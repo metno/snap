@@ -28,6 +28,7 @@ c
        real lower              ! base of the mashroom (or cylinder) in m
        real upper              ! top of the mashroom (or cylinder) in m
        real activity              ! total radioactivity released in Bq
+       integer activities  ! number of activity-classes to divide the activity into
 c
 c------------------------------------------------------------------------------------------------------------------
 c
@@ -202,26 +203,27 @@ cRELEASE.BQ/STEP.COMP= 1.0e+16 'Aerosol_173.2mym'
 cRELEASE.BQ/STEP.COMP= 1.0e+16 'Aerosol_250mym'
 c        fmt="(A,e10.1,1x,'''Aerosol_2.2mym''')"
 c       write(2,fmt) "RELEASE.BQ/STEP.COMP=",activity
+       activities = 10 ! 10 aerosol classes
        write(2,"(A,e10.1,1x,'''Aerosol_2.2mym''')") 
-     &"RELEASE.BQ/STEP.COMP=",activity
+     &"RELEASE.BQ/STEP.COMP=",activity/activities
        write(2,"(A,e10.1,1x,'''Aerosol_4.4mym''')") 
-     &"RELEASE.BQ/STEP.COMP=",activity
+     &"RELEASE.BQ/STEP.COMP=",activity/activities
        write(2,"(A,e10.1,1x,'''Aerosol_8.6mym''')") 
-     &"RELEASE.BQ/STEP.COMP=",activity
+     &"RELEASE.BQ/STEP.COMP=",activity/activities
        write(2,"(A,e10.1,1x,'''Aerosol_14.6mym''')") 
-     &"RELEASE.BQ/STEP.COMP=",activity
+     &"RELEASE.BQ/STEP.COMP=",activity/activities
        write(2,"(A,e10.1,1x,'''Aerosol_22.8mym''')") 
-     &"RELEASE.BQ/STEP.COMP=",activity
+     &"RELEASE.BQ/STEP.COMP=",activity/activities
        write(2,"(A,e10.1,1x,'''Aerosol_36.1mym''')") 
-     &"RELEASE.BQ/STEP.COMP=",activity
+     &"RELEASE.BQ/STEP.COMP=",activity/activities
        write(2,"(A,e10.1,1x,'''Aerosol_56.5mym''')") 
-     &"RELEASE.BQ/STEP.COMP=",activity
+     &"RELEASE.BQ/STEP.COMP=",activity/activities
        write(2,"(A,e10.1,1x,'''Aerosol_92.3mym''')") 
-     &"RELEASE.BQ/STEP.COMP=",activity
+     &"RELEASE.BQ/STEP.COMP=",activity/activities
        write(2,"(A,e10.1,1x,'''Aerosol_173.2mym''')") 
-     &"RELEASE.BQ/STEP.COMP=",activity
+     &"RELEASE.BQ/STEP.COMP=",activity/activities
        write(2,"(A,e10.1,1x,'''Aerosol_250.0mym''')") 
-     &"RELEASE.BQ/STEP.COMP=",activity
+     &"RELEASE.BQ/STEP.COMP=",activity/activities
        write(2,"('* PARTICLE CLASSES')")
        write(2,"('COMPONENT= Aerosol_2.2mym')")
        write(2,"('DRY.DEP.ON')")
