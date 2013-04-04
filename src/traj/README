@@ -1,0 +1,28 @@
+Updated: 07.09.2012
+
+This is operational version for calculating trajectories.
+
+The SNAP code is in directory source.
+
+The sequence of events for computation is the following:
+
+1. Original file from NRPA is: Test_barsebeck_TRAJ_input (probably windows coding)
+
+2. It is copied to the file nrpa.input (unix coding).
+
+3. Creation of the input file for SNAP with the program: CREATE_SNAP_INPUT
+
+nrpa.input -> CREATE_SNAP_INPUT -> snap.input
+
+4. SNAP run creates files with trajectories: bsnap snap.input
+
+snap.input -> SNSAP -> Trajectory_001_20120906060000_BARSEBECK-1.DAT +
+Trajectory_003_20120906060000_BARSEBECK-1.DAT + Trajectory_003_20120906060000_BARSEBECK-1.DAT
+
+5. The output files Trajectory* can be sent to NRPA
+
+Source code for the program CREATE_SNAP_INPUT is in the file creat_snap_input.f
+
+In directory graphics are maps with trajectories, both from met.no and NRPA for comparison. met.no maps are created with the program T with source code in the file tr.f.
+
+This system was tested (Jan Erik Dyve and me) on 07.09.2012 and all worked well.

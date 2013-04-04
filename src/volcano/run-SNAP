@@ -1,0 +1,37 @@
+#!/bin/sh
+#
+# Script for running SNAP volcano version and creating VAAC maps.
+# Maps are created in directory graphics with 6-hour resolution
+#--------------------------------------------------------------------------
+# set -x
+#
+echo " "
+echo "Today is: " ; date
+echo "Running SNAP"
+bsnap  snap.input
+#
+cd graphics
+echo "Directory is: " ; pwd
+echo "  "
+echo "Moving concntration files: "
+echo "  "
+mv ../concentrations-* .
+#
+echo "Creating maps in .eps: "
+echo "  "
+C
+echo "Converting .eps to .png: "
+echo "  "
+for n in 01 02 03 04 05 06 07 08
+do
+echo "Map - $n/8"
+echo "  "
+convert level-1-"$n".eps level-1-"$n".png
+convert level-2-"$n".eps level-2-"$n".png
+convert level-3-"$n".eps level-3-"$n".png
+convert column-"$n".eps column-"$n".png
+done
+rm *.eps
+echo "Maps.png are ready! " 
+echo "  "
+exit

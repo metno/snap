@@ -1,0 +1,48 @@
+
+USRLOCAL=/usr/local
+LOCALDIR=/disk1/snap/metlibs
+
+#USRLOCAL=$(HOME)/usrlocal
+#LOCALDIR=$(HOME)/local
+
+
+##########################################################
+
+BINDIR=../../bin/
+
+F77= gfortran
+CXX= g++
+CC= gcc
+
+#F77FLAGS=-g
+#CXXFLAGS=-g
+#CCFLAGS=-g
+F77FLAGS=-O3
+CXXFLAGS=-O3
+CCFLAGS=-O3
+
+LDFLAGS=
+DEFS=
+
+FTINC = -I/usr/include/freetype2
+FTLIB = -L$/usr/lib -lfreetype
+
+FTGLINC = -I/usr/include/FTGL
+FTGLLIB = -L/usr/lib -lftgl
+
+PUINC = -I$(LOCALDIR)/include/puTools -I$(LOCALDIR)/include/puCtools -I$(LOCALDIR)/include/glText -I$(LOCALDIR)/include/glp -I$(LOCALDIR)/include/milib
+PULIB = -L$(LOCALDIR)/lib -lpuTools -lglText -lglp -lmic -lpuCtools
+
+QTDIR=/usr
+MOC=$(QTDIR)/bin/moc
+QQQ=-I/usr/include/qt3
+
+QTLIB=-L$(QTDIR)/lib -lqt-mt
+
+GLINC = -I/usr/include
+GLLIB = -L/usr/lib -lGL -lGLU -L/usr/X11R6/lib -lXmu -lX11 -lXext -lXt -lXinerama -lXft -lXrandr -lXcursor -lXrender -lSM -lXxf86vm -lICE
+
+MILIB = -L$(LOCALDIR)/lib -lmi -L/usr/lib -lgfortran
+
+EXLIB = -lpthread -ldl
+

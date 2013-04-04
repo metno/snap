@@ -1,0 +1,8 @@
+BARSEBECK-1          Source name
+ 55.750              Latitude (dec.deg.)
+ 12.917              Longitude (dec.deg.)
+2012090606           Start (UTC)
+3                    Number of parcels
+ 500.0               First parcel (metres above surface)
+1500.0               Second parcel (metres above surface)
+3000.0               Third parcel (metres above surface)
