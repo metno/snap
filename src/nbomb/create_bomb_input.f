@@ -100,7 +100,7 @@ c
        if(yield .eq. 30) then
           lower=4100.0
           upper=8400.0
-          radius=3300.0
+          radius=2300.0
           activity=6.0e20
           go to 888
        endif
