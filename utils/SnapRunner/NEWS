@@ -1,0 +1,11 @@
+SNAPrunner
+
+0.3
+   createDesktopIcon.pl puts now icon in localized Desktop (e.g. Skrivebord)
+   use VERSION file for versioning, not directory names
+
+0.2   2013-02-27
+    Allowing several users to reuse installation directory
+
+0.1   2013-02-27
+	First version deployed to meteorologists

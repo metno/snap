@@ -1,0 +1,5 @@
+EnableVPG=false
+FortranIncludePaths=/SNAP\n
+FortranModulePaths=/SNAP\n
+SourceForms=*.F\=Fixed Form\n*.F03\=Free Form - C Preprocessed\n*.F08\=Free Form - C Preprocessed\n*.F77\=Fixed Form\n*.F90\=Free Form - C Preprocessed\n*.F95\=Free Form - C Preprocessed\n*.FIX\=Fixed Form\n*.FOR\=Fixed Form\n*.FPP\=Fixed Form\n*.FTN\=Fixed Form\n*.f\=Fixed Form\n*.f03\=Free Form\n*.f08\=Free Form\n*.f77\=Fixed Form\n*.f90\=Free Form\n*.f95\=Free Form\n*.fix\=Fixed Form\n*.for\=Fixed Form\n*.fpp\=Fixed Form\n*.ftn\=Fixed Form\n
+eclipse.preferences.version=1
