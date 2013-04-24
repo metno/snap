@@ -20,11 +20,11 @@ c
        integer nlist		! Number of isotopes on the list
        parameter(nlist=382)
        integer isoid(nlist)	! Isotope id on the list
-       integer isoin(100)	! Isotope number on the linput file
+       integer isoin(nlist)	! Isotope number on the linput file
        character*7 isoname(nlist)	! Isotope name on the list
        integer isotype(nlist)	! Isotope type (0 noble gas, 1 gas, 2 aerosol)
        real drate(nlist)	! Decay rate on the list
-       real eratein(11)	! Emission rates in the nrpa.input file
+       real eratein(nlist)	! Emission rates in the nrpa.input file
        integer i,j,j1,k
        character*40 comp
        integer isoid0		! current isotope id number
@@ -36,8 +36,8 @@ c
        integer iradius(11)	! release radius for emissin steps (in m)
        integer lowrel(11)	! bottom of release (in m)
        integer toprel(11)	! top of release (in m)
-       real emi(11,11)		! emission rates for each isotope and emission step emi(iso,step)
-       character*3 cname(11)	! component name for snap.input file
+       real emi(nlist,11)		! emission rates for each isotope and emission step emi(iso,step)
+       character*3 cname(nlist)	! component name for snap.input file
         character*64 fmt	! Alvaro's variable
        integer npart		! Maximum number of particles released
 c
@@ -157,7 +157,7 @@ c	write(2,"(1(A)") 'TIME.RUN  = 66h','GRAPHICS.OFF',
        write(2,fmt) 'RELEASE.RADIUS.M=',(iradius(i),i=1,nrel+1)
        write(2,fmt) 'RELEASE.LOWER.M=',(lowrel(i),i=1,nrel+1)
        write(2,fmt) 'RELEASE.UPPER.M=',(toprel(i),i=1,nrel+1)
-        fmt="(A,??(e10.2,','),e10.2,1x,'''C',I2.2,'''')"
+        fmt="(A,??(e10.3,','),e10.3,1x,'''C',I2.2,'''')"
         write(fmt(4:5),"(I2.2)"),nrel!+1
        do i=1,niso
           write(2,fmt) "RELEASE.BQ/SEC.COMP=",(emi(i,j),j=1,nrel+1),i
