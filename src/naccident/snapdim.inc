@@ -64,7 +64,7 @@ c            (keep as small as "possible", it dimensions 2d/3d output fields)
 c
       integer mdefcomp,mcomp
       parameter (mdefcomp=24 )
-      parameter (mcomp=5)
+      parameter (mcomp=24)
 c
 c
 c..mfilef: max. no. of input FELT files
