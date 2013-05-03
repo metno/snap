@@ -157,7 +157,7 @@ c	write(2,"(1(A)") 'TIME.RUN  = 66h','GRAPHICS.OFF',
        write(2,fmt) 'RELEASE.RADIUS.M=',(iradius(i),i=1,nrel+1)
        write(2,fmt) 'RELEASE.LOWER.M=',(lowrel(i),i=1,nrel+1)
        write(2,fmt) 'RELEASE.UPPER.M=',(toprel(i),i=1,nrel+1)
-        fmt="(A,??(e10.3,','),e10.3,1x,'''C',I2.2,'''')"
+        fmt="(A,??(1pe10.3,','),1pe10.3,1x,'''C',I2.2,'''')"
         write(fmt(4:5),"(I2.2)"),nrel!+1
        do i=1,niso
           write(2,fmt) "RELEASE.BQ/SEC.COMP=",(emi(i,j),j=1,nrel+1),i
