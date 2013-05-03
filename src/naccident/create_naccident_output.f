@@ -247,11 +247,11 @@ c          write(*,"(2i4,e12.4)") i,j,dep(i,j)
            endif
            if(dose(i,j) .gt. 0.0) then
 c          write(*,"(2i4,4x,e12.4)") i,j,dose(i,j)
-             write(22,"(2(i4,1h,),1e14.6e2)") i,j,dose(i,j)
+             write(22,"(2(i4,1h,),1pe14.6e2)") i,j,dose(i,j)
            endif
            if(conc(i,j) .gt. 0.0) then
 c          write(*,"(2i4,8x,e12.4)") i,j,conc(i,j)
-             write(23,"(2(i4,1h,),1e14.6e2)") i,j,conc(i,j)
+             write(23,"(2(i4,1h,),1pe14.6e2)") i,j,conc(i,j)
            endif    
          enddo
          enddo
