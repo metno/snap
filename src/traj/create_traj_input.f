@@ -47,10 +47,19 @@ c
         read(1,'(i4,3i2.2)') (idate(i),i=1,4)
         write(*,'(i4,3i2.2)') (idate(i),i=1,4)	
         read(1,*) lname1
+        if (lname1(1:7).eq.'forward'
+     &    .or.lname1(1:8).eq.'backward') then
+c           new input format format with mode and duration (iforecast)
+            read(1,*) iforecast
+            read(1,*) ntraj
+        else
+c           old format
+            read (lname1, '(I10)') ntraj
+            lname1 = "forward"
+            iforecast = 48
+        end if
         write(*,*) lname1
-        read(1,*) iforecast
         write(*,*) iforecast
-        read(1,*) ntraj
         write(*,*) ntraj
         do i=1,ntraj
            read(1,*) level(i)
