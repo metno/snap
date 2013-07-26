@@ -1,8 +1,4 @@
       subroutine argoswrite(iunit,name,iparam,itimeargos,nx,ny,dblfield)
-c-----------------------------------------------------------------------
-c
-c 25.05.12 - new output format for remote NRPA - Jerzy Bartnicki
-c 02.06.12 - dblfield changed from one-dimensional to two-dimensional
 c
       implicit none
 c
@@ -29,22 +25,7 @@ c
       do ij1=1,nxy,10
 	ij2= min(ij1+9,nxy)
 	write(iunit,1006,err=900) (dblfield(ij),ij=ij1,ij2)
-	enddo
-	enddo
-c
-	write(iunit,1007,err=900) k
-	do j=1,ny
-	do i=1,nx
-	  if(dblfield(i,j).gt.0.0d0) then
-	  write(iunit,1008,err=900) i,j,dblfield(i,j)
-	  endif
-	enddo
-	enddo
-	
-cjb      do ij1=1,nxy,10
-cjb	ij2= min(ij1+9,nxy)
-cjb	write(iunit,1006,err=900) (dblfield(ij),ij=ij1,ij2)
-cjb      end do
+      end do
 cc
  1001 format('Isotope ',i3,' deposition (Unit/m2)')
  1002 format('Isotope ',i3,' concentration (Unit/m3)')
