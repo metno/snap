@@ -4,6 +4,8 @@ c  Purpose:  Compute dry deposition for each particle and each component
 c            and store depositions in nearest gridpoint in a field
 c  Method:   J.Bartnicki 2003
 c
+c ... 23.04.12 - gas, particle 0.1<d<10, particle d>10 - J. Bartnicki|
+c
 c
       implicit none
 c
@@ -43,9 +45,17 @@ cjb	if(kdrydep(m).eq.1 .and. pdata(3,n).gt.pdata(4,n)) then
 cjb	  h=pdata(5,n)
 	  h=30.0
 c..gravityms=pdata(10,n)
-cjb..13.11
-c	  deprate= 1.0 - exp(-tstep*pdata(10,n)/h)
-	  deprate= 1.0 - exp(-tstep*(0.002+pdata(10,n))/h)	
+cjb...23.04.12... difference between particle and gas
+c
+	  if(radiusmym(m) .le. 0.05) then
+	    deprate= 1.0-exp(-tstep*(0.008)/h)	!gas
+	  endif
+	  if(radiusmym(m) .gt. 0.05 .and. radiusmym(m) .le. 10.0) then	  
+	    deprate= 1.0-exp(-tstep*(0.002)/h)	!particle 0.05<r<10
+	  endif
+	  if(radiusmym(m) .gt. 10.0) then
+	    deprate= 1.0-exp(-tstep*(0.002+pdata(10,n))/h)	!particle r>10
+	  endif
           dep=deprate*pdata(9,n)
           pdata(9,n)=pdata(9,n)-dep
 	  i=nint(pdata(1,n))
