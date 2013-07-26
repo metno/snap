@@ -218,27 +218,27 @@ c
 	  write(iu,fmt='(i5,100(1x,5i2.2))',err=900)
      +			nargos,((argostime(i,j),i=1,5),j=1,nargos)
 c
-cjb	  write(iu,fmt='(a)',err=900) '1 centered'
-cjb	  write(iu,fmt='(2f8.2)',err=900) splat,splon
-cjb	  write(iu,fmt='(a)',err=900) 'SINGLE-LEVEL FIELDS'
+	  write(iu,fmt='(a)',err=900) '1 centered'
+	  write(iu,fmt='(2f8.2)',err=900) splat,splon
+	  write(iu,fmt='(a)',err=900) 'SINGLE-LEVEL FIELDS'
 c
-cjb	  write(iu,fmt='(a)',err=900) 'longitude (decimal deg.)'
-cjb	  write(iu,fmt='(1pe8.2e2)',err=900) 1.0
-cjb	  do i1=1,nx*ny,10
-cjb	    i2=min(i1+9,nx*ny)
-cjb	    write(iu,1001) (field1print(i),i=i1,i2)
-cjb	  end do
+	  write(iu,fmt='(a)',err=900) 'longitude (decimal deg.)'
+	  write(iu,fmt='(1pe8.2e2)',err=900) 1.0
+	  do i1=1,nx*ny,10
+	    i2=min(i1+9,nx*ny)
+	    write(iu,1001) (field1print(i),i=i1,i2)
+	  end do
 c
-cjb	  write(iu,fmt='(a)',err=900) 'latitude (decimal deg.)'
-cjb	  write(iu,fmt='(1pe8.2e2)',err=900) 1.0
-cjb	  do i1=1,nx*ny,10
-cjb	    i2=min(i1+9,nx*ny)
-cjb	    write(iu,1001) (field2print(i),i=i1,i2)
-cjb	  end do
+	  write(iu,fmt='(a)',err=900) 'latitude (decimal deg.)'
+	  write(iu,fmt='(1pe8.2e2)',err=900) 1.0
+	  do i1=1,nx*ny,10
+	    i2=min(i1+9,nx*ny)
+	    write(iu,1001) (field2print(i),i=i1,i2)
+	  end do
 c
  1001	  format(10(1pe14.6e2))
 c
-cjb	  write(iu,fmt='(a)',err=900) 'MULTI-LEVEL FIELDS'
+	  write(iu,fmt='(a)',err=900) 'MULTI-LEVEL FIELDS'
 c
 	end do
 c
@@ -819,57 +819,16 @@ c..argos "depo" output
 	end do
 c
 c..argos "conc" output
-cjb
-cjb ... initialization of dblfield
-cjb
-          do j=1,ny
-            do i=1,nx
-              dblfield(i,j)=0.0d0
-            end do
-          end do
-cjb
-cjb ... inst. concentration
-cjb
         do m=1,ncomp
-          do j=1,ny
-            do i=1,nx
-              dblfield(i,j)=dblfield(i,j)+concen(i,j,m)
-            end do
-          end do
-	  call argoswrite(92,'depo',idcomp(idefcomp(m)),
-     +			  itimeargos,nx,ny,dblfield)
+	  call argoswrite(92,'conc',idcomp(idefcomp(m)),
+     +			  itimeargos,nx,ny,concen(1,1,m))
 	end do
-cjb        do m=1,ncomp
-cjb	  call argoswrite(92,'conc',idcomp(idefcomp(m)),
-cjb     +			  itimeargos,nx,ny,concen(1,1,m))
-cjb	end do
-
 c
 c..argos "dose" output
-cjb
-cjb ... initialization of dblfield
-cjb
-          do j=1,ny
-            do i=1,nx
-              dblfield(i,j)=0.0d0
-            end do
-          end do
-cjb
-cjb ... inst. concentration
-cjb
         do m=1,ncomp
-          do j=1,ny
-            do i=1,nx
-              dblfield(i,j)=dblfield(i,j)+concacc(i,j,m)
-            end do
-          end do
-	  call argoswrite(93,'depo',idcomp(idefcomp(m)),
-     +			  itimeargos,nx,ny,dblfield)
+	  call argoswrite(93,'dose',idcomp(idefcomp(m)),
+     +			  itimeargos,nx,ny,concacc(1,1,m))
 	end do
-cjb        do m=1,ncomp
-cjb	  call argoswrite(93,'dose',idcomp(idefcomp(m)),
-cjb     +			  itimeargos,nx,ny,concacc(1,1,m))
-cjb	end do
 c
       end if
 c
