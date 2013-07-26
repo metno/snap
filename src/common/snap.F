@@ -275,6 +275,16 @@ c
       integer lenstr
 c
       logical pendingOutput
+#if defined(VOLCANO)
+cjb 02.05 
+c
+c... matrix for calculating volcanic ash concentrations + file name
+c
+	real vcon(nx,ny,3)
+	character*60 cfile
+cjb 19.05
+	integer itimev(5),j
+#endif
 c
 #ifndef BATCH
       save itime1,itime2,itime,itimei,itimeo
@@ -1870,6 +1880,19 @@ cjb_start
 	mhmin=10000.0
 	mhmax=-10.0
 cjb_end
+
+#if defined(VOLCANO)
+cjb 01.05 initialize concentration (mass) matrix
+c
+	do i=1,nx
+	do j=1,ny
+	do k=1,3
+	   vcon(i,j,k)=0.0
+	enddo
+	enddo
+	enddo
+cjb END
+#endif
 c
 #ifdef BATCH
       do 200 istep=0,nstep
@@ -2107,6 +2130,91 @@ c    +          istep,nstep,isteph,nsteph,iprecip,nprecip
 c###################################################################
 c
 c..output...................................................
+#if defined(VOLCANO)
+	do k=1,npart
+	   x=pdata(1,k)
+	   y=pdata(2,k)
+	   i=nint(pdata(1,k))
+	   j=nint(pdata(2,k))
+	   if(pdata(3,k) .gt. 0.43) 
+     &     vcon(i,j,1)=vcon(i,j,1)+pdata(9,k)/120.0				! level 1
+	   if(pdata(3,k) .gt. 0.23 .and. pdata(3,k) .le. 0.43) 
+     &     vcon(i,j,2)=vcon(i,j,2)+pdata(9,k)/120.0				! level 2
+	   if(pdata(3,k) .gt. 0.03 .and. pdata(3,k) .le. 0.216) 
+     &     vcon(i,j,3)=vcon(i,j,3)+pdata(9,k)/120.0				! level 3
+	enddo
+cccc
+c	if(mod(istep,nsteph).eq.0) then
+c     +    write(6,*) 'istep,nplume,npart: ',istep,nplume,npart
+cjb... START
+cjb... output with concentrations after 6 hours
+	if(istep .gt. 1 .and. mod(istep,72).eq.0) then
+	write(*,*) (itime(i),i=1,5)
+	do i=1,5
+	   itimev(i)=itime(i)
+	enddo
+	itimev(5)= itime(5)+1
+	call vtime(itimev,ierror)
+	write(*,*) (itimev(i),i=1,5)
+c     +    write(6,*) 'istep,nplume,npart: ',istep,nplume,npart
+c	write(6,*)
+c	write(6,*) 'istep,hour,npart=',istep,istep/72,npart
+c
+c... calculate number of non zero model grids
+c
+	m=0
+	do i=1,nx
+	do j=1,ny
+	do k=1,3
+	   if(vcon(i,j,k) .gt. 0.0) m=m+1
+	enddo
+	enddo
+	enddo
+c
+c... write non zero model grids, their gegraphical coordinates and mass to output file
+c
+cjb 19.05 start
+	write(cfile,'(''concentrations-'',i2.2)') istep/72
+	open(12,file=cfile)
+	rewind 12
+	write(12,'(i4,3i2.2)') (itimev(i),i=1,4)	
+	write(12,'(i6,'' - non zero grids'')') m
+	write(*,*)	
+	write(*,*) 'Output no.:',istep/72
+	write(*,*) 'Time (hrs): ',istep/12
+c
+	m=0
+	do i=1,nx
+	do j=1,ny
+	do k=1,3
+	   if(vcon(i,j,k) .gt. 0.0) then
+	      m=m+1
+	      x=real(i)+0.5
+	      y=real(j)+0.5
+	      call xyconvert(1,x,y,igtype,gparam,2,geoparam,ierror)
+	      write(12,'(i6,2x,3i5,2x,2f10.3,2x,e12.3)')
+     &        m,i,j,k,x,y,vcon(i,j,k)/72.0
+c	      write(*,'(i6,2x,3i5,2x,2f10.3,2x,e12.3)')
+c     &        m,i,j,k,x,y,vcon(i,j,k)/72.0
+	   endif
+	enddo
+	enddo
+	enddo
+c
+	do i=1,nx
+	do j=1,ny
+	do k=1,3
+	   vcon(i,j,k)=0.0
+	enddo
+	enddo
+	enddo
+c
+	write(6,*) 'npart all=',npart
+	write(6,*) 'ngrid all=',m
+	endif
+	close (12)
+cjb... END
+#endif
 c
 c..fields
       ifldout=0

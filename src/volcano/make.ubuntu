@@ -8,7 +8,7 @@ LOCALDIR=/disk1/snap/metlibs
 
 ##########################################################
 
-BINDIR=..
+BINDIR=../../bin
 
 F77= gfortran
 CXX= g++
@@ -17,7 +17,7 @@ CC= gcc
 #F77FLAGS=-g
 #CXXFLAGS=-g
 #CCFLAGS=-g
-F77FLAGS=-O3
+F77FLAGS=-O3 -DVOLCANO -mcmodel=medium
 CXXFLAGS=-O3
 CCFLAGS=-O3
 
