@@ -197,6 +197,7 @@ c  DNMI/FoU  16.01.2004  Anstein Foss ... mushroom shape release
 c  DNMI/FoU  04.11.2004  Anstein Foss ... bugfix (pselect called too late)
 c  DNMI/FoU  08.02.2005  Anstein Foss ... gravity(m/s) in pdata(10,n)
 c met.no/FoU 20.06.2006  Anstein Foss ... Ensemble update
+c met.no/FoU 22.03.2013  Heiko Klein  ... Fix output-format for argos/nrpa
 c-----------------------------------------------------------------------
 c
 c
@@ -275,7 +276,7 @@ c
       integer lenstr
 c
       logical pendingOutput
-#if defined(VOLCANO)
+#if defined(VOLCANO) || defined(TRAJ)
 cjb 02.05 
 c
 c... matrix for calculating volcanic ash concentrations + file name
@@ -284,6 +285,16 @@ c
 	character*60 cfile
 cjb 19.05
 	integer itimev(5),j
+#if defined(TRAJ)
+	real zzz
+	character*60 tr_file
+	integer ntraj,itraj
+	real tlevel(100)
+	character*80 tname(10)	! name for the trajectory
+	integer tyear, tmon, tday, thour, tmin
+	real distance, speed
+	common /speed/ speed
+#endif 
 #endif
 c
 #ifndef BATCH
@@ -1390,6 +1401,18 @@ c..argos.output.timestep.hour= <3>
      +	       argoshourstep.gt.240) goto 12
           elseif(cinput(k1:k2).eq.'end') then
 c..end
+#if defined(TRAJ)
+	read(iuinp,*) ntraj
+	write(*,*) 'ntraj=', ntraj
+	do i=1,ntraj
+	   read(iuinp,*) tlevel(i)
+	   write(*,*) tlevel(i)
+	enddo
+	do i=1,ntraj
+	   read(iuinp,'(a80)') tname(i)
+	   write(*,'(i4,1x,a80)') i,tname(i)
+	enddo	
+#endif
             iend=1
           else
             write(6,*) 'ERROR.  Unknown input:'
@@ -1740,6 +1763,22 @@ c..the following done to avoid updateing subr. fldout............
 	isynoptic= 0
 c................................................................
       end if
+#if defined(TRAJ)
+	do 201 itraj=1,ntraj
+	rellower(1)=tlevel(itraj)
+c	relupper(1)=rellower(1)+1
+	relupper(1)=rellower(1)
+	tyear=itime1(1)
+	tmon=itime1(2)
+	tday=itime1(3)
+	thour=itime1(4)
+	tmin=0.0
+	write(*,*) 'lower, upper',rellower(1),relupper(1)
+	write(*,*) 'tyear, tmon, tday, thour, tmin',
+     &  tyear, tmon, tday, thour, tmin
+	distance=0.0
+	speed=0.0
+#endif
 c
 c..initial no. of plumes and particles
       nplume=0
@@ -1875,6 +1914,25 @@ c
 c
       istep=-1
 c
+#if defined(TRAJ)
+c	write(*,*) (itime(i),i=1,5)
+	do i=1,5
+	   itimev(i)=itime(i)
+	enddo
+c	write(*,*) (itimev(i),i=1,5)
+1110	continue
+c	write(tr_file,'(''Trajectory_'',i3.3,
+c     &  ''_'',i4,3i2.2,''0000.DAT'')') itraj,(itime(i),i=1,4)
+c	open(13,file=tr_file)
+	open(13,file=tname(itraj))
+	rewind 13
+c	write(*,*) tr_file
+	write(*,*) tname(itraj)
+
+c	write(13,'(i6,3f12.3)') nstep
+c
+#endif
+
  1111 continue
 cjb_start
 	mhmin=10000.0
@@ -1893,6 +1951,7 @@ c
 	enddo
 cjb END
 #endif
+
 c
 #ifdef BATCH
       do 200 istep=0,nstep
@@ -1964,6 +2023,19 @@ c..release position from geographic to polarstereographic coordinates
             y=relpos(1,irelpos)
             x=relpos(2,irelpos)
             write(9,*) 'release lat,long: ',y,x
+#if defined(TRAJ)
+c	write(*,*) istep,x,y,rellower(1)
+c	write(13,'(i6,3f12.3)') istep,x,y,rellower(1)
+c
+	write(13,'(''RIMPUFF'')')
+	write(13,'(i2)') ntraj
+	write(13,'(1x,i4,4i2.2,''00'',
+     &  2f9.3,f12.3,f15.2,f10.2)') 
+     &  (itime(i),i=1,4),mod(istep,12)*5,y,x,rellower(1),distance,speed
+	write(*,'(i4,1x,i4,i2,i2,2i2.2,''00'',
+     &  2f9.3,f12.3,f15.2,f10.2)') istep, 
+     &  (itime(i),i=1,4),mod(istep,12)*5,y,x,rellower(1),distance,speed
+#endif
             call xyconvert(1,x,y,2,geoparam,igtype,gparam,ierror)
             if(ierror.ne.0) then
               write(9,*) 'ERROR: xyconvert'
@@ -2302,7 +2374,61 @@ c..store data for 'video replay'
 c
       if(isteph.eq.0 .and. iprecip.lt.nprecip) iprecip=iprecip+1
 c
+#if defined(TRAJ)
+cjb
+	tmin=tmin+tstep/60.0
+	if(tmin .eq. 60) then
+	   thour=thour+1
+	   tmin=0.0
+	endif
+	if(thour .eq. 24) then
+	   tday=tday+1
+	   thour=0
+	endif
+	distance=distance+speed*tstep
+	if(istep .gt. 0 .and. mod(istep,12).eq.0) then
+c	if(istep .gt. -1) then
+	call vtime(itimev,ierror)
+c	write(*,*) (itime(i),i=1,5), ierror
+c	write(*,*) (itimev(i),i=1,5)
+c	write(*,*) 'istep=',istep, 'npart=',npart	
+c	do k=1,npart
+	do k=1,1
+c	write(*,*) istep,pdata(1,k),pdata(2,k),pdata(3,k)
+	      x=pdata(1,k)
+	      y=pdata(2,k)
+	      i=int(x)
+	      j=int(y)
+	      call xyconvert(1,x,y,igtype,gparam,2,geoparam,ierror)
+             vlvl=pdata(3,k)
+             ilvl=vlvl*10000.
+             k1=ivlevel(ilvl)
+             k2=k1+1
+	zzz=hlevel2(i,j,k2)+(hlevel2(i,j,k1)-hlevel2(i,j,k2))*
+     &  (pdata(3,k)-vlevel(k2))/(vlevel(k1)-vlevel(k2))
+c	write(*,*) istep,x,y,pdata(3,k),k1,k2,
+c     &  vlevel(k1),vlevel(k2),hlevel2(i,j,k1),hlevel2(i,j,k2),zzz
+c	write(*,*)
+c	write(*,*) istep,k,x,y,zzz
+c	write(*,'(1x,i4,i2,i2,2i2.2,''00'')') 
+c     &(itime(i),i=1,4),mod(istep,12)*5
+	write(13,'(1x,i4,4i2.2,''00'',
+     &  2f9.3,f12.3,f15.2,f10.2)') 
+     &  tyear,tmon,tday,thour,mod(istep,12)*5,
+     &  y,x,zzz,distance, speed
+	write(*,'(i4,1x,i4,i2,i2,2i2.2,''00'',
+     &  2f9.3,f12.3,f15.2,f10.2)') istep,
+     &  tyear,tmon,tday,thour,mod(istep,12)*5,
+     &  y,x,zzz,distance, speed
+cjb-2701
+	enddo
+	endif
+#endif
   200 continue
+#if defined(TRAJ)
+	close (13)
+201	continue
+#endif
 c
 #ifndef BATCH
       if(pendingOutput) then

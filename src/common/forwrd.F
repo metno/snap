@@ -42,10 +42,12 @@ c
 c
 c..functions
       real    vgrav,cun,roa,visc
+#if defined(TRAJ)
 cjb_2802... calculation of distance and speed
 c
 	real speed
 	common /speed/ speed
+#endif
 c
       data vgcompute/.true./
 c
@@ -222,7 +224,9 @@ c.......................................???????????????????????????????
 c######################################################################
 c	  if(np.lt.21) write(6,*) 'np,k2,w,wg: ',np,k2,w,wg
 c######################################################################
-cjb_2702	  w= w + wg
+#if !defined(TRAJ)
+	  w= w + wg
+#endif
 	end if
 c
 c..update position
@@ -231,10 +235,12 @@ c
         pdata(1,np)=pdata(1,np)+u*dt*rmx/dxgrid
         pdata(2,np)=pdata(2,np)+v*dt*rmy/dygrid
         pdata(3,np)=pdata(3,np)+w*dt
+#if defined(TRAJ)
 cjb_270211
 c
 	speed=sqrt(u*u+v*v)
-ccc JB 29.04
+#endif
+ccc JB 29.04pdata(3,np)
 	if(pdata(3,np) .gt. vmax) pdata(9,np)=0.0
 ccc
 c

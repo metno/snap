@@ -78,7 +78,7 @@ filesort.o: ../common/filesort.f $(INCFILES)
 	${F77} -c ${F77FLAGS} -I. $<
 fldout.o: ../common/fldout.f $(INCFILES)
 	${F77} -c ${F77FLAGS} -I. $<
-forwrd.o: ../common/forwrd.f $(INCFILES)
+forwrd.o: ../common/forwrd.F $(INCFILES)
 	${F77} -c ${F77FLAGS} -I. $<
 ftest.o: ../common/ftest.f $(INCFILES)
 	${F77} -c ${F77FLAGS} -I. $<
