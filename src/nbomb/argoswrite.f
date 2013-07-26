@@ -11,11 +11,10 @@ c
 c..input
       integer iunit,iparam,nx,ny,itimeargos(5)
       character*4 name
-cjb      double precision dblfield(nx*ny)
-      double precision dblfield(nx,ny)
+      double precision dblfield(nx*ny)
 c
 c..local
-      integer nxy,ij,ij1,ij2,i,j,k
+      integer nxy,ij,ij1,ij2,i
       double precision dblmin,dblmax
 c
       nxy=nx*ny
@@ -24,14 +23,12 @@ c
       if(name.eq.'conc') write(iunit,1002,err=900) iparam
       if(name.eq.'dose') write(iunit,1003,err=900) iparam
 c
-cjb      write(iunit,1004,err=900) 1.0
+      write(iunit,1004,err=900) 1.0
       write(iunit,1005,err=900) (itimeargos(i),i=1,5)
 c
-	k=0
-cjb	do ij=1,nxy
-	do i=1,nx
-	do j=1,ny
-	  if(dblfield(i,j).gt.0.0d0) k=k+1
+      do ij1=1,nxy,10
+	ij2= min(ij1+9,nxy)
+	write(iunit,1006,err=900) (dblfield(ij),ij=ij1,ij2)
 	enddo
 	enddo
 c
@@ -55,8 +52,22 @@ cc
  1004 format(1pe8.2e2)
  1005 format(5i2.2)
  1006 format(10(1pe14.6e2))
- 1007 format(i4)
- 1008 format(2i5,1pe14.6e2)
+c
+      if(idebug.eq.1) then
+	dblmin=+1.0d+100
+	dblmax=-1.0d+100
+	do ij=1,nxy
+	  if(dblfield(ij).gt.0.0d0) then
+	    if(dblmin.gt.dblfield(ij)) dblmin=dblfield(ij)
+	    if(dblmax.lt.dblfield(ij)) dblmax=dblfield(ij)
+	  end if
+	end do
+	if(dblmin.gt.dblmax) then
+	  dblmin=0.0d0
+	  dblmax=0.0d0
+        end if
+        write(9,*) 'ARGOS ',name,iparam,dblmin,dblmax
+      end if
 c
       return
 c
