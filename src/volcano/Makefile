@@ -36,16 +36,16 @@ HFILES = diColour.h diLinetype.h diContouring.h diTesselation.h diFontManager.h 
 glFieldPlot.h glMapPlot.h snapInterface.h \
 diArea.h diProjection.h diRectangle.h
 
-all: link_incfiles bsnap_volcano
+all: bsnap_volcano
 
 link_incfiles:
 	for i in ../common/*.inc; do bn=`basename $$i`; if [ ! -L $$bn ]; then ln -s $$i .; fi; done
 
 
-$(BINDIR)/snap: $(CCOBJ) $(OBJ) $(MODELOBJ)
+$(BINDIR)/snap: link_incfiles $(CCOBJ) $(OBJ) $(MODELOBJ)
 	$(CXX) $(CXXFLAGS) $(CCOBJ) $(OBJ) $(MODELOBJ) $(LIBS) -o $(BINDIR)/snap
 
-bsnap_volcano: $(BOBJ) $(MODELOBJ)
+bsnap_volcano: link_incfiles $(BOBJ) $(MODELOBJ)
 	$(F77) $(F77FLAGS) $(BOBJ) $(MODELOBJ) $(BLIBS) -o $@
 
 #--------------------------------

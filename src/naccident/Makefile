@@ -47,7 +47,7 @@ BOBJ = snap_batch_copy.o
 INCFILES = snapdim.inc snapfil.inc snapfld.inc snapgrd.inc snappar.inc \
 snappos.inc snaptab.inc snapgrp.inc snapeps.inc snapargos.inc snapdebug.inc
 
-all: link_incfiles bsnap_naccident create_naccident_input create_naccident_output
+all: bsnap_naccident create_naccident_input create_naccident_output
 
 link_incfiles:
 	for i in ../common/*.inc; do bn=`basename $$i`; if [ ! -L $$bn ]; then ln -s $$i .; fi; done
@@ -58,7 +58,7 @@ create_naccident_input: create_naccident_input.f
 create_naccident_output: create_naccident_output.f
 	${F77} ${F77FLAGS} -I. $< -o $@
 
-bsnap_naccident: $(BOBJ) $(MODELOBJ) milib.o c2fgetvar.o c2fgetarg.o
+bsnap_naccident: link_incfiles $(BOBJ) $(MODELOBJ) milib.o c2fgetvar.o c2fgetarg.o
 	${F77} $(F77FLAGS) $(BOBJ) $(MODELOBJ) $(BLIBS) -o bsnap_naccident
 
 #--------------------------------

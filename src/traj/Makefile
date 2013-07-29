@@ -36,18 +36,18 @@ HFILES = diColour.h diLinetype.h diContouring.h diTesselation.h diFontManager.h 
 glFieldPlot.h glMapPlot.h snapInterface.h \
 diArea.h diProjection.h diRectangle.h
 
-all: link_incfiles bsnap_traj create_traj_input
+all: bsnap_traj create_traj_input
 
 link_incfiles:
 	for i in ../common/*.inc; do bn=`basename $$i`; if [ ! -L $$bn ]; then ln -s $$i .; fi; done
 
-snap_traj: $(CCOBJ) $(OBJ) $(MODELOBJ)
+snap_traj: link_incfiles $(CCOBJ) $(OBJ) $(MODELOBJ)
 	$(CXX) $(CXXFLAGS) $(CCOBJ) $(OBJ) $(MODELOBJ) $(LIBS) -o $@
 
 create_traj_input:
 	$(F77) create_traj_input.f -o $@
 
-bsnap_traj: $(BOBJ) $(MODELOBJ)
+bsnap_traj: link_incfiles $(BOBJ) $(MODELOBJ)
 	$(F77) $(F77FLAGS) $(BOBJ) $(MODELOBJ) $(BLIBS) -o $@
 
 #--------------------------------

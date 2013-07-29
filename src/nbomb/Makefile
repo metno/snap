@@ -47,7 +47,7 @@ BOBJ = snap_batch_copy.o
 INCFILES = snapdim.inc snapfil.inc snapfld.inc snapgrd.inc snappar.inc \
 snappos.inc snaptab.inc snapgrp.inc snapeps.inc snapargos.inc snapdebug.inc
 
-all: link_incfiles bsnap_nbomb create_bomb_input
+all: bsnap_nbomb create_bomb_input
 
 link_incfiles:
 	for i in ../common/*.inc; do bn=`basename $$i`; if [ ! -L $$bn ]; then ln -s $$i .; fi; done
@@ -55,7 +55,7 @@ link_incfiles:
 create_bomb_input: create_bomb_input.f
 	$(F77) ${F77FLAGS} -I. $< -o $@
 
-bsnap_nbomb: $(BOBJ) $(MODELOBJ) milib.o c2fgetvar.o c2fgetarg.o
+bsnap_nbomb: link_incfiles $(BOBJ) $(MODELOBJ) milib.o c2fgetvar.o c2fgetarg.o
 	$(F77) $(F77FLAGS) $(BOBJ) $(MODELOBJ) $(BLIBS) -o $@
 
 #--------------------------------
