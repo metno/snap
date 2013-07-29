@@ -242,7 +242,7 @@ c
       parameter (maxkey=10)
       integer   kwhere(5,maxkey)
 cjb 01.05
-	integer j
+       integer j
 c
       integer iargc,c2fiargc
       integer narg,iuinp,ios,iprhlp,nlines,nhrun,nhrel,irwalk,nhfout
@@ -277,7 +277,7 @@ c
 c
 c... matrix for calculating volcanic ash concentrations
 c
-	real vcon(nx,ny,3)
+       real vcon(nx,ny,3)
 c
 #ifndef BATCH
       save itime1,itime2,itime,itimei,itimeo
@@ -432,12 +432,12 @@ c
         halftime(m)   =-1.
         kgravity(m)   =-1
         gravityms(m)  = 0.
-	radiusmym(m)  = 0.
-	densitygcm3(m)= 0.
+       radiusmym(m)  = 0.
+       densitygcm3(m)= 0.
         idcomp(m)     =-1
-	iruncomp(m)   = 0
+       iruncomp(m)   = 0
         totalbq(m)    = 0.
-	numtotal(m)   = 0
+       numtotal(m)   = 0
       end do
       ncomp=0
       ndefcomp=0
@@ -447,14 +447,14 @@ c
       itprof=0
 c
       do i=1,mtprof
-	relradius(i)= -1.
-	relupper(i)=  -1.
-	rellower(i)=  -1.
-	relstemradius(i)= -1.
+       relradius(i)= -1.
+       relupper(i)=  -1.
+       rellower(i)=  -1.
+       relstemradius(i)= -1.
       end do
 c
       do m=1,mcomp
-	relbqsec(1,m)= -1.
+       relbqsec(1,m)= -1.
       end do
 c
       nrelpos=0
@@ -927,20 +927,20 @@ c..boundary.layer.full.mix.on
             blfullmix= .true.
           elseif(cinput(k1:k2).eq.'dry.deposition.old') then
 c..dry.deposition.old
-	    if(idrydep.ne.0 .and. idrydep.ne.1) goto 12
-	    idrydep=1
+           if(idrydep.ne.0 .and. idrydep.ne.1) goto 12
+           idrydep=1
           elseif(cinput(k1:k2).eq.'dry.deposition.new') then
 c..dry.deposition.new
-	    if(idrydep.ne.0 .and. idrydep.ne.2) goto 12
-	    idrydep=2
+           if(idrydep.ne.0 .and. idrydep.ne.2) goto 12
+           idrydep=2
           elseif(cinput(k1:k2).eq.'wet.deposition.old') then
 c..wet.deposition.old
-	    if(iwetdep.ne.0 .and. iwetdep.ne.1) goto 12
-	    iwetdep=1
+           if(iwetdep.ne.0 .and. iwetdep.ne.1) goto 12
+           iwetdep=1
           elseif(cinput(k1:k2).eq.'wet.deposition.new') then
 c..wet.deposition.new
-	    if(iwetdep.ne.0 .and. iwetdep.ne.2) goto 12
-	    iwetdep=2
+           if(iwetdep.ne.0 .and. iwetdep.ne.2) goto 12
+           iwetdep=2
           elseif(cinput(k1:k2).eq.'time.step') then
 c..time.step=<seconds>
             if(kv1.lt.1) goto 12
@@ -948,33 +948,33 @@ c..time.step=<seconds>
             if(tstep.lt.0.9999) goto 12
           elseif(cinput(k1:k2).eq.'time.release.profile.constant') then
 c..time.release.profile.constant
-	    if(itprof.ne.0 .and. itprof.ne.1) goto 12
-	    itprof=1
+           if(itprof.ne.0 .and. itprof.ne.1) goto 12
+           itprof=1
           elseif(cinput(k1:k2).eq.'time.release.profile.bomb') then
 c..time.release.profile.bomb
-	    if(itprof.ne.0 .and. itprof.ne.2) goto 12
-	    itprof=2
+           if(itprof.ne.0 .and. itprof.ne.2) goto 12
+           itprof=2
           elseif(cinput(k1:k2).eq.'time.release.profile.linear') then
 c..time.release.profile.linear
-	    if(itprof.ne.0 .and. itprof.ne.3) goto 12
-	    itprof=3
+           if(itprof.ne.0 .and. itprof.ne.3) goto 12
+           itprof=3
           elseif(cinput(k1:k2).eq.'time.release.profile.steps') then
 c..time.release.profile.steps
-	    if(itprof.ne.0 .and. itprof.ne.4) goto 12
-	    itprof=4
+           if(itprof.ne.0 .and. itprof.ne.4) goto 12
+           itprof=4
           elseif(cinput(k1:k2).eq.'release.day'    .or.
      +		 cinput(k1:k2).eq.'release.hour'   .or.
      +		 cinput(k1:k2).eq.'release.minute' .or.
      +		 cinput(k1:k2).eq.'release.second') then
-	    rscale=1.
-	    if(cinput(k1:k2).eq.'release.day')    rscale=24.
-	    if(cinput(k1:k2).eq.'release.minute') rscale=1./60.
-	    if(cinput(k1:k2).eq.'release.second') rscale=1./3600.
+           rscale=1.
+           if(cinput(k1:k2).eq.'release.day')    rscale=24.
+           if(cinput(k1:k2).eq.'release.minute') rscale=1./60.
+           if(cinput(k1:k2).eq.'release.second') rscale=1./3600.
 c..release.day
 c..release.hour
 c..release.minute
 c..release.second
-	    if(kv1.lt.1 .or. ntprof.gt.0) goto 12
+           if(kv1.lt.1 .or. ntprof.gt.0) goto 12
             i1=ntprof+1
             i2=ntprof
             ios=0
@@ -985,38 +985,38 @@ c..release.second
             end do
             i2=i2-1
             if(i2.lt.i1) goto 12
-	    do i=i1,i2
-	      irelhour(i)= nint(irelhour(i)*rscale)
-	    end do
+           do i=i1,i2
+             irelhour(i)= nint(irelhour(i)*rscale)
+           end do
             ntprof=i2
-	    if(irelhour(1).ne.0) goto 12
-	    do i=2,ntprof
-	      if(irelhour(i-1).ge.irelhour(i)) goto 12
-	    end do
+           if(irelhour(1).ne.0) goto 12
+           do i=2,ntprof
+             if(irelhour(i-1).ge.irelhour(i)) goto 12
+           end do
           elseif(cinput(k1:k2).eq.'release.radius.m') then
 c..release.radius.m
-	    if(kv1.lt.1 .or. ntprof.lt.1) goto 12
+           if(kv1.lt.1 .or. ntprof.lt.1) goto 12
             read(cipart,*,err=12) (relradius(i),i=1,ntprof)
-	    do i=1,ntprof
-	      if(relradius(i).lt.0.) goto 12
-	    end do
+           do i=1,ntprof
+             if(relradius(i).lt.0.) goto 12
+           end do
           elseif(cinput(k1:k2).eq.'release.upper.m') then
 c..release.upper.m
-	    if(kv1.lt.1 .or. ntprof.lt.1) goto 12
+           if(kv1.lt.1 .or. ntprof.lt.1) goto 12
             read(cipart,*,err=12) (relupper(i),i=1,ntprof)
-	    do i=1,ntprof
-	      if(relupper(i).lt.0.) goto 12
-	    end do
+           do i=1,ntprof
+             if(relupper(i).lt.0.) goto 12
+           end do
           elseif(cinput(k1:k2).eq.'release.lower.m') then
 c..release.lower.m
-	    if(kv1.lt.1 .or. ntprof.lt.1) goto 12
+           if(kv1.lt.1 .or. ntprof.lt.1) goto 12
             read(cipart,*,err=12) (rellower(i),i=1,ntprof)
-	    do i=1,ntprof
-	      if(rellower(i).lt.0.) goto 12
-	    end do
+           do i=1,ntprof
+             if(rellower(i).lt.0.) goto 12
+           end do
           elseif(cinput(k1:k2).eq.'release.mushroom.stem.radius.m') then
 c..release.mushroom.stem.radius.m
-	    if(kv1.lt.1 .or. ntprof.lt.1) goto 12
+           if(kv1.lt.1 .or. ntprof.lt.1) goto 12
             read(cipart,*,err=12) (relstemradius(i),i=1,ntprof)
           elseif(cinput(k1:k2).eq.'release.bq/hour.comp' .or.
      +           cinput(k1:k2).eq.'release.bq/sec.comp'  .or.
@@ -1026,35 +1026,35 @@ c..release.bq/hour.comp
 c..release.bq/sec.comp
 c..release.bq/day.comp
 c..release.bq/step.comp
-	    if(cinput(k1:k2).eq.'release.bq/hour.comp') then
-	      rscale=1./3600.
-	    elseif(cinput(k1:k2).eq.'release.bq/day.comp') then
-	      rscale=1./(3600.*24.)
-	    elseif(cinput(k1:k2).eq.'release.bq/step.comp') then
-	      rscale=-1.
-	    else
-	      rscale=1.
-	    end if
-	    if(kv1.lt.1 .or. ntprof.lt.1) goto 12
-	    ncomp= ncomp+1
-	    if(ncomp.gt.mcomp) goto 13
+           if(cinput(k1:k2).eq.'release.bq/hour.comp') then
+             rscale=1./3600.
+           elseif(cinput(k1:k2).eq.'release.bq/day.comp') then
+             rscale=1./(3600.*24.)
+           elseif(cinput(k1:k2).eq.'release.bq/step.comp') then
+             rscale=-1.
+           else
+             rscale=1.
+           end if
+           if(kv1.lt.1 .or. ntprof.lt.1) goto 12
+           ncomp= ncomp+1
+           if(ncomp.gt.mcomp) goto 13
             read(cipart,*,err=12) (relbqsec(i,ncomp),i=1,ntprof),
      +				   component(ncomp)
-	    do i=1,ntprof
-	      if(relbqsec(i,ncomp).lt.0.) goto 12
-	    end do
-	    if(rscale.gt.0.) then
-	      do i=1,ntprof
-	        relbqsec(i,ncomp)= relbqsec(i,ncomp)*rscale
-	      end do
-	    elseif(ntprof.gt.1 .and. relbqsec(ntprof,ncomp).ne.0.) then
-	      goto 12
-	    elseif(ntprof.gt.1) then
-	      do i=1,ntprof-1
-		rscale=1./(3600.*(irelhour(i+1)-irelhour(i)))
-	        relbqsec(i,ncomp)= relbqsec(i,ncomp)*rscale
-	      end do
-	    end if
+           do i=1,ntprof
+             if(relbqsec(i,ncomp).lt.0.) goto 12
+           end do
+           if(rscale.gt.0.) then
+             do i=1,ntprof
+               relbqsec(i,ncomp)= relbqsec(i,ncomp)*rscale
+             end do
+           elseif(ntprof.gt.1 .and. relbqsec(ntprof,ncomp).ne.0.) then
+             goto 12
+           elseif(ntprof.gt.1) then
+             do i=1,ntprof-1
+       	rscale=1./(3600.*(irelhour(i+1)-irelhour(i)))
+               relbqsec(i,ncomp)= relbqsec(i,ncomp)*rscale
+             end do
+           end if
           elseif(cinput(k1:k2).eq.'max.particles.per.release') then
 c..max.particles.per.release
             if(kv1.lt.1) goto 12
@@ -1111,7 +1111,7 @@ c..half.lifetime.minutes=
             if(kv1.lt.1) goto 12
             if(ndefcomp.lt.1 .or. halftime(ndefcomp).ge.0.) goto 12
             read(cipart,*,err=12) halftime(ndefcomp)
-	    halftime(ndefcomp)=halftime(ndefcomp)/60.
+           halftime(ndefcomp)=halftime(ndefcomp)/60.
           elseif(cinput(k1:k2).eq.'half.lifetime.hours') then
 c..half.lifetime.hours=
             if(kv1.lt.1) goto 12
@@ -1122,52 +1122,52 @@ c..half.lifetime.days=
             if(kv1.lt.1) goto 12
             if(ndefcomp.lt.1 .or. halftime(ndefcomp).ge.0.) goto 12
             read(cipart,*,err=12) halftime(ndefcomp)
-	    halftime(ndefcomp)=halftime(ndefcomp)*24.
+           halftime(ndefcomp)=halftime(ndefcomp)*24.
           elseif(cinput(k1:k2).eq.'half.lifetime.years') then
 c..half.lifetime.years=
             if(kv1.lt.1) goto 12
             if(ndefcomp.lt.1 .or. halftime(ndefcomp).ge.0.) goto 12
             read(cipart,*,err=12) halftime(ndefcomp)
-	    halftime(ndefcomp)=halftime(ndefcomp)*24.*365.25
+           halftime(ndefcomp)=halftime(ndefcomp)*24.*365.25
           elseif(cinput(k1:k2).eq.'gravity.off') then
 c..gravity.off
             if(ndefcomp.lt.1 .or. kgravity(ndefcomp).ne.-1) goto 12
-	    kgravity(ndefcomp)= 0
+           kgravity(ndefcomp)= 0
           elseif(cinput(k1:k2).eq.'gravity.fixed.m/s') then
 c..gravity.fixed.m/s
             if(ndefcomp.lt.1 .or. kgravity(ndefcomp).ne.-1) goto 12
-	    kgravity(ndefcomp)= 1
-	    if(kv1.lt.1) goto 12
+           kgravity(ndefcomp)= 1
+           if(kv1.lt.1) goto 12
             read(cipart,*,err=12) gravityms(ndefcomp)
-	    if (gravityms(ndefcomp).le.0.) goto 12
+           if (gravityms(ndefcomp).le.0.) goto 12
           elseif(cinput(k1:k2).eq.'gravity.fixed.cm/s') then
 c..gravity.fixed.cm/s
             if(ndefcomp.lt.1 .or. kgravity(ndefcomp).ne.-1) goto 12
-	    kgravity(ndefcomp)= 1
-	    if(kv1.lt.1) goto 12
+           kgravity(ndefcomp)= 1
+           if(kv1.lt.1) goto 12
             read(cipart,*,err=12) gravityms(ndefcomp)
-	    if (gravityms(ndefcomp).le.0.) goto 12
-	    gravityms(ndefcomp)=gravityms(ndefcomp)*0.01
+           if (gravityms(ndefcomp).le.0.) goto 12
+           gravityms(ndefcomp)=gravityms(ndefcomp)*0.01
           elseif(cinput(k1:k2).eq.'radius.micrometer') then
 c..radius.micrometer  (for gravity computation)
             if(kv1.lt.1) goto 12
             if(ndefcomp.lt.1 .or. radiusmym(ndefcomp).gt.0.) goto 12
             read(cipart,*,err=12) radiusmym(ndefcomp)
-	    if(radiusmym(ndefcomp).le.0.) goto 12
+           if(radiusmym(ndefcomp).le.0.) goto 12
           elseif(cinput(k1:k2).eq.'density.g/cm3') then
 c..density.g/cm3  (for gravity computation)
             if(kv1.lt.1) goto 12
             if(ndefcomp.lt.1 .or. densitygcm3(ndefcomp).gt.0.) goto 12
             read(cipart,*,err=12) densitygcm3(ndefcomp)
-	    if(densitygcm3(ndefcomp).le.0.) goto 12
+           if(densitygcm3(ndefcomp).le.0.) goto 12
           elseif(cinput(k1:k2).eq.'field.identification') then
 c..field.identification=
             if(kv1.lt.1) goto 12
             if(ndefcomp.lt.1 .or. idcomp(ndefcomp).ge.0) goto 12
             read(cipart,*,err=12) idcomp(ndefcomp)
-	    if(idcomp(ndefcomp).lt.1) goto 12
-	    do i=1,ndefcomp-1
-	      if(idcomp(i).eq.idcomp(ndefcomp)) goto 12
+           if(idcomp(ndefcomp).lt.1) goto 12
+           do i=1,ndefcomp-1
+             if(idcomp(i).eq.idcomp(ndefcomp)) goto 12
             end do
           elseif(cinput(k1:k2).eq.'precip(mm/h).probab') then
 c..precip(mm/h).probab=<precip_intensity,probability, ...>
@@ -1345,7 +1345,7 @@ c..ensemble.project.output.file= <ensemble.list>
 c..ensemble.project.participant= 09
             if(kv1.lt.1) goto 12
             read(cipart,*,err=12) ensembleparticipant
-	    if(ensembleparticipant.lt.0 .or.
+           if(ensembleparticipant.lt.0 .or.
      +	       ensembleparticipant.gt.99) goto 12
           elseif(cinput(k1:k2).eq.'ensemble.project.random.key') then
 c..ensemble.project.random.key= <rl52s3u>
@@ -1379,7 +1379,7 @@ c..argos.output.totaldose.file= runident_MLDP0_dose
 c..argos.output.timestep.hour= <3>
             if(kv1.lt.1) goto 12
             read(cipart,*,err=12) argoshourstep
-	    if(argoshourstep.le.0 .or.
+           if(argoshourstep.le.0 .or.
      +	       argoshourstep.gt.240) goto 12
           elseif(cinput(k1:k2).eq.'end') then
 c..end
@@ -1467,25 +1467,25 @@ c..check if compiled without ENSEMBLE PROJECT arrays
       if(nxep.lt.2 .or. nyep.lt.2) iensemble=0
 c
       if(ntprof.lt.1) then
-	write(6,*) 'No time profile(s) specified'
-	ierror=1
+       write(6,*) 'No time profile(s) specified'
+       ierror=1
       end if
       if(itprof.lt.1) then
-	write(6,*) 'No time profile type specified'
-	ierror=1
+       write(6,*) 'No time profile type specified'
+       ierror=1
       end if
       k=0
       do i=1,ntprof
-	if(relradius(i).lt.0. .or.
+       if(relradius(i).lt.0. .or.
      +     relupper(i) .lt.0. .or.
      +     rellower(i) .lt.0. .or.
      +     relupper(i).lt.rellower(i)) k=1
-	if(relupper(i).lt.rellower(i)+1.) relupper(i)=rellower(i)+1.
+       if(relupper(i).lt.rellower(i)+1.) relupper(i)=rellower(i)+1.
       end do
       if(k.eq.1) then
-	write(6,*) 'ERROR in relase profiles ',
+       write(6,*) 'ERROR in relase profiles ',
      +			'of upper,lower and/or radius'
-	ierror=1
+       ierror=1
       end if
 c
       if(ncomp.lt.0) then
@@ -1498,55 +1498,55 @@ c
       end if
 c
       do m=1,ndefcomp-1
-	if(idcomp(m).lt.1) then
-	  write(6,*) 'Component has no field identification: ',
+       if(idcomp(m).lt.1) then
+         write(6,*) 'Component has no field identification: ',
      +		      compname(m)(1:lenstr(compname(m),1))
-	end if
-	do i=m+1,ndefcomp
-	  if(compname(m).eq.compname(i)) then
-	    write(6,*) 'Component defined more than once: ',
+       end if
+       do i=m+1,ndefcomp
+         if(compname(m).eq.compname(i)) then
+           write(6,*) 'Component defined more than once: ',
      +			compname(m)(1:lenstr(compname(m),1))
-	    ierror=1
-	  end if
-	end do
+           ierror=1
+         end if
+       end do
       end do
 c
       do m=1,ncomp-1
-	do i=m+1,ncomp
-	  if(component(m).eq.component(i)) then
-	    write(6,*) 'Released component defined more than once: ',
+       do i=m+1,ncomp
+         if(component(m).eq.component(i)) then
+           write(6,*) 'Released component defined more than once: ',
      +			component(m)(1:lenstr(component(m),1))
-	    ierror=1
-	  end if
-	end do
+           ierror=1
+         end if
+       end do
       end do
 c
 c..match used components with defined components
       do m=1,ncomp
-	k=0
-	do i=1,ndefcomp
+       k=0
+       do i=1,ndefcomp
           if(component(m).eq.compname(i)) k=i
-	end do
-	if(k.gt.0) then
-	  idefcomp(m)= k
-	  iruncomp(k)= m
-	else
-	  write(6,*) 'Released component ',
+       end do
+       if(k.gt.0) then
+         idefcomp(m)= k
+         iruncomp(k)= m
+       else
+         write(6,*) 'Released component ',
      +		      component(m)(1:lenstr(component(m),1)),
      +               ' is not defined'
-	  ierror=1
-	end if
+         ierror=1
+       end if
       end do
 c
 c..gravity
       do n=1,ncomp
         m=idefcomp(n)
-	if(kgravity(m).lt.0) kgravity(m)= 2
-	if(kgravity(m).eq.2 .and.
+       if(kgravity(m).lt.0) kgravity(m)= 2
+       if(kgravity(m).eq.2 .and.
      +     (radiusmym(m).le.0. .or. densitygcm3(m).le.0.)) then
-	  write(6,*) 'Gravity error. radius,density: ',
+         write(6,*) 'Gravity error. radius,density: ',
      +			radiusmym(m),densitygcm3(m)
-	  ierror=1
+         ierror=1
         end if
       end do
 c
@@ -1726,11 +1726,11 @@ c
       if(nhrel.gt.nhrun) nhrel=nhrun
 c
       if(iargos.eq.1) then
-	argoshoursrelease= nhrel
-	argoshoursrun=     nhrun
+       argoshoursrelease= nhrel
+       argoshoursrun=     nhrun
 c..the following done to avoid updateing subr. fldout............
-	nhfout= argoshourstep
-	isynoptic= 0
+       nhfout= argoshourstep
+       isynoptic= 0
 c................................................................
       end if
 c
@@ -1791,7 +1791,7 @@ c..information to log file
       write(9,fmt='(1x,a,40(1x,i2))') 'iruncomp: ',
      +				      (iruncomp(i),i=1,ndefcomp)
       do n=1,ncomp
-	m=idefcomp(n)
+       m=idefcomp(n)
         write(9,*) 'component no:  ',n
         write(9,*) 'compname:   ',compname(m)
         write(9,*) '  field id:   ',idcomp(m)
@@ -1808,10 +1808,10 @@ c..information to log file
         write(9,*) '  radiusmym:  ',radiusmym(m)
         write(9,*) '  densitygcm3:',densitygcm3(m)
         write(9,*) '  Relase time profile:   ntprof: ',ntprof
-	do i=1,ntprof
+       do i=1,ntprof
           write(9,*) '  hour,Bq/hour: ',
      +			irelhour(i),relbqsec(i,n)*3600.
-	end do
+       end do
       end do
       write(9,*) 'itotcomp:   ',itotcomp
       write(9,*) 'nprepro:    ',nprepro
@@ -1824,29 +1824,29 @@ c..initialize files, deposition fields etc.
       nargos=0
       do n=1,nhrun
         do i=1,4
-	  itime(i)=itime1(i)
-	end do
-	itime(5)=n
-	if(isynoptic.eq.0) then
+         itime(i)=itime1(i)
+       end do
+       itime(5)=n
+       if(isynoptic.eq.0) then
 c..asynoptic output (use forecast length in hours to test if output)
-	  ihour=itime(5)
-	else
+         ihour=itime(5)
+       else
 c..synoptic output  (use valid hour to test if output)
-	  call vtime(itime,ierror)
-	  ihour=itime(4)
-	end if
-	if(mod(ihour,nhfout).eq.0) m=m+1
-	if(iargos.eq.1) then
-	  if(mod(n,argoshourstep).eq.0) then
-	    if(nargos.lt.margos) then
-	      nargos=nargos+1
-	      do i=1,4
-	        argostime(i,nargos)=itime1(i)
-	      end do
-	      argostime(5,nargos)=n
-	    end if
-	  end if
-	end if
+         call vtime(itime,ierror)
+         ihour=itime(4)
+       end if
+       if(mod(ihour,nhfout).eq.0) m=m+1
+       if(iargos.eq.1) then
+         if(mod(n,argoshourstep).eq.0) then
+           if(nargos.lt.margos) then
+             nargos=nargos+1
+             do i=1,4
+               argostime(i,nargos)=itime1(i)
+             end do
+             argostime(5,nargos)=n
+           end if
+         end if
+       end if
       end do
       call fldout(-1,iunito,fldfil,itime1,0.,0.,0.,tstep,
      *            m,nsteph,ierror)
@@ -1871,16 +1871,16 @@ c
  1111 continue
 cjb 01.05 initialize concentration (mass) matrix
 c
-	do i=1,nx
-	do j=1,ny
-	do k=1,3
-	   vcon(i,j,k)=0.0
-	enddo
-	enddo
-	enddo
+       do i=1,nx
+       do j=1,ny
+       do k=1,3
+          vcon(i,j,k)=0.0
+       enddo
+       enddo
+       enddo
 c... output file with concentrations (mass)
-	open(12,file='concentrations')
-	rewind 12
+       open(12,file='concentrations')
+       rewind 12
 cjb END
 c
 #ifdef BATCH
@@ -1894,70 +1894,70 @@ c	if(mod(istep,nsteph).eq.0) then
 c     +    write(6,*) 'istep,nplume,npart: ',istep,nplume,npart
 cjb... START
 cjb... output with concentrations after 6 hours
-	if(istep .gt. 1 .and. mod(istep,72).eq.0) then
+       if(istep .gt. 1 .and. mod(istep,72).eq.0) then
 c     +    write(6,*) 'istep,nplume,npart: ',istep,nplume,npart
-	write(6,*)
-	write(6,*) 'istep,hour,npart=',istep,istep/72,npart
+       write(6,*)
+       write(6,*) 'istep,hour,npart=',istep,istep/72,npart
 c	write(12,*) istep/12,npart
 c
-	do n=1,npart
-	   x=pdata(1,n)
-	   y=pdata(2,n)
-	   i=nint(pdata(1,n))
-	   j=nint(pdata(2,n))
-	   if(pdata(3,n) .gt. 0.45) vcon(i,j,1)=vcon(i,j,1)+pdata(9,i)	! level 1
-	   if(pdata(3,n) .gt. 0.23 .and. pdata(3,n) .le. 0.45) 
+       do n=1,npart
+          x=pdata(1,n)
+          y=pdata(2,n)
+          i=nint(pdata(1,n))
+          j=nint(pdata(2,n))
+          if(pdata(3,n) .gt. 0.45) vcon(i,j,1)=vcon(i,j,1)+pdata(9,i)	! level 1
+          if(pdata(3,n) .gt. 0.23 .and. pdata(3,n) .le. 0.45) 
      &     vcon(i,j,2)=vcon(i,j,2)+pdata(9,i)				! level 2
-	   if(pdata(3,n) .gt. 0.03 .and. pdata(3,n) .le. 0.23) 
+          if(pdata(3,n) .gt. 0.03 .and. pdata(3,n) .le. 0.23) 
      &     vcon(i,j,3)=vcon(i,j,3)+pdata(9,i)				! level 3
-	enddo
+       enddo
 c
 c... calculate number of non zero model grids
 c
-	m=0
-	do i=1,nx
-	do j=1,ny
-	do k=1,3
-	   if(vcon(i,j,k) .gt. 0.0) m=m+1
-	enddo
-	enddo
-	enddo
+       m=0
+       do i=1,nx
+       do j=1,ny
+       do k=1,3
+          if(vcon(i,j,k) .gt. 0.0) m=m+1
+       enddo
+       enddo
+       enddo
 c
 c... write non zero model grids, their gegraphical coordinates and mass to output file
 c
-	write(12,'(2i6)') istep/72,m
-	write(*,*) '6 hrs output: ',istep/72,m
+       write(12,'(2i6)') istep/72,m
+       write(*,*) '6 hrs output: ',istep/72,m
 c
-	m=0
-	do i=1,nx
-	do j=1,ny
-	do k=1,3
-	   if(vcon(i,j,k) .gt. 0.0) then
-	      m=m+1
-	      x=real(i)+0.5
-	      y=real(j)+0.5
-	      call xyconvert(1,x,y,igtype,gparam,2,geoparam,ierror)
-	      write(12,'(i6,2x,3i5,2x,2f10.3,2x,e12.3)')
+       m=0
+       do i=1,nx
+       do j=1,ny
+       do k=1,3
+          if(vcon(i,j,k) .gt. 0.0) then
+             m=m+1
+             x=real(i)+0.5
+             y=real(j)+0.5
+             call xyconvert(1,x,y,igtype,gparam,2,geoparam,ierror)
+             write(12,'(i6,2x,3i5,2x,2f10.3,2x,e12.3)')
      &        m,i,j,k,x,y,vcon(i,j,k)
-	      write(*,'(i6,2x,3i5,2x,2f10.3,2x,e12.3)')
+             write(*,'(i6,2x,3i5,2x,2f10.3,2x,e12.3)')
      &        m,i,j,k,x,y,vcon(i,j,k)
-	   endif
-	enddo
-	enddo
-	enddo
+          endif
+       enddo
+       enddo
+       enddo
 c
-	do i=1,nx
-	do j=1,ny
-	do k=1,3
-	   vcon(i,j,k)=0.0
-	enddo
-	enddo
-	enddo
+       do i=1,nx
+       do j=1,ny
+       do k=1,3
+          vcon(i,j,k)=0.0
+       enddo
+       enddo
+       enddo
 c
-	write(6,*) 'npart all=',npart
-	write(6,*) 'ngrid all=',m
-	write(6,*)
-	endif
+       write(6,*) 'npart all=',npart
+       write(6,*) 'ngrid all=',m
+       write(6,*)
+       endif
 cjb... END
 c
 c#######################################################################
@@ -1982,14 +1982,14 @@ c..read fields
             end do
             ihr1=-0
             ihr2=-nhfmax
-	    nhleft=nhrun
+           nhleft=nhrun
           else
             do i=1,5
               itimei(i)=itimefi(i)
             end do
             ihr1=+nhfmin
             ihr2=+nhfmax
-	    nhleft=(nstep-istep+1)/nsteph
+           nhleft=(nstep-istep+1)/nsteph
           end if
           call readfield(iunitf,istep,nhleft,itimei,ihr1,ihr2,
      +                   itimefi,ierror)
@@ -2005,11 +2005,11 @@ c..analysis time of input model
 c
           n=itimefi(5)
           call vtime(itimefi,ierr)
-	  write(6,fmt='(''input data: '',i4,3i3.2,''  prog='',i4)')
+         write(6,fmt='(''input data: '',i4,3i3.2,''  prog='',i4)')
      +                             (itimefi(i),i=1,4),n
 c
 c..compute model level heights
-	  call compheight
+         call compheight
 c
 c..calculate boundary layer (top and height)
           call bldp
@@ -2040,7 +2040,7 @@ c..release position from geographic to polarstereographic coordinates
             relpos(3,irelpos)=x
             relpos(4,irelpos)=y
 c
-	    if(iensemble.eq.1)
+           if(iensemble.eq.1)
      +        call ensemble(0,itime1,tf1,tf2,tnow,istep,nstep,nsteph)
 c
             nxtinf=1
@@ -2049,7 +2049,7 @@ c
 c
           end if
 c
-	  if(iensemble.eq.1)
+         if(iensemble.eq.1)
      +      call ensemble(1,itime,tf1,tf2,tnow,istep,nstep,nsteph)
 c
           call hrdiff(0,0,itimei,itimefi,ihdiff,ierr1,ierr2)
@@ -2059,11 +2059,11 @@ c
             call hrdiff(0,0,itimei,itime1,ihr,ierr1,ierr2)
             tnow=3600.*ihr
             nxtinf=istep+nsteph*(ihdiff-ihr)
-	    iprecip=1+ihr
+           iprecip=1+ihr
           else
             tnow=0.
             nxtinf=istep+nsteph*ihdiff
-	    iprecip=1
+           iprecip=1
           end if
 c
         else
@@ -2130,9 +2130,9 @@ c#######################################################################
 c
 c..radioactive decay
 c
-	if(idecay.eq.1) call decay(tstep)
+       if(idecay.eq.1) call decay(tstep)
 c
-	if(iensemble.eq.1)
+       if(iensemble.eq.1)
      +    call ensemble(2,itime,tf1,tf2,tnow,istep,nstep,nsteph)
 c
 c..dry deposition (1=old, 2=new version)
@@ -2140,7 +2140,7 @@ c
         if(idrydep.eq.1) call drydep1
         if(idrydep.eq.2) call drydep2(tstep)
 c
-	if(iensemble.eq.1)
+       if(iensemble.eq.1)
      +    call ensemble(3,itime,tf1,tf2,tnow,istep,nstep,nsteph)
 c
 c..wet deposition (1=old, 2=new version)
@@ -2148,7 +2148,7 @@ c
         if(iwetdep.eq.1) call wetdep1
         if(iwetdep.eq.2) call wetdep2(tstep)
 c
-	if(iensemble.eq.1)
+       if(iensemble.eq.1)
      +    call ensemble(4,itime,tf1,tf2,tnow,istep,nstep,nsteph)
 c
 c..move all particles forward
@@ -2167,7 +2167,7 @@ c..interpolation of boundary layer top, height, precipitation etc.
 c
         call posint(0,tf1,tf2,tnext)
 c
-	if(iensemble.eq.1)
+       if(iensemble.eq.1)
      +    call ensemble(5,itime,tf1,tf2,tnext,istep,nstep,nsteph)
 c
 c###################################################################
@@ -2271,9 +2271,9 @@ c
 c
 #ifndef BATCH
       if(pendingOutput) then
-	pendingOutput=.false.
-	if(iaction.eq.1) goto 1111
-	if(iaction.eq.2) goto 2222
+       pendingOutput=.false.
+       if(iaction.eq.1) goto 1111
+       if(iaction.eq.2) goto 2222
       end if
 c
       iexit=0
@@ -2314,7 +2314,7 @@ c
       end if
 c
 cjb
-	close (12)
+       close (12)
       if(istop.eq.0) then
         write(9,*) ' SNAP run finished'
         write(6,*) ' SNAP run finished'

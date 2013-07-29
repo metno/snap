@@ -51,73 +51,73 @@ c
 c..particle number scaled according to max Bq released
       rbqmax=0.
       do n=1,ntprof
-	rbq=0.
-	do m=1,ncomp
-	  rbq=rbq+relbqsec(n,m)
-	end do
-	if(rbqmax.lt.rbq) rbqmax=rbq
+       rbq=0.
+       do m=1,ncomp
+         rbq=rbq+relbqsec(n,m)
+       end do
+       if(rbqmax.lt.rbq) rbqmax=rbq
       end do
       pscale= float(mprel)/(rbqmax*tstep)
 c
       nt=1
       do n=2,ntprof
-	if(irelhour(n)*nsteph.le.istep) nt=n
+       if(irelhour(n)*nsteph.le.istep) nt=n
       end do
 c
       if(itprof.ne.4 .and. nt.lt.ntprof) then
-	c1=irelhour(nt)  *nsteph
-	c2=irelhour(nt+1)*nsteph
-	c3=istep
-	rt1=(c2-c3)/(c2-c1)
-	rt2=(c3-c2)/(c2-c1)
-	do n=1,ncomp
-	  relbq(n)= relbqsec(nt,n)*rt1 + relbqsec(nt+1,n)*rt2
-	end do
-	radius=         relradius(nt)*rt1 +     relradius(nt+1)*rt2
-	hupper=          relupper(nt)*rt1 +      relupper(nt+1)*rt2
-	hlower=          rellower(nt)*rt1 +      rellower(nt+1)*rt2
-	stemradius= relstemradius(nt)*rt1 + relstemradius(nt+1)*rt2
+       c1=irelhour(nt)  *nsteph
+       c2=irelhour(nt+1)*nsteph
+       c3=istep
+       rt1=(c2-c3)/(c2-c1)
+       rt2=(c3-c2)/(c2-c1)
+       do n=1,ncomp
+         relbq(n)= relbqsec(nt,n)*rt1 + relbqsec(nt+1,n)*rt2
+       end do
+       radius=         relradius(nt)*rt1 +     relradius(nt+1)*rt2
+       hupper=          relupper(nt)*rt1 +      relupper(nt+1)*rt2
+       hlower=          rellower(nt)*rt1 +      rellower(nt+1)*rt2
+       stemradius= relstemradius(nt)*rt1 + relstemradius(nt+1)*rt2
       else
-	do n=1,ncomp
-	  relbq(n)= relbqsec(nt,n)
-	end do
-	radius=         relradius(nt)
-	hupper=          relupper(nt)
-	hlower=          rellower(nt)
-	stemradius= relstemradius(nt)
+       do n=1,ncomp
+         relbq(n)= relbqsec(nt,n)
+       end do
+       radius=         relradius(nt)
+       hupper=          relupper(nt)
+       hlower=          rellower(nt)
+       stemradius= relstemradius(nt)
       end if
 c
       nprel=0
       do m=1,ncomp
 #if defined(BOMB)
 c Number of particles equal for each component, but not Bq
-	nrel(m)=nint(float(mprel)/float(ncomp))
+       nrel(m)=nint(float(mprel)/float(ncomp))
 #else
-	nrel(m)= nint(relbq(m)*tstep*pscale)
+       nrel(m)= nint(relbq(m)*tstep*pscale)
 #endif
-	if(nrel(m).gt.0) then
-	  pbq(m)= relbq(m)*tstep/float(nrel(m))
-	  nprel= nprel + nrel(m)
-	else
-	  nrel(m)= 0
-	  pbq(m)=0.
-	end if
+       if(nrel(m).gt.0) then
+         pbq(m)= relbq(m)*tstep/float(nrel(m))
+         nprel= nprel + nrel(m)
+       else
+         nrel(m)= 0
+         pbq(m)=0.
+       end if
       end do
 c
 c################################################################
 c      if(mod(istep,nsteph).eq.0) then
         do m=1,ncomp
 ccc	  write(6,*) 'release comp,num,bq:',m,nrel(m),pbq(m)
-	  write(9,*) 'release comp,num,bq:',m,nrel(m),pbq(m)
+         write(9,*) 'release comp,num,bq:',m,nrel(m),pbq(m)
         end do
 ccc	write(6,*) 'nprel: ',nprel
-	write(9,*) 'nprel: ',nprel
+       write(9,*) 'nprel: ',nprel
 c      end if
 c################################################################
 c
       if(nplume+1.gt.mplume .or. npart+nprel.gt.mpart) then
-	ierror=1
-	return
+       ierror=1
+       return
       end if
 c
       npar1= npart+1
@@ -173,12 +173,12 @@ c
         itab=rtab
         pif= pitab(itab)+(pitab(itab+1)-pitab(itab))*(rtab-itab)
 c
-	h1=hhu
+       h1=hhu
         h2=h1 + th*(pihu-pih)*ginv
         hlevel(k)= h1 + (h2-h1)*(pihu-pif)/(pihu-pih)
 c
-	hhu= h2
-	pihu=pih
+       hhu= h2
+       pihu=pih
 c
       end do
 c
@@ -240,9 +240,9 @@ c
 c
       if (x-dx.lt.1.01 .or. x+dx.gt.nx-0.01 .or.
      +    y-dy.lt.1.01 .or. y+dy.gt.ny-0.01) then
-	write(6,*) 'RELEASE ERROR: Bad position'
-	ierror=1
-	return
+       write(6,*) 'RELEASE ERROR: Bad position'
+       ierror=1
+       return
       end if
 c
       twodx= 2.*dx
@@ -263,9 +263,9 @@ c..(ellipse code from DIANA diFieldEdit.cc FieldEdit::editWeight,
 c.. and is probably more general than needed here (axis in x/y direction))
 c
       if (dx.ge.dy) then
-	e= sqrt(1.-(dy*dy)/(dx*dx))
+       e= sqrt(1.-(dy*dy)/(dx*dx))
       else
-	e= sqrt(1.-(dx*dx)/(dy*dy))
+       e= sqrt(1.-(dx*dx)/(dy*dy))
       end if
       a= sqrt(dx*dx+dy*dy)
       b= a*sqrt(1.-e*e)
@@ -278,7 +278,7 @@ c
 c
       do m=1,ncomp
 c
-	nprel= npart+nrel2(m,nrad)
+       nprel= npart+nrel2(m,nrad)
 c
         do while (npart.lt.nprel)
 c
@@ -287,36 +287,36 @@ c..the rand function returns random real numbers between 0.0 and 1.0
           yrand=rand()
           zrand=rand()
 c
-	  dx= twodx*(xrand-0.5)
-	  dy= twody*(yrand-0.5)
+         dx= twodx*(xrand-0.5)
+         dy= twody*(yrand-0.5)
 c
           s= sqrt(dx*dx + dy*dy)
-	  gcos= dx/s
-	  gsin= dy/s
-	  rcos= gcos*ecos + gsin*esin
-	  smax= sqrt(b2/(1.-en2*rcos*rcos))
+         gcos= dx/s
+         gsin= dy/s
+         rcos= gcos*ecos + gsin*esin
+         smax= sqrt(b2/(1.-en2*rcos*rcos))
 c
-	  if(s.le.smax) then
+         if(s.le.smax) then
 c
-	    h= hlower + (hupper-hlower)*zrand
-	    k= 2
-	    do while (k.lt.nk .and. h.gt.hlevel(k))
-	      k=k+1
-	    end do
-	    vlev= vlevel(k-1) + (vlevel(k)-vlevel(k-1))
+           h= hlower + (hupper-hlower)*zrand
+           k= 2
+           do while (k.lt.nk .and. h.gt.hlevel(k))
+             k=k+1
+           end do
+           vlev= vlevel(k-1) + (vlevel(k)-vlevel(k-1))
      +                       *(h-hlevel(k-1))/(hlevel(k)-hlevel(k-1))
 c
-	    npart=npart+1
-	    pdata(1,npart)= x+dx
-	    pdata(2,npart)= y+dy
-	    pdata(3,npart)= vlev
-	    pdata(9,npart)= pbq(m)
-	    icomp(npart)=   idefcomp(m)
+           npart=npart+1
+           pdata(1,npart)= x+dx
+           pdata(2,npart)= y+dy
+           pdata(3,npart)= vlev
+           pdata(9,npart)= pbq(m)
+           icomp(npart)=   idefcomp(m)
 c..an unique particle identifier (for testing...)
-	    nparnum=nparnum+1
-	    iparnum(npart)=nparnum
+           nparnum=nparnum+1
+           iparnum(npart)=nparnum
 c
-	  end if
+         end if
 c
         end do
 c
@@ -330,30 +330,30 @@ c..distribution in a column (radius=0)
 c
       do m=1,ncomp
 c
-	nprel= nrel2(m,nrad)
+       nprel= nrel2(m,nrad)
 c
         do n=1,nprel
 c
 c..the rand function returns random real numbers between 0.0 and 1.0
           zrand=rand()
 c
-	  h= hlower + (hupper-hlower)*zrand
-	  k= 2
-	  do while (k.lt.nk .and. h.gt.hlevel(k))
-	    k=k+1
-	  end do
-	  vlev= vlevel(k-1) + (vlevel(k)-vlevel(k-1))
+         h= hlower + (hupper-hlower)*zrand
+         k= 2
+         do while (k.lt.nk .and. h.gt.hlevel(k))
+           k=k+1
+         end do
+         vlev= vlevel(k-1) + (vlevel(k)-vlevel(k-1))
      +                       *(h-hlevel(k-1))/(hlevel(k)-hlevel(k-1))
 c
-	  npart=npart+1
-	  pdata(1,npart)= x
-	  pdata(2,npart)= y
-	  pdata(3,npart)= vlev
-	  pdata(9,npart)= pbq(m)
-	  icomp(npart)=   idefcomp(m)
+         npart=npart+1
+         pdata(1,npart)= x
+         pdata(2,npart)= y
+         pdata(3,npart)= vlev
+         pdata(9,npart)= pbq(m)
+         icomp(npart)=   idefcomp(m)
 c..an unique particle identifier (for testing...)
-	  nparnum=nparnum+1
-	  iparnum(npart)=nparnum
+         nparnum=nparnum+1
+         iparnum(npart)=nparnum
 c
         end do
 c
@@ -369,23 +369,23 @@ c.....end do nrad=1,numradius
 c++++++++++++++++++++++++++++++++++++++++++
 c
       do n=1,ncomp
-	m=idefcomp(n)
-	totalbq(m)= totalbq(m) + pbq(n)*nrel(n)
-	numtotal(m)=  numtotal(m) + nrel(n)
+       m=idefcomp(n)
+       totalbq(m)= totalbq(m) + pbq(n)*nrel(n)
+       numtotal(m)=  numtotal(m) + nrel(n)
       end do
 c
 c################################################################
 ccc   if(mod(istep,nsteph*3).eq.0) then
 c      if(mod(istep,nsteph).eq.0) then
         do n=1,ncomp
-	  m=idefcomp(n)
+         m=idefcomp(n)
 ccc	  write(6,*) 'comp,m,totalbq,numtotal: ',
 ccc  +			n,m,totalbq(m),numtotal(m)
-	  write(9,*) 'comp,m,totalbq,numtotal: ',
+         write(9,*) 'comp,m,totalbq,numtotal: ',
      +			n,m,totalbq(m),numtotal(m)
         end do
 ccc	write(6,*) 'nparnum: ',nparnum
-	write(9,*) 'nparnum: ',nparnum
+       write(9,*) 'nparnum: ',nparnum
 c      end if
 c################################################################
 c

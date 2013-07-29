@@ -31,8 +31,8 @@ c..for random number generation
       call srand(iseed)
 c
       do n=1,npart
-	m= icomp(n)
-	if(kwetdep(m).eq.1 .and. pdata(8,n).gt.0.0) then
+       m= icomp(n)
+       if(kwetdep(m).eq.1 .and. pdata(8,n).gt.0.0) then
 c..find particles with wet deposition and
 c..reset precipitation to zero if not wet deposition
           precint=pdata(8,n)
@@ -42,16 +42,16 @@ c..reset precipitation to zero if not wet deposition
 c..the rand function returns random real numbers between 0.0 and 1.0
           prand=rand()
           if(prand.gt.probab) then
-	    pdata(8,n)=0.0
-	  else
+           pdata(8,n)=0.0
+         else
             dep=wetdeprat(m)*pdata(9,n)
             pdata(9,n)=pdata(9,n)-dep
-	    i=nint(pdata(1,n))
-	    j=nint(pdata(2,n))
-	    mm=iruncomp(m)
+           i=nint(pdata(1,n))
+           j=nint(pdata(2,n))
+           mm=iruncomp(m)
             depwet(i,j,mm)=depwet(i,j,mm)+dble(dep)
-	  end if
-	end if
+         end if
+       end if
       end do
 c
       return

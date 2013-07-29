@@ -75,7 +75,7 @@ c..min,max forecast length in hours for model level data
           minhfc=limfcf(1,nf)
           maxhfc=limfcf(2,nf)
 c
-	  ktest=klevel(nk-kadd)
+         ktest=klevel(nk-kadd)
 c
           nbegin=navail
           iend=0
@@ -96,69 +96,69 @@ c
 c
               do n = 1,nfound
 c
-		if(inh(10,n).ge.minhfc .and. inh(10,n).le.maxhfc) then
-		  modsurf=0
-		  if(inh(11,n).eq.ivcoor .and. inh(12,n).eq.2
+       	if(inh(10,n).ge.minhfc .and. inh(10,n).le.maxhfc) then
+       	  modsurf=0
+       	  if(inh(11,n).eq.ivcoor .and. inh(12,n).eq.2
      +					 .and. inh(13,n).eq.ktest) then
-		    modsurf=1
-		  elseif(inh(11,n).eq.2 .and. inh(12,n).eq.33
+       	    modsurf=1
+       	  elseif(inh(11,n).eq.2 .and. inh(12,n).eq.33
      +					.and. inh(13,n).eq.1000) then
-		    modsurf=2
-		  end if
-		  if(modsurf.gt.0) then
+       	    modsurf=2
+       	  end if
+       	  if(modsurf.gt.0) then
 c..year,month,day,hour,forecast_hour
                     itime(1)=inh(3,n)
                     itime(2)=inh(4,n)/100
                     itime(3)=inh(4,n)-(inh(4,n)/100)*100
                     itime(4)=inh(5,n)/100
                     itime(5)=inh(10,n)
-	            do i=1,5
-		      itimev(i)=itime(i)
-		    end do
+                   do i=1,5
+       	      itimev(i)=itime(i)
+       	    end do
                     call vtime(itimev(1),ierror)
-	            if(ierror.eq.0) then
-		      k=0
-		      j=0
-		      do while (k.eq.0 .and. j.lt.navail)
-		        j=j+1
-			if(iavail(1,j).eq.itime(1) .and.
+                   if(ierror.eq.0) then
+       	      k=0
+       	      j=0
+       	      do while (k.eq.0 .and. j.lt.navail)
+       	        j=j+1
+       		if(iavail(1,j).eq.itime(1) .and.
      +			   iavail(2,j).eq.itime(2) .and.
      +			   iavail(3,j).eq.itime(3) .and.
      +			   iavail(4,j).eq.itime(4) .and.
      +			   iavail(5,j).eq.itime(5) .and.
      +			   iavail(6,j).eq.nf)  k=j
      		      end do
-		      if(k.eq.0) then
+       	      if(k.eq.0) then
                         navail=navail+1
                         if(navail.le.mavail) then
-		          if(navail.eq.1) then
-	                    do i=1,5
-		              itimeref(i)=itimev(i)
-		            end do
-		            ihdiff=0
-		          else
-		            call hrdiff(0,0,itimeref(1),itimev(1),
+       	          if(navail.eq.1) then
+                           do i=1,5
+       	              itimeref(i)=itimev(i)
+       	            end do
+       	            ihdiff=0
+       	          else
+       	            call hrdiff(0,0,itimeref(1),itimev(1),
      +				        ihdiff,ierr1,ierr2)
-		            mhdiff=min(mhdiff,ihdiff)
-		          end if
-		          iavail( 1,navail)=itime(1)
-		          iavail( 2,navail)=itime(2)
-		          iavail( 3,navail)=itime(3)
-		          iavail( 4,navail)=itime(4)
-		          iavail( 5,navail)=itime(5)
+       	            mhdiff=min(mhdiff,ihdiff)
+       	          end if
+       	          iavail( 1,navail)=itime(1)
+       	          iavail( 2,navail)=itime(2)
+       	          iavail( 3,navail)=itime(3)
+       	          iavail( 4,navail)=itime(4)
+       	          iavail( 5,navail)=itime(5)
                           iavail( 6,navail)=nf
                           iavail( 7,navail)=modsurf
                           iavail( 8,navail)=ihdiff
                           iavail( 9,navail)=0
                           iavail(10,navail)=0
-		        end if
-		      else
-		        if(iavail(7,k).eq.1 .and. modsurf.eq.2) iavail(7,k)=3
-		        if(iavail(7,k).eq.2 .and. modsurf.eq.1) iavail(7,k)=3
-		      end if
+       	        end if
+       	      else
+       	        if(iavail(7,k).eq.1 .and. modsurf.eq.2) iavail(7,k)=3
+       	        if(iavail(7,k).eq.2 .and. modsurf.eq.1) iavail(7,k)=3
+       	      end if
                     end if
-		  end if
-		end if
+       	  end if
+       	end if
 c
 c.............end do n = 1,nfound
               end do
@@ -185,7 +185,7 @@ c.....end do nf = 1,nfilef
       end do
 c
       do n=1,navail
-	iavail(8,n)=iavail(8,n)+mhdiff
+       iavail(8,n)=iavail(8,n)+mhdiff
       end do
 c
       if(navail.gt.mavail) then
@@ -210,28 +210,28 @@ c#############################################################################
       n=0
       do while (n.lt.navail)
         n=n+1
-	if(iavail(7,n).eq.2) then
-	  k=0
-	  j=0
-	  do while (k.eq.0 .and. j.lt.navail)
-	    j=j+1
-	    if(iavail(1,j).eq.iavail(1,n) .and.
+       if(iavail(7,n).eq.2) then
+         k=0
+         j=0
+         do while (k.eq.0 .and. j.lt.navail)
+           j=j+1
+           if(iavail(1,j).eq.iavail(1,n) .and.
      +	       iavail(2,j).eq.iavail(2,n) .and.
      +	       iavail(3,j).eq.iavail(3,n) .and.
      +	       iavail(4,j).eq.iavail(4,n) .and.
      +	       iavail(5,j).eq.iavail(5,n) .and.
      +	       iavail(7,j).ne.2) k=j
-	  end do
-	  if(k.eq.0) then
-	    navail=navail-1
-	    do j=n,navail
-	      do i=1,10
-	        iavail(i,j)=iavail(i,j+1)
-	      end do
-	    end do
-	    n=n-1
-	  end if
-	end if
+         end do
+         if(k.eq.0) then
+           navail=navail-1
+           do j=n,navail
+             do i=1,10
+               iavail(i,j)=iavail(i,j+1)
+             end do
+           end do
+           n=n-1
+         end if
+       end if
       end do
 c
       if(idebug.eq.1) then
@@ -293,14 +293,14 @@ c..start of forward list
 c..forward pointer from previous
         if(laforw.gt.0) iavail(9,laforw)=nmin
         laforw=nmin
-	iavail(9,laforw)=-1
+       iavail(9,laforw)=-1
 c
 c..start of backward list
         if(iaback.eq.0) iaback=nmax
 c..backward pointer from previous
         if(laback.gt.0) iavail(10,laback)=nmax
         laback=nmax
-	iavail(10,laback)=-1
+       iavail(10,laback)=-1
 c
 c.....end do k=1,navail
       end do

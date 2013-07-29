@@ -22,36 +22,36 @@ c
 c
 c..radioactive decay rate
         do m=1,ndefcomp
-	  if (kdecay(m).eq.1) then
-	    decayrate(m)= exp(-log(2.0)*tstep/(halftime(m)*3600.))
-	  else
-	    decayrate(m)=1.0
-	  end if
+         if (kdecay(m).eq.1) then
+           decayrate(m)= exp(-log(2.0)*tstep/(halftime(m)*3600.))
+         else
+           decayrate(m)=1.0
+         end if
         end do
 c
-	prepare=.false.
+       prepare=.false.
       end if
 c
       do n=1,npart
-	m= icomp(n)
-	if(kdecay(m).eq.1) then
-	  pdata(9,n)= pdata(9,n) * decayrate(m)
-	end if
+       m= icomp(n)
+       if(kdecay(m).eq.1) then
+         pdata(9,n)= pdata(9,n) * decayrate(m)
+       end if
       end do
 c
 
-	do m=1,ndefcomp
+       do m=1,ndefcomp
         if(kdecay(m).eq.1) then
-	do i=1,nx
-	do j=1,ny
-	  depdry(i,j,m)=depdry(i,j,m)*decayrate(m)
-	  depwet(i,j,m)=depwet(i,j,m)*decayrate(m)
-	  accdry(i,j,m)=accdry(i,j,m)*decayrate(m)
-	  accwet(i,j,m)=accwet(i,j,m)*decayrate(m)
-	enddo
-	enddo
-	endif
-	enddo
+       do i=1,nx
+       do j=1,ny
+         depdry(i,j,m)=depdry(i,j,m)*decayrate(m)
+         depwet(i,j,m)=depwet(i,j,m)*decayrate(m)
+         accdry(i,j,m)=accdry(i,j,m)*decayrate(m)
+         accwet(i,j,m)=accwet(i,j,m)*decayrate(m)
+       enddo
+       enddo
+       endif
+       enddo
 c
       return
       end

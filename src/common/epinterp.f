@@ -17,7 +17,7 @@ c
       undef=+1.e+35
 c
       do n=1,npos
-	if(inside(n).eq.1) then
+       if(inside(n).eq.1) then
           i=xpos(n)
           j=ypos(n)
           dx=xpos(n)-i
@@ -28,9 +28,9 @@ c
           c4=dy*dx
           zpos(n)= c1*field(i,j)  +c2*field(i+1,j)
      +            +c3*field(i,j+1)+c4*field(i+1,j+1)
-	else
-	  zpos(n)=undef
-	end if
+       else
+         zpos(n)=undef
+       end if
       end do
 c
       return

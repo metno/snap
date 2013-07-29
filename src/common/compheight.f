@@ -38,14 +38,14 @@ c
       ginv=1./g
 c
       do j=1,ny
-	do i=1,nx
-	  hlev(i,j)=0.
+       do i=1,nx
+         hlev(i,j)=0.
           rtab=ps2(i,j)*pmult
           itab=rtab
           pihl(i,j)=pitab(itab)+(pitab(itab+1)-pitab(itab))*(rtab-itab)
-	  hlayer2(i,j,nk)=9999.
-	  hlevel2(i,j,1)=0.
-	end do
+         hlayer2(i,j,nk)=9999.
+         hlevel2(i,j,1)=0.
+       end do
       end do
 c
       do k=2,nk
@@ -57,8 +57,8 @@ c	dz2max=-1.e+35
 c	hhhmin=+1.e+35
 c	hhhmax=-1.e+35
 c##################################################################
-	do j=1,ny
-	  do i=1,nx
+       do j=1,ny
+         do i=1,nx
             p=ahalf(k)+bhalf(k)*ps2(i,j)
             rtab=p*pmult
             itab=rtab
@@ -69,15 +69,15 @@ c
             itab=rtab
             pif=pitab(itab)+(pitab(itab+1)-pitab(itab))*(rtab-itab)
 c
-	    h1=hlev(i,j)
+           h1=hlev(i,j)
             h2=h1 + t2(i,j,k)*(pihl(i,j)-pih)*ginv
 c
-	    hlayer2(i,j,k-1)= h2-h1
+           hlayer2(i,j,k-1)= h2-h1
             hlevel2(i,j,k)= h1 + (h2-h1)*(pihl(i,j)-pif)
      +                                  /(pihl(i,j)-pih)
 c
-	    hlev(i,j)=h2
-	    pihl(i,j)=pih
+           hlev(i,j)=h2
+           pihl(i,j)=pih
 c##################################################################
 c	    dzz=h2-h1
 c	    dz1min=min(dz1min,dzz)
@@ -88,8 +88,8 @@ c	    dz2max=max(dz2max,dzz)
 c	    hhhmin=min(hhhmin,hlevel2(i,j,k))
 c	    hhhmax=max(hhhmax,hlevel2(i,j,k))
 c##################################################################
-	  end do
-	end do
+         end do
+       end do
 c##################################################################
 c	write(9,*) 'k,hhhmin,hhhmax: ',k,':',hhhmin,hhhmax
 c	write(9,*) 'dz1min,dz1max,dz2min,dz2max:',

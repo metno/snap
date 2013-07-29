@@ -23,8 +23,8 @@ c
       write(iunit,1005,err=900) (itimeargos(i),i=1,5)
 c
       do ij1=1,nxy,10
-	ij2= min(ij1+9,nxy)
-	write(iunit,1006,err=900) (dblfield(ij),ij=ij1,ij2)
+       ij2= min(ij1+9,nxy)
+       write(iunit,1006,err=900) (dblfield(ij),ij=ij1,ij2)
       end do
 cc
  1001 format('Isotope ',i3,' deposition (Unit/m2)')
@@ -35,17 +35,17 @@ cc
  1006 format(10(1pe14.6e2))
 c
       if(idebug.eq.1) then
-	dblmin=+1.0d+100
-	dblmax=-1.0d+100
-	do ij=1,nxy
-	  if(dblfield(ij).gt.0.0d0) then
-	    if(dblmin.gt.dblfield(ij)) dblmin=dblfield(ij)
-	    if(dblmax.lt.dblfield(ij)) dblmax=dblfield(ij)
-	  end if
-	end do
-	if(dblmin.gt.dblmax) then
-	  dblmin=0.0d0
-	  dblmax=0.0d0
+       dblmin=+1.0d+100
+       dblmax=-1.0d+100
+       do ij=1,nxy
+         if(dblfield(ij).gt.0.0d0) then
+           if(dblmin.gt.dblfield(ij)) dblmin=dblfield(ij)
+           if(dblmax.lt.dblfield(ij)) dblmax=dblfield(ij)
+         end if
+       end do
+       if(dblmin.gt.dblmax) then
+         dblmin=0.0d0
+         dblmax=0.0d0
         end if
         write(9,*) 'ARGOS ',name,iparam,dblmin,dblmax
       end if

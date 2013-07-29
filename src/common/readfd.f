@@ -42,14 +42,14 @@ c
 c
       if(idebug.eq.0) then
 c..silent (open,read,close modes)
-	imo=11
-	imr=12
-	imc=13
+       imo=11
+       imr=12
+       imc=13
       else
 c..print error messages (open,read,close modes)
-	imo=1
-	imr=2
-	imc=3
+       imo=1
+       imr=2
+       imc=3
       end if
 c
       if(nav.le.0) then
@@ -58,19 +58,19 @@ c..close last used file
         if(iopen.gt.0) then
 ccc 	  call mrfelt  (imc,filef(iopen),iunit,i2dum,0,0,0.,0.,
 ccc  +			0,i2dum,ierror)
-	  call mrfturbo(imc,filef(iopen),iunit,i2dum,0,0,0.,0.,
+         call mrfturbo(imc,filef(iopen),iunit,i2dum,0,0,0.,0.,
      +			0,i2dum,ierror)
-	end if
+       end if
         iopen=0
         ierror=0
         return
 c
       elseif(nav.gt.navail) then
 c
-	write(9,*) 'PROGRAM ERROR IN READFD. nav,navail: ',nav,navail
-	write(6,*) 'PROGRAM ERROR IN READFD. nav,navail: ',nav,navail
-	ierror=1
-	return
+       write(9,*) 'PROGRAM ERROR IN READFD. nav,navail: ',nav,navail
+       write(6,*) 'PROGRAM ERROR IN READFD. nav,navail: ',nav,navail
+       ierror=1
+       return
 c
       end if
 c
@@ -81,18 +81,18 @@ c
         if(iopen.gt.0) then
 ccc 	  call mrfelt  (imc,filef(iopen),iunit,i2dum,0,0,0.,0.,
 ccc  +			0,i2dum,ierror)
-	  call mrfturbo(imc,filef(iopen),iunit,i2dum,0,0,0.,0.,
+         call mrfturbo(imc,filef(iopen),iunit,i2dum,0,0,0.,0.,
      +			0,i2dum,ierror)
-	end if
-	iopen=nf
+       end if
+       iopen=nf
 ccc	call mrfelt  (imo,filef(nf),iunit,i2dum,0,0,0.,0.,
 ccc  +		      0,i2dum,ierror)
-	call mrfturbo(imo,filef(nf),iunit,i2dum,0,0,0.,0.,
+       call mrfturbo(imo,filef(nf),iunit,i2dum,0,0,0.,0.,
      +		      0,i2dum,ierror)
-	if(ierror.ne.0) then
-	  iopen=0
-	  return
-	end if
+       if(ierror.ne.0) then
+         iopen=0
+         return
+       end if
 c
       end if
 c
@@ -133,15 +133,15 @@ c
 c..computation area equal input field area
 ccc	call mrfelt  (imr,filef(nf),iunit,in,ipack,nx*ny,field,
 ccc  +                1.0,ldata,idata,ierror)
-	call mrfturbo(imr,filef(nf),iunit,in,ipack,nx*ny,field,
+       call mrfturbo(imr,filef(nf),iunit,in,ipack,nx*ny,field,
      +                1.0,ldata,idata,ierror)
 c###################################################################
-	if(ierror.eq.0) write(9,fmt='(1x,11i6)') (idata(i),i=1,2),
+       if(ierror.eq.0) write(9,fmt='(1x,11i6)') (idata(i),i=1,2),
      +						 (idata(i),i=12,14),
      +						 (idata(i),i=3,8)
 c###################################################################
 c
-	return
+       return
 c
       end if
 c
@@ -161,49 +161,49 @@ c
 c
       if(itotal.eq.0) then
 c
-	if(ixbase.lt.1) ixbase=1
-	if(iybase.lt.1) iybase=1
-	if(ixystp.lt.1) ixystp=1
+       if(ixbase.lt.1) ixbase=1
+       if(iybase.lt.1) iybase=1
+       if(ixystp.lt.1) ixystp=1
 c
-	ix1=ixbase
-	ix2=ixbase+(nx-1)*ixystp
-	iy1=iybase
-	iy2=iybase+(ny-1)*ixystp
+       ix1=ixbase
+       ix2=ixbase+(nx-1)*ixystp
+       iy1=iybase
+       iy2=iybase+(ny-1)*ixystp
 c..move compute area if necessary
-	if(ix2.gt.ix) then
-	  ix2=ix
-	  ix1=ix-(nx-1)*ixystp
-	end if
-	if(iy2.gt.iy) then
-	  iy2=iy
-	  iy1=iy-(ny-1)*ixystp
-	end if
-	if(ix1.lt.1 .or. iy1.lt.1) then
-	  write(9,*) '*READFD* Field dimension problem.'
-	  write(9,*) '         Input x,y base:  ',ixbase,iybase
-	  write(9,*) '         Input x/y step:  ',ixystp
-	  write(9,*) '         Program x,y dim: ',nx,ny
-	  write(9,*) '         Field       dim: ',ix,iy
-	  close(iunit)
-	  stop 1
-	end if
-	if(ix1.ne.ixbase .or. iy1.ne.iybase) then
-	  write(9,*) '*READFD* Field area moved.'
-	  write(9,*) '         Input x,y base:  ',ixbase,iybase
-	  write(9,*) '         Input x/y step:  ',ixystp
-	  write(9,*) '         Program x,y dim: ',nx,ny
-	  write(9,*) '         Field       dim: ',ix,iy
-	  write(9,*) '         Used  x,y base:  ',ix1,iy1
-	  ixbase=ix1
-	  iybase=iy1
-	end if
+       if(ix2.gt.ix) then
+         ix2=ix
+         ix1=ix-(nx-1)*ixystp
+       end if
+       if(iy2.gt.iy) then
+         iy2=iy
+         iy1=iy-(ny-1)*ixystp
+       end if
+       if(ix1.lt.1 .or. iy1.lt.1) then
+         write(9,*) '*READFD* Field dimension problem.'
+         write(9,*) '         Input x,y base:  ',ixbase,iybase
+         write(9,*) '         Input x/y step:  ',ixystp
+         write(9,*) '         Program x,y dim: ',nx,ny
+         write(9,*) '         Field       dim: ',ix,iy
+         close(iunit)
+         stop 1
+       end if
+       if(ix1.ne.ixbase .or. iy1.ne.iybase) then
+         write(9,*) '*READFD* Field area moved.'
+         write(9,*) '         Input x,y base:  ',ixbase,iybase
+         write(9,*) '         Input x/y step:  ',ixystp
+         write(9,*) '         Program x,y dim: ',nx,ny
+         write(9,*) '         Field       dim: ',ix,iy
+         write(9,*) '         Used  x,y base:  ',ix1,iy1
+         ixbase=ix1
+         iybase=iy1
+       end if
 c
-	if(ix1.eq.1 .and. ix2.eq.nx .and.
+       if(ix1.eq.1 .and. ix2.eq.nx .and.
      +     iy1.eq.1 .and. iy2.eq.ny .and. ixystp.eq.1) then
-	  itotal=1
-	else
-	  itotal=-1
-	end if
+         itotal=1
+       else
+         itotal=-1
+       end if
 c
       end if
 c

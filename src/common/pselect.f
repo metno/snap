@@ -59,7 +59,7 @@ c..single component
           bqlim=totalbq(igcomp)/numtotal(igcomp)
 c
           do n=1,npart
-	    if(icomp(n).eq.igcomp) then
+           if(icomp(n).eq.igcomp) then
               k=1
               if(pdata(8,n).gt.0.0) k=3
               if(pdata(3,n).lt.pdata(4,n)) k=k+1
@@ -84,7 +84,7 @@ c..the following does not take care of short release time for
 c..i.e. noble gas, but how can that be done ??????
 c..............................................................
           do n=1,ncomp
-	    m= idefcomp(n)
+           m= idefcomp(n)
             if(numtotal(m).gt.0) bqlim=bqlim+totalbq(m)/numtotal(m)
           end do
 c

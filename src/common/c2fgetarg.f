@@ -27,39 +27,39 @@ c
 c
 c..set (from C/C++)
 c
-	la=len(allargs)
-	lc=lenstr(carg,0)
-	if(lallargs+lc.le.la .and. nargs.lt.maxargs) then
-	  nargs=nargs+1
-	  k1=lallargs+1
-	  k2=lallargs+lc
-	  iallargs(1,nargs)=k1
-	  iallargs(2,nargs)=k2
-	  allargs(k1:k2)=carg(1:lc)
-	  lallargs=k2
-	end if
+       la=len(allargs)
+       lc=lenstr(carg,0)
+       if(lallargs+lc.le.la .and. nargs.lt.maxargs) then
+         nargs=nargs+1
+         k1=lallargs+1
+         k2=lallargs+lc
+         iallargs(1,nargs)=k1
+         iallargs(2,nargs)=k2
+         allargs(k1:k2)=carg(1:lc)
+         lallargs=k2
+       end if
 c
       elseif(iarg.eq.0) then
 c
 c..only called from iargc below !!!!!
 c..return no. of arguments set
 c
-	iarg=nargs
+       iarg=nargs
 c
       elseif(iarg.gt.0) then
 c
 c..get (from fortran subroutine)
 c
-	if(iarg.le.nargs) then
-	  k1=iallargs(1,iarg)
-	  k2=iallargs(2,iarg)
-	  lc=len(carg)
-	  lc=min(k2-k1+1,lc)
-	  carg=' '
-	  carg(1:lc)=allargs(k1:k1+lc-1)
-	else
-	  carg=' '
-	end if
+       if(iarg.le.nargs) then
+         k1=iallargs(1,iarg)
+         k2=iallargs(2,iarg)
+         lc=len(carg)
+         lc=min(k2-k1+1,lc)
+         carg=' '
+         carg(1:lc)=allargs(k1:k1+lc-1)
+       else
+         carg=' '
+       end if
 c
       end if
 c

@@ -124,125 +124,125 @@ c
               accwet(i,j,m)=0.0d0
               concen(i,j,m)=0.0d0
               concacc(i,j,m)=0.0d0
-	    end do
+           end do
           end do
         end do
-	do j=1,ny
-	  do i=1,nx
-	    accprec(i,j)=0.0d0
-	  end do
-	end do
-	initacc=1
+       do j=1,ny
+         do i=1,nx
+           accprec(i,j)=0.0d0
+         end do
+       end do
+       initacc=1
       end if
 c
       if(iwrite.eq.-1) then
 c..iwrite=-1: istep is no. of field outputs
-	n=ncomp
-	if(ncomp.gt.1 .and. itotcomp.eq.1) n=n+1
-	numfields= 2+n*9
-	if(itprof.eq.2) numfields= numfields + ncomp*4
-	if(inprecip .gt.0) numfields=numfields+2
-	if(imslp    .gt.0) numfields=numfields+1
-	if(imodlevel.gt.0) numfields=numfields+n*nk*2+1
+       n=ncomp
+       if(ncomp.gt.1 .and. itotcomp.eq.1) n=n+1
+       numfields= 2+n*9
+       if(itprof.eq.2) numfields= numfields + ncomp*4
+       if(inprecip .gt.0) numfields=numfields+2
+       if(imslp    .gt.0) numfields=numfields+1
+       if(imodlevel.gt.0) numfields=numfields+n*nk*2+1
         numfields= numfields*istep + 4
-	if(numfields.gt.32767) numfields=32767
-	do i=1,5
-	  itimeargos(i)=itime(i)
-	end do
-	return
+       if(numfields.gt.32767) numfields=32767
+       do i=1,5
+         itimeargos(i)=itime(i)
+       end do
+       return
       end if
 c
       if(iargos.eq.1 .and. initargos.eq.0) then
 c
 c..open output files
-	open(91,file=argosdepofile,
+       open(91,file=argosdepofile,
      +		access='sequential',form='formatted',status='unknown')
-	open(92,file=argosconcfile,
+       open(92,file=argosconcfile,
      +		access='sequential',form='formatted',status='unknown')
-	open(93,file=argosdosefile,
+       open(93,file=argosdosefile,
      +		access='sequential',form='formatted',status='unknown')
 c
-	read(argosdepofile,fmt='(i4,5i2)',iostat=ios)
+       read(argosdepofile,fmt='(i4,5i2)',iostat=ios)
      +				iyear,month,iday,ihour,minute,isecond
 c..if not correct "Run time ID", use machine time
         if(ios.ne.0)
      +	   call daytim(iyear,month,iday,ihour,minute,isecond)
 c
-	iyear=mod(iyear,100)
+       iyear=mod(iyear,100)
 c
-	call vtime(itimeargos,ierror)
-	itimeargos(1)=mod(itimeargos(1),100)
+       call vtime(itimeargos,ierror)
+       itimeargos(1)=mod(itimeargos(1),100)
 c
-	do i=1,nargos
-	  call vtime(argostime(1,i),ierror)
-	  argostime(1,i)=mod(argostime(1,i),100)
-	end do
+       do i=1,nargos
+         call vtime(argostime(1,i),ierror)
+         argostime(1,i)=mod(argostime(1,i),100)
+       end do
 c
 c..from (x,y) to (longitude,latitude)
-	do j=1,ny
-	  do i=1,nx
-	    field1(i,j)=float(i)
-	    field2(i,j)=float(j)
-	  end do
-	end do
+       do j=1,ny
+         do i=1,nx
+           field1(i,j)=float(i)
+           field2(i,j)=float(j)
+         end do
+       end do
 c
-	call xyconvert(nx*ny,field1,field2,igtype,gparam,
+       call xyconvert(nx*ny,field1,field2,igtype,gparam,
      +		       2,geoparam,ierror)
         if(ierror.ne.0) then
-	  write(6,*) 'XYCONVERT ERROR (ARGOS) !!!!!!!!!!!!!!!!!!'
-	  write(9,*) 'XYCONVERT ERROR (ARGOS) !!!!!!!!!!!!!!!!!!'
-	end if
+         write(6,*) 'XYCONVERT ERROR (ARGOS) !!!!!!!!!!!!!!!!!!'
+         write(9,*) 'XYCONVERT ERROR (ARGOS) !!!!!!!!!!!!!!!!!!'
+       end if
 c
-	if(igtype.eq.3) then
-	  splon=gparam(5)
-	  splat=gparam(6)-90.
-	else
-	  splon=0.
-	  splat=0.
-	end if
+       if(igtype.eq.3) then
+         splon=gparam(5)
+         splat=gparam(6)-90.
+       else
+         splon=0.
+         splat=0.
+       end if
 c
 c..same information in all headers
 c
-	do iu=91,93
+       do iu=91,93
 c
-	  write(iu,fmt='(a)',err=900) 'HEADER'
+         write(iu,fmt='(a)',err=900) 'HEADER'
 c..case or machine date/time
-	  write(iu,fmt='(4(i2.2,1x),i2.2)',err=900)
+         write(iu,fmt='(4(i2.2,1x),i2.2)',err=900)
      +		    iyear,month,iday,ihour,minute
 c..release/run start
-	  write(iu,fmt='(4(i2.2,1x),i2.2)',err=900)
+         write(iu,fmt='(4(i2.2,1x),i2.2)',err=900)
      +				(itimeargos(i),i=1,5)
 c
-	  write(iu,fmt='(2i5)',err=900) nx,ny
+         write(iu,fmt='(2i5)',err=900) nx,ny
 c
-	  write(iu,fmt='(i5,100(1x,5i2.2))',err=900)
+         write(iu,fmt='(i5,100(1x,5i2.2))',err=900)
      +			nargos,((argostime(i,j),i=1,5),j=1,nargos)
 c
-	  write(iu,fmt='(a)',err=900) '1 centered'
-	  write(iu,fmt='(2f8.2)',err=900) splat,splon
-	  write(iu,fmt='(a)',err=900) 'SINGLE-LEVEL FIELDS'
+         write(iu,fmt='(a)',err=900) '1 centered'
+         write(iu,fmt='(2f8.2)',err=900) splat,splon
+         write(iu,fmt='(a)',err=900) 'SINGLE-LEVEL FIELDS'
 c
-	  write(iu,fmt='(a)',err=900) 'longitude (decimal deg.)'
-	  write(iu,fmt='(1pe8.2e2)',err=900) 1.0
-	  do i1=1,nx*ny,10
-	    i2=min(i1+9,nx*ny)
-	    write(iu,1001) (field1print(i),i=i1,i2)
-	  end do
+         write(iu,fmt='(a)',err=900) 'longitude (decimal deg.)'
+         write(iu,fmt='(1pe8.2e2)',err=900) 1.0
+         do i1=1,nx*ny,10
+           i2=min(i1+9,nx*ny)
+           write(iu,1001) (field1print(i),i=i1,i2)
+         end do
 c
-	  write(iu,fmt='(a)',err=900) 'latitude (decimal deg.)'
-	  write(iu,fmt='(1pe8.2e2)',err=900) 1.0
-	  do i1=1,nx*ny,10
-	    i2=min(i1+9,nx*ny)
-	    write(iu,1001) (field2print(i),i=i1,i2)
-	  end do
+         write(iu,fmt='(a)',err=900) 'latitude (decimal deg.)'
+         write(iu,fmt='(1pe8.2e2)',err=900) 1.0
+         do i1=1,nx*ny,10
+           i2=min(i1+9,nx*ny)
+           write(iu,1001) (field2print(i),i=i1,i2)
+         end do
 c
  1001	  format(10(1pe14.6e2))
 c
-	  write(iu,fmt='(a)',err=900) 'MULTI-LEVEL FIELDS'
+         write(iu,fmt='(a)',err=900) 'MULTI-LEVEL FIELDS'
 c
-	end do
+       end do
 c
-	initargos=1
+       initargos=1
 c
       end if
 c
@@ -254,30 +254,30 @@ c
           do i=1,nx
              avghbl(i,j)=0.0d0
             avgprec(i,j)=0.0d0
-	  end do
+         end do
         end do
 c
-	do m=1,ncomp
+       do m=1,ncomp
           do j=1,ny
             do i=1,nx
               avgbq1(i,j,m)=0.0d0
               avgbq2(i,j,m)=0.0d0
-	    end do
+           end do
           end do
         end do
 c
 c..note: model level output on if nxmc=nx, nymc=ny and imodlevel=1
-	if(imodlevel.eq.1) then
-	  do m=1,ncomp
+       if(imodlevel.eq.1) then
+         do m=1,ncomp
             do k=1,nk-1
               do j=1,nymc
                 do i=1,nxmc
                   avgbq(i,j,k,m)=0.0d0
-	        end do
+               end do
               end do
             end do
           end do
-	end if
+       end if
 c
       end if
 c
@@ -308,7 +308,7 @@ c
         j=nint(pdata(2,n))
 ccc     ivlvl=pdata(3,n)*10000.
 ccc     k=ivlevel(ivlvl)
-	m=iruncomp(icomp(n))
+       m=iruncomp(icomp(n))
         if(pdata(3,n).ge.pdata(4,n)) then
 c..in boundary layer
           avgbq1(i,j,m)=avgbq1(i,j,m)+pdata(9,n)
@@ -321,11 +321,11 @@ c
 c..accumulated/integrated concentration
 c
       do m=1,ncomp
-	do j=1,ny
-	  do i=1,nx
-	    concen(i,j,m)=0.0d0
-	  end do
-	end do
+       do j=1,ny
+         do i=1,nx
+           concen(i,j,m)=0.0d0
+         end do
+       end do
       end do
 c
       do n=1,npart
@@ -334,21 +334,21 @@ c
         if(k.eq.1) then
           i=nint(pdata(1,n))
           j=nint(pdata(2,n))
-	  m=iruncomp(icomp(n))
+         m=iruncomp(icomp(n))
           concen(i,j,m)= concen(i,j,m)+dble(pdata(9,n))
-	end if
+       end if
       end do
 c
       do m=1,ncomp
-	do j=1,ny
-	  do i=1,nx
-	    if(concen(i,j,m).gt.0.0d0) then
-	      dh= rt1*hlayer1(i,j,1)+rt2*hlayer2(i,j,1)
-	      concen(i,j,m)= concen(i,j,m)/(dh*dgarea(i,j))
-	      concacc(i,j,m)= concacc(i,j,m) + concen(i,j,m)*hrstep
-	    end if
-	  end do
-	end do
+       do j=1,ny
+         do i=1,nx
+           if(concen(i,j,m).gt.0.0d0) then
+             dh= rt1*hlayer1(i,j,1)+rt2*hlayer2(i,j,1)
+             concen(i,j,m)= concen(i,j,m)/(dh*dgarea(i,j))
+             concacc(i,j,m)= concacc(i,j,m) + concen(i,j,m)*hrstep
+           end if
+         end do
+       end do
       end do
 c
       if(imodlevel.eq.1) then
@@ -358,10 +358,10 @@ c
           j=nint(pdata(2,n))
           ivlvl=pdata(3,n)*10000.
           k=ivlayer(ivlvl)
-	  m=iruncomp(icomp(n))
+         m=iruncomp(icomp(n))
 c..in each sigma/eta (input model) layer
           avgbq(i,j,k,m)=avgbq(i,j,k,m)+pdata(9,n)
-	end do
+       end do
 c
       end if
 c
@@ -369,10 +369,10 @@ c
 c
       if(iargos.eq.1) then
         do i=1,5
-	  itimeargos(i)=itime(i)
-	end do
-	call vtime(itimeargos,ierror)
-	itimeargos(1)=mod(itimeargos(1),100)
+         itimeargos(i)=itime(i)
+       end do
+       call vtime(itimeargos,ierror)
+       itimeargos(1)=mod(itimeargos(1),100)
       end if
 c
 c..output...............................................................
@@ -381,38 +381,38 @@ c
 c
       if(numfields.gt.0) then
 c..remove an existing file
-	call rmfile(filnam,0,ierror)
+       call rmfile(filnam,0,ierror)
 c..create DNMI felt file
-	itypef=999
-	ltimef=5
-	itimef(1)=itime(1)
-	itimef(2)=itime(2)
-	itimef(3)=itime(3)
-	itimef(4)=itime(4)
-	itimef(5)=0
-	icodef=0
-	lspecf=3
-	ispecf(1)=iprodr
-	ispecf(2)=igridr
-	ispecf(3)=numfields
-	loptf=1
-	ioptf=0
-	call crefelt(filnam,iunit,itypef,ltimef,itimef,
+       itypef=999
+       ltimef=5
+       itimef(1)=itime(1)
+       itimef(2)=itime(2)
+       itimef(3)=itime(3)
+       itimef(4)=itime(4)
+       itimef(5)=0
+       icodef=0
+       lspecf=3
+       ispecf(1)=iprodr
+       ispecf(2)=igridr
+       ispecf(3)=numfields
+       loptf=1
+       ioptf=0
+       call crefelt(filnam,iunit,itypef,ltimef,itimef,
      +               icodef,lspecf,ispecf,loptf,ioptf,ierror)
-	if(ierror.ne.0) write(6,*) 'fldout: crefelt ERROR'
-	if(ierror.ne.0) return
-	numfields=0
+       if(ierror.ne.0) write(6,*) 'fldout: crefelt ERROR'
+       if(ierror.ne.0) return
+       numfields=0
 c
-	filename=filnam(1:lenstr(filnam,1))//'_level_names'
-	open (90,file=filename,access='sequential',form='formatted')
-	write(90,1090) 0,'Total'
-	do m=1,ncomp
-	  mm=idefcomp(m)
-	  k=lenstr(compnamemc(mm),1)
-	  write(90,1090) idcomp(mm),compnamemc(mm)(1:k)
-	end do
+       filename=filnam(1:lenstr(filnam,1))//'_level_names'
+       open (90,file=filename,access='sequential',form='formatted')
+       write(90,1090) 0,'Total'
+       do m=1,ncomp
+         mm=idefcomp(m)
+         k=lenstr(compnamemc(mm),1)
+         write(90,1090) idcomp(mm),compnamemc(mm)(1:k)
+       end do
  1090   format(1x,i5,1x,'"',a,'"')
-	close(90)
+       close(90)
       end if
 c
 c..open output felt (field) file
@@ -467,24 +467,24 @@ c..geographic coordinates etc.
         idata( 7)=0
         idata( 8)=0
         idata(19)=0
-	call xyconvert(nx*ny,field1,field2,
+       call xyconvert(nx*ny,field1,field2,
      +		       igtype,gparam,2,geoparam,ierror)
         if(idebug.eq.1) call ftest('lat',1,1,nx,ny,1,field2,0)
         idata( 6)=901
         idata(20)=-32767
-	call mwfelt(2,filnam,iunit,1,nx*ny,field2,1.0,
+       call mwfelt(2,filnam,iunit,1,nx*ny,field2,1.0,
      +              ldata,idata,ierror)
         if(ierror.ne.0) goto 900
         if(idebug.eq.1) call ftest('long',1,1,nx,ny,1,field1,0)
         idata( 6)=902
         idata(20)=-32767
-	call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
+       call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
      +              ldata,idata,ierror)
         if(ierror.ne.0) goto 900
         if(idebug.eq.1) call ftest('area',1,1,nx,ny,1,garea,0)
         idata( 6)=903
         idata(20)=-32767
-	call mwfelt(2,filnam,iunit,1,nx*ny,garea,1.0,
+       call mwfelt(2,filnam,iunit,1,nx*ny,garea,1.0,
      +              ldata,idata,ierror)
         if(ierror.ne.0) goto 900
         idata(3)=id03
@@ -518,33 +518,33 @@ c..for linear interpolation in time
 c
 c..surface pressure (if model level output, for vertical crossections)
       if(imodlevel.eq.1) then
-	do j=1,ny
-	  do i=1,nx
-	    field1(i,j)=rt1*ps1(i,j)+rt2*ps2(i,j)
-	  end do
-	end do
+       do j=1,ny
+         do i=1,nx
+           field1(i,j)=rt1*ps1(i,j)+rt2*ps2(i,j)
+         end do
+       end do
         if(idebug.eq.1) call ftest('ps',1,1,nx,ny,1,field1,0)
         idata( 6)=8
         idata(20)=-32767
-	call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
+       call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
      +              ldata,idata,ierror)
         if(ierror.ne.0) goto 900
       end if
 c
 c..total accumulated precipitation from start of run
       if(inprecip.eq.1) then
-	do j=1,ny
-	  do i=1,nx
-	    accprec(i,j)=accprec(i,j)+avgprec(i,j)
-	    field1(i,j)=accprec(i,j)
-	  end do
-	end do
-	idextr=nint(float(istep)/float(nsteph))
+       do j=1,ny
+         do i=1,nx
+           accprec(i,j)=accprec(i,j)+avgprec(i,j)
+           field1(i,j)=accprec(i,j)
+         end do
+       end do
+       idextr=nint(float(istep)/float(nsteph))
         if(idebug.eq.1) call ftest('accprec',1,1,nx,ny,1,field1,0)
         idata( 6)=17
         idata(19)=idextr
         idata(20)=-32767
-	call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
+       call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
      +              ldata,idata,ierror)
         if(ierror.ne.0) goto 900
         idata(19)=0
@@ -552,15 +552,15 @@ c..total accumulated precipitation from start of run
 c
 c..mslp (if switched on)
       if(imslp.eq.1) then
-	do j=1,ny
-	  do i=1,nx
-	    field1(i,j)=rt1*pmsl1(i,j)+rt2*pmsl2(i,j)
-	  end do
-	end do
+       do j=1,ny
+         do i=1,nx
+           field1(i,j)=rt1*pmsl1(i,j)+rt2*pmsl2(i,j)
+         end do
+       end do
         if(idebug.eq.1) call ftest('mslp',1,1,nx,ny,1,field1,0)
         idata( 6)=58
         idata(20)=-32767
-	call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
+       call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
      +              ldata,idata,ierror)
         if(ierror.ne.0) goto 900
       end if
@@ -593,12 +593,12 @@ c..average height of boundary layer
 c
 c..precipitation accummulated between field output
       if(inprecip.eq.1) then
-	do j=1,ny
-	  do i=1,nx
-	    field1(i,j)=avgprec(i,j)
-	  end do
-	end do
-	idextr=nint(average*tstep/3600.)
+       do j=1,ny
+         do i=1,nx
+           field1(i,j)=avgprec(i,j)
+         end do
+       end do
+       idextr=nint(average*tstep/3600.)
         if(idebug.eq.1) call ftest('prec',1,1,nx,ny,1,field1,0)
         idata( 6)=502
         idata(19)=idextr
@@ -618,7 +618,7 @@ ccc   idata( 5)=3
 c
       do m=1,ncomp
 c
-	mm=idefcomp(m)
+       mm=idefcomp(m)
 c
 c..using the field level identifier to identify the component
         idata(7)=idcomp(mm)
@@ -630,44 +630,44 @@ c..instant Bq in and above boundary layer
             field2(i,j)=0.
           end do
         end do
-	bqtot1=0.0d0
-	bqtot2=0.0d0
-	nptot1=0
-	nptot2=0
+       bqtot1=0.0d0
+       bqtot2=0.0d0
+       nptot1=0
+       nptot2=0
 c
         do n=1,npart
-	  if(icomp(n).eq.mm) then
+         if(icomp(n).eq.mm) then
             i=nint(pdata(1,n))
             j=nint(pdata(2,n))
             if(pdata(3,n).ge.pdata(4,n)) then
               field1(i,j)=field1(i,j)+pdata(9,n)
-	      bqtot1=bqtot1+dble(pdata(9,n))
-	      nptot1=nptot1+1
+             bqtot1=bqtot1+dble(pdata(9,n))
+             nptot1=nptot1+1
             else
               field2(i,j)=field2(i,j)+pdata(9,n)
-	      bqtot2=bqtot2+dble(pdata(9,n))
-	      nptot2=nptot2+1
+             bqtot2=bqtot2+dble(pdata(9,n))
+             nptot2=nptot2+1
             end if
           end if
         end do
 c
-	write(9,*) ' component: ',compname(mm)
-	write(9,*) '   Bq,particles in    abl: ',bqtot1,nptot1
-	write(9,*) '   Bq,particles above abl: ',bqtot2,nptot2
-	write(9,*) '   Bq,particles          : ',bqtot1+bqtot2,
+       write(9,*) ' component: ',compname(mm)
+       write(9,*) '   Bq,particles in    abl: ',bqtot1,nptot1
+       write(9,*) '   Bq,particles above abl: ',bqtot2,nptot2
+       write(9,*) '   Bq,particles          : ',bqtot1+bqtot2,
      +						 nptot1+nptot2
 c
 c..instant part of Bq in boundary layer
-	scale=100.
-	do j=1,ny
-	  do i=1,nx
-	    if(field1(i,j)+field2(i,j).gt.0.) then
-	      field3(i,j)=scale*field1(i,j)/(field1(i,j)+field2(i,j))
-	    else
-	      field3(i,j)=undef
-	    end if
-	  end do
-	end do
+       scale=100.
+       do j=1,ny
+         do i=1,nx
+           if(field1(i,j)+field2(i,j).gt.0.) then
+             field3(i,j)=scale*field1(i,j)/(field1(i,j)+field2(i,j))
+           else
+             field3(i,j)=undef
+           end if
+         end do
+       end do
 c
 c..instant concentration in boundary layer
         do j=1,ny
@@ -686,10 +686,10 @@ ccc         hbl=rt1*hbl1(i,j)+rt2*hbl2(i,j)
 c
 c..average concentration in boundary layer
         do j=1,ny
-	  do i=1,nx
+         do i=1,nx
             field1(i,j)=cscale*avgbq1(i,j,m)
      +			      /(garea(i,j)*avghbl(i,j))
-	  end do
+         end do
         end do
         if(idebug.eq.1) call ftest('avgconc',1,1,nx,ny,1,field1,0)
         idata( 6)=511
@@ -769,17 +769,17 @@ c..instant part of Bq in boundary layer
         if(ierror.ne.0) goto 900
 c
 c..average part of Bq in boundary layer
-	scale=100.
-	do j=1,ny
-	  do i=1,nx
-	    if(avgbq1(i,j,m)+avgbq2(i,j,m).gt.0.) then
-	      field3(i,j)=scale*avgbq1(i,j,m)
+       scale=100.
+       do j=1,ny
+         do i=1,nx
+           if(avgbq1(i,j,m)+avgbq2(i,j,m).gt.0.) then
+             field3(i,j)=scale*avgbq1(i,j,m)
      +			       /(avgbq1(i,j,m)+avgbq2(i,j,m))
-	    else
-	      field3(i,j)=undef
-	    end if
-	  end do
-	end do
+           else
+             field3(i,j)=undef
+           end if
+         end do
+       end do
         if(idebug.eq.1) call ftest('apbq',1,1,nx,ny,1,field3,1)
         idata( 6)=517
         idata(20)=-32767
@@ -788,11 +788,11 @@ c..average part of Bq in boundary layer
         if(ierror.ne.0) goto 900
 c
 c..accumulated/integrated concentration
-	do j=1,ny
-	  do i=1,nx
-	    field3(i,j)= sngl(concacc(i,j,m))
-	  end do
-	end do
+       do j=1,ny
+         do i=1,nx
+           field3(i,j)= sngl(concacc(i,j,m))
+         end do
+       end do
         if(idebug.eq.1) call ftest('concac',1,1,nx,ny,1,field3,1)
         idata( 6)=518
         idata(20)=-32767
@@ -814,21 +814,21 @@ c..argos "depo" output
               dblfield(i,j)=(accdry(i,j,m)+accwet(i,j,m))/dgarea(i,j)
             end do
           end do
-	  call argoswrite(91,'depo',idcomp(idefcomp(m)),
+         call argoswrite(91,'depo',idcomp(idefcomp(m)),
      +			  itimeargos,nx,ny,dblfield)
-	end do
+       end do
 c
 c..argos "conc" output
         do m=1,ncomp
-	  call argoswrite(92,'conc',idcomp(idefcomp(m)),
+         call argoswrite(92,'conc',idcomp(idefcomp(m)),
      +			  itimeargos,nx,ny,concen(1,1,m))
-	end do
+       end do
 c
 c..argos "dose" output
         do m=1,ncomp
-	  call argoswrite(93,'dose',idcomp(idefcomp(m)),
+         call argoswrite(93,'dose',idcomp(idefcomp(m)),
      +			  itimeargos,nx,ny,concacc(1,1,m))
-	end do
+       end do
 c
       end if
 c
@@ -859,16 +859,16 @@ c
         end do
 c
 c..total instant part of Bq in boundary layer
-	scale=100.
-	do j=1,ny
-	  do i=1,nx
-	    if(field1(i,j)+field2(i,j).gt.0.) then
-	      field3(i,j)=scale*field1(i,j)/(field1(i,j)+field2(i,j))
-	    else
-	      field3(i,j)=undef
-	    end if
-	  end do
-	end do
+       scale=100.
+       do j=1,ny
+         do i=1,nx
+           if(field1(i,j)+field2(i,j).gt.0.) then
+             field3(i,j)=scale*field1(i,j)/(field1(i,j)+field2(i,j))
+           else
+             field3(i,j)=undef
+           end if
+         end do
+       end do
 c
 c..total instant concentration in boundary layer
         do j=1,ny
@@ -887,22 +887,22 @@ ccc         hbl=rt1*hbl1(i,j)+rt2*hbl2(i,j)
 c
 c..total average concentration in boundary layer
         do j=1,ny
-	  do i=1,nx
+         do i=1,nx
             field1(i,j)=0.
-	  end do
+         end do
         end do
-	do m=1,ncomp
+       do m=1,ncomp
           do j=1,ny
-	    do i=1,nx
+           do i=1,nx
               field1(i,j)=field1(i,j)+avgbq1(i,j,m)
-	    end do
-	  end do
+           end do
+         end do
         end do
         do j=1,ny
-	  do i=1,nx
+         do i=1,nx
             field1(i,j)=cscale*field1(i,j)
      +			      /(garea(i,j)*avghbl(i,j))
-	  end do
+         end do
         end do
         if(idebug.eq.1) call ftest('tavgconc',1,1,nx,ny,1,field1,0)
         idata( 6)=511
@@ -913,29 +913,29 @@ c..total average concentration in boundary layer
 c
         idry=0
         iwet=0
-	do m=1,ncomp
-	  mm=idefcomp(m)
-	  if(kdrydep(mm).eq.1) idry=1
-	  if(kwetdep(mm).eq.1) iwet=1
-	end do
+       do m=1,ncomp
+         mm=idefcomp(m)
+         if(kdrydep(mm).eq.1) idry=1
+         if(kwetdep(mm).eq.1) iwet=1
+       end do
 c
 c..total dry deposition
-	if(idry.eq.1) then
-	  do j=1,ny
-	    do i=1,nx
-	      field1(i,j)=0.
-	    end do
-	  end do
-	  do m=1,ncomp
-	    mm=idefcomp(m)
+       if(idry.eq.1) then
+         do j=1,ny
+           do i=1,nx
+             field1(i,j)=0.
+           end do
+         end do
+         do m=1,ncomp
+           mm=idefcomp(m)
             if(kdrydep(mm).eq.1) then
               do j=1,ny
                 do i=1,nx
                   field1(i,j)=field1(i,j)+sngl(depdry(i,j,m))
                 end do
               end do
-	    end if
-	  end do
+           end if
+         end do
           do j=1,ny
             do i=1,nx
               field1(i,j)=dscale*field1(i,j)/garea(i,j)
@@ -951,21 +951,21 @@ c..total dry deposition
 c
 c..total wet deposition
         if(iwet.eq.1) then
-	  do j=1,ny
-	    do i=1,nx
-	      field1(i,j)=0.
-	    end do
-	  end do
-	  do m=1,ncomp
-	    mm=idefcomp(m)
+         do j=1,ny
+           do i=1,nx
+             field1(i,j)=0.
+           end do
+         end do
+         do m=1,ncomp
+           mm=idefcomp(m)
             if(kwetdep(mm).eq.1) then
               do j=1,ny
                 do i=1,nx
                   field1(i,j)=field1(i,j)+sngl(depwet(i,j,m))
                 end do
               end do
-	    end if
-	  end do
+           end if
+         end do
           do j=1,ny
             do i=1,nx
               field1(i,j)=dscale*field1(i,j)/garea(i,j)
@@ -980,22 +980,22 @@ c..total wet deposition
         end if
 c
 c..total accumulated dry deposition
-	if(idry.eq.1) then
-	  do j=1,ny
-	    do i=1,nx
-	      field1(i,j)=0.
-	    end do
-	  end do
-	  do m=1,ncomp
-	    mm=idefcomp(m)
+       if(idry.eq.1) then
+         do j=1,ny
+           do i=1,nx
+             field1(i,j)=0.
+           end do
+         end do
+         do m=1,ncomp
+           mm=idefcomp(m)
             if(kdrydep(mm).eq.1) then
               do j=1,ny
                 do i=1,nx
                   field1(i,j)=field1(i,j)+sngl(accdry(i,j,m))
                 end do
               end do
-	    end if
-	  end do
+           end if
+         end do
           do j=1,ny
             do i=1,nx
               field1(i,j)=dscale*field1(i,j)/garea(i,j)
@@ -1011,21 +1011,21 @@ c..total accumulated dry deposition
 c
 c..total accumulated wet deposition
         if(iwet.eq.1) then
-	  do j=1,ny
-	    do i=1,nx
-	      field1(i,j)=0.
-	    end do
-	  end do
-	  do m=1,ncomp
-	    mm=idefcomp(m)
+         do j=1,ny
+           do i=1,nx
+             field1(i,j)=0.
+           end do
+         end do
+         do m=1,ncomp
+           mm=idefcomp(m)
             if(kwetdep(mm).eq.1) then
               do j=1,ny
                 do i=1,nx
                   field1(i,j)=field1(i,j)+sngl(accwet(i,j,m))
                 end do
               end do
-	    end if
-	  end do
+           end if
+         end do
           do j=1,ny
             do i=1,nx
               field1(i,j)=dscale*field1(i,j)/garea(i,j)
@@ -1048,31 +1048,31 @@ c..total instant part of Bq in boundary layer
         if(ierror.ne.0) goto 900
 c
 c..total average part of Bq in boundary layer
-	scale=100.
-	do j=1,ny
-	  do i=1,nx
-	    field1(i,j)=0.
-	    field2(i,j)=0.
-	  end do
-	end do
-	do m=1,ncomp
-	  do j=1,ny
-	    do i=1,nx
-	      field1(i,j)=field1(i,j)+sngl(avgbq1(i,j,m))
-	      field2(i,j)=field2(i,j)+sngl(avgbq2(i,j,m))
-	    end do
-	  end do
-	end do
-	do j=1,ny
-	  do i=1,nx
-	    if(field1(i,j)+field2(i,j).gt.0.) then
-	      field3(i,j)=scale*field1(i,j)
+       scale=100.
+       do j=1,ny
+         do i=1,nx
+           field1(i,j)=0.
+           field2(i,j)=0.
+         end do
+       end do
+       do m=1,ncomp
+         do j=1,ny
+           do i=1,nx
+             field1(i,j)=field1(i,j)+sngl(avgbq1(i,j,m))
+             field2(i,j)=field2(i,j)+sngl(avgbq2(i,j,m))
+           end do
+         end do
+       end do
+       do j=1,ny
+         do i=1,nx
+           if(field1(i,j)+field2(i,j).gt.0.) then
+             field3(i,j)=scale*field1(i,j)
      +			       /(field1(i,j)+field2(i,j))
-	    else
-	      field3(i,j)=undef
-	    end if
-	  end do
-	end do
+           else
+             field3(i,j)=undef
+           end if
+         end do
+       end do
         if(idebug.eq.1) call ftest('tapbq',1,1,nx,ny,1,field3,1)
         idata( 6)=517
         idata(20)=-32767
@@ -1081,18 +1081,18 @@ c..total average part of Bq in boundary layer
         if(ierror.ne.0) goto 900
 c
 c..total accumulated/integrated concentration
-	do j=1,ny
-	  do i=1,nx
-	    field3(i,j)=0.
-	  end do
-	end do
-	do m=1,ncomp
-	  do j=1,ny
-	    do i=1,nx
-	      field3(i,j)= field3(i,j) + sngl(concacc(i,j,m))
-	    end do
-	  end do
-	end do
+       do j=1,ny
+         do i=1,nx
+           field3(i,j)=0.
+         end do
+       end do
+       do m=1,ncomp
+         do j=1,ny
+           do i=1,nx
+             field3(i,j)= field3(i,j) + sngl(concacc(i,j,m))
+           end do
+         end do
+       end do
         if(idebug.eq.1) call ftest('concac',1,1,nx,ny,1,field3,1)
         idata( 6)=518
         idata(20)=-32767
@@ -1117,15 +1117,15 @@ ccc     idata( 5)=3
 c
         do m=1,ncomp
 c
-	  mm= idefcomp(m)
+         mm= idefcomp(m)
 c
-	  if(idebug.eq.1) write(9,*) ' component: ',compname(mm)
+         if(idebug.eq.1) write(9,*) ' component: ',compname(mm)
 c
 c..using the field level identifier to identify the component
           idata(7)=idcomp(mm)
 c
 c..scale to % of total released Bq (in a single bomb)
-	  dblscale= 100.0d0/dble(totalbq(mm))
+         dblscale= 100.0d0/dble(totalbq(mm))
 c
 c..dry deposition
           if(kdrydep(mm).eq.1) then
@@ -1209,20 +1209,20 @@ c
 c
         if(loop.eq.1) then
 c
-	  avg=average
-	  iparx=570
+         avg=average
+         iparx=570
 c
         else
 c
-	  avg=1.
-	  iparx=540
+         avg=1.
+         iparx=540
 c
-	  do m=1,ncomp
+         do m=1,ncomp
             do k=1,nk-1
               do j=1,nymc
                 do i=1,nxmc
                   avgbq(i,j,k,m)=0.0d0
-	        end do
+               end do
               end do
             end do
           end do
@@ -1232,31 +1232,31 @@ c
             j=nint(pdata(2,n))
             ivlvl=pdata(3,n)*10000.
             k=ivlayer(ivlvl)
-	    m=iruncomp(icomp(n))
+           m=iruncomp(icomp(n))
 c..in each sigma/eta (input model) layer
             avgbq(i,j,k,m)=avgbq(i,j,k,m)+pdata(9,n)
-	  end do
+         end do
 
         end if
 c
         do k=1,nk-1
-	  do j=1,ny
-	    do i=1,nx
+         do j=1,ny
+           do i=1,nx
               dh=rt1*hlayer1(i,j,k)+rt2*hlayer2(i,j,k)
-	      field4(i,j)=dh*garea(i,j)*avg
-	    end do
-	  end do
-	  do m=1,ncomp
-	    do j=1,ny
-	      do i=1,nx
-		avgbq(i,j,k,m)=avgbq(i,j,k,m)/field4(i,j)
-	      end do
-	    end do
-	  end do
+             field4(i,j)=dh*garea(i,j)*avg
+           end do
+         end do
+         do m=1,ncomp
+           do j=1,ny
+             do i=1,nx
+       	avgbq(i,j,k,m)=avgbq(i,j,k,m)/field4(i,j)
+             end do
+           end do
+         end do
         end do
 c
 c..average concentration in each layer for each type
-	do m=1,ncomp
+       do m=1,ncomp
           do k=1,nk-1
             do j=1,ny
               do i=1,nx
@@ -1264,11 +1264,11 @@ c..average concentration in each layer for each type
               end do
             end do
             if(idebug.eq.1) call ftest('avconcl',1,1,nx,ny,1,field1,0)
-	    ko=klevel(k+1)
-	    lvla=nint(alevel(k+1)*10.)
-	    lvlb=nint(blevel(k+1)*10000.)
-	    if(ivcoor.eq.2) lvla=0
-	    ipar=iparx+idcomp(m)
+           ko=klevel(k+1)
+           lvla=nint(alevel(k+1)*10.)
+           lvlb=nint(blevel(k+1)*10000.)
+           if(ivcoor.eq.2) lvla=0
+           ipar=iparx+idcomp(m)
             idata( 6)=ipar
             idata( 7)=ko
             idata( 8)=lvla
@@ -1278,19 +1278,19 @@ c..average concentration in each layer for each type
      +                  ldata,idata,ierror)
             if(ierror.ne.0) goto 900
           end do
-	end do
+       end do
 c
 c..total average concentration in each layer
-	if(ncomp.gt.1 .and. itotcomp.eq.1) then
-	  do m=2,ncomp
+       if(ncomp.gt.1 .and. itotcomp.eq.1) then
+         do m=2,ncomp
             do k=1,nk-1
               do j=1,ny
                 do i=1,nx
                   avgbq(i,j,k,1)=avgbq(i,j,k,1)+avgbq(i,j,k,m)
                 end do
               end do
-	    end do
-	  end do
+           end do
+         end do
           do k=1,nk-1
             do j=1,ny
               do i=1,nx
@@ -1298,11 +1298,11 @@ c..total average concentration in each layer
               end do
             end do
             if(idebug.eq.1) call ftest('tavconcl',1,1,nx,ny,1,field1,0)
-	    ko=klevel(k+1)
-	    lvla=nint(alevel(k+1)*10.)
-	    lvlb=nint(blevel(k+1)*10000.)
-	    if(ivcoor.eq.2) lvla=0
-	    ipar=iparx+0
+           ko=klevel(k+1)
+           lvla=nint(alevel(k+1)*10.)
+           lvlb=nint(blevel(k+1)*10000.)
+           if(ivcoor.eq.2) lvla=0
+           ipar=iparx+0
             idata( 6)=ipar
             idata( 7)=ko
             idata( 8)=lvla
@@ -1312,7 +1312,7 @@ c..total average concentration in each layer
      +                  ldata,idata,ierror)
             if(ierror.ne.0) goto 900
           end do
-	end if
+       end if
 c
 c.....end do loop=1,2
       end do
@@ -1320,14 +1320,14 @@ c
   800 ierror=0
 c
       do m=1,ncomp
-	mm=idefcomp(m)
+       mm=idefcomp(m)
         if(kdrydep(mm).eq.1) then
           do j=1,ny
             do i=1,nx
               depdry(i,j,m)=0.0d0
             end do
           end do
-	end if
+       end if
         if(kwetdep(mm).eq.1) then
           do j=1,ny
             do i=1,nx

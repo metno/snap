@@ -17,7 +17,7 @@ c
       gridtype=igtype
 c
       do i=1,6
-	gridspec(i)=gparam(i)
+       gridspec(i)=gparam(i)
       end do
 c
       i1=nint(rgrspec(1)*0.01*float(nx-1))+1
@@ -68,7 +68,7 @@ c
       nnstep =nstepgr
 c
       do i=1,5
-	itime(i)=itimegr(i)
+       itime(i)=itimegr(i)
       end do
       call vtime(itime,ierror)
       year=  itime(1)
@@ -84,13 +84,13 @@ c
       saveXPM=0
       saveBMP=0
       if(savePNGstep.gt.0) then
-	if(mod(istepgr,savePNGstep).eq.0) savePNG=1
+       if(mod(istepgr,savePNGstep).eq.0) savePNG=1
       end if
       if(saveXPMstep.gt.0) then
-	if(mod(istepgr,saveXPMstep).eq.0) saveXPM=1
+       if(mod(istepgr,saveXPMstep).eq.0) saveXPM=1
       end if
       if(saveBMPstep.gt.0) then
-	if(mod(istepgr,saveBMPstep).eq.0) saveBMP=1
+       if(mod(istepgr,saveBMPstep).eq.0) saveBMP=1
       end if
 c
       return
@@ -116,19 +116,19 @@ c
       if (fieldid.eq.-1) then
 c
         do j=1,ny
-	  do i=1,nx
-	    field(i,j)=0.
-	  end do
+         do i=1,nx
+           field(i,j)=0.
+         end do
         end do
 c
         do n=1,ncomp
           do j=1,ny
-	    do i=1,nx
-	      field(i,j)= field(i,j)
+           do i=1,nx
+             field(i,j)= field(i,j)
      +			  + sngl( accdry(i,j,n)+accwet(i,j,n)
      +				 +depdry(i,j,n)+depwet(i,j,n))
-	    end do
-	  end do
+           end do
+         end do
         end do
 c
       elseif (fieldid.eq.58) then
@@ -139,9 +139,9 @@ c
         rt2=(tnowgr-tf1gr)/(tf2gr-tf1gr)
 c
         do j=1,ny
-	  do i=1,nx
+         do i=1,nx
             field(i,j)= rt1*pmsl1(i,j) + rt2*pmsl2(i,j)
-	  end do
+         end do
         end do
 c
       elseif (fieldid.eq.17) then
@@ -149,19 +149,19 @@ c
 c..precip (mm/hour)
 c
         do j=1,ny
-	  do i=1,nx
+         do i=1,nx
             field(i,j)= precip(i,j,iprecip)
-	  end do
+         end do
         end do
 c
       else
 c
-	write(6,*) 'ERROR getfield: fieldid= ',fieldid
+       write(6,*) 'ERROR getfield: fieldid= ',fieldid
 c
         do j=1,ny
-	  do i=1,nx
-	    field(i,j)=0.
-	  end do
+         do i=1,nx
+           field(i,j)=0.
+         end do
         end do
 c
       end if
@@ -201,30 +201,30 @@ c            = 3 -    precip, in ABL
 c            = 4 -    precip, above ABL
 c            = 5,6,7,8 as 1,2,3,4 but without enough mass
 c
-	do k=1,8
-	  kshow(k)=-1
-	end do
-	if(igrspec(5).eq.1) then
-	  kshow(1)=0
-	  kshow(3)=1
-	end if
-	if(igrspec(6).eq.1) then
-	  kshow(2)=0
-	  kshow(4)=1
-	end if
+       do k=1,8
+         kshow(k)=-1
+       end do
+       if(igrspec(5).eq.1) then
+         kshow(1)=0
+         kshow(3)=1
+       end if
+       if(igrspec(6).eq.1) then
+         kshow(2)=0
+         kshow(4)=1
+       end if
 c
-	do n=1,npart
+       do n=1,npart
 c
-	  if(kshow(ipwork(n)).ne.-1) then
+         if(kshow(ipwork(n)).ne.-1) then
 c
-	    npdisp=npdisp+1
-	    xpos(npdisp)=pdata(1,n)
-	    ypos(npdisp)=pdata(2,n)
-	    ipos(npdisp)=kshow(ipwork(n))
+           npdisp=npdisp+1
+           xpos(npdisp)=pdata(1,n)
+           ypos(npdisp)=pdata(2,n)
+           ipos(npdisp)=kshow(ipwork(n))
 c
-	  end if
+         end if
 c
-	end do
+       end do
 c
       end if
 c
@@ -264,39 +264,39 @@ c
 c
 c..set (from C/C++)
 c
-	la=len(allargs)
-	lc=lenstr(carg,0)
-	if(lallargs+lc.le.la .and. nargs.lt.maxargs) then
-	  nargs=nargs+1
-	  k1=lallargs+1
-	  k2=lallargs+lc
-	  iallargs(1,nargs)=k1
-	  iallargs(2,nargs)=k2
-	  allargs(k1:k2)=carg(1:lc)
-	  lallargs=k2
-	end if
+       la=len(allargs)
+       lc=lenstr(carg,0)
+       if(lallargs+lc.le.la .and. nargs.lt.maxargs) then
+         nargs=nargs+1
+         k1=lallargs+1
+         k2=lallargs+lc
+         iallargs(1,nargs)=k1
+         iallargs(2,nargs)=k2
+         allargs(k1:k2)=carg(1:lc)
+         lallargs=k2
+       end if
 c
       elseif(iarg.eq.0) then
 c
 c..only called from iargc below !!!!!
 c..return no. of arguments set
 c
-	iarg=nargs
+       iarg=nargs
 c
       elseif(iarg.gt.0) then
 c
 c..get (from fortran subroutine)
 c
-	if(iarg.le.nargs) then
-	  k1=iallargs(1,iarg)
-	  k2=iallargs(2,iarg)
-	  lc=len(carg)
-	  lc=min(k2-k1+1,lc)
-	  carg=' '
-	  carg(1:lc)=allargs(k1:k1+lc-1)
-	else
-	  carg=' '
-	end if
+       if(iarg.le.nargs) then
+         k1=iallargs(1,iarg)
+         k2=iallargs(2,iarg)
+         lc=len(carg)
+         lc=min(k2-k1+1,lc)
+         carg=' '
+         carg(1:lc)=allargs(k1:k1+lc-1)
+       else
+         carg=' '
+       end if
 c
       end if
 c
@@ -454,7 +454,7 @@ c..keep all 'end' characters unless it is \
               if(iend.ne.nend) k2=k2-1
               var2=var(nv)(k1+1:k2)
             end if
-	    var3=' '
+           var3=' '
             if(ibeg.eq.1) then
 c..$name (environment variable)
               call getenv(var2,var3)
@@ -472,9 +472,9 @@ ccccc         call getarg(iarg,var3)
               call c2fgetarg(iarg,var3)
             end if
 c
-	    kv=0
-	    do k=1,lvarx
-	      if(var3(k:k).ne.' ') kv=k
+           kv=0
+           do k=1,lvarx
+             if(var3(k:k).ne.' ') kv=k
             end do
             km=kv-(k2-k1+1)
             kr=lvar-k2

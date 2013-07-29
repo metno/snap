@@ -137,18 +137,18 @@ c
           k=2
           zh(k-1)=0.
           zf(k-1)=0.
-	  zh(k)=zh(k-1)+t2(i,j,k)*(pih(k-1)-pih(k))*ginv
+         zh(k)=zh(k-1)+t2(i,j,k)*(pih(k-1)-pih(k))*ginv
           zf(k)=  zh(k-1)
      -          +(zh(k)-zh(k-1))*(pih(k-1)-pif(k))/(pih(k-1)-pih(k))
 c
 c..search for top of boundary layer
 c
-	  ktop=0
-	  k=1
+         ktop=0
+         k=1
 c
-	  do while ((ktop.eq.0 .or. k.lt.kblbot) .and. k.lt.kbltop)
+         do while ((ktop.eq.0 .or. k.lt.kblbot) .and. k.lt.kbltop)
 c
-	    k=k+1
+           k=k+1
 c
             p=ahalf(k+1)+bhalf(k+1)*ps2(i,j)
             rtab=p*pmult
@@ -172,7 +172,7 @@ c
      -              +(zh(k+1)-zh(k))*(pih(k)-pif(k+1))
      -                              /(pih(k)-pih(k+1))
 c
-	    if(ktop.eq.0) then
+           if(ktop.eq.0) then
 c
               dz=zf(k+1)-zf(k)
               dv2min=1.e-5*dz*dz
@@ -200,13 +200,13 @@ c	      ricric(k)=ric
 c######################################################################
 c
               if(ri.gt.ric) then
-		ktop=k
-	      else
+       	ktop=k
+             else
                 riu=ri
                 ricu=ric
-	      end if
+             end if
 c
-	    end if
+           end if
 c######################################################################
 c	    kstop=k
 c######################################################################
@@ -214,7 +214,7 @@ c
           end do
 c
           k=ktop
-	  if(k.eq.0) k=kbltop
+         if(k.eq.0) k=kbltop
 c
 c..sigma/eta at top of boundary layer
           if(vhalf(k).ge.vblbot) then

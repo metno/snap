@@ -128,7 +128,7 @@ c..keep all 'end' characters unless it is \
               if(iend.ne.nend) k2=k2-1
               var2=var(nv)(k1+1:k2)
             end if
-	    var3=' '
+           var3=' '
             if(ibeg.eq.1) then
 c..$name (environment variable)
               call getenv(var2,var3)
@@ -146,9 +146,9 @@ ccccc         call getarg(iarg,var3)
               call c2fgetarg(iarg,var3)
             end if
 c
-	    kv=0
-	    do k=1,lvarx
-	      if(var3(k:k).ne.' ') kv=k
+           kv=0
+           do k=1,lvarx
+             if(var3(k:k).ne.' ') kv=k
             end do
             km=kv-(k2-k1+1)
             kr=lvar-k2

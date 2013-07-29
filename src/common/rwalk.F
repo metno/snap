@@ -33,12 +33,12 @@ c
       integer np,i
       real    a,cona,conb,vrange,vrdbla,vrdblb,vrqrt
       real    xrand,yrand,zrand,u,v,vabs,rl,rv,rv2,vpos,rvmax
-	real hmax	! maximum mixing height = 2500m
-	real tmix	! Characteristic mixing time = 15 min
-	real lmax	! Maximum l-eta in the mixing layer = 0.28
-	real labove	! Standard l-eta above the mixing layer
-	real tfactor	! tfactor=tstep/tmix
-	real hfactor    ! hfactor=h/hmax		!
+       real hmax	! maximum mixing height = 2500m
+       real tmix	! Characteristic mixing time = 15 min
+       real lmax	! Maximum l-eta in the mixing layer = 0.28
+       real labove	! Standard l-eta above the mixing layer
+       real tfactor	! tfactor=tstep/tmix
+       real hfactor    ! hfactor=h/hmax		!
 c
 c..for random number functions
       integer irand,iseed
@@ -49,11 +49,11 @@ c
       double precision rand
 #endif
 c
-	hmax = 2500.0
-	tmix = 15.0*60.0
-	lmax = 0.28
-	labove=0.03
-	tfactor=tstep/tmix
+       hmax = 2500.0
+       tmix = 15.0*60.0
+       lmax = 0.28
+       labove=0.03
+       tfactor=tstep/tmix
 c	write(*,*) 'hmax, tmix,lmax, labove, tfactor',
 c     &hmax, tmix,lmax, labove, tfactor	
 c
@@ -97,8 +97,8 @@ c
 c..particle in boundary layer.....................................
 c
 c..horizontal diffusion
-	  u=pwork(np,1)
-	  v=pwork(np,2)
+         u=pwork(np,1)
+         v=pwork(np,2)
           vabs=sqrt(u*u+v*v)
           rl=sqrt(conb*vabs**1.75)*2.
           pdata(1,np)=pdata(1,np)+rl*xrand*pdata(6,np)
@@ -113,8 +113,8 @@ c
 c..particle above boundary layer..................................
 c
 c..horizontal diffusion
-	  u=pwork(np,1)
-	  v=pwork(np,2)
+         u=pwork(np,1)
+         v=pwork(np,2)
           vabs=sqrt(u*u+v*v)
           rl=sqrt(cona*vabs**1.75)*2.	   
           pdata(1,np)=pdata(1,np)+rl*xrand*pdata(6,np)
@@ -151,17 +151,17 @@ c
 c..particle in boundary layer.....................................
 c
 c..horizontal diffusion
-	  u=pwork(np,1)
-	  v=pwork(np,2)
+         u=pwork(np,1)
+         v=pwork(np,2)
           vabs=sqrt(u*u+v*v)
           rl=sqrt(conb*vabs**1.75)*2.
           pdata(1,np)=pdata(1,np)+rl*xrand*pdata(6,np)
           pdata(2,np)=pdata(2,np)+rl*yrand*pdata(7,np)
 c
 c..vertical diffusion
-	  hfactor=pdata(5,np)/hmax
-	  rv=lmax*hfactor*tfactor
-	  rvmax=1.0-pdata(4,np)
+         hfactor=pdata(5,np)/hmax
+         rv=lmax*hfactor*tfactor
+         rvmax=1.0-pdata(4,np)
 c	write(*,*) 'hfactor,rv,rvmax,pdata(4,np),pdata(5,np)',
 c     &hfactor,rv,rvmax,pdata(4,np),pdata(5,np)
 c	if(rv .gt. rvmax) then
@@ -170,29 +170,29 @@ c     &  rv,rvmax,pdata(3,np),pdata(4,np)
 c	stop
 c	endif
 c
-	if(rv .gt. rvmax) rv=rvmax
+       if(rv .gt. rvmax) rv=rvmax
         pdata(3,np)=pdata(3,np)+rv*zrand
 c
 c... reflection from the ABL top
 c
-	if(pdata(3,np) .lt. pdata(4,np)) then
+       if(pdata(3,np) .lt. pdata(4,np)) then
 c	  write(*,*) 'gora-przed, p4=',pdata(4,np)
 c	  write(*,*) 'gora-przed, p3=',pdata(3,np)
-	  pdata(3,np)= 2.0*pdata(4,np)-pdata(3,np)
+         pdata(3,np)= 2.0*pdata(4,np)-pdata(3,np)
 c	  write(*,*) 'gora-po   , p3=',pdata(3,np)
-	endif
+       endif
 c
 c... reflection from the bottom
 c
-	if(pdata(3,np) .gt. 1.0) then
+       if(pdata(3,np) .gt. 1.0) then
 c	  write(*,*) 'dol-przed, p=',pdata(3,np)
-	  pdata(3,np)= 2.0-pdata(3,np)
+         pdata(3,np)= 2.0-pdata(3,np)
 c	  write(*,*) 'dol-po   , p=',pdata(3,np)
-	endif
+       endif
 c
 c..vertical limits
-	  if(pdata(3,np) .gt. 1.0) pdata(3,np)=1.0
-	  if(pdata(3,np) .lt. pdata(4,np)) 
+         if(pdata(3,np) .gt. 1.0) pdata(3,np)=1.0
+         if(pdata(3,np) .lt. pdata(4,np)) 
      &    pdata(3,np)=pdata(4,np)
 c
         else
@@ -200,8 +200,8 @@ c
 c..particle above boundary layer..................................
 c
 c..horizontal diffusion
-	  u=pwork(np,1)
-	  v=pwork(np,2)
+         u=pwork(np,1)
+         v=pwork(np,2)
           vabs=sqrt(u*u+v*v)
           rl=sqrt(cona*vabs**1.75)*2.
           pdata(1,np)=pdata(1,np)+rl*xrand*pdata(6,np)

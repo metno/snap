@@ -43,7 +43,7 @@ c..get time offset in hours (as iavail(8,n))
         do i=1,5
           itime(i,n)=itimei(i)
         end do
-	itime(5,n)=itime(5,n)+ihours(n)
+       itime(5,n)=itime(5,n)+ihours(n)
         call hrdiff(0,1,itimer(1,1),itime(1,n),ihours(n),ierr1,ierr2)
       end do
       ihdif1=ihours(1)
@@ -56,22 +56,22 @@ c
 c
 c..move data from input time step 2 to 1
 c
-	navailt1=navailt2
-	navailt2=0
+       navailt1=navailt2
+       navailt2=0
 c
-	call copyfield(u2,u1,nx,ny,nk)
-	call copyfield(v2,v1,nx,ny,nk)
-	call copyfield(w2,w1,nx,ny,nk)
-	call copyfield(t2,t1,nx,ny,nk)
-	call copyfield(hlevel2,hlevel1,nx,ny,nk)
-	call copyfield(hlayer2,hlayer1,nx,ny,nk)
+       call copyfield(u2,u1,nx,ny,nk)
+       call copyfield(v2,v1,nx,ny,nk)
+       call copyfield(w2,w1,nx,ny,nk)
+       call copyfield(t2,t1,nx,ny,nk)
+       call copyfield(hlevel2,hlevel1,nx,ny,nk)
+       call copyfield(hlayer2,hlayer1,nx,ny,nk)
 c
-	call copyfield(ps2,ps1,nx,ny,1)
-	call copyfield(bl2,bl1,nx,ny,1)
-	call copyfield(hbl2,hbl1,nx,ny,1)
+       call copyfield(ps2,ps1,nx,ny,1)
+       call copyfield(bl2,bl1,nx,ny,1)
+       call copyfield(hbl2,hbl1,nx,ny,1)
 c
         if(nxad.eq.nx .and. nyad.eq.ny .and. imslp.ne.0) then
-	  call copyfield(pmsl2,pmsl1,nx,ny,1)
+         call copyfield(pmsl2,pmsl1,nx,ny,1)
         end if
 c
       end if
@@ -242,17 +242,17 @@ c
 c
       if(iavail(7,nav).eq.1) then
         k=0
-	j=0
-	do while (k.eq.0 .and. j.lt.navail)
-	  j=j+1
-	  if(iavail(1,j).eq.iavail(1,nav) .and.
+       j=0
+       do while (k.eq.0 .and. j.lt.navail)
+         j=j+1
+         if(iavail(1,j).eq.iavail(1,nav) .and.
      +	     iavail(2,j).eq.iavail(2,nav) .and.
      +	     iavail(3,j).eq.iavail(3,nav) .and.
      +	     iavail(4,j).eq.iavail(4,nav) .and.
      +	     iavail(5,j).eq.iavail(5,nav) .and.
      +	     iavail(7,j).ne.1) k=j
-	end do
-	if(k.gt.0) nav=k
+       end do
+       if(k.gt.0) nav=k
       end if
 c
       ivc=2
@@ -348,44 +348,44 @@ c..first try to read hourly precipitation
       lprog2=-999
       ihdiff=0
       do while (ierror.eq.0 .and. ihdiff.lt.nhdiff)
-	ihdiff=ihdiff+1
-	if(ihdiff.le.(nhdiff+1)/2) then
-	  nav=navailt1
-	  ihrpr1=ihdiff-1
-	  ihrpr2=ihdiff
-	else
-	  nav=navailt2
-	  ihrpr1=-nhdiff+ihdiff-1
-	  ihrpr2=-nhdiff+ihdiff
-	end if
-	iprog1=iavail(5,nav)+ihrpr1
-	if(iprog1.eq.0) then
-	  do j=1,ny
-	    do i=1,nx
-	      field1(i,j)=0.
-	    end do
-	  end do
-	elseif(iprog1.eq.lprog2) then
-	  do j=1,ny
-	    do i=1,nx
-	      field1(i,j)=field2(i,j)
-	    end do
-	  end do
-	else
+       ihdiff=ihdiff+1
+       if(ihdiff.le.(nhdiff+1)/2) then
+         nav=navailt1
+         ihrpr1=ihdiff-1
+         ihrpr2=ihdiff
+       else
+         nav=navailt2
+         ihrpr1=-nhdiff+ihdiff-1
+         ihrpr2=-nhdiff+ihdiff
+       end if
+       iprog1=iavail(5,nav)+ihrpr1
+       if(iprog1.eq.0) then
+         do j=1,ny
+           do i=1,nx
+             field1(i,j)=0.
+           end do
+         end do
+       elseif(iprog1.eq.lprog2) then
+         do j=1,ny
+           do i=1,nx
+             field1(i,j)=field2(i,j)
+           end do
+         end do
+       else
           call readfd(iunit,nav,ivc,17,ilevel,ihrpr1,field1,ierror)
-	end if
-	if(ierror.eq.0) then
+       end if
+       if(ierror.eq.0) then
           call readfd(iunit,nav,ivc,17,ilevel,ihrpr2,field2,ierror)
           if(ierror.eq.0) then
 c..the difference below may get negative due to different scaling
-	    do j=1,ny
-	      do i=1,nx
-	        precip(i,j,ihdiff)=max(field2(i,j)-field1(i,j),0.)
-	      end do
-	    end do
-	    lprog2=iavail(5,nav)+ihrpr2
-	  end if
-	end if
+           do j=1,ny
+             do i=1,nx
+               precip(i,j,ihdiff)=max(field2(i,j)-field1(i,j),0.)
+             end do
+           end do
+           lprog2=iavail(5,nav)+ihrpr2
+         end if
+       end if
       end do
 c
       if(ierror.eq.0) goto 190
@@ -402,27 +402,27 @@ c..3 hours total precipitation
       if(ierror.eq.0) then
         call readfd(iunit,nav,ivc,17,ilevel,+3,field2,ierror)
         if(ierror.eq.0) then
-	  nav=navailt2
+         nav=navailt2
           call readfd(iunit,nav,ivc,17,ilevel,-3,field3,ierror)
           if(ierror.eq.0) then
             call readfd(iunit,nav,ivc,17,ilevel,-0,field4,ierror)
-	    if(ierror.eq.0) then
-	      do j=1,ny
-		do i=1,nx
-		  prec1=max(field2(i,j)-field1(i,j),0.)/3.
-		  prec2=max(field4(i,j)-field3(i,j),0.)/3.
-		  precip(i,j,1)=prec1
-		  precip(i,j,2)=prec1
-		  precip(i,j,3)=prec1
-		  precip(i,j,4)=prec2
-		  precip(i,j,5)=prec2
-		  precip(i,j,6)=prec2
-		end do
-	      end do
-	      goto 190
-	    end if
-	  end if
-	end if
+           if(ierror.eq.0) then
+             do j=1,ny
+       	do i=1,nx
+       	  prec1=max(field2(i,j)-field1(i,j),0.)/3.
+       	  prec2=max(field4(i,j)-field3(i,j),0.)/3.
+       	  precip(i,j,1)=prec1
+       	  precip(i,j,2)=prec1
+       	  precip(i,j,3)=prec1
+       	  precip(i,j,4)=prec2
+       	  precip(i,j,5)=prec2
+       	  precip(i,j,6)=prec2
+       	end do
+             end do
+             goto 190
+           end if
+         end if
+       end if
       end if
 c
   130 itryprecip=3
@@ -435,31 +435,31 @@ c..3 hours frontal and convective precipitation
         call readfd(iunit,nav,ivc,19,ilevel,+3,precip(1,1,3),ierr1)
         call readfd(iunit,nav,ivc,20,ilevel,+3,precip(1,1,4),ierr2)
         if(ierr1.eq.0 .and. ierr2.eq.0) then
-	  nav=navailt2
+         nav=navailt2
           call readfd(iunit,nav,ivc,19,ilevel,-3,field1,ierr1)
           call readfd(iunit,nav,ivc,20,ilevel,-3,field2,ierr2)
           if(ierr1.eq.0 .and. ierr2.eq.0) then
             call readfd(iunit,nav,ivc,19,ilevel,-0,field3,ierr1)
             call readfd(iunit,nav,ivc,20,ilevel,-0,field4,ierr2)
-	    if(ierr1.eq.0 .and. ierr2.eq.0) then
-	      do j=1,ny
-		do i=1,nx
-		  prec1=max( precip(i,j,3)+precip(i,j,4)
+           if(ierr1.eq.0 .and. ierr2.eq.0) then
+             do j=1,ny
+       	do i=1,nx
+       	  prec1=max( precip(i,j,3)+precip(i,j,4)
      +			    -precip(i,j,1)-precip(i,j,2),0.)/3.
-		  prec2=max( field3(i,j)+field4(i,j)
+       	  prec2=max( field3(i,j)+field4(i,j)
      +			    -field1(i,j)-field2(i,j),0.)/3.
-		  precip(i,j,1)=prec1
-		  precip(i,j,2)=prec1
-		  precip(i,j,3)=prec1
-		  precip(i,j,4)=prec2
-		  precip(i,j,5)=prec2
-		  precip(i,j,6)=prec2
-		end do
-	      end do
-	      goto 190
-	    end if
-	  end if
-	end if
+       	  precip(i,j,1)=prec1
+       	  precip(i,j,2)=prec1
+       	  precip(i,j,3)=prec1
+       	  precip(i,j,4)=prec2
+       	  precip(i,j,5)=prec2
+       	  precip(i,j,6)=prec2
+       	end do
+             end do
+             goto 190
+           end if
+         end if
+       end if
       end if
 c
   140 itryprecip=4
@@ -471,24 +471,24 @@ c..3 hours frontal and convective precipitation (Norlam, not accumulated)
       call readfd(iunit,nav,ivc,15,ilevel,+3,field1,ierr1)
       call readfd(iunit,nav,ivc,16,ilevel,+3,field2,ierr2)
       if(ierr1.eq.0 .and. ierr2.eq.0) then
-	nav=navailt2
+       nav=navailt2
         call readfd(iunit,nav,ivc,15,ilevel,+0,field3,ierr1)
         call readfd(iunit,nav,ivc,16,ilevel,+0,field4,ierr2)
         if(ierr1.eq.0 .and. ierr2.eq.0) then
-	  do j=1,ny
-	    do i=1,nx
-	      prec1=field1(i,j)+field2(i,j)
-	      prec2=field3(i,j)+field4(i,j)
-	      precip(i,j,1)=prec1
-	      precip(i,j,2)=prec1
-	      precip(i,j,3)=prec1
-	      precip(i,j,4)=prec2
-	      precip(i,j,5)=prec2
-	      precip(i,j,6)=prec2
-	    end do
-	  end do
-	  goto 190
-	end if
+         do j=1,ny
+           do i=1,nx
+             prec1=field1(i,j)+field2(i,j)
+             prec2=field3(i,j)+field4(i,j)
+             precip(i,j,1)=prec1
+             precip(i,j,2)=prec1
+             precip(i,j,3)=prec1
+             precip(i,j,4)=prec2
+             precip(i,j,5)=prec2
+             precip(i,j,6)=prec2
+           end do
+         end do
+         goto 190
+       end if
       end if
 c
   150 itryprecip=5
@@ -500,24 +500,24 @@ c..Lam50e frontal and convective precipitation, 2hr*1.5 and 3.hr !!!
       call readfd(iunit,nav,ivc,40,ilevel,+2,field1,ierr1)
       call readfd(iunit,nav,ivc,41,ilevel,+2,field2,ierr2)
       if(ierr1.eq.0 .and. ierr2.eq.0) then
-	nav=navailt2
+       nav=navailt2
         call readfd(iunit,nav,ivc,15,ilevel,+0,field3,ierr1)
         call readfd(iunit,nav,ivc,16,ilevel,+0,field4,ierr2)
         if(ierr1.eq.0 .and. ierr2.eq.0) then
-	  do j=1,ny
-	    do i=1,nx
-	      prec1=(field1(i,j)+field2(i,j))*1.5
-	      prec2= field3(i,j)+field4(i,j)
-	      precip(i,j,1)=prec1
-	      precip(i,j,2)=prec1
-	      precip(i,j,3)=prec1
-	      precip(i,j,4)=prec2
-	      precip(i,j,5)=prec2
-	      precip(i,j,6)=prec2
-	    end do
-	  end do
-	  goto 190
-	end if
+         do j=1,ny
+           do i=1,nx
+             prec1=(field1(i,j)+field2(i,j))*1.5
+             prec2= field3(i,j)+field4(i,j)
+             precip(i,j,1)=prec1
+             precip(i,j,2)=prec1
+             precip(i,j,3)=prec1
+             precip(i,j,4)=prec2
+             precip(i,j,5)=prec2
+             precip(i,j,6)=prec2
+           end do
+         end do
+         goto 190
+       end if
       end if
 c
   160 itryprecip=6
@@ -533,25 +533,25 @@ c
       nav=navailt2
       call readfd(iunit,nav,ivc,17,ilevel,+0,field2,ierr2)
       if(ierr1.eq.0 .and. ierr2.eq.0) then
-	write(6,*) '================================================='
-	write(6,*) 'WARNING: CHECK USE OF EC ERA PRECIPITATION !!!!!!'
-	write(6,*) '================================================='
-	write(9,*) '================================================='
-	write(9,*) 'WARNING: CHECK USE OF EC ERA PRECIPITATION !!!!!!'
-	write(9,*) '================================================='
-	do j=1,ny
-	  do i=1,nx
-	    prec1=field1(i,j)/6.0
-	    prec2=field2(i,j)/6.0
-	    precip(i,j,1)=prec1
-	    precip(i,j,2)=prec1
-	    precip(i,j,3)=prec1
-	    precip(i,j,4)=prec2
-	    precip(i,j,5)=prec2
-	    precip(i,j,6)=prec2
-	  end do
-	end do
-	goto 190
+       write(6,*) '================================================='
+       write(6,*) 'WARNING: CHECK USE OF EC ERA PRECIPITATION !!!!!!'
+       write(6,*) '================================================='
+       write(9,*) '================================================='
+       write(9,*) 'WARNING: CHECK USE OF EC ERA PRECIPITATION !!!!!!'
+       write(9,*) '================================================='
+       do j=1,ny
+         do i=1,nx
+           prec1=field1(i,j)/6.0
+           prec2=field2(i,j)/6.0
+           precip(i,j,1)=prec1
+           precip(i,j,2)=prec1
+           precip(i,j,3)=prec1
+           precip(i,j,4)=prec2
+           precip(i,j,5)=prec2
+           precip(i,j,6)=prec2
+         end do
+       end do
+       goto 190
       end if
 c
   170 itryprecip=7
@@ -570,26 +570,26 @@ c
         call readfd(iunit,nav,ivc,19,ilevel,+0,field3,ierr2)
         call readfd(iunit,nav,ivc,20,ilevel,+0,field4,ierr2)
         if(ierr1.eq.0 .and. ierr2.eq.0) then
-	write(6,*) '================================================='
-	write(6,*) 'WARNING: CHECK USE OF EC ERA PRECIPITATION !!!!!!'
-	write(6,*) '================================================='
-	write(9,*) '================================================='
-	write(9,*) 'WARNING: CHECK USE OF EC ERA PRECIPITATION !!!!!!'
-	write(9,*) '================================================='
-	  do j=1,ny
-	    do i=1,nx
-	      prec1=(field1(i,j)+field2(i,j))/6.0
-	      prec2=(field3(i,j)+field4(i,j))/6.0
-	      precip(i,j,1)=prec1
-	      precip(i,j,2)=prec1
-	      precip(i,j,3)=prec1
-	      precip(i,j,4)=prec2
-	      precip(i,j,5)=prec2
-	      precip(i,j,6)=prec2
-	    end do
-	  end do
-	  goto 190
-	end if
+       write(6,*) '================================================='
+       write(6,*) 'WARNING: CHECK USE OF EC ERA PRECIPITATION !!!!!!'
+       write(6,*) '================================================='
+       write(9,*) '================================================='
+       write(9,*) 'WARNING: CHECK USE OF EC ERA PRECIPITATION !!!!!!'
+       write(9,*) '================================================='
+         do j=1,ny
+           do i=1,nx
+             prec1=(field1(i,j)+field2(i,j))/6.0
+             prec2=(field3(i,j)+field4(i,j))/6.0
+             precip(i,j,1)=prec1
+             precip(i,j,2)=prec1
+             precip(i,j,3)=prec1
+             precip(i,j,4)=prec2
+             precip(i,j,5)=prec2
+             precip(i,j,6)=prec2
+           end do
+         end do
+         goto 190
+       end if
       end if
 c
   180 continue
@@ -737,7 +737,7 @@ c..size of each grid square (m**2)
         do j=1,ny
           do i=1,nx
             garea(i,j)=(dxgrid/xm(i,j))*(dygrid/ym(i,j))
-	    dgarea(i,j)=dble(garea(i,j))
+           dgarea(i,j)=dble(garea(i,j))
           end do
         end do
 c
@@ -811,7 +811,7 @@ c
         call ftest('w  ',nk,1,nx,ny,nk,   w2,0)
         call ftest('t  ',nk,1,nx,ny,nk,   t2,0)
         call ftest('ps ',1, 1,nx,ny, 1,  ps2,0)
-	if (istep.gt.0)
+       if (istep.gt.0)
      +    call ftest('pre',1,nprecip,nx,ny,nprecip,precip,0)
       end if
 c
@@ -821,8 +821,8 @@ c..close last used FELT file
       call readfd(iunit,0,0,0,0,0,0.,ierr)
 c
       if(ierror.ne.0) then
-	navailt2=0
-	return
+       navailt2=0
+       return
       end if
 c
       if(istep.eq.0) then

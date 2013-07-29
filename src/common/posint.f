@@ -94,12 +94,12 @@ c
 c
       if(mode.eq.1) then
 c..copy interpolated data to the other particles in the plume
-	np1=iplume(1,nplume)
-	do np=np1,np2-1
-	  do i=4,8
-	    pdata(i,np)=pdata(i,np2)
-	  end do
-	end do
+       np1=iplume(1,nplume)
+       do np=np1,np2-1
+         do i=4,8
+           pdata(i,np)=pdata(i,np2)
+         end do
+       end do
       end if
 c
 c..reset precipitation to zero if pressure less than approx. 550 hPa.
@@ -108,21 +108,21 @@ c
       precmin=0.01
 c
       if(vminprec.lt.0.) then
-	plim=550.
-	p2=1000.
-	k=1
-	do while (p2.gt.plim .and. k.lt.nk)
-	  k=k+1
-	  p1=p2
-	  p2=alevel(k)+blevel(k)*1000.
-	end do
-	if(k.gt.1) then
-	  vminprec= vlevel(k-1)
+       plim=550.
+       p2=1000.
+       k=1
+       do while (p2.gt.plim .and. k.lt.nk)
+         k=k+1
+         p1=p2
+         p2=alevel(k)+blevel(k)*1000.
+       end do
+       if(k.gt.1) then
+         vminprec= vlevel(k-1)
      +		   +(vlevel(k)-vlevel(k-1))*(p1-plim)/(p1-p2)
-	else
-	  vminprec=vlevel(nk)
-	end if
-	write(9,*) 'POSINT. precmin,vminprec: ',precmin,vminprec
+       else
+         vminprec=vlevel(nk)
+       end if
+       write(9,*) 'POSINT. precmin,vminprec: ',precmin,vminprec
       end if
 c
       do np=np1,np2

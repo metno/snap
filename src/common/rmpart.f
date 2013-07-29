@@ -32,7 +32,7 @@ c
 c..rmlimit is now input, used to be 0.02 (2%)
       idep=0
       do n=1,ncomp
-	m=idefcomp(n)
+       m=idefcomp(n)
         pbqmin(m)=0.
         if(kdrydep(m).eq.1 .or. kwetdep(m).eq.1
      +			   .or. kdecay(m).eq.1) then
@@ -52,39 +52,39 @@ c
 c
 c..redistribution of lost mass (within one plume)
         if(idep.eq.1 .and. i1.gt.0) then
-	  do m=1,ncomp
+         do m=1,ncomp
             pbqtotal(m)=0.
-	    npkeep(m)=0
-	  end do
-	  nkeep=0
+           npkeep(m)=0
+         end do
+         nkeep=0
           do i=i1,i2
-	    m=icomp(i)
-	    if(pdata(9,i).gt.pbqmin(m)) then
-	      pbqtotal(m)=pbqtotal(m)+pdata(9,i)
-	      npkeep(m)=npkeep(m)+1
-	    else
-	      pbqlost(m)=pbqlost(m)+pdata(9,i)
-	      pdata(9,i)=0.
+           m=icomp(i)
+           if(pdata(9,i).gt.pbqmin(m)) then
+             pbqtotal(m)=pbqtotal(m)+pdata(9,i)
+             npkeep(m)=npkeep(m)+1
+           else
+             pbqlost(m)=pbqlost(m)+pdata(9,i)
+             pdata(9,i)=0.
               pdata(1,i)=0.
               pdata(2,i)=0.
-	    end if
+           end if
           end do
-	  iredist=0
-	  do m=1,ncomp
-	    pbqdist(m)=0.
+         iredist=0
+         do m=1,ncomp
+           pbqdist(m)=0.
             if(pbqlost(m).gt.0. .and. npkeep(m).gt.0) then
-	      pbqdist(m)=pbqlost(m)/float(npkeep(m))
-	      pbqlost(m)=0.
-	      iredist=1
-	    end if
-	  end do
+             pbqdist(m)=pbqlost(m)/float(npkeep(m))
+             pbqlost(m)=0.
+             iredist=1
+           end if
+         end do
           if(iredist.eq.1) then
             do i=i1,i2
-	      if(pdata(9,i).gt.0.0) then
-	        m=icomp(i)
-	        pdata(9,i)= pdata(9,i)+pbqdist(m)
-	      end if
-	    end do
+             if(pdata(9,i).gt.0.0) then
+               m=icomp(i)
+               pdata(9,i)= pdata(9,i)+pbqdist(m)
+             end if
+           end do
           end if
         end if
 c
@@ -97,11 +97,11 @@ c
             pdata(3,i)=max(pdata(3,i),vmin)
             n=n+1
             if(n.ne.i) then
-	      do j=1,npdata
+             do j=1,npdata
                 pdata(j,n)=pdata(j,i)
-	      end do
-	      icomp(n)=  icomp(i)
-	      iparnum(n)=iparnum(i)
+             end do
+             icomp(n)=  icomp(i)
+             iparnum(n)=iparnum(i)
             end if
           end if
         end do

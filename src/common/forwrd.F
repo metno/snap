@@ -35,7 +35,7 @@ c
       real    th,tk1,tk2,ps,p,pi,t,gravity,grav1,grav2,pvg,tvg
       real    ginv,pi1,pi2,dz,deta,wg,rtab,cpinv,rcpinv
 ccc JB 29.10
-	real vmax
+       real vmax
 ccc
 c
       logical vgcompute
@@ -45,8 +45,8 @@ c..functions
 #if defined(TRAJ)
 cjb_2802... calculation of distance and speed
 c
-	real speed
-	common /speed/ speed
+       real speed
+       common /speed/ speed
 #endif
 c
       data vgcompute/.true./
@@ -60,13 +60,13 @@ c
           if(kgravity(m).gt.1) j=j+1
         end do
         if (j.gt.0) then
-	  write(9,*) 'Computing gravity tables...'
-	  call vgravtables
-	  write(9,*) 'done'
+         write(9,*) 'Computing gravity tables...'
+         call vgravtables
+         write(9,*) 'done'
         else
           write(9,*) 'Computation of gravity tables not needed'
         end if
-	vgcompute= .false.
+       vgcompute= .false.
       end if
 c
       dt=tstep
@@ -143,11 +143,11 @@ c..map ratio
 c
         m=icomp(np)
 c
-	if(kgravity(m).gt.0) then
+       if(kgravity(m).gt.0) then
 c
 c..potential temperature (no pot.temp. at surface...)
-	  kt1= max(k1,2)
-	  kt2= kt1+1
+         kt1= max(k1,2)
+         kt2= kt1+1
           tk1= rt1*(c1*t1(i,j,  kt1)+c2*t1(i+1,j,  kt1)
      -             +c3*t1(i,j+1,kt1)+c4*t1(i+1,j+1,kt1))
      -        +rt2*(c1*t2(i,j,  kt1)+c2*t2(i+1,j,  kt1)
@@ -173,41 +173,41 @@ c
             rtab=p*pmult
             itab=rtab
             pi2= pitab(itab)+(pitab(itab+1)-pitab(itab))*(rtab-itab)
-	    pi= pi1*dz1+pi2*dz2
+           pi= pi1*dz1+pi2*dz2
             t=th*pi*cpinv
-	    p= 1000.*(pi*cpinv)**rcpinv
+           p= 1000.*(pi*cpinv)**rcpinv
 c.old       gravity= vgrav(radiusmym(m),densitygcm3(m),p,t)
-	    ip= (p-pbasevg)/pincrvg
-	    if(ip.lt.1) ip=1
-	    if(ip.ge.numpresvg) ip=numpresvg-1
-	    pvg= pbasevg + ip*pincrvg
-	    it= (t-tbasevg)/tincrvg
-	    if(it.lt.1) it=1
-	    if(it.ge.numtempvg) it=numtempvg-1
-	    tvg= tbasevg + it*tincrvg
-	    grav1= vgtable(it,ip,m)
+           ip= (p-pbasevg)/pincrvg
+           if(ip.lt.1) ip=1
+           if(ip.ge.numpresvg) ip=numpresvg-1
+           pvg= pbasevg + ip*pincrvg
+           it= (t-tbasevg)/tincrvg
+           if(it.lt.1) it=1
+           if(it.ge.numtempvg) it=numtempvg-1
+           tvg= tbasevg + it*tincrvg
+           grav1= vgtable(it,ip,m)
      +		   + (vgtable(it+1,ip,m)-vgtable(it,ip,m))
      +		    *(t-tvg)/tincrvg
-	    ip= ip+1
-	    grav2= vgtable(it,ip,m)
+           ip= ip+1
+           grav2= vgtable(it,ip,m)
      +		   + (vgtable(it+1,ip,m)-vgtable(it,ip,m))
      +		    *(t-tvg)/tincrvg
-	    gravity= grav1 + (grav2-grav1) * (p-pvg)/pincrvg
+           gravity= grav1 + (grav2-grav1) * (p-pvg)/pincrvg
 c######################################################################
 c	    if(np.lt.21) write(6,*) '  p,t,gravity: ',p,t,gravity
 c######################################################################
-	  else
-	    gravity= gravityms(m)
-	  end if
+         else
+           gravity= gravityms(m)
+         end if
 c
-	  pdata(10,np)= gravity
+         pdata(10,np)= gravity
 
 c
 c..gravity ... a very simple, probably too simple (!!!) conversion
 c............. from m/s to model etadot/sigmadot "vertical velocity"
           k1=ivlayer(ilvl)
 c.......................................???????????????????????????????
-	  if (k1.eq.nk) k1=k1-1
+         if (k1.eq.nk) k1=k1-1
 c.......................................???????????????????????????????
           k2=k1+1
           p=ahalf(k1)+bhalf(k1)*ps
@@ -218,16 +218,16 @@ c.......................................???????????????????????????????
           rtab=p*pmult
           itab=rtab
           pi2= pitab(itab)+(pitab(itab+1)-pitab(itab))*(rtab-itab)
-	  dz= th*(pi1-pi2)*ginv
-	  deta= vhalf(k1)-vhalf(k2)
-	  wg= gravity*deta/dz
+         dz= th*(pi1-pi2)*ginv
+         deta= vhalf(k1)-vhalf(k2)
+         wg= gravity*deta/dz
 c######################################################################
 c	  if(np.lt.21) write(6,*) 'np,k2,w,wg: ',np,k2,w,wg
 c######################################################################
 #if !defined(TRAJ)
-	  w= w + wg
+         w= w + wg
 #endif
-	end if
+       end if
 c
 c..update position
 c
@@ -238,10 +238,10 @@ c
 #if defined(TRAJ)
 cjb_270211
 c
-	speed=sqrt(u*u+v*v)
+       speed=sqrt(u*u+v*v)
 #endif
 ccc JB 29.04pdata(3,np)
-	if(pdata(3,np) .gt. vmax) pdata(9,np)=0.0
+       if(pdata(3,np) .gt. vmax) pdata(9,np)=0.0
 ccc
 c
 c..store u,v for rwalk

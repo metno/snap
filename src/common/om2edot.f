@@ -46,16 +46,16 @@ c
 c
       do k=2,nk-kadd
 c
-	deta=vhalf(k-1)-vhalf(k)
+       deta=vhalf(k-1)-vhalf(k)
 c
-	do j=1,ny
-	  do i=1,nx
-	    omega=w2(i,j,k)
-	    p1=ahalf(k)+bhalf(k)*ps2(i,j)
-	    p2=ahalf(k-1)+bhalf(k-1)*ps2(i,j)
-	    w2(i,j,k)=omega*deta/(p2-p1)
-	  end do
-	end do
+       do j=1,ny
+         do i=1,nx
+           omega=w2(i,j,k)
+           p1=ahalf(k)+bhalf(k)*ps2(i,j)
+           p2=ahalf(k-1)+bhalf(k-1)*ps2(i,j)
+           w2(i,j,k)=omega*deta/(p2-p1)
+         end do
+       end do
 c
       end do
 c
@@ -68,19 +68,19 @@ c..assuming that the lower model level is always present above surface level
 c
       if(kk.gt.km/2 .and. kadd.eq.0 .and. klevel(nk).eq.1) then
 c
-	d2hx=1./(gparam(7)*2.)
-	d2hy=1./(gparam(8)*2.)
-	do j=1,ny
-	  do i=1,nx
-	    xmd2h(i,j)=xm(i,j)*d2hx
-	    ymd2h(i,j)=ym(i,j)*d2hy
-	  end do
-	end do
+       d2hx=1./(gparam(7)*2.)
+       d2hy=1./(gparam(8)*2.)
+       do j=1,ny
+         do i=1,nx
+           xmd2h(i,j)=xm(i,j)*d2hx
+           ymd2h(i,j)=ym(i,j)*d2hy
+         end do
+       end do
 c
-	write(9,*) 'OM2EDOT call EDCOMP'
+       write(9,*) 'OM2EDOT call EDCOMP'
 c
         k=2
-	call edcomp(nx,ny,kk,u2(1,1,k),v2(1,1,k),w2(1,1,k),ps2(1,1),
+       call edcomp(nx,ny,kk,u2(1,1,k),v2(1,1,k),w2(1,1,k),ps2(1,1),
      +		    xmd2h,ymd2h,ahalf(1),bhalf(1),vhalf(1),
      +		    field1,field2,field3,field4)
 c
