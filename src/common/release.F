@@ -91,6 +91,7 @@ c
       do m=1,ncomp
 #if defined(BOMB)
 c Number of particles equal for each component, but not Bq
+c shouldn't this be everywhere ?????
        nrel(m)=nint(float(mprel)/float(ncomp))
 #else
        nrel(m)= nint(relbq(m)*tstep*pscale)
