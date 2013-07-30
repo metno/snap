@@ -1,0 +1,299 @@
+#!/bin/ksh
+#
+# A script to install ODB into destination directories
+#
+# Author: Sami Saarinen, ECMWF, 12-Jan-2004 : Initial version
+#                               25-May-2005 : Added -L to override CPP-preprocessor "/lib/cpp -P"
+#                               25-May-2005 : Added -I target to apply $CPP on target and copy it to $ODB_SYSPATH
+#                               27-May-2005 : Files with -I target are copied to a new destination (sql)dir $ODB_SQLPATH
+#                               01-Jan-2005 : Files with -I target are also gzipped, if -g option is supplied
+#                               02-Jan-2005 : Copies shareable libs instead of static libs (except libodbmain.a)
+#                               02-Jan-2005 : The default libcpp /lib/cpp -P -C now maintains C/C++ comment lines
+#                               07-Jan-2005 : Copies any shareable libs -- when found -- instead of static libs
+#                               09-Jan-2005 : Tests any files existence before trying to put it to tarfile
+#                               07-Nov-2005 : libcpp is now by default "/lib/cpp -P -C -DECMWF"; use -L opt. to override
+#                               20-Dec-2005 : Old default "/lib/cpp -P -C" re-instated
+#                               17-Mar-2006 : SQL-files go now under $ODB_SQLPATH/$dbname/
+#
+
+set -eu
+
+thisdir=$(pwd)
+
+alias cd='\cd'
+alias rm='\rm'
+alias cp='\cp'
+alias ls='\ls'
+alias ln='\ln'
+alias mv='\mv'
+
+saved_args=""
+if [[ $# -gt 0 ]] ; then
+  saved_args="$*"
+fi
+
+USAGE_1="make_install [-d install_dir] [-v]   \\"
+USAGE_2="             [-e executable_name(s)] \\"
+USAGE_3="             [-l library_name(s)]    \\"
+USAGE_4="             [-i include_file(s)]    \\"
+USAGE_5="             [-m module_file(s)]     \\"
+USAGE_6="             [-c color_map_or_constant_file(s)] \\"
+USAGE_7="             [-s script_file(s)]     \\"
+USAGE_8="             [-r rootdir] \\"
+USAGE_9="             [-L 'alternate_C_preprocessor_cmd'] \\"
+USAGE_A="             [-I target_to_C_preprocess_and_place_in_\$ODB_SQLPATH] \\" 
+USAGE_B="             [-g] \\"
+USAGE_C="             [-S shareable_lib_suffix_different_from_a]"
+
+install_dir="/dev/null"
+exes=""
+libs=""
+incs=""
+cols=""
+mods=""
+scri=""
+Verbose=""
+rootdir=.
+#libcpp="/lib/cpp -P -C -DECMWF"
+libcpp="/lib/cpp -P -C"
+#-- In MeteoFrance, use : 
+#libcpp="/lib/cpp -P -C"
+targets=""
+gzip=0
+shsfx=a
+
+errflg=0
+while getopts c:d:e:gi:I:m:l:L:r:s:S:v  option
+do
+  case $option in
+    c) cols="$cols$OPTARG ";;
+    d) install_dir="$OPTARG";;
+    e) exes="$exes$OPTARG ";;
+    g) gzip=1;;
+    i) incs="$incs$OPTARG ";;
+    I) targets="$targets$OPTARG ";;
+    m) mods="$mods$OPTARG ";;
+    l) libs="$libs$OPTARG ";;
+    L) libcpp="$OPTARG";;
+    r) rootdir="$OPTARG";;
+    s) scri="$scri$OPTARG ";;
+    S) shsfx="$OPTARG";;
+    v) Verbose=v;;
+   \?) errflg=1;;
+  esac
+done
+
+#=======================================================================
+#   Show parameters (... not completed yet)
+#=======================================================================
+
+echo "make_install $saved_args"
+
+#=======================================================================
+#   Check errors
+#=======================================================================
+
+[[ -d "$install_dir" ]] || {
+  echo "***Warning: Installation directory '$install_dir' does not exist. Creating ..."
+  mkdir -p "$install_dir"          || errflg=1
+  chmod u=rwx,go=rx "$install_dir" || errflg=1
+}
+
+[[ -d "$install_dir/bin"     ]] ||  mkdir -p "$install_dir/bin"     || errflg=1
+[[ -d "$install_dir/lib"     ]] ||  mkdir -p "$install_dir/lib"     || errflg=1
+[[ -d "$install_dir/include" ]] ||  mkdir -p "$install_dir/include" || errflg=1
+[[ -d "$install_dir/module"  ]] ||  mkdir -p "$install_dir/module"  || errflg=1
+[[ -d "$install_dir/sqldir"  ]] ||  mkdir -p "$install_dir/sqldir"  || errflg=1
+
+if [[ $errflg -ne 0 ]] ; then
+  echo $USAGE_1 >&2
+  echo $USAGE_2 >&2
+  echo $USAGE_3 >&2
+  echo $USAGE_4 >&2
+  echo $USAGE_5 >&2
+  echo $USAGE_6 >&2
+  echo $USAGE_7 >&2
+  echo $USAGE_8 >&2
+  echo $USAGE_9 >&2
+  echo $USAGE_A >&2
+  echo $USAGE_B >&2
+  exit 1
+fi
+
+#=======================================================================
+#   Get going ...
+#=======================================================================
+
+tar_create="tar -c${Verbose}f"
+tar_expand="tar -x${Verbose}f"
+
+gzip_exe=$(whence gzip 2>/dev/null || echo "gzip")
+perl_exe=$(whence perl 2>/dev/null || echo "perl")
+
+cd $rootdir
+pwd
+
+#-- Target files to be preprocessed
+#   ... and gzip'ped, if -g options was supplied (i.e. $gzip = 1) 
+
+destdir=$install_dir/sqldir
+echo "Target files created with '$libcpp' ==> $destdir"
+for f in $targets
+do
+  dir=$(\cd $(dirname $f) >/dev/null 2>&1; pwd)
+  base=$(basename $f)
+  if [[ -f $f ]] ; then
+    dbname=$(basename $dir | $perl_exe -pe 's/^.*\.//')
+    sqldir=$destdir/$dbname
+    [[ -d $sqldir ]] || mkdir $sqldir
+    if [[ $gzip -eq 1 ]] ; then
+      rm -f $sqldir/$base.gz
+      (cd $dir ; $libcpp < $base | $gzip_exe -9 > $sqldir/$base.gz)
+      echo "$libcpp : $f --> $base.gz ok."
+    else
+      rm -f $sqldir/$base
+      (cd $dir ; $libcpp < $base > $sqldir/$base)
+      echo "$libcpp : $f --> $base ok."
+    fi
+  fi
+done
+(cd $destdir; find . -type f -print | xargs chmod u=rw,go=r)
+chmod u=rwx,go=rx $destdir
+
+#-- Scripts
+
+destdir=$install_dir/bin
+echo "Scripts ==> $destdir"
+for f in $scri
+do
+  if [[ -f $f ]] ; then
+    dir=$(\cd $(dirname $f) >/dev/null 2>&1; pwd)
+    base=$(basename $f)
+    rm -rf $destdir/$base
+    (cd $dir; $tar_create - $base | (cd $destdir; $tar_expand -))
+    echo "$f ok."
+  else
+    echo "***Warning: Couldn't locate script-file $f"
+  fi
+done
+(cd $destdir; find . -type f -print | xargs chmod u=rwx,go=rx)
+chmod u=rwx,go=rx $destdir
+
+#-- Executables
+
+destdir=$install_dir/bin
+echo "Executables ==> $destdir"
+for f in $exes
+do
+  if [[ -f $f ]] ; then
+    dir=$(\cd $(dirname $f) >/dev/null 2>&1; pwd)
+    base=$(basename $f)
+    rm -f $destdir/$base
+    (cd $dir; $tar_create - $base | (cd $destdir; $tar_expand -))
+    echo "$f ok."
+  else
+    echo "***Warning: Couldn't locate executable $f"
+  fi
+done
+(cd $destdir; find . -type f -print | xargs chmod u=rwx,go=rx)
+chmod u=rwx,go=rx $destdir
+
+#-- except odbi_server.x, which should be protected from ordinary users
+#   (protection skipped)
+#if [[ -f $destdir/odbi_server.x ]] ; then
+#  chmod u=rwx,og= $destdir/odbi_server.x
+#fi
+
+#-- Libraries
+
+destdir=$install_dir/lib
+echo "Libraries ==> $destdir"
+for f in $libs
+do
+  dir=$(\cd $(dirname $f) >/dev/null 2>&1; pwd)
+  base=$(basename $f .a)
+  # Take .so-file (or $shsfx) only if available, otherwise .a-file
+  if [[ -f "$dir/$base.$shsfx" ]] ; then
+    base=$base.$shsfx
+  else
+    base=$base.a
+  fi
+  f=$dir/$base
+  if [[ -f $f ]] ; then
+    rm -f $destdir/$base
+    (cd $dir; $tar_create - $base | (cd $destdir; $tar_expand -))
+    echo "$f ok."
+  else
+    echo "***Warning: Couldn't locate library $f"
+  fi
+done
+(cd $destdir; find . -type f -print | xargs chmod u=rw,go=r)
+chmod u=rwx,go=rx $destdir
+
+#-- Include files (we don't want symbolic links here, though)
+
+destdir=$install_dir/include
+echo "Include files ==> $destdir"
+for f in $incs
+do
+  if [[ -f $f ]] ; then
+    dir=$(\cd $(dirname $f) >/dev/null 2>&1; pwd)
+    base=$(basename $f)
+    rm -f $destdir/$base
+    if [[ -L $f ]] ; then
+      echo "***Warning: Skipping symbolic link $f"
+    else
+      (cd $dir; $tar_create - $base | (cd $destdir; $tar_expand -))
+      echo "$f ok."
+    fi
+  else
+    echo "***Warning: Couldn't locate include file $f"
+  fi
+done
+(cd $destdir; find . -type f -print | xargs chmod u=rw,go=r)
+chmod u=rwx,go=rx $destdir
+
+#-- Module files
+
+destdir=$install_dir/module
+echo "Module files ==> $destdir"
+for f in $mods
+do
+  if [[ -f $f ]] ; then
+    dir=$(\cd $(dirname $f) >/dev/null 2>&1; pwd)
+    base=$(basename $f)
+    rm -f $destdir/$base
+    (cd $dir; $tar_create - $base | (cd $destdir; $tar_expand -))
+    echo "$f ok."
+  else
+    echo "***Warning: Couldn't locate module file $f"
+  fi
+done
+(cd $destdir; find . -type f -print | xargs chmod u=rw,go=r)
+chmod u=rwx,go=rx $destdir
+
+#-- Color maps, and other constant files
+
+destdir=$install_dir/include
+echo "Color map files ==> $destdir"
+for f in $cols
+do
+  if [[ -f $f ]] ; then
+    dir=$(\cd $(dirname $f) >/dev/null 2>&1; pwd)
+    base=$(basename $f)
+    rm -f $destdir/$base
+    (cd $dir; $tar_create - $base | (cd $destdir; $tar_expand -))
+    echo "$f ok."
+  else
+    echo "***Warning: Couldn't locate color map file $f"
+  fi
+done
+(cd $destdir; find . -type f -print | xargs chmod u=rw,go=r)
+chmod u=rwx,go=rx $destdir
+
+#-- Finally, make sure protections are correct
+
+chmod u=rwx,go=rx $install_dir
+find $install_dir -type d -print | xargs chmod a+rx
+
+exit 0

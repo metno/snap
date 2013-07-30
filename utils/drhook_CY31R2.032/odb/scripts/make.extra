@@ -1,0 +1,3 @@
+#-- Optional extra rules after this --
+
+#defs.ok:	yacc.o

@@ -1,0 +1,84 @@
+#-- NEC SX-5
+#   A big thanks to Bureau of Meteorology (BoM), Melbourne, Australia !!
+#   Derived from BoM port by Paul Burton, ECMWF
+#   NEC SX-5 being tested on CSCS's (Ligano, Switzerland) machine by Sami Saarinen
+
+ARCH=SX8
+
+#-- Installation directory
+INSTALL_DIR=/not/defined
+
+SYSLIB=-lgen -lcpp
+
+# Fortran compiler
+FC=sxmpif90 
+FCFLAGS=-D$(ARCH) -DNEC -DODBCS=0 -V -c -USX -Chopt -Popenmp $(FTRACE) -Wf,-pvctl fullmsg vwork=stack,-L fmtlist transform
+
+FCFREEFMT=-f4
+
+FCFIXEDFMT=-f3
+
+#-- C
+CC=sxcc -traceback
+CCFLAGS=\
+-woff=177:236:550 -O -D$(ARCH) \
+-DNEC -DSTATIC_LINKING -DODBCS=0 \
+-UHAS_MOTIF \
+-Chopt -pvctl,fullmsg,vwork=stack,nodep \
+-DDBXDEBUGGER=/bin/dbx
+
+#-- C++
+CCPLUS=sxc++ -g
+CCPLUSFLAGS=$(CCFLAGS)
+
+
+#-- C-linker
+LDCC=$(CC)
+#LDCCFLAGS=-P openmp -lcpp
+LDCCFLAGS=-lcpp -V -USX -Chopt $(FTRACE) -pvctl,fullmsg,vwork=stack,nodep
+
+#-- Fortran90-linker
+#LDFC_SERIAL=sxmpif90
+LDFC=$(FC)
+LDFCFLAGS= -V -USX -Chopt -Popenmp $(FTRACE) -Wf,-pvctl fullmsg vwork=stack,-L fmtlist transform
+
+AR=sxar
+
+# Build odb98.x compiler for Linux front-end compiler
+FE_YACC=bison --yacc -d
+FE_LEX=flex -lv
+FE_CC=gcc -g -fPIC
+FE_CCFLAGS=\
+-O1 \
+-Werror \
+-DLINUX -DLITTLE \
+-DINTEGER_IS_INT \
+-DHAS_NETCDF \
+-DNEC_FE
+FE_LDCC=$(FE_CC)
+FE_LDCCFLAGS=-rdynamic
+FE_YACCLEX_LIBS=-lfl -lm
+FE_SYSLIB=-ldl
+FE_AR=ar
+
+BACKENDTOO=yes
+
+#-- Magics
+MAGLIB=-L$(ROOTDIR) -lodbdummy
+
+#-- Lex & Yacc
+YACC=yacc -d
+
+LEX=flex -lv
+YACCLEX_LIBS=-lm
+
+#-- MPI
+MPILIB=-lpmpi -lmpi
+
+#-- X-windows
+XWLIBS=
+
+SHELL=/bin/ksh -e
+
+ECLIB=-L$(ROOTDIR) -lodbec
+EMOSLIB=-L$(ROOTDIR) -lodbemos

@@ -1,0 +1,3 @@
+OBJS= \
+tools/Kind.o \
+tools/sizeof.o 

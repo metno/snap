@@ -1,0 +1,18 @@
+#!/bin/ksh
+
+set +xv
+set -eu
+
+if [[ $# -le 0 ]] ; then
+  echo "***Error: Usage $0 fortran_file(s)" >&2
+  exit 1
+fi
+
+cmd=$(basename $0)
+dir=$(\cd $(dirname $cmd) >/dev/null 2>&1; pwd)
+
+export VPATH=.
+
+perl -w -I$dir $dir/insert_drhook.pl $*
+
+exit 0

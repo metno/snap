@@ -1,0 +1,63 @@
+#-- NEC SX 
+#   A big thanks to Bureau of Meteorology (BoM), Melbourne, Australia !!
+#   Derived from BoM port by Paul Burton, ECMWF
+
+ARCH=necsx
+
+#-- Installation directory
+INSTALL_DIR=/data/nwp/nm/frifs/odb_CY31R0.007/install/$(ARCH)/latest
+
+# Fortran compiler
+FC=sxmpif90 
+FCFLAGS=-D$(ARCH) -DNEC -DODBCS=0 -V -ftrace -c -USX -Chopt -Popenmp $(FTRACE) -Wf,-pvctl fullmsg vwork=stack,-L fmtlist transform
+
+FCFREEFMT=-f4
+
+FCFIXEDFMT=-f3
+
+#-- C
+CC=sxcc
+CCFLAGS=-O -D$(ARCH) -DNEC -DSTATIC_LINKING -DODBCS=0
+
+#-- C++
+CCPLUS=sxc++ -g
+CCPLUSFLAGS= $(CCFLAGS)
+
+
+#-- C-linker
+LDCC=$(FC)
+#LDCCFLAGS=-P openmp -lcpp
+LDCCFLAGS=-lcpp -P openmp -ftrace -V -ftrace -USX -Chopt -Popenmp $(FTRACE) -Wf,-pvctl fullmsg vwork=stack,-L fmtlist transform
+
+#-- Fortran90-linker
+LDFC=$(FC)
+LDFCFLAGS=-P openmp -ftrace -V -ftrace -USX -Chopt -Popenmp $(FTRACE) -Wf,-pvctl fullmsg vwork=stack,-L fmtlist transform
+
+AR=sxar
+
+#-- Front-end flags
+FE_AR=ar
+FE_CC=gcc -g -fPIC
+FE_CCFLAGS=-O1 -Werror -DLINUX -DNEC_FE
+FE_LDCC=$(FE_CC)
+FE_LDCCFLAGS=
+
+#-- Magics
+MAGLIB=-L$(ROOTDIR) -lodbdummy
+
+#-- Lex & Yacc
+YACC=yacc -d
+
+LEX=flex -lv
+YACCLEX_LIBS=-lm
+
+#-- MPI
+MPILIB=-lpmpi -lmpi
+
+#-- X-windows
+XWLIBS=
+
+SHELL=/bin/ksh -e
+
+ECLIB=-L$(ROOTDIR) -lodbec
+EMOSLIB=-L$(ROOTDIR) -lodbemos

@@ -1,0 +1,136 @@
+#!/usr/bin/perl
+
+####/usr/local/apps/ActivePerl-5.6.1-626/bin/perl
+
+use File::Find;
+
+$nocase="";
+$suffix="";
+$recurse=0;
+$context=0;
+$missing=0;
+$dirout="";
+
+while ($ARGV[0] =~/^-/) {
+  $_=shift;
+  if (/^-i$/) {
+    $nocase="i";
+  }
+  elsif (/^-r$/) {
+    $recurse=1;
+  }
+  elsif (/^-m$/) {
+    $missing=1;
+  }
+  elsif (/^-c$/) {
+    $context=shift;
+    die "-c must be followed by space and a number not by $context\n"
+      if ($context!~/^\d+$/);
+  }
+  elsif (/^-d$/) {
+    $dirout=shift;
+    die "-d must be followed by the name of an existing directory\n"
+      if (! -d $dirout);
+  }
+  elsif (/^-s$/) {
+    $suffix=shift;
+    die "-s must be followed by space and letter not by $suffix\n"
+      if ($suffix!~/^\w+$/);
+  }
+  else {
+    print "USAGE: mgrep [-r] [-i] [-m] [-c #] [-d outdir] regexp [file ..] \n";
+    die "Unrecognized switch: $_\n";
+  }
+}
+$pat=shift;
+$pat=~s/!/\\!/g;
+if ($missing) {
+$action = <<'EOF';
+$imissing=0;
+EOF
+}
+else {
+$action = <<'EOF';
+print $file,":\t",$_;
+EOF
+}
+
+if ($recurse) {
+  find(\&wanted,'.');
+  @files=sort @files;
+   }
+else { 
+   (@files)=@ARGV;
+}
+
+$prog1 = <<EOF1;
+FILE:foreach \$file (\@files) {
+  open(FILE,\$file) || do {
+#    print STDERR "can't open \$file: \$!\\n";
+    next;
+  };
+  next if -d FILE;
+  next if -B FILE;
+  if(\$suffix) {
+    next if (\$file !~ /\.$suffix\$/);
+  }
+  \$imissing=1;
+  while (<FILE>) {
+    if (m!$pat!$nocase) {
+      $action;
+    }
+  }
+  if (\$missing) {
+    if (\$imissing) {
+      print "\$file :\t  $pat missing\n";
+    }
+  } 
+}
+EOF1
+$prog2 = <<EOF2;
+FILE:foreach \$file (\@files) {
+  open(FILE,\$file) || do {
+#    print STDERR "can't open \$file: \$!\\n";
+    next;
+  };
+  next if -d FILE;
+  next if -B FILE;
+  if(\$suffix) {
+    next if (\$file !~ /\.$suffix\$/);
+  }
+  \@ary=();
+  \$_=<FILE>;
+  \$seq=0;
+  push(\@ary,\$_);
+  for (1..$context) {
+    unshift(\@ary,'');
+    \$_=<FILE>;
+    push(\@ary,\$_) if \$_;
+  }
+  while (\$ary[$context]) {
+
+    if(\$ary[$context] =~ m!$pat!$nocase) {
+      print "-------File : \$file\n" if !\$seq;
+      print "-------\n" if \$seq++;
+      print \@ary,"\n";
+    }
+    \$_=<FILE> if \$_;
+    shift(\@ary);
+    push(\@ary,\$_);
+  }
+}
+EOF2
+
+  if($context){
+    eval $prog2;
+  }
+  else {
+    eval $prog1;
+  }
+  die $@ if $@;
+
+sub wanted{
+  push(@files,$File::Find::name);
+}
+
+

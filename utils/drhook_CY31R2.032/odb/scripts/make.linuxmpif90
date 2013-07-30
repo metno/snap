@@ -1,0 +1,74 @@
+#-- Pentium/Linux with experimental Gnu Fortran95 compiler --
+
+ARCH=linuxmpif90
+SYSLIB=-ldl
+
+#-- Installation directory
+INSTALL_DIR=/vol/odb/ODBDIR/$(ARCH)/mytest
+
+#-- Fortran90 with GNU g95 (watch this development !!)
+FC=mpif90 -g
+
+#-- The following should be on, when running executables
+#   This corresponds -byteswapio of pgf90
+#   or -convert big_endian on SGI/Altix & Dec/Compaq/Alpha
+
+FCFLAGS= -fopenmp \
+-DLINUX -DLITTLE -D$(ARCH) \
+-I$(ROOTDIR)/odb/scripts \
+-fno-second-underscore
+
+FCFREEFMT=-ffree-form
+
+FCFIXEDFMT=-ffixed-form  -fdefault-real-8
+
+#-I$(INSTALL_DIR)/include
+
+#-- C
+CC=gcc -g
+CCFLAGS=\
+-Werror \
+-DLINUX -DLITTLE -D$(ARCH) \
+-DHAS_XMOTIF -I/usr/X11/include \
+-DINTEGER_IS_INT
+
+#-- C++
+CCPLUS=g++ -g
+CCPLUSFLAGS=\
+-DLINUX -DLITTLE
+
+#-- C-linker
+LDCC=$(CC)
+LDCCFLAGS=-rdynamic
+
+#-- Fortran90-linker
+LDFC=$(FC)
+LDFCFLAGS=-Wl,-export-dynamic -fopenmp
+
+#-- Magics
+LDMAG=env LD_LIBRARY_PATH=/usr/local/apps/newgnu/lib $(LDFC)
+MAGLIB=\
+-L/usr/local/apps/Magics/current/lib -lmagics_r8 \
+-lMvDevices_r8 -lmagics_r8 -lgd -lpng -ljpeg -lz -lfreetype \
+-L/usr/local/apps/newgnu/lib -lstdc++ -lm \
+-L$(ROOTDIR) -lodbemos
+
+#-- Magics switched off for the moment ...
+LDMAG=$(LDFC)
+MAGLIB=-L$(ROOTDIR) -lodbdummy
+
+#-- Lex & Yacc
+YACC=bison --yacc -d
+LEX=flex -lv
+YACCLEX_LIBS=-lfl -lm
+
+#-- MPI
+#MPILIB=-L$(INSTALL_DIR)/lib -lmpich -ldl
+
+MPILIB=-L$(ROOTDIR) -ldl
+
+#-- X-windows
+XWLIBS=-L/usr/X11/lib -lXm -lXt -lX11
+#XWLIBS=
+
+SHELL=/bin/ksh -e

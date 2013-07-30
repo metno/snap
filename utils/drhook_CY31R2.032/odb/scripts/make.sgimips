@@ -1,0 +1,50 @@
+#-- SGI (sgimips) --
+
+ARCH=sgimips
+
+INSTALL_DIR=/vol/odb/ODBDIR/$(ARCH)/mytest
+
+SGI_ABI=-n32
+
+FC=f90 $(SGI_ABI)
+#FCOPT=-g3 -O2 -mips4 -r10000 -OPT:Olimit_opt=on
+FCOPT=-g3 -O1 -mips4 -r10000 -OPT:Olimit_opt=on
+FCFLAGS=\
+-ansi \
+-DSGI -DNO_UNDEF -macro_expand \
+-D$(ARCH) $(FCOPT)
+
+FCFREEFMT=-freeform
+FCFIXEDFMT=-fixedform -r8
+
+CC=cc $(SGI_ABI)
+CCOPT=$(FCOPT)
+CCFLAGS=\
+-DSGI -woff 1167,1174,1552,1164,1275 \
+-DHAS_XMOTIF \
+-D$(ARCH) $(CCOPT) \
+-DINTEGER_IS_INT
+
+CCPLUS=CC
+
+MODUPCASE=-u
+
+LDCC=$(CC)
+LDCCFLAGS=$(CCOPT)
+
+LDFC=$(FC)
+LDFCFLAGS=$(FCOPT) -Wl,-woff,15 -Wl,-woff,171 -Wl,-woff,84
+#MPILIB=$(LIBODB) $(LIBIFSAUX) $(LIBODBDUMMY) -lmpi -lgen
+MPILIB=-L$(ROOTDIR) -lmpi_serial -lgen
+
+YACC=yacc -d
+LEX=lex -v
+YACCLEX_LIBS=-lgen -lm
+
+LDMAG=$(LDFC)
+MAGLIB=\
+-L/usr/local/apps/Magics/current/lib -lmagGL -lMvDevices -lftn -lfortran -lm \
+-L$(ROOTDIR) -lodbemos
+
+#-- X-windows
+XWLIBS=-woff 1164 -lXm -lXt -lX11

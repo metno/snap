@@ -1,0 +1,68 @@
+#!/bin/ksh
+#
+# A simple mpirun simulator for IBM RS/6000
+#
+# Author: Sami Saarinen, ECMWF, 19/12/2001
+#
+# Usage: mpirun.ibm [-np <nprocs>] executable [arguments]
+#
+# If MP_HOSTFILE has been predefined, then use that as a hostfile
+# No. of lines in *PREDEFINED* MP_HOSTFILE denote the $NPES *really* to be used!!
+#
+
+set -a
+
+NPES=1
+if [[ $# -gt 2 ]] ; then
+  if [[ "$1" = "-np" ]] ; then
+    NPES=$2
+    shift 2
+  fi
+fi
+
+export OMP_NUM_THREADS=${OMP_NUM_THREADS:=1}
+MPL_MBX_SIZE=64000000 # for now
+MP_PROCS=$NPES
+MP_SHARED_MEMORY=yes
+MP_WAIT_MODE=poll
+    OMP_SCHEDULE=dynamic,$OMP_NUM_THREADS
+    if [[ $OMP_NUM_THREADS = 1 ]] ; then
+      XLSMPOPTS="parthds=1:stack=268435456 : spins=500000 : yields=50000"
+    else
+      XLSMPOPTS="parthds=$OMP_NUM_THREADS:stack=268435456"
+    fi
+#XLSMPOPTS="parthds=:stack=50000000 : spins=500000 : yields=50000"
+#_RLD_ARGS="-log /dev/null"
+MP_COREFILE_FORMAT=STDERR
+
+defhere=0
+if [[ "${MP_HOSTFILE:-/not/available}" = "/not/available" ]] ; then
+  defhere=1
+elif [[ ! -f "${MP_HOSTFILE}" ]] ; then
+  defhere=1
+fi
+
+if [[ $defhere -eq 1 ]] ; then
+  MP_HOSTFILE=node_file.$$
+  echo "$NPES $(hostname)" | awk '{for(i=1;i<=$1;i++) print $2;}' > $MP_HOSTFILE
+fi
+
+# printenv | egrep ^MP_
+
+export MPL_CL_TERMINATE=${MPL_CL_TERMINATE:="-^"}
+cl_terminate=$MPL_CL_TERMINATE # see ifsaux/module/mpl_arg_mod.F90
+
+if [[ $# -gt 0 ]] ; then
+  args="$* $cl_terminate"
+else
+  args="$cl_terminate"
+fi
+
+rc=0
+
+echo "Running: env OMP_NUM_THREADS=${OMP_NUM_THREADS} $args"
+               env OMP_NUM_THREADS=${OMP_NUM_THREADS} $args || rc=$?
+
+[[ $defhere -eq 0 ]] || \rm -f $MP_HOSTFILE
+
+exit $rc

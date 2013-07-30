@@ -1,0 +1,10 @@
+TASK=odbmain
+LIB=$(ROOTDIR)/libodbmain.a
+VPATH=
+CCINC=
+FCINC=$(CCINC) 
+ODB_FILTER=no
+OBJS= \
+Kind.o \
+sizeof.o 
+# DO NOT DELETE THIS LINE - used by make depend

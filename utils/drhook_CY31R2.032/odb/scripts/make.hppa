@@ -1,0 +1,65 @@
+#-- HP PA-Risc
+
+ARCH=hppa
+
+#-- Installation directory
+INSTALL_DIR=/vol/odb/ODBDIR/$(ARCH)/mytest
+
+#-- Fortran90 : 
+#   HP doesn't understand *.F90 (i.e. capital f90) files
+#   do I need to provide a temporary solution via script
+
+FC=/bin/ksh -e $(ROOTDIR)/odb/scripts/F90hppa
+
+FCFLAGS=\
+-DHPPA -D$(ARCH) \
+-I$(ROOTDIR)/odb/scripts \
++ppu +Z +cpp=yes \
++DAportable
+
+FCFREEFMT=
+
+FCFIXEDFMT=+autodbl4
+
+#-- C
+CC=c89
+CCFLAGS=\
+-DHPPA -D$(ARCH) -D_HPUX_SOURCE \
++e +Z \
+-DINTEGER_IS_INT
+
+#-- C++
+CCPLUS=c++
+CCPLUSFLAGS=\
+-DHPPA -D$(ARCH) -D_HPUX_SOURCE
+
+#-- C-linker
+#LDCC=c89
+LDCC=f90
+LDCCFLAGS=-Wl,+k -Wl,-Bimmediate -Wl,-Bnonfatal -Wl,-Bverbose
+
+#-- Fortran90-linker
+LDFC=f90
+LDFCFLAGS=$(LDCCFLAGS) -Wl,+n +U77 +DAportable
+
+#-- Magics (disabled for now)
+#LDMAG=env LD_LIBRARY_PATH=/usr/local/apps/newgnu/lib $(LDFC)
+#MAGLIB=\
+#-L/usr/local/apps/Magics/current/lib -lmagics \
+#-lMvDevices -lmagics -lgd -lpng -ljpeg -lz -lfreetype \
+#-L/usr/local/apps/newgnu/lib -lstdc++ -lm \
+#-L$(ROOTDIR) -lodbemos
+
+#-- Lex & Yacc
+YACC=yacc -d
+LEX=lex -v
+YACCLEX_LIBS=-ll -ly -lm
+
+#-- MPI
+#MPILIB=-L$(INSTALL_DIR)/lib -lmpich
+
+MPILIB=$(LIBMPI_SERIAL) -lc -lm -lxnet
+
+#-- X-windows (disabled for now)
+#XWLIBS=-L/usr/X11/lib -lXm -lXt -lX11
+XWLIBS=

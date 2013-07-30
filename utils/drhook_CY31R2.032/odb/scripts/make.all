@@ -1,0 +1,1 @@
+all: $(TIMESTAMP_EXE) _$(TASK)_

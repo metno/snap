@@ -1,0 +1,173 @@
+
+How to build the Dr.Hook software from a tarfile ?
+--------------------------------------------------
+
+Assuming you have gunzip'ped tarfile "drhook_CY29R1.tar.gz".
+Copy it to the place where you have at least 2MB of disk space
+and untar it. Then run configure and make. As follows (ksh/bash):
+
+	$ cp drhook_CY29R1.tar.gz /your/disk
+	$ cd /your/disk
+	$ gunzip < drhook_CY29R1.tar.gz | tar -xf -
+	$ cd drhook_CY29R1
+        $ export ARCH=xxxx
+	$ ./configure -a $ARCH
+	$ make ARCH=xxxx drhook 2>&1 | tee log.make
+	( in C-shell (csh/tcsh): make |& tee log.make )
+
+where xxxx is ARCH-name as described in table below.
+Also, please have a look at odb/scripts/make.xxxx for ARCH=xxxx.
+Make any modification necessary to get it going on your platform.
+
+Compilation shouldn't take more than a minute or so.
+
+The label "CY29R1" may vary, depending on version that is being shipped.
+
+Before running ./configure, make sure your ARCH setting is 
+set to one of the following:
+
+ARCH		Machine                   Remarks
+----		-------                   -------
+rs6000		IBM RS6000 Power3         
+ibm_power4	IBM RS6000 Power4         Memory profiling, Mflop/s (if libhpm.a)
+linux		Pentium/Linux             
+linuxg95	Pentium/Linux with Gnu95  Not tested
+sgimips		SGI MIPS R10000		  
+vpp5000		Fujitsu VPP5000		  Not tested at ECMWF; should be ok
+hppa		HP-UX 11		  Not tested
+decalpha	Compaq/Dec Alpha	  Not tested
+amd64		Opteron AMD64
+sv2		Cray SV2 (X1)		  makefile available from Cray; Mflop/s working
+
+
+At the moment we haven't tested on all platforms.
+To add new platform, you need to add file "make.<platform>"
+under odb/scripts/ directory. Please see make.linux
+or make.rs6000 or make.ibm_power4 for example.
+
+The Dr.Hook was originally developed on IBM Power4 systems.
+Therefore IBM systems are also able to produce their own stack trace
+(whenever it is not itself corrupted!). The same holds for Fujitsu VPP5000.
+
+The Dr.Hook should also run okay on Sun Solaris, HP-UX, Dec/Compaq Alpha
+and on the new Cray SV2-systems, and NEC SX.
+
+Inserting Dr.Hook-calls
+-----------------------
+
+We currently have Perl-scripts that massage Fortran90-files
+with suffix .F90 only. Say, your program prog.F90 looks like:
+
+program prog
+implicit none
+call sub
+end program prog
+subroutine sub
+implicit none
+print *,'Hello'
+end subroutine sub
+
+Insert Dr.Hook and rename file:
+
+$ insert_drhook prog.F90
+
+The instrumented F90-file will be called _prog.F90 and looks as follows:
+
+program prog
+USE PARKIND1  ,ONLY : JPRB
+USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+implicit none
+REAL(KIND=JPRB) :: ZHOOK_HANDLE
+IF (LHOOK) CALL DR_HOOK('PROG',0,ZHOOK_HANDLE)
+call sub
+IF (LHOOK) CALL DR_HOOK('PROG',1,ZHOOK_HANDLE)
+end program prog
+subroutine sub
+USE PARKIND1  ,ONLY : JPRB
+USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+implicit none
+REAL(KIND=JPRB) :: ZHOOK_HANDLE
+IF (LHOOK) CALL DR_HOOK('SUB',0,ZHOOK_HANDLE)
+print *,'Hello'
+IF (LHOOK) CALL DR_HOOK('SUB',1,ZHOOK_HANDLE)
+end subroutine sub
+
+Current limitations:
+
+* must be in free format
+* suffix must be .F90
+* IMPLICIT NONE must already be in place
+* already instrumented F90-files may not be able to be re-instrumented correctly
+
+Also, currently we do not have corresponding Perl-scripts to add Dr.Hook 
+automatically into C-routines. 
+
+
+Compiling, linking & running Dr.Hook'ed program
+-----------------------------------------------
+
+Compile & link & run (assume some generic Fortran90 compiler, say, f90):
+
+$ f90 -I. _prog.F90 -L. -ldrhook
+$ export DR_HOOK=1
+$ ./a.out
+
+In linking you may need additional system depended libraries to cope 
+with Mflop-counters etc.
+
+The wall clock time profiling can be turned on by
+$ export DR_HOOK_OPT="prof"
+
+The Mflop-counters, if available to this computer platform, via
+$ export DR_HOOK_OPT="hpmprof"
+
+The CPU-time profiling comes with
+$ export DR_HOOK_OPT="cpuprof"
+
+And memory profiling by
+$ export DR_HOOK_OPT="memprof"
+
+Note that, you can run in a single run memory profiling with
+any other aforementioned profiling as follows:
+
+$ export DR_HOOK_OPT="memprof,prof"
+
+This activates memory profiling and wall clock time profiling
+and profiling information is written into separate files.
+Please note that these profiling informations look very different.
+
+
+Running examples
+----------------
+
+Example#1: (drhook_ex1.F90)
+
+1) Generate Dr.Hook calls automatically
+2) Compile & link program
+3) Run and detect traceback error due to flp. exception
+
+Example#2: (drhook_ex2.F90)
+
+1) Modifying previous program so that floating point
+   exception doesn't occur anymore
+2) Add watch-points to detect when about the array is (over-)written
+
+Example#3: (drhook_ex3.F90)
+
+1) Corrected code
+2) Run with different profilings: 
+    - wallprof (or just prof) : wallclock-time profiling
+    - cpuprof : CPU-time based profiling
+    - hpmprof : Mflop/s profiling
+    - memprof : memory profiling
+
+These tests were all run on IBM Power4 platform.
+Full output is in file drhook_ex.log.
+A Korn-shell script to run them all is in file drhook_ex.ksh.
+
+
+
+						by Sami Saarinen
+						sami.saarinen@ecmwf.int
+						ECMWF, 28-Feb-2005
+

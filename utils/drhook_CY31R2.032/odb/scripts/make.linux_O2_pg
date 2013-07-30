@@ -1,0 +1,86 @@
+#-- Pentium/Linux with Portland Group F90-compiler  --
+#   -O2 optimization applied + -pg for gprof'iling
+
+ARCH=linux_O2_pg
+
+ODB_GPROF=-pg
+
+#-- Shareable lib creation disabled
+#   Use make.linux_shlib to enable shlib's
+SHLIB_CMD=none
+SYSLIB=-ldl
+
+#-- Installation directory
+INSTALL_DIR=/vol/odb/ODBDIR/$(ARCH)/mytest
+
+#-- Fortran90 with Portland Group F90-compiler (5.2)
+#   Cannot produce correct code for .F-files with common-blocks
+#   and OpenMP option -mp ==> OpenMP disabled for .F,
+#   but present for .F90 and linking
+#
+#   Please note: Cannot have -O2 for pgf90 (5.2) since
+#                produces wrong code for allocate_incore()@odb/lib/msgpass_obsdata.F90 ;-(
+#
+FC=pgf90 -tp px -g -byteswapio -fPIC $(ODB_GPROF)
+
+FCFLAGS=\
+-O1 -Ktrap=fp \
+-DLINUX -DLITTLE -D$(ARCH) \
+-I$(ROOTDIR)/odb/scripts
+
+FCFREEFMT=-Mfree -mp
+
+FCFIXEDFMT=-Mfixed -r8
+
+#-I$(INSTALL_DIR)/include
+
+#-- C
+FE_CC=gcc -g -fPIC
+
+CC=$(FE_CC) $(ODB_GPROF)
+CCFLAGS=\
+-O2 \
+-Werror \
+-DLINUX -DLITTLE -D$(ARCH) \
+-DHAS_XMOTIF -I/usr/X11/include \
+-DINTEGER_IS_INT \
+-DHAS_NETCDF
+
+#-- C++
+CCPLUS=g++ -g -fPIC $(ODB_GPROF)
+CCPLUSFLAGS=\
+-O2 \
+-DLINUX -DLITTLE
+
+#-- C-linker
+FE_LDCC=$(FE_CC)
+LDCC=$(CC)
+LDCCFLAGS=-rdynamic
+
+#-- Fortran90-linker
+LDFC=$(FC) -mp
+LDFCFLAGS=-Wl,-export-dynamic
+
+#-- Magics
+LDMAG=env LD_LIBRARY_PATH=/usr/local/apps/newgnu/lib $(LDFC) $(LDFCFLAGS)
+MAGLIB=\
+-L$(ROOTDIR) \
+-L/usr/local/apps/Magics/current/lib -lmagics_r8 \
+-lMvDevices_r8 -lmagics_r8 -lgd -lpng -ljpeg -lz -lfreetype \
+-L/usr/local/apps/newgnu/lib -lstdc++ -lm \
+-lodbemos
+
+#-- Lex & Yacc
+YACC=bison --yacc -d
+LEX=flex -lv
+YACCLEX_LIBS=-lfl -lm
+
+#-- MPI
+#MPILIB=-L$(INSTALL_DIR)/lib -lmpich -ldl
+
+MPILIB=$(MPI_SERIAL_LIB) -ldl
+
+#-- X-windows
+XWLIBS=-L/usr/X11/lib -lXm -lXt -lX11
+
+SHELL=/bin/ksh -e

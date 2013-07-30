@@ -1,0 +1,187 @@
+#!/bin/ksh
+
+set -eu
+
+alias cd='\cd'
+alias rm='\rm'
+alias cp='\cp'
+alias ln='\ln'
+alias ls='\ls'
+alias mv='\mv'
+
+USAGE="Usage: $0 [-t] [-j #ntasks] [-a arch] [ARCH=arch]"
+
+errflg=0
+timestamp=0
+ntasks=2 # Use at least 2 processes to compile ODB database (KNOWN_DBS) libs [if gmake]
+has_gmake=0
+arch=${ARCH:=none}
+
+while getopts a:j:t  option
+do
+  case $option in
+    a) arch=$OPTARG;;
+    j) ntasks=$OPTARG;;
+    t) timestamp=1;;
+   \?) errflg=1;;
+  esac
+done
+
+if [[ $errflg -ne 0 ]] ; then
+  echo $USAGE >&2
+  exit 1
+fi
+
+shift $(expr $OPTIND - 1)
+
+if [[ $# -ge 1 ]]; then
+  for arg in $*
+  do
+    name=$(echo "$arg" | perl -pe 's/^(\S+)=.*/$1/')
+    value=$(echo "$arg" | perl -pe 's/^\S+=(.*)/$1/')
+    if [[ "$name" = "ARCH" ]] ; then
+      arch="$value"
+    #elif .. # add more whenever necessary
+    fi
+  done  
+fi
+
+export ARCH=$arch
+
+makearch=make.$ARCH
+makerootdir=make.rootdir
+
+rm -f $makearch
+
+if [[ ! -f odb/scripts/$makearch ]] ; then
+  echo "***Error: No architecture depended makefile 'odb/scripts/$makearch'. Check your \$ARCH."  >&2
+  if [[ -d odb/scripts ]] ; then
+    cd odb/scripts
+    echo ">>> You can choose from the following make.<arch> files (in $(pwd))" >&2
+    ls make.* >&2
+  fi
+  exit 2
+fi
+
+ln -s odb/scripts/$makearch .
+
+rm -f makefile make.dep.none make.extra make_depend
+rm -f make_lib make_shlib mygrep test_arch make_fclibs make.all
+rm -f timestamp.c notimestamp.x parse_log.pl
+
+ln -s odb/scripts/makefile .
+ln -s odb/scripts/make.dep.none .
+ln -s odb/scripts/make.extra .
+ln -s odb/scripts/make_depend .
+ln -s odb/scripts/make_lib .
+ln -s odb/scripts/make_shlib .
+ln -s odb/scripts/mgrep mygrep
+ln -s odb/scripts/test_arch .
+ln -s odb/scripts/make_fclibs .
+ln -s odb/scripts/timestamp.c .
+ln -s odb/scripts/notimestamp.x .
+ln -s odb/scripts/parse_log.pl .
+
+chmod a+rx odb/scripts/make_depend
+chmod a+rx odb/scripts/make_lib
+chmod a+rx odb/scripts/make_shlib
+chmod a+rx odb/scripts/mgrep
+chmod a+rx odb/scripts/test_arch
+chmod a+rx odb/scripts/make_fclibs
+chmod a+rx odb/scripts/notimestamp.x
+chmod a+rx odb/scripts/parse_log.pl
+
+rm -f $makerootdir
+echo "ROOTDIR=."       >  $makerootdir
+echo "TIMESTAMP_DIR=." >> $makerootdir
+
+if [[ $timestamp -eq 1 ]] ; then # turn timestamping ON (by default OFF)
+  echo 'TIMESTAMPER_OPTS='                                >> $makerootdir
+  echo 'TIMESTAMP_EXE=$(TIMESTAMP_DIR)/timestamp.x'       >> $makerootdir
+  echo 'TIMESTAMPER=$(TIMESTAMP_EXE) $(TIMESTAMPER_OPTS)' >> $makerootdir
+else
+  echo 'TIMESTAMPER_OPTS=__NO_TIMESTAMPS__'               >> $makerootdir
+  echo 'TIMESTAMP_EXE=$(TIMESTAMP_DIR)/notimestamp.x'     >> $makerootdir
+  echo 'TIMESTAMPER=$(TIMESTAMP_EXE) $(TIMESTAMPER_OPTS)' >> $makerootdir
+fi
+
+if [[ -f $makearch ]] ; then
+  #-- Search for ARCH, if any
+  rc=0
+  egrep "^ARCH=" $makearch >/dev/null 2>&1 || rc=$?
+  if [[ $rc -eq 0 ]] ; then # Found
+    egrep "^ARCH=" $makearch >> $makerootdir
+  fi
+  #-- Search for SHELL, if any
+  rc=0
+  egrep "^SHELL=" $makearch >/dev/null 2>&1 || rc=$?
+  if [[ $rc -eq 0 ]] ; then # Found
+    egrep "^SHELL=" $makearch >> $makerootdir
+  fi
+  #-- Search for MODUPCASE and MOD_EXT, if any
+  rc=0
+  egrep "^(MODUPCASE|MOD_EXT)=" $makearch >/dev/null 2>&1 || rc=$?
+  if [[ $rc -eq 0 ]] ; then # Found
+    egrep "^(MODUPCASE|MOD_EXT)=" $makearch >> $makerootdir
+  fi
+  #-- Search for gmake syntax from architecture depended compiler flag file
+  rc=0
+  egrep '^(ifeq|MAKE=gmake)' $makearch >/dev/null 2>&1 || rc=$?
+  if [[ $rc -eq 0 ]] ; then # GNU-make syntax found
+    echo "MAKE=gmake" >>   $makerootdir
+    has_gmake=1
+  else                      # Use regular 'make' unless 'whence gmake' finds the real McCoy
+    mccoy=$(whence gmake || echo "")
+    if [[ "$mccoy" = "" ]] || [[ ! -x "$mccoy" ]] ; then
+      echo "MAKE=make"  >>   $makerootdir
+    else
+      echo "MAKE=$mccoy"  >>   $makerootdir
+      has_gmake=1
+   fi
+  fi
+fi
+
+make=$(egrep ^MAKE= $makerootdir | tail -1 | perl -pe 's/^MAKE=(\S+).*/$1/')
+
+if [[ "$make" != "" ]] ; then
+  make=$(whence $make || echo "")
+fi
+
+if [[ "$make" = "" ]] ; then
+  make=make
+fi
+
+#-- Change the default target in makefile to allow 'make' instead of 'make drhook'
+#   Done by creating DIFFERENT make.all file than for ODB-builds
+rm -f make.all
+cat /dev/null                                    >  make.all
+echo 'all:  $(TIMESTAMP_EXE) drhook drhook_exes' >> make.all
+
+
+if [[ "$ARCH" = vpp5000 ]] || [[ "$ARCH" = VPP5000 ]] ; then
+# make ... fclibs apparently broken for VPP5000 ;-(
+  echo "***Warning: make_fclibs broken for $ARCH" >&2
+  echo " " > ./ODB_FCLIBS
+else
+  $make ARCH=$ARCH -i fclibs
+fi
+
+$make ARCH=$ARCH OPTS="-D -l drhook -l mpi_serial -l odbmain -l odbdummy" depend
+
+if [[ -f ./ODB_FCLIBS ]] ; then
+  echo "ODB_FCLIBS=$(cat ./ODB_FCLIBS)" >> $makerootdir
+fi
+
+if [[ $timestamp -eq 1 ]] ; then # turn timestamping ON (by default OFF)
+  echo 'TIMESTAMPER_OPTS='                                >> $makerootdir
+  echo 'TIMESTAMP_EXE=$(TIMESTAMP_DIR)/timestamp.x'       >> $makerootdir
+  echo 'TIMESTAMPER=$(TIMESTAMP_EXE) $(TIMESTAMPER_OPTS)' >> $makerootdir
+else
+  echo 'TIMESTAMPER_OPTS=__NO_TIMESTAMPS__'               >> $makerootdir
+  echo 'TIMESTAMP_EXE=$(TIMESTAMP_DIR)/notimestamp.x'     >> $makerootdir
+  echo 'TIMESTAMPER=$(TIMESTAMP_EXE) $(TIMESTAMPER_OPTS)' >> $makerootdir
+fi
+
+if [[ $has_gmake -eq 1 && $ntasks -gt 1 ]] ; then
+  echo "PARALLEL_GMAKE=-j $ntasks" >> $makerootdir
+fi

@@ -1,0 +1,91 @@
+#-- AMD64/Linux with Portland Group F90-compiler  --
+#   With MPICH MPI library (mpich-1.2.7)
+#   use pgi-6.1
+
+ARCH=amd64_mpich
+
+#MPICH_ROOT=/vol/rdx_dir/mpi/suse90/mpich-1.2.7
+MPICH_ROOT=/usr/local/apps/mpich/mpich-1.2.7p1/pgi/pgi-6.1
+
+#-- Shareable lib creation disabled
+SHLIB_CMD=none
+SYSLIB=-ldl
+
+#-- Installation directory
+INSTALL_DIR=/vol/odb/ODBDIR/$(ARCH)/mytest
+
+#-- Fortran90 with Portland Group F90-compiler
+
+#FC=pgf90 -mp -tp amd64 -g -byteswapio -fPIC
+FC=$(MPICH_ROOT)/bin/mpif90 \
+-f90=pgf90 \
+-mp -tp amd64 -g -fPIC
+
+#-- Please note that with this MPICH-implementation
+#   the mpif.h is taken from $(MPICH_ROOT)/include,
+#   NOT from $(ROOTDIR)/odb/scripts
+
+FCFLAGS=\
+-O1 -Ktrap=fp \
+-DLINUX -DLITTLE -D$(ARCH) \
+-I$(MPICH_ROOT)/include \
+-DNEW_MAGICS -D_ABI64 \
+-Mbyteswapio -Mscalarsse
+
+FCFREEFMT=-Mfree
+
+FCFIXEDFMT=-Mfixed -r8
+
+#-I$(INSTALL_DIR)/include
+
+#-- C
+CC=gcc -g -m64 -fPIC
+CCFLAGS=\
+-O1 \
+-Werror \
+-DLINUX -DLITTLE -D$(ARCH) \
+-DHAS_XMOTIF -I/usr/X11/include \
+-DINTEGER_IS_INT -D_ABI64
+
+#-- C++
+CCPLUS=g++ -g -m64 -fPIC
+CCPLUSFLAGS=\
+-O1 \
+-DLINUX -DLITTLE -D_ABI64
+
+#-- C-linker
+LDCC=$(CC)
+LDCCFLAGS=-rdynamic
+
+#-- Fortran90-linker
+LDFC=$(FC)
+LDFC_SERIAL=pgf90 -mp -tp amd64 -g -fPIC
+LDFCFLAGS=-Wl,-export-dynamic
+
+#-- Magics++ ... for the moment ...
+LDMAG=$(LDFC) $(LDFCFLAGS)
+#-L/usr/local/apps/Magics/current64++/lib -lMagPlus
+MAGLIB=\
+-L$(ROOTDIR) \
+/usr/local/apps/Magics/current64++/lib/libMagPlus.a \
+-L/usr/local/apps/Magics/external/lib64 -lgd -lfontconfig -lfreetype \
+-ljpeg -lpng -lz -lnetpbm -L/usr/local/lib64 \
+-L/usr/local/lib64/metaps/lib/grib_api/current/lib -lgrib_api \
+-lspot_database \
+-L$(ROOTDIR) -lodbemos -lodb \
+-ljasper -lnetcdf_c++ -lnetcdf -lstdc++ -lm
+
+#-- Lex & Yacc
+YACC=bison --yacc -d
+#YACC=yacc -d
+LEX=flex -lv
+YACCLEX_LIBS=-lfl -lm
+
+#-- MPI
+MPILIB=-L$(MPICH_ROOT)/lib -lmpichf90 -lmpich -ldl
+
+#-- X-windows
+#XWLIBS=-L/usr/X11R6/lib -lXm -lXt -lX11
+XWLIBS=-L/usr/X11R6/lib64 -lXm -lXt -lX11
+
+SHELL=/bin/ksh -e

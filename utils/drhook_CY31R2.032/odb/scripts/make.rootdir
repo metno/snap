@@ -1,0 +1,3 @@
+#ROOTDIR=/ccvobs
+ROOTDIR=../..
+TIMESTAMP_DIR=.

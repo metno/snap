@@ -1,0 +1,65 @@
+#!/bin/ksh
+set -eu
+
+set -a
+
+ODB_PROPAGATE_ENV=0 # This is not needed; new MPL_getarg takes over
+
+NPES=1
+if [[ $# -gt 2 ]] ; then
+  if [[ "$1" = "-np" ]] ; then
+    NPES=$2
+    shift 2
+  fi
+fi
+
+if [[ $# -gt 0 ]] ; then
+  args=$*
+else
+  args=""
+fi
+
+export MPL_CL_TERMINATE=${MPL_CL_TERMINATE:="-^"}
+cl_terminate=$MPL_CL_TERMINATE # see ifsaux/module/mpl_arg_mod.F90
+
+args="$args $cl_terminate"
+
+rc=0
+
+MPICH_ROOT=${MPICH_ROOT:=/not/available}
+mpargs="$MPICH_ROOT/bin/mpirun"
+
+if [[ $NPES -gt 1 && -d $MPICH_ROOT && -x $mpargs ]] ; then
+  defhere=0
+  if [[ "${MP_HOSTFILE:-/not/available}" = "/not/available" ]] ; then
+    defhere=1
+  elif [[ ! -f "${MP_HOSTFILE}" ]] ; then
+    defhere=1
+  fi
+
+  if [[ $defhere -eq 1 ]] ; then
+    TMPDIR=${TMPDIR:=/dev/shm}
+    USER=${USER:=$(whoami)}
+    hostname=$(hostname)
+    if [[ -d $TMPDIR ]] ; then
+      hostfile=$TMPDIR/hostfile.$hostname.$USER.$$
+    else
+      hostfile=$(pwd)/hostfile.$hostname.$USER.$$
+    fi
+    echo "$NPES $hostname" | awk '{for(i=1;i<=$1;i++) print $2;}' > $hostfile
+    mpargs="$mpargs -np $NPES -machinefile $hostfile"
+  else
+    NPES=$(cat ${MP_HOSTFILE} | wc -l)  # No. of MPI-tasks
+    mpargs="$mpargs -np $NPES -machinefile ${MP_HOSTFILE}"
+  fi
+
+  OMP_NUM_THREADS=1  # MPICH is not thread safe
+  echo "Running: env OMP_NUM_THREADS=${OMP_NUM_THREADS} $mpargs $args"
+                 env OMP_NUM_THREADS=${OMP_NUM_THREADS} $mpargs $args || rc=$?
+  [[ $defhere -eq 0 ]] || \rm -f $hostfile
+else # Try to run without MPI
+  echo "Running: $args"
+                 $args || rc=$?
+fi
+
+exit $rc

@@ -1,0 +1,117 @@
+#!/bin/ksh
+#
+# make_lib [-c "ar_create_cmd"]
+#          [-l library_name]
+#          [-t "ar_table_of_contents_cmd"]
+#          [-u "ar_update_cmd"]
+#          [-v]  # verbose output
+#          [-r]  # invoke ranlib
+#          [-f list_of_objects] # object names via file
+#          [-p prefix] # add this prefix, if file starts with lowercase
+#          [additional_object_file(s)]
+#
+
+set -eu
+
+alias cd='\cd'
+alias rm='\rm'
+alias cp='\cp'
+alias ls='\ls'
+alias ln='\ln'
+alias mv='\mv'
+alias cat='\cat'
+
+lib=libnone.a
+arcrea="ar -q"
+artbl="ar -t"
+arupd="ar -ruv"
+verbose=0
+ranlib=0
+listobj=/dev/null
+prefix=""
+prefix_given=0
+
+errflg=0
+while getopts c:f:l:rp:t:u:v  option
+do
+  case $option in
+	c) shcmd="$OPTARG";;
+	f) listobj="$OPTARG";;
+	l) lib="$OPTARG";;
+	p) prefix="$OPTARG"; prefix_given=1;;
+	r) ranlib=1;;
+	t) artbl="$OPTARG";;
+	u) arupd="$OPTARG";;
+	v) verbose=1;;
+	\?) errflg=1;;
+  esac
+done
+
+shift $(expr $OPTIND - 1)
+
+if [[ $prefix_given -eq 1 && "$prefix" = "__notdef__" ]] ; then
+  prefix_given=0
+fi
+
+# How many files per each arupd-command
+if [[ $prefix_given -eq 1 ]] ; then
+  threshold=10
+else
+  threshold=30
+fi
+
+if [[ $errflg -eq 0 ]] ; then
+  cmd=""
+
+  if [[ ! -f $lib ]] ; then
+    cmd="$arcrea $lib"
+    echo "$cmd"
+          $cmd
+    cmd=""
+  fi
+
+  libsave=${lib}.save
+  cp -p $lib $libsave
+
+  olist=""
+  doupd=0
+
+  for f in $(ls -C1 $(cat $listobj 2>/dev/null || :) ${*:-} 2>/dev/null || :)
+  do
+    typeset ff=$f
+    if [[ $prefix_given -eq 1 ]] ; then
+      ff=$(echo "$ff" | perl -pe 's/^([a-z])/'"$prefix"'_$1/')
+    fi
+    if [[ -L $ff ]] ; then
+      [[ $verbose -eq 0 ]] || echo "::: File $ff is a symbolic link -- thus ignored"
+    else
+      olist="$olist $ff"
+      ((doupd += 1))
+      if [[ $doupd -ge $threshold ]] ; then # to prevent olist becoming too long (cygwin)
+        cmd="$arupd $lib $olist"
+        echo "$cmd"
+              $cmd
+        [[ $ranlib -eq 0 ]] || ranlib $lib
+        doupd=0
+        olist=""
+      fi
+    fi
+  done
+
+  if [[ $doupd -ge 1 ]] ; then
+    cmd="$arupd $lib $olist"
+    echo "$cmd"
+          $cmd
+    [[ $ranlib -eq 0 ]] || ranlib $lib
+  fi
+
+  if [[ -f $libsave ]] ; then
+    no_change=1
+    cmp -s $libsave $lib || no_change=0
+    if [[ $no_change -eq 1 ]] ; then
+      mv $libsave $lib
+    fi
+  fi
+fi
+
+exit $errflg

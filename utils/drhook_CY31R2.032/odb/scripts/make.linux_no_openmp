@@ -1,0 +1,67 @@
+#-- Pentium/Linux with Portland Group F90-compiler  --
+#   No OpenMP (i.e. pgf90 w/o -mp flag)
+
+ARCH=linux_no_openmp
+
+#-- Installation directory
+INSTALL_DIR=/vol/odb/ODBDIR/$(ARCH)/mytest
+
+#-- Fortran90 with Portland Group F90-compiler
+FC=pgf90 -tp px -g -byteswapio
+
+FCFLAGS=\
+-O1 -Ktrap=fp \
+-DLINUX -DLITTLE -D$(ARCH) \
+-I$(ROOTDIR)/odb/scripts
+
+FCFREEFMT=-Mfree
+
+FCFIXEDFMT=-Mfixed -r8
+
+#-I$(INSTALL_DIR)/include
+
+#-- C
+CC=gcc -g
+CCFLAGS=\
+-O1 \
+-Werror \
+-DLINUX -DLITTLE -D$(ARCH) \
+-DHAS_XMOTIF -I/usr/X11/include \
+-DINTEGER_IS_INT
+
+#-- C++
+CCPLUS=g++ -g
+CCPLUSFLAGS=\
+-O1 \
+-DLINUX -DLITTLE
+
+#-- C-linker
+LDCC=$(CC)
+LDCCFLAGS=-rdynamic
+
+#-- Fortran90-linker
+LDFC=$(FC)
+LDFCFLAGS=-Wl,-export-dynamic
+
+#-- Magics
+LDMAG=env LD_LIBRARY_PATH=/usr/local/apps/newgnu/lib $(LDFC)
+MAGLIB=\
+-L/usr/local/apps/Magics/current/lib -lmagics_r8 \
+-lMvDevices_r8 -lmagics_r8 -lgd -lpng -ljpeg -lz -lfreetype \
+-L/usr/local/apps/newgnu/lib -lstdc++ -lm \
+-L$(ROOTDIR) -lodbemos
+
+#-- Lex & Yacc
+YACC=bison --yacc -d
+LEX=flex -lv
+YACCLEX_LIBS=-lfl -lm
+
+#-- MPI
+#MPILIB=-L$(INSTALL_DIR)/lib -lmpich -ldl
+
+MPILIB=$(LIBMPI_SERIAL) -ldl
+
+#-- X-windows
+XWLIBS=-L/usr/X11/lib -lXm -lXt -lX11
+
+SHELL=/bin/ksh -e

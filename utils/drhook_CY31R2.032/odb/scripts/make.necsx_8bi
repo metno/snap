@@ -1,0 +1,102 @@
+#-- NEC/SX with cross compiler  --
+#   By Bureau of Meteorologu (BoM), Australia
+
+ARCH=necsx_8bi
+
+#-- Shareable lib creation disabled
+#   Use make.linux_shlib to enable shlib's
+SHLIB_CMD=none
+SYSLIB=-lgen -lcpp
+
+#-- Installation directory
+INSTALL_DIR=/bm/data/aaron/odb_CY29R2/odb/$(ARCH)/latest
+
+#-- Fortran90 with Portland Group F90-compiler (5.2)
+#   Cannot produce correct code for .F-files with common-blocks
+#   and OpenMP option -mp ==> OpenMP disabled for .F,
+#   but present for .F90 and linking
+#
+FC=sxf90 -V
+
+
+FCEXTRA1=-Wf"-A idbl4 -ptr byte -pvctl vwork=stack -L fmtlist transform map -pvctl fullmsg -ompctl nocondcomp"
+FCEXTRA2=-DPOINTER_64 -DINTEGER_IS_INT -D_ABI64 -DUSE_8_BYTE_WORDS
+FCFLAGS=-P openmp -I/SX/usr/include -dw -c -p -R2 -R5 -D$(ARCH) -DNEC $(FCEXTRA1) $(FCEXTRA2)
+
+
+FCFREEFMT=-f4
+FCFIXEDFMT=-f3
+
+CC=sxc++ -g
+CCFLAGS=-pvctl vwork=stack -I/SX/usr/include -O -D$(ARCH) -DNEC -DHAS_NETCDF -DSTATIC_LINKING -DMPI -DPOINTER_64 -DINTEGER_IS_INT -D_ABI64 -DODBCS=0
+
+
+#-- C++
+
+CCPLUS=sxc++ -g
+CCPLUSFLAGS= -O $(CCFLAGS)
+
+#-- C-linker
+LDCC=$(FC)
+LDCCFLAGS=-P openmp -L$(SX_BASE_CPLUS)/lib -lcpp 
+
+#-- Fortran90-linker
+LDFC=$(FC)
+LDFCFLAGS=-P openmp -dw -L$(SX_BASE_CPLUS)/lib
+#-L/SX/usr/lib/ 
+
+AR=sxar
+
+#-- Magics
+#LDMAG=env LD_LIBRARY_PATH=/usr/local/apps/newgnu/lib $(LDFC) $(LDFCFLAGS)
+#MAGLIB=\
+#-L$(ROOTDIR) \
+#-L/usr/local/apps/Magics/current/lib -lmagics \
+#-lMvDevices -lmagics -lgd -lpng -ljpeg -lz -lfreetype \
+#-L/usr/local/apps/newgnu/lib -lstdc++ -lm \
+#-lemos
+MAGLIB=-L$(ROOTDIR) -lodbdummy
+
+#-L/usr/local/lib -lemos
+
+#-- Lex & Yacc
+YACC=bison --yacc -d
+YACC=yacc -d
+
+LEX=flex -lv
+#LEX=do_tx7 flex -v
+#YACCLEX_LIBS=-lfl -lm
+YACCLEX_LIBS=-lm
+
+#-- MPI
+#MPILIB=-L$(INSTALL_DIR)/lib -lmpich -ldl
+
+MPILIB=-L /SX/usr/lib -lpmpi -lmpi
+
+#-- X-windows
+XWLIBS=-L/usr/X11/lib -lXm -lXt -lX11
+XWLIBS=
+
+SHELL=/bin/ksh -e
+
+ECLIB=-L$(ROOTDIR) -lodbec
+EMOSLIB=-L$(ROOTDIR) -lodbemos
+
+# Build odb98.x compiler for Linux front-end compiler
+FE_YACC=bison --yacc -d
+FE_LEX=flex -lv
+FE_CC=gcc -g -fPIC
+FE_CCFLAGS=\
+-O1 \
+-Werror \
+-DLINUX -DLITTLE \
+-DINTEGER_IS_INT \
+-DHAS_NETCDF \
+-DNEC_FE
+FE_LDCC=$(FE_CC)
+FE_LDCCFLAGS=-rdynamic
+FE_YACCLEX_LIBS=-lfl -lm
+FE_SYSLIB=-ldl
+FE_AR=ar
+
+

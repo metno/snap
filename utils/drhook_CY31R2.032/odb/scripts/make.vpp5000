@@ -1,0 +1,33 @@
+#-- VPP5000 (tested)
+
+ARCH=vpp5000
+
+FC=frt
+FCFLAGS=\
+-Sw -Wp,-DVPP,-DVPP50000,-DADDRESS64,-D_ABI64 -ADoQm -Karraystack1 \
+-Oe,-e,-u,-p -Eupeil -X9 -I/usr/lang/mpi2/include64
+
+FCFREEFMT=
+FCFIXEDFMT=-Ad
+
+CC=vcc
+CCFLAGS=-DVPP -DVPP5000 -DADDRESS64 -DINTEGER_IS_INT -D_ABI64
+
+LDFCFLAGS=\
+-Wl,-P -KA64 -Hl,/usr/ccs/bin -Wl,-zmuldefs,-zorder,-zdummy_verbose,-t
+LDFCLIBS=$(AUXLIBS) -lssl2vp
+
+LDCC=$(CC)
+LDCCFLAGS=-Wl,-dy -lvfl
+
+MPILIB=-L/usr/lang/mpi2/lib64 -lmpi
+MPILIB_SERIAL=-L$(ROOTDIR) -lmpi_serial
+
+CPLUS=CC # ??
+
+#-- Lex & Yacc
+YACC=yacc -d
+LEX=lex -v
+
+#-- No X-windows/Motif ?
+XWLIBS=

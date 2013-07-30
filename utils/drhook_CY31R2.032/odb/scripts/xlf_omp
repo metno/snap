@@ -1,0 +1,28 @@
+#!/bin/ksh
+
+set -eu 
+
+command="$*"
+last=$#
+shift $last-1
+file="$@"
+comp=
+found=1
+egrep -q '^\!\$' $file || found=0
+if [[ $found -eq 1 ]] ; then
+  comp="-qsmp=omp"
+  found=1
+  egrep -qi '^\@PROCESS NOOPT' $file || found=0
+  if [[ $found -eq 1 ]] ; then
+    comp="-qsmp=omp:noopt"
+  fi
+  found=1
+  echo "$command" | grep -q '\-O' || found=0
+  if [[ $found -eq 0 ]] ; then
+    comp="-qsmp=omp:noopt"
+  fi
+fi
+
+xlf90_r $comp $command || exit $?
+
+exit 0

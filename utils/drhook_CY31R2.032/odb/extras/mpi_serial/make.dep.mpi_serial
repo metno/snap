@@ -1,0 +1,49 @@
+TASK=mpi_serial
+LIB=$(ROOTDIR)/libmpi_serial.a
+VPATH=
+CCINC=
+FCINC=$(CCINC) 
+ODB_FILTER=no
+OBJS= \
+mpi_abort.o \
+mpi_allgatherv.o \
+mpi_allreduce.o \
+mpi_alltoallv.o \
+mpi_barrier.o \
+mpi_bcast.o \
+mpi_bsend.o \
+mpi_buffer_attach.o \
+mpi_buffer_detach.o \
+mpi_cart_coords.o \
+mpi_cart_create.o \
+mpi_cart_rank.o \
+mpi_cart_sub.o \
+mpi_comm_create.o \
+mpi_comm_group.o \
+mpi_comm_rank.o \
+mpi_comm_size.o \
+mpi_comm_split.o \
+mpi_end.o \
+mpi_error_string.o \
+mpi_finalize.o \
+mpi_gather.o \
+mpi_gatherv.o \
+mpi_get_count.o \
+mpi_group_incl.o \
+mpi_init.o \
+mpi_initialized.o \
+mpi_iprobe.o \
+mpi_irecv.o \
+mpi_isend.o \
+mpi_probe.o \
+mpi_recv.o \
+mpi_scatterv.o \
+mpi_send.o \
+mpi_waitall.o \
+mpi_wait.o \
+tracecalls.o \
+vpp_abort.o \
+vpp_barrier.o \
+vpp_sempost.o \
+vpp_semwait.o 
+# DO NOT DELETE THIS LINE - used by make depend

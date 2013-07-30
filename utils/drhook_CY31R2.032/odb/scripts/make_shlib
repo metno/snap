@@ -1,0 +1,104 @@
+#!/bin/ksh
+#
+# make_shlib [-c "shareable_lib_creation_cmd"]
+#            [-l library_name]
+#            [-s suffix]
+#            [-u "ar_update_cmd"]
+#            [-i comma_separated_list_of_shlibs_to_be_created]
+#            [-r]  # invoke ranlib
+#            [additional_object_file(s)]
+#
+
+set -eu
+
+alias cd='\cd'
+alias rm='\rm'
+alias cp='\cp'
+alias ls='\ls'
+alias ln='\ln'
+alias mv='\mv'
+
+shcmd=none
+shsfx=a
+lib=libnone.a
+shlib=
+arupd="ar -r"
+ilist=""
+ranlib=0
+
+errflg=0
+while getopts c:i:l:rs:u:  option
+do
+  case $option in
+	c) shcmd="$OPTARG";;
+	i) ilist="${ilist},${OPTARG},";;
+	l) lib="$OPTARG";;
+	r) ranlib=1;;
+ 	s) shsfx="$OPTARG";;
+	u) arupd="$OPTARG";;
+	\?) errflg=1;;
+  esac
+done
+
+shift $(expr $OPTIND - 1)
+
+if [[ $errflg -eq 0 ]] ; then
+  objs=""
+  if [[ $# -gt 0 ]] ; then
+    objs="$*"
+  fi
+
+  if [[ "$objs" != "" ]] ; then
+    cmd="$arupd $lib $objs"
+    echo "$cmd"
+          $cmd
+    [[ $ranlib -eq 0 ]] || ranlib $lib 
+  fi
+fi
+
+if [[ $errflg -eq 0    && -f "$lib"     && \
+      "$shcmd" != none && "$shsfx" != a ]] ; then
+
+  base=$(basename $lib .a)
+  # Skip such libraries which are not database libs (like libECMA, etc.)
+  name=$(echo "$base" | perl -pe 's/^lib//')
+  uppercase=$(echo "$name" | perl -pe 'tr/a-z/A-Z/')
+
+  ftest=$(echo "$ilist" | perl -pe "s/^.*,\s*($name)\s*,.*$/\1/")
+
+  libdir=$(\cd $(dirname $lib); pwd)
+  shlib=$libdir/$base.$shsfx
+
+  if [[ "$name" != "$uppercase" && "$name" != "$ftest" ]] ; then
+    # Skip this
+    echo "***Warning: No shareable library will be created from '$lib'"
+    rm -f $shlib
+    exit 0
+  fi
+
+  lib=$libdir/$base.a
+  
+  wrkdir=$libdir/_$base.dir
+  if [[ ! -d $wrkdir ]] ; then
+    mkdir -p $wrkdir
+  fi
+
+  (cd $wrkdir ; ar -x $lib ; chmod u+w *.o)
+
+  if [[ "$objs" != "" ]] ; then
+    cp $objs $wrkdir
+  fi
+
+  cd $wrkdir
+  chmod u+w *.o
+
+  cmd="$shcmd -o $shlib `ls -C1 *.o | perl -pe 's/\n/ /g'`"
+  echo "$cmd"
+        $cmd
+
+  shl=$libdir/SHLIB
+  [[ -f $shl ]] || cat /dev/null > $shl
+  echo "$(date): $shcmd -o $shlib" >> $shl
+fi
+
+exit $errflg

@@ -1,0 +1,106 @@
+TASK=drhook
+LIB=$(ROOTDIR)/libdrhook.a
+VPATH=$(ROOTDIR)/ifsaux/include:../include:$(ROOTDIR)/ifsaux/module:../module
+CCINC=-I$(ROOTDIR)/ifsaux/include -I../include -I$(ROOTDIR)/ifsaux/module -I../module
+FCINC=$(CCINC) 
+ODB_FILTER=no
+OBJS= \
+f90_unix_env.o \
+f90_unix_io.o \
+f90_unix_proc.o \
+ifcore.o \
+ifport.o \
+mpi4to8.o \
+mpi4to8_m.o \
+mpi4to8_s.o \
+mpl_abort_mod.o \
+mpl_allgather_mod.o \
+mpl_allgatherv_mod.o \
+mpl_allreduce_mod.o \
+mpl_alltoallv_mod.o \
+mpl_arg_mod.o \
+mpl_barrier_mod.o \
+mpl_broadcast_mod.o \
+mpl_buffer_method_mod.o \
+mpl_close_mod.o \
+mpl_comm_create_mod.o \
+mpl_data_module.o \
+mpl_end_mod.o \
+mpl_gatherv_mod.o \
+mpl_groups.o \
+mpl_init_mod.o \
+mpl_ioinit_mod.o \
+mpl_locomm_create_mod.o \
+mpl_message_mod.o \
+mpl_module.o \
+mpl_mpif.o \
+mpl_mygatherv_mod.o \
+mpl_myrank_mod.o \
+mpl_nproc_mod.o \
+mpl_open_mod.o \
+mpl_probe_mod.o \
+mpl_read_mod.o \
+mpl_recv_mod.o \
+mpl_scatterv_mod.o \
+mpl_send_mod.o \
+mpl_setdflt_comm_mod.o \
+mpl_tour_table_mod.o \
+mpl_wait_mod.o \
+mpl_write_mod.o \
+parkind1.o \
+parkind2.o \
+sdl_module.o \
+yomabrt.o \
+yomhook.o \
+yomlun_ifsaux.o \
+yommpi.o \
+yomoml.o \
+yomwatch.o 
+# DO NOT DELETE THIS LINE - used by make depend
+mpi4to8.o: mpi4to8_m.o mpi4to8_s.o
+mpi4to8_m.o: mpl_mpif.o parkind1.o
+mpi4to8_s.o: mpl_mpif.o parkind1.o
+mpl_abort_mod.o: mpl_data_module.o mpl_mpif.o parkind1.o sdl_module.o yomabrt.o yomoml.o
+mpl_allgather_mod.o: mpl_barrier_mod.o mpl_data_module.o mpl_message_mod.o mpl_mpif.o mpl_recv_mod.o mpl_send_mod.o parkind1.o
+mpl_allgatherv_mod.o: mpi4to8.o mpl_barrier_mod.o mpl_data_module.o mpl_message_mod.o mpl_mpif.o mpl_recv_mod.o mpl_send_mod.o parkind1.o
+mpl_allreduce_mod.o: mpi4to8.o mpl_broadcast_mod.o mpl_data_module.o mpl_message_mod.o mpl_mpif.o mpl_recv_mod.o mpl_send_mod.o parkind1.o
+mpl_alltoallv_mod.o: mpi4to8.o mpl_data_module.o mpl_message_mod.o mpl_mpif.o parkind1.o
+mpl_arg_mod.o: f90_unix_env.o mpi4to8.o mpl_data_module.o mpl_mpif.o parkind1.o
+mpl_barrier_mod.o: mpi4to8.o mpl_data_module.o mpl_message_mod.o parkind1.o
+mpl_broadcast_mod.o: mpi4to8.o mpl_barrier_mod.o mpl_data_module.o mpl_message_mod.o mpl_mpif.o mpl_myrank_mod.o mpl_recv_mod.o mpl_send_mod.o parkind1.o
+mpl_buffer_method_mod.o: mpi4to8.o mpl_data_module.o mpl_message_mod.o parkind1.o
+mpl_close_mod.o: mpi4to8.o mpl_data_module.o mpl_ioinit_mod.o mpl_message_mod.o parkind1.o
+mpl_comm_create_mod.o: mpl_data_module.o mpl_message_mod.o mpl_mpif.o parkind1.o
+mpl_data_module.o: parkind1.o yomoml.o
+mpl_end_mod.o: mpi4to8.o mpl_data_module.o mpl_message_mod.o parkind1.o
+mpl_gatherv_mod.o: mpi4to8.o mpl_data_module.o mpl_message_mod.o mpl_mpif.o mpl_myrank_mod.o mpl_recv_mod.o mpl_send_mod.o parkind1.o
+mpl_groups.o: mpi4to8.o mpl_data_module.o mpl_message_mod.o mpl_mpif.o parkind1.o
+mpl_init_mod.o: mpi4to8.o mpl_arg_mod.o mpl_buffer_method_mod.o mpl_data_module.o mpl_locomm_create_mod.o mpl_message_mod.o mpl_mpif.o mpl_tour_table_mod.o parkind1.o
+mpl_ioinit_mod.o: mpi4to8.o mpl_data_module.o mpl_message_mod.o mpl_mpif.o parkind1.o
+mpl_locomm_create_mod.o: mpi4to8.o mpl_data_module.o mpl_message_mod.o mpl_mpif.o parkind1.o
+mpl_message_mod.o: mpi4to8.o mpl_abort_mod.o mpl_data_module.o mpl_mpif.o parkind1.o
+mpl_module.o: mpl_abort_mod.o mpl_allgather_mod.o mpl_allgatherv_mod.o mpl_allreduce_mod.o mpl_alltoallv_mod.o mpl_arg_mod.o mpl_barrier_mod.o mpl_broadcast_mod.o mpl_buffer_method_mod.o mpl_close_mod.o mpl_comm_create_mod.o mpl_end_mod.o mpl_gatherv_mod.o mpl_groups.o mpl_init_mod.o mpl_ioinit_mod.o mpl_message_mod.o mpl_myrank_mod.o mpl_nproc_mod.o mpl_open_mod.o mpl_probe_mod.o mpl_read_mod.o mpl_recv_mod.o mpl_scatterv_mod.o mpl_send_mod.o mpl_tour_table_mod.o mpl_wait_mod.o mpl_write_mod.o
+mpl_mygatherv_mod.o: mpi4to8.o mpl_data_module.o mpl_message_mod.o mpl_mpif.o parkind1.o
+mpl_myrank_mod.o: mpi4to8.o mpl_data_module.o mpl_message_mod.o parkind1.o
+mpl_nproc_mod.o: mpi4to8.o mpl_data_module.o mpl_message_mod.o parkind1.o
+mpl_open_mod.o: mpi4to8.o mpl_data_module.o mpl_ioinit_mod.o mpl_message_mod.o mpl_mpif.o parkind1.o
+mpl_probe_mod.o: mpi4to8.o mpl_data_module.o mpl_message_mod.o mpl_mpif.o parkind1.o
+mpl_read_mod.o: mpi4to8.o mpl_data_module.o mpl_ioinit_mod.o mpl_message_mod.o mpl_mpif.o parkind1.o
+mpl_recv_mod.o: mpi4to8.o mpl_data_module.o mpl_message_mod.o mpl_mpif.o parkind1.o
+mpl_scatterv_mod.o: mpi4to8.o mpl_data_module.o mpl_message_mod.o mpl_mpif.o mpl_myrank_mod.o parkind1.o
+mpl_send_mod.o: mpi4to8.o mpl_data_module.o mpl_message_mod.o mpl_mpif.o parkind1.o
+mpl_setdflt_comm_mod.o: mpi4to8.o mpl_data_module.o mpl_message_mod.o mpl_mpif.o parkind1.o
+mpl_tour_table_mod.o: mpl_data_module.o mpl_message_mod.o parkind1.o
+mpl_wait_mod.o: mpi4to8.o mpl_data_module.o mpl_message_mod.o mpl_mpif.o parkind1.o
+mpl_write_mod.o: mpi4to8.o mpl_data_module.o mpl_ioinit_mod.o mpl_message_mod.o mpl_mpif.o parkind1.o
+sdl_module.o: parkind1.o yomhook.o yomoml.o
+yomabrt.o: parkind1.o yomoml.o
+yomhook.o: ../include/dr_hook_util_multi.ok ../include/dr_hook_util.ok
+yomhook.o: parkind1.o
+yomlun_ifsaux.o: parkind1.o
+yommpi.o: parkind1.o
+yomoml.o: parkind1.o
+yomwatch.o: parkind1.o
+
+../include/dr_hook_util.ok: ../include/dr_hook_util.h
+../include/dr_hook_util_multi.ok: ../include/dr_hook_util_multi.h

@@ -1,0 +1,120 @@
+#!/bin/ksh
+trap 'echo "Received signal, aborting ..."; wait; exit 1' 1 2 3 15
+#begin
+#
+# Usage: run_fe [-l username_at_remote_host] [-h remote_host]
+#               [-p a/front/end/path/to/which/we/cd/first]
+#               [-P /path1/bin:/path2/bin:/added/to/the/default/front/end/path/variable]
+#               [-f 'path_filter']
+#               [-r]  # use rsh (the default)
+#               [-s]  # use ssh
+#               [-d]  # run directly without using rsh or ssh
+#               [-v]  # be more verbose
+#               [-H]  # print this help & exit
+#               front_end_unix_command(s)
+#
+# (note: multiple commands with comma separation and the whole cmd string in dbl or single quotes)
+#
+#    or using standard input
+#
+#        echo "command(s)" | run_fe [args]
+#        cat command_file | run_fe [args]
+#
+#end
+#
+
+set -eu
+
+cmd=$(\cd $(dirname $0); echo $(pwd))/$(basename $0)
+
+user=$(whoami 2>/dev/null || echo "unknown")
+export USER=${USER:=$user}
+
+#-- Front-end user
+export RUN_FE_USER=${RUN_FE_USER:="$user"}
+#-- Front-end hostname or tcp-ip address
+export RUN_FE_HOST=${RUN_FE_HOST:="bar.cscs.ch"}
+#-- Front-end path to which will be cd'ed first
+export RUN_FE_CDPATH=${RUN_FE_CDPATH:=$(pwd)}
+#-- Perl-filter used to resolve front-end path from the current supercomputer path 
+export RUN_FE_CDPATH_FILTER=${RUN_FE_CDPATH_FILTER:="s|^/nfs/||"}
+#-- A PATH (-extension) which will be added in the FRONT of the existing front-end $PATH
+export RUN_FE_PREPATH=${RUN_FE_PREPATH:="/sx5/usr/bin:/users/mps/bar/ODBDIR/necsx/current/bin"}
+#-- Run directly (=1) or really using the front-end (=0)
+export RUN_FE_DIRECT=${RUN_FE_DIRECT:=0}
+
+user=${RUN_FE_USER}
+host=${RUN_FE_HOST}
+filter=${RUN_FE_CDPATH_FILTER}
+apath=${RUN_FE_CDPATH}
+apath_given=0
+prepath=${RUN_FE_PREPATH}
+use_rsh=1
+verbose=0
+direct=${RUN_FE_DIRECT}
+
+FLAGS=l:h:Hf:p:P:drsv
+
+abort=no
+while getopts ${FLAGS} i
+do
+  case $i in
+  l) user="$OPTARG";;
+  h) host="$OPTARG";;
+  f) filter="$OPTARG";;
+  p) apath="$OPTARG" ; apath_given=1;;
+  P) prepath="$OPTARG";;
+  r) use_rsh=1;;
+  s) use_rsh=0;;
+  v) verbose=1;;
+  d) direct=1;;
+  H) abort=yes; break;;
+  *) abort=yes; break;;
+  esac
+done
+
+if [[ $abort = yes ]] ; then
+  awk '/#begin/,/#end/' $cmd | egrep -v '#(begin|end)' | sed 's/^#//'
+  exit 1
+fi
+
+shift $(expr $OPTIND - 1) || :
+
+if [[ $# -lt 1 ]] ; then # from stdin
+  args=$(cat | perl -pe 's/\n/;/g; s/;$//;')
+else
+  args="$*"
+fi
+
+if [[ $direct -eq 1 ]] ; then
+  cmd=""
+  [[ $verbose -eq 0 ]]     || cmd="set -x;"
+  [[ $apath_given -eq 0 ]] || cmd="${cmd}cd $apath;"
+  cmd="${cmd}$args"
+  eval $cmd || exit 1
+  exit 0
+fi
+
+if [[ $apath_given -eq 0 ]] ; then
+  apath=$(echo $apath | perl -pe "$filter")
+fi
+
+if [[ "${prepath}" != "" ]] ; then
+  prepath=$(echo ${prepath} | perl -pe 's/:$//;')
+  cmd="PATH=${prepath}:\${PATH}; cd $apath; $args"
+else
+  cmd="cd $apath; $args"
+fi
+
+if [[ $verbose -eq 1 ]] ; then
+  echo "Issuing command(s):"
+  echo "$cmd"
+fi
+
+if [[ $use_rsh -eq 1 ]] ; then
+  [[ $verbose -eq 0 ]] || set -x
+  rsh $host -l $user "$cmd"
+else
+  [[ $verbose -eq 0 ]] || set -x
+  ssh $user@$host "$cmd"
+fi
