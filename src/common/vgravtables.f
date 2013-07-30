@@ -4,7 +4,14 @@ c
 c   program for calculating the gravitational settling velocities
 c   for small and large particles (outside the Stokes low)
 c---------------------------------------
-       implicit none	
+#if defined(DRHOOK)
+      USE PARKIND1  ,ONLY : JPIM     ,JPRB
+      USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+#endif
+      implicit none
+#if defined(DRHOOK)
+      REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
+#endif
        real t		! absolute temperature (K)
        external vgrav
        real vgrav	! external function for calculating initial vg
@@ -17,8 +24,13 @@ c
        integer n,m,ip,it
 c---------------------------------------
 c
+c
       include 'snapdim.inc'
       include 'snappar.inc'
+#if defined(DRHOOK)
+      ! Before the very first statement
+      IF (LHOOK) CALL DR_HOOK('VGRAVTABLES',0,ZHOOK_HANDLE)
+#endif
 c
        tincrvg= 200./float(numtempvg-1)
        tbasevg= 273. - 120. - tincrvg
@@ -54,6 +66,10 @@ c
 c
        end do
 c
+#if defined(DRHOOK)
+c     before the return statement
+      IF (LHOOK) CALL DR_HOOK('VGRAVTABLES',1,ZHOOK_HANDLE)
+#endif
        return
        end
 c
@@ -65,14 +81,14 @@ c   etha(T) = 1.72e-2*(393/(T+120))*(T/273)**1.5
 c   etha	 	- viscosity of the air (g cm-1 s-1)
 c   T	 		- absolute temperature (K)
 c---------------------------------------
-       implicit none	
+       implicit none
 ccc	real etha	! viscosity of the air (g cm-1 s-1)
        real t		! absolute temperature (K)
 c---------------------------------------
        visc=1.72e-4*(393.0/(t+120.0))*(t/273.0)**1.5
 c
        return
-       end	
+       end
 c
        real function cun(dp)
 c==========================================
@@ -86,7 +102,7 @@ c   a1=1.257		- constant
 c   a2=0.40		- constant
 c   a3=0.55		- constant
 c---------------------------------------
-       implicit none	
+       implicit none
 ccc	real c		! Cunningham factor
        real a1,a2,a3	! constants
        real dp		! particle size in micro meters
@@ -115,7 +131,7 @@ c   t			- air absolute temperature (K)
 c   a1=0.15		- constant
 c   a2=0.687		- constant
 c---------------------------------------
-       implicit none	
+       implicit none
        real u		! vg during the iteration
        real u0		! vg according to Stokes low
        real a1,a2	! constants
@@ -145,7 +161,7 @@ c	write(*,*) 'u0=',u0
 c	write(*,*) 'u=',u
        etha=visc(t)
        re=u*dp*1.0e-4*roa(p,t)/etha
-c	write(*,*) 'etha=',etha	
+c	write(*,*) 'etha=',etha
 c	write(*,*) 're=',re
 c	write(*,*) 'u*a1*re**a2=',u*a1*re**a2
        fit=u*(1.0+a1*re**a2)-u0
@@ -171,7 +187,7 @@ c   c(dp)		- Cunningham factor for the small particles
 c   p			- atmospheric presure (hPa)
 c   t			- air absolute temperature (K)
 c---------------------------------------
-       implicit none	
+       implicit none
 ccc	real vgrav	! gravitational setling
        real g		! acceleration of gravity
        real rp		! density of particle
@@ -202,7 +218,7 @@ c	write(*,*) 'c=',cun(dp)
 c	vgrav=0.01*(dp*0.0001)**2*g*(rp-ra)*cun(dp)/(18.0*etha)
        vgrav=(dp*0.0001)**2*g*(rp-ra)*cun(dp)/(18.0*etha)
 c	vgrav=(dp)**2*g*(rp-ra)*cun(dp)/(18.0*etha)
-c	write(*,*) 'vg=',vgrav	
+c	write(*,*) 'vg=',vgrav
 c
        return
        end
@@ -221,7 +237,7 @@ c   x			- value from the fit domain
 c   eps			- accuracy of computed vg (0.1%)
 c---------------------------------------
        implicit none
-       real vg		! computed gravitational settling velocity	
+       real vg		! computed gravitational settling velocity
        real u0		! vg according to Stokes low
        real a1,a2	! constants
        real dp		! particle size in micro meters
@@ -315,7 +331,7 @@ c   T	 	- absolute temperature (K)
 c   P		- presure (hPa)
 c   R=287.04 	- universal gas constant J/kg/K
 c---------------------------------------
-       implicit none	
+       implicit none
 ccc	real ro		! density of the dry air (g/cm3)
        real t		! absolute temperature (K)
        real p		! presure (hPa)

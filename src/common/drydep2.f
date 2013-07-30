@@ -7,7 +7,14 @@ c
 c ... 23.04.12 - gas, particle 0.1<d<10, particle d>10 - J. Bartnicki|
 c
 c
+#if defined(DRHOOK)
+      USE PARKIND1  ,ONLY : JPIM     ,JPRB
+      USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+#endif
       implicit none
+#if defined(DRHOOK)
+      REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
+#endif
 c
       include 'snapdim.inc'
       include 'snapgrd.inc'
@@ -22,6 +29,12 @@ c################################################################
       integer numdep
       real depmin,depmax,ratmin,ratmax,hblmin,hblmax
       double precision totinp,depsum,totsum
+c
+#if defined(DRHOOK)
+      ! Before the very first statement
+      IF (LHOOK) CALL DR_HOOK('DRYDEP2',0,ZHOOK_HANDLE)
+#endif
+c
       numdep=0
       hblmin=+1.e+38
       hblmax=-1.e+38
@@ -90,5 +103,9 @@ c      if(depmin.le.depmax)
 c     +   write(88,*) 'DRYDEP2 depmin,depmax: ',depmin,depmax
 c      write(88,*) '--------'
 c################################################################
+#if defined(DRHOOK)
+c     before the return statement
+      IF (LHOOK) CALL DR_HOOK('DRYDEP2',1,ZHOOK_HANDLE)
+#endif
       return
       end

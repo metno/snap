@@ -5,7 +5,14 @@ c  Purpose:  Read fields from FELT files.
 c            (FELT files: forecasts and archives)
 c
 c
+#if defined(DRHOOK)
+      USE PARKIND1  ,ONLY : JPIM     ,JPRB
+      USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+#endif
       implicit none
+#if defined(DRHOOK)
+      REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
+#endif
 c
       include 'snapdim.inc'
       include 'snapfil.inc'
@@ -34,6 +41,10 @@ c
 c
       data itryprecip/1/
 c
+#if defined(DRHOOK)
+      ! Before the very first statement
+      IF (LHOOK) CALL DR_HOOK('READFIELD',0,ZHOOK_HANDLE)
+#endif
 c..get time offset in hours (as iavail(8,n))
       ihours(1)=ihr1
       ihours(2)=ihr2
@@ -116,6 +127,10 @@ c
         write(9,*) '*READFIELD* No model level data available'
         write(6,*) '*READFIELD* No model level data available'
         ierror=1
+#if defined(DRHOOK)
+c     before the return statement
+      IF (LHOOK) CALL DR_HOOK('READFIELD',1,ZHOOK_HANDLE)
+#endif
         return
       end if
 c
@@ -317,6 +332,10 @@ c
         write(9,*) '     nhdiff,mprecip: ',nhdiff,mhprecip
         write(9,*) '   Recompile with mprecip=',nhdiff
         ierror=1
+#if defined(DRHOOK)
+c     before the return statement
+      IF (LHOOK) CALL DR_HOOK('FORWRD',1,ZHOOK_HANDLE)
+#endif
         return
       end if
 c
@@ -822,6 +841,10 @@ c..close last used FELT file
 c
       if(ierror.ne.0) then
        navailt2=0
+#if defined(DRHOOK)
+c     before the return statement
+      IF (LHOOK) CALL DR_HOOK('FORWRD',1,ZHOOK_HANDLE)
+#endif
        return
       end if
 c
@@ -872,5 +895,9 @@ c.. but ordering bottom to top, reorder at time of output)
 c
       end if
 c
+#if defined(DRHOOK)
+c     before the return statement
+      IF (LHOOK) CALL DR_HOOK('FORWRD',1,ZHOOK_HANDLE)
+#endif
       return
       end

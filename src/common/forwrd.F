@@ -1,4 +1,5 @@
       subroutine forwrd(tf1,tf2,tnow,tstep)
+
 c
 c  Purpose:  Move all particles one timestep forward
 c
@@ -19,7 +20,14 @@ c       tnow:  time in seconds for current paricle positions
 c       tstep: timestep in seconds
 c
 c
+#if defined(DRHOOK)
+      USE PARKIND1  ,ONLY : JPIM     ,JPRB
+      USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+#endif
       implicit none
+#if defined(DRHOOK)
+      REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
+#endif
 c
       include 'snapdim.inc'
       include 'snapgrd.inc'
@@ -51,6 +59,12 @@ c
 c
       data vgcompute/.true./
 c
+
+#if defined(DRHOOK)
+      ! Before the very first statement
+      IF (LHOOK) CALL DR_HOOK('FORWRD',0,ZHOOK_HANDLE)
+#endif
+
       vmax=vlevel( 1)
 c
       if (vgcompute) then
@@ -250,5 +264,10 @@ c..store u,v for rwalk
 c
       end do
 c
+#if defined(DRHOOK)
+c     before the return statement
+      IF (LHOOK) CALL DR_HOOK('FORWRD',1,ZHOOK_HANDLE)
+#endif
+
       return
       end

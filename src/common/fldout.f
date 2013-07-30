@@ -57,7 +57,14 @@ c	    Bq above boundary layer
 c		= (1.0-part_of_bq_in_bl)*concentration/(garea*hbl)
 c---------------------------------------------------------------------
 c
+#if defined(DRHOOK)
+      USE PARKIND1  ,ONLY : JPIM     ,JPRB
+      USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+#endif
       implicit none
+#if defined(DRHOOK)
+      REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
+#endif
 c
       include 'snapdim.inc'
       include 'snapfil.inc'
@@ -108,6 +115,11 @@ c
 c
       data itimeargos/5*0/
 c
+#if defined(DRHOOK)
+      ! Before the very first statement
+      IF (LHOOK) CALL DR_HOOK('FLDOUT',0,ZHOOK_HANDLE)
+#endif
+c
       ierror=0
 c
 c..initialization
@@ -149,6 +161,10 @@ c..iwrite=-1: istep is no. of field outputs
        do i=1,5
          itimeargos(i)=itime(i)
        end do
+#if defined(DRHOOK)
+c     before the return statement
+      IF (LHOOK) CALL DR_HOOK('FLDOUT',1,ZHOOK_HANDLE)
+#endif
        return
       end if
 c
@@ -365,7 +381,13 @@ c..in each sigma/eta (input model) layer
 c
       end if
 c
-      if(iwrite.eq.0) return
+      if(iwrite.eq.0) then
+#if defined(DRHOOK)
+c     before the return statement
+      IF (LHOOK) CALL DR_HOOK('FLDOUT',1,ZHOOK_HANDLE)
+#endif
+        return
+      end if
 c
       if(iargos.eq.1) then
         do i=1,5
@@ -400,7 +422,13 @@ c..create DNMI felt file
        call crefelt(filnam,iunit,itypef,ltimef,itimef,
      +               icodef,lspecf,ispecf,loptf,ioptf,ierror)
        if(ierror.ne.0) write(6,*) 'fldout: crefelt ERROR'
-       if(ierror.ne.0) return
+       if(ierror.ne.0) then
+#if defined(DRHOOK)
+c     before the return statement
+      IF (LHOOK) CALL DR_HOOK('FLDOUT',1,ZHOOK_HANDLE)
+#endif
+         return
+       end if
        numfields=0
 c
        filename=filnam(1:lenstr(filnam,1))//'_level_names'
@@ -1340,6 +1368,10 @@ c
 c..close output felt (field) file
       call mwfelt(13,filnam,iunit,1,nx*ny,field1,1.0,
      +            ldata,idata,ierror)
+#if defined(DRHOOK)
+c     before the return statement
+      IF (LHOOK) CALL DR_HOOK('FLDOUT',1,ZHOOK_HANDLE)
+#endif
       return
 c
   900 ierror=1
@@ -1348,5 +1380,9 @@ c..close output felt (field) file
      +            ldata,idata,ierr)
   920 write(9,*) '*FLDOUT*  Terminates due to write error.'
 c
+#if defined(DRHOOK)
+c     before the return statement
+      IF (LHOOK) CALL DR_HOOK('FLDOUT',1,ZHOOK_HANDLE)
+#endif
       return
       end

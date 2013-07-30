@@ -40,6 +40,7 @@ c
       data iopen,itotal/0,0/
       data ix1,ix2,iy1,iy2/4*0/
 c
+
       if(idebug.eq.0) then
 c..silent (open,read,close modes)
        imo=11

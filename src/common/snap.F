@@ -4,7 +4,7 @@ c
 c SNAP - Severe Nuclear Accident Program
 c
 c-----------------------
-c Options in snap.input: 
+c Options in snap.input:
 c=======================================================================
 c * comment
 c GRAPHICS.ON
@@ -206,6 +206,11 @@ c
 #else
       subroutine snap(iaction,iexit)
 #endif
+#if defined(DRHOOK)
+      USE PARKIND1  ,ONLY : JPIM     ,JPRB
+      USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+#endif
+
 c
 c SNAP - Severe Nuclear Accident Program
 c
@@ -219,6 +224,9 @@ c	iexit=1   : end of run
 c	iexit=2   : some error, exit
 c
       implicit none
+#if defined(DRHOOK)
+      REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
+#endif
 c
       include 'snapdim.inc'
       include 'snapfil.inc'
@@ -277,7 +285,7 @@ c
 c
       logical pendingOutput
 #if defined(VOLCANO) || defined(TRAJ)
-cjb 02.05 
+cjb 02.05
 c
 c... matrix for calculating volcanic ash concentrations + file name
 c
@@ -294,7 +302,7 @@ cjb 19.05
        integer tyear, tmon, tday, thour, tmin
        real distance, speed
        common /speed/ speed
-#endif 
+#endif
 #endif
 c
 #ifndef BATCH
@@ -330,6 +338,10 @@ c
 c
 #ifdef BATCH
       iaction=0
+#if defined(DRHOOK)
+      ! Before the very first statement
+      IF (LHOOK) CALL DR_HOOK('SNAP',0,ZHOOK_HANDLE)
+#endif
 #endif
       iexit=0
 c
@@ -1411,7 +1423,7 @@ c..end
        do i=1,ntraj
           read(iuinp,'(a80)') tname(i)
           write(*,'(i4,1x,a80)') i,tname(i)
-       enddo	
+       enddo
 #endif
             iend=1
           else
@@ -2030,10 +2042,10 @@ c
        write(13,'(''RIMPUFF'')')
        write(13,'(i2)') ntraj
        write(13,'(1x,i4,4i2.2,''00'',
-     &  2f9.3,f12.3,f15.2,f10.2)') 
+     &  2f9.3,f12.3,f15.2,f10.2)')
      &  (itime(i),i=1,4),mod(istep,12)*5,y,x,rellower(1),distance,speed
        write(*,'(i4,1x,i4,i2,i2,2i2.2,''00'',
-     &  2f9.3,f12.3,f15.2,f10.2)') istep, 
+     &  2f9.3,f12.3,f15.2,f10.2)') istep,
      &  (itime(i),i=1,4),mod(istep,12)*5,y,x,rellower(1),distance,speed
 #endif
             call xyconvert(1,x,y,2,geoparam,igtype,gparam,ierror)
@@ -2208,11 +2220,11 @@ c..output...................................................
           y=pdata(2,k)
           i=nint(pdata(1,k))
           j=nint(pdata(2,k))
-          if(pdata(3,k) .gt. 0.43) 
+          if(pdata(3,k) .gt. 0.43)
      &     vcon(i,j,1)=vcon(i,j,1)+pdata(9,k)/120.0				! level 1
-          if(pdata(3,k) .gt. 0.23 .and. pdata(3,k) .le. 0.43) 
+          if(pdata(3,k) .gt. 0.23 .and. pdata(3,k) .le. 0.43)
      &     vcon(i,j,2)=vcon(i,j,2)+pdata(9,k)/120.0				! level 2
-          if(pdata(3,k) .gt. 0.03 .and. pdata(3,k) .le. 0.216) 
+          if(pdata(3,k) .gt. 0.03 .and. pdata(3,k) .le. 0.216)
      &     vcon(i,j,3)=vcon(i,j,3)+pdata(9,k)/120.0				! level 3
        enddo
 cccc
@@ -2249,9 +2261,9 @@ cjb 19.05 start
        write(cfile,'(''concentrations-'',i2.2)') istep/72
        open(12,file=cfile)
        rewind 12
-       write(12,'(i4,3i2.2)') (itimev(i),i=1,4)	
+       write(12,'(i4,3i2.2)') (itimev(i),i=1,4)
        write(12,'(i6,'' - non zero grids'')') m
-       write(*,*)	
+       write(*,*)
        write(*,*) 'Output no.:',istep/72
        write(*,*) 'Time (hrs): ',istep/12
 c
@@ -2391,7 +2403,7 @@ c	if(istep .gt. -1) then
        call vtime(itimev,ierror)
 c	write(*,*) (itime(i),i=1,5), ierror
 c	write(*,*) (itimev(i),i=1,5)
-c	write(*,*) 'istep=',istep, 'npart=',npart	
+c	write(*,*) 'istep=',istep, 'npart=',npart
 c	do k=1,npart
        do k=1,1
 c	write(*,*) istep,pdata(1,k),pdata(2,k),pdata(3,k)
@@ -2410,10 +2422,10 @@ c	write(*,*) istep,x,y,pdata(3,k),k1,k2,
 c     &  vlevel(k1),vlevel(k2),hlevel2(i,j,k1),hlevel2(i,j,k2),zzz
 c	write(*,*)
 c	write(*,*) istep,k,x,y,zzz
-c	write(*,'(1x,i4,i2,i2,2i2.2,''00'')') 
+c	write(*,'(1x,i4,i2,i2,2i2.2,''00'')')
 c     &(itime(i),i=1,4),mod(istep,12)*5
        write(13,'(1x,i4,4i2.2,''00'',
-     &  2f9.3,f12.3,f15.2,f10.2)') 
+     &  2f9.3,f12.3,f15.2,f10.2)')
      &  tyear,tmon,tday,thour,mod(istep,12)*5,
      &  y,x,zzz,distance, speed
        write(*,'(i4,1x,i4,i2,i2,2i2.2,''00'',
@@ -2492,6 +2504,10 @@ c
 c
 #ifdef BATCH
       if(istop.gt.0) call exit(istop)
+#if defined(DRHOOK)
+      ! Before the very last statement
+      IF (LHOOK) CALL DR_HOOK('SNAP',1,ZHOOK_HANDLE)
+#endif
       stop
 #else
       iexit=1

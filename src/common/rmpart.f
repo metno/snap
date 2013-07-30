@@ -6,7 +6,14 @@ c           remaining mass is transferred to to the other particles
 c           in the same plume (or to the next plume if none left).
 c
 c
+#if defined(DRHOOK)
+      USE PARKIND1  ,ONLY : JPIM     ,JPRB
+      USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+#endif
       implicit none
+#if defined(DRHOOK)
+      REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
+#endif
 c
       include 'snapdim.inc'
       include 'snapgrd.inc'
@@ -22,6 +29,10 @@ c
       real    pbqdist(mdefcomp)
 c
 c
+#if defined(DRHOOK)
+      ! Before the very first statement
+      IF (LHOOK) CALL DR_HOOK('RMPART',0,ZHOOK_HANDLE)
+#endif
       xmin=1.
       ymin=1.
       xmax=float(nx)
@@ -119,5 +130,9 @@ c
 c..note: if pmlost>0 we lost mass inside the grid area
 c..      (no later plumes to take the mass).
 c
+#if defined(DRHOOK)
+c     before the return statement
+      IF (LHOOK) CALL DR_HOOK('RMPART',1,ZHOOK_HANDLE)
+#endif
       return
       end

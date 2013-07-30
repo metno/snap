@@ -15,7 +15,14 @@ c      and in the same levels
 c    - lower model level is level 2
 c
 c
+#if defined(DRHOOK)
+      USE PARKIND1  ,ONLY : JPIM     ,JPRB
+      USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+#endif
       implicit none
+#if defined(DRHOOK)
+      REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
+#endif
 c
       include 'snapdim.inc'
       include 'snapgrd.inc'
@@ -32,6 +39,12 @@ c
 c-test----------------------------------------------
       real    rri(4,nk)
       integer nrri(nk)
+c
+#if defined(DRHOOK)
+      ! Before the very first statement
+      IF (LHOOK) CALL DR_HOOK('BLDP',0,ZHOOK_HANDLE)
+#endif
+c
 c-test----------------------------------------------
 c######################################################################
 c     real riri(nk),ricric(nk)
@@ -282,5 +295,9 @@ c-test----------------------------------------------
       end do
 c-test----------------------------------------------
 c
+#if defined(DRHOOK)
+c     before the return statement
+      IF (LHOOK) CALL DR_HOOK('BLDP',1,ZHOOK_HANDLE)
+#endif
       return
       end

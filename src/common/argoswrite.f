@@ -1,6 +1,13 @@
       subroutine argoswrite(iunit,name,iparam,itimeargos,nx,ny,dblfield)
 c
+#if defined(DRHOOK)
+      USE PARKIND1  ,ONLY : JPIM     ,JPRB
+      USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+#endif
       implicit none
+#if defined(DRHOOK)
+      REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
+#endif
 c
       include 'snapdebug.inc'
 c
@@ -12,6 +19,11 @@ c
 c..local
       integer nxy,ij,ij1,ij2,i
       double precision dblmin,dblmax
+c
+#if defined(DRHOOK)
+      ! Before the very first statement
+      IF (LHOOK) CALL DR_HOOK('ARGOSWRITE',0,ZHOOK_HANDLE)
+#endif
 c
       nxy=nx*ny
 c
@@ -50,6 +62,10 @@ c
         write(9,*) 'ARGOS ',name,iparam,dblmin,dblmax
       end if
 c
+#if defined(DRHOOK)
+c     before the return statement
+      IF (LHOOK) CALL DR_HOOK('ARGOSWRITE',1,ZHOOK_HANDLE)
+#endif
       return
 c
   900 continue

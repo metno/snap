@@ -17,7 +17,7 @@ CC= gcc
 #F77FLAGS=-g
 #CXXFLAGS=-g
 #CCFLAGS=-g
-F77FLAGS=-O3 -DTRAJ -mcmodel=medium
+F77FLAGS=-DTRAJ -cpp -O3 -mcmodel=medium
 CXXFLAGS=-O3
 CCFLAGS=-O3
 

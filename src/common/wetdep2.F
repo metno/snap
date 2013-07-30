@@ -6,7 +6,14 @@ c  Method:   J.Bartnicki 2003
 c
 c ... 23.04.12 - gas, particle 0.1<d<10, particle d>10 - J. Bartnicki|
 c
+#if defined(DRHOOK)
+      USE PARKIND1  ,ONLY : JPIM     ,JPRB
+      USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+#endif
       implicit none
+#if defined(DRHOOK)
+      REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
+#endif
 c
       include 'snapdim.inc'
       include 'snapgrd.inc'
@@ -53,6 +60,10 @@ c
 c
       data prepare/.true./
 c
+#if defined(DRHOOK)
+      ! Before the very first statement
+      IF (LHOOK) CALL DR_HOOK('WETDEP2',0,ZHOOK_HANDLE)
+#endif
 c
       if(prepare) then
 c
@@ -76,7 +87,7 @@ c##############################################
          do m=1,ndefcomp
 c
 cjb... 25.04.12 wet deposition for convective and gases
-c	
+c
            if(radiusmym(m).gt.0.05.and.radiusmym(m).le.1.4) then
              rkw= a0*q**0.79
            endif
@@ -87,12 +98,12 @@ c
              rkw= a1*q + a2*q*q
            endif
            if(q .gt. 7.0) then	! convective
-              rkw=3.36e-4*q**0.79 
-           endif 
+              rkw=3.36e-4*q**0.79
+           endif
            if(radiusmym(m).le. 0.1) then	! gas
-              rkw=1.12e-4*q**0.79 
-           endif 
-           deprate= 1.0 - exp(-tstep*rkw)	
+              rkw=1.12e-4*q**0.79
+           endif
+           deprate= 1.0 - exp(-tstep*rkw)
            ratdep(m)=deprate
          end do
          write(9,1010) q,(ratdep(m),m=1,ndefcomp)
@@ -147,12 +158,12 @@ c
              rkw= a1*q + a2*q*q
            endif
            if(q .gt. 7.0) then	! convective
-              rkw=3.36e-4*q**0.79 
-           endif 
+              rkw=3.36e-4*q**0.79
+           endif
            if(radiusmym(m).le. 0.1) then	! gas
-              rkw=1.12e-4*q**0.79 
-           endif 
-           deprate= 1.0 - exp(-tstep*rkw)	
+              rkw=1.12e-4*q**0.79
+           endif
+           deprate= 1.0 - exp(-tstep*rkw)
             dep=deprate*pdata(9,n)
             if(dep.gt.pdata(9,n)) dep=pdata(9,n)
             pdata(9,n)=pdata(9,n)-dep
@@ -188,5 +199,9 @@ c      if(depmin.le.depmax)
 c     +   write(88,*) 'WETDEP2 depmin,depmax: ',depmin,depmax
 c      write(88,*) '---------------------------------------'
 c################################################################
+#if defined(DRHOOK)
+c     before the return statement
+      IF (LHOOK) CALL DR_HOOK('WETDEP1',1,ZHOOK_HANDLE)
+#endif
       return
       end

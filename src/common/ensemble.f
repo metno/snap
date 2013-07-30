@@ -14,7 +14,14 @@ c            =6 : output etc...
 c            =7 : final output of timeseries for each gridpoint
 c
 c
+#if defined(DRHOOK)
+      USE PARKIND1  ,ONLY : JPIM     ,JPRB
+      USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+#endif
       implicit none
+#if defined(DRHOOK)
+      REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
+#endif
 c
       include 'snapdim.inc'
 cxx   include 'snapfil.inc'
@@ -120,7 +127,12 @@ c
       data itimerel/0,0,0,0,0/
       data nsaveconc/0/
       data ntoutput/0/
+c
 c---------------------------------------------------------
+#if defined(DRHOOK)
+      ! Before the very first statement
+      IF (LHOOK) CALL DR_HOOK('ENSEMBLE',0,ZHOOK_HANDLE)
+#endif
 c
       if (nxep.lt.2 .or. nyep.lt.2) return
 c
@@ -662,5 +674,9 @@ c
 c
       end if
 c
+#if defined(DRHOOK)
+c     before the return statement
+      IF (LHOOK) CALL DR_HOOK('ENSEMBLE',1,ZHOOK_HANDLE)
+#endif
       return
       end

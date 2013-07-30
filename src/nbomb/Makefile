@@ -4,7 +4,7 @@ F77= gfortran
 CXX= g++
 CC= gcc
 
-F77FLAGS=-DBOMB -O3 -mcmodel=medium
+F77FLAGS=-DBOMB -O3 -cpp -mcmodel=medium
 CXXFLAGS=-O3
 CCFLAGS=-O3
 
@@ -16,6 +16,10 @@ MIINC = -I/usr/include
 MILIB = -L/usr/lib -lmi
 EXLIBS = -lpthread -ldl
 
+DRHOOKINC = -I../../utils/drhook_CY31R2.032
+DRHOOKLIB = -L../../utils/drhook_CY31R2.032 -ldrhook -lmpi_serial
+
+
 USRLOCAL=/usr
 
 ##########################################################
@@ -26,6 +30,13 @@ INCLUDES = -I. $(MIINC)
 
 LIBS= $(MILIB) $(EXLIBS)
 BLIBS= $(MILIB)
+
+ifdef DR_HOOK
+$(info DR_HOOK defined)
+F77FLAGS += -DDRHOOK $(DRHOOKINC)
+BLIBS += $(DRHOOKLIB)
+endif
+
 
 .SUFFIXES: .cc .c .f .F
 .f.o:

@@ -8,7 +8,14 @@ c      defined by alevel and blevel
 c    - lower model level is level 2
 c
 c
+#if defined(DRHOOK)
+      USE PARKIND1  ,ONLY : JPIM     ,JPRB
+      USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+#endif
       implicit none
+#if defined(DRHOOK)
+      REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
+#endif
 c
       include 'snapdim.inc'
       include 'snapgrd.inc'
@@ -18,6 +25,11 @@ c
       integer i,j,k,itab
       real    ginv,rtab,p,pih,pif,h1,h2
       real    pihl(nx,ny),hlev(nx,ny)
+c
+#if defined(DRHOOK)
+      ! Before the very first statement
+      IF (LHOOK) CALL DR_HOOK('COMPHEIGHT',0,ZHOOK_HANDLE)
+#endif
 c
 c##################################################################
 c     real dz1min,dz1max,dz2min,dz2max,hhhmin,hhhmax,dzz
@@ -111,5 +123,9 @@ c    +			    k,hlayer2(i,j,k),hlevel2(i,j,k)
 c     end do
 c##################################################################
 c
+#if defined(DRHOOK)
+c     before the return statement
+      IF (LHOOK) CALL DR_HOOK('COMPHEIGHT',1,ZHOOK_HANDLE)
+#endif
       return
       end

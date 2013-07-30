@@ -1,10 +1,20 @@
 # includefile contains Compiler definitions etc.
 include ./make.ubuntu
 
+DRHOOKINC = -I../../utils/drhook_CY31R2.032
+DRHOOKLIB = -L../../utils/drhook_CY31R2.032 -ldrhook -lmpi_serial
+
 INCLUDES = -I. $(PUINC)  $(FTGLINC) $(FTINC) $(QQQ) $(GLINC) $(GLTTINC)
 
 LIBS= $(PULIB) $(FTGLLIB) $(FTLIB) $(QTLIB) $(GLLIB) $(MILIB) $(EXLIB)
 BLIBS= $(MILIB)
+
+ifdef DR_HOOK
+$(info DR_HOOK defined)
+F77FLAGS += -DDRHOOK $(DRHOOKINC)
+BLIBS += $(DRHOOKLIB)
+endif
+
 
 .SUFFIXES: .cc .c .f .F
 .f.o:

@@ -4,7 +4,14 @@ c  Purpose:  Release one plume of particles
 c            The particles are spread in a cylinder volume if radius>0,
 c	     otherwise in a column
 c
+#if defined(DRHOOK)
+      USE PARKIND1  ,ONLY : JPIM     ,JPRB
+      USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+#endif
       implicit none
+#if defined(DRHOOK)
+      REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
+#endif
 c
       include 'snapdim.inc'
       include 'snapgrd.inc'
@@ -39,6 +46,10 @@ c
       real rand
 #else
       double precision rand
+#endif
+#if defined(DRHOOK)
+      ! Before the very first statement
+      IF (LHOOK) CALL DR_HOOK('RELEASE',0,ZHOOK_HANDLE)
 #endif
 c
       if(itprof.eq.2) then
@@ -401,5 +412,9 @@ c#######################################################################
 c
       ierror= 0
 c
+#if defined(DRHOOK)
+c     before the return statement
+      IF (LHOOK) CALL DR_HOOK('RELEASE',1,ZHOOK_HANDLE)
+#endif
       return
       end
