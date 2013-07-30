@@ -54,8 +54,8 @@ c
 
        do m=1,ndefcomp
         if(kdecay(m).eq.1) then
-       do i=1,nx
        do j=1,ny
+       do i=1,nx
          depdry(i,j,m)=depdry(i,j,m)*decayrate(m)
          depwet(i,j,m)=depwet(i,j,m)*decayrate(m)
          accdry(i,j,m)=accdry(i,j,m)*decayrate(m)
