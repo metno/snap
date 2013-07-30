@@ -1,9 +1,0 @@
-TASK=odbdummy
-LIB=$(ROOTDIR)/libodbdummy.a
-VPATH=
-CCINC=
-FCINC=$(CCINC) 
-ODB_FILTER=no
-OBJS= \
-Dummies.o 
-# DO NOT DELETE THIS LINE - used by make depend

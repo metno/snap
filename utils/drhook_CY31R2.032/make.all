@@ -1,1 +1,0 @@
-all:  $(TIMESTAMP_EXE) drhook drhook_exes
