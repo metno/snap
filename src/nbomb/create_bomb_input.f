@@ -156,7 +156,7 @@ c       write(2,*) 'TIME.START=   2010 10 14 06'
        write(2,"('TIME.START=  ',i5,3i3)")
      &(idate_start(i),i=1,4)
        write(2,"('SET_RELEASE.POS= P=',f10.4,',',f10.4)")
-     &long,lat
+     &lat,long
        write(2,"('TIME.RUN  = ',i3,'h')") iforecast
        write(2,"(1(A))") 'GRAPHICS.OFF',
      & 'VIDEO.SAVE.OFF','RANDOM.WALK.ON',
