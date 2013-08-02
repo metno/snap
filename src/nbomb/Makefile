@@ -29,7 +29,7 @@ BINDIR=../../bin
 INCLUDES = -I. $(MIINC)
 
 LIBS= $(MILIB) $(EXLIBS)
-BLIBS= $(MILIB)
+BLIBS= $(MILIB) -lnetcdf -lnetcdff
 
 ifdef DR_HOOK
 $(info DR_HOOK defined)
@@ -50,7 +50,7 @@ endif
 
 MODELOBJ= argoswrite.o bldp.o compheight.o copyfield.o decay.o drydep1.o drydep2.o edcomp.o \
 ensemble.o epinterp.o filesort.o fldout.o forwrd.o ftest.o om2edot.o posint.o \
-pselect.o readfd.o readfield.o release.o rmpart.o rwalk.o tabcon.o \
+pselect.o readfd.o readfield.o readfield_nc.o release.o rmpart.o rwalk.o tabcon.o \
 vgravtables.o videosave.o wetdep1.o wetdep2.o
 
 BOBJ = snap_batch_copy.o
@@ -113,6 +113,8 @@ readfd.o: ../common/readfd.f $(INCFILES)
 	${F77} -c ${F77FLAGS} -I. $<
 readfield.o: ../common/readfield.f $(INCFILES)
 	${F77} -c ${F77FLAGS} -I. $<
+readfield_nc.o: ../common/readfield_nc.F $(INCFILES)
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 release.o: ../common/release.F $(INCFILES)
 	${F77} -c ${F77FLAGS} -I. $<
 rmpart.o: ../common/rmpart.f $(INCFILES)
