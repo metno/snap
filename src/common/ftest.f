@@ -27,6 +27,7 @@ c
         fmax=-undef
         fsum=0.
         if(iundef.eq.0) then
+
           do j=1,ny
             do i=1,nx
               fmin=min(fmin,field(i,j,k))
@@ -63,6 +64,7 @@ c
      -                     name,  fmin,fmean,fmax
         end if
       end do
+      flush(9)
 c
       return
       end

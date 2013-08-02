@@ -17,3 +17,9 @@ install:
 		cd $$i && $(MAKE) install; \
 		cd ..; \
 	done
+
+naccident_install:
+	for i in naccident; do \
+		cd $$i && $(MAKE) install; \
+		cd ..; \
+	done

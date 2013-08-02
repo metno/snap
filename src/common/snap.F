@@ -126,6 +126,7 @@ c LEVELS.INPUT= 14, 0,31,30,29,28,27,26,25,23,21,17,13,7,1
 c * forecast.hour.min/max for following files (may change between files)
 c FORECAST.HOUR.MIN= +6 ......................... (default is +6)
 c FORECAST.HOUR.MAX= +32767 ..................... (default is +32767)
+c FIELD.TYPE=felt|netcdf
 c FIELD.INPUT= arklam.dat
 c FIELD.INPUT= feltlam.dat
 c FIELD_TIME.FORECAST
@@ -275,7 +276,7 @@ cjb_end
 c
       logical blfullmix
 c
-      character*72  finput,fldfil,logfile
+      character*72  finput,fldfil,logfile,ftype
       character*256 cinput,ciname,cipart
       character*8   cpos1,cpos2
       character*1   tchar
@@ -511,6 +512,7 @@ c
 c
       idebug=0
 c
+      ftype='felt'
       fldfil= 'snap.dat'
       logfile='snap.log'
 c
@@ -576,148 +578,6 @@ c
             cipart=cinput(kv1:kv2)//tchar
           end if
 c
-c=======================================================================
-c * comment
-c GRAPHICS.ON
-c GRAPHICS.OFF
-c GRAPHICS.PRECIP.ON
-c GRAPHICS.PRECIP.OFF
-c GRAPHICS.DRY.DEP.ON
-c GRAPHICS.DRY.DEP.OFF
-c GRAPHICS.WET.DEP.ON
-c GRAPHICS.WET.DEP.OFF
-c GRAPHICS.TOTAL.DEP.ON
-c GRAPHICS.TOTAL.DEP.OFF
-c GRAPHICS.MSLP.ON
-c GRAPHICS.MSLP.OFF
-c GRAPHICS.COMPONENT= Aerosol
-c GRAPHICS.COMPONENTS.TOTAL
-c GRAPHICS.PARTICLES.KEEP.MASS
-c GRAPHICS.PARTICLES.KEEP.POSITIONS
-c GRAPHICS.PARTICLES.IN.BOUNDARY.LAYER.ON
-c GRAPHICS.PARTICLES.IN.BOUNDARY.LAYER.OFF
-c GRAPHICS.PARTICLES.ABOVE.BOUNDARY.LAYER.ON
-c GRAPHICS.PARTICLES.ABOVE.BOUNDARY.LAYER.OFF
-c GRAPHICS.FREEZE.OFF
-c GRAPHICS.FREEZE.AT.START
-c GRAPHICS.FREEZE.AT.START.AND.END
-c GRAPHICS.FREEZE.AT.END
-c GRAPHICS.FREEZE.AT.EVERY.TIMESTEP
-c GRAPHICS.FREEZE.AT.TIME.OF.FIELD.OUTPUT
-c GRAPHICS.BACKGROUND.BLACK
-c GRAPHICS.BACKGROUND.WHITE
-c GRAPHICS.AREA.PERCENT.X1.X2.Y1.Y2= 0.,100.,0.,100.
-c GRAPHICS.SCREEN.PERCENT.X1.X2.Y1.Y2= 5.,95.,5.,95.
-c GRAPHICS.LAND= /usr/local/gsetup/land4.dat
-c GRAPHICS.LAND= /usr/local/gsetup/land5.dat
-c SAVE.PNG.STEP= 1
-c SAVE.XPM.STEP= 0
-c SAVE.BMP.STEP= 0
-c VIDEO.SAVE.ON
-c VIDEO.SAVE.OFF
-c POSITIONS.DECIMAL
-c POSITIONS.DEGREE+MINUTE
-c TIME.START=        1993,1,25,12
-c TIME.RUN  =        5d
-c TIME.RELEASE=      12h
-c SET_RELEASE.POS=   P.1
-c RANDOM.WALK.ON
-c RANDOM.WALK.OFF
-c BOUNDARY.LAYER.FULL.MIX.OFF
-c BOUNDARY.LAYER.FULL.MIX.ON
-c DRY.DEPOSITION.OLD .......................... (default)
-c DRY.DEPOSITION.NEW
-c WET.DEPOSITION.OLD .......................... (default)
-c WET.DEPOSITION.NEW
-c TIME.STEP= 900.
-c TIME.RELEASE.PROFILE.CONSTANT
-c TIME.RELEASE.PROFILE.BOMB
-c TIME.RELEASE.PROFILE.LINEAR
-c TIME.RELEASE.PROFILE.STEPS
-c * RELEASE.SECOND=
-c * RELEASE.MINUTE=
-c * RELEASE.DAY=                    0,       1,       2, ....
-c RELEASE.HOUR=                     0,      24,      48, ....
-c RELEASE.RADIUS.M=             10000,   10000,   10000, ....
-c RELEASE.UPPER.M=              10000,   10000,   10000, ....
-c RELEASE.LOWER.M=               5000,    5000,    5000, ....
-c RELEASE.MUSHROOM.STEM.RADIUS.M= 500,     500,     500, ....
-c RELEASE.BQ/HOUR.COMP=   2.e+15,  1.e+15, 0.5e+15, ..., 'Aerosol.large'
-c RELEASE.BQ/HOUR.COMP=   1.e+15,  1.e+15, 0.5e+15, ..., 'Aerosol.medium'
-c RELEASE.BQ/HOUR.COMP=       0.,  1.e+15, 0.5e+15, ..., 'Aerosol.small'
-c * RELEASE.BQ/SEC.COMP=
-c * RELEASE.BQ/DAY.COMP=
-c * RELEASE.BQ/STEP.COMP=
-c MAX.PARTICLES.PER.RELEASE= 2000
-c COMPONENT= Aerosol
-c DRY.DEP.ON
-c DRY.DEP.OFF
-c WET.DEP.ON
-c WET.DEP.OFF
-c DRY.DEP.HEIGHT= 44.
-c DRY.DEP.RATIO=  0.1
-c WET.DEP.RATIO=  0.2
-c RADIOACTIVE.DECAY.ON
-c RADIOACTIVE.DECAY.OFF
-c HALF.LIFETIME.MINUTES= 45.5
-c HALF.LIFETIME.HOURS= ...
-c HALF.LIFETIME.DAYS= ....
-c HALF.LIFETIME.YEARS= ....
-c # GRAVITY.OFF
-c # GRAVITY.FIXED.M/S= 0.01
-c # GRAVITY.FIXED.CM/S= 1.0
-c RADIUS.MICROMETER= 50.
-c DENSITY.G/CM3= 19.
-c FIELD.IDENTIFICATION= 1
-c TOTAL.COMPONENTS.OFF
-c TOTAL.COMPONENTS.ON
-c PRECIP(MM/H).PROBAB= 0.0,0.00, 0.5,0.31, 1.0,0.48, 1.5,0.60, 2.0,0.66
-c PRECIP(MM/H).PROBAB= 3.3,0.72, 8.3,0.80, 15.,0.85, 25.,0.91
-c REMOVE.RELATIVE.MASS.LIMIT= 0.02
-c STEP.HOUR.INPUT.MIN=  6
-c STEP.HOUR.INPUT.MAX= 12
-c STEP.HOUR.OUTPUT.FIELDS=  3
-c SYNOPTIC.OUTPUT
-c ASYNOPTIC.OUTPUT
-c MSLP.ON
-c MSLP.OFF
-c PRECIPITATION.ON
-c PRECIPITATION.OFF
-c MODEL.LEVEL.FIELDS.ON
-c MODEL.LEVEL.FIELDS.OFF
-c RELEASE.POS= 'P.1', 58.50, -4.00
-c GRID.INPUT= 88,1814
-c GRID.RUN=   88,1814, 1,1,1
-c * Norlam (sigma levels)
-c DATA.SIGMA.LEVELS
-c * Hirlam (eta levels)
-c DATA.ETA.LEVELS
-c * wind.surface = wind.10m (one 0 level first in list)
-c LEVELS.INPUT= 14, 0,31,30,29,28,27,26,25,23,21,17,13,7,1
-c * forecast.hour.min/max for following files (may change between files)
-c FORECAST.HOUR.MIN= +6 ......................... (default is +6)
-c FORECAST.HOUR.MAX= +32767 ..................... (default is +32767)
-c FIELD.INPUT= arklam.dat
-c FIELD.INPUT= feltlam.dat
-c FIELD_TIME.FORECAST
-c FIELD_TIME.VALID
-c FIELD.OUTPUT= snap.dat
-c LOG.FILE=     snap.log
-c DEBUG.OFF ..................................... (default)
-c DEBUG.ON
-c ENSEMBLE.PROJECT.OUTPUT.OFF ................... (default)
-c ENSEMBLE.PROJECT.OUTPUT.ON
-c ENSEMBLE.PROJECT.OUTPUT.FILE= ensemble.list
-c ENSEMBLE.PROJECT.PARTICIPANT= 09
-c ENSEMBLE.PROJECT.RANDOM.KEY=  RL52S3U
-c ENSEMBLE.PROJECT.OUTPUT.STEP.HOUR= 3
-c ARGOS.OUTPUT.OFF
-c ARGOS.OUTPUT.ON
-c ARGOS.OUTPUT.DEPOSITION.FILE=    runident_MLDP0_depo
-c ARGOS.OUTPUT.CONCENTRATION.FILE= runident_MLDP0_conc
-c ARGOS.OUTPUT.TOTALDOSE.FILE=     runident_MLDP0_dose
-c ARGOS.OUTPUT.TIMESTEP.HOUR= 3
-c END
 c=======================================================================
 c
           if(cinput(k1:k2).eq.'graphics.on') then
@@ -1325,6 +1185,10 @@ c..forecast.hour.min= +6
 c..forecast.hour.max= +32767
             if(kv1.lt.1) goto 12
             read(cipart,*,err=12) maxhfc
+          elseif(cinput(k1:k2).eq.'field.type') then
+c..field.type felt or netcdf
+            if(kv1.lt.1) goto 12
+            read(cipart,*,err=12) ftype
           elseif(cinput(k1:k2).eq.'field.input') then
 c..field.input=  felt_file_name
             if(kv1.lt.1) goto 12
@@ -1496,6 +1360,10 @@ c
       end if
       if(nlevel.eq.0) then
         write(6,*) 'Input model levels not specified'
+        ierror=1
+      end if
+      if(ftype .ne. "felt" .and. ftype .ne. "netcdf") then
+        write(6,*) 'Input type not felt or netcdf:', ftype
         ierror=1
       end if
       if(nfilef.eq.0) then
@@ -1972,8 +1840,11 @@ c
 #endif
 c
         write(9,*) 'istep,nplume,npart: ',istep,nplume,npart
-       if(mod(istep,nsteph).eq.0)
-     +    write(6,*) 'istep,nplume,npart: ',istep,nplume,npart
+        flush(9)
+        if(mod(istep,nsteph).eq.0) then
+          write(6,*) 'istep,nplume,npart: ',istep,nplume,npart
+          flush(6)
+        end if
 c
 c#######################################################################
 c..test print: printing all particles in plume 'jpl'
@@ -1997,17 +1868,26 @@ c..read fields
             end do
             ihr1=-0
             ihr2=-nhfmax
-           nhleft=nhrun
+            nhleft=nhrun
           else
             do i=1,5
               itimei(i)=itimefi(i)
             end do
             ihr1=+nhfmin
             ihr2=+nhfmax
-           nhleft=(nstep-istep+1)/nsteph
+            nhleft=(nstep-istep+1)/nsteph
           end if
-          call readfield(iunitf,istep,nhleft,itimei,ihr1,ihr2,
+c          write (*,*) "readfield(", iunitf, istep, nhleft, itimei, ihr1
+c     +          ,ihr2, itimefi, ierror, ")"
+          if (ftype .eq. "netcdf") then
+            call readfield_nc(iunitf,istep,nhleft,itimei,ihr1,ihr2,
      +                   itimefi,ierror)
+          else
+            call readfield(iunitf,istep,nhleft,itimei,ihr1,ihr2,
+     +                   itimefi,ierror)
+          end if
+c          write (*,*) "readfield(", iunitf, istep, nhleft, itimei, ihr1
+c     +          ,ihr2, itimefi, ierror, ")"
           if(ierror.ne.0) goto 910
 c
 c..analysis time of input model
@@ -2020,11 +1900,11 @@ c..analysis time of input model
 c
           n=itimefi(5)
           call vtime(itimefi,ierr)
-         write(6,fmt='(''input data: '',i4,3i3.2,''  prog='',i4)')
+          write(6,fmt='(''input data: '',i4,3i3.2,''  prog='',i4)')
      +                             (itimefi(i),i=1,4),n
 c
 c..compute model level heights
-         call compheight
+          call compheight
 c
 c..calculate boundary layer (top and height)
           call bldp
@@ -2068,13 +1948,13 @@ c
             relpos(3,irelpos)=x
             relpos(4,irelpos)=y
 c
-           if(iensemble.eq.1)
+            if(iensemble.eq.1)
      +        call ensemble(0,itime1,tf1,tf2,tnow,istep,nstep,nsteph)
 c
             nxtinf=1
             ifldout=0
+c continue istep loop after initialization
             goto 200
-c
           end if
 c
          if(iensemble.eq.1)
