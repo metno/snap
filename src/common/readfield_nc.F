@@ -49,7 +49,14 @@
       integer ncid, varid, retval
       integer start3d(3), start4d(4), count3d(3), count4d(4)
       character*(*) file_name
+      character*(10) meteoType
+      character*(80) xwindv,ywindv,xwind10mv,ywind10mv,pottempv,ptopv
+      character*(80) sigmadotv,apv,bv,sigmav,psv,mslpv,precaccumv
+      character*(80) precstrativ,precconv
       parameter (file_name='/disk1/myopdata/hirlam12/h12all00.nc')
+      parameter (meteoType='h12')
+
+
 
 #if defined(DRHOOK)
 ! Before the very first statement
@@ -57,6 +64,43 @@
 #endif
 
       call check(nf_open(file_name, NF_NOWRITE, ncid), file_name)
+
+      if (meteoType.eq.'h12') then
+        xwindv = 'x_wind_ml'
+        ywindv = 'y_wind_ml'
+        xwind10mv = 'x_wind_10m'
+        ywind10mv = 'y_wind_10m'
+        pottempv = 'air_potential_temperature_ml'
+        sigmav = ''
+        ptopv = ''
+        apv = 'ap'
+        bv = 'b'
+        sigmadotv = 'sigma_dot_ml'
+        psv = 'surface_air_pressure'
+        mslpv = 'air_pressure_at_sea_level'
+        precaccumv = 'precipitation_amount_acc'
+        precstrativ = ''
+        precconv = ''
+      else if (meteoType.eq.'emep') then
+        xwindv = 'u_wind'
+        ywindv = 'v_wind'
+        xwind10mv = 'u10'
+        ywind10mv = 'v10'
+        pottempv = 'potential_temperature'
+        sigmav = 'k'
+        ptopv = ''
+        apv = ''
+        bv = ''
+        sigmadotv = ''
+        psv = 'surface_pressure'
+        mslpv = 'air_pressure_at_sea_level'
+        precaccumv = 'precipitation_amount_acc'
+        precstrativ = 'large_scale_precipitations'
+        precconv = 'convective_precipitations'
+      else
+        write(*,*) "undefined meteo type: ", meteoType
+        call exit(1)
+      end if
 
 
 !..get time offset in hours (as iavail(8,n))
@@ -130,49 +174,50 @@ c..input model level no.
 c
 c..u
 !     Get the varid of the data variable, based on its name.
-        call check(nf_inq_varid(ncid, 'x_wind_ml', varid), 'x_wind_ml')
-        call check(nf_get_vara_real(ncid, varid, start4d, count4d,
-     +             u2(1,1,k)), 'x_wind_ml')
+        call nfcheckload(ncid, xwindv, start4d, count4d, u2(1,1,k))
 !        call readfd(iunit,nav,ivc,iu,ilevel,0,u2(1,1,k),ierror)
 !        if(ierror.ne.0) goto 100
 !
 !..v
-        call check(nf_inq_varid(ncid, 'y_wind_ml', varid), 'y_wind_ml')
-        call check(nf_get_vara_real(ncid, varid, start4d, count4d,
-     +             v2(1,1,k)), 'y_wind_ml')
+        call nfcheckload(ncid, ywindv, start4d, count4d, v2(1,1,k))
 !        call readfd(iunit,nav,ivc,iv,ilevel,0,v2(1,1,k),ierror)
 !        if(ierror.ne.0) goto 100
 c
 c..pot.temp. or abs.temp.
-        call check(nf_inq_varid(ncid, 'air_potential_temperature_ml',
-     +                           varid), 'air_potential_temperature_ml')
-        call check(nf_get_vara_real(ncid, varid, start4d, count4d,
-     +             t2(1,1,k)), 'air_potential_temperature_ml')
+        call nfcheckload(ncid, pottempv, start4d, count4d, t2(1,1,k))
 !        call readfd(iunit,nav,ivc,it,ilevel,0,t2(1,1,k),ierror)
 !        if(ierror.ne.0) goto 100
 c
-c..alevel (here) only for eta levels
-        call check(nf_inq_varid(ncid, 'ap', varid), 'ap')
-        call check(nf_get_vara_real(ncid, varid, ilevel, 1,
-     +             alev(k)), 'ap')
-c TODO: check unit (here Pa -> hPa
-        alev(k) = alev(k) / 100
-        call check(nf_inq_varid(ncid, 'b', varid), 'b')
-        call check(nf_get_vara_real(ncid, varid, ilevel, 1,
-     +             blev(k)), 'b')
-c
-c   TOOD read ptop from file (only needed for sigma)
-c..ptop for sigma (Norlam)
-      ptop=0.
-      if(ivcoor.eq.2) ptop=idata(19)
 
+c..alevel (here) only for eta levels
+        if (.not.apv.eq.'') then
+          call nfcheckload(ncid, apv, (/ilevel/), (/1/), alev(k))
+c TODO: check unit (here Pa -> hPa
+          alev(k) = alev(k) / 100
+          call nfcheckload(ncid, bv, (/ilevel/), (/1/), blev(k))
+        end if
+        if (.not.sigmav.eq.'') then
+c reusing blev(k) for sigma(k) later
+          call nfcheckload(ncid, sigmav, (/ilevel/), (/1/), blev(k))
+        end if
+c
+c   TOOD read ptop from file (only needed for sigma), but not in emep data
+       ptop=100.
+c      if(ivcoor.eq.2) ptop=idata(19)
 c
 c..sigma_dot/eta_dot (0 at surface)
 c..eta: eta_dot (or omega) stored in the same levels as u,v,th.
-        call check(nf_inq_varid(ncid, 'sigma_dot_ml', varid),
-     +              'sigma_dot_ml')
-        call check(nf_get_vara_real(ncid, varid, start4d, count4d,
-     +             w2(1,1,k)), 'sigma_dot_ml')
+        if (sigmadotv.eq.'') then
+          do j=1,ny
+            do i=1,nx
+c no vertical velocity TODO: improve by using continuation equation
+              w2(i,j,k) = 0
+            end do
+          end do
+        else
+          call nfcheckload(ncid, sigmadotv,
+     +                     start4d, count4d, w2(1,1,k))
+        end if
 !        call readfd(iunit,nav,ivc,iw,ilevel,0,w2(1,1,k),ierror)
 !        if(ierror.ne.0) goto 100
 c
@@ -191,10 +236,7 @@ c
       count3d(3) = 1
 
 c ps
-      call check(nf_inq_varid(ncid, 'surface_air_pressure', varid),
-     +            'surface_air_pressure')
-      call check(nf_get_vara_real(ncid, varid, start3d, count3d,
-     +             ps2(1,1)), 'surface_air_pressure')
+      call nfcheckload(ncid, psv, start3d, count3d, ps2(1,1))
 c TODO: something wrong with input ps, should be hPa, but is 10*hPa
       do j=1,ny
         do i=1,nx
@@ -204,28 +246,21 @@ c TODO: something wrong with input ps, should be hPa, but is 10*hPa
 c      call readfd(iunit,navps,ivc,8,ilevel,0,ps2(1,1),ierror)
 
 c u10m
-      call check(nf_inq_varid(ncid, 'x_wind_10m', varid), 'x_wind_10m')
-      call check(nf_get_vara_real(ncid, varid, start3d, count3d,
-     +             u2(1,1,1)), 'x_wind_10m')
+      call nfcheckload(ncid, xwind10mv, start3d, count3d, u2(1,1,1))
 c      call readfd(iunit,nav,ivc,33,ilevel,0,u2(1,1,1),ierror)
 c v10m
-      call check(nf_inq_varid(ncid, 'y_wind_10m', varid),'y_wind_10m')
-      call check(nf_get_vara_real(ncid, varid, start3d, count3d,
-     +             v2(1,1,1)), 'y_wind_10m')
+      call nfcheckload(ncid, ywind10mv, start3d, count3d, v2(1,1,1))
 c      call readfd(iunit,nav,ivc,34,ilevel,0,v2(1,1,1),ierror)
 
 c..mean sea level pressure, not used in computations,
 c..(only for graphics and/or output to results file)
       if(imslp.ne.0) then
-        retval = nf_inq_varid(ncid, 'air_pressure_at_sea_level', varid)
-        if (retval .eq. nf_noerr) then
-          call check(nf_get_vara_real(ncid, varid, start3d, count3d,
-     +                 pmsl2(1,1)), 'air_pressure_at_sea_level')
-c        call readfd(iunit,nav,ivc,58,ilevel,0,pmsl2(1,1),ierror)
-        else
+        if (.not.mslpv.eq.'') then
           write(9,*) 'Mslp not found. Not important.'
-c..stop input of mslp at later timesteps
           imslp=0
+        else
+          call nfcheckload(ncid, mslpv, start3d, count3d, pmsl2(1,1))
+c        call readfd(iunit,nav,ivc,58,ilevel,0,pmsl2(1,1),ierror)
         end if
       end if
 
@@ -233,15 +268,14 @@ c..precipitation......................................................
 c
 c..precipitation between input time 't1' and 't2'
       if (timepos .ne. 1) then
-        call check(nf_inq_varid(ncid, 'precipitation_amount_acc',
-     +               varid), 'precipitation_amount_acc')
         start3d(3) = timepos - 1
-        call check(nf_get_vara_real(ncid, varid, start3d, count3d,
-     +               field1(1,1)), 'precipitation_amount_acc')
+        call nfcheckload(ncid, precaccumv,
+     +                    start3d, count3d, field1(1,1))
+
 c       call readfd(iunit,nav,ivc,17,ilevel,ihrpr1,field1,ierror)
         start3d(3) = timepos
-        call check(nf_get_vara_real(ncid, varid, start3d, count3d,
-     +               field2(1,1)), 'precipitation_amount_acc')
+        call nfcheckload(ncid, precaccumv,
+     +                    start3d, count3d, field2(1,1))
 c       call readfd(iunit,nav,ivc,17,ilevel,ihrpr2,field2,ierror)
 c..the difference below may get negative due to different scaling
         do j=1,ny
@@ -493,3 +527,18 @@ c
         call exit(1)
       endif
       end subroutine check
+
+      subroutine nfcheckload(ncid, varname, start, length, field)
+      implicit none
+      include 'netcdf.inc'
+      integer, intent ( in) :: ncid, start(1), length(1)
+      character(len=*), intent(in) :: varname
+      real(kind=4), intent (inout) :: field(1)
+
+      integer :: varid
+
+      call check(nf_inq_varid(ncid, varname, varid), varname)
+      call check(nf_get_vara_real(ncid, varid, start, length,
+     +             field), varname)
+
+      end subroutine nfcheckload

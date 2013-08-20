@@ -40,21 +40,15 @@ c
       integer np,i
       real    a,cona,conb,vrange,vrdbla,vrdblb,vrqrt
       real    xrand,yrand,zrand,u,v,vabs,rl,rv,rv2,vpos,rvmax
-       real hmax	! maximum mixing height = 2500m
-       real tmix	! Characteristic mixing time = 15 min
-       real lmax	! Maximum l-eta in the mixing layer = 0.28
-       real labove	! Standard l-eta above the mixing layer
-       real tfactor	! tfactor=tstep/tmix
-       real hfactor    ! hfactor=h/hmax		!
+       real hmax ! maximum mixing height = 2500m
+       real tmix ! Characteristic mixing time = 15 min
+       real lmax ! Maximum l-eta in the mixing layer = 0.28
+       real labove ! Standard l-eta above the mixing layer
+       real tfactor ! tfactor=tstep/tmix
+       real hfactor    ! hfactor=h/hmax!
+       real rnd(3)
 c
-c..for random number functions
-      integer irand,iseed
-c
-#if defined(linux)
-      real rand
-#else
-      double precision rand
-#endif
+
 #if defined(DRHOOK)
       ! Before the very first statement
       IF (LHOOK) CALL DR_HOOK('RWALK',0,ZHOOK_HANDLE)
@@ -66,7 +60,7 @@ c
        labove=0.03
        tfactor=tstep/tmix
 c	write(*,*) 'hmax, tmix,lmax, labove, tfactor',
-c     &hmax, tmix,lmax, labove, tfactor	
+c     &hmax, tmix,lmax, labove, tfactor
 c
       a=0.5
       conb=2.*tstep*0.5*(tstep**0.75)*(a**2)
@@ -80,12 +74,7 @@ c l-eta above mixing height
 c
 c l-eta below mixing height
       vrdblb=lmax*tfactor
-      vrqrt=vrange*0.25	
-c
-c..for random number generation
-c..(better if moved into particle loop ?)
-      iseed=irand()
-      call srand(iseed)
+      vrqrt=vrange*0.25
 c
 c--------------------------------------
       if (blfullmix) then
@@ -95,13 +84,11 @@ c
 c
 c..the rand function returns random real numbers between 0.0 and 1.0
 c
-        xrand=rand()
-        yrand=rand()
-        zrand=rand()
-c
-        xrand=(xrand-0.5)
-        yrand=(yrand-0.5)
-        zrand=(zrand-0.5)
+        call random_number(rnd)
+        xrand = rnd(1) - 0.5
+        yrand = rnd(2) - 0.5
+        zrand = rnd(3) - 0.5
+
 c
         if(pdata(3,np).gt.pdata(4,np)) then
 c
@@ -127,7 +114,7 @@ c..horizontal diffusion
          u=pwork(np,1)
          v=pwork(np,2)
           vabs=sqrt(u*u+v*v)
-          rl=sqrt(cona*vabs**1.75)*2.	   
+          rl=sqrt(cona*vabs**1.75)*2.
           pdata(1,np)=pdata(1,np)+rl*xrand*pdata(6,np)
           pdata(2,np)=pdata(2,np)+rl*yrand*pdata(7,np)
 c
@@ -149,13 +136,10 @@ c	write(*,*) np,(pdata(i,np),i=1,5)
 c
 c..the rand function returns random real numbers between 0.0 and 1.0
 c
-        xrand=rand()
-        yrand=rand()
-        zrand=rand()
-c
-        xrand=(xrand-0.5)
-        yrand=(yrand-0.5)
-        zrand=(zrand-0.5)
+        call random_number(rnd)
+        xrand = rnd(1) - 0.5
+        yrand = rnd(2) - 0.5
+        zrand = rnd(3) - 0.5
 c
         if(pdata(3,np).gt.pdata(4,np)) then
 c
@@ -203,7 +187,7 @@ c	  write(*,*) 'dol-po   , p=',pdata(3,np)
 c
 c..vertical limits
          if(pdata(3,np) .gt. 1.0) pdata(3,np)=1.0
-         if(pdata(3,np) .lt. pdata(4,np)) 
+         if(pdata(3,np) .lt. pdata(4,np))
      &    pdata(3,np)=pdata(4,np)
 c
         else
@@ -235,3 +219,16 @@ c     before the return statement
 #endif
       return
       end
+
+      SUBROUTINE rwalk_init_random_seed()
+            INTEGER :: i,n
+            INTEGER, DIMENSION(:), ALLOCATABLE :: seed
+
+            CALL RANDOM_SEED(size = n)
+            ALLOCATE(seed(n))
+
+            seed = 3 + 37 * (/ (i - 1, i = 1, n) /)
+            CALL RANDOM_SEED(PUT = seed)
+
+            DEALLOCATE(seed)
+      END SUBROUTINE
