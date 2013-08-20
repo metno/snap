@@ -334,7 +334,7 @@ c
         ierror=1
 #if defined(DRHOOK)
 c     before the return statement
-      IF (LHOOK) CALL DR_HOOK('FORWRD',1,ZHOOK_HANDLE)
+      IF (LHOOK) CALL DR_HOOK('READFIELD',1,ZHOOK_HANDLE)
 #endif
         return
       end if
@@ -843,7 +843,7 @@ c
        navailt2=0
 #if defined(DRHOOK)
 c     before the return statement
-      IF (LHOOK) CALL DR_HOOK('FORWRD',1,ZHOOK_HANDLE)
+      IF (LHOOK) CALL DR_HOOK('READFIELD',1,ZHOOK_HANDLE)
 #endif
        return
       end if
@@ -897,7 +897,7 @@ c
 c
 #if defined(DRHOOK)
 c     before the return statement
-      IF (LHOOK) CALL DR_HOOK('FORWRD',1,ZHOOK_HANDLE)
+      IF (LHOOK) CALL DR_HOOK('READFIELD',1,ZHOOK_HANDLE)
 #endif
       return
       end

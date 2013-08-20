@@ -337,6 +337,7 @@ c..used in xyconvert (longitude,latitude -> x,y)
 c
       data pendingOutput/.false./
 c
+
 #ifdef BATCH
       iaction=0
 #if defined(DRHOOK)
@@ -344,6 +345,8 @@ c
       IF (LHOOK) CALL DR_HOOK('SNAP',0,ZHOOK_HANDLE)
 #endif
 #endif
+c initialize random number generator for rwalk
+      CALL rwalk_init_random_seed()
       iexit=0
 c
 #ifndef BATCH

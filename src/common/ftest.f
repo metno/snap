@@ -3,7 +3,14 @@ c
 c  Purpose: Test field, print min,mean,max values.
 c
 c
+#if defined(DRHOOK)
+      USE PARKIND1  ,ONLY : JPIM     ,JPRB
+      USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
+#endif
       implicit none
+#if defined(DRHOOK)
+      REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
+#endif
 c
       integer       k1,k2,nx,ny,nk,iundef
       real          field(nx,ny,nk)
@@ -14,6 +21,10 @@ c
 c
       double precision fsum
 c
+#if defined(DRHOOK)
+      ! Before the very first statement
+      IF (LHOOK) CALL DR_HOOK('FTEST',0,ZHOOK_HANDLE)
+#endif
       if(k1.lt.1 .or. k1.gt.nk) k1=1
       if(k2.lt.1 .or. k2.gt.nk) k2=nk
       kstep=+1
@@ -66,5 +77,9 @@ c
       end do
       flush(9)
 c
+#if defined(DRHOOK)
+c     before the return statement
+      IF (LHOOK) CALL DR_HOOK('FTEST',1,ZHOOK_HANDLE)
+#endif
       return
       end
