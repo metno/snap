@@ -1,6 +1,7 @@
 #! /usr/bin/perl
 use strict;
 use warnings;
+use FindBin qw($Bin);
 
 use Getopt::Long qw(GetOptions);
 use Pod::Usage qw(pod2usage);
@@ -9,7 +10,7 @@ use XML::LibXML;
 use vars qw(%Args);
 $Args{levelnames} = "snap.felt_level_names";
 $Args{felt_input} = "snap.felt";
-$Args{xml_template} = "felt2nc_snap_dummy_levels.xml";
+$Args{xml_template} = "$Bin/felt2nc_snap_dummy_levels.xml";
 GetOptions(\%Args,
        'debug',
        'help',
@@ -30,10 +31,10 @@ pod2usage(-exitval => 2,
           -msg => "missing tag") unless $Args{tag};
 
 
-my $command =  "perl felt2ncDummyLevels2Isotopes.pl  --levelnames=$Args{levelnames} --xmlTemplate=$Args{xml_template} --output=felt2nc_$Args{tag}.xml";
+my $command =  "perl $Bin/felt2ncDummyLevels2Isotopes.pl  --levelnames=$Args{levelnames} --xmlTemplate=$Args{xml_template} --output=$Bin/felt2nc_$Args{tag}.xml";
 print $command, "\n";
 system($command) == 0 or die "system $command failed: $?";
-$command = "fimex --input.file=$Args{felt_input} --input.config=felt2nc_$Args{tag}.xml --output.file=$Args{tag}.nc --output.type=nc4";
+$command = "fimex --input.file=$Args{felt_input} --input.config=$Bin/felt2nc_$Args{tag}.xml --output.file=$Args{tag}.nc --output.type=nc4";
 print $command, "\n";
 system($command) == 0 or die "system $command failed: $?";
 
@@ -50,7 +51,7 @@ sub readIsotopes {
 	my %isotopes;
 	while (defined (my $line = <$f>)) {
 		if ($line =~ /^\s+(\d+)\s+"([^"]+)"/) {
-			$isotopes{$1} = $2;
+			$isotopes{$1} = $2 unless $2 eq 'Total';
 		} else {
 			warn "Cannot parse line in $file: $line";
 		}
@@ -124,6 +125,14 @@ dash1=    1111000011111111
 
 <FIELD_COMPUTE>
 EOT
+    # add the sum for accumulation of aerosols
+    foreach my $type (qw(accum.dry.dep_ accum.wet.dep_ conc.average_ conc.instant_ conc.accum_)) {
+        print $f $type,"Total=sum(",
+            join(',',map {$type.$isotopes->{$_}} keys %$isotopes),
+            ")\n";
+    }
+    $isotopes->{sum} = "Total";
+
     foreach my $id (keys %$isotopes) {
         my $iso = $isotopes->{$id};
         print $f "${iso}_concentration=add(conc.average_${iso},0)\n";
@@ -131,6 +140,8 @@ EOT
         print $f "${iso}_concentration_accum=add(conc.accum_${iso},0)\n";
         print $f "${iso}_tdep=add(accum.dry.dep_${iso},accum.wet.dep_${iso})\n";
     }
+
+
 print $f <<'EOT';
 
 </FIELD_COMPUTE>
@@ -158,7 +169,10 @@ field=PRECIP.SNAP
 end.field
 
 EOT
-    foreach my $id (keys %$isotopes) {
+
+
+# the isotopes
+    foreach my $id (sort keys %$isotopes) {
         my $iso = $isotopes->{$id};
         print $f <<"EOT";
 field=${iso}_total_deposisjon
