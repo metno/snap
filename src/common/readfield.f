@@ -169,6 +169,11 @@ c..ECMWF data : omega and abs.temp. input (converted later)
         iw=13
         it=4
       end if
+      if(iprod.eq.88.and.igridr.eq.1999) then
+c..Nora10 (era interim downscaled to hirlam10)
+        iw=13
+        itryprecip=8
+      end if
 c
       do k=nk-kadd,2,-1
 c
@@ -358,7 +363,7 @@ c
       ivc=2
       ilevel=1000
 c
-      goto (110,120,130,140,150,160,170) itryprecip
+      goto (110,120,130,140,150,160,170,175) itryprecip
 c
   110 itryprecip=1
 c
@@ -611,6 +616,40 @@ c
        end if
       end if
 c
+c
+  175 itryprecip=8
+c
+c nora-era felt-files, with hourly non-accumulated precipitation in param 17
+c with forecast hour 3 meaning precip between 2 and 3
+c
+      ierror=0
+      lprog2=-999
+      ihdiff=0
+      do while (ierror.eq.0 .and. ihdiff.lt.nhdiff)
+       ihdiff=ihdiff+1
+       if ((iavail(5,navailt1)+ihdiff).lt.9) then
+c hours 4 to 8
+         nav=navailt1
+         ihrpr2=ihdiff
+       else
+c hours 9 = hours 3 on next file
+         nav=navailt2
+         ihrpr2=ihdiff - 3
+       end if
+       call readfd(iunit,nav,ivc,17,ilevel,ihrpr2,field2,ierror)
+       if(ierror.eq.0) then
+c..the difference below may get negative due to different scaling
+         do j=1,ny
+           do i=1,nx
+             precip(i,j,ihdiff)=field2(i,j)
+           end do
+         end do
+       end if
+      end do
+
+      if(ierror.eq.0) goto 190
+
+
   180 continue
 c
       write(6,*) 'NO PRECIPITATION FOUND !!!!!!!!!!!!!!!!!!!'
@@ -762,8 +801,7 @@ c..size of each grid square (m**2)
 c
       end if
 c
-      if(iprod.eq.98) then
-c..conversions of ECMWF input data
+      if(it.eq.4) then
 c
 c..abs.temp. -> pot.temp.
         rcp=r/cp
@@ -775,6 +813,9 @@ c..abs.temp. -> pot.temp.
             end do
           end do
         end do
+      end if
+
+      if (iw.eq.13) then
 c
 c..omega -> etadot
         call om2edot
