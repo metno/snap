@@ -23,3 +23,9 @@ naccident_install:
 		cd $$i && $(MAKE) install; \
 		cd ..; \
 	done
+
+nbomb_install:
+	for i in nbomb; do \
+		cd $$i && $(MAKE) install; \
+		cd ..; \
+	done
