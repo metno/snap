@@ -53,9 +53,10 @@
       character*(80) xwindv,ywindv,xwind10mv,ywind10mv,pottempv,ptopv
       character*(80) sigmadotv,apv,bv,sigmav,psv,mslpv,precaccumv
       character*(80) precstrativ,precconv
-      parameter (file_name='/disk1/myopdata/hirlam12/h12all00.nc')
-      parameter (meteoType='h12')
-
+c      parameter (file_name='/disk1/myopdata/hirlam12/h12all00.nc')
+c      parameter (meteoType='h12')
+      parameter (file_name='/disk1/myopdata/emep/meteo2013080400_00.nc')
+      parameter (meteoType='emep')
 
 
 #if defined(DRHOOK)
@@ -81,6 +82,16 @@
         precaccumv = 'precipitation_amount_acc'
         precstrativ = ''
         precconv = ''
+c..get grid parameters from field identification
+!     TODO: get grid parameters from file
+        igtype = 3
+        gparam(1) = -46.400002
+        gparam(2) = -36.400002
+        gparam(3) = 0.10800000
+        gparam(4) = 0.10800000
+        gparam(5) = 0.0000000
+        gparam(6) = 65.000000
+
       else if (meteoType.eq.'emep') then
         xwindv = 'u_wind'
         ywindv = 'v_wind'
@@ -97,6 +108,17 @@
         precaccumv = 'precipitation_amount_acc'
         precstrativ = 'large_scale_precipitations'
         precconv = 'convective_precipitations'
+c..get grid parameters from field identification
+!     TODO: get grid parameters from file
+        igtype = 2
+        gparam(1) = -179.
+        gparam(2) = -89.5
+        gparam(3) = 1.
+        gparam(4) = 1.
+        gparam(5) = 0.
+        gparam(6) = 0.
+c set as long as sortfield still is called
+        ivcoor = 2
       else
         write(*,*) "undefined meteo type: ", meteoType
         call exit(1)
@@ -246,39 +268,6 @@ c  input ps, must be hPa
       end do
 c      call readfd(iunit,navps,ivc,8,ilevel,0,ps2(1,1),ierror)
 
-      if (sigmadotv.eq.'') then
-c calculate sigmadot by continuation equation
-#if 0
-        do j = 2,ny-1
-          do i = 2,nx-1
-            Pmid=ps(i,j)-ptop
-            Pu1=0.5*(ps2(i-1,j)+ps2(i,j))-ptop
-            Pu2=0.5*(ps2(i+1,j)+ps2(i,j))-ptop
-            Pv1=0.5*(ps2(i,j-1)+ps2(i,j))-ptop
-            Pv2=0.5*(ps2(i,j+1)+ps2(i,j))-ptop
-
-            sdot(i,j,KMAX_BND,nr)=0.0
-            sdot(i,j,1,nr)=0.0
-            sumdiv=0.0
-            do k=1,KMAX_MID
-              divk(k)=((u_xmj(i,j,k,nr)*Pu2-u_xmj(i-1,j,k,nr)*Pu1)         &
-                   + (v_xmi(i,j,k,nr)*Pv2-v_xmi(i,j-1,k,nr)*Pv1))          &
-                   * xm2(i,j)*(sigma_bnd(k+1)-sigma_bnd(k))  &
-                   / GRIDWIDTH_M/Pmid
-              sumdiv=sumdiv+divk(k)
-            enddo
-           !  sdot(i,j,KMAX_MID,nr)=-(sigma_bnd(KMAX_MID+1)-sigma_bnd(KMAX_MID))&
-           !                         *sumdiv+divk(KMAX_MID)
-            do k=KMAX_MID,1,-1
-              sdot(i,j,k,nr)=sdot(i,j,k+1,nr)-(sigma_bnd(k+1)-sigma_bnd(k))&
-                                               *sumdiv+divk(k)
-            enddo
-          enddo
-        enddo
-#endif
-      end if
-
-
 
 c u10m
       call nfcheckload(ncid, xwind10mv, start3d, count3d, u2(1,1,1))
@@ -422,18 +411,7 @@ c..is the following the best we can do ???
         ahalf(nk)=alevel(nk)
         bhalf(nk)=blevel(nk)
         vhalf(nk)=vlevel(nk)
-c
-c..get grid parameters from field identification
-!     TODO: get grid parameters from file
-c..get grid parameters from field identification
-!      call gridpar(+1,ldata,idata,igtype,ix,iy,gparam,ierror)
-        igtype = 3
-        gparam(1) = -46.400002
-        gparam(2) = -36.400002
-        gparam(3) = 0.10800000
-        gparam(4) = 0.10800000
-        gparam(5) = 0.0000000
-        gparam(6) = 65.000000
+
 c..compute map ratio
         call mapfield(1,0,igtype,gparam,nx,ny,xm,ym,0.,
      +                dxgrid,dygrid,ierror)
@@ -456,6 +434,10 @@ c
       end if
 c
 
+      if (sigmadotv.eq.'') then
+c..omega -> etadot, or rather etadot derived from continuity-equation
+        call om2edot
+      end if
 
 c..sigma_dot/eta_dot 0 at surface
       do j=1,ny
@@ -599,12 +581,12 @@ c
       offset = 0.
       status = nf_inq_att(ncid, varid, "scale_factor", attlen, atttype)
       if (status .eq. nf_noerr) then
-        call check(nf_get_att(ncid, varid, "scale_factor", factor),
+        call check(nf_get_att_real(ncid, varid, "scale_factor",factor),
      +       "scale_factor "//varname)
       end if
       status = nf_inq_att(ncid, varid, "add_offset", attlen, atttype)
       if (status .eq. nf_noerr) then
-        call check(nf_get_att(ncid, varid, "add_offset", offset),
+        call check(nf_get_att_real(ncid, varid, "add_offset", offset),
      +      "add_offset "//varname)
       end if
       if (factor /= 1. .or. offset /= 0.) then
@@ -613,6 +595,7 @@ c
         do i =1,ndims
           siz = siz * length(i)
         end do
+        write(*,*) "scaling:", varname, factor, offset, siz
         do i = 1, siz
           field(i) = field(i)*factor + offset
         end do
