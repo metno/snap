@@ -223,6 +223,7 @@ c no vertical velocity TODO: improve by using continuation equation
 c
 c.....end do k=nk-kadd,2,-1
       end do
+
 c
 c
 c..surface pressure, 10m wind and possibly mean sea level pressure,
@@ -237,13 +238,47 @@ c
 
 c ps
       call nfcheckload(ncid, psv, start3d, count3d, ps2(1,1))
-c TODO: something wrong with input ps, should be hPa, but is 10*hPa
+c  input ps, must be hPa
       do j=1,ny
         do i=1,nx
-          ps2(i,j) = ps2(i,j)/10
+          ps2(i,j) = ps2(i,j)
         end do
       end do
 c      call readfd(iunit,navps,ivc,8,ilevel,0,ps2(1,1),ierror)
+
+      if (sigmadotv.eq.'') then
+c calculate sigmadot by continuation equation
+#if 0
+        do j = 2,ny-1
+          do i = 2,nx-1
+            Pmid=ps(i,j)-ptop
+            Pu1=0.5*(ps2(i-1,j)+ps2(i,j))-ptop
+            Pu2=0.5*(ps2(i+1,j)+ps2(i,j))-ptop
+            Pv1=0.5*(ps2(i,j-1)+ps2(i,j))-ptop
+            Pv2=0.5*(ps2(i,j+1)+ps2(i,j))-ptop
+
+            sdot(i,j,KMAX_BND,nr)=0.0
+            sdot(i,j,1,nr)=0.0
+            sumdiv=0.0
+            do k=1,KMAX_MID
+              divk(k)=((u_xmj(i,j,k,nr)*Pu2-u_xmj(i-1,j,k,nr)*Pu1)         &
+                   + (v_xmi(i,j,k,nr)*Pv2-v_xmi(i,j-1,k,nr)*Pv1))          &
+                   * xm2(i,j)*(sigma_bnd(k+1)-sigma_bnd(k))  &
+                   / GRIDWIDTH_M/Pmid
+              sumdiv=sumdiv+divk(k)
+            enddo
+           !  sdot(i,j,KMAX_MID,nr)=-(sigma_bnd(KMAX_MID+1)-sigma_bnd(KMAX_MID))&
+           !                         *sumdiv+divk(KMAX_MID)
+            do k=KMAX_MID,1,-1
+              sdot(i,j,k,nr)=sdot(i,j,k+1,nr)-(sigma_bnd(k+1)-sigma_bnd(k))&
+                                               *sumdiv+divk(k)
+            enddo
+          enddo
+        enddo
+#endif
+      end if
+
+
 
 c u10m
       call nfcheckload(ncid, xwind10mv, start3d, count3d, u2(1,1,1))
@@ -266,26 +301,44 @@ c        call readfd(iunit,nav,ivc,58,ilevel,0,pmsl2(1,1),ierror)
 
 c..precipitation......................................................
 c
+      if (meteoType.eq.'h12') then
 c..precipitation between input time 't1' and 't2'
-      if (timepos .ne. 1) then
-        start3d(3) = timepos - 1
-        call nfcheckload(ncid, precaccumv,
-     +                    start3d, count3d, field1(1,1))
+        if (timepos .ne. 1) then
+          start3d(3) = timepos - 1
+          call nfcheckload(ncid, precaccumv,
+     +                      start3d, count3d, field1(1,1))
 
-c       call readfd(iunit,nav,ivc,17,ilevel,ihrpr1,field1,ierror)
-        start3d(3) = timepos
-        call nfcheckload(ncid, precaccumv,
+c         call readfd(iunit,nav,ivc,17,ilevel,ihrpr1,field1,ierror)
+          start3d(3) = timepos
+          call nfcheckload(ncid, precaccumv,
      +                    start3d, count3d, field2(1,1))
-c       call readfd(iunit,nav,ivc,17,ilevel,ihrpr2,field2,ierror)
+c         call readfd(iunit,nav,ivc,17,ilevel,ihrpr2,field2,ierror)
 c..the difference below may get negative due to different scaling
+          do j=1,ny
+            do i=1,nx
+              precip1=max(field2(i,j)-field1(i,j),0.)/ihdif1
+              do k=1,nprecip
+                precip(i,j,k)=precip1
+              end do
+            end do
+          end do
+        end if
+      else if (meteoType.eq."emep") then
+c..non-accumulated emissions in stratiform an convective
+        call nfcheckload(ncid, precstrativ,
+     +                    start3d, count3d, field1(1,1))
+        call nfcheckload(ncid, precconv,
+     +                    start3d, count3d, field2(1,1))
         do j=1,ny
           do i=1,nx
-            precip1=max(field2(i,j)-field1(i,j),0.)/ihdif1
+c..precipitation must be larger 0
+            precip1=max(field1(i,j)+field2(i,j),0.)/ihdif1
             do k=1,nprecip
               precip(i,j,k)=precip1
             end do
           end do
         end do
+
       end if
 
 c first time initialized data
@@ -535,10 +588,35 @@ c
       character(len=*), intent(in) :: varname
       real(kind=4), intent (inout) :: field(1)
 
-      integer :: varid
+      real(kind=4) factor, offset
+      integer :: varid, attlen, atttype, status, ndims, siz, i
 
       call check(nf_inq_varid(ncid, varname, varid), varname)
       call check(nf_get_vara_real(ncid, varid, start, length,
      +             field), varname)
+!  check add_offset and scale_factor
+      factor = 1.
+      offset = 0.
+      status = nf_inq_att(ncid, varid, "scale_factor", attlen, atttype)
+      if (status .eq. nf_noerr) then
+        call check(nf_get_att(ncid, varid, "scale_factor", factor),
+     +       "scale_factor "//varname)
+      end if
+      status = nf_inq_att(ncid, varid, "add_offset", attlen, atttype)
+      if (status .eq. nf_noerr) then
+        call check(nf_get_att(ncid, varid, "add_offset", offset),
+     +      "add_offset "//varname)
+      end if
+      if (factor /= 1. .or. offset /= 0.) then
+        call check(nf_inq_varndims(ncid, varid,ndims), "dims"//varname)
+        siz=1
+        do i =1,ndims
+          siz = siz * length(i)
+        end do
+        do i = 1, siz
+          field(i) = field(i)*factor + offset
+        end do
+      end if
+
 
       end subroutine nfcheckload
