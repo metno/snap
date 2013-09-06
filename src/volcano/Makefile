@@ -1,154 +1,17 @@
 # includefile contains Compiler definitions etc.
-include ./make.ubuntu
+include ../current.mk
 
-DRHOOKINC = -I../../utils/drhook_CY31R2.032
-DRHOOKLIB = -L../../utils/drhook_CY31R2.032 -ldrhook -lmpi_serial
-
-INCLUDES = -I. $(PUINC)  $(FTGLINC) $(FTINC) $(QQQ) $(GLINC) $(GLTTINC)
-
-LIBS= $(PULIB) $(FTGLLIB) $(FTLIB) $(QTLIB) $(GLLIB) $(MILIB) $(EXLIB)
-BLIBS= $(MILIB) -lnetcdf -lnetcdff
-
-ifdef DR_HOOK
-$(info DR_HOOK defined)
-F77FLAGS += -DDRHOOK $(DRHOOKINC)
-BLIBS += $(DRHOOKLIB)
-endif
-
-
-.SUFFIXES: .cc .c .f .F
-.f.o:
-	$(F77) -c $(F77FLAGS) -I. $<
-.F.o:
-	$(F77) -c $(F77FLAGS) -I. $<
-.c.o:
-	$(CC)  -c $(CCFLAGS) -I. $<
-.cc.o:
-	$(CXX) -c $(CXXFLAGS) $(DEFS) $(INCLUDES) $<
-
-MODELOBJ= allocateFields.o argoswrite.o bldp.o compheight.o copyfield.o decay.o drydep1.o drydep2.o edcomp.o \
-ensemble.o epinterp.o filesort.o fldout.o forwrd.o ftest.o om2edot.o posint.o \
-pselect.o readfd.o readfield.o readfield_nc.o release.o rmpart.o rwalk.o tabcon.o \
-vgravtables.o videosave.o wetdep1.o wetdep2.o
-
-CCOBJ = glSnapPlot.o glMapPlot.o glFieldPlot.o \
-diFontManager.o diColour.o diLinetype.o diContouring.o diTesselation.o \
-diArea.o diProjection.o diRectangle.o
-
-OBJ = snap.o snapInterface.o
-
-BOBJ = snap_batch_copy.o
-
-INCFILES = snapdim.inc snapfil.inc snapfld.inc snapgrd.inc snappar.inc \
-snappos.inc snaptab.inc snapgrp.inc snapeps.inc snapargos.inc snapdebug.inc
-
-HFILES = diColour.h diLinetype.h diContouring.h diTesselation.h diFontManager.h diPlotOptions.h \
-glFieldPlot.h glMapPlot.h snapInterface.h \
-diArea.h diProjection.h diRectangle.h
+F77FLAGS += -DVOLCANO
 
 all: bsnap_volcano
 
-link_incfiles:
-	for i in ../common/*.inc; do bn=`basename $$i`; if [ ! -L $$bn ]; then ln -s $$i .; fi; done
-
-
-$(BINDIR)/snap: link_incfiles $(CCOBJ) $(OBJ) $(MODELOBJ)
-	$(CXX) $(CXXFLAGS) $(CCOBJ) $(OBJ) $(MODELOBJ) $(LIBS) -o $(BINDIR)/snap
+include ../common/snap.mk
 
 bsnap_volcano: link_incfiles $(BOBJ) $(MODELOBJ)
 	$(F77) $(F77FLAGS) $(BOBJ) $(MODELOBJ) $(BLIBS) -o $@
 
-#--------------------------------
-
-snap_batch_copy.o: ../common/snap.F $(INCFILES)
-	cp -p ../common/snap.F snap_batch_copy.F
-	$(F77) -c $(F77FLAGS) -I. -DBATCH snap_batch_copy.F
-
-allocateFields.o: ../common/allocateFields.F $(INCFILES)
-	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-argoswrite.o: ../common/argoswrite.f $(INCFILES)
-	${F77} -c ${F77FLAGS} -I. $<
-bldp.o: ../common/bldp.f $(INCFILES)
-	${F77} -c ${F77FLAGS} -I. $<
-compheight.o: ../common/compheight.f  $(INCFILES)
-	${F77} -c ${F77FLAGS} -I. $<
-copyfield.o: ../common/copyfield.f $(INCFILES)
-	${F77} -c ${F77FLAGS} -I. $<
-decay.o: ../common/decay.f $(INCFILES)
-	${F77} -c ${F77FLAGS} -I. $<
-drydep1.o: ../common/drydep1.f $(INCFILES)
-	${F77} -c ${F77FLAGS} -I. $<
-drydep2.o: ../common/drydep2.f $(INCFILES)
-	${F77} -c ${F77FLAGS} -I. $<
-edcomp.o: ../common/edcomp.f $(INCFILES)
-	${F77} -c ${F77FLAGS} -I. $<
-ensemble.o: ../common/ensemble.f $(INCFILES)
-	${F77} -c ${F77FLAGS} -I. $<
-epinterp.o: ../common/epinterp.f $(INCFILES)
-	${F77} -c ${F77FLAGS} -I. $<
-filesort.o: ../common/filesort.f $(INCFILES)
-	${F77} -c ${F77FLAGS} -I. $<
-fldout.o: ../common/fldout.f $(INCFILES)
-	${F77} -c ${F77FLAGS} -I. $<
-forwrd.o: ../common/forwrd.F $(INCFILES)
-	${F77} -c ${F77FLAGS} -I. $<
-ftest.o: ../common/ftest.f $(INCFILES)
-	${F77} -c ${F77FLAGS} -I. $<
-om2edot.o: ../common/om2edot.f $(INCFILES)
-	${F77} -c ${F77FLAGS} -I. $<
-posint.o: ../common/posint.f $(INCFILES)
-	${F77} -c ${F77FLAGS} -I. $<
-pselect.o: ../common/pselect.f $(INCFILES)
-	${F77} -c ${F77FLAGS} -I. $<
-readfd.o: ../common/readfd.f $(INCFILES)
-	${F77} -c ${F77FLAGS} -I. $<
-readfield.o: ../common/readfield.f $(INCFILES)
-	${F77} -c ${F77FLAGS} -I. $<
-readfield_nc.o: ../common/readfield_nc.F $(INCFILES)
-	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-release.o: ../common/release.F $(INCFILES)
-	${F77} -c ${F77FLAGS} -I. $<
-rmpart.o: ../common/rmpart.f $(INCFILES)
-	${F77} -c ${F77FLAGS} -I. $<
-rwalk.o: ../common/rwalk.F $(INCFILES)
-	${F77} -c ${F77FLAGS} -I. $<
-tabcon.o: ../common/tabcon.f $(INCFILES)
-	${F77} -c ${F77FLAGS} -I. $<
-vgravtables.o: ../common/vgravtables.f $(INCFILES)
-	${F77} -c ${F77FLAGS} -I. $<
-videosave.o: ../common/videosave.f $(INCFILES)
-	${F77} -c ${F77FLAGS} -I. $<
-wetdep1.o: ../common/wetdep1.F $(INCFILES)
-	${F77} -c ${F77FLAGS} -I. $<
-wetdep2.o: ../common/wetdep2.F $(INCFILES)
-	${F77} -c ${F77FLAGS} -I. $<
-
-snapInterface.o: $(INCFILES)
-	${F77} -c ${F77FLAGS} -I. $<
-
-milib.o: ../common/milib.c ../common/milib.h
-	$(CC)  -c $(CCFLAGS) -I../common $<
-c2fgetvar.o: ../common/c2fgetvar.f
-	${F77} -c ${F77FLAGS} -I. $<
-c2fgetarg.o: ../common/c2fgetarg.f
-	${F77} -c ${F77FLAGS} -I. $<
-
-diColour.o: $(HFILES)
-diLinetype.o: $(HFILES)
-diContouring.o: $(HFILES)
-diFontManager.o: $(HFILES)
-glFieldPlot.o: $(HFILES)
-glMapPlot.o: $(HFILES)
-glSnapPlot.o: $(HFILES)
-
-#---------------------------------------------------------
-
-clean:
-	for i in *.inc; do if [ -L $$i ]; then rm $$i; fi done
-	rm -f *.o
-	rm -f *~
-	rm -f snap_batch_copy.*
-	rm -f bsnap_volcano
+clean: clean_links
+	rm -f *.o *~ snap_batch_copy.* bsnap_volcano
 
 install: bsnap_volcano
 	cp $^ $(BINDIR)
