@@ -568,7 +568,7 @@ c
       include 'netcdf.inc'
       integer, intent ( in) :: ncid, start(1), length(1)
       character(len=*), intent(in) :: varname
-      real(kind=4), intent (inout) :: field(1)
+      real(kind=4), intent (inout) :: field(*)
 
       real(kind=4) factor, offset
       integer :: varid, attlen, atttype, status, ndims, siz, i

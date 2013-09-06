@@ -15,7 +15,10 @@ ccc      parameter (nx=468,ny=378,nk=41)
 ccc h12ml in archive (which is 24km)
 ccc   parameter (nx=432,ny=349,nk=61)
 ccc h12sf and h12snap (12km)
-      parameter (nx=864,ny=698,nk=61)
+cc      parameter (nx=864,ny=698,nk=61)
+ccc emep latlon 1x1,
+      parameter (nx=360,ny=180,nk=21)
+
 c
 c..mprecip: max no. og hourly precipitation fields
 c           (and then the maximum hours between field input...)

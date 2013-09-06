@@ -26,7 +26,7 @@ endif
 .cc.o:
 	$(CXX) -c $(CXXFLAGS) $(DEFS) $(INCLUDES) $<
 
-MODELOBJ= argoswrite.o bldp.o compheight.o copyfield.o decay.o drydep1.o drydep2.o edcomp.o \
+MODELOBJ= allocateFields.o argoswrite.o bldp.o compheight.o copyfield.o decay.o drydep1.o drydep2.o edcomp.o \
 ensemble.o epinterp.o filesort.o fldout.o forwrd.o ftest.o om2edot.o posint.o \
 pselect.o readfd.o readfield.o readfield_nc.o release.o rmpart.o rwalk.o tabcon.o \
 vgravtables.o videosave.o wetdep1.o wetdep2.o
@@ -64,6 +64,8 @@ snap_batch_copy.o: ../common/snap.F $(INCFILES)
 	cp -p ../common/snap.F snap_batch_copy.F
 	$(F77) -c $(F77FLAGS) -I. -DBATCH snap_batch_copy.F
 
+allocateFields.o: ../common/allocateFields.F $(INCFILES)
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 argoswrite.o: ../common/argoswrite.f $(INCFILES)
 	${F77} -c ${F77FLAGS} -I. $<
 bldp.o: ../common/bldp.f $(INCFILES)

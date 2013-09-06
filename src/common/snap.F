@@ -345,6 +345,8 @@ c
       IF (LHOOK) CALL DR_HOOK('SNAP',0,ZHOOK_HANDLE)
 #endif
 #endif
+c initialize all arrays
+      CALL allocateFields()
 c initialize random number generator for rwalk
       CALL rwalk_init_random_seed()
       iexit=0
@@ -2385,6 +2387,8 @@ cjb_end
 c
       close(iulog)
 c
+c deallocate all fields
+      CALL deAllocateFields()
 #ifdef BATCH
       if(istop.gt.0) call exit(istop)
 #if defined(DRHOOK)
