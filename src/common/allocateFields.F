@@ -67,6 +67,36 @@
       ALLOCATE ( precip(nx,ny,mprecip), STAT = AllocateStatus)
       IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
 
+c the calculation-fields
+      ALLOCATE ( dgarea(nx,ny), STAT = AllocateStatus)
+      IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+      ALLOCATE ( avghbl(nx,ny), STAT = AllocateStatus)
+      IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+      ALLOCATE ( avgprec(nx,ny), STAT = AllocateStatus)
+      IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+      ALLOCATE ( accprec(nx,ny), STAT = AllocateStatus)
+      IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+
+      ALLOCATE ( depdry(nx,ny,mcomp), STAT = AllocateStatus)
+      IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+      ALLOCATE ( depwet(nx,ny,mcomp), STAT = AllocateStatus)
+      IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+      ALLOCATE ( accdry(nx,ny,mcomp), STAT = AllocateStatus)
+      IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+      ALLOCATE ( accwet(nx,ny,mcomp), STAT = AllocateStatus)
+      IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+      ALLOCATE ( concen(nx,ny,mcomp), STAT = AllocateStatus)
+      IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+      ALLOCATE ( concacc(nx,ny,mcomp), STAT = AllocateStatus)
+      IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+      ALLOCATE ( avgbq1(nx,ny,mcomp), STAT = AllocateStatus)
+      IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+      ALLOCATE ( avgbq2(nx,ny,mcomp), STAT = AllocateStatus)
+      IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+
+      ALLOCATE ( avgbq(nxmc,nymc,nk-1,mcomp), STAT = AllocateStatus)
+      IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+
       end subroutine allocateFields
 
 
@@ -107,5 +137,21 @@
       DEALLOCATE ( pmsl2)
 
       DEALLOCATE ( precip)
+
+      DEALLOCATE ( dgarea )
+      DEALLOCATE ( avghbl )
+      DEALLOCATE ( avgprec )
+      DEALLOCATE ( accprec )
+
+      DEALLOCATE ( depdry )
+      DEALLOCATE ( depwet )
+      DEALLOCATE ( accdry )
+      DEALLOCATE ( accwet )
+      DEALLOCATE ( concen )
+      DEALLOCATE ( concacc )
+      DEALLOCATE ( avgbq1 )
+      DEALLOCATE ( avgbq2 )
+
+      DEALLOCATE ( avgbq )
 
       end subroutine deAllocateFields
