@@ -104,8 +104,8 @@ c
 c
       real field1print(nx*ny),field2print(nx*ny)
 c
-      equivalence (field1(1,1),field1print(1))
-      equivalence (field2(1,1),field2print(1))
+c      equivalence (field1(1,1),field1print(1))
+c      equivalence (field2(1,1),field2print(1))
 c
 c..used in xyconvert (x,y -> longitude,latitude)
       data geoparam/1.,1.,1.,1.,0.,0./
@@ -242,14 +242,16 @@ c
          write(iu,fmt='(1pe8.2e2)',err=900) 1.0
          do i1=1,nx*ny,10
            i2=min(i1+9,nx*ny)
-           write(iu,1001) (field1print(i),i=i1,i2)
+c           write(iu,1001) (field1print(i),i=i1,i2)
+           write(iu,1001) (field1(modulo(i,nx),int(i/nx)),i=i1,i2)
          end do
 c
          write(iu,fmt='(a)',err=900) 'latitude (decimal deg.)'
          write(iu,fmt='(1pe8.2e2)',err=900) 1.0
          do i1=1,nx*ny,10
            i2=min(i1+9,nx*ny)
-           write(iu,1001) (field2print(i),i=i1,i2)
+c           write(iu,1001) (field2print(i),i=i1,i2)
+           write(iu,1001) (field2(modulo(i,nx),int(i/nx)),i=i1,i2)
          end do
 c
  1001	  format(10(1pe14.6e2))

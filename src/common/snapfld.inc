@@ -22,24 +22,24 @@ c..precip: hourly precipitation intensity (mm/hour)
 c..nprecip: no. of steps stored
 c..iprecip: the current precipitation field
 c
-      real    u1(nx,ny,nk),v1(nx,ny,nk),w1(nx,ny,nk),t1(nx,ny,nk)
-     -       ,ps1(nx,ny),bl1(nx,ny),hbl1(nx,ny)
-     -       ,hlevel1(nx,ny,nk),hlayer1(nx,ny,nk)
-     -       ,u2(nx,ny,nk),v2(nx,ny,nk),w2(nx,ny,nk),t2(nx,ny,nk)
-     -       ,ps2(nx,ny),bl2(nx,ny),hbl2(nx,ny)
-     -       ,hlevel2(nx,ny,nk),hlayer2(nx,ny,nk)
-     -       ,xm(nx,ny),ym(nx,ny),garea(nx,ny)
-     -       ,field1(nx,ny),field2(nx,ny),field3(nx,ny)
-     -       ,field4(nx,ny)
-     -       ,pmsl1(nxad,nyad),pmsl2(nxad,nyad)
-     -       ,precip(nx,ny,mprecip)
+      REAL, DIMENSION(:,:,:), POINTER ::
+     +   u1, v1, w1, t1, hlevel1, hlayer1,
+     +   u2, v2, w2, t2, hlevel2, hlayer2,
+     +   precip
+
+      REAL, DIMENSION(:,:), POINTER ::
+     +  ps1, bl1, hbl1,
+     +  ps2, bl2, hbl2,
+     +  xm, ym, garea, field1, field2, field3,
+     +  field4, pmsl1, pmsl2
+
       integer nprecip,iprecip
 c
       common/fieldi/u1,v1,w1,t1,ps1,bl1,hbl1,hlevel1,hlayer1
      -             ,u2,v2,w2,t2,ps2,bl2,hbl2,hlevel2,hlayer2
      -             ,xm,ym,garea
-     -		   ,field1,field2,field3,field4
-     -		   ,pmsl1,pmsl2
+     -             ,field1,field2,field3,field4
+     -             ,pmsl1,pmsl2
      -             ,precip,nprecip,iprecip
 c
 c

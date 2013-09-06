@@ -17,7 +17,8 @@ CC= gcc
 #F77FLAGS=-g
 #CXXFLAGS=-g
 #CCFLAGS=-g
-F77FLAGS=-DVOLCANO -O3 -cpp -mcmodel=medium
+F77FLAGS=-DVOLCANO -O3 -cpp
+#-mcmodel=medium
 CXXFLAGS=-O3
 CCFLAGS=-O3
 
