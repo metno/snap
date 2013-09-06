@@ -22,12 +22,12 @@ c..precip: hourly precipitation intensity (mm/hour)
 c..nprecip: no. of steps stored
 c..iprecip: the current precipitation field
 c
-      REAL, DIMENSION(:,:,:), POINTER ::
+      REAL(kind=4), DIMENSION(:,:,:), POINTER ::
      +   u1, v1, w1, t1, hlevel1, hlayer1,
      +   u2, v2, w2, t2, hlevel2, hlayer2,
      +   precip
 
-      REAL, DIMENSION(:,:), POINTER ::
+      REAL(kind=4), DIMENSION(:,:), POINTER ::
      +  ps1, bl1, hbl1,
      +  ps2, bl2, hbl2,
      +  xm, ym, garea, field1, field2, field3,
@@ -57,18 +57,18 @@ c..avgbq2:  average Bq (per square area) above boundary layer (accum.)
 c..avgbq:   average Bq (per square area) in each layer (accum.)
 c..	    only used if (nxmc=nx, nymc=ny and imodlevel=1)
 c
-      double precision dgarea(nx,ny)
-     -                ,depdry(nx,ny,mcomp),depwet(nx,ny,mcomp)
-     -                ,accdry(nx,ny,mcomp),accwet(nx,ny,mcomp)
-     -                ,concen(nx,ny,mcomp),concacc(nx,ny,mcomp)
-     -		      ,avghbl(nx,ny),avgprec(nx,ny),accprec(nx,ny)
-     -		      ,avgbq1(nx,ny,mcomp),avgbq2(nx,ny,mcomp)
-     -		      ,avgbq(nxmc,nymc,nk-1,mcomp)
+      REAL(kind=8), DIMENSION(:,:), POINTER ::
+     +  dgarea, avghbl, avgprec, accprec
+      REAL(kind=8), DIMENSION(:,:,:), POINTER ::
+     +  depdry, depwet, accdry, accwet,
+     +  concen, concacc, avgbq1, avgbq2
+      REAL(kind=8), DIMENSION(:,:,:,:), POINTER ::
+     +  avgbq
 c
       common/fieldo/dgarea
      -             ,depdry,depwet,accdry,accwet
      -             ,concen,concacc
-     -		   ,avghbl,avgprec,accprec
-     -		   ,avgbq1,avgbq2
-     -		   ,avgbq
+     -         ,avghbl,avgprec,accprec
+     -         ,avgbq1,avgbq2
+     -         ,avgbq
 c-----------------------------------------------------------------------
