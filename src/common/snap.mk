@@ -1,8 +1,9 @@
 # this file contains the common parts to compile bsnap
 # should be included after all: target
 
-MODELOBJ= allocateFields.o argoswrite.o bldp.o compheight.o copyfield.o decay.o drydep1.o drydep2.o edcomp.o \
-ensemble.o epinterp.o filesort.o fldout.o forwrd.o ftest.o om2edot.o posint.o \
+MODELOBJ= allocateFields.o argoswrite.o bldp.o compheight.o copyfield.o decay.o drydep1.o drydep2.o \
+dateCalc.o edcomp.o \
+ensemble.o epinterp.o filesort.o filesort_nc.o fldout.o forwrd.o ftest.o om2edot.o posint.o \
 pselect.o readfd.o readfield.o readfield_nc.o release.o rmpart.o rwalk.o tabcon.o \
 vgravtables.o videosave.o wetdep1.o wetdep2.o
 
@@ -16,6 +17,7 @@ link_incfiles:
 
 clean_links:
 	for i in *.inc; do if [ -L $$i ]; then rm $$i; fi done
+	rm -f *.mod *.o *~
 
 #--------------------------------
 
@@ -33,6 +35,8 @@ compheight.o: ../common/compheight.f  $(INCFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 copyfield.o: ../common/copyfield.f $(INCFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+dateCalc.o: ../common/dateCalc.F90 $(INCFILES)
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 decay.o: ../common/decay.f $(INCFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 drydep1.o: ../common/drydep1.f $(INCFILES)
@@ -46,6 +50,8 @@ ensemble.o: ../common/ensemble.f $(INCFILES)
 epinterp.o: ../common/epinterp.f $(INCFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 filesort.o: ../common/filesort.f $(INCFILES)
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+filesort_nc.o: ../common/filesort_nc.F $(INCFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 fldout.o: ../common/fldout.f $(INCFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
