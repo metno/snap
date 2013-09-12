@@ -1585,7 +1585,11 @@ c..file unit for temporary open files (graphics etc.)
 c
 c..check input FELT files and make sorted lists of available data
 c..make main list based on x wind comp. (u) in upper used level
-      call filesort(iunitf,ierror)
+      if (ftype .eq. "netcdf") then
+        call filesort_nc(iunitf, ierror)
+      else
+        call filesort(iunitf,ierror)
+      end if
       if(ierror.ne.0) goto 910
 c
 c..itime: itime(1) - year

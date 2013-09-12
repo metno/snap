@@ -19,6 +19,7 @@ c       pointers to lists in iavail:
 c         kavail(1): pointer to first forward  sorted timestep
 c         kavail(2): pointer to first backward sorted timestep
 c
+      USE DateCalc
 #if defined(DRHOOK)
       USE PARKIND1  ,ONLY : JPIM     ,JPRB
       USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
@@ -35,8 +36,11 @@ c
 ! netcdf
       include 'netcdf.inc'
 
-      integer ncid, nf, varid, dimid, tsize
+      integer i, ncid, nf, varid, dimid, tsize
       real(kind=8) times(mavail)
+      integer(kind=8) eTimes(mavail)
+      integer(kind=8) :: add_offset, scalef
+      character(80) :: tunits
 
 #if defined(DRHOOK)
 ! Before the very first statement
@@ -48,13 +52,22 @@ c
 ! get the time steps from the files "time" variable
         call check(nf_open(filef(nf), NF_NOWRITE, ncid), filef(nf))
         call check(nf_inq_varid(ncid, "time", varid), "time")
-        call check(nf_inq_dim(ncid, "time", dimid, tsize), "tdim")
+        call check(nf_inq_dimid(ncid, "time", dimid), "tdim-id")
+        call check(nf_inq_dimlen(ncid, dimid, tsize), "tdim-len")
         if (tsize > size(times)) then
           write(*,*) "to many time-steps in ", filef(nf), ": ", tsize
           call exit(1)
         end if
-        call check(nf_get_vara_double(ncid, varid, (/0/), (/tsize/),
+        call check(nf_get_vara_double(ncid, varid, (/1/), (/tsize/),
      +             times), "time")
+        call check(nf_get_att_text(ncid, varid, "units", tunits),
+     +             "time units")
+        add_offset = timeUnitOffset(tunits)
+        scalef = timeUnitScale(tunits)
+        do i = 1, tsize
+          eTimes(i) = times(i)*scalef + add_offset
+          write(*,*) epochToDate(eTimes(i))
+        end do
 
 
       end do
