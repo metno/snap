@@ -3,7 +3,9 @@ module DateCalc
     public timeGM
 ! this function is similar to gmtime, except that values are month: 1-12, mday 1-31 and year in YYYY
     public epochToDate
-    public parseDate
+    public parseIsoDate
+    public timeUnitScale
+    public timeUnitOffset
 
     integer, private, parameter :: MONTHDAYS(12) = (/ 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30 /)
     integer, private, parameter :: SECS_PER_HOUR = 3600
@@ -45,7 +47,7 @@ contains
       call exit(1)
     end if
     date = trim(unit(ind+7:))
-    timeUnitOffset = timeGM(parseDate(date, "YYYY-MM-DD hh:mm:ss"))
+    timeUnitOffset = timeGM(parseIsoDate(date))
   end function timeUnitOffset
 
   function epochToDate(epochSeconds) result(values)
@@ -118,55 +120,57 @@ contains
     return
   end function leapyear
 
-  subroutine str2detail(str,fmt,year,month,day,hour,seconds,minute,second,days,&
-                       fstep,ntme,nlev,nlat,nlon,debug)
-    implicit none
-    character(len=*), intent(in) :: str,fmt
-    integer,intent(out),optional :: year,month,day,hour,seconds,&
-                                    minute,second,days,&
-                                    fstep,ntme,nlev,nlat,nlon
-    logical, intent(in),optional :: debug
-    if(present(second ))second =str2int(str,fmt,'ss'  )
-    if(present(minute ))minute =str2int(str,fmt,'mm'  )
-    if(present(hour   ))hour   =str2int(str,fmt,'hh'  )
-    if(present(day    ))day    =str2int(str,fmt,'DD'  )
-    if(present(month  ))month  =str2int(str,fmt,'MM'  )
-    if(present(year   ))year   =str2int(str,fmt,'YYYY')
-!   if(present(year   ))year   =str2int(str,fmt,'YY'  )+1900
-    if(present(days   ))days   =str2int(str,fmt,'JJJ' ) ! day of the year
-    if(present(nlon   ))nlon   =str2int(str,fmt,'LON' )
-    if(present(nlat   ))nlat   =str2int(str,fmt,'LAT' )
-    if(present(nlev   ))nlev   =str2int(str,fmt,'LL'  )
-    if(present(ntme   ))ntme   =str2int(str,fmt,'TTT' )
-    if(present(fstep  ))fstep  =str2int(str,fmt,'FFF' )
-    if(present(debug))then
-      if(debug) write(*,*)'string2date: ',trim(str),'/',trim(fmt)
-    endif
-  end subroutine str2detail
-
 ! convert a string to a list of values(6) = secs,min,hours, days,month,year
-  function parseDate(str,fmt,debug) result(values)
-    implicit none
-    character(len=*), intent(in)   :: str,fmt
-    integer                         :: values(6)
-    logical, intent(in),optional  :: debug
-    call str2detail(str,fmt,year=values(6),month=values(5),day=values(4),&
-                    hour=values(3),minute=values(2),second=values(1),debug=debug)
-  end function parseDate
+  function parseIsoDate(str) result(values)
+    character(*), intent(in)       :: str
+    integer                         :: values(6), ind, ind2
+    character(80)                   :: substr
 
+    values = 0
+    ! year
+    ind = index(str, "-")
+    if (ind > 0) read(str(:ind-1),*) values(6)
+    substr = str(ind+1:)
 
-! extract an integer from string in a certain format
-  function str2int(str,fmt,key) result(val)
-    implicit none
-    character(len=*), intent(in) :: str,fmt,key
-    integer :: val
-    integer :: ind=0
-    val=0
-    ind=index(fmt,trim(key))
-!    write(*,*) ind, key, fmt, str(ind:ind+len_trim(key)-1)
-    if(ind>0)read(str(ind:ind+len_trim(key)-1),*)val
-  end function str2int
+    !month
+    ind = index(substr, "-")
+    if (ind > 0) read(substr(:ind-1),*) values(5)
+    substr = substr(ind+1:)
 
+    !day
+    ind = index(substr, " ")
+    ind2 = index(substr, "T")
+    if (ind == 0) ind = len(substr)
+    if (ind2 == 0) ind2 = len(substr)
+    ind = min(ind, ind2)
+    ! write(*,*) ind, ind2, substr
+    if (ind > 0) read(substr(:ind-1),*) values(4)
+    substr = substr(ind+1:)
+
+    ! hour
+    ind = index(substr, ":")
+    if (ind > 0) read(substr(:ind-1),*) values(3)
+    substr = substr(ind+1:)
+
+    ! minute
+    ind = index(substr, ":")
+    if (ind > 0) read(substr(:ind-1),*) values(2)
+    substr = substr(ind+1:)
+
+    ! seconds, end at end, ., space or Z
+    ind = index(substr, ".")
+    ind2 = index(substr, " ")
+    if (ind == 0) ind = len(substr)
+    if (ind2 == 0) ind2 = len(substr)
+    ind = min(ind, ind2)
+    ind2 = index(substr, "Z")
+    if (ind2 == 0) ind2 = len(substr)
+    ind = min(ind, ind2)
+    ! write(*,*) ind, ind2, substr
+    if (ind > 0) read(substr(:ind-1),*) values(1)
+    substr = substr(ind+1:)
+
+  end function parseIsoDate
 
 
 end module DateCalc

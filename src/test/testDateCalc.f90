@@ -53,7 +53,7 @@ program testDateCalc
     call exit(1)
   end if
 
-  values = parseDate("1973-06-26T09:51:21Z", "YYYY-MM-DD hh:mm:ss")
+  values = parseIsoDate("1973-06-26T09:51:21Z")
   epochSeconds = timegm(values)
   values2 = epochToDate(epochSeconds)
   if (.not. all(values.eq.values2)) then
@@ -63,23 +63,22 @@ program testDateCalc
 
 
 
-  values = parseDate("1973-06-26 09:51:21", "YYYY-MM-DD hh:mm:ss")
+  values = parseIsoDate("1973-06-26 09:51:21")
   if (timegm(values) .ne. 109936281) then
-    write(*,*) "wrong 1973-06-26 09:51:21", parseDate("1973-06-26 09:51:21", "YYYY-MM-DD hh:mm:ss")
+    write(*,*) "wrong 1973-06-26 09:51:21", parseIsoDate("1973-06-26 09:51:21")
     call exit(1)
   end if
-  values = parseDate("1973-06-26T09:51:21Z", "YYYY-MM-DD hh:mm:ss")
+  values = parseIsoDate("1973-06-26T09:51:21Z")
   if (timegm(values) .ne. 109936281) then
-    write(*,*) "wrong 1973-06-26 09:51:21", parseDate("1973-06-26T09:51:21Z", "YYYY-MM-DD hh:mm:ss")
+    write(*,*) "wrong 1973-06-26 09:51:21", parseIsoDate("1973-06-26T09:51:21Z")
     call exit(1)
   end if
 
-! TODO: missing leading whitespaces don't work yet
-!  values = parseDate("1973-06-26 9:51:21", "YYYY-MM-DD hh:mm:ss")
-!  if (timegm(values) .ne. 109936281) then
-!    write(*,*) "wrong 1973-06-26 09:51:21", parseDate("1973-06-26 09:51:21", "YYYY-MM-DD hh:mm:ss")
-!    call exit(1)
-!  end if
+  values = parseIsoDate("1973-6-26 9:51:1")
+  if (timegm(values) .ne. 109936261) then
+    write(*,*) "wrong 1973-6-26 9:51:1", parseIsoDate("1973-6-26 9:51:1")
+    call exit(1)
+  end if
 
 
   if (timeUnitScale("seconds since 1970-01-01 00:00:00") .ne. 1) then
