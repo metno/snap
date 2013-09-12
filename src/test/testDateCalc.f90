@@ -3,7 +3,7 @@ program testDateCalc
   use DateCalc
   implicit none
 
-  integer :: values(6)
+  integer :: values(6), values2(6)
   integer(kind=8) :: epochSeconds
 
 
@@ -53,6 +53,16 @@ program testDateCalc
     call exit(1)
   end if
 
+  values = parseDate("1973-06-26T09:51:21Z", "YYYY-MM-DD hh:mm:ss")
+  epochSeconds = timegm(values)
+  values2 = epochToDate(epochSeconds)
+  if (.not. all(values.eq.values2)) then
+    write(*,*) "wrong epochToDate: ", values, " != ", values2
+    call exit(1)
+  end if
+
+
+
   values = parseDate("1973-06-26 09:51:21", "YYYY-MM-DD hh:mm:ss")
   if (timegm(values) .ne. 109936281) then
     write(*,*) "wrong 1973-06-26 09:51:21", parseDate("1973-06-26 09:51:21", "YYYY-MM-DD hh:mm:ss")
@@ -63,8 +73,6 @@ program testDateCalc
     write(*,*) "wrong 1973-06-26 09:51:21", parseDate("1973-06-26T09:51:21Z", "YYYY-MM-DD hh:mm:ss")
     call exit(1)
   end if
-
-
 
 ! TODO: missing leading whitespaces don't work yet
 !  values = parseDate("1973-06-26 9:51:21", "YYYY-MM-DD hh:mm:ss")
@@ -84,6 +92,8 @@ program testDateCalc
                  timeUnitOffset("seconds since 1970-01-01 00:00:00")
     call exit(1)
   end if
+
+
 
 
 end program testDateCalc
