@@ -1,6 +1,8 @@
 module DateCalc
     implicit none
     public timeGM
+! this function is similar to gmtime, except that values are month: 1-12, mday 1-31 and year in YYYY
+    public epochToDate
     public parseDate
 
     integer, private, parameter :: MONTHDAYS(12) = (/ 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30 /)
@@ -45,6 +47,20 @@ contains
     date = trim(unit(ind+7:))
     timeUnitOffset = timeGM(parseDate(date, "YYYY-MM-DD hh:mm:ss"))
   end function timeUnitOffset
+
+  function epochToDate(epochSeconds) result(values)
+    integer(kind=8), intent(in) :: epochSeconds
+    integer :: values(6)
+    integer :: gmvalues(9)
+    integer(kind=4) :: gmtimeIn
+
+    gmtimeIn = epochSeconds
+    call gmtime(gmtimeIn, gmvalues)
+    values = gmvalues(1:6)
+    values(5) = values(5) + 1
+    values(6) = values(6) + 1900
+
+  end function epochToDate
 
 ! calculate from values(6)=(/secs,min,hours,mday(1-31),month(1-12),year(since 0)
   function timeGM(values)
