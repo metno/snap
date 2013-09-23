@@ -38,6 +38,7 @@ c
 
       integer i, j, ncid, nf, varid, dimid, tsize, ierror
       real(kind=8) times(mavail)
+      integer zeroHour
       integer(kind=8) eTimes(mavail)
       integer(kind=8) :: add_offset, scalef
       integer, dimension(6) :: dateTime
@@ -91,7 +92,8 @@ c         iavail( 5,n): forecast hour
           iavail( 5,navail) = 0
           iavail( 6,navail) = nf
 c         iavail( 7,n): 1=model level  2=surface  3=both
-          iavail( 7,navail) = 3
+c in nc-mode: time-postion in file
+          iavail( 7,navail) = i
 c         iavail( 8,n): offset in hours from first (sorted) timestep
 c         but currently used to store the hours since 1970-01-01
           iavail( 8,navail) = int(eTimes(i)/3600)
@@ -150,6 +152,13 @@ c..time range
 c..get valid time (with forecast=0)
       call vtime(itimer(1,1),ierror)
       call vtime(itimer(1,2),ierror)
+
+c..adjust hours to hours since first available time
+      zeroHour = iavail(8,kavail(1))
+      do i=1,navail
+        iavail(8, i) = iavail(8,i) - zeroHour
+      end do
+
 
 
 #if defined(DRHOOK)

@@ -40,22 +40,23 @@
 ! local variables
       integer i, j, k, n, ilevel, ierr1, ierr2, i1, i2
       integer itime(5,4),ihours(4)
-      integer ihdiff, ihdif1, ihdif2
-      integer, save :: timepos
+      integer ihdiff, ihdif1, ihdif2, nhdiff
+      integer, save :: ncid = 0
+      integer, save :: ntav1, ntav2 = 0
+      character*(255), save :: file_name = ""
       real     alev(nk),blev(nk),db, precip1,dxgrid,dygrid
-      integer kk
+      integer kk, ifb, kfb
       real    dred, red, p, px, dp, p1, p2,ptop
 
-      integer ncid, varid, retval
+      integer varid, retval, timepos
       integer start3d(3), start4d(4), count3d(3), count4d(4)
-      character*(*) file_name
       character*(10) meteoType
       character*(80) xwindv,ywindv,xwind10mv,ywind10mv,pottempv,ptopv
       character*(80) sigmadotv,apv,bv,sigmav,psv,mslpv,precaccumv
-      character*(80) precstrativ,precconv
+      character*(80) precstrativrt,precconvrt
 c      parameter (file_name='/disk1/myopdata/hirlam12/h12all00.nc')
 c      parameter (meteoType='h12')
-      parameter (file_name='/disk1/myopdata/emep/meteo2013080400_00.nc')
+c      parameter (file_name='/disk1/myopdata/emep/meteo2013080400_00.nc')
       parameter (meteoType='emep')
 
 
@@ -63,8 +64,6 @@ c      parameter (meteoType='h12')
 ! Before the very first statement
       IF (LHOOK) CALL DR_HOOK('READFIELD_NC',0,ZHOOK_HANDLE)
 #endif
-
-      call check(nf_open(file_name, NF_NOWRITE, ncid), file_name)
 
       if (meteoType.eq.'h12') then
         xwindv = 'x_wind_ml'
@@ -80,8 +79,8 @@ c      parameter (meteoType='h12')
         psv = 'surface_air_pressure'
         mslpv = 'air_pressure_at_sea_level'
         precaccumv = 'precipitation_amount_acc'
-        precstrativ = ''
-        precconv = ''
+        precstrativrt = ''
+        precconvrt = ''
 c..get grid parameters from field identification
 !     TODO: get grid parameters from file
         igtype = 3
@@ -106,10 +105,11 @@ c..get grid parameters from field identification
         psv = 'surface_pressure'
         mslpv = 'air_pressure_at_sea_level'
         precaccumv = 'precipitation_amount_acc'
-        precstrativ = 'large_scale_precipitations'
-        precconv = 'convective_precipitations'
+!.. non accumulated precipitation rates in m/s
+        precstrativrt = 'large_scale_precipitations'
+        precconvrt = 'convective_precipitations'
 c..get grid parameters from field identification
-!     TODO: get grid parameters from file
+!     TODO: get grid parameters from snap.input
         igtype = 2
         gparam(1) = -179.
         gparam(2) = -89.5
@@ -139,26 +139,74 @@ c set as long as sortfield still is called
       end do
       ihdif1=ihours(1)
       ihdif2=ihours(2)
-!
 
-!     TODO: set timepos to something useful
-      ihdif1 = 6
-      nprecip = 6
-      if (istep .eq. 0) then
-        timepos = 2
-      else
-        timepos = timepos + 1
-      end if
-      do n=1,4
-        itimefi(n) = itimei(n)
-      end do
-      itimefi(5) = -12 + timepos*6
-      call vtime(itimefi, ierror)
-
-!
-
-      write(9,*) '*READFIELD_NC* Requested time: ',(itime(i,1),i=1,4)
+      write(9,*) '*READFIELD* Requested time: ',(itime(i,1),i=1,4)
       write(9,*) '                Time limit: ',(itime(i,2),i=1,4)
+
+!
+c..search in list of available timesteps with model level data
+      if(ihdif1.gt.ihdif2) then
+c..first field input, using the backward list
+        i=ihdif1
+        ihdif1=ihdif2
+        ihdif2=i
+        kfb=2
+        ifb=10
+      else
+        kfb=1
+        ifb=9
+      end if
+c
+      ntav1 = ntav2
+      ntav2 = 0
+      n=kavail(kfb)
+      do while ((ntav2.eq.0) .and. (n.gt.0))
+        if(iavail(8,n).ge.ihdif1 .and. iavail(8,n).le.ihdif2) then
+          ntav2 = n
+        end if
+c..pointer to next timestep (possibly same time)
+        n=iavail(ifb,n)
+      end do
+c
+      if(idebug.eq.1) then
+        write(9,*) 'MODEL LEVEL SEARCH LIST.   ntav2=',ntav2
+        write(9,*) 'istep,nhleft: ',istep,nhleft
+        write(9,*) 'itimei(5), ihr1, ihr2:',(itimei(i),i=1,5),ihr1,ihr2
+        write(9,*) 'kfb,ifb,ihdif1,ihdif2:',kfb,ifb,ihdif1,ihdif2
+        write(9,fmt='(7(1x,i4),1x,i6,2i5)') (iavail(i,ntav2),i=1,10)
+      end if
+c
+      if(ntav2.lt.1) then
+        write(9,*) '*READFIELD* No model level data available'
+        write(6,*) '*READFIELD* No model level data available'
+        ierror=1
+#if defined(DRHOOK)
+c     before the return statement
+      IF (LHOOK) CALL DR_HOOK('READFIELD_NC',1,ZHOOK_HANDLE)
+#endif
+        return
+      end if
+
+! time between two inputs
+! open the correct file, if required
+      if (file_name .ne. filef(iavail(6, ntav2))) then
+        if (ncid.ne.0) then
+          call check(nf_close(ncid), "close ncid")
+        end if
+        file_name = filef(iavail(6, ntav2))
+        call check(nf_open(file_name, NF_NOWRITE, ncid), file_name)
+      end if
+
+!     set timepos and nhdiff
+      nhdiff = 3
+      if (ntav1.ne.0) nhdiff = iavail(8, ntav2) - iavail(8, ntav1)
+      nprecip = nhdiff
+      timepos = iavail(7, ntav2)
+      do n=1,5
+        itimefi(n) = iavail(n, ntav2)
+      end do
+
+
 !
       if(.true.) then
 !..move data from input time step 2 to 1
@@ -305,7 +353,7 @@ c         call readfd(iunit,nav,ivc,17,ilevel,ihrpr2,field2,ierror)
 c..the difference below may get negative due to different scaling
           do j=1,ny
             do i=1,nx
-              precip1=max(field2(i,j)-field1(i,j),0.)/ihdif1
+              precip1=max(field2(i,j)-field1(i,j),0.)/nhdiff
               do k=1,nprecip
                 precip(i,j,k)=precip1
               end do
@@ -314,14 +362,14 @@ c..the difference below may get negative due to different scaling
         end if
       else if (meteoType.eq."emep") then
 c..non-accumulated emissions in stratiform an convective
-        call nfcheckload(ncid, precstrativ,
+        call nfcheckload(ncid, precstrativrt,
      +                    start3d, count3d, field1(1,1))
-        call nfcheckload(ncid, precconv,
+        call nfcheckload(ncid, precconvrt,
      +                    start3d, count3d, field2(1,1))
         do j=1,ny
           do i=1,nx
-c..precipitation must be larger 0
-            precip1=max(field1(i,j)+field2(i,j),0.)/ihdif1
+c..precipitation must be larger 0, m/s -> mm/h
+            precip1=max(field1(i,j)+field2(i,j),0.)*3600*1000
             do k=1,nprecip
               precip(i,j,k)=precip1
             end do
@@ -492,7 +540,7 @@ c
       end if
 c
 c close file
-      call check(nf_close(ncid), "")
+c      call check(nf_close(ncid), "")
 
       if (istep .eq. 0) then
 c-test---------------------------------------------------------------
@@ -595,7 +643,7 @@ c
         do i =1,ndims
           siz = siz * length(i)
         end do
-        write(*,*) "scaling:", varname, factor, offset, siz
+c        write(*,*) "scaling:", varname, factor, offset, siz
         do i = 1, siz
           field(i) = field(i)*factor + offset
         end do
