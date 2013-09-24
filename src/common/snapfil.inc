@@ -35,8 +35,9 @@ c
       integer      nhfmin,nhfmax,nfilef,navail,navailt1,navailt2
       integer      iavail(10,mavail),kavail(2)
       integer      itimer(5,2),limfcf(2,mfilef)
-      real         fdata(maxsiz)
-      integer*2    idata(ldata)
+c fdata(maxsiz), idata(ldata)
+      real, pointer ::  fdata(:)
+      integer*2, pointer :: idata(:)
       character*72 filef(mfilef)
 c
       common/cfiles/nhfmin,nhfmax,nfilef,navail

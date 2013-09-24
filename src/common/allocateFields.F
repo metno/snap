@@ -4,9 +4,25 @@
       integer :: AllocateStatus
       include 'snapdim.inc'
       include 'snapfld.inc'
+      include 'snapfil.inc'
+      include 'snapgrd.inc'
 
       if (.not. FirstCall) return
       FirstCall = .FALSE.
+
+      ALLOCATE ( alevel(nk), STAT = AllocateStatus)
+      IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+      ALLOCATE ( blevel(nk), STAT = AllocateStatus)
+      IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+      ALLOCATE ( vlevel(nk), STAT = AllocateStatus)
+      IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+      ALLOCATE ( ahalf(nk), STAT = AllocateStatus)
+      IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+      ALLOCATE ( bhalf(nk), STAT = AllocateStatus)
+      IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+      ALLOCATE ( vhalf(nk), STAT = AllocateStatus)
+      IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+
 
       ALLOCATE ( u1(nx,ny,nk), STAT = AllocateStatus)
       IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
@@ -44,6 +60,11 @@
       IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
       ALLOCATE ( hlayer2(nx,ny,nk), STAT = AllocateStatus)
 
+      ALLOCATE ( idata(ldata), STAT = AllocateStatus)
+      IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+      ALLOCATE ( fdata(maxsiz), STAT = AllocateStatus)
+      IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+
       ALLOCATE ( xm(nx,ny), STAT = AllocateStatus)
       IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
       ALLOCATE ( ym(nx,ny), STAT = AllocateStatus)
@@ -59,9 +80,9 @@
       ALLOCATE ( field4(nx,ny), STAT = AllocateStatus)
       IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
 
-      ALLOCATE ( pmsl1(nxad,nyad), STAT = AllocateStatus)
+      ALLOCATE ( pmsl1(nx,ny), STAT = AllocateStatus)
       IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
-      ALLOCATE ( pmsl2(nxad,nyad), STAT = AllocateStatus)
+      ALLOCATE ( pmsl2(nx,ny), STAT = AllocateStatus)
       IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
 
       ALLOCATE ( precip(nx,ny,mprecip), STAT = AllocateStatus)
@@ -104,6 +125,15 @@ c the calculation-fields
       implicit none
       include 'snapdim.inc'
       include 'snapfld.inc'
+      include 'snapfil.inc'
+      include 'snapgrd.inc'
+
+      DEALLOCATE ( alevel )
+      DEALLOCATE ( blevel )
+      DEALLOCATE ( vlevel )
+      DEALLOCATE ( ahalf )
+      DEALLOCATE ( bhalf )
+      DEALLOCATE ( vhalf )
 
       DEALLOCATE ( u1)
       DEALLOCATE ( v1)
@@ -124,6 +154,9 @@ c the calculation-fields
       DEALLOCATE ( hbl2)
       DEALLOCATE ( hlevel2)
       DEALLOCATE ( hlayer2)
+
+      DEALLOCATE ( idata )
+      DEALLOCATE ( fdata )
 
       DEALLOCATE ( xm)
       DEALLOCATE ( ym)

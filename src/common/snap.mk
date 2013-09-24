@@ -3,7 +3,7 @@
 
 MODELOBJ= allocateFields.o argoswrite.o bldp.o compheight.o copyfield.o decay.o drydep1.o drydep2.o \
 dateCalc.o edcomp.o \
-ensemble.o epinterp.o filesort.o filesort_nc.o fldout.o forwrd.o ftest.o om2edot.o posint.o \
+epinterp.o filesort.o filesort_nc.o fldout.o forwrd.o ftest.o om2edot.o posint.o \
 pselect.o readfd.o readfield.o readfield_nc.o release.o rmpart.o rwalk.o tabcon.o \
 vgravtables.o videosave.o wetdep1.o wetdep2.o
 
