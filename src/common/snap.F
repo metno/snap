@@ -116,6 +116,7 @@ c MODEL.LEVEL.FIELDS.ON
 c MODEL.LEVEL.FIELDS.OFF
 c RELEASE.POS= 'P.1', 58.50, -4.00
 c GRID.INPUT= 88,1814
+c GRID.SIZE= 360,180
 c GRID.RUN=   88,1814, 1,1,1
 c * Norlam (sigma levels)
 c DATA.SIGMA.LEVELS
@@ -202,11 +203,7 @@ c met.no/FoU 22.03.2013  Heiko Klein  ... Fix output-format for argos/nrpa
 c-----------------------------------------------------------------------
 c
 c
-#ifdef BATCH
       program bsnap
-#else
-      subroutine snap(iaction,iexit)
-#endif
 #if defined(DRHOOK)
       USE PARKIND1  ,ONLY : JPIM     ,JPRB
       USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
@@ -241,7 +238,7 @@ c
       include 'snapargos.inc'
       include 'snapgrp.inc'
 c
-      integer   iaction,iexit
+      integer   iaction,iexit,allocatestatus
 c
       integer   itime1(5),itime2(5),itime(5),itimei(5),itimeo(5)
       integer   itimefi(5),itimefa(5),itimefo(5,2)
@@ -266,8 +263,10 @@ c
       real    tstep,rmlimit,rnhrun,rnhrel,glat,glong,tf1,tf2,tnow,tnext
       real    x,y
       real    rscale,actweight
-c
-      integer ipcount(mdefcomp,nk),npcount(nk)
+c ipcount(mdefcomp, nk)
+      integer, dimension(:,:), allocatable:: ipcount
+c npcount(nk)
+      integer, dimension(:), allocatable:: npcount
       integer ilvl
       real    vlvl
 cjb_start
@@ -277,7 +276,7 @@ c
       logical blfullmix
 c
       character*72  finput,fldfil,logfile,ftype
-      character*256 cinput,ciname,cipart
+      character*256 cinput,ciname,cipart,cipart2
       character*8   cpos1,cpos2
       character*1   tchar
       character*32  bqcomponent
@@ -306,64 +305,27 @@ cjb 19.05
 #endif
 #endif
 c
-#ifndef BATCH
-      save itime1,itime2,itime,itimei,itimeo
-     +    ,itimefi,itimefa,itimefo
-c
-      save narg,iuinp,ios,iprhlp,nlines,nhrun,nhrel,irwalk,nhfout
-     +    ,isynoptic,isvideo,m,nlevel,minhfc,maxhfc,ifltim
-     +    ,ipostyp,lcinp,iend,ks,nkey,k,ierror,mkey
-     +    ,ikey,k1,k2,kv1,kv2,nkv,i,kh,kd,ig,igd,igm,i1,i2,l,n,idmin
-     +    ,idrydep,iwetdep,idecay
-     +    ,iulog,ntimefo,iunitf,iunitx,nh1,nh2
-     +    ,ierr1,ierr2,nsteph,nstep,nstepr,iunito
-     +    ,nxtinf,ihread,isteph,lstepr,iendrel,istep,ihr1,ihr2,nhleft
-     +    ,ierr,ihdiff,ihr,ifldout,ihour,istop
-     +    ,tstep,rmlimit,rnhrun,rnhrel,glat,glong,tf1,tf2,tnow,tnext
-     +    ,x,y
-c
-      save blfullmix
-c
-      save finput,fldfil,logfile
-     +    ,cinput,ciname,cipart
-     +    ,cpos1,cpos2
-     +    ,tchar
-c
-      save ipcount,npcount
-#endif
 c
 c..used in xyconvert (longitude,latitude -> x,y)
       data geoparam/1.,1.,1.,1.,0.,0./
 c
       data pendingOutput/.false./
 c
+      data nx/nxpre/
+      data ny/nypre/
 
-#ifdef BATCH
       iaction=0
 #if defined(DRHOOK)
       ! Before the very first statement
       IF (LHOOK) CALL DR_HOOK('SNAP',0,ZHOOK_HANDLE)
 #endif
-#endif
-c initialize all arrays
-      CALL allocateFields()
 c initialize random number generator for rwalk
       CALL rwalk_init_random_seed()
       iexit=0
 c
-#ifndef BATCH
-      if(pendingOutput) goto 3333
-c
-      if(iaction.eq.1) goto 1111
-      if(iaction.eq.2) goto 2222
-#endif
 c
 c-------------------------------------------------------------------
-#ifdef BATCH
       narg=iargc()
-#else
-      narg=c2fiargc()
-#endif
       if(narg.lt.1) then
         write(6,*)
         write(6,*) '  usage: snap <snap.input>'
@@ -372,11 +334,7 @@ c-------------------------------------------------------------------
         write(6,*)
         stop 1
       endif
-#ifdef BATCH
       call getarg(1,finput)
-#else
-      call c2fgetarg(1,finput)
-#endif
 c
       iuinp=8
       open(iuinp,file=finput,
@@ -388,11 +346,7 @@ c
       endif
 c
       if(narg.eq.2) then
-#ifdef BATCH
         call getarg(2,cinput)
-#else
-        call c2fgetarg(2,cinput)
-#endif
         iprhlp=1
         if(cinput(1:1).eq.'?') goto 14
         iprhlp=0
@@ -557,11 +511,7 @@ c
             cinput(k:k)=' '
           end do
 c..check if input as environment variables or command line arguments
-#ifdef BATCH
           call getvar(1,cinput,1,1,1,ierror)
-#else
-          call c2fgetvar(1,cinput,1,1,1,ierror)
-#endif
           if(ierror.ne.0) goto 14
 c..find keywords and values
           mkey=maxkey
@@ -1152,6 +1102,10 @@ c..release.pos=<'name',latitude,longitude>
 c..grid.input=<producer,grid>
             if(kv1.lt.1) goto 12
             read(cipart,*,err=12) iprod,igrid
+          elseif(cinput(k1:k2).eq.'grid.size') then
+c..grid.size=<nx,ny>
+            if(kv1.lt.1) goto 12
+            read(cipart,*,err=12) nx,ny
           elseif(cinput(k1:k2).eq.'grid.run') then
 c..grid.run=<producer,grid,ixbase,iybase,ixystp>
             if(kv1.lt.1) goto 12
@@ -1167,13 +1121,16 @@ c..levels.input=<num_levels, 0,kk,k,k,k,....,1>
 c..levels.input=<num_levels, 0,kk,k,k,k,....,18,0,0,...>
             if(nlevel.ne.0) goto 12
             if(kv1.lt.1) goto 12
+            read(cipart,*,err=12) nlevel
+            nk = nlevel
+            ALLOCATE ( klevel(nk), STAT = AllocateStatus)
+            IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+            ALLOCATE ( ipcount(mdefcomp, nk), STAT = AllocateStatus)
+            IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+            ALLOCATE ( npcount(nk), STAT = AllocateStatus)
+            IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+
             read(cipart,*,err=12) nlevel,(klevel(i),i=1,nlevel)
-            if(nlevel.ne.nk) then
-              write(6,*) 'ERROR.'
-              write(6,*) '  No. of levels input:    ',nlevel
-              write(6,*) '  No. of levels in model: ',nk
-              goto 12
-            end if
             if(klevel(1).ne.0 .or. klevel(2).eq.0) goto 12
             kadd=0
             do i=nk,2,-1
@@ -1336,13 +1293,16 @@ c
    18 close(iuinp)
 c
       if (iexit.ne.0) then
-#ifdef BATCH
         call exit(1)
-#else
-        return
-#endif
       end if
 c
+
+c initialize all arrays after reading input
+      maxsiz = nx*ny
+      ldata=20+maxsiz+50
+      CALL allocateFields()
+
+
 c..convert names to uppercase letters
       call chcase(2,1,srelnam)
       if(nrelpos.gt.0) call chcase(2,nrelpos,relnam)
@@ -1523,12 +1483,7 @@ c
       if(i2.eq.0) iwetdep=0
 c
       if(ierror.ne.0) then
-#ifdef BATCH
         call exit(1)
-#else
-        iexit=2
-        return
-#endif
       end if
 c
       if(itotcomp.eq.1 .and. ncomp.eq.1) itotcomp=0
@@ -1692,7 +1647,7 @@ c..field output file unit
 c
 c..information to log file
       write(9,*) 'nx,ny,nk:  ',nx,ny,nk
-      write(9,*) 'nxad,nyad: ',nxad,nyad
+c      write(9,*) 'nxad,nyad: ',nxad,nyad
       write(9,*) 'nxmc,nymc: ',nxmc,nymc
       write(9,*) 'kadd:      ',kadd
       write(9,*) 'klevel:'
@@ -1842,11 +1797,7 @@ cjb END
 #endif
 
 c
-#ifdef BATCH
       do 200 istep=0,nstep
-#else
-        istep=istep+1
-#endif
 c
         write(9,*) 'istep,nplume,npart: ',istep,nplume,npart
         flush(9)
@@ -1957,8 +1908,8 @@ c
             relpos(3,irelpos)=x
             relpos(4,irelpos)=y
 c
-            if(iensemble.eq.1)
-     +        call ensemble(0,itime1,tf1,tf2,tnow,istep,nstep,nsteph)
+c            if(iensemble.eq.1)
+c     +        call ensemble(0,itime1,tf1,tf2,tnow,istep,nstep,nsteph)
 c
             nxtinf=1
             ifldout=0
@@ -1966,8 +1917,8 @@ c continue istep loop after initialization
             goto 200
           end if
 c
-         if(iensemble.eq.1)
-     +      call ensemble(1,itime,tf1,tf2,tnow,istep,nstep,nsteph)
+c         if(iensemble.eq.1)
+c     +      call ensemble(1,itime,tf1,tf2,tnow,istep,nstep,nsteph)
 c
           call hrdiff(0,0,itimei,itimefi,ihdiff,ierr1,ierr2)
           tf1=0.
@@ -2049,24 +2000,24 @@ c..radioactive decay
 c
        if(idecay.eq.1) call decay(tstep)
 c
-       if(iensemble.eq.1)
-     +    call ensemble(2,itime,tf1,tf2,tnow,istep,nstep,nsteph)
+c       if(iensemble.eq.1)
+c     +    call ensemble(2,itime,tf1,tf2,tnow,istep,nstep,nsteph)
 c
 c..dry deposition (1=old, 2=new version)
 c
         if(idrydep.eq.1) call drydep1
         if(idrydep.eq.2) call drydep2(tstep)
 c
-       if(iensemble.eq.1)
-     +    call ensemble(3,itime,tf1,tf2,tnow,istep,nstep,nsteph)
+c       if(iensemble.eq.1)
+c     +    call ensemble(3,itime,tf1,tf2,tnow,istep,nstep,nsteph)
 c
 c..wet deposition (1=old, 2=new version)
 c
         if(iwetdep.eq.1) call wetdep1
         if(iwetdep.eq.2) call wetdep2(tstep)
 c
-       if(iensemble.eq.1)
-     +    call ensemble(4,itime,tf1,tf2,tnow,istep,nstep,nsteph)
+c       if(iensemble.eq.1)
+c     +    call ensemble(4,itime,tf1,tf2,tnow,istep,nstep,nsteph)
 c
 c..move all particles forward
 c
@@ -2084,8 +2035,8 @@ c..interpolation of boundary layer top, height, precipitation etc.
 c
         call posint(0,tf1,tf2,tnext)
 c
-       if(iensemble.eq.1)
-     +    call ensemble(5,itime,tf1,tf2,tnext,istep,nstep,nsteph)
+c       if(iensemble.eq.1)
+c     +    call ensemble(5,itime,tf1,tf2,tnext,istep,nstep,nsteph)
 cjb_start
        do n=1,npart
           if(pdata(5,n) .gt. mhmax) mhmax=pdata(5,n)
@@ -2228,36 +2179,11 @@ c..save first and last output time
         end if
       end if
 c
-#ifndef BATCH
-c
-c..select particles to be displayed (graphics) or saved in video files.
-      if(igraphics.eq.1 .or. isvideo.eq.1)
-     +  call pselect(igrspec,idrydep,iwetdep)
-c
-c..info for graphics
-      istephgr=isteph
-      nstephgr=nsteph
-      istepgr=istep
-      nstepgr=nstep
-      iunitgr=iunitx
-      tf1gr=tf1
-      tf2gr=tf2
-      tnowgr=tnow
-      do i=1,5
-        itimegr(i)=itime(i)
-      end do
-c
-c..postponing output until current state shown
-      pendingOutput= .true.
-      iexit=0
-      if(istep.ge.nstep) iexit=1
-      return
-#endif
 c
  3333 continue
 c
-      if(iensemble.eq.1 .and. isteph.eq.0)
-     +  call ensemble(6,itime,tf1,tf2,tnext,istep,nstep,nsteph)
+c      if(iensemble.eq.1 .and. isteph.eq.0)
+c     +  call ensemble(6,itime,tf1,tf2,tnext,istep,nstep,nsteph)
 c
 c..field output if ifldout=1, always accumulation for average fields
       call fldout(ifldout,iunito,fldfil,itimeo,tf1,tf2,tnext,tstep,
@@ -2331,18 +2257,6 @@ cjb-2701
 201	continue
 #endif
 c
-#ifndef BATCH
-      if(pendingOutput) then
-       pendingOutput=.false.
-       if(iaction.eq.1) goto 1111
-       if(iaction.eq.2) goto 2222
-      end if
-c
-      iexit=0
-      if(istep.eq.0) goto 1111
-      if(istep.ge.nstep) iexit=1
-      return
-#endif
 c
  2222 continue
 c
@@ -2354,8 +2268,8 @@ c
 c
   990 continue
 c
-      if(iensemble.eq.1)
-     +  call ensemble(7,itimefa,tf1,tf2,tnext,istep,nstep,nsteph)
+c      if(iensemble.eq.1)
+c     +  call ensemble(7,itimefa,tf1,tf2,tnext,istep,nstep,nsteph)
 c
       if(iargos.eq.1) then
         close(91)
@@ -2393,16 +2307,10 @@ c
 c
 c deallocate all fields
       CALL deAllocateFields()
-#ifdef BATCH
       if(istop.gt.0) call exit(istop)
 #if defined(DRHOOK)
       ! Before the very last statement
       IF (LHOOK) CALL DR_HOOK('SNAP',1,ZHOOK_HANDLE)
 #endif
       stop
-#else
-      iexit=1
-      if(istop.ne.0) iexit=2
-      return
-#endif
       end

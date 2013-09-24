@@ -28,7 +28,9 @@ c..itotcomp:      0=not output of total of all components
 c		  (e.g. when each component is released with a mass unit)
 c                 1=output of total of all components
 c
-      integer iprod,igrid,klevel(nk)
+      integer iprod,igrid
+c klevel needs to get allocated in main program while reading parameters
+      INTEGER, DIMENSION(:), POINTER ::  klevel
       integer iprodr,igridr,ixbase,iybase,ixystp
       integer inprecip,imslp,imodlevel,itotcomp
 c
@@ -75,8 +77,9 @@ c..ivlayer:   tabel of layer numbers for concentration in model levels
 c..	      (key is vlevel*10000)
 c
       real    gparam(8)
-      real    alevel(nk),blevel(nk),vlevel(nk)
-      real    ahalf(nk),bhalf(nk),vhalf(nk)
+c nk dependent arrays
+      REAL, DIMENSION(:), POINTER :: alevel,blevel,vlevel
+      REAL, DIMENSION(:), POINTER :: ahalf,bhalf,vhalf
       integer igtype,ivcoor,kadd
       integer ivlevel(0:10000),ivlayer(0:10000)
 c

@@ -170,10 +170,12 @@ c..pointer to next timestep (possibly same time)
 c
       if(idebug.eq.1) then
         write(9,*) 'MODEL LEVEL SEARCH LIST.   ntav2=',ntav2
+        write(9,*) 'nx,ny,nk: ',nx,ny,nk
         write(9,*) 'istep,nhleft: ',istep,nhleft
         write(9,*) 'itimei(5), ihr1, ihr2:',(itimei(i),i=1,5),ihr1,ihr2
         write(9,*) 'kfb,ifb,ihdif1,ihdif2:',kfb,ifb,ihdif1,ihdif2
         write(9,fmt='(7(1x,i4),1x,i6,2i5)') (iavail(i,ntav2),i=1,10)
+        flush(9)
       end if
 c
       if(ntav2.lt.1) then
@@ -222,7 +224,7 @@ c     before the return statement
        call copyfield(bl2,bl1,nx,ny,1)
        call copyfield(hbl2,hbl1,nx,ny,1)
 !
-        if(nxad.eq.nx .and. nyad.eq.ny .and. imslp.ne.0) then
+        if(imslp.ne.0) then
          call copyfield(pmsl2,pmsl1,nx,ny,1)
         end if
 !
@@ -293,7 +295,6 @@ c no vertical velocity TODO: improve by using continuation equation
 c
 c.....end do k=nk-kadd,2,-1
       end do
-
 c
 c
 c..surface pressure, 10m wind and possibly mean sea level pressure,
@@ -481,6 +482,7 @@ c..size of each grid square (m**2)
 c
       end if
 c
+
 
       if (sigmadotv.eq.'') then
 c..omega -> etadot, or rather etadot derived from continuity-equation

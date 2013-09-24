@@ -81,7 +81,7 @@ c
        call copyfield(bl2,bl1,nx,ny,1)
        call copyfield(hbl2,hbl1,nx,ny,1)
 c
-        if(nxad.eq.nx .and. nyad.eq.ny .and. imslp.ne.0) then
+        if(imslp.ne.0) then
          call copyfield(pmsl2,pmsl1,nx,ny,1)
         end if
 c
@@ -278,7 +278,7 @@ c
       ivc=2
       ilevel=1000
 c
-      if(imslp.eq.0 .or. nxad.ne.nx .or. nyad.ne.ny) imslp=0
+      if(imslp.eq.0) imslp=0
 c
 c..surface pressure
       call readfd(iunit,navps,ivc,8,ilevel,0,ps2(1,1),ierror)
