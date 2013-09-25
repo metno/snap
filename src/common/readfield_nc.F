@@ -50,14 +50,9 @@
 
       integer varid, retval, timepos
       integer start3d(3), start4d(4), count3d(3), count4d(4)
-      character*(10) meteoType
       character*(80) xwindv,ywindv,xwind10mv,ywind10mv,pottempv,ptopv
       character*(80) sigmadotv,apv,bv,sigmav,psv,mslpv,precaccumv
       character*(80) precstrativrt,precconvrt
-c      parameter (file_name='/disk1/myopdata/hirlam12/h12all00.nc')
-c      parameter (meteoType='h12')
-c      parameter (file_name='/disk1/myopdata/emep/meteo2013080400_00.nc')
-      parameter (meteoType='emep')
 
 
 #if defined(DRHOOK)
@@ -65,7 +60,7 @@ c      parameter (file_name='/disk1/myopdata/emep/meteo2013080400_00.nc')
       IF (LHOOK) CALL DR_HOOK('READFIELD_NC',0,ZHOOK_HANDLE)
 #endif
 
-      if (meteoType.eq.'h12') then
+      if (nctype.eq.'h12') then
         xwindv = 'x_wind_ml'
         ywindv = 'y_wind_ml'
         xwind10mv = 'x_wind_10m'
@@ -82,16 +77,8 @@ c      parameter (file_name='/disk1/myopdata/emep/meteo2013080400_00.nc')
         precstrativrt = ''
         precconvrt = ''
 c..get grid parameters from field identification
-!     TODO: get grid parameters from file
-        igtype = 3
-        gparam(1) = -46.400002
-        gparam(2) = -36.400002
-        gparam(3) = 0.10800000
-        gparam(4) = 0.10800000
-        gparam(5) = 0.0000000
-        gparam(6) = 65.000000
 
-      else if (meteoType.eq.'emep') then
+      else if (nctype.eq.'emep') then
         xwindv = 'u_wind'
         ywindv = 'v_wind'
         xwind10mv = 'u10'
@@ -109,18 +96,10 @@ c..get grid parameters from field identification
         precstrativrt = 'large_scale_precipitations'
         precconvrt = 'convective_precipitations'
 c..get grid parameters from field identification
-!     TODO: get grid parameters from snap.input
-        igtype = 2
-        gparam(1) = -179.
-        gparam(2) = -89.5
-        gparam(3) = 1.
-        gparam(4) = 1.
-        gparam(5) = 0.
-        gparam(6) = 0.
 c set as long as sortfield still is called
         ivcoor = 2
       else
-        write(*,*) "undefined meteo type: ", meteoType
+        write(*,*) "undefined grid.nctype: ", nctype
         call exit(1)
       end if
 
@@ -339,7 +318,7 @@ c        call readfd(iunit,nav,ivc,58,ilevel,0,pmsl2(1,1),ierror)
 
 c..precipitation......................................................
 c
-      if (meteoType.eq.'h12') then
+      if (nctype.eq.'h12') then
 c..precipitation between input time 't1' and 't2'
         if (timepos .ne. 1) then
           start3d(3) = timepos - 1
@@ -361,7 +340,7 @@ c..the difference below may get negative due to different scaling
             end do
           end do
         end if
-      else if (meteoType.eq."emep") then
+      else if (nctype.eq."emep") then
 c..non-accumulated emissions in stratiform an convective
         call nfcheckload(ncid, precstrativrt,
      +                    start3d, count3d, field1(1,1))
