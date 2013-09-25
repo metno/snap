@@ -1908,8 +1908,8 @@ c
             relpos(3,irelpos)=x
             relpos(4,irelpos)=y
 c
-c            if(iensemble.eq.1)
-c     +        call ensemble(0,itime1,tf1,tf2,tnow,istep,nstep,nsteph)
+            if(iensemble.eq.1)
+     +        call ensemble(0,itime1,tf1,tf2,tnow,istep,nstep,nsteph)
 c
             nxtinf=1
             ifldout=0
@@ -1917,8 +1917,8 @@ c continue istep loop after initialization
             goto 200
           end if
 c
-c         if(iensemble.eq.1)
-c     +      call ensemble(1,itime,tf1,tf2,tnow,istep,nstep,nsteph)
+         if(iensemble.eq.1)
+     +      call ensemble(1,itime,tf1,tf2,tnow,istep,nstep,nsteph)
 c
           call hrdiff(0,0,itimei,itimefi,ihdiff,ierr1,ierr2)
           tf1=0.
@@ -2000,24 +2000,24 @@ c..radioactive decay
 c
        if(idecay.eq.1) call decay(tstep)
 c
-c       if(iensemble.eq.1)
-c     +    call ensemble(2,itime,tf1,tf2,tnow,istep,nstep,nsteph)
+       if(iensemble.eq.1)
+     +    call ensemble(2,itime,tf1,tf2,tnow,istep,nstep,nsteph)
 c
 c..dry deposition (1=old, 2=new version)
 c
         if(idrydep.eq.1) call drydep1
         if(idrydep.eq.2) call drydep2(tstep)
 c
-c       if(iensemble.eq.1)
-c     +    call ensemble(3,itime,tf1,tf2,tnow,istep,nstep,nsteph)
+       if(iensemble.eq.1)
+     +    call ensemble(3,itime,tf1,tf2,tnow,istep,nstep,nsteph)
 c
 c..wet deposition (1=old, 2=new version)
 c
         if(iwetdep.eq.1) call wetdep1
         if(iwetdep.eq.2) call wetdep2(tstep)
 c
-c       if(iensemble.eq.1)
-c     +    call ensemble(4,itime,tf1,tf2,tnow,istep,nstep,nsteph)
+       if(iensemble.eq.1)
+     +    call ensemble(4,itime,tf1,tf2,tnow,istep,nstep,nsteph)
 c
 c..move all particles forward
 c
@@ -2035,8 +2035,8 @@ c..interpolation of boundary layer top, height, precipitation etc.
 c
         call posint(0,tf1,tf2,tnext)
 c
-c       if(iensemble.eq.1)
-c     +    call ensemble(5,itime,tf1,tf2,tnext,istep,nstep,nsteph)
+       if(iensemble.eq.1)
+     +    call ensemble(5,itime,tf1,tf2,tnext,istep,nstep,nsteph)
 cjb_start
        do n=1,npart
           if(pdata(5,n) .gt. mhmax) mhmax=pdata(5,n)
@@ -2182,8 +2182,8 @@ c
 c
  3333 continue
 c
-c      if(iensemble.eq.1 .and. isteph.eq.0)
-c     +  call ensemble(6,itime,tf1,tf2,tnext,istep,nstep,nsteph)
+      if(iensemble.eq.1 .and. isteph.eq.0)
+     +  call ensemble(6,itime,tf1,tf2,tnext,istep,nstep,nsteph)
 c
 c..field output if ifldout=1, always accumulation for average fields
       call fldout(ifldout,iunito,fldfil,itimeo,tf1,tf2,tnext,tstep,
@@ -2268,8 +2268,8 @@ c
 c
   990 continue
 c
-c      if(iensemble.eq.1)
-c     +  call ensemble(7,itimefa,tf1,tf2,tnext,istep,nstep,nsteph)
+      if(iensemble.eq.1)
+     +  call ensemble(7,itimefa,tf1,tf2,tnext,istep,nstep,nsteph)
 c
       if(iargos.eq.1) then
         close(91)

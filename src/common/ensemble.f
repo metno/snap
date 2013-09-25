@@ -47,55 +47,45 @@ c
 c
       real    heights(nheights)
 c
-      integer igridep
+      integer igridep, AllocStat
       real     gparep(6)
 c
-      double precision drydepep(nxep,nyep,mcomp)
-      double precision wetdepep(nxep,nyep,mcomp)
-      double precision concsurfep(nxep,nyep,mcomp)
-      double precision concep(nxep,nyep,nk,mcomp)
-      double precision conc(nxep,nyep,mcomp)
+c nxep,nyep,mcomp arrays, (nxep,nyep,nk,mcomp in case of concep)
+      real(kind=8), allocatable, save :: drydepep(:,:,:),
+     + wetdepep(:,:,:), concsurfep(:,:,:), conc(:,:,:), concep(:,:,:,:)
 c
-      real precipep(nxep,nyep)
-      real hlayer1ep(nxep,nyep,nk),hlayer2ep(nxep,nyep,nk)
-      real hlevel1ep(nxep,nyep,nk),hlevel2ep(nxep,nyep,nk)
-      real gareaep(nxep,nyep)
-      real xmodel(nxep,nyep),ymodel(nxep,nyep)
-      real prectmp(nxep,nyep)
+c nxep,nyep,mk arrays
+      real(kind=4), allocatable, save :: hlayer1ep(:,:,:),
+     + hlayer2ep(:,:,:), hlevel1ep(:,:,:),hlevel2ep(:,:,:)
+c nxep, nyep arrays
+      real(kind=4), allocatable, save :: precipep(:,:), gareaep(:,:),
+     + xmodel(:,:), ymodel(:,:), prectmp(:,:)
 c
-      real pbq1(mpart),pbq2(mpart)
-      real xep(mpart),yep(mpart)
+c mpart arrays
+      real(kind=4), allocatable, save :: pbq1(:),pbq2(:),
+     + xep(:),yep(:)
 c
-      real epfield(nxep,nyep,nepout)
+c nxep, nyep, nepout
+      real(kind=4), allocatable, save :: epfield(:,:,:)
 c
-      integer inside(nxep,nyep)
-      integer ijlist(2,nxep*nyep)
+c nxep, nyep
+      integer, allocatable, save :: inside(:,:)
+c 2, nxep*nyep
+      integer, allocatable, save :: ijlist(:,:)
 c
-      integer lepdata
-      parameter (lepdata=  nxep*nyep*(3+nk+1)*mcomp*2
-     +                   + nxep*nyep*(1+nk*4+3+1)
-     +			 + mpart*4 )
-c
-      common/epdata/drydepep,wetdepep,concsurfep,concep,conc,
-     +	            precipep,
-     +              hlayer1ep,hlayer2ep,hlevel1ep,hlevel2ep,
-     +              gareaep,xmodel,ymodel,
-     +              prectmp,
-     +              pbq1,pbq2,xep,yep,
-     +              epfield,
-     +              inside,ijlist
 c
 c..using allocated memory for the final output (timeseries at each pos.)
 c
+      integer lepdata
       integer mbuffer
-      parameter (mbuffer= lepdata/nepout)
-      real buffer(nepout,mbuffer)
-      equivalence (drydepep(1,1,1),buffer(1,1))
+c buffer nepout, mbuffer, should be used after dallocation of other arrays
+      real, allocatable :: buffer(:,:)
+c      equivalence (drydepep(1,1,1),buffer(1,1))
+c
 c
       integer matimev
-      parameter (matimev= 100 + nxep*nyep/5)
-      integer iatimev(5,matimev)
-      equivalence (inside(1,1),iatimev(1,1))
+c 5,matimev
+      integer, allocatable :: iatimev(:,:)
 c
       real dxgr(5),dygr(5)
 c
@@ -144,6 +134,60 @@ c
       undef=+1.e+35
 c
       if(icall.eq.0) then
+c initialize
+      ALLOCATE ( drydepep(nxep,nyep,mcomp), STAT = AllocStat)
+      IF (AllocStat /= 0) STOP "*** Not enough memory ***"
+      ALLOCATE ( wetdepep(nxep,nyep,mcomp), STAT = AllocStat)
+      IF (AllocStat /= 0) STOP "*** Not enough memory ***"
+      ALLOCATE ( concsurfep(nxep,nyep,mcomp), STAT = AllocStat)
+      IF (AllocStat /= 0) STOP "*** Not enough memory ***"
+      ALLOCATE ( conc(nxep,nyep,mcomp), STAT = AllocStat)
+      IF (AllocStat /= 0) STOP "*** Not enough memory ***"
+
+      ALLOCATE ( concep(nxep,nyep,nk,mcomp), STAT = AllocStat)
+      IF (AllocStat /= 0) STOP "*** Not enough memory ***"
+
+      ALLOCATE ( hlayer1ep(nxep,nyep,nk), STAT = AllocStat)
+      IF (AllocStat /= 0) STOP "*** Not enough memory ***"
+      ALLOCATE ( hlayer2ep(nxep,nyep,nk), STAT = AllocStat)
+      IF (AllocStat /= 0) STOP "*** Not enough memory ***"
+      ALLOCATE ( hlevel1ep(nxep,nyep,nk), STAT = AllocStat)
+      IF (AllocStat /= 0) STOP "*** Not enough memory ***"
+      ALLOCATE ( hlevel2ep(nxep,nyep,nk), STAT = AllocStat)
+      IF (AllocStat /= 0) STOP "*** Not enough memory ***"
+
+      ALLOCATE ( precipep(nxep,nyep), STAT = AllocStat)
+      IF (AllocStat /= 0) STOP "*** Not enough memory ***"
+      ALLOCATE ( gareaep(nxep,nyep), STAT = AllocStat)
+      IF (AllocStat /= 0) STOP "*** Not enough memory ***"
+      ALLOCATE ( xmodel(nxep,nyep), STAT = AllocStat)
+      IF (AllocStat /= 0) STOP "*** Not enough memory ***"
+      ALLOCATE ( ymodel(nxep,nyep), STAT = AllocStat)
+      IF (AllocStat /= 0) STOP "*** Not enough memory ***"
+      ALLOCATE ( prectmp(nxep,nyep), STAT = AllocStat)
+      IF (AllocStat /= 0) STOP "*** Not enough memory ***"
+
+      ALLOCATE ( pbq1(mpart), STAT = AllocStat)
+      IF (AllocStat /= 0) STOP "*** Not enough memory ***"
+      ALLOCATE ( pbq2(mpart), STAT = AllocStat)
+      IF (AllocStat /= 0) STOP "*** Not enough memory ***"
+      ALLOCATE ( xep(mpart), STAT = AllocStat)
+      IF (AllocStat /= 0) STOP "*** Not enough memory ***"
+      ALLOCATE ( yep(mpart), STAT = AllocStat)
+      IF (AllocStat /= 0) STOP "*** Not enough memory ***"
+
+      ALLOCATE ( epfield(nxep,nyep,nepout), STAT = AllocStat)
+      IF (AllocStat /= 0) STOP "*** Not enough memory ***"
+
+      ALLOCATE ( inside(nxep,nyep), STAT = AllocStat)
+      IF (AllocStat /= 0) STOP "*** Not enough memory ***"
+
+      ALLOCATE ( ijlist(2, nxep*nyep), STAT = AllocStat)
+      IF (AllocStat /= 0) STOP "*** Not enough memory ***"
+c
+c
+
+
 c
 c..time of release
        do i=1,5
@@ -570,6 +614,40 @@ c
 c
       if(icall.eq.7) then
 c
+      DEALLOCATE ( drydepep )
+      DEALLOCATE ( wetdepep )
+      DEALLOCATE ( concsurfep )
+      DEALLOCATE ( conc )
+      DEALLOCATE ( concep )
+      DEALLOCATE ( hlayer1ep )
+      DEALLOCATE ( hlayer2ep )
+      DEALLOCATE ( hlevel1ep )
+      DEALLOCATE ( hlevel2ep )
+      DEALLOCATE ( precipep )
+      DEALLOCATE ( gareaep )
+      DEALLOCATE ( xmodel )
+      DEALLOCATE ( ymodel )
+      DEALLOCATE ( prectmp )
+      DEALLOCATE ( pbq1 )
+      DEALLOCATE ( pbq2 )
+      DEALLOCATE ( xep )
+      DEALLOCATE ( yep )
+
+      DEALLOCATE ( inside )
+
+      DEALLOCATE ( ijlist )
+
+c reuse just deallocated memory
+      lepdata=  nxep*nyep*(3+nk+1)*mcomp*2
+     +                   + nxep*nyep*(1+nk*4+3+1)
+     +       + mpart*4
+      mbuffer= lepdata/nepout
+      ALLOCATE ( buffer(nepout,mbuffer), STAT = AllocStat)
+      IF (AllocStat /= 0) STOP "*** Not enough memory ***"
+      matimev= 100 + nxep*nyep/5
+      ALLOCATE ( iatimev(5,matimev), STAT = AllocStat)
+      IF (AllocStat /= 0) STOP "*** Not enough memory ***"
+
        if (ntoutput.lt.1) return
 c
        npos= mbuffer/ntoutput
@@ -597,7 +675,7 @@ c
        if (k.lt.0) k=len(ensemblefile)+1
        k=k-1
        filename=ensemblefile(1:k)//'_'//compnamemc(mm)
-       
+
        open(98,file=filename,
      +		access='sequential',form='formatted',
      +		status='unknown')
@@ -672,6 +750,8 @@ c
 c
        end do
 c
+      DEALLOCATE ( epfield )
+
       end if
 c
 #if defined(DRHOOK)
