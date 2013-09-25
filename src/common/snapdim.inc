@@ -5,14 +5,24 @@ c..include file  - all parameter statements (model dimensions etc.)
 c
 c
 c..nx,ny:  horizontal field dimensions (for computations)
+c..nxpre,nypre: nx and ny if not in input-file
 c..nk:     number of levels
 c
-      integer nx,ny,nk
+      integer nx,ny,nk, maxsiz,ldata
+      integer nxpre, nypre, nkpre
 ccc   parameter (nx=121,ny=97,nk=14)
 ccc   parameter (nx=127,ny=103,nk=19)
 ccc   parameter (nx=188,ny=152,nk=32)
 ccc      parameter (nx=468,ny=378,nk=41)
-      parameter (nx=864,ny=698,nk=61)
+ccc h12ml in archive (which is 24km)
+ccc   parameter (nx=432,ny=349,nk=61)
+ccc h12sf and h12snap (12km)
+cc default parameters, if input.gridsize and input.levels not in snap.input
+      parameter (nxpre=864,nypre=698,nkpre=61)
+ccc emep latlon 1x1,
+cc      parameter (nxpre=360,nypre=180)
+      common /gridsize/nx,ny,nk, maxsiz,ldata
+
 c
 c..mprecip: max no. og hourly precipitation fields
 c           (and then the maximum hours between field input...)
@@ -24,9 +34,9 @@ c
 c..maxsiz: max. input field size (possibly larger than nx*ny)
 c..ldata:  length of buffer for field input/output
 c
-      integer maxsiz,ldata
-      parameter (maxsiz=nx*ny)
-      parameter (ldata=20+maxsiz+50)
+c      integer maxsiz,ldata
+c      parameter (maxsiz=nx*ny)
+c      parameter (ldata=20+maxsiz+50)
 c
 c
 c..ENSEMBLE PROJECT.....................................
@@ -78,10 +88,10 @@ cc    parameter (nxmc=nx,nymc=ny)
 c..2: remove large arrays for concentration
       parameter (nxmc=1,nymc=1)
 c
-      integer nxad,nyad
+c      integer nxad,nyad
 c..use 1 or 2 below:
 c..1: keep additional fields (for output/graphics, not used in comp.)
-      parameter (nxad=nx,nyad=ny)
+c      parameter (nxad=nx,nyad=ny)
 c..2: remove additional fields
 cc    parameter (nxad=1,nyad=1)
 c

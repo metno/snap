@@ -289,7 +289,8 @@ cjb 02.05
 c
 c... matrix for calculating volcanic ash concentrations + file name
 c
-       real vcon(nx,ny,3)
+c   vcon(nx,ny,3)
+       real, allocatable :: vcon(:,:,:)
        character*60 cfile
 cjb 19.05
        integer itimev(5),j
@@ -1786,6 +1787,8 @@ cjb_end
 #if defined(VOLCANO)
 cjb 01.05 initialize concentration (mass) matrix
 c
+       ALLOCATE( vcon(nx,ny,3), STAT = AllocateStatus )
+       IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
        do i=1,nx
        do j=1,ny
        do k=1,3
