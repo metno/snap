@@ -117,6 +117,11 @@ c MODEL.LEVEL.FIELDS.OFF
 c RELEASE.POS= 'P.1', 58.50, -4.00
 c GRID.INPUT= 88,1814
 c GRID.SIZE= 360,180
+c * gtype and gparam(6) according to felt.txt (required only for nc-files)
+c * rotated latlon, hirlam 12
+c GRID.GPARAM = 3,-46.400002,-36.400002,0.10800000,0.10800000, 0.0000000, 65.000000
+c * emep 1x1 deg lat lon
+c * GRID.GPARAM = 2, -179.,-89.5,1.,1., 0., 0.
 c GRID.RUN=   88,1814, 1,1,1
 c * Norlam (sigma levels)
 c DATA.SIGMA.LEVELS
@@ -1103,10 +1108,18 @@ c..release.pos=<'name',latitude,longitude>
 c..grid.input=<producer,grid>
             if(kv1.lt.1) goto 12
             read(cipart,*,err=12) iprod,igrid
+          elseif(cinput(k1:k2).eq.'grid.nctype') then
+c..grid.nctype=<emep/hirlam12>
+            if(kv1.lt.1) goto 12
+            read(cipart,*,err=12) nctype
           elseif(cinput(k1:k2).eq.'grid.size') then
 c..grid.size=<nx,ny>
             if(kv1.lt.1) goto 12
             read(cipart,*,err=12) nx,ny
+          elseif(cinput(k1:k2).eq.'grid.gparam') then
+c..grid.gparam=<igtype,gparam(6)>
+            if(kv1.lt.1) goto 12
+            read(cipart,*,err=12) igtype,(gparam(i),i=1,6)
           elseif(cinput(k1:k2).eq.'grid.run') then
 c..grid.run=<producer,grid,ixbase,iybase,ixystp>
             if(kv1.lt.1) goto 12
@@ -1848,6 +1861,9 @@ c     +          ,ihr2, itimefi, ierror, ")"
           else
             call readfield(iunitf,istep,nhleft,itimei,ihr1,ihr2,
      +                   itimefi,ierror)
+          end if
+          if (idebug.ge.1) then
+            write(9,*) "igtype, gparam(8): ", igtype, gparam
           end if
 c          write (*,*) "readfield(", iunitf, istep, nhleft, itimei, ihr1
 c     +          ,ihr2, itimefi, ierror, ")"

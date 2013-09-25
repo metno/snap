@@ -31,6 +31,7 @@ c..limfcf: limitation of used forecast lengths in each file
 c             limfcf(1,n): min forecast length in hours
 c             limfcf(2,n): max forecast length in hours
 c..filef:  file names
+c..nctype: type of meteorology, used for different nc-inputs (emep,hirlam12)
 c
       integer      nhfmin,nhfmax,nfilef,navail,navailt1,navailt2
       integer      iavail(10,mavail),kavail(2)
@@ -39,10 +40,11 @@ c fdata(maxsiz), idata(ldata)
       real, pointer ::  fdata(:)
       integer*2, pointer :: idata(:)
       character*72 filef(mfilef)
+      character*72 nctype
 c
       common/cfiles/nhfmin,nhfmax,nfilef,navail
      -             ,iavail,kavail,navailt1,navailt2
      -             ,itimer,limfcf
      -             ,fdata,idata
-     -             ,filef
+     -             ,filef,nctype
 c-----------------------------------------------------------------------
