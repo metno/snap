@@ -12,22 +12,4 @@ LEVELS.INPUT= 61, 0,60,59,58,57,56,55,54,53,52,51,50,49,48,47,46,45,44,43,42,41,
 *
 FORECAST.HOUR.MIN= +3
 FORECAST.HOUR.MAX= +9999
-*
-*FIELD.TYPE=netcdf
-*FIELD.INPUT= /opdata/hirlam12/h12snap00.dat-1
-*FIELD.INPUT= /opdata/hirlam12/h12sf00.dat-1
-*FIELD.INPUT= /opdata/hirlam12/h12snap06.dat-1
-*FIELD.INPUT= /opdata/hirlam12/h12sf06.dat-1
-*FIELD.INPUT= /opdata/hirlam12/h12snap12.dat-1
-*FIELD.INPUT= /opdata/hirlam12/h12sf12.dat-1
-*FIELD.INPUT= /opdata/hirlam12/h12snap18.dat-1
-*FIELD.INPUT= /opdata/hirlam12/h12sf18.dat-1
-FIELD.INPUT= /disk1/myopdata/hirlam12/h12snap00.dat
-FIELD.INPUT= /disk1/myopdata/hirlam12/h12sf00.dat
-*FIELD.INPUT= /opdata/hirlam12/h12snap06.dat
-*FIELD.INPUT= /opdata/hirlam12/h12sf06.dat
-*FIELD.INPUT= /opdata/hirlam12/h12snap12.dat
-*FIELD.INPUT= /opdata/hirlam12/h12sf12.dat
-*FIELD.INPUT= /opdata/hirlam12/h12snap18.dat
-*FIELD.INPUT= /opdata/hirlam12/h12sf18.dat
-*
+
