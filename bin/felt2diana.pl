@@ -17,7 +17,8 @@ GetOptions(\%Args,
        'felt_input=s',
        'levelnames=s',
        'xml_template=s',
-       'tag=s')
+       'tag=s',
+       'omitDiana')
     or pod2usage(2);
 
 pod2usage(-exitval => 0,
@@ -41,9 +42,10 @@ system($command) == 0 or die "system $command failed: $?";
 my %isotopes = readIsotopes($Args{levelnames});
 
 createDianaSetup($Args{tag}, \%isotopes);
-$command = "diana.bin -s diana.setup_$Args{tag}";
-system($command) == 0 or die "system $command failed: $?";
-
+if (!$Args{omitDiana}) {
+    $command = "diana.bin -s diana.setup_$Args{tag}";
+    system($command) == 0 or die "system $command failed: $?";
+}
 
 sub readIsotopes {
 	my ($file) = @_;
@@ -150,13 +152,13 @@ print $f <<'EOT';
 <FIELD_PLOT>
 
 #  Clear the definitions from diana.setup-COMMON
-CLEAR    
+CLEAR
 
 #change plot options of existing field
 
 # For netCDF files these use the variable names, not the standard_names.
-# Thus, this section must be tailored for various datasets, i.e., 
-# a separate setup file for each dataset. 
+# Thus, this section must be tailored for various datasets, i.e.,
+# a separate setup file for each dataset.
 # For example: different setup files for TOPAZ, MIPOM, ROMS, etc.
 
 
@@ -222,7 +224,7 @@ name=EMEP_PROJ proj4string="+proj=stere +lat_0=90 +lon_0=-32 +ellps=WGS84 +towgs
 
 
 <MAP_TYPE>
- 
+
 #map=elver_grenser    file=/metno/local/maps/land5.dat    # emep(grenser,elver)
 
 </MAP_TYPE>
