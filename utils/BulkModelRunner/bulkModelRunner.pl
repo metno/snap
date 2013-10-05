@@ -43,26 +43,34 @@ my $meteoSetup = slurp($Args{meteoSetupFile});
 
 my @runs = createRuns($Args{startDate}, $Args{endDate}, \@dailyStart);
 
+my %knownChildren;
 for (my $i = 0; $i < $Args{n}; $i++) {
-    makeChildRun(\@runs, $Args{runTime}, $Args{inputDir}, $Args{inputType}, $Args{outputDir}, $sourceTerm, $meteoSetup);
+    makeChildRun(\@runs, \%knownChildren, $Args{runTime}, $Args{inputDir}, $Args{inputType}, $Args{outputDir}, $sourceTerm, $meteoSetup);
 }
 
 my $child = 1;
 while ($child > 0) {
     $child = waitpid(-1, 0);
-    # start a new child after one has gone
-    makeChildRun(\@runs, $Args{runTime}, $Args{inputDir}, $Args{inputType}, $Args{outputDir}, $sourceTerm, $meteoSetup);
+    if (exists $knownChildren{$child}) {
+        delete $knownChildren{$child};
+        # start a new child after one has gone
+        makeChildRun(\@runs, \%knownChildren, $Args{runTime}, $Args{inputDir}, $Args{inputType}, $Args{outputDir}, $sourceTerm, $meteoSetup);
+    }
 }
 
 sub makeChildRun {
-    my ($runs, $runTime, $inputDir, $inputType, $outputDir, $sourceTerm, $meteoSetup) = @_;
+    my ($runs, $knownChildren, $runTime, $inputDir, $inputType, $outputDir, $sourceTerm, $meteoSetup) = @_;
     my $runId = shift @$runs;
     if (defined $runId) {
+	print STDERR "Starting run $runId, ".scalar @runs." remaining\n";
         my $pid = fork();
         die "fork() failed: $!" unless defined $pid;
-        if ($pid) {
+        if ($pid == 0) {
             # child
             snapRun($runId, $runTime, $inputDir, $inputType, $outputDir, $sourceTerm, $meteoSetup);
+            exit(0);
+        } else {
+            $knownChildren->{$pid} = 1;
         }
     }
 }
@@ -134,7 +142,7 @@ sub snapRun {
 sub createRuns {
     my ($start, $end, $hours) = @_;
     my ($syear, $smon, $sday) = split '-', $start;
-    my ($eyear, $emon, $eday) = split '-', $start;
+    my ($eyear, $emon, $eday) = split '-', $end;
 
     my $gmstart = timegm(0,0,0,$sday,$smon-1,$syear);
     my $gmend = timegm(0,0,0,$eday,$emon-1,$eyear);
