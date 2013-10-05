@@ -5,10 +5,9 @@ use warnings;
 use Time::Local qw(timegm);
 use Getopt::Long qw(GetOptions);
 use Pod::Usage qw(pod2usage);
-use File::Copy qw(copy);
 use Cwd qw(cwd);
 
-use constant SNAP_FILES => [qw(bsnap_naccident felt2ncDummyLevels2Isotopes.pl felt2nc_snap_dummy_levels.xml felt2diana.pl)];
+use constant SNAP_FILES => [qw(bsnap_naccident felt2ncDummyLevels2Isotopes.pl felt2nc_snap_dummy_levels.xml felt_axes.xml felt2diana.pl)];
 
 use vars qw(%Args $nproc);
 $Args{n} = 4;
@@ -33,11 +32,11 @@ GetOptions(\%Args,
 pod2usage(-exitval => 0,
       -verbose => 2) if $Args{help};
 pod2usage(-exitval => 2,
-      -msg => 'missing outputDir'
-      -verbose => 2) if ! -d $Args{outputDir};
+      -message => 'missing outputDir',
+      -verbose => 0) if (! -d $Args{outputDir});
 pod2usage(-exitval => 2,
-      -msg => 'missing inputDir'
-      -verbose => 2) if ! -d $Args{inputDir};
+      -msg => 'missing inputDir',
+      -verbose => 0) if ! -d $Args{inputDir};
 my @dailyStart = split ',', $Args{dailyStart};
 my $sourceTerm = slurp($Args{sourceTermFile});
 my $meteoSetup = slurp($Args{meteoSetupFile});
@@ -51,9 +50,9 @@ foreach my $runId (@runs) {
 sub snapRun {
     my ($runId, $runTime, $inputDir, $inputType, $outputDir, $sourceTerm, $meteoSetup) = @_;
     my @date = gmtime($runId);
-    my $hour = $date[2];
-    my $day = $date[3];
-    my $month = $date[4] + 1;
+    my $hour = sprintf "%02d", $date[2];
+    my $day = sprintf "%02d", $date[3];
+    my $month = sprintf "%02d", ($date[4] + 1);
     my $year = $date[5] + 1900;
 
     # create the new snap.input data
@@ -72,7 +71,7 @@ sub snapRun {
             my $day = sprintf "%02d", $date[3];
             my $month = sprintf "%02d", ($date[4] + 1);
             my $year = $date[5] + 1900;
-            my $fileName = $inputDir + '/meteo' + "$year$month$day" + '00_00.nc';
+            my $fileName = $inputDir . '/meteo' . "$year$month$day" . '00_00.nc';
             if (-r $fileName) {
                 $snapInput .= "FIELD.INPUT= $fileName\n";
             } else {
@@ -86,23 +85,26 @@ sub snapRun {
     # and the rest
     $snapInput .= SNAPINPUT();
 
-    my $newDir =  "$outputDir\_$year$month$day\_$hour";
-    mkdir "$newDir" or die "Cannot create directory $newDir: $!\n";
-
+    my $newDir =  "$outputDir$year$month$day\_$hour";
+    if (!-d $newDir) {
+    	mkdir "$newDir" or die "Cannot create directory $newDir: $!\n";
+    }
     foreach my $file (@{ SNAP_FILES() }) {
-        copy($file, $newDir) or die "Cannot copy $file to $newDir: $!\n"
+       if (! -e "$newDir/$file") {
+           link($file, $newDir."/$file") or die "Cannot link $file to $newDir: $!\n";
+       }
     }
     my $orgDir = cwd();
     chdir $newDir or die "Cannot change to $newDir: $!\n";
-    open my $f, 'snap.input' or die "Cannot write snap.input in $newDir: $!\n";
+    open my $f, '>snap.input' or die "Cannot write snap.input in $newDir: $!\n";
     print $f $snapInput;
     my $bsnap = SNAP_FILES->[0];
-    system($bsnap, 'snap.input') == 0 or die "system $bsnap snap.input in $newDir failed: $?";
-    system "perl felt2diana.pl  --tag=snap --omitDiana" == 0
+    system("./$bsnap". ' snap.input > snapOut.log 2>&1') == 0 or die "system ./$bsnap snap.input in $newDir failed: $?";
+    system("perl felt2diana.pl  --tag=snap --omitDiana") == 0
         or die "Cannot run felt2diana in $newDir";
     # cleanup
     foreach my $file (@{ SNAP_FILES() }) {
-        unlink $file;
+        #unlink $file;
     }
     unlink 'snap.felt';
     chdir $orgDir or die "Cannot change to $orgDir: $!\n";
@@ -110,7 +112,7 @@ sub snapRun {
 
 # return runs with runid = epoch-seconds
 sub createRuns {
-    my ($start, $end, $hours);
+    my ($start, $end, $hours) = @_;
     my ($syear, $smon, $sday) = split '-', $start;
     my ($eyear, $emon, $eday) = split '-', $start;
 
@@ -148,7 +150,7 @@ REMOVE.RELATIVE.MASS.LIMIT= 0.01
 TIME.STEP= 300.
 STEP.HOUR.INPUT.MIN=  1
 STEP.HOUR.INPUT.MAX=  6
-STEP.HOUR.OUTPUT.FIELDS= 240
+*STEP.HOUR.OUTPUT.FIELDS= 240
 ASYNOPTIC.OUTPUT
 TOTAL.COMPONENTS.OFF
 PRECIPITATION.ON
