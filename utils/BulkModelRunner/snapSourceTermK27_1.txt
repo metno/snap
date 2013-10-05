@@ -11,7 +11,7 @@ RELEASE.BQ/SEC.COMP= 1.0e+13, 1.0e+13, 'Xe-133'
 RELEASE.BQ/SEC.COMP= 1.0e+13, 1.0e+13, 'Cs137'
 *
 *** particles distributed on components according to mass
-MAX.PARTICLES.PER.RELEASE= 2000
+MAX.PARTICLES.PER.RELEASE= 20000
 *
 *
 *** List of possible components (enabled with "RELEASE.XX/YYY.COMP= ...")
