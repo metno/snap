@@ -10,7 +10,7 @@ use Cwd qw(cwd);
 
 use constant SNAP_FILES => [qw(bsnap_naccident felt2ncDummyLevels2Isotopes.pl felt2nc_snap_dummy_levels.xml felt2diana.pl)];
 
-use vars qw(%Args nproc);
+use vars qw(%Args $nproc);
 $Args{n} = 4;
 $Args{inputType} = 'felt';
 $Args{inputDir} = '';
@@ -41,7 +41,7 @@ my $meteoSetup = slurp($Args{meteoSetupFile});
 
 my @runs = createRuns($Args{startDate}, $Args{endDate}, \@dailyStart);
 
-foreach my $r (@runs) {
+foreach my $runId (@runs) {
     snapRun($runId, $Args{runTime}, $Args{inputDir}, $Args{inputType}, $Args{outputDir}, $sourceTerm, $meteoSetup);
 }
 
@@ -61,7 +61,7 @@ sub snapRun {
     # add filenames to use for this run
     my $runEnd = $runId + 3600 * ($runTime + 6);
     my $time = $runId;
-    while ($time <= $runEnd>) {
+    while ($time <= $runEnd) {
         if ($inputType eq 'ec') {
             # daily files of type meteo2013090100_00.nc
             # but starting at 03-24
@@ -86,7 +86,7 @@ sub snapRun {
     my $newDir =  "$outputDir\_$year$month$day\_$hour";
     mkdir "$newDir" or die "Cannot create directory $newDir: $!\n";
 
-    foreach my $file (@{ SNAP_FILES }) {
+    foreach my $file (@{ SNAP_FILES() }) {
         copy($file, $newDir) or die "Cannot copy $file to $newDir: $!\n"
     }
     my $orgDir = cwd();
@@ -98,7 +98,7 @@ sub snapRun {
     system "perl felt2diana.pl  --tag=snap --omitDiana" == 0
         or die "Cannot run felt2diana in $newDir";
     # cleanup
-    foreach my $file (@{ SNAP_FILES }) {
+    foreach my $file (@{ SNAP_FILES() }) {
         unlink $file;
     }
     unlink 'snap.felt';
