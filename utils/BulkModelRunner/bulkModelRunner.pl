@@ -9,7 +9,7 @@ use Cwd qw(cwd);
 
 use constant SNAP_FILES => [qw(bsnap_naccident felt2ncDummyLevels2Isotopes.pl felt2nc_snap_dummy_levels.xml felt_axes.xml felt2diana.pl)];
 
-use vars qw(%Args $nproc);
+use vars qw(%Args);
 $Args{n} = 4;
 $Args{inputType} = 'felt';
 $Args{inputDir} = '';
@@ -43,8 +43,28 @@ my $meteoSetup = slurp($Args{meteoSetupFile});
 
 my @runs = createRuns($Args{startDate}, $Args{endDate}, \@dailyStart);
 
-foreach my $runId (@runs) {
-    snapRun($runId, $Args{runTime}, $Args{inputDir}, $Args{inputType}, $Args{outputDir}, $sourceTerm, $meteoSetup);
+for (my $i = 0; $i < $Args{n}; $i++) {
+    makeChildRun(\@runs, $Args{runTime}, $Args{inputDir}, $Args{inputType}, $Args{outputDir}, $sourceTerm, $meteoSetup);
+}
+
+my $child = 1;
+while ($child > 0) {
+    $child = waitpid(-1, 0);
+    # start a new child after one has gone
+    makeChildRun(\@runs, $Args{runTime}, $Args{inputDir}, $Args{inputType}, $Args{outputDir}, $sourceTerm, $meteoSetup);
+}
+
+sub makeChildRun {
+    my ($runs, $runTime, $inputDir, $inputType, $outputDir, $sourceTerm, $meteoSetup) = @_;
+    my $runId = shift @$runs;
+    if (defined $runId) {
+        my $pid = fork();
+        die "fork() failed: $!" unless defined $pid;
+        if ($pid) {
+            # child
+            snapRun($runId, $runTime, $inputDir, $inputType, $outputDir, $sourceTerm, $meteoSetup);
+        }
+    }
 }
 
 sub snapRun {
