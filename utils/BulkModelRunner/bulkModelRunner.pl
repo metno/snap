@@ -115,7 +115,7 @@ sub snapRun {
             my $year = $date[5] + 1900;
             my $dirName = $inputDir . '/$year-$month-$day/';
             foreach my $file (qw(h12sf00.dat h12snap00.dat h12sf12.dat h12snap12.dat)) {
-                my $fileName = $inputDir . $file;
+                my $fileName = $dirName . $file;
                 if (-r $fileName) {
                     $snapInput .= "FIELD.INPUT= $fileName\n";
                 } else {
