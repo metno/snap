@@ -11,7 +11,7 @@ use constant SNAP_FILES => [qw(bsnap_naccident felt2ncDummyLevels2Isotopes.pl fe
 
 use vars qw(%Args);
 $Args{n} = 4;
-$Args{inputType} = 'felt';
+$Args{inputType} = 'h12';
 $Args{inputDir} = '';
 $Args{dailyStart} = '12';
 GetOptions(\%Args,
@@ -117,6 +117,23 @@ sub snapRun {
             my $dirName = $inputDir . "/$year-$month-$day/";
             foreach my $file (qw(h12sf00.dat h12snap00.dat h12sf12.dat h12snap12.dat)) {
                 my $fileName = $dirName . $file;
+                if (-r $fileName) {
+                    $snapInput .= "FIELD.INPUT= $fileName\n";
+                } else {
+                    die "unreadable file: $fileName";
+                }
+            }
+            $time += 24*3600; # advance a day
+        } elsif ($inputType eq 'erai') {
+            # 4 files daily of type 2001/08/fc.2001080100 fc.2001080106 fc.2001080112 fc.2001080118
+            # but starting at 00-24, need 3 hours startup (precip)
+            my @date = gmtime($time - 3 * 3600);
+            my $day = sprintf "%02d", $date[3];
+            my $month = sprintf "%02d", ($date[4] + 1);
+            my $year = $date[5] + 1900;
+            my $dirName = $inputDir . "/$year/$month/";
+            foreach my $hh (qw(00 06 12 18)) {
+                my $fileName = $dirName . "fc.$year$month$day$hh";
                 if (-r $fileName) {
                     $snapInput .= "FIELD.INPUT= $fileName\n";
                 } else {
@@ -242,7 +259,7 @@ vertical-levels etc.
 
 =over 8
 
-=item inputType can be ec or h12
+=item inputType can be ec (netcdf emep/IFS), h12 (felt) or erai (felt, nora era interim 10km)
 
 = back
 
