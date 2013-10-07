@@ -113,7 +113,7 @@ sub snapRun {
             my $day = sprintf "%02d", $date[3];
             my $month = sprintf "%02d", ($date[4] + 1);
             my $year = $date[5] + 1900;
-            my $dirName = $inputDir . '/$year-$month-$day/';
+            my $dirName = $inputDir . "/$year-$month-$day/";
             foreach my $file (qw(h12sf00.dat h12snap00.dat h12sf12.dat h12snap12.dat)) {
                 my $fileName = $dirName . $file;
                 if (-r $fileName) {
