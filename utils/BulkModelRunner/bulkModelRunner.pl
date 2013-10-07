@@ -106,6 +106,23 @@ sub snapRun {
                 die "unreadable file: $fileName";
             }
             $time += 24*3600; # advance a day
+        } elsif ($inputType eq 'h12') {
+            # 4 files daily of type h12sf00.dat h12snap00.dat
+            # but starting at 00-24
+            my @date = gmtime($time);
+            my $day = sprintf "%02d", $date[3];
+            my $month = sprintf "%02d", ($date[4] + 1);
+            my $year = $date[5] + 1900;
+            my $dirName = $inputDir . '/$year-$month-$day/';
+            foreach my $file (qw(h12sf00.dat h12snap00.dat h12sf12.dat h12snap12.dat)) {
+                my $fileName = $inputDir . $file;
+                if (-r $fileName) {
+                    $snapInput .= "FIELD.INPUT= $fileName\n";
+                } else {
+                    die "unreadable file: $fileName";
+                }
+            }
+            $time += 24*3600; # advance a day
         } else {
             die "unknown inputTye: $inputType\n";
         }
@@ -151,6 +168,7 @@ sub createRuns {
     my $secsPerDay = $secsPerHour*24;
     while ($gmstart <= $gmend) {
         push @runs, map {$gmstart + $_*$secsPerHour} @$hours;
+        print STDERR "$gmstart $gmend @runs\n";
         $gmstart += $secsPerDay;
     }
     return @runs;
@@ -218,6 +236,14 @@ will be added as is to the snap.input file.
 
 The modelSetupFile.txt should contain the information about the meteo-model, e.g. domain,
 vertical-levels etc.
+
+=head2 DETAILS
+
+=over 8
+
+=item inputType can be ec or h12
+
+= back
 
 =head1 AUTHOR
 
