@@ -79,7 +79,7 @@ c..mavail: max. no. of available timesteps with data
 c
       integer mfilef,mavail
       parameter (mfilef=100)
-      parameter (mavail=600)
+      parameter (mavail=1024)
 c
       integer nxmc,nymc
 c..use 1 or 2 below:
