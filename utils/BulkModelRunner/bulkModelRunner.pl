@@ -86,6 +86,7 @@ sub snapRun {
     # create the new snap.input data
     my $snapInput = "TIME.START=   $year  $month  $day $hour\n";
     $snapInput .=   "TIME.RUN  = $runTime"."h\n";
+    $snapInput .=   "STEP.HOUR.OUTPUT.FIELDS= $runTime\n";
     $snapInput .= $sourceTerm;
     $snapInput .= $meteoSetup;
     # add filenames to use for this run
@@ -108,8 +109,8 @@ sub snapRun {
             $time += 24*3600; # advance a day
         } elsif ($inputType eq 'h12') {
             # 4 files daily of type h12sf00.dat h12snap00.dat
-            # but starting at 00-24
-            my @date = gmtime($time);
+            # but starting at 00-24, need 3 hours startup (precip)
+            my @date = gmtime($time - 3 * 3600);
             my $day = sprintf "%02d", $date[3];
             my $month = sprintf "%02d", ($date[4] + 1);
             my $year = $date[5] + 1900;
@@ -168,7 +169,7 @@ sub createRuns {
     my $secsPerDay = $secsPerHour*24;
     while ($gmstart <= $gmend) {
         push @runs, map {$gmstart + $_*$secsPerHour} @$hours;
-        print STDERR "$gmstart $gmend @runs\n";
+        #print STDERR "$gmstart $gmend @runs\n";
         $gmstart += $secsPerDay;
     }
     return @runs;
