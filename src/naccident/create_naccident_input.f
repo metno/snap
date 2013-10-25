@@ -51,6 +51,9 @@ c
 c
 c... read id, name and decay rate for each isotope from the list
 c
+       do i=1, nlist
+          isoin(i) = 0
+       enddo
        open(1,file='isotope_list.txt')
        rewind 1
        do i=1,nlist
@@ -120,14 +123,16 @@ c	  ihour(j+)=ihour(j)+hour
          toprel(j+1)=hmax
          do i=1,niso
            read(1,*) isoid0,eratein(i)
-           do j1=1,nlist
+           do j1=1,niso
 c release order and isotope order might change
 c check by isoid0
-             if(isoid0.eq.isoin(j1)) emi(j1,j+1)=eratein(i)
+             if(isoid0.eq.isoid(isoin(j1))) then
+                emi(j1,j+1)=eratein(i)
+             end if
            enddo
            j1=isoin(i)
-           write(*,'(i4,1x,a7,1x,i1,2e10.3)') isoid0,
-     &      isoname(j1),isotype(j1),drate(j1),eratein(i)
+           write(*,'(i4,1x,a7,1x,i1,2e10.3,2e10.3)') isoid0,
+     &      isoname(j1),isotype(j1),drate(j1),eratein(i),emi(i,j+1)
          enddo 
        enddo
        lowrel(1)=lowrel(2)
