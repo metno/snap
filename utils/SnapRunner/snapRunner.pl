@@ -159,7 +159,8 @@ sub runModel {
 	system($command);
     unlink("snap.felt");
     chmod(0666, "snap.felt_level_names");
-	system("diana.bin -s diana.setup&");
+	system("sh plotAndMail.sh");
+	# system("diana.bin -s diana.setup&");
 	
 	
 	return "<html><head><title>SNAP-Runner</title></head><body><h1>SNAP-Runner</h1>SNAP run successfull for: <p>Time: $params->{startTime} Length $params->{runTime}h<p>Place $npp<br>Lat: $lat<br>Lon: $lon<br><p>Release Scenario:<br>$releaseScenario<p> Start diana with <pre>diana.bin -s $FindBin::Bin/diana.setup</pre><a href=\"default\">Start new run.</a></body></html>";
