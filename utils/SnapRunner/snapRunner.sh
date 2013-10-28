@@ -1,5 +1,6 @@
 #! /bin/sh
 
+cat VERSION
 cd /home/heikok/Programme/Models/SNAP/SnapRunner
 gnome-terminal -e 'perl snapRunner.pl' --title 'SNAP runner log'&
 sleep 2;
