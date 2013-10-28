@@ -1,5 +1,10 @@
 SNAPrunner
 
+0.4 2013-10-28
+   mail pictures to user
+   require input in log-window
+   only optional start of diana
+
 0.3
    createDesktopIcon.pl puts now icon in localized Desktop (e.g. Skrivebord)
    use VERSION file for versioning, not directory names
