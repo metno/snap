@@ -35,7 +35,6 @@ print $sf <<"EOT";
 #! /bin/sh
 
 cd $path
-cat VERSION
 gnome-terminal -e 'perl snapRunner.pl' --title 'SNAP runner log'&
 sleep 2;
 gnome-open http://localhost:8081/snaprunner/&
