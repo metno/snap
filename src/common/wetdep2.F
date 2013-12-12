@@ -5,7 +5,7 @@ c            and store depositions in nearest gridpoint in a field
 c  Method:   J.Bartnicki 2003
 c
 c ... 23.04.12 - gas, particle 0.1<d<10, particle d>10 - J. Bartnicki|
-c
+c ... 12.12.13 - gas 'particle size' changed to 0.05um - H. Klein
 #if defined(DRHOOK)
       USE PARKIND1  ,ONLY : JPIM     ,JPRB
       USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
@@ -100,7 +100,7 @@ c
            if(q .gt. 7.0) then	! convective
               rkw=3.36e-4*q**0.79
            endif
-           if(radiusmym(m).le. 0.1) then	! gas
+           if(radiusmym(m).le. 0.05) then	! gas
               rkw=1.12e-4*q**0.79
            endif
            deprate= 1.0 - exp(-tstep*rkw)
