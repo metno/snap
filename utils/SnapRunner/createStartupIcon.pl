@@ -37,7 +37,7 @@ print $sf <<"EOT";
 cd $path
 gnome-terminal -e 'perl snapRunner.pl' --title 'SNAP runner log'&
 sleep 2;
-gnome-open http://localhost:8081/snaprunner/&
+gvfs-open http://localhost:8081/snaprunner/&
 EOT
 close $sf;
 chmod 0777, $startScript;
