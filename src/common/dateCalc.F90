@@ -122,6 +122,7 @@ contains
 
 ! convert a string to a list of values(6) = secs,min,hours, days,month,year
   function parseIsoDate(str) result(values)
+    USE iso_c_binding, ONLY: C_NULL_CHAR
     character(*), intent(in)       :: str
     integer                         :: values(6), ind, ind2
     character(80)                   :: substr
@@ -157,13 +158,16 @@ contains
     if (ind > 0) read(substr(:ind-1),*) values(2)
     substr = substr(ind+1:)
 
-    ! seconds, end at end, ., space or Z
+    ! seconds, end at end, ., space, C_NULL_CHAR or Z
     ind = index(substr, ".")
     ind2 = index(substr, " ")
     if (ind == 0) ind = len(substr)
     if (ind2 == 0) ind2 = len(substr)
     ind = min(ind, ind2)
     ind2 = index(substr, "Z")
+    if (ind2 == 0) ind2 = len(substr)
+    ind = min(ind, ind2)
+    ind2 = index(substr, C_NULL_CHAR)
     if (ind2 == 0) ind2 = len(substr)
     ind = min(ind, ind2)
     ! write(*,*) ind, ind2, substr
