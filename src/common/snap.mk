@@ -4,7 +4,7 @@
 MODELOBJ= allocateFields.o argoswrite.o bldp.o compheight.o copyfield.o decay.o drydep1.o drydep2.o \
 dateCalc.o edcomp.o \
 ensemble.o epinterp.o filesort.o filesort_nc.o fldout.o forwrd.o ftest.o om2edot.o posint.o \
-pselect.o readfd.o readfield.o readfield_nc.o release.o rmpart.o rwalk.o tabcon.o \
+pselect.o readfd.o readfield.o readfield_nc.o release.o releasefile.o rmpart.o rwalk.o tabcon.o \
 vgravtables.o videosave.o wetdep1.o wetdep2.o
 
 BOBJ = snap_batch_copy.o
@@ -70,6 +70,8 @@ readfd.o: ../common/readfd.f $(INCFILES)
 readfield.o: ../common/readfield.f $(INCFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 readfield_nc.o: ../common/readfield_nc.F $(INCFILES)
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+releasefile.o: ../common/releasefile.f $(INCFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 release.o: ../common/release.F $(INCFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<

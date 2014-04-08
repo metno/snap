@@ -1,0 +1,6 @@
+* hour  height  comp  release
+0        625    ASC_1    29.5
+0       1275    ASC_1    17.0
+* another comment
+1        625    ASC_1    1.0
+end
