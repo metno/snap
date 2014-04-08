@@ -7,7 +7,7 @@ c
 c..ndefcomp:  no. of components defined (aerosol,gas,noble.gas,...)
 c..nplume:    no. of released plumes
 c..npart:     total no. of particles (in all released plumes)
-c..nparnum:   counter for unique particle identifier 
+c..nparnum:   counter for unique particle identifier
 c..iplume:    pointers to first and last particle in each plume
 c.            (0,-1 means no particles left in the grid domain)
 c..kdrydep:   for each component: 0=dry deposition off  1=dry dep. on
@@ -71,29 +71,33 @@ c             3= linear (between specified timesteps)
 c             4= steps  (constant between the specified timesteps)
 c..ntprof:  no. of timesteps in the release profiles
 c..ncomp:   no. of components used in the run
+c..nrelheight: no. of height classes in the run
 c..mprel:   max no. of particles released in each plume
 c              (scaled according to max mass released
 c               and divided between components according to mass)
 c..component(n):    component name
 c..idefcomp(n):     component no. as defined in input file sequence
 c..irelhour(i):     specified release hours in time profile
-c..relradius(i):    release radius in unit meter
-c..relupper(i):     release upper height in unit meter
-c..rellower(i):     release lower height in unit meter
+c..relradius(i,h):    release radius in unit meter
+c..relupper(i,h):     release upper height in unit meter
+c..rellower(i,h):     release lower height in unit meter
 c..relstemradius(i): release radius in unit meter for a mushroom stem
-c..relbqsec(i,n):   radioactive release in unit Bq/sec
+c..relbqsec(i,n,h):   radioactive release in unit Bq/sec
 c..      i=1,ntprof
 c..      n=1,ncomp
+c..      h=1,nrelheight
 c
-      integer       itprof,ntprof,ncomp,mprel
+      integer       itprof,ntprof,ncomp,nrelheight,mprel
       integer       idefcomp(mcomp)
       integer       irelhour(mtprof)
-      real          relradius(mtprof),relupper(mtprof),rellower(mtprof)
+      real          relradius(mtprof,mrelheight)
+      real          relupper(mtprof,mrelheight)
+      real          rellower(mtprof,mrelheight)
       real          relstemradius(mtprof)
-      real          relbqsec(mtprof,mcomp)
+      real          relbqsec(mtprof,mcomp,mrelheight)
       character*32  component(mcomp)
 c
-      common/relcom/itprof,ntprof,ncomp,mprel
+      common/relcom/itprof,ntprof,ncomp,nrelheight,mprel
      -             ,idefcomp
      -             ,irelhour
      -             ,relradius,relupper,rellower

@@ -62,7 +62,7 @@ c..mpart:   max. no. of particles, total in all plumes
 c
       integer mplume,mpart
       parameter (mplume=50000)
-      parameter (mpart =1000000)
+      parameter (mpart =10000000)
 ccc   parameter (mpart =300000)
 c
 c..mdefcomp: max. no. of components defined in input file (aerosol,gas,....)
@@ -70,8 +70,8 @@ c..mcomp:    max no. of components used in one run
 c            (keep as small as "possible", it dimensions 2d/3d output fields)
 c
       integer mdefcomp,mcomp
-      parameter (mdefcomp=24 )
-      parameter (mcomp=24)
+      parameter (mdefcomp=31 )
+      parameter (mcomp=31)
 c
 c
 c..mfilef: max. no. of input FELT files
@@ -99,16 +99,18 @@ c
 c..mbuffr:  max. length of buffer (for misc. reading from 'snap.input')
 c..mrelpos: max. no. of release positions available (in list)
 c..mtprof:  max. no. of timesteps in release profiles
+c..mrelheight: max. no. of height classes for releases
 c..mprepro: max. no. of steps in input precipitation probability table
 c..mpretab: max. no. of steps in precipitation probability table
 c
       integer mbuffr
       integer mrelpos
-      integer mtprof
+      integer mtprof, mrelheight
       integer mprepro,mpretab
       parameter (mbuffr=60)
       parameter (mrelpos=30)
-      parameter (mtprof=20)
+      parameter (mtprof=500)
+      parameter (mrelheight=10)
       parameter (mprepro=40,mpretab=500)
 c
 c

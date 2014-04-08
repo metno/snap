@@ -43,7 +43,7 @@
       integer ihdiff, ihdif1, ihdif2, nhdiff
       integer, save :: ncid = 0
       integer, save :: ntav1, ntav2 = 0
-      character*(255), save :: file_name = ""
+      character*(1024), save :: file_name = ""
       real     alev(nk),blev(nk),db, precip1,dxgrid,dygrid
       integer kk, ifb, kfb
       real    dred, red, p, px, dp, p1, p2,ptop

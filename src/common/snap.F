@@ -78,6 +78,12 @@ c * RELEASE.BQ/SEC.COMP=
 c * RELEASE.BQ/DAY.COMP=
 c * RELEASE.BQ/STEP.COMP=
 c MAX.PARTICLES.PER.RELEASE= 2000
+c * Input for multi-timesteps, multi-height releases
+c RELEASE.FILE=release.txt
+c RELEASE.COMPONENTS= 'CS137', 'XE133', ...
+c RELEASE.HEIGHTLOWER.M= 0  ,626,
+c RELEASE.HEIGHTUPPER.M= 625,1275
+c RELEASE.HEIGHTRADIUS.M= 0, 0
 c COMPONENT= Aerosol
 c DRY.DEP.ON
 c DRY.DEP.OFF
@@ -259,7 +265,7 @@ c
       integer isynoptic,isvideo,m,nlevel,minhfc,maxhfc,ifltim
       integer ipostyp,lcinp,iend,ks,nkey,k,ierror,mkey
       integer ikey,k1,k2,kv1,kv2,nkv,i,kh,kd,ig,igd,igm,i1,i2,l,n,idmin
-      integer iscale
+      integer iscale,ih
       integer idrydep,iwetdep,idecay
       integer iulog,ntimefo,iunitf,iunitx,nh1,nh2
       integer ierr1,ierr2,nsteph,nstep,nstepr,iunito
@@ -281,6 +287,7 @@ c
       logical blfullmix
 c
       character*72  finput,fldfil,logfile,ftype
+      character*72  relfile
       character*256 cinput,ciname,cipart,cipart2
       character*8   cpos1,cpos2
       character*1   tchar
@@ -409,6 +416,7 @@ c..default values
       rgrspec(7)=  5.
       rgrspec(8)= 95.
       nlandfile=0
+      nrelheight=1
 c
       savePNGstep= 0
       saveXPMstep= 0
@@ -443,14 +451,18 @@ c
       itprof=0
 c
       do i=1,mtprof
-       relradius(i)= -1.
-       relupper(i)=  -1.
-       rellower(i)=  -1.
+        do ih=1,mrelheight
+          relradius(i,ih)= -1.
+          relupper(i,ih)=  -1.
+          rellower(i,ih)=  -1.
+        end do
        relstemradius(i)= -1.
       end do
 c
       do m=1,mcomp
-       relbqsec(1,m)= -1.
+        do ih=1,mrelheight
+          relbqsec(1,m,ih)= -1.
+        end do
       end do
 c
       nrelpos=0
@@ -480,6 +492,7 @@ c
       ftype='felt'
       fldfil= 'snap.dat'
       logfile='snap.log'
+      relfile='*'
 c
       iensemble=0
       ensemblefile='ensemble.list'
@@ -847,23 +860,23 @@ c..release.second
           elseif(cinput(k1:k2).eq.'release.radius.m') then
 c..release.radius.m
            if(kv1.lt.1 .or. ntprof.lt.1) goto 12
-            read(cipart,*,err=12) (relradius(i),i=1,ntprof)
+            read(cipart,*,err=12) (relradius(i,1),i=1,ntprof)
            do i=1,ntprof
-             if(relradius(i).lt.0.) goto 12
+             if(relradius(i,1).lt.0.) goto 12
            end do
           elseif(cinput(k1:k2).eq.'release.upper.m') then
 c..release.upper.m
            if(kv1.lt.1 .or. ntprof.lt.1) goto 12
-            read(cipart,*,err=12) (relupper(i),i=1,ntprof)
+            read(cipart,*,err=12) (relupper(i,1),i=1,ntprof)
            do i=1,ntprof
-             if(relupper(i).lt.0.) goto 12
+             if(relupper(i,1).lt.0.) goto 12
            end do
           elseif(cinput(k1:k2).eq.'release.lower.m') then
 c..release.lower.m
            if(kv1.lt.1 .or. ntprof.lt.1) goto 12
-            read(cipart,*,err=12) (rellower(i),i=1,ntprof)
+            read(cipart,*,err=12) (rellower(i,1),i=1,ntprof)
            do i=1,ntprof
-             if(rellower(i).lt.0.) goto 12
+             if(rellower(i,1).lt.0.) goto 12
            end do
           elseif(cinput(k1:k2).eq.'release.mushroom.stem.radius.m') then
 c..release.mushroom.stem.radius.m
@@ -889,23 +902,74 @@ c..release.bq/step.comp
            if(kv1.lt.1 .or. ntprof.lt.1) goto 12
            ncomp= ncomp+1
            if(ncomp.gt.mcomp) goto 13
-            read(cipart,*,err=12) (relbqsec(i,ncomp),i=1,ntprof),
+            read(cipart,*,err=12) (relbqsec(i,ncomp,1),i=1,ntprof),
      +				   component(ncomp)
            do i=1,ntprof
-             if(relbqsec(i,ncomp).lt.0.) goto 12
+             if(relbqsec(i,ncomp,1).lt.0.) goto 12
            end do
            if(rscale.gt.0.) then
              do i=1,ntprof
-               relbqsec(i,ncomp)= relbqsec(i,ncomp)*rscale
+               relbqsec(i,ncomp,1)= relbqsec(i,ncomp,1)*rscale
              end do
-           elseif(ntprof.gt.1 .and. relbqsec(ntprof,ncomp).ne.0.) then
+           elseif(ntprof.gt.1 .and.relbqsec(ntprof,ncomp,1).ne.0.)then
              goto 12
            elseif(ntprof.gt.1) then
              do i=1,ntprof-1
        	rscale=1./(3600.*(irelhour(i+1)-irelhour(i)))
-               relbqsec(i,ncomp)= relbqsec(i,ncomp)*rscale
+               relbqsec(i,ncomp,1)= relbqsec(i,ncomp,1)*rscale
              end do
            end if
+
+c..releases with different height classes
+c..  height-classes defined here, time-profile defined outside
+c..release.heightlower.m
+          elseif(cinput(k1:k2).eq.'release.heightlower.m') then
+            nrelheight=0
+            if(kv1.lt.1 .or. nrelheight.gt.0) goto 12
+            i1=nrelheight+1
+            i2=nrelheight
+            ios=0
+            do while (ios.eq.0)
+              if(i2.gt.mrelheight) goto 13
+              i2=i2+1
+              read(cipart,*,iostat=ios) (rellower(1,ih),ih=i1,i2)
+            end do
+            i2=i2-1
+            if(i2.lt.i1) goto 12
+            nrelheight=i2
+          elseif(cinput(k1:k2).eq.'release.heightradius.m') then
+c..release.heightradius.m
+           if(kv1.lt.1 .or. nrelheight.lt.1) goto 12
+            read(cipart,*,err=12) (relradius(1,ih),ih=1,nrelheight)
+           do ih=1,nrelheight
+             if(relradius(1,ih).lt.0.) goto 12
+           end do
+          elseif(cinput(k1:k2).eq.'release.heightupper.m') then
+c..release.heightupper.m
+           if(kv1.lt.1 .or. nrelheight.lt.1) goto 12
+            read(cipart,*,err=12) (relupper(1,ih),ih=1,nrelheight)
+           do ih=1,nrelheight
+             if(relupper(1,ih).lt.rellower(1,ih)) goto 12
+           end do
+          elseif(cinput(k1:k2).eq.'release.file') then
+c..release.file
+            relfile=ciname(1:nkv)
+c..release.component
+          elseif(cinput(k1:k2).eq.'release.components') then
+            ncomp=0
+            if(kv1.lt.1 .or. ncomp.gt.0) goto 12
+            i1=ncomp+1
+            i2=ncomp
+            ios=0
+            do while (ios.eq.0)
+              if(i2.gt.mcomp) goto 13
+              i2=i2+1
+              read(cipart,*,iostat=ios) (component(i),i=i1,i2)
+            end do
+            i2=i2-1
+            if(i2.lt.i1) goto 12
+            ncomp=i2
+
           elseif(cinput(k1:k2).eq.'max.particles.per.release') then
 c..max.particles.per.release
             if(kv1.lt.1) goto 12
@@ -1310,7 +1374,9 @@ c
         call exit(1)
       end if
 c
-
+      if (relfile.ne.'*') then
+        call releasefile(relfile)
+      end if
 c initialize all arrays after reading input
       maxsiz = nx*ny
       ldata=20+maxsiz+50
@@ -1365,11 +1431,12 @@ c
       end if
       k=0
       do i=1,ntprof
-       if(relradius(i).lt.0. .or.
-     +     relupper(i) .lt.0. .or.
-     +     rellower(i) .lt.0. .or.
-     +     relupper(i).lt.rellower(i)) k=1
-       if(relupper(i).lt.rellower(i)+1.) relupper(i)=rellower(i)+1.
+       if(relradius(i,1).lt.0. .or.
+     +     relupper(i,1) .lt.0. .or.
+     +     rellower(i,1) .lt.0. .or.
+     +     relupper(i,1).lt.rellower(i,1)) k=1
+       if(relupper(i,1).lt.rellower(i,1)+1.)
+     +     relupper(i,1)=rellower(i,1)+1.
       end do
       if(k.eq.1) then
        write(6,*) 'ERROR in relase profiles ',
@@ -1714,7 +1781,7 @@ c      write(9,*) 'nxad,nyad: ',nxad,nyad
         write(9,*) '  Relase time profile:   ntprof: ',ntprof
        do i=1,ntprof
           write(9,*) '  hour,Bq/hour: ',
-     +			irelhour(i),relbqsec(i,n)*3600.
+     +			irelhour(i),(relbqsec(i,n,ih)*3600.,ih=1,nrelheight)
        end do
       end do
       write(9,*) 'itotcomp:   ',itotcomp

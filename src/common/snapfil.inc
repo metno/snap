@@ -39,7 +39,7 @@ c
 c fdata(maxsiz), idata(ldata)
       real, pointer ::  fdata(:)
       integer*2, pointer :: idata(:)
-      character*72 filef(mfilef)
+      character*1024 filef(mfilef)
       character*72 nctype
 c
       common/cfiles/nhfmin,nhfmax,nfilef,navail
