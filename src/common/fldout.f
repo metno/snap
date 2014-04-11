@@ -124,7 +124,7 @@ c
 c
 c..initialization
 c
-      if(imodlevel.eq.1 .and. (nxmc.ne.nx .or. nymc.ne.ny)) imodlevel=0
+      if(imodlevel.eq.1 .and.(nxmc.ne.nx .or. nymc.ne.ny)) imodlevel=0
 c
       if(initacc.eq.0) then
         do m=1,ncomp
@@ -423,6 +423,7 @@ c..create DNMI felt file
        ioptf=0
        call crefelt(filnam,iunit,itypef,ltimef,itimef,
      +               icodef,lspecf,ispecf,loptf,ioptf,ierror)
+       write(9,*) 'creating fldout: ',filnam
        if(ierror.ne.0) write(6,*) 'fldout: crefelt ERROR'
        if(ierror.ne.0) then
 #if defined(DRHOOK)
@@ -1304,8 +1305,11 @@ c..average concentration in each layer for each type
             idata( 8)=lvla
             idata(19)=lvlb
             idata(20)=-32767
-            call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
+c don't write average currently, only instant (loop = 2)
+        if (loop .eq. 2)
+     +       call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
      +                  ldata,idata,ierror)
+c
             if(ierror.ne.0) goto 900
           end do
        end do
