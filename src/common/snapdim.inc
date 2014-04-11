@@ -21,7 +21,6 @@ cc default parameters, if input.gridsize and input.levels not in snap.input
       parameter (nxpre=864,nypre=698,nkpre=61)
 ccc emep latlon 1x1,
 cc      parameter (nxpre=360,nypre=180)
-      common /gridsize/nx,ny,nk, maxsiz,ldata
 
 c
 c..mprecip: max no. og hourly precipitation fields
@@ -62,7 +61,7 @@ c..mpart:   max. no. of particles, total in all plumes
 c
       integer mplume,mpart
       parameter (mplume=50000)
-      parameter (mpart =10000000)
+      parameter (mpart =20000000)
 ccc   parameter (mpart =300000)
 c
 c..mdefcomp: max. no. of components defined in input file (aerosol,gas,....)
@@ -78,15 +77,15 @@ c..mfilef: max. no. of input FELT files
 c..mavail: max. no. of available timesteps with data
 c
       integer mfilef,mavail
-      parameter (mfilef=100)
-      parameter (mavail=1024)
+      parameter (mfilef=400)
+      parameter (mavail=8192)
 c
       integer nxmc,nymc
 c..use 1 or 2 below:
 c..1: keep large arrays for concentration of each component in each layer
 cc    parameter (nxmc=nx,nymc=ny)
 c..2: remove large arrays for concentration
-      parameter (nxmc=1,nymc=1)
+c      parameter (nxmc=1,nymc=1)
 c
 c      integer nxad,nyad
 c..use 1 or 2 below:
@@ -110,7 +109,7 @@ c
       parameter (mbuffr=60)
       parameter (mrelpos=30)
       parameter (mtprof=500)
-      parameter (mrelheight=10)
+      parameter (mrelheight=20)
       parameter (mprepro=40,mpretab=500)
 c
 c
@@ -128,3 +127,4 @@ c
       parameter (mlandfile=6)
 c
 c-----------------------------------------------------------------------
+      common /gridsize/nx,ny,nk, nxmc, nymc, maxsiz,ldata

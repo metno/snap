@@ -144,6 +144,7 @@ c FIELD.INPUT= feltlam.dat
 c FIELD_TIME.FORECAST
 c FIELD_TIME.VALID
 c FIELD.OUTPUT= snap.felt
+c FIELD.DAILY.OUTPUT.ON
 c LOG.FILE=     snap.log
 c DEBUG.OFF ..................................... (default)
 c DEBUG.ON
@@ -270,7 +271,7 @@ c
       integer iulog,ntimefo,iunitf,iunitx,nh1,nh2
       integer ierr1,ierr2,nsteph,nstep,nstepr,iunito
       integer nxtinf,ihread,isteph,lstepr,iendrel,istep,ihr1,ihr2,nhleft
-      integer ierr,ihdiff,ihr,ifldout,ihour,istop
+      integer ierr,ihdiff,ihr,ifldout,idailyout,ihour,istop
       real    tstep,rmlimit,rnhrun,rnhrel,glat,glong,tf1,tf2,tnow,tnext
       real    x,y
       real    rscale,actweight
@@ -286,7 +287,7 @@ cjb_end
 c
       logical blfullmix
 c
-      character*72  finput,fldfil,logfile,ftype
+      character*72  finput,fldfil,fldfilX,fldfilN,logfile,ftype
       character*72  relfile
       character*256 cinput,ciname,cipart,cipart2
       character*8   cpos1,cpos2
@@ -499,6 +500,8 @@ c
       ensembleparticipant=09
       ensembleRandomKey='*******'
       ensembleStepHours=3
+c
+      idailyout=0
 c
       iargos=0
       argoshourstep= 6
@@ -1255,6 +1258,10 @@ c..field_time.valid ...... use valid time in output field identification
 c..field.output= <'file_name'>
             if(kv1.lt.1) goto 12
             fldfil=ciname(1:nkv)
+          elseif(cinput(k1:k2).eq.'field.daily.output.on') then
+            idailyout = 1
+          elseif(cinput(k1:k2).eq.'field.daily.output.off') then
+            idailyout = 0
           elseif(cinput(k1:k2).eq.'log.file') then
 c..log.file= <'log_file_name'>
             if(kv1.lt.1) goto 12
@@ -1378,6 +1385,13 @@ c
         call releasefile(relfile)
       end if
 c initialize all arrays after reading input
+      if (imodlevel.eq.1) then
+        nxmc = nx
+        nymc = ny
+      else
+        nxmc = 1
+        nymc = 1
+      end if
       maxsiz = nx*ny
       ldata=20+maxsiz+50
       CALL allocateFields()
@@ -1690,15 +1704,15 @@ c................................................................
       end if
 #if defined(TRAJ)
        do 201 itraj=1,ntraj
-       rellower(1)=tlevel(itraj)
+       rellower(1,1)=tlevel(itraj)
 c	relupper(1)=rellower(1)+1
-       relupper(1)=rellower(1)
+       relupper(1,1)=rellower(1,1)
        tyear=itime1(1)
        tmon=itime1(2)
        tday=itime1(3)
        thour=itime1(4)
        tmin=0.0
-       write(*,*) 'lower, upper',rellower(1),relupper(1)
+       write(*,*) 'lower, upper',rellower(1,1),relupper(1,1)
        write(*,*) 'tyear, tmon, tday, thour, tmin',
      &  tyear, tmon, tday, thour, tmin
        distance=0.0
@@ -1819,9 +1833,15 @@ c..synoptic output  (use valid hour to test if output)
          end if
        end if
       end do
+      if (idailyout.eq.1) then
+c       daily output, append +x for each day, but initialize later
+        write(fldfilX,'(a9,a1,I3.3)') fldfil, '+', -1
+      end if
+c standard output needs to be initialized, even for daily
       call fldout(-1,iunito,fldfil,itime1,0.,0.,0.,tstep,
-     *            m,nsteph,ierror)
+     *          m,nsteph,ierror)
       if(ierror.ne.0) goto 910
+
 c
       do i=1,5
         itime(i)=itime1(i)
@@ -1969,10 +1989,12 @@ c
        write(13,'(i2)') ntraj
        write(13,'(1x,i4,4i2.2,''00'',
      &  2f9.3,f12.3,f15.2,f10.2)')
-     &  (itime(i),i=1,4),mod(istep,12)*5,y,x,rellower(1),distance,speed
+     &  (itime(i),i=1,4),mod(istep,12)*5,y,x,rellower(1,1),distance,
+     &  speed
        write(*,'(i4,1x,i4,i2,i2,2i2.2,''00'',
      &  2f9.3,f12.3,f15.2,f10.2)') istep,
-     &  (itime(i),i=1,4),mod(istep,12)*5,y,x,rellower(1),distance,speed
+     &  (itime(i),i=1,4),mod(istep,12)*5,y,x,rellower(1,1),distance,
+     &  speed
 #endif
             call xyconvert(1,x,y,2,geoparam,igtype,gparam,ierror)
             if(ierror.ne.0) then
@@ -2272,9 +2294,24 @@ c
      +  call ensemble(6,itime,tf1,tf2,tnext,istep,nstep,nsteph)
 c
 c..field output if ifldout=1, always accumulation for average fields
-      call fldout(ifldout,iunito,fldfil,itimeo,tf1,tf2,tnext,tstep,
+      if (idailyout.eq.1) then
+c       daily output, append +x for each day
+c istep/nsteph = hour  -> /24 =day
+        write(fldfilN,'(a9,a1,I3.3)') fldfil, '+', istep/nsteph/24
+        if (fldfilX .ne. fldfilN) then
+           fldfilX = fldfilN
+           call fldout(-1,iunito,fldfilX,itime1,0.,0.,0.,tstep,
+     *            (24/nhfout)+1,nsteph,ierror)
+           if(ierror.ne.0) goto 910
+        end if
+        call fldout(ifldout,iunito,fldfilX,itimeo,tf1,tf2,tnext,tstep,
      +            istep,nsteph,ierror)
-      if(ierror.ne.0) goto 910
+        if(ierror.ne.0) goto 910
+      else
+        call fldout(ifldout,iunito,fldfil,itimeo,tf1,tf2,tnext,tstep,
+     +            istep,nsteph,ierror)
+        if(ierror.ne.0) goto 910
+      end if
 c
 c###c..select particles to be displayed (graphics) or saved in video files.
 c###      if(igraphics.eq.1 .or. isvideo.eq.1)
