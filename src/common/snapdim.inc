@@ -57,12 +57,13 @@ c.......................................................
 c
 c
 c..mplume:  max. no. of plume releases
-c..mpart:   max. no. of particles, total in all plumes
+c..mpart:   max. no. of particles, total in all plumes, preset, can be configured in snap.input
 c
-      integer mplume,mpart
-      parameter (mplume=50000)
-      parameter (mpart =20000000)
-ccc   parameter (mpart =300000)
+      integer mplume,mplumepre,mpart,mpartpre
+c mplume should be timesteps (model) * release-heights
+      parameter (mplumepre=50000)
+      parameter (mpartpre =10000000)
+ccc   parameter (mpartpre =300000)
 c
 c..mdefcomp: max. no. of components defined in input file (aerosol,gas,....)
 c..mcomp:    max no. of components used in one run

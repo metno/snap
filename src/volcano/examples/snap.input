@@ -66,7 +66,10 @@ RELEASE.BQ/SEC.COMP=  1.0e+8, 1.0e+8, 1.0e+8 'Aerosol.10.0'
 RELEASE.BQ/SEC.COMP= 37.2e+8,37.2e+8,37.2e+8 'Aerosol.30.0'
 *
 *** particles distributed on components according to mass
+MAX.TOTALPARTICLES=2000000
 MAX.PARTICLES.PER.RELEASE=200
+*** plumes should be > releaseheight * release-modeltimesteps
+MAX.TOTALPLUMES=50000
 *
 *
 *** List of possible components (enabled with "RELEASE.XX/YYY.COMP= ...")

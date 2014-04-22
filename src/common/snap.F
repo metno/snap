@@ -78,6 +78,7 @@ c * RELEASE.BQ/SEC.COMP=
 c * RELEASE.BQ/DAY.COMP=
 c * RELEASE.BQ/STEP.COMP=
 c MAX.PARTICLES.PER.RELEASE= 2000
+c MAX.TOTALPARTICLES=2000000
 c * Input for multi-timesteps, multi-height releases
 c RELEASE.FILE=release.txt
 c RELEASE.COMPONENTS= 'CS137', 'XE133', ...
@@ -327,6 +328,8 @@ c
 c
       data nx/nxpre/
       data ny/nypre/
+      data mpart/mpartpre/
+      data mplume/mplumepre/
 
       iaction=0
 #if defined(DRHOOK)
@@ -973,6 +976,16 @@ c..release.component
             if(i2.lt.i1) goto 12
             ncomp=i2
 
+          elseif(cinput(k1:k2).eq.'max.totalparticles') then
+c..max.totalparticles
+            if(kv1.lt.1) goto 12
+            read(cipart,*,err=12) mpart
+            if(mpart.lt.1) goto 12
+          elseif(cinput(k1:k2).eq.'max.totalplumes') then
+c..max.totalplumes
+            if(kv1.lt.1) goto 12
+            read(cipart,*,err=12) mplume
+            if(mplume.lt.1) goto 12
           elseif(cinput(k1:k2).eq.'max.particles.per.release') then
 c..max.particles.per.release
             if(kv1.lt.1) goto 12

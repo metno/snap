@@ -6,6 +6,7 @@
       include 'snapfld.inc'
       include 'snapfil.inc'
       include 'snapgrd.inc'
+      include 'snappar.inc'
 
       if (.not. FirstCall) return
       FirstCall = .FALSE.
@@ -118,6 +119,24 @@ c the calculation-fields
       ALLOCATE ( avgbq(nxmc,nymc,nk-1,mcomp), STAT = AllocateStatus)
       IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
 
+c the part particles fields
+c      real    pdata(npdata,mpart),pwork(mpart,2)
+c      integer icomp(mpart),iparnum(mpart),ipwork(mpart)
+      ALLOCATE ( pdata(npdata, mpart), STAT = AllocateStatus)
+      IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+      ALLOCATE ( pwork(mpart, 2), STAT = AllocateStatus)
+      IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+      ALLOCATE ( icomp(mpart), STAT = AllocateStatus)
+      IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+      ALLOCATE ( iparnum(mpart), STAT = AllocateStatus)
+      IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+      ALLOCATE ( ipwork(mpart), STAT = AllocateStatus)
+      IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+
+c the plumes
+      ALLOCATE ( iplume(2,mplume), STAT = AllocateStatus)
+      IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+
       end subroutine allocateFields
 
 
@@ -127,6 +146,7 @@ c the calculation-fields
       include 'snapfld.inc'
       include 'snapfil.inc'
       include 'snapgrd.inc'
+      include 'snappar.inc'
 
       DEALLOCATE ( alevel )
       DEALLOCATE ( blevel )
@@ -186,5 +206,13 @@ c the calculation-fields
       DEALLOCATE ( avgbq2 )
 
       DEALLOCATE ( avgbq )
+
+      DEALLOCATE ( pdata )
+      DEALLOCATE ( pwork )
+      DEALLOCATE ( icomp )
+      DEALLOCATE ( iparnum )
+      DEALLOCATE ( ipwork )
+
+      DEALLOCATE ( iplume )
 
       end subroutine deAllocateFields

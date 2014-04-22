@@ -37,7 +37,8 @@ c..numtotal:  total no. of particles released, accumulated during run
 c..compname:  a component name (not much used, really)
 c
       integer      ndefcomp,nplume,npart,nparnum
-      integer      iplume(2,mplume)
+c      integer      iplume(2,mplume)
+      INTEGER, DIMENSION(:,:), POINTER :: iplume
       integer      kdrydep(mdefcomp),kwetdep(mdefcomp),kdecay(mdefcomp)
       integer      kgravity(mdefcomp)
       real         drydephgt(mdefcomp)
@@ -53,7 +54,7 @@ c
       character*32 compname(mdefcomp),compnamemc(mdefcomp)
 c
       common/plume/ndefcomp,nplume,npart,nparnum
-     -            ,iplume
+     -            ,iplume,mplume
      -		  ,kdrydep,kwetdep,kdecay,kgravity
      -		  ,drydephgt,drydeprat,wetdeprat
      -            ,halftime,decayrate
@@ -126,10 +127,12 @@ c..icomp:   component no. in particle
 c..iparnum: unique identifier for each particle
 c..ipwork:  work array
 c
-      real    pdata(npdata,mpart),pwork(mpart,2)
-      integer icomp(mpart),iparnum(mpart),ipwork(mpart)
+c      real    pdata(npdata,mpart),pwork(mpart,2)
+c      integer icomp(mpart),iparnum(mpart),ipwork(mpart)
+      REAL, DIMENSION(:,:), POINTER :: pdata, pwork
+      INTEGER, DIMENSION(:), POINTER :: icomp, iparnum, ipwork
 c
       common/part/pdata,pwork
-     -           ,icomp,iparnum,ipwork
+     -           ,icomp,iparnum,ipwork,mpart
 c
 c-----------------------------------------------------------------------
