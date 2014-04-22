@@ -19,11 +19,15 @@ c
 c
       integer   nsave
       integer   itimev(5),ksave(8)
-      integer*2 ixysave(2,mpart)
+      integer AllocateStatus
+      integer*2, pointer :: ixysave(:,:)
       character*80 text
       character*64 savefile
 c
-      equivalence (ixysave,pwork)
+c      equivalence (ixysave,pwork)
+      allocate( ixysave(2,mpart), STAT = AllocateStatus)
+      IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+
 c
       data nsave/0/
 c
@@ -83,5 +87,6 @@ c
       if(np.gt.0) write(iunit) ((ixysave(i,n),i=1,2),n=1,np)
       close(iunit)
 c
+      deallocate(ixysave)
       return
       end
