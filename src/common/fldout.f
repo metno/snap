@@ -155,7 +155,7 @@ c..iwrite=-1: istep is no. of field outputs
        if(itprof.eq.2) numfields= numfields + ncomp*4
        if(inprecip .gt.0) numfields=numfields+2
        if(imslp    .gt.0) numfields=numfields+1
-       if(imodlevel.gt.0) numfields=numfields+n*nk*2+1
+       if(imodlevel.gt.0) numfields=numfields+n*nk*2+nk+1
         numfields= numfields*istep + 4
        if(numfields.gt.32767) numfields=32767
        do i=1,5
@@ -1274,13 +1274,31 @@ c
          do j=1,ny
            do i=1,nx
               dh=rt1*hlayer1(i,j,k)+rt2*hlayer2(i,j,k)
+             field1(i,j)=dh
              field4(i,j)=dh*garea(i,j)*avg
            end do
          end do
+c.. write out layer-height
+         if (loop .eq. 1) then
+           ko=klevel(k+1)
+           lvla=nint(alevel(k+1)*10.)
+           lvlb=nint(blevel(k+1)*10000.)
+           if(ivcoor.eq.2) lvla=0
+c use parameter z (1)
+           idata( 6)=1
+           idata( 7)=ko
+           idata( 8)=lvla
+           idata(19)=lvlb
+           idata(20)=-32767
+           call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
+     +               ldata,idata,ierror)
+           if(ierror.ne.0) goto 900
+         end if
+
          do m=1,ncomp
            do j=1,ny
              do i=1,nx
-       	avgbq(i,j,k,m)=avgbq(i,j,k,m)/field4(i,j)
+           avgbq(i,j,k,m)=avgbq(i,j,k,m)/field4(i,j)
              end do
            end do
          end do
