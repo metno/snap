@@ -107,6 +107,8 @@ calculateFlightDistance.pl - calculate different flight distances
 
 =head1 EXAMPLE
 
+ calculateFlightDistance.pl  --input=gremikhaParticles.nc --binDist=50 --parameter=accum.wet.dep_Total,accum.dry.dep_Total --latitude=68.07 --longitude=39.47
+
 =head1 AUTHOR
 
 Heiko Klein, E<lt>Heiko.Klein@met.noE<gt>
