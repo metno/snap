@@ -12,7 +12,7 @@ CCFLAGS=-O3
 LDFLAGS=
 
 # NCDIR not required if /usr or /usr/local
-# NCDIR = /opt/netcdf4.1.1
+NCDIR = /opt/netcdf-fortran-4.2
 
 
 MIINC = -I/usr/include
@@ -35,7 +35,7 @@ INCLUDES += -I$(NCDIR)/include
 endif
 
 LIBS= $(MILIB) $(EXLIBS)
-BLIBS += $(MILIB) -lnetcdf -lnetcdff
+BLIBS += $(MILIB) -lnetcdff
 
 ifdef DR_HOOK
 $(info DR_HOOK defined)
