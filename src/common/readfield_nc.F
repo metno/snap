@@ -45,14 +45,16 @@
       integer, save :: ntav1, ntav2 = 0
       character*(1024), save :: file_name = ""
       real     alev(nk),blev(nk),db, precip1,dxgrid,dygrid
+      real     astatic(65), bstatic(65)
       integer kk, ifb, kfb
-      real    dred, red, p, px, dp, p1, p2,ptop
+      real    rcp, dred, red, p, px, dp, p1, p2,ptop
 
       integer varid, retval, timepos
       integer start3d(3), start4d(4), count3d(3), count4d(4)
       character*(80) xwindv,ywindv,xwind10mv,ywind10mv,pottempv,ptopv
       character*(80) sigmadotv,apv,bv,sigmav,psv,mslpv,precaccumv
       character*(80) precstrativrt,precconvrt
+      logical temp_is_abs, has_dummy_dim
 
 
 #if defined(DRHOOK)
@@ -60,6 +62,47 @@
       IF (LHOOK) CALL DR_HOOK('READFIELD_NC',0,ZHOOK_HANDLE)
 #endif
 
+      astatic = (/1000., 3000.1064453125, 5001.1552734375,
+     & 6956.677734375, 8772.134765625,
+     & 10401.19140625, 11845.974609375, 13108.7890625, 14192.05859375,
+     & 15098.3046875, 15831.09375, 16393.41015625, 16786.13671875,
+     & 17011.248046875, 17073.814453125, 16981.732421875, 16745.3867187,
+     & 16377.24609375, 15891.423828125, 15303.205078125, 14628.5859375,
+     & 13883.833984375, 13085.064453125, 12247.884765625, 11387.0859375,
+     & 10516.384765625, 9648.2421875, 8793.732421875, 7962.462890625,
+     & 7162.55078125, 6400.638671875, 5681.939453125, 5010.318359375,
+     & 4388.38745117188, 3817.61083984375, 3298.43225097656, 2830.3980,
+     & 2412.28137207031, 2042.20617675781, 1717.76794433594, 1436.1484,
+     & 1193.76184082031, 986.16552734375, 809.11083984375, 658.9615478,
+     & 532.382568359375, 426.338134765625, 338.084106445312, 265.156356,
+     & 205.356636047363, 156.736114501953, 117.57788848877, 86.37949371,
+     & 61.8351898193359, 42.8186264038086, 28.3661956787109, 17.6612434,
+     & 10.0193367004395, 4.87473726272583, 1.76825225353241, 0.33672177,
+     & 0., 0., 0., 0. /)
+      bstatic =  (/ 0., 0., 0., 0.000477339955978096, 0.00239018991123,
+     & 0.00622448418289423,
+     & 0.0119905434548855, 0.0196991395205259, 0.0293618012219667,
+     & 0.0409907661378384, 0.054624704644084, 0.0703164525330067,
+     & 0.0880625545978546, 0.107799530029297, 0.129433423280716,
+     & 0.152842253446579, 0.177879512310028, 0.204378187656403,
+     & 0.232155054807663, 0.261015236377716, 0.290756821632385,
+     & 0.321175336837769, 0.352067738771439, 0.383236020803452,
+     & 0.414490222930908, 0.445650935173035, 0.476551234722137,
+     & 0.507037848234177, 0.53697195649147, 0.566229432821274,
+     & 0.594700753688812, 0.6222904920578, 0.648916512727737, 0.6745090,
+     & 0.699009656906128, 0.722369998693466, 0.74455052614212,
+     & 0.765519380569458, 0.78525111079216, 0.80372542142868, 0.8209261,
+     & 0.836873173713684, 0.851647526025772, 0.865336537361145,
+     & 0.878005385398865, 0.889716595411301, 0.90053004026413,
+     & 0.910503029823303, 0.91969045996666, 0.928144991397858,
+     & 0.935917228460312, 0.943055868148804, 0.949608027935028,
+     & 0.955619394779205, 0.96113446354866, 0.966196745634079, 0.970849,
+     & 0.975133717060089, 0.97909289598465, 0.982768833637238,
+     & 0.986204296350479, 0.989445954561234, 0.992544859647751,
+     & 0.995552182197571, 0.998519629240036 /)
+
+      temp_is_abs = .false.
+      has_dummy_dim = .false.
       if (nctype.eq.'h12') then
         xwindv = 'x_wind_ml'
         ywindv = 'y_wind_ml'
@@ -71,6 +114,30 @@
         apv = 'ap'
         bv = 'b'
         sigmadotv = 'sigma_dot_ml'
+        psv = 'surface_air_pressure'
+        mslpv = 'air_pressure_at_sea_level'
+        precaccumv = 'precipitation_amount_acc'
+        precstrativrt = ''
+        precconvrt = ''
+c..get grid parameters from field identification
+
+      else if (nctype.eq.'arome') then
+        has_dummy_dim = .true.
+        xwindv = 'x_wind_ml'
+        ywindv = 'y_wind_ml'
+        xwind10mv = 'x_wind_10m'
+        ywind10mv = 'y_wind_10m'
+c       !! real temperature, convert to pot-temp later
+        pottempv = 'air_temperature_ml'
+        temp_is_abs = .true.
+        sigmav = ''
+        ptopv = ''
+c this is a bug in the arome test-file, apv and bv are therefore
+c hardcoded, see below
+        apv = 'arome'
+        bv = 'arome'
+c upward_air_velocity_ml, not used yet?
+        sigmadotv = ''
         psv = 'surface_air_pressure'
         mslpv = 'air_pressure_at_sea_level'
         precaccumv = 'precipitation_amount_acc'
@@ -242,10 +309,15 @@ c
 
 c..alevel (here) only for eta levels
         if (.not.apv.eq.'') then
-          call nfcheckload(ncid, apv, (/ilevel/), (/1/), alev(k))
+          if (apv.eq.'arome') then
+            alev(k) = astatic(ilevel)
+            blev(k) = bstatic(ilevel)
+          else
+            call nfcheckload(ncid, apv, (/ilevel/), (/1/), alev(k))
+            call nfcheckload(ncid, bv, (/ilevel/), (/1/), blev(k))
+          end if
 c TODO: check unit (here Pa -> hPa
           alev(k) = alev(k) / 100
-          call nfcheckload(ncid, bv, (/ilevel/), (/1/), blev(k))
         end if
         if (.not.sigmav.eq.'') then
 c reusing blev(k) for sigma(k) later
@@ -286,23 +358,43 @@ c
       count3d(2) = ny
       count3d(3) = 1
 
+      if (has_dummy_dim) then
+        start4d(1) = 1
+        start4d(2) = 1
+        start4d(3) = 1
+        start4d(4) = timepos
+        count4d(1) = nx
+        count4d(2) = ny
+        count4d(3) = 1
+        count4d(4) = 1
+      end if
+
 c ps
-      call nfcheckload(ncid, psv, start3d, count3d, ps2(1,1))
-c  input ps, must be hPa
-      do j=1,ny
-        do i=1,nx
-          ps2(i,j) = ps2(i,j)
+      if (has_dummy_dim) then
+       call nfcheckload(ncid, psv, start4d, count4d, ps2(1,1))
+      else
+       call nfcheckload(ncid, psv, start3d, count3d, ps2(1,1))
+      endif
+c  input ps, must be hPa, otherwise:
+      if (nctype.eq.'arome') then
+        do j=1,ny
+          do i=1,nx
+            ps2(i,j) = ps2(i,j) *0.01
+          end do
         end do
-      end do
+      endif
 c      call readfd(iunit,navps,ivc,8,ilevel,0,ps2(1,1),ierror)
 
 
 c u10m
-      call nfcheckload(ncid, xwind10mv, start3d, count3d, u2(1,1,1))
-c      call readfd(iunit,nav,ivc,33,ilevel,0,u2(1,1,1),ierror)
 c v10m
-      call nfcheckload(ncid, ywind10mv, start3d, count3d, v2(1,1,1))
-c      call readfd(iunit,nav,ivc,34,ilevel,0,v2(1,1,1),ierror)
+      if (has_dummy_dim) then
+        call nfcheckload(ncid, xwind10mv, start4d, count4d, u2(1,1,1))
+        call nfcheckload(ncid, ywind10mv, start4d, count4d, v2(1,1,1))
+      else
+        call nfcheckload(ncid, xwind10mv, start3d, count3d, u2(1,1,1))
+        call nfcheckload(ncid, ywind10mv, start3d, count3d, v2(1,1,1))
+      endif
 
 c..mean sea level pressure, not used in computations,
 c..(only for graphics and/or output to results file)
@@ -311,24 +403,37 @@ c..(only for graphics and/or output to results file)
           write(9,*) 'Mslp not found. Not important.'
           imslp=0
         else
-          call nfcheckload(ncid, mslpv, start3d, count3d, pmsl2(1,1))
+          if (has_dummy_dim) then
+            call nfcheckload(ncid, mslpv, start4d, count4d, pmsl2(1,1))
+          else
+            call nfcheckload(ncid, mslpv, start3d, count3d, pmsl2(1,1))
+          endif
 c        call readfd(iunit,nav,ivc,58,ilevel,0,pmsl2(1,1),ierror)
         end if
       end if
 
 c..precipitation......................................................
 c
-      if (nctype.eq.'h12') then
+      if (nctype.eq.'h12'.or.nctype.eq.'arome') then
 c..precipitation between input time 't1' and 't2'
         if (timepos .ne. 1) then
-          start3d(3) = timepos - 1
-          call nfcheckload(ncid, precaccumv,
-     +                      start3d, count3d, field1(1,1))
-
+          if (has_dummy_dim) then
+            start4d(4) = timepos - 1
+            call nfcheckload(ncid, precaccumv,
+     +                        start4d, count4d, field1(1,1))
 c         call readfd(iunit,nav,ivc,17,ilevel,ihrpr1,field1,ierror)
-          start3d(3) = timepos
-          call nfcheckload(ncid, precaccumv,
-     +                    start3d, count3d, field2(1,1))
+            start4d(4) = timepos
+            call nfcheckload(ncid, precaccumv,
+     +                      start4d, count4d, field2(1,1))
+          else
+            start3d(3) = timepos - 1
+            call nfcheckload(ncid, precaccumv,
+     +                        start3d, count3d, field1(1,1))
+c         call readfd(iunit,nav,ivc,17,ilevel,ihrpr1,field1,ierror)
+            start3d(3) = timepos
+            call nfcheckload(ncid, precaccumv,
+     +                      start3d, count3d, field2(1,1))
+         endif
 c         call readfd(iunit,nav,ivc,17,ilevel,ihrpr2,field2,ierror)
 c..the difference below may get negative due to different scaling
           do j=1,ny
@@ -342,10 +447,18 @@ c..the difference below may get negative due to different scaling
         end if
       else if (nctype.eq."emep") then
 c..non-accumulated emissions in stratiform an convective
-        call nfcheckload(ncid, precstrativrt,
+        if (has_dummy_dim) then
+          call nfcheckload(ncid, precstrativrt,
+     +                    start4d, count4d, field1(1,1))
+          call nfcheckload(ncid, precconvrt,
+     +                    start4d, count4d, field2(1,1))
+        else
+          call nfcheckload(ncid, precstrativrt,
      +                    start3d, count3d, field1(1,1))
-        call nfcheckload(ncid, precconvrt,
+          call nfcheckload(ncid, precconvrt,
      +                    start3d, count3d, field2(1,1))
+        endif
+
         do j=1,ny
           do i=1,nx
 c..precipitation must be larger 0, m/s -> mm/h
@@ -461,7 +574,18 @@ c..size of each grid square (m**2)
 c
       end if
 c
-
+      if (temp_is_abs) then
+c..abs.temp. -> pot.temp.
+        rcp=r/cp
+        do k=2,nk-kadd
+          do j=1,ny
+            do i=1,nx
+              p=alevel(k)+blevel(k)*ps2(i,j)
+              t2(i,j,k)=t2(i,j,k)/((p*0.001)**rcp)
+            end do
+          end do
+        end do
+      end if
 
       if (sigmadotv.eq.'') then
 c..omega -> etadot, or rather etadot derived from continuity-equation
