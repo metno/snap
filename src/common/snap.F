@@ -2054,8 +2054,8 @@ c
         end if
 c
 c#############################################################
-      write(6,*) 'tf1,tf2,tnow,tnext,tstep,ipr,nxtinf: ',
-     +		  tf1,tf2,tnow,tnext,tstep,iprecip,nxtinf
+c      write(6,*) 'tf1,tf2,tnow,tnext,tstep,ipr,nxtinf: ',
+c     +		  tf1,tf2,tnow,tnext,tstep,iprecip,nxtinf
 c     write(9,*) 'tf1,tf2,tnow,tnext,tstep,ipr: ',
 c    +		  tf1,tf2,tnow,tnext,tstep,iprecip
 c#############################################################
@@ -2236,7 +2236,11 @@ c..fields
       isteph=isteph+1
       if(isteph.eq.nsteph) then
         isteph=0
-        itime(5)=itime(5)+1
+        if (nhrun .gt. 0) then
+          itime(5)=itime(5)+1
+        else
+          itime(5)=itime(5)-1
+        end if
         do i=1,5
           itimeo(i)=itime(i)
         end do
