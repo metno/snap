@@ -5,8 +5,8 @@
 !
 !  Parameters:
 !             iunit      filehandle-unit (dummy)
-!             istep      current timestep
-!             nhleft     remaining run-hours
+!             istep      current timestep (always positive)
+!             nhleft     remaining run-hours (negative for backward-calculations)
 !             itimei(5)  initial time
 !             ihr1       minimal time-offset?
 !             ihr2       maximal time-offset?
@@ -24,7 +24,7 @@
 #endif
 !
 !..input/output
-      integer, INTENT(IN) ::  iunit,istep,nhleft,ihr1,ihr2,
+      integer, INTENT(INOUT) ::  iunit,istep,nhleft,ihr1,ihr2,
      +                           itimei(5)
       integer, INTENT(OUT) :: itimefi(5),ierror
 
@@ -172,6 +172,10 @@ c set as long as sortfield still is called
 
 
 !..get time offset in hours (as iavail(8,n))
+      if (nhleft .lt. 0) then
+        ihr1 = -ihr1
+        ihr2 = -ihr2
+      end if
       ihours(1)=ihr1
       ihours(2)=ihr2
       ihours(3)=0
@@ -188,11 +192,12 @@ c set as long as sortfield still is called
 
       write(9,*) '*READFIELD* Requested time: ',(itime(i,1),i=1,4)
       write(9,*) '                Time limit: ',(itime(i,2),i=1,4)
+      write(9,*) '                 ihr1,ihr2: ', ihr1, ihr2
 
 !
 c..search in list of available timesteps with model level data
       if(ihdif1.gt.ihdif2) then
-c..first field input, using the backward list
+c..using the backward list
         i=ihdif1
         ihdif1=ihdif2
         ihdif2=i
@@ -247,7 +252,7 @@ c     before the return statement
 
 !     set timepos and nhdiff
       nhdiff = 3
-      if (ntav1.ne.0) nhdiff = iavail(8, ntav2) - iavail(8, ntav1)
+      if (ntav1.ne.0) nhdiff = abs(iavail(8, ntav2) - iavail(8, ntav1))
       nprecip = nhdiff
       timepos = iavail(7, ntav2)
       do n=1,5
@@ -622,6 +627,20 @@ c..levels added at the top
           end do
         end do
       end if
+
+      if(nhleft.lt.0) then
+c backward-calculation, switch sign of winds
+        do k=1,nk
+          do j=1,ny
+            do i=1,nx
+              u2(i,j,k)=-u2(i,j,k)
+              v2(i,j,k)=-v2(i,j,k)
+              w2(i,j,k)=-w2(i,j,k)
+            end do
+          end do
+        end do
+      end if
+
 c
 c-test---------------------------------------------------------------
       write(9,*) 'k,k_model,alevel,blevel,vlevel,p,dp:'
@@ -632,6 +651,7 @@ c-test---------------------------------------------------------------
      +          k,klevel(k),alevel(k),blevel(k),vlevel(k),p,p-px
         px=p
       end do
+
 c-test---------------------------------------------------------------
 c
       if(idebug.eq.1) then

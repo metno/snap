@@ -7,43 +7,6 @@ c-----------------------
 c Options in snap.input:
 c=======================================================================
 c * comment
-c GRAPHICS.ON
-c GRAPHICS.OFF
-c GRAPHICS.PRECIP.ON
-c GRAPHICS.PRECIP.OFF
-c GRAPHICS.DRY.DEP.ON
-c GRAPHICS.DRY.DEP.OFF
-c GRAPHICS.WET.DEP.ON
-c GRAPHICS.WET.DEP.OFF
-c GRAPHICS.TOTAL.DEP.ON
-c GRAPHICS.TOTAL.DEP.OFF
-c GRAPHICS.MSLP.ON
-c GRAPHICS.MSLP.OFF
-c GRAPHICS.COMPONENT= Aerosol
-c GRAPHICS.COMPONENTS.TOTAL
-c GRAPHICS.PARTICLES.KEEP.MASS
-c GRAPHICS.PARTICLES.KEEP.POSITIONS
-c GRAPHICS.PARTICLES.IN.BOUNDARY.LAYER.ON
-c GRAPHICS.PARTICLES.IN.BOUNDARY.LAYER.OFF
-c GRAPHICS.PARTICLES.ABOVE.BOUNDARY.LAYER.ON
-c GRAPHICS.PARTICLES.ABOVE.BOUNDARY.LAYER.OFF
-c GRAPHICS.FREEZE.OFF
-c GRAPHICS.FREEZE.AT.START
-c GRAPHICS.FREEZE.AT.START.AND.END
-c GRAPHICS.FREEZE.AT.END
-c GRAPHICS.FREEZE.AT.EVERY.TIMESTEP
-c GRAPHICS.FREEZE.AT.TIME.OF.FIELD.OUTPUT
-c GRAPHICS.BACKGROUND.BLACK
-c GRAPHICS.BACKGROUND.WHITE
-c GRAPHICS.AREA.PERCENT.X1.X2.Y1.Y2= 0.,100.,0.,100.
-c GRAPHICS.SCREEN.PERCENT.X1.X2.Y1.Y2= 5.,95.,5.,95.
-c GRAPHICS.LAND= /usr/local/gsetup/land4.dat
-c GRAPHICS.LAND= /usr/local/gsetup/land5.dat
-c SAVE.PNG.STEP= 1
-c SAVE.XPM.STEP= 0
-c SAVE.BMP.STEP= 0
-c VIDEO.SAVE.ON
-c VIDEO.SAVE.OFF
 c POSITIONS.DECIMAL
 c POSITIONS.DEGREE+MINUTE
 c TIME.START=        1993,1,25,12
@@ -921,7 +884,7 @@ c..release.bq/step.comp
              goto 12
            elseif(ntprof.gt.1) then
              do i=1,ntprof-1
-       	rscale=1./(3600.*(irelhour(i+1)-irelhour(i)))
+           rscale=1./(3600.*(irelhour(i+1)-irelhour(i)))
                relbqsec(i,ncomp,1)= relbqsec(i,ncomp,1)*rscale
              end do
            end if
@@ -1705,7 +1668,7 @@ c
         call hrdiff(0,0,itime1,itime2,nhrun,ierr1,ierr2)
       end if
 c
-      if(nhrel.gt.nhrun) nhrel=nhrun
+      if(nhrel.gt.abs(nhrun)) nhrel=abs(nhrun)
 c
       if(iargos.eq.1) then
        argoshoursrelease= nhrel
@@ -1743,6 +1706,7 @@ c..no. of timesteps per hour (adjust the timestep)
 c
 c..total no. of timesteps to run (nhrun is no. of hours to run)
       nstep=nsteph*nhrun
+      if (nstep < 0) nstep = -nstep
 c
 c..total no. of timesteps to release particles
       nstepr=nsteph*nhrel
@@ -1820,11 +1784,15 @@ c
 c..initialize files, deposition fields etc.
       m=0
       nargos=0
-      do n=1,nhrun
+      do n=1,abs(nhrun)
         do i=1,4
          itime(i)=itime1(i)
        end do
-       itime(5)=n
+       if (nhrun > 0) then
+         itime(5)=n
+       else
+         itime(5)=-n
+       endif
        if(isynoptic.eq.0) then
 c..asynoptic output (use forecast length in hours to test if output)
          ihour=itime(5)
@@ -1952,6 +1920,7 @@ c..read fields
             ihr1=+nhfmin
             ihr2=+nhfmax
             nhleft=(nstep-istep+1)/nsteph
+            if (nhrun.lt.0) nhleft=-nhleft
           end if
 c          write (*,*) "readfield(", iunitf, istep, nhleft, itimei, ihr1
 c     +          ,ihr2, itimefi, ierror, ")"
@@ -2044,14 +2013,15 @@ c
           call hrdiff(0,0,itimei,itimefi,ihdiff,ierr1,ierr2)
           tf1=0.
           tf2=3600.*ihdiff
+          if (nhrun.lt.0) tf2=-tf2
           if(istep.eq.1) then
             call hrdiff(0,0,itimei,itime1,ihr,ierr1,ierr2)
             tnow=3600.*ihr
-            nxtinf=istep+nsteph*(ihdiff-ihr)
+            nxtinf=istep+nsteph*abs(ihdiff-ihr)
            iprecip=1+ihr
           else
             tnow=0.
-            nxtinf=istep+nsteph*ihdiff
+            nxtinf=istep+nsteph*abs(ihdiff)
            iprecip=1
           end if
 c
@@ -2084,8 +2054,8 @@ c
         end if
 c
 c#############################################################
-c     write(6,*) 'tf1,tf2,tnow,tnext,tstep,ipr: ',
-c    +		  tf1,tf2,tnow,tnext,tstep,iprecip
+      write(6,*) 'tf1,tf2,tnow,tnext,tstep,ipr,nxtinf: ',
+     +		  tf1,tf2,tnow,tnext,tstep,iprecip,nxtinf
 c     write(9,*) 'tf1,tf2,tnow,tnext,tstep,ipr: ',
 c    +		  tf1,tf2,tnow,tnext,tstep,iprecip
 c#############################################################

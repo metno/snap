@@ -3,6 +3,15 @@
 c
 c  Purpose:  Read fields from FELT files.
 c            (FELT files: forecasts and archives)
+!  Parameters:
+!             iunit      filehandle-unit (dummy)
+!             istep      current timestep (always positive)
+!             nhleft     remaining run-hours (negative for backward)
+!             itimei(5)  initial time
+!             ihr1       minimal time-offset?
+!             ihr2       maximal time-offset?
+!             itimefi(5) final time (output)
+!             ierror     error (output)
 c
 c
 #if defined(DRHOOK)
@@ -46,6 +55,10 @@ c
       IF (LHOOK) CALL DR_HOOK('READFIELD',0,ZHOOK_HANDLE)
 #endif
 c..get time offset in hours (as iavail(8,n))
+      if (nhleft .lt. 0) then
+        ihr1 = -ihr1
+        ihr2 = -ihr2
+      end if
       ihours(1)=ihr1
       ihours(2)=ihr2
       ihours(3)=0
@@ -54,7 +67,7 @@ c..get time offset in hours (as iavail(8,n))
         do i=1,5
           itime(i,n)=itimei(i)
         end do
-       itime(5,n)=itime(5,n)+ihours(n)
+        itime(5,n)=itime(5,n)+ihours(n)
         call hrdiff(0,1,itimer(1,1),itime(1,n),ihours(n),ierr1,ierr2)
       end do
       ihdif1=ihours(1)
@@ -62,6 +75,7 @@ c..get time offset in hours (as iavail(8,n))
 c
       write(9,*) '*READFIELD* Requested time: ',(itime(i,1),i=1,4)
       write(9,*) '                Time limit: ',(itime(i,2),i=1,4)
+      write(9,*) '                 ihr1,ihr2: ', ihr1, ihr2
 c
       if(navailt2.gt.0) then
 c
@@ -90,7 +104,7 @@ c
 c
 c..search in list of available timesteps with model level data
       if(ihdif1.gt.ihdif2) then
-c..first field input, using the backward list
+c..using the backward list
         i=ihdif1
         ihdif1=ihdif2
         ihdif2=i
@@ -99,6 +113,11 @@ c..first field input, using the backward list
       else
         kfb=1
         ifb=9
+      end if
+
+      if(idebug.eq.1) then
+        write(9,*) 'istep,nhleft: ',istep,nhleft
+        write(9,*) 'kfb,ifb,ihdif1,ihdif2:',kfb,ifb,ihdif1,ihdif2
       end if
 c
       mtav=0
@@ -115,8 +134,6 @@ c..pointer to next timestep (possibly same time)
 c
       if(idebug.eq.1) then
         write(9,*) 'MODEL LEVEL SEARCH LIST.   mtav=',mtav
-        write(9,*) 'istep,nhleft: ',istep,nhleft
-        write(9,*) 'kfb,ifb,ihdif1,ihdif2:',kfb,ifb,ihdif1,ihdif2
         do j=1,mtav
           n=itav(j)
           write(9,fmt='(7(1x,i4),1x,i6,2i5)') (iavail(i,n),i=1,10)
@@ -255,6 +272,8 @@ c
       itimefi(3)=idata(13)-itimefi(2)*100
       itimefi(4)=idata(14)/100
       itimefi(5)=idata( 4)
+      write(9,*) '*READFIELD* Used time: ',(itimefi(i),i=1,5)
+
 c
 c..surface pressure, 10m wind and possibly mean sea level pressure
 c
@@ -327,7 +346,7 @@ c..precipitation between input time 't1' and 't2'
 c
       if(navailt1.le.0) goto 190
 c
-      nhdiff=iavail(8,navailt2)-iavail(8,navailt1)
+      nhdiff=abs(iavail(8,navailt2)-iavail(8,navailt1))
 c
       if(nhdiff.gt.mprecip) then
         write(6,*) '*READFIELD* PRECIPITATION PROBLEM'
@@ -432,16 +451,16 @@ c..3 hours total precipitation
             call readfd(iunit,nav,ivc,17,ilevel,-0,field4,ierror)
            if(ierror.eq.0) then
              do j=1,ny
-       	do i=1,nx
-       	  prec1=max(field2(i,j)-field1(i,j),0.)/3.
-       	  prec2=max(field4(i,j)-field3(i,j),0.)/3.
-       	  precip(i,j,1)=prec1
-       	  precip(i,j,2)=prec1
-       	  precip(i,j,3)=prec1
-       	  precip(i,j,4)=prec2
-       	  precip(i,j,5)=prec2
-       	  precip(i,j,6)=prec2
-       	end do
+           do i=1,nx
+             prec1=max(field2(i,j)-field1(i,j),0.)/3.
+             prec2=max(field4(i,j)-field3(i,j),0.)/3.
+             precip(i,j,1)=prec1
+             precip(i,j,2)=prec1
+             precip(i,j,3)=prec1
+             precip(i,j,4)=prec2
+             precip(i,j,5)=prec2
+             precip(i,j,6)=prec2
+           end do
              end do
              goto 190
            end if
@@ -467,18 +486,18 @@ c..3 hours frontal and convective precipitation
             call readfd(iunit,nav,ivc,20,ilevel,-0,field4,ierr2)
            if(ierr1.eq.0 .and. ierr2.eq.0) then
              do j=1,ny
-       	do i=1,nx
-       	  prec1=max( precip(i,j,3)+precip(i,j,4)
+           do i=1,nx
+             prec1=max( precip(i,j,3)+precip(i,j,4)
      +			    -precip(i,j,1)-precip(i,j,2),0.)/3.
-       	  prec2=max( field3(i,j)+field4(i,j)
+             prec2=max( field3(i,j)+field4(i,j)
      +			    -field1(i,j)-field2(i,j),0.)/3.
-       	  precip(i,j,1)=prec1
-       	  precip(i,j,2)=prec1
-       	  precip(i,j,3)=prec1
-       	  precip(i,j,4)=prec2
-       	  precip(i,j,5)=prec2
-       	  precip(i,j,6)=prec2
-       	end do
+             precip(i,j,1)=prec1
+             precip(i,j,2)=prec1
+             precip(i,j,3)=prec1
+             precip(i,j,4)=prec2
+             precip(i,j,5)=prec2
+             precip(i,j,6)=prec2
+           end do
              end do
              goto 190
            end if
@@ -865,6 +884,19 @@ c-test---------------------------------------------------------------
       end do
 c-test---------------------------------------------------------------
 c
+      if(nhleft.lt.0) then
+c backward-calculation, switch sign of winds
+        do k=1,nk
+          do j=1,ny
+            do i=1,nx
+              u2(i,j,k)=-u2(i,j,k)
+              v2(i,j,k)=-v2(i,j,k)
+              w2(i,j,k)=-w2(i,j,k)
+            end do
+          end do
+        end do
+      end if
+
       if(idebug.eq.1) then
         call ftest('u  ',nk,1,nx,ny,nk,   u2,0)
         call ftest('v  ',nk,1,nx,ny,nk,   v2,0)
