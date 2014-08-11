@@ -31,44 +31,68 @@ modifyDoc($felt2ncDoc, \%isotopes);
 $felt2ncDoc->toFile($Args{output},1);
 
 sub readIsotopes {
-	my ($file) = @_;
-	open (my $f, $file) or die "Cannot read levelnames file $file: $!";
-	my %isotopes;
-	while (defined (my $line = <$f>)) {
-		if ($line =~ /^\s+(\d+)\s+"([^"]+)"/) {
-			$isotopes{$1} = $2;
-		} else {
-			warn "Cannot parse line in $file: $line";
-		}
-	}
-	return %isotopes;
+    my ($file) = @_;
+    open (my $f, $file) or die "Cannot read levelnames file $file: $!";
+    my %isotopes;
+    while (defined (my $line = <$f>)) {
+        if ($line =~ /^\s+(\d+)\s+"([^"]+)"/) {
+            $isotopes{$1} = $2;
+        } else {
+            warn "Cannot parse line in $file: $line";
+        }
+    }
+    return %isotopes;
 }
 
 sub modifyDoc {
-	my ($doc, $isotopes) = @_;
-	
-	for (my $var = 500; $var < 600; ++$var) {
-		my $xpath = '/cdm_felt_config/variables/parameter[@id="'.$var.',0"]';
-		my @nodes = $doc->findnodes($xpath);
-		if (@nodes) {
-			foreach my $levelId (keys %$isotopes) {
-				my $newNode = $nodes[0]->cloneNode(1);
-				my ($idAttr) = $newNode->findnodes('@id');
-				my $val = $idAttr->getValue() . ",$levelId";
-				$idAttr->setValue($val);
-				my ($nameAttr) = $newNode->findnodes('@name');
-				my $name = $nameAttr->getValue() . '_' .$isotopes->{$levelId};
-				$nameAttr->setValue($name);
-				print STDERR "new node: $val -> $name \n" if $Args{debug};
-				
-				#$doc->insertBefore($newNode, $nodes[0]);
-				$nodes[0]->parentNode()->addChild($newNode);
-				print STDERR $newNode->toString(1) if $Args{debug};
-			}
-			$nodes[0]->unbindNode();
-		}
-	}
-	
+    my ($doc, $isotopes) = @_;
+
+    for (my $var = 500; $var < 540; ++$var) {
+        my $xpath = '/cdm_felt_config/variables/parameter[@id="'.$var.',0"]';
+        my @nodes = $doc->findnodes($xpath);
+        if (@nodes) {
+            foreach my $levelId (keys %$isotopes) {
+                my $newNode = $nodes[0]->cloneNode(1);
+                my ($idAttr) = $newNode->findnodes('@id');
+                my $val = $idAttr->getValue() . ",$levelId";
+                $idAttr->setValue($val);
+                my ($nameAttr) = $newNode->findnodes('@name');
+                my $name = $nameAttr->getValue() . '_' .$isotopes->{$levelId};
+                $nameAttr->setValue($name);
+                print STDERR "new node: $val -> $name \n" if $Args{debug};
+
+                #$doc->insertBefore($newNode, $nodes[0]);
+                $nodes[0]->parentNode()->addChild($newNode);
+                print STDERR $newNode->toString(1) if $Args{debug};
+            }
+            $nodes[0]->unbindNode();
+        }
+    }
+
+    # model levels
+    foreach my $var (540, 570) {
+        my $xpath = '/cdm_felt_config/variables/parameter[@id="'.$var.'"]';
+        my @nodes = $doc->findnodes($xpath);
+        if (@nodes) {
+            foreach my $isoId (keys %$isotopes) {
+                my $newNode = $nodes[0]->cloneNode(1);
+                my ($idAttr) = $newNode->findnodes('@id');
+                my $val = $idAttr->getValue() + $isoId;
+                $idAttr->setValue($val);
+                my ($nameAttr) = $newNode->findnodes('@name');
+                my $name = $nameAttr->getValue() . '_' .$isotopes->{$isoId};
+                $nameAttr->setValue($name);
+                print STDERR "new node: $val -> $name \n" if $Args{debug};
+
+                #$doc->insertBefore($newNode, $nodes[0]);
+                $nodes[0]->parentNode()->addChild($newNode);
+                print STDERR $newNode->toString(1) if $Args{debug};
+            }
+            $nodes[0]->unbindNode();
+        }
+    }
+
+
 }
 
 
