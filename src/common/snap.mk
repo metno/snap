@@ -3,7 +3,7 @@
 
 MODELOBJ= allocateFields.o argoswrite.o bldp.o compheight.o copyfield.o decay.o drydep1.o drydep2.o \
 dateCalc.o edcomp.o \
-ensemble.o epinterp.o filesort.o filesort_nc.o fldout.o forwrd.o ftest.o om2edot.o posint.o \
+ensemble.o epinterp.o filesort.o filesort_nc.o fldout.o fldout_nc.o forwrd.o ftest.o om2edot.o posint.o \
 pselect.o readfd.o readfield.o readfield_nc.o release.o releasefile.o rmpart.o rwalk.o tabcon.o \
 vgravtables.o videosave.o wetdep1.o wetdep2.o
 
@@ -54,6 +54,8 @@ filesort.o: ../common/filesort.f $(INCFILES)
 filesort_nc.o: ../common/filesort_nc.F $(INCFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 fldout.o: ../common/fldout.f $(INCFILES)
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+fldout_nc.o: ../common/fldout_nc.f $(INCFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 forwrd.o: ../common/forwrd.F $(INCFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
