@@ -108,6 +108,7 @@ c FIELD.INPUT= feltlam.dat
 c FIELD_TIME.FORECAST
 c FIELD_TIME.VALID
 c FIELD.OUTPUT= snap.felt
+c FIELD.OUTTYPE=netcdf/felt
 c FIELD.DAILY.OUTPUT.ON
 c LOG.FILE=     snap.log
 c DEBUG.OFF ..................................... (default)
@@ -251,8 +252,8 @@ cjb_end
 c
       logical blfullmix
 c
-      character*72  finput,fldfil,fldfilX,fldfilN,logfile,ftype
-      character*72  relfile
+      character*72  finput,fldfil,fldfilX,fldfilN,logfile,ftype,
+     +        fldtype, relfile
       character*256 cinput,ciname,cipart,cipart2
       character*8   cpos1,cpos2
       character*1   tchar
@@ -455,8 +456,10 @@ c
       imodlevel=0
 c
       idebug=0
-c
+c input type
       ftype='felt'
+c output type
+      fldtype='felt'
       fldfil= 'snap.dat'
       logfile='snap.log'
       relfile='*'
@@ -1234,6 +1237,10 @@ c..field_time.valid ...... use valid time in output field identification
 c..field.output= <'file_name'>
             if(kv1.lt.1) goto 12
             fldfil=ciname(1:nkv)
+          elseif(cinput(k1:k2).eq.'field.outtype') then
+c..field.outtype= <'felt|netcdf'>
+            if(kv1.lt.1) goto 12
+            fldtype=ciname(1:nkv)
           elseif(cinput(k1:k2).eq.'field.daily.output.on') then
             idailyout = 1
           elseif(cinput(k1:k2).eq.'field.daily.output.off') then
@@ -1399,6 +1406,10 @@ c
       end if
       if(ftype .ne. "felt" .and. ftype .ne. "netcdf") then
         write(6,*) 'Input type not felt or netcdf:', ftype
+        ierror=1
+      end if
+      if(ftype .ne. "felt" .and. ftype .ne. "netcdf") then
+        write(6,*) 'Output type not felt or netcdf:', ftype
         ierror=1
       end if
       if(nfilef.eq.0) then
@@ -1819,8 +1830,13 @@ c       daily output, append +x for each day, but initialize later
         write(fldfilX,'(a9,a1,I3.3)') fldfil, '+', -1
       end if
 c standard output needs to be initialized, even for daily
-      call fldout(-1,iunito,fldfil,itime1,0.,0.,0.,tstep,
+      if (fldtype .eq. "netcdf") then
+        call fldout_nc(-1,iunito,fldfil,itime1,0.,0.,0.,tstep,
      *          m,nsteph,ierror)
+      else
+        call fldout(-1,iunito,fldfil,itime1,0.,0.,0.,tstep,
+     *          m,nsteph,ierror)
+      endif
       if(ierror.ne.0) goto 910
 
 c
@@ -2287,16 +2303,31 @@ c istep/nsteph = hour  -> /24 =day
         write(fldfilN,'(a9,a1,I3.3)') fldfil, '+', istep/nsteph/24
         if (fldfilX .ne. fldfilN) then
            fldfilX = fldfilN
-           call fldout(-1,iunito,fldfilX,itime1,0.,0.,0.,tstep,
+           if (fldtype .eq. "netcdf") then
+             call fldout_nc(-1,iunito,fldfilX,itime1,0.,0.,0.,tstep,
      *            (24/nhfout)+1,nsteph,ierror)
+           else
+             call fldout(-1,iunito,fldfilX,itime1,0.,0.,0.,tstep,
+     *            (24/nhfout)+1,nsteph,ierror)
+           endif
            if(ierror.ne.0) goto 910
         end if
-        call fldout(ifldout,iunito,fldfilX,itimeo,tf1,tf2,tnext,tstep,
+        if (fldtype .eq. "netcdf") then
+          call fldout_nc(ifldout,iunito,fldfilX,itimeo,tf1,tf2,tnext,
+     +            tstep,istep,nsteph,ierror)
+        else
+          call fldout(ifldout,iunito,fldfilX,itimeo,tf1,tf2,tnext,tstep,
      +            istep,nsteph,ierror)
+        endif
         if(ierror.ne.0) goto 910
       else
-        call fldout(ifldout,iunito,fldfil,itimeo,tf1,tf2,tnext,tstep,
+       if (fldtype .eq. "netcdf") then
+         call fldout_nc(ifldout,iunito,fldfil,itimeo,tf1,tf2,tnext,
+     +            tstep,istep,nsteph,ierror)
+       else
+         call fldout(ifldout,iunito,fldfil,itimeo,tf1,tf2,tnext,tstep,
      +            istep,nsteph,ierror)
+       endif
         if(ierror.ne.0) goto 910
       end if
 c
