@@ -104,8 +104,11 @@ c     * 902 - geographic longitude (degrees)
 c     * 903 - grid square area (m2)
 c     ^------- current output
 
-      integer, save :: ps_varid, accum_prc_varid, mslp_varid,
-     +    ihbl_varid(mcomp), ahbl_varid(mcomp),
+      integer, save :: ps_varid, accum_prc_varid, prc_varid,
+     +    mslp_varid,
+     +    icblt_varid,acblt_varid,act_varid,iddt_varid,iwdt_varid,
+     +    accddt_varid,accwdt_varid,
+     +    ihbl_varid, ahbl_varid,
      +    icbl_varid(mcomp),
      +    acbl_varid(mcomp), idd_varid(mcomp), iwd_varid(mcomp),
      +    accdd_varid(mcomp), accwd_varid(mcomp), ac_varid(mcomp),
@@ -132,7 +135,6 @@ c
       integer          nptot1,nptot2
       double precision bqtot1,bqtot2
       double precision dblscale
-      double precision dblfield(nx,ny)
 c
       integer iyear,month,iday,ihour,minute,isecond
       integer i,j,k,m,mm,n,id03,id04,ivlvl,idextr,idry,iwet,loop,iparx
@@ -149,11 +151,6 @@ c
       character*256 string
       integer lenstr
 c
-      real field1print(nx*ny),field2print(nx*ny)
-
-c
-c      equivalence (field1(1,1),field1print(1))
-c      equivalence (field2(1,1),field2print(1))
 c
 c..used in xyconvert (x,y -> longitude,latitude)
       data geoparam/1.,1.,1.,1.,0.,0./
@@ -168,6 +165,14 @@ c
       IF (LHOOK) CALL DR_HOOK('FLDOUT_NC',0,ZHOOK_HANDLE)
 #endif
 c
+       idry=0
+       iwet=0
+       do m=1,ncomp
+         mm=idefcomp(m)
+         if(kdrydep(mm).eq.1) idry=1
+         if(kwetdep(mm).eq.1) iwet=1
+       end do
+
       ierror=0
 c
 c..initialization
@@ -404,14 +409,104 @@ c..store the files base-time
      +    call nc_declare_3d(iunit, dimids3d, mslp_varid,
      +                          chksz3d, "air_pressure_at_sea_level",
      +                          "hPa", "air_pressure_at_sea_level", "")
+       if (inprecip.eq.1)
+     +    call nc_declare_3d(iunit, dimids3d, accum_prc_varid,
+     +                       chksz3d, "precipitation_amount_acc",
+     +                       "kg/m2", "precipitation_amount", "")
+
+        call nc_declare_3d(iunit, dimids3d, ihbl_varid,
+     +                     chksz3d, "initial_height_boundary_layer",
+     +                     "m", "height",
+     +                     "initial_height_boundary_layer")
+        call nc_declare_3d(iunit, dimids3d, ahbl_varid,
+     +                     chksz3d, "average_height_boundary_layer",
+     +                     "m", "height",
+     +                     "average_height_boundary_layer")
+
 
        do m=1,ncomp
          mm=idefcomp(m)
-         call nc_declare_3d(iunit, dimids3d, varid,
-     +          chksz3d, "acc_dry_dep_"//compnamemc(mm),
-     +          "Bq/m2","","accumulated_dry_dep_"//TRIM(compnamemc(mm)))
-         accdd_varid(m) = varid
+         call nc_declare_3d(iunit, dimids3d, ic_varid(m),
+     +        chksz3d, TRIM(compnamemc(mm))//"_concentration",
+     +        "Bq/m3","",
+     +        TRIM(compnamemc(mm))//"_concentration")
+         call nc_declare_3d(iunit, dimids3d, icbl_varid(m),
+     +        chksz3d, TRIM(compnamemc(mm))//"_concentration_bl",
+     +        "Bq/m3","",
+     +        TRIM(compnamemc(mm))//"_concentration_boundary_layer")
+         call nc_declare_3d(iunit, dimids3d, ac_varid(m),
+     +        chksz3d, TRIM(compnamemc(mm))//"_acc_concentration",
+     +        "Bq*hr/m3","",
+     +        TRIM(compnamemc(mm))//"_accumulated_concentration")
+         call nc_declare_3d(iunit, dimids3d, acbl_varid(m),
+     +        chksz3d, TRIM(compnamemc(mm))//"_avg_concentration_bl",
+     +        "Bq/m3","",
+     +        TRIM(compnamemc(mm))//"_average_concentration_bl")
+         if (kdrydep(mm).gt.0) then
+           call nc_declare_3d(iunit, dimids3d, idd_varid(m),
+     +          chksz3d, TRIM(compnamemc(mm))//"_dry_deposition",
+     +          "Bq/m2","",
+     +          TRIM(compnamemc(mm))//"_dry_deposition")
+           call nc_declare_3d(iunit, dimids3d, accdd_varid(m),
+     +          chksz3d, TRIM(compnamemc(mm))//"_acc_dry_deposition",
+     +          "Bq/m2","",
+     +          TRIM(compnamemc(mm))//"_accumulated_dry_deposition")
+         end if
+         if (kwetdep(mm).gt.0) then
+           call nc_declare_3d(iunit, dimids3d, iwd_varid(m),
+     +          chksz3d, TRIM(compnamemc(mm))//"_wet_deposition",
+     +          "Bq/m2","",
+     +          TRIM(compnamemc(mm))//"_wet_deposition")
+           call nc_declare_3d(iunit, dimids3d, accwd_varid(m),
+     +          chksz3d, TRIM(compnamemc(mm))//"_acc_wet_deposition",
+     +          "Bq/m2","",
+     +          TRIM(compnamemc(mm))//"_accumulated_wet_deposition")
+         end if
+         if (imodlevel.eq.1) then
+           call nc_declare_4d(iunit, dimids4d, icml_varid(m),
+     +          chksz4d, TRIM(compnamemc(mm))//"_concentration_ml",
+     +          "Bq/m3","",
+     +          TRIM(compnamemc(mm))//"_concentration_ml")
+           call nc_declare_4d(iunit, dimids4d, acml_varid(m),
+     +          chksz4d, TRIM(compnamemc(mm))//"_acc_concentration_ml",
+     +          "Bq*hour/m3","",
+     +          TRIM(compnamemc(mm))//"_accumulated_concentration_ml")
+         end if
        end do
+       if (itotcomp.eq.1) then
+         call nc_declare_3d(iunit, dimids3d, icblt_varid,
+     +        chksz3d, "total_concentration_bl",
+     +        "Bq/m3","",
+     +        "total_concentration_bl")
+         call nc_declare_3d(iunit, dimids3d, acblt_varid,
+     +        chksz3d, "total_avg_concentration_bl",
+     +        "Bq/m3","",
+     +        "total_average_concentration_bl")
+         call nc_declare_3d(iunit, dimids3d, act_varid,
+     +        chksz3d, "total_acc_concentration",
+     +        "Bq/m3","",
+     +        "total_accumulated_concentration")
+         if (kdrydep(mm).gt.0) then
+           call nc_declare_3d(iunit, dimids3d, iddt_varid,
+     +          chksz3d, "total_dry_deposition",
+     +          "Bq/m2","",
+     +          "total_dry_deposition")
+           call nc_declare_3d(iunit, dimids3d, accddt_varid,
+     +          chksz3d, "total_acc_dry_deposition",
+     +          "Bq/m2","",
+     +          "total_accumulated_dry_deposition")
+         end if
+         if (kwetdep(mm).gt.0) then
+           call nc_declare_3d(iunit, dimids3d, iwdt_varid,
+     +          chksz3d, "total_wet_deposition",
+     +          "Bq/m2","",
+     +          "total_wet_deposition")
+           call nc_declare_3d(iunit, dimids3d, accwdt_varid,
+     +          chksz3d, "total_acc_wet_deposition",
+     +          "Bq/m2","",
+     +          "total_accumulated_wet_deposition")
+         end if
+       end if
        call check(nf_enddef(iunit))
       end if
 
@@ -560,6 +655,8 @@ c..total accumulated precipitation from start of run
         idata(20)=-32767
 c       call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
 c     +              ldata,idata,ierror)
+        call check(NF_PUT_VARA_REAL(iunit, accum_prc_varid, ipos, isize,
+     +               field1))
         if(ierror.ne.0) goto 900
         idata(19)=0
       end if
@@ -591,6 +688,8 @@ c..instant height of boundary layer
       idata(20)=-32767
 c      call mwfelt(2,filnam,iunit,1,nx*ny,field4,1.0,
 c     +            ldata,idata,ierror)
+      call check(NF_PUT_VARA_REAL(iunit, ihbl_varid, ipos, isize,
+     +               field1))
       if(ierror.ne.0) goto 900
 c
 c..average height of boundary layer
@@ -604,10 +703,12 @@ c..average height of boundary layer
       idata(20)=-32767
 c      call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
 c     +            ldata,idata,ierror)
+      call check(NF_PUT_VARA_REAL(iunit, ahbl_varid, ipos, isize,
+     +               field1))
       if(ierror.ne.0) goto 900
 c
-c..precipitation accummulated between field output
-      if(inprecip.eq.1) then
+c..precipitation accummulated between field output // currently disable use 1 to write
+      if(inprecip.eq.-1) then
        do j=1,ny
          do i=1,nx
            field1(i,j)=avgprec(i,j)
@@ -620,6 +721,8 @@ c..precipitation accummulated between field output
         idata(20)=-32767
 c        call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
 c     +              ldata,idata,ierror)
+        call check(NF_PUT_VARA_REAL(iunit, prc_varid, ipos, isize,
+     +               field1))
         if(ierror.ne.0) goto 900
         idata(19)=0
       end if
@@ -697,6 +800,8 @@ ccc         hbl=rt1*hbl1(i,j)+rt2*hbl2(i,j)
         idata(20)=-32767
 c        call mwfelt(2,filnam,iunit,1,nx*ny,field2,1.0,
 c     +              ldata,idata,ierror)
+        call check(NF_PUT_VARA_REAL(iunit, icbl_varid(m), ipos, isize,
+     +               field2))
         if(ierror.ne.0) goto 900
 c
 c..average concentration in boundary layer
@@ -711,6 +816,8 @@ c..average concentration in boundary layer
         idata(20)=-32767
 c        call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
 c     +              ldata,idata,ierror)
+        call check(NF_PUT_VARA_REAL(iunit, acbl_varid(m), ipos, isize,
+     +               field1))
         if(ierror.ne.0) goto 900
 c
 c..dry deposition
@@ -726,6 +833,8 @@ c..dry deposition
           idata(20)=-32767
 c          call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
 c     +                ldata,idata,ierror)
+          call check(NF_PUT_VARA_REAL(iunit, idd_varid(m), ipos, isize,
+     +               field1))
           if(ierror.ne.0) goto 900
         end if
 c
@@ -742,6 +851,8 @@ c..wet deposition
           idata(20)=-32767
 c          call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
 c     +                ldata,idata,ierror)
+          call check(NF_PUT_VARA_REAL(iunit, iwd_varid(m), ipos, isize,
+     +               field1))
           if(ierror.ne.0) goto 900
         end if
 c
@@ -775,6 +886,8 @@ c..accumulated wet deposition
           idata(20)=-32767
 c          call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
 c     +                ldata,idata,ierror)
+          call check(NF_PUT_VARA_REAL(iunit, accwd_varid(m),ipos,isize,
+     +            field1))
           if(ierror.ne.0) goto 900
         end if
 c
@@ -805,7 +918,17 @@ c        call mwfelt(2,filnam,iunit,2,nx*ny,field3,1.0,
 c     +              ldata,idata,ierror)
         if(ierror.ne.0) goto 900
 c
-c..accumulated/integrated concentration
+c..instant concentration on surface (not in felt-format)
+       do j=1,ny
+         do i=1,nx
+           field3(i,j)= sngl(concen(i,j,m))
+         end do
+       end do
+        if(idebug.eq.1) call ftest('concen',1,1,nx,ny,1,field3,1)
+        call check(NF_PUT_VARA_REAL(iunit, ic_varid(m),ipos,isize,
+     +            field3))
+
+c..accumulated/integrated concentration surface = dose
        do j=1,ny
          do i=1,nx
            field3(i,j)= sngl(concacc(i,j,m))
@@ -816,6 +939,8 @@ c..accumulated/integrated concentration
         idata(20)=-32767
 c        call mwfelt(2,filnam,iunit,2,nx*ny,field3,1.0,
 c     +              ldata,idata,ierror)
+         call check(NF_PUT_VARA_REAL(iunit, ac_varid(m),ipos,isize,
+     +            field1))
         if(ierror.ne.0) goto 900
 c
 c.....end do m=1,ncomp
@@ -870,8 +995,10 @@ ccc         hbl=rt1*hbl1(i,j)+rt2*hbl2(i,j)
         if(idebug.eq.1) call ftest('tconc',1,1,nx,ny,1,field2,0)
         idata( 6)=510
         idata(20)=-32767
-        call mwfelt(2,filnam,iunit,1,nx*ny,field2,1.0,
-     +              ldata,idata,ierror)
+c        call mwfelt(2,filnam,iunit,1,nx*ny,field2,1.0,
+c     +              ldata,idata,ierror)
+        call check(NF_PUT_VARA_REAL(iunit, icblt_varid,ipos,isize,
+     +            field2))
         if(ierror.ne.0) goto 900
 c
 c..total average concentration in boundary layer
@@ -898,15 +1025,9 @@ c..total average concentration in boundary layer
         idata(20)=-32767
 c        call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
 c     +              ldata,idata,ierror)
+        call check(NF_PUT_VARA_REAL(iunit, acblt_varid,ipos,isize,
+     +            field1))
         if(ierror.ne.0) goto 900
-c
-        idry=0
-        iwet=0
-       do m=1,ncomp
-         mm=idefcomp(m)
-         if(kdrydep(mm).eq.1) idry=1
-         if(kwetdep(mm).eq.1) iwet=1
-       end do
 c
 c..total dry deposition
        if(idry.eq.1) then
@@ -935,6 +1056,9 @@ c..total dry deposition
           idata(20)=-32767
 c          call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
 c     +                ldata,idata,ierror)
+          call check(NF_PUT_VARA_REAL(iunit, iddt_varid,ipos,isize,
+     +            field1))
+
           if(ierror.ne.0) goto 900
         end if
 c
@@ -965,6 +1089,8 @@ c..total wet deposition
           idata(20)=-32767
 c          call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
 c     +                ldata,idata,ierror)
+          call check(NF_PUT_VARA_REAL(iunit, iwdt_varid,ipos,isize,
+     +            field1))
           if(ierror.ne.0) goto 900
         end if
 c
@@ -995,6 +1121,8 @@ c..total accumulated dry deposition
           idata(20)=-32767
 c          call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
 c     +                ldata,idata,ierror)
+          call check(NF_PUT_VARA_REAL(iunit, accddt_varid,ipos,isize,
+     +            field1))
           if(ierror.ne.0) goto 900
         end if
 c
@@ -1025,6 +1153,8 @@ c..total accumulated wet deposition
           idata(20)=-32767
 c          call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
 c     +                ldata,idata,ierror)
+          call check(NF_PUT_VARA_REAL(iunit, accwdt_varid,ipos,isize,
+     +            field1))
           if(ierror.ne.0) goto 900
         end if
 c
@@ -1087,6 +1217,9 @@ c..total accumulated/integrated concentration
         idata(20)=-32767
 c        call mwfelt(2,filnam,iunit,2,nx*ny,field3,1.0,
 c     +              ldata,idata,ierror)
+         call check(NF_PUT_VARA_REAL(iunit, act_varid,ipos,isize,
+     +            field3))
+
         if(ierror.ne.0) goto 900
 c
 c.....end if(ncomp.gt.1 .and. itotcomp.eq.1) then
@@ -1348,9 +1481,9 @@ c
       end do
 c
 c..close output felt (field) file
-c       call check(nf_close(iunit))
 c      call mwfelt(13,filnam,iunit,1,nx*ny,field1,1.0,
 c     +            ldata,idata,ierror)
+       call check(nf_sync(iunit))
 #if defined(DRHOOK)
 c     before the return statement
       IF (LHOOK) CALL DR_HOOK('FLDOUT_NC',1,ZHOOK_HANDLE)
@@ -1402,3 +1535,35 @@ c       call check(NF_DEF_VAR_CHUNKING(iunit, varid, NF_CHUNKED, chksz))
      +    LEN_TRIM("projection"), "projection"))
 
       end subroutine nc_declare_3d
+
+      subroutine nc_declare_4d(iunit, dimids, varid,
+     +                          chksz, varnm,
+     +                          units, stdnm, metnm)
+       implicit none
+       include 'netcdf.inc'
+       INTEGER, INTENT(OUT)   :: varid
+       INTEGER, INTENT(IN)    :: iunit, dimids(4), chksz(4)
+       CHARACTER(LEN=*), INTENT(IN) :: varnm, stdnm, metnm, units
+
+
+       write(9,*) "declaring ", iunit, TRIM(varnm), TRIM(units)
+     +     ,TRIM(stdnm),TRIM(metnm)
+       call check(nf_def_var(iunit, TRIM(varnm),
+     +     NF_FLOAT, 4, dimids, varid))
+       call check(NF_DEF_VAR_CHUNKING(iunit, varid, NF_CHUNKED, chksz))
+       call check(NF_DEF_VAR_DEFLATE(iunit, varid, 1,1,1))
+       call check(nf_put_att_text(iunit,varid, "units",
+     +     LEN_TRIM(units), TRIM(units)))
+       if (LEN_TRIM(stdnm).gt.0)
+     +    call check(nf_put_att_text(iunit,varid,"standard_name",
+     +    LEN_TRIM(stdnm), TRIM(stdnm)))
+!       if (LEN_TRIM(metnm).gt.0)
+!     +    call check(nf_put_att_text(iunit,varid,"metno_name",
+!     +    LEN_TRIM(metnm), TRIM(metnm)))
+
+       call check(nf_put_att_text(iunit,varid,"coordinates",
+     +    LEN_TRIM("x y"), "x y"))
+       call check(nf_put_att_text(iunit,varid,"grid_mapping",
+     +    LEN_TRIM("projection"), "projection"))
+
+      end subroutine nc_declare_4d
