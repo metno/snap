@@ -91,28 +91,27 @@ c     * accdd 514 - dry deposition (accumulated from start) (Bq/m2)
 c     * accwd 515 - wet deposition (accumulated from start) (Bq/m2)
 c     * 516 - instant part of Bq in the boundary layer  (%)
 c     * 517 - average part of Bq in the boundary layer  (%)
-c     * acsurf 518 - accumulated concentration in the surface layer (Bq*hr/m3)
-c     * icsurf 519 - instant     concentration in the surface layer (Bq/m3)
-c     * 521 - BOMB dry deposition (for one time interval),  % of release
-c     * 522 - BOMB wet deposition (for one time interval),  % of release
-c     * 523 - BOMB dry deposition (accumulated from start), % of release
-c     * 524 - BOMB wet deposition (accumulated from start), % of release
+c     * ac 518 - accumulated concentration in the surface layer (Bq*hr/m3)
+c     * ic 519 - instant     concentration in the surface layer (Bq/m3)
+c     * 521 bdd - BOMB dry deposition (for one time interval),  % of release
+c     * 522 bwd - BOMB wet deposition (for one time interval),  % of release
+c     * 523 accbdd - BOMB dry deposition (accumulated from start), % of release
+c     * 524 accbwd - BOMB wet deposition (accumulated from start), % of release
 c       icml 540-569 - instant concentration in each layer (Bq/m3)
 c       acml 570-599 - average concentration in each layer (Bq/m3)
 c     * 901 - geographic latitude  (degrees)
 c     * 902 - geographic longitude (degrees)
 c     * 903 - grid square area (m2)
 c     ^------- current output
-      logical do_accum_prc, do_ihbl, do_ahbl,
-     +   do_icbl, do_acbl, do_idd, do_iwd, do_accdd,
-     +   do_accwd, do_acsurf, do_ic_surf, do_icml, do_acml
 
       integer, save :: ps_varid, accum_prc_varid, mslp_varid,
      +    ihbl_varid(mcomp), ahbl_varid(mcomp),
      +    icbl_varid(mcomp),
      +    acbl_varid(mcomp), idd_varid(mcomp), iwd_varid(mcomp),
-     +    accdd_varid(mcomp), accwd_varid(mcomp), acsurf_varid(mcomp),
-     +    ic_surf_varid(mcomp), icml_varid(mcomp), acml_varid(mcomp)
+     +    accdd_varid(mcomp), accwd_varid(mcomp), ac_varid(mcomp),
+     +    ic_varid(mcomp), icml_varid(mcomp), acml_varid(mcomp),
+     +    bdd_varid(mcomp), bwd_varid(mcomp), accbdd_varid(mcomp),
+     +    accbwd_varid(mcomp)
 
       integer   iwrite,iunit,istep,nsteph,ierror
       integer   itime(5)
@@ -123,9 +122,10 @@ c
       real      geoparam(6)
 c
 
-      integer dimids2d(2),dimids3d(3),dimids4d(4), ipos(4), isize(4)
+      integer dimids2d(2),dimids3d(3),dimids4d(4), ipos(4), isize(4),
+     +         varid, chksz3d(3), chksz4d(4)
       integer, save :: x_dimid, y_dimid, k_dimid, t_dimid
-      integer, save :: varid, t_varid
+      integer, save :: t_varid
       integer, save  :: iftime(5), ihrs, ihrs_pos
 
 
@@ -150,13 +150,6 @@ c
       integer lenstr
 c
       real field1print(nx*ny),field2print(nx*ny)
-
-      data do_accum_prc, do_ihbl, do_ahbl
-     +     /.false.,.false.,.false./
-      data do_icbl, do_acbl, do_idd, do_iwd, do_accdd
-     +     /.false.,.false.,.false.,.false.,.true./
-      data do_accwd, do_acsurf, do_ic_surf, do_icml, do_acml
-     +     /.true.,.true.,.true.,.true.,.true./
 
 c
 c      equivalence (field1(1,1),field1print(1))
@@ -360,7 +353,7 @@ c
 c..initialization of file
 c..remove an existing file and create a completely new one
        if (iunit.ne.30)
-         call check(nf_close(iunit))
+     +   call check(nf_close(iunit))
        numfields=0
        call rmfile(filnam,0,ierror)
        write(9,*) 'creating fldout_nc: ',filnam
@@ -377,7 +370,7 @@ c..remove an existing file and create a completely new one
      + "hours since ",itime(1),"-",itime(2),"-",itime(3)," ",
      + itime(4),":00:00 +0000"
        call check(nf_put_att_text(iunit, t_varid, "units",
-     +      len_trim(string), string))
+     +      len_trim(string), trim(string)))
 c
 c..store the files base-time
       do i=1,4
@@ -395,47 +388,30 @@ c..store the files base-time
        dimids4d(3) = k_dimid
        dimids4d(4) = t_dimid
 
-       if (imodlevel.eq.1) then
-         call check(nf_def_var(iunit,"surface_air_pressure",
-     +           NF_FLOAT,3,dimids3d,ps_varid))
-         call check(NF_DEF_VAR_DEFLATE(iunit, ps_varid, 1,1,1))
-         call check(nf_put_att_text(iunit, ps_varid, "units",
-     +      3, "hPa"))
-         call check(nf_put_att_text(iunit, ps_varid, "standard_name",
-     +      20, "surface_air_pressure"))
-       end if
-       if (imslp.eq.1) then
-         call check(nf_def_var(iunit,"air_pressure_at_sea_level",
-     +           NF_FLOAT,3,dimids3d,mslp_varid))
-         call check(NF_DEF_VAR_DEFLATE(iunit,mslp_varid, 1,1,1))
-         call check(nf_put_att_text(iunit, mslp_varid, "units",
-     +      3, "hPa"))
-         call check(nf_put_att_text(iunit, mslp_varid, "standard_name",
-     +      25, "air_pressure_at_sea_level"))
-       end if
-       if (do_accdd) then
-         do m=1,ncomp
-           mm=idefcomp(m)
-           call check(nf_def_var(iunit,"acc_dry_dep_"//compnamemc(mm),
-     +             NF_FLOAT,3,dimids3d,accdd_varid(m)))
-           call check(NF_DEF_VAR_DEFLATE(iunit,accdd_varid(m), 1,1,1))
-           call check(nf_put_att_text(iunit,accdd_varid(m),"units",
-     +        5, "Bq/m2"))
-           call check(nf_put_att_text(iunit,accdd_varid(m),"metno_name",
-     +        20+len_trim(compnamemc(mm)),
-     +        "accumulated_dry_dep_"//TRIM(compnamemc(mm))))
-         end do
-       end if
-       filename=filnam(1:lenstr(filnam,1))//'_level_names'
-       open (90,file=filename,access='sequential',form='formatted')
-       write(90,1090) 0,'Total'
+       chksz3d(1) = nx
+       chksz3d(2) = ny
+       chksz3d(3) = 1
+       chksz4d(1) = nx
+       chksz4d(2) = ny
+       chksz4d(3) = 1
+       chksz4d(4) = 1
+
+       if (imodlevel.eq.1)
+     +    call nc_declare_3d(iunit, dimids3d, ps_varid,
+     +                          chksz3d, "surface_air_pressure",
+     +                          "hPa", "surface_air_pressure", "")
+       if (imslp.eq.1)
+     +    call nc_declare_3d(iunit, dimids3d, mslp_varid,
+     +                          chksz3d, "air_pressure_at_sea_level",
+     +                          "hPa", "air_pressure_at_sea_level", "")
+
        do m=1,ncomp
          mm=idefcomp(m)
-         k=lenstr(compnamemc(mm),1)
-         write(90,1090) idcomp(mm),compnamemc(mm)(1:k)
+         call nc_declare_3d(iunit, dimids3d, varid,
+     +          chksz3d, "acc_dry_dep_"//compnamemc(mm),
+     +          "Bq/m2","","accumulated_dry_dep_"//TRIM(compnamemc(mm)))
+         accdd_varid(m) = varid
        end do
- 1090   format(1x,i5,1x,'"',a,'"')
-       close(90)
        call check(nf_enddef(iunit))
       end if
 
@@ -1393,3 +1369,36 @@ c     before the return statement
 #endif
       return
       end subroutine fldout_nc
+
+
+      subroutine nc_declare_3d(iunit, dimids, varid,
+     +                          chksz, varnm,
+     +                          units, stdnm, metnm)
+       implicit none
+       include 'netcdf.inc'
+       INTEGER, INTENT(OUT)   :: varid
+       INTEGER, INTENT(IN)    :: iunit, dimids(3), chksz(3)
+       CHARACTER(LEN=*), INTENT(IN) :: varnm, stdnm, metnm, units
+
+
+       write(9,*) "declaring ", iunit, TRIM(varnm), TRIM(units)
+     +     ,TRIM(stdnm),TRIM(metnm)
+       call check(nf_def_var(iunit, TRIM(varnm),
+     +     NF_FLOAT, 3, dimids, varid))
+c       call check(NF_DEF_VAR_CHUNKING(iunit, varid, NF_CHUNKED, chksz))
+       call check(NF_DEF_VAR_DEFLATE(iunit, varid, 1,1,1))
+       call check(nf_put_att_text(iunit,varid, "units",
+     +     LEN_TRIM(units), TRIM(units)))
+       if (LEN_TRIM(stdnm).gt.0)
+     +    call check(nf_put_att_text(iunit,varid,"standard_name",
+     +    LEN_TRIM(stdnm), TRIM(stdnm)))
+!       if (LEN_TRIM(metnm).gt.0)
+!     +    call check(nf_put_att_text(iunit,varid,"metno_name",
+!     +    LEN_TRIM(metnm), TRIM(metnm)))
+
+       call check(nf_put_att_text(iunit,varid,"coordinates",
+     +    LEN_TRIM("x y"), "x y"))
+       call check(nf_put_att_text(iunit,varid,"grid_mapping",
+     +    LEN_TRIM("projection"), "projection"))
+
+      end subroutine nc_declare_3d
