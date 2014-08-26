@@ -1664,7 +1664,7 @@ c..polar_stereographic
 
          pi = 4.D0*DATAN(1.D0)
 c..increment
-         val = 6371000*(1+sin(gparam(5)*pi/180)) / gparam(2)
+         val = 6371000*(1+sin(gparam(5)*pi/180)) / gparam(3)
          do i=1,nx
            xvals(i) = (i-gparam(1))*val
          end do
@@ -1685,8 +1685,8 @@ c..lcc
      +     LEN_TRIM("projection_y_axis"),
      +         TRIM("projection_y_axis")))
          call check(nf_put_att_text(iunit,proj_varid,
-     +     "grid_mapping_name", LEN_TRIM("polar_stereographic"),
-     +                              TRIM("polar_stereographic")))
+     +     "grid_mapping_name", LEN_TRIM("lambert_conformal_conic"),
+     +                              TRIM("lambert_conformal_conic")))
          val = 180+gparam(5)
          if (val > 360) val = val - 360
          call check(nf_put_att_real(iunit,proj_varid,
@@ -1720,7 +1720,7 @@ c..lcc
        call check(nf_put_var_real(iunit, y_varid, yvals))
        call check(nf_sync(iunit))
 
-c       if (igtype.ne.2) then  !!!! can't get 'coordinates working yet, but I have projections
+c       if (igtype.ne.2) then  !!!! can't get coordinates working yet, but I have projections, so not needed
         if (igtype.eq.1000) then
          call check(nf_def_var(iunit, "lon",
      +       NF_FLOAT, 2, dimids, lon_varid))
