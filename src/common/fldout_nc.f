@@ -1594,6 +1594,10 @@ c     +    LEN_TRIM("lon lat"), "lon lat"))
        call check(nf_def_var(iunit, "projection",
      +     NF_SHORT, 0, 0, proj_varid))
 
+       call check(nf_put_att_text(iunit,NF_GLOBAL, "Conventions",
+     +   LEN_TRIM("CF-1.0"), "CF-1.0"))
+
+
        if (igtype.eq.2) then
 c..geographic
          call check(nf_put_att_text(iunit,x_varid, "units",
