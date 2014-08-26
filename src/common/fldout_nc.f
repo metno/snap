@@ -1648,8 +1648,8 @@ c..polar_stereographic
      +     LEN_TRIM("projection_x_coordinate"),
      +         TRIM("projection_x_coordinate")))
          call check(nf_put_att_text(iunit,y_varid, "standard_name",
-     +     LEN_TRIM("projection_y_axis"),
-     +         TRIM("projection_y_axis")))
+     +     LEN_TRIM("projection_y_coordinate"),
+     +         TRIM("projection_y_coordinate")))
          call check(nf_put_att_text(iunit,proj_varid,
      +     "grid_mapping_name", LEN_TRIM("polar_stereographic"),
      +                              TRIM("polar_stereographic")))
@@ -1682,8 +1682,8 @@ c..lcc
      +     LEN_TRIM("projection_x_coordinate"),
      +         TRIM("projection_x_coordinate")))
          call check(nf_put_att_text(iunit,y_varid, "standard_name",
-     +     LEN_TRIM("projection_y_axis"),
-     +         TRIM("projection_y_axis")))
+     +     LEN_TRIM("projection_y_coordinate"),
+     +         TRIM("projection_y_coordinate")))
          call check(nf_put_att_text(iunit,proj_varid,
      +     "grid_mapping_name", LEN_TRIM("lambert_conformal_conic"),
      +                              TRIM("lambert_conformal_conic")))
