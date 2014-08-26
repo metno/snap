@@ -1645,8 +1645,8 @@ c..polar_stereographic
          call check(nf_put_att_text(iunit,y_varid, "units",
      +     LEN_TRIM("m"), TRIM("m")))
          call check(nf_put_att_text(iunit,x_varid, "standard_name",
-     +     LEN_TRIM("projection_x_axis"),
-     +         TRIM("projection_x_axis")))
+     +     LEN_TRIM("projection_x_coordinate"),
+     +         TRIM("projection_x_coordinate")))
          call check(nf_put_att_text(iunit,y_varid, "standard_name",
      +     LEN_TRIM("projection_y_axis"),
      +         TRIM("projection_y_axis")))
@@ -1661,10 +1661,10 @@ c..polar_stereographic
      +     "standard_parallel", NF_FLOAT, 1,gparam(5)))
          call check(nf_put_att_int(iunit,proj_varid,
      +     "latitude_of_projection_origin", NF_INT, 1, 90))
-
          pi = 4.D0*DATAN(1.D0)
 c..increment
          val = 6371000*(1+sin(gparam(5)*pi/180)) / gparam(3)
+c         write(*,*) "gparam dx", gparam, val
          do i=1,nx
            xvals(i) = (i-gparam(1))*val
          end do
@@ -1679,8 +1679,8 @@ c..lcc
          call check(nf_put_att_text(iunit,y_varid, "units",
      +     LEN_TRIM("m"), TRIM("m")))
          call check(nf_put_att_text(iunit,x_varid, "standard_name",
-     +     LEN_TRIM("projection_x_axis"),
-     +         TRIM("projection_x_axis")))
+     +     LEN_TRIM("projection_x_coordinate"),
+     +         TRIM("projection_x_coordinate")))
          call check(nf_put_att_text(iunit,y_varid, "standard_name",
      +     LEN_TRIM("projection_y_axis"),
      +         TRIM("projection_y_axis")))
