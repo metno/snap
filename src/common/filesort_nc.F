@@ -38,7 +38,7 @@ c
 
       integer i, j, ncid, nf, varid, dimid, tsize, ierror
       real(kind=8) times(mavail)
-      integer zeroHour
+      integer zeroHour, tunitLen
       integer(kind=8) eTimes(mavail)
       integer(kind=8) :: add_offset, scalef
       integer, dimension(6) :: dateTime
@@ -64,8 +64,11 @@ c
         end if
         call check(nf_get_vara_double(ncid, varid, (/1/), (/tsize/),
      +             times), "time")
+        call check(nf_inq_attlen(ncid, varid, "units", tunitLen))
         call check(nf_get_att_text(ncid, varid, "units", tunits),
      +             "time units")
+! shrink units-string to actual size
+        tunits = tunits(:tunitLen)
         add_offset = timeUnitOffset(tunits)
         scalef = timeUnitScale(tunits)
         do i = 1, tsize
