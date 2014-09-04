@@ -255,7 +255,9 @@ c
        speed=sqrt(u*u+v*v)
 #endif
 ccc JB 29.04pdata(3,np)
-       if(pdata(3,np) .gt. vmax) pdata(9,np)=0.0
+c       if(pdata(3,np) .gt. vmax) pdata(9,np)=0.0
+ccc JB 
+       if(pdata(3,np) .gt. vmax) pdata(3,np)=vmax
 ccc
 c
 c..store u,v for rwalk
