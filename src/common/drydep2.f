@@ -68,6 +68,7 @@ c
          endif
          if(radiusmym(m) .gt. 10.0) then
            deprate= 1.0-exp(-tstep*(0.002+pdata(10,n))/h)	!particle r>10
+           if (pdata(3,n) .eq. vlevel(1)) deprate = 1.  ! complete deposition when particle hits ground
          endif
           dep=deprate*pdata(9,n)
           pdata(9,n)=pdata(9,n)-dep
