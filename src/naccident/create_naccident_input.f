@@ -2,7 +2,7 @@ c create_naccident_input.f
 c
 c Program reads the input file for SNAP run with nuclear accidents specified by NRPA.
 c The input file from NRPA is: nrpa_input.txt.txt
-c Than, program reads a list of isotopes with the identification number, 
+c Than, program reads a list of isotopes with the identification number,
 c name and decay rate from the file isotope_list.txt
 c The output from the program is: snap.input - standard input file for the snap model
 c
@@ -78,7 +78,7 @@ c
        read(1,*) long
        write(*,*) long,' LONGITUDE'
        read(1,'(i4,5(1x,i2))') (idate(i),i=1,6)
-       write(*,'(i4,1h-,i2.2,1h-,i2.2,1hT,i2.2,1h:,i2.2,1h:i2.2,1hZ)') 
+       write(*,'(i4,1h-,i2.2,1h-,i2.2,1hT,i2.2,1h:,i2.2,1h:i2.2,1hZ)')
      &(idate(i),i=1,6)
 c
 c... isotepes involved
@@ -91,7 +91,7 @@ c
              if(isoid0 .eq. isoid(j)) isoin(i)=j
           enddo
           j=isoin(i)
-          write(*,'(i4,1x,a7,i3,e10.3)') 
+          write(*,'(i4,1x,a7,i3,e10.3)')
      &     isoid(j),isoname(j),isotype(j),drate(j)
        enddo
 c
@@ -133,7 +133,7 @@ c check by isoid0
            j1=isoin(i)
            write(*,'(i4,1x,a7,1x,i1,2e10.3,2e10.3)') isoid0,
      &      isoname(j1),isotype(j1),drate(j1),eratein(i),emi(i,j+1)
-         enddo 
+         enddo
        enddo
        lowrel(1)=lowrel(2)
        toprel(1)=toprel(2)
@@ -157,13 +157,14 @@ c	write(2,"(1(A)") 'TIME.RUN  = 66h','GRAPHICS.OFF',
      & 'BOUNDARY.LAYER.FULL.MIX.OFF','DRY.DEPOSITION.NEW',
      & 'WET.DEPOSITION.NEW',
      & 'TIME.RELEASE.PROFILE.STEPS'
-        fmt="(A,T21,10(i10,:,','))"
+        fmt="(A,T21,??(i10,:,','))"
+        write(fmt(8:9),"(I2.2)"),nrel+1
        write(2,fmt) 'RELEASE.HOUR=',(ihour(i),i=1,nrel+1)
        write(2,fmt) 'RELEASE.RADIUS.M=',(iradius(i),i=1,nrel+1)
        write(2,fmt) 'RELEASE.LOWER.M=',(lowrel(i),i=1,nrel+1)
        write(2,fmt) 'RELEASE.UPPER.M=',(toprel(i),i=1,nrel+1)
         fmt="(A,??(1pe10.3,','),1pe10.3,1x,'''C',I2.2,'''')"
-        write(fmt(4:5),"(I2.2)"),nrel!+1
+        write(fmt(4:5),"(I2.2)"),nrel
        do i=1,niso
           write(2,fmt) "RELEASE.BQ/SEC.COMP=",(emi(i,j),j=1,nrel+1),i
        enddo
@@ -177,25 +178,25 @@ c
          write(2,"('Component= C',i2.2)") i
 c	  write(2,"('Type=',i2)") isotype(j)
          write(2,"('RADIOACTIVE.DECAY.ON')")
-         write(2,"('HALF.LIFETIME.DAYS= ',f10.4)") 
+         write(2,"('HALF.LIFETIME.DAYS= ',f10.4)")
      &(log(2.)/(drate(j)*60.*60.*24.))
          select case (isotype(j))
            case(0)
 c	    write(2,*) 'Noble gas'
              write(2,"('DRY.DEP.OFF')")
-   	         write(2,"('WET.DEP.OFF')")
+                write(2,"('WET.DEP.OFF')")
              write(2,"('GRAVITY.OFF')")
            case(1)
 c	    write(2,*) 'Gas'
              write(2,"('DRY.DEP.ON')")
- 	         write(2,"('WET.DEP.ON')")
+              write(2,"('WET.DEP.ON')")
              write(2,"('RADIUS.MICROMETER=0.05')")
              write(2,"('DENSITY.G/CM3=0.001')")
              write(2,"('GRAVITY.FIXED.M/S=0.00001')")
            case(2)
 c	    write(2,*) 'Aerosol'
              write(2,"('DRY.DEP.ON')")
- 	         write(2,"('WET.DEP.ON')")
+              write(2,"('WET.DEP.ON')")
              write(2,"('RADIUS.MICROMETER=0.55')")
              write(2,"('DENSITY.G/CM3=2.3')")
              write(2,"('GRAVITY.FIXED.M/S=0.0002')")
@@ -205,77 +206,77 @@ c	    write(2,*) 'Aerosol'
              call exit(1)
          end select
 c
-         write(2,"('FIELD.IDENTIFICATION= ',i2)") i	  
+         write(2,"('FIELD.IDENTIFICATION= ',i2)") i
        enddo
 c
        write(2,"('PRECIP(MM/H).PROBAB= 0.0,0.00, 0.5,0.31, 1.0,0.48,'
      &' 1.5,0.60, 2.0,0.66, ',
      &'3.3,0.72, 8.3,0.80, 15.,0.85, 25.,0.91')")
 c
-   	write(2,"('*')")
-   	write(2,"('REMOVE.RELATIVE.MASS.LIMIT= 0.01')")
-   	write(2,"('*')")
-   	write(2,"('TIME.STEP= 300.')")
-   	write(2,"('STEP.HOUR.INPUT.MIN=  3')")
-   	write(2,"('STEP.HOUR.INPUT.MAX= 12')")
-   	write(2,"('STEP.HOUR.OUTPUT.FIELDS= 240')")
-   	write(2,"('ASYNOPTIC.OUTPUT')")
+       write(2,"('*')")
+       write(2,"('REMOVE.RELATIVE.MASS.LIMIT= 0.01')")
+       write(2,"('*')")
+       write(2,"('TIME.STEP= 300.')")
+       write(2,"('STEP.HOUR.INPUT.MIN=  3')")
+       write(2,"('STEP.HOUR.INPUT.MAX= 12')")
+       write(2,"('STEP.HOUR.OUTPUT.FIELDS= 240')")
+       write(2,"('ASYNOPTIC.OUTPUT')")
 c
-   	write(2,"('*')")
-   	write(2,"('TOTAL.COMPONENTS.OFF')")
-   	write(2,"('MSLP.ON')")
-   	write(2,"('PRECIPITATION.ON')")
-   	write(2,"('MODEL.LEVEL.FIELDS.OFF')")
+       write(2,"('*')")
+       write(2,"('TOTAL.COMPONENTS.OFF')")
+       write(2,"('MSLP.ON')")
+       write(2,"('PRECIPITATION.ON')")
+       write(2,"('MODEL.LEVEL.FIELDS.OFF')")
 c
-   	write(2,"('*')")
-   	write(2,"('POSITIONS.DECIMAL')")
+       write(2,"('*')")
+       write(2,"('POSITIONS.DECIMAL')")
 c
-   	write(2,"('*')")
-   	write(2,"('** Hirlam.12km')")
-   	write(2,"('GRID.INPUT= 88,12')")
-   	write(2,"('GRID.RUN=   88,12, 1,1,1')")
-   	write(2,"('DATA.ETA.LEVELS')")
-   	write(2,"('LEVELS.INPUT= 61,',
+       write(2,"('*')")
+       write(2,"('** Hirlam.12km')")
+       write(2,"('GRID.INPUT= 88,12')")
+       write(2,"('GRID.RUN=   88,12, 1,1,1')")
+       write(2,"('DATA.ETA.LEVELS')")
+       write(2,"('LEVELS.INPUT= 61,',
      &'0,60,59,58,57,56,55,54,53,52,51,50,'
      &'49,48,47,46,45,44,43,42,41,40,',
      &'39,38,37,36,35,34,33,32,31,30,',
      &'29,28,27,26,25,24,23,22,21,20,',
-     &'19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1')") 
-   	write(2,"('*')")
-   	write(2,"('** INPUT FIELD FILES')")
-   	write(2,"('FORECAST.HOUR.MIN= +3')")
-   	write(2,"('FORECAST.HOUR.MAX= +9999')")
+     &'19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1')")
+       write(2,"('*')")
+       write(2,"('** INPUT FIELD FILES')")
+       write(2,"('FORECAST.HOUR.MIN= +3')")
+       write(2,"('FORECAST.HOUR.MAX= +9999')")
 c
-   	write(2,"('*')")
+       write(2,"('*')")
        write(2,"('FIELD.INPUT= /opdata/hirlam12/h12snap00.dat-1')")
-   	write(2,"('FIELD.INPUT= /opdata/hirlam12/h12sf00.dat-1')")
-   	write(2,"('FIELD.INPUT= /opdata/hirlam12/h12snap06.dat-1')")
-   	write(2,"('FIELD.INPUT= /opdata/hirlam12/h12sf06.dat-1')")
-   	write(2,"('FIELD.INPUT= /opdata/hirlam12/h12snap12.dat-1')")
-   	write(2,"('FIELD.INPUT= /opdata/hirlam12/h12sf12.dat-1')")
-   	write(2,"('FIELD.INPUT= /opdata/hirlam12/h12snap18.dat-1')")
-   	write(2,"('FIELD.INPUT= /opdata/hirlam12/h12sf18.dat-1')")
-   	write(2,"('FIELD.INPUT= /opdata/hirlam12/h12snap00.dat')")
-   	write(2,"('FIELD.INPUT= /opdata/hirlam12/h12sf00.dat')")
-   	write(2,"('FIELD.INPUT= /opdata/hirlam12/h12snap06.dat')")
-   	write(2,"('FIELD.INPUT= /opdata/hirlam12/h12sf06.dat')")
-   	write(2,"('FIELD.INPUT= /opdata/hirlam12/h12snap12.dat')")
-   	write(2,"('FIELD.INPUT= /opdata/hirlam12/h12sf12.dat')")
-   	write(2,"('FIELD.INPUT= /opdata/hirlam12/h12snap18.dat')")
-   	write(2,"('FIELD.INPUT= /opdata/hirlam12/h12sf18.dat')")
+       write(2,"('FIELD.INPUT= /opdata/hirlam12/h12sf00.dat-1')")
+       write(2,"('FIELD.INPUT= /opdata/hirlam12/h12snap06.dat-1')")
+       write(2,"('FIELD.INPUT= /opdata/hirlam12/h12sf06.dat-1')")
+       write(2,"('FIELD.INPUT= /opdata/hirlam12/h12snap12.dat-1')")
+       write(2,"('FIELD.INPUT= /opdata/hirlam12/h12sf12.dat-1')")
+       write(2,"('FIELD.INPUT= /opdata/hirlam12/h12snap18.dat-1')")
+       write(2,"('FIELD.INPUT= /opdata/hirlam12/h12sf18.dat-1')")
+       write(2,"('FIELD.INPUT= /opdata/hirlam12/h12snap00.dat')")
+       write(2,"('FIELD.INPUT= /opdata/hirlam12/h12sf00.dat')")
+       write(2,"('FIELD.INPUT= /opdata/hirlam12/h12snap06.dat')")
+       write(2,"('FIELD.INPUT= /opdata/hirlam12/h12sf06.dat')")
+       write(2,"('FIELD.INPUT= /opdata/hirlam12/h12snap12.dat')")
+       write(2,"('FIELD.INPUT= /opdata/hirlam12/h12sf12.dat')")
+       write(2,"('FIELD.INPUT= /opdata/hirlam12/h12snap18.dat')")
+       write(2,"('FIELD.INPUT= /opdata/hirlam12/h12sf18.dat')")
 c
-   	write(2,"('*')")
-   	write(2,"('FIELD_TIME.FORECAST')")
+       write(2,"('*')")
+       write(2,"('FIELD_TIME.FORECAST')")
 c
-   	write(2,"('*')")
+       write(2,"('*')")
        write(2,"('** OUTPUT FILES')")
        write(2,"('FIELD.OUTPUT= snap.felt')")
        write(2,"('LOG.FILE=     snap.log')")
 c
-   	write(2,"('*')")
+       write(2,"('*')")
        write(2,"('DEBUG.ON')")
 c
-   	write(2,"('*')")
+       write(2,"('*')")
        write(2,"('ARGOS.OUTPUT.ON')")
        write(2,"('ARGOS.OUTPUT.DEPOSITION.FILE=    argos_dep')")
        write(2,"('ARGOS.OUTPUT.CONCENTRATION.FILE= argos_conc_inst')")
@@ -290,4 +291,4 @@ c
        write(*,*)
 c
 100    stop
-       end	
+       end
