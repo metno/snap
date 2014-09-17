@@ -2070,8 +2070,8 @@ c
         end if
 c
 c#############################################################
-c      write(6,*) 'tf1,tf2,tnow,tnext,tstep,ipr,nxtinf: ',
-c     +		  tf1,tf2,tnow,tnext,tstep,iprecip,nxtinf
+c     write(6,*) 'tf1,tf2,tnow,tnext,tstep,ipr: ',
+c    +		  tf1,tf2,tnow,tnext,tstep,iprecip
 c     write(9,*) 'tf1,tf2,tnow,tnext,tstep,ipr: ',
 c    +		  tf1,tf2,tnow,tnext,tstep,iprecip
 c#############################################################

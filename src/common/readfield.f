@@ -346,7 +346,12 @@ c..precipitation between input time 't1' and 't2'
 c
       if(navailt1.le.0) goto 190
 c
-      nhdiff=abs(iavail(8,navailt2)-iavail(8,navailt1))
+        if(nhleft.gt.0) then
+          nhdiff=iavail(8,navailt2)-iavail(8,navailt1)
+        else
+c backward calculation
+          nhdiff=iavail(8,navailt1)-iavail(8,navailt2)
+        end if
 c
       if(nhdiff.gt.mprecip) then
         write(6,*) '*READFIELD* PRECIPITATION PROBLEM'

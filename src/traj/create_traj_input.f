@@ -39,19 +39,20 @@ c
         write(fmt(26:27),"(I2.2)"), len_trim(runident)
         write(*,*)'fmt=', fmt
 c
-        write(*,*) 
+        write(*,*)
         read(1,*) lat
         write(*,*) lat
         read(1,*) long
         write(*,*) long
         read(1,'(i4,3i2.2)') (idate(i),i=1,4)
-        write(*,'(i4,3i2.2)') (idate(i),i=1,4)	
+        write(*,'(i4,3i2.2)') (idate(i),i=1,4)
         read(1,*) lname1
         if (lname1(1:7).eq.'forward'
      &    .or.lname1(1:8).eq.'backward') then
 c           new input format format with mode and duration (iforecast)
             read(1,*) iforecast
             read(1,*) ntraj
+            if (lname1(1:8).eq.'backward') iforecast = - iforecast
         else
 c           old format
             read (lname1, '(I10)') ntraj
@@ -167,7 +168,7 @@ c
            write(2,'(a)') trim(tname(i))
         enddo
         write(2,*) '**----'
-        close (2)	
+        close (2)
 c
         stop
         end
