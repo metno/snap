@@ -1496,8 +1496,8 @@ c     before the return statement
 c
   900 ierror=1
 c..close output felt (field) file
-      call mwfelt(13,filnam,iunit,1,nx*ny,field1,1.0,
-     +            ldata,idata,ierr)
+c      call mwfelt(13,filnam,iunit,1,nx*ny,field1,1.0,
+c     +            ldata,idata,ierr)
   920 write(9,*) '*FLDOUT_NC*  Terminates due to write error.'
 c
 #if defined(DRHOOK)
