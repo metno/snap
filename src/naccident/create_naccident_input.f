@@ -107,14 +107,14 @@ c
        read(1,*) nrel
        write(*,*) nrel,' RELEASE INTERVALS'
        j=0
-       ihour(j+1)=0
+       ihour(1)=0
        write(*,'('' step='',i3,'' ihour='',i3)') j+1,ihour(j+1)
        do j=1,nrel
          write(*,*) j,' INTERVAL'
          read(1,*)
          read(1,*) hour, minute
          write(*,'(i3,'' hours'',i3,'' minutes'')') hour,minute
-         ihour(j+1)= ihour(j)+nint(real(hour)+real(minute)/60.0)
+         ihour(j+1)= nint(real(hour)+real(minute)/60.0)
 c	  ihour(j+)=ihour(j)+hour
          write(*,'('' step='',i3,'' ihour='',i3)') j+1,ihour(j+1)
          read(1,*) hmin, hmax
@@ -135,11 +135,15 @@ c check by isoid0
      &      isoname(j1),isotype(j1),drate(j1),eratein(i),emi(i,j+1)
          enddo
        enddo
-       lowrel(1)=lowrel(2)
-       toprel(1)=toprel(2)
-       do i=1,niso
-         emi(i,1)=emi(i,2)
-       enddo
+c snap expects start of period, not end of period
+c move emissions and height to a time-slot earlier
+       do j=2,nrel+1
+         lowrel(j-1)=lowrel(j)
+         toprel(j-1)=toprel(j)
+         do i=1,niso
+           emi(i,j-1)=emi(i,j)
+         enddo
+       end do
 c
 c... file: snap.input
 c
