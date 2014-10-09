@@ -39,30 +39,44 @@
 </xsl:template>
 
 <xsl:template match="SourceTime">
-<xsl:choose>
-  <xsl:when test="contains(@EndTime,'H')">
-		<xsl:value-of select="substring-after(substring-before(@EndTime,'H'),'PT')"/>
-  </xsl:when>
-  <xsl:otherwise>
-		<xsl:text>0</xsl:text>
-  </xsl:otherwise>
-</xsl:choose>
-<xsl:text> </xsl:text>
-<xsl:choose>
-  <xsl:when test="contains(@EndTime,'M')">
-  	<xsl:choose>
-  		<xsl:when test="contains(@EndTime,'H')">
-				<xsl:value-of select="substring-after(substring-before(@EndTime,'M'),'H')"/>
-			</xsl:when>
-  		<xsl:otherwise>
-				<xsl:value-of select="substring-after(substring-before(@EndTime,'M'),'PT')"/>
-  		</xsl:otherwise>
-  	</xsl:choose>
-  </xsl:when>
-  <xsl:otherwise>
-		<xsl:text>0</xsl:text>
-  </xsl:otherwise>
-</xsl:choose>
+<xsl:variable name="days">
+	<xsl:choose>
+ 	 <xsl:when test="contains(@EndTime,'D')">
+			<xsl:value-of select="substring-after(substring-before(@EndTime,'D'),'P')"/>
+ 	 </xsl:when>
+ 	 <xsl:otherwise>
+			<xsl:value-of select="0"/>
+ 	 </xsl:otherwise>
+	</xsl:choose>
+</xsl:variable>
+<xsl:variable name="hours">
+	<xsl:choose>
+		<xsl:when test="contains(@EndTime,'H')">
+			<xsl:value-of select="substring-after(substring-before(@EndTime,'H'),'T')"/>
+  	</xsl:when>
+  	<xsl:otherwise>
+			<xsl:text>0</xsl:text>
+  	</xsl:otherwise>
+	</xsl:choose>
+</xsl:variable>	
+<xsl:variable name="minutes">
+	<xsl:choose>
+  	<xsl:when test="contains(@EndTime,'M')">
+  		<xsl:choose>
+  			<xsl:when test="contains(@EndTime,'H')">
+					<xsl:value-of select="substring-after(substring-before(@EndTime,'M'),'H')"/>
+				</xsl:when>
+  			<xsl:otherwise>
+					<xsl:value-of select="substring-after(substring-before(@EndTime,'M'),'T')"/>
+  			</xsl:otherwise>
+  		</xsl:choose>
+  	</xsl:when>
+  	<xsl:otherwise>
+			<xsl:text>0</xsl:text>
+  	</xsl:otherwise>
+	</xsl:choose>
+</xsl:variable>
+<xsl:value-of select="concat(($days * 24 + $hours),' ',($minutes))"/>
 <xsl:text> HOUR,MINUTE&#10;</xsl:text>
 </xsl:template>
 
