@@ -18,7 +18,9 @@ c
        integer idate(6)	! date and time of start
        integer iforecast	! forecast in hours
        integer nlist		! Number of isotopes on the list
+       integer maxrel ! max number of releases
        parameter(nlist=382)
+       parameter(maxrel=100)
        integer isoid(nlist)	! Isotope id on the list
        integer isoin(nlist)	! Isotope number on the linput file
        character*7 isoname(nlist)	! Isotope name on the list
@@ -32,11 +34,11 @@ c
        integer hmin,hmax	! minimum and maximum height of release interval
        integer nrel		! number of release intervals
        integer niso		! number of isotopes released
-       integer ihour(11)	! hours for emissin steps (in hours)
-       integer iradius(11)	! release radius for emissin steps (in m)
-       integer lowrel(11)	! bottom of release (in m)
-       integer toprel(11)	! top of release (in m)
-       real emi(nlist,11)		! emission rates for each isotope and emission step emi(iso,step)
+       integer ihour(maxrel)	! hours for emissin steps (in hours)
+       integer iradius(maxrel)	! release radius for emissin steps (in m)
+       integer lowrel(maxrel)	! bottom of release (in m)
+       integer toprel(maxrel)	! top of release (in m)
+       real emi(nlist,maxrel)		! emission rates for each isotope and emission step emi(iso,step)
        character*3 cname(nlist)	! component name for snap.input file
         character*64 fmt	! Alvaro's variable
        integer npart		! Maximum number of particles released
@@ -45,7 +47,7 @@ c-------------------------------------------------------------------------------
 c
 c... releas radius for emission steps
 c
-       do i=1,10
+       do i=1,maxrel
           iradius(i)=50
        enddo
 c
