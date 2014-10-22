@@ -2136,7 +2136,7 @@ c
 c
 c..remove particles outside grid domain or without any mass left
 c
-        call rmpart(rmlimit)
+        if (rmlimit.ne.0) call rmpart(rmlimit)
 c
 c..interpolation of boundary layer top, height, precipitation etc.
 c

@@ -136,7 +136,7 @@ c
        write(*,*) ' ONLY these values are allowed:'
        write(*,*) ' 1,3,10,30,100,300,1000,3000'
        write(*,*) ' STOP with ERROR in explosive yield'
-       stop       
+       stop
 888       continue
 c
 c... maximum number of particles released
@@ -204,25 +204,25 @@ cRELEASE.BQ/STEP.COMP= 1.0e+16 'Aerosol_250mym'
 c        fmt="(A,e10.1,1x,'''Aerosol_2.2mym''')"
 c       write(2,fmt) "RELEASE.BQ/STEP.COMP=",activity
        activities = 10 ! 10 aerosol classes
-       write(2,"(A,e10.1,1x,'''Aerosol_2.2mym''')") 
+       write(2,"(A,e10.1,1x,'''Aerosol_2.2mym''')")
      &"RELEASE.BQ/STEP.COMP=",activity/activities
-       write(2,"(A,e10.1,1x,'''Aerosol_4.4mym''')") 
+       write(2,"(A,e10.1,1x,'''Aerosol_4.4mym''')")
      &"RELEASE.BQ/STEP.COMP=",activity/activities
-       write(2,"(A,e10.1,1x,'''Aerosol_8.6mym''')") 
+       write(2,"(A,e10.1,1x,'''Aerosol_8.6mym''')")
      &"RELEASE.BQ/STEP.COMP=",activity/activities
-       write(2,"(A,e10.1,1x,'''Aerosol_14.6mym''')") 
+       write(2,"(A,e10.1,1x,'''Aerosol_14.6mym''')")
      &"RELEASE.BQ/STEP.COMP=",activity/activities
-       write(2,"(A,e10.1,1x,'''Aerosol_22.8mym''')") 
+       write(2,"(A,e10.1,1x,'''Aerosol_22.8mym''')")
      &"RELEASE.BQ/STEP.COMP=",activity/activities
-       write(2,"(A,e10.1,1x,'''Aerosol_36.1mym''')") 
+       write(2,"(A,e10.1,1x,'''Aerosol_36.1mym''')")
      &"RELEASE.BQ/STEP.COMP=",activity/activities
-       write(2,"(A,e10.1,1x,'''Aerosol_56.5mym''')") 
+       write(2,"(A,e10.1,1x,'''Aerosol_56.5mym''')")
      &"RELEASE.BQ/STEP.COMP=",activity/activities
-       write(2,"(A,e10.1,1x,'''Aerosol_92.3mym''')") 
+       write(2,"(A,e10.1,1x,'''Aerosol_92.3mym''')")
      &"RELEASE.BQ/STEP.COMP=",activity/activities
-       write(2,"(A,e10.1,1x,'''Aerosol_173.2mym''')") 
+       write(2,"(A,e10.1,1x,'''Aerosol_173.2mym''')")
      &"RELEASE.BQ/STEP.COMP=",activity/activities
-       write(2,"(A,e10.1,1x,'''Aerosol_250.0mym''')") 
+       write(2,"(A,e10.1,1x,'''Aerosol_250.0mym''')")
      &"RELEASE.BQ/STEP.COMP=",activity/activities
        write(2,"('* PARTICLE CLASSES')")
        write(2,"('COMPONENT= Aerosol_2.2mym')")
@@ -316,7 +316,7 @@ c
      &'3.3,0.72, 8.3,0.80, 15.,0.85, 25.,0.91')")
 c
           write(2,"('*')")
-          write(2,"('REMOVE.RELATIVE.MASS.LIMIT= 0.01')")
+          write(2,"('REMOVE.RELATIVE.MASS.LIMIT= 0.')")
           write(2,"('*')")
           write(2,"('TIME.STEP= 300.')")
           write(2,"('STEP.HOUR.INPUT.MIN=  3')")
@@ -343,7 +343,7 @@ c
      &'49,48,47,46,45,44,43,42,41,40,',
      &'39,38,37,36,35,34,33,32,31,30,',
      &'29,28,27,26,25,24,23,22,21,20,',
-     &'19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1')") 
+     &'19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1')")
           write(2,"('*')")
           write(2,"('** INPUT FIELD FILES')")
           write(2,"('FORECAST.HOUR.MIN= +3')")
@@ -393,4 +393,4 @@ c
        write(*,*)
 c
        stop
-       end       
+       end
