@@ -52,7 +52,9 @@ c
 c           new input format format with mode and duration (iforecast)
             read(1,*) iforecast
             read(1,*) ntraj
-            if (lname1(1:8).eq.'backward') iforecast = - iforecast
+            if (lname1(1:8).eq.'backward') then
+                iforecast = - iforecast
+            end if
         else
 c           old format
             read (lname1, '(I10)') ntraj
