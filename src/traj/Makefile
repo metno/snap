@@ -10,8 +10,8 @@ include ../common/snap.mk
 snap_traj: link_incfiles $(CCOBJ) $(OBJ) $(MODELOBJ)
 	$(CXX) $(CXXFLAGS) $(CCOBJ) $(OBJ) $(MODELOBJ) $(LIBS) -o $@
 
-create_traj_input:
-	$(F77) create_traj_input.f -o $@
+create_traj_input: create_traj_input.o
+	$(F77) $< -o $@
 
 bsnap_traj: link_incfiles $(BOBJ) $(MODELOBJ)
 	$(F77) $(F77FLAGS) $(BOBJ) $(MODELOBJ) $(BLIBS) -o $@
@@ -22,3 +22,5 @@ clean: clean_links
 install: bsnap_traj create_traj_input
 	install $^ $(BINDIR)
 
+create_traj_input.o: create_traj_input.f
+	$(F77) -c $< -o $@
