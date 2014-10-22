@@ -220,7 +220,7 @@ c
      &'3.3,0.72, 8.3,0.80, 15.,0.85, 25.,0.91')")
 c
        write(2,"('*')")
-       write(2,"('REMOVE.RELATIVE.MASS.LIMIT= 0.01')")
+       write(2,"('REMOVE.RELATIVE.MASS.LIMIT= 0.')")
        write(2,"('*')")
        write(2,"('TIME.STEP= 300.')")
        write(2,"('STEP.HOUR.INPUT.MIN=  3')")
