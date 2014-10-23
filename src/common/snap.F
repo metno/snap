@@ -181,6 +181,7 @@ c-----------------------------------------------------------------------
 c
 c
       program bsnap
+      USE DateCalc  ,ONLY : epochToDate, timeGM
 #if defined(DRHOOK)
       USE PARKIND1  ,ONLY : JPIM     ,JPRB
       USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
@@ -237,6 +238,8 @@ c
       integer ierr1,ierr2,nsteph,nstep,nstepr,iunito
       integer nxtinf,ihread,isteph,lstepr,iendrel,istep,ihr1,ihr2,nhleft
       integer ierr,ihdiff,ihr,ifldout,idailyout,ihour,istop
+      integer  :: timeStart(6), timeCurrent(6)
+      integer(kind=8) :: epochSecs
       real    tstep,rmlimit,rnhrun,rnhrel,glat,glong,tf1,tf2,tnow,tnext
       real    x,y
       real    rscale,actweight
@@ -1987,12 +1990,12 @@ c
        write(13,'(i2)') ntraj
        write(13,'(1x,i4,4i2.2,''00'',
      &  2f9.3,f12.3,f15.2,f10.2)')
-     &  (itime(i),i=1,4),mod(istep,12)*5,y,x,rellower(1,1),distance,
-     &  speed
+     &  (itime(i),i=1,4),0,y,x,rellower(1,1),
+     &  distance,speed
        write(*,'(i4,1x,i4,i2,i2,2i2.2,''00'',
      &  2f9.3,f12.3,f15.2,f10.2)') istep,
-     &  (itime(i),i=1,4),mod(istep,12)*5,y,x,rellower(1,1),distance,
-     &  speed
+     &  (itime(i),i=1,4),0,y,x,rellower(1,1),
+     &  distance,speed
 #endif
             call xyconvert(1,x,y,2,geoparam,igtype,gparam,ierror)
             if(ierror.ne.0) then
@@ -2344,52 +2347,61 @@ c
 c
 #if defined(TRAJ)
 cjb
-       tmin=tmin+tstep/60.0
-       if(tmin .eq. 60) then
-          thour=thour+1
-          tmin=0.0
-       endif
-       if(thour .eq. 24) then
-          tday=tday+1
-          thour=0
-       endif
+
        distance=distance+speed*tstep
-       if(istep .gt. 0 .and. mod(istep,12).eq.0) then
+       if(istep .gt. 0 .and. mod(istep,nsteph).eq.0) then
+         timeStart(1) = 0
+         timeStart(2) = 0
+         timeStart(3) = itime1(4)
+         timeStart(4) = itime1(3)
+         timeStart(5) = itime1(2)
+         timeStart(6) = itime1(1)
+         epochSecs = timeGm(timeStart)
+         if (nhrun .ge. 0) then
+           epochSecs = epochSecs + nint(istep*tstep)
+         else
+           epochSecs = epochSecs - nint(istep*tstep)
+         endif
+         timeCurrent = epochToDate(epochSecs)
+
 c	if(istep .gt. -1) then
-       call vtime(itimev,ierror)
+         call vtime(itimev,ierror)
 c	write(*,*) (itime(i),i=1,5), ierror
 c	write(*,*) (itimev(i),i=1,5)
 c	write(*,*) 'istep=',istep, 'npart=',npart
 c	do k=1,npart
-       do k=1,1
+         do k=1,1
 c	write(*,*) istep,pdata(1,k),pdata(2,k),pdata(3,k)
-             x=pdata(1,k)
-             y=pdata(2,k)
-             i=int(x)
-             j=int(y)
-             call xyconvert(1,x,y,igtype,gparam,2,geoparam,ierror)
-             vlvl=pdata(3,k)
-             ilvl=vlvl*10000.
-             k1=ivlevel(ilvl)
-             k2=k1+1
-       zzz=hlevel2(i,j,k2)+(hlevel2(i,j,k1)-hlevel2(i,j,k2))*
-     &  (pdata(3,k)-vlevel(k2))/(vlevel(k1)-vlevel(k2))
+            x=pdata(1,k)
+            y=pdata(2,k)
+            i=int(x)
+            j=int(y)
+            call xyconvert(1,x,y,igtype,gparam,2,geoparam,ierror)
+            vlvl=pdata(3,k)
+            ilvl=vlvl*10000.
+            k1=ivlevel(ilvl)
+            k2=k1+1
+            zzz=hlevel2(i,j,k2)+(hlevel2(i,j,k1)-hlevel2(i,j,k2))*
+     &        (pdata(3,k)-vlevel(k2))/(vlevel(k1)-vlevel(k2))
 c	write(*,*) istep,x,y,pdata(3,k),k1,k2,
 c     &  vlevel(k1),vlevel(k2),hlevel2(i,j,k1),hlevel2(i,j,k2),zzz
 c	write(*,*)
 c	write(*,*) istep,k,x,y,zzz
 c	write(*,'(1x,i4,i2,i2,2i2.2,''00'')')
 c     &(itime(i),i=1,4),mod(istep,12)*5
-       write(13,'(1x,i4,4i2.2,''00'',
-     &  2f9.3,f12.3,f15.2,f10.2)')
-     &  tyear,tmon,tday,thour,mod(istep,12)*5,
-     &  y,x,zzz,distance, speed
-       write(*,'(i4,1x,i4,i2,i2,2i2.2,''00'',
-     &  2f9.3,f12.3,f15.2,f10.2)') istep,
-     &  tyear,tmon,tday,thour,mod(istep,12)*5,
-     &  y,x,zzz,distance, speed
+            write(13,'(1x,i4,4i2.2,''00'',
+     &                 2f9.3,f12.3,f15.2,f10.2)')
+     &           timeCurrent(6),timeCurrent(5),timeCurrent(4),
+     &           timeCurrent(3),timeCurrent(2),
+     &           y,x,zzz,distance, speed
+            write(*,'(i4,1x,i4,i2,i2,2i2.2,''00'',
+     &                2f9.3,f12.3,f15.2,f10.2)') istep,
+     &           timeCurrent(6),timeCurrent(5),timeCurrent(4),
+     &           timeCurrent(3),timeCurrent(2),
+     &           y,x,zzz,distance, speed
 cjb-2701
-       enddo
+            flush(13)
+         enddo
        endif
 #endif
   200 continue
