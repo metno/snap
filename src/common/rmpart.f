@@ -101,11 +101,11 @@ c..redistribution of lost mass (within one plume)
 c
 c removal of particles outside of the domain
 c by reordering of plumes
-c
         iplume(1,npl)=n+1
         do i=i1,i2
           if(pdata(1,i).gt.xmin .and. pdata(1,i).lt.xmax .and.
      +      pdata(2,i).gt.ymin .and. pdata(2,i).lt.ymax) then
+c TODO we should only keep particles which carry mass, e.g. pdata(9,i) > 0
             pdata(3,i)=min(pdata(3,i),vmax)
             pdata(3,i)=max(pdata(3,i),vmin)
             n=n+1
