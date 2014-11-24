@@ -63,60 +63,65 @@ c
 c
 c..redistribution of lost mass (within one plume)
         if(idep.eq.1 .and. i1.gt.0) then
-         do m=1,ncomp
+          do m=1,ncomp
             pbqtotal(m)=0.
-           npkeep(m)=0
-         end do
-         nkeep=0
-          do i=i1,i2
-           m=icomp(i)
-           if(pdata(9,i).gt.pbqmin(m)) then
-             pbqtotal(m)=pbqtotal(m)+pdata(9,i)
-             npkeep(m)=npkeep(m)+1
-           else
-             pbqlost(m)=pbqlost(m)+pdata(9,i)
-             pdata(9,i)=0.
-              pdata(1,i)=0.
-              pdata(2,i)=0.
-           end if
-          end do
-         iredist=0
-         do m=1,ncomp
-           pbqdist(m)=0.
-            if(pbqlost(m).gt.0. .and. npkeep(m).gt.0) then
-             pbqdist(m)=pbqlost(m)/float(npkeep(m))
-             pbqlost(m)=0.
-             iredist=1
-           end if
-         end do
-          if(iredist.eq.1) then
-            do i=i1,i2
-             if(pdata(9,i).gt.0.0) then
-               m=icomp(i)
-               pdata(9,i)= pdata(9,i)+pbqdist(m)
+            npkeep(m)=0
+           end do
+           nkeep=0
+           do i=i1,i2
+             m=icomp(i)
+             if(pdata(9,i).gt.pbqmin(m)) then
+               pbqtotal(m)=pbqtotal(m)+pdata(9,i)
+               npkeep(m)=npkeep(m)+1
+             else
+               pbqlost(m)=pbqlost(m)+pdata(9,i)
+               pdata(9,i)=0.
+               pdata(1,i)=0.
+               pdata(2,i)=0.
              end if
            end do
-          end if
-        end if
+           iredist=0
+           do m=1,ncomp
+             pbqdist(m)=0.
+             if(pbqlost(m).gt.0. .and. npkeep(m).gt.0) then
+               pbqdist(m)=pbqlost(m)/float(npkeep(m))
+               pbqlost(m)=0.
+               iredist=1
+             end if
+           end do
+           if(iredist.eq.1) then
+             do i=i1,i2
+               if(pdata(9,i).gt.0.0) then
+                 m=icomp(i)
+                 pdata(9,i)= pdata(9,i)+pbqdist(m)
+               end if
+             end do
+           end if
+         end if
+c
+c removal of particles outside of the domain
+c by reordering of plumes
 c
         iplume(1,npl)=n+1
-c
         do i=i1,i2
           if(pdata(1,i).gt.xmin .and. pdata(1,i).lt.xmax .and.
-     +       pdata(2,i).gt.ymin .and. pdata(2,i).lt.ymax) then
+     +      pdata(2,i).gt.ymin .and. pdata(2,i).lt.ymax) then
             pdata(3,i)=min(pdata(3,i),vmax)
             pdata(3,i)=max(pdata(3,i),vmin)
             n=n+1
             if(n.ne.i) then
-             do j=1,npdata
+c             moving paricle to new position in pdata (n < i)
+              do j=1,npdata
                 pdata(j,n)=pdata(j,i)
-             end do
-             icomp(n)=  icomp(i)
-             iparnum(n)=iparnum(i)
+              end do
+              icomp(n)=  icomp(i)
+              iparnum(n)=iparnum(i)
             end if
           end if
         end do
 c
+c updating plume-particle relation, or making plume empty
+c (plumes are never removed!)
         iplume(2,npl)=n
         if(iplume(1,npl).gt.iplume(2,npl)) then
           iplume(1,npl)=0
@@ -125,6 +130,7 @@ c
 c
       end do
 c
+c updating the used number of particles
       npart=n
 c
 c..note: if pmlost>0 we lost mass inside the grid area
