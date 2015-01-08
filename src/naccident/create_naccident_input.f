@@ -184,7 +184,8 @@ c
          write(2,"('Component= C',i2.2)") i
 c	  write(2,"('Type=',i2)") isotype(j)
          write(2,"('RADIOACTIVE.DECAY.ON')")
-         write(2,"('HALF.LIFETIME.DAYS= ',f10.4)")
+c         write(2,"('HALF.LIFETIME.DAYS= ',f10.4)")
+         write(2,"('HALF.LIFETIME.DAYS= ',ES14.8E2)")
      &(log(2.)/(drate(j)*60.*60.*24.))
          select case (isotype(j))
            case(0)
