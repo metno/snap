@@ -70,8 +70,8 @@ c..mcomp:    max no. of components used in one run
 c            (keep as small as "possible", it dimensions 2d/3d output fields)
 c
       integer mdefcomp,mcomp
-      parameter (mdefcomp=31 )
-      parameter (mcomp=31)
+      parameter (mdefcomp=51 )
+      parameter (mcomp=51)
 c
 c
 c..mfilef: max. no. of input FELT files
