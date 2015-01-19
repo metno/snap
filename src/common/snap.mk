@@ -21,7 +21,7 @@ clean_links:
 
 #--------------------------------
 
-snap_batch_copy.o: ../common/snap.F $(INCFILES)
+snap_batch_copy.o: ../common/snap.F dateCalc.o $(INCFILES)
 	cp -p ../common/snap.F snap_batch_copy.F
 	${F77} -c $(F77FLAGS) $(INCLUDES) -DBATCH snap_batch_copy.F
 
