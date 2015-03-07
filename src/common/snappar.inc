@@ -78,7 +78,7 @@ c              (scaled according to max mass released
 c               and divided between components according to mass)
 c..component(n):    component name
 c..idefcomp(n):     component no. as defined in input file sequence
-c..irelhour(i):     specified release hours in time profile
+c..frelhour(i):     specified release hours in time profile
 c..relradius(i,h):    release radius in unit meter
 c..relupper(i,h):     release upper height in unit meter
 c..rellower(i,h):     release lower height in unit meter
@@ -90,7 +90,7 @@ c..      h=1,nrelheight
 c
       integer       itprof,ntprof,ncomp,nrelheight,mprel
       integer       idefcomp(mcomp)
-      integer       irelhour(mtprof)
+      real          frelhour(mtprof)
       real          relradius(mtprof,mrelheight)
       real          relupper(mtprof,mrelheight)
       real          rellower(mtprof,mrelheight)
@@ -100,7 +100,7 @@ c
 c
       common/relcom/itprof,ntprof,ncomp,nrelheight,mprel
      -             ,idefcomp
-     -             ,irelhour
+     -             ,frelhour
      -             ,relradius,relupper,rellower
      -             ,relstemradius
      -             ,relbqsec

@@ -88,15 +88,15 @@ c..particle number scaled according to max Bq released
 c
       nt=1
       do n=2,ntprof
-       if(irelhour(n)*nsteph.le.istep) nt=n
+       if(frelhour(n)*nsteph.le.istep) nt=n
       end do
 c
 c loop over all heights
       do ih=1,nrelheight
 c
         if(itprof.ne.4 .and. nt.lt.ntprof) then
-          c1=irelhour(nt)  *nsteph
-          c2=irelhour(nt+1)*nsteph
+          c1=frelhour(nt)  *nsteph
+          c2=frelhour(nt+1)*nsteph
           c3=istep
           rt1=(c2-c3)/(c2-c1)
           rt2=(c3-c2)/(c2-c1)

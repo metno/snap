@@ -4,7 +4,7 @@ c comment-rows start with #
 c hour height[upper_in_m] component release[kg/s]
 
 c data is read to
-c  irelhour
+c  frelhour
 c  relbqsec(time, comp, height)
 c
 c for each release-step, rellower/relupper/relradius are copied from (1,x)
@@ -20,7 +20,8 @@ c
       logical debugrelfile
       integer ifd, ios, iend, iexit, nlines
       integer i,j
-      integer hour, height, lasthour
+      real hour
+      integer height, lasthour
       integer ihour, iheight, icmp
       real    rel_s
       character*32 comp
@@ -70,7 +71,7 @@ c add new release timestep
               write(*,*) 'to many release timesteps, increase mtprof'
               goto 12
             end if
-            irelhour(ihour) = hour
+            frelhour(ihour) = hour
 c make sure all initial release are undefined
             do i=1,mcomp
               do j=1,mrelheight
@@ -134,7 +135,7 @@ c sanity check of relbqsec
             if (relbqsec(ihour,icmp,iheight).lt.0) then
               relbqsec(ihour,icmp,iheight) = 0
               write(*,*) 'no release for (',component(icmp),',',
-     c               rellower(ihour,iheight),'m,',irelhour(ihour),'h)'
+     c               rellower(ihour,iheight),'m,',frelhour(ihour),'h)'
             end if
           end do
         end do

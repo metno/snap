@@ -820,17 +820,17 @@ c..release.second
             do while (ios.eq.0)
               if(i2.gt.mtprof) goto 13
               i2=i2+1
-              read(cipart,*,iostat=ios) (irelhour(i),i=i1,i2)
+              read(cipart,*,iostat=ios) (frelhour(i),i=i1,i2)
             end do
             i2=i2-1
             if(i2.lt.i1) goto 12
            do i=i1,i2
-             irelhour(i)= nint(irelhour(i)*rscale)
+             frelhour(i)= frelhour(i)*rscale
            end do
             ntprof=i2
-           if(irelhour(1).ne.0) goto 12
+           if(frelhour(1).ne.0) goto 12
            do i=2,ntprof
-             if(irelhour(i-1).ge.irelhour(i)) goto 12
+             if(frelhour(i-1).ge.frelhour(i)) goto 12
            end do
           elseif(cinput(k1:k2).eq.'release.radius.m') then
 c..release.radius.m
@@ -890,7 +890,7 @@ c..release.bq/step.comp
              goto 12
            elseif(ntprof.gt.1) then
              do i=1,ntprof-1
-           rscale=1./(3600.*(irelhour(i+1)-irelhour(i)))
+           rscale=1./(3600.*(frelhour(i+1)-frelhour(i)))
                relbqsec(i,ncomp,1)= relbqsec(i,ncomp,1)*rscale
              end do
            end if
@@ -1420,7 +1420,7 @@ c
         ierror=1
       end if
 c
-      if(nhrel.eq.0 .and. ntprof.gt.0) nhrel=irelhour(ntprof)
+      if(nhrel.eq.0 .and. ntprof.gt.0) nhrel=frelhour(ntprof)
 c
 c..check if compiled without ENSEMBLE PROJECT arrays
       if(nxep.lt.2 .or. nyep.lt.2) iensemble=0
@@ -1786,7 +1786,7 @@ c      write(9,*) 'nxad,nyad: ',nxad,nyad
         write(9,*) '  Relase time profile:   ntprof: ',ntprof
        do i=1,ntprof
           write(9,*) '  hour,Bq/hour: ',
-     +			irelhour(i),(relbqsec(i,n,ih)*3600.,ih=1,nrelheight)
+     +			frelhour(i),(relbqsec(i,n,ih)*3600.,ih=1,nrelheight)
        end do
       end do
       write(9,*) 'itotcomp:   ',itotcomp
