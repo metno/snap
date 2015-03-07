@@ -338,7 +338,7 @@ c..eta: eta_dot (or omega) stored in the same levels as u,v,th.
         if (sigmadotv.eq.'') then
           do j=1,ny
             do i=1,nx
-c no vertical velocity TODO: improve by using continuation equation
+c no vertical velocity
               w2(i,j,k) = 0
             end do
           end do
