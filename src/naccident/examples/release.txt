@@ -1,4 +1,4 @@
-* hour  height  comp  release
+* hour  height_lower  comp  release[Bq/s]
 0        625    ASC_1    29.5
 0       1275    ASC_1    17.0
 * another comment
