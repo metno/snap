@@ -20,8 +20,8 @@ c
       logical debugrelfile
       integer ifd, ios, iend, iexit, nlines
       integer i,j
-      real hour
-      integer height, lasthour
+      real hour, lasthour
+      integer height
       integer ihour, iheight, icmp
       real    rel_s
       character*32 comp

@@ -53,6 +53,7 @@
       integer start3d(3), start4d(4), count3d(3), count4d(4)
       character*(80) xwindv,ywindv,xwind10mv,ywind10mv,pottempv,ptopv
       character*(80) sigmadotv,apv,bv,sigmav,psv,mslpv,precaccumv
+      character*(80) precstratiaccumv, precconaccumv 
       character*(80) precstrativrt,precconvrt
       logical temp_is_abs, has_dummy_dim
 
@@ -144,6 +145,28 @@ c upward_air_velocity_ml, not used yet?
         precstrativrt = ''
         precconvrt = ''
 c..get grid parameters from field identification
+      else if (nctype.eq.'dmi_eps') then
+        has_dummy_dim = .true.
+        xwindv = 'x_wind_ml'
+        ywindv = 'y_wind_ml'
+        xwind10mv = 'x_wind_10m'
+        ywind10mv = 'y_wind_10m'
+c       !! real temperature, convert to pot-temp later
+        pottempv = 'air_temperature_ml'
+        temp_is_abs = .true.
+        sigmav = ''
+        ptopv = ''
+        apv = 'ap'
+        bv = 'b'
+c upward_air_velocity_ml, not used yet?
+        sigmadotv = ''
+        psv = 'surface_air_pressure'
+c        mslpv = 'air_pressure_at_sea_level'
+        precaccumv = ''
+        precstratiaccumv = 'stratiform_precipitation_amount_acc'
+        precconaccumv = 'convective_precipitation_amount_acc'
+        precstrativrt = ''
+        precconvrt = ''
 
       else if (nctype.eq.'emep') then
         xwindv = 'u_wind'
@@ -158,7 +181,7 @@ c..get grid parameters from field identification
         sigmadotv = ''
         psv = 'surface_pressure'
         mslpv = 'air_pressure_at_sea_level'
-        precaccumv = 'precipitation_amount_acc'
+        precaccumv = ''
 !.. non accumulated precipitation rates in m/s
         precstrativrt = 'large_scale_precipitations'
         precconvrt = 'convective_precipitations'
@@ -381,7 +404,7 @@ c ps
        call nfcheckload(ncid, psv, start3d, count3d, ps2(1,1))
       endif
 c  input ps, must be hPa, otherwise:
-      if (nctype.eq.'arome') then
+      if (nctype.eq.'arome'.or.nctype.eq.'dmi_eps') then
         do j=1,ny
           do i=1,nx
             ps2(i,j) = ps2(i,j) *0.01
@@ -419,7 +442,7 @@ c        call readfd(iunit,nav,ivc,58,ilevel,0,pmsl2(1,1),ierror)
 
 c..precipitation......................................................
 c
-      if (nctype.eq.'h12'.or.nctype.eq.'arome') then
+      if (precaccumv.ne.'') then
 c..precipitation between input time 't1' and 't2'
         if (timepos .ne. 1) then
           if (has_dummy_dim) then
@@ -450,7 +473,46 @@ c..the difference below may get negative due to different scaling
             end do
           end do
         end if
-      else if (nctype.eq."emep") then
+      else if (precstratiaccumv .ne. '') then
+c accumulated stratiform and convective precipitation
+c..precipitation between input time 't1' and 't2'
+        if (timepos .ne. 1) then
+          if (has_dummy_dim) then
+            start4d(4) = timepos - 1
+            call nfcheckload(ncid, precstratiaccumv,
+     +                        start4d, count4d, field1(1,1))
+            call nfcheckload(ncid, precconaccumv,
+     +                        start4d, count4d, field2(1,1))
+c and the next timestep
+            start4d(4) = timepos
+            call nfcheckload(ncid, precstratiaccumv,
+     +                        start4d, count4d, field3(1,1))
+            call nfcheckload(ncid, precconaccumv,
+     +                        start4d, count4d, field4(1,1))
+          else
+            start3d(3) = timepos - 1
+            call nfcheckload(ncid, precstratiaccumv,
+     +                        start3d, count3d, field1(1,1))
+            call nfcheckload(ncid, precconaccumv,
+     +                        start3d, count3d, field2(1,1))
+            start3d(3) = timepos
+            call nfcheckload(ncid, precstratiaccumv,
+     +                        start3d, count3d, field3(1,1))
+            call nfcheckload(ncid, precconaccumv,
+     +                        start3d, count3d, field4(1,1))
+         endif
+c..the difference below may get negative due to different scaling
+          do j=1,ny
+            do i=1,nx
+              precip1=max(field3(i,j)+field4(i,j)-
+     +                    (field1(i,j)+field2(i,j)),0.)/nhdiff
+              do k=1,nprecip
+                precip(i,j,k)=precip1
+              end do
+            end do
+          end do
+        end if
+      else 
 c..non-accumulated emissions in stratiform an convective
         if (has_dummy_dim) then
           call nfcheckload(ncid, precstrativrt,
