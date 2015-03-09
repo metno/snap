@@ -10,7 +10,11 @@ use HTTP::Daemon;
 use HTTP::Status;
 use CGI qw();
 
-use vars qw(%Args $Daemon %Plants);
+use vars qw(%Args $Daemon %Plants %PlantBB);
+%PlantBB = (west => -60,
+             east => 70,
+             north=> 90,
+             south=> 30);
 
 chdir($FindBin::Bin) or die "Cannot chdir $FindBin::Bin: $!";
 
@@ -38,7 +42,11 @@ sub readPlants {
         }
         my $tag = $site;
         $tag =~ s/ /_/g;
-        $Plants{$tag} = {site => $site, CC => $country, lon => $long, lat => $lat, status => $status };
+        if ($long >= $PlantBB{west} and $long <= $PlantBB{east} and
+            $lat >= $PlantBB{south} and $lat <= $PlantBB{north}) {
+#            printf STDERR ("%5.2f %5.2f %s %s\n", $long, $lat, $site, $country);
+            $Plants{$tag} = {site => $site, CC => $country, lon => $long, lat => $lat, status => $status };
+        }
     }
 }
 
