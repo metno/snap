@@ -35,7 +35,7 @@ pod2usage(-exitval => 2,
 my $command =  "perl $Bin/felt2ncDummyLevels2Isotopes.pl  --levelnames=$Args{levelnames} --xmlTemplate=$Args{xml_template} --output=$Bin/felt2nc_$Args{tag}.xml";
 print $command, "\n";
 system($command) == 0 or die "system $command failed: $?";
-$command = "fimex --input.file=$Args{felt_input} --input.config=$Bin/felt2nc_$Args{tag}.xml --output.file=$Args{tag}.nc --output.type=nc4";
+$command = "fimex --input.file=$Args{felt_input} --input.config=$Bin/../etc/felt2nc_$Args{tag}.xml --output.file=$Args{tag}.nc --output.type=nc4 --output.config=$Bin/../etc/cdmWriterConfig.xml";
 print $command, "\n";
 system($command) == 0 or die "system $command failed: $?";
 
