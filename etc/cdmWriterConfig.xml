@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE cdm_ncwriter_config SYSTEM "cdmWriterConfig.dtd">
+<cdm_ncwriter_config>
+
+<!-- filetype are netcdf3 netcdf3_64bit netcdf4 netcdf4classic -->
+<!-- compression levels are 0 (no compression) to 9 -->
+<!-- compression levels from 10 to 19 will enable shuffling -->
+<default filetype="netcdf4" compressionLevel="1" />
+<!-- <default filetype="netcdf3" compressionLevel="0" /> -->
+
+</cdm_ncwriter_config>
