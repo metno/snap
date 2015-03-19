@@ -7,10 +7,11 @@ use Getopt::Long qw(GetOptions);
 use Pod::Usage qw(pod2usage);
 use XML::LibXML;
 
+our $EtcDir = "$Bin/../etc/";
 use vars qw(%Args);
 $Args{levelnames} = "snap.felt_level_names";
 $Args{felt_input} = "snap.felt";
-$Args{xml_template} = "$Bin/felt2nc_snap_dummy_levels.xml";
+$Args{xml_template} = "$EtcDir/felt2nc_snap_dummy_levels.xml";
 GetOptions(\%Args,
        'debug',
        'help',
@@ -32,10 +33,14 @@ pod2usage(-exitval => 2,
           -msg => "missing tag") unless $Args{tag};
 
 
-my $command =  "perl $Bin/felt2ncDummyLevels2Isotopes.pl  --levelnames=$Args{levelnames} --xmlTemplate=$Args{xml_template} --output=$Bin/felt2nc_$Args{tag}.xml";
+my $command =  "perl $Bin/felt2ncDummyLevels2Isotopes.pl  --levelnames=$Args{levelnames} --xmlTemplate=$Args{xml_template} --output=felt2nc_$Args{tag}.xml";
 print $command, "\n";
+unless (-f "felt_axes.xml") {
+    symlink("$EtcDir/felt_axes.xml", "felt_axes.xml")
+        or die "Cannot link $EtcDir/felt_axes.xml to $PWD\n";
+}
 system($command) == 0 or die "system $command failed: $?";
-$command = "fimex --input.file=$Args{felt_input} --input.config=$Bin/../etc/felt2nc_$Args{tag}.xml --output.file=$Args{tag}.nc --output.type=nc4 --output.config=$Bin/../etc/cdmWriterConfig.xml";
+$command = "fimex --input.file=$Args{felt_input} --input.config=felt2nc_$Args{tag}.xml --output.file=$Args{tag}.nc --output.type=nc4 --output.config=$EtcDir/cdmWriterConfig.xml";
 print $command, "\n";
 system($command) == 0 or die "system $command failed: $?";
 
