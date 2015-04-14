@@ -282,6 +282,13 @@ c     before the return statement
         itimefi(n) = iavail(n, ntav2)
       end do
 
+      if(idebug.eq.1) then
+        write(9,*) 'READING DATA FROM file=',trim(file_name)
+        write(9,*) 'READING DATA FROM position=',timepos, ' for ',
+     +               itimefi
+      end if
+
+
 
 !
       if(.true.) then
