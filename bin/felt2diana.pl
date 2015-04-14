@@ -1,6 +1,7 @@
 #! /usr/bin/perl
 use strict;
 use warnings;
+use Cwd;
 use FindBin qw($Bin);
 
 use Getopt::Long qw(GetOptions);
@@ -37,10 +38,10 @@ my $command =  "perl $Bin/felt2ncDummyLevels2Isotopes.pl  --levelnames=$Args{lev
 print $command, "\n";
 unless (-f "felt_axes.xml") {
     symlink("$EtcDir/felt_axes.xml", "felt_axes.xml")
-        or die "Cannot link $EtcDir/felt_axes.xml to $PWD\n";
+        or die "Cannot link $EtcDir/felt_axes.xml to ". getcwd() ."\n";
 }
 system($command) == 0 or die "system $command failed: $?";
-$command = "fimex --input.file=$Args{felt_input} --input.config=felt2nc_$Args{tag}.xml --output.file=$Args{tag}.nc --output.type=nc4 --output.config=$EtcDir/cdmWriterConfig.xml";
+$command = "fimex --input.file=$Args{felt_input} --input.config=felt2nc_$Args{tag}.xml --output.file=$Args{tag}.nc --output.type=nc4";# --output.config=$EtcDir/cdmWriterConfig.xml";
 print $command, "\n";
 system($command) == 0 or die "system $command failed: $?";
 
