@@ -128,7 +128,7 @@ c
       integer dimids2d(2),dimids3d(3),dimids4d(4), ipos(4), isize(4),
      +         varid, chksz3d(3), chksz4d(4)
       integer, save :: x_dimid, y_dimid, k_dimid, t_dimid
-      integer, save :: t_varid
+      integer, save :: t_varid, k_varid, ap_varid, b_varid
       integer, save  :: iftime(5), ihrs, ihrs_pos
 
 
@@ -373,7 +373,7 @@ c..remove an existing file and create a completely new one
        call nc_set_projection(iunit, x_dimid, y_dimid,
      +                              igtype,nx,ny,gparam)
        if (imodlevel.eq.1)
-     + call nc_set_vtrans(iunit, k_dimid)
+     + call nc_set_vtrans(iunit, k_dimid, k_varid, ap_varid, b_varid)
 
        call check(nf_def_var(iunit, "time",NF_FLOAT,1,t_dimid,t_varid))
        write(string,'(A12,I4,A1,I0.2,A1,I0.2,A1,I0.2,A12)')
@@ -1324,6 +1324,12 @@ c..model level fields...................................................
 c
       if(imodlevel.ne.1) goto 800
 c
+c write k, ap, b - will be overwritten several times, but not data/timecritical
+      call check(nf_put_var_real(iunit, k_varid, vlevel(2)))
+      call check(nf_put_var_real(iunit, ap_varid, alevel(2)))
+      call check(nf_put_var_real(iunit, b_varid, blevel(2)))
+
+
 c..concentration in each layer
 c..(height only computed at time of output)
 c
@@ -1573,12 +1579,12 @@ c     +    LEN_TRIM("lon lat"), "lon lat"))
       end subroutine nc_declare_4d
 
 
-      subroutine nc_set_vtrans(iunit, kdimid)
+      subroutine nc_set_vtrans(iunit, kdimid,k_varid,ap_varid,b_varid)
        implicit none
        include 'netcdf.inc'
-       include 'snapgrd.inc'
        INTEGER, INTENT(IN) :: iunit, kdimid
-       INTEGER :: k_varid, ap_varid, b_varid, p0_varid
+       INTEGER, INTENT(OUT) :: k_varid, ap_varid, b_varid
+       INTEGER ::p0_varid
 
        call check(nf_def_var(iunit, "k",
      +     NF_FLOAT, 1, kdimid, k_varid))
@@ -1594,23 +1600,23 @@ c     +    LEN_TRIM("lon lat"), "lon lat"))
        call check(nf_put_att_text(iunit,k_varid, "positive",
      +     LEN_TRIM("down"),
      +     TRIM("down")))
-       call check(nf_put_var_real(iunit, k_varid, vlevel))
+c       call check(nf_put_var_real(iunit, k_varid, vlevel))
 
        call check(nf_def_var(iunit, "ap",
      +     NF_FLOAT, 1, kdimid, ap_varid))
        call check(nf_put_att_text(iunit,ap_varid, "units",
-     +     LEN_TRIM("Pa"), TRIM("Pa")))
-       call check(nf_put_var_real(iunit, ap_varid, alevel))
+     +     LEN_TRIM("hPa"), TRIM("hPa")))
+c       call check(nf_put_var_real(iunit, ap_varid, alevel))
 
        call check(nf_def_var(iunit, "b",
      +     NF_FLOAT, 1, kdimid, b_varid))
-       call check(nf_put_var_real(iunit, ap_varid, blevel))
+c       call check(nf_put_var_real(iunit, ap_varid, blevel))
 
        call check(nf_def_var(iunit, "p0",
      +     NF_FLOAT, 0, 0, p0_varid))
        call check(nf_put_att_text(iunit,p0_varid, "units",
-     +     LEN_TRIM("Pa"), TRIM("Pa")))
-       call check(nf_put_var_real(iunit, p0_varid, 10000))
+     +     LEN_TRIM("hPa"), TRIM("hPa")))
+       call check(nf_put_var_real(iunit, p0_varid, 100))
 
       end subroutine nc_set_vtrans
 
