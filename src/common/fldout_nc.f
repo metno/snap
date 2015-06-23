@@ -368,7 +368,7 @@ c..remove an existing file and create a completely new one
      +             "t-dim")
        call check(nf_def_dim(iunit, "x", nx, x_dimid), "x-dim")
        call check(nf_def_dim(iunit, "y", ny, y_dimid), "y-dim")
-       call check(nf_def_dim(iunit, "k", nk, k_dimid), "k-dim")
+       call check(nf_def_dim(iunit, "k", nk-1, k_dimid), "k-dim")
 
        call nc_set_projection(iunit, x_dimid, y_dimid,
      +                              igtype,nx,ny,gparam)
@@ -522,9 +522,11 @@ c set the runtime
       ipos(1) = 1
       ipos(2) = 1
       ipos(3) = ihrs_pos
+      ipos(4) = 1
       isize(1) = nx
       isize(2) = ny
       isize(3) = 1
+      isize(4) = 1
 
 c
 c..open output felt (field) file
@@ -1394,6 +1396,9 @@ c use parameter z (1)
            idata(20)=-32767
 c           call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
 c     +               ldata,idata,ierror)
+           ipos(4) = k
+           call check(NF_PUT_VARA_REAL(iunit, icml_varid(m),ipos,isize,
+     +            field1))
            if(ierror.ne.0) goto 900
          end if
 
@@ -1430,6 +1435,9 @@ c        if (loop .eq. 2)
 c     +       call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
 c     +                  ldata,idata,ierror)
 c
+           ipos(4) = k
+           call check(NF_PUT_VARA_REAL(iunit, acml_varid(m),ipos,isize,
+     +            field1))
             if(ierror.ne.0) goto 900
           end do
        end do
