@@ -472,10 +472,10 @@ c..store the files base-time
      +          chksz4d, TRIM(compnamemc(mm))//"_concentration_ml",
      +          "Bq/m3","",
      +          TRIM(compnamemc(mm))//"_concentration_ml")
-           call nc_declare_4d(iunit, dimids4d, acml_varid(m),
-     +          chksz4d, TRIM(compnamemc(mm))//"_acc_concentration_ml",
-     +          "Bq*hour/m3","",
-     +          TRIM(compnamemc(mm))//"_accumulated_concentration_ml")
+c           call nc_declare_4d(iunit, dimids4d, acml_varid(m),
+c     +          chksz4d, TRIM(compnamemc(mm))//"_avg_concentration_ml",
+c     +          "Bq*hour/m3","",
+c     +          TRIM(compnamemc(mm))//"_accumulated_concentration_ml")
          end if
        end do
        if (itotcomp.eq.1) then
@@ -1396,9 +1396,6 @@ c use parameter z (1)
            idata(20)=-32767
 c           call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
 c     +               ldata,idata,ierror)
-           ipos(4) = k
-           call check(NF_PUT_VARA_REAL(iunit, icml_varid(m),ipos,isize,
-     +            field1))
            if(ierror.ne.0) goto 900
          end if
 
@@ -1432,11 +1429,14 @@ c..average concentration in each layer for each type
             idata(20)=-32767
 c don't write average currently, only instant (loop = 2)
 c        if (loop .eq. 2)
+c           ipos(4) = k
+c           call check(NF_PUT_VARA_REAL(iunit, acml_varid(m),ipos,isize,
+c     +            field1))
 c     +       call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
 c     +                  ldata,idata,ierror)
 c
            ipos(4) = k
-           call check(NF_PUT_VARA_REAL(iunit, acml_varid(m),ipos,isize,
+           call check(NF_PUT_VARA_REAL(iunit, icml_varid(m),ipos,isize,
      +            field1))
             if(ierror.ne.0) goto 900
           end do
