@@ -372,7 +372,8 @@ c..remove an existing file and create a completely new one
 
        call nc_set_projection(iunit, x_dimid, y_dimid,
      +                              igtype,nx,ny,gparam)
-
+       if (imodlevel.eq.1)
+     + call nc_set_vtrans(iunit, k_dimid)
 
        call check(nf_def_var(iunit, "time",NF_FLOAT,1,t_dimid,t_varid))
        write(string,'(A12,I4,A1,I0.2,A1,I0.2,A1,I0.2,A12)')
@@ -1571,6 +1572,47 @@ c     +    LEN_TRIM("lon lat"), "lon lat"))
 
       end subroutine nc_declare_4d
 
+
+      subroutine nc_set_vtrans(iunit, kdimid)
+       implicit none
+       include 'netcdf.inc'
+       include 'snapgrd.inc'
+       INTEGER, INTENT(IN) :: iunit, kdimid
+       INTEGER :: k_varid, ap_varid, b_varid, p0_varid
+
+       call check(nf_def_var(iunit, "k",
+     +     NF_FLOAT, 1, kdimid, k_varid))
+       call check(nf_put_att_text(iunit,k_varid, "standard_name",
+     +     LEN_TRIM("atmosphere_hybrid_sigma_pressure_coordinate"),
+     +     TRIM("atmosphere_hybrid_sigma_pressure_coordinate")))
+       call check(nf_put_att_text(iunit,k_varid, "formula",
+     +     LEN_TRIM("p(n,k,j,i) = ap(k) + b(k)*ps(n,j,i)"),
+     +     TRIM("p(n,k,j,i) = ap(k) + b(k)*ps(n,j,i)")))
+       call check(nf_put_att_text(iunit,k_varid, "formula_terms",
+     +     LEN_TRIM("ap: ap b: b ps: surface_air_pressure p0: p0"),
+     +     TRIM("ap: ap b: b ps: surface_air_pressure p0: p0")))
+       call check(nf_put_att_text(iunit,k_varid, "positive",
+     +     LEN_TRIM("down"),
+     +     TRIM("down")))
+       call check(nf_put_var_real(iunit, k_varid, vlevel))
+
+       call check(nf_def_var(iunit, "ap",
+     +     NF_FLOAT, 1, kdimid, ap_varid))
+       call check(nf_put_att_text(iunit,ap_varid, "units",
+     +     LEN_TRIM("Pa"), TRIM("Pa")))
+       call check(nf_put_var_real(iunit, ap_varid, alevel))
+
+       call check(nf_def_var(iunit, "b",
+     +     NF_FLOAT, 1, kdimid, b_varid))
+       call check(nf_put_var_real(iunit, ap_varid, blevel))
+
+       call check(nf_def_var(iunit, "p0",
+     +     NF_FLOAT, 0, 0, p0_varid))
+       call check(nf_put_att_text(iunit,p0_varid, "units",
+     +     LEN_TRIM("Pa"), TRIM("Pa")))
+       call check(nf_put_var_real(iunit, p0_varid, 10000))
+
+      end subroutine nc_set_vtrans
 
       subroutine nc_set_projection(iunit, xdimid, ydimid,
      +                              igtype,nx,ny,gparam)
