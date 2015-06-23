@@ -522,7 +522,7 @@ c set the runtime
       ipos(1) = 1
       ipos(2) = 1
       ipos(3) = ihrs_pos
-      ipos(4) = 1
+      ipos(4) = ihrs_pos
       isize(1) = nx
       isize(2) = ny
       isize(3) = 1
@@ -1428,16 +1428,21 @@ c..average concentration in each layer for each type
             idata(19)=lvlb
             idata(20)=-32767
 c don't write average currently, only instant (loop = 2)
-c        if (loop .eq. 2)
-c           ipos(4) = k
+c        if (loop .eq. 2) then
+c           ipos(3) = k
 c           call check(NF_PUT_VARA_REAL(iunit, acml_varid(m),ipos,isize,
 c     +            field1))
+c reset ipos(3) for 3d fields to time-pos (=ipos(4))
+c           ipos(3) = ipos(4)
 c     +       call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
 c     +                  ldata,idata,ierror)
 c
-           ipos(4) = k
+c        end if
+           ipos(3) = k
            call check(NF_PUT_VARA_REAL(iunit, icml_varid(m),ipos,isize,
      +            field1))
+c reset ipos(3) for 3d fields to time-pos (=ipos(4))
+           ipos(3) = ipos(4)
             if(ierror.ne.0) goto 900
           end do
        end do
