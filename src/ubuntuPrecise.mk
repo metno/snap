@@ -11,12 +11,13 @@ CCFLAGS=-O3
 
 LDFLAGS=
 
-# NCDIR not required if /usr or /usr/local
+# NCDIR required even if /usr or /usr/local
 NCDIR = /opt/netcdf-fortran-4.2
 
 
 MIINC = -I/usr/include
-MILIB = -L/usr/lib -lmi
+# uncomment MILIB if felt-support not required
+#MILIB = -L/usr/lib -lmi
 EXLIBS = -lpthread -ldl
 
 DRHOOKINC = -I../../utils/drhook_CY31R2.032

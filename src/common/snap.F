@@ -2339,9 +2339,9 @@ c###      if(igraphics.eq.1 .or. isvideo.eq.1)
 c###     +  call pselect(igrspec,idrydep,iwetdep)
 c
 c..store data for 'video replay'
-      if(isvideo.eq.1)
-     +   call videosave(iunitx,istep,nstep,itime,isteph,nsteph,itime1,
-     +                  igrspec)
+c      if(isvideo.eq.1)
+c     +   call videosave(iunitx,istep,nstep,itime,isteph,nsteph,itime1,
+c     +                  igrspec)
 c
       if(isteph.eq.0 .and. iprecip.lt.nprecip) iprecip=iprecip+1
 c
