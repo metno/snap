@@ -38,12 +38,12 @@ c
       real    depconst(mdefcomp)
 c
 c..for random number functions
-      integer irand,iseed
+c      integer irand,iseed
 c
 #if defined(linux)
-      real rand
+c      real rand
 #else
-      double precision rand
+c      double precision rand
 #endif
 c
 c++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -118,8 +118,8 @@ c++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
       end if
 c
 c..for random number generation
-      iseed=irand()
-      call srand(iseed)
+c      iseed=irand()
+c      call srand(iseed)
 c################################################################
       numdep=0
       premin=+1.e+38

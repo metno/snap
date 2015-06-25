@@ -278,8 +278,9 @@ c
 c
 c..for random number generation
 c..(better if moved into particle loops ?)
-          iseed=irand()
-          call srand(iseed)
+c          iseed=irand()
+c          call srand(iseed)
+           call RANDOM_SEED ();
 c
 c----------------------------------------------
           if (dx.gt.0.01 .and. dy.gt.0.01) then
@@ -311,9 +312,12 @@ c
               do while (npart.lt.nprel)
 c
 c..the rand function returns random real numbers between 0.0 and 1.0
-                xrand=rand()
-                yrand=rand()
-                zrand=rand()
+c                xrand=rand()
+c                yrand=rand()
+c                zrand=rand()
+                 call random_number(xrand)
+                 call random_number(yrand)
+                 call random_number(zrand)
 c
                 dx= twodx*(xrand-0.5)
                 dy= twody*(yrand-0.5)
@@ -363,7 +367,8 @@ c
               do n=1,nprel
 c
 c..the rand function returns random real numbers between 0.0 and 1.0
-                zrand=rand()
+c                zrand=rand()
+                call random_number(zrand)
 c
                 h= hlower + (hupper-hlower)*zrand
                 k= 2
