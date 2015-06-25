@@ -3,7 +3,8 @@
 
 MODELOBJ= allocateFields.o argoswrite.o bldp.o compheight.o copyfield.o decay.o drydep1.o drydep2.o \
 dateCalc.o edcomp.o \
-ensemble.o epinterp.o filesort_nc.o fldout_nc.o forwrd.o ftest.o om2edot.o posint.o \
+ensemble.o epinterp.o filesort_nc.o fldout_nc.o forwrd.o ftest.o \
+init_random_seed.o om2edot.o posint.o \
 pselect.o readfield_nc.o release.o releasefile.o rmpart.o rwalk.o tabcon.o \
 vgravtables.o wetdep1.o wetdep2.o
 
@@ -70,6 +71,8 @@ feltio_dummy.o: ../common/feltio_dummy.f $(INCFILES)
 forwrd.o: ../common/forwrd.F $(INCFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 ftest.o: ../common/ftest.f $(INCFILES)
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+init_random_seed.o: ../common/init_random_seed.f
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 om2edot.o: ../common/om2edot.f $(INCFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<

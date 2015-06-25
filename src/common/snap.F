@@ -303,8 +303,8 @@ c
       ! Before the very first statement
       IF (LHOOK) CALL DR_HOOK('SNAP',0,ZHOOK_HANDLE)
 #endif
-c initialize random number generator for rwalk
-      CALL rwalk_init_random_seed()
+c initialize random number generator for rwalk and release
+      CALL init_random_seed()
       iexit=0
 c
 c
