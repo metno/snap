@@ -54,13 +54,8 @@ c
 
 c
 c..for random number functions
-      integer irand,iseed
-c
-#if defined(linux)
-      real rand
-#else
-      double precision rand
-#endif
+      real rnd(3)
+
 #if defined(DRHOOK)
       ! Before the very first statement
       IF (LHOOK) CALL DR_HOOK('RELEASE',0,ZHOOK_HANDLE)
@@ -276,11 +271,6 @@ c
           twodx= 2.*dx
           twody= 2.*dy
 c
-c..for random number generation
-c..(better if moved into particle loops ?)
-c          iseed=irand()
-c          call srand(iseed)
-           call RANDOM_SEED ();
 c
 c----------------------------------------------
           if (dx.gt.0.01 .and. dy.gt.0.01) then
@@ -312,12 +302,10 @@ c
               do while (npart.lt.nprel)
 c
 c..the rand function returns random real numbers between 0.0 and 1.0
-c                xrand=rand()
-c                yrand=rand()
-c                zrand=rand()
-                 call random_number(xrand)
-                 call random_number(yrand)
-                 call random_number(zrand)
+                call random_number(rnd)
+                xrand=rnd(1)
+                yrand=rnd(2)
+                zrand=rnd(3)
 c
                 dx= twodx*(xrand-0.5)
                 dy= twody*(yrand-0.5)

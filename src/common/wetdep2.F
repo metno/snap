@@ -37,15 +37,6 @@ c
       real    precint,probab,prand,deprate,dep,q,rkw
       real    depconst(mdefcomp)
 c
-c..for random number functions
-c      integer irand,iseed
-c
-#if defined(linux)
-c      real rand
-#else
-c      double precision rand
-#endif
-c
 c++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
       real ratdep(mdefcomp)
 c++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
