@@ -518,7 +518,8 @@ c     +          TRIM(compnamemc(mm))//"_accumulated_concentration_ml")
 c set the runtime
       ihrs_pos = ihrs_pos + 1
       call hrdiff(0,0,iftime,itime,ihrs,ierror,ierror)
-      call check(NF_PUT_VAR1_REAL(iunit,t_varid,ihrs_pos,FLOAT(ihrs)))
+      call check(NF_PUT_VAR1_REAL(iunit,t_varid,ihrs_pos,FLOAT(ihrs)),
+     +    "set time")
       ipos(1) = 1
       ipos(2) = 1
       ipos(3) = ihrs_pos
@@ -641,7 +642,8 @@ c..surface pressure (if model level output, for vertical crossections)
         if(idebug.eq.1) call ftest('ps',1,1,nx,ny,1,field1,0)
         idata( 6)=8
         idata(20)=-32767
-        call check(NF_PUT_VARA_REAL(iunit, ps_varid,ipos,isize,field1))
+        call check(NF_PUT_VARA_REAL(iunit, ps_varid,ipos,isize,field1),
+     +    "set_ps")
 c       call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
 c     +              ldata,idata,ierror)
         if(ierror.ne.0) goto 900
@@ -663,7 +665,7 @@ c..total accumulated precipitation from start of run
 c       call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
 c     +              ldata,idata,ierror)
         call check(NF_PUT_VARA_REAL(iunit, accum_prc_varid, ipos, isize,
-     +               field1))
+     +               field1), "set_accum_prc")
         if(ierror.ne.0) goto 900
         idata(19)=0
       end if
@@ -681,7 +683,7 @@ c        idata(20)=-32767
 c       call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
 c     +              ldata,idata,ierror)
         call check(NF_PUT_VARA_REAL(iunit, mslp_varid, ipos, isize,
-     +               field1))
+     +               field1), "set_mslp")
       end if
 c
 c..instant height of boundary layer
@@ -696,7 +698,7 @@ c..instant height of boundary layer
 c      call mwfelt(2,filnam,iunit,1,nx*ny,field4,1.0,
 c     +            ldata,idata,ierror)
       call check(NF_PUT_VARA_REAL(iunit, ihbl_varid, ipos, isize,
-     +               field1))
+     +               field1), "set_ihbl")
       if(ierror.ne.0) goto 900
 c
 c..average height of boundary layer
@@ -711,7 +713,7 @@ c..average height of boundary layer
 c      call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
 c     +            ldata,idata,ierror)
       call check(NF_PUT_VARA_REAL(iunit, ahbl_varid, ipos, isize,
-     +               field1))
+     +               field1), "set_ahbl")
       if(ierror.ne.0) goto 900
 c
 c..precipitation accummulated between field output // currently disable use 1 to write
@@ -729,7 +731,7 @@ c..precipitation accummulated between field output // currently disable use 1 to
 c        call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
 c     +              ldata,idata,ierror)
         call check(NF_PUT_VARA_REAL(iunit, prc_varid, ipos, isize,
-     +               field1))
+     +               field1), "set_prc")
         if(ierror.ne.0) goto 900
         idata(19)=0
       end if
@@ -808,7 +810,7 @@ ccc         hbl=rt1*hbl1(i,j)+rt2*hbl2(i,j)
 c        call mwfelt(2,filnam,iunit,1,nx*ny,field2,1.0,
 c     +              ldata,idata,ierror)
         call check(NF_PUT_VARA_REAL(iunit, icbl_varid(m), ipos, isize,
-     +               field2))
+     +               field2), "set_icbl")
         if(ierror.ne.0) goto 900
 c
 c..average concentration in boundary layer
@@ -824,7 +826,7 @@ c..average concentration in boundary layer
 c        call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
 c     +              ldata,idata,ierror)
         call check(NF_PUT_VARA_REAL(iunit, acbl_varid(m), ipos, isize,
-     +               field1))
+     +               field1), "set_acbl")
         if(ierror.ne.0) goto 900
 c
 c..dry deposition
@@ -841,7 +843,7 @@ c..dry deposition
 c          call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
 c     +                ldata,idata,ierror)
           call check(NF_PUT_VARA_REAL(iunit, idd_varid(m), ipos, isize,
-     +               field1))
+     +               field1), "set_idd(m)")
           if(ierror.ne.0) goto 900
         end if
 c
@@ -859,7 +861,7 @@ c..wet deposition
 c          call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
 c     +                ldata,idata,ierror)
           call check(NF_PUT_VARA_REAL(iunit, iwd_varid(m), ipos, isize,
-     +               field1))
+     +               field1), "set_iwd(m)")
           if(ierror.ne.0) goto 900
         end if
 c
@@ -876,7 +878,7 @@ c..accumulated dry deposition
 c          call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
 c     +                ldata,idata,ierror)
           call check(NF_PUT_VARA_REAL(iunit, accdd_varid(m),ipos,isize,
-     +            field1))
+     +            field1), "set_accdd(m)")
 
           if(ierror.ne.0) goto 900
         end if
@@ -894,7 +896,7 @@ c..accumulated wet deposition
 c          call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
 c     +                ldata,idata,ierror)
           call check(NF_PUT_VARA_REAL(iunit, accwd_varid(m),ipos,isize,
-     +            field1))
+     +            field1), "set_accwd(m)")
           if(ierror.ne.0) goto 900
         end if
 c
@@ -933,7 +935,7 @@ c..instant concentration on surface (not in felt-format)
        end do
         if(idebug.eq.1) call ftest('concen',1,1,nx,ny,1,field3,1)
         call check(NF_PUT_VARA_REAL(iunit, ic_varid(m),ipos,isize,
-     +            field3))
+     +            field3), "set_ic(m)")
 
 c..accumulated/integrated concentration surface = dose
        do j=1,ny
@@ -947,7 +949,7 @@ c..accumulated/integrated concentration surface = dose
 c        call mwfelt(2,filnam,iunit,2,nx*ny,field3,1.0,
 c     +              ldata,idata,ierror)
          call check(NF_PUT_VARA_REAL(iunit, ac_varid(m),ipos,isize,
-     +            field1))
+     +            field1), "set_ac(m)")
         if(ierror.ne.0) goto 900
 c
 c.....end do m=1,ncomp
@@ -1005,7 +1007,7 @@ ccc         hbl=rt1*hbl1(i,j)+rt2*hbl2(i,j)
 c        call mwfelt(2,filnam,iunit,1,nx*ny,field2,1.0,
 c     +              ldata,idata,ierror)
         call check(NF_PUT_VARA_REAL(iunit, icblt_varid,ipos,isize,
-     +            field2))
+     +            field2), "set_icblt(m)")
         if(ierror.ne.0) goto 900
 c
 c..total average concentration in boundary layer
@@ -1033,7 +1035,7 @@ c..total average concentration in boundary layer
 c        call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
 c     +              ldata,idata,ierror)
         call check(NF_PUT_VARA_REAL(iunit, acblt_varid,ipos,isize,
-     +            field1))
+     +            field1), "set_acblt")
         if(ierror.ne.0) goto 900
 c
 c..total dry deposition
@@ -1064,7 +1066,7 @@ c..total dry deposition
 c          call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
 c     +                ldata,idata,ierror)
           call check(NF_PUT_VARA_REAL(iunit, iddt_varid,ipos,isize,
-     +            field1))
+     +            field1), "set_iddt")
 
           if(ierror.ne.0) goto 900
         end if
@@ -1097,7 +1099,7 @@ c..total wet deposition
 c          call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
 c     +                ldata,idata,ierror)
           call check(NF_PUT_VARA_REAL(iunit, iwdt_varid,ipos,isize,
-     +            field1))
+     +            field1), "set_iwdt")
           if(ierror.ne.0) goto 900
         end if
 c
@@ -1129,7 +1131,7 @@ c..total accumulated dry deposition
 c          call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
 c     +                ldata,idata,ierror)
           call check(NF_PUT_VARA_REAL(iunit, accddt_varid,ipos,isize,
-     +            field1))
+     +            field1), "set_accddt")
           if(ierror.ne.0) goto 900
         end if
 c
@@ -1161,7 +1163,7 @@ c..total accumulated wet deposition
 c          call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
 c     +                ldata,idata,ierror)
           call check(NF_PUT_VARA_REAL(iunit, accwdt_varid,ipos,isize,
-     +            field1))
+     +            field1), "set_accwdt")
           if(ierror.ne.0) goto 900
         end if
 c
@@ -1225,7 +1227,7 @@ c..total accumulated/integrated concentration
 c        call mwfelt(2,filnam,iunit,2,nx*ny,field3,1.0,
 c     +              ldata,idata,ierror)
          call check(NF_PUT_VARA_REAL(iunit, act_varid,ipos,isize,
-     +            field3))
+     +            field3), "set_act")
 
         if(ierror.ne.0) goto 900
 c
@@ -1327,9 +1329,9 @@ c
       if(imodlevel.ne.1) goto 800
 c
 c write k, ap, b - will be overwritten several times, but not data/timecritical
-      call check(nf_put_var_real(iunit, k_varid, vlevel(2)))
-      call check(nf_put_var_real(iunit, ap_varid, alevel(2)))
-      call check(nf_put_var_real(iunit, b_varid, blevel(2)))
+      call check(nf_put_var_real(iunit, k_varid, vlevel(2)), "set_k")
+      call check(nf_put_var_real(iunit, ap_varid, alevel(2)), "set_ap")
+      call check(nf_put_var_real(iunit, b_varid, blevel(2)), "set_b")
 
 
 c..concentration in each layer
@@ -1440,7 +1442,7 @@ c
 c        end if
            ipos(3) = k
            call check(NF_PUT_VARA_REAL(iunit, icml_varid(m),ipos,isize,
-     +            field1))
+     +            field1), "icml(m)")
 c reset ipos(3) for 3d fields to time-pos (=ipos(4))
            ipos(3) = ipos(4)
             if(ierror.ne.0) goto 900
@@ -1540,7 +1542,7 @@ c     before the return statement
        write(9,*) "declaring ", iunit, TRIM(varnm), TRIM(units)
      +     ,TRIM(stdnm),TRIM(metnm)
        call check(nf_def_var(iunit, TRIM(varnm),
-     +     NF_FLOAT, 3, dimids, varid))
+     +     NF_FLOAT, 3, dimids, varid), "def_"//varnm)
 c       call check(NF_DEF_VAR_CHUNKING(iunit, varid, NF_CHUNKED, chksz))
        call check(NF_DEF_VAR_DEFLATE(iunit, varid, 1,1,1))
        call check(nf_put_att_text(iunit,varid, "units",
@@ -1572,7 +1574,7 @@ c     +    LEN_TRIM("lon lat"), "lon lat"))
        write(9,*) "declaring ", iunit, TRIM(varnm), TRIM(units)
      +     ,TRIM(stdnm),TRIM(metnm)
        call check(nf_def_var(iunit, TRIM(varnm),
-     +     NF_FLOAT, 4, dimids, varid))
+     +     NF_FLOAT, 4, dimids, varid), "def_"//varnm)
        call check(NF_DEF_VAR_CHUNKING(iunit, varid, NF_CHUNKED, chksz))
        call check(NF_DEF_VAR_DEFLATE(iunit, varid, 1,1,1))
        call check(nf_put_att_text(iunit,varid, "units",
@@ -1600,7 +1602,7 @@ c     +    LEN_TRIM("lon lat"), "lon lat"))
        INTEGER ::p0_varid
 
        call check(nf_def_var(iunit, "k",
-     +     NF_FLOAT, 1, kdimid, k_varid))
+     +     NF_FLOAT, 1, kdimid, k_varid), "def_k")
        call check(nf_put_att_text(iunit,k_varid, "standard_name",
      +     LEN_TRIM("atmosphere_hybrid_sigma_pressure_coordinate"),
      +     TRIM("atmosphere_hybrid_sigma_pressure_coordinate")))
@@ -1616,13 +1618,13 @@ c     +    LEN_TRIM("lon lat"), "lon lat"))
 c       call check(nf_put_var_real(iunit, k_varid, vlevel))
 
        call check(nf_def_var(iunit, "ap",
-     +     NF_FLOAT, 1, kdimid, ap_varid))
+     +     NF_FLOAT, 1, kdimid, ap_varid), "def_ap")
        call check(nf_put_att_text(iunit,ap_varid, "units",
      +     LEN_TRIM("hPa"), TRIM("hPa")))
 c       call check(nf_put_var_real(iunit, ap_varid, alevel))
 
        call check(nf_def_var(iunit, "b",
-     +     NF_FLOAT, 1, kdimid, b_varid))
+     +     NF_FLOAT, 1, kdimid, b_varid), "def_b")
 c       call check(nf_put_var_real(iunit, ap_varid, blevel))
 
        call check(nf_def_var(iunit, "p0",

@@ -117,15 +117,13 @@ chcase.o: ../common/milib/chcase.f
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 gridpar.o: ../common/milib/gridpar.f
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-hrdiff.o: ../common/milib/hrdiff.f
-	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-lenstr.o: ../common/milib/lenstr.f
-	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 getvar.o: ../common/milib/getvar.f
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 hrdiff.o: ../common/milib/hrdiff.f
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 keywrd.o: ../common/milib/keywrd.f
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+lenstr.o: ../common/milib/lenstr.f
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 mapfield.o: ../common/milib/mapfield.f
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<

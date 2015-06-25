@@ -53,7 +53,7 @@
       integer start3d(3), start4d(4), count3d(3), count4d(4)
       character*(80) xwindv,ywindv,xwind10mv,ywind10mv,pottempv,ptopv
       character*(80) sigmadotv,apv,bv,sigmav,psv,mslpv,precaccumv
-      character*(80) precstratiaccumv, precconaccumv 
+      character*(80) precstratiaccumv, precconaccumv
       character*(80) precstrativrt,precconvrt
       logical temp_is_abs, has_dummy_dim
 
@@ -182,6 +182,7 @@ c        mslpv = 'air_pressure_at_sea_level'
         psv = 'surface_pressure'
         mslpv = 'air_pressure_at_sea_level'
         precaccumv = ''
+        precstratiaccumv = ''
 !.. non accumulated precipitation rates in m/s
         precstrativrt = 'large_scale_precipitations'
         precconvrt = 'convective_precipitations'
@@ -519,7 +520,7 @@ c..the difference below may get negative due to different scaling
             end do
           end do
         end if
-      else 
+      else
 c..non-accumulated emissions in stratiform an convective
         if (has_dummy_dim) then
           call nfcheckload(ncid, precstrativrt,
@@ -815,7 +816,9 @@ c
       real(kind=4) factor, offset
       integer :: varid, attlen, atttype, status, ndims, siz, i
 
+!      write(*,*) "inq ", varname
       call check(nf_inq_varid(ncid, varname, varid), varname)
+!      write(*,*) "get ", varname
       call check(nf_get_vara_real(ncid, varid, start, length,
      +             field), varname)
 !  check add_offset and scale_factor
