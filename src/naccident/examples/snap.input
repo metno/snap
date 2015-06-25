@@ -5,7 +5,7 @@
 ***
 *SET_RELEASE.POS= P=   61.9720,   10.8100
 TIME.START=   2012 12 20 06
-SET_RELEASE.POS= P=   57.25,   16.67      
+SET_RELEASE.POS= P=   57.25,   16.67
 TIME.RUN  = 48h
 *
 * GRAPHICS.ON
@@ -165,8 +165,14 @@ FIELD_TIME.FORECAST
 *
 ** OUTPUT FILES
 *
+FIELD.OUTTYPE= felt
 FIELD.OUTPUT= snap.felt
 LOG.FILE=     snap.log
+*
+*FIELD.OUTTYPE= netcdf
+*FIELD.OUTPUT= snap.nc
+*LOG.FILE=     snap.log
+
 *
 * DEBUG.OFF
 DEBUG.ON
