@@ -107,32 +107,17 @@ c
      -             ,component
 c
 c
-      integer npdata
-      parameter (npdata=10)
-c
-c
-c..pdata:   pdata(1,n) - x position in grid
-c           pdata(2,n) - y position in grid
-c           pdata(3,n) - sigma/eta position (vertical)
-c           pdata(4,n) - sigma/eta at top of boundary layer
-c           pdata(5,n) - height of boundary layer
-c           pdata(6,n) - map ratio in x direction
-c           pdata(7,n) - map ratio in y direction
-c           pdata(8,n) - precipitation intensity (mm/hour)
-c           pdata(9,n) - radioactive content (Bq)
-c           pdata(10,n) - gravity in m/s (fixed or computed)
+c..pdata:   now defined in particleML.f90, no more npdata
 c..pwork:   work array, currently also used to transfer wind components
 c                       (u,v) for 'forwrd' to 'rwalk'
 c..icomp:   component no. in particle
 c..iparnum: unique identifier for each particle
 c..ipwork:  work array
 c
-c      real    pdata(npdata,mpart),pwork(mpart,2)
-c      integer icomp(mpart),iparnum(mpart),ipwork(mpart)
-      REAL, DIMENSION(:,:), POINTER :: pdata, pwork
+      REAL, DIMENSION(:,:), POINTER :: pwork
       INTEGER, DIMENSION(:), POINTER :: icomp, iparnum, ipwork
 c
-      common/part/pdata,pwork
+      common/part/ pwork
      -           ,icomp,iparnum,ipwork,mpart
 c
 c-----------------------------------------------------------------------

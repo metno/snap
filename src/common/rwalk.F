@@ -1,4 +1,5 @@
       subroutine rwalk(tstep,blfullmix)
+      use particleML
 c
 c  Purpose:  Diffusion, in and above boudary layer.
 c
@@ -90,7 +91,7 @@ c
         zrand = rnd(3) - 0.5
 
 c
-        if(pdata(3,np).gt.pdata(4,np)) then
+        if(pdata(np)%z.gt.pdata(np)%tbl) then
 c
 c..particle in boundary layer.....................................
 c
@@ -99,12 +100,12 @@ c..horizontal diffusion
          v=pwork(np,2)
           vabs=sqrt(u*u+v*v)
           rl=sqrt(conb*vabs**1.75)*2.
-          pdata(1,np)=pdata(1,np)+rl*xrand*pdata(6,np)
-          pdata(2,np)=pdata(2,np)+rl*yrand*pdata(7,np)
+          pdata(np)%x=pdata(np)%x+rl*xrand*pdata(np)%rmx
+          pdata(np)%y=pdata(np)%y+rl*yrand*pdata(np)%rmy
 c
 c..vertical diffusion
 c
-          pdata(3,np)=1.-(1.-pdata(4,np))*1.1*(zrand+0.5)
+          pdata(np)%z=1.-(1.-pdata(np)%tbl)*1.1*(zrand+0.5)
 c
         else
 c
@@ -115,11 +116,11 @@ c..horizontal diffusion
          v=pwork(np,2)
           vabs=sqrt(u*u+v*v)
           rl=sqrt(cona*vabs**1.75)*2.
-          pdata(1,np)=pdata(1,np)+rl*xrand*pdata(6,np)
-          pdata(2,np)=pdata(2,np)+rl*yrand*pdata(7,np)
+          pdata(np)%x=pdata(np)%x+rl*xrand*pdata(np)%rmx
+          pdata(np)%y=pdata(np)%y+rl*yrand*pdata(np)%rmy
 c
 c..vertical diffusion
-          pdata(3,np)=pdata(3,np)+vrdbla*zrand
+          pdata(np)%z=pdata(np)%z+vrdbla*zrand
 c
         end if
 
@@ -141,7 +142,7 @@ c
         yrand = rnd(2) - 0.5
         zrand = rnd(3) - 0.5
 c
-        if(pdata(3,np).gt.pdata(4,np)) then
+        if(pdata(np)%z.gt.pdata(np)%tbl) then
 c
 c..particle in boundary layer.....................................
 c
@@ -150,45 +151,45 @@ c..horizontal diffusion
          v=pwork(np,2)
           vabs=sqrt(u*u+v*v)
           rl=sqrt(conb*vabs**1.75)*2.
-          pdata(1,np)=pdata(1,np)+rl*xrand*pdata(6,np)
-          pdata(2,np)=pdata(2,np)+rl*yrand*pdata(7,np)
+          pdata(np)%x=pdata(np)%x+rl*xrand*pdata(np)%rmx
+          pdata(np)%y=pdata(np)%y+rl*yrand*pdata(np)%rmy
 c
 c..vertical diffusion
-         hfactor=pdata(5,np)/hmax
+         hfactor=pdata(np)%hbl/hmax
          rv=lmax*hfactor*tfactor
-         rvmax=1.0-pdata(4,np)
-c	write(*,*) 'hfactor,rv,rvmax,pdata(4,np),pdata(5,np)',
-c     &hfactor,rv,rvmax,pdata(4,np),pdata(5,np)
+         rvmax=1.0-pdata(np)%tbl
+c	write(*,*) 'hfactor,rv,rvmax,pdata(np)%tbl,pdata(np)%hbl',
+c     &hfactor,rv,rvmax,pdata(np)%tbl,pdata(np)%hbl
 c	if(rv .gt. rvmax) then
-c	write(*,*) 'rv,rvmax,pdata(3,np),pdata(4,np)',
-c     &  rv,rvmax,pdata(3,np),pdata(4,np)
+c	write(*,*) 'rv,rvmax,pdata(np)%z,pdata(np)%tbl',
+c     &  rv,rvmax,pdata(np)%z,pdata(np)%tbl
 c	stop
 c	endif
 c
        if(rv .gt. rvmax) rv=rvmax
-        pdata(3,np)=pdata(3,np)+rv*zrand
+        pdata(np)%z=pdata(np)%z+rv*zrand
 c
 c... reflection from the ABL top
 c
-       if(pdata(3,np) .lt. pdata(4,np)) then
-c	  write(*,*) 'gora-przed, p4=',pdata(4,np)
-c	  write(*,*) 'gora-przed, p3=',pdata(3,np)
-         pdata(3,np)= 2.0*pdata(4,np)-pdata(3,np)
-c	  write(*,*) 'gora-po   , p3=',pdata(3,np)
+       if(pdata(np)%z .lt. pdata(np)%tbl) then
+c	  write(*,*) 'gora-przed, p4=',pdata(np)%tbl
+c	  write(*,*) 'gora-przed, p3=',pdata(np)%z
+         pdata(np)%z= 2.0*pdata(np)%tbl-pdata(np)%z
+c	  write(*,*) 'gora-po   , p3=',pdata(np)%z
        endif
 c
 c... reflection from the bottom
 c
-       if(pdata(3,np) .gt. 1.0) then
-c	  write(*,*) 'dol-przed, p=',pdata(3,np)
-         pdata(3,np)= 2.0-pdata(3,np)
-c	  write(*,*) 'dol-po   , p=',pdata(3,np)
+       if(pdata(np)%z .gt. 1.0) then
+c	  write(*,*) 'dol-przed, p=',pdata(np)%z
+         pdata(np)%z= 2.0-pdata(np)%z
+c	  write(*,*) 'dol-po   , p=',pdata(np)%z
        endif
 c
 c..vertical limits
-         if(pdata(3,np) .gt. 1.0) pdata(3,np)=1.0
-         if(pdata(3,np) .lt. pdata(4,np))
-     &    pdata(3,np)=pdata(4,np)
+         if(pdata(np)%z .gt. 1.0) pdata(np)%z=1.0
+         if(pdata(np)%z .lt. pdata(np)%tbl)
+     &    pdata(np)%z=pdata(np)%tbl
 c
         else
 c
@@ -199,11 +200,11 @@ c..horizontal diffusion
          v=pwork(np,2)
           vabs=sqrt(u*u+v*v)
           rl=sqrt(cona*vabs**1.75)*2.
-          pdata(1,np)=pdata(1,np)+rl*xrand*pdata(6,np)
-          pdata(2,np)=pdata(2,np)+rl*yrand*pdata(7,np)
+          pdata(np)%x=pdata(np)%x+rl*xrand*pdata(np)%rmx
+          pdata(np)%y=pdata(np)%y+rl*yrand*pdata(np)%rmy
 c
 c..vertical diffusion
-          pdata(3,np)=pdata(3,np)+vrdbla*zrand
+          pdata(np)%z=pdata(np)%z+vrdbla*zrand
 c
         end if
 

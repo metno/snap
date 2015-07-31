@@ -1,4 +1,5 @@
       subroutine rmpart(rmlimit)
+      use particleML
 c
 c  Purpose: Remove particles which have left the grid domain
 c           or has lost (almost) all mass, in the last case the
@@ -70,14 +71,14 @@ c..redistribution of lost mass (within one plume)
            nkeep=0
            do i=i1,i2
              m=icomp(i)
-             if(pdata(9,i).gt.pbqmin(m)) then
-               pbqtotal(m)=pbqtotal(m)+pdata(9,i)
+             if(pdata(i)%rad.gt.pbqmin(m)) then
+               pbqtotal(m)=pbqtotal(m)+pdata(i)%rad
                npkeep(m)=npkeep(m)+1
              else
-               pbqlost(m)=pbqlost(m)+pdata(9,i)
-               pdata(9,i)=0.
-               pdata(1,i)=0.
-               pdata(2,i)=0.
+               pbqlost(m)=pbqlost(m)+pdata(i)%rad
+               pdata(i)%rad=0.
+               pdata(i)%x=0.
+               pdata(i)%y=0.
              end if
            end do
            iredist=0
@@ -91,9 +92,9 @@ c..redistribution of lost mass (within one plume)
            end do
            if(iredist.eq.1) then
              do i=i1,i2
-               if(pdata(9,i).gt.0.0) then
+               if(pdata(i)%rad.gt.0.0) then
                  m=icomp(i)
-                 pdata(9,i)= pdata(9,i)+pbqdist(m)
+                 pdata(i)%rad= pdata(i)%rad+pbqdist(m)
                end if
              end do
            end if
@@ -103,17 +104,15 @@ c removal of particles outside of the domain
 c by reordering of plumes
         iplume(1,npl)=n+1
         do i=i1,i2
-          if(pdata(1,i).gt.xmin .and. pdata(1,i).lt.xmax .and.
-     +      pdata(2,i).gt.ymin .and. pdata(2,i).lt.ymax) then
-c TODO we should only keep particles which carry mass, e.g. pdata(9,i) > 0
-            pdata(3,i)=min(pdata(3,i),vmax)
-            pdata(3,i)=max(pdata(3,i),vmin)
+          if(pdata(i)%x.gt.xmin .and. pdata(i)%x.lt.xmax .and.
+     +      pdata(i)%y.gt.ymin .and. pdata(i)%y.lt.ymax) then
+c TODO we should only keep particles which carry mass, e.g. pdata(i)%rad > 0
+            pdata(i)%z=min(pdata(i)%z,vmax)
+            pdata(i)%z=max(pdata(i)%z,vmin)
             n=n+1
             if(n.ne.i) then
 c             moving paricle to new position in pdata (n < i)
-              do j=1,npdata
-                pdata(j,n)=pdata(j,i)
-              end do
+              pdata(n) = pdata(i)
               icomp(n)=  icomp(i)
               iparnum(n)=iparnum(i)
             end if

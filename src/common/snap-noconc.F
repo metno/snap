@@ -195,7 +195,7 @@ c  DNMI/FoU  15.08.2003  Anstein Foss ... ARGOS output in the model grid
 c  DNMI/FoU  23.11.2003  Anstein Foss ... BOMB version drydep2,wetdep2
 c  DNMI/FoU  16.01.2004  Anstein Foss ... mushroom shape release
 c  DNMI/FoU  04.11.2004  Anstein Foss ... bugfix (pselect called too late)
-c  DNMI/FoU  08.02.2005  Anstein Foss ... gravity(m/s) in pdata(10,n)
+c  DNMI/FoU  08.02.2005  Anstein Foss ... gravity(m/s) in pdata(n)%grv
 c met.no/FoU 20.06.2006  Anstein Foss ... Ensemble update
 c-----------------------------------------------------------------------
 c
@@ -1882,19 +1882,19 @@ c     +    write(6,*) 'istep,nplume,npart: ',istep,nplume,npart
        write(12,*) istep/12,npart
        k=0
        do i=1,npart
-          if(pdata(3,i) .gt. pdata(4,i)) then
+          if(pdata(i)%z .gt. pdata(i)%tbl) then
           k=k+1
-c	   write(6,'(2i6,3f10.2)') k,i,pdata(1,i),pdata(2,i),pdata(3,i)
+c	   write(6,'(2i6,3f10.2)') k,i,pdata(i)%x,pdata(i)%y,pdata(i)%z
           endif
-          x=pdata(1,i)
-          y=pdata(2,i)
+          x=pdata(i)%x
+          y=pdata(i)%y
           call xyconvert(1,x,y,igtype,gparam,2,geoparam,ierror)
 c	   write(12,'(i6,2x,8f10.4,e12.2,f10.4)') 
-c     &     i,x,y,pdata(1,i),pdata(2,i),pdata(3,i),
-c     &     pdata(4,i),pdata(5,i),pdata(8,i),
-c     &     pdata(9,i),pdata(10,i)
+c     &     i,x,y,pdata(i)%x,pdata(i)%y,pdata(i)%z,
+c     &     pdata(i)%tbl,pdata(i)%hbl,pdata(i)%prc,
+c     &     pdata(i)%rad,pdata(i)%grv
           write(12,'(i6,2x,3f10.4,2x,e16.4)') 
-     &     i,pdata(3,i),pdata(4,i),pdata(10,i),pdata(9,i)
+     &     i,pdata(i)%z,pdata(i)%tbl,pdata(i)%grv,pdata(i)%rad
        enddo
        write(6,*) 'npart all=',npart
        write(6,*) 'npart below ABL=',k
@@ -1909,8 +1909,8 @@ c       jpl=1
 c       if(jpl.le.nplume .and. iplume(1,jpl).gt.0) then
 c         do n=iplume(1,jpl),iplume(2,jpl)
 c           write(88,fmt='(1x,i6,2f7.2,2f7.4,f6.0,f7.3,i4,f8.3)')
-c    +                  iparnum(n),(pdata(i,n),i=1,5),pdata(8,n),
-c    +                  icomp(n),pdata(9,n)
+c    +                  iparnum(n),(pdata(i,n),i=1,5),pdata(n)%prc,
+c    +                  icomp(n),pdata(n)%rad
 c         end do
 c       end if
 c#######################################################################
@@ -2053,7 +2053,7 @@ c              ipcount(i,k)=0
 c            end do
 c          end do
 c          do n=1,npart
-c            vlvl=pdata(3,n)
+c            vlvl=pdata(n)%z
 c            ilvl=vlvl*10000.
 c            k=ivlevel(ilvl)
 c            npcount(k)  =npcount(k)+1

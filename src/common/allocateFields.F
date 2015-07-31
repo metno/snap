@@ -1,5 +1,7 @@
       subroutine allocateFields
+      use particleML
       implicit none
+      TYPE(particle), DIMENSION(:), POINTER :: x
       logical, save :: FirstCall = .TRUE.
       integer :: AllocateStatus
       include 'snapdim.inc'
@@ -120,9 +122,7 @@ c the calculation-fields
       IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
 
 c the part particles fields
-c      real    pdata(npdata,mpart),pwork(mpart,2)
-c      integer icomp(mpart),iparnum(mpart),ipwork(mpart)
-      ALLOCATE ( pdata(npdata, mpart), STAT = AllocateStatus)
+      ALLOCATE ( pdata(mpart), STAT = AllocateStatus)
       IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
       ALLOCATE ( pwork(mpart, 2), STAT = AllocateStatus)
       IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
@@ -141,6 +141,7 @@ c the plumes
 
 
       subroutine deAllocateFields
+      use particleML
       implicit none
       include 'snapdim.inc'
       include 'snapfld.inc'

@@ -12,6 +12,7 @@ c       tf2:   time in seconds for field set 2 (e.g. 21600, if 6 hours)
 c       tnow:  time in seconds for current paricle positions
 c
 c
+      USE particleML
       implicit none
 c
       include 'snapdim.inc'
@@ -50,10 +51,10 @@ c
       do np=np1,np2
 c
 c..for horizotal interpolations
-        i=pdata(1,np)
-        j=pdata(2,np)
-        dx=pdata(1,np)-i
-        dy=pdata(2,np)-j
+        i=pdata(np)%x
+        j=pdata(np)%y
+        dx=pdata(np)%x-i
+        dy=pdata(np)%y-j
         c1=(1.-dy)*(1.-dx)
         c2=(1.-dy)*dx
         c3=dy*(1.-dx)
@@ -84,11 +85,11 @@ c..precipitation intensity (mm/hour)
 c
 c..update boundary layer top and height, map ratio and precipitation
 c
-        pdata(4,np)=bl
-        pdata(5,np)=hbl
-        pdata(6,np)=rmx/dxgrid
-        pdata(7,np)=rmy/dygrid
-        pdata(8,np)=pr
+        pdata(np)%tbl=bl
+        pdata(np)%hbl=hbl
+        pdata(np)%rmx=rmx/dxgrid
+        pdata(np)%rmy=rmy/dygrid
+        pdata(np)%prc=pr
 c
       end do
 c
@@ -96,9 +97,11 @@ c
 c..copy interpolated data to the other particles in the plume
        np1=iplume(1,nplume)
        do np=np1,np2-1
-         do i=4,8
-           pdata(i,np)=pdata(i,np2)
-         end do
+         pdata(np)%tbl = pdata(np2)%tbl
+         pdata(np)%hbl = pdata(np2)%hbl
+         pdata(np)%rmx = pdata(np2)%rmx
+         pdata(np)%rmy = pdata(np2)%rmy
+         pdata(np)%prc = pdata(np2)%prc
        end do
       end if
 c
@@ -126,8 +129,8 @@ c
       end if
 c
       do np=np1,np2
-        if(pdata(3,np).lt.vminprec .or.
-     +     pdata(8,np).lt.precmin) pdata(8,np)=0.
+        if(pdata(np)%z.lt.vminprec .or.
+     +     pdata(np)%prc.lt.precmin) pdata(np)%prc=0.
       end do
 c
       return

@@ -1,5 +1,5 @@
       subroutine forwrd(tf1,tf2,tnow,tstep)
-
+      use particleML
 c
 c  Purpose:  Move all particles one timestep forward
 c
@@ -97,17 +97,17 @@ c
       do np=1,npart
 c
 c..for horizotal interpolations
-        i=pdata(1,np)
-        j=pdata(2,np)
-        dx=pdata(1,np)-i
-        dy=pdata(2,np)-j
+        i=pdata(np)%x
+        j=pdata(np)%y
+        dx=pdata(np)%x-i
+        dy=pdata(np)%y-j
         c1=(1.-dy)*(1.-dx)
         c2=(1.-dy)*dx
         c3=dy*(1.-dx)
         c4=dy*dx
 c
 c..for vertical interpolation (sigma/eta levels)
-        vlvl=pdata(3,np)
+        vlvl=pdata(np)%z
         ilvl=vlvl*10000.
         k1=ivlevel(ilvl)
         k2=k1+1
@@ -212,7 +212,7 @@ c######################################################################
            gravity= gravityms(m)
          end if
 c
-         pdata(10,np)= gravity
+         pdata(np)%grv= gravity
 
 c
 c..gravity ... a very simple, probably too simple (!!!) conversion
@@ -244,18 +244,18 @@ c
 c..update position
 c
 
-        pdata(1,np)=pdata(1,np)+u*dt*rmx/dxgrid
-        pdata(2,np)=pdata(2,np)+v*dt*rmy/dygrid
-        pdata(3,np)=pdata(3,np)+w*dt
+        pdata(np)%x=pdata(np)%x+u*dt*rmx/dxgrid
+        pdata(np)%y=pdata(np)%y+v*dt*rmy/dygrid
+        pdata(np)%z=pdata(np)%z+w*dt
 #if defined(TRAJ)
 cjb_270211
 c
        speed=sqrt(u*u+v*v)
 #endif
-ccc JB 29.04pdata(3,np)
-c       if(pdata(3,np) .gt. vmax) pdata(9,np)=0.0
+ccc JB 29.04pdata(np)%z
+c       if(pdata(np)%z .gt. vmax) pdata(np)%rad=0.0
 ccc JB
-       if(pdata(3,np) .gt. vmax) pdata(3,np)=vmax
+       if(pdata(np)%z .gt. vmax) pdata(np)%z=vmax
 ccc
 c
 c..store u,v for rwalk
