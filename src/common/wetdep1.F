@@ -1,4 +1,5 @@
       subroutine wetdep1
+      use particleML
 c
 c  Purpose:  Compute wet deposition for each particle and each component
 c            and store depositions in nearest gridpoint in a field
@@ -43,22 +44,22 @@ c..for random number generation
 c
       do n=1,npart
        m= icomp(n)
-       if(kwetdep(m).eq.1 .and. pdata(8,n).gt.0.0) then
+       if(kwetdep(m).eq.1 .and. pdata(n)%prc.gt.0.0) then
 c..find particles with wet deposition and
 c..reset precipitation to zero if not wet deposition
-          precint=pdata(8,n)
+          precint=pdata(n)%prc
           itab=nint(precint*premult)
           itab=min(itab,mpretab)
           probab=pretab(itab)
 c..the rand function returns random real numbers between 0.0 and 1.0
           prand=rand()
           if(prand.gt.probab) then
-           pdata(8,n)=0.0
+           pdata(n)%prc=0.0
          else
-            dep=wetdeprat(m)*pdata(9,n)
-            pdata(9,n)=pdata(9,n)-dep
-           i=nint(pdata(1,n))
-           j=nint(pdata(2,n))
+            dep=wetdeprat(m)*pdata(n)%rad
+            pdata(n)%rad=pdata(n)%rad-dep
+           i=nint(pdata(n)%x)
+           j=nint(pdata(n)%y)
            mm=iruncomp(m)
             depwet(i,j,mm)=depwet(i,j,mm)+dble(dep)
          end if

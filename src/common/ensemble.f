@@ -1,4 +1,5 @@
       subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph)
+      use particleML
 c
 c  Purpose: Interpolate particle positions to ENSEMBLE grid,
 c           and store data in this grid (and model levels),
@@ -351,7 +352,7 @@ c
 c
 c..store Bq before drydep
        do n=1,npart
-         pbq1(n)=pdata(9,n)
+         pbq1(n)=pdata(n)%rad
        end do
 c
       end if
@@ -360,7 +361,7 @@ c
 c
 c..store Bq after drydep, before wetdep
        do n=1,npart
-         pbq2(n)=pdata(9,n)
+         pbq2(n)=pdata(n)%rad
        end do
 c
       end if
@@ -369,8 +370,8 @@ c
 c
 c..convert positions to ensemble grid
        do n=1,npart
-         xep(n)= pdata(1,n)
-         yep(n)= pdata(2,n)
+         xep(n)= pdata(n)%x
+         yep(n)= pdata(n)%y
        end do
        call xyconvert(npart,xep,yep,igtype,gparam,
      +		       igridep,gparep,ierror)
@@ -391,7 +392,8 @@ c
          if(i.gt.0 .and. i.le.nxep .and.
      +       j.gt.0 .and. j.le.nyep) then
            drydepep(i,j,m)= drydepep(i,j,m) + dble(pbq1(n)-pbq2(n))
-           wetdepep(i,j,m)= wetdepep(i,j,m) + dble(pbq2(n)-pdata(9,n))
+           wetdepep(i,j,m)= wetdepep(i,j,m) +
+     +                      dble(pbq2(n)-pdata(n)%rad)
          end if
        end do
 c
@@ -413,7 +415,7 @@ c
        end do
 c
        do n=1,npart
-          ivlvl=pdata(3,n)*10000.
+          ivlvl=pdata(n)%z*10000.
           k=ivlayer(ivlvl)
           if(k.eq.1) then
            i=nint(xep(n))
@@ -421,7 +423,7 @@ c
            if(i.gt.0 .and. i.le.nxep .and.
      +         j.gt.0 .and. j.le.nyep) then
              m=iruncomp(icomp(n))
-              conc(i,j,m)= conc(i,j,m)+dble(pdata(9,n))
+              conc(i,j,m)= conc(i,j,m)+dble(pdata(n)%rad)
            end if
          end if
        end do
@@ -430,7 +432,7 @@ c
          do j=1,nyep
            do i=1,nxep
              if(conc(i,j,m).gt.0.0d0) then
-       	dh= rt1*hlayer1ep(i,j,1)+rt2*hlayer2ep(i,j,1)
+           dh= rt1*hlayer1ep(i,j,1)+rt2*hlayer2ep(i,j,1)
                concsurfep(i,j,m)= concsurfep(i,j,m)
      +				+conc(i,j,m)*hrstep/(dh*gareaep(i,j))
              end if
@@ -462,11 +464,11 @@ c##################################################################
            j=nint(yep(n))
            if(i.gt.0 .and. i.le.nxep .and.
      +         j.gt.0 .and. j.le.nyep) then
-              ivlvl=pdata(3,n)*10000.
+              ivlvl=pdata(n)%z*10000.
               k=ivlayer(ivlvl)
              m=iruncomp(icomp(n))
 c..in each sigma/eta (input model) layer
-              concep(i,j,k,m)=concep(i,j,k,m)+dble(pdata(9,n))
+              concep(i,j,k,m)=concep(i,j,k,m)+dble(pdata(n)%rad)
 c##################################################################
 c	      minv=min(minv,ivlvl)
 c	      maxv=max(maxv,ivlvl)
@@ -549,31 +551,31 @@ c
                kk=0
                do while (hh.lt.hmax .and. kk.lt.nk)
                  kk=kk+1
-       	  dh=rt1*hlayer1ep(i,j,kk)+rt2*hlayer2ep(i,j,kk)
-       	  hh=rt1*hlevel1ep(i,j,kk)+rt2*hlevel2ep(i,j,kk)
-       	  hl(kk)=hh
-       	  cl(kk)=concep(i,j,kk,m)/(dh*gareaep(i,j)*cavg)
+             dh=rt1*hlayer1ep(i,j,kk)+rt2*hlayer2ep(i,j,kk)
+             hh=rt1*hlevel1ep(i,j,kk)+rt2*hlevel2ep(i,j,kk)
+             hl(kk)=hh
+             cl(kk)=concep(i,j,kk,m)/(dh*gareaep(i,j)*cavg)
                end do
-       	k=2
+           k=2
                do l=1,nheights
-       	  do while (heights(l).gt.hl(k) .and. k.lt.kk)
-       	    k=k+1
-       	  end do
-       	  rk1=(hl(k)-heights(l))  /(hl(k)-hl(k-1))
-       	  rk2=(heights(l)-hl(k-1))/(hl(k)-hl(k-1))
-       	  epfield(i,j,l)= (rk1*cl(k-1)+rk2*cl(k))*cscale
-       	end do
-       	epfield(i,j,nheights+1)=concsurfep(i,j,m)*cscale
-       	epfield(i,j,nheights+2)=drydepep(i,j,1)*dscale
+             do while (heights(l).gt.hl(k) .and. k.lt.kk)
+               k=k+1
+             end do
+             rk1=(hl(k)-heights(l))  /(hl(k)-hl(k-1))
+             rk2=(heights(l)-hl(k-1))/(hl(k)-hl(k-1))
+             epfield(i,j,l)= (rk1*cl(k-1)+rk2*cl(k))*cscale
+           end do
+           epfield(i,j,nheights+1)=concsurfep(i,j,m)*cscale
+           epfield(i,j,nheights+2)=drydepep(i,j,1)*dscale
      +						       /gareaep(i,j)
-       	epfield(i,j,nheights+3)=wetdepep(i,j,1)*dscale
+           epfield(i,j,nheights+3)=wetdepep(i,j,1)*dscale
      +						       /gareaep(i,j)
 c..precipitation unit 0.1 mm !!!!!!!!!!!!!!!!!!!!
-       	epfield(i,j,nheights+4)=precipep(i,j) * 10.
+           epfield(i,j,nheights+4)=precipep(i,j) * 10.
              else
-       	do l=1,nepout
-       	  epfield(i,j,l)=-9.
-       	end do
+           do l=1,nepout
+             epfield(i,j,l)=-9.
+           end do
              end if
 c
 ccc	      write(97,1001) (itimev(l),l=1,5),glon,glat,
@@ -582,7 +584,7 @@ ccc  +			     (epfield(i,j,l),l=1,nepout)
 c################################################################
              ttmax=0.
              do l=1,nepout-1
-       	ttmax=max(ttmax,epfield(i,j,l))
+           ttmax=max(ttmax,epfield(i,j,l))
              end do
              if(ttmax.gt.0.)
      +	        write(70+m,1001) (itimev(l),l=1,5),glon,glat,
@@ -721,7 +723,7 @@ c
              j=ijlist(2,n)
              no=(n-n1)*ntoutput+it
              do k=1,nepout
-       	buffer(k,no)= epfield(i,j,k)
+           buffer(k,no)= epfield(i,j,k)
              end do
            end do
 c

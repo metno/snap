@@ -174,7 +174,7 @@ c  DNMI/FoU  15.08.2003  Anstein Foss ... ARGOS output in the model grid
 c  DNMI/FoU  23.11.2003  Anstein Foss ... BOMB version drydep2,wetdep2
 c  DNMI/FoU  16.01.2004  Anstein Foss ... mushroom shape release
 c  DNMI/FoU  04.11.2004  Anstein Foss ... bugfix (pselect called too late)
-c  DNMI/FoU  08.02.2005  Anstein Foss ... gravity(m/s) in pdata(10,n)
+c  DNMI/FoU  08.02.2005  Anstein Foss ... gravity(m/s) in pdata(n)%grv
 c met.no/FoU 20.06.2006  Anstein Foss ... Ensemble update
 c met.no/FoU 22.03.2013  Heiko Klein  ... Fix output-format for argos/nrpa
 c-----------------------------------------------------------------------
@@ -182,6 +182,7 @@ c
 c
       program bsnap
       USE DateCalc  ,ONLY : epochToDate, timeGM
+      USE particleML
 #if defined(DRHOOK)
       USE PARKIND1  ,ONLY : JPIM     ,JPRB
       USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
@@ -1916,8 +1917,8 @@ c       jpl=1
 c       if(jpl.le.nplume .and. iplume(1,jpl).gt.0) then
 c         do n=iplume(1,jpl),iplume(2,jpl)
 c           write(88,fmt='(1x,i6,2f7.2,2f7.4,f6.0,f7.3,i4,f8.3)')
-c    +                  iparnum(n),(pdata(i,n),i=1,5),pdata(8,n),
-c    +                  icomp(n),pdata(9,n)
+c    +                  iparnum(n),(pdata(i,n),i=1,5),pdata(n)%prc,
+c    +                  icomp(n),pdata(n)%rad
 c         end do
 c       end if
 c#######################################################################
@@ -2089,7 +2090,7 @@ c              ipcount(i,k)=0
 c            end do
 c          end do
 c          do n=1,npart
-c            vlvl=pdata(3,n)
+c            vlvl=pdata(n)%z
 c            ilvl=vlvl*10000.
 c            k=ivlevel(ilvl)
 c            npcount(k)  =npcount(k)+1
@@ -2149,8 +2150,8 @@ c
      +    call ensemble(5,itime,tf1,tf2,tnext,istep,nstep,nsteph)
 cjb_start
        do n=1,npart
-          if(pdata(5,n) .gt. mhmax) mhmax=pdata(5,n)
-          if(pdata(5,n) .lt. mhmin) mhmin=pdata(5,n)
+          if(pdata(n)%hbl .gt. mhmax) mhmax=pdata(n)%hbl
+          if(pdata(n)%hbl .lt. mhmin) mhmin=pdata(n)%hbl
        enddo
 cjb_end
 c
@@ -2166,16 +2167,16 @@ c
 c..output...................................................
 #if defined(VOLCANO)
        do k=1,npart
-          x=pdata(1,k)
-          y=pdata(2,k)
-          i=nint(pdata(1,k))
-          j=nint(pdata(2,k))
-          if(pdata(3,k) .gt. 0.43)
-     &     vcon(i,j,1)=vcon(i,j,1)+pdata(9,k)/120.0				! level 1
-          if(pdata(3,k) .gt. 0.23 .and. pdata(3,k) .le. 0.43)
-     &     vcon(i,j,2)=vcon(i,j,2)+pdata(9,k)/120.0				! level 2
-          if(pdata(3,k) .gt. 0.03 .and. pdata(3,k) .le. 0.216)
-     &     vcon(i,j,3)=vcon(i,j,3)+pdata(9,k)/120.0				! level 3
+          x=pdata(k)%x
+          y=pdata(k)%y
+          i=nint(pdata(k)%x)
+          j=nint(pdata(k)%y)
+          if(pdata(k)%z .gt. 0.43)
+     &     vcon(i,j,1)=vcon(i,j,1)+pdata(k)%rad/120.0				! level 1
+          if(pdata(k)%z .gt. 0.23 .and. pdata(k)%z .le. 0.43)
+     &     vcon(i,j,2)=vcon(i,j,2)+pdata(k)%rad/120.0				! level 2
+          if(pdata(k)%z .gt. 0.03 .and. pdata(k)%z .le. 0.216)
+     &     vcon(i,j,3)=vcon(i,j,3)+pdata(k)%rad/120.0				! level 3
        enddo
 cccc
 c	if(mod(istep,nsteph).eq.0) then
@@ -2371,19 +2372,19 @@ c	write(*,*) (itimev(i),i=1,5)
 c	write(*,*) 'istep=',istep, 'npart=',npart
 c	do k=1,npart
          do k=1,1
-c	write(*,*) istep,pdata(1,k),pdata(2,k),pdata(3,k)
-            x=pdata(1,k)
-            y=pdata(2,k)
+c	write(*,*) istep,pdata(k)%x,pdata(k)%y,pdata(k)%z
+            x=pdata(k)%x
+            y=pdata(k)%y
             i=int(x)
             j=int(y)
             call xyconvert(1,x,y,igtype,gparam,2,geoparam,ierror)
-            vlvl=pdata(3,k)
+            vlvl=pdata(k)%z
             ilvl=vlvl*10000.
             k1=ivlevel(ilvl)
             k2=k1+1
             zzz=hlevel2(i,j,k2)+(hlevel2(i,j,k1)-hlevel2(i,j,k2))*
-     &        (pdata(3,k)-vlevel(k2))/(vlevel(k1)-vlevel(k2))
-c	write(*,*) istep,x,y,pdata(3,k),k1,k2,
+     &        (pdata(k)%z-vlevel(k2))/(vlevel(k1)-vlevel(k2))
+c	write(*,*) istep,x,y,pdata(k)%z,k1,k2,
 c     &  vlevel(k1),vlevel(k2),hlevel2(i,j,k1),hlevel2(i,j,k2),zzz
 c	write(*,*)
 c	write(*,*) istep,k,x,y,zzz

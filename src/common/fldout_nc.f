@@ -61,6 +61,7 @@ c
       USE PARKIND1  ,ONLY : JPIM     ,JPRB
       USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
 #endif
+      USE particleML
       implicit none
 #if defined(DRHOOK)
       REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
@@ -280,17 +281,17 @@ c..precipitation (no time interpolation, but hourly time intervals)
       end do
 c
       do n=1,npart
-        i=nint(pdata(1,n))
-        j=nint(pdata(2,n))
-ccc     ivlvl=pdata(3,n)*10000.
+        i=nint(pdata(n)%x)
+        j=nint(pdata(n)%y)
+ccc     ivlvl=pdata(n)%z*10000.
 ccc     k=ivlevel(ivlvl)
        m=iruncomp(icomp(n))
-        if(pdata(3,n).ge.pdata(4,n)) then
+        if(pdata(n)%z.ge.pdata(n)%tbl) then
 c..in boundary layer
-          avgbq1(i,j,m)=avgbq1(i,j,m)+pdata(9,n)
+          avgbq1(i,j,m)=avgbq1(i,j,m)+pdata(n)%rad
         else
 c..above boundary layer
-          avgbq2(i,j,m)=avgbq2(i,j,m)+pdata(9,n)
+          avgbq2(i,j,m)=avgbq2(i,j,m)+pdata(n)%rad
         end if
       end do
 c
@@ -305,13 +306,13 @@ c
       end do
 c
       do n=1,npart
-        ivlvl=pdata(3,n)*10000.
+        ivlvl=pdata(n)%z*10000.
         k=ivlayer(ivlvl)
         if(k.eq.1) then
-          i=nint(pdata(1,n))
-          j=nint(pdata(2,n))
+          i=nint(pdata(n)%x)
+          j=nint(pdata(n)%y)
          m=iruncomp(icomp(n))
-          concen(i,j,m)= concen(i,j,m)+dble(pdata(9,n))
+          concen(i,j,m)= concen(i,j,m)+dble(pdata(n)%rad)
        end if
       end do
 c
@@ -330,13 +331,13 @@ c
       if(imodlevel.eq.1) then
 c
         do n=1,npart
-          i=nint(pdata(1,n))
-          j=nint(pdata(2,n))
-          ivlvl=pdata(3,n)*10000.
+          i=nint(pdata(n)%x)
+          j=nint(pdata(n)%y)
+          ivlvl=pdata(n)%z*10000.
           k=ivlayer(ivlvl)
           m=iruncomp(icomp(n))
 c..in each sigma/eta (input model) layer
-          avgbq(i,j,k,m)=avgbq(i,j,k,m)+pdata(9,n)
+          avgbq(i,j,k,m)=avgbq(i,j,k,m)+pdata(n)%rad
        end do
 c
       end if
@@ -764,15 +765,15 @@ c..instant Bq in and above boundary layer
 c
         do n=1,npart
          if(icomp(n).eq.mm) then
-            i=nint(pdata(1,n))
-            j=nint(pdata(2,n))
-            if(pdata(3,n).ge.pdata(4,n)) then
-              field1(i,j)=field1(i,j)+pdata(9,n)
-             bqtot1=bqtot1+dble(pdata(9,n))
+            i=nint(pdata(n)%x)
+            j=nint(pdata(n)%y)
+            if(pdata(n)%z.ge.pdata(n)%tbl) then
+              field1(i,j)=field1(i,j)+pdata(n)%rad
+             bqtot1=bqtot1+dble(pdata(n)%rad)
              nptot1=nptot1+1
             else
-              field2(i,j)=field2(i,j)+pdata(9,n)
-             bqtot2=bqtot2+dble(pdata(9,n))
+              field2(i,j)=field2(i,j)+pdata(n)%rad
+             bqtot2=bqtot2+dble(pdata(n)%rad)
              nptot2=nptot2+1
             end if
           end if
@@ -972,12 +973,12 @@ c..total instant Bq in and above boundary layer
         end do
 c
         do n=1,npart
-          i=nint(pdata(1,n))
-          j=nint(pdata(2,n))
-          if(pdata(3,n).ge.pdata(4,n)) then
-            field1(i,j)=field1(i,j)+pdata(9,n)
+          i=nint(pdata(n)%x)
+          j=nint(pdata(n)%y)
+          if(pdata(n)%z.ge.pdata(n)%tbl) then
+            field1(i,j)=field1(i,j)+pdata(n)%rad
           else
-            field2(i,j)=field2(i,j)+pdata(9,n)
+            field2(i,j)=field2(i,j)+pdata(n)%rad
           end if
         end do
 c
@@ -1365,13 +1366,13 @@ c
           end do
 c
           do n=1,npart
-            i=nint(pdata(1,n))
-            j=nint(pdata(2,n))
-            ivlvl=pdata(3,n)*10000.
+            i=nint(pdata(n)%x)
+            j=nint(pdata(n)%y)
+            ivlvl=pdata(n)%z*10000.
             k=ivlayer(ivlvl)
            m=iruncomp(icomp(n))
 c..in each sigma/eta (input model) layer
-            avgbq(i,j,k,m)=avgbq(i,j,k,m)+pdata(9,n)
+            avgbq(i,j,k,m)=avgbq(i,j,k,m)+pdata(n)%rad
          end do
 
         end if

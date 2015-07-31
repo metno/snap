@@ -1,4 +1,5 @@
       subroutine drydep2(tstep)
+      use particleML
 c
 c  Purpose:  Compute dry deposition for each particle and each component
 c            and store depositions in nearest gridpoint in a field
@@ -49,31 +50,31 @@ c################################################################
 c
       do n=1,npart
 c################################################################
-        totinp=totinp+dble(pdata(9,n))
+        totinp=totinp+dble(pdata(n)%rad)
 c################################################################
        m= icomp(n)
-c######	if(kdrydep(m).eq.1 .and. pdata(3,n).lt.pdata(4,n)) then
-cjb	if(kdrydep(m).eq.1 .and. pdata(3,n).gt.pdata(4,n)) then
-       if(kdrydep(m).eq.1 .and. pdata(3,n).gt. 0.996) then
-cjb	  h=pdata(5,n)
+c######	if(kdrydep(m).eq.1 .and. pdata(n)%z.lt.pdata(n)%tbl) then
+cjb	if(kdrydep(m).eq.1 .and. pdata(n)%z.gt.pdata(n)%tbl) then
+       if(kdrydep(m).eq.1 .and. pdata(n)%z.gt. 0.996) then
+cjb	  h=pdata(n)%hbl
          h=30.0
-c..gravityms=pdata(10,n)
+c..gravityms=pdata(n)%grv
 cjb...23.04.12... difference between particle and gas
 c
          if(radiusmym(m) .le. 0.05) then
            deprate= 1.0-exp(-tstep*(0.008)/h)	!gas
          endif
-         if(radiusmym(m) .gt. 0.05 .and. radiusmym(m) .le. 10.0) then	  
+         if(radiusmym(m) .gt. 0.05 .and. radiusmym(m) .le. 10.0) then
            deprate= 1.0-exp(-tstep*(0.002)/h)	!particle 0.05<r<10
          endif
          if(radiusmym(m) .gt. 10.0) then
-           deprate= 1.0-exp(-tstep*(0.002+pdata(10,n))/h)	!particle r>10
-           if (pdata(3,n) .eq. vlevel(1)) deprate = 1.  ! complete deposition when particle hits ground
+           deprate= 1.0-exp(-tstep*(0.002+pdata(n)%grv)/h)	!particle r>10
+           if (pdata(n)%z .eq. vlevel(1)) deprate = 1.  ! complete deposition when particle hits ground
          endif
-          dep=deprate*pdata(9,n)
-          pdata(9,n)=pdata(9,n)-dep
-         i=nint(pdata(1,n))
-         j=nint(pdata(2,n))
+          dep=deprate*pdata(n)%rad
+          pdata(n)%rad=pdata(n)%rad-dep
+         i=nint(pdata(n)%x)
+         j=nint(pdata(n)%y)
          mm=iruncomp(m)
           depdry(i,j,mm)=depdry(i,j,mm)+dble(dep)
 c################################################################
@@ -88,7 +89,7 @@ c################################################################
 c################################################################
        end if
 c################################################################
-        totsum=totsum+dble(pdata(9,n))
+        totsum=totsum+dble(pdata(n)%rad)
 c################################################################
       end do
 c

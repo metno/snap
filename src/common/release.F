@@ -8,6 +8,7 @@ c
       USE PARKIND1  ,ONLY : JPIM     ,JPRB
       USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
 #endif
+      USE particleML
       implicit none
 #if defined(DRHOOK)
       REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
@@ -327,10 +328,10 @@ c
      +                       *(h-hlevel(k-1))/(hlevel(k)-hlevel(k-1))
 c
                   npart=npart+1
-                  pdata(1,npart)= x+dx
-                  pdata(2,npart)= y+dy
-                  pdata(3,npart)= vlev
-                  pdata(9,npart)= pbq(m)
+                  pdata(npart)%x= x+dx
+                  pdata(npart)%y= y+dy
+                  pdata(npart)%z= vlev
+                  pdata(npart)%rad= pbq(m)
                   icomp(npart)=   idefcomp(m)
 c..an unique particle identifier (for testing...)
                   nparnum=nparnum+1
@@ -367,10 +368,10 @@ c
      +                       *(h-hlevel(k-1))/(hlevel(k)-hlevel(k-1))
 c
                 npart=npart+1
-                pdata(1,npart)= x
-                pdata(2,npart)= y
-                pdata(3,npart)= vlev
-                pdata(9,npart)= pbq(m)
+                pdata(npart)%x= x
+                pdata(npart)%y= y
+                pdata(npart)%z= vlev
+                pdata(npart)%rad= pbq(m)
                 icomp(npart)=   idefcomp(m)
 c..an unique particle identifier (for testing...)
                 nparnum=nparnum+1

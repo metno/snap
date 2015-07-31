@@ -4,7 +4,7 @@
 MODELOBJ= allocateFields.o argoswrite.o bldp.o compheight.o copyfield.o decay.o drydep1.o drydep2.o \
 dateCalc.o edcomp.o \
 ensemble.o epinterp.o filesort_nc.o fldout_nc.o forwrd.o ftest.o \
-init_random_seed.o om2edot.o posint.o \
+init_random_seed.o om2edot.o particleML.o posint.o \
 readfield_nc.o release.o releasefile.o rmpart.o rwalk.o tabcon.o \
 vgravtables.o wetdep1.o wetdep2.o
 
@@ -30,7 +30,7 @@ clean_links:
 
 #--------------------------------
 
-snap_batch_copy.o: ../common/snap.F dateCalc.o $(INCFILES)
+snap_batch_copy.o: ../common/snap.F dateCalc.o particleML.o $(INCFILES)
 	cp -p ../common/snap.F snap_batch_copy.F
 	${F77} -c $(F77FLAGS) $(INCLUDES) -DBATCH snap_batch_copy.F
 
@@ -76,6 +76,8 @@ init_random_seed.o: ../common/init_random_seed.f
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 om2edot.o: ../common/om2edot.f $(INCFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+particleML.o: ../common/particleML.f90
+	${F77} -c ${F77FLAGS} $<
 posint.o: ../common/posint.f $(INCFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 readfd.o: ../common/readfd.f $(INCFILES)

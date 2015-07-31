@@ -6,6 +6,7 @@ c
       USE PARKIND1  ,ONLY : JPIM     ,JPRB
       USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
 #endif
+      use particleML
       implicit none
 #if defined(DRHOOK)
       REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
@@ -47,7 +48,7 @@ c
       do n=1,npart
        m= icomp(n)
        if(kdecay(m).eq.1) then
-         pdata(9,n)= pdata(9,n) * decayrate(m)
+         pdata(n)%rad= pdata(n)%rad * decayrate(m)
        end if
       end do
 c

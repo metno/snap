@@ -1,4 +1,5 @@
       subroutine wetdep2(tstep)
+      use particleML
 c
 c  Purpose:  Compute wet deposition for each particle and each component
 c            and store depositions in nearest gridpoint in a field
@@ -126,15 +127,15 @@ c################################################################
 c
       do n=1,npart
 c################################################################
-        totinp=totinp+dble(pdata(9,n))
+        totinp=totinp+dble(pdata(n)%rad)
 c################################################################
        m= icomp(n)
-c	if(kwetdep(m).eq.1 .and. pdata(8,n).gt.0.0) then
-       if(kwetdep(m).eq.1 .and. pdata(8,n).gt.0.0
-     & .and. pdata(3,n) .gt. 0.67) then
+c	if(kwetdep(m).eq.1 .and. pdata(n)%prc.gt.0.0) then
+       if(kwetdep(m).eq.1 .and. pdata(n)%prc.gt.0.0
+     & .and. pdata(n)%z .gt. 0.67) then
 c..find particles with wet deposition and
 c..reset precipitation to zero if not wet deposition
-          precint=pdata(8,n)
+          precint=pdata(n)%prc
            q=precint
 c
 cjb... 25.04.12 wet deposition for convective and gases
@@ -155,11 +156,11 @@ c
               rkw=1.12e-4*q**0.79
            endif
            deprate= 1.0 - exp(-tstep*rkw)
-            dep=deprate*pdata(9,n)
-            if(dep.gt.pdata(9,n)) dep=pdata(9,n)
-            pdata(9,n)=pdata(9,n)-dep
-           i=nint(pdata(1,n))
-           j=nint(pdata(2,n))
+            dep=deprate*pdata(n)%rad
+            if(dep.gt.pdata(n)%rad) dep=pdata(n)%rad
+            pdata(n)%rad=pdata(n)%rad-dep
+           i=nint(pdata(n)%x)
+           j=nint(pdata(n)%y)
            mm=iruncomp(m)
             depwet(i,j,mm)=depwet(i,j,mm)+dble(dep)
 c################################################################
@@ -174,7 +175,7 @@ c################################################################
 c################################################################
        end if
 c################################################################
-        totsum=totsum+dble(pdata(9,n))
+        totsum=totsum+dble(pdata(n)%rad)
 c################################################################
       end do
 c
