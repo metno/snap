@@ -5,11 +5,11 @@ MODELOBJ= allocateFields.o argoswrite.o bldp.o compheight.o copyfield.o decay.o 
 dateCalc.o edcomp.o \
 ensemble.o epinterp.o filesort_nc.o fldout_nc.o forwrd.o ftest.o \
 init_random_seed.o om2edot.o posint.o \
-pselect.o readfield_nc.o release.o releasefile.o rmpart.o rwalk.o tabcon.o \
+readfield_nc.o release.o releasefile.o rmpart.o rwalk.o tabcon.o \
 vgravtables.o wetdep1.o wetdep2.o
 
 ifdef MILIB
-  MODELOBJ += fldout.o filesort.o readfield.o readfd.o videosave.o  
+  MODELOBJ += fldout.o filesort.o readfield.o readfd.o  
 else
   MODELOBJ += feltio_dummy.o chcase.o  gridpar.o  keywrd.o  mapfield.o  rlunit.o  termchar.o  xyconvert.o \
      getvar.o  hrdiff.o   lenstr.o  prhelp.o    rmfile.o  vtime.o \
@@ -78,8 +78,6 @@ om2edot.o: ../common/om2edot.f $(INCFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 posint.o: ../common/posint.f $(INCFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-pselect.o: ../common/pselect.f $(INCFILES)
-	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 readfd.o: ../common/readfd.f $(INCFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 readfield.o: ../common/readfield.f $(INCFILES)
@@ -98,15 +96,11 @@ tabcon.o: ../common/tabcon.f $(INCFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 vgravtables.o: ../common/vgravtables.f $(INCFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-videosave.o: ../common/videosave.f $(INCFILES)
-	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 wetdep1.o: ../common/wetdep1.F $(INCFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 wetdep2.o: ../common/wetdep2.F $(INCFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 
-snapInterface.o: $(INCFILES)
-	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 
 milib.o: ../common/milib.c ../common/milib.h
 	$(CC)  -c $(CCFLAGS) -I../common $<
