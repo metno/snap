@@ -46,7 +46,7 @@ ccc JB 29.10
        real vmax
 ccc
 c
-      logical vgcompute
+      logical, save :: vgcompute = .TRUE.
 c
 c..functions
       real    vgrav,cun,roa,visc
@@ -56,8 +56,6 @@ c
        real speed
        common /speed/ speed
 #endif
-c
-      data vgcompute/.true./
 c
 
 #if defined(DRHOOK)
@@ -256,7 +254,7 @@ c
 #endif
 ccc JB 29.04pdata(3,np)
 c       if(pdata(3,np) .gt. vmax) pdata(9,np)=0.0
-ccc JB 
+ccc JB
        if(pdata(3,np) .gt. vmax) pdata(3,np)=vmax
 ccc
 c
