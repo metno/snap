@@ -5,7 +5,8 @@ c            and precipitation intensity to particle positions
 c
 c  Input:
 c	mode=0: interpolation for all particles
-c	mode=1: interpolation for the last released plume
+c	mode=-1: interpolation for the last released plume
+c mode>0: interpolate only one particle, np = mode
 c		(with all particles at the same horizontal position)
 c       tf1:   time in seconds for field set 1 (e.g. 0.)
 c       tf2:   time in seconds for field set 2 (e.g. 21600, if 6 hours)
@@ -20,18 +21,38 @@ c
       include 'snapfld.inc'
       include 'snappar.inc'
 c
-      integer mode
-      real    tf1,tf2,tnow
+      INTEGER, INTENT(IN) :: mode
+      REAL, INTENT(IN) ::    tf1,tf2,tnow
 c
       integer np,np1,np2,i,j,i1,i2,k
       real    rt1,rt2,dxgrid,dygrid,dx,dy,c1,c2,c3,c4,bl,hbl,rmx,rmy
       real    pr,precmin,p1,p2,plim
 c
-      real    vminprec
-c
-      data    vminprec/-1./
+      REAL, SAVE ::    vminprec = -1.
 c
 c
+c
+      precmin=0.01
+c initialization, only run once
+      if(vminprec.lt.0.) then
+       plim=550.
+       p2=1000.
+       k=1
+       do while (p2.gt.plim .and. k.lt.nk)
+         k=k+1
+         p1=p2
+         p2=alevel(k)+blevel(k)*1000.
+       end do
+       if(k.gt.1) then
+         vminprec= vlevel(k-1)
+     +       +(vlevel(k)-vlevel(k-1))*(p1-plim)/(p1-p2)
+       else
+         vminprec=vlevel(nk)
+       end if
+       write(9,*) 'POSINT. precmin,vminprec: ',precmin,vminprec
+      end if
+c
+
 c..for linear interpolation in time
       rt1=(tf2-tnow)/(tf2-tf1)
       rt2=(tnow-tf1)/(tf2-tf1)
@@ -39,15 +60,19 @@ c
       dxgrid=gparam(7)
       dygrid=gparam(8)
 c
-      if(mode.eq.1) then
+      if(mode.eq.-1) then
         np1=npart
         np2=npart
-      else
+      elseif (mode.eq.0) then
         np1=1
         np2=npart
+      elseif (mode.gt.0) then
+        np1 = mode
+        np2 = mode
       end if
 c
 c
+!$OMP PARALLEL DO
       do np=np1,np2
 c
 c..for horizotal interpolations
@@ -90,10 +115,16 @@ c
         pdata(np)%rmx=rmx/dxgrid
         pdata(np)%rmy=rmy/dygrid
         pdata(np)%prc=pr
+
+c..reset precipitation to zero if pressure less than approx. 550 hPa.
+c..and if less than a minimum precipitation intensity (mm/hour)
+        if(pdata(np)%z.lt.vminprec .or.
+     +     pdata(np)%prc.lt.precmin) pdata(np)%prc=0.
 c
       end do
+!$OMP END PARALLEL DO
 c
-      if(mode.eq.1) then
+      if(mode.eq.-1) then
 c..copy interpolated data to the other particles in the plume
        np1=iplume(1,nplume)
        do np=np1,np2-1
@@ -104,34 +135,6 @@ c..copy interpolated data to the other particles in the plume
          pdata(np)%prc = pdata(np2)%prc
        end do
       end if
-c
-c..reset precipitation to zero if pressure less than approx. 550 hPa.
-c..and if less than a minimum precipitation intensity (mm/hour)
-c
-      precmin=0.01
-c
-      if(vminprec.lt.0.) then
-       plim=550.
-       p2=1000.
-       k=1
-       do while (p2.gt.plim .and. k.lt.nk)
-         k=k+1
-         p1=p2
-         p2=alevel(k)+blevel(k)*1000.
-       end do
-       if(k.gt.1) then
-         vminprec= vlevel(k-1)
-     +		   +(vlevel(k)-vlevel(k-1))*(p1-plim)/(p1-p2)
-       else
-         vminprec=vlevel(nk)
-       end if
-       write(9,*) 'POSINT. precmin,vminprec: ',precmin,vminprec
-      end if
-c
-      do np=np1,np2
-        if(pdata(np)%z.lt.vminprec .or.
-     +     pdata(np)%prc.lt.precmin) pdata(np)%prc=0.
-      end do
 c
       return
       end

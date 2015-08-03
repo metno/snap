@@ -1,7 +1,7 @@
 # this file contains the common parts to compile bsnap
 # should be included after all: target
 
-MODELOBJ= allocateFields.o argoswrite.o bldp.o compheight.o copyfield.o decay.o drydep1.o drydep2.o \
+MODELOBJ= allocateFields.o argoswrite.o bldp.o compheight.o copyfield.o decay.o decayDeps.o drydep1.o drydep2.o \
 dateCalc.o edcomp.o \
 ensemble.o epinterp.o filesort_nc.o fldout_nc.o forwrd.o ftest.o \
 init_random_seed.o om2edot.o particleML.o posint.o \
@@ -47,6 +47,8 @@ copyfield.o: ../common/copyfield.f $(INCFILES)
 dateCalc.o: ../common/dateCalc.F90 $(INCFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 decay.o: ../common/decay.f $(INCFILES)
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+decayDeps.o: ../common/decayDeps.f $(INCFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 drydep1.o: ../common/drydep1.f $(INCFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<

@@ -1,4 +1,4 @@
-      subroutine forwrd(tf1,tf2,tnow,tstep)
+      subroutine forwrd(tf1,tf2,tnow,tstep,np)
       use particleML
 c
 c  Purpose:  Move all particles one timestep forward
@@ -37,16 +37,16 @@ c
 c
       real tf1,tf2,tnow,tstep
 c
-      integer np,i,j,m,ilvl,k1,k2,itab,kt1,kt2,ip,it
-      real    dt,rt1,rt2,dxgrid,dygrid,dx,dy,c1,c2,c3,c4,vlvl
+c particle loop index, np = 0 is initalization
+      INTEGER, INTENT(IN) :: np
+      integer i,j,m,ilvl,k1,k2,itab,kt1,kt2,ip,it
+      real    dt,rt1,rt2,dx,dy,c1,c2,c3,c4,vlvl
       real    dz1,dz2,uk1,uk2,u,vk1,vk2,v,wk1,wk2,w,rmx,rmy
       real    th,tk1,tk2,ps,p,pi,t,gravity,grav1,grav2,pvg,tvg
-      real    ginv,pi1,pi2,dz,deta,wg,rtab,cpinv,rcpinv
-ccc JB 29.10
-       real vmax
+      real    pi1,pi2,dz,deta,wg,rtab
 ccc
 c
-      logical, save :: vgcompute = .TRUE.
+      real, save :: cpinv, rcpinv, ginv, vmax, dxgrid,dygrid
 c
 c..functions
       real    vgrav,cun,roa,visc
@@ -63,9 +63,8 @@ c
       IF (LHOOK) CALL DR_HOOK('FORWRD',0,ZHOOK_HANDLE)
 #endif
 
-      vmax=vlevel( 1)
-c
-      if (vgcompute) then
+c initialization
+      if (np .eq. 0) then
         j=0
         do i=1,ncomp
           m= idefcomp(i)
@@ -78,23 +77,29 @@ c
         else
           write(9,*) 'Computation of gravity tables not needed'
         end if
-       vgcompute= .false.
+        ginv= 1./g
+        cpinv= 1./cp
+        rcpinv=cp/r
+        dxgrid=gparam(7)
+        dygrid=gparam(8)
+        vmax=vlevel( 1)
+#if defined(DRHOOK)
+c     before the return statement
+        IF (LHOOK) CALL DR_HOOK('FORWRD',1,ZHOOK_HANDLE)
+#endif
+      return
+
       end if
 c
       dt=tstep
 c
-      ginv= 1./g
-      cpinv= 1./cp
-      rcpinv=cp/r
 c
 c..for linear interpolation in time
       rt1=(tf2-tnow)/(tf2-tf1)
       rt2=(tnow-tf1)/(tf2-tf1)
 c
-      dxgrid=gparam(7)
-      dygrid=gparam(8)
 c
-      do np=1,npart
+c      do np=1,npart // particle loop moved out (snap.F)
 c
 c..for horizotal interpolations
         i=pdata(np)%x
@@ -262,7 +267,7 @@ c..store u,v for rwalk
         pwork(np,1)=u
         pwork(np,2)=v
 c
-      end do
+c      end do
 c
 #if defined(DRHOOK)
 c     before the return statement

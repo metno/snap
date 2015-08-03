@@ -1,4 +1,5 @@
-      subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph)
+      subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph,
+     +                     np)
       use particleML
 c
 c  Purpose: Interpolate particle positions to ENSEMBLE grid,
@@ -7,6 +8,7 @@ c	    interpolation of concentrations to fixed heights.
 c
 c	icall=0 : initialize (after first fields read),
 c            =1 : new fields read
+c 2,3,4 need to be called within a particle loop (np)
 c            =2 : before drydep
 c            =3 : after drydep, before wetdep
 c            =4 : after wetdep
@@ -14,6 +16,7 @@ c            =5 : after forwrd,rwalk
 c            =6 : output etc...
 c            =7 : final output of timeseries for each gridpoint
 c
+c  np: particle-id from particle loop for icall=2,3,4
 c
 #if defined(DRHOOK)
       USE PARKIND1  ,ONLY : JPIM     ,JPRB
@@ -33,9 +36,9 @@ cxx   include 'snapfil.inc'
       include 'snapeps.inc'
 c
 c..input
-      integer icall,istep,nstep,nsteph
-      integer itime(5)
-      real    tf1,tf2,tnow
+      integer, INTENT(IN) :: icall,istep,nstep,nsteph, np
+      integer, INTENT(IN) :: itime(5)
+      real, INTENT(IN)    ::    tf1,tf2,tnow
 c
 c---------------------------------------------------------
 ccccc parameter (nxep=151,nyep=91)
@@ -351,55 +354,60 @@ c
       if(icall.eq.2) then
 c
 c..store Bq before drydep
-       do n=1,npart
-         pbq1(n)=pdata(n)%rad
-       end do
+c       do n=1,npart // particle loop now in snap.f
+         pbq1(np)=pdata(np)%rad
+c       end do
 c
       end if
 c
       if(icall.eq.3) then
 c
 c..store Bq after drydep, before wetdep
-       do n=1,npart
-         pbq2(n)=pdata(n)%rad
-       end do
+c       do n=1,npart // particle loop now in snap.f
+         pbq2(np)=pdata(np)%rad
+c       end do
 c
       end if
 c
-      if(icall.eq.4 .or. icall.eq.5) then
+      if(icall.eq.4) then
 c
+c       do n=1,npart // np loop now in snap.F
+         xep(1)= pdata(np)%x
+         yep(1)= pdata(np)%y
+         call xyconvert(1,xep,yep,igtype,gparam,
+     +           igridep,gparep,ierror)
+         if(ierror.ne.0) then
+           write(6,*) 'ensemble XYCONVERT ERROR'
+           write(9,*) 'ensemble XYCONVERT ERROR'
+           stop 17
+         end if
+
+         i=nint(xep(1))
+         j=nint(yep(1))
+         m=iruncomp(icomp(n))
+         if(i.gt.0 .and. i.le.nxep .and.
+     +       j.gt.0 .and. j.le.nyep) then
+           drydepep(i,j,m)= drydepep(i,j,m) + dble(pbq1(np)-pbq2(np))
+           wetdepep(i,j,m)= wetdepep(i,j,m) +
+     +                      dble(pbq2(np)-pdata(np)%rad)
+         end if
+c       end do
+c
+      end if
+c
+      if(icall.eq.5) then
 c..convert positions to ensemble grid
        do n=1,npart
          xep(n)= pdata(n)%x
          yep(n)= pdata(n)%y
        end do
        call xyconvert(npart,xep,yep,igtype,gparam,
-     +		       igridep,gparep,ierror)
+     +           igridep,gparep,ierror)
        if(ierror.ne.0) then
          write(6,*) 'ensemble XYCONVERT ERROR'
          write(9,*) 'ensemble XYCONVERT ERROR'
           stop 17
        end if
-c
-      end if
-
-      if(icall.eq.4) then
-c
-       do n=1,npart
-         i=nint(xep(n))
-         j=nint(yep(n))
-         m=iruncomp(icomp(n))
-         if(i.gt.0 .and. i.le.nxep .and.
-     +       j.gt.0 .and. j.le.nyep) then
-           drydepep(i,j,m)= drydepep(i,j,m) + dble(pbq1(n)-pbq2(n))
-           wetdepep(i,j,m)= wetdepep(i,j,m) +
-     +                      dble(pbq2(n)-pdata(n)%rad)
-         end if
-       end do
-c
-      end if
-c
-      if(icall.eq.5) then
 c
 c..for linear interpolation in time
         rt1=(tf2-tnow)/(tf2-tf1)

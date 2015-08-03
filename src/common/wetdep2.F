@@ -1,4 +1,4 @@
-      subroutine wetdep2(tstep)
+      subroutine wetdep2(tstep,np)
       use particleML
 c
 c  Purpose:  Compute wet deposition for each particle and each component
@@ -34,6 +34,8 @@ c
       parameter (b2=-3.0062e-2)
       parameter (b3=9.34458e-4)
 c
+c particle loop index, np = 0 means init
+      INTEGER, INTENT(IN) :: np
       integer m,n,itab,i,j,mm
       real    precint,probab,prand,deprate,dep,q,rkw
       real    depconst(mdefcomp)
@@ -41,7 +43,6 @@ c
 c++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
       real ratdep(mdefcomp)
 c++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-      logical prepare
 c################################################################
       integer numdep
       real depmin,depmax,ratmin,ratmax,premin,premax
@@ -50,14 +51,12 @@ c################################################################
 c
       save depconst
 c
-      data prepare/.true./
-c
 #if defined(DRHOOK)
       ! Before the very first statement
       IF (LHOOK) CALL DR_HOOK('WETDEP2',0,ZHOOK_HANDLE)
 #endif
-c
-      if(prepare) then
+c initalization
+      if(np .eq. 0) then
 c
        do m=1,ndefcomp
          r=radiusmym(m)
@@ -106,12 +105,14 @@ ccc	radiusmym(1)=dep
 c##############################################
        write(9,*) '-------------------------------------------------'
 c++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-       prepare=.false.
+c end init
+#if defined(DRHOOK)
+c     before the return statement
+      IF (LHOOK) CALL DR_HOOK('WETDEP1',1,ZHOOK_HANDLE)
+#endif
+      return
       end if
 c
-c..for random number generation
-c      iseed=irand()
-c      call srand(iseed)
 c################################################################
       numdep=0
       premin=+1.e+38
@@ -125,17 +126,17 @@ c################################################################
       totsum=0.0d0
 c################################################################
 c
-      do n=1,npart
+c      do np=1,npart // particle loop moved out
 c################################################################
-        totinp=totinp+dble(pdata(n)%rad)
+        totinp=totinp+dble(pdata(np)%rad)
 c################################################################
-       m= icomp(n)
-c	if(kwetdep(m).eq.1 .and. pdata(n)%prc.gt.0.0) then
-       if(kwetdep(m).eq.1 .and. pdata(n)%prc.gt.0.0
-     & .and. pdata(n)%z .gt. 0.67) then
+       m= icomp(np)
+c	if(kwetdep(m).eq.1 .and. pdata(np)%prc.gt.0.0) then
+       if(kwetdep(m).eq.1 .and. pdata(np)%prc.gt.0.0
+     & .and. pdata(np)%z .gt. 0.67) then
 c..find particles with wet deposition and
 c..reset precipitation to zero if not wet deposition
-          precint=pdata(n)%prc
+          precint=pdata(np)%prc
            q=precint
 c
 cjb... 25.04.12 wet deposition for convective and gases
@@ -156,12 +157,13 @@ c
               rkw=1.12e-4*q**0.79
            endif
            deprate= 1.0 - exp(-tstep*rkw)
-            dep=deprate*pdata(n)%rad
-            if(dep.gt.pdata(n)%rad) dep=pdata(n)%rad
-            pdata(n)%rad=pdata(n)%rad-dep
-           i=nint(pdata(n)%x)
-           j=nint(pdata(n)%y)
+            dep=deprate*pdata(np)%rad
+            if(dep.gt.pdata(np)%rad) dep=pdata(np)%rad
+            pdata(np)%rad=pdata(np)%rad-dep
+           i=nint(pdata(np)%x)
+           j=nint(pdata(np)%y)
            mm=iruncomp(m)
+!$omp atomic
             depwet(i,j,mm)=depwet(i,j,mm)+dble(dep)
 c################################################################
            if(premin.gt.precint) premin=precint
@@ -175,9 +177,9 @@ c################################################################
 c################################################################
        end if
 c################################################################
-        totsum=totsum+dble(pdata(n)%rad)
+        totsum=totsum+dble(pdata(np)%rad)
 c################################################################
-      end do
+c      end do
 c
 c################################################################
 c      write(88,*) 'WETDEP2 numdep,npart:  ',numdep,npart

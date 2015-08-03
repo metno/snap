@@ -1,4 +1,4 @@
-      subroutine drydep2(tstep)
+      subroutine drydep2(tstep,n)
       use particleML
 c
 c  Purpose:  Compute dry deposition for each particle and each component
@@ -24,7 +24,9 @@ c
 c
       real    tstep
 c
-      integer m,n,i,j,mm
+c particle loop index, n = 0 means init
+      INTEGER, INTENT(IN) :: n
+      integer m,i,j,mm
       real    h,deprate,dep
 c################################################################
       integer numdep
@@ -48,7 +50,7 @@ c
       totsum=0.0d0
 c################################################################
 c
-      do n=1,npart
+c     do n=1,npart // particle loop outside
 c################################################################
         totinp=totinp+dble(pdata(n)%rad)
 c################################################################
@@ -76,6 +78,7 @@ c
          i=nint(pdata(n)%x)
          j=nint(pdata(n)%y)
          mm=iruncomp(m)
+!$omp atomic
           depdry(i,j,mm)=depdry(i,j,mm)+dble(dep)
 c################################################################
          if(hblmin.gt.h) hblmin=h
@@ -91,7 +94,7 @@ c################################################################
 c################################################################
         totsum=totsum+dble(pdata(n)%rad)
 c################################################################
-      end do
+c      end do
 c
 c################################################################
 c      write(88,*) 'DRYDEP2 numdep,npart:  ',numdep,npart
