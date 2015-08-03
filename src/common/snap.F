@@ -2164,9 +2164,9 @@ c  posint is parallelized by itself, currently much faster
         call posint(0,tf1,tf2,tnext)
 c
 c..remove particles outside grid domain or without any mass left
-c run only every 3 hours
+c run only every 32 timesteps for better performance
         if (rmlimit.ne.0) then
-           if (mod(istep,3*nsteph).eq.0) call rmpart(rmlimit)
+           if (mod(istep,32).eq.0) call rmpart(rmlimit)
         endif
 c
        if(iensemble.eq.1)
