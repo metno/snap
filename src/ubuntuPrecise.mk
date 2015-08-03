@@ -5,7 +5,7 @@ F77 = gfortran
 CXX = g++
 CC  = gcc
 
-F77FLAGS=-O3 -cpp
+F77FLAGS=-O3 -fopenmp -cpp
 CXXFLAGS=-O3
 CCFLAGS=-O3
 
@@ -17,7 +17,7 @@ NCDIR = /opt/netcdf-fortran-4.2
 
 MIINC = -I/usr/include
 # uncomment MILIB if felt-support not required
-#MILIB = -L/usr/lib -lmi
+MILIB = -L/usr/lib -lmi
 EXLIBS = -lpthread -ldl
 
 DRHOOKINC = -I../../utils/drhook_CY31R2.032

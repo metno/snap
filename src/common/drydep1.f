@@ -1,4 +1,4 @@
-      subroutine drydep1
+      subroutine drydep1(n)
       use particleML
 c
 c  Purpose:  Compute dry deposition for each particle and each component
@@ -20,7 +20,9 @@ c
       include 'snapfld.inc'
       include 'snappar.inc'
 c
-      integer m,n,i,j,mm
+c particle loop index, n=0 means init
+      INTEGER, INTENT(IN) :: n
+      integer m,i,j,mm
       real    h,dep
 c
 #if defined(DRHOOK)
@@ -28,7 +30,7 @@ c
       IF (LHOOK) CALL DR_HOOK('DRYDEP1',0,ZHOOK_HANDLE)
 #endif
 c
-      do n=1,npart
+c      do n=1,npart // particle loop now outside
        m= icomp(n)
        if(kdrydep(m).eq.1) then
 c..very rough eastimate of height,
@@ -40,10 +42,11 @@ c..using boundary layer height, then just linear in sigma/eta !!! ????
            i=nint(pdata(n)%x)
            j=nint(pdata(n)%y)
            mm=iruncomp(m)
+!$omp atomic
             depdry(i,j,mm)=depdry(i,j,mm)+dble(dep)
          end if
        end if
-      end do
+c      end do
 c
 #if defined(DRHOOK)
 c     before the return statement

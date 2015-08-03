@@ -230,7 +230,7 @@ c
 c
       integer iargc,c2fiargc
       integer narg,iuinp,ios,iprhlp,nlines,nhrun,nhrel,irwalk,nhfout
-      integer isynoptic,isvideo,m,nlevel,minhfc,maxhfc,ifltim
+      integer isynoptic,isvideo,m,np,nlevel,minhfc,maxhfc,ifltim
       integer ipostyp,lcinp,iend,ks,nkey,k,ierror,mkey
       integer ikey,k1,k2,kv1,kv2,nkv,i,kh,kd,ig,igd,igm,i1,i2,l,n,idmin
       integer iscale,ih
@@ -255,6 +255,7 @@ cjb_start
 cjb_end
 c
       logical blfullmix
+      logical :: init = .true.
 c
       character*72  finput,fldfil,fldfilX,fldfilN,logfile,ftype,
      +        fldtype, relfile
@@ -2019,7 +2020,7 @@ c
             relpos(4,irelpos)=y
 c
             if(iensemble.eq.1)
-     +        call ensemble(0,itime1,tf1,tf2,tnow,istep,nstep,nsteph)
+     +        call ensemble(0,itime1,tf1,tf2,tnow,istep,nstep,nsteph,0)
 c
             nxtinf=1
             ifldout=0
@@ -2028,7 +2029,7 @@ c continue istep loop after initialization
           end if
 c
          if(iensemble.eq.1)
-     +      call ensemble(1,itime,tf1,tf2,tnow,istep,nstep,nsteph)
+     +      call ensemble(1,itime,tf1,tf2,tnow,istep,nstep,nsteph,0)
 c
           call hrdiff(0,0,itimei,itimefi,ihdiff,ierr1,ierr2)
           tf1=0.
@@ -2061,7 +2062,7 @@ c
 c
           if(ierror.eq.0) then
 c..interpolation of boundary layer top, height, precipitation etc.
-            call posint(1,tf1,tf2,tnow)
+            call posint(-1,tf1,tf2,tnow)
             lstepr=istep
           else
             write(9,*) 'WARNING. Out of space for plumes/particles'
@@ -2107,53 +2108,81 @@ c          write(88,*) '----------------------------------------------'
 c        end if
 c#######################################################################
 c
+c..radioactive decay for depositions
+c.. and initialization of decay-parameters
+       if (idecay.eq.1) call decayDeps(tstep)
+c prepare particle functions once before loop
+       if (init) then
+c setting particle-number to 0 means init
+         if(idrydep.eq.1) call drydep1(0)
+         if(idrydep.eq.2) call drydep2(tstep,0)
+         if(iwetdep.eq.1) call wetdep1(0)
+         if(iwetdep.eq.2) call wetdep2(tstep,0)
+         call forwrd(tf1,tf2,tnow,tstep,0)
+         if(irwalk.ne.0) call rwalk(tstep,blfullmix,0)
+         init = .false.
+       end if
+c particle loop
+!$OMP PARALLEL DO !np is private by default
+       do np=1,npart
 c..radioactive decay
 c
-       if(idecay.eq.1) call decay(tstep)
+         if(idecay.eq.1) call decay(np)
 c
-       if(iensemble.eq.1)
-     +    call ensemble(2,itime,tf1,tf2,tnow,istep,nstep,nsteph)
+         if(iensemble.eq.1)
+     +      call ensemble(2,itime,tf1,tf2,tnow,istep,nstep,nsteph,np)
 c
 c..dry deposition (1=old, 2=new version)
 c
-        if(idrydep.eq.1) call drydep1
-        if(idrydep.eq.2) call drydep2(tstep)
+          if(idrydep.eq.1) call drydep1(np)
+          if(idrydep.eq.2) call drydep2(tstep,np)
 c
-       if(iensemble.eq.1)
-     +    call ensemble(3,itime,tf1,tf2,tnow,istep,nstep,nsteph)
+          if(iensemble.eq.1)
+     +      call ensemble(3,itime,tf1,tf2,tnow,istep,nstep,nsteph,np)
 c
 c..wet deposition (1=old, 2=new version)
 c
-        if(iwetdep.eq.1) call wetdep1
-        if(iwetdep.eq.2) call wetdep2(tstep)
+          if(iwetdep.eq.1) call wetdep1(np)
+          if(iwetdep.eq.2) call wetdep2(tstep,np)
 c
-       if(iensemble.eq.1)
-     +    call ensemble(4,itime,tf1,tf2,tnow,istep,nstep,nsteph)
+          if(iensemble.eq.1)
+     +      call ensemble(4,itime,tf1,tf2,tnow,istep,nstep,nsteph,np)
 c
 c..move all particles forward
 c
-        call forwrd(tf1,tf2,tnow,tstep)
+          call forwrd(tf1,tf2,tnow,tstep,np)
 c
 c..apply the random walk method (diffusion)
 c
-        if(irwalk.ne.0) call rwalk(tstep,blfullmix)
+          if(irwalk.ne.0) call rwalk(tstep,blfullmix,np)
 c
-c..remove particles outside grid domain or without any mass left
-c
-        if (rmlimit.ne.0) call rmpart(rmlimit)
-c
+c end of particle
+       end do
+!$OMP END PARALLEL DO
 c..interpolation of boundary layer top, height, precipitation etc.
-c
+c  posint is parallelized by itself, currently much faster
         call posint(0,tf1,tf2,tnext)
 c
+c..remove particles outside grid domain or without any mass left
+c run only every 3 hours
+        if (rmlimit.ne.0) then
+           if (mod(istep,3*nsteph).eq.0) call rmpart(rmlimit)
+        endif
+c
        if(iensemble.eq.1)
-     +    call ensemble(5,itime,tf1,tf2,tnext,istep,nstep,nsteph)
-cjb_start
+     +    call ensemble(5,itime,tf1,tf2,tnext,istep,nstep,nsteph,0)
+c
+!$OMP PARALLEL DO REDUCTION(max : mhmax)
        do n=1,npart
           if(pdata(n)%hbl .gt. mhmax) mhmax=pdata(n)%hbl
+       enddo
+!$OMP END PARALLEL DO
+!$OMP PARALLEL DO REDUCTION(min : mhmin)
+       do n=1,npart
           if(pdata(n)%hbl .lt. mhmin) mhmin=pdata(n)%hbl
        enddo
-cjb_end
+!$OMP END PARALLEL DO
+c
 c
 c###################################################################
 c	write(6,
@@ -2298,7 +2327,7 @@ c
  3333 continue
 c
       if(iensemble.eq.1 .and. isteph.eq.0)
-     +  call ensemble(6,itime,tf1,tf2,tnext,istep,nstep,nsteph)
+     +  call ensemble(6,itime,tf1,tf2,tnext,istep,nstep,nsteph,0)
 c
 c..field output if ifldout=1, always accumulation for average fields
       if (idailyout.eq.1) then
@@ -2423,7 +2452,7 @@ c
   990 continue
 c
       if(iensemble.eq.1)
-     +  call ensemble(7,itimefa,tf1,tf2,tnext,istep,nstep,nsteph)
+     +  call ensemble(7,itimefa,tf1,tf2,tnext,istep,nstep,nsteph,0)
 c
       if(iargos.eq.1) then
         close(91)

@@ -1,4 +1,4 @@
-      subroutine rwalk(tstep,blfullmix)
+      subroutine rwalk(tstep,blfullmix,np)
       use particleML
 c
 c  Purpose:  Diffusion, in and above boudary layer.
@@ -35,53 +35,63 @@ c
       include 'snapgrd.inc'
       include 'snappar.inc'
 c
-      real    tstep
-      logical blfullmix
+      REAL, INTENT(IN) ::    tstep
+      LOGICAL, INTENT(IN) :: blfullmix
+c particle-loop index, np = 0 means init
+      INTEGER, INTENT(IN)  :: np
 c
-      integer np,i
-      real    a,cona,conb,vrange,vrdbla,vrdblb,vrqrt
-      real    xrand,yrand,zrand,u,v,vabs,rl,rv,rv2,vpos,rvmax
-       real hmax ! maximum mixing height = 2500m
-       real tmix ! Characteristic mixing time = 15 min
-       real lmax ! Maximum l-eta in the mixing layer = 0.28
-       real labove ! Standard l-eta above the mixing layer
-       real tfactor ! tfactor=tstep/tmix
-       real hfactor    ! hfactor=h/hmax!
-       real rnd(3)
+
+      integer i
+      real, save ::    a,cona,conb,vrange,vrdbla,vrdblb,vrqrt
+      real, save :: hmax ! maximum mixing height = 2500m
+      real, save :: tmix ! Characteristic mixing time = 15 min
+      real, save :: lmax ! Maximum l-eta in the mixing layer = 0.28
+      real, save :: labove ! Standard l-eta above the mixing layer
+      real, save :: tfactor ! tfactor=tstep/tmix
+c
+      real rnd(3), xrand, yrand, zrand, u, v, rl, vabs
+      real hfactor, rv, rvmax
 c
 
 #if defined(DRHOOK)
       ! Before the very first statement
       IF (LHOOK) CALL DR_HOOK('RWALK',0,ZHOOK_HANDLE)
 #endif
-c
-       hmax = 2500.0
-       tmix = 15.0*60.0
-       lmax = 0.28
-       labove=0.03
-       tfactor=tstep/tmix
+c initialization
+      if (np .eq. 0) then
+        hmax = 2500.0
+        tmix = 15.0*60.0
+        lmax = 0.28
+        labove=0.03
+        tfactor=tstep/tmix
 c	write(*,*) 'hmax, tmix,lmax, labove, tfactor',
 c     &hmax, tmix,lmax, labove, tfactor
 c
-      a=0.5
-      conb=2.*tstep*0.5*(tstep**0.75)*(a**2)
-      a=0.25
-      cona=2.*tstep*0.5*(tstep**0.75)*(a**2)
+        a=0.5
+        conb=2.*tstep*0.5*(tstep**0.75)*(a**2)
+        a=0.25
+        cona=2.*tstep*0.5*(tstep**0.75)*(a**2)
 c
-      vrange=0.02
-c      vrdbla=vrange*0.5
+        vrange=0.02
+c       vrdbla=vrange*0.5
 c l-eta above mixing height
-      vrdbla=labove*tfactor
+        vrdbla=labove*tfactor
 c
 c l-eta below mixing height
-      vrdblb=lmax*tfactor
-      vrqrt=vrange*0.25
+        vrdblb=lmax*tfactor
+        vrqrt=vrange*0.25
+#if defined(DRHOOK)
+c     before the return statement
+        IF (LHOOK) CALL DR_HOOK('RWALK',1,ZHOOK_HANDLE)
+#endif
+        return
+      end if
 c
 c--------------------------------------
       if (blfullmix) then
 c--------------------------------------
 c
-      do np=1,npart
+c      do np=1,npart // moved particle loop out
 c
 c..the rand function returns random real numbers between 0.0 and 1.0
 c
@@ -124,7 +134,7 @@ c..vertical diffusion
 c
         end if
 
-      end do
+c      end do
 c
 c--------------------------------------
       else
@@ -132,7 +142,7 @@ c--------------------------------------
 c
 c... no full mixing
 c
-      do np=1,npart
+c      do np=1,npart  // moved particle loop out
 c	write(*,*) np,(pdata(i,np),i=1,5)
 c
 c..the rand function returns random real numbers between 0.0 and 1.0
@@ -208,7 +218,7 @@ c..vertical diffusion
 c
         end if
 
-      end do
+c      end do
 c
 c--------------------------------------
       end if

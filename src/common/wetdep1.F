@@ -1,4 +1,4 @@
-      subroutine wetdep1
+      subroutine wetdep1(n)
       use particleML
 c
 c  Purpose:  Compute wet deposition for each particle and each component
@@ -21,28 +21,19 @@ c
       include 'snappar.inc'
       include 'snaptab.inc'
 c
-      integer m,n,itab,i,j,mm
+c particle loop index, n = 0 means init
+      INTEGER, INTENT(IN) :: n
+      integer m,itab,i,j,mm
       real    precint,probab,prand,dep
 c
-c..for random number functions
-      integer irand,iseed
 c
-#if defined(linux)
-      real rand
-#else
-      double precision rand
-#endif
 #if defined(DRHOOK)
       ! Before the very first statement
       IF (LHOOK) CALL DR_HOOK('WETDEP1',0,ZHOOK_HANDLE)
 #endif
 c
 c
-c..for random number generation
-      iseed=irand()
-      call srand(iseed)
-c
-      do n=1,npart
+c      do n=1,npart // particle loop moved outside subroutine
        m= icomp(n)
        if(kwetdep(m).eq.1 .and. pdata(n)%prc.gt.0.0) then
 c..find particles with wet deposition and
@@ -52,7 +43,7 @@ c..reset precipitation to zero if not wet deposition
           itab=min(itab,mpretab)
           probab=pretab(itab)
 c..the rand function returns random real numbers between 0.0 and 1.0
-          prand=rand()
+          call random_number(prand)
           if(prand.gt.probab) then
            pdata(n)%prc=0.0
          else
@@ -61,10 +52,11 @@ c..the rand function returns random real numbers between 0.0 and 1.0
            i=nint(pdata(n)%x)
            j=nint(pdata(n)%y)
            mm=iruncomp(m)
+!$omp atomic
             depwet(i,j,mm)=depwet(i,j,mm)+dble(dep)
          end if
        end if
-      end do
+c      end do
 c
 #if defined(DRHOOK)
 c     before the return statement
