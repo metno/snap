@@ -111,8 +111,8 @@ c..horizontal diffusion
           v=pextra%v
           vabs=sqrt(u*u+v*v)
           rl=sqrt(conb*vabs**1.75)*2.
-          pdata(np)%x=pdata(np)%x+rl*xrand*pdata(np)%rmx
-          pdata(np)%y=pdata(np)%y+rl*yrand*pdata(np)%rmy
+          pdata(np)%x=pdata(np)%x+rl*xrand*pextra%rmx
+          pdata(np)%y=pdata(np)%y+rl*yrand*pextra%rmy
 c
 c..vertical diffusion
 c
@@ -127,8 +127,8 @@ c..horizontal diffusion
           v=pextra%v
           vabs=sqrt(u*u+v*v)
           rl=sqrt(cona*vabs**1.75)*2.
-          pdata(np)%x=pdata(np)%x+rl*xrand*pdata(np)%rmx
-          pdata(np)%y=pdata(np)%y+rl*yrand*pdata(np)%rmy
+          pdata(np)%x=pdata(np)%x+rl*xrand*pextra%rmx
+          pdata(np)%y=pdata(np)%y+rl*yrand*pextra%rmy
 c
 c..vertical diffusion
           pdata(np)%z=pdata(np)%z+vrdbla*zrand
@@ -162,8 +162,8 @@ c..horizontal diffusion
           v=pextra%v
           vabs=sqrt(u*u+v*v)
           rl=sqrt(conb*vabs**1.75)*2.
-          pdata(np)%x=pdata(np)%x+rl*xrand*pdata(np)%rmx
-          pdata(np)%y=pdata(np)%y+rl*yrand*pdata(np)%rmy
+          pdata(np)%x=pdata(np)%x+rl*xrand*pextra%rmx
+          pdata(np)%y=pdata(np)%y+rl*yrand*pextra%rmy
 c
 c..vertical diffusion
          hfactor=pdata(np)%hbl/hmax
@@ -211,8 +211,8 @@ c..horizontal diffusion
           v=pextra%v
           vabs=sqrt(u*u+v*v)
           rl=sqrt(cona*vabs**1.75)*2.
-          pdata(np)%x=pdata(np)%x+rl*xrand*pdata(np)%rmx
-          pdata(np)%y=pdata(np)%y+rl*yrand*pdata(np)%rmy
+          pdata(np)%x=pdata(np)%x+rl*xrand*pextra%rmx
+          pdata(np)%y=pdata(np)%y+rl*yrand*pextra%rmy
 c
 c..vertical diffusion
           pdata(np)%z=pdata(np)%z+vrdbla*zrand

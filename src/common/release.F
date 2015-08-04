@@ -332,6 +332,7 @@ c
                   pdata(npart)%y= y+dy
                   pdata(npart)%z= vlev
                   pdata(npart)%rad= pbq(m)
+                  pdata(npart)%grv= 0
                   pdata(npart)%active = .true.
                   icomp(npart)=   idefcomp(m)
 c..an unique particle identifier (for testing...)

@@ -39,10 +39,10 @@ c
 c
 c particle loop index, np = 0 is initalization
       INTEGER, INTENT(IN) :: np
-      TYPE(extraParticle), INTENT(OUT) :: pextra
+      TYPE(extraParticle), INTENT(INOUT) :: pextra
       integer i,j,m,ilvl,k1,k2,itab,kt1,kt2,ip,it
       real    dt,rt1,rt2,dx,dy,c1,c2,c3,c4,vlvl
-      real    dz1,dz2,uk1,uk2,u,vk1,vk2,v,wk1,wk2,w,rmx,rmy
+      real    dz1,dz2,uk1,uk2,u,vk1,vk2,v,wk1,wk2,w
       real    th,tk1,tk2,ps,p,pi,t,gravity,grav1,grav2,pvg,tvg
       real    pi1,pi2,dz,deta,wg,rtab
 ccc
@@ -153,12 +153,6 @@ c..w
      -           +c3*w2(i,j+1,k2)+c4*w2(i+1,j+1,k2))
         w=wk1*dz1+wk2*dz2
 c
-c..map ratio
-        rmx= c1*xm(i,j)  +c2*xm(i+1,j)
-     -      +c3*xm(i,j+1)+c4*xm(i+1,j+1)
-        rmy= c1*ym(i,j)  +c2*ym(i+1,j)
-     -      +c3*ym(i,j+1)+c4*ym(i+1,j+1)
-c
         m=icomp(np)
 c
        if(kgravity(m).gt.0) then
@@ -249,9 +243,8 @@ c######################################################################
 c
 c..update position
 c
-
-        pdata(np)%x=pdata(np)%x+u*dt*rmx/dxgrid
-        pdata(np)%y=pdata(np)%y+v*dt*rmy/dygrid
+        pdata(np)%x=pdata(np)%x+u*dt*pextra%rmx
+        pdata(np)%y=pdata(np)%y+v*dt*pextra%rmy
         pdata(np)%z=pdata(np)%z+w*dt
 #if defined(TRAJ)
 cjb_270211
