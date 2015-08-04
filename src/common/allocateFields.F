@@ -124,13 +124,9 @@ c the calculation-fields
 c the part particles fields
       ALLOCATE ( pdata(mpart), STAT = AllocateStatus)
       IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
-      ALLOCATE ( pwork(mpart, 2), STAT = AllocateStatus)
-      IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
       ALLOCATE ( icomp(mpart), STAT = AllocateStatus)
       IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
       ALLOCATE ( iparnum(mpart), STAT = AllocateStatus)
-      IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
-      ALLOCATE ( ipwork(mpart), STAT = AllocateStatus)
       IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
 
 c the plumes
@@ -209,10 +205,8 @@ c the plumes
       DEALLOCATE ( avgbq )
 
       DEALLOCATE ( pdata )
-      DEALLOCATE ( pwork )
       DEALLOCATE ( icomp )
       DEALLOCATE ( iparnum )
-      DEALLOCATE ( ipwork )
 
       DEALLOCATE ( iplume )
 

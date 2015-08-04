@@ -114,10 +114,10 @@ c..icomp:   component no. in particle
 c..iparnum: unique identifier for each particle
 c..ipwork:  work array
 c
-      REAL, DIMENSION(:,:), POINTER :: pwork
-      INTEGER, DIMENSION(:), POINTER :: icomp, iparnum, ipwork
+c      REAL, DIMENSION(:,:), POINTER :: pwork
+      INTEGER, DIMENSION(:), POINTER :: icomp, iparnum
 c
-      common/part/ pwork
-     -           ,icomp,iparnum,ipwork,mpart
+      common/part/ icomp,iparnum,mpart
+c     -  pwork, ipwork
 c
 c-----------------------------------------------------------------------

@@ -243,6 +243,7 @@ c
       integer(kind=8) :: epochSecs
       real    tstep,rmlimit,rnhrun,rnhrel,glat,glong,tf1,tf2,tnow,tnext
       real    x,y
+      TYPE(extraParticle) pextra
       real    rscale,actweight
 c ipcount(mdefcomp, nk)
       integer, dimension(:,:), allocatable:: ipcount
@@ -2114,17 +2115,15 @@ c.. and initialization of decay-parameters
 c prepare particle functions once before loop
        if (init) then
 c setting particle-number to 0 means init
-         if(idrydep.eq.1) call drydep1(0)
-         if(idrydep.eq.2) call drydep2(tstep,0)
-         if(iwetdep.eq.1) call wetdep1(0)
          if(iwetdep.eq.2) call wetdep2(tstep,0)
          call forwrd(tf1,tf2,tnow,tstep,0)
          if(irwalk.ne.0) call rwalk(tstep,blfullmix,0)
          init = .false.
        end if
 c particle loop
-!$OMP PARALLEL DO !np is private by default
+!$OMP PARALLEL DO PRIVATE(pextra) !np is private by default
        do np=1,npart
+        if (pdata(np)%active) then
 c..radioactive decay
 c
          if(idecay.eq.1) call decay(np)
@@ -2150,24 +2149,27 @@ c
 c
 c..move all particles forward
 c
-          call forwrd(tf1,tf2,tnow,tstep,np)
+          call forwrd(tf1,tf2,tnow,tstep,np, pextra)
 c
 c..apply the random walk method (diffusion)
 c
-          if(irwalk.ne.0) call rwalk(tstep,blfullmix,np)
+          if(irwalk.ne.0) call rwalk(tstep,blfullmix,np,pextra)
 c
-c end of particle
+c.. check domain (%active) after moving particle
+c
+          call checkDomain(np)
+c
+c end of particle loop over active particles
+        endif
        end do
 !$OMP END PARALLEL DO
 c..interpolation of boundary layer top, height, precipitation etc.
 c  posint is parallelized by itself, currently much faster
         call posint(0,tf1,tf2,tnext)
 c
-c..remove particles outside grid domain or without any mass left
+c..remove inactive particles or without any mass left
 c run only every 32 timesteps for better performance
-        if (rmlimit.ne.0) then
-           if (mod(istep,32).eq.0) call rmpart(rmlimit)
-        endif
+        if (mod(istep,32).eq.0) call rmpart(rmlimit)
 c
        if(iensemble.eq.1)
      +    call ensemble(5,itime,tf1,tf2,tnext,istep,nstep,nsteph,0)

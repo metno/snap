@@ -24,14 +24,12 @@ module particleML
        REAL    :: rmy ! map ration in y direction
        REAL    :: prc ! precipition intensity (mm/hour)
        REAL    :: grv ! gravity in m/s (fixed or computed)
+       INTEGER*2 :: ageInSteps ! age of particle since construction
+       LOGICAL :: active ! inside/outside domain
     END TYPE particle
 
-! the actual particle storage, will be allocated in allocateFields.F
-    TYPE(particle), DIMENSION(:), POINTER :: pdata
-
-
-    TYPE complexParticle
-       TYPE(particle) :: par ! the original particle
+! storage for extra particle data
+    TYPE extraParticle
        REAL    :: u ! u-speed
        REAL    :: v ! v-speed
        REAL    :: hbl ! height of boundary layer
@@ -39,6 +37,9 @@ module particleML
        REAL    :: rmy ! map ration in y direction
        REAL    :: precip ! precipition intensity (mm/hour)
        REAL    :: grav ! gravity in m/s (fixed or computed)
-    END TYPE complexParticle
+    END TYPE extraParticle
+
+! the actual particle storage, will be allocated in allocateFields.F
+    TYPE(particle), DIMENSION(:), POINTER :: pdata
 
 end module particleML

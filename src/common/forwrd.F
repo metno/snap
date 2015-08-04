@@ -1,4 +1,4 @@
-      subroutine forwrd(tf1,tf2,tnow,tstep,np)
+      subroutine forwrd(tf1,tf2,tnow,tstep,np,pextra)
       use particleML
 c
 c  Purpose:  Move all particles one timestep forward
@@ -39,6 +39,7 @@ c
 c
 c particle loop index, np = 0 is initalization
       INTEGER, INTENT(IN) :: np
+      TYPE(extraParticle), INTENT(OUT) :: pextra
       integer i,j,m,ilvl,k1,k2,itab,kt1,kt2,ip,it
       real    dt,rt1,rt2,dx,dy,c1,c2,c3,c4,vlvl
       real    dz1,dz2,uk1,uk2,u,vk1,vk2,v,wk1,wk2,w,rmx,rmy
@@ -264,8 +265,8 @@ ccc JB
 ccc
 c
 c..store u,v for rwalk
-        pwork(np,1)=u
-        pwork(np,2)=v
+        pextra%u=u
+        pextra%v=v
 c
 c      end do
 c

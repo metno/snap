@@ -1,4 +1,4 @@
-      subroutine rwalk(tstep,blfullmix,np)
+      subroutine rwalk(tstep,blfullmix,np,pextra)
       use particleML
 c
 c  Purpose:  Diffusion, in and above boudary layer.
@@ -39,6 +39,7 @@ c
       LOGICAL, INTENT(IN) :: blfullmix
 c particle-loop index, np = 0 means init
       INTEGER, INTENT(IN)  :: np
+      TYPE(extraParticle), INTENT(IN) :: pextra
 c
 
       integer i
@@ -106,8 +107,8 @@ c
 c..particle in boundary layer.....................................
 c
 c..horizontal diffusion
-         u=pwork(np,1)
-         v=pwork(np,2)
+          u=pextra%u
+          v=pextra%v
           vabs=sqrt(u*u+v*v)
           rl=sqrt(conb*vabs**1.75)*2.
           pdata(np)%x=pdata(np)%x+rl*xrand*pdata(np)%rmx
@@ -122,8 +123,8 @@ c
 c..particle above boundary layer..................................
 c
 c..horizontal diffusion
-         u=pwork(np,1)
-         v=pwork(np,2)
+          u=pextra%u
+          v=pextra%v
           vabs=sqrt(u*u+v*v)
           rl=sqrt(cona*vabs**1.75)*2.
           pdata(np)%x=pdata(np)%x+rl*xrand*pdata(np)%rmx
@@ -157,8 +158,8 @@ c
 c..particle in boundary layer.....................................
 c
 c..horizontal diffusion
-         u=pwork(np,1)
-         v=pwork(np,2)
+          u=pextra%u
+          v=pextra%v
           vabs=sqrt(u*u+v*v)
           rl=sqrt(conb*vabs**1.75)*2.
           pdata(np)%x=pdata(np)%x+rl*xrand*pdata(np)%rmx
@@ -206,8 +207,8 @@ c
 c..particle above boundary layer..................................
 c
 c..horizontal diffusion
-         u=pwork(np,1)
-         v=pwork(np,2)
+          u=pextra%u
+          v=pextra%v
           vabs=sqrt(u*u+v*v)
           rl=sqrt(cona*vabs**1.75)*2.
           pdata(np)%x=pdata(np)%x+rl*xrand*pdata(np)%rmx

@@ -1,8 +1,8 @@
       subroutine rmpart(rmlimit)
       use particleML
 c
-c  Purpose: Remove particles which have left the grid domain
-c           or has lost (almost) all mass, in the last case the
+c  Purpose: Remove particles which are inactive
+c           or have lost (almost) all mass, in the last case the
 c           remaining mass is transferred to to the other particles
 c           in the same plume (or to the next plume if none left).
 c
@@ -77,6 +77,7 @@ c..redistribution of lost mass (within one plume)
              else
                pbqlost(m)=pbqlost(m)+pdata(i)%rad
                pdata(i)%rad=0.
+               pdata(i)%active = .false.
                pdata(i)%x=0.
                pdata(i)%y=0.
              end if
@@ -104,11 +105,8 @@ c removal of particles outside of the domain
 c by reordering of plumes
         iplume(1,npl)=n+1
         do i=i1,i2
-          if(pdata(i)%x.gt.xmin .and. pdata(i)%x.lt.xmax .and.
-     +      pdata(i)%y.gt.ymin .and. pdata(i)%y.lt.ymax) then
-c TODO we should only keep particles which carry mass, e.g. pdata(i)%rad > 0
-            pdata(i)%z=min(pdata(i)%z,vmax)
-            pdata(i)%z=max(pdata(i)%z,vmin)
+c reorder all particles, only keep active
+          if(pdata(i)%active) then
             n=n+1
             if(n.ne.i) then
 c             moving paricle to new position in pdata (n < i)
