@@ -19,10 +19,6 @@ module particleML
        REAL    :: tbl   !- sigma/eta at top of boundary layer
        REAL    :: rad   !- radioactive content (Bq)
        REAL    :: hbl
-       ! to be removed
-!       REAL    :: rmx
-!       REAL    :: rmy ! map ration in y direction
-!       REAL    :: prc ! precipition intensity (mm/hour)
        REAL    :: grv ! gravity in m/s (fixed or computed)
        INTEGER*2 :: ageInSteps ! age of particle since construction
        LOGICAL :: active ! inside/outside domain
