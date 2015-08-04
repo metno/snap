@@ -2062,8 +2062,6 @@ c
           call release(istep-1,nsteph,tf1,tf2,tnow,ierror)
 c
           if(ierror.eq.0) then
-c..interpolation of boundary layer top, height, precipitation etc.
-            call posint(-1,tf1,tf2,tnow, pextra)
             lstepr=istep
           else
             write(9,*) 'WARNING. Out of space for plumes/particles'
@@ -2115,6 +2113,7 @@ c.. and initialization of decay-parameters
 c prepare particle functions once before loop
        if (init) then
 c setting particle-number to 0 means init
+         call posint(0,tf1,tf2,tnow, pextra)
          if(iwetdep.eq.2) call wetdep2(tstep,0)
          call forwrd(tf1,tf2,tnow,tstep,0)
          if(irwalk.ne.0) call rwalk(tstep,blfullmix,0)
