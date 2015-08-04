@@ -5,7 +5,7 @@ F77 = gfortran
 CXX = g++
 CC  = gcc
 
-F77FLAGS=-O3 -fopenmp -cpp
+F77FLAGS=-O3 -fopenmp -cpp # -fbounds-check
 CXXFLAGS=-O3
 CCFLAGS=-O3
 

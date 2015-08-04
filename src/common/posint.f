@@ -74,6 +74,7 @@ c
 c
 !$OMP PARALLEL DO
       do np=np1,np2
+        if (pdata(np)%active) then
 c
 c..for horizotal interpolations
         i=pdata(np)%x
@@ -121,6 +122,8 @@ c..and if less than a minimum precipitation intensity (mm/hour)
         if(pdata(np)%z.lt.vminprec .or.
      +     pdata(np)%prc.lt.precmin) pdata(np)%prc=0.
 c
+c end loop ove active particles
+      endif
       end do
 !$OMP END PARALLEL DO
 c

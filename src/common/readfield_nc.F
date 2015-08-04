@@ -810,7 +810,7 @@ c
       subroutine nfcheckload(ncid, varname, start, length, field)
       implicit none
       include 'netcdf.inc'
-      integer, intent ( in) :: ncid, start(1), length(1)
+      integer, intent ( in) :: ncid, start(7), length(7)
       character(len=*), intent(in) :: varname
       real(kind=4), intent (inout) :: field(*)
 
