@@ -56,7 +56,7 @@ contains
     integer :: gmvalues(9)
     integer(kind=4) :: gmtimeIn
 
-    gmtimeIn = epochSeconds
+    gmtimeIn = INT(epochSeconds, KIND=4)
     call gmtime(gmtimeIn, gmvalues)
     values = gmvalues(1:6)
     values(5) = values(5) + 1

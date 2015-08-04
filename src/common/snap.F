@@ -2063,7 +2063,7 @@ c
 c
           if(ierror.eq.0) then
 c..interpolation of boundary layer top, height, precipitation etc.
-            call posint(-1,tf1,tf2,tnow)
+            call posint(-1,tf1,tf2,tnow, pextra)
             lstepr=istep
           else
             write(9,*) 'WARNING. Out of space for plumes/particles'
@@ -2124,6 +2124,9 @@ c particle loop
 !$OMP PARALLEL DO PRIVATE(pextra) !np is private by default
        do np=1,npart
         if (pdata(np)%active) then
+c..interpolation of boundary layer top, height, precipitation etc.
+c  creates and save temporary data to pextra%prc, pextra%
+         call posint(np,tf1,tf2,tnow, pextra)
 c..radioactive decay
 c
          if(idecay.eq.1) call decay(np)
@@ -2141,13 +2144,13 @@ c
 c
 c..wet deposition (1=old, 2=new version)
 c
-          if(iwetdep.eq.1) call wetdep1(np)
-          if(iwetdep.eq.2) call wetdep2(tstep,np)
+          if(iwetdep.eq.1) call wetdep1(np, pextra)
+          if(iwetdep.eq.2) call wetdep2(tstep,np, pextra)
 c
           if(iensemble.eq.1)
      +      call ensemble(4,itime,tf1,tf2,tnow,istep,nstep,nsteph,np)
 c
-c..move all particles forward
+c..move all particles forward, save u and v to pextra
 c
           call forwrd(tf1,tf2,tnow,tstep,np, pextra)
 c
@@ -2163,10 +2166,7 @@ c end of particle loop over active particles
         endif
        end do
 !$OMP END PARALLEL DO
-c..interpolation of boundary layer top, height, precipitation etc.
-c  posint is parallelized by itself, currently much faster
-        call posint(0,tf1,tf2,tnext)
-c
+
 c..remove inactive particles or without any mass left
 c run only every 32 timesteps for better performance
         if (mod(istep,32).eq.0) call rmpart(rmlimit)

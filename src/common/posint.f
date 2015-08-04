@@ -1,10 +1,9 @@
-      subroutine posint(mode,tf1,tf2,tnow)
+      subroutine posint(mode,tf1,tf2,tnow,pextra)
 c
 c  Purpose:  Interpolation of boundary layer top and height
 c            and precipitation intensity to particle positions
 c
 c  Input:
-c	mode=0: interpolation for all particles
 c	mode=-1: interpolation for the last released plume
 c mode>0: interpolate only one particle, np = mode
 c		(with all particles at the same horizontal position)
@@ -23,8 +22,9 @@ c
 c
       INTEGER, INTENT(IN) :: mode
       REAL, INTENT(IN) ::    tf1,tf2,tnow
+      TYPE(extraParticle), INTENT(OUT) :: pextra
 c
-      integer np,np1,np2,i,j,i1,i2,k
+      integer np,npi, np1,np2,i,j,i1,i2,k
       real    rt1,rt2,dxgrid,dygrid,dx,dy,c1,c2,c3,c4,bl,hbl,rmx,rmy
       real    pr,precmin,p1,p2,plim
 c
@@ -63,18 +63,16 @@ c
       if(mode.eq.-1) then
         np1=npart
         np2=npart
-      elseif (mode.eq.0) then
-        np1=1
-        np2=npart
+        np=npart
       elseif (mode.gt.0) then
-        np1 = mode
-        np2 = mode
+        np = mode
+      else
+        write(*,*) 'wrong mode to posint:', mode
+        call exit(1)
       end if
 c
 c
-!$OMP PARALLEL DO
-      do np=np1,np2
-        if (pdata(np)%active) then
+      if (pdata(np)%active) then
 c
 c..for horizotal interpolations
         i=pdata(np)%x
@@ -113,29 +111,24 @@ c..update boundary layer top and height, map ratio and precipitation
 c
         pdata(np)%tbl=bl
         pdata(np)%hbl=hbl
-        pdata(np)%rmx=rmx/dxgrid
-        pdata(np)%rmy=rmy/dygrid
-        pdata(np)%prc=pr
+        pextra%rmx=rmx/dxgrid
+        pextra%rmy=rmy/dygrid
+        pextra%prc=pr
 
 c..reset precipitation to zero if pressure less than approx. 550 hPa.
 c..and if less than a minimum precipitation intensity (mm/hour)
         if(pdata(np)%z.lt.vminprec .or.
-     +     pdata(np)%prc.lt.precmin) pdata(np)%prc=0.
+     +     pextra%prc.lt.precmin) pextra%prc=0.
 c
 c end loop ove active particles
       endif
-      end do
-!$OMP END PARALLEL DO
 c
       if(mode.eq.-1) then
 c..copy interpolated data to the other particles in the plume
        np1=iplume(1,nplume)
-       do np=np1,np2-1
-         pdata(np)%tbl = pdata(np2)%tbl
-         pdata(np)%hbl = pdata(np2)%hbl
-         pdata(np)%rmx = pdata(np2)%rmx
-         pdata(np)%rmy = pdata(np2)%rmy
-         pdata(np)%prc = pdata(np2)%prc
+       do npi=np1,np2-1
+         pdata(npi)%tbl = pdata(np2)%tbl
+         pdata(npi)%hbl = pdata(np2)%hbl
        end do
       end if
 c

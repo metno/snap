@@ -1,4 +1,4 @@
-      subroutine wetdep2(tstep,np)
+      subroutine wetdep2(tstep,np,pextra)
       use particleML
 c
 c  Purpose:  Compute wet deposition for each particle and each component
@@ -36,6 +36,7 @@ c
 c
 c particle loop index, np = 0 means init
       INTEGER, INTENT(IN) :: np
+      TYPE(extraParticle), INTENT(IN) :: pextra
       integer m,n,itab,i,j,mm
       real    precint,probab,prand,deprate,dep,q,rkw
       real    depconst(mdefcomp)
@@ -131,12 +132,12 @@ c################################################################
         totinp=totinp+dble(pdata(np)%rad)
 c################################################################
        m= icomp(np)
-c	if(kwetdep(m).eq.1 .and. pdata(np)%prc.gt.0.0) then
-       if(kwetdep(m).eq.1 .and. pdata(np)%prc.gt.0.0
+c	if(kwetdep(m).eq.1 .and. pextra%prc.gt.0.0) then
+       if(kwetdep(m).eq.1 .and. pextra%prc.gt.0.0
      & .and. pdata(np)%z .gt. 0.67) then
 c..find particles with wet deposition and
 c..reset precipitation to zero if not wet deposition
-          precint=pdata(np)%prc
+          precint=pextra%prc
            q=precint
 c
 cjb... 25.04.12 wet deposition for convective and gases
