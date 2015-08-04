@@ -2119,10 +2119,12 @@ c setting particle-number to 0 means init
          if(irwalk.ne.0) call rwalk(tstep,blfullmix,0)
          init = .false.
        end if
+c
 c particle loop
 !$OMP PARALLEL DO PRIVATE(pextra) !np is private by default
        do np=1,npart
         if (pdata(np)%active) then
+         pdata(np)%ageInSteps = pdata(np)%ageInSteps + 1
 c..interpolation of boundary layer top, height, precipitation etc.
 c  creates and save temporary data to pextra%prc, pextra%
          call posint(np,tf1,tf2,tnow, pextra)
