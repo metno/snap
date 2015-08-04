@@ -1,11 +1,10 @@
-      subroutine posint(mode,tf1,tf2,tnow,pextra)
+      subroutine posint(np,tf1,tf2,tnow,pextra)
 c
 c  Purpose:  Interpolation of boundary layer top and height
 c            and precipitation intensity to particle positions
 c
 c  Input:
-c	mode=-1: interpolation for the last released plume
-c mode>0: interpolate only one particle, np = mode
+c   np = particle number, np = 0 initialization
 c		(with all particles at the same horizontal position)
 c       tf1:   time in seconds for field set 1 (e.g. 0.)
 c       tf2:   time in seconds for field set 2 (e.g. 21600, if 6 hours)
@@ -20,11 +19,11 @@ c
       include 'snapfld.inc'
       include 'snappar.inc'
 c
-      INTEGER, INTENT(IN) :: mode
+      INTEGER, INTENT(IN) :: np
       REAL, INTENT(IN) ::    tf1,tf2,tnow
       TYPE(extraParticle), INTENT(OUT) :: pextra
 c
-      integer np,npi, np1,np2,i,j,i1,i2,k
+      integer i,j,i1,i2,k
       real    rt1,rt2,dxgrid,dygrid,dx,dy,c1,c2,c3,c4,bl,hbl,rmx,rmy
       real    pr,precmin,p1,p2,plim
 c
@@ -34,6 +33,7 @@ c
 c
       precmin=0.01
 c initialization, only run once
+      if (np .eq. 0) then
       if(vminprec.lt.0.) then
        plim=550.
        p2=1000.
@@ -51,6 +51,9 @@ c initialization, only run once
        end if
        write(9,*) 'POSINT. precmin,vminprec: ',precmin,vminprec
       end if
+c end initialization
+      return
+      end if
 c
 
 c..for linear interpolation in time
@@ -59,18 +62,6 @@ c..for linear interpolation in time
 c
       dxgrid=gparam(7)
       dygrid=gparam(8)
-c
-      if(mode.eq.-1) then
-        np1=npart
-        np2=npart
-        np=npart
-      elseif (mode.gt.0) then
-        np = mode
-      else
-        write(*,*) 'wrong mode to posint:', mode
-        call exit(1)
-      end if
-c
 c
       if (pdata(np)%active) then
 c
@@ -122,15 +113,6 @@ c..and if less than a minimum precipitation intensity (mm/hour)
 c
 c end loop ove active particles
       endif
-c
-      if(mode.eq.-1) then
-c..copy interpolated data to the other particles in the plume
-       np1=iplume(1,nplume)
-       do npi=np1,np2-1
-         pdata(npi)%tbl = pdata(np2)%tbl
-         pdata(npi)%hbl = pdata(np2)%hbl
-       end do
-      end if
 c
       return
       end
