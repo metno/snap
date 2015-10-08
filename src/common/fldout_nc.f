@@ -955,7 +955,7 @@ c..accumulated/integrated concentration surface = dose
 c        call mwfelt(2,filnam,iunit,2,nx*ny,field3,1.0,
 c     +              ldata,idata,ierror)
          call check(NF_PUT_VARA_REAL(iunit, ac_varid(m),ipos,isize,
-     +            field1), "set_ac(m)")
+     +            field3), "set_ac(m)")
         if(ierror.ne.0) goto 900
 c
 c.....end do m=1,ncomp
