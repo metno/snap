@@ -24,6 +24,7 @@ c..imslp:         0=not read mslp  -1=read mslp  1=read and write mslp
 c		  (mslp not used in computations)
 c..imodlevel:     0=not output of concentrations in model levels
 c		  1=output (possible if nxmc=nx and nymc=ny)
+c..modleveldump: remove particles from model after at least that many steps
 c..itotcomp:      0=not output of total of all components
 c		  (e.g. when each component is released with a mass unit)
 c                 1=output of total of all components
@@ -33,10 +34,11 @@ c klevel needs to get allocated in main program while reading parameters
       INTEGER, DIMENSION(:), POINTER ::  klevel
       integer iprodr,igridr,ixbase,iybase,ixystp
       integer inprecip,imslp,imodlevel,itotcomp
+      real modleveldump
 c
       common/cgrid1/iprod,igrid,klevel
      -             ,iprodr,igridr,ixbase,iybase,ixystp
-     -		   ,inprecip,imslp,imodlevel,itotcomp
+     -		   ,inprecip,imslp,imodlevel,itotcomp,modleveldump
 c
 c
 c..gparam:  grid parameters (depending on the grid type)
