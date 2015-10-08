@@ -19,9 +19,9 @@ module particleML
        REAL    :: tbl   !- sigma/eta at top of boundary layer
        REAL    :: rad   !- radioactive content (Bq)
        REAL    :: hbl
-       REAL    :: grv ! gravity in m/s (fixed or computed)
-       INTEGER*2 :: ageInSteps ! age of particle since construction
-       LOGICAL :: active ! inside/outside domain
+       REAL    :: grv = 0. ! gravity in m/s (fixed or computed)
+       INTEGER*2 :: ageInSteps = 0 ! age of particle since construction
+       LOGICAL :: active = .false. ! inside/outside domain
     END TYPE particle
 
 ! storage for extra particle data

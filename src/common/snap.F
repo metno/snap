@@ -84,6 +84,9 @@ c PRECIPITATION.ON
 c PRECIPITATION.OFF
 c MODEL.LEVEL.FIELDS.ON
 c MODEL.LEVEL.FIELDS.OFF
+c * only write particles to model-level, which are at least DUMPTIME in h
+c * old. If DUMPTIME > 0, the dumped particles will be removed from model
+c MODEL.LEVEL.FIELDS.DUMPTIME= 4.0
 c RELEASE.POS= 'P.1', 58.50, -4.00
 c GRID.INPUT= 88,1814
 c GRID.SIZE= 360,180
@@ -460,6 +463,7 @@ c
       inprecip =1
       imslp    =0
       imodlevel=0
+      modleveldump=0.0
 c
       idebug=0
 c input type
@@ -1135,6 +1139,10 @@ c..model.level.fields.on
           elseif(cinput(k1:k2).eq.'model.level.fields.off') then
 c..model.level.fields.off
             imodlevel=0
+          elseif(cinput(k1:k2).eq.'model.level.fields.dumptime') then
+c..levelfields are dump-data
+            if(kv1.lt.1) goto 12
+            read(cipart,*,err=12) modleveldump
           elseif(cinput(k1:k2).eq.'release.pos') then
 c..release.pos=<'name',latitude,longitude>
             if(kv1.lt.1) goto 12
@@ -1720,6 +1728,8 @@ c
 c..no. of timesteps per hour (adjust the timestep)
       nsteph=nint(3600./tstep)
       tstep=3600./float(nsteph)
+c..convert modleveldump from hours to steps
+      modleveldump=modleveldump * nsteph
 c
 c..total no. of timesteps to run (nhrun is no. of hours to run)
       nstep=nsteph*nhrun
@@ -1744,6 +1754,8 @@ c      write(9,*) 'nxad,nyad: ',nxad,nyad
       write(9,*) 'imslp:     ',imslp
       write(9,*) 'inprecip:  ',inprecip
       write(9,*) 'imodlevel: ',imodlevel
+      write(9,*) 'modleveldump (h), steps:', modleveldump/nsteph,
+     +                                       modleveldump
       write(9,*) 'itime1:  ',(itime1(i),i=1,5)
       write(9,*) 'itime2:  ',(itime2(i),i=1,5)
       write(9,*) 'itimer1: ',(itimer(i,1),i=1,5)
@@ -2169,8 +2181,7 @@ c end of particle loop over active particles
 !$OMP END PARALLEL DO
 
 c..remove inactive particles or without any mass left
-c run only every 32 timesteps for better performance
-        if (mod(istep,32).eq.0) call rmpart(rmlimit)
+       call rmpart(rmlimit)
 c
        if(iensemble.eq.1)
      +    call ensemble(5,itime,tf1,tf2,tnext,istep,nstep,nsteph,0)

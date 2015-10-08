@@ -137,11 +137,11 @@ c
       double precision bqtot1,bqtot2
       double precision dblscale
 c
-      integer iyear,month,iday,ihour,minute,isecond
+      integer iyear,month,iday,ihour,minute,isecond,maxage
       integer i,j,k,m,mm,n,id03,id04,ivlvl,idextr,idry,iwet,loop,iparx
       integer itab,ko,lvla,lvlb,ipar,ierr,numfields,ios,iu,i1,i2
       real    rt1,rt2,scale,undef,average,averinv,cscale,dscale,hbl
-      real    avg,hrstep,dh,splon,splat
+      real    avg,hrstep,dh,splon,splat,total
 c
       integer   itypef,ltimef,itimef(5),icodef,lspecf,loptf,ioptf
       integer   itimeargos(5)
@@ -469,10 +469,15 @@ c..store the files base-time
      +          TRIM(compnamemc(mm))//"_accumulated_wet_deposition")
          end if
          if (imodlevel.eq.1) then
+           if (modleveldump .gt. 0.) then
+             string = TRIM(compnamemc(mm))//"_concentration_dump_ml"
+           else
+             string = TRIM(compnamemc(mm))//"_concentration_ml"
+           endif
            call nc_declare_4d(iunit, dimids4d, icml_varid(m),
-     +          chksz4d, TRIM(compnamemc(mm))//"_concentration_ml",
+     +          chksz4d, TRIM(string),
      +          "Bq/m3","",
-     +          TRIM(compnamemc(mm))//"_concentration_ml")
+     +          TRIM(string))
 c           call nc_declare_4d(iunit, dimids4d, acml_varid(m),
 c     +          chksz4d, TRIM(compnamemc(mm))//"_avg_concentration_ml",
 c     +          "Bq*hour/m3","",
@@ -1354,27 +1359,43 @@ c
 c
          avg=1.
          iparx=540
+         total=0.
+         maxage=0
 c
          do m=1,ncomp
-            do k=1,nk-1
-              do j=1,nymc
-                do i=1,nxmc
-                  avgbq(i,j,k,m)=0.0d0
+           do k=1,nk-1
+             do j=1,nymc
+               do i=1,nxmc
+                avgbq(i,j,k,m)=0.0d0
                end do
-              end do
-            end do
-          end do
+             end do
+           end do
+         end do
 c
-          do n=1,npart
-            i=nint(pdata(n)%x)
-            j=nint(pdata(n)%y)
-            ivlvl=pdata(n)%z*10000.
-            k=ivlayer(ivlvl)
+         do n=1,npart
+           i=nint(pdata(n)%x)
+           j=nint(pdata(n)%y)
+           ivlvl=pdata(n)%z*10000.
+           k=ivlayer(ivlvl)
            m=iruncomp(icomp(n))
 c..in each sigma/eta (input model) layer
-            avgbq(i,j,k,m)=avgbq(i,j,k,m)+pdata(n)%rad
+           if (modleveldump .gt. 0) then
+c.. dump and remove old particles, don't touch  new ones
+             if (pdata(n)%ageInSteps .ge. nint(modleveldump)) then
+                if (pdata(n)%ageInSteps .gt. maxage)
+     +             maxage=pdata(n)%ageInSteps
+                avgbq(i,j,k,m)=avgbq(i,j,k,m)+pdata(n)%rad
+                total = total + pdata(n)%rad
+                pdata(n)%active = .false.
+                pdata(n)%rad = 0.
+             end if
+           else
+              avgbq(i,j,k,m)=avgbq(i,j,k,m)+pdata(n)%rad
+           endif
          end do
-
+         if (modleveldump .gt. 0) then
+           write(*,*) "dumped; maxage, total", maxage, total
+         endif
         end if
 c
         do k=1,nk-1
@@ -1431,7 +1452,7 @@ c..average concentration in each layer for each type
             idata(19)=lvlb
             idata(20)=-32767
 c don't write average currently, only instant (loop = 2)
-c        if (loop .eq. 2) then
+c        if (loop .eq. 1) then
 c           ipos(3) = k
 c           call check(NF_PUT_VARA_REAL(iunit, acml_varid(m),ipos,isize,
 c     +            field1))
@@ -1441,12 +1462,14 @@ c     +       call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
 c     +                  ldata,idata,ierror)
 c
 c        end if
-           ipos(3) = k
-           call check(NF_PUT_VARA_REAL(iunit, icml_varid(m),ipos,isize,
-     +            field1), "icml(m)")
+           if (loop .eq. 2) then
+             ipos(3) = k
+             call check(NF_PUT_VARA_REAL(iunit, icml_varid(m),ipos,
+     +            isize,field1), "icml(m)")
 c reset ipos(3) for 3d fields to time-pos (=ipos(4))
-           ipos(3) = ipos(4)
-            if(ierror.ne.0) goto 900
+             ipos(3) = ipos(4)
+             if(ierror.ne.0) goto 900
+           endif
           end do
        end do
 c
