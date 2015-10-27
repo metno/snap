@@ -261,7 +261,7 @@ c
       logical blfullmix
       logical :: init = .true.
 c
-      character*72  finput,fldfil,fldfilX,fldfilN,logfile,ftype,
+      character*1024  finput,fldfil,fldfilX,fldfilN,logfile,ftype,
      +        fldtype, relfile
       character*256 cinput,ciname,cipart,cipart2
       character*8   cpos1,cpos2
