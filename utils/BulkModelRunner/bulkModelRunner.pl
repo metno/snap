@@ -174,12 +174,12 @@ sub snapRun {
     if (!-d $newDir) {
         mkdir "$newDir" or die "Cannot create directory $newDir: $!\n";
     }
+    my $orgDir = cwd();
     foreach my $file (@{ SNAP_FILES() }) {
        if (! -e "$newDir/$file") {
-           symlink($file, $newDir."/$file") or die "Cannot link $file to $newDir: $!\n";
+           symlink("$orgDir/$file", "$newDir/$file") or die "Cannot link $file to $newDir: $!\n";
        }
     }
-    my $orgDir = cwd();
     chdir $newDir or die "Cannot change to $newDir: $!\n";
     open my $f, '>snap.input' or die "Cannot write snap.input in $newDir: $!\n";
     print $f $snapInput;
