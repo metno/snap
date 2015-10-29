@@ -10,7 +10,8 @@ use Cwd qw(cwd);
 use constant SNAP_FILES => [qw(bsnap_naccident felt2ncDummyLevels2Isotopes.pl felt2nc_snap_dummy_levels.xml felt_axes.xml felt2diana.pl)];
 
 use vars qw(%Args);
-$Args{n} = 4;
+$Args{n} = 0;
+$Args{arrayJob} = 0;
 $Args{inputType} = 'h12';
 $Args{inputDir} = '';
 $Args{dailyStart} = '12';
@@ -26,7 +27,8 @@ GetOptions(\%Args,
        'runTime=i',
        'sourceTermFile=s',
        'meteoSetupFile=s',
-       'n=i')
+       'n=i',
+       'arrayJob=i')
     or pod2usage(2);
 
 pod2usage(-exitval => 0,
@@ -43,26 +45,36 @@ my $meteoSetup = slurp($Args{meteoSetupFile});
 
 my @runs = createRuns($Args{startDate}, $Args{endDate}, \@dailyStart);
 
-my %knownChildren;
-for (my $i = 0; $i < $Args{n}; $i++) {
-    makeChildRun(\@runs, \%knownChildren, $Args{runTime}, $Args{inputDir}, $Args{inputType}, $Args{outputDir}, $sourceTerm, $meteoSetup);
-}
 
-my $child = 1;
-while ($child > 0) {
-    $child = waitpid(-1, 0);
-    if (exists $knownChildren{$child}) {
-        delete $knownChildren{$child};
-        # start a new child after one has gone
+if ($Args{n}  > 0) {
+    my %knownChildren;
+    for (my $i = 0; $i < $Args{n}; $i++) {
         makeChildRun(\@runs, \%knownChildren, $Args{runTime}, $Args{inputDir}, $Args{inputType}, $Args{outputDir}, $sourceTerm, $meteoSetup);
     }
+
+    my $child = 1;
+    while ($child > 0) {
+        $child = waitpid(-1, 0);
+        if (exists $knownChildren{$child}) {
+            delete $knownChildren{$child};
+            # start a new child after one has gone
+            makeChildRun(\@runs, \%knownChildren, $Args{runTime}, $Args{inputDir}, $Args{inputType}, $Args{outputDir}, $sourceTerm, $meteoSetup);
+        }
+    }
+} elsif ($Args{arrayJob} > 0 and $Args{arrayJob} <= @runs) {
+    makeArrayRun($runs[$Args{arrayJob}-1], $Args{runTime}, $Args{inputDir}, $Args{inputType}, $Args{outputDir}, $sourceTerm, $meteoSetup);
+} else {
+    print STDERR "Please run either -n 4 (number of parallel processors) or\n";
+    print STDERR "with -arrayJob # (pbs/sge array job number) with # between 1 and ",scalar @runs,"\n";
+    exit 1;
 }
+
 
 sub makeChildRun {
     my ($runs, $knownChildren, $runTime, $inputDir, $inputType, $outputDir, $sourceTerm, $meteoSetup) = @_;
     my $runId = shift @$runs;
     if (defined $runId) {
-	print STDERR "Starting run $runId, ".scalar @runs." remaining\n";
+    print STDERR "Starting run $runId, ".scalar @runs." remaining\n";
         my $pid = fork();
         die "fork() failed: $!" unless defined $pid;
         if ($pid == 0) {
@@ -75,6 +87,11 @@ sub makeChildRun {
     }
 }
 
+sub makeArrayRun {
+    my ($runId, $runTime, $inputDir, $inputType, $outputDir, $sourceTerm, $meteoSetup) = @_;
+    snapRun($runId, $runTime, $inputDir, $inputType, $outputDir, $sourceTerm, $meteoSetup);
+}
+
 sub snapRun {
     my ($runId, $runTime, $inputDir, $inputType, $outputDir, $sourceTerm, $meteoSetup) = @_;
     my @date = gmtime($runId);
@@ -82,6 +99,11 @@ sub snapRun {
     my $day = sprintf "%02d", $date[3];
     my $month = sprintf "%02d", ($date[4] + 1);
     my $year = $date[5] + 1900;
+    my $newDir =  "$outputDir$year$month$day\_$hour";
+    if (-f "$newDir/snap.nc") {
+        print STDERR "snap.nc already exists for $year-$month-$day $hour, finish";
+        return;
+    }
 
     # create the new snap.input data
     my $snapInput = "TIME.START=   $year  $month  $day $hour\n";
@@ -148,9 +170,8 @@ sub snapRun {
     # and the rest
     $snapInput .= SNAPINPUT();
 
-    my $newDir =  "$outputDir$year$month$day\_$hour";
     if (!-d $newDir) {
-    	mkdir "$newDir" or die "Cannot create directory $newDir: $!\n";
+        mkdir "$newDir" or die "Cannot create directory $newDir: $!\n";
     }
     foreach my $file (@{ SNAP_FILES() }) {
        if (! -e "$newDir/$file") {
@@ -162,14 +183,15 @@ sub snapRun {
     open my $f, '>snap.input' or die "Cannot write snap.input in $newDir: $!\n";
     print $f $snapInput;
     my $bsnap = SNAP_FILES->[0];
-    system("./$bsnap". ' snap.input > snapOut.log 2>&1') == 0 or die "system ./$bsnap snap.input in $newDir failed: $?";
-    system("perl felt2diana.pl  --tag=snap --omitDiana") == 0
-        or die "Cannot run felt2diana in $newDir";
+    system("./$bsnap". ' snap.input > snapOut.log 2>&1') == 0 or die "system ./$bsnap snap.input in $newDir, $runId failed: $?";
+    print STDERR "$bsnap successfully finished in $newDir for $runId";
+#    system("perl felt2diana.pl  --tag=snap --omitDiana") == 0
+#        or die "Cannot run felt2diana in $newDir";
     # cleanup
     foreach my $file (@{ SNAP_FILES() }) {
         #unlink $file;
     }
-    unlink 'snap.felt';
+    # unlink 'snap.felt';
     chdir $orgDir or die "Cannot change to $orgDir: $!\n";
 }
 
@@ -221,7 +243,8 @@ PRECIPITATION.ON
 MODEL.LEVEL.FIELDS.OFF
 FIELD_TIME.FORECAST
 * FIELD_TIME.VALID
-FIELD.OUTPUT= snap.felt
+FIELD.OUTTYPE= netcdf
+FIELD.OUTPUT= snap.nc
 LOG.FILE=     snap.log
 DEBUG.OFF
 ENSEMBLE.PROJECT.OUTPUT.OFF
@@ -238,15 +261,16 @@ bulkModelRunner.pl - run snap model in parallel many times
 
 =head1 SYNOPSIS
 
-  bulkModleRunner --inputType=ec --inputDir=/disk1/K27/Ecmet --outputDir=/tmp/results
+  bulkModelRunner --inputType=ec --inputDir=/disk1/K27/Ecmet --outputDir=/tmp/results
                   --startDate=2013-08-01 --dailyStart=0,12 --endDate=2013-10-01
                   --runTime=96
                   --sourceTermFile=snapSourceTerm.txt --meteoSetupFile=snapMeteoSetup.txt
-                  -n 8
+                  [ -n 8 | -arrayJob 348 ]
 
 =head1 DESCRIPTION
 
-Run the snap model in parallel (-n times) starting at startDate and finish at endDate, with
+Run the snap model in parallel (-n times) or in a pbs/sge array-queue (-arrayJob jobNumber)
+starting at startDate and finish at endDate, with
 dailyStart start-hours. inputType can be ec (IFS-emep-meteo in netcdf) or hirlam (felt).
 
 The sourceTermFile.txt should contain all information about the source-term and
