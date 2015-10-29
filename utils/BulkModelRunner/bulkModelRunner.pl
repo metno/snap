@@ -7,7 +7,8 @@ use Getopt::Long qw(GetOptions);
 use Pod::Usage qw(pod2usage);
 use Cwd qw(cwd);
 
-use constant SNAP_FILES => [qw(bsnap_naccident felt2ncDummyLevels2Isotopes.pl felt2nc_snap_dummy_levels.xml felt_axes.xml felt2diana.pl)];
+use constant SNAP_FILES => [qw(bsnap_naccident )];
+#felt2ncDummyLevels2Isotopes.pl felt2nc_snap_dummy_levels.xml felt_axes.xml felt2diana.pl)];
 
 use vars qw(%Args);
 $Args{n} = 0;
