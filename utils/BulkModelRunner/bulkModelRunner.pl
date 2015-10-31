@@ -184,8 +184,10 @@ sub snapRun {
     open my $f, '>snap.input' or die "Cannot write snap.input in $newDir: $!\n";
     print $f $snapInput;
     my $bsnap = SNAP_FILES->[0];
+    my $starttime = time;
     system("./$bsnap". ' snap.input > snapOut.log 2>&1') == 0 or die "system ./$bsnap snap.input in $newDir, $runId failed: $?";
-    print STDERR "$bsnap successfully finished in $newDir for $runId";
+    my $runtime = time - $starttime;
+    print STDERR "$bsnap successfully finished for $year$month$day\_$hour in $runtime secs\n";
 #    system("perl felt2diana.pl  --tag=snap --omitDiana") == 0
 #        or die "Cannot run felt2diana in $newDir";
     # cleanup
