@@ -177,6 +177,8 @@ sub snapRun {
     my $orgDir = cwd();
     foreach my $file (@{ SNAP_FILES() }) {
        if (! -e "$newDir/$file") {
+           unlink("$newDir/core");
+	   unlink("$newDir/$file");
            symlink("$orgDir/$file", "$newDir/$file") or die "Cannot link $file to $newDir: $!\n";
        }
     }
