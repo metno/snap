@@ -186,8 +186,7 @@ sub runModel {
         system("diana.bin -s diana.setup&");
     }
     if ($region) {
-        my $timestring = "$startYY-$startmm-$startDD $startHH:00:00";
-        system("bdiana -i snap.in -s diana.setup TIME='$timestring' p='$region' t=$startHH");
+        system("bdiana -i snap.in -s diana.setup p='$region'");
         system("rm -rf prod");
         mkdir("prod") or print STDERR "Cannot create prod directory: $!\n";
         system("mv snap_* prod");

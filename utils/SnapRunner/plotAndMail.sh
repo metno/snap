@@ -16,13 +16,7 @@ then
 p=Globalt
 fi
 
-echo ""
-echo -n "Oppgi start-tid for beregningen [UTC]. f.eks: 08 : "
-read t
-
-
-timestring="$(date +%Y-%m-%d) $t:00:00"
-bdiana -i snap.in -s diana.setup TIME="$timestring" p=$p t=$t
+bdiana -i snap.in -s diana.setup p=$p
 mkdir prod/
 mv snap_* prod/
 ./sendmail.sh prod/*.png
