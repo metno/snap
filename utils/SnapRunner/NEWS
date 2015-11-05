@@ -1,5 +1,11 @@
 SNAPrunner
 
+0.7 2015-11-05
+   fix auto-plotting / mail with newer diana versions (>=3.39)
+
+0.6 2015-03-16
+   remove stations outside bounding box 30 to 90lat, -60 to 70 lon
+
 0.5 2013-10-29
    mail and diana-control from browser-window
    show version in log-window
