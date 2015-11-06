@@ -181,12 +181,19 @@ sub runModel {
 
     my $region = $params->{"region"};
     my $startdiana = $params->{"startdiana"};
+    my $diVersion = $params->{"dianaversion"} || "";
+    print STDERR "diVersion: '$diVersion'\n";
+    if ($diVersion =~ /(\d*\.\d+)/) {
+        $diVersion = "-$1";
+    } else {
+        $diVersion = "";
+    }
 
     if ($startdiana) {
-        system("diana.bin -s diana.setup&");
+        system("diana.bin$diVersion -s diana.setup&");
     }
     if ($region) {
-        system("bdiana -i snap.in -s diana.setup p='$region'");
+        system("bdiana$diVersion -i snap.in -s diana.setup p='$region'");
         system("rm -rf prod");
         mkdir("prod") or print STDERR "Cannot create prod directory: $!\n";
         system("mv snap_* prod");
@@ -194,7 +201,7 @@ sub runModel {
     }
 
 
-    return "<html><head><title>SNAP-Runner</title></head><body><h1>SNAP-Runner</h1>SNAP run successfull for: <p>Time: $params->{startTime} Length $params->{runTime}h<p>Place $npp<br>Lat: $lat<br>Lon: $lon<br><p>Release Scenario:<br>$releaseScenario<p> Start diana with <pre>diana.bin -s $FindBin::Bin/diana.setup</pre><a href=\"default\">Start new run.</a></body></html>";
+    return "<html><head><title>SNAP-Runner</title></head><body><h1>SNAP-Runner</h1>SNAP run successfull for: <p>Time: $params->{startTime} Length $params->{runTime}h<p>Place $npp<br>Lat: $lat<br>Lon: $lon<br><p>Release Scenario:<br>$releaseScenario<p> Start diana with <pre>diana.bin$diVersion -s $FindBin::Bin/diana.setup</pre><a href=\"default\">Start new run.</a></body></html>";
 }
 
 sub debug {
