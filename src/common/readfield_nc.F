@@ -123,6 +123,33 @@
         precconvrt = ''
 c..get grid parameters from field identification
 
+      else if (nctype.eq.'ec_det') then
+        has_dummy_dim = .true.
+        xwindv = 'x_wind_ml'
+        ywindv = 'y_wind_ml'
+        xwind10mv = 'x_wind_10m'
+        ywind10mv = 'y_wind_10m'
+c       !! real temperature, convert to pot-temp later
+        pottempv = 'air_temperature_ml'
+        temp_is_abs = .true.
+        sigmav = ''
+        ptopv = ''
+c this is a bug in the arome test-file, apv and bv are therefore
+c hardcoded, see below
+        apv = 'ap'
+        bv = 'b'
+c upward_air_velocity_ml, not used yet?
+        sigmadotv = ''
+        psv = 'surface_air_pressure'
+        mslpv = ''
+        precaccumv = ''
+        precstrativrt = ''
+        precconvrt = ''
+        precstratiaccumv =
+     &    'lwe_thickness_of_stratiform_precipitation_amount'
+        precconaccumv =
+     &    'lwe_thickness_of_convective_precipitation_amount'
+c..get grid parameters from field identification
       else if (nctype.eq.'arome') then
         has_dummy_dim = .true.
         xwindv = 'x_wind_ml'
@@ -413,7 +440,8 @@ c ps
        call nfcheckload(ncid, psv, start3d, count3d, ps2(1,1))
       endif
 c  input ps, must be hPa, otherwise:
-      if (nctype.eq.'arome'.or.nctype.eq.'dmi_eps') then
+      if (nctype.eq.'arome'.or.nctype.eq.'dmi_eps'.or.
+     &    nctype.eq.'ec_det') then
         do j=1,ny
           do i=1,nx
             ps2(i,j) = ps2(i,j) *0.01
