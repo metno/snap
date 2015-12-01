@@ -13,7 +13,8 @@ c..cp   :  ...
 c
       real    pmult,pitab(0:130),g,r,cp
 c
-      common/table1/pmult,pitab,g,r,cp
+      common/table1/pmult,pitab
+      parameter (g=9.81, r=287., cp=1004.)
 c
 c
 c..premult: multiply precipitation intensity (mm/hour) by this value

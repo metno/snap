@@ -78,7 +78,7 @@ c..mfilef: max. no. of input FELT files
 c..mavail: max. no. of available timesteps with data
 c
       integer mfilef,mavail
-      parameter (mfilef=400)
+      parameter (mfilef=1024)
       parameter (mavail=8192)
 c
       integer nxmc,nymc

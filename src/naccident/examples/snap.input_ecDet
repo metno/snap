@@ -3,7 +3,7 @@
 ***
 *** DNMI SNAP - Severe Nuclear Accident Program
 ***
-TIME.START=   2015 11 09 15
+TIME.START=   2015 11 09 06
 POSITIONS.DECIMAL
 SET_RELEASE.POS= P=   57.25,   16.67      
 TIME.RUN  = 60h
@@ -111,7 +111,7 @@ FORECAST.HOUR.MIN= +3
 FORECAST.HOUR.MAX= +9999
 *
 FIELD.TYPE=netcdf
-FIELD.INPUT= /home/heikok/Mnt/LustreDir/Meteorology/ecdiss-internet.met.no/ecdiss/ec_n1s_20151109_12.nc
+FIELD.INPUT= /home/heikok/Mnt/LustreDir/Meteorology/ecdiss-internet.met.no/ecdiss/ec_n1s_20151109_00.nc
 *FIELD.INPUT= /disk1/myopdata/emep/meteo2013080500_00.nc
 
 *
