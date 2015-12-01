@@ -2134,7 +2134,6 @@ c setting particle-number to 0 means init
 c
 c particle loop
 !$OMP PARALLEL DO PRIVATE(pextra) !np is private by default
-       narg = 0
        do np=1,npart
         if (pdata(np)%active) then
          narg = narg + 1
@@ -2180,11 +2179,6 @@ c
 c end of particle loop over active particles
         endif
        end do
-        if(mod(istep,nsteph).eq.0) then
-          write(6,*) 'npart, active: ',npart, narg
-          flush(6)
-        end if
-
 !$OMP END PARALLEL DO
 
 c..remove inactive particles or without any mass left
