@@ -49,6 +49,7 @@
       real     astatic(65), bstatic(65)
       integer kk, ifb, kfb
       real    rcp, dred, red, p, px, dp, p1, p2,ptop
+      real    unitScale
 
       integer varid, retval, timepos
       integer start3d(3), start4d(4), count3d(3), count4d(4)
@@ -56,7 +57,7 @@
       character*(80) sigmadotv,apv,bv,sigmav,psv,mslpv,precaccumv
       character*(80) precstratiaccumv, precconaccumv
       character*(80) precstrativrt,precconvrt
-      logical temp_is_abs, has_dummy_dim
+      logical temp_is_abs, has_dummy_dim, manual_level_selection
 
 
 #if defined(DRHOOK)
@@ -105,6 +106,7 @@
 
       temp_is_abs = .false.
       has_dummy_dim = .false.
+      manual_level_selection = .false.
       if (nctype.eq.'h12') then
         xwindv = 'x_wind_ml'
         ywindv = 'y_wind_ml'
@@ -124,6 +126,7 @@
 c..get grid parameters from field identification
 
       else if (nctype.eq.'ec_det') then
+        manual_level_selection = .true.
         has_dummy_dim = .true.
         xwindv = 'x_wind_ml'
         ywindv = 'y_wind_ml'
@@ -539,12 +542,14 @@ c and the next timestep
      +                        start3d, count3d, field4(1,1))
          endif
 c..the difference below may get negative due to different scaling
+         unitScale = 1.
+         if (nctype .eq. 'ec_det') unitScale = 1000.
           do j=1,ny
             do i=1,nx
               precip1=max(field3(i,j)+field4(i,j)-
      +                    (field1(i,j)+field2(i,j)),0.)/nhdiff
               do k=1,nprecip
-                precip(i,j,k)=precip1
+                precip(i,j,k)=precip1 * unitScale
               end do
             end do
           end do
@@ -643,7 +648,8 @@ c..alevel and blevel are in the middle of each layer
         vhalf(1)=vlevel(1)
 c..is the following the best we can do ???
         do k=2,nk-1
-          if(klevel(k+1).eq.klevel(k)-1) then
+          if((.not.manual_level_selection)
+     &       .and.(klevel(k+1).eq.klevel(k)-1)) then
             ahalf(k)=alevel(k)+(alevel(k)-ahalf(k-1))
             bhalf(k)=blevel(k)+(blevel(k)-bhalf(k-1))
             vhalf(k)=ahalf(k)/1013.26+bhalf(k)
@@ -686,6 +692,8 @@ c..abs.temp. -> pot.temp.
             do i=1,nx
               p=alevel(k)+blevel(k)*ps2(i,j)
               t2(i,j,k)=t2(i,j,k)/((p*0.001)**rcp)
+              if (k.eq.44.and.j.eq.50.and.i.eq.50) then
+              end if
             end do
           end do
         end do

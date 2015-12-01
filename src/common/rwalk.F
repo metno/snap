@@ -43,15 +43,15 @@ c particle-loop index, np = 0 means init
 c
 
       integer i
-      real, save ::    a,cona,conb,vrange,vrdbla,vrdblb,vrqrt
-      real, save :: hmax ! maximum mixing height = 2500m
-      real, save :: tmix ! Characteristic mixing time = 15 min
-      real, save :: lmax ! Maximum l-eta in the mixing layer = 0.28
-      real, save :: labove ! Standard l-eta above the mixing layer
-      real, save :: tfactor ! tfactor=tstep/tmix
+      real*8, save ::    a,cona,conb,vrange,vrdbla,vrdblb,vrqrt
+      real*8, save :: hmax ! maximum mixing height = 2500m
+      real*8, save :: tmix ! Characteristic mixing time = 15 min
+      real*8, save :: lmax ! Maximum l-eta in the mixing layer = 0.28
+      real*8, save :: labove ! Standard l-eta above the mixing layer
+      real*8, save :: tfactor ! tfactor=tstep/tmix
 c
-      real rnd(3), xrand, yrand, zrand, u, v, rl, vabs
-      real hfactor, rv, rvmax
+      real*8 rnd(3), xrand, yrand, zrand, u, v, rl, vabs
+      real*8 hfactor, rv, rvmax
 c
 
 #if defined(DRHOOK)
@@ -211,6 +211,7 @@ c..horizontal diffusion
           v=pextra%v
           vabs=sqrt(u*u+v*v)
           rl=sqrt(cona*vabs**1.75)*2.
+
           pdata(np)%x=pdata(np)%x+rl*xrand*pextra%rmx
           pdata(np)%y=pdata(np)%y+rl*yrand*pextra%rmy
 c

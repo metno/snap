@@ -46,7 +46,7 @@ c++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 c++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 c################################################################
       integer numdep
-      real depmin,depmax,ratmin,ratmax,premin,premax
+      real depmin,depmax,ratmin,ratmax,premin,premax,rm
       double precision totinp,depsum,totsum
 c################################################################
 c
@@ -60,10 +60,10 @@ c initalization
       if(np .eq. 0) then
 c
        do m=1,ndefcomp
-         r=radiusmym(m)
-         depconst(m)=b0 + b1*r + b2*r*r + b3*r*r*r
+         rm=radiusmym(m)
+         depconst(m)=b0 + b1*rm + b2*rm*rm + b3*rm*rm*rm
 c################################################################
-         write(9,*) 'WETDEP2 m,r,depconst(m): ',m,r,depconst(m)
+         write(9,*) 'WETDEP2 m,r,depconst(m): ',m,rm,depconst(m)
 c################################################################
         end do
 c

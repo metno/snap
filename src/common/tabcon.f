@@ -11,11 +11,6 @@ c
       integer i,j,n
       real    rcp,p,prestep,precint,probab
 c
-c..some constants
-      g=9.8
-      r=287.
-      cp=1004.
-c
       rcp=r/cp
 c
 c..Exner function, pitab(0:130) for p=0,10,20,...1300 hPa
