@@ -15,9 +15,9 @@ c
 c
 c..Exner function, pitab(0:130) for p=0,10,20,...1300 hPa
 c
-      pmult=0.1
+c      pmult=0.1
       do i=0,130
-        p=i*10.
+        p=i/pmult
         pitab(i)=1004.*(p/1000.)**rcp
       end do
 c
