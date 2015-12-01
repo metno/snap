@@ -692,8 +692,6 @@ c..abs.temp. -> pot.temp.
             do i=1,nx
               p=alevel(k)+blevel(k)*ps2(i,j)
               t2(i,j,k)=t2(i,j,k)/((p*0.001)**rcp)
-              if (k.eq.44.and.j.eq.50.and.i.eq.50) then
-              end if
             end do
           end do
         end do
