@@ -49,6 +49,7 @@
       real     astatic(65), bstatic(65)
       integer kk, ifb, kfb
       real    rcp, dred, red, p, px, dp, p1, p2,ptop
+      real    t2thetafac(1500)
       real    unitScale
 
       integer varid, retval, timepos
@@ -681,17 +682,24 @@ c..size of each grid square (m**2)
           end do
         end do
 
-c
+        if (temp_is_abs) then
+          rcp=r/cp
+c create precomputed table for pressures between 1 and 1500hPa
+          do i=1,1500
+            t2thetafac(i) = (1000./i)**rcp
+          end do
+        end if
+
+c end initialization
       end if
 c
       if (temp_is_abs) then
 c..abs.temp. -> pot.temp.
-        rcp=r/cp
         do k=2,nk-kadd
           do j=1,ny
             do i=1,nx
               p=alevel(k)+blevel(k)*ps2(i,j)
-              t2(i,j,k)=t2(i,j,k)/((p*0.001)**rcp)
+              t2(i,j,k)=t2(i,j,k) * t2thetafac(int(p))
             end do
           end do
         end do
