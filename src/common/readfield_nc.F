@@ -49,6 +49,7 @@
       real     astatic(65), bstatic(65)
       integer kk, ifb, kfb
       real    rcp, dred, red, p, px, dp, p1, p2,ptop
+      real    totalprec
 c      real,save     ::    t2thetafac(15000)
       real    unitScale
 
@@ -124,6 +125,35 @@ c      real,save     ::    t2thetafac(15000)
         precaccumv = 'precipitation_amount_acc'
         precstrativrt = ''
         precconvrt = ''
+c..get grid parameters from field identification
+      else if (nctype.eq.'h12_grib') then
+c..h12 results converted directly from grib-files via fimex
+        manual_level_selection = .false.
+        has_dummy_dim = .true.
+        xwindv = 'x_wind_ml'
+        ywindv = 'y_wind_ml'
+        xwind10mv = 'x_wind_10m'
+        ywind10mv = 'y_wind_10m'
+c       !! real temperature, convert to pot-temp later
+        pottempv = 'air_temperature_ml'
+        temp_is_abs = .true.
+        sigmav = ''
+        ptopv = ''
+c this is a bug in the arome test-file, apv and bv are therefore
+c hardcoded, see below
+        apv = 'ap'
+        bv = 'b'
+c upward_air_velocity_ml, not used yet?
+        sigmadotv = ''
+        psv = 'surface_air_pressure'
+        mslpv = ''
+        precaccumv = ''
+        precstrativrt = ''
+        precconvrt = ''
+        precstratiaccumv =
+     &    'lwe_thickness_of_stratiform_precipitation_amount'
+        precconaccumv =
+     &    'lwe_thickness_of_convective_precipitation_amount'
 c..get grid parameters from field identification
 
       else if (nctype.eq.'ec_det') then
@@ -445,7 +475,7 @@ c ps
       endif
 c  input ps, must be hPa, otherwise:
       if (nctype.eq.'arome'.or.nctype.eq.'dmi_eps'.or.
-     &    nctype.eq.'ec_det') then
+     &    nctype.eq.'ec_det'.or.nctype.eq.'h12_grib') then
         do j=1,ny
           do i=1,nx
             ps2(i,j) = ps2(i,j) *0.01
@@ -554,6 +584,45 @@ c..the difference below may get negative due to different scaling
               end do
             end do
           end do
+        else
+c timepos eq 1, check if precipitation already present / assume dummy step 0
+          if (has_dummy_dim) then
+            start4d(4) = timepos
+            call nfcheckload(ncid, precstratiaccumv,
+     +                        start4d, count4d, field3(1,1))
+            call nfcheckload(ncid, precconaccumv,
+     +                        start4d, count4d, field4(1,1))
+          else
+            start3d(3) = timepos
+            call nfcheckload(ncid, precstratiaccumv,
+     +                        start3d, count3d, field3(1,1))
+            call nfcheckload(ncid, precconaccumv,
+     +                        start3d, count3d, field4(1,1))
+          endif
+          totalprec = 0
+          do j=1,ny
+            do i=1,nx
+               field1(i,j) = 0.
+               field2(i,j) = 0.
+               totalprec = totalprec + field3(i,j) + field4(i,j)
+            end do
+          end do
+          if (totalprec .gt. 1e-5) then
+c..the difference below may get negative due to different scaling
+            write(9,*) "found precip in first timestep, assuming ",
+     +                "empty 0 timestep to deaccumulate precip"
+            unitScale = 1.
+            if (nctype .eq. 'ec_det') unitScale = 1000.
+            do j=1,ny
+              do i=1,nx
+                precip1=max(field3(i,j)+field4(i,j)-
+     +                    (field1(i,j)+field2(i,j)),0.)/nhdiff
+                do k=1,nprecip
+                  precip(i,j,k)=precip1 * unitScale
+                end do
+              end do
+            end do
+          endif
         end if
       else
 c..non-accumulated emissions in stratiform an convective
