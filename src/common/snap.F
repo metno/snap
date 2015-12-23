@@ -344,7 +344,7 @@ c
 c
 c
       write(6,*) 'Reading input file:'
-      write(6,*)  finput
+      write(6,*)  TRIM(finput)
 c
       nlines=0
 c
