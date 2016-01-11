@@ -62,6 +62,7 @@ c
       USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
 #endif
       USE particleML
+      USE fileInfoML
       implicit none
 #if defined(DRHOOK)
       REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE

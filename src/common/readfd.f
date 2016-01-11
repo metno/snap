@@ -15,6 +15,7 @@ c            ilevel - level or level no.
 c            ihdisp - time displacement in hours (forecast length)
 c
 c
+      use fileInfoML
       implicit none
 c
       include 'snapdim.inc'
@@ -75,7 +76,7 @@ c
 c
       end if
 c
-      nf=iavail(6,nav)
+      nf=iavail(nav)%fileNo
 c
       if(iopen.ne.nf) then
 c
@@ -113,10 +114,10 @@ c----------------------------------------------
 c
       in( 1)=iprod
       in( 2)=igrid
-      in( 3)=iavail(1,nav)
-      in( 4)=iavail(2,nav)*100+iavail(3,nav)
-      in( 5)=iavail(4,nav)*100
-      in(10)=iavail(5,nav)+ihdisp
+      in( 3)=iavail(nav)%aYear
+      in( 4)=iavail(nav)%aMonth*100+iavail(nav)%aDay
+      in( 5)=iavail(nav)%aHour*100
+      in(10)=iavail(nav)%fcHour+ihdisp
       in(11)=ivcord
       in(12)=iparam
       in(13)=ilevel

@@ -1,5 +1,6 @@
       subroutine allocateFields
       use particleML
+      use fileInfoML
       implicit none
       TYPE(particle), DIMENSION(:), POINTER :: x
       logical, save :: FirstCall = .TRUE.
@@ -138,6 +139,7 @@ c the plumes
 
       subroutine deAllocateFields
       use particleML
+      use fileInfoML
       implicit none
       include 'snapdim.inc'
       include 'snapfld.inc'
