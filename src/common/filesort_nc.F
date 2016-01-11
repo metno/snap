@@ -96,8 +96,10 @@ c         iavail(n)%fcHour: forecast hour
           iavail(navail)%fcHour = 0
           iavail(navail)%fileNo = nf
 c         iavail(n)%fileType: 1=model level  2=surface  3=both
+c         currently not used
+          iavail(navail)%fileType = 3
 c in nc-mode: time-postion in file
-          iavail(navail)%fileType = i
+          iavail(navail)%timePos = i
 c         iavail(n)%oHour: offset in hours from first (sorted) timestep
 c         but currently used to store the hours since 1970-01-01
           iavail(navail)%oHour = int(eTimes(i)/3600)
@@ -131,15 +133,18 @@ c         insert at beginning
           iavail(i)%pAvail = 0
         else
           if (iavail(i)%oHour == iavail(j)%oHour) then
+            if (.not. iavail(i)%timePos == 1) then
+c             avoid analysis time / first time-step if possible
 c replace position j with i
-            iavail(i)%nAvail = iavail(j)%nAvail
-            iavail(i)%pAvail = iavail(j)%pAvail
-c           set next of previous if previous exists
-            if (iavail(j)%pAvail .ne. 0)
-     &        iavail(iavail(j)%pAvail)%nAvail = i
-c           set previous of next if next exists
-            if (iavail(j)%nAvail .ne. 0)
-     &        iavail(iavail(j)%pAvail)%nAvail = i
+              iavail(i)%nAvail = iavail(j)%nAvail
+              iavail(i)%pAvail = iavail(j)%pAvail
+c             set next of previous if previous exists
+              if (iavail(j)%pAvail .ne. 0)
+     &          iavail(iavail(j)%pAvail)%nAvail = i
+c             set previous of next if next exists
+              if (iavail(j)%nAvail .ne. 0)
+     &         iavail(iavail(j)%pAvail)%nAvail = i
+            end if
           else
 c insert i as successor to j
             iavail(i)%nAvail = iavail(j)%nAvail
