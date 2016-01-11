@@ -28,7 +28,7 @@ module fileInfoML
         ! filetype 1=model 2=surface 3=both
         INTEGER(KIND=2) :: FILETYPE
         ! offset in hours from first sorted timestep
-        INTEGER(KIND=2) :: OHOUR
+        INTEGER(KIND=4) :: OHOUR
         ! pointer to next forward time data
         INTEGER(KIND=2) :: NAVAIL
         ! pointer to next backward (=previous) time data
