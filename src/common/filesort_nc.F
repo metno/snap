@@ -3,16 +3,16 @@ c
 c       check and sort felt file contents
 c
 c       unsorted list of files and timesteps with data:
-c         iavail( 1,n): year    )
-c         iavail( 2,n): month   ) Time of analysis
-c         iavail( 3,n): day     ) (not valid time of forecast)
-c         iavail( 4,n): hour    )
-c         iavail( 5,n): forecast hour
-c         iavail( 6,n): file no. (in filename array)
-c         iavail( 7,n): 1=model level  2=surface  3=both
-c         iavail( 8,n): offset in hours from first (sorted) timestep
-c         iavail( 9,n): pointer to next forward  (time) data
-c         iavail(10,n): pointer to next backward (time) data
+c         iavail(n)%aYear: year    )
+c         iavail(n)%aMonth: month   ) Time of analysis
+c         iavail(n)%aDay: day     ) (not valid time of forecast)
+c         iavail(n)%aHour: hour    )
+c         iavail(n)%fcHour: forecast hour
+c         iavail(n)%fileNo: file no. (in filename array)
+c         iavail(n)%fileType: 1=model level  2=surface  3=both
+c         iavail(n)%oHour: offset in hours from first (sorted) timestep
+c         iavail(n)%nAvail: pointer to next forward  (time) data
+c         iavail(n)%pAvail: pointer to next backward (time) data
 c                   n=1,navail
 c
 c       pointers to lists in iavail:
@@ -20,6 +20,7 @@ c         kavail(1): pointer to first forward  sorted timestep
 c         kavail(2): pointer to first backward sorted timestep
 c
       USE DateCalc
+      USE fileInfoML
 #if defined(DRHOOK)
       USE PARKIND1  ,ONLY : JPIM     ,JPRB
       USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
@@ -87,24 +88,24 @@ c
           eTimes(i) = times(i)*scalef + add_offset
           dateTime = epochToDate(eTimes(i))
 !          write(*,*) dateTime
-          iavail( 1,navail) = dateTime(6)
-          iavail( 2,navail) = dateTime(5)
-          iavail( 3,navail) = dateTime(4)
-          iavail( 4,navail) = dateTime(3)
-c         iavail( 5,n): forecast hour
-          iavail( 5,navail) = 0
-          iavail( 6,navail) = nf
-c         iavail( 7,n): 1=model level  2=surface  3=both
+          iavail(navail)%aYear = dateTime(6)
+          iavail(navail)%aMonth = dateTime(5)
+          iavail(navail)%aDay = dateTime(4)
+          iavail(navail)%aHour = dateTime(3)
+c         iavail(n)%fcHour: forecast hour
+          iavail(navail)%fcHour = 0
+          iavail(navail)%fileNo = nf
+c         iavail(n)%fileType: 1=model level  2=surface  3=both
 c in nc-mode: time-postion in file
-          iavail( 7,navail) = i
-c         iavail( 8,n): offset in hours from first (sorted) timestep
+          iavail(navail)%fileType = i
+c         iavail(n)%oHour: offset in hours from first (sorted) timestep
 c         but currently used to store the hours since 1970-01-01
-          iavail( 8,navail) = int(eTimes(i)/3600)
-c         iavail( 9,n): pointer to next forward  (time) data
-c         iavail(10,n): pointer to next backward (time) data
+          iavail(navail)%oHour = int(eTimes(i)/3600)
+c         iavail(n)%nAvail: pointer to next forward  (time) data
+c         iavail(n)%pAvail: pointer to next backward (time) data
 c still to be set
-          iavail( 9,navail) = 0
-          iavail(10,navail) = 0
+          iavail(navail)%nAvail = 0
+          iavail(navail)%pAvail = 0
         end do
       end do
 
@@ -112,12 +113,12 @@ c sorting time-steps, setting iavail 9, 10, kavail(1) and kavail(2)
 c drop double occurances of time, using latest
       kavail(1) = 1
       kavail(2) = 1
-      iavail(10, 1) = 0
+      iavail(1)%pAvail = 0
       do i = 2, navail
 c       run back until time is > existing time
         j = kavail(2)
-        do while (j > 0 .and. iavail(8, i) < iavail(8, j))
-          j = iavail(10, j)
+        do while (j > 0 .and. iavail(i)%oHour < iavail(j)%oHour)
+          j = iavail(j)%pAvail
         end do
 c        write(*,*) i, j, kavail(1), kavail(2)
         if (j .eq. 0) kavail(1) = i
@@ -125,41 +126,48 @@ c        write(*,*) i, j, kavail(1), kavail(2)
 
         if (j == 0) then
 c         insert at beginning
-          iavail(10, kavail(1)) = i
-          iavail( 9, i) = kavail(1)
-          iavail(10, i) = 0
+          iavail(kavail(1))%pAvail = i
+          iavail(i)%nAvail = kavail(1)
+          iavail(i)%pAvail = 0
         else
-          if (iavail(8, i) == iavail(8, j)) then
+          if (iavail(i)%oHour == iavail(j)%oHour) then
 c replace position j with i
-            iavail( 9, i) = iavail( 9, j)
-            iavail(10, i) = iavail(10, j)
+            iavail(i)%nAvail = iavail(j)%nAvail
+            iavail(i)%pAvail = iavail(j)%pAvail
 c           set next of previous if previous exists
-            if (iavail(10,j) .ne. 0) iavail( 9, iavail(10, j)) = i
+            if (iavail(j)%pAvail .ne. 0)
+     &        iavail(iavail(j)%pAvail)%nAvail = i
 c           set previous of next if next exists
-            if (iavail( 9,j) .ne. 0) iavail(10, iavail(9, j)) = i
+            if (iavail(j)%nAvail .ne. 0)
+     &        iavail(iavail(j)%pAvail)%nAvail = i
           else
 c insert i as successor to j
-            iavail( 9, i) = iavail( 9, j)
-            iavail(10, i) = j
-            iavail( 9, j) = i
+            iavail(i)%nAvail = iavail(j)%nAvail
+            iavail(i)%pAvail = j
+            iavail(j)%nAvail = i
           end if
         end if
       end do
 
 
 c..time range
-      do i=1,5
-        itimer(i,1)=iavail(i,kavail(1))
-        itimer(i,2)=iavail(i,kavail(2))
+
+      do i=1,2
+        itimer(1,i)=iavail(kavail(i))%aYear
+        itimer(2,i)=iavail(kavail(i))%aMonth
+        itimer(3,i)=iavail(kavail(i))%aDay
+        itimer(4,i)=iavail(kavail(i))%aHour
+        itimer(5,i)=iavail(kavail(i))%fcHour
       end do
+
 c..get valid time (with forecast=0)
       call vtime(itimer(1,1),ierror)
       call vtime(itimer(1,2),ierror)
 
 c..adjust hours to hours since first available time
-      zeroHour = iavail(8,kavail(1))
+      zeroHour = iavail(kavail(1))%oHour
       do i=1,navail
-        iavail(8, i) = iavail(8,i) - zeroHour
+        iavail(i)%oHour = iavail(i)%oHour - zeroHour
       end do
 
 

@@ -19,6 +19,7 @@
       USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
 #endif
       USE particleML
+      USE fileInfoML
       implicit none
 #if defined(DRHOOK)
       REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
@@ -257,7 +258,7 @@ c set as long as sortfield still is called
       end if
 
 
-!..get time offset in hours (as iavail(8,n))
+!..get time offset in hours (as iavail(n)%oHour)
       if (nhleft .lt. 0) then
         ihr1 = -ihr1
         ihr2 = -ihr2
@@ -298,11 +299,16 @@ c
       ntav2 = 0
       n=kavail(kfb)
       do while ((ntav2.eq.0) .and. (n.gt.0))
-        if(iavail(8,n).ge.ihdif1 .and. iavail(8,n).le.ihdif2) then
+        if(iavail(n)%oHour.ge.ihdif1 .and.
+     &     iavail(n)%oHour.le.ihdif2) then
           ntav2 = n
         end if
 c..pointer to next timestep (possibly same time)
-        n=iavail(ifb,n)
+        if (ifb .eq. 9) then
+           n=iavail(n)%nAvail
+        else
+           n=iavail(n)%pAvail
+        end if
       end do
 c
       if(idebug.eq.1) then
@@ -311,7 +317,7 @@ c
         write(9,*) 'istep,nhleft: ',istep,nhleft
         write(9,*) 'itimei(5), ihr1, ihr2:',(itimei(i),i=1,5),ihr1,ihr2
         write(9,*) 'kfb,ifb,ihdif1,ihdif2:',kfb,ifb,ihdif1,ihdif2
-        write(9,fmt='(7(1x,i4),1x,i6,2i5)') (iavail(i,ntav2),i=1,10)
+        write(9,fmt='(7(1x,i4),1x,i6,2i5)') (iavail(ntav2))
         flush(9)
       end if
 c
@@ -328,22 +334,25 @@ c     before the return statement
 
 ! time between two inputs
 ! open the correct file, if required
-      if (file_name .ne. filef(iavail(6, ntav2))) then
+      if (file_name .ne. filef(iavail(ntav2)%fileNo)) then
         if (ncid.ne.0) then
           call check(nf_close(ncid), "close ncid")
         end if
-        file_name = filef(iavail(6, ntav2))
+        file_name = filef(iavail(ntav2)%fileNo)
         call check(nf_open(file_name, NF_NOWRITE, ncid), file_name)
       end if
 
 !     set timepos and nhdiff
       nhdiff = 3
-      if (ntav1.ne.0) nhdiff = abs(iavail(8, ntav2) - iavail(8, ntav1))
+      if (ntav1.ne.0)
+     &   nhdiff = abs(iavail(ntav2)%oHour - iavail(ntav1)%oHour)
       nprecip = nhdiff
-      timepos = iavail(7, ntav2)
-      do n=1,5
-        itimefi(n) = iavail(n, ntav2)
-      end do
+      timepos = iavail(ntav2)%fileType
+      itimefi(1) = iavail(ntav2)%aYear
+      itimefi(2) = iavail(ntav2)%aMonth
+      itimefi(3) = iavail(ntav2)%aDay
+      itimefi(4) = iavail(ntav2)%aHour
+      itimefi(5) = iavail(ntav2)%fcHour
 
       if(idebug.eq.1) then
         write(9,*) 'READING DATA FROM file=',trim(file_name)

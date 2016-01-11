@@ -186,6 +186,7 @@ c
       program bsnap
       USE DateCalc  ,ONLY : epochToDate, timeGM
       USE particleML
+      USE fileInfoML
 #if defined(DRHOOK)
       USE PARKIND1  ,ONLY : JPIM     ,JPRB
       USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK

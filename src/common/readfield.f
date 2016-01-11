@@ -19,6 +19,7 @@ c
       USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
 #endif
       USE particleML
+      USE fileInfoML
       implicit none
 #if defined(DRHOOK)
       REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
@@ -55,7 +56,7 @@ c
       ! Before the very first statement
       IF (LHOOK) CALL DR_HOOK('READFIELD',0,ZHOOK_HANDLE)
 #endif
-c..get time offset in hours (as iavail(8,n))
+c..get time offset in hours (as iavail(n)%oHour)
       if (nhleft .lt. 0) then
         ihr1 = -ihr1
         ihr2 = -ihr2
@@ -124,20 +125,25 @@ c
       mtav=0
       n=kavail(kfb)
       do while (n.gt.0)
-        if((iavail(7,n).eq.1 .or. iavail(7,n).eq.3) .and.
-     +	   iavail(8,n).ge.ihdif1 .and. iavail(8,n).le.ihdif2) then
+        if((iavail(n)%fileType.eq.1 .or. iavail(n)%fileType.eq.3)
+     +	    .and. iavail(n)%oHour.ge.ihdif1
+     +      .and. iavail(n)%oHour.le.ihdif2) then
           mtav=mtav+1
           itav(mtav)=n
         end if
 c..pointer to next timestep (possibly same time)
-        n=iavail(ifb,n)
+        if (ifb .eq. 9) then
+           n=iavail(n)%nAvail
+        else
+           n=iavail(n)%pAvail
+        end if
       end do
 c
       if(idebug.eq.1) then
         write(9,*) 'MODEL LEVEL SEARCH LIST.   mtav=',mtav
         do j=1,mtav
           n=itav(j)
-          write(9,fmt='(7(1x,i4),1x,i6,2i5)') (iavail(i,n),i=1,10)
+          write(9,fmt='(7(1x,i4),1x,i6,2i5)') (iavail(n))
         end do
       end if
 c
@@ -280,17 +286,17 @@ c..surface pressure, 10m wind and possibly mean sea level pressure
 c
       navps=nav
 c
-      if(iavail(7,nav).eq.1) then
+      if(iavail(nav)%fileType.eq.1) then
         k=0
        j=0
        do while (k.eq.0 .and. j.lt.navail)
          j=j+1
-         if(iavail(1,j).eq.iavail(1,nav) .and.
-     +	     iavail(2,j).eq.iavail(2,nav) .and.
-     +	     iavail(3,j).eq.iavail(3,nav) .and.
-     +	     iavail(4,j).eq.iavail(4,nav) .and.
-     +	     iavail(5,j).eq.iavail(5,nav) .and.
-     +	     iavail(7,j).ne.1) k=j
+         if(iavail(j)%aYear.eq.iavail(nav)%aYear .and.
+     +	     iavail(j)%aMonth.eq.iavail(nav)%aMonth .and.
+     +	     iavail(j)%aDay.eq.iavail(nav)%aDay .and.
+     +	     iavail(j)%aHour.eq.iavail(nav)%aHour .and.
+     +	     iavail(j)%fcHour.eq.iavail(nav)%fcHour .and.
+     +	     iavail(j)%fileType.ne.1) k=j
        end do
        if(k.gt.0) nav=k
       end if
@@ -348,10 +354,10 @@ c
       if(navailt1.le.0) goto 190
 c
         if(nhleft.gt.0) then
-          nhdiff=iavail(8,navailt2)-iavail(8,navailt1)
+          nhdiff=iavail(navailt2)%oHour-iavail(navailt1)%oHour
         else
 c backward calculation
-          nhdiff=iavail(8,navailt1)-iavail(8,navailt2)
+          nhdiff=iavail(navailt1)%oHour-iavail(navailt2)%oHour
         end if
 c
       if(nhdiff.gt.mprecip) then
@@ -407,7 +413,7 @@ c..first try to read hourly precipitation
          ihrpr1=-nhdiff+ihdiff-1
          ihrpr2=-nhdiff+ihdiff
        end if
-       iprog1=iavail(5,nav)+ihrpr1
+       iprog1=iavail(nav)%fcHour+ihrpr1
        if(iprog1.eq.0) then
          do j=1,ny
            do i=1,nx
@@ -432,7 +438,7 @@ c..the difference below may get negative due to different scaling
                precip(i,j,ihdiff)=max(field2(i,j)-field1(i,j),0.)
              end do
            end do
-           lprog2=iavail(5,nav)+ihrpr2
+           lprog2=iavail(nav)%fcHour+ihrpr2
          end if
        end if
       end do
@@ -652,7 +658,7 @@ c
       ihdiff=0
       do while (ierror.eq.0 .and. ihdiff.lt.nhdiff)
        ihdiff=ihdiff+1
-       if ((iavail(5,navailt1)+ihdiff).lt.9) then
+       if ((iavail(navailt1)%fcHour+ihdiff).lt.9) then
 c hours 4 to 8
          nav=navailt1
          ihrpr2=ihdiff

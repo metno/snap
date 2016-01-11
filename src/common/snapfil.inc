@@ -8,19 +8,8 @@ c..nhfmin: min. step in hours between field input
 c..nhfmax: max. step in hours between field input
 c..nfilef: no. of input FELT files
 c..navail: no. of available timesteps with data, plus 'other' files
-c..iavail: unsorted list of timesteps with data:
-c..        plus files with 'other' data
-c          iavail( 1,n): year    )
-c          iavail( 2,n): month   ) Time of analysis
-c          iavail( 3,n): day     ) (not valid time of forecast)
-c          iavail( 4,n): hour    )
-c          iavail( 5,n): forecast hour
-c          iavail( 6,n): file no. (in filename array)
-c          iavail( 7,n): 1=model levels 2=surface data 3=both
-c          iavail( 8,n): offset in hours from first (sorted) timestep
-c          iavail( 9,n): pointer to next forward  (time) data
-c          iavail(10,n): pointer to next backward (time) data
-c                    n=1,navail
+c..iavail: unsorted list of timesteps with data as defined in fileInfo
+c        plus files with 'other' data
 c..kavail: pointers etc. to lists in iavail:
 c          kavail(1): pointer to first forward  sorted timestep
 c          kavail(2): pointer to first backward sorted timestep
@@ -34,7 +23,8 @@ c..filef:  file names
 c..nctype: type of meteorology, used for different nc-inputs (emep,hirlam12)
 c
       integer      nhfmin,nhfmax,nfilef,navail,navailt1,navailt2
-      integer      iavail(10,mavail),kavail(2)
+      integer      kavail(2)
+      TYPE(fileInfo) ::  iavail(mavail)
       integer      itimer(5,2),limfcf(2,mfilef)
 c fdata(maxsiz), idata(ldata)
       real, pointer ::  fdata(:)

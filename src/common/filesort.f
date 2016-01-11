@@ -3,22 +3,23 @@ c
 c       check and sort felt file contents
 c
 c       unsorted list of files and timesteps with data:
-c         iavail( 1,n): year    )
-c         iavail( 2,n): month   ) Time of analysis
-c         iavail( 3,n): day     ) (not valid time of forecast)
-c         iavail( 4,n): hour    )
-c         iavail( 5,n): forecast hour
-c         iavail( 6,n): file no. (in filename array)
-c         iavail( 7,n): 1=model level  2=surface  3=both
-c         iavail( 8,n): offset in hours from first (sorted) timestep
-c         iavail( 9,n): pointer to next forward  (time) data
-c         iavail(10,n): pointer to next backward (time) data
+c         iavail(n)%aYear: year    )
+c         iavail(n)%aMonth: month   ) Time of analysis
+c         iavail(n)%aDay: day     ) (not valid time of forecast)
+c         iavail(n)%aHour: hour    )
+c         iavail(n)%fcHour: forecast hour
+c         iavail(n)%fileNo: file no. (in filename array)
+c         iavail(n)%fileType: 1=model level  2=surface  3=both
+c         iavail(n)%oHour: offset in hours from first (sorted) timestep
+c         iavail(n)%nAvail: pointer to next forward  (time) data
+c         iavail(n)%pAvail: pointer to next backward (time) data
 c                   n=1,navail
 c
 c       pointers to lists in iavail:
 c         kavail(1): pointer to first forward  sorted timestep
 c         kavail(2): pointer to first backward sorted timestep
 c
+      use fileInfoML
       implicit none
 c
       include 'snapdim.inc'
@@ -96,16 +97,16 @@ c
 c
               do n = 1,nfound
 c
-       	if(inh(10,n).ge.minhfc .and. inh(10,n).le.maxhfc) then
-       	  modsurf=0
-       	  if(inh(11,n).eq.ivcoor .and. inh(12,n).eq.2
+           if(inh(10,n).ge.minhfc .and. inh(10,n).le.maxhfc) then
+             modsurf=0
+             if(inh(11,n).eq.ivcoor .and. inh(12,n).eq.2
      +					 .and. inh(13,n).eq.ktest) then
-       	    modsurf=1
-       	  elseif(inh(11,n).eq.2 .and. inh(12,n).eq.33
+               modsurf=1
+             elseif(inh(11,n).eq.2 .and. inh(12,n).eq.33
      +					.and. inh(13,n).eq.1000) then
-       	    modsurf=2
-       	  end if
-       	  if(modsurf.gt.0) then
+               modsurf=2
+             end if
+             if(modsurf.gt.0) then
 c..year,month,day,hour,forecast_hour
                     itime(1)=inh(3,n)
                     itime(2)=inh(4,n)/100
@@ -113,52 +114,54 @@ c..year,month,day,hour,forecast_hour
                     itime(4)=inh(5,n)/100
                     itime(5)=inh(10,n)
                    do i=1,5
-       	      itimev(i)=itime(i)
-       	    end do
+                 itimev(i)=itime(i)
+               end do
                     call vtime(itimev(1),ierror)
                    if(ierror.eq.0) then
-       	      k=0
-       	      j=0
-       	      do while (k.eq.0 .and. j.lt.navail)
-       	        j=j+1
-       		if(iavail(1,j).eq.itime(1) .and.
-     +			   iavail(2,j).eq.itime(2) .and.
-     +			   iavail(3,j).eq.itime(3) .and.
-     +			   iavail(4,j).eq.itime(4) .and.
-     +			   iavail(5,j).eq.itime(5) .and.
-     +			   iavail(6,j).eq.nf)  k=j
-     		      end do
-       	      if(k.eq.0) then
+                 k=0
+                 j=0
+                 do while (k.eq.0 .and. j.lt.navail)
+                   j=j+1
+               if(iavail(j)%aYear.eq.itime(1) .and.
+     +			   iavail(j)%aMonth.eq.itime(2) .and.
+     +			   iavail(j)%aDay.eq.itime(3) .and.
+     +			   iavail(j)%aHour.eq.itime(4) .and.
+     +			   iavail(j)%fcHour.eq.itime(5) .and.
+     +			   iavail(j)%fileNo.eq.nf)  k=j
+                   end do
+                 if(k.eq.0) then
                         navail=navail+1
                         if(navail.le.mavail) then
-       	          if(navail.eq.1) then
+                     if(navail.eq.1) then
                            do i=1,5
-       	              itimeref(i)=itimev(i)
-       	            end do
-       	            ihdiff=0
-       	          else
-       	            call hrdiff(0,0,itimeref(1),itimev(1),
+                         itimeref(i)=itimev(i)
+                       end do
+                       ihdiff=0
+                     else
+                       call hrdiff(0,0,itimeref(1),itimev(1),
      +				        ihdiff,ierr1,ierr2)
-       	            mhdiff=min(mhdiff,ihdiff)
-       	          end if
-       	          iavail( 1,navail)=itime(1)
-       	          iavail( 2,navail)=itime(2)
-       	          iavail( 3,navail)=itime(3)
-       	          iavail( 4,navail)=itime(4)
-       	          iavail( 5,navail)=itime(5)
-                          iavail( 6,navail)=nf
-                          iavail( 7,navail)=modsurf
-                          iavail( 8,navail)=ihdiff
-                          iavail( 9,navail)=0
-                          iavail(10,navail)=0
-       	        end if
-       	      else
-       	        if(iavail(7,k).eq.1 .and. modsurf.eq.2) iavail(7,k)=3
-       	        if(iavail(7,k).eq.2 .and. modsurf.eq.1) iavail(7,k)=3
-       	      end if
+                       mhdiff=min(mhdiff,ihdiff)
+                     end if
+                     iavail(navail)%aYear=itime(1)
+                     iavail(navail)%aMonth=itime(2)
+                     iavail(navail)%aDay=itime(3)
+                     iavail(navail)%aHour=itime(4)
+                     iavail(navail)%fcHour=itime(5)
+                          iavail(navail)%fileNo=nf
+                          iavail(navail)%fileType=modsurf
+                          iavail(navail)%oHour=ihdiff
+                          iavail(navail)%nAvail=0
+                          iavail(navail)%pAvail=0
+                   end if
+                 else
+                   if(iavail(k)%fileType.eq.1 .and. modsurf.eq.2)
+     &                iavail(k)%fileType=3
+                   if(iavail(k)%fileType.eq.2 .and. modsurf.eq.1)
+     &                iavail(k)%fileType=3
+                 end if
                     end if
-       	  end if
-       	end if
+             end if
+           end if
 c
 c.............end do n = 1,nfound
               end do
@@ -185,7 +188,7 @@ c.....end do nf = 1,nfilef
       end do
 c
       do n=1,navail
-       iavail(8,n)=iavail(8,n)+mhdiff
+       iavail(n)%oHour=iavail(n)%oHour+mhdiff
       end do
 c
       if(navail.gt.mavail) then
@@ -210,24 +213,22 @@ c#############################################################################
       n=0
       do while (n.lt.navail)
         n=n+1
-       if(iavail(7,n).eq.2) then
+       if(iavail(n)%fileType.eq.2) then
          k=0
          j=0
          do while (k.eq.0 .and. j.lt.navail)
            j=j+1
-           if(iavail(1,j).eq.iavail(1,n) .and.
-     +	       iavail(2,j).eq.iavail(2,n) .and.
-     +	       iavail(3,j).eq.iavail(3,n) .and.
-     +	       iavail(4,j).eq.iavail(4,n) .and.
-     +	       iavail(5,j).eq.iavail(5,n) .and.
-     +	       iavail(7,j).ne.2) k=j
+           if(iavail(j)%aYear.eq.iavail(n)%aYear .and.
+     +	       iavail(j)%aMonth.eq.iavail(n)%aMonth .and.
+     +	       iavail(j)%aDay.eq.iavail(n)%aDay .and.
+     +	       iavail(j)%aHour.eq.iavail(n)%aHour .and.
+     +	       iavail(j)%fcHour.eq.iavail(n)%fcHour .and.
+     +	       iavail(j)%fileType.ne.2) k=j
          end do
          if(k.eq.0) then
            navail=navail-1
            do j=n,navail
-             do i=1,10
-               iavail(i,j)=iavail(i,j+1)
-             end do
+             iavail(j)=iavail(j+1)
            end do
            n=n-1
          end if
@@ -238,7 +239,7 @@ c
         write(9,*) 'UNSORTED AVAILABLE    navail=',navail
         do n=1,navail
           write(9,fmt='(i4,'':'',7(1x,i4),1x,i6,2i5)')
-     +				n,(iavail(i,n),i=1,10)
+     +				n,(iavail(n))
         end do
       end if
 c
@@ -272,17 +273,21 @@ c
 c
         do n=1,navail
 c..forward
-          if(iavail(9,n).eq.0 .and. (iavail(8,n).lt.ihrmin .or.
-     +       (iavail(8,n).eq.ihrmin .and. iavail(5,n).lt.iprmin))) then
-            ihrmin=iavail(8,n)
-            iprmin=iavail(5,n)
+          if(iavail(n)%nAvail.eq.0 .and. (iavail(n)%oHour.lt.ihrmin
+     +      .or.
+     +       (iavail(n)%oHour.eq.ihrmin
+     +         .and.iavail(n)%fcHour.lt.iprmin))) then
+            ihrmin=iavail(n)%oHour
+            iprmin=iavail(n)%fcHour
             nmin  =n
           end if
 c..backward (note that shortest forecast length is recorded first)
-          if(iavail(10,n).eq.0 .and. (iavail(8,n).gt.ihrmax .or.
-     +       (iavail(8,n).eq.ihrmax .and. iavail(5,n).lt.iprmax))) then
-            ihrmax=iavail(8,n)
-            iprmax=iavail(5,n)
+          if(iavail(n)%pAvail.eq.0 .and. (iavail(n)%oHour.gt.ihrmax
+     +       .or.
+     +       (iavail(n)%oHour.eq.ihrmax
+     +          .and. iavail(n)%fcHour.lt.iprmax))) then
+            ihrmax=iavail(n)%oHour
+            iprmax=iavail(n)%fcHour
             nmax  =n
           end if
 c
@@ -291,30 +296,30 @@ c
 c..start of forward list
         if(iaforw.eq.0) iaforw=nmin
 c..forward pointer from previous
-        if(laforw.gt.0) iavail(9,laforw)=nmin
+        if(laforw.gt.0) iavail(laforw)%nAvail=nmin
         laforw=nmin
-       iavail(9,laforw)=-1
+       iavail(laforw)%nAvail=-1
 c
 c..start of backward list
         if(iaback.eq.0) iaback=nmax
 c..backward pointer from previous
-        if(laback.gt.0) iavail(10,laback)=nmax
+        if(laback.gt.0) iavail(laback)%pAvail=nmax
         laback=nmax
-       iavail(10,laback)=-1
+       iavail(laback)%pAvail=-1
 c
 c.....end do k=1,navail
       end do
 c
-      iavail( 9,laforw)=0
-      iavail(10,laback)=0
+      iavail(laforw)%nAvail=0
+      iavail(laback)%pAvail=0
 c
       kavail(1)=iaforw
       kavail(2)=iaback
 c
 c..set time difference in hours equal zero for first timestep
-      ihdiff=-iavail(8,iaforw)
+      ihdiff=-iavail(iaforw)%oHour
       do n = 1,navail
-        iavail(8,n)=iavail(8,n)+ihdiff
+        iavail(n)%oHour=iavail(n)%oHour+ihdiff
       end do
 c
       if(idebug.eq.1) then
@@ -322,25 +327,31 @@ c
         n=iaforw
         do while (n.gt.0)
           write(9,fmt='(i4,'':'',7(1x,i4),1x,i6,2i5)')
-     +				n,(iavail(i,n),i=1,10)
-          n=iavail(9,n)
+     +				n,(iavail(n))
+          n=iavail(n)%nAvail
         end do
         write(9,*) 'BACKWARD SORTED AVAILABLE    navail=',navail
         n=iaback
         do while (n.gt.0)
           write(9,fmt='(i4,'':'',7(1x,i4),1x,i6,2i5)')
-     +				n,(iavail(i,n),i=1,10)
-          n=iavail(10,n)
+     +				n,(iavail(n))
+          n=iavail(n)%pAvail
         end do
         write(9,*) '--------------------------------------------------'
         write(9,*)
       end if
 c
 c..time range
-      do i=1,5
-        itimer(i,1)=iavail(i,iaforw)
-        itimer(i,2)=iavail(i,iaback)
-      end do
+      itimer(1,1)=iavail(iaforw)%aYear
+      itimer(2,1)=iavail(iaforw)%aMonth
+      itimer(3,1)=iavail(iaforw)%aDay
+      itimer(4,1)=iavail(iaforw)%aHour
+      itimer(5,1)=iavail(iaforw)%fcHour
+      itimer(1,2)=iavail(iaback)%aYear
+      itimer(2,2)=iavail(iaback)%aMonth
+      itimer(3,2)=iavail(iaback)%aDay
+      itimer(4,2)=iavail(iaback)%aHour
+      itimer(5,2)=iavail(iaback)%fcHour
 c..get valid time (with forecast=0)
       call vtime(itimer(1,1),ierror)
       call vtime(itimer(1,2),ierror)

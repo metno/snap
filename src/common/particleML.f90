@@ -13,6 +13,7 @@ module particleML
 !           pdata(8,n) - precipitation intensity (mm/hour)
 !           pdata(9,n) - radioactive content (Bq)
 !           pdata(10,n) - gravity in m/s (fixed or computed)
+       SEQUENCE
        REAL*8    :: x     !- x position in grid
        REAL*8    :: y     !- y position in grid
        REAL*8    :: z     !- sigma/eta position (vertical)
@@ -26,6 +27,7 @@ module particleML
 
 ! storage for extra particle data
     TYPE extraParticle
+       SEQUENCE
        REAL    :: u ! u-speed
        REAL    :: v ! v-speed
        REAL*8  :: rmx ! map ratio in x direction
