@@ -347,7 +347,7 @@ c     before the return statement
       if (ntav1.ne.0)
      &   nhdiff = abs(iavail(ntav2)%oHour - iavail(ntav1)%oHour)
       nprecip = nhdiff
-      timepos = iavail(ntav2)%fileType
+      timepos = iavail(ntav2)%timePos
       itimefi(1) = iavail(ntav2)%aYear
       itimefi(2) = iavail(ntav2)%aMonth
       itimefi(3) = iavail(ntav2)%aDay

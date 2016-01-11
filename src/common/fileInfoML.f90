@@ -27,6 +27,8 @@ module fileInfoML
         INTEGER(KIND=2) :: FILENO
         ! filetype 1=model 2=surface 3=both
         INTEGER(KIND=2) :: FILETYPE
+        ! timePos position of fchour in current time
+        INTEGER(KIND=2) :: TIMEPOS
         ! offset in hours from first sorted timestep
         INTEGER(KIND=4) :: OHOUR
         ! pointer to next forward time data
