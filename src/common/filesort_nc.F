@@ -144,6 +144,11 @@ c             set next of previous if previous exists
 c             set previous of next if next exists
               if (iavail(j)%nAvail .ne. 0)
      &         iavail(iavail(j)%pAvail)%nAvail = i
+            else
+c  ignore this timestep if possible, but give next and previous
+              iavail(i)%nAvail = iavail(j)%nAvail
+              iavail(i)%pAvail = j
+              iavail(j)%nAvail = i
             end if
           else
 c insert i as successor to j
