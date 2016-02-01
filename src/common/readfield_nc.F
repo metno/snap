@@ -120,7 +120,7 @@ c      real,save     ::    t2thetafac(15000)
         ptopv = ''
         apv = 'ap'
         bv = 'b'
-        sigmadotv = 'sigma_dot_ml'
+        sigmadotv = 'omega_ml'
         psv = 'surface_air_pressure'
         mslpv = 'air_pressure_at_sea_level'
         precaccumv = 'precipitation_amount_acc'
