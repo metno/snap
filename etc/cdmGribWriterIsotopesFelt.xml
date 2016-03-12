@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cdm_gribwriter_config
+                       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<!--                        xsi:noNamespaceSchemaLocation="cdmGribWriterConfig.xsd"> -->
+<!-- isotopes are an extension from CMA, stored in grib1-PDS byte 46+47 -->
+<!-- it needs the isotopeIdentificationNumber extension in /usr/share/grib_api/definitions/grib1/local.54.def -->
+<!-- (or a comparable file in GRIB_DEFINITION_PATH):
+# applicationIdentifier     41
+# type                      42
+# identificationNumber      43
+# productIdentifier         44
+# spatialSmoothingOfProduct 45
+# isotopeIdentificationNumber 46-47               2
+
+unsigned[1] applicationIdentifier : dump ;
+
+unsigned[1] type : dump;
+
+unsigned[1] identificationNumber : dump;
+
+unsigned[1] productIdentifier : dump ;
+
+unsigned[1] spatialSmoothingOfProduct : dump  ;
+
+#
+
+unsigned[2] isotopeIdentificationNumber : dump ;
+-->
+<template_file name="/disk1/Fimex/conc_Am-241.ID_328.grib" />
+<global_attributes>
+    <!-- type can be double, long, string -->
+    <attribute name="identificationOfOriginatingGeneratingCentre" value="54" type="long" />
+    <attribute name="packingType" value="grid_simple" type="string" /> <!-- grid_simple, grid_second_order -->
+</global_attributes>
+<axes>
+<!-- no vertical axis -->
+<vertical_axis standard_name="">
+   <!-- using height in meter, 0 -->
+   <grib1 id="105" value="0" type="short"/>
+   <grib2 id="103" value="0" type="short"/>
+</vertical_axis>
+<vertical_axis unitCompatibleTo="m">
+   <!-- no standard_name for height/depth, defined only by positive=up/down -->
+   <grib1 id="105" units="m" type="short"/>
+   <grib2 id="103" units="m" type="double"/>
+</vertical_axis>
+<vertical_axis unitCompatibleTo="Pa">
+   <!-- no standard_name for pressure coord, defined only by unit of hPa -->
+   <grib1 id="100" units="hPa" type="short"/>
+   <grib2 id="100" units="Pa" type="double"/>
+</vertical_axis>
+<vertical_axis standard_name="air_pressure">
+   <grib1 id="100" units="hPa" type="short"/>
+   <grib2 id="100" units="Pa" type="double"/>
+</vertical_axis>
+<vertical_axis standard_name="atmosphere_sigma_coordinate">
+    <grib1 id="107" scale_factor="1e-4" add_offset="0" type="short" />
+    <grib2 id="104" type="double" />
+</vertical_axis>
+</axes>
+<variables>
+<!-- translation section for parameter names/standard_names -->
+<!-- surface-concentrations should end in _conc files -->
+<parameter name="conc.instant_Cs-137">
+    <grib1 parameterNumber="200" codeTable="133" units="Bq/m3">
+        <!-- see isotope_list.txt file -->
+        <attribute name="isotopeIdentificationNumber" type="long" value="169" />
+    </grib1>
+</parameter>
+<!-- dose/time-integrated concentration, should end in files named _dose -->
+<parameter name="conc.accum_Cs-137">
+    <grib1 parameterNumber="202" codeTable="133" units="Bq*h/m3">
+        <!-- see isotope_list.txt file -->
+        <attribute name="isotopeIdentificationNumber" type="long" value="169" />
+    </grib1>
+</parameter>
+<!-- total deposition (tdep), should be in files ending with _depo -->
+<parameter name="accum.total.dep_Cs-137">
+    <grib1 parameterNumber="201" codeTable="133" units="Bq/m2">
+        <!-- see isotope_list.txt file -->
+        <attribute name="isotopeIdentificationNumber" type="long" value="169" />
+    </grib1>
+</parameter>
+<!-- wet deposition (wdep), should be in files ending with _wdep -->
+<parameter name="accum.wet.dep_Cs-137">
+    <grib1 parameterNumber="205" codeTable="133" units="Bq/m2">
+        <!-- see isotope_list.txt file -->
+        <attribute name="isotopeIdentificationNumber" type="long" value="169" />
+    </grib1>
+</parameter>
+
+<parameter name="conc.instant_Cs-134">
+    <grib1 parameterNumber="200" codeTable="133" units="Bq/m3">
+        <!-- see isotope_list.txt file -->
+        <attribute name="isotopeIdentificationNumber" type="long" value="165" />
+    </grib1>
+</parameter>
+<!-- dose/time-integrated concentration, should end in files named _dose -->
+<parameter name="conc.accum_Cs-134">
+    <grib1 parameterNumber="202" codeTable="133" units="Bq*h/m3">
+        <!-- see isotope_list.txt file -->
+        <attribute name="isotopeIdentificationNumber" type="long" value="165" />
+    </grib1>
+</parameter>
+<!-- total deposition (tdep), should be in files ending with _depo -->
+<parameter name="accum.total.dep_Cs-134">
+    <grib1 parameterNumber="201" codeTable="133" units="Bq/m2">
+        <!-- see isotope_list.txt file -->
+        <attribute name="isotopeIdentificationNumber" type="long" value="165" />
+    </grib1>
+</parameter>
+<!-- wet deposition (wdep), should be in files ending with _wdep -->
+<parameter name="accum.wet.dep_Cs-134">
+    <grib1 parameterNumber="205" codeTable="133" units="Bq/m2">
+        <!-- see isotope_list.txt file -->
+        <attribute name="isotopeIdentificationNumber" type="long" value="165" />
+    </grib1>
+</parameter>
+
+
+<!-- surface-concentrations should end in _conc files -->
+<parameter name="conc.instant_I-131">
+    <grib1 parameterNumber="200" codeTable="133" units="Bq/m3">
+        <!-- see isotope_list.txt file -->
+        <attribute name="isotopeIdentificationNumber" type="long" value="148" />
+    </grib1>
+</parameter>
+<!-- dose/time-integrated concentration, should end in files named _dose -->
+<parameter name="conc.accum_I-131">
+    <grib1 parameterNumber="202" codeTable="133" units="Bq*h/m3">
+        <!-- see isotope_list.txt file -->
+        <attribute name="isotopeIdentificationNumber" type="long" value="148" />
+    </grib1>
+</parameter>
+<!-- total deposition (tdep), should be in files ending with _depo -->
+<parameter name="accum.total.dep_I-131">
+    <grib1 parameterNumber="201" codeTable="133" units="Bq/m2">
+        <!-- see isotope_list.txt file -->
+        <attribute name="isotopeIdentificationNumber" type="long" value="148" />
+    </grib1>
+</parameter>
+<!-- wet deposition (wdep), should be in files ending with _wdep -->
+<parameter name="accum.wet.dep_I-131">
+    <grib1 parameterNumber="205" codeTable="133" units="Bq/m2">
+        <!-- see isotope_list.txt file -->
+        <attribute name="isotopeIdentificationNumber" type="long" value="148" />
+    </grib1>
+</parameter>
+
+<parameter name="conc.instant_Xe-135">
+    <grib1 parameterNumber="200" codeTable="133" units="Bq/m3">
+        <!-- see isotope_list.txt file -->
+        <attribute name="isotopeIdentificationNumber" type="long" value="161" />
+    </grib1>
+</parameter>
+<!-- dose/time-integrated concentration, should end in files named _dose -->
+<parameter name="conc.accum_Xe-135">
+    <grib1 parameterNumber="202" codeTable="133" units="Bq*h/m3">
+        <!-- see isotope_list.txt file -->
+        <attribute name="isotopeIdentificationNumber" type="long" value="161" />
+    </grib1>
+</parameter>
+
+<!-- time of arrival, should be in files ending with _tofa -->
+<parameter name="AM241_toa">
+    <grib1 parameterNumber="206" codeTable="133" units="seconds">
+        <!-- see isotope_list.txt file -->
+        <attribute name="isotopeIdentificationNumber" type="long" value="328" />
+    </grib1>
+</parameter>
+
+<!-- surface-concentrations should end in _conc files -->
+<parameter name="137Cesium_concentration">
+    <grib1 parameterNumber="200" codeTable="133" units="Bq*h/m3"> <!-- using Bq*h to get the right translation -->
+        <!-- see isotope_list.txt file -->
+        <attribute name="isotopeIdentificationNumber" type="long" value="169" />
+    </grib1>
+</parameter>
+
+<!-- surface-concentrations should end in _conc files -->
+<parameter name="133Xenon_concentration">
+    <grib1 parameterNumber="200" codeTable="133" units="Bq*h/m3">
+        <!-- see isotope_list.txt file -->
+        <attribute name="isotopeIdentificationNumber" type="long" value="158" />
+    </grib1>
+</parameter>
+
+<!-- time of arrival, should be in files ending with _tofa -->
+<parameter name="133Xenon_toa">
+    <grib1 parameterNumber="206" codeTable="133" units="seconds">
+        <!-- see isotope_list.txt file -->
+        <attribute name="isotopeIdentificationNumber" type="long" value="158" />
+    </grib1>
+</parameter>
+
+<!-- time of arrival, should be in files ending with _tofa -->
+<parameter name="conc.accum_Cs-137_toa">
+    <grib1 parameterNumber="206" codeTable="133" units="seconds">
+        <!-- see isotope_list.txt file -->
+        <attribute name="isotopeIdentificationNumber" type="long" value="169" />
+    </grib1>
+</parameter>
+
+<!-- time of arrival, should be in files ending with _tofa -->
+<parameter name="conc.accum_Cs-134_toa">
+    <grib1 parameterNumber="206" codeTable="133" units="seconds">
+        <!-- see isotope_list.txt file -->
+        <attribute name="isotopeIdentificationNumber" type="long" value="165" />
+    </grib1>
+</parameter>
+
+<!-- time of arrival, should be in files ending with _tofa -->
+<parameter name="conc.accum_I-131_toa">
+    <grib1 parameterNumber="206" codeTable="133" units="seconds">
+        <!-- see isotope_list.txt file -->
+        <attribute name="isotopeIdentificationNumber" type="long" value="148" />
+    </grib1>
+</parameter>
+
+<!-- time of arrival, should be in files ending with _tofa -->
+<parameter name="conc.accum_Xe-135_toa">
+    <grib1 parameterNumber="206" codeTable="133" units="seconds">
+        <!-- see isotope_list.txt file -->
+        <attribute name="isotopeIdentificationNumber" type="long" value="161" />
+    </grib1>
+</parameter>
+
+<!-- time of arrival, should be in files ending with _tofa; isotope 392 = all/total -->
+<parameter name="total_toa">
+    <grib1 parameterNumber="206" codeTable="133" units="seconds">
+        <!-- see isotope_list.txt file -->
+        <attribute name="isotopeIdentificationNumber" type="long" value="392" />
+    </grib1>
+</parameter>
+
+
+<!-- wet deposition (wdep), should be in files ending with _prec -->
+<parameter standard_name="precipitation_amount">
+    <grib1 parameterNumber="203" codeTable="133" units="kg/m2"/> <!-- must be hourly-files, or rate!!! -->
+</parameter>
+</variables>
+</cdm_gribwriter_config>
