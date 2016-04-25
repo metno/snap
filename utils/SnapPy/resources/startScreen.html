@@ -1,0 +1,81 @@
+<html>
+<head>
+<title>SNAP-Runner</title>
+</head>
+<body>
+<h1>SNAP-Runner</h1>
+    <form method="get" action="http://localhost/snaprunner/run">
+     <div style="float: left;">
+     <fieldset>
+       <legend>Source-Term</legend>
+       <p>Start-Time UTC (e.g. 2013-02-14 08:00):<br><input name="startTime" type="text" size="20" maxlength="20" value="%CURRENTTIME%"></p>
+         <p>Release-Length (in hours)<br><input name="releaseTime" type="text" size="4" maxlength="4" value="12"><br />
+         Run-Length (in hours)<br><input name="runTime" type="text" size="4" maxlength="4" value="48"></p>
+         <p>Nuclear Power Plants<br>
+         <select name="npp" size="20">
+             <option selected="selected" value="">Use Lat-Lon</option>
+<option value="Kola">Kola</options>
+<option value="LENINGRAD">LENINGRAD</options>
+<option value="Kalinin">Kalinin</options>
+<option value="IGNALINA">IGNALINA</options>
+<option value="CHERNOBYL">CHERNOBYL</options>
+<option value="Smolensk">Smolensk</options>
+<option value="LOVIISA">LOVIISA</options>
+<option value="OLKILUOTO">OLKILUOTO</options>
+<option value="FORSMARK">FORSMARK</options>
+<option value="OSKARSHAMN">OSKARSHAMN</options>
+<option value="BARSEBECK">BARSEBECK</options>
+<option value="RINGHALS">RINGHALS</options>
+<option value="ROVNO">ROVNO</options>
+<option value="Sizewell">Sizewell</options>
+<option value="Hartlepool">Hartlepool</options>
+<option value="DOUNREAY">DOUNREAY</options>
+<option value="BRUNSBUETTEL_(KKB)">BRUNSBUETTEL (KKB)</options>
+
+           %NPP_OPTIONS%
+       </select>
+       <br>
+       If <b>Use Lat-Lon</b>:<br>
+       Latitude (e.g. 60.45):<br><input name="latitude" type="text" size="5" maxlength="6"><br>
+       Longitude (e.g. 10.15):<br><input name="longitude" type="text" size="5" maxlength="6"><p>
+     </fieldset>
+     </div>
+     <div style="float: left;">
+     <fieldset>
+     <legend>Mail-Plots / Diana</legend>
+       Plot-Region<br>
+       <select name="region" size="1">
+       <option selected="selected" value="model/sat-area">Model</option>
+       <option value="">No E-Mail</option>
+       <option value="Geografisk">Geografisk</option>
+       <option value="Merkator">Merkator</option>
+       <option value="Globalt">Globalt</option>
+       <option value="N.halvkule">N.halvkule</option>
+       <option value="N.halvkule-90">N.halvkule-90</option>
+       <option value="N.halvkule+90">N.halvkule+90</option>
+       <option value="S.halvkule">S.halvkule</option>
+       <option value="S.halvkule+180">S.halvkule+180</option>
+       <option value="Atlant">Atlant</option>
+       <option value="Europa">Europa</option>
+       <option value="N-Europa">N-Europa</option>
+       <option value="Skandinavia">Skandinavia</option>
+       <option value="Norge">Norge</option>
+       <option value="S-Norge">S-Norge</option>
+       <option value="N-Norge">N-Norge</option>
+       <option value="Norge.20W">Norge.20W</option>
+       <option value="VA-Norge">VA-Norge</option>
+       <option value="VV-Norge">VV-Norge</option>
+       <option value="VNN-Norge">VNN-Norge</option>
+       </select>
+     <p>
+     <input type="checkbox" name="startdiana">Autostart diana</input><br />
+     Diana-Version (e.g. 3.39): <input type="text" name="dianaversion" size="5" maxlength="5"></br>
+     </fieldset>
+     </div>
+     <div style="clear: both;">
+     <input type="submit" id="Run" value="Run" />
+     </div>
+    </form>
+
+</body>
+</html>
