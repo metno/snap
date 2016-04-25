@@ -63,6 +63,8 @@ class MainBrowserWindow(QtWidgets.QMainWindow):
         self.bt_ahead.clicked.connect(self.webview.forward)
         self.webview.urlChanged.connect(self.url_changed)
 
+        self.set_form_handler(self._default_form_handler)
+
         #self.default_url = "https://dokit.met.no/fou/kl/prosjekter/eemep/esnap_userdoc"
         #self.tb_url.setText(self.default_url)
         #self.browse()
@@ -84,16 +86,26 @@ class MainBrowserWindow(QtWidgets.QMainWindow):
         self.tb_url.setText("")
         self.web_page = StartWebPage()
         self.webview.setPage(self.web_page)
-        self.webview.page().formSubmitted.connect(self._handleFormSubmitted)
+        self.webview.page().formSubmitted.connect(self._handle_formSubmitted)
         self.webview.setHtml(text)
 
-    def _handleFormSubmitted(self, url):
+    @staticmethod
+    def _default_form_handler(dict):
+        for key, value in dict:
+            print(str.format("{0} => {1}", key, value))
+
+    def set_form_handler(self, handler):
+        """ the form handler should accept a dictionary with query results as input """
+        self.form_handler = handler
+
+    def evaluate_javaScript(self, jscript):
+        self.webview.page().mainFrame().evaluateJavaScript(jscript);
+
+    def _handle_formSubmitted(self, url):
         # I don't manage to get the right query strings from the web-page
         print("handleFromSubmitted:"+url.toString());
-        for key, value in QtCore.QUrlQuery(url).queryItems(QtCore.QUrl.FullyDecoded):
-            print(str.format("{0} => {1}", key, value))
-        # so I call the javascript handler
-        self.webview.page().mainFrame().evaluateJavaScript(str.format('alert("called run with {0}");', url.toString()))
+        self.form_handler(QtCore.QUrlQuery(url).queryItems(QtCore.QUrl.FullyDecoded));
+
 
 
 
