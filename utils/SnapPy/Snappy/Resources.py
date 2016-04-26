@@ -12,7 +12,7 @@ class Resources():
     '''
     Read the resources and combine them
     '''
-
+    OUTPUTDIR = "/disk1/tmp"
 
     def __init__(self):
         '''
@@ -36,7 +36,7 @@ class Resources():
     def getIconPath(self):
         return os.path.join(os.path.dirname(__file__),"resources/radioMapIcon.png")
 
-    def readNPPs(self, bb):
+    def readNPPs(self, bb={'west': -180., 'east': 180., 'north': 90., 'south': -90.}):
         nppsFile = open(os.path.join(os.path.dirname(__file__),"resources/npps.csv"),
                         mode='r', encoding="UTF-8")
         # skip header
@@ -55,6 +55,14 @@ class Resources():
                 npps[tag] = {'site': site[0], 'CC': site[1], 'lon': float(site[2]), 'lat': float(site[3]), 'status': site[4]}
         nppsFile.close()
         return npps
+
+    def getSnapInputTemplate(self):
+        filename = os.path.join(os.path.dirname(__file__),"resources/snap.input.tmpl")
+        f = open(filename)
+        return f.read()
+
+    def getSnapOutputDir(self):
+        return self.OUTPUTDIR
 
 
 if __name__ == "__main__":
