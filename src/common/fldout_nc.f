@@ -1618,7 +1618,6 @@ c     +    LEN_TRIM("lon lat"), "lon lat"))
 
       end subroutine nc_declare_4d
 
-
       subroutine nc_set_vtrans(iunit, kdimid,k_varid,ap_varid,b_varid)
        implicit none
        include 'netcdf.inc'
@@ -1668,7 +1667,8 @@ c       call check(nf_put_var_real(iunit, ap_varid, blevel))
        REAL(KIND=4), INTENT(IN):: gparam(6)
 
        INTEGER :: i, j, ierror, x_varid, y_varid, proj_varid,
-     +             lon_varid, lat_varid, dimids(2)
+     +             lon_varid, lat_varid, dimids(2), date_time(8)
+       CHARACTER(LEN=19)  :: simulation_start
        REAL(KIND=4) :: xvals(nx), yvals(ny), lon(nx,ny), lat(nx,ny),
      +      val, pi, incr, llparam(6)
 
@@ -1685,6 +1685,16 @@ c       call check(nf_put_var_real(iunit, ap_varid, blevel))
        call check(nf_put_att_text(iunit,NF_GLOBAL, "Conventions",
      +   LEN_TRIM("CF-1.0"), "CF-1.0"))
 
+c a reference-time, same as in WRF
+c timestamp of the form 0000-00-00_00:00:00
+       call DATE_AND_TIME(VALUES=date_time)
+       write (simulation_start, 9999) (date_time(i),i=1,3),
+     +                                (date_time(i),i=5,7)
+9999   FORMAT(I4.4,'-',I2.2,'-',I2.2,'_',I2.2,':',I2.2,':',I2.2)
+       write(*,*) "SIMULATION_START_DATE: ", simulation_start
+       call check(nf_put_att_text(iunit, NF_GLOBAL,
+     +   "SIMULATION_START_DATE", LEN_TRIM("0000-00-00_00:00:00"),
+     +    simulation_start))
 
        if (igtype.eq.2) then
 c..geographic
