@@ -2,10 +2,13 @@ import sys
 import re
 import json
 import os
+import queue
+from subprocess import Popen
 from time import gmtime, strftime
 from Snappy.MainBrowserWindow import MainBrowserWindow
 from Snappy.Resources import Resources
 from PyQt5 import QtWidgets, QtGui
+from asyncio.subprocess import STDOUT
 
 def debug(*objs):
     print("DEBUG: ", *objs, file=sys.stderr)
@@ -25,6 +28,8 @@ class SnapController:
         self.main.evaluate_javaScript('updateSnapLog({0});'.format(json.dumps(str)))
 
     def run_snap_query(self, qDict):
+        # make sure all files are rw for everybody (for later deletion)
+        os.umask(0)
         debug("run_snap_query")
         for key, value in qDict.items():
             print(str.format("{0} => {1}", key, value))
@@ -86,6 +91,27 @@ class SnapController:
 
         snap_input = self.res.getSnapInputTemplate()
         print(snap_input, file=fh)
+        fh.close()
+
+        stdoutFh = open(os.path.join(self.lastOutputDir,"snap.log.stdout"),'w')
+        stderrFh = open(os.path.join(self.lastOutputDir,"snap.log.stderr"),'w')
+        os.chdir(self.lastOutputDir)
+        proc = Popen(['/usr/bin/bsnap_naccident', 'snap.input'], stdout=stdoutFh, stderr=stderrFh)
+#         while not proc.poll() :
+#             tailq = queue.Queue(maxsize=10)
+#             lfh = open(os.path.join(self.lastOutputDir,"snap.log.stdout"))
+#             while 1:
+#                 line = lfh.readline()
+#                 if line :
+#                     tailq.put(line)
+#                 else :
+#                     break
+#             self.write_log(tailq.get())
+#             sleep(5);
+
+#        stdoutFh.close()
+#        stderrFh.close()
+
 #
 #     # fix diana-setup
 #     {
@@ -136,8 +162,12 @@ class SnapController:
 
 
     def update_log_query(self, qDict):
-        MainBrowserWindow._default_form_handler(queryDict)
+        #MainBrowserWindow._default_form_handler(qDict)
         self.write_log("updating...")
+        if os.path.isfile(os.path.join(self.lastOutputDir,"snap.log.stdout")) :
+            lfh = open(os.path.join(self.lastOutputDir,"snap.log.stdout"))
+            print(tail(os.path.join(self.lastOutputDir,"snap.log.stdout"),10), file=sys.stderr)
+            self.write_log(tail(os.path.join(self.lastOutputDir,"snap.log.stdout"), 10))
 
 
     def _create_snap_form_handler(self):
@@ -164,6 +194,18 @@ class SnapController:
 
 
 
+def tail(f, n):
+    fh = open(f)
+    lines = []
+    while 1:
+        line = fh.readline()
+        if (line):
+            lines.append(line)
+            if len(lines) > n:
+                lines = lines[len(lines)-n:]
+        else:
+            break
+    return "".join(lines)
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)

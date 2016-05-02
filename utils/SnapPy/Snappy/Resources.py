@@ -12,7 +12,8 @@ class Resources():
     '''
     Read the resources and combine them
     '''
-    OUTPUTDIR = "/disk1/tmp"
+    #OUTPUTDIR = "/disk1/tmp"
+    OUTPUTDIR = "/lustre/storeB/project/fou/kl/snap/runs"
 
     def __init__(self):
         '''
