@@ -11,6 +11,9 @@ setup(name='Snappy',
       packages=['Snappy'],
       package_dir={'Snappy': 'Snappy'},
       package_data={'Snappy': ['resources/*']},
-      scripts=['snappy']
+      scripts=['snapPy'],
+      install_requires=[
+# can't put pyqt5 here
+    ],
 )
 
