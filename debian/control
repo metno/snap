@@ -1,11 +1,12 @@
-Source: snap
+Source: bsnap
 Maintainer: Heiko Klein <heiko.klein@met.no>
 Section: science
 Priority: optional
-Standards-Version: 3.9.2
+Standards-Version: 3.9.5
 Build-Depends: debhelper (>= 9), netcdf-fortran-4.2-metno-dev, gfortran, libmi-dev
-Package: snap
-Architecture: any
+
+Package: bsnap
+Architecture: amd64
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: Severe Nuclear Accident Programme
  Dispersion model specialized for nuclear accidents.

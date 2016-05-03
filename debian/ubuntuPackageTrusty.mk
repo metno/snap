@@ -25,7 +25,7 @@ DRHOOKLIB = -L../../utils/drhook_CY31R2.032 -ldrhook -lmpi_serial
 
 ##########################################################
 
-BINDIR=../debian/snap/usr/bin/
+BINDIR=../debian/bsnap/usr/bin/
 
 INCLUDES = -I. $(MIINC)
 
