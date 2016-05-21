@@ -3,15 +3,65 @@ import re
 import json
 import os
 import queue
+import time
+import traceback
+import concurrent.futures
 from subprocess import Popen
+from asyncio.subprocess import STDOUT
+
 from time import gmtime, strftime
 from Snappy.MainBrowserWindow import MainBrowserWindow
 from Snappy.Resources import Resources
 from PyQt5 import QtWidgets, QtGui
-from asyncio.subprocess import STDOUT
+from PyQt5.QtCore import QProcess, QThread, QRunnable, QThreadPool, pyqtSignal, pyqtSlot
 
 def debug(*objs):
     print("DEBUG: ", *objs, file=sys.stderr)
+
+class _SnapUpdateThread(QThread):
+    update_log_signal = pyqtSignal()
+
+    def __init__(self, snapController):
+        QThread.__init__(self)
+        self.snap_controller = snapController
+
+    def __del__(self):
+        self.wait()
+
+    def run(self):
+        debug("run-status:" + self.snap_controller.snapRunning)
+        try:
+            while self.snap_controller.snapRunning == "running":
+                debug("running")
+                debug(tail(os.path.join(self.snap_controller.lastOutputDir,"snap.log.stdout"),10))
+                self.update_log_signal.emit()
+                self.sleep(3)
+        except:
+            traceback.print_exc()
+
+
+class _SnapRun():
+
+
+    def __init__(self, snapController):
+        self.snap_controller = snapController
+        self.proc = QProcess()
+
+
+    def start(self):
+        debug("outputdir: "+self.snap_controller.lastOutputDir)
+#         stdoutFh = open(os.path.join(self.snap_controller.lastOutputDir,"snap.log.stdout"),'w')
+#         stderrFh = open(os.path.join(self.snap_controller.lastOutputDir,"snap.log.stderr"),'w')
+#         os.chdir(self.snap_controller.lastOutputDir)
+#        proc = Popen(['/usr/bin/bsnap_naccident', 'snap.input'], stdout=stdoutFh, stderr=stderrFh)
+        self.proc.setWorkingDirectory(self.snap_controller.lastOutputDir)
+        self.proc.setStandardOutputFile(os.path.join(self.snap_controller.lastOutputDir,"snap.log.stdout"))
+        self.proc.setStandardErrorFile(os.path.join(self.snap_controller.lastOutputDir,"snap.log.stderr"))
+#         self.proc.start('/home/heikok/sleepLong.sh', ['snap.input'])
+        self.proc.start('/usr/bin/bsnap_naccident', ['snap.input'])
+        self.proc.waitForStarted(30000)
+        self.snap_controller.snapRunning = "running"
+        debug("started: "+ self.snap_controller.snapRunning)
 
 class SnapController:
     def __init__(self):
@@ -22,10 +72,17 @@ class SnapController:
         self.main.set_html(self.res.getStartScreen())
         self.main.set_form_handler(self._create_snap_form_handler())
         self.main.show()
+        self.snapRunning = "inactive"
 
     def write_log(self, str:str):
         debug(str)
         self.main.evaluate_javaScript('updateSnapLog({0});'.format(json.dumps(str)))
+
+    @pyqtSlot()
+    def _snap_finished(self):
+        debug("finished")
+        self.snapRunning = "finished"
+        self.update_log()
 
     def run_snap_query(self, qDict):
         # make sure all files are rw for everybody (for later deletion)
@@ -93,24 +150,12 @@ class SnapController:
         print(snap_input, file=fh)
         fh.close()
 
-        stdoutFh = open(os.path.join(self.lastOutputDir,"snap.log.stdout"),'w')
-        stderrFh = open(os.path.join(self.lastOutputDir,"snap.log.stderr"),'w')
-        os.chdir(self.lastOutputDir)
-        proc = Popen(['/usr/bin/bsnap_naccident', 'snap.input'], stdout=stdoutFh, stderr=stderrFh)
-#         while not proc.poll() :
-#             tailq = queue.Queue(maxsize=10)
-#             lfh = open(os.path.join(self.lastOutputDir,"snap.log.stdout"))
-#             while 1:
-#                 line = lfh.readline()
-#                 if line :
-#                     tailq.put(line)
-#                 else :
-#                     break
-#             self.write_log(tailq.get())
-#             sleep(5);
-
-#        stdoutFh.close()
-#        stderrFh.close()
+        self.snap_run = _SnapRun(self)
+        self.snap_run.proc.finished.connect(self._snap_finished)
+        self.snap_run.start()
+        self.snap_update = _SnapUpdateThread(self)
+        self.snap_update.update_log_signal.connect(self.update_log)
+        self.snap_update.start(QThread.LowPriority)
 
 #
 #     # fix diana-setup
@@ -160,15 +205,17 @@ class SnapController:
 #     return "<html><head><title>SNAP-Runner</title></head><body><h1>SNAP-Runner</h1>SNAP run successfull for: <p>Time: $params->{startTime} Length $params->{runTime}h<p>Place $npp<br>Lat: $lat<br>Lon: $lon<br><p>Release Scenario:<br>$releaseScenario<p> Start diana with <pre>diana.bin$diVersion -s $FindBin::Bin/diana.setup</pre><a href=\"default\">Start new run.</a></body></html>";
 # }
 
-
     def update_log_query(self, qDict):
         #MainBrowserWindow._default_form_handler(qDict)
         self.write_log("updating...")
         if os.path.isfile(os.path.join(self.lastOutputDir,"snap.log.stdout")) :
             lfh = open(os.path.join(self.lastOutputDir,"snap.log.stdout"))
-            print(tail(os.path.join(self.lastOutputDir,"snap.log.stdout"),10), file=sys.stderr)
+            debug(tail(os.path.join(self.lastOutputDir,"snap.log.stdout"),10))
             self.write_log(tail(os.path.join(self.lastOutputDir,"snap.log.stdout"), 10))
 
+    @pyqtSlot()
+    def update_log(self):
+        self.update_log_query({})
 
     def _create_snap_form_handler(self):
         def handler(queryDict):
@@ -208,6 +255,7 @@ def tail(f, n):
     return "".join(lines)
 
 if __name__ == "__main__":
+    debug("threads: {}".format(QThreadPool.globalInstance().maxThreadCount()))
     app = QtWidgets.QApplication(sys.argv)
     ctr = SnapController()
     sys.exit(app.exec_())
