@@ -1,0 +1,52 @@
+#- Mandatory:
+buffersize=800x600    # plotbuffer (WIDTHxHEIGHT)
+                         # For output=RASTER: size of plot.
+                         # For output=POSTSCRIPT: size of buffer
+                         #  affects output-quality. TIP: make
+                         #  sure width/height ratio = width/height
+                         #  ratio of MAP-area (defined under PLOT)
+
+#- Optional: values for each option below are default-values
+#setupfile=diana.setup    # use a standard setup-file
+output=PNG       # POSTSCRIPT/EPS/PNG/RASTER
+                         #  RASTER: format from filename-suffix
+colour=COLOUR            # GREYSCALE/COLOUR
+#filename=tmp_diana.ps    # output filename
+keepPlotArea=NO          # YES=try to keep plotarea for several
+                         # plots
+
+# the following options for output=POSTSCRIPT or EPS only
+toprinter=NO             # send output to printer (postscript)
+                         # obsolete command! use PRINT_DOCUMENT instead
+printer=fou3             # name of printer        (postscript)
+                         # (see PRINT_DOCUMENT command below)
+papersize=297x420,A4     # size of paper in mm,   (postscript)
+                         # papertype (A4 etc) or both.
+drawbackground=NO        # plot background colour (postscript)
+orientation=PORTRAIT    # PORTRAIT/LANDSCAPE     (postscript)
+                         # (default here is really 'automatic'
+                         # which sets orientation according to
+                         # width/height-ratio of buffersize)
+
+#- Making snap-plots
+settime=starttime
+LOOP[HOUR]=3,6,9,12,15,18,21,24,27,30,33,36,39,42,45,48,51,54,57,60,63,66
+    ADDHOUR=[HOUR]
+    FILENAME=snap_[HOUR]h.png
+    PLOT
+FIELD  model=SNAP.current plot=Cs137_acc_concentration colour=off plottype=contour linetype=solid linewidth=1 base=0 frame=1 log.line.values=100,300 extreme.type=None extreme.size=1 extreme.radius=1 palettecolours=who_uvi patterns=off table=1 repeat=0 value.label=1 line.smooth=0 field.smooth=0 label.size=1 grid.lines=0 grid.lines.max=0 undef.masking=0 undef.colour=255:255:255:255 undef.linewidth=1 undef.linetype=solid grid.value=0 colour_2=off dim=1 unit=Bq/m2
+AREA name=$p
+MAP map=Gshhs-Auto contour=on cont.colour=black cont.linewidth=1 cont.linetype=solid cont.zorder=1 land=on land.colour=landgul land.zorder=0 lon=off lat=off frame=off
+MAP map=Euro2 contour=on cont.colour=black cont.linewidth=1 cont.linetype=solid cont.zorder=1 land=off lon=off lat=off frame=off
+MAP map=Euro3 contour=on cont.colour=black cont.linewidth=1 cont.linetype=solid cont.zorder=1 land=off lon=off lat=off frame=off
+MAP backcolour=havblå map=Fylker contour=on cont.colour=black cont.linewidth=1 cont.linetype=solid cont.zorder=1 land=off lon=on lon.colour=black lon.linewidth=1 lon.linetype=solid lon.density=10 lon.zorder=2 lon.showvalue=off lon.value_pos=bottom lon.fontsize=10 lat=on lat.colour=black lat.linewidth=1 lat.linetype=solid lat.density=10 lat.zorder=2 lat.showvalue=off lat.value_pos=left lat.fontsize=10 frame=off
+LABEL data font=BITMAPFONT fontsize=8
+LABEL text="$day $date $auto UTC" tcolour=red bcolour=black fcolour=white:200 polystyle=both halign=left valign=top font=BITMAPFONT fontsize=8
+LABEL anno=<table,fcolour=white:150> halign=right valign=top polystyle=none margin=0 fontsize=10
+LABEL anno=<arrow> halign=right valign=bottom fcolour=220:220:220:160 fontsize=12
+
+    ENDPLOT
+    LOOP.END
+
+
+
