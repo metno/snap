@@ -7,13 +7,14 @@ Created on Apr 13, 2016
 import re
 import os
 from time import gmtime, strftime
+from fileinput import filename
 
 class Resources():
     '''
     Read the resources and combine them
     '''
-    OUTPUTDIR = "/disk1/tmp"
-    #OUTPUTDIR = "/lustre/storeB/project/fou/kl/snap/runs"
+    #OUTPUTDIR = "/disk1/tmp"
+    OUTPUTDIR = "/lustre/storeB/project/fou/kl/snap/runs"
 
     def __init__(self):
         '''
@@ -61,6 +62,14 @@ class Resources():
         filename = os.path.join(os.path.dirname(__file__),"resources/snap.input.tmpl")
         f = open(filename)
         return f.read()
+
+    def getSendmailScript(self):
+        filename = os.path.join(os.path.dirname(__file__),"resources/sendmail.sh")
+        return filename
+
+    def getBSnapInputFile(self):
+        filename = os.path.join(os.path.dirname(__file__),"resources/snap.in")
+        return filename
 
     def getSnapOutputDir(self):
         return self.OUTPUTDIR

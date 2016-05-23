@@ -13,7 +13,7 @@ from time import gmtime, strftime
 from Snappy.MainBrowserWindow import MainBrowserWindow
 from Snappy.Resources import Resources
 from PyQt5 import QtWidgets, QtGui
-from PyQt5.QtCore import QProcess, QThread, QRunnable, QThreadPool, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import QProcess, QThread, QIODevice, QThreadPool, pyqtSignal, pyqtSlot
 
 def debug(*objs):
     print("DEBUG: ", *objs, file=sys.stderr)
@@ -73,6 +73,8 @@ class SnapController:
         self.main.set_form_handler(self._create_snap_form_handler())
         self.main.show()
         self.snapRunning = "inactive"
+        self.lastOutputDir = ""
+        self.lastQDict = {}
 
     def write_log(self, str:str):
         debug(str)
@@ -83,6 +85,40 @@ class SnapController:
         debug("finished")
         self.snapRunning = "finished"
         self.update_log()
+        self.plot_results()
+
+    def plot_results(self):
+        match = re.search(r'(\d*\.\d+)', self.lastQDict['dianaversion'])
+        if match:
+            diVersion = "-{}".format(match.group(1))
+        else :
+            diVersion = ""
+
+        if 'region' in self.lastQDict:
+            prod_dir = os.path.join(self.lastOutputDir, "prod")
+            os.mkdir(prod_dir)
+            fh = open(os.path.join(prod_dir, "diana.setup"),'w')
+            di_setup = """
+%include /etc/diana/setup/diana.setup-COMMON
+<FIELD_FILES>
+filegroup=SNAP
+m=SNAP.current t=fimex format=netcdf f={}
+</FIELD_FILES>
+"""
+            fh.write(di_setup.format(os.path.join(self.lastOutputDir, "snap.nc")))
+            fh.close()
+
+            proc = QProcess()
+            proc.setWorkingDirectory(os.path.join(prod_dir))
+            proc.setStandardOutputFile(os.path.join(self.lastOutputDir,"snap.log.stdout"), QIODevice.Append)
+            proc.setStandardErrorFile(os.path.join(self.lastOutputDir,"snap.log.stderr"), QIODevice.Append)
+            proc.start("bdiana{}".format(diVersion), ['-i', self.res.getBSnapInputFile(), '-s', 'diana.setup', 'p={}'.format(self.lastQDict['region'])])
+            proc.waitForFinished(-1)
+
+            proc.start("/bin/bash", [self.res.getSendmailScript()]);
+            proc.waitForFinished(-1)
+        self.update_log()
+
 
     def run_snap_query(self, qDict):
         # make sure all files are rw for everybody (for later deletion)
@@ -138,6 +174,7 @@ class SnapController:
         self.write_log("working with lat/lon=({0}/{1}) starting at {2}".format(latf, lonf, startTime))
 
         self.lastOutputDir = os.path.join(self.res.getSnapOutputDir(), "{0}_{1}".format(tag, strftime("%Y-%m-%dT%H%M%S", gmtime())))
+        self.lastQDict = qDict
         debug("output directory: {}".format(self.lastOutputDir))
         os.mkdir(self.lastOutputDir)
         fh = open(os.path.join(self.lastOutputDir, "snap.input"),'w')
@@ -153,6 +190,7 @@ class SnapController:
         self.snap_run = _SnapRun(self)
         self.snap_run.proc.finished.connect(self._snap_finished)
         self.snap_run.start()
+
         self.snap_update = _SnapUpdateThread(self)
         self.snap_update.update_log_signal.connect(self.update_log)
         self.snap_update.start(QThread.LowPriority)
@@ -171,34 +209,10 @@ class SnapController:
 #         close $oh;
 #         close $diTmpl;
 #     }
-#     my $command = "./bsnap $inputFile";
-#     print STDERR $command, "\n";
-#     system($command);
-#     $command = "fimex --input.file=snap.felt --input.config=felt2nc_snap.xml --output.file=snap.nc --output.type=nc4";
-#     print STDERR $command, "\n";
-#     system($command);
-#     unlink("snap.felt");
-#     chmod(0666, "snap.felt_level_names");
-#
-#     my $region = $params->{"region"};
-#     my $startdiana = $params->{"startdiana"};
-#     my $diVersion = $params->{"dianaversion"} || "";
-#     print STDERR "diVersion: '$diVersion'\n";
-#     if ($diVersion =~ /(\d*\.\d+)/) {
-#         $diVersion = "-$1";
-#     } else {
-#         $diVersion = "";
-#     }
+
 #
 #     if ($startdiana) {
 #         system("diana.bin$diVersion -s diana.setup&");
-#     }
-#     if ($region) {
-#         system("bdiana$diVersion -i snap.in -s diana.setup p='$region'");
-#         system("rm -rf prod");
-#         mkdir("prod") or print STDERR "Cannot create prod directory: $!\n";
-#         system("mv snap_* prod");
-#         system("./sendmail.sh prod/*.png");
 #     }
 #
 #
