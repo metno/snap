@@ -1,9 +1,0 @@
-#!/bin/sh
-set -e
-
-# Automatically added by dhpython:
-if which py3compile >/dev/null 2>&1; then
-	py3compile -p snap-py 
-fi
-
-# End automatically added section
