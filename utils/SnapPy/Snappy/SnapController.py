@@ -6,7 +6,6 @@ import queue
 import time
 import traceback
 import concurrent.futures
-from subprocess import Popen
 from asyncio.subprocess import STDOUT
 
 from time import gmtime, strftime
@@ -119,7 +118,7 @@ m=SNAP.current t=fimex format=netcdf f={}
             lfh.close()
 
             sendPngsFromDir('SNAP calculation',
-                            "Finished in {1}. See attached file(s).\n SourceTerm: \n{2}".format(self.lastOutputDir, self.lastSourceTerm),
+                            "Finished in {dir}. See attached file(s).\n SourceTerm: \n{sourceTerm}".format(dir=self.lastOutputDir, sourceTerm=self.lastSourceTerm),
                             prod_dir)
 
         self.update_log()
