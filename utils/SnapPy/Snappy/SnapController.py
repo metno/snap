@@ -113,6 +113,9 @@ m=SNAP.current t=fimex format=netcdf f={}
             proc.setStandardErrorFile(os.path.join(self.lastOutputDir,"snap.log.stderr"), QIODevice.Append)
             proc.start("bdiana{}".format(diVersion), ['-i', self.res.getBSnapInputFile(), '-s', 'diana.setup', 'p={}'.format(self.lastQDict['region'])])
             proc.waitForFinished(-1)
+            lfh = open(os.path.join(self.lastOutputDir,"snap.log.stdout"), 'a')
+            lfh.write("plotting finished")
+            lfh.close()
 
             proc.start("/bin/bash", [self.res.getSendmailScript(), self.lastSourceTerm])
             proc.waitForFinished(-1)
