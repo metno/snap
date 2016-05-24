@@ -117,7 +117,7 @@ m=SNAP.current t=fimex format=netcdf f={}
             lfh.write("plotting finished")
             lfh.close()
 
-            sendPngsFromDir('SNAP calculation',
+            sendPngsFromDir("SNAP calculation: {}".format(self.lastTag),
                             "Finished in {dir}. See attached file(s).\n SourceTerm: \n{sourceTerm}".format(dir=self.lastOutputDir, sourceTerm=self.lastSourceTerm),
                             prod_dir)
 
@@ -157,6 +157,7 @@ m=SNAP.current t=fimex format=netcdf f={}
             lat = nPPs[qDict['npp']]['lat']
             lon = nPPs[qDict['npp']]['lon']
             debug("NPP: {0} {1} {2}".format(npp, lat, lon))
+        self.lastTag = "{0} {1}".format(tag, startTime)
 
         try:
             latf = float(lat)
