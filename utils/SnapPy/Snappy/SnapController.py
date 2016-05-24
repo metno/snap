@@ -13,7 +13,7 @@ from time import gmtime, strftime
 from Snappy.MainBrowserWindow import MainBrowserWindow
 from Snappy.Resources import Resources
 from PyQt5 import QtWidgets, QtGui
-from PyQt5.QtCore import QProcess, QThread, QIODevice, QThreadPool, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import QProcess, QProcessEnvironment, QThread, QIODevice, QThreadPool, pyqtSignal, pyqtSlot
 
 def debug(*objs):
     print("DEBUG: ", *objs, file=sys.stderr)
@@ -53,6 +53,9 @@ class _SnapRun():
         self.proc.setWorkingDirectory(self.snap_controller.lastOutputDir)
         self.proc.setStandardOutputFile(os.path.join(self.snap_controller.lastOutputDir,"snap.log.stdout"))
         self.proc.setStandardErrorFile(os.path.join(self.snap_controller.lastOutputDir,"snap.log.stderr"))
+        env = QProcessEnvironment.systemEnvironment()
+        env.insert("OMP_NUM_THREADS", "1")
+        self.proc.setProcessEnvironment(env)
 #         self.proc.start('/home/heikok/sleepLong.sh', ['snap.input'])
         self.proc.start('/usr/bin/bsnap_naccident', ['snap.input'])
         self.proc.waitForStarted(30000)
