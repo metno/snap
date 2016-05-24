@@ -1,4 +1,4 @@
-VERSION=0.2
+VERSION=0.3
 dch -v ${VERSION}-1 -U "initial upload"
 dch -r ''
 python3 setup.py sdist

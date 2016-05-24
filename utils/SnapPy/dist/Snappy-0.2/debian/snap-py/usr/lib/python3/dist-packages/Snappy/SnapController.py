@@ -11,7 +11,6 @@ from asyncio.subprocess import STDOUT
 
 from time import gmtime, strftime
 from Snappy.MainBrowserWindow import MainBrowserWindow
-from Snappy.MailImages import sendPngsFromDir
 from Snappy.Resources import Resources
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtCore import QProcess, QProcessEnvironment, QThread, QIODevice, QThreadPool, pyqtSignal, pyqtSlot
@@ -118,10 +117,8 @@ m=SNAP.current t=fimex format=netcdf f={}
             lfh.write("plotting finished")
             lfh.close()
 
-            sendPngsFromDir('SNAP calculation',
-                            "Finished in {1}. See attached file(s).\n SourceTerm: \n{2}".format(self.lastOutputDir, self.lastSourceTerm),
-                            prod_dir)
-
+            proc.start("/bin/bash", [self.res.getSendmailScript(), self.lastSourceTerm])
+            proc.waitForFinished(-1)
         self.update_log()
 
 

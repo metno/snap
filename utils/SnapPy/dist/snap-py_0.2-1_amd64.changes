@@ -1,0 +1,31 @@
+Format: 1.8
+Date: Tue, 24 May 2016 10:13:01 +0200
+Source: snap-py
+Binary: snap-py
+Architecture: source all
+Version: 0.2-1
+Distribution: trusty
+Urgency: medium
+Maintainer: Heiko Klein <Heiko.Klein@met.no>
+Changed-By: Heiko Klein <heikok@pc4631.pc.met.no>
+Description: 
+ snap-py    - SNAP GUI in python
+Changes: 
+ snap-py (0.2-1) trusty; urgency=medium
+ .
+   * initial upload
+Checksums-Sha1: 
+ 6aa77f7a58ca92f3d7fada003b199506b8d896dd 762 snap-py_0.2-1.dsc
+ 677c41be0b11d76dcd9e1854818de24beb1526c4 24511 snap-py_0.2.orig.tar.gz
+ 851e668b063808263f9892f78c2108f72898c1a2 896 snap-py_0.2-1.debian.tar.gz
+ bdeb5cb7a965b6ecb2b77df36011b9451e3a6e63 23436 snap-py_0.2-1_all.deb
+Checksums-Sha256: 
+ 27b7d9eeb8f31fc5177fe43476087063338227687a7a7eef2e1d8620d5ea819c 762 snap-py_0.2-1.dsc
+ 885f4b552607f14c72315b0b6114b1eb49822fd66270e5b38af14d52ceb819e0 24511 snap-py_0.2.orig.tar.gz
+ 2be5c56aab7ce77bb8d1aa0106fe6b992c11f6fdcd2b35c804a6b4704a904019 896 snap-py_0.2-1.debian.tar.gz
+ 7f72229b8ec59ba0e1cf1a76f0bb68775d32d86b42579f3d9cc9cc93544478e8 23436 snap-py_0.2-1_all.deb
+Files: 
+ a700973671ffc8b37769da3840aa0a76 762 python optional snap-py_0.2-1.dsc
+ f5ad5cce19a9fc42bb737cd563cc97de 24511 python optional snap-py_0.2.orig.tar.gz
+ 6ef6f54ed9b73474ddfa3933730acef4 896 python optional snap-py_0.2-1.debian.tar.gz
+ fc82a631680fc80f54be3a301ed2168c 23436 python optional snap-py_0.2-1_all.deb
