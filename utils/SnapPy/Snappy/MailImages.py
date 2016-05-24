@@ -13,9 +13,10 @@ def sendPngsFromDir(subject, body, dir):
     # Create the container (outer) email message.
     mailuser = "{}@met.no".format(getpass.getuser())
     msg = MIMEMultipart()
-    msg['Subject'] = subject
     msg['From'] = mailuser
+    msg['Reply-To'] = mailuser
     msg['To'] = mailuser
+    msg['Subject'] = subject
     msg.preamble = body
 
     for file in glob.glob(os.path.join(dir, '*.png')):
