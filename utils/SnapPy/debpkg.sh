@@ -1,4 +1,6 @@
-VERSION=0.1
+VERSION=0.2
+dch -v ${VERSION}-1 -U "initial upload"
+dch -r ''
 python3 setup.py sdist
 cd dist
 tar xvfz Snappy-${VERSION}.tar.gz 
