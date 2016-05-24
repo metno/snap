@@ -1,0 +1,9 @@
+Package: snap-py
+Version: 0.2-2
+Architecture: all
+Maintainer: Heiko Klein <Heiko.Klein@met.no>
+Installed-Size: 55
+Depends: python3, python3:any (>= 3.3.2-2~), bsnap, python3-pyqt5, python3-pyqt5.qtwebkit
+Section: python
+Priority: optional
+Description: SNAP GUI in python
