@@ -29,12 +29,12 @@ orientation=PORTRAIT    # PORTRAIT/LANDSCAPE     (postscript)
                          # width/height-ratio of buffersize)
 
 #- Making snap-plots
-settime=starttime
-LOOP[HOUR]=3,6,9,12,15,18,21,24,27,30,33,36,39,42,45,48,51,54,57,60,63,66
+settime=firsttime
+LOOP[HOUR]=0,3,6,9,12,15,18,21,24,27,30,33,36,39,42,45,48,51,54,57,60,63,66
     ADDHOUR=[HOUR]
     FILENAME=snap_[HOUR]h.png
     PLOT
-FIELD  model=SNAP.current plot=Cs137_acc_concentration colour=off plottype=contour linetype=solid linewidth=1 base=0 frame=1 log.line.values=100,300 extreme.type=None extreme.size=1 extreme.radius=1 palettecolours=who_uvi patterns=off table=1 repeat=0 value.label=1 line.smooth=0 field.smooth=0 label.size=1 grid.lines=0 grid.lines.max=0 undef.masking=0 undef.colour=255:255:255:255 undef.linewidth=1 undef.linetype=solid grid.value=0 colour_2=off dim=1 unit=Bq/m2
+FIELD  model=SNAP.current plot=Cs137_acc_total_deposition colour=off plottype=contour linetype=solid linewidth=1 base=0 frame=1 log.line.values=100,300 extreme.type=None extreme.size=1 extreme.radius=1 palettecolours=who_uvi patterns=off table=1 repeat=0 value.label=1 line.smooth=0 field.smooth=0 label.size=1 grid.lines=0 grid.lines.max=0 undef.masking=0 undef.colour=255:255:255:255 undef.linewidth=1 undef.linetype=solid grid.value=0 colour_2=off dim=1 unit=Bq/m2
 AREA name=$p
 MAP map=Gshhs-Auto contour=on cont.colour=black cont.linewidth=1 cont.linetype=solid cont.zorder=1 land=on land.colour=landgul land.zorder=0 lon=off lat=off frame=off
 MAP map=Euro2 contour=on cont.colour=black cont.linewidth=1 cont.linetype=solid cont.zorder=1 land=off lon=off lat=off frame=off

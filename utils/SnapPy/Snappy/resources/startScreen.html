@@ -42,6 +42,16 @@
 }
 -->
 </style>
+<script type="text/javascript">
+function toggle_advanced_sourceterm() {
+        var e = document.getElementById("advanced_sourceterm");
+        if(e.style.display == 'block') {
+            e.style.display = 'none';
+        } else {
+            e.style.display = 'block';
+        }
+    }
+</script>
 </head>
 <body>
 <div id="snap_working" class="modal">
@@ -69,8 +79,18 @@
      <fieldset>
        <legend>Source-Term</legend>
        <p>Start-Time UTC (e.g. 2013-02-14 08:00):<br><input name="startTime" type="text" size="20" maxlength="20" value="%CURRENTTIME%"></p>
-         <p>Release-Length (in hours)<br><input name="releaseTime" type="text" size="4" maxlength="4" value="12"><br />
+         <p>Release-Length (in hours)<br><input name="releaseTime" type="text" size="4" maxlength="4" value="48"><br />
          Run-Length (in hours)<br><input name="runTime" type="text" size="4" maxlength="4" value="48"></p>
+         <fieldset>
+         <legend><a href="javascript: toggle_advanced_sourceterm()">Advanced</a></legend>
+         <div id="advanced_sourceterm" style="display: none">
+         <p>Height (lower/heigher in m)<br><input name="lowerHeight" type="text" size="4" maxlength="4" value="15"><input name="upperHeight" type="text" size="4" maxlength="4" value="500"></p>
+         <p>Radius (in m)<br><input name="radius" type="text" size="4" maxlength="4" value="50"></p>
+         <p>Release CS-137 (in Bq/s)<br><input name="relCS137" type="text" size="8" maxlength="8" value="2.6e+11"></p>
+         <p>Release XE-133 (in Bq/s)<br><input name="relXE133" type="text" size="8" maxlength="8" value="1.0e+13"></p>
+         <p>Release I-133 (in Bq/s)<br><input name="relI131" type="text" size="8" maxlength="8" value="1.39e+13"></p>
+         </div>
+         </fieldset>
          <p>Nuclear Power Plants<br>
          <select name="npp" size="20">
              <option selected="selected" value="">Use Lat-Lon</option>
