@@ -15,4 +15,4 @@ for FILE in *.png; do
     FILES_TO_ADD="$FILES_TO_ADD -a $FILE"
 done
 
-echo "Se vedlagt fil(er)." | mail $FILES_TO_ADD -r "$MAILFROM" -s "$SUBJECT" "$MAILTO"
+echo "Se vedlagt fil(er).\n SourceTerm: \n$1" | mail $FILES_TO_ADD -r "$MAILFROM" -s "$SUBJECT" "$MAILTO"

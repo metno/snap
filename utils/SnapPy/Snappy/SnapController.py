@@ -50,10 +50,6 @@ class _SnapRun():
 
     def start(self):
         debug("outputdir: "+self.snap_controller.lastOutputDir)
-#         stdoutFh = open(os.path.join(self.snap_controller.lastOutputDir,"snap.log.stdout"),'w')
-#         stderrFh = open(os.path.join(self.snap_controller.lastOutputDir,"snap.log.stderr"),'w')
-#         os.chdir(self.snap_controller.lastOutputDir)
-#        proc = Popen(['/usr/bin/bsnap_naccident', 'snap.input'], stdout=stdoutFh, stderr=stderrFh)
         self.proc.setWorkingDirectory(self.snap_controller.lastOutputDir)
         self.proc.setStandardOutputFile(os.path.join(self.snap_controller.lastOutputDir,"snap.log.stdout"))
         self.proc.setStandardErrorFile(os.path.join(self.snap_controller.lastOutputDir,"snap.log.stderr"))
@@ -115,7 +111,7 @@ m=SNAP.current t=fimex format=netcdf f={}
             proc.start("bdiana{}".format(diVersion), ['-i', self.res.getBSnapInputFile(), '-s', 'diana.setup', 'p={}'.format(self.lastQDict['region'])])
             proc.waitForFinished(-1)
 
-            proc.start("/bin/bash", [self.res.getSendmailScript()]);
+            proc.start("/bin/bash", [self.res.getSendmailScript(), self.lastSourceTerm])
             proc.waitForFinished(-1)
         self.update_log()
 
@@ -175,16 +171,33 @@ m=SNAP.current t=fimex format=netcdf f={}
 
         self.lastOutputDir = os.path.join(self.res.getSnapOutputDir(), "{0}_{1}".format(tag, strftime("%Y-%m-%dT%H%M%S", gmtime())))
         self.lastQDict = qDict
+        sourceTerm = """
+SET_RELEASE.POS= P=   {lat},   {lon}
+TIME.START= {startTime}
+TIME.RUN = {runTime}h
+RELEASE.HOUR= 0, {releaseTime}
+RELEASE.RADIUS.M= {radius}, {radius}
+RELEASE.LOWER.M= {lowerHeight}, {lowerHeight}
+RELEASE.UPPER.M= {upperHeight}, {upperHeight}
+RELEASE.BQ/SEC.COMP= {relI131}, {relI131}, 'I131'
+RELEASE.BQ/SEC.COMP= {relXE133}, {relXE133}, 'Xe133'
+RELEASE.BQ/SEC.COMP= {relCS137}, {relCS137}, 'Cs137'
+"""
+        self.lastSourceTerm = sourceTerm.format(lat=latf, lon=lonf, startTime=startTime,
+                                                runTime=qDict['runTime'],
+                                                releaseTime=qDict['releaseTime'],
+                                                radius=qDict['radius'],
+                                                lowerHeight=qDict['lowerHeight'], upperHeight=qDict['upperHeight'],
+                                                relI131=qDict['relI131'],
+                                                relXE133=qDict['relXE133'],
+                                                relCS137=qDict['relCS137'])
         debug("output directory: {}".format(self.lastOutputDir))
         os.mkdir(self.lastOutputDir)
-        fh = open(os.path.join(self.lastOutputDir, "snap.input"),'w')
-        print("SET_RELEASE.POS= P=   {lat},   {lon}\n".format(lat=latf, lon=lonf), file=fh)
-        print("RELEASE.HOUR= 0, {releaseTime}\n".format(releaseTime=qDict['releaseTime']), file=fh)
-        print("TIME.START= {startTime}\n".format(startTime=startTime), file=fh)
-        print("TIME.RUN = {runTime}h\n".format(runTime=qDict['runTime']), file=fh)
 
+        fh = open(os.path.join(self.lastOutputDir, "snap.input"),'w')
+        fh.write(self.lastSourceTerm)
         snap_input = self.res.getSnapInputTemplate()
-        print(snap_input, file=fh)
+        fh.write(snap_input)
         fh.close()
 
         self.snap_run = _SnapRun(self)
@@ -195,29 +208,6 @@ m=SNAP.current t=fimex format=netcdf f={}
         self.snap_update.update_log_signal.connect(self.update_log)
         self.snap_update.start(QThread.LowPriority)
 
-#
-#     # fix diana-setup
-#     {
-#         open (my $diTmpl, "$FindBin::Bin/diana.setup.tmpl")
-#             or die "Cannot read $FindBin::Bin/diana.setup.tmpl: $!\n";
-#         local $/ = undef;
-#         my $d = <$diTmpl>;
-#         $d =~ s/%PWD%/$FindBin::Bin/g;
-#         open ($oh, ">diana.setup")
-#             or die "Cannot write diana.setup: $!\n";
-#         print $oh $d;
-#         close $oh;
-#         close $diTmpl;
-#     }
-
-#
-#     if ($startdiana) {
-#         system("diana.bin$diVersion -s diana.setup&");
-#     }
-#
-#
-#     return "<html><head><title>SNAP-Runner</title></head><body><h1>SNAP-Runner</h1>SNAP run successfull for: <p>Time: $params->{startTime} Length $params->{runTime}h<p>Place $npp<br>Lat: $lat<br>Lon: $lon<br><p>Release Scenario:<br>$releaseScenario<p> Start diana with <pre>diana.bin$diVersion -s $FindBin::Bin/diana.setup</pre><a href=\"default\">Start new run.</a></body></html>";
-# }
 
     def update_log_query(self, qDict):
         #MainBrowserWindow._default_form_handler(qDict)
