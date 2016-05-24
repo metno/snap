@@ -1,5 +1,4 @@
-# Import smtplib for the actual sending function
-import smtplib
+from subprocess import Popen, PIPE
 
 # Here are the email package modules we'll need
 from email.mime.image import MIMEImage
@@ -7,6 +6,7 @@ from email.mime.multipart import MIMEMultipart
 
 import getpass
 import glob
+import os
 
 def sendPngsFromDir(subject, body, dir):
     '''send all *.png images from the dir to myself'''
@@ -25,7 +25,6 @@ def sendPngsFromDir(subject, body, dir):
             img = MIMEImage(fp.read())
         msg.attach(img)
 
-    # Send the email via our own SMTP server.
-    s = smtplib.SMTP('localhost')
-    s.send_message(msg)
-    s.quit()
+    # Send the email via sendmail
+    p = Popen(["/usr/sbin/sendmail", "-t", "-oi"], stdin=PIPE)
+    p.communicate(msg.as_bytes())
