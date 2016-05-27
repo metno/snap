@@ -223,8 +223,8 @@ RELEASE.BQ/SEC.COMP= {relCS137}, {relCS137}, 'Cs137'
         self.write_log("updating...")
         if os.path.isfile(os.path.join(self.lastOutputDir,"snap.log.stdout")) :
             lfh = open(os.path.join(self.lastOutputDir,"snap.log.stdout"))
-            debug(tail(os.path.join(self.lastOutputDir,"snap.log.stdout"),25))
-            self.write_log(tail(os.path.join(self.lastOutputDir,"snap.log.stdout"), 25))
+            debug(tail(os.path.join(self.lastOutputDir,"snap.log.stdout"),30))
+            self.write_log(tail(os.path.join(self.lastOutputDir,"snap.log.stdout"), 30))
 
     @pyqtSlot()
     def update_log(self):
