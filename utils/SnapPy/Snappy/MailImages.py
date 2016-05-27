@@ -23,8 +23,9 @@ def sendPngsFromDir(subject, body, dir):
         # Open the files in binary mode.  Let the MIMEImage class automatically
         # guess the specific image type.
         with open(file, 'rb') as fp:
-            img = MIMEImage(fp.read())
-        msg.attach(img)
+            img_msg = MIMEImage(fp.read())
+        img_msg.add_header('Content-Disposition', 'attachment', filename=os.path.basename(file))
+        msg.attach(img_msg)
 
     # Send the email via sendmail
     p = Popen(["/usr/sbin/sendmail", "-t", "-oi"], stdin=PIPE)
