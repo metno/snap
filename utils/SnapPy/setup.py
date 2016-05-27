@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(name='Snappy',
-      version='0.3',
+      version='0.4',
       description='SNAP GUI in python',
       author='Heiko Klein',
       author_email='Heiko.Klein@met.no',
