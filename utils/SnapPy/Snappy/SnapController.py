@@ -85,7 +85,7 @@ class SnapController:
         self.snapRunning = "finished"
         self.plot_results()
         with open(os.path.join(self.lastOutputDir,"snap.log.stdout"), "a") as logFile:
-            logFile.write("All work finished. Please open diana to see results.")
+            logFile.write("All work finished. Please open diana to see results.\nResults in {}\n".format(self.lastOutputDir))
         self.update_log()
 
     def plot_results(self):
