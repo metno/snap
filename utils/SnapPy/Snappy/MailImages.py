@@ -2,6 +2,7 @@ from subprocess import Popen, PIPE
 
 # Here are the email package modules we'll need
 from email.mime.image import MIMEImage
+from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 import getpass
@@ -17,7 +18,8 @@ def sendPngsFromDir(subject, body, dir):
     msg['Reply-To'] = mailuser
     msg['To'] = mailuser
     msg['Subject'] = subject
-    msg.preamble = body
+    msg.preamble = subject
+    msg.attach(MIMEText(body))
 
     for file in glob.glob(os.path.join(dir, '*.png')):
         # Open the files in binary mode.  Let the MIMEImage class automatically
