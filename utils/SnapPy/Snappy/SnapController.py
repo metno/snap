@@ -83,8 +83,10 @@ class SnapController:
     def _snap_finished(self):
         debug("finished")
         self.snapRunning = "finished"
-        self.update_log()
         self.plot_results()
+        with open(os.path.join(self.lastOutputDir,"snap.log.stdout"), "a") as logFile:
+            logFile.write("All work finished. Please open diana to see results.")
+        self.update_log()
 
     def plot_results(self):
         match = re.search(r'(\d*\.\d+)', self.lastQDict['dianaversion'])
@@ -121,7 +123,6 @@ m=SNAP.current t=fimex format=netcdf f={}
                             "Finished in {dir}. See attached file(s).\n SourceTerm: \n{sourceTerm}".format(dir=self.lastOutputDir, sourceTerm=self.lastSourceTerm),
                             prod_dir)
 
-        self.update_log()
 
 
     def run_snap_query(self, qDict):
