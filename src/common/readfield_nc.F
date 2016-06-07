@@ -238,7 +238,7 @@ c        mslpv = 'air_pressure_at_sea_level'
         xwind10mv = 'u10'
         ywind10mv = 'v10'
         pottempv = 'potential_temperature'
-        sigmav = 'lev'
+        sigmav = 'k'
         ptopv = ''
         apv = ''
         bv = ''
@@ -253,6 +253,27 @@ c        mslpv = 'air_pressure_at_sea_level'
 c..get grid parameters from field identification
 c set as long as sortfield still is called
         ivcoor = 2
+      else if (nctype.eq.'ecemep') then
+        manual_level_selection = .true.
+        xwindv = 'u_wind'
+        ywindv = 'v_wind'
+        xwind10mv = 'u10'
+        ywind10mv = 'v10'
+        pottempv = 'potential_temperature'
+        sigmav = 'lev'
+        ptopv = 'P0'
+        apv = 'hyai'
+        bv = 'hybi'
+        sigmadotv = ''
+        psv = 'surface_pressure'
+!        mslpv = 'air_pressure_at_sea_level'
+        precaccumv = ''
+        precstratiaccumv = ''
+!.. non accumulated precipitation rates in m/s
+        precstrativrt = 'large_scale_precipitations'
+        precconvrt = 'convective_precipitations'
+c..get grid parameters from field identification
+c set as long as sortfield still is called
       else
         write(*,*) "undefined grid.nctype: ", nctype
         call exit(1)
@@ -415,6 +436,14 @@ c..pot.temp. or abs.temp.
 !        if(ierror.ne.0) goto 100
 c
 
+c
+c   TOOD read ptop from file (only needed for sigma), but not in emep data
+        ptop=100.
+c       if(ivcoor.eq.2) ptop=idata(19)
+c..p0 for hybrid loaded to ptop, ap is a * p0
+        if (ivcoor.ne.2 .and. .not.ptopv.eq.'') then
+          call nfcheckload(ncid, ptopv, (/0/), (/1/), ptop)
+        end if
 c..alevel (here) only for eta levels
         if (.not.apv.eq.'') then
           if (apv.eq.'arome') then
@@ -424,17 +453,17 @@ c..alevel (here) only for eta levels
             call nfcheckload(ncid, apv, (/ilevel/), (/1/), alev(k))
             call nfcheckload(ncid, bv, (/ilevel/), (/1/), blev(k))
           end if
+          if (ivcoor.ne.2 .and. .not.ptopv.eq.'') then
+c..p0 for hybrid loaded to ptop, ap is a * p0
+            alev(k) = alev(k) * ptop
+          end if
 c TODO: check unit (here Pa -> hPa
           alev(k) = alev(k) / 100
-        end if
-        if (.not.sigmav.eq.'') then
+         end if
+         if (.not.sigmav.eq.'') then
 c reusing blev(k) for sigma(k) later
-          call nfcheckload(ncid, sigmav, (/ilevel/), (/1/), blev(k))
-        end if
-c
-c   TOOD read ptop from file (only needed for sigma), but not in emep data
-       ptop=100.
-c      if(ivcoor.eq.2) ptop=idata(19)
+           call nfcheckload(ncid, sigmav, (/ilevel/), (/1/), blev(k))
+         end if
 c
 c..sigma_dot/eta_dot (0 at surface)
 c..eta: eta_dot (or omega) stored in the same levels as u,v,th.
