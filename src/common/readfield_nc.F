@@ -232,6 +232,7 @@ c        mslpv = 'air_pressure_at_sea_level'
         precconvrt = ''
 
       else if (nctype.eq.'emep') then
+        manual_level_selection = .true.
         xwindv = 'u_wind'
         ywindv = 'v_wind'
         xwind10mv = 'u10'
