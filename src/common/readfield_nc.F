@@ -129,15 +129,18 @@ c      real,save     ::    t2thetafac(15000)
 c..get grid parameters from field identification
       else if (nctype.eq.'h12_grib') then
 c..h12 results converted directly from grib-files via fimex
-        manual_level_selection = .false.
+        manual_level_selection = .true.
         has_dummy_dim = .true.
         xwindv = 'x_wind_ml'
         ywindv = 'y_wind_ml'
         xwind10mv = 'x_wind_10m'
         ywind10mv = 'y_wind_10m'
 c       !! real temperature, convert to pot-temp later
-        pottempv = 'air_temperature_ml'
-        temp_is_abs = .true.
+c semipalatinsk uses air_temp
+c        pottempv = 'air_temperature_ml'
+c        temp_is_abs = .true.
+c chernobyl uses pot-temp 
+        pottempv = 'air_potential_temperature_ml'
         sigmav = ''
         ptopv = ''
 c this is a bug in the arome test-file, apv and bv are therefore
@@ -145,7 +148,10 @@ c hardcoded, see below
         apv = 'ap'
         bv = 'b'
 c upward_air_velocity_ml, not used yet?
+c semipalatinsk
         sigmadotv = ''
+c chernobyl 
+c        sigmadotv = 'omega_ml'
         psv = 'surface_air_pressure'
         mslpv = ''
         precaccumv = ''
@@ -260,7 +266,7 @@ c set as long as sortfield still is called
         xwind10mv = 'u10'
         ywind10mv = 'v10'
         pottempv = 'potential_temperature'
-        sigmav = 'lev'
+        sigmav = ''
         ptopv = 'P0'
         apv = 'hyai'
         bv = 'hybi'
@@ -429,6 +435,13 @@ c..u
         call nfcheckload(ncid, ywindv, start4d, count4d, v2(1,1,k))
 !        call readfd(iunit,nav,ivc,iv,ilevel,0,v2(1,1,k),ierror)
 !        if(ierror.ne.0) goto 100
+c bug in chernobyl borders from destaggering
+        do j=1,ny
+          do i=1,nx
+            if (v2(i,j,k) .ge. 1e+30) v2(i,j,k) = 0.
+          end do
+        end do
+
 c
 c..pot.temp. or abs.temp.
         call nfcheckload(ncid, pottempv, start4d, count4d, t2(1,1,k))
