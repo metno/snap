@@ -86,11 +86,17 @@ function toggle_advanced_sourceterm() {
          <fieldset>
          <legend><a href="javascript: toggle_advanced_sourceterm()">Advanced</a></legend>
          <div id="advanced_sourceterm" style="display: none">
-         <p>Height (lower/heigher in m)<br><input name="lowerHeight" type="text" size="4" maxlength="4" value="15"><input name="upperHeight" type="text" size="4" maxlength="4" value="500"></p>
-         <p>Radius (in m)<br><input name="radius" type="text" size="4" maxlength="4" value="50"></p>
-         <p>Release CS-137 (in Bq/s)<br><input name="relCS137" type="text" size="8" maxlength="8" value="2.6e+11"></p>
-         <p>Release XE-133 (in Bq/s)<br><input name="relXE133" type="text" size="8" maxlength="8" value="1.0e+13"></p>
-         <p>Release I-133 (in Bq/s)<br><input name="relI131" type="text" size="8" maxlength="8" value="1.39e+13"></p>
+         Height (lower/heigher in m)<br><input name="lowerHeight" type="text" size="4" maxlength="4" value="15"><input name="upperHeight" type="text" size="4" maxlength="4" value="500"><br />
+         Radius (in m)<br><input name="radius" type="text" size="4" maxlength="4" value="50">
+         <p />
+         Release CS-137 (in Bq/s)<br><input name="relCS137" type="text" size="8" maxlength="8" value="2.6e+11"><br />
+         Release XE-133 (in Bq/s)<br><input name="relXE133" type="text" size="8" maxlength="8" value="1.0e+13"><br />
+         Release I-133 (in Bq/s)<br><input name="relI131" type="text" size="8" maxlength="8" value="1.39e+13"><br />
+         <p />MET-MODEL
+         <select name="metmodel">
+             <option selected="selected" value="h12">Hirlam12</option>
+             <option value="nrpa_ec_0p1">EC 0.1, NRPA-domain</option>
+         </select>
          </div>
          </fieldset>
          <p>Nuclear Power Plants<br>
