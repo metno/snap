@@ -1,4 +1,6 @@
 VERSION=1.1
+svn copy https://svn.met.no/snap/trunk \
+     https://svn.met.no/snap/tags/$VERSION -m "Release $VERSION" || exit 1
 cd src
 VERSION=$VERSION make dist
 cd ..
