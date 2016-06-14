@@ -7,7 +7,7 @@ Created on Apr 13, 2016
 import re
 import os
 from time import gmtime, strftime
-from fileinput import filename
+from datetime import datetime, time, date, timedelta
 
 class Resources():
     '''
@@ -15,6 +15,8 @@ class Resources():
     '''
     #OUTPUTDIR = "/disk1/tmp"
     OUTPUTDIR = "/lustre/storeB/project/fou/kl/snap/runs"
+    ECINPUTDIRS = ["/lustre/storeB/users/heikok/Meteorology/ecdis2cwf/", "/lustre/storeA/users/heikok/Meteorology/ecdis2cwf/"];
+    EC_FILE_PATTERN = "NRPA_EUROPE_0_1_{UTC:02d}/meteo{year:04d}{month:02d}{day:02d}_{dayoffset:02d}.nc"
 
     def __init__(self):
         '''
@@ -47,7 +49,7 @@ class Resources():
         npps = {}
         for line in nppsFile:
             # [site, country, long, lat, status)
-            site = line.split ('|')
+            site = line.split('|')
             if len(site) < 4:
                 print("NPP not properly defined: ", line, file=sys.stderr)
             tag = site[0]
@@ -58,8 +60,16 @@ class Resources():
         nppsFile.close()
         return npps
 
-    def getSnapInputTemplate(self):
-        filename = os.path.join(os.path.dirname(__file__),"resources/snap.input.tmpl")
+    def getSnapInputTemplate(self, metmodel=None):
+        """Read a snap input file without source-term parameters and eventually without meteorology files.
+
+        Keyword arguments:
+        metmodel -- h12, hirlam12 including files (default), or nrpa_ec_0p1 without met-files
+        """
+        if (metmodel is None) or (metmodel == 'h12'):
+            filename = os.path.join(os.path.dirname(__file__),"resources/snap.input.tmpl")
+        else:
+            filename = os.path.join(os.path.dirname(__file__),"resources/snap.input_{}.tmpl".format(metmodel))
         f = open(filename)
         return f.read()
 
@@ -74,6 +84,45 @@ class Resources():
     def getSnapOutputDir(self):
         return self.OUTPUTDIR
 
+    def _findFileInPathes(self, file, pathes):
+        for path in pathes:
+            filename = os.path.join(path, file)
+            if os.path.isfile(filename):
+                return filename
+        return None
+
+    def getECMeteorologyFiles(self, dtime: datetime, run_hours: int):
+        relevant_dates = []
+        today = datetime.combine(date.today(), time(0,0,0))
+        yesterday = today - timedelta(days=1)
+        # that is midnight
+        tommorow = today + timedelta(days=2)
+        # set start 3 hours before earliest date
+        if run_hours < 0:
+            start = dtime + timedelta(hours=(run_hours-3))
+        else:
+            start = dtime + timedelta(hours=-3)
+
+        while (start < yesterday):
+            for utc in [0, 6, 12, 18]:
+                file = self.EC_FILE_PATTERN.format(dayoffset=0, UTC=utc, year=start.year, month=start.month, day=start.day)
+                filename = self._findFileInPathes(file, self.ECINPUTDIRS)
+                if filename is not None: relevant_dates.append(filename)
+            start += timedelta(days=1)
+
+        # today
+        while (start < tommorow):
+            for offset in [0,1,2,3]:
+                for utc in [0, 6, 12, 18]:
+                    file = self.EC_FILE_PATTERN.format(dayoffset=offset, UTC=utc, year=start.year, month=start.month, day=start.day)
+                    filename = self._findFileInPathes(file, self.ECINPUTDIRS)
+                    if filename is not None: relevant_dates.append(filename)
+            start += timedelta(days=1)
+        return relevant_dates
+
+
 
 if __name__ == "__main__":
     print(Resources().getStartScreen())
+    print(Resources().getECMeteorologyFiles(datetime.combine(date.today(),time(0)), 72))
+    print(Resources().getECMeteorologyFiles(datetime.combine(date.today(),time(0)), -72))

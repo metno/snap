@@ -1,7 +1,9 @@
-VERSION=0.3
+# remember to update version in setup.py, too
+# results appear under dist
+VERSION=0.6
 dch -v ${VERSION}-1 -U "initial upload"
 dch -r ''
-python3 setup.py sdist
+VERSION=$VERSION python3 setup.py sdist
 cd dist
 tar xvfz Snappy-${VERSION}.tar.gz 
 cd Snappy-${VERSION}
