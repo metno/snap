@@ -2,13 +2,10 @@ import sys
 import re
 import json
 import os
-import queue
-import time
 import traceback
-import concurrent.futures
-from asyncio.subprocess import STDOUT
 
 from time import gmtime, strftime
+import datetime
 from Snappy.MainBrowserWindow import MainBrowserWindow
 from Snappy.MailImages import sendPngsFromDir
 from Snappy.Resources import Resources
@@ -75,9 +72,9 @@ class SnapController:
         self.lastOutputDir = ""
         self.lastQDict = {}
 
-    def write_log(self, str:str):
-        debug(str)
-        self.main.evaluate_javaScript('updateSnapLog({0});'.format(json.dumps(str)))
+    def write_log(self, txt:str):
+        debug(txt)
+        self.main.evaluate_javaScript('updateSnapLog({0});'.format(json.dumps(txt)))
 
     @pyqtSlot()
     def _snap_finished(self):
@@ -134,10 +131,7 @@ m=SNAP.current t=fimex format=netcdf f={}
         match = re.search(r'(\d{4})-(\d{2})-(\d{2})[\+\s]+(\d{1,2})', qDict['startTime'])
         if match:
             startTime = "{0} {1} {2} {3}".format(*match.group(1,2,3,4))
-            startYY = "{:02d}".format(int(match.group(1)))
-            startmm = "{:02d}".format(int(match.group(2)))
-            startDD = "{:02d}".format(int(match.group(3)))
-            startHH = "{:02d}".format(int(match.group(4)))
+            startDT = datetime.datetime(*tuple(map(int, list(match.group(1,2,3,4)))))
         else:
             errors += "Cannot interprete startTime: {0}\n".format(qDict['startTime'])
 
@@ -205,8 +199,12 @@ RELEASE.BQ/SEC.COMP= {relCS137}, {relCS137}, 'Cs137'
 
         fh = open(os.path.join(self.lastOutputDir, "snap.input"),'w')
         fh.write(self.lastSourceTerm)
-        snap_input = self.res.getSnapInputTemplate()
-        fh.write(snap_input)
+        if (qDict['metmodel'] == 'nrpa_ec_0p1'):
+            for f in self.res.getECMeteorologyFiles(startDT, int(qDict['runTime'])):
+                fh.write("FIELD.INPUT={}\n".format(f))
+            fh.write(self.res.getSnapInputTemplate('nrpa_ec_0p1'))
+        else:
+            fh.write(self.res.getSnapInputTemplate())
         fh.close()
 
         self.snap_run = _SnapRun(self)
@@ -225,6 +223,7 @@ RELEASE.BQ/SEC.COMP= {relCS137}, {relCS137}, 'Cs137'
             lfh = open(os.path.join(self.lastOutputDir,"snap.log.stdout"))
             debug(tail(os.path.join(self.lastOutputDir,"snap.log.stdout"),30))
             self.write_log(tail(os.path.join(self.lastOutputDir,"snap.log.stdout"), 30))
+            lfh.close()
 
     @pyqtSlot()
     def update_log(self):
