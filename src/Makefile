@@ -1,4 +1,6 @@
 SUBDIRS = naccident nbomb traj volcano
+# version from environment
+VERSION ?= "1.0"
 
 all:
 	for i in $(SUBDIRS); do \
@@ -11,6 +13,12 @@ clean:
 		cd $$i && $(MAKE) clean; \
 		cd ..; \
 	done
+
+dist: clean
+	cp -R . ../snap-$(VERSION); cd ..; \
+	rm snap-$(VERSION)/current.mk; \
+	tar cvfz snap-$(VERSION).tgz snap-$(VERSION); \
+	rm -r snap-$(VERSION)
 
 install:
 	for i in $(SUBDIRS); do \
