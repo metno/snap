@@ -13,9 +13,9 @@ class Resources():
     '''
     Read the resources and combine them
     '''
-    #OUTPUTDIR = "/disk1/tmp"
+    OUTPUTDIR = "/disk1/tmp"
     OUTPUTDIR = "/lustre/storeB/project/fou/kl/snap/runs"
-    ECINPUTDIRS = ["/lustre/storeB/users/heikok/Meteorology/ecdis2cwf/", "/lustre/storeA/users/heikok/Meteorology/ecdis2cwf/"];
+    #ECINPUTDIRS = ["/lustre/storeB/users/heikok/Meteorology/ecdis2cwf/", "/lustre/storeA/users/heikok/Meteorology/ecdis2cwf/"];
     EC_FILE_PATTERN = "NRPA_EUROPE_0_1_{UTC:02d}/meteo{year:04d}{month:02d}{day:02d}_{dayoffset:02d}.nc"
 
     def __init__(self):
@@ -95,13 +95,16 @@ class Resources():
         relevant_dates = []
         today = datetime.combine(date.today(), time(0,0,0))
         yesterday = today - timedelta(days=1)
-        # that is midnight
-        tommorow = today + timedelta(days=2)
+
+        tomorrow = today + timedelta(days=1)
         # set start 3 hours before earliest date
         if run_hours < 0:
             start = dtime + timedelta(hours=(run_hours-3))
         else:
             start = dtime + timedelta(hours=-3)
+
+        if start >= tomorrow:
+            start -= timedelta(hours=72) # go 72 hours (forecast-length) back
 
         while (start < yesterday):
             for utc in [0, 6, 12, 18]:
@@ -111,7 +114,7 @@ class Resources():
             start += timedelta(days=1)
 
         # today
-        while (start < tommorow):
+        while (start < tomorrow):
             for offset in [0,1,2,3]:
                 for utc in [0, 6, 12, 18]:
                     file = self.EC_FILE_PATTERN.format(dayoffset=offset, UTC=utc, year=start.year, month=start.month, day=start.day)

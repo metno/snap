@@ -55,9 +55,11 @@ class _SnapRun():
         self.proc.setProcessEnvironment(env)
 #         self.proc.start('/home/heikok/sleepLong.sh', ['snap.input'])
         self.proc.start('/usr/bin/bsnap_naccident', ['snap.input'])
-        self.proc.waitForStarted(30000)
-        self.snap_controller.snapRunning = "running"
-        debug("started: "+ self.snap_controller.snapRunning)
+        if (self.proc.waitForStarted(3000)) :
+            self.snap_controller.snapRunning = "running"
+            debug("started: "+ self.snap_controller.snapRunning)
+        else:
+            self.snap_controller.write_log("starting /usr/bin/bsnap_naccident snap.input failed")
 
 class SnapController:
     def __init__(self):
@@ -200,7 +202,11 @@ RELEASE.BQ/SEC.COMP= {relCS137}, {relCS137}, 'Cs137'
         fh = open(os.path.join(self.lastOutputDir, "snap.input"),'w')
         fh.write(self.lastSourceTerm)
         if (qDict['metmodel'] == 'nrpa_ec_0p1'):
-            for f in self.res.getECMeteorologyFiles(startDT, int(qDict['runTime'])):
+            files = self.res.getECMeteorologyFiles(startDT, int(qDict['runTime']))
+            if (len(files) == 0):
+                self.write_log("no EC met-files found for {}, runtime {}".format(startDT, qDict['runTime']))
+                return
+            for f in files:
                 fh.write("FIELD.INPUT={}\n".format(f))
             fh.write(self.res.getSnapInputTemplate('nrpa_ec_0p1'))
         else:
