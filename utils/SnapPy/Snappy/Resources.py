@@ -13,9 +13,9 @@ class Resources():
     '''
     Read the resources and combine them
     '''
-    OUTPUTDIR = "/disk1/tmp"
+    #OUTPUTDIR = "/disk1/tmp"
     OUTPUTDIR = "/lustre/storeB/project/fou/kl/snap/runs"
-    #ECINPUTDIRS = ["/lustre/storeB/users/heikok/Meteorology/ecdis2cwf/", "/lustre/storeA/users/heikok/Meteorology/ecdis2cwf/"];
+    ECINPUTDIRS = ["/lustre/storeA/project/metproduction/products/ecmwf/cwf_input/", "/lustre/storeB/project/metproduction/products/ecmwf/cwf_input/"];
     EC_FILE_PATTERN = "NRPA_EUROPE_0_1_{UTC:02d}/meteo{year:04d}{month:02d}{day:02d}_{dayoffset:02d}.nc"
 
     def __init__(self):
