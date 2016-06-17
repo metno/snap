@@ -1,6 +1,6 @@
 # remember to update version in setup.py, too
 # results appear under dist
-VERSION=0.8
+VERSION=0.8.1
 dch -v ${VERSION}-1 -U "initial upload"
 dch -r ''
 VERSION=$VERSION python3 setup.py sdist
