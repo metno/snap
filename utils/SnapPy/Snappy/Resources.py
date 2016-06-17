@@ -104,7 +104,7 @@ class Resources():
         else:
             start = dtime + timedelta(hours=-3)
 
-        if start >= tomorrow:
+        if start >= today:
             start -= timedelta(hours=72) # go 72 hours (forecast-length) back
 
         while (start < yesterday):
