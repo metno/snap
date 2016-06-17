@@ -1,4 +1,4 @@
-VERSION=1.1
+VERSION=1.2
 svn copy https://svn.met.no/snap/trunk \
      https://svn.met.no/snap/tags/$VERSION -m "Release $VERSION" || exit 1
 cd src
@@ -8,7 +8,7 @@ tar xvfz snap-${VERSION}.tgz
 mv snap-${VERSION}.tgz bsnap_${VERSION}.orig.tar.gz
 cd snap-${VERSION}
 cp -r ../debian .
-dch -v 1.1-1 "new release"
+dch -v ${VERSION}-1 "new release"
 dch -r ""
 debuild -us -uc -sa
 
