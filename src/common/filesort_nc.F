@@ -112,12 +112,12 @@ c still to be set
       end do
 
 c sorting time-steps, setting iavail 9, 10, kavail(1) and kavail(2)
-c drop double occurances of time, using latest
+c drop double occurances of time, using latest in input-list
       kavail(1) = 1
       kavail(2) = 1
       iavail(1)%pAvail = 0
       do i = 2, navail
-c       run back until time is > existing time
+c       run back until time is >= existing time
         j = kavail(2)
         do while (j > 0 .and. iavail(i)%oHour < iavail(j)%oHour)
           j = iavail(j)%pAvail
@@ -133,9 +133,15 @@ c         insert at beginning
           iavail(i)%pAvail = 0
         else
           if (iavail(i)%oHour == iavail(j)%oHour) then
-            if (.not. iavail(i)%timePos == 1) then
-c             avoid analysis time / first time-step if possible
-c replace position j with i
+c           replace position j with i (newer)
+            if (iavail(i)%timePos==1 .and. iavail(j)%timePos>1) then
+c  exception,  i is analysis time, j isn't so keep j
+c  ignore this timestep if possible, but give next and previous
+              iavail(i)%nAvail = iavail(j)%nAvail
+              iavail(i)%pAvail = j
+              if (i .eq. kavail(1)) kavail(1) = j
+              if (i .eq. kavail(2)) kavail(2) = j
+            else
               iavail(i)%nAvail = iavail(j)%nAvail
               iavail(i)%pAvail = iavail(j)%pAvail
 c             set next of previous if previous exists
@@ -143,12 +149,7 @@ c             set next of previous if previous exists
      &          iavail(iavail(j)%pAvail)%nAvail = i
 c             set previous of next if next exists
               if (iavail(j)%nAvail .ne. 0)
-     &         iavail(iavail(j)%pAvail)%nAvail = i
-            else
-c  ignore this timestep if possible, but give next and previous
-              iavail(i)%nAvail = iavail(j)%nAvail
-              iavail(i)%pAvail = j
-              iavail(j)%nAvail = i
+     &          iavail(iavail(j)%nAvail)%pAvail = i
             end if
           else
 c insert i as successor to j
@@ -180,6 +181,26 @@ c..adjust hours to hours since first available time
         iavail(i)%oHour = iavail(i)%oHour - zeroHour
       end do
 
+      if(idebug.eq.1) then
+        write(9,*)
+        write(9,*) 'FILESORT------------------------------------------'
+c..debug message of forward list
+        j = kavail(1)
+        do while (j > 0)
+          write(9,*) "file info forward",j,": ",iavail(j)%aYear,
+     +      iavail(j)%aMonth,
+     +      iavail(j)%aDay,iavail(j)%aHour,trim(filef(iavail(j)%fileNo))
+          j = iavail(j)%nAvail
+        end do
+
+        j = kavail(2)
+        do while (j > 0)
+          write(9,*) "file info backward",j,": ",iavail(j)%aYear,
+     +      iavail(j)%aMonth,
+     +      iavail(j)%aDay,iavail(j)%aHour,trim(filef(iavail(j)%fileNo))
+          j = iavail(j)%pAvail
+        end do
+      end if
 
 
 #if defined(DRHOOK)
