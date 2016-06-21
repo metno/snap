@@ -116,14 +116,13 @@ c drop double occurances of time, using latest in input-list
       kavail(1) = 1
       kavail(2) = 1
       iavail(1)%pAvail = 0
+      iavail(1)%nAvail = 0
       do i = 2, navail
 c       run back until time is >= existing time
         j = kavail(2)
         do while (j > 0 .and. iavail(i)%oHour < iavail(j)%oHour)
           j = iavail(j)%pAvail
         end do
-c        write(*,*) i, j, kavail(1), kavail(2)
-        if (j .eq. 0) kavail(1) = i
         if (j .eq. kavail(2)) kavail(2) = i
 
         if (j == 0) then
@@ -131,17 +130,20 @@ c         insert at beginning
           iavail(kavail(1))%pAvail = i
           iavail(i)%nAvail = kavail(1)
           iavail(i)%pAvail = 0
+          kavail(1) = i
         else
           if (iavail(i)%oHour == iavail(j)%oHour) then
 c           replace position j with i (newer)
             if (iavail(i)%timePos==1 .and. iavail(j)%timePos>1) then
-c  exception,  i is analysis time, j isn't so keep j
+c  exception,  i is analysis time, j isn't so: keep j
 c  ignore this timestep if possible, but give next and previous
               iavail(i)%nAvail = iavail(j)%nAvail
               iavail(i)%pAvail = j
-              if (i .eq. kavail(1)) kavail(1) = j
-              if (i .eq. kavail(2)) kavail(2) = j
+c             reset first and last elements to j
+              if (kavail(1) == i) kavail(1) = j
+              if (kavail(2) == i) kavail(2) = j
             else
+c            replace j with i
               iavail(i)%nAvail = iavail(j)%nAvail
               iavail(i)%pAvail = iavail(j)%pAvail
 c             set next of previous if previous exists
@@ -150,12 +152,18 @@ c             set next of previous if previous exists
 c             set previous of next if next exists
               if (iavail(j)%nAvail .ne. 0)
      &          iavail(iavail(j)%nAvail)%pAvail = i
+c             reset first and last elements to i
+              if (kavail(1) == j) kavail(1) = i
+              if (kavail(2) == j) kavail(2) = i
             end if
           else
 c insert i as successor to j
             iavail(i)%nAvail = iavail(j)%nAvail
-            iavail(i)%pAvail = j
             iavail(j)%nAvail = i
+            iavail(i)%pAvail = j
+            if (iavail(i)%nAvail .ne. 0)
+     &          iavail(iavail(i)%nAvail)%pAvail = i
+            if (kavail(2) == j) kavail(2) = i
           end if
         end if
       end do
@@ -193,6 +201,8 @@ c..debug message of forward list
           j = iavail(j)%nAvail
         end do
 
+        write(9,*)
+        write(9,*) 'FILESORT--backward--------------------------------'
         j = kavail(2)
         do while (j > 0)
           write(9,*) "file info backward",j,": ",iavail(j)%aYear,
