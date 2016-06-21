@@ -15,8 +15,8 @@ class Resources():
     '''
     #OUTPUTDIR = "/disk1/tmp"
     OUTPUTDIR = "/lustre/storeB/project/fou/kl/snap/runs"
-    #ECINPUTDIRS = ["/lustre/storeA/project/metproduction/products/ecmwf/cwf_input/", "/lustre/storeB/project/metproduction/products/ecmwf/cwf_input/"]
-    ECINPUTDIRS = ["/lustre/storeB/users/heikok/Meteorology/ecdis2cwf/"]
+    ECINPUTDIRS = ["/lustre/storeA/project/metproduction/products/ecmwf/cwf_input/", "/lustre/storeB/project/metproduction/products/ecmwf/cwf_input/"]
+    #ECINPUTDIRS = ["/lustre/storeB/users/heikok/Meteorology/ecdis2cwf/"]
     EC_FILE_PATTERN = "NRPA_EUROPE_0_1_{UTC:02d}/meteo{year:04d}{month:02d}{day:02d}_{dayoffset:02d}.nc"
 
     def __init__(self):
@@ -34,6 +34,11 @@ class Resources():
             nppStrings.append('<option value="{tag}">{site}</options>\n'.format(tag=tag, site=site['site']))
         self.startScreen = re.sub(r'%NPP_OPTIONS%',"".join(nppStrings),self.startScreen)
         self.startScreen = re.sub(r'%CURRENTTIME%',strftime("%Y-%m-%d %H:00", gmtime()),self.startScreen)
+
+        ecmodelruns=""
+        for run in self.getECRuns():
+            ecmodelruns += "<option value=\"{run}\">{run}</option>\n".format(run=run)
+        self.startScreen = re.sub(r'%ECMODELRUN%',ecmodelruns,self.startScreen)
 
     def getStartScreen(self):
         return self.startScreen
@@ -92,41 +97,69 @@ class Resources():
                 return filename
         return None
 
-    def getECMeteorologyFiles(self, dtime: datetime, run_hours: int):
-        relevant_dates = []
+    def getECRuns(self):
+        """Find ec-runs with at least 2 days of forecast"""
+        relevant = []
         today = datetime.combine(date.today(), time(0,0,0))
-        yesterday = today - timedelta(days=1)
-
+        start = today - timedelta(hours=72)
         tomorrow = today + timedelta(days=1)
-        # set start 3 hours before earliest date
-        if run_hours < 0:
-            start = dtime + timedelta(hours=(run_hours-3))
-        else:
-            start = dtime + timedelta(hours=-3)
+        while (start < tomorrow):
+            for utc in [0, 6, 12, 18]:
+                file = self.EC_FILE_PATTERN.format(dayoffset=2, UTC=utc, year=start.year, month=start.month, day=start.day)
+                filename = self._findFileInPathes(file, self.ECINPUTDIRS)
+                if filename is not None:
+                    relevant.append("{year:04d}-{month:02d}-{day:02d}_{UTC:02d}".format(UTC=utc, year=start.year, month=start.month, day=start.day))
+            start += timedelta(days=1)
+        return relevant
 
-        if start >= today:
+    def getECMeteorologyFiles(self, dtime: datetime, run_hours: int, fixed_run="best"):
+        """Get available meteorology files for the last few days around dtime and run_hours
+
+        Keyword arguments:
+        dtime -- start time of model run
+        run_hours -- run length in hours, possibly negative
+        fixed_run -- string of form YYYY-MM-DD_HH giving a specific model-run
+        """
+        relevant_dates = []
+
+        if (fixed_run == "best"):
+            if run_hours < 0:
+                start = dtime + timedelta(hours=run_hours)
+            else:
+                start = dtime
+
             start -= timedelta(hours=72) # go 72 hours (forecast-length) back
 
-        while (start < yesterday):
-            for utc in [0, 6, 12, 18]:
-                file = self.EC_FILE_PATTERN.format(dayoffset=0, UTC=utc, year=start.year, month=start.month, day=start.day)
-                filename = self._findFileInPathes(file, self.ECINPUTDIRS)
-                if filename is not None: relevant_dates.append(filename)
-            start += timedelta(days=1)
-
-        # today
-        while (start < tomorrow):
-            for offset in [0,1,2,3]:
-                for utc in [0, 6, 12, 18]:
-                    file = self.EC_FILE_PATTERN.format(dayoffset=offset, UTC=utc, year=start.year, month=start.month, day=start.day)
+            today = datetime.combine(date.today(), time(0,0,0))
+            tomorrow = today + timedelta(days=1)
+            days = []
+            while (start < tomorrow):
+                days.append(start)
+                start += timedelta(days=1)
+            # loop needs to have latest model runs/hindcast runs last
+            for offset in [3,2,1,0]:
+                for day in days:
+                    for utc in [0, 6, 12, 18]:
+                        file = self.EC_FILE_PATTERN.format(dayoffset=offset, UTC=utc, year=day.year, month=day.month, day=day.day)
+                        filename = self._findFileInPathes(file, self.ECINPUTDIRS)
+                        if filename is not None: relevant_dates.append(filename)
+        else:
+            match = re.match(r'(\d{4})-(\d{2})-(\d{2})_(\d{2})', fixed_run)
+            if (match):
+                (year,month,day,utc) = tuple(map(int, list(match.group(1,2,3,4))))
+                for offset in [0,1,2,3]:
+                    file = self.EC_FILE_PATTERN.format(dayoffset=offset, UTC=utc, year=year, month=month, day=day)
                     filename = self._findFileInPathes(file, self.ECINPUTDIRS)
                     if filename is not None: relevant_dates.append(filename)
-            start += timedelta(days=1)
+
         return relevant_dates
 
 
 
 if __name__ == "__main__":
     print(Resources().getStartScreen())
-    print(Resources().getECMeteorologyFiles(datetime.combine(date.today(),time(0)), 72))
+    print(Resources().getECMeteorologyFiles(datetime.combine(date.today(),time(0)), 48))
     print(Resources().getECMeteorologyFiles(datetime.combine(date.today(),time(0)), -72))
+    runs = Resources().getECRuns()
+    print(runs)
+    print(Resources().getECMeteorologyFiles(datetime.combine(date.today(),time(0)), 48, runs[1]))

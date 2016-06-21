@@ -202,7 +202,7 @@ RELEASE.BQ/SEC.COMP= {relCS137}, {relCS137}, 'Cs137'
         fh = open(os.path.join(self.lastOutputDir, "snap.input"),'w')
         fh.write(self.lastSourceTerm)
         if (qDict['metmodel'] == 'nrpa_ec_0p1'):
-            files = self.res.getECMeteorologyFiles(startDT, int(qDict['runTime']))
+            files = self.res.getECMeteorologyFiles(startDT, int(qDict['runTime']), qDict['ecmodelrun'])
             if (len(files) == 0):
                 self.write_log("no EC met-files found for {}, runtime {}".format(startDT, qDict['runTime']))
                 return
