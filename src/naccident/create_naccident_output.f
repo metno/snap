@@ -1,14 +1,14 @@
 c create_naccident_output.f
 c
 c Program out.f generates final output files from the accident run for the ARGOS system in NRPA.
-c The input files are: 
+c The input files are:
 c   nrpa.input - info about the run
 c   argos_dep - SNAP results with calculated deposition
 c   argos_conc - SNAP results with calculated time integrated concntration
 c   argos_ conc_inst - SNAP results with calculated instanteanous concntration
-c The program reads a list of isotopes with the identification numbers 
+c The program reads a list of isotopes with the identification numbers
 c from the file nrpa.input.
-c The output from the program is included in the following files: 
+c The output from the program is included in the following files:
 c   SNAP_depo - deposition results
 c   SNAP_conc - inst. concentration results
 c   SNAP_dose - time integrated concentration results
@@ -28,19 +28,26 @@ c
        integer niso        ! number of isotopes released
        integer isoid(nlist)    ! identification numbers for simulated isotopes
        integer i,j,k        ! indexes
-       real lon(imax,jmax)    ! longitude matrix
-       real lat(imax,jmax)    ! lattitude matrix
        integer ip,is        ! current period and isotope
        integer nperiod        ! number of periods
-       real dep(imax,jmax)    ! deposition matrix
-       real conc(imax,jmax)    ! concentration matrix
-       real dose(imax,jmax)    ! time integration matrix
-       character*10 period(30)    ! definition of 3-hour periods    
+       real, dimension(:,:), allocatable :: lon    ! longitude matrix
+       real, dimension(:,:), allocatable :: lat    ! lattitude matrix
+       real, dimension(:,:), allocatable :: dep    ! deposition matrix
+       real, dimension(:,:), allocatable :: conc   ! concentration matrix
+       real, dimension(:,:), allocatable :: dose   ! time integration matrix
+       character*10 period(30)    ! definition of 3-hour periods
 c
 c------------------------------------------------------------------------------------------------------------------
 c
 c... open output files: naccident_out.input, naccident_out_depo, naccident_out_conc, naccident_out_dose
 c
+
+       allocate(lon(imax,jmax))
+       allocate(lat(imax,jmax))
+       allocate(dep(imax,jmax))
+       allocate(conc(imax,jmax))
+       allocate(dose(imax,jmax))
+
        open(1,file='nrpa_input.txt')
        rewind 1
 c
@@ -115,7 +122,7 @@ c
        write(*,"(i3,30(1x,a10))") j,(period(i),i=1,nperiod)
        write(21,"(i3,30(1x,a10))") j,(period(i),i=1,nperiod)
        write(22,"(i3,30(1x,a10))") j,(period(i),i=1,nperiod)
-       write(23,"(i3,30(1x,a10))") j,(period(i),i=1,nperiod)        
+       write(23,"(i3,30(1x,a10))") j,(period(i),i=1,nperiod)
 c
        do i=6,10
          read(11,'(a70)') lname
@@ -238,7 +245,7 @@ c
          read(11,*) dep
          read(12,*) dose
          read(13,*) conc
-c     
+c
          do i=1,imax
          do j=1,jmax
            if(dep(i,j) .gt. 0.0) then
@@ -252,13 +259,13 @@ c          write(*,"(2i4,4x,e12.4)") i,j,dose(i,j)
            if(conc(i,j) .gt. 0.0) then
 c          write(*,"(2i4,8x,e12.4)") i,j,conc(i,j)
              write(23,"(2(i4,1h,),1pe14.6e2)") i,j,conc(i,j)
-           endif    
+           endif
          enddo
          enddo
-         write(*,*)      
+         write(*,*)
        enddo
-       enddo    
-c    
+       enddo
+c
        close (21)
        close (22)
        close (23)
