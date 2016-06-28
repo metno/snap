@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cdm_felt_config xmlns:xi="http://www.w3.org/2001/XInclude">
+<!-- optional processing options for felt-files -->
+<processOptions>
+    <!-- allowed deviation of gridParameter (6 values, see felt.doc) to still assumed to be the same grid, default: no deviation allowed -->
+    <!--  <option name="gridParameterDelta" value="0 0 0 0 0 0"/> -->
+</processOptions>
+<global_attributes>
+    <attribute name="Conventions" value="CF-1.4" type="string" />
+    <attribute name="institution" value="Norwegian Meteorological Institute, met.no" type="string" />
+    <attribute name="source" value="snap-default" type="string" />
+    <attribute name="title" value="SNAP - Severe Nuclear Accident Program" type="string" />
+    <attribute name="min_time" value="%MIN_DATETIME(%Y-%m-%d %H:%M:%SZ)%" type="string" />
+    <attribute name="max_time" value="%MAX_DATETIME(%Y-%m-%d)%" type="string" />
+</global_attributes>
+<xi:include href="felt_axes.xml" />
+<variables>
+<parameter id="17,2,1000" name="precipitation_amount" type="float">
+	<attribute name="_FillValue" value="9.9692099683868690e+36f" type="float" />
+	<attribute name="long_name" value="precipitation_amount" type="string" />
+	<attribute name="standard_name" value="precipitation_amount" type="string" />
+	<attribute name="units" value="kg/m2" type="string" />
+</parameter>
+<parameter id="58,2,1000" name="sea_level_pressure">
+    <attribute name="scale_factor" value="100." type="float" />
+    <attribute name="_FillValue" value="-32767" type="short" />
+    <attribute name="cell_methods" value="time: point" type="string" />
+    <attribute name="long_name" value="air_pressure_at_sea_level" type="string" />
+    <attribute name="standard_name" value="air_pressure_at_sea_level" type="string" />
+    <attribute name="units" value="Pa" type="string" />
+</parameter>
+<parameter id="901" name="geolat" type="float">
+    <attribute name="_FillValue" value="9.9692099683868690e+36f" type="float" />
+    <attribute name="long_name" value="latitude" type="string" />
+    <attribute name="standard_name" value="latitude" type="string" />
+    <attribute name="units" value="degrees_north" type="string" />
+</parameter>
+<parameter id="902" name="geolon" type="float">
+    <attribute name="_FillValue" value="9.9692099683868690e+36f" type="float" />
+    <attribute name="long_name" value="longitude" type="string" />
+    <attribute name="standard_name" value="longitude" type="string" />
+    <attribute name="units" value="degrees_east" type="string" />
+</parameter>
+<parameter id="903" name="cell_area" type="float">
+    <attribute name="_FillValue" value="9.9692099683868690e+36f" type="float" />
+    <attribute name="standard_name" value="cell_area" type="string" />
+    <attribute name="units" value="m2" type="string" />
+</parameter>
+<parameter id="500,0" name="hbl.instant" type="float">
+    <attribute name="_FillValue" value="9.9692099683868690e+36f" type="float" />
+    <attribute name="long_name" value="instant height of boundary layer" type="string" />
+    <attribute name="standard_name" value="atmosphere_boundary_layer_thickness" type="string" />
+    <attribute name="cell_methods" value="area: max" type="string" />
+    <attribute name="units" value="m" type="string" />
+</parameter>
+<parameter id="501,0" name="hbl.average" type="float">
+    <attribute name="_FillValue" value="9.9692099683868690e+36f" type="float" />
+    <attribute name="long_name" value="average height of boundary layer" type="string" />
+    <attribute name="standard_name" value="atmosphere_boundary_layer_thickness" type="string" />
+    <attribute name="cell_methods" value="area: mean" type="string" />
+    <attribute name="units" value="m" type="string" />
+</parameter>
+<parameter id="502,0" name="precip.snap" type="float">
+    <attribute name="_FillValue" value="9.9692099683868690e+36f" type="float" />
+    <attribute name="long_name" value="precipitation accummulated between field output" type="string" />
+    <attribute name="standard_name" value="precipitation_amount" type="string" />
+    <attribute name="units" value="kg/m2" type="string" />
+</parameter>
+<parameter id="510,0" name="conc.instant" type="float">
+    <attribute name="_FillValue" value="9.9692099683868690e+36f" type="float" />
+    <attribute name="long_name" value="instant concentration in boundary layer" type="string" />
+    <attribute name="units" value="Bq/m3" type="string" />
+</parameter>
+<parameter id="511,0" name="conc.average" type="float">
+    <attribute name="_FillValue" value="9.9692099683868690e+36f" type="float" />
+    <attribute name="long_name" value="average concentration in boundary layer" type="string" />
+    <attribute name="units" value="Bq/m3" type="string" />
+</parameter>
+<parameter id="518,0" name="conc.accum" type="float">
+    <attribute name="_FillValue" value="9.9692099683868690e+36f" type="float" />
+    <attribute name="long_name" value="accumulated concentration in boundary layer" type="string" />
+    <attribute name="units" value="Bq*hr/m3" type="string" />
+</parameter>
+<parameter id="512,0" name="dry.dep" type="float">
+    <attribute name="_FillValue" value="9.9692099683868690e+36f" type="float" />
+    <attribute name="long_name" value="dry deposition (for one time interval)" type="string" />
+    <attribute name="units" value="Bq/m2" type="string" />
+</parameter>
+<parameter id="513,0" name="wet.dep" type="float">
+    <attribute name="_FillValue" value="9.9692099683868690e+36f" type="float" />
+    <attribute name="long_name" value="wet deposition (for one time interval)" type="string" />
+    <attribute name="units" value="Bq/m2" type="string" />
+</parameter>
+<parameter id="514,0" name="accum.dry.dep" type="float">
+    <attribute name="_FillValue" value="9.9692099683868690e+36f" type="float" />
+    <attribute name="long_name" value="dry deposition (accumulated from start)" type="string" />
+    <attribute name="units" value="Bq/m2" type="string" />
+</parameter>
+<parameter id="515,0" name="accum.wet.dep" type="float">
+    <attribute name="_FillValue" value="9.9692099683868690e+36f" type="float" />
+    <attribute name="long_name" value="wet deposition (accumulated from start)" type="string" />
+    <attribute name="units" value="Bq/m2" type="string" />
+</parameter>
+<parameter id="516,0" name="mass.in.bl.instant" type="float">
+    <attribute name="_FillValue" value="9.9692099683868690e+36f" type="float" />
+    <attribute name="long_name" value="instant part of mass in the boundary layer" type="string" />
+    <attribute name="units" value="%" type="string" />
+</parameter>
+<parameter id="517,0" name="mass.in.bl.average" type="float">
+    <attribute name="_FillValue" value="9.9692099683868690e+36f" type="float" />
+    <attribute name="long_name" value="average part of mass in the boundary layer" type="string" />
+    <attribute name="units" value="%" type="string" />
+</parameter>
+<parameter id="521,0" name="bomb.dry.dep" type="float">
+    <attribute name="_FillValue" value="9.9692099683868690e+36f" type="float" />
+    <attribute name="long_name" value="bomb dry deposition" type="string" />
+    <attribute name="units" value="%" type="string" />
+</parameter>
+<parameter id="522,0" name="bomb.wet.dep" type="float">
+    <attribute name="_FillValue" value="9.9692099683868690e+36f" type="float" />
+    <attribute name="long_name" value="bomb wet deposition" type="string" />
+    <attribute name="units" value="%" type="string" />
+</parameter>
+<parameter id="523,0" name="bomb.accum.dry.dep" type="float">
+    <attribute name="_FillValue" value="9.9692099683868690e+36f" type="float" />
+    <attribute name="long_name" value="bomb accumulated dry deposition" type="string" />
+    <attribute name="units" value="%" type="string" />
+</parameter>
+<parameter id="524,0" name="bomb.accum.wet.dep" type="float">
+    <attribute name="_FillValue" value="9.9692099683868690e+36f" type="float" />
+    <attribute name="long_name" value="bomb accumulated wet deposition" type="string" />
+    <attribute name="units" value="%" type="string" />
+</parameter>
+<!--  519  :  instant     concentration in boundary layer (Bq/m3) -->
+</variables>
+</cdm_felt_config>

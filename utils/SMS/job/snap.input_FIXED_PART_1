@@ -1,0 +1,47 @@
+***********************************************************************
+*** snap.input  ('snap.input')
+***
+*** DNMI SNAP - Severe Nuclear Accident Program
+***
+*=> Run SNAP with HIRLAM fields input.
+*=>
+*=> Environment variables:
+*=>    none
+*=> Command format:
+*=>    snap snap.input \?     <---- to get this information
+*=>    snap snap.input
+***
+***********************************************************************
+**   $name = environment var.   #n = command line arg. n (n>1)
+**---------------------------------------------------------------
+**
+*
+* GRAPHICS.ON
+* GRAPHICS.OFF
+*
+GRAPHICS.PRECIP.OFF
+GRAPHICS.DRY.DEP.ON
+GRAPHICS.WET.DEP.ON
+GRAPHICS.TOTAL.DEP.OFF
+GRAPHICS.MSLP.OFF
+* GRAPHICS.COMPONENT= Aerosol
+GRAPHICS.COMPONENTS.TOTAL
+GRAPHICS.PARTICLES.KEEP.MASS
+* GRAPHICS.PARTICLES.KEEP.POSITIONS
+GRAPHICS.PARTICLES.IN.BOUNDARY.LAYER.ON
+GRAPHICS.PARTICLES.ABOVE.BOUNDARY.LAYER.ON
+* GRAPHICS.FREEZE.OFF
+* GRAPHICS.FREEZE.AT.START
+* GRAPHICS.FREEZE.AT.START.AND.END
+GRAPHICS.FREEZE.AT.END
+* GRAPHICS.FREEZE.AT.EVERY.TIMESTEP
+* GRAPHICS.FREEZE.AT.TIME.OF.FIELD.OUTPUT
+GRAPHICS.BACKGROUND.BLACK
+* GRAPHICS.BACKGROUND.WHITE
+GRAPHICS.AREA.PERCENT.X1.X2.Y1.Y2= 0.,100.,0.,100.
+GRAPHICS.SCREEN.PERCENT.X1.X2.Y1.Y2= 5.,95.,5.,95.
+GRAPHICS.LAND= /usr/local/gsetup/land4.dat
+GRAPHICS.LAND= /usr/local/gsetup/land5.dat
+*
+GRAPHICS.OFF
+VIDEO.SAVE.OFF
