@@ -1,0 +1,58 @@
+#! /usr/bin/python3
+import xml.etree.ElementTree as ET
+import os
+import datetime
+import re
+
+
+def parseIsoTimeDelta(period):
+    """parse string like P2DT12H5M to timedelta-objects"""
+    regex = re.compile(r'P((?P<days>\d+?)D)?T?((?P<hours>\d+?)H)?((?P<minutes>\d+?)M)?((?P<seconds>\d+?)S)?')
+    match = regex.match(period)
+    if not match:
+        return
+    time_params = {}
+    for (name, param) in match.groupdict().items():
+        if param:
+            time_params[name] = int(param)
+    return datetime.timedelta(**time_params)
+
+
+def rimsterm2input(rimxml):
+    sourceTermTemplate = """
+SET_RELEASE.POS= P=   {lat},   {lon}
+TIME.START= {startTime}
+TIME.RUN = {runTime}h
+"""
+    lat = rimxml.find("Header/Place/Location/[@Latitude]").attrib['Latitude']
+    lon = rimxml.find("Header/Place/Location/[@Longitude]").attrib['Longitude']
+    startTime = rimxml.find("TimeOfInitialRelease").text
+    startDTime = datetime.datetime.strptime(startTime, '%Y-%m-%dT%H:%M:%SZ')
+    snapStartTime="{year} {month} {day} {hour}".format(year=startDTime.year,month=startDTime.month,day=startDTime.day, hour=startDTime.hour)
+    runTime = "72"
+    sourceTerm = sourceTermTemplate.format(lat=lat,lon=lon,startTime=snapStartTime, runTime=runTime)
+
+    endtime = parseIsoTimeDelta(rimxml.find("Source/TimeDependent/ReleaseInterval/SourceTime/[@EndTime]").attrib['EndTime'])
+# TODO: continue implementation
+    return sourceTerm
+
+def snap4rimsterm(rimsterm, basedir):
+    '''run snap with rimsterm definition in basedir dir'''
+    tree = ET.parse(rimsterm)
+    root = tree.getroot()
+    assert root.tag == 'CBRN_Sourceterm', "Not a rimsterm input file: {}".format(rimsterm)
+
+    if (not os.path.isdir(basedir)):
+        os.makedirs(basedir)
+
+    snapInput = rimsterm2input(root)
+
+
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--rimsterm", help="source-term in rimsterm format")
+    parser.add_argument("--dir", help="output-directory")
+    args = parser.parse_args()
+    snap4rimsterm(args.rimsterm, args.dir)
