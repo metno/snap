@@ -22,7 +22,7 @@
 #
 #    SNAP = Severe Nuclear Accident Program
 #    NRPA = Norwegian Radiation Protection Authority
-#           (Statens Strålevern)
+#           (Statens Strï¿½levern)
 #
 #    NRPA is the customer.
 #
@@ -46,26 +46,26 @@
 #    nrpa.met.no and /opdata/snap/upload.  It should be something like
 #    this:
 #
-#        ssh sms@routine  
+#        ssh sms@routine
 #        ssh mitrans@nrpa
 #        ls /metno/nrpa/upload
-#        
+#
 #        Find the name of the failing request, it should be something
 #        like this:
-#        
+#
 #        Skogbrann1_ARGOS2SNAP.zip
 #        rm /metno/nrpa/upload/Skogbrann1_ARGOS2SNAP.zip
 #        logout
-#        
+#
 #        Still as sms-user:
 #        rm /opdata/snap/upload/Skogbrann1_ARGOS2SNAP.zip
 #
 #
-#    If unable to contact Jørgen contact the direct contact points at
-#    Statens Strålevern:  
+#    If unable to contact Jï¿½rgen contact the direct contact points at
+#    Statens Strï¿½levern:
 #       Jan Erik Dyve 67 16 26 48 (jan.erik.dyve@nrpa.no)
 #       Kasra Tazmini 67 16 26 97 (kasra.tazmini@nrpa.no)
-#    N.B. Main telephone nr. for Statens Strålevern is 67 16 25 00.
+#    N.B. Main telephone nr. for Statens Strï¿½levern is 67 16 25 00.
 #
 # BUGS:
 #    Yes.
@@ -96,13 +96,13 @@
 #    SMSDATA/snap/<ident>_hi_res_MLDP02ARGOS.zip (the 3 files above zipped)
 #
 # CHANGE LOG:
-#    2002-12-12::"Kjersti Røkenes" <kjerstir>: Initial version
-#    2002-12-17:"Anstein Foss" <ansteinf>:"Kjersti Røkenes" <kjerstir>:
+#    2002-12-12::"Kjersti Rï¿½kenes" <kjerstir>: Initial version
+#    2002-12-17:"Anstein Foss" <ansteinf>:"Kjersti Rï¿½kenes" <kjerstir>:
 #               Added script to start model. Still testing!
-#    2003-02-03::"Kjersti Røkenes" <kjerstir>: Use new version of
+#    2003-02-03::"Kjersti Rï¿½kenes" <kjerstir>: Use new version of
 #               read_argos.pl (with Getopt::Long)
 #    2003-02-26::"Anstein Foss" <ansteinf>: unzip input, zip output
-#    2003-03-19::"Kjersti Røkenes" <kjerstir>: Check if the inputfile(s)
+#    2003-03-19::"Kjersti Rï¿½kenes" <kjerstir>: Check if the inputfile(s)
 #               copied from remote host really exists at local host
 #    2003-04-01::"Anstein Foss" <ansteinf>: for NRPA testing, nrpa@nrpa -> atom@lightning
 #    2003-05-21::"Anstein Foss" <ansteinf>: more testing...
@@ -132,6 +132,7 @@
 #    2013-10-09::<heikok>: no longer required to modify Trajectory filenames
 #    2013-10-16::<siris>: a small old fix
 #    2013-10-18::<arildb>: Fixed format error in change log
+#    2016-06-27::<heikok>: moving put_statusfile and run_model to modules
 #
 ##########################################################################
 %end
@@ -149,8 +150,17 @@ use XML::LibXSLT;
 use Template;
 
 use English;
+
+use Snap qw(put_statusfile);
+use SnapHirlam12 qw();
+use SnapEC qw();
+
 use vars qw( $RSHVALUE $RSHERROR );
 
+my %smsdirs = ('data' => $datadir,
+               'work' => $workdir,
+               'etc' => $etcdir,
+               'job' => $jobdir);
 
 my $upload_dir = "$datadir" . "/" . "upload";
 my $done_dir   = "$datadir" . "/" . "done";
@@ -162,7 +172,7 @@ my (@input_files, @list_files, @list_names);
 my $remote_host_alias = 'nrpa.met.no';
 my $remote_user = 'nrpa';
 my $remote_hosts_and_users = [ { host => "$remote_host_alias",
-				 user => "$remote_user" } ];
+                 user => "$remote_user" } ];
 
 my $remote_home_directory = '/metno/nrpa';
 my $remote_ftp_upload     = '/metno/nrpa/upload';
@@ -223,7 +233,7 @@ if ( $#requests > -1 ) {
   }
   print SFTPINP ("quit\n");
   close(SFTPINP);
-  
+
   system("sftp -b $sftpinp $remote_user\@$remote_host_alias");
 }
 
@@ -239,10 +249,10 @@ chomp @tmprequests;
 @requests = grep /_ARGOS2.*/, @tmprequests;
 
 if ( $#requests < 0 ) {		# Nothing happens
-  
+
   print "\nThere was no new input files at $remote_host_alias",
     " so the SNAP-model won't be started.\n\n";
-  
+
 } else {			# The model will be started
 
   my $zip_file  = $requests[0];
@@ -262,30 +272,30 @@ if ( $#requests < 0 ) {		# Nothing happens
   unlink <*_MLDP0_dose>;
 
   copy("$upload_dir/$zip_file", "$zip_file");
-  
+
   push(@input_files, $zip_file);
-  
+
   system( "unzip -o $zip_file" ) == 0
     or die( "\nProblems with unzip -o $zip_file\n\n" );
 
   print "\nThe input files @input_files was copied from $remote_host_alias. The SNAP-model will be started.\n\n";
-  
+
   my $mail_msg = "SNAP starting run...\n";
 #  send_mail( $send_mail_to, $reply_to, $mail_msg );
-  
+
   # The model is started right  here!
-  my ( $error, @output_files ) = run_model( $remote_hosts_and_users, 
-					    $remote_ftp_download, 
-					    $run_ident, $model );
-  
-  archive_inputfiles( $remote_user, $remote_host_alias, 
-		      $remote_ftp_upload, $upload_dir, $done_dir, 
-		      @input_files );
+  my ( $error, @output_files ) = SnapHirlam12::run_model( \%smsdirs, $remote_hosts_and_users,
+                        $remote_ftp_download,
+                        $run_ident, $model );
+
+  archive_inputfiles( $remote_user, $remote_host_alias,
+              $remote_ftp_upload, $upload_dir, $done_dir,
+              @input_files );
 
   if ( $error ) {
 
-    put_statusfile( $remote_hosts_and_users, $remote_ftp_download, 
-		    $run_ident, $model, 409 );
+    put_statusfile( \%smsdirs, $remote_hosts_and_users, $remote_ftp_download,
+            $run_ident, $model, 409 );
 
     my $error_message = "Problems while running SNAP!\n";
     send_mail( $send_mail_to, $reply_to, $error_message );
@@ -294,376 +304,28 @@ if ( $#requests < 0 ) {		# Nothing happens
 
   } else {
 
-    put_resultfiles( $remote_hosts_and_users, $remote_ftp_download, 
-		     @output_files );
+    put_resultfiles( $remote_hosts_and_users, $remote_ftp_download,
+             @output_files );
 
-    put_statusfile( $remote_hosts_and_users, $remote_ftp_download, 
-		    $run_ident, $model, 202 );
+    put_statusfile( \%smsdirs, $remote_hosts_and_users, $remote_ftp_download,
+            $run_ident, $model, 202 );
 
     print "SNAP finished. Everything OK!\n";
   }
 }
 
-# Run the original model, using read_argos
-sub run_model_orig {
-    my ( $remote_hosts_and_users, $remote_ftp_dir, $run_ident ) = @_;
-
-    my $model_error = 0;
-
-    # Prepare input
-    my $arg1 = "--conffile $jobdir/Isodata_Radius_DryDepVel.DAT";
-    my $arg2 = "--staticindir $jobdir";
-    my $arg3 = "--dynamicindir $datadir";
-    my $arg4 = "--outputfile $datadir/snap.input";
-    my $arg5 = "--runident $run_ident";
-    my $res = system( "$jobdir/read_argos.pl $arg1 $arg2 $arg3 $arg4 $arg5" );
-    if ( $res > 0 ) {
-      put_statusfile( $remote_hosts_and_users, $remote_ftp_dir, $run_ident, 
-		      'MLDP0', $res );
-      die( "\nProblems with $jobdir/read_argos.pl\n\n" );
-    }
-
-    put_statusfile( $remote_hosts_and_users, $remote_ftp_dir, 
-		    $run_ident, 'MLDP0', 101 );
-
-    # Run the model
-    chdir( $datadir );
-    system( "bsnap snap.input" ) == 0
-      or do {
-	$model_error = 1;
-      };
-
-    my $resfile= $run_ident . "_hi_res_MLDP02ARGOS.zip";
-    my $file1=   $run_ident . "_MLDP0_depo";
-    my $file2=   $run_ident . "_MLDP0_conc";
-    my $file3=   $run_ident . "_MLDP0_dose";
-
-    if ( ! -s $file1 && ! -s $file2 && ! -s $file3) { $model_error = 2 };
-
-    my $zip = "zip";
-    if ( -x "zip" ) { $zip = "zip" };
-
-    system( "$zip -l $resfile $file1 $file2 $file3" );
-
-    if ( ! -s $resfile ) { $model_error = 3 };
-
-    unlink ($file1, $file2, $file3);
-
-    my @output_files = ( $resfile );
-
-    return ( $model_error, @output_files );
-
-}
-
-# Run the model and return filenames.  Gets as input which of the
-# three models to run.
-#
-# All three models are run by running bsnap_model snap.input.  We start with
-# creating a correct snap.input.
-sub run_model {
-    my ( $remote_hosts_and_users, $remote_ftp_dir, $run_ident, $model ) = @_;
-
-    my $mod_dir = $workdir;
-
-    my $model_error = 0;
-    my $return_file;
-    my $bsnap;
-    my $input_res;
-
-    # MLDPO is the original bsnap.. 
-    if ( $model eq q[MLDP0] ) {
-      return run_model_orig( $remote_hosts_and_users, $remote_ftp_dir, $run_ident );
-    }
-    elsif ( $model eq q[TRAJ]) {
-      # Do traj-stuff
-      $return_file = $run_ident . q[_TRAJ2ARGOS.zip];
-
-      $mod_dir = qq[$datadir/work_traj];
-      
-      # Create nrpa.input to create snap.input
-      my $inputfile = $run_ident . q[_TRAJ_input];
-      my $nrpa;
-      {
-	open my $if, $inputfile
-	  or die "Cannot read $inputfile: $!\n";
-	scalar <$if>; # skip run-name (use run-ident instead)
-	local $/ = undef;
-	$nrpa = $run_ident . "\n" . <$if>;
-	close $if;
-      }
-      open my $of, ">$mod_dir/nrpa.input"
-	or die "Cannot write $mod_dir/nrpa.input: $!\n";
-      print $of $nrpa;
-      close $of;
-
-      # read inputfile, fixed format
-      print qq[**** Reading $inputfile\n];
-      open my $ih,q[<], $inputfile or 
-	put_statusfile( $remote_hosts_and_users, $remote_ftp_dir, 
-			$run_ident, $model, 409 ) &&
-			  die qq[Can't read $inputfile, $!\n];
-      
-      # my %vars;
-      # extract_info(\%vars, $ih);
-
-      # # Make sure duration is specified:
-      # if ( !$vars{'duration'} ) {
-      # 	  $vars{'duration'} = q[48h];
-      # }
-
-      # if ( !$vars{'mode'} ) {
-      # 	  $vars{'mode'} = q[forward];
-      # }
-
-      # # Convert starttime from YYYYMMDDHH to YYYY MM DD HH
-      # print $vars{'starttime'};
-      # my ($year, $month, $day, $hour) 
-      # 	  = ( $vars{'starttime'} =~ m[(\d{4})(\d\d)(\d\d)(\d\d)] );
-
-      # $vars{'starttime'} = qq[$year $month $day $hour];
-
-      # my $ttfile    = qq[$etcdir/traj_input.tt];
-      # my $snapinput = qq[$mod_dir/snap.input];
-      # $input_res = create_tt_input( $snapinput, \%vars, $ttfile);
-      
-      chdir $mod_dir;
-      print qq[Running create_traj_input\n];
-      $input_res = system( q[create_traj_input] );
-      chdir $datadir;
-
-      $bsnap = qq[bsnap_traj];
-    }
-    elsif ( $model eq q[SNAP] ) {
-      # Do nuclear accident stuffstylesheet
-      $return_file = $run_ident . q[_hi_res_SNAP2ARGOS.zip];
-      
-      $mod_dir = qq[$datadir/work_naccident];
-
-      # Make sure directory exist before copying file:
-      if (!-d $mod_dir) {
-	mkdir $mod_dir || die qq[Can't mkdir to $mod_dir $!\n];
-      }
-      chdir $mod_dir or die qq[Can't chdir to $mod_dir, $!\n];
-
-      # Copy isotope file from etc:
-      copy( qq[$etcdir/isotope_list.txt], qq[$mod_dir/] );
-
-      # Define XML- and XSLfiles:
-      my $xmlfile = qq[$datadir/$run_ident] . q[_Rimsterm.xml];
-      my $xslfile = qq[$etcdir/rimsterm.xsl];
-      my $outfile = qq[$mod_dir/nrpa_input.txt];
-
-      # Create nrpa_input.txt from XML using XSL
-      print qq[Creating nrpa_input.txt from $xmlfile using $xslfile\n];
-      my $parser = XML::LibXML->new();
-      my $doc = $parser->parse_file( $xmlfile );
-
-      my $root = $doc->getDocumentElement;
-      my $xslt = XML::LibXSLT->new();
-      my $source = XML::LibXML->load_xml( location => $xmlfile );
-      my $xsl_doc = XML::LibXML->load_xml( location => $xslfile,
-					   no_cata => 1 );
-      
-      my $stylesheet = $xslt->parse_stylesheet($xsl_doc);
-      my $results = $stylesheet->transform($source);
-      
-      $stylesheet->output_file($results, $outfile);
-      print qq[Running create_naccident_input\n];
-      $input_res = system( q[create_naccident_input] );
-#      if (!$input_res == 0) {
-#	print qq[res: $!\n];
-#	$input_res=0;
-#      }
-
-      $bsnap = qq[bsnap_naccident];
-    }
-    elsif ( $model eq q[SNAP-BOMB]) {
-      # Do nuclear bomb stuff
-      $mod_dir = qq[$datadir/work_bomb];
-
-      $return_file = $run_ident . q[_SNAP-BOMB2ARGOS.zip];
-
-      my $inputfile = $run_ident . q[_SNAP-BOMB_input];
-
-      # read inputfile
-      open my $ih, q[<], $inputfile or 
-	put_statusfile( $remote_hosts_and_users, $remote_ftp_dir, 
-			$run_ident, $model, 409 ) &&
-			die qq[Can't read $inputfile, $!\n];
-
-      my %vars;
-      extract_info(\%vars, $ih);
-
-      # # Make sure duration is specified:
-      # if (!$vars{'duration'}) {
-      # 	  $vars{'duration'} = q[48h];
-      # }
-
-      # # Convert start- and endtime from YYYYMMDDHH to YYYY MM DD HH
-      # my ($year, $month, $day, $hour) 
-      # 	  = ( $vars{'starttime'} =~ m[(\d{4})(\d\d)(\d\d)(\d\d)] );
-      # $vars{'starttime'} = qq[$year $month $day $hour];
-      
-      # ($year, $month, $day, $hour) 
-      # 	  = ( $vars{'endtime'} =~ m[(\d{4})(\d\d)(\d\d)(\d\d)] );      
-      # $vars{'endtime'} = qq[$year $month $day $hour];
-
-#      my $ttfile    = qq[$etcdir/bomb_input.tt];
-#      my $snapinput = q[$mod_dir/snap.input];
-      # $input_res = create_tt_input( $snapinput, \%vars, $ttfile);
-      $input_res = system( q[create_bomb_input] );
-
-      $bsnap = qq[bsnap_nbomb];
-    }
-
-    if ( $input_res != 0 ) {
-      put_statusfile( $remote_hosts_and_users, $remote_ftp_dir, 
-		      $run_ident, $model, $input_res );
-      die( "\nProblems with creating snap.input, $input_res\n\n" );
-    }
-
-    put_statusfile( $remote_hosts_and_users, $remote_ftp_dir, 
-		    $run_ident, $model, 101 );
-
-    # Run the model
-    if (!-d $mod_dir) {
-      mkdir $mod_dir || die qq[Can't mkdir to $mod_dir $!\n];
-    }
-    chdir $mod_dir or die qq[Can't chdir to $mod_dir, $!\n];
-
-    print qq[Run $bsnap snap.inpu\n];
-    system( "$bsnap snap.input" ) == 0
-      or do {
-	$model_error = 1;
-      };
-
-    my @files;
-    
-    # when naccident is run, we need to do some postprocessing
-    if ( $model eq q[SNAP] ) {
-      system( "create_naccident_output" ) == 0
-	or do {
-	  $model_error = 1;
-	};
-      
-      # change file names to be $run_ident... :
-      my @old_files = qw(naccident_SNAP_conc 
-			 naccident_SNAP_dose 
-			 naccident_SNAP_depo);
-      foreach my $file (@old_files) {
-	my $new_name = $file;
-	$new_name =~ s!naccident!$run_ident!;
-	move($file, $new_name);
-      }
-
-      print qq[Add files $mod_dir/*_{conc,dose,depo} to $return_file:\n];
-      @files = glob( $run_ident . qq[*_{conc,dose,depo}] );
-    }
-    elsif ( $model eq q[TRAJ] ) {
-        @files = glob( qq[Trajectory*\.DAT] );
-    }
-
-    # zip the result file, move zip file to datadir and then change to
-    # datadir:
-    my @tmp =  map{ basename($_) . q[ ] } @files;
-
-    system( "zip -l $return_file @tmp" );
-
-    if ( ! -s $return_file ) { 
-      $model_error = 3;
-    }
-    else {
-      map { unlink $_ } @files;
-    }
-
-    # Move zip file to datadir and change:
-    my @output_files = ( $return_file );
-    rename($return_file, qq[$datadir/$return_file]) or print qq[Can't rename $!\n];
-    chdir $datadir;
-
-    return ( $model_error, @output_files );
-}
-
 # Create input file to snap using template toolkit:
 sub create_tt_input {
   my ($snapinput, $tmp, $ttfile) = @_;
-  
+
   print qq[Try to create $snapinput with $ttfile];
 
   my $template = Template->new( {ABSOLUTE => 1} );
-  $template->process($ttfile, $tmp, $snapinput) 
+  $template->process($ttfile, $tmp, $snapinput)
     or WARNING $template->error() && return 409;
-  
+
   return 0;
 }
-
-sub put_statusfile {
-
-    my ( $remote_hosts_and_users, $remote_ftp_dir, 
-	 $run_ident, $model, $status_number ) = @_;
-
-    print qq[Run put_statusfile, $run_ident, $model, $status_number\n];
-
-    # Create timestamp
-    my ( $min, $hour, $mday, $mon, $year ) = ( gmtime() )[1,2,3,4,5];
-    $year += 1900;
-    $mon += 1;
-    $min =~ s/^(\d)$/0$1/;
-    $hour =~ s/^(\d)$/0$1/;
-    $mday =~ s/^(\d)$/0$1/;
-    $mon =~ s/^(\d)$/0$1/;
-    my $timestamp = "$year" . "$mon" . "$mday" . "$hour" . "$min";
-    my $text= "Unknown message number";
-
-    if ( $status_number == 101 && $run_ident eq q[ARGOS] ) {
-      open (TFILE,"$datadir/snap.time") or ( die "OPEN ERROR: snap.time, $!");
-      while (<TFILE>) {
-	chomp;
-	my @parts= split(/\s+/);
-	if ( $#parts >= 4 ) {
-          $text = "$parts[0]" . "$parts[1]" . "$parts[2]" . "$parts[3]" . "$parts[4]" . ":Running DERMA";
-	}
-      }
-      close (TFILE);
-    }
-    elsif ($status_number == 101) {
-      $text = $timestamp . q[ running];
-    }
-
-    if ( $status_number == 100 ) { $text = ":Getting ARGOS data from server"; }
-    if ( $status_number == 200 ) { $text = ":Finished getting ARGOS-data from server"; }
-    if ( $status_number == 401 ) { $text = ":$run_ident" . "_${model}_input does not exist"; }
-    if ( $status_number == 402 ) { $text = ":$run_ident" . "_${model}_iso does not exist"; }
-    if ( $status_number == 403 ) { $text = ":$run_ident" . "_${model}_src does not exist"; }
-    if ( $status_number == 404 ) { $text = ":Inconsistent isotope identification (isotop-navn)"; }
-    if ( $status_number == 408 ) { $text = ":Initial time not covered by NWP database"; }
-    if ( $status_number == 201 ) { $text = ":Finished running ${model}"; }
-    if ( $status_number == 409 ) { $text = ":${model} output data do not exist"; }
-    if ( $status_number == 202 ) { $text = ":Finished extracting ${model} data for ARGOS"; }
-
-    my $message = "$status_number" . ":" . "$timestamp" . ":" . "$text";
-
-    print "\nSTATUS MESSAGE: $message\n\n";
-
-    my $statusfile = "$run_ident" . "_${model}_status";
-
-    open (STATUS,">$statusfile") or die "OPEN ERROR: $statusfile";
-    print STATUS ("$message\n");
-    close(STATUS);
-
-    my $sftpinp = "sftp.input";
-    open (SFTPINP,">$sftpinp") or die "OPEN ERROR: $sftpinp";
-    print SFTPINP ("cd $remote_ftp_dir\n");
-    print SFTPINP ("put $statusfile\nquit\n");
-    close(SFTPINP);
-
-    # Send result to remote host (both)
-    foreach my $dest ( @{$remote_hosts_and_users} ) {
-	system("sftp -b $sftpinp $dest->{user}\@$dest->{host}");
-    }
-
-}
-
 
 sub put_resultfiles {
 
@@ -680,7 +342,7 @@ sub put_resultfiles {
 
     # Send result to remote host (both)
     foreach my $dest ( @{$remote_hosts_and_users} ) {
-	system("sftp -b $sftpinp $dest->{user}\@$dest->{host}");
+    system("sftp -b $sftpinp $dest->{user}\@$dest->{host}");
     }
 
 }
@@ -714,12 +376,12 @@ sub archive_inputfiles {
 
     foreach my $input_file ( @input_files ) {
 
-	# Rename inputfiles at localhost,
-	# give a unique filename containing date
+    # Rename inputfiles at localhost,
+    # give a unique filename containing date
 
-	my $input_file_with_timestamp = $input_file . '_' . $timestring;
+    my $input_file_with_timestamp = $input_file . '_' . $timestring;
 
-	rename ("$upload_dir/$input_file", "$done_dir/$input_file_with_timestamp");
+    rename ("$upload_dir/$input_file", "$done_dir/$input_file_with_timestamp");
     }
 
 }
@@ -733,15 +395,15 @@ sub send_mail {
     my $mail_msg_file = "$datadir/mail_message";
 
     open( ERRORMAIL, ">$mail_msg_file" )
-		or die( "Failed to open $mail_msg_file: $!\n" );
+        or die( "Failed to open $mail_msg_file: $!\n" );
     print ERRORMAIL "$msg\n";
     close( ERRORMAIL ) or die( "Failed to close $mail_msg_file: $!\n" );
 
     foreach my $person ( @{$mail_list} ) {
 
-	print "Sending mail to $person\n";
-	system( "$sendwithmail_prog $person $reply_to $mail_msg_file @other_attachments" ) == 0
-	  or warn( "Failed to send mail to $person\n" );
+    print "Sending mail to $person\n";
+    system( "$sendwithmail_prog $person $reply_to $mail_msg_file @other_attachments" ) == 0
+      or warn( "Failed to send mail to $person\n" );
 
     }
 
@@ -755,31 +417,31 @@ sub send_mail {
 # extract value, might be leading whitespace!
 sub extract_info {
     my ($vars, $ih) = @_;
-    
+
     my @parcels;
     while (my $line = <$ih>) {
-	my ($value, $desc) = split m[\s\s+], $line;
-	$value = strip( $value );
-	$desc = lc(strip( $desc ));
-	
-	$desc = 'starttime' if ( $desc =~ m[start]i);
-	$desc = 'num_parcel' if ( $desc =~ m[number.*parcels]i);
-	$desc = 'latitude' if ( $desc =~ m[latitude]i );
-	$desc = 'longitude' if ( $desc =~ m[longitude]i );
-	
-	if ($desc =~ m[ parcel ]) {
-	    push @parcels, $value;
-	    next;
-	}
-	
-	$vars->{$desc} = $value;
-	
+    my ($value, $desc) = split m[\s\s+], $line;
+    $value = strip( $value );
+    $desc = lc(strip( $desc ));
+
+    $desc = 'starttime' if ( $desc =~ m[start]i);
+    $desc = 'num_parcel' if ( $desc =~ m[number.*parcels]i);
+    $desc = 'latitude' if ( $desc =~ m[latitude]i );
+    $desc = 'longitude' if ( $desc =~ m[longitude]i );
+
+    if ($desc =~ m[ parcel ]) {
+        push @parcels, $value;
+        next;
     }
-    
+
+    $vars->{$desc} = $value;
+
+    }
+
     if (scalar(@parcels) > 0) {
-	$vars->{'parcels'} = \@parcels;
+    $vars->{'parcels'} = \@parcels;
     }
-    
+
     return 1;
 }
 
@@ -788,7 +450,7 @@ sub strip {
 
     $a =~ s!\A\s*!!;
     $a =~ s!\s*\z!!;
-    
+
     return $a;
 }
 

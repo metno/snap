@@ -9,7 +9,7 @@ use lib "$Bin/../job/";
 
 
 BEGIN {
-    use_ok('SnapEC');
+    use_ok('SnapHirlam12');
 }
 
 
@@ -17,7 +17,8 @@ $ENV{PATH} = join(':', ("$Bin/../binprecise/", $ENV{PATH}));
 $Snap::DEBUG = 1;
 my %smsdirs = (data => "$Bin/data",
                work => "$Bin/work",
-               etc  => "$Bin/../etc/");
+               etc  => "$Bin/../etc/",
+               job  => "$Bin/../job/");
 
 my $remote_hosts_and_users = [ { host => "x",
                               user => "x" } ];
@@ -38,6 +39,6 @@ my $date = sprintf("%04d-%02d-%02d", $year, $mon, $mday);
     close $nfh;
 }
 
-my ($error, @files) = SnapEC::run_model(\%smsdirs, $remote_hosts_and_users, '',
+my ($error, @files) = SnapHirlam12::run_model(\%smsdirs, $remote_hosts_and_users, '',
             'Hartlepool-20162306-0924', 'SNAP');
-ok($error == 0, "running model: SNAP");
+ok($error == 0, "run_model, SNAP");
