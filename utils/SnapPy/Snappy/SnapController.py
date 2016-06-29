@@ -201,6 +201,8 @@ RELEASE.BQ/SEC.COMP= {relCS137}, {relCS137}, 'Cs137'
 
         fh = open(os.path.join(self.lastOutputDir, "snap.input"),'w')
         fh.write(self.lastSourceTerm)
+        # add Cs137, I131 and Xe133
+        fh.write(self.res.isotopes2snapinput([169, 158, 148]))
         if (qDict['metmodel'] == 'nrpa_ec_0p1'):
             files = self.res.getECMeteorologyFiles(startDT, int(qDict['runTime']), qDict['ecmodelrun'])
             if (len(files) == 0):

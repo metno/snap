@@ -6,6 +6,8 @@ Created on Apr 13, 2016
 
 import re
 import os
+import sys
+import math
 from time import gmtime, strftime
 from datetime import datetime, time, date, timedelta
 
@@ -46,6 +48,71 @@ class Resources():
     def getIconPath(self):
         return os.path.join(os.path.dirname(__file__),"resources/radioMapIcon.png")
 
+    def getIsotopes(self):
+        """ return a dictionary of isotope-ids mapping to a dictionary with isotope,type and decay"""
+        isotopes = dict()
+        with open(os.path.join(os.path.dirname(__file__),"resources/isotope_list.txt"),
+                        mode='r', encoding="UTF-8") as isoFH:
+            for line in isoFH:
+                if not line.strip() is  "":
+                    isoId = int(line[0:4])
+                    el = line[4:7].strip()
+                    iso = line[8:13].strip()
+                    isoType= int(line[13:14])
+                    decay=float(line[14:])
+                    isotopes[isoId] = {'isotope': "{0}{1}".format(el,iso), 'type': isoType, 'decay': decay}
+        return isotopes
+
+    def isotopes2snapinput(self, isotopeIds):
+        '''Read a list of isotopeIds and return a block to be used for a snap.input file, like
+COMPONENT= Cs137
+DRY.DEP.ON
+WET.DEP.ON
+RADIOACTIVE.DECAY.ON
+RADIUS.MICROMETER=0.55
+DENSITY.G/CM3=2.3
+HALF.LIFETIME.YEARS= 30
+GRAVITY.FIXED.M/S=0.00001
+FIELD.IDENTIFICATION=01
+'''
+        snapinputs = ["***List of components"]
+        isotopes = self.getIsotopes()
+        fieldId = 0
+        for isoId in isotopeIds:
+            fieldId += 1
+            iso = isotopes[isoId]
+            snapinput = "COMPONENT= {}\n".format(iso['isotope'])
+            snapinput += "RADIOACTIVE.DECAY.ON\n"
+            snapinput += "HALF.LIFETIME.DAYS= {:14.8E}\n".format(math.log(2.)/(iso['decay']*60.*60.*24.))
+            if (iso['type'] == 0):
+                # Noble gas
+                snapinput += """DRY.DEP.OFF
+WET.DEP.OFF
+GRAVITY.OFF
+"""
+            elif (iso['type'] == 1):
+                # Gas
+                snapinput += """DRY.DEP.ON
+WET.DEP.ON
+RADIUS.MICROMETER=0.05
+DENSITY.G/CM3=0.001
+GRAVITY.FIXED.M/S=0.00001
+"""
+            elif (iso['type'] == 2):
+                # Aerosol
+                snapinput += """DRY.DEP.ON
+WET.DEP.ON
+RADIUS.MICROMETER=0.55
+DENSITY.G/CM3=2.3
+GRAVITY.FIXED.M/S=0.0002
+"""
+            else:
+                raise Exception("Error, unknown type '{1}' for isotope '{2}'".format(iso['type'],iso['isotope']))
+            snapinput += "FIELD.IDENTIFICATION= {:02d}\n".format(fieldId)
+            snapinputs.append(snapinput)
+
+        return "\n".join(snapinputs)
+
     def readNPPs(self, bb={'west': -180., 'east': 180., 'north': 90., 'south': -90.}):
         nppsFile = open(os.path.join(os.path.dirname(__file__),"resources/npps.csv"),
                         mode='r', encoding="UTF-8")
@@ -67,7 +134,7 @@ class Resources():
         return npps
 
     def getSnapInputTemplate(self, metmodel=None):
-        """Read a snap input file without source-term parameters and eventually without meteorology files.
+        """Read a snap input file without source-term parameters, isotopes (isotopes2snapinput) and eventually without meteorology files.
 
         Keyword arguments:
         metmodel -- h12, hirlam12 including files (default), or nrpa_ec_0p1 without met-files
@@ -163,3 +230,4 @@ if __name__ == "__main__":
     runs = Resources().getECRuns()
     print(runs)
     print(Resources().getECMeteorologyFiles(datetime.combine(date.today(),time(0)), 48, runs[1]))
+    print(Resources().isotopes2snapinput([169, 158, 148]))
