@@ -1,0 +1,33 @@
+#! /usr/bin/env python
+
+import netCDF4
+import argparse
+import numpy
+
+parser = argparse.ArgumentParser()
+parser.add_argument("snapNc", help="snap.nc file to be changed")
+args = parser.parse_args()
+
+
+with netCDF4.Dataset(args.snapNc, "a") as nc:
+    times = netCDF4.num2date(nc.variables['time'][:],units=nc.variables['time'].units)
+    timeMax = int((times[-1] - times[0]).total_seconds() / (60*60))
+    timeDelta = int((times[1] - times[0]).total_seconds() / (60*60))
+    print(timeDelta, timeMax)
+    data = 0
+    exampleVar = ""
+    for v in nc.variables.keys():
+        if (v[-18:] == "_acc_concentration"):
+            exampleVar = v
+            data += nc.variables[v][:]
+    arrived = numpy.where(data >= 1)
+    flying = numpy.where(data < 1)
+    data[arrived] = 0
+    data[flying] = timeDelta # timeDelta hourly data
+    toa = numpy.sum(data, axis=0)
+    toa[numpy.where(toa > timeMax)] = -999
+
+    toaVar = nc.createVariable('total_toa', 'f', nc.variables[exampleVar].dimensions, zlib=True, fill_value=-999)
+    toaVar.units = 'hours'
+    toaVar.grid_mapping = nc.variables[exampleVar].grid_mapping
+    toaVar[0,:] = toa

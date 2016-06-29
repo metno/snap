@@ -1,4 +1,4 @@
-#! /usr/bin/python3
+#! /usr/bin/env python3
 import xml.etree.ElementTree as ET
 import os
 import datetime
@@ -117,6 +117,12 @@ def snap4rimsterm(rimsterm, basedir):
     proc = subprocess.Popen(['bsnap_naccident', 'snap.input'], cwd=basedir, stderr=errlog, stdout=outlog)
     if (proc.wait() != 0):
         raise Exception("bsnap_naccident in {} failed".format(basedir))
+
+    proc2 = subprocess.Popen(['snapAddToa', 'snap.nc'], cwd=basedir, stderr=errlog, stdout=outlog)
+    if (proc2.wait() != 0):
+        raise Exception("snapAddToa snap.nc in {} failed".format(basedir))
+
+
     errlog.close()
     outlog.close()
 

@@ -112,6 +112,12 @@ m=SNAP.current t=fimex format=netcdf f={}
             proc.setWorkingDirectory(os.path.join(prod_dir))
             proc.setStandardOutputFile(os.path.join(self.lastOutputDir,"snap.log.stdout"), QIODevice.Append)
             proc.setStandardErrorFile(os.path.join(self.lastOutputDir,"snap.log.stderr"), QIODevice.Append)
+
+            # add toa
+            proc.start("snapAddToa", ['snap.nc'])
+            proc.waitForFinished(-1)
+
+            # plots
             proc.start("bdiana{}".format(diVersion), ['-i', self.res.getBSnapInputFile(), '-s', 'diana.setup', 'p={}'.format(self.lastQDict['region'])])
             proc.waitForFinished(-1)
             with open(os.path.join(self.lastOutputDir,"snap.log.stdout"), 'a') as lfh:
