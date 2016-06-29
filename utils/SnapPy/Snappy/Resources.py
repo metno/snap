@@ -64,15 +64,15 @@ class Resources():
         return isotopes
 
     def isotopes2snapinput(self, isotopeIds):
-        '''Read a list of isotopeIds and return a block to be used for a snap.input file, like
+        '''Read a list of isotopeIds and return a text-block to be used for a snap.input file, like
 COMPONENT= Cs137
+RADIOACTIVE.DECAY.ON
+HALF.LIFETIME.YEARS= 30
 DRY.DEP.ON
 WET.DEP.ON
-RADIOACTIVE.DECAY.ON
 RADIUS.MICROMETER=0.55
 DENSITY.G/CM3=2.3
-HALF.LIFETIME.YEARS= 30
-GRAVITY.FIXED.M/S=0.00001
+GRAVITY.FIXED.M/S=0.0002
 FIELD.IDENTIFICATION=01
 '''
         snapinputs = ["***List of components"]
@@ -112,6 +112,8 @@ GRAVITY.FIXED.M/S=0.0002
             snapinputs.append(snapinput)
 
         return "\n".join(snapinputs)
+
+
 
     def readNPPs(self, bb={'west': -180., 'east': 180., 'north': 90., 'south': -90.}):
         nppsFile = open(os.path.join(os.path.dirname(__file__),"resources/npps.csv"),

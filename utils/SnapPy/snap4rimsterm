@@ -3,6 +3,8 @@ import xml.etree.ElementTree as ET
 import os
 import datetime
 import re
+import subprocess
+from Snappy.Resources import Resources
 
 
 def parseIsoTimeDelta(period):
@@ -19,11 +21,14 @@ def parseIsoTimeDelta(period):
 
 
 def rimsterm2input(rimxml):
+    """create a full snap.input sourceterm from a rimsterm.xml file using the ec-nrpa meteo"""
+
     sourceTermTemplate = """
 SET_RELEASE.POS= P=   {lat},   {lon}
 TIME.START= {startTime}
 TIME.RUN = {runTime}h
 """
+    res = Resources()
     lat = rimxml.find("Header/Place/Location/[@Latitude]").attrib['Latitude']
     lon = rimxml.find("Header/Place/Location/[@Longitude]").attrib['Longitude']
     startTime = rimxml.find("TimeOfInitialRelease").text
@@ -32,8 +37,66 @@ TIME.RUN = {runTime}h
     runTime = "72"
     sourceTerm = sourceTermTemplate.format(lat=lat,lon=lon,startTime=snapStartTime, runTime=runTime)
 
-    endtime = parseIsoTimeDelta(rimxml.find("Source/TimeDependent/ReleaseInterval/SourceTime/[@EndTime]").attrib['EndTime'])
-# TODO: continue implementation
+    isos = res.getIsotopes()
+    isoItems = {}
+    for itemXML in rimxml.findall("ItemsTot/Item"):
+        isoItems[itemXML.attrib['ItemName']] = int(itemXML.attrib['ItemNum'])
+    releases = []
+    for relXML in rimxml.findall("Source/TimeDependent/ReleaseInterval"):
+        endtime = parseIsoTimeDelta(relXML.find("SourceTime/[@EndTime]").attrib['EndTime'])
+        posXML = relXML.find("SourcePosition")
+        lHeight = posXML.attrib['HeightAboveGround']
+        uHeight = posXML.attrib['HeightAboveGroundMax']
+        if uHeight < lHeight:
+            uHeight = lHeight
+        isoBqs = {}
+        for isoName in isoItems.keys():
+            xpath = 'SourceStrength[@ItemName="{}"]'.format(isoName)
+            relValXML = relXML.find(xpath)
+            if relValXML:
+                isoBqs[isoName] = float(relValXML.find('BinStrength').attrib['Value'])
+            else:
+                isoBqs[isoName] = 0
+        releases.append({'endtime': endtime, 'lower': lHeight, 'upper': uHeight, 'isoBqs': isoBqs})
+
+    timevals = ["0"]
+    radiusvals = []
+    lowervals = []
+    uppervals = []
+    for rel in releases:
+        timevals.append("{:.2f}".format(rel['endtime'].total_seconds()/(60*60)))
+        radiusvals.append("50")
+        lowervals.append(rel['lower'])
+        uppervals.append(rel['upper'])
+    radiusvals.append("0")
+    lowervals.append("0")
+    uppervals.append("0")
+    releaseTerm = "RELEASE.HOUR= {}\n".format(", ".join(timevals))
+    releaseTerm += "RELEASE.RADIUS.M= {}\n".format(", ".join(radiusvals))
+    releaseTerm += "RELEASE.LOWER.M= {}\n".format(", ".join(lowervals))
+    releaseTerm += "RELEASE.UPPER.M= {}\n".format(', '.join(uppervals))
+    for isoName, isoId in isoItems.items():
+        vals = []
+        for rel in releases:
+            vals.append("{:10.3E}".format(rel['isoBqs'][isoName]))
+        vals.append("0")
+        vals.append("'{}'".format(isos[isoId]['isotope']))
+        releaseTerm += "RELEASE.BQ/SEC.COMP= {}\n".format(','.join(vals))
+
+    sourceTerm += releaseTerm + "\n"
+
+    sourceTerm += res.isotopes2snapinput(isoItems.values())
+
+    meteoTerm = "\n"
+    files = res.getECMeteorologyFiles(startDTime, int(runTime))
+    if (len(files) == 0):
+        raise Exception("no EC met-files found for {}, runtime {}".format(startDTime, runTime))
+    for f in files:
+        meteoTerm += "FIELD.INPUT={}\n".format(f)
+
+    sourceTerm += meteoTerm
+    sourceTerm += res.getSnapInputTemplate('nrpa_ec_0p1')
+
     return sourceTerm
 
 def snap4rimsterm(rimsterm, basedir):
@@ -46,6 +109,16 @@ def snap4rimsterm(rimsterm, basedir):
         os.makedirs(basedir)
 
     snapInput = rimsterm2input(root)
+    with open(os.path.join(basedir, "snap.input"), "w") as fh:
+        fh.write(snapInput)
+
+    errlog = open(os.path.join(basedir, "snap.errlog"), "w")
+    outlog = open(os.path.join(basedir, "snap.outlog"), "w")
+    proc = subprocess.Popen(['bsnap_naccident', 'snap.input'], cwd=basedir, stderr=errlog, stdout=outlog)
+    if (proc.wait() != 0):
+        raise Exception("bsnap_naccident in {} failed".format(basedir))
+    errlog.close()
+    outlog.close()
 
 
 
