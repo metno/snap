@@ -13,7 +13,6 @@ with netCDF4.Dataset(args.snapNc, "a") as nc:
     times = netCDF4.num2date(nc.variables['time'][:],units=nc.variables['time'].units)
     timeMax = int((times[-1] - times[0]).total_seconds() / (60*60))
     timeDelta = int((times[1] - times[0]).total_seconds() / (60*60))
-    print(timeDelta, timeMax)
     data = 0
     exampleVar = ""
     for v in nc.variables.keys():
