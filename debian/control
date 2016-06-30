@@ -7,6 +7,6 @@ Build-Depends: debhelper (>= 9), netcdf-fortran-4.2-metno-dev, gfortran, libmi-d
 
 Package: bsnap
 Architecture: amd64
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, python-netcdf4-metno
 Description: Severe Nuclear Accident Programme
  Dispersion model specialized for nuclear accidents.
