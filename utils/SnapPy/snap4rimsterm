@@ -19,6 +19,12 @@ def parseIsoTimeDelta(period):
             time_params[name] = int(param)
     return datetime.timedelta(**time_params)
 
+def rimstermGetIsotopes(rimxml):
+    """return dictionary of isotopeNames (used by rimsterm) and isotopeIds"""
+    isoItems = {}
+    for itemXML in rimxml.findall("ItemsTot/Item"):
+        isoItems[itemXML.attrib['ItemName']] = int(itemXML.attrib['ItemNum'])
+    return isoItems
 
 def rimsterm2input(rimxml):
     """create a full snap.input sourceterm from a rimsterm.xml file using the ec-nrpa meteo"""
@@ -37,10 +43,8 @@ TIME.RUN = {runTime}h
     runTime = "72"
     sourceTerm = sourceTermTemplate.format(lat=lat,lon=lon,startTime=snapStartTime, runTime=runTime)
 
+    isoItems = rimstermGetIsotopes(rimxml)
     isos = res.getIsotopes()
-    isoItems = {}
-    for itemXML in rimxml.findall("ItemsTot/Item"):
-        isoItems[itemXML.attrib['ItemName']] = int(itemXML.attrib['ItemNum'])
     releases = []
     for relXML in rimxml.findall("Source/TimeDependent/ReleaseInterval"):
         endtime = parseIsoTimeDelta(relXML.find("SourceTime/[@EndTime]").attrib['EndTime'])
@@ -99,7 +103,29 @@ TIME.RUN = {runTime}h
 
     return sourceTerm
 
-def snap4rimsterm(rimsterm, basedir):
+def convert_to_grib(snapNc, basedir, ident, isotopes):
+    config = Resources().getGribWriterConfig(isotopes)
+    xmlFile = os.path.join(basedir, "cdmGribWriterCongfig.xml")
+    with open(xmlFile, 'w') as xh:
+        xh.write(config['xml'])
+    errlog = open(os.path.join(basedir, "fimex.errlog"), "w")
+    outlog = open(os.path.join(basedir, "fimex.outlog"), "w")
+    for appendix, params in config['extracts'].items():
+        outFile = os.path.join(basedir, "{ident}_{type}".format(ident=ident, type=appendix))
+        procOptions = ['fimex', '--input.file=snap.nc', '--input.config={}'.format(config['ncml']),
+                       '--output.file={}'.format(outFile),
+                       '--output.type=grib', '--output.config={}'.format(xmlFile)]
+        for param in params:
+            procOptions.append('--extract.selectVariables={}'.format(param))
+        print(" ".join(procOptions))
+        proc = subprocess.Popen(procOptions, cwd=basedir, stderr=errlog, stdout=outlog)
+        if (proc.wait() != 0):
+            raise Exception("'{fimex}' in {dir} failed".format(fimex=' '.join(procOptions), dir=basedir))
+    errlog.close()
+    outlog.close()
+
+
+def snap4rimsterm(rimsterm, basedir, ident):
     '''run snap with rimsterm definition in basedir dir'''
     tree = ET.parse(rimsterm)
     root = tree.getroot()
@@ -112,12 +138,14 @@ def snap4rimsterm(rimsterm, basedir):
     with open(os.path.join(basedir, "snap.input"), "w") as fh:
         fh.write(snapInput)
 
-    errlog = open(os.path.join(basedir, "snap.errlog"), "w")
-    outlog = open(os.path.join(basedir, "snap.outlog"), "w")
-    proc = subprocess.Popen(['bsnap_naccident', 'snap.input'], cwd=basedir, stderr=errlog, stdout=outlog)
-    if (proc.wait() != 0):
-        raise Exception("bsnap_naccident in {} failed".format(basedir))
+    errlog = open(os.path.join(basedir, "snap.errlog"), "a")
+    outlog = open(os.path.join(basedir, "snap.outlog"), "a")
+    print("bsnap_naccident snap.input")
+#     proc = subprocess.Popen(['bsnap_naccident', 'snap.input'], cwd=basedir, stderr=errlog, stdout=outlog)
+#     if (proc.wait() != 0):
+#         raise Exception("bsnap_naccident in {} failed".format(basedir))
 
+    print("snapAddToa snap.nc")
     proc2 = subprocess.Popen(['snapAddToa', 'snap.nc'], cwd=basedir, stderr=errlog, stdout=outlog)
     if (proc2.wait() != 0):
         raise Exception("snapAddToa snap.nc in {} failed".format(basedir))
@@ -126,6 +154,8 @@ def snap4rimsterm(rimsterm, basedir):
     errlog.close()
     outlog.close()
 
+    convert_to_grib(os.path.join(basedir,"snap.nc"), basedir, ident, rimstermGetIsotopes(root).values())
+
 
 
 if __name__ == "__main__":
@@ -133,5 +163,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--rimsterm", help="source-term in rimsterm format")
     parser.add_argument("--dir", help="output-directory")
+    parser.add_argument("--ident", help="output-file identifier")
     args = parser.parse_args()
-    snap4rimsterm(args.rimsterm, args.dir)
+    snap4rimsterm(args.rimsterm, args.dir, args.ident)

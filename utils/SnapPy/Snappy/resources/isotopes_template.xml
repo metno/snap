@@ -1,0 +1,28 @@
+<!-- surface-concentrations should end in _conc files -->
+<parameter name="{ISOTOPE}_concentration">
+    <grib1 parameterNumber="200" codeTable="133" units="Bq/m3">
+        <!-- see isotope_list.txt file -->
+        <attribute name="isotopeIdentificationNumber" type="long" value="{ID}" />
+    </grib1>
+</parameter>
+<!-- dose/time-integrated concentration, should end in files named _dose -->
+<parameter name="{ISOTOPE}_acc_concentration">
+    <grib1 parameterNumber="202" codeTable="133" units="Bq*h/m3">
+        <!-- see isotope_list.txt file -->
+        <attribute name="isotopeIdentificationNumber" type="long" value="{ID}" />
+    </grib1>
+</parameter>
+<!-- total deposition (tdep), should be in files ending with _depo -->
+<parameter name="{ISOTOPE}_acc_total_deposition">
+    <grib1 parameterNumber="201" codeTable="133" units="Bq/m2">
+        <!-- see isotope_list.txt file -->
+        <attribute name="isotopeIdentificationNumber" type="long" value="{ID}" />
+    </grib1>
+</parameter>
+<!-- wet deposition (wdep), should be in files ending with _wdep -->
+<parameter name="{ISOTOPE}_acc_wet_deposition">
+    <grib1 parameterNumber="205" codeTable="133" units="Bq/m2">
+        <!-- see isotope_list.txt file -->
+        <attribute name="isotopeIdentificationNumber" type="long" value="{ID}" />
+    </grib1>
+</parameter>

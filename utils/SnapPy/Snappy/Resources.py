@@ -113,6 +113,36 @@ GRAVITY.FIXED.M/S=0.0002
 
         return "\n".join(snapinputs)
 
+    def getGribWriterConfig(self, isotopes):
+        '''Return a dictionary with a xml: xmlconfiguration string and a exracts: output-type and variable-names'''
+        allIsos = self.getIsotopes()
+        extracts = {'tofa': ['time_of_arrival'],
+                    'prec': ['precipitation_amount_acc'],
+                    'wdep': [],
+                    'depo': [],
+                    'dose': [],
+                    'conc': []
+                    }
+
+        with open(os.path.join(os.path.dirname(__file__),"resources/isotopes_template.xml"),) as isoTemplate:
+            isoTemp = isoTemplate.read()
+
+        isoStr = ""
+        for isoId in isotopes:
+            isoName = allIsos[isoId]['isotope']
+            isoStr += isoTemp.format(ISOTOPE=isoName, ID=isoId)
+            extracts['conc'].append("{}_concentration".format(isoName))
+            extracts['dose'].append("{}_acc_concentration".format(isoName))
+            if allIsos[isoId]['type'] > 0:
+                extracts['depo'].append("{}_acc_total_deposition".format(isoName))
+                extracts['wdep'].append("{}_acc_wet_deposition".format(isoName))
+
+        with open(os.path.join(os.path.dirname(__file__),"resources/cdmGribWriterIsotopesTemplate.xml"),) as xmlTemplate:
+            xmlTemp = xmlTemplate.read()
+
+        xmlOut = xmlTemp.format(ISOTOPES=isoStr, GRIB_TEMPLATE_PATH=os.path.join(os.path.dirname(__file__),"resources/template_conc_Am-241.ID_328.grib"))
+
+        return {'extracts': extracts, 'xml': xmlOut, 'ncml': os.path.join(os.path.dirname(__file__),"resources/removeSnapReferenceTime.ncml")}
 
 
     def readNPPs(self, bb={'west': -180., 'east': 180., 'north': 90., 'south': -90.}):

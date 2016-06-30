@@ -10,6 +10,8 @@ args = parser.parse_args()
 
 
 with netCDF4.Dataset(args.snapNc, "a") as nc:
+    if ('time_of_arrival' in nc.variables):
+        exit(0)
     times = netCDF4.num2date(nc.variables['time'][:],units=nc.variables['time'].units)
     timeMax = int((times[-1] - times[0]).total_seconds() / (60*60))
     timeDelta = int((times[1] - times[0]).total_seconds() / (60*60))
