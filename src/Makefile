@@ -25,7 +25,6 @@ install:
 		cd $$i && $(MAKE) install; \
 		cd ..; \
 	done
-	cp ../utils/snapAddToa $(BINDIR)
 
 naccident_install:
 	for i in naccident; do \

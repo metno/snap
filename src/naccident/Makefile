@@ -23,6 +23,7 @@ clean: clean_links
 
 install: bsnap_naccident create_naccident_input create_naccident_output
 	install $^ $(BINDIR)/
+	cp ../../utils/snapAddToa $(BINDIR)/
 
 
 create_naccident_input.o: create_naccident_input.f
