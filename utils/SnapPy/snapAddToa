@@ -26,7 +26,18 @@ with netCDF4.Dataset(args.snapNc, "a") as nc:
     toa = numpy.sum(data, axis=0)
     toa[numpy.where(toa > timeMax)] = -999
 
-    toaVar = nc.createVariable('total_toa', 'f', nc.variables[exampleVar].dimensions, zlib=True, fill_value=-999)
+    toaVar = nc.createVariable('time_of_arrival', 'f', nc.variables[exampleVar].dimensions, zlib=True, fill_value=-999)
     toaVar.units = 'hours'
     toaVar.grid_mapping = nc.variables[exampleVar].grid_mapping
     toaVar[0,:] = toa
+
+    # add also total depositions
+    for v in nc.variables.keys():
+        if (v[-19:] == "_acc_wet_deposition"):
+            comp = v[:-19]
+            print(comp)
+            total = nc.variables[v][:] + nc.variables["{}_acc_dry_deposition".format(comp)][:]
+            totalVar = nc.createVariable('{}_acc_total_deposition'.format(comp), 'f', nc.variables[v].dimensions, zlib=True)
+            totalVar.units = nc.variables[v].units
+            totalVar.grid_mapping =  nc.variables[v].grid_mapping
+            totalVar[:] = total
