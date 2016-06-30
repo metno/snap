@@ -18,7 +18,7 @@
 <ReleaseInterval>
 <SourceTime EndTime="P2DT12H"/>
 <SourceStrength ItemName="Cs-137" Unit="Bq/s">
-<BinStrength BinId="1" Value="1"/></SourceStrength>
+<BinStrength BinId="1" Value="1e+11"/></SourceStrength>
 <SourcePosition Longitude="-1.18083" Latitude="54.6344" HeightAboveGround="100" HeightAboveGroundMax="0" Datum="WGS84"/>
 <SourcePuffSigmaYZ Unit="m" SigmaY="1" SigmaZ="1"/>
 <SourceHeat Unit="W" Value="0"/></ReleaseInterval></TimeDependent></Source></CBRN_Sourceterm>
