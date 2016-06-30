@@ -82,10 +82,21 @@ class SnapController:
     def _snap_finished(self):
         debug("finished")
         self.snapRunning = "finished"
+        self.results_add_toa()
         self.plot_results()
         with open(os.path.join(self.lastOutputDir,"snap.log.stdout"), "a") as logFile:
             logFile.write("All work finished. Please open diana to see results.\nResults in {}\n".format(self.lastOutputDir))
         self.update_log()
+
+    def results_add_toa(self):
+        proc = QProcess()
+        proc.setWorkingDirectory(self.lastOutputDir)
+        proc.setStandardOutputFile(os.path.join(self.lastOutputDir,"snap.log.stdout"), QIODevice.Append)
+        proc.setStandardErrorFile(os.path.join(self.lastOutputDir,"snap.log.stderr"), QIODevice.Append)
+
+        proc.start("snapAddToa", ['snap.nc'])
+        proc.waitForFinished(-1)
+
 
     def plot_results(self):
         match = re.search(r'(\d*\.\d+)', self.lastQDict['dianaversion'])
@@ -112,10 +123,6 @@ m=SNAP.current t=fimex format=netcdf f={}
             proc.setWorkingDirectory(os.path.join(prod_dir))
             proc.setStandardOutputFile(os.path.join(self.lastOutputDir,"snap.log.stdout"), QIODevice.Append)
             proc.setStandardErrorFile(os.path.join(self.lastOutputDir,"snap.log.stderr"), QIODevice.Append)
-
-            # add toa
-            proc.start("snapAddToa", ['snap.nc'])
-            proc.waitForFinished(-1)
 
             # plots
             proc.start("bdiana{}".format(diVersion), ['-i', self.res.getBSnapInputFile(), '-s', 'diana.setup', 'p={}'.format(self.lastQDict['region'])])
