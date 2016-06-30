@@ -14,6 +14,6 @@ setup(name='Snappy',
       packages=['Snappy'],
       package_dir={'Snappy': 'Snappy'},
       package_data={'Snappy': ['resources/*']},
-      scripts=['snapPy', 'snapAddToa', 'snap4rimsterm'],
+      scripts=['snapPy', 'snap4rimsterm'],
 )
 
