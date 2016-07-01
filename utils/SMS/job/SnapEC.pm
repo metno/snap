@@ -18,6 +18,9 @@ sub run_model {
     my ($smsdirs, $remote_hosts_and_users, $remote_ftp_dir, $run_ident, $model) = @_;
 
     my $mod_dir = $smsdirs->{work};
+    my $PPIdir = $remote_hosts_and_users->[0]{PPIdir} or die "run_model needs PPIdir";
+    my $PPIhost = $remote_hosts_and_users->[0]{PPIhost} or die "run_model needs PPIhost";
+    my $PPIuser = $remote_hosts_and_users->[0]{PPIuser} or die "run_model needs PPIuser";
 
     my $model_error = 0;
     my $return_file;
@@ -75,68 +78,54 @@ sub run_model {
         }
         chdir $mod_dir or die qq[Can't chdir to $mod_dir, $!\n];
 
-        # Copy isotope file from etc:
-        copy($smsdirs->{etc}.q[/isotope_list.txt], qq[$mod_dir/]);
-
-        # Define XML- and XSLfiles:
+        # Define XML file
         my $xmlfile = $smsdirs->{data}.qq[/$run_ident] . q[_Rimsterm.xml];
-        my $xslfile = $smsdirs->{etc}.q[/rimsterm.xsl];
-        if (! -f $xslfile) {
-            die "Missing xsl-file in etc: $xslfile\n";
+        # Create qsub script
+        my $qsubScript = "nrpa\_bsnap.sh";
+        open(my $qsub, "> $qsubScript") or die "Cannot write '$qsubScript': $!\n";
+        print $qsub <<"EOF";
+#!/bin/bash
+#\$ -N nrpa_bsnap
+#\$ -S /bin/bash
+#\$ -j n
+#\$ -r y
+#\$ -l h_rt=0:40:00
+#\$ -l h_vmem=5G
+#\$ -m bea
+#\$ -pe mpi 1
+#\$ -q operational.q
+#\$ -sync yes
+#\$ -o /home/sms/sge/OU\$JOB_NAME.\$JOB_ID
+#\$ -e /home/sms/sge/ER\$JOB_NAME.\$JOB_ID
+
+module load SnapPy/1.0.0
+
+export OMP_NUM_THREADS=1
+
+cd $remote_hosts_and_users->[0]{PPIdir}
+snap4rimsterm --rimsterm $xmlfile --dir . --ident naccident_SNAP
+
+EOF
+        close $qsub;
+
+        print qq[Moving input to PPI\n];
+        my $scp_command = q[[scp $qsubScript $xmlfile $PPIuser\@$PPIhost:$PPIdir]];
+
+        if (system($scp_command) != 0) {
+            print STDERR "error on command: '$scp_command'";
+            $input_res++;
         }
-        my $outfile = qq[$mod_dir/nrpa_input.txt];
 
-        # Create nrpa_input.txt from XML using XSL
-        print qq[Creating nrpa_input.txt from $xmlfile using $xslfile\n];
-        my $parser = XML::LibXML->new();
-        my $doc    = $parser->parse_file($xmlfile);
-
-        my $root    = $doc->getDocumentElement;
-        my $xslt    = XML::LibXSLT->new();
-        my $source  = XML::LibXML->load_xml(location => $xmlfile);
-        my $xsl_doc = XML::LibXML->load_xml(
-            location => $xslfile,
-            no_cata  => 1
-        );
-
-        my $stylesheet = $xslt->parse_stylesheet($xsl_doc);
-        my $results    = $stylesheet->transform($source);
-
-        $stylesheet->output_file($results, $outfile);
-        print qq[Running create_naccident_input\n];
-        $input_res = system(q[create_naccident_input]);
-
-        #      if (!$input_res == 0) {
-        #	print qq[res: $!\n];
-        #	$input_res=0;
-        #      }
-
-        $bsnap = qq[bsnap_naccident];
+        $bsnap = qq[qsub $PPIdir/$qsubScript];
     } elsif ($model eq q[SNAP-BOMB]) {
 
-        # Do nuclear bomb stuff
-        $mod_dir = $smsdirs->{data}.q[/work_bomb];
+        die "BOMB not working with EC-data";
 
-        $return_file = $run_ident . q[_SNAP-BOMB2ARGOS.zip];
-
-        my $inputfile = $run_ident . q[_SNAP-BOMB_input];
-
-        # read inputfile
-        open my $ih, q[<], $inputfile
-            or put_statusfile($smsdirs, $remote_hosts_and_users, $remote_ftp_dir, $run_ident, $model, 409)
-            && die qq[Can't read $inputfile, $!\n];
-
-        my %vars;
-        extract_info(\%vars, $ih);
-
-        $input_res = system(q[create_bomb_input]);
-
-        $bsnap = qq[bsnap_nbomb];
     }
 
     if ($input_res != 0) {
         put_statusfile($smsdirs, $remote_hosts_and_users, $remote_ftp_dir, $run_ident, $model, $input_res);
-        die("\nProblems with creating snap.input, $input_res\n\n");
+        die("\nProblems with creating input, $input_res\n\n");
     }
 
     put_statusfile($smsdirs, $remote_hosts_and_users, $remote_ftp_dir, $run_ident, $model, 101);
@@ -147,8 +136,8 @@ sub run_model {
     }
     chdir $mod_dir or die qq[Can't chdir to $mod_dir, $!\n];
 
-    print qq[Run $bsnap snap.input\n];
-    system("$bsnap snap.input") == 0
+    print qq[Run on PPI: '$bsnap'\n];
+    system_ppi("$bsnap") == 0
         or do {
         $model_error = 1;
         };
@@ -157,23 +146,25 @@ sub run_model {
 
     # when naccident is run, we need to do some postprocessing
     if ($model eq q[SNAP]) {
-        system("create_naccident_output") == 0
-            or do {
-            $model_error = 2;
-            };
-
         # change file names to be $run_ident... :
-        my @old_files = qw(naccident_SNAP_conc
+        my @old_files = qw(
+            naccident_SNAP_conc
             naccident_SNAP_dose
-            naccident_SNAP_depo);
+            naccident_SNAP_depo
+            naccident_SNAP_wdep
+            naccident_SNAP_prec
+            );
+        my $scp_command = "scp $PPIuser@$PPIhost:$PPIdir/naccident_SNAP_* .";
+        print qq[Running '$scp_command'\n];
+        system($scp_command);
         foreach my $file (@old_files) {
             my $new_name = $file;
             $new_name =~ s!naccident!$run_ident!;
             move($file, $new_name);
         }
 
-        print qq[Add files $mod_dir/*_{conc,dose,depo} to $return_file:\n];
-        @files = glob($run_ident . qq[*_{conc,dose,depo}]);
+        print qq[Add files $mod_dir/*_{conc,dose,depo,prec,wdep} to $return_file:\n];
+        @files = glob($run_ident . qq[*_{conc,dose,depo,prec,wdep}]);
     } elsif ($model eq q[TRAJ]) {
         @files = glob(qq[Trajectory*\.DAT]);
     }
