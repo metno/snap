@@ -22,7 +22,7 @@
 #
 #    SNAP = Severe Nuclear Accident Program
 #    NRPA = Norwegian Radiation Protection Authority
-#           (Statens Str�levern)
+#           (Statens Straalevern)
 #
 #    NRPA is the customer.
 #
@@ -61,11 +61,11 @@
 #        rm /opdata/snap/upload/Skogbrann1_ARGOS2SNAP.zip
 #
 #
-#    If unable to contact J�rgen contact the direct contact points at
-#    Statens Str�levern:
+#    If unable to contact Heiko contact the direct contact points at
+#    Statens Straalevern:
 #       Jan Erik Dyve 67 16 26 48 (jan.erik.dyve@nrpa.no)
 #       Kasra Tazmini 67 16 26 97 (kasra.tazmini@nrpa.no)
-#    N.B. Main telephone nr. for Statens Str�levern is 67 16 25 00.
+#    N.B. Main telephone nr. for Statens Straalevern is 67 16 25 00.
 #
 # BUGS:
 #    Yes.
@@ -96,13 +96,13 @@
 #    SMSDATA/snap/<ident>_hi_res_MLDP02ARGOS.zip (the 3 files above zipped)
 #
 # CHANGE LOG:
-#    2002-12-12::"Kjersti R�kenes" <kjerstir>: Initial version
-#    2002-12-17:"Anstein Foss" <ansteinf>:"Kjersti R�kenes" <kjerstir>:
+#    2002-12-12::"Kjersti Roekenes" <kjerstir>: Initial version
+#    2002-12-17:"Anstein Foss" <ansteinf>:"Kjersti Roekenes" <kjerstir>:
 #               Added script to start model. Still testing!
-#    2003-02-03::"Kjersti R�kenes" <kjerstir>: Use new version of
+#    2003-02-03::"Kjersti Roekenes" <kjerstir>: Use new version of
 #               read_argos.pl (with Getopt::Long)
 #    2003-02-26::"Anstein Foss" <ansteinf>: unzip input, zip output
-#    2003-03-19::"Kjersti R�kenes" <kjerstir>: Check if the inputfile(s)
+#    2003-03-19::"Kjersti Roekenes" <kjerstir>: Check if the inputfile(s)
 #               copied from remote host really exists at local host
 #    2003-04-01::"Anstein Foss" <ansteinf>: for NRPA testing, nrpa@nrpa -> atom@lightning
 #    2003-05-21::"Anstein Foss" <ansteinf>: more testing...
