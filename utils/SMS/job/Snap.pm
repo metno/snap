@@ -16,6 +16,8 @@ $DEBUG = 0;
     'all' => [
         qw(
             put_statusfile
+            system_ppi
+            create_ppi_dir
             )
     ]
 );
@@ -88,8 +90,34 @@ sub put_statusfile {
             system("@command");
         }
     }
-
 }
+
+sub system_ppi {
+    my ($remote_hosts_and_users, $command) = @_;
+    my $ppiuser = $remote_hosts_and_users->[0]{'PPIuser'};
+    my $ppihost = $remote_hosts_and_users->[0]{'PPIhost'};
+    my $dircommand = $command;
+    if (defined $remote_hosts_and_users->[0]{'PPIdir'}) {
+        $dircommand = 'cd ' . $remote_hosts_and_users->[0]{'PPIdir'} . ' && ' . $command;
+    }
+    print STDERR $dircommand, "\n" if $DEBUG;
+
+    return system("ssh -l $ppiuser $ppihost '$dircommand'");
+}
+
+sub create_ppi_dir {
+    my ($remote_hosts_and_users, $dirs) = @_;
+
+    my $dir = undef;
+    for my $d (@$dirs) {
+        if (system_ppi($remote_hosts_and_users, "mkdir -p $d") == 0) {
+            $dir = $d;
+            last;
+        }
+    }
+    return $dir;
+}
+
 
 1;
 __END__
@@ -101,31 +129,31 @@ Snap - general functionality to run snap
 =head1 SYNOPSIS
 
   use Snap qw(put_statusfile);
-  
-  
-  put_statusfile( \%smsdirs, $remote_hosts_and_users, $remote_ftp_dir, 
-			$run_ident, $model, 409 )
-			
+
+
+  put_statusfile( \%smsdirs, $remote_hosts_and_users, $remote_ftp_dir,
+            $run_ident, $model, 409 )
+
 =head1 DESCRIPTION
 
-The snap modules provides a few methods to work with snap model output via ssh/ftp. 
+The snap modules provides a few methods to work with snap model output via ssh/ftp.
 Set $Snap::DEBUG = 1 to avoid remote access, e.g. for testing.
 
 
-=head2 put_statusfile(\%smsdirs, $remote_hosts_and_users, $remote_ftp_dir, 
-			$run_ident, $model, $status )
-			
+=head2 put_statusfile(\%smsdirs, $remote_hosts_and_users, $remote_ftp_dir,
+            $run_ident, $model, $status )
+
 Write a status back to the sftp.
 
 =over 4
 
 =item \%smsdirs  directories used by sms, usually $smsdirs->{data}, {etc}, {work}
 
-=item $remote_hosts_and_users 
+=item $remote_hosts_and_users
 
    [ { host => "$remote_host_alias",
-	   user => "$remote_user" } ]
-	   
+       user => "$remote_user" } ]
+
 =item $remote_ftp_dir a directory
 
 =item $run_ident  the basename for the run
@@ -160,7 +188,35 @@ Write a status back to the sftp.
 
 =back
 
+=head2 system_ppi( $remote_hosts_and_users, $command )
 
+Execute the command throw ssh on ppi, and return the system-return value.
+
+=over 4
+
+=item $remote_hosts_and_users This must contain the following fields
+
+   [ { PPIhost => "$remote_host_alias",
+       PPIuser => "$remote_user",
+       PPIdir  => "$remote_working_directory"  # optional, defaults to remote home
+      } ]
+
+
+
+=back
+
+=head2 create_ppi_dir( $remote_hosts_and_users, ['/lustre/storeA/dir', '/lustre/storeB/dir'] )
+
+Create on of the directories from a list. Return directory-name of the one created.
+
+=over 4
+
+=item $remote_hosts_and_users This must contain the following fields, but not! PPIdir
+
+   [ { PPIhost => "$remote_host_alias",
+       PPIuser => "$remote_user" } ]
+
+=back
 
 =head1 AUTHOR
 

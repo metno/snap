@@ -151,7 +151,7 @@ use Template;
 
 use English;
 
-use Snap qw(put_statusfile);
+use Snap qw(put_statusfile create_ppi_dir);
 use SnapHirlam12 qw();
 use SnapEC qw();
 
@@ -172,7 +172,10 @@ my (@input_files, @list_files, @list_names);
 my $remote_host_alias = 'nrpa.met.no';
 my $remote_user = 'nrpa';
 my $remote_hosts_and_users = [ { host => "$remote_host_alias",
-                 user => "$remote_user" } ];
+                 user => "$remote_user",
+                 PPIuser => "heikok",
+                 PPIbasedirs => [qw(/lustre/storeB/project/fou/kl/snap/nrpa_runs
+                                    /lustre/storeA/project/fou/kl/snap/nrpa_runs)] } ];
 
 my $remote_home_directory = '/metno/nrpa';
 my $remote_ftp_upload     = '/metno/nrpa/upload';
@@ -284,10 +287,24 @@ if ( $#requests < 0 ) {		# Nothing happens
 #  send_mail( $send_mail_to, $reply_to, $mail_msg );
 
   # The model is started right  here!
-  my ( $error, @output_files ) = SnapHirlam12::run_model( \%smsdirs, $remote_hosts_and_users,
+  my ( $error, @output_files );
+  if (substr($run_ident,0,4) eq "EC01") {
+      # run the ec-model on the PPI machines
+      $ppiHost = GET_PPI_LOGIN_HOST($remote_hosts_and_users->[0]{'PPIuser'}) or die "cannot GET_PPI_LOGIN_HOST() with user ".$remote_hosts_and_users->[0]{'PPIuser'}."\n";
+      $remote_hosts_and_users[0]{PPIhost} = $ppiHost;
+      my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = gmtime(time);
+      $year+=1900; $mon++;
+      my $dateStr = sprintf("%04d-%02d-%02T%02%02%02", $year, $mon, $mday, $hour, $min, $sec);
+      $ppiDir = create_ppi_dir($remote_hosts_and_users, [map {$_ . '/' . $dateStr} @{ $remote_hosts_and_users{'PPIbasedirs'} } ]);
+      $remote_hosts_and_users[0]{PPIdir} = $ppiDir;
+      ( $error, @output_files ) = SnapEC::run_model( \%smsdirs, $remote_hosts_and_users,
                         $remote_ftp_download,
                         $run_ident, $model );
-
+  } else {
+    ( $error, @output_files ) = SnapHirlam12::run_model( \%smsdirs, $remote_hosts_and_users,
+                        $remote_ftp_download,
+                        $run_ident, $model );
+  }
   archive_inputfiles( $remote_user, $remote_host_alias,
               $remote_ftp_upload, $upload_dir, $done_dir,
               @input_files );
