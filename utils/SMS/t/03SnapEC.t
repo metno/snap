@@ -1,6 +1,6 @@
 #! /usr/bin/perl -w
 
-use Test::More tests => 2;
+use Test::More tests => 4;
 use strict;
 use warnings;
 use FindBin qw( $Bin );
@@ -20,7 +20,12 @@ my %smsdirs = (data => "$Bin/data",
                etc  => "$Bin/../etc/");
 
 my $remote_hosts_and_users = [ { host => "x",
-                              user => "x" } ];
+                              user => "x",
+                              PPIuser => 'heikok',
+                              PPIhost => 'vis-m2',
+                               } ];
+my $PPIdir = Snap::create_ppi_dir($remote_hosts_and_users, ['/lustre/storeB/project/fou/kl/snap/nrpa_runs/test'.$$]);
+$remote_hosts_and_users->[0]{PPIdir} = $PPIdir;
 
 my (undef,undef,undef,$mday, $mon, $year) = gmtime(time);
 $mon++;$year += 1900;
@@ -38,6 +43,24 @@ my $date = sprintf("%04d-%02d-%02d", $year, $mon, $mday);
     close $nfh;
 }
 
-my ($error, @files) = SnapEC::run_model(\%smsdirs, $remote_hosts_and_users, '',
+
+SKIP: {
+    skip "cannot create PPI directory", 2 unless $PPIdir;
+
+    my ($error, @files) = SnapEC::run_model(\%smsdirs, $remote_hosts_and_users, '',
             'Hartlepool-20162306-0924', 'SNAP');
-ok($error == 0, "running model: SNAP");
+    ok($error == 0, "running model: SNAP");
+
+    ok(-f "$Bin/data/Hartlepool-20162306-0924_hi_res_SNAP2ARGOS.zip", "SNAP2ARGOS file created");
+    unlink "$Bin/data/Hartlepool-20162306-0924_hi_res_SNAP2ARGOS.zip";
+    # cleanup
+    #ok(Snap::system_ppi($remote_hosts_and_users, "rm -r $PPIdir") == 0, "cleanup");
+};
+
+eval {
+    delete $remote_hosts_and_users->[0]{PPIuser};
+    my ($error, @files) = SnapEC::run_model(\%smsdirs, $remote_hosts_and_users, '',
+            'Hartlepool-20162306-0924', 'SNAP');
+};
+ok($@, "run_model dies on missing PPI variables");
+

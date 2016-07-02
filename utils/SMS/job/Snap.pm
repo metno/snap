@@ -94,8 +94,8 @@ sub put_statusfile {
 
 sub system_ppi {
     my ($remote_hosts_and_users, $command) = @_;
-    my $ppiuser = $remote_hosts_and_users->[0]{'PPIuser'};
-    my $ppihost = $remote_hosts_and_users->[0]{'PPIhost'};
+    my $ppiuser = $remote_hosts_and_users->[0]{'PPIuser'} or die "missing PPIuser\n";
+    my $ppihost = $remote_hosts_and_users->[0]{'PPIhost'} or die "missing PPIhost\n";;
     my $dircommand = $command;
     if (defined $remote_hosts_and_users->[0]{'PPIdir'}) {
         $dircommand = 'cd ' . $remote_hosts_and_users->[0]{'PPIdir'} . ' && ' . $command;
