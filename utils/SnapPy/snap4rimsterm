@@ -141,9 +141,9 @@ def snap4rimsterm(rimsterm, basedir, ident):
     errlog = open(os.path.join(basedir, "snap.errlog"), "a")
     outlog = open(os.path.join(basedir, "snap.outlog"), "a")
     print("bsnap_naccident snap.input")
-#     proc = subprocess.Popen(['bsnap_naccident', 'snap.input'], cwd=basedir, stderr=errlog, stdout=outlog)
-#     if (proc.wait() != 0):
-#         raise Exception("bsnap_naccident in {} failed".format(basedir))
+    proc = subprocess.Popen(['bsnap_naccident', 'snap.input'], cwd=basedir, stderr=errlog, stdout=outlog)
+    if (proc.wait() != 0):
+        raise Exception("bsnap_naccident in {} failed".format(basedir))
 
     print("snapAddToa snap.nc")
     proc2 = subprocess.Popen(['snapAddToa', 'snap.nc'], cwd=basedir, stderr=errlog, stdout=outlog)
