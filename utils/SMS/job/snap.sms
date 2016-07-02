@@ -259,7 +259,7 @@ if ( $#requests < 0 ) {		# Nothing happens
 } else {			# The model will be started
 
   my $zip_file  = $requests[0];
-  my ($run_ident, $model) = ($zip_file =~ m[(.*)_ARGOS2(.*)\.zip]);
+  my ($run_ident, $model) = ($zip_file =~ m[([\w-\.:]*)_ARGOS2(.*)\.zip]);
 
   print("   zip_file=  $zip_file\n");
   print("   run_ident= $run_ident\n");
