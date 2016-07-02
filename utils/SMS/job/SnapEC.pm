@@ -29,37 +29,56 @@ sub run_model {
 
         # Do traj-stuff
         $return_file = $run_ident . q[_TRAJ2ARGOS.zip];
+        $return_files_ascii = 1;
 
         $mod_dir = $smsdirs->{data}.'/work_traj';
-
-        # Create nrpa.input to create snap.input
-        my $inputfile = $run_ident . q[_TRAJ_input];
-        my $nrpa;
-        {
-            open my $if, $inputfile
-                or die "Cannot read $inputfile: $!\n";
-            scalar <$if>;    # skip run-name (use run-ident instead)
-            local $/ = undef;
-            $nrpa = $run_ident . "\n" . <$if>;
-            close $if;
+        # Make sure directory exist before copying file:
+        if (!-d $mod_dir) {
+            mkdir $mod_dir || die qq[Can't mkdir to $mod_dir $!\n];
         }
-        open my $of, ">$mod_dir/nrpa.input"
-            or die "Cannot write $mod_dir/nrpa.input: $!\n";
-        print $of $nrpa;
-        close $of;
 
-        # read inputfile, fixed format
-        print qq[**** Reading $inputfile\n];
-        open my $ih, q[<], $inputfile
-            or put_statusfile($smsdirs, $remote_hosts_and_users, $remote_ftp_dir, $run_ident, $model, 409)
-            && die qq[Can't read $inputfile, $!\n];
+        # Trajectory input file from nrpa
+        my $trajIn = $run_ident . q[_TRAJ_input];
+        my $inputfile = $smsdirs->{data}. q[/]. $trajIn;
 
-        chdir $mod_dir;
-        print qq[Running create_traj_input\n];
-        $input_res = system(q[create_traj_input]);
-        chdir $smsdirs->{data};
+        my $qsubScript = "nrpa_bsnap_traj.sh";
+        open(my $qsub, "> $qsubScript") or die "Cannot write '$qsubScript': $!\n";
+        print $qsub <<"EOF";
+#!/bin/bash
+#\$ -N nrpa_bsnap_traj
+#\$ -S /bin/bash
+#\$ -j n
+#\$ -r y
+#\$ -l h_rt=0:10:00
+#\$ -l h_vmem=8G
+#\$ -m bea
+#\$ -pe mpi 1
+#\$ -q operational.q
+#\$ -sync yes
+#\$ -o $remote_hosts_and_users->[0]{PPIdir}/OU\$JOB_NAME.\$JOB_ID
+#\$ -e $remote_hosts_and_users->[0]{PPIdir}/ER\$JOB_NAME.\$JOB_ID
 
-        $bsnap = qq[bsnap_traj];
+module load SnapPy/1.0.0
+
+ulimit -c 0
+export OMP_NUM_THREADS=1
+
+cd $remote_hosts_and_users->[0]{PPIdir}
+snap4rimsterm --trajInput $trajIn --dir . --ident $run_ident
+
+EOF
+        close $qsub;
+
+        print qq[Moving input to PPI\n];
+        my $scp_command = qq[scp $qsubScript $inputfile $PPIuser\@$PPIhost:$PPIdir];
+
+        if (system($scp_command) != 0) {
+            print STDERR "error on command: '$scp_command'";
+            $input_res++;
+        }
+
+        $bsnap = qq[qsub $PPIdir/$qsubScript];
+
     } elsif ($model eq q[SNAP]) {
 
         # Do nuclear accident stuffstylesheet
@@ -87,7 +106,7 @@ sub run_model {
 #\$ -j n
 #\$ -r y
 #\$ -l h_rt=0:40:00
-#\$ -l h_vmem=5G
+#\$ -l h_vmem=8G
 #\$ -m bea
 #\$ -pe mpi 1
 #\$ -q operational.q
@@ -97,6 +116,7 @@ sub run_model {
 
 module load SnapPy/1.0.0
 
+ulimit -c 0
 export OMP_NUM_THREADS=1
 
 cd $remote_hosts_and_users->[0]{PPIdir}
@@ -163,6 +183,9 @@ EOF
         print qq[Add files $mod_dir/*_{conc,dose,depo,prec,wdep} to $return_file:\n];
         @files = glob($run_ident . qq[*_{conc,dose,depo,prec,wdep}]);
     } elsif ($model eq q[TRAJ]) {
+        my $scp_command = "scp $PPIuser\@$PPIhost:$PPIdir/Trajectory*\.DAT .";
+        print qq[Running '$scp_command'\n];
+        system($scp_command);
         @files = glob(qq[Trajectory*\.DAT]);
     }
 
@@ -263,7 +286,7 @@ The SnapEC module will run the model remotely on the PPI.
 
 =item $model the model type, e.g. MLDP0, SNAP, TRAJ, SNAP-BOMB
 
-currently, only SNAP is implemented
+currently, only SNAP and TRAJ is implemented. MLDP0 is very old, and SNAP-BOMB never worked
 
 =item $error Return error status, 0 on success
 

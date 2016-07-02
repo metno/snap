@@ -1,6 +1,6 @@
 #! /usr/bin/perl -w
 
-use Test::More tests => 4;
+use Test::More tests => 8;
 use strict;
 use warnings;
 use FindBin qw( $Bin );
@@ -42,17 +42,54 @@ my $date = sprintf("%04d-%02d-%02d", $year, $mon, $mday);
     print $nfh $content;
     close $nfh;
 }
+{
+    my $date2 = sprintf("%04d%02d%02d", $year, $mon, $mday);
+    # fix date of test-input
+    foreach my  $file ("$Bin/data/Brokdorf_test_2_TRAJ_input", "$Bin/data/backward2_TRAJ_input") {
+        open my $fh, "$file.org" or die "Cannot read $file.org: $!\n";
+        local $/ = undef;
+        my $content = <$fh>;
+        $content =~ s/20130411/$date2/g;
+        close $fh;
+        open my $nfh, ">$file" or die "Cannot write $file: $!\n";
+        print $nfh $content;
+        close $nfh;
+    }
+}
 
 
 SKIP: {
-    skip "cannot create PPI directory", 2 unless $PPIdir;
+    skip "cannot create PPI directory", 6 unless $PPIdir;
+    my ($error, @files);
 
-    my ($error, @files) = SnapEC::run_model(\%smsdirs, $remote_hosts_and_users, '',
+    # dispersion
+    ($error, @files) = SnapEC::run_model(\%smsdirs, $remote_hosts_and_users, '',
             'Hartlepool-20162306-0924', 'SNAP');
     ok($error == 0, "running model: SNAP");
 
     ok(-f "$Bin/data/Hartlepool-20162306-0924_hi_res_SNAP2ARGOS.zip", "SNAP2ARGOS file created");
     unlink "$Bin/data/Hartlepool-20162306-0924_hi_res_SNAP2ARGOS.zip";
+
+    # forward trajectory
+    my $ident = 'Brokdorf_test_2';
+    ($error, @files) = SnapEC::run_model(\%smsdirs, $remote_hosts_and_users, '',
+            $ident, 'TRAJ');
+    ok($error == 0, "running model: TRAJ");
+
+    ok(-f "$Bin/data/$ident\_TRAJ2ARGOS.zip", "TRAJ2ARGOS file created");
+    unlink "$Bin/data/$ident\_TRAJ2ARGOS.zip";
+
+
+    # backward trajectory
+    $ident = 'backward2';
+    ($error, @files) = SnapEC::run_model(\%smsdirs, $remote_hosts_and_users, '',
+            $ident, 'TRAJ');
+    ok($error == 0, "running model: TRAJ");
+
+    ok(-f "$Bin/data/$ident\_TRAJ2ARGOS.zip", "TRAJ2ARGOS file created");
+    unlink "$Bin/data/$ident\_TRAJ2ARGOS.zip";
+
+
     # cleanup
     #ok(Snap::system_ppi($remote_hosts_and_users, "rm -r $PPIdir") == 0, "cleanup");
 };
