@@ -188,7 +188,7 @@ FIELD.IDENTIFICATION=1
     for i in range(0,count):
         sourceTerm += "{:f}\n".format(heights[i])
     for i in range(0,count):
-        sourceTerm += "Trajectory_{:03d}_{}.DAT\n".format(i, ident)
+        sourceTerm += "Trajectory_{:03d}_{}.DAT\n".format(i+1, ident)
 
     return sourceTerm
 
