@@ -3,6 +3,7 @@ import xml.etree.ElementTree as ET
 import os
 import datetime
 import re
+import sys
 import subprocess
 from Snappy.Resources import Resources
 
@@ -75,7 +76,9 @@ TIME.RUN = {runTime}h
     radiusvals.append("0")
     lowervals.append("0")
     uppervals.append("0")
-    releaseTerm = "RELEASE.HOUR= {}\n".format(", ".join(timevals))
+    releaseTerm = "TIME.RELEASE.PROFILE.STEPS\n"
+    releaseTerm += "MAX.PARTICLES.PER.RELEASE= {:d}\n".format(max(5000, 400*len(isoItems)))
+    releaseTerm += "RELEASE.HOUR= {}\n".format(", ".join(timevals))
     releaseTerm += "RELEASE.RADIUS.M= {}\n".format(", ".join(radiusvals))
     releaseTerm += "RELEASE.LOWER.M= {}\n".format(", ".join(lowervals))
     releaseTerm += "RELEASE.UPPER.M= {}\n".format(', '.join(uppervals))
@@ -124,6 +127,90 @@ def convert_to_grib(snapNc, basedir, ident, isotopes):
     errlog.close()
     outlog.close()
 
+def assertReadTrajLine(line, keyword):
+    '''check that the line contains the keyword at the end and return the first characters'''
+    if (re.search(keyword, line)):
+        return line[0:20]
+    raise Exception("trajectory line does not contain {keyword}: {line}".format(keyword=keyword, line=line))
+
+def trajInput2snapInput(trajInput, ident):
+    res = Resources()
+
+    with open(trajInput) as traj:
+        name = assertReadTrajLine(traj.readline(), r'Source')
+        lat = float(assertReadTrajLine(traj.readline(), r'Latitude'))
+        lon = float(assertReadTrajLine(traj.readline(), r'Longitude'))
+        sdate = datetime.datetime.strptime(assertReadTrajLine(traj.readline(), r'Start')[0:12],'%Y%m%d%H%M')
+        fwbw = assertReadTrajLine(traj.readline(), r'(forward|backward)')
+        duration = int(assertReadTrajLine(traj.readline(), r'Simulation'))
+        count = int(assertReadTrajLine(traj.readline(), r'Number'))
+        heights = []
+        for i in range(0, count):
+            heights.append(float(assertReadTrajLine(traj.readline(), r'above')))
+
+    sourceTermTemplate = """
+SET_RELEASE.POS= P=   {lat},   {lon}
+TIME.START= {startTime}
+TIME.RUN = {runTime}h
+
+TIME.RELEASE.PROFILE.BOMB
+MAX.PARTICLES.PER.RELEASE= 1
+RELEASE.SECOND=    0
+RELEASE.RADIUS.M=    0.
+RELEASE.LOWER.M= 500.
+RELEASE.UPPER.M= 500.
+RELEASE.BQ/STEP.COMP= 1.0e+20 traj
+MAX.PARTICLES.PER.RELEASE=1
+
+COMPONENT= traj
+DRY.DEP.OFF
+WET.DEP.OFF
+GRAVITY.OFF
+FIELD.IDENTIFICATION=1
+
+"""
+    if (re.search(r'backward', fwbw)):
+        duration = duration * -1
+    snapStartTime="{year} {month} {day} {hour}".format(year=sdate.year,month=sdate.month,day=sdate.day, hour=sdate.hour)
+    sourceTerm = sourceTermTemplate.format(lat=lat,lon=lon,startTime=snapStartTime, runTime=duration)
+
+    meteoTerm = "\n"
+    files = res.getECMeteorologyFiles(sdate, duration)
+    if (len(files) == 0):
+        raise Exception("no EC met-files found for {}, runtime {}".format(sdate, duration))
+    for f in files:
+        meteoTerm += "FIELD.INPUT={}\n".format(f)
+
+    sourceTerm += meteoTerm
+    sourceTerm += res.getSnapInputTemplate('nrpa_ec_0p1')
+
+    sourceTerm += "{:d}\n".format(count)
+    for i in range(0,count):
+        sourceTerm += "{:f}\n".format(heights[i])
+    for i in range(0,count):
+        sourceTerm += "Trajectory_{:03d}_{}.DAT\n".format(i, ident)
+
+    return sourceTerm
+
+
+def snap4traj(trajInput, basedir, ident):
+    '''run snap with traj definition in basedir dir'''
+
+    if (not os.path.isdir(basedir)):
+        os.makedirs(basedir)
+    snapInput = trajInput2snapInput(trajInput, ident)
+    with open(os.path.join(basedir, "snap.input"), "w") as fh:
+        fh.write(snapInput)
+
+    errlog = open(os.path.join(basedir, "snap.errlog"), "a")
+    outlog = open(os.path.join(basedir, "snap.outlog"), "a")
+    print("bsnap_traj snap.input")
+    proc = subprocess.Popen(['bsnap_traj', 'snap.input'], cwd=basedir, stderr=errlog, stdout=outlog)
+    if (proc.wait() != 0):
+        raise Exception("bsnap_traj in {} failed".format(basedir))
+    errlog.close()
+    outlog.close()
+
 
 def snap4rimsterm(rimsterm, basedir, ident):
     '''run snap with rimsterm definition in basedir dir'''
@@ -161,8 +248,14 @@ def snap4rimsterm(rimsterm, basedir, ident):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="run snap from a rimsterm.xml file and convert to grib-files named ident_conc, ident_depo ident_wdep ident_dose ident_tofa")
-    parser.add_argument("--rimsterm", help="source-term in rimsterm format", required=True)
+    parser.add_argument("--rimsterm", help="source-term in rimsterm format", required=False)
+    parser.add_argument("--trajInput", help="source-term in nrpa trajectory input format", required=False)
     parser.add_argument("--dir", help="output-directory", required=True)
     parser.add_argument("--ident", help="output-file identifier", required=True)
     args = parser.parse_args()
-    snap4rimsterm(args.rimsterm, args.dir, args.ident)
+    if args.rimsterm is not None:
+        snap4rimsterm(args.rimsterm, args.dir, args.ident)
+    elif args.trajInput is not None:
+        snap4traj(args.trajInput, args.dir, args.ident)
+    else:
+        print("need one of trajInput or rimsterm options", file=sys.stderr)
