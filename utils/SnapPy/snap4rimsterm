@@ -77,7 +77,7 @@ TIME.RUN = {runTime}h
     lowervals.append("0")
     uppervals.append("0")
     releaseTerm = "TIME.RELEASE.PROFILE.STEPS\n"
-    releaseTerm += "MAX.PARTICLES.PER.RELEASE= {:d}\n".format(max(5000, 400*len(isoItems)))
+    releaseTerm += "MAX.PARTICLES.PER.RELEASE= {:d}\n".format(min(5000, 400*len(isoItems)))
     releaseTerm += "RELEASE.HOUR= {}\n".format(", ".join(timevals))
     releaseTerm += "RELEASE.RADIUS.M= {}\n".format(", ".join(radiusvals))
     releaseTerm += "RELEASE.LOWER.M= {}\n".format(", ".join(lowervals))
