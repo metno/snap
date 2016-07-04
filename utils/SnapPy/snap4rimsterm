@@ -78,6 +78,7 @@ TIME.RUN = {runTime}h
     uppervals.append("0")
     releaseTerm = "TIME.RELEASE.PROFILE.STEPS\n"
     releaseTerm += "MAX.PARTICLES.PER.RELEASE= {:d}\n".format(min(5000, 400*len(isoItems)))
+    releaseTerm += "MAX.TOTALPARTICLES= {:d}\n".format(20000000) # rough estimate
     releaseTerm += "RELEASE.HOUR= {}\n".format(", ".join(timevals))
     releaseTerm += "RELEASE.RADIUS.M= {}\n".format(", ".join(radiusvals))
     releaseTerm += "RELEASE.LOWER.M= {}\n".format(", ".join(lowervals))
@@ -155,6 +156,7 @@ TIME.RUN = {runTime}h
 
 TIME.RELEASE.PROFILE.BOMB
 MAX.PARTICLES.PER.RELEASE= 1
+MAX.TOTALPARTICLES= 100
 RELEASE.SECOND=    0
 RELEASE.RADIUS.M=    0.
 RELEASE.LOWER.M= 500.
