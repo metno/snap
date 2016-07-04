@@ -39,7 +39,7 @@ c
 
       integer i, j, ncid, nf, varid, dimid, tsize, ierror
       real(kind=8) times(mavail)
-      integer zeroHour, tunitLen
+      integer zeroHour, tunitLen, status
       integer(kind=8) eTimes(mavail)
       integer(kind=8) :: add_offset, scalef
       integer, dimension(6) :: dateTime
@@ -55,7 +55,14 @@ c
 ! loop over all file-names
       do nf = 1,nfilef
 ! get the time steps from the files "time" variable
-        call check(nf_open(filef(nf), NF_NOWRITE, ncid), filef(nf))
+        status = nf_open(filef(nf), NF_NOWRITE, ncid)
+        if(status == nf_noerr) then
+           write(9,*) "cannot open ", trim(filef(nf)), ":",
+     +         trim(nf_strerror(status))
+           write(9,*) "cannot open ", trim(filef(nf)), ":",
+     +         trim(nf_strerror(status))
+           cycle
+        endif
         call check(nf_inq_varid(ncid, "time", varid), "time")
         call check(nf_inq_dimid(ncid, "time", dimid), "tdim-id")
         call check(nf_inq_dimlen(ncid, dimid, tsize), "tdim-len")
