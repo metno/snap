@@ -47,7 +47,7 @@ c      integer      iplume(2,mplume)
      -            ,gravityms(mdefcomp)
      -            ,radiusmym(mdefcomp),densitygcm3(mdefcomp)
      -            ,vgtable(numtempvg,numpresvg,mdefcomp)
-     -		  ,tbasevg,tincrvg,pbasevg,pincrvg
+     -            ,tbasevg,tincrvg,pbasevg,pincrvg
      -            ,totalbq(mdefcomp)
       integer      numtotal(mdefcomp)
       integer      idcomp(mdefcomp),iruncomp(mdefcomp)
@@ -55,14 +55,14 @@ c      integer      iplume(2,mplume)
 c
       common/plume/ndefcomp,nplume,npart,nparnum
      -            ,iplume,mplume
-     -		  ,kdrydep,kwetdep,kdecay,kgravity
-     -		  ,drydephgt,drydeprat,wetdeprat
+     -            ,kdrydep,kwetdep,kdecay,kgravity
+     -            ,drydephgt,drydeprat,wetdeprat
      -            ,halftime,decayrate
-     -		  ,idcomp,iruncomp
+     -            ,idcomp,iruncomp
      -            ,gravityms,radiusmym,densitygcm3
      -            ,vgtable,tbasevg,tincrvg,pbasevg,pincrvg
      -            ,totalbq,numtotal
-     -		  ,compname,compnamemc
+     -            ,compname,compnamemc
 c
 c
 c..itprof:  time profile type:
