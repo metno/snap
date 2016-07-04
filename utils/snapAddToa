@@ -37,7 +37,7 @@ with netCDF4.Dataset(args.snapNc, "a") as nc:
     for v in nc.variables.keys():
         if (v[-19:] == "_acc_wet_deposition"):
             comp = v[:-19]
-            print(comp)
+#            print(comp)
             total = nc.variables[v][:] + nc.variables["{}_acc_dry_deposition".format(comp)][:]
             totalVar = nc.createVariable('{}_acc_total_deposition'.format(comp), 'f', nc.variables[v].dimensions, zlib=True)
             totalVar.units = nc.variables[v].units
