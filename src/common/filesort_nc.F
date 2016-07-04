@@ -56,7 +56,7 @@ c
       do nf = 1,nfilef
 ! get the time steps from the files "time" variable
         status = nf_open(filef(nf), NF_NOWRITE, ncid)
-        if(status == nf_noerr) then
+        if(status /= nf_noerr) then
            write(9,*) "cannot open ", trim(filef(nf)), ":",
      +         trim(nf_strerror(status))
            write(9,*) "cannot open ", trim(filef(nf)), ":",
