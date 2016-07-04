@@ -1,4 +1,4 @@
-VERSION=1.3.1
+VERSION=1.3.2
 svn copy https://svn.met.no/snap/trunk \
      https://svn.met.no/snap/tags/$VERSION -m "Release $VERSION" || exit 1
 cd src
