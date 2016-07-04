@@ -5,7 +5,7 @@ F77 = gfortran
 CXX = g++
 CC  = gcc
 
-F77FLAGS=-O2 -g -avx -cpp -ftree-vectorize -fno-math-errno
+F77FLAGS=-O2 -g -mavx -cpp -ftree-vectorize -fno-math-errno
 CXXFLAGS=-O2 -mavx -ftree-vectorize -fno-math-errno
 CCFLAGS=-O2 -mavx -ftree-vectorize -fno-math-errno
 
