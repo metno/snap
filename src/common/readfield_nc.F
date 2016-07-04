@@ -5,7 +5,7 @@
 !
 !  Parameters:
 !             iunit      filehandle-unit (dummy)
-!             istep      current timestep (always positive)
+!             istep      current timestep (always positive), negative istep means reset
 !             nhleft     remaining run-hours (negative for backward-calculations)
 !             itimei(5)  initial time
 !             ihr1       minimal time-offset?
@@ -62,6 +62,13 @@ c      real,save     ::    t2thetafac(15000)
       character*(80) precstrativrt,precconvrt
       logical temp_is_abs, has_dummy_dim, manual_level_selection
 
+      if (istep < 0) then
+c set all 'save' variables to default values,
+c ncid not needed, will close automaticall
+        ntav1 = 0
+        ntav2 = 0
+        return
+      end if
 
 #if defined(DRHOOK)
 ! Before the very first statement
@@ -139,7 +146,7 @@ c       !! real temperature, convert to pot-temp later
 c semipalatinsk uses air_temp
 c        pottempv = 'air_temperature_ml'
 c        temp_is_abs = .true.
-c chernobyl uses pot-temp 
+c chernobyl uses pot-temp
         pottempv = 'air_potential_temperature_ml'
         sigmav = ''
         ptopv = ''
@@ -150,7 +157,7 @@ c hardcoded, see below
 c upward_air_velocity_ml, not used yet?
 c semipalatinsk
         sigmadotv = ''
-c chernobyl 
+c chernobyl
 c        sigmadotv = 'omega_ml'
         psv = 'surface_air_pressure'
         mslpv = ''
@@ -375,6 +382,7 @@ c     before the return statement
       if (ntav1.ne.0)
      &   nhdiff = abs(iavail(ntav2)%oHour - iavail(ntav1)%oHour)
       nprecip = nhdiff
+
       timepos = iavail(ntav2)%timePos
       itimefi(1) = iavail(ntav2)%aYear
       itimefi(2) = iavail(ntav2)%aMonth

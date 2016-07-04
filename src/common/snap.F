@@ -1705,7 +1705,7 @@ c..the following done to avoid updateing subr. fldout............
 c................................................................
       end if
 #if defined(TRAJ)
-       do 201 itraj=1,ntraj
+      do itraj=1,ntraj
        rellower(1,1)=tlevel(itraj)
 c	relupper(1)=rellower(1)+1
        relupper(1,1)=rellower(1,1)
@@ -1719,6 +1719,7 @@ c	relupper(1)=rellower(1)+1
      &  tyear, tmon, tday, thour, tmin
        distance=0.0
        speed=0.0
+       iprecip=1
 #endif
 c
 c..initial no. of plumes and particles
@@ -1916,6 +1917,11 @@ cjb END
 #endif
 
 c
+c reset readfield_nc (eventually, traj will rerun this loop)
+      if (ftype .eq. "netcdf")
+     +   call readfield_nc(iunitf,-1,nhleft,itimei,ihr1,ihr2,
+     +                     itimefi,ierror)
+c start time loop
       do 200 istep=0,nstep
 c
         write(9,*) 'istep,nplume,npart: ',istep,nplume,npart
@@ -2042,7 +2048,7 @@ c continue istep loop after initialization
             goto 200
           end if
 c
-         if(iensemble.eq.1)
+          if(iensemble.eq.1)
      +      call ensemble(1,itime,tf1,tf2,tnow,istep,nstep,nsteph,0)
 c
           call hrdiff(0,0,itimei,itimefi,ihdiff,ierr1,ierr2)
@@ -2053,11 +2059,13 @@ c
             call hrdiff(0,0,itimei,itime1,ihr,ierr1,ierr2)
             tnow=3600.*ihr
             nxtinf=istep+nsteph*abs(ihdiff-ihr)
-           iprecip=1+ihr
+            iprecip=1+ihr
+c              backward calculations difficult, but precip does not matter there
+            if (ihr < 0) iprecip = 1
           else
             tnow=0.
             nxtinf=istep+nsteph*abs(ihdiff)
-           iprecip=1
+            iprecip=1
           end if
 c
         else
@@ -2453,7 +2461,8 @@ cjb-2701
   200 continue
 #if defined(TRAJ)
        close (13)
-201	continue
+
+      end do
 #endif
 c
 c
