@@ -38,7 +38,7 @@ c klevel needs to get allocated in main program while reading parameters
 c
       common/cgrid1/iprod,igrid,klevel
      -             ,iprodr,igridr,ixbase,iybase,ixystp
-     -		   ,inprecip,imslp,imodlevel,itotcomp,modleveldump
+     -             ,inprecip,imslp,imodlevel,itotcomp,modleveldump
 c
 c
 c..gparam:  grid parameters (depending on the grid type)

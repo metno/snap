@@ -1,8 +1,8 @@
       subroutine edcomp(nx,ny,nz,u,v,edot,ps,xmd2h,ymd2h,
-     +			ahalf,bhalf,vhalf,
-     +			uu,vv,dpsdt,edoth)
+     +   ahalf,bhalf,vhalf,
+     +   uu,vv,dpsdt,edoth)
 c
-c	  compute etadot (in full levels) from u,v and ps
+c      compute etadot (in full levels) from u,v and ps
 c
       implicit none
 c
@@ -43,7 +43,7 @@ c
        do j=2,ny-1
          do i=2,nx-1
            dpsdt(i,j) = (uu(i+1,j)-uu(i-1,j))*xmd2h(i,j)
-     +			+(vv(i,j+1)-vv(i,j-1))*ymd2h(i,j)
+     +                 +(vv(i,j+1)-vv(i,j-1))*ymd2h(i,j)
          end do
        end do
 c
@@ -73,7 +73,7 @@ c
            do i=2,nx-1
 c..divergence
              div= (uu(i+1,j)-uu(i-1,j))*xmd2h(i,j)
-     +		  +(vv(i,j+1)-vv(i,j-1))*ymd2h(i,j)
+     +           +(vv(i,j+1)-vv(i,j-1))*ymd2h(i,j)
 c..etadot in half level below full level k
              edothu=edoth(i,j)
 c..etadot in half level above full level k

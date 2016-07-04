@@ -4,9 +4,9 @@
 c
 c  Purpose: Interpolate particle positions to ENSEMBLE grid,
 c           and store data in this grid (and model levels),
-c	    interpolation of concentrations to fixed heights.
+c        interpolation of concentrations to fixed heights.
 c
-c	icall=0 : initialize (after first fields read),
+c    icall=0 : initialize (after first fields read),
 c            =1 : new fields read
 c 2,3,4 need to be called within a particle loop (np)
 c            =2 : before drydep
@@ -200,7 +200,7 @@ c..time of release
 c
 c..compute map ratio
         call mapfield(1,0,igridep,gparep,
-     +		      nxep,nyep,xmodel,ymodel,0.,
+     +              nxep,nyep,xmodel,ymodel,0.,
      +                dxgridep,dygridep,ierror)
         if(ierror.ne.0) then
           write(9,*) 'ensemble MAPFIELD ERROR. ierror= ',ierror
@@ -213,7 +213,7 @@ c..size of each grid square (m**2)
         do j=1,nyep
           do i=1,nxep
             gareaep(i,j)= (dxgridep/xmodel(i,j))
-     +			 *(dygridep/ymodel(i,j))
+     +             *(dygridep/ymodel(i,j))
           end do
         end do
 c
@@ -231,7 +231,7 @@ c..no output unless all corners of gridsquare are inside model grid
            end do
          end do
          call xyconvert(nxep*nyep,xmodel,ymodel,
-     +		         igridep,gparep,igtype,gparam,ierror)
+     +                 igridep,gparep,igtype,gparam,ierror)
          if(ierror.ne.0) then
            write(6,*) 'ensemble XYCONVERT ERROR'
            write(9,*) 'ensemble XYCONVERT ERROR'
@@ -248,7 +248,7 @@ c##################################################################
            do i=1,nxep
              if(xmodel(i,j).lt.x1 .or. xmodel(i,j).gt.x2 .or.
      +           ymodel(i,j).lt.y1 .or. ymodel(i,j).gt.y2)
-     +						     inside(i,j)=0
+     +                             inside(i,j)=0
 c##################################################################
              ninside=ninside+inside(i,j)
 c##################################################################
@@ -257,9 +257,9 @@ c##################################################################
        end do
 c##################################################################
        write(6,*) 'nxep*nyep,ninside,noutside: ',
-     +		    nxep*nyep,ninside,nxep*nyep-ninside
+     +            nxep*nyep,ninside,nxep*nyep-ninside
        write(9,*) 'nxep*nyep,ninside,noutside: ',
-     +		    nxep*nyep,ninside,nxep*nyep-ninside
+     +            nxep*nyep,ninside,nxep*nyep-ninside
         call ftest('xmodel',1,1,nxep,nyep,1,xmodel,0)
         call ftest('ymodel',1,1,nxep,nyep,1,ymodel,0)
         call ftest('gareap',1,1,nxep,nyep,1,gareaep,0)
@@ -300,14 +300,14 @@ c
 c
          filename= 'ensemble.tmp.'//compnamemc(mm)
          open(60+m,file=filename,
-     +		    access='direct',form='unformatted',
-     +		    recl=(5+nxep*nyep*nepout)*4/lrunit,
-     +		    status='unknown')
+     +            access='direct',form='unformatted',
+     +            recl=(5+nxep*nyep*nepout)*4/lrunit,
+     +            status='unknown')
 c
          filename= 'ensemble.test.'//compnamemc(mm)
          open(70+m,file=filename,
-     +		    access='sequential',form='formatted',
-     +		    status='unknown')
+     +            access='sequential',form='formatted',
+     +            status='unknown')
 c
        end do
 c
@@ -326,14 +326,14 @@ c..height of model levels and thickness of model layers
 c
        do k=1,nk
          call epinterp(nx,ny,hlevel2(1,1,k),
-     +		        nxep*nyep,xmodel,ymodel,
-     +			hlevel2ep(1,1,k),inside)
+     +                nxep*nyep,xmodel,ymodel,
+     +            hlevel2ep(1,1,k),inside)
        end do
 c
        do k=1,nk
          call epinterp(nx,ny,hlayer2(1,1,k),
-     +		        nxep*nyep,xmodel,ymodel,
-     +			hlayer2ep(1,1,k),inside)
+     +                nxep*nyep,xmodel,ymodel,
+     +            hlayer2ep(1,1,k),inside)
        end do
 c
 c##################################################################
@@ -346,7 +346,7 @@ c##################################################################
        j=nyep/2
        do k=nk,1,-1
          write(9,fmt='(''    k,hlayer,hlevel:'',i3,2f8.0)')
-     +			      k,hlayer2ep(i,j,k),hlevel2ep(i,j,k)
+     +                  k,hlayer2ep(i,j,k),hlevel2ep(i,j,k)
        end do
 c##################################################################
       end if
@@ -442,7 +442,7 @@ c
              if(conc(i,j,m).gt.0.0d0) then
            dh= rt1*hlayer1ep(i,j,1)+rt2*hlayer2ep(i,j,1)
                concsurfep(i,j,m)= concsurfep(i,j,m)
-     +				+conc(i,j,m)*hrstep/(dh*gareaep(i,j))
+     +                +conc(i,j,m)*hrstep/(dh*gareaep(i,j))
              end if
            end do
          end do
@@ -462,10 +462,10 @@ c
          end if
          nsaveconc=nsaveconc+1
 c##################################################################
-c	  minv=+999999
-c	  maxv=-999999
-c	  mink=+999999
-c	  maxk=-999999
+c      minv=+999999
+c      maxv=-999999
+c      mink=+999999
+c      maxk=-999999
 c##################################################################
          do n=1,npart
            i=nint(xep(n))
@@ -478,26 +478,26 @@ c##################################################################
 c..in each sigma/eta (input model) layer
               concep(i,j,k,m)=concep(i,j,k,m)+dble(pdata(n)%rad)
 c##################################################################
-c	      minv=min(minv,ivlvl)
-c	      maxv=max(maxv,ivlvl)
-c	      mink=min(mink,k)
-c	      maxk=max(maxk,k)
+c          minv=min(minv,ivlvl)
+c          maxv=max(maxv,ivlvl)
+c          mink=min(mink,k)
+c          maxk=max(maxk,k)
 c##################################################################
            end if
          end do
 c##################################################################
-c	  write(9,*) 'minv,maxv,mink,maxk: ',minv,maxv,mink,maxk
+c      write(9,*) 'minv,maxv,mink,maxk: ',minv,maxv,mink,maxk
 c##################################################################
        end if
 c
 c..precipitation (from intensity per hour)
        scale= 1./float(nsteph)
        call epinterp(nx,ny,precip(1,1,iprecip),
-     +		      nxep*nyep,xmodel,ymodel,prectmp,inside)
+     +              nxep*nyep,xmodel,ymodel,prectmp,inside)
        do j=1,nyep
          do i=1,nxep
            if(inside(i,j).eq.1)
-     +	      precipep(i,j)= precipep(i,j)+scale*prectmp(i,j)
+     +          precipep(i,j)= precipep(i,j)+scale*prectmp(i,j)
          end do
        end do
 c
@@ -575,9 +575,9 @@ c
            end do
            epfield(i,j,nheights+1)=concsurfep(i,j,m)*cscale
            epfield(i,j,nheights+2)=drydepep(i,j,1)*dscale
-     +						       /gareaep(i,j)
+     +                               /gareaep(i,j)
            epfield(i,j,nheights+3)=wetdepep(i,j,1)*dscale
-     +						       /gareaep(i,j)
+     +                               /gareaep(i,j)
 c..precipitation unit 0.1 mm !!!!!!!!!!!!!!!!!!!!
            epfield(i,j,nheights+4)=precipep(i,j) * 10.
              else
@@ -586,17 +586,17 @@ c..precipitation unit 0.1 mm !!!!!!!!!!!!!!!!!!!!
            end do
              end if
 c
-ccc	      write(97,1001) (itimev(l),l=1,5),glon,glat,
-ccc  +			     (epfield(i,j,l),l=1,nepout)
- 1001	      format(i4.4,4i2.2,f10.5,1x,f10.5,9(1x,1pe11.4))
+ccc          write(97,1001) (itimev(l),l=1,5),glon,glat,
+ccc  +                 (epfield(i,j,l),l=1,nepout)
+ 1001          format(i4.4,4i2.2,f10.5,1x,f10.5,9(1x,1pe11.4))
 c################################################################
              ttmax=0.
              do l=1,nepout-1
            ttmax=max(ttmax,epfield(i,j,l))
              end do
              if(ttmax.gt.0.)
-     +	        write(70+m,1001) (itimev(l),l=1,5),glon,glat,
-     +			         (epfield(i,j,l),l=1,nepout)
+     +            write(70+m,1001) (itimev(l),l=1,5),glon,glat,
+     +                     (epfield(i,j,l),l=1,nepout)
 c################################################################
            end do
          end do
@@ -605,7 +605,7 @@ c
 c
 c..write temporary binary file
 c################################################################
-c	  write(6,*) 'WRITE unit,rec: ',60+m,ntoutput
+c      write(6,*) 'WRITE unit,rec: ',60+m,ntoutput
 c################################################################
          write(60+m,rec=ntoutput) itimev,epfield
 c
@@ -687,8 +687,8 @@ c
        filename=ensemblefile(1:k)//'_'//compnamemc(mm)
 
        open(98,file=filename,
-     +		access='sequential',form='formatted',
-     +		status='unknown')
+     +        access='sequential',form='formatted',
+     +        status='unknown')
 c
        write(98,fmt='(i2.2)') ensembleparticipant
        write(98,fmt='(a7)')   ensembleRandomKey
@@ -718,7 +718,7 @@ c
          do it=1,ntoutput
 c
 c################################################################
-c	    write(6,*) 'READ unit,rec: ',60+m,it
+c        write(6,*) 'READ unit,rec: ',60+m,it
 c################################################################
            read(60+m,rec=it) itimev,epfield
 c
@@ -747,8 +747,8 @@ c
             do it=1,ntoutput
              no=no+1
              write(98,fmt='(i4.4,4i2.2,9(1x,1pe11.4))')
-     +		       (iatimev(i,it),i=1,5),
-     +		       (buffer(k,no),k=1,nepout)
+     +               (iatimev(i,it),i=1,5),
+     +               (buffer(k,no),k=1,nepout)
             end do
           end do
 c
