@@ -4,7 +4,7 @@ use Test::More tests => 8;
 use strict;
 use warnings;
 use FindBin qw( $Bin );
-use lib "$Bin/../job/";
+use lib "$Bin/../lib/";
 
 
 
