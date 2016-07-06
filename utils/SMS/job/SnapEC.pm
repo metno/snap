@@ -51,7 +51,7 @@ sub run_model {
 #\$ -r y
 #\$ -l h_rt=0:10:00
 #\$ -l h_vmem=8G
-#\$ -m bea
+##\$ -m bea
 #\$ -pe mpi 1
 #\$ -q operational.q
 #\$ -sync yes
@@ -107,7 +107,7 @@ EOF
 #\$ -r y
 #\$ -l h_rt=0:40:00
 #\$ -l h_vmem=8G
-#\$ -m bea
+##\$ -m bea
 #\$ -pe mpi 1
 #\$ -q operational.q
 #\$ -sync yes
