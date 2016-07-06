@@ -5,7 +5,7 @@ use strict;
 use warnings;
 
 use FindBin qw( $Bin );
-use lib "$Bin/../job/";
+use lib "$Bin/../lib/";
 
 BEGIN {
     use_ok('Snap', 'put_statusfile', 'system_ppi', 'create_ppi_dir');
