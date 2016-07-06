@@ -151,7 +151,7 @@ use Template;
 
 use English;
 
-use Snap qw(put_statusfile create_ppi_dir);
+use Snap qw(put_statusfile create_ppi_dir system_ppi);
 use SnapHirlam12 qw();
 use SnapEC qw();
 
@@ -173,7 +173,7 @@ my $remote_host_alias = 'nrpa.met.no';
 my $remote_user = 'nrpa';
 my $remote_hosts_and_users = [ { host => "$remote_host_alias",
                  user => "$remote_user",
-                 PPIuser => "heikok",
+                 PPIuser => "sms",
                  PPIbasedirs => [qw(/lustre/storeB/project/fou/kl/snap/nrpa_runs
                                     /lustre/storeA/project/fou/kl/snap/nrpa_runs)] } ];
 
@@ -194,7 +194,7 @@ my $sftpinp;
 chdir $upload_dir;
 
 # Start with removing all old files from the ftp-server
-my $serr = SECURECOMMAND("$remote_host_alias -l $remote_user -n 'find $remote_home_directory/* -maxdepth 0 -mtime +31 -type f | xargs rm -f'");
+my $serr = SECURECOMMAND("$remote_host_alias -l $remote_user -n 'find $remote_home_directory/* -maxdepth 0 -mtime +31 -type f -delete'");
 print "\nReturned value from SECURECOMMAND (RSHVALUE):\n$RSHVALUE\n";
 print "\nReturned error from SECURECOMMAND (RSHERROR):\n$RSHERROR\n" ;
 die ("Error from SECURECOMMAND\n") if ( $serr );
@@ -259,7 +259,7 @@ if ( $#requests < 0 ) {		# Nothing happens
 } else {			# The model will be started
 
   my $zip_file  = $requests[0];
-  my ($run_ident, $model) = ($zip_file =~ m[([\w-\.:]*)_ARGOS2(.*)\.zip]);
+  my ($run_ident, $model) = ($zip_file =~ m[([\w\-\.:]*)_ARGOS2(.*)\.zip]);
 
   print("   zip_file=  $zip_file\n");
   print("   run_ident= $run_ident\n");
@@ -290,13 +290,21 @@ if ( $#requests < 0 ) {		# Nothing happens
   my ( $error, @output_files );
   if (substr($run_ident,0,4) eq "EC01") {
       # run the ec-model on the PPI machines
-      $ppiHost = GET_PPI_LOGIN_HOST($remote_hosts_and_users->[0]{'PPIuser'}) or die "cannot GET_PPI_LOGIN_HOST() with user ".$remote_hosts_and_users->[0]{'PPIuser'}."\n";
-      $remote_hosts_and_users[0]{PPIhost} = $ppiHost;
+      my $ppiHost = GET_PPI_LOGIN_HOST($remote_hosts_and_users->[0]{'PPIuser'}) or die "cannot GET_PPI_LOGIN_HOST() with user ".$remote_hosts_and_users->[0]{'PPIuser'}."\n";
+      $remote_hosts_and_users->[0]{PPIhost} = $ppiHost;
+
+      ## Do some cleaning on lustre:
+      foreach my $tmp_dir ( @{ $remote_hosts_and_users->[0]{'PPIbasedirs'}}) {
+	my $cmd = "find $tmp_dir/* -maxdepth 0 -mtime +31 -exec 'rm -rf \\\{\} \;'";
+	print $cmd . "\n";
+	system_ppi($remote_hosts_and_users, $cmd);
+    }
+
       my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = gmtime(time);
       $year+=1900; $mon++;
-      my $dateStr = sprintf("%04d-%02d-%02T%02%02%02", $year, $mon, $mday, $hour, $min, $sec);
-      $ppiDir = create_ppi_dir($remote_hosts_and_users, [map {$_ . '/' . $dateStr} @{ $remote_hosts_and_users{'PPIbasedirs'} } ]);
-      $remote_hosts_and_users[0]{PPIdir} = $ppiDir;
+      my $dateStr = sprintf("%04d-%02d-%02dT%02d%02d%02d", $year, $mon, $mday, $hour, $min, $sec);
+      my $ppiDir = create_ppi_dir($remote_hosts_and_users, [map {$_ . '/' . $dateStr . "_$run_ident"} @{ $remote_hosts_and_users->[0]{'PPIbasedirs'} } ]);
+      $remote_hosts_and_users->[0]{PPIdir} = $ppiDir;
       ( $error, @output_files ) = SnapEC::run_model( \%smsdirs, $remote_hosts_and_users,
                         $remote_ftp_download,
                         $run_ident, $model );
