@@ -248,7 +248,7 @@ def snap4rimsterm(rimsterm, basedir, ident):
 
 if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser(description="run snap from a rimsterm.xml file and convert to grib-files named ident_conc, ident_depo ident_wdep ident_dose ident_tofa")
+    parser = argparse.ArgumentParser(description="run snap from a rimsterm.xml file and convert to grib-files named ident_conc, ident_depo ident_wetd ident_dose ident_tofa")
     parser.add_argument("--rimsterm", help="source-term in rimsterm format", required=False)
     parser.add_argument("--trajInput", help="source-term in nrpa trajectory input format", required=False)
     parser.add_argument("--dir", help="output-directory", required=True)
