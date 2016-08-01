@@ -1,3 +1,9 @@
+snap-py (1.0-1) trusty; urgency=medium
+
+  * initial upload
+
+ -- Heiko Klein <heikok@pc4631.pc.met.no>  Mon, 04 Jul 2016 12:42:14 +0200
+
 snap-py (0.9-1) trusty; urgency=medium
 
   * initial upload

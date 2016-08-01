@@ -118,7 +118,7 @@ GRAVITY.FIXED.M/S=0.0002
         allIsos = self.getIsotopes()
         extracts = {'tofa': ['time_of_arrival'],
                     'prec': ['precipitation_amount_acc'],
-                    'wdep': [],
+                    'wetd': [],
                     'depo': [],
                     'dose': [],
                     'conc': []
@@ -135,7 +135,7 @@ GRAVITY.FIXED.M/S=0.0002
             extracts['dose'].append("{}_acc_concentration".format(isoName))
             if allIsos[isoId]['type'] > 0:
                 extracts['depo'].append("{}_acc_total_deposition".format(isoName))
-                extracts['wdep'].append("{}_acc_wet_deposition".format(isoName))
+                extracts['wetd'].append("{}_acc_wet_deposition".format(isoName))
 
         with open(os.path.join(os.path.dirname(__file__),"resources/cdmGribWriterIsotopesTemplate.xml"),) as xmlTemplate:
             xmlTemp = xmlTemplate.read()

@@ -168,7 +168,7 @@ EOF
             naccident_SNAP_conc
             naccident_SNAP_dose
             naccident_SNAP_depo
-            naccident_SNAP_wdep
+            naccident_SNAP_wetd
             naccident_SNAP_prec
             naccident_SNAP_tofa
             );
@@ -181,8 +181,8 @@ EOF
             move($file, $new_name);
         }
 
-        print qq[Add files $mod_dir/*_{conc,dose,depo,prec,wdep,tofa} to $return_file:\n];
-        @files = glob($run_ident . qq[*_{conc,dose,depo,prec,wdep,tofa}]);
+        print qq[Add files $mod_dir/*_{conc,dose,depo,prec,wetd,tofa} to $return_file:\n];
+        @files = glob($run_ident . qq[*_{conc,dose,depo,prec,wetd,tofa}]);
     } elsif ($model eq q[TRAJ]) {
         my $scp_command = "scp $PPIuser\@$PPIhost:$PPIdir/Trajectory*\.DAT .";
         print qq[Running '$scp_command'\n];
