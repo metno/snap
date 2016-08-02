@@ -132,7 +132,7 @@ def convert_to_grib(snapNc, basedir, ident, isotopes):
                     errlog.write("'{fimex}' in {dir} failed".format(fimex=' '.join(procOptions), dir=basedir))
                 else:
                     # append tmp-file to final grib-file
-                    with (open('tmp.grb', 'rb')) as th:
+                    with (open(tempfile, 'rb')) as th:
                         while True:
                             data = th.read(65536)
                             if data:
