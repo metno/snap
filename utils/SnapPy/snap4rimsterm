@@ -123,7 +123,8 @@ def convert_to_grib(snapNc, basedir, ident, isotopes):
                        '--output.type=grib', '--output.config={}'.format(xmlFile)]
         with open(outFile, 'wb') as gh:
             for param in params:
-                os.remove(tempfile)
+                if (os.path.exists(tempfile)):
+                    os.remove(tempfile)
                 procOptions.append('--extract.selectVariables={}'.format(param))
                 print(" ".join(procOptions))
                 proc = subprocess.Popen(procOptions, cwd=basedir, stderr=errlog, stdout=outlog)
@@ -138,7 +139,8 @@ def convert_to_grib(snapNc, basedir, ident, isotopes):
                                 gh.write(th.read())
                             else:
                                 break
-                os.remove(tempfile)
+                if (os.path.exists(tempfile)):
+                    os.remove(tempfile)
 
     errlog.close()
     outlog.close()
