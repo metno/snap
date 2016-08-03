@@ -8,6 +8,7 @@ import re
 import os
 import sys
 import math
+from collections import OrderedDict
 from time import gmtime, strftime
 from datetime import datetime, time, date, timedelta
 
@@ -163,7 +164,7 @@ GRAVITY.FIXED.M/S=0.0002
                 (float(site[3]) >= bb['south']) and (float(site[3]) <= bb['north'])):
                 npps[tag] = {'site': site[0], 'CC': site[1], 'lon': float(site[2]), 'lat': float(site[3]), 'status': site[4]}
         nppsFile.close()
-        return npps
+        return OrderedDict(sorted(npps.items(), key=lambda t: t[0].lower()))
 
     def getSnapInputTemplate(self, metmodel=None):
         """Read a snap input file without source-term parameters, isotopes (isotopes2snapinput) and eventually without meteorology files.
