@@ -1,0 +1,143 @@
+<html>
+<head>
+<meta charset="UTF-8">
+<title>eemep-Runner</title>
+<style type="text/css">
+<!--
+ /* The Modal (background) */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+/* Modal Content/Box */
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto; /* 15% from the top and centered */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%; /* Could be more or less, depending on screen size */
+}
+
+/* The Close Button */
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+-->
+</style>
+<script type="text/javascript">
+function toggle_advanced_sourceterm() {
+        var e = document.getElementById("advanced_sourceterm");
+        if(e.style.display == 'block') {
+            e.style.display = 'none';
+        } else {
+            e.style.display = 'block';
+        }
+    }
+</script>
+</head>
+<body>
+<div id="eemep_working" class="modal">
+
+  <!-- Modal content -->
+  <div class="modal-content">
+    <span class="close">x</span>
+    <h2>EEMEP Log</h2>
+    <pre id="log">
+
+    </pre>
+    <!-- no update wanted by forecasters
+    <form method="get" action="http://localhost/eemeprunner/run">
+    <fieldset>
+        <input type="submit" name="action" value="Update" />
+    </fieldset>
+    </form>
+     -->
+  </div>
+
+</div>
+
+
+<h1>EEmep-Ash-Runner</h1>
+    <form method="get" action="http://localhost/eemeprunner/run">
+     <div style="float: left;">
+     <fieldset>
+       <legend>Source-Term</legend>
+       <!--  -->
+       <label>Eruption Start UTC (YYYY-MM-DD HH:MM):<br><input name="startTime" type="text" value="%CURRENTTIME%" size="20" maxlength="20" ></label>
+       <p><label>Run-Length (in hours)<br><input name="runTime" type="number" step="3" max="120" min="12" value="48"></label></p>
+       <p><label>Ash-Cloud (m over surface) if available<br><input name="cloudheight" type="number" step="500" max="16000" min="0"></label></p>
+         <fieldset>
+         <legend><a href="javascript: toggle_advanced_sourceterm()">Advanced</a></legend>
+         <div id="advanced_sourceterm" style="display: none">
+         <label><input type="checkbox" name="restart_file" value="true">Continue previous run</label>
+         <p />MET-MODEL
+         <select name="metmodel">
+             <option selected="selected" value="nrpa_ec_0p1">EC 0.1, NRPA-domain</option>
+         </select>
+         <br/>EC-Model Runtime
+         <select name="ecmodelrun">
+             <option selected="selected" value="best">Best mixed</option>
+             %ECMODELRUN%
+         </select>
+
+         </div>
+         </fieldset>
+         <p>Volcanoes<br>
+         <select name="volcano" size="20">
+             <option selected="selected" value="">Use Lat-Lon</option>
+           %VOLCANO_OPTIONS%
+       </select>
+       <br>
+       <fieldset>
+       If <b>Use Lat-Lon</b>:<br>
+       <label>Latitude (degN) (e.g. 60.45):<br><input name="latitude" type="number" step="0.1" max="90" min="90"></label><br>
+       <label>Longitude (degE) (e.g. 10.15):<br><input name="longitude" type="number" step="0.1" max="180" min="-180"></label><br>
+       <label>Altitude (m) (e.g. 3300):<br><input name="altitude" type="number" step="1" max="9000" min="0"></label>
+       </fieldset>
+     </fieldset>
+     </div>
+     <div style="float: left;">
+     </div>
+     <div style="clear: both;">
+     <input type="submit" name="action" value="Run" />
+     </div>
+    </form>
+
+</body>
+
+<script type="text/javascript">
+var btnClose = document.getElementsByClassName("close")[0];
+//When the user clicks on <span> (x), close the modal
+btnClose.onclick = function() {
+    eemep.style.display = "none";
+}
+var eemep = document.getElementById('eemep_working');
+var eemepLog = document.getElementById('log');
+
+function updateEemepLog(text) {
+    eemepLog.innerHTML = text;
+    eemep.style.display = "block";
+    //alert(text);
+}
+</script>
+
+</html>

@@ -1,10 +1,24 @@
 #! /usr/bin/env python3
 
 import sys
-from PyQt5 import QtCore, QtGui, QtWidgets, QtWebKit, QtWebKitWidgets
-from Snappy.SnapController import SnapController
+from PyQt5 import QtGui, QtWidgets
+from Snappy import SnapController
+from Snappy import BrowserWidget
+import Snappy.EEMEP.Resources
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
-    ctr = SnapController()
+    tabs = QtWidgets.QTabWidget()
+    snap = SnapController()
+    eemep = BrowserWidget()
+    eemepRes = Snappy.EEMEP.Resources.Resources()
+    eemep.set_html(eemepRes.getStartScreen())
+    tabs.addTab(snap.main, 'SNAP Nuclear Accident')
+    tabs.addTab(eemep, 'EEMEP Ash Cloud')
+    tabs.resize(960,1024)
+    tabs.setWindowTitle('SNAPpy')
+    tabs.setWindowIcon(QtGui.QIcon(snap.res.getIconPath()))
+    tabs.show()
+
+
     sys.exit(app.exec_())
