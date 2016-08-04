@@ -6,9 +6,9 @@ import traceback
 
 from time import gmtime, strftime
 import datetime
-from Snappy.MainBrowserWindow import MainBrowserWindow
+from Snappy import BrowserWidget
 from Snappy.MailImages import sendPngsFromDir
-from Snappy.Resources import Resources
+from Snappy import Resources
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtCore import QProcess, QProcessEnvironment, QThread, QIODevice, QThreadPool, pyqtSignal, pyqtSlot
 
@@ -64,9 +64,7 @@ class _SnapRun():
 class SnapController:
     def __init__(self):
         self.res = Resources()
-        self.main = MainBrowserWindow()
-        self.main.setWindowTitle('SNAPpy')
-        self.main.setWindowIcon(QtGui.QIcon(self.res.getIconPath()))
+        self.main = BrowserWidget()
         self.main.set_html(self.res.getStartScreen())
         self.main.set_form_handler(self._create_snap_form_handler())
         self.main.show()

@@ -1,0 +1,1541 @@
+# Mastin&al:2009a
+# Preliminary spreadsheet of eruption source parameters for volcanoes of the world.
+# Open-File Report, U.S. Geological Survey, 2009. Number 2009-1133.
+# L.G. Mastin, M. Guffanti, J.E. Ewert and J. Spiegel.
+# http://pubs.usgs.gov/of/2009/1133
+#NUMBER,RN,SN,VN,NAME,LOCATION,STATUS,LATITUDE,NS,VF,LONGITUDE,EW,ELEV,TYPE,TIMEFRAME,ERUPTION TYPE
+0100-01-,01,00,-01-,West_Eifel_Volc_Field,Germany,Radiocarbon,50.17,N,*,  6.85,E,600,Maars,D7,S0
+0100-02-,01,00,-02-,Chaine_des_Puys,France,Radiocarbon,45.775,N,*,  2.97,E,1464,Cinder cones,D7,M0
+0100-03-,01,00,-03-,Olot_Volc_Field,Spain,Holocene,42.17,N,*,  2.53,E,893,Pyroclastic cones,U,M0
+0100-04-,01,00,-04-,Calatrava_Volc_Field,Spain,Radiocarbon,38.87,N,*,  4.02,W,1117,Pyroclastic cones,D7,M0
+0101-001,01,01,-001,Larderello,Italy,Historical,43.25,N,, 10.87,E,500,Explosion craters,D6,S0
+0101-003,01,01,-003,Vulsini,Italy,Historical,42.60,N,, 11.93,E,800,Caldera,D7,S0
+0101-004,01,01,-004,Alban_Hills,Italy,Holocene?,41.73,N,, 12.70,E,949,Caldera,?,S0
+0101-01=,01,01,-01-,Campi_Flegrei,Italy,Historical,40.827,N,, 14.139,E,458,Caldera,D5,S0
+0101-02=,01,01,-02-,Vesuvius,Italy,Historical,40.821,N,, 14.426,E,1281,Somma volcano,D2,S2
+0101-03=,01,01,-03-,Ischia,Italy,Historical,40.73,N,, 13.897,E,789,Complex volcano,D6,S0
+0101-041,01,01,-041,Panarea,Italy,Holocene?,38.63,N,, 15.07,E,421,Stratovolcano,?,S0
+0101-042,01,01,-042,Lipari,Italy,Historical,38.48,N,, 14.95,E,602,Stratovolcanoes,D6,S0
+0101-04=,01,01,-04-,Stromboli,Italy,Historical,38.789,N,, 15.213,E,924,Stratovolcano,D1,M1
+0101-05=,01,01,-05-,Vulcano,Italy,Historical,38.404,N,, 14.962,E,500,Stratovolcanoes,D3,S2
+0101-06=,01,01,-06-,Etna,Italy,Historical,37.734,N,, 15.004,E,3330,Stratovolcanoes,D1,M1
+0101-071,01,01,-071,Pantelleria,Italy,Historical,36.77,N,, 12.02,E,836,Shield volcano,D3,S0
+0101-07=,01,01,-07-,Campi_Flegrei Mar Sicilia,Italy,Historical,37.10,N,*, 12.70,E,-8,Submarine volcanoes,D3,M0
+0102-02=,01,02,-02-,Methana,Greece,Historical,37.615,N,, 23.336,E,760,Lava domes,D7,S0
+0102-03=,01,02,-03-,Milos,Greece,Radiocarbon,36.699,N,*, 24.439,E,751,Stratovolcanoes,D6,S0
+0102-04=,01,02,-04-,Santorini,Greece,Historical,36.404,N,, 25.396,E,367,Shield volcanoes,D2,S1
+0102-051,01,02,-051,Yali,Greece,Holocene,36.671,N,, 27.140,E,180,Lava domes,U,S0
+0102-05=,01,02,-05-,Nisyros,Greece,Historical,36.586,N,, 27.160,E,698,Stratovolcano,D3,S0
+0103-00-,01,03,-00-,Kula,Turkey,Holocene,38.58,N,*, 28.52,E,750,Cinder cones,U,M0
+0103-001,01,03,-001,Karapinar_Field,Turkey,Holocene,37.67,N,*, 33.65,E,1302,Cinder cones,U,M0
+0103-002,01,03,-002,Hasan_Dagi,Turkey,Anthropology,38.13,N,, 34.17,E,3253,Stratovolcano,D7,S0
+0103-003,01,03,-003,Gollu_Dag,Turkey,Holocene?,38.25,N,, 34.57,E,2143,Lava dome,?,S0
+0103-004,01,03,-004,Acigol_Nevsehir,Turkey,Anthropology,38.57,N,, 34.52,E,1689,Caldera,D7,S0
+0103-011,01,03,-011,Karaca_Dag,Turkey,Holocene,37.67,N,, 39.83,E,1957,Shield volcano,U,M0
+0103-01=,01,03,-01-,Erciyes_Dagi,Turkey,Holocene?,38.52,N,, 35.48,E,3916,Stratovolcano,?,S0
+0103-021,01,03,-021,Suphan_Dagi,Turkey,Holocene,38.92,N,, 42.82,E,4158,Stratovolcano,D7,S0
+0103-022,01,03,-022,Girekol,Turkey,Holocene,39.17,N,, 43.33,E,,Unknown,U,S0
+0103-02=,01,03,-02-,Nemrut_Dagi,Turkey,Historical,38.65,N,, 42.23,E,2948,Stratovolcano,D5,S0
+0103-03=,01,03,-03-,Tendürek Dagi,Turkey,Historical,39.37,N,, 43.87,E,3584,Shield volcano,D3,M0
+0103-04-,01,03,-04-,Ararat,Turkey,Historical,39.70,N,, 44.30,E,5165,Stratovolcano,D3,S0
+0103-05-,01,03,-05-,Kars_Plateau,Turkey,Holocene?,40.75,N,*, 42.90,E,3000,Volcanic field,?,S0
+0104-01-,01,04,-01-,Elbrus,Russia-SW,Tephrochronology,43.33,N,, 42.45,E,5633,Stratovolcano,D6,S0
+0104-02-,01,04,-02-,Kasbek,Georgia,Tephrochronology,42.70,N,, 44.50,E,5050,Stratovolcano,D7,S0
+0104-03-,01,04,-03-,Kabargin_Oth_Group,Georgia,Holocene,42.55,N,*, 44.00,E,3650,Cinder cones,U,S0
+0104-04-,01,04,-04-,Unnamed,Georgia,Holocene,42.45,N,*, 44.25,E,3750,Cinder cones,U,S0
+0104-05-,01,04,-05-,Unnamed,Georgia,Holocene,41.55,N,*, 43.60,E,3400,Lava cones,U,S0
+0104-06-,01,04,-06-,Aragats,Armenia,Holocene,40.53,N,, 44.20,E,4095,Stratovolcano,U,S0
+0104-07-,01,04,-07-,Ghegam_Ridge,Armenia,Anthropology,40.275,N,*, 44.75,E,3597,Volcanic field,D7,S0
+0104-08-,01,04,-08-,Dar_Alages,Armenia,Anthropology,39.70,N,*, 45.542,E,3329,Pyroclastic cones,D7,S0
+0104-09-,01,04,-09-,Porak,Armenia,Anthropology,40.02,N,, 45.78,E,2800,Stratovolcano,D7,S0
+0104-10-,01,04,-10-,Tskhouk_Karckar,Armenia,Tephrochronology,39.73,N,, 46.02,E,3000,Pyroclastic cones,D7,S0
+0201-01=,02,01,-01-,Jebel_at_Tair,Red Sea,Historical,15.55,N,, 41.83,E,244,Stratovolcano,D1,M1
+0201-021,02,01,-021,Zukur,Red Sea,Holocene,14.02,N,, 42.75,E,624,Shield volcano,U,M0
+0201-022,02,01,-022,Hanish,Red Sea,Holocene,13.72,N,, 42.73,E,422,Shield volcano,U,M0
+0201-02=,02,01,-02-,Jebel_Zubair,Red Sea,Historical,15.05,N,, 42.18,E,191,Shield volcano,D3,M0
+0201-03=,02,01,-03-,Jalua,Ethiopia,Holocene,15.042,N,, 39.82,E,713,Stratovolcano,U,M0
+0201-041,02,01,-041,Dallol,Ethiopia,Historical,14.242,N,, 40.30,E,-48,Explosion craters,D2,S0
+0201-04=,02,01,-04-,Alid,Ethiopia,Holocene,14.88,N,, 39.92,E,904,Stratovolcano,U,S0
+0201-05=,02,01,-05-,Gada_Ale,Ethiopia,Holocene,13.975,N,, 40.408,E,287,Stratovolcano,U,M0
+0201-06=,02,01,-06-,Alu,Ethiopia,Holocene,13.825,N,, 40.508,E,429,Fissure vents,U,M0
+0201-071,02,01,-071,Borale_Ale,Ethiopia,Holocene,13.725,N,, 40.60,E,668,Stratovolcano,U,M0
+0201-07=,02,01,-07-,Dalaffilla,Ethiopia,Historical,13.792,N,, 40.55,E,613,Stratovolcano,D1,M0
+0201-08=,02,01,-08-,Erta_Ale,Ethiopia,Historical,13.60,N,, 40.67,E,613,Shield volcano,D1,M1
+0201-091,02,01,-091,Hayli_Gubbi,Ethiopia,Holocene,13.50,N,, 40.72,E,521,Shield volcano,U,M0
+0201-09=,02,01,-09-,Ale_Bagu,Ethiopia,Holocene,13.52,N,, 40.63,E,1031,Stratovolcano,U,M0
+0201-101,02,01,-101,Nabro,Ethiopia,Holocene?,13.37,N,, 41.70,E,2218,Stratovolcano,?,S0
+0201-102,02,01,-102,Mallahle,Ethiopia,Holocene?,13.27,N,, 41.65,E,1875,Stratovolcano,?,S0
+0201-103,02,01,-103,Sork_Ale,Ethiopia,Holocene?,13.18,N,, 41.725,E,1611,Stratovolcano,?,M0
+0201-104,02,01,-104,Asavyo,Ethiopia,Holocene,13.07,N,, 41.60,E,1200,Shield volcano,U,M0
+0201-105,02,01,-105,Mat_Ala,Ethiopia,Holocene,13.10,N,, 41.15,E,523,Shield volcano,U,M0
+0201-106,02,01,-106,Tat_Ali,Ethiopia,Holocene,13.28,N,, 41.07,E,700,Shield volcano,U,M0
+0201-107,02,01,-107,Borawli,Ethiopia,Holocene,13.30,N,, 40.98,E,812,Stratovolcano,U,M0
+0201-10=,02,01,-10-,Dubbi,Ethiopia,Historical,13.58,N,, 41.808,E,1625,Stratovolcano,D3,M0
+0201-111,02,01,-111,Ma_Alalta,Ethiopia,Holocene,13.02,N,, 40.20,E,1815,Stratovolcano,U,S0
+0201-112,02,01,-112,Alayta,Ethiopia,Historical,12.88,N,, 40.57,E,1501,Shield volcano,D2,M0
+0201-113,02,01,-113,Dabbahu,Ethiopia,Historical,12.60,N,, 40.48,E,1442,Stratovolcano,D1,S0
+0201-114,02,01,-114,Dabbayra,Ethiopia,Holocene,12.38,N,, 40.07,E,1302,Shield volcano,U,M0
+0201-115,02,01,-115,Manda_Hararo,Ethiopia,Historical,12.17,N,, 40.82,E,600,Shield volcanoes,D1,M0
+0201-116,02,01,-116,Groppo,Ethiopia,Holocene,11.73,N,, 40.25,E,930,Stratovolcano,U,S0
+0201-11=,02,01,-11-,Afdera,Ethiopia,Holocene?,13.08,N,, 40.85,E,1295,Stratovolcano,?,S0
+0201-121,02,01,-121,Borawli,Ethiopia,Holocene,11.63,N,, 41.45,E,875,Lava domes,U,S0
+0201-122,02,01,-122,Manda_Inakir,Ethiopia,Historical,12.38,N,, 42.20,E,600,Fissure vents,D2,M0
+0201-123,02,01,-123,Mousa_Alli,Ethiopia,Holocene,12.47,N,, 42.40,E,2028,Stratovolcano,U,S0
+0201-124,02,01,-124,Gufa,Ethiopia,Holocene,12.55,N,*, 42.53,E,600,Volcanic field,U,M0
+0201-125,02,01,-125,Assab_Volc_Field,Ethiopia,Holocene,12.95,N,*, 42.43,E,987,Volcanic field,U,M0
+0201-126,02,01,-126,Ardoukoba,Djibouti,Historical,11.58,N,*, 42.47,E,298,Fissure vents,D2,M0
+0201-12=,02,01,-12-,Kurub,Ethiopia,Holocene,11.88,N,, 41.208,E,625,Shield volcano,U,M0
+0201-141,02,01,-141,Dama_Ali,Ethiopia,Historical,11.28,N,, 41.63,E,1068,Shield volcano,D5,M0
+0201-151,02,01,-151,Yangudi,Ethiopia,Holocene,10.58,N,, 41.042,E,1383,Complex volcano,U,S0
+0201-15=,02,01,-15-,Gabillema,Ethiopia,Holocene,11.08,N,, 41.27,E,1459,Stratovolcano,U,S0
+0201-16=,02,01,-16-,Ayelu,Ethiopia,Holocene,10.082,N,, 40.702,E,2145,Stratovolcano,U,S0
+0201-171,02,01,-171,Hertali,Ethiopia,Holocene, 9.78,N,, 40.33,E,900,Fissure vent,U,M0
+0201-172,02,01,-172,Liado_Hayk,Ethiopia,Holocene?, 9.57,N,*, 40.28,E,878,Maars,?,S0
+0201-17=,02,01,-17-,Adwa,Ethiopia,Holocene,10.070,N,, 40.840,E,1733,Stratovolcano,U,S0
+0201-18=,02,01,-18-,Dofen,Ethiopia,Holocene, 9.35,N,, 40.13,E,1151,Stratovolcano,U,S0
+0201-191,02,01,-191,Beru,Ethiopia,Holocene, 8.95,N,, 39.75,E,1100,Volcanic field,U,M0
+0201-19=,02,01,-19-,Fentale,Ethiopia,Historical, 8.975,N,, 39.93,E,2007,Stratovolcano,D3,S0
+0201-20-,02,01,-20-,Kone,Ethiopia,Historical, 8.80,N,, 39.692,E,1619,Calderas,D3,S0
+0201-201,02,01,-201,Unnamed,Ethiopia,Holocene, 8.70,N,*, 39.63,E,1300,Pyroclastic cones,U,M0
+0201-21-,02,01,-21-,Boset_Bericha,Ethiopia,Holocene, 8.558,N,, 39.475,E,2447,Stratovolcanoes,U,S0
+0201-22-,02,01,-22-,Bishoftu_Volc_Field,Ethiopia,Holocene, 8.78,N,*, 38.98,E,1850,Fissure vents,U,M0
+0201-221,02,01,-221,Unnamed,Ethiopia,Holocene, 8.62,N,*, 38.95,E,1800,Fissure vents,U,M0
+0201-222,02,01,-222,Sodore,Ethiopia,Holocene, 8.43,N,*, 39.35,E,1765,Pyroclastic cones,U,M0
+0201-23-,02,01,-23-,Gedamsa Caldera,Ethiopia,Holocene, 8.35,N,, 39.18,E,1984,Caldera,U,S0
+0201-24-,02,01,-24-,Bora_Bericcio,Ethiopia,Holocene, 8.27,N,, 39.03,E,2285,Pumice cones,U,S0
+0201-25-,02,01,-25-,Tullu_Moje,Ethiopia,Anthropology, 8.158,N,, 39.13,E,2349,Pumice cone,D2,S0
+0201-251,02,01,-251,Unnamed,Ethiopia,Holocene, 8.07,N,*, 39.07,E,1800,Fissure vents,U,M0
+0201-252,02,01,-252,East_Zway,Ethiopia,Holocene, 7.95,N,*, 38.93,E,1889,Fissure vents,U,M0
+0201-26-,02,01,-26-,Butajiri_Silti_Field,Ethiopia,Holocene, 8.05,N,*, 38.35,E,2281,Fissure vents,U,M0
+0201-27-,02,01,-27-,Alutu,Ethiopia,Radiocarbon, 7.77,N,, 38.78,E,2335,Stratovolcano,D7,S0
+0201-28-,02,01,-28-,O_a_Caldera,Ethiopia,Holocene, 7.47,N,, 38.58,E,2075,Caldera,U,S0
+0201-29-,02,01,-29-,Corbetti Caldera,Ethiopia,Holocene, 7.18,N,, 38.43,E,2320,Caldera,U,S0
+0201-291,02,01,-291,Bilate_River_Field,Ethiopia,Holocene, 7.07,N,*, 38.10,E,1700,Maars,U,S0
+0201-292,02,01,-292,Tepi,Ethiopia,Holocene, 7.42,N,*, 35.43,E,2728,Shield volcano,U,M0
+0201-293,02,01,-293,Hobicha Caldera,Ethiopia,Holocene?, 6.78,N,, 37.83,E,1800,Caldera,?,M0
+0201-30-,02,01,-30-,Chiracha,Ethiopia,Holocene?, 6.65,N,, 38.12,E,1650,Stratovolcano,?,S0
+0201-31-,02,01,-31-,Tosa_Sucha,Ethiopia,Holocene, 5.93,N,*, 37.57,E,1650,Cinder cones,U,M0
+0201-311,02,01,-311,Unnamed,Ethiopia,Holocene, 5.65,N,*, 37.67,E,1200,Cinder cones,U,M0
+0201-32-,02,01,-32-,Korath_Range,Ethiopia,Holocene?, 5.10,N,*, 35.88,E,912,Tuff cones,?,M0
+0201-33-,02,01,-33-,Mega_Basalt_Field,Ethiopia,Holocene, 4.08,N,*, 37.42,E,1067,Pyroclastic cones,U,M0
+0202-001,02,02,-001,North_Island,Africa-E,Holocene, 4.07,N,, 36.05,E,520,Tuff cones,U,S0
+0202-01=,02,02,-01-,Central_Island,Africa-E,Holocene, 3.50,N,, 36.042,E,550,Tuff cones,U,M0
+0202-021,02,02,-021,Marsabit,Africa-E,Holocene?, 2.32,N,, 37.97,E,1707,Shield volcano,?,M0
+0202-02=,02,02,-02-,South_Island,Africa-E,Historical, 2.63,N,, 36.60,E,800,Stratovolcano,D3,M0
+0202-03=,02,02,-03-,The_Barrier,Africa-E,Historical, 2.32,N,, 36.57,E,1032,Shield volcano,D2,S1
+0202-04-,02,02,-04-,Namarunu,Africa-E,Tephrochronology, 1.98,N,, 36.43,E,817,Shield volcano,D7,M0
+0202-05-,02,02,-05-,Segererua_Plateau,Africa-E,Holocene, 1.57,N,*, 37.90,E,699,Pyroclastic cones,U,M0
+0202-051,02,02,-051,Emuruangogolak,Africa-E,Radiocarbon, 1.50,N,, 36.33,E,1328,Shield volcano,D2,S0
+0202-052,02,02,-052,Silali,Africa-E,Ar/Ar, 1.15,N,, 36.23,E,1528,Shield volcano,D7,S0
+0202-053,02,02,-053,Paka,Africa-E,Ar/Ar, 0.92,N,, 36.18,E,1697,Shield volcano,D7,S0
+0202-054,02,02,-054,Korosi,Africa-E,Holocene, 0.77,N,, 36.12,E,1446,Shield volcano,U,S0
+0202-055,02,02,-055,Ol_Kokwe,Africa-E,Holocene, 0.62,N,, 36.075,E,1130,Shield volcano,U,M0
+0202-056,02,02,-056,Nyambeni_Hills,Africa-E,Holocene, 0.23,N,, 37.87,E,750,Shield volcano,U,M0
+0202-06=,02,02,-06-,Menengai,Africa-E,Tephrochronology, 0.20,S,, 36.07,E,2278,Shield volcano,D7,S0
+0202-071,02,02,-071,Elmenteita_Badlands,Africa-E,Holocene, 0.52,S,*, 36.27,E,2126,Pyroclastic cones,U,M0
+0202-07=,02,02,-07-,Homa_Mountain,Africa-E,Holocene, 0.38,S,, 34.50,E,1751,Complex volcano,U,M0
+0202-08=,02,02,-08-,Ol_Doinyo_Eburru,Africa-E,Holocene, 0.65,S,, 36.22,E,2856,Complex volcano,U,S0
+0202-09=,02,02,-09-,Olkaria,Africa-E,Radiocarbon, 0.904,S,*, 36.292,E,2434,Pumice cones,D4,S0
+0202-10=,02,02,-10-,Longonot,Africa-E,Anthropology, 0.914,S,, 36.446,E,2776,Stratovolcano,D3,S0
+0202-11=,02,02,-11-,Suswa,Africa-E,Holocene, 1.175,S,, 36.35,E,2356,Shield volcano,U,S0
+0202-12=,02,02,-12-,Ol_Doinyo_Lengai,Africa-E,Historical, 2.764,S,, 35.914,E,2962,Stratovolcano,D1,S2
+0202-13=,02,02,-13-,Chyulu_Hills,Africa-E,Anthropology, 2.68,S,*, 37.88,E,2188,Volcanic field,D3,M0
+0202-15=,02,02,-15-,Kilimanjaro,Africa-E,Holocene, 3.07,S,, 37.35,E,5895,Stratovolcano,U,S0
+0202-161,02,02,-161,Igwisi_Hills,Africa-E,Holocene, 4.87,S,*, 31.92,E,,Tuff cones,U,S0
+0202-162,02,02,-162,Unnamed,Africa-E,Holocene, 8.63,S,, 33.57,E,,Pyroclastic cone,U,M0
+0202-163,02,02,-163,SW_Usangu_Basin,Africa-E,Holocene, 8.75,S,*, 33.80,E,2179,Lava domes,U,S0
+0202-164,02,02,-164,Ngozi,Africa-E,Holocene, 8.97,S,, 33.57,E,2622,Caldera,U,S0
+0202-165,02,02,-165,Izumbwe_Mpoli,Africa-E,Holocene, 8.93,S,, 33.40,E,1568,Pyroclastic cones,U,S0
+0202-166,02,02,-166,Rungwe,Africa-E,Holocene, 9.13,S,, 33.67,E,2961,Stratovolcano,U,S0
+0202-16=,02,02,-16-,Meru,Africa-E,Historical, 3.25,S,, 36.75,E,4565,Stratovolcano,D2,S0
+0202-17=,02,02,-17-,Kieyo,Africa-E,Historical, 9.23,S,, 33.78,E,2175,Stratovolcano,D3,S0
+0203-001,02,03,-001,Fort_Portal,Africa-C,Radiocarbon, 0.70,N,*, 30.25,E,1615,Tuff cones,D7,M0
+0203-002,02,03,-002,Kyatwa,Africa-C,Holocene?, 0.45,N,*, 30.25,E,1430,Tuff cones,?,S0
+0203-003,02,03,-003,Katwe_Kikorongo,Africa-C,Holocene, 0.08,S,*, 29.92,E,1067,Tuff cones,U,S0
+0203-004,02,03,-004,Bunyaruguru,Africa-C,Holocene, 0.20,S,*, 30.08,E,1554,Maars,U,S0
+0203-005,02,03,-005,Katunga,Africa-C,Holocene, 0.471,S,, 30.191,E,1707,Tuff cone,U,S0
+0203-01=,02,03,-01-,May_ya_moto,Africa-C,Fumarolic, 0.93,S,, 29.33,E,950,Fumarole field,?,S0
+0203-02=,02,03,-02-,Nyamuragira,Africa-C,Historical, 1.408,S,, 29.20,E,3058,Shield volcano,D1,M1
+0203-03=,02,03,-03-,Nyiragongo,Africa-C,Historical, 1.52,S,, 29.25,E,3470,Stratovolcano,D1,M1
+0203-04-,02,03,-04-,Karisimbi,Africa-C,Potassium-Argon, 1.50,S,, 29.45,E,4507,Stratovolcano,D7,M0
+0203-05-,02,03,-05-,Visoke,Africa-C,Historical, 1.47,S,, 29.492,E,3711,Stratovolcano,D2,S0
+0203-06-,02,03,-06-,Muhavura,Africa-C,Holocene, 1.38,S,, 29.67,E,4127,Stratovolcano,U,M0
+0203-07-,02,03,-07-,Bufumbira,Africa-C,Holocene?, 1.23,S,*, 29.72,E,2440,Cinder cones,?,M0
+0203-08-,02,03,-08-,Tshibinda,Africa-C,Holocene, 2.32,S,*, 28.75,E,1460,Cinder cones,U,M0
+0204-001,02,04,-001,Sao_Tome,Africa-W,Holocene?, 0.20,N,,  6.58,E,2024,Shield volcano,?,M0
+0204-002,02,04,-002,San_Carlos,Africa-W,Holocene, 3.35,N,,  8.52,E,2260,Shield volcano,U,M0
+0204-003,02,04,-003,San_Joaquin,Africa-W,Holocene, 3.35,N,,  8.63,E,2009,Shield volcano,U,M0
+0204-004,02,04,-004,Santa_Isabel,Africa-W,Historical, 3.58,N,*,  8.75,E,3007,Shield volcano,D2,M0
+0204-011,02,04,-011,Tombel_Graben,Africa-W,Holocene, 4.75,N,*,  9.67,E,500,Cinder cones,U,M0
+0204-01=,02,04,-01-,Cameroon,Africa-W,Historical, 4.203,N,,  9.170,E,4095,Stratovolcano,D1,M1
+0204-02-,02,04,-02-,Manengouba,Africa-W,Holocene?, 5.03,N,,  9.83,E,2411,Stratovolcano,?,M0
+0204-03-,02,04,-03-,Oku_Volc_Field,Africa-W,Holocene?, 6.25,N,*, 10.50,E,3011,Stratovolcano,?,M0
+0204-04-,02,04,-04-,Ngaoundere_Plateau,Africa-W,Holocene?, 7.25,N,*, 13.67,E,,Volcanic field,?,M0
+0204-05-,02,04,-05-,Biu_Plateau,Africa-W,Holocene?,10.75,N,*, 12.00,E,,Volcanic field,?,M0
+0205-001,02,05,-001,Todra_Volc_Field,Africa-N,Holocene,17.68,N,*,  8.50,E,1780,Cinder cones,U,M0
+0205-002,02,05,-002,Tin_Zaouatene_Volc_Field,Africa-N,Holocene,19.83,N,*,  2.83,E,,Volcanic field,U,M0
+0205-003,02,05,-003,In_Ezzane_Volc_Field,Africa-N,Holocene?,23.00,N,*, 10.83,E,,Volcanic field,?,M0
+0205-004,02,05,-004,Tahalra_Volc_Field,Africa-N,Holocene,22.67,N,*,  5.00,E,1467,Pyroclastic cones,U,M0
+0205-005,02,05,-005,Atakor_volc_field,Africa-N,Holocene,23.33,N,*,  5.83,E,2918,Scoria cones,U,M0
+0205-006,02,05,-006,Manzaz_volc_field,Africa-N,Holocene,23.92,N,*,  5.83,E,1672,Scoria cones,U,M0
+0205-007,02,05,-007,Haruj,Africa-N,Holocene,27.25,N,*, 17.50,E,1200,Volcanic field,U,M0
+0205-008,02,05,-008,Wau_en_Namus,Africa-N,Holocene?,25.05,N,*, 17.55,E,547,Caldera,?,M0
+0205-009,02,05,-009,Toh_Tarso,Africa-N,Holocene,21.33,N,*, 16.33,E,2000,Volcanic field,U,M0
+0205-01=,02,05,-01-,Tousside_Tarso,Africa-N,Holocene,21.03,N,, 16.45,E,3265,Stratovolcano,U,S0
+0205-021,02,05,-021,Koussi_Emi,Africa-N,Holocene,19.80,N,, 18.53,E,3415,Pyroclastic shield,U,S0
+0205-02=,02,05,-02-,Voon_Tarso,Africa-N,Fumarolic,20.92,N,, 17.28,E,3100,Stratovolcano,U,S0
+0205-03-,02,05,-03-,Marra_Jebel,Africa-N,Radiocarbon,12.95,N,, 24.27,E,3042,Volcanic field,D7,M0
+0205-04-,02,05,-04-,Kutum_volc_field,Africa-N,Holocene?,14.57,N,*, 25.85,E,,Scoria cones,?,M0
+0205-05-,02,05,-05-,Meidob_volc_field,Africa-N,Holocene,15.32,N,*, 26.47,E,2000,Scoria cones,D7,M0
+0205-06-,02,05,-06-,Bayuda_volc_field,Africa-N,Radiocarbon,18.33,N,*, 32.75,E,670,Cinder cones,D6,M0
+0205-07-,02,05,-07-,Umm_Arafieb_Jebel,Africa-N,Holocene?,18.17,N,*, 33.83,E,,Shield volcano,?,M0
+0300-01-,03,00,-01-,Sharat_Kovakab,Syria,Holocene,36.53,N,*, 40.85,E,534,Volcanic field,U,M0
+0300-02-,03,00,-02-,Unnamed,Syria,Historical,36.67,N,*, 37.00,E,,Volcanic field,D6,M0
+0300-03-,03,00,-03-,Golan_Heights,Syria,Holocene,33.10,N,*, 35.97,E,1197,Volcanic field,U,M0
+0300-04-,03,00,-04-,Unnamed,Syria,Holocene,33.00,N,*, 36.43,E,945,Volcanic field,U,M0
+0300-05-,03,00,-05-,Es_Safa,Syria,Historical,33.25,N,*, 37.07,E,979,Volcanic field,D3,M0
+0300-06-,03,00,-06-,Druze_Jabal_ad,Syria,Holocene,32.658,N,*, 36.425,E,1803,Volcanic field,U,M0
+0301-001,03,01,-001,Al_Harrah,Arabia-W,Holocene,31.08,N,*, 38.42,E,1100,Volcanic field,U,M0
+0301-01=,03,01,-01-,Harrat_ar_Rahah,Arabia-W,Anthropology,27.80,N,*, 36.17,E,1950,Volcanic field,U,M0
+0301-02=,03,01,-02-,Harrat_Uwayrid,Arabia-W,Anthropology,27.08,N,*, 37.25,E,1920,Volcanic field,D6,M0
+0301-04-,03,01,-04-,Lunayyir_Harrat,Arabia-W,Historical,25.17,N,*, 37.75,E,1370,Volcanic field,D6,M0
+0301-05=,03,01,-05-,Ithnayn_Harrat,Arabia-W,Holocene,26.58,N,*, 40.20,E,1625,Volcanic field,U,M0
+0301-06=,03,01,-06-,Khaybar_Harrat,Arabia-W,Historical,25.00,N,*, 39.92,E,2093,Volcanic field,D6,M0
+0301-071,03,01,-071,Kishb_Harrat,Arabia-W,Holocene,22.80,N,*, 41.38,E,1475,Volcanic field,U,M0
+0301-072,03,01,-072,Birk_Harrat_al,Arabia-W,Holocene,18.37,N,*, 41.63,E,381,Volcanic field,U,M0
+0301-07=,03,01,-07-,Rahat_Harrat,Arabia-W,Historical,23.08,N,*, 39.78,E,1744,Volcanic field,D6,M0
+0301-08-,03,01,-08-,Yar_Jabal,Arabia-W,Historical,17.05,N,*, 42.83,E,305,Volcanic field,D3,M0
+0301-09-,03,01,-09-,Arhab_Harra_of,Arabia-S,Historical,15.63,N,*, 44.08,E,3100,Volcanic field,D6,M0
+0301-10-,03,01,-10-,Marha_Jabal_el-,Arabia-S,Holocene?,15.245,N,, 44.236,E,2506,Tuff cone,?,M0
+0301-11-,03,01,-11-,Haylan_Jabal,Arabia-S,Anthropology,15.43,N,*, 44.78,E,1550,Volcanic field,D7,M0
+0301-12-,03,01,-12-,Dhamar_Harras_of,Arabia-S,Historical,14.57,N,*, 44.67,E,3500,Volcanic field,D2,M0
+0301-15-,03,01,-15-,Unnamed,Arabia-S,Uncertain,12.25,N,, 45.00,E,,Submarine volcano,?,U0
+0301-16-,03,01,-16-,Sawad_Harra_es,Arabia-S,Historical,13.58,N,*, 46.12,E,1737,Volcanic field,D6,M0
+0301-17-,03,01,-17-,Harra_of_Bal_Haf,Arabia-S,Holocene,14.05,N,*, 48.33,E,233,Volcanic field,U,M0
+0301-18-,03,01,-18-,Bir_Borhut,Arabia-S,Holocene?,15.55,N,*, 50.63,E,,Volcanic field,?,M0
+0302-00-,03,02,-00-,Unnamed,Iran,Holocene,39.33,N,, 45.17,E,,Volcanic field,U,S0
+0302-001,03,02,-001,Sahand,Iran,Holocene,37.75,N,, 46.43,E,3707,Stratovolcano,U,S0
+0302-002,03,02,-002,Sabalan,Iran,Holocene,38.25,N,, 47.92,E,4811,Stratovolcano,U,S0
+0302-01-,03,02,-01-,Damavand,Iran,Uranium-series,35.951,N,, 52.109,E,5670,Stratovolcano,D7,S0
+0302-02-,03,02,-02-,Qaleh_Hasan_Ali,Iran,Holocene?,29.40,N,*, 57.57,E,,Maars,?,M0
+0302-03-,03,02,-03-,Bazman,Iran,Fumarolic,28.07,N,, 60.00,E,3490,Stratovolcano,U,S0
+0302-04-,03,02,-04-,Unnamed,Iran,Holocene?,28.17,N,*, 60.67,E,,Volcanic field,?,M0
+0302-05-,03,02,-05-,Taftan,Iran,Holocene,28.60,N,, 61.13,E,3940,Stratovolcano,U,S0
+0302-06-,03,02,-06-,Dacht_i_Navar_Group,Afghanistan,Holocene?,33.95,N,*, 67.92,E,3800,Lava domes,?,S0
+0302-07-,03,02,-07-,Vakak_Group,Afghanistan,Holocene?,34.25,N,*, 67.97,E,3190,Volcanic field,?,S0
+0303-001,03,03,-001,La_Grille,Indian O.-W,Holocene,11.47,S,, 43.33,E,1087,Shield volcano,U,M0
+0303-011,03,03,-011,Ambre_Bobaomby,Madagascar,Holocene,12.60,S,*, 49.15,E,1475,Volcanic field,U,M0
+0303-012,03,03,-012,Nosy_Be,Madagascar,Holocene,13.32,S,*, 48.48,E,214,Cinder cones,U,S0
+0303-013,03,03,-013,Ankaizina_Field,Madagascar,Holocene,14.30,S,*, 48.67,E,2878,Cinder cones,U,M0
+0303-014,03,03,-014,Itasy_volc_field,Madagascar,Radiocarbon,19.00,S,*, 46.77,E,1800,Scoria cones,D7,S0
+0303-015,03,03,-015,Ankaratra_Field,Madagascar,Holocene,19.40,S,*, 47.20,E,2644,Cinder cones,U,S0
+0303-01=,03,03,-01-,Karthala,Indian O.-W,Historical,11.75,S,, 43.38,E,2361,Shield volcano,D1,M1
+0303-02=,03,03,-02-,Fournaise_Piton_de_la,Indian O.-W,Historical,21.231,S,, 55.713,E,2632,Shield volcano,D1,M1
+0304-00-,03,04,-00-,Boomerang_Seamount,Indian O.-S,Historical,37.721,S,, 77.825,E,-650,Submarine volcano,D2,U0
+0304-001,03,04,-001,Amsterdam_Island,Indian O.-S,Holocene,37.83,S,, 77.52,E,881,Stratovolcano,U,M0
+0304-002,03,04,-002,St_Paul,Indian O.-S,Historical,38.72,S,, 77.53,E,268,Stratovolcano,D4,M0
+0304-011,03,04,-011,McDonald_Islands,Indian O.-S,Historical,53.03,S,, 72.60,E,230,Complex volcano,D1,S1
+0304-01=,03,04,-01-,Heard,Indian O.-S,Historical,53.106,S,, 73.513,E,2745,Stratovolcano,D1,M1
+0304-02=,03,04,-02-,Kerguelen_Islands,Indian O.-S,Holocene?,49.58,S,, 69.50,E,1840,Stratovolcanoes,?,S0
+0304-03-,03,04,-03-,Ile_de_la_Est,Indian O.-S,Holocene?,46.43,S,, 52.20,E,1090,Stratovolcano,?,M0
+0304-04-,03,04,-04-,Ile_de_laPossession,Indian O.-S,Holocene,46.42,S,, 51.75,E,934,Stratovolcano,U,M0
+0304-05-,03,04,-05-,Ile_aux_Cochons,Indian O.-S,Holocene,46.10,S,, 50.23,E,775,Stratovolcano,U,M0
+0304-06-,03,04,-06-,Prince_Edward_Island,Indian O.,Holocene,46.63,S,, 37.95,E,672,Shield volcano,U,M0
+0304-07-,03,04,-07-,Marion_Island,Indian O.-S,Historical,46.90,S,, 37.75,E,1230,Shield volcanoes,D1,M1
+0305-01=,03,05,-01-,Unnamed,Indian O.-E,Uncertain,11.75,N,, 80.75,E,,Submarine volcano ?,?,U0
+0401-011,04,01,-011,Whangarei,New Zealand,Holocene?,35.75,S,*,174.27,E,397,Cinder cones,?,M0
+0401-01=,04,01,-01-,Kaikohe_Bay_of_Islands,New Zealand,Radiocarbon,35.30,S,*,173.90,E,388,Volcanic field,D6,M0
+0401-021,04,01,-021,Mayor_Island,New Zealand,Radiocarbon,37.28,S,,176.25,E,355,Shield volcano,D7,S0
+0401-02=,04,01,-02-,Auckland_Field,New Zealand,Radiocarbon,36.90,S,*,174.87,E,260,Volcanic field,D6,M0
+0401-03=,04,01,-03-,Taranaki_Egmont,New Zealand,Historical,39.30,S,,174.07,E,2518,Stratovolcano,D3,S0
+0401-04=,04,01,-04-,White_Island,New Zealand,Historical,37.52,S,,177.18,E,321,Stratovolcanoes,D1,S1
+0401-05=,04,01,-05-,Okataina,New Zealand,Historical,38.12,S,,176.50,E,1111,Lava domes,D2,S0
+0401-06-,04,01,-06-,Reporoa,New Zealand,Tephrochronology,38.42,S,,176.33,E,592,Caldera,D6,S0
+0401-061,04,01,-061,Maroa,New Zealand,Tephrochronology,38.42,S,,176.08,E,1156,Calderas,D6,S0
+0401-07=,04,01,-07-,Taupo,New Zealand,Radiocarbon,38.82,S,,176.00,E,760,Caldera,D6,S0
+0401-08=,04,01,-08-,Tongariro,New Zealand,Historical,39.13,S,,175.642,E,1978,Stratovolcanoes,D2,S1
+0401-101,04,01,-101,Clark,New Zealand,Fumarolic,36.446,S,,177.839,E,-860,Submarine volcano,U,U0
+0401-102,04,01,-102,Tangaroa,New Zealand,Fumarolic,36.321,S,,178.028,E,600,Submarine volcano,U,U0
+0401-10=,04,01,-10-,Ruapehu,New Zealand,Historical,39.28,S,,175.57,E,2797,Stratovolcano,D1,S1
+0401-11-,04,01,-11-,Rumble_V,New Zealand,Fumarolic,36.142,S,,178.196,E,400,Submarine volcano,U,U0
+0401-12-,04,01,-12-,Rumble_IV,New Zealand,Fumarolic,36.13,S,,178.05,E,500,Submarine volcano,U,U0
+0401-13-,04,01,-13-,Rumble_III,New Zealand,Hydrophonic,35.745,S,,178.478,E,-220,Submarine volcano,D2,U0
+0401-131,04,01,-131,Rumble_II_West,New Zealand,Fumarolic,35.353,S,,178.527,E,1200,Submarine volcano,U,U0
+0401-14-,04,01,-14-,Healy,New Zealand,Radiocarbon,35.004,S,,178.973,E,980,Submarine volcano,D6,U0
+0401-15-,04,01,-15-,Brothers,New Zealand,Fumarolic,34.875,S,,179.075,E,-1350,Submarine volcano,U,U0
+0402-001,04,02,-001,Volcano_W,Kermadec Is,Fumarolic,31.85,S,,179.18,W,-900,Submarine volcanoes,U,U0
+0402-01=,04,02,-01-,Curtis_Island,Kermadec Is,Uncertain,30.542,S,,178.561,W,137,Submarine volcano,?,S0
+0402-021,04,02,-021,Macauley_Island,Kermadec Is,Radiocarbon,30.20,S,,178.47,W,238,Caldera,D7,M0
+0402-022,04,02,-022,Giggenbach,Kermadec Is,Fumarolic,30.036,S,,178.712,W,-65,Submarine volcano,U,U0
+0402-03=,04,02,-03-,Raoul_Island,Kermadec Is,Historical,29.27,S,,177.92,W,516,Stratovolcano,D1,S0
+0402-05-,04,02,-05-,Monowai_Seamount,Kermadec Is,Historical,25.887,S,,177.188,W,-132,Submarine volcano,D1,U0
+0403-001,04,03,-001,Unnamed,Tonga-SW Pacific,Fumarolic,24.80,S,,177.02,W,-385,Submarine volcano,U,U0
+0403-011,04,03,-011,Unnamed,Tonga-SW Pacific,Fumarolic,21.15,S,,175.75,W,-65,Submarine volcano,U,U0
+0403-01=,04,03,-01-,Unnamed,Tonga-SW Pacific,Historical,21.38,S,,175.65,W,-500,Submarine volcano,D2,U0
+0403-03=,04,03,-03-,Unnamed,Tonga-SW Pacific,Historical,20.85,S,,175.53,W,-13,Submarine volcano,D2,S0
+0403-04=,04,03,-04-,Hunga_Tonga_Hunga_Ha_apai,Tonga-SW Pacific,Historical,20.57,S,,175.38,W,149,Submarine volcano,D2,S0
+0403-05=,04,03,-05-,Falcon_Island,Tonga-SW Pacific,Historical,20.32,S,,175.42,W,-17,Submarine volcano,D2,S0
+0403-061,04,03,-061,Kao,Tonga-SW Pacific,Holocene,19.67,S,,175.03,W,1030,Stratovolcano,U,S0
+0403-06=,04,03,-06-,Tofua,Tonga-SW Pacific,Historical,19.75,S,,175.07,W,515,Caldera,D2,S0
+0403-07=,04,03,-07-,Metis_Shoal,Tonga-SW Pacific,Historical,19.18,S,,174.87,W,43,Submarine volcano,D2,S0
+0403-08=,04,03,-08-,Home_Reef,Tonga-SW Pacific,Historical,18.992,S,,174.775,W,-2,Submarine volcano,D1,S0
+0403-091,04,03,-091,Unnamed,Tonga-SW Pacific,Historical,18.325,S,,174.365,W,-40,Submarine volcano,D1,S0
+0403-09=,04,03,-09-,Late,Tonga-SW Pacific,Historical,18.806,S,,174.65,W,540,Stratovolcano,D3,S0
+0403-101,04,03,-101,Tafahi,Tonga-SW Pacific,Holocene?,15.85,S,,173.72,W,560,Stratovolcano,?,S0
+0403-102,04,03,-102,Curacoa,Tonga-SW Pacific,Historical,15.62,S,,173.67,W,-33,Submarine volcano,D2,S0
+0403-10=,04,03,-10-,Fonualei,Tonga-SW Pacific,Historical,18.02,S,,174.325,W,180,Stratovolcano,D2,S0
+0403-11=,04,03,-11-,Niuafoou,Tonga-SW Pacific,Historical,15.60,S,,175.63,W,260,Shield volcano,D2,M0
+0404-00-,04,04,-00-,Vailuluu,Samoa-SW Pacific,Historical,14.215,S,,169.058,W,-592,Submarine volcano,D1,U0
+0404-001,04,04,-001,Tau,Samoa-SW Pacific,Holocene,14.23,S,,169.454,W,931,Shield volcano,U,M0
+0404-01=,04,04,-01-,Ofu_Olosega,Samoa-SW Pacific,Historical,14.175,S,,169.618,W,639,Shield volcanoes,D3,M0
+0404-02-,04,04,-02-,Tutuila,Samoa-SW Pacific,Holocene,14.295,S,,170.70,W,653,Tuff cones,U,M0
+0404-03-,04,04,-03-,Upolu,Samoa-SW Pacific,Holocene,13.935,S,,171.72,W,1100,Shield volcano,U,M0
+0404-04=,04,04,-04-,Savaii,Samoa-SW Pacific,Historical,13.612,S,,172.525,W,1858,Shield volcano,D2,M0
+0404-05-,04,04,-05-,Wallis_Islands,SW Pacific,Holocene,13.30,S,,176.17,W,143,Shield volcanoes,U,M0
+0405-01-,04,05,-01-,Taveuni,Fiji Is-SW Pacific,Radiocarbon,16.82,S,,179.97,W,1241,Shield volcano,D5,M0
+0405-02-,04,05,-02-,Koro,Fiji Is-SW Pacific,Holocene?,17.32,S,,179.40,E,522,Cinder cones,?,M0
+0405-03-,04,05,-03-,Nabukelevu,Fiji Is-SW Pacific,Radiocarbon,19.12,S,,177.98,E,805,Lava domes,D5,S0
+0500-01=,05,00,-01-,St_Andrew_Strait,Admiralty Is-SW Pacific,Historical, 2.38,S,,147.35,E,270,Complex volcano,D2,S0
+0500-02-,05,00,-02-,Baluan,Admiralty Is-SW Pacific,Holocene?, 2.57,S,,147.28,E,254,Stratovolcano,U,M0
+0500-03-,05,00,-03-,Unnamed,Admiralty Is-SW Pacific,Hydrophonic, 3.03,S,,147.78,E,-1300,Submarine volcano,D2,U0
+0501-001,05,01,-001,Blup_Blup,New Guinea-NE of,Holocene, 3.507,S,,144.605,E,402,Stratovolcano,U,S0
+0501-002,05,01,-002,Kadovar,New Guinea-NE of,Holocene, 3.630,S,,144.631,E,365,Stratovolcano,U,S0
+0501-011,05,01,-011,Boisa,New Guinea-NE of,Holocene?, 3.994,S,,144.963,E,240,Stratovolcano,U,M0
+0501-01=,05,01,-01-,Bam,New Guinea-NE of,Historical, 3.613,S,,144.818,E,685,Stratovolcano,D2,S2
+0501-02=,05,01,-02-,Manam,New Guinea-NE of,Historical, 4.080,S,,145.037,E,1807,Stratovolcano,D1,M1
+0501-03=,05,01,-03-,Karkar,New Guinea-NE of,Historical, 4.649,S,,145.964,E,1839,Stratovolcano,D2,S1
+0501-041,05,01,-041,Yomba,New Guinea-NE of,Uncertain, 4.90,S,,146.75,E,,Submarine volcano ?,?,U0
+0501-04=,05,01,-04-,Unnamed,New Guinea-NE of,Uncertain, 4.311,S,,146.256,E,-2000,Submarine volcano ?,?,U0
+0501-05=,05,01,-05-,Long_Island,New Guinea-NE of,Historical, 5.358,S,,147.12,E,1280,Complex volcano,D2,S1
+0501-06=,05,01,-06-,Umboi,New Guinea-NE of,Holocene, 5.589,S,,147.875,E,1548,Complex volcano,U,M0
+0501-07=,05,01,-07-,Ritter_Island,New Guinea-NE of,Historical, 5.52,S,,148.121,E,140,Stratovolcano,D1,M1
+0501-08=,05,01,-08-,Sakar,New Guinea-NE of,Holocene?, 5.414,S,,148.094,E,992,Stratovolcano,?,M0
+0502-001,05,02,-001,Unnamed,New Britain-SW Pac,Uncertain, 5.20,S,,148.57,E,,Submarine volcano ?,?,U0
+0502-01=,05,02,-01-,Langila,New Britain-SW Pac,Historical, 5.525,S,,148.42,E,1330,Complex volcano,D1,M1
+0502-021,05,02,-021,Mundua,New Britain-SW Pac,Holocene, 4.63,S,,149.35,E,179,Complex volcano,U,M0
+0502-03=,05,02,-03-,Garove,New Britain-SW Pac,Holocene, 4.692,S,,149.50,E,368,Stratovolcano,U,S0
+0502-04=,05,02,-04-,Dakataua,New Britain-SW Pac,Anthropology, 5.056,S,,150.108,E,400,Caldera,D3,S0
+0502-05=,05,02,-05-,Bola,New Britain-SW Pac,Holocene, 5.15,S,,150.03,E,1155,Stratovolcano,U,S0
+0502-06=,05,02,-06-,Garua_Harbour,New Britain-SW Pac,Holocene?, 5.30,S,*,150.07,E,565,Volcanic field,?,S0
+0502-071,05,02,-071,Lolo,New Britain-SW Pac,Holocene?, 5.468,S,,150.507,E,805,Stratovolcano,?,S0
+0502-07=,05,02,-07-,Garbuna_Group,New Britain-SW Pac,Historical, 5.45,S,,150.03,E,564,Stratovolcanoes,D1,S0
+0502-08=,05,02,-08-,Pago,New Britain-SW Pac,Historical, 5.58,S,,150.52,E,742,Caldera,D1,S1
+0502-09=,05,02,-09-,Sulu_Range,New Britain-SW Pac,Fumarolic, 5.50,S,,150.942,E,610,Stratovolcanoes,U,S0
+0502-10=,05,02,-10-,Hargy,New Britain-SW Pac,Radiocarbon, 5.33,S,,151.10,E,1148,Stratovolcano,D6,S0
+0502-11=,05,02,-11-,Bamus,New Britain-SW Pac,Anthropology, 5.20,S,,151.23,E,2248,Stratovolcano,D3,S0
+0502-12=,05,02,-12-,Ulawun,New Britain-SW Pac,Historical, 5.05,S,,151.33,E,2334,Stratovolcano,D1,S2
+0502-131,05,02,-131,Unnamed,New Britain-SW Pac,Uncertain, 4.75,S,,150.85,E,,Submarine volcano ?,?,U0
+0502-13=,05,02,-13-,Lolobau,New Britain-SW Pac,Historical, 4.92,S,,151.158,E,858,Caldera,D2,M3
+0502-14=,05,02,-14-,Rabaul,New Britain-SW Pac,Historical, 4.271,S,,152.203,E,688,Pyroclastic shield,D1,S1
+0502-15-,05,02,-15-,Tavui,New Britain-SW Pac,Radiocarbon, 4.12,S,,152.20,E,200,Caldera,D7,S0
+0503-00-,05,03,-00-,Doma_Peaks,New Guinea,Holocene?, 5.90,S,,143.15,E,3568,Stratovolcano,?,S0
+0503-001,05,03,-001,Crater_Mountain,New Guinea,Holocene?, 6.58,S,,145.08,E,3233,Stratovolcano,?,M0
+0503-002,05,03,-002,Yelia,New Guinea,Holocene?, 7.05,S,,145.858,E,3384,Stratovolcano,?,S0
+0503-003,05,03,-003,Koranga,New Guinea,Holocene, 7.33,S,,146.708,E,1500,Maar,U,S0
+0503-004,05,03,-004,Madilogo,New Guinea,Holocene, 9.20,S,,147.57,E,850,Pyroclastic cone,U,M0
+0503-011,05,03,-011,Hydrographers_Range,New Guinea,Holocene, 9.00,S,,148.37,E,1915,Stratovolcano,U,S0
+0503-01=,05,03,-01-,Lamington,New Guinea,Historical, 8.95,S,,148.15,E,1680,Stratovolcano,D2,S2
+0503-021,05,03,-021,Managlase_Plateau,New Guinea,Anthropology, 9.08,S,*,148.33,E,1342,Volcanic field,U,M0
+0503-02=,05,03,-02-,Musa_River,New Guinea,Hot Springs, 9.308,S,,148.13,E,808,Hydrothermal field,?,S0
+0503-031,05,03,-031,Sessagara,New Guinea,Holocene, 9.48,S,*,149.13,E,370,Pyroclastic cones,U,S0
+0503-03=,05,03,-03-,Victory,New Guinea,Historical, 9.20,S,,149.07,E,1925,Stratovolcano,D2,S1
+0503-041,05,03,-041,Goodenough,D'Entrecasteaux Is,Holocene, 9.48,S,*,150.35,E,220,Volcanic field,U,S0
+0503-04=,05,03,-04-,Waiowa,New Guinea,Historical, 9.57,S,,149.075,E,640,Pyroclastic cone,D2,S2
+0503-05=,05,03,-05-,Iamalele,D'Entrecasteaux Is,Holocene, 9.52,S,,150.53,E,200,Lava domes,U,S0
+0503-06=,05,03,-06-,Dawson_Strait_Group,D'Entrecasteaux Is,Hydration Rind, 9.62,S,*,150.88,E,500,Volcanic field,D6,S0
+0504-01=,05,04,-01-,Lihir,New Ireland-SW Pacific,Holocene, 3.125,S,,152.642,E,700,Volcanic complex,U,M0
+0504-02=,05,04,-02-,Ambitle,New Ireland-SW Pacific,Radiocarbon, 4.08,S,,153.65,E,450,Stratovolcano,D7,S0
+0505-00-,05,05,-00-,Tore,Bougainville-SW Pacific,Holocene, 5.83,S,,154.93,E,2200,Lava cone,U,S0
+0505-011,05,05,-011,Billy_Mitchell,Bougainville-SW Pacific,Radiocarbon, 6.092,S,,155.225,E,1544,Pyroclastic shield,D5,S0
+0505-01=,05,05,-01-,Balbi,Bougainville-SW Pacific,Holocene, 5.92,S,,154.98,E,2715,Stratovolcano,U,S0
+0505-021,05,05,-021,Takuan_Group,Bougainville-SW Pacific,Holocene, 6.442,S,,155.608,E,2210,Volcanic complex,U,S0
+0505-02=,05,05,-02-,Bagana,Bougainville-SW Pacific,Historical, 6.140,S,,155.195,E,1750,Lava cone,D1,S1
+0505-03=,05,05,-03-,Loloru,Bougainville-SW Pacific,Radiocarbon, 6.52,S,,155.62,E,1887,Pyroclastic shield,D7,S0
+0505-052,05,05,-052,Kana_Keoki,Solomon Is-SW Pacific,Holocene, 8.75,S,,157.03,E,-700,Submarine volcano,U,U0
+0505-053,05,05,-053,Coleman_Seamount,Solomon Is-SW Pacific,Holocene, 8.83,S,,157.17,E,,Submarine volcano,U,U0
+0505-05=,05,05,-05-,Simbo,Solomon Is-SW Pacific,Anthropology, 8.292,S,,156.52,E,335,Stratovolcanoes,D2,S0
+0505-061,05,05,-061,Unnamed,Solomon Is-SW Pacific,Holocene, 8.92,S,,158.03,E,-240,Submarine volcanoes,U,U0
+0505-062,05,05,-062,Gallego,Solomon Is-SW Pacific,Holocene?, 9.35,S,*,159.73,E,1000,Volcanic field,?,S0
+0505-06=,05,05,-06-,Kavachi,Solomon Is-SW Pacific,Historical, 9.02,S,,157.95,E,-20,Submarine volcano,D1,M1
+0505-07=,05,05,-07-,Savo,Solomon Is-SW Pacific,Historical, 9.13,S,,159.82,E,485,Stratovolcano,D3,S2
+0506-01=,05,06,-01-,Tinakula,Santa Cruz Is-SW Pacific,Historical,10.38,S,,165.80,E,851,Stratovolcano,D1,S1
+0507-001,05,07,-001,Motlav,Vanuatu-SW Pacific,Holocene,13.67,S,,167.67,E,411,Stratovolcano,U,M0
+0507-01=,05,07,-01-,Suretamatai,Vanuatu-SW Pacific,Historical,13.80,S,,167.47,E,921,Complex volcano,D2,S0
+0507-021,05,07,-021,Mere_Lava,Vanuatu-SW Pacific,Holocene,14.45,S,,168.05,E,1028,Stratovolcano,U,M0
+0507-02=,05,07,-02-,Gaua,Vanuatu-SW Pacific,Historical,14.27,S,,167.50,E,797,Stratovolcano,D2,S1
+0507-03=,05,07,-03-,Aoba,Vanuatu-SW Pacific,Historical,15.40,S,,167.83,E,1496,Shield volcano,D1,M0
+0507-04=,05,07,-04-,Ambrym,Vanuatu-SW Pacific,Historical,16.25,S,,168.12,E,1334,Pyroclastic shield,D1,M1
+0507-05=,05,07,-05-,Lopevi,Vanuatu-SW Pacific,Historical,16.507,S,,168.346,E,1413,Stratovolcano,D1,M2
+0507-06=,05,07,-06-,Epi,Vanuatu-SW Pacific,Historical,16.68,S,,168.37,E,833,Stratovolcanoes,D1,M0
+0507-07=,05,07,-07-,Kuwae,Vanuatu-SW Pacific,Historical,16.829,S,,168.536,E,-2,Caldera,D2,M0
+0507-08-,05,07,-08-,Unnamed,Vanuatu-SW Pacific,Holocene?,16.992,S,,168.592,E,216,Stratovolcanoes,?,M0
+0507-081,05,07,-081,North_Vate,Vanuatu-SW Pacific,Holocene,17.47,S,,168.353,E,594,Stratovolcanoes,U,M0
+0507-09=,05,07,-09-,Traitors_Head,Vanuatu-SW Pacific,Historical,18.75,S,,169.23,E,837,Stratovolcano,D3,M0
+0507-10=,05,07,-10-,Yasur,Vanuatu-SW Pacific,Historical,19.53,S,,169.442,E,361,Stratovolcano,D1,M1
+0507-11-,05,07,-11-,Aneityum,Vanuatu-SW Pacific,Holocene?,20.20,S,,169.78,E,852,Stratovolcanoes,?,M0
+0508-001,05,08,-001,Eastern_Gemini_Seamount,SW Pacific,Historical,20.98,S,,170.28,E,-80,Submarine volcano,D2,U0
+0508-01=,05,08,-01-,Matthew_Island,SW Pacific,Historical,22.33,S,,171.32,E,177,Stratovolcano,D2,S0
+0508-02=,05,08,-02-,Hunter_Island,SW Pacific,Historical,22.40,S,,172.05,E,297,Stratovolcano,D2,S0
+0508-03-,05,08,-03-,Unnamed,SW Pacific,Hydrophonic,25.78,S,,168.63,E,-2400,Submarine volcano,D2,U0
+0509-01-,05,09,-01-,Newer_Volcanics_Prov,Australia,Radiocarbon,37.77,S,*,142.50,E,1011,Shield volcanoes,D7,M0
+0600-001,06,00,-001,Narcondum,Andaman Is-Indian O,Holocene,13.43,N,, 94.28,E,710,Stratovolcano,U,S0
+0600-01=,06,00,-01-,Barren_Island,Andaman Is-Indian O,Historical,12.278,N,, 93.858,E,354,Stratovolcano,D1,S2
+0601-02=,06,01,-02-,Seulawah_Agam,Sumatra,Historical, 5.448,N,, 95.658,E,1810,Stratovolcano,D3,S0
+0601-03=,06,01,-03-,Peuet_Sague,Sumatra,Historical, 4.914,N,, 96.329,E,2801,Complex volcano,D1,S1
+0601-05=,06,01,-05-,Bur_ni_Telong,Sumatra,Historical, 4.769,N,, 96.821,E,2617,Stratovolcano,D2,S1
+0601-07=,06,01,-07-,Sibayak,Sumatra,Historical, 3.23,N,, 98.52,E,2212,Stratovolcanoes,D3,S0
+0601-08=,06,01,-08-,Sinabung,Sumatra,Holocene, 3.17,N,, 98.392,E,2460,Stratovolcano,U,S0
+0601-09=,06,01,-09-,Toba,Sumatra,Holocene, 2.58,N,, 98.83,E,2157,Caldera,U,S0
+0601-101,06,01,-101,Imun,Sumatra,Holocene?, 2.158,N,, 98.93,E,1505,Unknown,?,S0
+0601-111,06,01,-111,Lubukraya,Sumatra,Holocene?, 1.478,N,, 99.209,E,1862,Stratovolcano,?,S0
+0601-11=,06,01,-11-,Sibualbuali,Sumatra,Holocene?, 1.556,N,, 99.255,E,1819,Stratovolcano,?,S0
+0601-12=,06,01,-12-,Sorikmarapi,Sumatra,Historical, 0.686,N,, 99.539,E,2145,Stratovolcano,D2,S1
+0601-131,06,01,-131,Sarik_Gajah,Sumatra,Holocene?, 0.08,N,,100.20,E,,Pyroclastic cones,?,S0
+0601-13=,06,01,-13-,Talakmau,Sumatra,Holocene, 0.079,N,, 99.98,E,2919,Complex volcano,U,S0
+0601-14=,06,01,-14-,Marapi,Sumatra,Historical, 0.381,S,,100.473,E,2891,Complex volcano,D1,S1
+0601-15=,06,01,-15-,Tandikat,Sumatra,Historical, 0.433,S,,100.317,E,2438,Stratovolcanoes,D2,S1
+0601-16=,06,01,-16-,Talang,Sumatra,Historical, 0.978,S,,100.679,E,2597,Stratovolcano,D1,S1
+0601-171,06,01,-171,Kunyit,Sumatra,Fumarolic, 2.274,S,,101.483,E,2151,Stratovolcano,U,S0
+0601-172,06,01,-172,Hutapanjang,Sumatra,Holocene, 2.33,S,,101.60,E,2021,Stratovolcano,U,S0
+0601-17=,06,01,-17-,Kerinci,Sumatra,Historical, 1.697,S,,101.264,E,3800,Stratovolcano,D1,S1
+0601-18=,06,01,-18-,Sumbing,Sumatra,Historical, 2.414,S,,101.728,E,2507,Stratovolcano,D2,S1
+0601-191,06,01,-191,Pendan,Sumatra,Holocene, 2.82,S,,102.02,E,,Unknown,U,S0
+0601-20=,06,01,-20-,Belirang_Beriti,Sumatra,Fumarolic, 2.82,S,,102.18,E,1958,Compound volcano,U,M0
+0601-21=,06,01,-21-,Daun_Bukit,Sumatra,Fumarolic, 3.38,S,,102.37,E,2467,Stratovolcanoes,U,M0
+0601-22=,06,01,-22-,Kaba,Sumatra,Historical, 3.52,S,,102.62,E,1952,Stratovolcano,D1,S1
+0601-231,06,01,-231,Patah,Sumatra,Fumarolic, 4.27,S,,103.30,E,2817,Unknown,?,S0
+0601-23=,06,01,-23-,Dempo,Sumatra,Historical, 4.03,S,,103.13,E,3173,Stratovolcanoes,D2,S1
+0601-24=,06,01,-24-,Lumut_Balai_Bukit,Sumatra,Fumarolic, 4.22,S,,103.62,E,2055,Stratovolcano ?,U,S0
+0601-251,06,01,-251,Ranau,Sumatra,Holocene?, 4.83,S,,103.92,E,1881,Caldera,?,S0
+0601-25=,06,01,-25-,Besar,Sumatra,Historical, 4.43,S,,103.67,E,1899,Stratovolcano ?,D2,S0
+0601-26=,06,01,-26-,Sekincau_Belirang,Sumatra,Fumarolic, 5.12,S,,104.32,E,1719,Calderas,U,S0
+0601-27=,06,01,-27-,Suoh,Sumatra,Historical, 5.25,S,,104.27,E,1000,Calderas,D2,S0
+0601-28=,06,01,-28-,Hulubelu,Sumatra,Fumarolic, 5.35,S,,104.60,E,1040,Caldera,U,S0
+0601-29=,06,01,-29-,Rajabasa,Sumatra,Fumarolic, 5.78,S,,105.625,E,1281,Stratovolcano,U,S0
+0602-00=,06,02,-00-,Krakatau,Indonesia,Historical, 6.102,S,,105.423,E,813,Caldera,D1,S1
+0603-01=,06,03,-01-,Pulosari,Java,Holocene, 6.342,S,,105.975,E,1346,Stratovolcano,U,S0
+0603-02=,06,03,-02-,Karang,Java,Holocene?, 6.27,S,,106.042,E,1778,Stratovolcano,?,S0
+0603-04=,06,03,-04-,Perbakti_Gagak,Java,Historical, 6.75,S,,106.70,E,1699,Stratovolcanoes,D2,S0
+0603-05=,06,03,-05-,Salak,Java,Historical, 6.72,S,,106.73,E,2211,Stratovolcano,D2,S1
+0603-06=,06,03,-06-,Gede,Java,Historical, 6.78,S,,106.98,E,2958,Stratovolcano,D2,S2
+0603-07=,06,03,-07-,Patuha,Java,Holocene, 7.160,S,,107.40,E,2434,Stratovolcano,U,S0
+0603-081,06,03,-081,Malabar,Java,Holocene?, 7.13,S,,107.65,E,2343,Stratovolcano,?,S0
+0603-08=,06,03,-08-,Wayang_Windu,Java,Fumarolic, 7.208,S,,107.63,E,2182,Lava dome,U,S0
+0603-09=,06,03,-09-,Tangkubanparahu,Java,Historical, 6.77,S,,107.60,E,2084,Stratovolcano,D2,S1
+0603-10=,06,03,-10-,Papandayan,Java,Historical, 7.32,S,,107.73,E,2665,Stratovolcanoes,D1,S1
+0603-11=,06,03,-11-,Kendang,Java,Holocene, 7.23,S,,107.72,E,2608,Stratovolcano,U,S0
+0603-131,06,03,-131,Tampomas,Java,Holocene, 6.77,S,,107.95,E,1684,Stratovolcano,U,S0
+0603-13=,06,03,-13-,Guntur,Java,Historical, 7.143,S,,107.840,E,2249,Complex volcano,D3,S1
+0603-14=,06,03,-14-,Galunggung,Java,Historical, 7.25,S,,108.058,E,2168,Stratovolcano,D2,M2
+0603-15=,06,03,-15-,Talagabodas,Java,Fumarolic, 7.208,S,,108.07,E,2201,Stratovolcano,U,M0
+0603-16=,06,03,-16-,Karaha_Kawah,Java,Fumarolic, 7.12,S,,108.08,E,1155,Fumarole field,U,S0
+0603-17=,06,03,-17-,Cereme,Java,Historical, 6.892,S,,108.40,E,3078,Stratovolcano,D2,S1
+0603-18=,06,03,-18-,Slamet,Java,Historical, 7.242,S,,109.208,E,3428,Stratovolcano,D2,M1
+0603-20=,06,03,-20-,Dieng_Volc_Complex,Java,Historical, 7.20,S,*,109.92,E,2565,Complex volcano,D2,S1
+0603-21=,06,03,-21-,Sundoro,Java,Historical, 7.30,S,,109.992,E,3136,Stratovolcano,D2,S1
+0603-22=,06,03,-22-,Sumbing,Java,Historical, 7.384,S,,110.070,E,3371,Stratovolcano,D4,S0
+0603-231,06,03,-231,Telomoyo,Java,Holocene, 7.37,S,,110.40,E,1894,Stratovolcano,U,S0
+0603-23=,06,03,-23-,Ungaran,Java,Holocene, 7.18,S,,110.33,E,2050,Stratovolcano,U,S0
+0603-24=,06,03,-24-,Merbabu,Java,Historical, 7.45,S,,110.43,E,3145,Stratovolcano,D4,M1
+0603-251,06,03,-251,Muria,Java,Holocene, 6.62,S,,110.88,E,1625,Stratovolcano,D7,M0
+0603-25=,06,03,-25-,Merapi,Java,Historical, 7.542,S,,110.442,E,2968,Stratovolcano,D1,S9
+0603-26=,06,03,-26-,Lawu,Java,Historical, 7.625,S,,111.192,E,3265,Stratovolcano,D3,S1
+0603-27=,06,03,-27-,Wilis,Java,Holocene, 7.808,S,,111.758,E,2563,Stratovolcano,U,S0
+0603-281,06,03,-281,Kawi_Butak,Java,Holocene, 7.92,S,,112.45,E,2651,Stratovolcanoes,U,S0
+0603-28=,06,03,-28-,Kelut,Java,Historical, 7.93,S,,112.308,E,1731,Stratovolcano,D1,S2
+0603-291,06,03,-291,Penanggungan,Java,Holocene, 7.62,S,,112.63,E,1653,Stratovolcano,U,S0
+0603-292,06,03,-292,Malang_Plain,Java,Holocene, 8.02,S,*,112.68,E,680,Maars,U,S0
+0603-29=,06,03,-29-,Arjuno_Welirang,Java,Historical, 7.725,S,,112.58,E,3339,Stratovolcano,D2,S1
+0603-30=,06,03,-30-,Semeru,Java,Historical, 8.108,S,,112.92,E,3676,Stratovolcano,D1,S1
+0603-31=,06,03,-31-,Tengger_Caldera,Java,Historical, 7.942,S,,112.95,E,2329,Stratovolcanoes,D1,S1
+0603-321,06,03,-321,Lurus,Java,Holocene?, 7.73,S,,113.58,E,539,Complex volcano,?,S0
+0603-32=,06,03,-32-,Lamongan,Java,Historical, 7.979,S,,113.342,E,1651,Stratovolcano,D3,M1
+0603-33=,06,03,-33-,Iyang_Argapura,Java,Holocene, 7.97,S,,113.57,E,3088,Complex volcano,U,S0
+0603-34=,06,03,-34-,Raung,Java,Historical, 8.125,S,,114.042,E,3332,Stratovolcano,D1,S1
+0603-351,06,03,-351,Baluran,Java,Holocene?, 7.85,S,,114.37,E,1247,Stratovolcano,?,S0
+0603-35=,06,03,-35-,Ijen,Java,Historical, 8.058,S,,114.242,E,2799,Stratovolcanoes,D2,S1
+0604-001,06,04,-001,Bratan,Lesser Sunda Is,Holocene, 8.28,S,,115.13,E,2276,Caldera,U,S0
+0604-01=,06,04,-01-,Batur,Lesser Sunda Is,Historical, 8.242,S,,115.375,E,1717,Caldera,D1,S1
+0604-02=,06,04,-02-,Agung,Lesser Sunda Is,Historical, 8.342,S,,115.508,E,3142,Stratovolcano,D2,S0
+0604-03=,06,04,-03-,Rinjani,Lesser Sunda Is,Historical, 8.42,S,,116.47,E,3726,Stratovolcano,D1,S1
+0604-04=,06,04,-04-,Tambora,Lesser Sunda Is,Historical, 8.25,S,,118.00,E,2850,Stratovolcano,D2,S0
+0604-05=,06,04,-05-,Sangeang_Api,Lesser Sunda Is,Historical, 8.20,S,,119.07,E,1949,Complex volcano,D2,M2
+0604-06=,06,04,-06-,Sano_Wai,Lesser Sunda Is,Holocene, 8.72,S,,120.02,E,903,Caldera,U,S0
+0604-071,06,04,-071,Ranakah,Lesser Sunda Is,Historical, 8.62,S,,120.52,E,2350,Lava domes,D2,S0
+0604-07=,06,04,-07-,Poco_Leok,Lesser Sunda Is,Fumarolic, 8.68,S,,120.48,E,1675,Stratovolcano,U,S0
+0604-08=,06,04,-08-,Inierie,Lesser Sunda Is,Radiocarbon, 8.875,S,,120.95,E,2245,Stratovolcano,D7,S0
+0604-09=,06,04,-09-,Inielika,Lesser Sunda Is,Historical, 8.73,S,,120.98,E,1559,Complex volcano,D1,S1
+0604-10=,06,04,-10-,Ebulobo,Lesser Sunda Is,Historical, 8.82,S,,121.18,E,2124,Stratovolcano,D2,S1
+0604-11=,06,04,-11-,Iya,Lesser Sunda Is,Historical, 8.897,S,,121.645,E,637,Stratovolcano,D2,M1
+0604-12=,06,04,-12-,Sukaria_Caldera,Lesser Sunda Is,Fumarolic, 8.792,S,,121.77,E,1500,Caldera,U,S0
+0604-13=,06,04,-13-,Ndete_Napu,Lesser Sunda Is,Fumarolic, 8.72,S,,121.78,E,750,Fumarole field,?,S0
+0604-14=,06,04,-14-,Kelimutu,Lesser Sunda Is,Historical, 8.77,S,,121.82,E,1639,Complex volcano,D2,S1
+0604-15=,06,04,-15-,Paluweh,Lesser Sunda Is,Historical, 8.32,S,,121.708,E,875,Stratovolcano,D2,S2
+0604-16=,06,04,-16-,Egon,Lesser Sunda Is,Historical, 8.67,S,,122.45,E,1703,Stratovolcano,D1,S1
+0604-17=,06,04,-17-,Ilimuda,Lesser Sunda Is,Fumarolic, 8.478,S,,122.671,E,1100,Stratovolcano,U,S0
+0604-18=,06,04,-18-,Lewotobi,Lesser Sunda Is,Historical, 8.542,S,,122.775,E,1703,Stratovolcanoes,D1,S1
+0604-20=,06,04,-20-,Leroboleng,Lesser Sunda Is,Historical, 8.358,S,,122.842,E,1117,Complex volcano,D1,S1
+0604-22=,06,04,-22-,Iliboleng,Lesser Sunda Is,Historical, 8.342,S,,123.258,E,1659,Stratovolcano,D2,M1
+0604-23=,06,04,-23-,Lewotolo,Lesser Sunda Is,Historical, 8.272,S,,123.505,E,1423,Stratovolcano,D2,S1
+0604-24=,06,04,-24-,Ililabalekan,Lesser Sunda Is,Fumarolic, 8.55,S,,123.38,E,1018,Stratovolcano,U,M0
+0604-25=,06,04,-25-,Iliwerung,Lesser Sunda Is,Historical, 8.53,S,,123.57,E,1018,Complex volcano,D2,M1
+0604-26=,06,04,-26-,Tara_Batu,Lesser Sunda Is,Historical, 7.792,S,,123.579,E,748,Stratovolcano,D1,M1
+0604-27=,06,04,-27-,Sirung,Lesser Sunda Is,Historical, 8.508,S,,124.13,E,862,Complex volcano,D2,S1
+0604-28=,06,04,-28-,Yersey,Lesser Sunda Is,Uncertain, 7.53,S,,123.95,E,-3800,Submarine volcano ?,?,U0
+0605-01=,06,05,-01-,Emperor_of_China,Banda Sea,Uncertain, 6.62,S,,124.22,E,-2850,Submarine volcano ?,?,U0
+0605-02=,06,05,-02-,Nieuwerkerk,Banda Sea,Uncertain, 6.60,S,,124.675,E,-2285,Submarine volcano ?,?,U0
+0605-03=,06,05,-03-,Gunungapi_Wetar,Banda Sea,Historical, 6.642,S,,126.65,E,282,Stratovolcano,D5,S2
+0605-04=,06,05,-04-,Wurlali,Banda Sea,Historical, 7.125,S,,128.675,E,868,Stratovolcano,D3,S1
+0605-05=,06,05,-05-,Teon,Banda Sea,Historical, 6.92,S,,129.125,E,655,Stratovolcano,D2,S2
+0605-06=,06,05,-06-,Nila,Banda Sea,Historical, 6.73,S,,129.50,E,781,Stratovolcano,D2,S1
+0605-07=,06,05,-07-,Serua,Banda Sea,Historical, 6.30,S,,130.00,E,641,Stratovolcano,D2,S1
+0605-08=,06,05,-08-,Manuk,Banda Sea,Fumarolic, 5.53,S,,130.292,E,282,Stratovolcano,U,S0
+0605-09=,06,05,-09-,Banda_Api,Banda Sea,Historical, 4.525,S,,129.871,E,640,Caldera,D2,S1
+0606-01=,06,06,-01-,Colo_Una_Una,Sulawesi-Indonesia,Historical, 0.17,S,,121.608,E,507,Stratovolcano,D2,S2
+0606-02=,06,06,-02-,Ambang,Sulawesi-Indonesia,Historical, 0.75,N,,124.42,E,1795,Complex volcano,D3,S0
+0606-03=,06,06,-03-,Soputan,Sulawesi-Indonesia,Historical, 1.108,N,,124.73,E,1784,Stratovolcano,D1,S1
+0606-04=,06,06,-04-,Sempu,Sulawesi-Indonesia,Fumarolic, 1.13,N,,124.758,E,1549,Caldera,U,S0
+0606-07-,06,06,-07-,Tondano_Caldera,Sulawesi-Indonesia,Fumarolic, 1.23,N,,124.83,E,1202,Caldera,U,S0
+0606-10=,06,06,-10-,Lokon_Empung,Sulawesi-Indonesia,Historical, 1.358,N,,124.792,E,1580,Stratovolcano,D1,S1
+0606-11=,06,06,-11-,Mahawu,Sulawesi-Indonesia,Historical, 1.358,N,,124.858,E,1324,Stratovolcano,D2,S1
+0606-12=,06,06,-12-,Klabat,Sulawesi-Indonesia,Fumarolic, 1.47,N,,125.03,E,1995,Stratovolcano,U,S0
+0606-13=,06,06,-13-,Tongkoko,Sulawesi-Indonesia,Historical, 1.52,N,,125.20,E,1149,Stratovolcano,D3,S1
+0607-01=,06,07,-01-,Ruang,Sangihe Is-Indonesia,Historical, 2.30,N,,125.37,E,725,Stratovolcano,D1,S1
+0607-02=,06,07,-02-,Karangetang_Api_Siau,Sangihe Is-Indonesia,Historical, 2.78,N,,125.40,E,1784,Stratovolcano,D1,S1
+0607-03=,06,07,-03-,Banua_Wuhu,Sangihe Is-Indonesia,Historical, 3.138,N,,125.491,E,-5,Submarine volcano,D2,S1
+0607-04=,06,07,-04-,Awu,Sangihe Is-Indonesia,Historical, 3.67,N,,125.50,E,1320,Stratovolcano,D1,S1
+0607-05=,06,07,-05-,Unnamed,Sangihe Is-Indonesia,Uncertain, 3.97,N,,124.17,E,-5000,Submarine volcano ?,?,U0
+0608-001,06,08,-001,Tarakan,Halmahera-Indonesia,Holocene, 1.83,N,,127.83,E,318,Pyroclastic cones,U,M0
+0608-01=,06,08,-01-,Dukono,Halmahera-Indonesia,Historical, 1.68,N,,127.88,E,1335,Complex volcano,D1,S1
+0608-02-,06,08,-02-,Tobaru,Halmahera-Indonesia,Holocene, 1.63,N,,127.67,E,1035,Unknown,U,S0
+0608-03=,06,08,-03-,Ibu,Halmahera-Indonesia,Historical, 1.488,N,,127.63,E,1325,Stratovolcano,D1,S1
+0608-04=,06,08,-04-,Gamkonora,Halmahera-Indonesia,Historical, 1.38,N,,127.53,E,1635,Stratovolcano,D1,S1
+0608-051,06,08,-051,Jailolo,Halmahera-Indonesia,Holocene, 1.08,N,,127.42,E,1130,Stratovolcano,U,S0
+0608-052,06,08,-052,Hiri,Halmahera-Indonesia,Holocene, 0.90,N,,127.32,E,630,Stratovolcano,U,M0
+0608-05=,06,08,-05-,Todoko_Ranu,Halmahera-Indonesia,Holocene, 1.25,N,,127.47,E,979,Calderas,U,S0
+0608-061,06,08,-061,Tidore,Halmahera-Indonesia,Holocene, 0.658,N,,127.40,E,1730,Stratovolcano,U,S0
+0608-062,06,08,-062,Mare,Halmahera-Indonesia,Holocene, 0.57,N,,127.40,E,308,Stratovolcano,U,S0
+0608-063,06,08,-063,Moti,Halmahera-Indonesia,Holocene, 0.45,N,,127.40,E,950,Stratovolcano,U,S0
+0608-06=,06,08,-06-,Gamalama,Halmahera-Indonesia,Historical, 0.80,N,,127.33,E,1715,Stratovolcanoes,D1,S1
+0608-071,06,08,-071,Tigalalu,Halmahera-Indonesia,Holocene, 0.07,N,,127.42,E,422,Stratovolcano,U,S0
+0608-072,06,08,-072,Amasing,Halmahera-Indonesia,Holocene, 0.53,S,,127.48,E,1030,Stratovolcanoes,U,S0
+0608-073,06,08,-073,Bibinoi,Halmahera-Indonesia,Holocene, 0.77,S,,127.72,E,900,Stratovolcanoes,U,S0
+0608-07=,06,08,-07-,Makian,Halmahera-Indonesia,Historical, 0.32,N,,127.40,E,1357,Stratovolcano,D2,S2
+0610-01-,06,10,-01-,Bombalai,Borneo,Holocene?, 4.40,N,,117.88,E,531,Pyroclastic cone,?,M0
+0700-01=,07,00,-01-,Jolo,Sulu Is-Philippines,Historical, 6.013,N,*,121.057,E,811,Pyroclastic cones,D3,M0
+0701-011,07,01,-011,Parker,Mindanao-Philippines,Historical, 6.113,N,,124.892,E,1824,Stratovolcano,D5,S0
+0701-01=,07,01,-01-,Balut,Mindanao-Philippines,Fumarolic, 5.40,N,,125.375,E,862,Stratovolcano,U,S0
+0701-02=,07,01,-02-,Matutum,Mindanao-Philippines,Radiocarbon, 6.37,N,,125.07,E,2286,Stratovolcano,D6,S0
+0701-031,07,01,-031,Leonard_Range,Mindanao-Philippines,Radiocarbon, 7.382,N,,126.047,E,1080,Stratovolcano,D6,S0
+0701-03=,07,01,-03-,Apo,Mindanao-Philippines,Fumarolic, 6.989,N,,125.269,E,2938,Stratovolcano,U,S0
+0701-04=,07,01,-04-,Makaturing,Mindanao-Philippines,Historical, 7.647,N,,124.32,E,1940,Stratovolcano,D3,S0
+0701-05=,07,01,-05-,Latukan,Mindanao-Philippines,Holocene?, 7.65,N,,124.45,E,2338,Stratovolcano,?,S0
+0701-061,07,01,-061,Kalatungan,Mindanao-Philippines,Holocene?, 7.95,N,,124.80,E,2824,Stratovolcano,?,S0
+0701-06=,07,01,-06-,Ragang,Mindanao-Philippines,Historical, 7.70,N,,124.50,E,2815,Stratovolcano,D3,S1
+0701-071,07,01,-071,Malindang,Mindanao-Philippines,Holocene, 8.22,N,,123.63,E,2404,Stratovolcano,U,S0
+0701-072,07,01,-072,Balatukan,Mindanao-Philippines,Uncertain, 8.77,N,,124.98,E,2450,Compound volcano,?,M0
+0701-07=,07,01,-07-,Musuan,Mindanao-Philippines,Historical, 7.877,N,,125.068,E,646,Lava dome,D3,S0
+0701-08=,07,01,-08-,Camiguin,Mindanao-Philippines,Historical, 9.203,N,,124.673,E,1552,Stratovolcanoes,D2,S0
+0701-09-,07,01,-09-,Paco,Mindanao-Philippines,Anthropology, 9.593,N,,125.520,E,524,Stratovolcano,U,S0
+0702-01=,07,02,-01-,Cuernos_de_Negros,Philippines-C,Fumarolic, 9.25,N,,123.17,E,1862,Complex volcano,U,S0
+0702-02=,07,02,-02-,Kanlaon,Philippines-C,Historical,10.412,N,,123.132,E,2435,Stratovolcano,D1,S1
+0702-03=,07,02,-03-,Mandalagan,Philippines-C,Fumarolic,10.65,N,,123.25,E,1885,Complex volcano,U,S0
+0702-04=,07,02,-04-,Silay,Philippines-C,Fumarolic,10.77,N,,123.23,E,1510,Stratovolcano,U,S0
+0702-05=,07,02,-05-,Cabalían,Philippines-C,Radiocarbon,10.287,N,,125.221,E,945,Stratovolcano,D3,S0
+0702-07=,07,02,-07-,Mahagnao,Philippines-C,Fumarolic,10.896,N,,125.87,E,860,Stratovolcano,U,S0
+0702-08=,07,02,-08-,Biliran,Philippines-C,Historical,11.523,N,,124.535,E,1301,Compound volcano,D2,S0
+0703-01=,07,03,-01-,Bulusan,Luzon-Philippines,Historical,12.770,N,,124.05,E,1565,Stratovolcanoes,D1,S1
+0703-02=,07,03,-02-,Pocdol_Mountains,Luzon-Philippines,Fumarolic,13.05,N,,123.958,E,1102,Compound volcano,U,S0
+0703-031,07,03,-031,Masaraga,Luzon-Philippines,Holocene,13.32,N,,123.60,E,1328,Stratovolcano,U,S0
+0703-03=,07,03,-03-,Mayon,Luzon-Philippines,Historical,13.257,N,,123.685,E,2462,Stratovolcano,D1,S2
+0703-041,07,03,-041,Iriga,Luzon-Philippines,Holocene,13.457,N,,123.457,E,1196,Stratovolcano,U,S0
+0703-042,07,03,-042,Isarog,Luzon-Philippines,Fumarolic,13.658,N,,123.38,E,1966,Stratovolcano,U,S0
+0703-044,07,03,-044,Malindig,Luzon-Philippines,Hot Springs,13.240,N,,122.018,E,1157,Stratovolcano,U,S0
+0703-05=,07,03,-05-,Banahaw,Luzon-Philippines,Holocene,14.07,N,,121.48,E,2158,Complex volcano,U,S0
+0703-06=,07,03,-06-,San_Pablo_volc_field,Luzon-Philippines,Anthropology,14.12,N,*,121.30,E,1090,Stratovolcano,D6,S0
+0703-07=,07,03,-07-,Taal,Luzon-Philippines,Historical,14.002,N,,120.993,E,311,Caldera,D2,S2
+0703-081,07,03,-081,Mariveles,Luzon-Philippines,Radiocarbon,14.52,N,,120.47,E,1388,Stratovolcano,D7,S0
+0703-082,07,03,-082,Natib,Luzon-Philippines,Holocene?,14.72,N,,120.40,E,1253,Stratovolcano,?,S0
+0703-083,07,03,-083,Pinatubo,Luzon-Philippines,Historical,15.13,N,,120.35,E,1486,Stratovolcano,D2,S3
+0703-084,07,03,-084,Arayat,Luzon-Philippines,Holocene?,15.20,N,,120.742,E,1026,Stratovolcano,?,S0
+0703-085,07,03,-085,Amorong,Luzon-Philippines,Fumarolic,15.828,N,,120.805,E,376,Lava domes,U,S0
+0703-086,07,03,-086,Santo Tomas,Luzon-Philippines,Uncertain,16.33,N,,120.55,E,2260,Stratovolcano,?,S0
+0703-087,07,03,-087,Patoc,Luzon-Philippines,Fumarolic,17.147,N,,120.980,E,1865,Stratovolcano,U,S0
+0703-088,07,03,-088,Ambalatungan_Group,Luzon-Philippines,Fumarolic,17.32,N,,121.10,E,2329,Compound volcano,U,S0
+0703-08=,07,03,-08-,Laguna_Caldera,Luzon-Philippines,Fumarolic,14.42,N,,121.27,E,743,Caldera,U,S0
+0703-09=,07,03,-09-,Cagua,Luzon-Philippines,Historical,18.222,N,,122.123,E,1133,Stratovolcano,D3,S0
+0704-01=,07,04,-01-,Camiguin_de_Babuyanes,Luzon-N of,Historical,18.83,N,,121.860,E,712,Stratovolcano,D3,S0
+0704-02=,07,04,-02-,Didicas,Luzon-N of,Historical,19.077,N,,122.202,E,228,Compound volcano,D2,S0
+0704-03=,07,04,-03-,Babuyan_Claro,Luzon-N of,Historical,19.523,N,,121.940,E,1080,Stratovolcanoes,D2,S1
+0704-05=,07,04,-05-,Unnamed,Luzon-N of,Historical,20.33,N,,121.75,E,-24,Submarine volcano,D3,S0
+0704-06-,07,04,-06-,Iraya,Luzon-N of,Historical,20.469,N,,122.010,E,1009,Stratovolcano,D6,S0
+0705-001,07,05,-001,Hainan_Dao,SE Asia,Historical,19.70,N,*,110.10,E,,Pyroclastic cones,D2,S0
+0705-01-,07,05,-01-,Leizhou_Bandao,SE Asia,Holocene,20.78,N,*,110.17,E,259,Volcanic field,U,S0
+0705-02-,07,05,-02-,Cu_Lao_Re_Group,SE Asia,Holocene,15.38,N,*,109.12,E,181,Volcanic field,U,S0
+0705-03-,07,05,-03-,Toroeng_Prong,SE Asia,Holocene?,14.93,N,,108.00,E,800,Cinder cone,?,M0
+0705-04-,07,05,-04-,Haut_Dong_Nai,SE Asia,Holocene?,11.60,N,*,108.20,E,1000,Volcanic field,?,S0
+0705-05-,07,05,-05-,Bas_Dong_Nai,SE Asia,Holocene?,10.80,N,*,107.20,E,392,Volcanic field,?,S0
+0705-06-,07,05,-06-,Ile_des_Cendres,SE Asia,Historical,10.158,N,,109.014,E,-20,Submarine volcanoes,D2,M0
+0705-07-,07,05,-07-,Veteran,SE Asia,Fumarolic, 9.83,N,,109.05,E,,Submarine volcano,U,S0
+0705-08-,07,05,-08-,Popa,SE Asia,Anthropology,20.92,N,, 95.25,E,1518,Stratovolcano,D7,S0
+0705-09-,07,05,-09-,Lower_Chindwin,SE Asia,Holocene?,22.28,N,*, 95.10,E,385,Volcanic field,?,S0
+0705-10-,07,05,-10-,Singu_Plateau,SE Asia,Holocene,22.70,N,*, 95.98,E,507,Fissure vents,U,S0
+0705-11-,07,05,-11-,Tengchong,SE Asia,Uranium-series,25.23,N,*, 98.50,E,2865,Pyroclastic cones,D7,S0
+0801-011,08,01,-011,Unnamed,Taiwan-E of,Uncertain,19.17,N,,132.25,E,-10,Submarine volcano ?,?,S0
+0801-01=,08,01,-01-,Unnamed,Taiwan-E of,Uncertain,20.93,N,,134.75,E,-6000,Submarine volcano ?,?,U0
+0801-02=,08,01,-02-,Unnamed,Taiwan-E of,Uncertain,21.83,N,,121.18,E,-115,Submarine volcano,?,U0
+0801-031,08,01,-031,Kueishantao,Taiwan-E of,Historical,24.85,N,,121.92,E,401,Stratovolcano,D4,S0
+0801-03=,08,01,-03-,Unnamed,Taiwan-E of,Historical,24.00,N,,121.83,E,,Submarine volcano,D3,S0
+0801-04=,08,01,-04-,Unnamed,Taiwan-N of,Uncertain,25.40,N,,122.20,E,-100,Submarine volcano,?,U0
+0801-05=,08,01,-05-,Zengyu,Taiwan-N of,Uncertain,26.18,N,,122.458,E,-418,Submarine volcano,?,U0
+0802-01=,08,02,-01-,Iriomote_jima,Ryukyu Is,Historical,24.558,N,,124.00,E,-200,Submarine volcano,D2,U0
+0802-021,08,02,-021,Yokoate_jima,Ryukyu Is,Historical,28.797,N,,128.997,E,495,Stratovolcanoes,D3,S0
+0802-022,08,02,-022,Akuseki_jima,Ryukyu Is,Holocene?,29.461,N,,129.597,E,584,Stratovolcanoes,?,S0
+0802-02=,08,02,-02-,Iwo_Tori_shima,Ryukyu Is,Historical,27.877,N,,128.224,E,212,Complex volcano,D2,S1
+0802-03=,08,02,-03-,Suwanose_jima,Ryukyu Is,Historical,29.635,N,,129.716,E,799,Stratovolcanoes,D1,S1
+0802-041,08,02,-041,Kogaja_jima,Ryukyu Is,Holocene?,29.879,N,,129.625,E,301,Lava domes,?,S0
+0802-043,08,02,-043,Kuchino_shima,Ryukyu Is,Radiocarbon,29.964,N,,129.927,E,628,Stratovolcanoes,D6,S0
+0802-04=,08,02,-04-,Nakano_shima,Ryukyu Is,Historical,29.856,N,,129.859,E,979,Stratovolcanoes,D2,S0
+0802-05=,08,02,-05-,Kuchinoerabu_jima,Ryukyu Is,Historical,30.440,N,,130.219,E,657,Stratovolcanoes,D2,S2
+0802-06=,08,02,-06-,Kikai,Ryukyu Is,Historical,30.789,N,,130.308,E,704,Caldera,D1,S1
+0802-07=,08,02,-07-,Ibusuki_volc_field,Kyushu-Japan,Historical,31.22,N,*,130.57,E,922,Calderas,D6,S0
+0802-081,08,02,-081,Sumiyoshi_ike,Kyushu-Japan,Radiocarbon,31.768,N,,130.594,E,15,Maars,D7,M0
+0802-08=,08,02,-08-,Sakura_jima,Kyushu-Japan,Historical,31.585,N,,130.657,E,1117,Stratovolcano,D1,S1
+0802-091,08,02,-091,Fukue_jima,Kyushu-Japan,Tephrochronology,32.653,N,,128.851,E,317,Shield volcanoes,D7,M0
+0802-09=,08,02,-09-,Kirishima,Kyushu-Japan,Historical,31.931,N,,130.864,E,1700,Shield volcano,D1,S1
+0802-10=,08,02,-10-,Unzen,Kyushu-Japan,Historical,32.757,N,,130.294,E,1500,Complex volcano,D2,S1
+0802-11=,08,02,-11-,Aso,Kyushu-Japan,Historical,32.881,N,,131.106,E,1592,Caldera,D1,M1
+0802-12=,08,02,-12-,Kuju,Kyushu-Japan,Historical,33.083,N,,131.251,E,1791,Stratovolcanoes,D2,M1
+0802-13=,08,02,-13-,Tsurumi,Kyushu-Japan,Historical,33.28,N,,131.432,E,1584,Lava domes,D6,S0
+0803-001,08,03,-001,Abu,Honshu-Japan,Thermoluminescence,34.50,N,,131.60,E,641,Shield volcanoes,D7,M0
+0803-002,08,03,-002,Sanbe,Honshu-Japan,Radiocarbon,35.13,N,,132.62,E,1126,Stratovolcano,D6,S0
+0803-003,08,03,-003,Oki_Dogo,Honshu-Japan,Anthropology,36.176,N,,133.334,E,151,Shield volcano,U,M0
+0803-01=,08,03,-01-,Izu_Tobu,Honshu-Japan,Historical,34.900,N,,139.098,E,1406,Pyroclastic cones,D2,M0
+0803-02=,08,03,-02-,Hakone,Honshu-Japan,Radiocarbon,35.230,N,,139.024,E,1438,Complex volcano,D6,S0
+0803-031,08,03,-031,Kita_Yatsuga-take,Honshu-Japan,Radiocarbon,36.10,N,,138.30,E,2530,Stratovolcanoes,D6,S0
+0803-03=,08,03,-03-,Fuji,Honshu-Japan,Historical,35.358,N,,138.731,E,3776,Stratovolcano,D4,S2
+0803-04=,08,03,-04-,On_take,Honshu-Japan,Historical,35.890,N,,137.48,E,3063,Complex volcano,D2,S0
+0803-05=,08,03,-05-,Haku_san,Honshu-Japan,Historical,36.152,N,,136.774,E,2702,Stratovolcano,D5,S2
+0803-06=,08,03,-06-,Norikura,Honshu-Japan,Radiocarbon,36.103,N,,137.557,E,3026,Stratovolcanoes,D7,S0
+0803-071,08,03,-071,Washiba_Kumonotaira,Honshu-Japan,Holocene,36.408,N,,137.594,E,2924,Shield volcanoes,D,M0
+0803-07=,08,03,-07-,Yake_dake,Honshu-Japan,Historical,36.224,N,,137.590,E,2455,Stratovolcanoes,D2,S0
+0803-08=,08,03,-08-,Tate_yama,Honshu-Japan,Historical,36.568,N,,137.593,E,2621,Stratovolcano,D3,S0
+0803-09=,08,03,-09-,Niigata_Yake_yama,Honshu-Japan,Historical,36.918,N,,138.039,E,2400,Lava dome,D2,S1
+0803-10=,08,03,-10-,Myoko,Honshu-Japan,Radiocarbon,36.888,N,,138.12,E,2446,Stratovolcano,D7,S0
+0803-11=,08,03,-11-,Asama,Honshu-Japan,Historical,36.403,N,,138.526,E,2568,Complex volcano,D1,S1
+0803-121,08,03,-121,Shiga,Honshu-Japan,Holocene?,36.688,N,,138.519,E,2041,Shield volcanoes,?,M0
+0803-122,08,03,-122,Haruna,Honshu-Japan,Anthropology,36.474,N,,138.881,E,1449,Stratovolcano,D6,S0
+0803-12=,08,03,-12-,Kusatsu_Shirane,Honshu-Japan,Historical,36.620,N,,138.535,E,2171,Stratovolcanoes,D2,S1
+0803-131,08,03,-131,Hiuchi,Honshu-Japan,Historical,36.952,N,,139.289,E,2356,Stratovolcano,D5,S0
+0803-13=,08,03,-13-,Akagi,Honshu-Japan,Holocene?,36.557,N,,139.196,E,1828,Stratovolcano,?,S0
+0803-141,08,03,-141,Nantai,Honshu-Japan,Holocene?,36.762,N,,139.494,E,2486,Stratovolcano,?,S0
+0803-142,08,03,-142,Omanago Group,Honshu-Japan,Radiocarbon,36.792,N,,139.510,E,2367,Lava domes,D7,S0
+0803-143,08,03,-143,Takahara,Honshu-Japan,Holocene,36.897,N,,139.780,E,1795,Stratovolcano,D7,S0
+0803-14=,08,03,-14-,Nikko_Shirane,Honshu-Japan,Historical,36.796,N,,139.379,E,2578,Shield volcano,D2,S1
+0803-151,08,03,-151,Numazawa,Honshu-Japan,Radiocarbon,37.450,N,,139.579,E,1100,Shield volcano,D7,M0
+0803-15=,08,03,-15-,Nasu,Honshu-Japan,Historical,37.122,N,,139.966,E,1915,Stratovolcanoes,D2,S1
+0803-16=,08,03,-16-,Bandai,Honshu-Japan,Historical,37.598,N,,140.076,E,1819,Stratovolcano,D3,S1
+0803-17=,08,03,-17-,Adatara,Honshu-Japan,Historical,37.644,N,,140.286,E,1718,Stratovolcanoes,D2,S1
+0803-18=,08,03,-18-,Azuma,Honshu-Japan,Historical,37.732,N,,140.248,E,2035,Stratovolcanoes,D2,S1
+0803-191,08,03,-191,Hijiori,Honshu-Japan,Holocene,38.606,N,,140.178,E,516,Caldera,U,S0
+0803-19=,08,03,-19-,Zao,Honshu-Japan,Historical,38.141,N,,140.443,E,1841,Complex volcano,D2,S1
+0803-20=,08,03,-20-,Narugo,Honshu-Japan,Historical,38.733,N,,140.732,E,470,Caldera,D6,S0
+0803-21=,08,03,-21-,Kurikoma,Honshu-Japan,Historical,38.958,N,,140.792,E,1628,Stratovolcano,D2,S1
+0803-22=,08,03,-22-,Chokai,Honshu-Japan,Historical,39.096,N,,140.052,E,2233,Stratovolcanoes,D2,S1
+0803-23=,08,03,-23-,Akita_Komaga_take,Honshu-Japan,Historical,39.758,N,,140.803,E,1637,Stratovolcanoes,D2,S1
+0803-24=,08,03,-24-,Iwate,Honshu-Japan,Historical,39.850,N,,141.004,E,2041,Complex volcano,D2,S0
+0803-25=,08,03,-25-,Hachimantai,Honshu-Japan,Radiocarbon,39.955,N,,140.857,E,1614,Stratovolcano,D7,S0
+0803-262,08,03,-262,Megata,Honshu-Japan,Tephrochronology,39.95,N,,139.73,E,291,Maars,D7,M0
+0803-26=,08,03,-26-,Akita_Yake_yama,Honshu-Japan,Historical,39.961,N,,140.761,E,1366,Stratovolcano,D2,S0
+0803-271,08,03,-271,Towada,Honshu-Japan,Historical,40.47,N,,140.92,E,1159,Caldera,D6,S0
+0803-27=,08,03,-27-,Iwaki,Honshu-Japan,Historical,40.653,N,,140.307,E,1625,Stratovolcano,D3,S1
+0803-28=,08,03,-28-,Hakkoda_Group,Honshu-Japan,Radiocarbon,40.656,N,,140.881,E,1585,Stratovolcanoes,D5,S0
+0803-29=,08,03,-29-,Osore_yama,Honshu-Japan,Historical,41.276,N,,141.124,E,879,Stratovolcano,D4,S0
+0804-011,08,04,-011,To_shima,Izu Is-Japan,Tephrochronology,34.517,N,,139.283,E,508,Stratovolcano,D7,S0
+0804-01=,08,04,-01-,Oshima,Izu Is-Japan,Historical,34.721,N,,139.398,E,764,Stratovolcano,D2,S1
+0804-02=,08,04,-02-,Nii_jima,Izu Is-Japan,Historical,34.393,N,,139.273,E,432,Lava domes,D6,S0
+0804-03=,08,04,-03-,Kozu_shima,Izu Is-Japan,Historical,34.216,N,,139.156,E,572,Lava domes,D6,S0
+0804-041,08,04,-041,Mikura_jima,Izu Is-Japan,Tephrochronology,33.871,N,,139.605,E,851,Stratovolcano,D7,S0
+0804-042,08,04,-042,Kurose_Hole,Izu Is-Japan,Holocene?,33.40,N,,139.68,E,-107,Submarine volcano,?,U0
+0804-04=,08,04,-04-,Miyake_jima,Izu Is-Japan,Historical,34.079,N,,139.529,E,815,Stratovolcano,D1,M2
+0804-05=,08,04,-05-,Hachijo_jima,Izu Is-Japan,Historical,33.13,N,,139.769,E,854,Stratovolcanoes,D5,M0
+0804-061,08,04,-061,Myojin_Knoll,Izu Is-Japan,Holocene?,32.10,N,,139.85,E,360,Submarine volcano,?,S0
+0804-06=,08,04,-06-,Aoga_shima,Izu Is-Japan,Historical,32.454,N,,139.762,E,423,Stratovolcano,D4,S0
+0804-07=,08,04,-07-,Bayonnaise_Rocks,Izu Is-Japan,Historical,31.88,N,,139.92,E,11,Submarine volcano,D2,S1
+0804-08=,08,04,-08-,Smith_Rock,Izu Is-Japan,Historical,31.436,N,,140.054,E,136,Submarine volcano,D2,S0
+0804-091,08,04,-091,Sofugan,Izu Is-Japan,Uncertain,29.789,N,,140.345,E,99,Stratovolcano,?,M0
+0804-093,08,04,-093,Suiyo_Seamount,Izu Is-Japan,Fumarolic,28.60,N,,140.63,E,-1418,Submarine volcano,U,U0
+0804-094,08,04,-094,Mokuyo_Seamount,Izu Is-Japan,Fumarolic,28.32,N,,140.57,E,-920,Submarine volcano,U,U0
+0804-095,08,04,-095,Doyo_Seamount,Izu Is-Japan,Fumarolic,27.68,N,,140.80,E,-860,Submarine volcano,U,U0
+0804-096,08,04,-096,Nishino_shima,Volcano Is-Japan,Historical,27.274,N,,140.882,E,38,Caldera,D2,S0
+0804-097,08,04,-097,Kaikata_Seamount,Volcano Is-Japan,Fumarolic,26.67,N,,141.00,E,-162,Submarine volcano,U,U0
+0804-09=,08,04,-09-,Tori_shima,Izu Is-Japan,Historical,30.480,N,,140.306,E,394,Stratovolcano,D1,M0
+0804-101,08,04,-101,Unnamed,Volcano Is-Japan,Uncertain,26.13,N,,144.48,E,-3200,Submarine volcano ?,?,U0
+0804-10=,08,04,-10-,Kaitoku_Seamount,Volcano Is-Japan,Historical,26.122,N,,141.102,E,-103,Submarine volcano,D2,U0
+0804-11=,08,04,-11-,Kita_Iwo_jima,Volcano Is-Japan,Historical,25.424,N,,141.284,E,792,Stratovolcano,D2,M0
+0804-121,08,04,-121,Kita_Fukutokutai,Volcano Is-Japan,Historical,24.414,N,,141.419,E,-73,Submarine volcano,D2,U0
+0804-12=,08,04,-12-,Ioto_Iwo_jima,Volcano Is-Japan,Historical,24.754,N,,141.290,E,161,Caldera,D1,S1
+0804-131,08,04,-131,Minami_Hiyoshi,Volcano Is-Japan,Historical,23.497,N,,141.940,E,-30,Submarine volcano,D2,M0
+0804-132,08,04,-132,Nikko,Volcano Is-Japan,Fumarolic,23.075,N,,142.308,E,-391,Submarine volcano,U,U0
+0804-133,08,04,-133,Fukujin,Volcano Is-Japan,Historical,21.93,N,,143.47,E,-217,Submarine volcano,D2,U0
+0804-134,08,04,-134,Kasuga,Volcano Is-Japan,Historical,21.765,N,,143.710,E,-598,Submarine volcano,D2,U0
+0804-135,08,04,-135,Minami_Kasuga,Volcano Is-Japan,Holocene,21.60,N,,143.637,E,-274,Submarine volcano,U,U0
+0804-136,08,04,-136,NW_Eifuku,Volcano Is-Japan,Fumarolic,21.485,N,,144.043,E,-1535,Submarine volcano,U,U0
+0804-137,08,04,-137,Daikoku,Volcano Is-Japan,Fumarolic,21.324,N,,144.194,E,-323,Submarine volcano,U,U0
+0804-138,08,04,-138,Unnamed,Mariana Is-C Pacific,Uncertain,21.00,N,,142.90,E,,Submarine volcano ?,?,U0
+0804-139,08,04,-139,Unnamed,Mariana Is-C Pacific,Uncertain,20.30,N,,143.20,E,,Submarine volcano ?,?,U0
+0804-13=,08,04,-13-,Fukutoku_Okanoba,Volcano Is-Japan,Historical,24.28,N,,141.485,E,-14,Submarine volcano,D1,S1
+0804-141,08,04,-141,Ahyi,Mariana Is-C Pacific,Seismicity,20.42,N,,145.03,E,-137,Submarine volcano,D1,U0
+0804-142,08,04,-142,Supply_Reef,Mariana Is-C Pacific,Hydrophonic,20.13,N,,145.10,E,-8,Submarine volcano,D2,S0
+0804-143,08,04,-143,Maug_Islands,Mariana Is-C Pacific,Fumarolic,20.02,N,,145.22,E,227,Stratovolcano,U,M0
+0804-14=,08,04,-14-,Farallon_de_Pajaros,Mariana Is-C Pacific,Historical,20.538,N,,144.896,E,360,Stratovolcano,D2,S1
+0804-15=,08,04,-15-,Asuncion,Mariana Is-C Pacific,Historical,19.671,N,,145.406,E,857,Stratovolcano,D2,S0
+0804-16=,08,04,-16-,Agrigan,Mariana Is-C Pacific,Historical,18.77,N,,145.67,E,965,Stratovolcano,D2,M0
+0804-17=,08,04,-17-,Pagan,Mariana Is-C Pacific,Historical,18.13,N,,145.80,E,570,Stratovolcanoes,D1,M2
+0804-18=,08,04,-18-,Alamagan,Mariana Is-C Pacific,Radiocarbon,17.60,N,,145.83,E,744,Stratovolcano,D6,S0
+0804-191,08,04,-191,Zealandia Bank,Mariana Is-C Pacific,Fumarolic,16.88,N,,145.85,E,0,Stratovolcano,U,S0
+0804-192,08,04,-192,Sarigan,Mariana Is-C Pacific,Holocene,16.708,N,,145.78,E,538,Stratovolcano,U,S0
+0804-19=,08,04,-19-,Guguan,Mariana Is-C Pacific,Historical,17.307,N,,145.845,E,287,Stratovolcano,D3,S0
+0804-201,08,04,-201,East_Diamante,Mariana Is-C Pacific,Fumarolic,15.93,N,,145.67,E,-127,Submarine volcano,U,U0
+0804-202,08,04,-202,Ruby,Mariana Is-C Pacific,Historical,15.62,N,,145.57,E,-230,Submarine volcano,D2,U0
+0804-20=,08,04,-20-,Anatahan,Mariana Is-C Pacific,Historical,16.35,N,,145.67,E,790,Stratovolcano,D1,S2
+0804-211,08,04,-211,NW_Rota_1,Mariana Is-C Pacific,Historical,14.601,N,,144.775,E,-517,Submarine volcano,D1,U0
+0804-21=,08,04,-21-,Esmeralda_Bank,Mariana Is-C Pacific,Fumarolic,15.00,N,,145.25,E,-43,Submarine volcano,U,M0
+0804-22-,08,04,-22-,Forecast_Seamount,Mariana Is-C Pacific,Fumarolic,13.40,N,,143.92,E,,Submarine volcano,U,M0
+0804-23-,08,04,-23-,Seamount_X,Mariana Is-C Pacific,Fumarolic,13.25,N,,144.02,E,-1230,Submarine volcano,U,M0
+0805-011,08,05,-011,E_san,Hokkaido-Japan,Historical,41.802,N,,141.170,E,618,Stratovolcano,D3,S0
+0805-01=,08,05,-01-,Oshima_Oshima,Hokkaido-Japan,Historical,41.507,N,,139.371,E,737,Stratovolcano,D4,M0
+0805-02=,08,05,-02-,Komaga_take,Hokkaido-Japan,Historical,42.061,N,,140.681,E,1131,Stratovolcano,D1,S2
+0805-031,08,05,-031,Niseko,Hokkaido-Japan,Tephrochronology,42.88,N,,140.63,E,1154,Stratovolcanoes,D7,S0
+0805-032,08,05,-032,Yotei,Hokkaido-Japan,Tephrochronology,42.830,N,,140.815,E,1898,Stratovolcano,D7,S0
+0805-034,08,05,-034,Kuttara,Hokkaido-Japan,Tephrochronology,42.489,N,,141.163,E,581,Stratovolcanoes,D3,S0
+0805-03=,08,05,-03-,Usu,Hokkaido-Japan,Historical,42.541,N,,140.843,E,737,Stratovolcano,D1,S0
+0805-041,08,05,-041,Rishiri,Hokkaido-Japan,Radiocarbon,45.18,N,,141.25,E,1721,Stratovolcano,D7,S0
+0805-04=,08,05,-04-,Shikotsu,Hokkaido-Japan,Historical,42.688,N,,141.380,E,1320,Caldera,D2,S0
+0805-05=,08,05,-05-,Tokachi,Hokkaido-Japan,Historical,43.416,N,,142.690,E,2077,Stratovolcanoes,D1,S0
+0805-061,08,05,-061,Nipesotsu_Maruyama,Hokkaido-Japan,Historical,43.453,N,,143.036,E,2013,Stratovolcanoes,D3,S0
+0805-062,08,05,-062,Shikaribetsu_Group,Hokkaido-Japan,Holocene?,43.312,N,,143.096,E,1401,Lava domes,?,S0
+0805-06=,08,05,-06-,Daisetsu,Hokkaido-Japan,Tephrochronology,43.661,N,,142.858,E,2290,Stratovolcanoes,D4,S0
+0805-07=,08,05,-07-,Akan,Hokkaido-Japan,Historical,43.384,N,,144.013,E,1499,Caldera,D1,S1
+0805-081,08,05,-081,Mashu,Hokkaido-Japan,Radiocarbon,43.570,N,,144.565,E,855,Caldera,D6,S0
+0805-082,08,05,-082,Rausu,Hokkaido-Japan,Radiocarbon,44.073,N,,145.126,E,1660,Stratovolcano,D3,S0
+0805-08=,08,05,-08-,Kutcharo,Hokkaido-Japan,Tephrochronology,43.608,N,,144.443,E,999,Caldera,D6,S0
+0805-09=,08,05,-09-,Shiretoko_Iwo_zan,Hokkaido-Japan,Historical,44.131,N,,145.165,E,1563,Stratovolcano,D2,S0
+0900-01=,09,00,-01-,Golovnin,Kuril Is,Historical,43.841,N,,145.509,E,543,Caldera,D3,S0
+0900-021,09,00,-021,Smirnov,Kuril Is,Holocene,44.420,N,,146.135,E,1189,Stratovolcano,U,S0
+0900-02=,09,00,-02-,Mendeleev,Kuril Is,Historical,43.976,N,,145.736,E,888,Stratovolcano,D3,S0
+0900-03=,09,00,-03-,Tiatia,Kuril Is,Historical,44.351,N,,146.256,E,1819,Stratovolcano,D2,M0
+0900-041,09,00,-041,Lvinaya_Past,Kuril Is,Radiocarbon,44.608,N,,146.994,E,528,Stratovolcano,D7,S0
+0900-04=,09,00,-04-,Berutarube,Kuril Is,Holocene,44.459,N,,146.936,E,1221,Stratovolcano,U,S0
+0900-05=,09,00,-05-,Atsonupuri,Kuril Is,Historical,44.805,N,,147.135,E,1206,Stratovolcano,D2,S0
+0900-06-,09,00,-06-,Bogatyr_Ridge,Kuril Is,Holocene,44.833,N,,147.342,E,1634,Stratovolcano,U,S0
+0900-061,09,00,-061,Unnamed,Kuril Is,Uncertain,45.03,N,,147.208,E,-930,Submarine volcano,?,U0
+0900-07=,09,00,-07-,Grozny_Group,Kuril Is,Historical,45.026,N,,147.922,E,1211,Complex volcanoes,D2,S1
+0900-08=,09,00,-08-,Baransky,Kuril Is,Historical,45.097,N,,148.024,E,1132,Stratovolcano,D2,S0
+0900-091,09,00,-091,Golets_Tornyi_Group,Kuril Is,Holocene?,45.25,N,,148.35,E,442,Pyroclastic cones,?,S0
+0900-09=,09,00,-09-,Chirip,Kuril Is,Historical,45.338,N,,147.925,E,1587,Stratovolcanoes,D3,M0
+0900-10=,09,00,-10-,Medvezhia,Kuril Is,Historical,45.387,N,,148.843,E,1125,Somma volcano,D2,S0
+0900-11-,09,00,-11-,Demon,Kuril Is,Holocene,45.50,N,,148.85,E,1205,Stratovolcano,U,S0
+0900-111,09,00,-111,Ivao_Group,Kuril Is,Holocene,45.77,N,,149.68,E,1426,Cinder cones,U,S0
+0900-112,09,00,-112,Rudakov,Kuril Is,Holocene?,45.88,N,,149.83,E,542,Stratovolcano,?,S0
+0900-113,09,00,-113,Tri_Sestry,Kuril Is,Holocene?,45.93,N,,149.92,E,998,Stratovolcano,?,S0
+0900-12=,09,00,-12-,Kolokol_Group,Kuril Is,Historical,46.042,N,,150.05,E,1328,Somma volcanoes,D2,S0
+0900-13-,09,00,-13-,Unnamed,Kuril Is,Uncertain,46.10,N,,150.50,E,-100,Submarine volcano ?,?,U0
+0900-15=,09,00,-15-,Chirpoi,Kuril Is,Historical,46.525,N,,150.875,E,742,Caldera,D2,S0
+0900-16-,09,00,-16-,Unnamed,Kuril Is,Hydrophonic,46.47,N,,151.28,E,-502,Submarine volcano,D2,U0
+0900-161,09,00,-161,Milne,Kuril Is,Holocene,46.82,N,,151.78,E,1540,Somma volcano,U,S0
+0900-17=,09,00,-17-,Goriaschaia_Sopka,Kuril Is,Historical,46.83,N,,151.75,E,891,Stratovolcano,D2,S0
+0900-18=,09,00,-18-,Zavaritzki_Caldera,Kuril Is,Historical,46.925,N,,151.95,E,624,Caldera,D2,S0
+0900-191,09,00,-191,Urataman,Kuril Is,Holocene,47.12,N,,152.25,E,678,Somma volcano,U,S0
+0900-19=,09,00,-19-,Prevo_Peak,Kuril Is,Historical,47.02,N,,152.12,E,1360,Stratovolcano,D3,M0
+0900-20=,09,00,-20-,Ketoi,Kuril Is,Historical,47.35,N,,152.475,E,1172,Stratovolcano,D2,S0
+0900-211,09,00,-211,Srednii,Kuril Is,Holocene,47.60,N,,152.92,E,36,Submarine volcano,U,S0
+0900-21=,09,00,-21-,Ushishur,Kuril Is,Historical,47.52,N,,152.80,E,401,Caldera,D3,S0
+0900-22=,09,00,-22-,Rasshua,Kuril Is,Historical,47.77,N,,153.02,E,956,Stratovolcano,D2,S0
+0900-23=,09,00,-23-,Unnamed,Kuril Is,Historical,48.08,N,,153.33,E,-150,Submarine volcano,D2,U0
+0900-24=,09,00,-24-,Sarychev_Peak,Kuril Is,Historical,48.092,N,,153.20,E,1496,Stratovolcano,D2,S1
+0900-25=,09,00,-25-,Raikoke,Kuril Is,Historical,48.292,N,,153.25,E,551,Stratovolcano,D2,M0
+0900-26=,09,00,-26-,Chirinkotan,Kuril Is,Historical,48.98,N,,153.48,E,724,Stratovolcano,D1,S0
+0900-27=,09,00,-27-,Ekarma,Kuril Is,Historical,48.958,N,,153.93,E,1170,Stratovolcano,D2,S0
+0900-29=,09,00,-29-,Sinarka,Kuril Is,Historical,48.875,N,,154.175,E,934,Stratovolcano,D3,S0
+0900-30=,09,00,-30-,Kharimkotan,Kuril Is,Historical,49.12,N,,154.508,E,1145,Stratovolcano,D2,S0
+0900-31=,09,00,-31-,Tao_Rusyr_Caldera,Kuril Is,Historical,49.35,N,,154.70,E,1325,Stratovolcano,D2,S0
+0900-32=,09,00,-32-,Nemo-Peak,Kuril Is,Historical,49.57,N,,154.808,E,1018,Caldera,D2,S0
+0900-331,09,00,-331,Shirinki,Kuril Is,Holocene,50.20,N,,154.98,E,761,Stratovolcano,U,S0
+0900-34=,09,00,-34-,Fuss_Peak,Kuril Is,Historical,50.27,N,,155.25,E,1772,Stratovolcano,D3,S0
+0900-351,09,00,-351,Lomonosov_Group,Kuril Is,Holocene,50.25,N,,155.43,E,1681,Cinder cones,U,S0
+0900-35=,09,00,-35-,Karpinsky_Group,Kuril Is,Historical,50.13,N,,155.37,E,1345,Cones,D2,S0
+0900-36=,09,00,-36-,Chikurachki,Kuril Is,Historical,50.325,N,,155.458,E,1816,Stratovolcanoes,D1,M2
+0900-37-,09,00,-37-,Vernadskii_Ridge,Kuril Is,Holocene,50.55,N,,155.97,E,1183,Cinder cones,U,S0
+0900-38=,09,00,-38-,Ebeko,Kuril Is,Historical,50.68,N,,156.02,E,1156,Somma volcano,D1,S1
+0900-39=,09,00,-39-,Alaid,Kuril Is,Historical,50.858,N,,155.55,E,2339,Stratovolcano,D2,M1
+1000-001,10,00,-001,Mashkovtsev,Kamchatka,Holocene,51.10,N,,156.72,E,503,Stratovolcano,U,M0
+1000-01=,10,00,-01-,Kambalny,Kamchatka,Historical,51.30,N,,156.87,E,2156,Stratovolcano,D6,M0
+1000-021,10,00,-021,Yavinsky,Kamchatka,Tephrochronology,51.57,N,,156.60,E,705,Stratovolcano,D7,M0
+1000-022,10,00,-022,Diky_Greben,Kamchatka,Radiocarbon,51.45,N,,156.97,E,1070,Lava domes,D6,S0
+1000-023,10,00,-023,Kurile_Lake,Kamchatka,Radiocarbon,51.45,N,,157.12,E,81,Caldera,D7,S0
+1000-02=,10,00,-02-,Koshelev,Kamchatka,Historical,51.357,N,,156.75,E,1812,Stratovolcano,D5,M0
+1000-03=,10,00,-03-,Ilyinsky,Kamchatka,Historical,51.490,N,,157.20,E,1578,Stratovolcano,D2,S0
+1000-041,10,00,-041,Kell,Kamchatka,Holocene,51.65,N,,157.35,E,900,Stratovolcanoes,U,M0
+1000-042,10,00,-042,Belenkaya,Kamchatka,Holocene,51.75,N,,157.27,E,892,Stratovolcano,U,M0
+1000-04=,10,00,-04-,Zheltovsky,Kamchatka,Historical,51.57,N,,157.323,E,1953,Stratovolcano,D2,M0
+1000-051,10,00,-051,Ozernoy,Kamchatka,Holocene,51.88,N,,157.38,E,562,Shield volcano,U,M0
+1000-052,10,00,-052,Olkoviy_Volc_Group,Kamchatka,Holocene,52.02,N,*,157.53,E,681,Volcanic field,U,M0
+1000-053,10,00,-053,Khodutka,Kamchatka,Radiocarbon,52.063,N,,157.703,E,2090,Stratovolcanoes,D7,S0
+1000-054,10,00,-054,Piratkovsky,Kamchatka,Holocene,52.113,N,,157.849,E,1322,Stratovolcano,U,S0
+1000-055,10,00,-055,Ostanets,Kamchatka,Holocene,52.146,N,,157.322,E,719,Shield volcanoes,U,M0
+1000-056,10,00,-056,Otdelniy,Kamchatka,Holocene,52.220,N,*,157.428,E,791,Shield volcanoes,U,M0
+1000-057,10,00,-057,Golaya,Kamchatka,Holocene,52.263,N,,157.787,E,858,Stratovolcano,U,M0
+1000-058,10,00,-058,Asacha,Kamchatka,Holocene,52.355,N,,157.827,E,1910,Complex volcano,U,M0
+1000-059,10,00,-059,Visokiy,Kamchatka,Holocene,52.43,N,,157.93,E,1234,Stratovolcano,U,M0
+1000-05=,10,00,-05-,Ksudach,Kamchatka,Historical,51.80,N,,157.53,E,1079,Stratovolcano,D2,S0
+1000-06=,10,00,-06-,Mutnovsky,Kamchatka,Historical,52.453,N,,158.195,E,2322,Complex volcano,D1,M1
+1000-07=,10,00,-07-,Gorely,Kamchatka,Historical,52.558,N,,158.03,E,1829,Caldera,D2,S0
+1000-081,10,00,-081,Unnamed,Kamchatka,Holocene,52.57,N,*,157.02,E,610,Cinder cone,U,M0
+1000-082,10,00,-082,Tolmachev_Dol,Kamchatka,Radiocarbon,52.63,N,*,157.58,E,1021,Cinder cones,D6,M0
+1000-083,10,00,-083,Vilyuchik,Kamchatka,Tephrochronology,52.70,N,,158.28,E,2173,Stratovolcano,D7,S0
+1000-084,10,00,-084,Barkhatnaya_Sopka,Kamchatka,Tephrochronology,52.823,N,,158.27,E,870,Lava domes,D7,M0
+1000-085,10,00,-085,Unnamed,Kamchatka,Holocene,52.92,N,,158.52,E,450,Shield volcanoes,U,M0
+1000-086,10,00,-086,Unnamed,Kamchatka,Holocene,52.88,N,,158.30,E,700,Shield volcanoes,U,M0
+1000-087,10,00,-087,Bolshe_Bannaya,Kamchatka,Holocene,52.90,N,,157.78,E,1200,Lava domes,U,M0
+1000-08=,10,00,-08-,Opala,Kamchatka,Historical,52.543,N,,157.335,E,2475,Caldera,D4,M0
+1000-09=,10,00,-09-,Koryaksky,Kamchatka,Historical,53.320,N,,158.688,E,3456,Stratovolcano,D1,S0
+1000-10=,10,00,-10-,Avachinsky,Kamchatka,Historical,53.255,N,,158.830,E,2741,Stratovolcano,D1,S0
+1000-11=,10,00,-11-,Dzenzursky,Kamchatka,Holocene,53.637,N,,158.922,E,2285,Compound volcano,U,S0
+1000-121,10,00,-121,Veer,Kamchatka,Tephrochronology,53.75,N,,158.45,E,520,Cinder cones,D6,M0
+1000-122,10,00,-122,Kostakan,Kamchatka,Holocene,53.83,N,*,158.05,E,1150,Cinder cones,D6,M0
+1000-123,10,00,-123,Bakening,Kamchatka,Tephrochronology,53.905,N,,158.07,E,2278,Stratovolcano,D7,S0
+1000-124,10,00,-124,Zavaritsky,Kamchatka,Radiocarbon,53.905,N,,158.385,E,1567,Cinder cones,D7,M0
+1000-125,10,00,-125,Akademia_Nauk,Kamchatka,Historical,53.98,N,,159.45,E,1180,Stratovolcanoes,D2,S0
+1000-12=,10,00,-12-,Zhupanovsky,Kamchatka,Historical,53.590,N,,159.147,E,2958,Compound volcano,D2,S0
+1000-13=,10,00,-13-,Karymsky,Kamchatka,Historical,54.05,N,,159.45,E,1536,Stratovolcano,D1,S1
+1000-14=,10,00,-14-,Maly_Semiachik,Kamchatka,Historical,54.13,N,,159.67,E,1560,Caldera,D2,M0
+1000-15=,10,00,-15-,Bolshoi_Semiachik,Kamchatka,Radiocarbon,54.32,N,,160.02,E,1720,Stratovolcanoes,D7,M0
+1000-16-,10,00,-16-,Taunshits,Kamchatka,Radiocarbon,54.53,N,,159.80,E,2353,Stratovolcano,D7,S0
+1000-17=,10,00,-17-,Uzon,Kamchatka,Radiocarbon,54.50,N,,159.97,E,1617,Calderas,D7,S0
+1000-18=,10,00,-18-,Kikhpinych,Kamchatka,Radiocarbon,54.487,N,,160.253,E,1552,Stratovolcanoes,D5,M0
+1000-19=,10,00,-19-,Krasheninnikov,Kamchatka,Radiocarbon,54.593,N,,160.273,E,1856,Caldera,D5,M0
+1000-201,10,00,-201,Schmidt,Kamchatka,Holocene,54.92,N,,160.63,E,2020,Shield volcano,U,M0
+1000-20=,10,00,-20-,Kronotsky,Kamchatka,Historical,54.753,N,,160.527,E,3528,Stratovolcano,D2,M0
+1000-21=,10,00,-21-,Gamchen,Kamchatka,Tephrochronology,54.973,N,,160.702,E,2576,Complex volcano,D7,M0
+1000-221,10,00,-221,Vysoky,Kamchatka,Radiocarbon,55.07,N,,160.77,E,2161,Stratovolcano,D7,S0
+1000-22=,10,00,-22-,Komarov,Kamchatka,Radiocarbon,55.032,N,,160.720,E,2070,Stratovolcano,D6,M0
+1000-232,10,00,-232,Unnamed,Kamchatka,Holocene?,55.92,N,*,161.75,E,,Cinder cones,?,S0
+1000-23=,10,00,-23-,Kizimen,Kamchatka,Historical,55.130,N,,160.32,E,2376,Stratovolcano,D2,S0
+1000-241,10,00,-241,Udina,Kamchatka,Holocene,55.755,N,,160.527,E,2923,Stratovolcanoes,U,S0
+1000-242,10,00,-242,Zimina,Kamchatka,Holocene,55.862,N,,160.603,E,3081,Stratovolcanoes,U,S0
+1000-24=,10,00,-24-,Tolbachik,Kamchatka,Historical,55.830,N,,160.330,E,3682,Shield volcano,D2,M1
+1000-251,10,00,-251,Kamen,Kamchatka,Holocene,56.02,N,,160.593,E,4585,Stratovolcano,U,M0
+1000-25=,10,00,-25-,Bezymianny,Kamchatka,Historical,55.978,N,,160.587,E,2882,Stratovolcano,D1,S2
+1000-261,10,00,-261,Ushkovsky,Kamchatka,Historical,56.070,N,,160.470,E,3943,Compound volcano,D3,M0
+1000-26=,10,00,-26-,Kliuchevskoi,Kamchatka,Historical,56.057,N,,160.638,E,4835,Stratovolcano,D1,M1
+1000-271,10,00,-271,Piip,Kamchatka-E of,Tephrochronology,55.42,N,,167.33,E,-300,Submarine volcano,D7,U0
+1000-272,10,00,-272,Khangar,Kamchatka,Radiocarbon,54.75,N,,157.38,E,2000,Stratovolcano,D5,S0
+1000-273,10,00,-273,Cherpuk_Group,Kamchatka,Radiocarbon,55.55,N,,157.47,E,1868,Pyroclastic cones,D7,S0
+1000-27=,10,00,-27-,Shiveluch,Kamchatka,Historical,56.653,N,,161.360,E,3283,Stratovolcano,D1,S1
+1000-28=,10,00,-28-,Ichinsky,Kamchatka,Historical,55.68,N,,157.73,E,3621,Stratovolcano,D4,M0
+1000-29-,10,00,-29-,Maly_Payalpan,Kamchatka,Holocene?,55.82,N,,157.98,E,1802,Shield volcanoes,?,M0
+1000-30-,10,00,-30-,Bolshoi_Payalpan,Kamchatka,Holocene?,55.88,N,,157.78,E,1906,Shield volcanoes,?,M0
+1000-31-,10,00,-31-,Plosky,Kamchatka,Holocene?,55.20,N,,158.47,E,1236,Shield volcano,?,M0
+1000-32-,10,00,-32-,Akhtang,Kamchatka,Holocene?,55.43,N,,158.65,E,1956,Shield volcano,?,M0
+1000-33-,10,00,-33-,Kozyrevsky,Kamchatka,Holocene?,55.58,N,,158.38,E,2016,Shield volcano,?,M0
+1000-34-,10,00,-34-,Romanovka,Kamchatka,Holocene?,55.65,N,,158.80,E,1442,Stratovolcano,?,M0
+1000-35-,10,00,-35-,Uksichan,Kamchatka,Holocene?,56.08,N,,158.38,E,1692,Shield volcano,?,M0
+1000-36-,10,00,-36-,Bolshoi_Kekuknaysky,Kamchatka,Radiocarbon,56.47,N,,157.80,E,1401,Shield volcanoes,D7,M0
+1000-37-,10,00,-37-,Kulkev,Kamchatka,Holocene?,56.37,N,,158.37,E,915,Shield volcano,?,M0
+1000-38-,10,00,-38-,Geodesistoy,Kamchatka,Holocene?,56.33,N,,158.67,E,1170,Shield volcano,?,M0
+1000-39-,10,00,-39-,Anaun,Kamchatka,Holocene?,56.32,N,,158.83,E,1828,Stratovolcano,?,M0
+1000-40-,10,00,-40-,Krainy,Kamchatka,Holocene?,56.37,N,,159.03,E,1554,Shield volcano,?,M0
+1000-41-,10,00,-41-,Kekurny,Kamchatka,Holocene?,56.40,N,,158.85,E,1377,Shield volcanoes,?,M0
+1000-42-,10,00,-42-,Eggella,Kamchatka,Holocene?,56.57,N,,158.52,E,1046,Shield volcano,?,M0
+1000-43-,10,00,-43-,Unnamed,Kamchatka,Holocene?,56.82,N,,158.95,E,1185,Shield volcano,?,M0
+1000-44-,10,00,-44-,Verkhovoy,Kamchatka,Holocene?,56.52,N,,159.53,E,1400,Shield volcano,?,M0
+1000-45-,10,00,-45-,Alney_Chashakondzha,Kamchatka,Radiocarbon,56.70,N,,159.65,E,2598,Stratovolcano,D5,M0
+1000-46-,10,00,-46-,Cherny,Kamchatka,Holocene?,56.82,N,,159.67,E,1778,Stratovolcano,?,M0
+1000-47-,10,00,-47-,Pogranychny,Kamchatka,Holocene?,56.85,N,,159.80,E,1427,Shield volcanoes,?,M0
+1000-48-,10,00,-48-,Zaozerny,Kamchatka,Holocene?,56.88,N,,159.95,E,1349,Shield volcanoes,?,M0
+1000-49-,10,00,-49-,Bliznets,Kamchatka,Holocene?,56.97,N,,159.78,E,1244,Stratovolcano,?,M0
+1000-50-,10,00,-50-,Kebeney,Kamchatka,Holocene?,57.10,N,,159.93,E,1527,Shield volcano,?,M0
+1000-51-,10,00,-51-,Fedotych,Kamchatka,Holocene?,57.13,N,,160.40,E,965,Shield volcano,?,M0
+1000-511,10,00,-511,Shisheika,Kamchatka,Radiocarbon,57.15,N,,161.08,E,379,Lava dome,D7,S0
+1000-512,10,00,-512,Terpuk,Kamchatka,Radiocarbon,57.20,N,,159.83,E,765,Shield volcano,D7,M0
+1000-52-,10,00,-52-,Sedankinsky,Kamchatka,Radiocarbon,57.27,N,,160.08,E,1241,Shield volcano,D7,M0
+1000-53-,10,00,-53-,Leutongey,Kamchatka,Holocene?,57.30,N,,159.83,E,1333,Shield volcano,?,M0
+1000-54-,10,00,-54-,Tuzovsky,Kamchatka,Holocene?,57.32,N,,159.97,E,1533,Shield volcanoes,?,M0
+1000-55-,10,00,-55-,Gorny_Institute,Kamchatka,Radiocarbon,57.33,N,,160.20,E,2125,Stratovolcano,D6,S0
+1000-551,10,00,-551,Kinenin,Kamchatka,Radiocarbon,57.35,N,,160.97,E,583,Maar,D6,M0
+1000-552,10,00,-552,Bliznetsy,Kamchatka,Radiocarbon,57.35,N,,161.37,E,265,Lava cone,D7,S0
+1000-56-,10,00,-56-,Titila,Kamchatka,Radiocarbon,57.40,N,,160.10,E,1559,Shield volcanoes,D7,M0
+1000-57-,10,00,-57-,Mezhdusopochny,Kamchatka,Holocene?,57.47,N,,160.25,E,1641,Shield volcano,?,M0
+1000-58-,10,00,-58-,Shishel,Kamchatka,Holocene?,57.45,N,,160.37,E,2525,Shield volcano,?,M0
+1000-59-,10,00,-59-,Elovsky,Kamchatka,Tephrochronology,57.55,N,,160.53,E,1381,Shield volcanoes,D7,M0
+1000-60-,10,00,-60-,Alngey,Kamchatka,Holocene?,57.70,N,,160.40,E,1853,Stratovolcano,?,M0
+1000-61-,10,00,-61-,Uka,Kamchatka,Holocene?,57.70,N,,160.58,E,1643,Shield volcano,?,M0
+1000-62-,10,00,-62-,Kaileney,Kamchatka,Holocene?,57.80,N,,160.67,E,1582,Shield volcano,?,M0
+1000-63-,10,00,-63-,Plosky,Kamchatka,Holocene?,57.83,N,,160.25,E,1255,Shield volcano,?,M0
+1000-64-,10,00,-64-,Bely,Kamchatka,Holocene?,57.88,N,,160.53,E,2080,Shield volcanoes,?,M0
+1000-65-,10,00,-65-,Nylgimelkin,Kamchatka,Radiocarbon,57.97,N,,160.65,E,1764,Shield volcanoes,D7,M0
+1000-66-,10,00,-66-,Snezhniy,Kamchatka,Holocene?,58.02,N,,160.80,E,2169,Shield volcano,?,M0
+1000-67-,10,00,-67-,Iktunup,Kamchatka,Holocene?,58.08,N,,160.77,E,2300,Shield volcanoes,?,M0
+1000-671,10,00,-671,Spokoiny,Kamchatka,Radiocarbon,58.13,N,,160.82,E,2171,Stratovolcano,D7,S0
+1000-68-,10,00,-68-,Ostry,Kamchatka,Holocene,58.18,N,,160.82,E,2552,Stratovolcano,D7,M0
+1000-69-,10,00,-69-,Snegovoy,Kamchatka,Holocene?,58.20,N,,160.97,E,2169,Shield volcano,?,M0
+1000-70-,10,00,-70-,Severny,Kamchatka,Radiocarbon,58.28,N,,160.87,E,1936,Shield volcano,D7,M0
+1000-71-,10,00,-71-,Iettunup,Kamchatka,Holocene?,58.40,N,,161.08,E,1340,Shield volcanoes,?,M0
+1000-72-,10,00,-72-,Voyampolsky,Kamchatka,Holocene?,58.37,N,,160.62,E,1225,Shield volcanoes,?,M0
+1002-01-,10,02,-01-,Sikhote_Alin,Russia-SE,Holocene,47.00,N,*,137.50,E,,Volcanic field,U,M0
+1002-03-,10,02,-03-,Udokan_Plateau,Russia-SE,Radiocarbon,56.28,N,*,117.77,E,2180,Pyroclastic cones,D7,M0
+1002-04-,10,02,-04-,Vitim_Plateau,Russia-SE,Holocene,53.70,N,*,113.30,E,1250,Cinder cones,U,M0
+1002-05-,10,02,-05-,Tunkin_Depression,Russia-SE,Holocene?,51.50,N,*,102.50,E,1200,Volcanic field,?,M0
+1002-06-,10,02,-06-,Oka_Plateau,Russia-SE,Holocene,52.70,N,*, 98.98,E,2077,Cinder cones,U,M0
+1002-07-,10,02,-07-,Azas_Plateau,Russia-SE,Holocene,52.52,N,*, 98.60,E,2765,Volcanic field,U,M0
+1003-01-,10,03,-01-,Taryatu_Chulutu,Mongolia,Radiocarbon,48.17,N,*, 99.70,E,2400,Volcanic field,D7,M0
+1003-02-,10,03,-02-,Khanuy_Gol,Mongolia,Holocene,48.67,N,*,102.75,E,1886,Volcanic field,U,S0
+1003-03-,10,03,-03-,Bus_Obo,Mongolia,Holocene?,47.12,N,,109.08,E,1162,Cinder cone,?,M0
+1003-04-,10,03,-04-,Dariganga_volc_field,Mongolia,Holocene,45.33,N,*,114.00,E,1778,Cinder cones,U,M0
+1003-05-,10,03,-05-,Middle_Gobi,Mongolia,Holocene?,45.28,N,*,106.70,E,1120,Cinder cones,?,M0
+1004-01-,10,04,-01-,Turfan,China-W,Historical,42.90,N,, 89.25,E,,Cone,D6,S0
+1004-02-,10,04,-02-,Tianshan_Volc_Group,China-W,Historical,42.50,N,*, 82.50,E,,Volcanic field,D6,S0
+1004-03-,10,04,-03-,Kunlun_Volc_Group,China-W,Historical,35.52,N,*, 80.20,E,5808,Pyroclastic cones,D2,S0
+1004-04-,10,04,-04-,Unnamed,China-W,Uncertain,35.85,N,*, 91.70,E,5400,Volcanic field,?,S0
+1005-01-,10,05,-01-,Honggeertu,China-E,Holocene?,41.47,N,*,113.00,E,1700,Cinder cones,?,M0
+1005-011,10,05,-011,Arshan,China-E,Radiocarbon,47.50,N,*,120.70,E,,Cinder cones,D,M0
+1005-02-,10,05,-02-,Keluo_Group,China-E,Holocene,49.37,N,*,125.92,E,670,Pyroclastic cones,U,M0
+1005-03-,10,05,-03-,Wudalianchi,China-E,Historical,48.72,N,*,126.12,E,597,Volcanic field,D4,M0
+1005-04-,10,05,-04-,Jingbo,China-E,Radiocarbon,44.08,N,*,128.83,E,1000,Volcanic field,D7,M0
+1005-05-,10,05,-05-,Longgang_Group,China-E,Radiocarbon,42.33,N,*,126.50,E,1000,Cinder cones,D6,M0
+1005-06-,10,05,-06-,Changbaishan,China-E,Historical,41.98,N,,128.08,E,2744,Stratovolcano,D2,S0
+1006-01-,10,06,-01-,Xianjindao,Korea,Uncertain,41.33,N,,128.00,E,,Unknown,?,S0
+1006-02-,10,06,-02-,Chuga_ryong,Korea,Holocene?,38.33,N,,127.33,E,452,Shield volcano,?,M0
+1006-03-,10,06,-03-,Ulreung,Korea,Radiocarbon,37.50,N,,130.87,E,984,Stratovolcano,D7,S0
+1006-04-,10,06,-04-,Halla,Korea,Historical,33.37,N,,126.53,E,1950,Shield volcano,D6,M0
+1101-01-,11,01,-01-,Buldir,Aleutian Is,Holocene?,52.35,N,,175.911,E,656,Stratovolcano,?,S0
+1101-02-,11,01,-02-,Kiska,Aleutian Is,Historical,52.103,N,,177.602,E,1220,Stratovolcano,D2,M0
+1101-03-,11,01,-03-,Segula,Aleutian Is,Holocene,52.015,N,,178.136,E,1160,Stratovolcano,U,S0
+1101-04-,11,01,-04-,Davidof,Aleutian Is,Holocene?,51.97,N,,178.33,E,328,Stratovolcano,?,M0
+1101-05-,11,01,-05-,Little_Sitkin,Aleutian Is,Historical,51.95,N,,178.543,E,1174,Stratovolcano,D3,S0
+1101-06-,11,01,-06-,Semisopochnoi,Aleutian Is,Historical,51.93,N,,179.58,E,1221,Stratovolcano,D2,S0
+1101-07-,11,01,-07-,Gareloi,Aleutian Is,Historical,51.790,N,,178.794,W,1573,Stratovolcano,D2,S0
+1101-08-,11,01,-08-,Tanaga,Aleutian Is,Historical,51.885,N,,178.146,W,1806,Stratovolcanoes,D2,S0
+1101-09-,11,01,-09-,Takawangha,Aleutian Is,Radiocarbon,51.873,N,,178.006,W,1449,Stratovolcano,D5,S0
+1101-10-,11,01,-10-,Bobrof,Aleutian Is,Holocene?,51.910,N,,177.438,W,738,Stratovolcano,?,S0
+1101-11-,11,01,-11-,Kanaga,Aleutian Is,Historical,51.923,N,,177.168,W,1307,Stratovolcano,D2,M0
+1101-111,11,01,-111,Moffett,Aleutian Is,Holocene?,51.944,N,,176.747,W,1196,Stratovolcano,?,S0
+1101-12-,11,01,-12-,Great_Sitkin,Aleutian Is,Historical,52.076,N,,176.130,W,1740,Stratovolcano,D2,S1
+1101-13-,11,01,-13-,Kasatochi,Aleutian Is,Historical,52.177,N,,175.508,W,314,Stratovolcano,D1,S2
+1101-14-,11,01,-14-,Koniuji,Aleutian Is,Uncertain,52.22,N,,175.13,W,273,Stratovolcano,?,S0
+1101-15-,11,01,-15-,Sergief,Aleutian Is,Uncertain,52.05,N,,174.95,W,560,Stratovolcano,?,S0
+1101-16-,11,01,-16-,Atka,Aleutian Is,Historical,52.332,N,,174.137,W,1451,Stratovolcanoes,D2,S1
+1101-161,11,01,-161,Korovin,Aleutian Is,Historical,52.381,N,,174.154,W,1533,Stratovolcanoes,D1,S1
+1101-18-,11,01,-18-,Seguam,Aleutian Is,Historical,52.315,N,,172.510,W,1054,Stratovolcanoes,D2,S0
+1101-19-,11,01,-19-,Amukta,Aleutian Is,Historical,52.50,N,,171.252,W,1066,Stratovolcano,D2,S1
+1101-20-,11,01,-20-,Chagulak,Aleutian Is,Holocene,52.577,N,,171.13,W,1142,Stratovolcano,U,S0
+1101-21-,11,01,-21-,Yunaska,Aleutian Is,Historical,52.643,N,,170.629,W,550,Shield volcano,D2,S2
+1101-22-,11,01,-22-,Herbert,Aleutian Is,Holocene,52.742,N,,170.111,W,1280,Stratovolcano,U,S0
+1101-23-,11,01,-23-,Carlisle,Aleutian Is,Historical,52.894,N,,170.054,W,1620,Stratovolcano,D3,S1
+1101-24-,11,01,-24-,Cleveland,Aleutian Is,Historical,52.825,N,,169.944,W,1730,Stratovolcano,D1,S2
+1101-241,11,01,-241,Tana,Aleutian Is,Holocene,52.83,N,,169.77,W,1170,Stratovolcanoes,U,S0
+1101-25-,11,01,-25-,Uliaga,Aleutian Is,Holocene,53.065,N,,169.77,W,888,Stratovolcano,U,S0
+1101-26-,11,01,-26-,Kagamil,Aleutian Is,Historical,52.974,N,,169.72,W,893,Stratovolcano,D2,S0
+1101-27-,11,01,-27-,Vsevidof,Aleutian Is,Historical,53.130,N,,168.693,W,2149,Stratovolcano,D3,S0
+1101-28-,11,01,-28-,Recheschnoi,Aleutian Is,Holocene,53.157,N,,168.539,W,1984,Stratovolcano,U,S0
+1101-29-,11,01,-29-,Okmok,Aleutian Is,Historical,53.43,N,,168.13,W,1073,Shield volcano,D1,S2
+1101-30-,11,01,-30-,Bogoslof,Aleutian Is,Historical,53.93,N,,168.03,W,150,Submarine volcano,D2,S2
+1101-31-,11,01,-31-,Makushin,Aleutian Is,Historical,53.891,N,,166.923,W,1800,Stratovolcano,D2,S1
+1101-32-,11,01,-32-,Akutan,Aleutian Is,Historical,54.134,N,,165.986,W,1303,Stratovolcano,D2,S1
+1101-34-,11,01,-34-,Westdahl,Aleutian Is,Historical,54.518,N,,164.65,W,1654,Stratovolcano ?,D2,S2
+1101-35-,11,01,-35-,Fisher,Aleutian Is,Historical,54.65,N,,164.43,W,1112,Stratovolcano,D3,S0
+1101-36-,11,01,-36-,Shishaldin,Aleutian Is,Historical,54.756,N,,163.97,W,2857,Stratovolcano,D1,S2
+1101-37-,11,01,-37-,Isanotski,Aleutian Is,Uncertain,54.765,N,,163.723,W,2446,Stratovolcano,?,S0
+1101-38-,11,01,-38-,Roundtop,Aleutian Is,Radiocarbon,54.80,N,,163.589,W,1871,Stratovolcano,D7,S0
+1101-39-,11,01,-39-,Amak,Aleutian Is,Historical,55.424,N,,163.149,W,488,Stratovolcano,D4,S0
+1102-01-,11,02,-01-,Frosty,Alaska Peninsula,Holocene,55.082,N,,162.814,W,2012,Stratovolcanoes,U,S0
+1102-011,11,02,-011,Dutton,Alaska Peninsula,Holocene,55.168,N,,162.272,W,1506,Stratovolcano,U,S0
+1102-02-,11,02,-02-,Emmons_Lake,Alaska Peninsula,Holocene,55.341,N,,162.079,W,1436,Caldera,U,S0
+1102-03-,11,02,-03-,Pavlof,Alaska Peninsula,Historical,55.42,N,,161.887,W,2519,Stratovolcano,D1,S2
+1102-04-,11,02,-04-,Pavlof_Sister,Alaska Peninsula,Holocene,55.453,N,,161.843,W,2142,Stratovolcano,U,S0
+1102-05-,11,02,-05-,Dana,Alaska Peninsula,Radiocarbon,55.641,N,,161.214,W,1354,Stratovolcano,D7,S0
+1102-051,11,02,-051,Stepovak_Bay_2,Alaska Peninsula,Holocene,55.913,N,,160.041,W,1323,Cinder cone,U,S0
+1102-052,11,02,-052,Stepovak_Bay_3,Alaska Peninsula,Holocene?,55.929,N,,160.002,W,1555,Cinder cone,?,S0
+1102-053,11,02,-053,Stepovak_Bay_4,Alaska Peninsula,Pleistocene,55.954,N,,159.954,W,1557,Stratovolcano,P,S0
+1102-06-,11,02,-06-,Kupreanof,Alaska Peninsula,Historical,56.011,N,,159.797,W,1895,Stratovolcano,D2,S0
+1102-07-,11,02,-07-,Veniaminof,Alaska Peninsula,Historical,56.17,N,,159.38,W,2507,Stratovolcano,D1,S1
+1102-08-,11,02,-08-,Black_Peak,Alaska Peninsula,Radiocarbon,56.552,N,,158.785,W,1032,Stratovolcano,D7,S0
+1102-09-,11,02,-09-,Aniakchak,Alaska Peninsula,Historical,56.88,N,,158.17,W,1341,Caldera,D2,S1
+1102-10-,11,02,-10-,Yantarni,Alaska Peninsula,Tephrochronology,57.019,N,,157.185,W,1345,Stratovolcano,D7,S0
+1102-11-,11,02,-11-,Chiginagak,Alaska Peninsula,Historical,57.135,N,,156.990,W,2221,Stratovolcano,D2,S0
+1102-12-,11,02,-12-,Kialagvik,Alaska Peninsula,Holocene,57.203,N,,156.745,W,1677,Stratovolcano,U,S0
+1102-13-,11,02,-13-,Ugashik_Peulik,Alaska Peninsula,Historical,57.751,N,,156.368,W,1474,Stratovolcano,D3,S0
+1102-131,11,02,-131,Ukinrek_Maars,Alaska Peninsula,Historical,57.832,N,,156.510,W,91,Maars,D2,S1
+1102-132,11,02,-132,Unnamed,Alaska Peninsula,Holocene,57.87,N,,155.42,W,300,Lava dome,U,S0
+1102-14-,11,02,-14-,Martin,Alaska Peninsula,Historical,58.172,N,,155.361,W,1863,Stratovolcano,D2,S0
+1102-15-,11,02,-15-,Mageik,Alaska Peninsula,Radiocarbon,58.195,N,,155.253,W,2165,Stratovolcano,D7,S0
+1102-16-,11,02,-16-,Trident,Alaska Peninsula,Historical,58.236,N,,155.10,W,1864,Stratovolcano,D2,S2
+1102-17-,11,02,-17-,Katmai,Alaska Peninsula,Historical,58.280,N,,154.963,W,2047,Stratovolcano,D2,S0
+1102-18-,11,02,-18-,Novarupta,Alaska Peninsula,Historical,58.27,N,,155.157,W,841,Caldera,D2,S0
+1102-19-,11,02,-19-,Griggs,Alaska Peninsula,Radiocarbon,58.354,N,,155.092,W,2317,Stratovolcano,D7,S0
+1102-20-,11,02,-20-,Snowy_Mountain,Alaska Peninsula,Radiocarbon,58.336,N,,154.682,W,2162,Stratovolcanoes,D4,S0
+1102-21-,11,02,-21-,Denison,Alaska Peninsula,Holocene?,58.418,N,,154.449,W,2287,Stratovolcano,?,S0
+1102-22-,11,02,-22-,Steller,Alaska Peninsula,Holocene,58.43,N,,154.40,W,2272,Stratovolcano,U,S0
+1102-23-,11,02,-23-,Kukak,Alaska Peninsula,Fumarolic,58.453,N,,154.355,W,2043,Stratovolcano,U,S0
+1102-25-,11,02,-25-,Kaguyak,Alaska Peninsula,Holocene,58.608,N,,154.028,W,901,Stratovolcano,D7,S0
+1102-26-,11,02,-26-,Fourpeaked,Alaska Peninsula,Historical,58.770,N,,153.672,W,2105,Stratovolcano,D1,S1
+1102-27-,11,02,-27-,Douglas,Alaska Peninsula,Holocene,58.855,N,,153.542,W,2140,Stratovolcano,U,S0
+1103-01-,11,03,-01-,Augustine,Alaska-SW,Historical,59.363,N,,153.43,W,1252,Lava domes,D1,S2
+1103-02-,11,03,-02-,Iliamna,Alaska-SW,Historical,60.032,N,,153.090,W,3053,Stratovolcano,D3,S0
+1103-03-,11,03,-03-,Redoubt,Alaska-SW,Historical,60.485,N,,152.742,W,3108,Stratovolcano,D2,S2
+1103-04-,11,03,-04-,Spurr,Alaska-SW,Historical,61.299,N,,152.251,W,3374,Stratovolcano,D2,S2
+1103-05-,11,03,-05-,Hayes,Alaska-SW,Radiocarbon,61.640,N,,152.411,W,3034,Stratovolcano,D6,S0
+1104-01-,11,04,-01-,St_Paul_Island,Alaska-W,Radiocarbon,57.18,N,*,170.30,W,203,Shield volcano,D7,M0
+1104-02-,11,04,-02-,Nunivak_Island,Alaska-W,Holocene,60.02,N,*,166.33,W,511,Shield volcano,U,M0
+1104-03-,11,04,-03-,Ingakslugwat_Hills,Alaska-W,Holocene,61.43,N,*,164.47,W,190,Cinder cones,U,M0
+1104-04-,11,04,-04-,St_Michael,Alaska-W,Anthropology,63.45,N,*,162.12,W,715,Shield volcanoes,U,M0
+1104-05-,11,04,-05-,Kookooligit_Mountains,Alaska-W,Holocene,63.60,N,*,170.43,W,673,Shield volcano,U,M0
+1104-06-,11,04,-06-,Imuruk_Lake,Alaska-W,Radiocarbon,65.60,N,*,163.92,W,610,Shield volcanoes,D6,M0
+1105-001,11,05,-001,Buzzard_Creek,Alaska-E,Radiocarbon,64.07,N,,148.42,W,830,Tuff rings,D7,M0
+1105-01-,11,05,-01-,Sanford,Alaska-E,Holocene?,62.22,N,,144.13,W,4949,Shield volcano,?,S0
+1105-02-,11,05,-02-,Wrangell,Alaska-E,Historical,62.00,N,,144.02,W,4317,Shield volcano,D1,S0
+1105-021,11,05,-021,Gordon,Alaska-E,Holocene?,62.13,N,,143.08,W,2755,Cinder cones,?,M0
+1105-03-,11,05,-03-,Churchill,Alaska-E,Radiocarbon,61.38,N,,141.75,W,5005,Stratovolcano,D6,S0
+1105-04-,11,05,-04-,Edgecumbe,Alaska-E,Radiocarbon,57.05,N,,135.75,W,970,Stratovolcanoes,D7,S0
+1105-05-,11,05,-05-,Duncan_Canal,Alaska-E,Holocene,56.50,N,*,133.10,W,15,Volcanic field,U,M0
+1105-06-,11,05,-06-,Tlevak_Strait_Suemez_Is,Alaska-E,Holocene,55.25,N,*,133.30,W,50,Volcanic field,U,M0
+1105-07-,11,05,-07-,Behm_Canal_Rudyerd_Bay,Alaska-E,Holocene?,55.32,N,*,131.05,W,500,Cinder cones,?,M0
+1200-01-,12,00,-01-,Fort_Selkirk,Canada,Holocene?,62.93,N,*,137.38,W,1239,Volcanic field,?,M0
+1200-02-,12,00,-02-,Alligator_Lake,Canada,Holocene,60.42,N,*,135.42,W,2217,Volcanic field,U,M0
+1200-03-,12,00,-03-,Atlin_volc_field,Canada,Holocene,59.68,N,*,133.32,W,1880,Cinder cones,U,M0
+1200-031,12,00,-031,Tuya_volc_field,Canada,Holocene,59.37,N,*,130.58,W,2123,Volcanic field,U,M0
+1200-04-,12,00,-04-,Heart_Peaks,Canada,Holocene?,58.60,N,,131.97,W,2012,Shield volcano,?,S0
+1200-05-,12,00,-05-,Level_Mountain,Canada,Holocene?,58.42,N,,131.35,W,2190,Shield volcano,?,S0
+1200-06-,12,00,-06-,Edziza,Canada,Radiocarbon,57.72,N,,130.63,W,2786,Stratovolcano,D6,M0
+1200-07-,12,00,-07-,Spectrum_Range,Canada,Holocene,57.43,N,,130.68,W,2430,Shield volcano,U,S0
+1200-08-,12,00,-08-,Hoodoo_Mountain,Canada,Tephrochronology,56.78,N,,131.28,W,1850,Subglacial volcano,D7,S0
+1200-09-,12,00,-09-,Iskut_Unuk_River_Cones,Canada,Radiocarbon,56.58,N,*,130.55,W,1880,Cinder cones,D3,M0
+1200-10-,12,00,-10-,Tseax_River_Cone,Canada,Radiocarbon,55.12,N,,128.90,W,609,Pyroclastic cone,D4,M0
+1200-11-,12,00,-11-,Crow_Lagoon,Canada,Holocene,54.70,N,,130.23,W,335,Pyroclastic cone,U,M0
+1200-12-,12,00,-12-,Milbanke_Sound_Group,Canada,Holocene,52.50,N,*,128.73,W,335,Cinder cones,U,M0
+1200-13-,12,00,-13-,Satah_Mountain,Canada,Holocene,52.47,N,*,124.70,W,1921,Volcanic field,U,M0
+1200-14-,12,00,-14-,Nazko,Canada,Radiocarbon,52.90,N,,123.73,W,1230,Cinder cones,D7,M0
+1200-15-,12,00,-15-,Wells_Gray_Clearwater,Canada,Dendrochronology,52.33,N,*,120.57,W,2015,Cinder cones,D5,M0
+1200-16-,12,00,-16-,Silverthrone,Canada,Holocene,51.43,N,,126.30,W,3160,Caldera,U,S0
+1200-17-,12,00,-17-,Bridge_River_Cones,Canada,Holocene,50.80,N,*,123.40,W,2500,Volcanic field,U,M0
+1200-18-,12,00,-18-,Meager,Canada,Radiocarbon,50.63,N,,123.50,W,2680,Complex volcano,D7,S0
+1200-19-,12,00,-19-,Garibaldi_Lake,Canada,Holocene,49.92,N,*,123.03,W,2316,Volcanic field,U,S0
+1200-20-,12,00,-20-,Garibaldi,Canada,Radiocarbon,49.85,N,,123.00,W,2678,Stratovolcano,D7,S0
+1201-01=,12,01,-01-,Baker,US-Washington,Historical,48.777,N,,121.813,W,3285,Stratovolcanoes,D3,S1
+1201-02-,12,01,-02-,Glacier_Peak,US-Washington,Tephrochronology,48.112,N,,121.113,W,3213,Stratovolcano,D4,S0
+1201-03-,12,01,-03-,Rainier,US-Washington,Historical,46.853,N,,121.760,W,4392,Stratovolcano,D3,S1
+1201-04-,12,01,-04-,Adams,US-Washington,Tephrochronology,46.206,N,,121.490,W,3742,Stratovolcano,D6,S0
+1201-05-,12,01,-05-,St_Helens,US-Washington,Historical,46.20,N,,122.18,W,2549,Stratovolcano,D1,S2
+1201-06-,12,01,-06-,West_Crater,US-Washington,Radiocarbon,45.88,N,*,122.08,W,1329,Volcanic field,D7,M0
+1201-07-,12,01,-07-,Indian_Heaven,US-Washington,Radiocarbon,45.93,N,*,121.82,W,1806,Shield volcanoes,D7,M0
+1202-01-,12,02,-01-,Hood,US-Oregon,Historical,45.374,N,,121.695,W,3426,Stratovolcano,D3,S0
+1202-02-,12,02,-02-,Jefferson,US-Oregon,Varve Count,44.674,N,,121.800,W,3199,Stratovolcano,D6,S0
+1202-03-,12,02,-03-,Blue_Lake_Crater,US-Oregon,Radiocarbon,44.411,N,,121.774,W,1230,Maar,D6,M0
+1202-04-,12,02,-04-,Sand_Mountain_Field,US-Oregon,Radiocarbon,44.38,N,*,121.93,W,1664,Cinder cones,D6,M0
+1202-06-,12,02,-06-,Belknap,US-Oregon,Radiocarbon,44.285,N,,121.841,W,2095,Shield volcanoes,D6,M0
+1202-07-,12,02,-07-,North_Sister_Field,US-Oregon,Radiocarbon,44.17,N,,121.77,W,3074,Complex volcano,D6,M0
+1202-08-,12,02,-08-,South_Sister,US-Oregon,Radiocarbon,44.103,N,,121.768,W,3157,Complex volcano,D7,S0
+1202-09-,12,02,-09-,Bachelor,US-Oregon,Tephrochronology,43.979,N,,121.688,W,2763,Stratovolcano,D7,S0
+1202-10-,12,02,-10-,Davis_Lake,US-Oregon,Radiocarbon,43.57,N,*,121.82,W,2163,Volcanic field,D7,M0
+1202-11-,12,02,-11-,Newberry,US-Oregon,Radiocarbon,43.722,N,,121.229,W,2434,Shield volcano,D6,S0
+1202-12-,12,02,-12-,Devils_Garden,US-Oregon,Holocene?,43.512,N,*,120.861,W,1698,Volcanic field,?,M0
+1202-13-,12,02,-13-,Squaw_Ridge_Lava_Field,US-Oregon,Holocene?,43.472,N,*,120.754,W,1711,Volcanic field,?,M0
+1202-14-,12,02,-14-,Four_Craters_Lava_Field,US-Oregon,Holocene?,43.361,N,*,120.669,W,1501,Volcanic field,?,M0
+1202-15-,12,02,-15-,Cinnamon_Butte,US-Oregon,Holocene?,43.241,N,*,122.108,W,1956,Cinder cones,?,M0
+1202-16-,12,02,-16-,Crater_Lake,US-Oregon,Radiocarbon,42.93,N,,122.12,W,2487,Caldera,D7,S0
+1202-17-,12,02,-17-,Diamond_Craters,US-Oregon,Holocene?,43.10,N,*,118.75,W,1435,Volcanic field,?,M0
+1202-19-,12,02,-19-,Jordan_Craters,US-Oregon,Radiocarbon,43.147,N,,117.460,W,1473,Volcanic field,D7,M0
+1203-01-,12,03,-01-,Shasta,US-California,Historical,41.409,N,,122.193,W,4317,Stratovolcano,D4,S2
+1203-02-,12,03,-02-,Medicine_Lake,US-California,Radiocarbon,41.611,N,,121.554,W,2412,Shield volcano,D6,S0
+1203-03-,12,03,-03-,Brushy_Butte,US-California,Holocene?,41.178,N,,121.443,W,1174,Shield volcano,?,M0
+1203-04-,12,03,-04-,Twin_Buttes,US-California,Holocene?,40.777,N,*,121.591,W,1631,Cinder cones,?,M0
+1203-05-,12,03,-05-,Silver_Lake,US-California,Holocene?,40.731,N,,121.841,W,1535,Cinder cones,?,M0
+1203-06-,12,03,-06-,Tumble_Buttes,US-California,Holocene?,40.68,N,*,121.55,W,2191,Cinder cones,?,M0
+1203-08-,12,03,-08-,Lassen_Volc_Center,US-California,Historical,40.492,N,,121.508,W,3187,Stratovolcano,D2,S2
+1203-09-,12,03,-09-,Eagle_Lake_Field,US-California,Holocene?,40.63,N,*,120.83,W,1652,Fissure vents,?,M0
+1203-10-,12,03,-10-,Clear-Lake,US-California,Holocene,38.97,N,*,122.77,W,1439,Volcanic field,U,S0
+1203-11-,12,03,-11-,Mono_Lake_volc_field,US-California,Tephrochronology,38.00,N,*,119.03,W,2121,Cinder cones,D4,S0
+1203-12-,12,03,-12-,Mono_Craters,US-California,Radiocarbon,37.88,N,,119.00,W,2796,Lava domes,D6,S0
+1203-13-,12,03,-13-,Inyo_Craters,US-California,Radiocarbon,37.692,N,,119.02,W,2629,Lava domes,D6,S0
+1203-15-,12,03,-15-,Mammoth_Mountain,US-California,Radiocarbon,37.631,N,,119.032,W,3369,Lava domes,D6,S0
+1203-16-,12,03,-16-,Ubehebe_Craters,US-California,Anthropology,37.02,N,,117.45,W,752,Maars,D7,M0
+1203-17-,12,03,-17-,Golden_Trout Creek,US-California,Tephrochronology,36.358,N,*,118.32,W,2886,Volcanic field,D7,M0
+1203-18-,12,03,-18-,Coso_volc_field,US-California,Holocene?,36.03,N,*,117.82,W,2400,Lava domes,?,S0
+1203-19-,12,03,-19-,Lavic_Lake,US-California,Holocene?,34.75,N,*,116.625,W,1495,Volcanic field,?,M0
+1204-01-,12,04,-01-,Shoshone_Lava_Field,US-Idaho,Holocene,43.18,N,,114.35,W,1478,Shield volcano,D7,M0
+1204-02-,12,04,-02-,Craters_of_the_Moon,US-Idaho,Radiocarbon,43.42,N,*,113.50,W,2005,Cinder cones,D7,M0
+1204-03-,12,04,-03-,Wapi_Lava_Field,US-Idaho,Radiocarbon,42.88,N,*,113.22,W,1604,Shield volcano,D7,M0
+1204-04-,12,04,-04-,Hells_Half_Acre,US-Idaho,Radiocarbon,43.50,N,,112.45,W,1631,Shield volcano,D7,M0
+1205-01-,12,05,-01-,Yellowstone,US-Wyoming,Tephrochronology,44.43,N,,110.67,W,2805,Calderas,D7,S0
+1206-01-,12,06,-01-,Soda_Lakes,US-Nevada,Holocene,39.53,N,,118.87,W,1251,Maars,U,M0
+1207-01-,12,07,-01-,Santa_Clara,US-Utah,Holocene?,37.257,N,*,113.625,W,1465,Volcanic field,?,M0
+1207-03-,12,07,-03-,Bald_Knoll,US-Utah,Holocene,37.328,N,,112.408,W,2135,Cinder cones,U,M0
+1207-04-,12,07,-04-,Markagunt_Plateau,US-Utah,Dendrochronology,37.58,N,*,112.67,W,2840,Volcanic field,D6,M0
+1207-05-,12,07,-05-,Black_Rock_Desert,US-Utah,Radiocarbon,38.97,N,*,112.50,W,1800,Volcanic field,D6,M0
+1208-01-,12,08,-01-,Dotsero,US-Colorado,Radiocarbon,39.661,N,,107.035,W,2230,Maar,D7,M0
+1209-01-,12,09,-01-,Uinkaret_Field,US-Arizona,Anthropology,36.38,N,*,113.13,W,1555,Volcanic field,D6,M0
+1209-02-,12,09,-02-,Sunset_Crater,US-Arizona,Dendrochronology,35.37,N,*,111.50,W,2447,Cinder cone,D6,M0
+1210-01-,12,10,-01-,Carrizozo,US-New Mexico,Surface Exposure,33.78,N,,105.93,W,1731,Cinder cones,D7,M0
+1210-02-,12,10,-02-,Zuni_Bandera,US-New Mexico,Anthropology,34.80,N,*,108.00,W,2550,Volcanic field,D7,M0
+1301-01-,13,01,-01-,Endeavour_Ridge,Pacific-NE,Uranium-series,47.95,N,,129.10,W,-2050,Submarine volcano,D7,U0
+1301-011,13,01,-011,Cobb_Segment,Pacific-NE,Uranium-series,46.88,N,,129.33,W,-2100,Submarine volcano,D7,U0
+1301-02-,13,01,-02-,CoAxial_Segment,Pacific-NE,Historical,46.52,N,,129.58,W,-2400,Submarine volcano,D2,U0
+1301-021,13,01,-021,Axial_Seamount,Pacific-NE,Historical,45.95,N,,130.00,W,-1410,Submarine volcano,D2,U0
+1301-03-,13,01,-03-,Cleft_Segment,Pacific-NE,Historical,44.83,N,,130.30,W,-2140,Submarine volcano,D2,U0
+1301-031,13,01,-031,North_Gorda_Ridge,Pacific-NE,Historical,42.67,N,,126.78,W,-3000,Submarine volcano,D2,U0
+1301-04-,13,01,-04-,Escanaba_Segment,Pacific-NE,Uranium-series,40.98,N,,127.50,W,-1700,Submarine volcano,D7,U0
+1301-05-,13,01,-05-,Unnamed,Pacific-NE,Uncertain,31.75,N,,124.25,W,-2533,Submarine volcano ?,?,U0
+1302-00-,13,02,-00-,Loihi,Hawaiian Is,Historical,18.92,N,,155.27,W,-975,Submarine volcano,D2,U0
+1302-01-,13,02,-01-,Kilauea,Hawaiian Is,Historical,19.421,N,,155.287,W,1222,Shield volcano,D1,M1
+1302-02=,13,02,-02-,Mauna_Loa,Hawaiian Is,Historical,19.475,N,,155.608,W,4170,Shield volcano,D2,M1
+1302-03-,13,02,-03-,Mauna_Kea,Hawaiian Is,Radiocarbon,19.82,N,,155.47,W,4205,Shield volcano,D7,M0
+1302-04-,13,02,-04-,Hualalai,Hawaiian Is,Historical,19.692,N,,155.87,W,2523,Shield volcano,D3,M0
+1302-06-,13,02,-06-,Haleakala,Hawaiian Is,Anthropology,20.708,N,,156.25,W,3055,Shield volcano,D4,M0
+1302-08-,13,02,-08-,Unnamed,Hawaiian Is,Uncertain,21.75,N,,158.75,W,-3000,Submarine volcano ?,?,U0
+1302-09-,13,02,-09-,Unnamed,Hawaiian Is,Historical,23.58,N,,163.83,W,-4000,Submarine volcano,D2,U0
+1303-01-,13,03,-01-,Teahitia,Society Is-C Pacific,Seismicity,17.57,S,,148.85,W,-1400,Submarine volcano,D2,U0
+1303-02-,13,03,-02-,Rocard,Society Is-C Pacific,Seismicity,17.642,S,,148.60,W,-2100,Submarine volcano,D2,U0
+1303-03-,13,03,-03-,Moua_Pihaa,Society Is-C Pacific,Seismicity,18.32,S,,148.67,W,-160,Submarine volcano,D2,U0
+1303-04-,13,03,-04-,Mehetia,Society Is-C Pacific,Anthropology,17.87,S,,148.07,W,435,Stratovolcano,U,U0
+1303-05-,13,03,-05-,Adams_Seamount,Pacific-C,Potassium-Argon,25.37,S,,129.27,W,-39,Submarine volcano,D7,U0
+1303-06-,13,03,-06-,Macdonald,Austral Is-C Pacific,Historical,28.98,S,,140.25,W,-39,Submarine volcano,D2,S0
+1304-02-,13,04,-02-,Northern_EPR_Segment_RO2,Pacific-E,Magnetism,16.55,N,,105.32,W,-2700,Submarine volcano,D7,U0
+1304-021,13,04,-021,Northern_EPR_Segment_RO3,Pacific-E,Magnetism,15.83,N,,105.43,W,-2300,Submarine volcano,D7,U0
+1304-04-,13,04,-04-,Unnamed,Pacific-E,Historical,10.73,N,,103.58,W,,Submarine volcano,D1,U0
+1304-05-,13,04,-05-,Unnamed,Pacific-E,Historical, 9.83,N,,104.30,W,-2500,Submarine volcano,D1,U0
+1304-07-,13,04,-07-,Galapagos_Rift,Pacific-E,Historical, 0.792,N,, 86.15,W,-2430,Submarine volcano,D2,U0
+1304-10-,13,04,-10-,Unnamed,Pacific-E,Historical, 8.27,S,,107.95,W,-2800,Submarine volcano,D2,U0
+1304-12-,13,04,-12-,Southern_EPR_Segment_K,Pacific-E,Historical,17.436,S,,113.206,W,-2566,Submarine volcano,D2,U0
+1304-13-,13,04,-13-,Southern_EPR_Segment_J,Pacific-E,Magnetism,18.175,S,,113.35,W,-2650,Submarine volcano,D3,U0
+1304-14-,13,04,-14-,Southern_EPR_Segment_I,Pacific-E,Magnetism,18.53,S,,113.42,W,-2600,Submarine volcano,D2,U0
+1305-01-,13,05,-01-,Antipodes_Island,Pacific-S,Holocene?,49.68,S,,178.77,E,402,Pyroclastic cones,?,U0
+1305-02-,13,05,-02-,Unnamed,Pacific-S,Uncertain,53.90,S,,140.30,W,-1000,Submarine volcano,?,U0
+1305-03-,13,05,-03-,Unnamed,Pacific-S,Uncertain,55.97,S,,143.17,W,,Submarine volcano,?,U0
+1401-00-,14,01,-00-,Cerro_Prieto,México,Holocene?,32.418,N,,115.305,W,223,Lava dome,?,M0
+1401-001,14,01,-001,Pinacate,México,Holocene,31.772,N,*,113.498,W,1200,Cinder cones,U,M0
+1401-002,14,01,-002,San_Quintin_volc_field,México,Holocene?,30.468,N,*,115.996,W,260,Cinder cones,?,M0
+1401-003,14,01,-003,Isla_San_Luis,México,Holocene,29.97,N,,114.40,W,180,Tuff cone,U,M0
+1401-004,14,01,-004,Jaraguay_volc_field,México,Holocene,29.33,N,*,114.50,W,960,Cinder cones,U,M0
+1401-005,14,01,-005,Coronado,México,Fumarolic,29.08,N,,113.513,W,440,Stratovolcano,U,S0
+1401-006,14,01,-006,Guadalupe,México,Holocene,29.07,N,,118.28,W,1100,Shield volcano,U,S0
+1401-007,14,01,-007,San_Borja_volc_field,México,Holocene,28.50,N,*,113.75,W,1360,Cinder cones,U,M0
+1401-008,14,01,-008,Unnamed,México,Uncertain,28.00,N,,115.00,W,,Submarine volcano ?,?,U0
+1401-011,14,01,-011,Isla_Tortuga,México,Holocene,27.43,N,,111.88,W,210,Shield volcano,U,M0
+1401-012,14,01,-012,Comondu_La_Purisima,México,Holocene?,26.00,N,*,111.92,W,780,Volcanic field,?,S0
+1401-01=,14,01,-01-,Tres_Virgenes,México,Holocene?,27.470,N,,112.591,W,1940,Stratovolcanoes,?,S0
+1401-021,14,01,-021,Socorro,México-Is,Historical,18.78,N,,110.95,W,1050,Shield volcano,D2,M0
+1401-022,14,01,-022,Durango_volc_field,México,Holocene,24.15,N,*,104.45,W,2075,Cinder cones,U,M0
+1401-023,14,01,-023,Sanganguey,México,Holocene,21.45,N,,104.73,W,2340,Stratovolcano,U,S0
+1401-02=,14,01,-02-,Barcena,México-Is,Historical,19.30,N,,110.82,W,332,Cinder cones,D2,M0
+1401-031,14,01,-031,Mascota_volc_field,México,Holocene,20.62,N,*,104.83,W,2560,Cinder cones,U,M0
+1401-03=,14,01,-03-,Ceboruco,México,Historical,21.125,N,,104.508,W,2280,Stratovolcano,D3,S2
+1401-04=,14,01,-04-,Colima,México,Historical,19.514,N,,103.62,W,3850,Stratovolcanoes,D1,S0
+1401-061,14,01,-061,Zitacuaro_Valle_de_Bravo,México,Ar/Ar,19.40,N,*,100.25,W,3500,Caldera,D7,M0
+1401-062,14,01,-062,Jocotitlan,México,Radiocarbon,19.73,N,, 99.758,W,3900,Stratovolcano,D6,S0
+1401-06=,14,01,-06-,Michoacan_Guanajuato,México,Historical,19.85,N,*,101.75,W,3860,Cinder cones,D2,M2
+1401-07-,14,01,-07-,Nevado_de_Toluca,México,Radiocarbon,19.108,N,, 99.758,W,4680,Stratovolcano,D7,S2
+1401-081,14,01,-081,Papayo,México,Holocene,19.308,N,, 98.70,W,3600,Lava dome,U,S0
+1401-082,14,01,-082,Iztaccihuatl,México,Holocene,19.179,N,, 98.642,W,5230,Stratovolcano,U,S0
+1401-08=,14,01,-08-,Chichinautzin,México,Radiocarbon,19.08,N,*, 99.13,W,3930,Volcanic field,D6,M0
+1401-091,14,01,-091,La_Malinche,México,Radiocarbon,19.231,N,, 98.032,W,4461,Stratovolcano,D7,S0
+1401-092,14,01,-092,Serdan_Oriental,México,Holocene,19.27,N,*, 97.47,W,3485,Tuff cones,U,S0
+1401-093,14,01,-093,Los_Humeros,México,Holocene?,19.68,N,, 97.45,W,3150,Calderas,?,S0
+1401-094,14,01,-094,Los_Atlixcos,México,Holocene,19.809,N,, 96.526,W,800,Shield volcano,U,M0
+1401-095,14,01,-095,Naolinco_volc_field,México,Radiocarbon,19.67,N,*, 96.75,W,2000,Pyroclastic cones,D7,M0
+1401-096,14,01,-096,Cofre_de_Perote,México,Radiocarbon,19.492,N,, 97.15,W,4282,Shield volcanoes,D6,M0
+1401-097,14,01,-097,La_Gloria,México,Holocene,19.33,N,*, 97.25,W,3500,Volcanic field,U,M0
+1401-098,14,01,-098,Las_Cumbres,México,Radiocarbon,19.15,N,, 97.27,W,3940,Stratovolcano,D7,S0
+1401-09=,14,01,-09-,Popocatepetl,México,Historical,19.023,N,, 98.622,W,5426,Stratovolcanoes,D1,S1
+1401-10=,14,01,-10-,Pico_de_Orizaba,México,Historical,19.030,N,, 97.268,W,5675,Stratovolcano,D3,S0
+1401-11=,14,01,-11-,San_Martin,México,Historical,18.57,N,, 95.20,W,1650,Shield volcano,D4,M0
+1401-12=,14,01,-12-,El_Chichon,México,Historical,17.360,N,, 93.228,W,1150,Lava domes,D2,S0
+1401-13=,14,01,-13-,Tacana,México,Historical,15.130,N,, 92.112,W,4060,Stratovolcano,D2,S0
+1402-02=,14,02,-02-,Tajumulco,Guatemala,Holocene,15.034,N,, 91.903,W,4220,Stratovolcano,U,S0
+1402-03=,14,02,-03-,Santa_Maria,Guatemala,Historical,14.756,N,, 91.552,W,3772,Stratovolcano,D1,S9
+1402-04=,14,02,-04-,Almolonga,Guatemala,Historical,14.82,N,, 91.48,W,3197,Stratovolcano,D3,S0
+1402-06=,14,02,-06-,Atitlan,Guatemala,Historical,14.583,N,, 91.186,W,3535,Stratovolcano,D3,S1
+1402-07=,14,02,-07-,Toliman,Guatemala,Holocene,14.612,N,, 91.189,W,3158,Stratovolcano,U,M0
+1402-08=,14,02,-08-,Acatenango,Guatemala,Historical,14.501,N,, 90.876,W,3976,Stratovolcano,D2,S1
+1402-09=,14,02,-09-,Fuego,Guatemala,Historical,14.473,N,, 90.880,W,3763,Stratovolcano,D1,M2
+1402-10=,14,02,-10-,Agua,Guatemala,Holocene,14.465,N,, 90.743,W,3760,Stratovolcano,U,S0
+1402-111,14,02,-111,Cuilapa-Barbarena,Guatemala,Holocene,14.33,N,*, 90.40,W,1454,Volcanic field,U,S0
+1402-11=,14,02,-11-,Pacaya,Guatemala,Historical,14.381,N,, 90.601,W,2552,Complex volcano,D1,M1
+1402-121,14,02,-121,Jumaytepeque,Guatemala,Holocene?,14.336,N,, 90.269,W,1815,Stratovolcano,?,S0
+1402-12=,14,02,-12-,Tecuamburro,Guatemala,Radiocarbon,14.156,N,, 90.407,W,1845,Stratovolcano,D7,S0
+1402-13-,14,02,-13-,Moyuta,Guatemala,Hot Springs,14.03,N,, 90.10,W,1662,Stratovolcano,U,S0
+1402-14-,14,02,-14-,Flores,Guatemala,Holocene,14.308,N,*, 89.992,W,1600,Volcanic field,U,M0
+1402-141,14,02,-141,Tahual,Guatemala,Holocene,14.43,N,, 89.90,W,1716,Stratovolcano,U,S0
+1402-15-,14,02,-15-,Cerro_Santiago,Guatemala,Holocene,14.33,N,*, 89.87,W,1192,Volcanic field,U,M0
+1402-16-,14,02,-16-,Suchitan,Guatemala,Holocene,14.40,N,, 89.78,W,2042,Stratovolcanoes,U,S0
+1402-17-,14,02,-17-,Chingo,Guatemala,Holocene,14.12,N,*, 89.73,W,1775,Stratovolcano,U,S0
+1402-18-,14,02,-18-,Ixtepeque,Guatemala,Holocene,14.42,N,*, 89.68,W,1292,Lava domes,U,S0
+1402-19-,14,02,-19-,Ipala,Guatemala,Holocene,14.55,N,, 89.63,W,1650,Stratovolcano,U,M0
+1402-20-,14,02,-20-,Chiquimula_volc_field,Guatemala,Holocene,14.83,N,*, 89.55,W,1192,Cinder cones,U,M0
+1402-21-,14,02,-21-,Quezaltepeque,Guatemala,Holocene,14.57,N,, 89.45,W,1200,Volcanic field,U,M0
+1403-001,14,03,-001,San_Diego,El Salvador,Holocene,14.27,N,*, 89.48,W,781,Volcanic field,U,M0
+1403-002,14,03,-002,Cerro_Singuil,El Salvador,Holocene,14.05,N,*, 89.65,W,957,Cinder cones,U,M0
+1403-01=,14,03,-01-,Apaneca Range,El Salvador,Holocene,13.891,N,, 89.786,W,2036,Stratovolcanoes,U,M0
+1403-02=,14,03,-02-,Santa_Ana,El Salvador,Historical,13.853,N,, 89.630,W,2381,Stratovolcano,D1,M2
+1403-03=,14,03,-03-,Izalco,El Salvador,Historical,13.813,N,, 89.633,W,1950,Stratovolcano,D2,M1
+1403-041,14,03,-041,Coatepeque_Caldera,El Salvador,Holocene,13.87,N,, 89.55,W,746,Caldera,U,S0
+1403-051,14,03,-051,Cerro_Cinotepeque,El Salvador,Holocene,14.02,N,, 89.25,W,665,Volcanic field,U,M0
+1403-052,14,03,-052,Guazapa,El Salvador,Holocene?,13.90,N,, 89.12,W,1438,Stratovolcano,?,M0
+1403-05=,14,03,-05-,San_Salvador,El Salvador,Historical,13.734,N,, 89.294,W,1893,Stratovolcano,D2,M2
+1403-06=,14,03,-06-,Ilopango,El Salvador,Historical,13.672,N,, 89.053,W,450,Caldera,D3,S0
+1403-071,14,03,-071,Apastepeque_Field,El Salvador,Holocene,13.72,N,*, 88.77,W,700,Volcanic field,U,M0
+1403-072,14,03,-072,Taburete,El Salvador,Holocene?,13.435,N,, 88.532,W,1172,Stratovolcano,?,M0
+1403-07=,14,03,-07-,San_Vicente,El Salvador,Holocene,13.595,N,, 88.837,W,2182,Stratovolcano,U,S0
+1403-081,14,03,-081,Usulutan,El Salvador,Holocene,13.419,N,, 88.471,W,1449,Stratovolcano,U,M0
+1403-082,14,03,-082,El_Tigre,El Salvador,Holocene,13.47,N,, 88.43,W,1640,Stratovolcano,U,M0
+1403-08=,14,03,-08-,Tecapa,El Salvador,Holocene,13.494,N,, 88.502,W,1593,Stratovolcano,U,S0
+1403-09=,14,03,-09-,Chinameca,El Salvador,Holocene,13.478,N,, 88.330,W,1300,Stratovolcano,U,S0
+1403-101,14,03,-101,Aramuaca_Laguna,El Salvador,Holocene,13.428,N,, 88.105,W,181,Maar,U,M0
+1403-10=,14,03,-10-,San_Miguel,El Salvador,Historical,13.434,N,, 88.269,W,2130,Stratovolcano,D1,S1
+1403-11=,14,03,-11-,Conchagua,El Salvador,Uncertain,13.275,N,, 87.845,W,1225,Stratovolcano,?,S0
+1403-12=,14,03,-12-,Conchaguita,El Salvador,Historical,13.229,N,, 87.767,W,505,Stratovolcano,D3,M0
+1403-13-,14,03,-13-,Isla_el_Tigre,Honduras,Holocene,13.272,N,, 87.641,W,783,Stratovolcano,U,M0
+1403-14-,14,03,-14-,Isla_Zacate_Grande,Honduras,Holocene,13.33,N,, 87.63,W,640,Stratovolcano,U,M0
+1403-15-,14,03,-15-,Yojoa_Lake,Honduras,Holocene,14.98,N,*, 87.98,W,1090,Volcanic field,U,M0
+1403-16-,14,03,-16-,Utila_Island,Honduras,Holocene,16.10,N,*, 86.90,W,74,Pyroclastic cones,U,M0
+1404-01=,14,04,-01-,Cosiguina,Nicaragua,Historical,12.98,N,, 87.57,W,872,Stratovolcano,D3,S2
+1404-02=,14,04,-02-,San_Cristobal,Nicaragua,Historical,12.702,N,, 87.004,W,1745,Stratovolcano,D1,S1
+1404-04=,14,04,-04-,Telica,Nicaragua,Historical,12.602,N,, 86.845,W,1061,Stratovolcanoes,D1,S1
+1404-06-,14,04,-06-,Rota,Nicaragua,Holocene,12.55,N,, 86.75,W,832,Stratovolcano,U,S1
+1404-07=,14,04,-07-,Cerro_Negro,Nicaragua,Historical,12.506,N,, 86.702,W,728,Cinder cones,D2,M2
+1404-08=,14,04,-08-,Las_Pilas,Nicaragua,Historical,12.495,N,, 86.688,W,1088,Complex volcano,D2,M0
+1404-091,14,04,-091,Apoyeque,Nicaragua,Radiocarbon,12.242,N,, 86.342,W,518,Pyroclastic shield,D7,S0
+1404-092,14,04,-092,Nejapa_Miraflores,Nicaragua,Tephrochronology,12.12,N,, 86.32,W,360,Fissure vents,D7,M0
+1404-09=,14,04,-09-,Momotombo,Nicaragua,Historical,12.422,N,, 86.540,W,1297,Stratovolcano,D2,M2
+1404-101,14,04,-101,Granada,Nicaragua,Holocene,11.92,N,, 85.98,W,300,Fissure vents,U,M0
+1404-10=,14,04,-10-,Masaya,Nicaragua,Historical,11.984,N,, 86.161,W,635,Caldera,D1,M1
+1404-111,14,04,-111,Zapatera,Nicaragua,Holocene,11.73,N,, 85.82,W,629,Shield volcano,U,M0
+1404-11=,14,04,-11-,Mombacho,Nicaragua,Holocene,11.826,N,, 85.968,W,1344,Stratovolcano,U,S0
+1404-12=,14,04,-12-,Concepcion,Nicaragua,Historical,11.538,N,, 85.622,W,1700,Stratovolcano,D1,S1
+1404-13-,14,04,-13-,Maderas,Nicaragua,Holocene,11.446,N,, 85.515,W,1394,Stratovolcano,U,S0
+1404-131,14,04,-131,Esteli,Nicaragua,Holocene?,13.17,N,*, 86.40,W,899,Fissure vents,?,M0
+1404-132,14,04,-132,Cerro_el_Ciguatepe,Nicaragua,Holocene?,12.53,N,, 86.142,W,603,Stratovolcano,?,M0
+1404-133,14,04,-133,Las_Lajas,Nicaragua,Holocene?,12.30,N,, 85.73,W,926,Shield volcano,?,M0
+1404-14-,14,04,-14-,Azul_Volcan,Nicaragua,Holocene,12.53,N,*, 83.87,W,201,Cinder cones,U,M0
+1405-01=,14,05,-01-,Orosi,Costa Rica,Holocene?,10.980,N,, 85.473,W,1659,Stratovolcanoes,?,S0
+1405-02=,14,05,-02-,Rincon_de_la_Vieja,Costa Rica,Historical,10.830,N,, 85.324,W,1916,Complex volcano,D2,S2
+1405-031,14,05,-031,Tenorio,Costa Rica,Holocene,10.673,N,, 85.015,W,1916,Stratovolcanoes,U,S0
+1405-033,14,05,-033,Arenal,Costa Rica,Historical,10.463,N,, 84.703,W,1670,Stratovolcano,D1,S1
+1405-034,14,05,-034,Platanar,Costa Rica,Holocene,10.30,N,, 84.366,W,2267,Stratovolcanoes,U,S0
+1405-03=,14,05,-03-,Miravalles,Costa Rica,Historical,10.748,N,, 85.153,W,2028,Stratovolcano,D2,S0
+1405-04=,14,05,-04-,Poas,Costa Rica,Historical,10.20,N,, 84.233,W,2708,Stratovolcano,D1,S1
+1405-05=,14,05,-05-,Barva,Costa Rica,Tephrochronology,10.135,N,, 84.10,W,2906,Complex volcano,D7,S0
+1405-06=,14,05,-06-,Irazu,Costa Rica,Historical, 9.979,N,, 83.852,W,3432,Stratovolcano,D2,S1
+1405-07=,14,05,-07-,Turrialba,Costa Rica,Historical,10.025,N,, 83.767,W,3340,Stratovolcano,D3,S1
+1406-01-,14,06,-01-,Baru,Panamá,Historical, 8.808,N,, 82.543,W,3474,Stratovolcano,D5,S0
+1406-02-,14,06,-02-,La_Yeguada,Panamá,Radiocarbon, 8.47,N,, 80.82,W,1297,Stratovolcano,D5,M0
+1406-03-,14,06,-03-,El_Valle,Panamá,Holocene?, 8.58,N,, 80.17,W,1185,Stratovolcano,?,S0
+1501-011,15,01,-011,Romeral,Colombia,Radiocarbon, 5.206,N,, 75.364,W,3858,Stratovolcano,D7,S0
+1501-012,15,01,-012,Cerro_Bravo,Colombia,Radiocarbon, 5.092,N,, 75.30,W,4000,Stratovolcano,D4,S0
+1501-021,15,01,-021,Santa_Isabel,Colombia,Radiocarbon, 4.82,N,, 75.37,W,4950,Shield volcano,D7,S0
+1501-02=,15,01,-02-,Nevado_del_Ruiz,Colombia,Historical, 4.895,N,, 75.322,W,5321,Stratovolcano,D2,S1
+1501-03=,15,01,-03-,Nevado_del_Tolima,Colombia,Historical, 4.67,N,, 75.33,W,5200,Stratovolcano,D2,S2
+1501-04=,15,01,-04-,Machin,Colombia,Radiocarbon, 4.48,N,, 75.392,W,2650,Stratovolcano,D6,S0
+1501-05=,15,01,-05-,Nevado_del_Huila,Colombia,Historical, 2.93,N,, 76.03,W,5364,Stratovolcano,D1,S1
+1501-061,15,01,-061,Sotara,Colombia,Holocene, 2.108,N,, 76.592,W,4400,Stratovolcano,U,S0
+1501-062,15,01,-062,Petacas,Colombia,Holocene?, 1.57,N,, 76.78,W,4054,Lava dome,?,S0
+1501-06=,15,01,-06-,Purace,Colombia,Historical, 2.32,N,, 76.40,W,4650,Stratovolcanoes,D2,S1
+1501-07=,15,01,-07-,Dona_Juana,Colombia,Historical, 1.47,N,, 76.92,W,4150,Stratovolcano,D2,S2
+1501-08=,15,01,-08-,Galeras,Colombia,Historical, 1.22,N,, 77.37,W,4276,Complex volcano,D1,S1
+1501-09=,15,01,-09-,Azufral,Colombia,Radiocarbon, 1.08,N,, 77.68,W,4070,Stratovolcano,D7,S0
+1501-10=,15,01,-10-,Cumbal,Colombia,Historical, 0.95,N,, 77.87,W,4764,Stratovolcano,D2,S1
+1501-11=,15,01,-11-,Cerro_Negro_de_Mayasquer,Colombia,Holocene?, 0.828,N,, 77.964,W,4445,Stratovolcano,D2,S0
+1502-001,15,02,-001,Soche,Ecuador,Radiocarbon, 0.552,N,, 77.580,W,3955,Stratovolcano,D7,S0
+1502-002,15,02,-002,Chachimbiro,Ecuador,Radiocarbon, 0.468,N,, 78.287,W,4106,Stratovolcano,D7,S0
+1502-003,15,02,-003,Cuicocha,Ecuador,Radiocarbon, 0.308,N,, 78.364,W,3246,Caldera,D6,S0
+1502-004,15,02,-004,Imbabura,Ecuador,Radiocarbon, 0.258,N,, 78.183,W,4609,Compound volcano,D7,S0
+1502-005,15,02,-005,Mojanda,Ecuador,Holocene?, 0.13,N,, 78.27,W,4263,Stratovolcanoes,?,S2
+1502-006,15,02,-006,Cayambe,Ecuador,Historical, 0.029,N,, 77.986,W,5790,Compound volcano,D4,S0
+1502-011,15,02,-011,Pululagua,Ecuador,Radiocarbon, 0.038,N,, 78.463,W,3356,Caldera,D6,S0
+1502-01=,15,02,-01-,Reventador,Ecuador,Historical, 0.077,S,, 77.656,W,3562,Stratovolcano,D1,S2
+1502-021,15,02,-021,Atacazo,Ecuador,Radiocarbon, 0.353,S,, 78.617,W,4463,Stratovolcano,D7,S0
+1502-022,15,02,-022,Chacana,Ecuador,Historical, 0.375,S,, 78.25,W,4643,Caldera,D4,S0
+1502-02=,15,02,-02-,Guagua_Pichincha,Ecuador,Historical, 0.171,S,, 78.598,W,4784,Stratovolcano,D1,S1
+1502-03=,15,02,-03-,Antisana,Ecuador,Historical, 0.481,S,, 78.141,W,5753,Stratovolcano,D3,S2
+1502-041,15,02,-041,Illiniza,Ecuador,Holocene, 0.659,S,, 78.714,W,5248,Stratovolcano,U,S0
+1502-04=,15,02,-04-,Sumaco,Ecuador,Historical, 0.538,S,, 77.626,W,3990,Stratovolcano,D3,S0
+1502-05=,15,02,-05-,Cotopaxi,Ecuador,Historical, 0.677,S,, 78.436,W,5911,Stratovolcano,D2,S2
+1502-06=,15,02,-06-,Quilotoa,Ecuador,Radiocarbon, 0.85,S,, 78.90,W,3914,Caldera,D6,S0
+1502-071,15,02,-071,Chimborazo,Ecuador,Radiocarbon, 1.464,S,, 78.815,W,6310,Stratovolcano,D6,S0
+1502-081,15,02,-081,Licto,Ecuador,Holocene?, 1.780,S,*, 78.613,W,3336,Scoria cones,?,M0
+1502-08=,15,02,-08-,Tungurahua,Ecuador,Historical, 1.467,S,, 78.442,W,5023,Stratovolcano,D1,S1
+1502-09=,15,02,-09-,Sangay,Ecuador,Historical, 2.002,S,, 78.341,W,5230,Stratovolcano,D1,S9
+1503-011,15,03,-011,Ecuador,Galápagos,Surface Exposure, 0.02,S,, 91.546,W,790,Shield volcano,D6,M0
+1503-01=,15,03,-01-,Fernandina,Galápagos,Historical, 0.37,S,, 91.55,W,1476,Shield volcano,D1,M0
+1503-02=,15,03,-02-,Wolf,Galápagos,Historical, 0.02,N,, 91.35,W,1710,Shield volcano,D2,M0
+1503-03=,15,03,-03-,Darwin,Galápagos,Surface Exposure, 0.18,S,, 91.28,W,1330,Shield volcano,D3,M0
+1503-04=,15,03,-04-,Alcedo,Galápagos,Historical, 0.43,S,, 91.12,W,1130,Shield volcano,D2,S0
+1503-05=,15,03,-05-,Negra_Sierra,Galápagos,Historical, 0.83,S,, 91.17,W,1124,Shield volcano,D1,M0
+1503-06=,15,03,-06-,Cerro_Azul,Galápagos,Historical, 0.92,S,, 91.408,W,1640,Shield volcano,D1,M0
+1503-07=,15,03,-07-,Pinta,Galápagos,Historical, 0.58,N,, 90.75,W,780,Shield volcano,D2,M0
+1503-081,15,03,-081,Genovesa,Galápagos,Holocene, 0.32,N,, 89.958,W,64,Shield volcano,U,M0
+1503-08=,15,03,-08-,Marchena,Galápagos,Historical, 0.33,N,, 90.47,W,343,Shield volcano,D2,M0
+1503-091,15,03,-091,Santa_Cruz,Galápagos,Holocene, 0.62,S,, 90.33,W,864,Shield volcano,U,M0
+1503-09=,15,03,-09-,Santiago,Galápagos,Historical, 0.22,S,, 90.77,W,920,Shield volcano,D2,M0
+1503-12-,15,03,-12-,San_Cristobal,Galápagos,Holocene, 0.88,S,, 89.50,W,759,Shield volcano,U,M0
+1504-00-,15,04,-00-,Quimsachata,Perú,Radiocarbon,14.20,S,, 71.33,W,3923,Lava dome,D7,S0
+1504-001,15,04,-001,Cerro_Auquihuato,Perú,Holocene?,15.07,S,, 73.18,W,4980,Cinder cone,?,M0
+1504-002,15,04,-002,Sara_Sara,Perú,Holocene,15.33,S,, 73.45,W,5522,Stratovolcano,U,S0
+1504-003,15,04,-003,Coropuna,Perú,Holocene,15.52,S,, 72.65,W,6377,Stratovolcano,U,S0
+1504-004,15,04,-004,Andahua_Orcopampa,Perú,Radiocarbon,15.42,S,*, 72.33,W,4713,Cinder cones,D6,M0
+1504-005,15,04,-005,Huambo,Perú,Radiocarbon,15.83,S,, 72.13,W,4550,Volcanic field,D7,S0
+1504-006,15,04,-006,Sabancaya,Perú,Historical,15.78,S,, 71.85,W,5967,Stratovolcanoes,D1,S0
+1504-007,15,04,-007,Chachani_Nevado,Perú,Holocene?,16.191,S,, 71.530,W,6057,Stratovolcano,?,S0
+1504-008,15,04,-008,Cerro_Nicholson,Perú,Holocene,16.261,S,, 71.730,W,2520,Cinder cone,U,M0
+1504-01=,15,04,-01-,El_Misti,Perú,Historical,16.294,S,, 71.409,W,5822,Stratovolcano,D2,S0
+1504-02=,15,04,-02-,Ubinas,Perú,Historical,16.355,S,, 70.903,W,5672,Stratovolcano,D1,S1
+1504-031,15,04,-031,Ticsani,Perú,Tephrochronology,16.755,S,, 70.595,W,5408,Lava domes,D3,S0
+1504-03=,15,04,-03-,Huaynaputina,Perú,Historical,16.608,S,, 70.85,W,4850,Stratovolcano,D5,S3
+1504-04=,15,04,-04-,Tutupaca,Perú,Holocene,17.025,S,, 70.358,W,5815,Stratovolcano,U,S0
+1504-05-,15,04,-05-,Yucamane,Perú,Historical,17.18,S,, 70.20,W,5550,Stratovolcanoes,D2,S0
+1504-06-,15,04,-06-,Casiri_Nevados,Perú,Holocene,17.47,S,, 69.813,W,5650,Stratovolcanoes,U,S0
+1505-011,15,05,-011,Taapaca,Chile-N,Radiocarbon,18.10,S,, 69.50,W,5860,Complex volcano,D7,S0
+1505-012,15,05,-012,Parinacota,Chile-N,Surface Exposure,18.17,S,, 69.15,W,6348,Stratovolcano,D6,S0
+1505-01=,15,05,-01-,Tacora,Chile-N,Fumarolic,17.72,S,, 69.77,W,5980,Stratovolcano,U,S0
+1505-021,15,05,-021,Tambo Quemado,Bolivia,Holocene,18.62,S,, 68.75,W,4215,Pyroclastic shield,U,S0
+1505-02=,15,05,-02-,Guallatiri,Chile-N,Historical,18.42,S,, 69.092,W,6071,Stratovolcano,D2,S1
+1505-032,15,05,-032,Tata_Sabaya,Bolivia,Holocene,19.13,S,, 68.53,W,5430,Stratovolcano,U,S0
+1505-035,15,05,-035,Jayu_Khota_Laguna,Bolivia,Holocene,19.45,S,, 67.42,W,3650,Maars,U,S0
+1505-036,15,05,-036,Nuevo_Mundo,Bolivia,Holocene?,19.78,S,, 66.48,W,5438,Lava domes,?,S0
+1505-03=,15,05,-03-,Isluga,Chile-N,Historical,19.15,S,, 68.83,W,5550,Stratovolcano,D2,S1
+1505-042,15,05,-042,Pampa_Luxsar,Bolivia,Holocene?,20.85,S,*, 68.20,W,5543,Volcanic field,?,S0
+1505-04=,15,05,-04-,Irruputuncu,Chile-N,Historical,20.73,S,, 68.55,W,5163,Stratovolcano,D2,S0
+1505-05=,15,05,-05-,Olca_Paruma,Chile-N,Historical,20.93,S,, 68.48,W,5407,Stratovolcanoes,D3,S0
+1505-061,15,05,-061,Cerro_del_Azufre,Chile-N,Holocene?,21.787,S,, 68.237,W,5846,Stratovolcano,?,S0
+1505-06=,15,05,-06-,Ollague,Chile-N,Holocene?,21.30,S,, 68.18,W,5868,Stratovolcano,?,S0
+1505-07=,15,05,-07-,San_Pedro,Chile-N,Historical,21.88,S,, 68.40,W,6145,Stratovolcanoes,D2,S1
+1505-091,15,05,-091,Sairecabur,Chile-N,Holocene,22.72,S,, 67.892,W,5971,Stratovolcanoes,U,S0
+1505-092,15,05,-092,Licancabur,Chile-N,Holocene,22.83,S,, 67.88,W,5916,Stratovolcano,U,S0
+1505-093,15,05,-093,Guayaques,Chile-N,Holocene,22.895,S,, 67.566,W,5598,Lava domes,U,S0
+1505-094,15,05,-094,Purico_Complex,Chile-N,Holocene,23.00,S,, 67.75,W,5703,Pyroclastic shield,U,S0
+1505-095,15,05,-095,Colachi,Chile-N,Holocene,23.236,S,, 67.645,W,5631,Stratovolcano,U,S0
+1505-096,15,05,-096,Acamarachi,Chile-N,Holocene,23.30,S,, 67.62,W,6046,Stratovolcano,U,S0
+1505-097,15,05,-097,Cerro_Overo,Chile-N,Holocene?,23.52,S,, 67.67,W,4555,Maar,?,S0
+1505-098,15,05,-098,Chiliques,Chile-N,Holocene?,23.58,S,, 67.70,W,5778,Stratovolcano,?,S0
+1505-09=,15,05,-09-,Putana,Chile-N,Historical,22.55,S,, 67.85,W,5890,Stratovolcano,D3,S0
+1505-101,15,05,-101,Cordon_de_Puntas_Negras,Chile-N,Holocene,23.743,S,, 67.534,W,5852,Stratovolcanoes,U,S0
+1505-102,15,05,-102,Miniques,Chile-N,Holocene?,23.82,S,, 67.77,W,5910,Stratovolcanoes,?,S0
+1505-103,15,05,-103,Cerro_Tujle,Chile-N,Holocene,23.83,S,, 67.95,W,3550,Maar,U,M0
+1505-104,15,05,-104,Caichinque,Chile-N,Holocene?,23.95,S,, 67.73,W,4450,Stratovolcanoes,?,S0
+1505-105,15,05,-105,Tilocalar,Chile-N,Holocene?,23.97,S,, 68.13,W,3116,Stratovolcanoes,?,S0
+1505-106,15,05,-106,El_Negrillar,Chile-N,Holocene,24.18,S,*, 68.25,W,3500,Pyroclastic cones,U,M0
+1505-107,15,05,-107,Pular,Chile-N,Holocene?,24.188,S,, 68.054,W,6233,Stratovolcanoes,?,S0
+1505-108,15,05,-108,La_Negrillar,Chile-N,Holocene?,24.28,S,, 68.60,W,4109,Pyroclastic cones,?,M0
+1505-109,15,05,-109,Socompa,Chile-N,Radiocarbon,24.40,S,, 68.25,W,6051,Stratovolcano,D7,S0
+1505-10=,15,05,-10-,Lascar,Chile-N,Historical,23.37,S,, 67.73,W,5592,Stratovolcanoes,D1,S2
+1505-112,15,05,-112,Cerro_Escorial,Chile-N,Holocene?,25.08,S,, 68.37,W,5447,Stratovolcano,?,S0
+1505-11=,15,05,-11-,Llullaillaco,Chile-N,Historical,24.72,S,, 68.53,W,6739,Stratovolcano,D3,S0
+1505-121,15,05,-121,Cordon_del_Azufre,Chile-N,Holocene,25.33,S,, 68.52,W,5463,Complex volcano,U,S0
+1505-122,15,05,-122,Cerro_Bayo,Chile-N,Holocene,25.42,S,, 68.58,W,5401,Complex volcano,U,S0
+1505-123,15,05,-123,Sierra_Nevada,Chile-N,Holocene,26.48,S,*, 68.58,W,6127,Complex volcano,U,S0
+1505-124,15,05,-124,Falso_Azufre,Chile-N,Holocene?,26.80,S,, 68.37,W,5890,Complex volcano,?,S0
+1505-125,15,05,-125,Nevado_de_Incahuasi,Chile-N,Holocene?,27.042,S,, 68.28,W,6621,Stratovolcanoes,?,S0
+1505-12=,15,05,-12-,Lastarria,Chile-N,Holocene,25.17,S,, 68.50,W,5697,Stratovolcano,U,S0
+1505-131,15,05,-131,El_Solo,Chile-N,Holocene,27.108,S,, 68.72,W,6190,Stratovolcano,U,S0
+1505-13=,15,05,-13-,Nevados_Ojos_del_Salado,Chile-N,Tephrochronology,27.12,S,, 68.55,W,6887,Stratovolcano,D6,S0
+1505-14-,15,05,-14-,Copiapo,Chile-N,Uncertain,27.30,S,, 69.13,W,6052,Stratovolcano,?,S0
+1505-15-,15,05,-15-,Cerro_Tuzgle,Argentina,Holocene?,24.05,S,, 66.48,W,5500,Stratovolcano,?,S0
+1505-16-,15,05,-16-,Aracar,Argentina,Uncertain,24.25,S,, 67.77,W,6082,Stratovolcano,?,S0
+1505-161,15,05,-161,Unnamed,Argentina,Holocene?,25.10,S,, 68.27,W,,Pyroclastic cone,?,M0
+1505-18-,15,05,-18-,Antofagasta_de_la_Sierra,Argentina,Holocene,26.08,S,*, 67.50,W,4000,Scoria cones,U,M0
+1505-19-,15,05,-19-,Cerro_el_Condor,Argentina,Holocene,26.62,S,, 68.35,W,6532,Stratovolcano,U,S0
+1505-20-,15,05,-20-,Peinado,Argentina,Holocene,26.62,S,, 68.15,W,5740,Stratovolcano,U,S0
+1505-21-,15,05,-21-,Robledo,Argentina,Holocene,26.77,S,, 67.72,W,4400,Caldera,U,S0
+1505-22-,15,05,-22-,Tipas,Argentina,Holocene,27.20,S,, 68.55,W,6660,Complex volcano,U,S0
+1506-011,15,06,-011,Easter_Island,Chile-Is,Holocene,27.15,S,,109.38,W,511,Shield volcanoes,U,M0
+1506-01=,15,06,-01-,San_Felix,Chile-Is,Holocene,26.28,S,, 80.12,W,193,Shield volcano,U,M0
+1506-02=,15,06,-02-,Robinson_Crusoe,Chile-Is,Historical,33.658,S,, 78.85,W,922,Shield volcanoes,D3,M0
+1506-04=,15,06,-04-,Unnamed,Chile-Is,Uncertain,33.62,S,, 76.83,W,-642,Submarine volcano,?,U0
+1507-01=,15,07,-01-,Tupungatito,Chile-C,Historical,33.40,S,, 69.80,W,6000,Stratovolcano,D2,S1
+1507-021,15,07,-021,Maipo,Chile-C,Historical,34.161,S,, 69.833,W,5264,Caldera,D2,S1
+1507-022,15,07,-022,Palomo,Chile-C,Holocene,34.608,S,, 70.295,W,4860,Stratovolcano,U,S0
+1507-023,15,07,-023,Caldera_del_Atuel,Argentina,Holocene,34.65,S,*, 70.05,W,5189,Caldera,U,S0
+1507-024,15,07,-024,Risco_Plateado,Argentina,Holocene?,34.93,S,, 70.00,W,4999,Stratovolcano,?,S0
+1507-02=,15,07,-02-,San_José,Chile-C,Historical,33.782,S,, 69.897,W,5856,Stratovolcano,D2,S1
+1507-03=,15,07,-03-,Tinguiririca,Chile-C,Historical,34.814,S,, 70.352,W,4280,Stratovolcano,D2,S0
+1507-042,15,07,-042,Calabozos,Chile-C,Holocene,35.558,S,, 70.496,W,3508,Caldera,U,S0
+1507-04=,15,07,-04-,Planchon_Peteroa,Chile-C,Historical,35.240,S,, 70.570,W,4107,Stratovolcanoes,D2,S1
+1507-05=,15,07,-05-,Descabezado_Grande,Chile-C,Historical,35.58,S,, 70.75,W,3953,Stratovolcanoes,D2,S0
+1507-061,15,07,-061,Maule_Laguna_del,Chile-C,Holocene,36.02,S,*, 70.58,W,3092,Caldera,U,S0
+1507-062,15,07,-062,San_Pedro_Pellado,Chile-C,Holocene,35.989,S,, 70.849,W,3621,Stratovolcanoes,U,S0
+1507-063,15,07,-063,Nevado_de_Longavi,Chile-C,Radiocarbon,36.193,S,, 71.161,W,3242,Stratovolcano,D7,S0
+1507-064,15,07,-064,Blancas_Lomas,Chile-C,Holocene,36.286,S,, 71.009,W,2268,Stratovolcano,U,S0
+1507-065,15,07,-065,Resago,Chile-C,Holocene,36.45,S,, 70.92,W,1890,Cinder cone,U,M0
+1507-066,15,07,-066,Payun_Matru,Argentina,Holocene,36.42,S,, 69.20,W,3680,Shield volcano,U,M0
+1507-067,15,07,-067,Domuyo,Argentina,Holocene?,36.58,S,, 70.42,W,4709,Stratovolcano,?,S0
+1507-06=,15,07,-06-,Cerro_Azul,Chile-C,Historical,35.653,S,, 70.761,W,3788,Stratovolcano,D2,S2
+1507-071,15,07,-071,Cochiquito_Volc_Group,Argentina,Holocene,36.77,S,, 69.82,W,1435,Stratovolcanoes,U,S0
+1507-072,15,07,-072,Tromen,Argentina,Holocene,37.142,S,, 70.03,W,3978,Stratovolcanoes,U,S0
+1507-073,15,07,-073,Puesto_Cortaderas,Argentina,Holocene,37.57,S,, 69.62,W,970,Pyroclastic cone,U,M0
+1507-07=,15,07,-07-,Nevados_de_Chillan,Chile-C,Historical,36.863,S,, 71.377,W,3212,Stratovolcano,D1,S1
+1507-081,15,07,-081,Trocon,Argentina,Holocene?,37.73,S,, 70.90,W,2500,Lava domes,?,S0
+1507-08=,15,07,-08-,Antuco,Chile-C,Historical,37.406,S,, 71.349,W,2979,Stratovolcano,D3,S1
+1507-091,15,07,-091,Callaqui,Chile-C,Historical,37.92,S,, 71.45,W,3164,Stratovolcano,D2,S1
+1507-092,15,07,-092,Laguna_Marinaqui,Chile-C,Holocene,38.27,S,, 71.10,W,2143,Cinder cones,U,M0
+1507-093,15,07,-093,Tolguaca,Chile-C,Holocene,38.310,S,, 71.645,W,2806,Stratovolcano,U,S0
+1507-09=,15,07,-09-,Copahue,Chile-C,Historical,37.85,S,, 71.17,W,2997,Stratovolcano,D1,S1
+1507-10=,15,07,-10-,Lonquimay,Chile-C,Historical,38.377,S,, 71.58,W,2865,Stratovolcano,D2,S2
+1507-111,15,07,-111,Sollipulli,Chile-C,Radiocarbon,38.97,S,, 71.52,W,2282,Caldera,D6,S0
+1507-112,15,07,-112,Caburgua_Huelemolle,Chile-C,Tephrochronology,39.25,S,*, 71.70,W,1496,Cinder cones,D7,M0
+1507-11=,15,07,-11-,Llaima,Chile-C,Historical,38.692,S,, 71.729,W,3125,Stratovolcano,D1,S1
+1507-121,15,07,-121,Quetrupillan,Chile-C,Historical,39.50,S,, 71.70,W,2360,Stratovolcano,D3,S0
+1507-122,15,07,-122,Lanin,Chile-C,Radiocarbon,39.633,S,, 71.500,W,3747,Stratovolcano,D6,S0
+1507-123,15,07,-123,Huanquihue_Group,Argentina,Radiocarbon,39.88,S,, 71.58,W,2139,Stratovolcanoes,D4,S0
+1507-12=,15,07,-12-,Villarrica,Chile-C,Historical,39.42,S,, 71.93,W,2847,Stratovolcano,D1,S1
+1507-13=,15,07,-13-,Mocho_Choshuenco,Chile-C,Historical,39.927,S,, 72.027,W,2422,Stratovolcanoes,D2,S0
+1507-14=,15,07,-14-,Carran_Los_Venados,Chile-C,Historical,40.35,S,*, 72.07,W,1114,Pyroclastic cones,D2,M2
+1507-152,15,07,-152,Cerro_Pantoja,Chile-C,Holocene,40.77,S,, 71.95,W,2024,Stratovolcano,U,S0
+1507-153,15,07,-153,Antillanca_Group,Chile-C,Radiocarbon,40.771,S,, 72.153,W,1990,Stratovolcanoes,D7,S0
+1507-15=,15,07,-15-,Puyehue_Cordon_Caulle,Chile-C,Historical,40.590,S,, 72.117,W,2236,Stratovolcano,D2,S0
+1507-16-,15,07,-16-,Puntiagudo_Cordon_Cenizos,Chile-C,Historical,40.969,S,, 72.264,W,2493,Stratovolcano,D3,S0
+1508-011,15,08,-011,Tronador,Chile-S,Holocene?,41.157,S,, 71.885,W,3491,Stratovolcano,?,S0
+1508-012,15,08,-012,Cayutue_La_Vigueria,Chile-S,Tephrochronology,41.25,S,*, 72.27,W,506,Pyroclastic cones,D7,M0
+1508-01=,15,08,-01-,Osorno,Chile-S,Historical,41.10,S,, 72.493,W,2652,Stratovolcano,D3,S1
+1508-021,15,08,-021,Cuernos_del_Diablo,Chile-S,Holocene,41.40,S,, 72.00,W,1862,Stratovolcano,U,S0
+1508-022,15,08,-022,Yate,Chile-S,Holocene,41.755,S,, 72.396,W,2187,Stratovolcano,U,S0
+1508-023,15,08,-023,Hornopiren,Chile-S,Holocene,41.874,S,, 72.431,W,1572,Stratovolcano,U,S0
+1508-024,15,08,-024,Apagado,Chile-S,Holocene,41.88,S,, 72.58,W,1210,Pyroclastic cone,U,S0
+1508-025,15,08,-025,Crater_Basalt_volc_field,Chile-S/Argentina,Holocene,42.02,S,*, 70.18,W,1359,Cinder cones,U,M0
+1508-02=,15,08,-02-,Calbuco,Chile-S,Historical,41.326,S,, 72.614,W,2003,Stratovolcano,D2,S2
+1508-03=,15,08,-03-,Huequi,Chile-S,Historical,42.377,S,, 72.578,W,1318,Stratovolcano,D2,S1
+1508-041,15,08,-041,Chaiten,Chile-S,Historical,42.833,S,, 72.646,W,1122,Caldera,D1,S2
+1508-04=,15,08,-04-,Minchinmavida,Chile-S,Historical,42.793,S,, 72.439,W,2404,Stratovolcano,D3,S1
+1508-050,15,08,-050,Yanteles,Chile-S,Radiocarbon,43.50,S,, 72.80,W,2042,Stratovolcanoes,D7,S0
+1508-051,15,08,-051,Palena_Volc_Group,Chile-S,Holocene,43.78,S,, 72.47,W,,Cinder cones,U,M0
+1508-052,15,08,-052,Melimoyu,Chile-S,Radiocarbon,44.08,S,, 72.88,W,2400,Stratovolcano,D6,S0
+1508-053,15,08,-053,Puyuhuapi,Chile-S,Holocene,44.30,S,, 72.53,W,524,Cinder cones,U,M0
+1508-054,15,08,-054,Mentolat,Chile-S,Historical,44.70,S,, 73.08,W,1660,Stratovolcano,D4,S0
+1508-055,15,08,-055,Cay,Chile-S,Holocene?,45.059,S,, 72.984,W,2090,Stratovolcano,?,S0
+1508-056,15,08,-056,Maca,Chile-S,Radiocarbon,45.10,S,, 73.17,W,2960,Stratovolcano,D6,S0
+1508-057,15,08,-057,Cerro_Hudson,Chile-S,Historical,45.90,S,, 72.97,W,1905,Stratovolcano,D2,S3
+1508-058,15,08,-058,Rio_Murta,Chile-S,Holocene?,46.17,S,, 72.67,W,,Pyroclastic cones,?,M0
+1508-059,15,08,-059,Arenales,Chile-S,Historical,47.20,S,, 73.48,W,3437,Stratovolcano,D2,S0
+1508-05=,15,08,-05-,Corcovado,Chile-S,Historical,43.18,S,, 72.80,W,2300,Stratovolcano,D7,S0
+1508-061,15,08,-061,Viedma,Argentina,Historical,49.358,S,, 73.28,W,1500,Subglacial volcano,D2,S0
+1508-062,15,08,-062,Aguilera,Chile-S,Radiocarbon,50.33,S,, 73.75,W,2546,Stratovolcano,D7,S0
+1508-063,15,08,-063,Reclus,Chile-S,Historical,50.964,S,, 73.585,W,1000,Cinder cone,D2,S0
+1508-06=,15,08,-06-,Lautaro,Chile-S,Historical,49.02,S,, 73.55,W,3607,Stratovolcano,D2,S1
+1508-07=,15,08,-07-,Monte_Burney,Chile-S,Historical,52.33,S,, 73.40,W,1758,Stratovolcano,D2,S0
+1508-08-,15,08,-08-,Palei_Aike_volc_field,Chile-S,Anthropology,52.00,S,*, 70.00,W,282,Cinder cones,D7,M0
+1508-09-,15,08,-09-,Fueguino,Chile-S,Historical,54.95,S,, 70.25,W,150,Lava domes,D3,S0
+1600-01=,16,00,-01-,Saba,W Indies,Historical,17.63,N,, 63.23,W,887,Stratovolcano,D5,S0
+1600-02=,16,00,-02-,The_Quill,W Indies,Radiocarbon,17.478,N,, 62.960,W,601,Stratovolcano,D6,S0
+1600-03=,16,00,-03-,Liamuiga,W Indies,Radiocarbon,17.37,N,, 62.80,W,1156,Stratovolcano,D6,S0
+1600-04=,16,00,-04-,Nevis_Peak,W Indies,Holocene?,17.15,N,, 62.58,W,985,Stratovolcano,?,S0
+1600-05=,16,00,-05-,Soufriere_Hills,W Indies,Historical,16.72,N,, 62.18,W,915,Stratovolcano,D1,S9
+1600-06=,16,00,-06-,Soufriere_Guadeloupe,W Indies,Historical,16.05,N,, 61.67,W,1467,Stratovolcano,D2,S0
+1600-08=,16,00,-08-,Diables_Morne_aux,W Indies,Holocene,15.612,N,, 61.43,W,861,Stratovolcano,U,S0
+1600-09=,16,00,-09-,Diablotins_Morne,W Indies,Holocene?,15.503,N,, 61.397,W,1430,Stratovolcano,?,S0
+1600-101,16,00,-101,Watt_Morne,W Indies,Historical,15.307,N,, 61.305,W,1224,Stratovolcanoes,D2,S0
+1600-10=,16,00,-10-,Morne_Trois_Pitons,W Indies,Radiocarbon,15.37,N,, 61.33,W,1387,Complex volcano,D6,S0
+1600-11=,16,00,-11-,Morne_Plat_Pays,W Indies,Radiocarbon,15.255,N,, 61.341,W,940,Stratovolcano,D6,S0
+1600-12=,16,00,-12-,Pelee,W Indies,Historical,14.82,N,, 61.17,W,1397,Stratovolcano,D2,S2
+1600-14=,16,00,-14-,Qualibou,W Indies,Historical,13.83,N,, 61.05,W,777,Caldera,D4,S0
+1600-15=,16,00,-15-,Soufriere_St_Vincent,W Indies,Historical,13.33,N,, 61.18,W,1220,Stratovolcano,D2,S2
+1600-16=,16,00,-16-,Kick_em_Jenny,W Indies,Historical,12.300,N,, 61.640,W,-185,Submarine volcano,D1,U0
+1600-17=,16,00,-17-,St_Catherine,W Indies,Holocene,12.15,N,, 61.67,W,840,Stratovolcano,U,S0
+1700-01=,17,00,-01-,Snaefellsjokull,Iceland-W,Radiocarbon,64.80,N,, 23.78,W,1448,Stratovolcano,D6,M0
+1700-02=,17,00,-02-,Helgrindur,Iceland-W,Holocene,64.87,N,*, 23.25,W,647,Pyroclastic cones,U,M0
+1700-03=,17,00,-03-,Ljosufjoll,Iceland-W,Anthropology,64.87,N,*, 22.23,W,1063,Fissure vents,D6,M0
+1701-02=,17,01,-02-,Reykjanes,Iceland-SW,Historical,63.88,N,*, 22.50,W,230,Crater rows,D3,M0
+1701-03=,17,01,-03-,Krisuvik,Iceland-SW,Historical,63.93,N,*, 22.10,W,379,Crater rows,D6,M0
+1701-04=,17,01,-04-,Brennisteinsfjoll,Iceland-SW,Historical,63.92,N,*, 21.83,W,621,Crater rows,D6,S0
+1701-051,17,01,-051,Hromundartindur,Iceland-S,Holocene?,64.073,N,*, 21.202,W,540,Stratovolcano,?,S0
+1701-05=,17,01,-05-,Hengill,Iceland-SW,Historical,64.08,N,*, 21.32,W,803,Crater rows,D6,M0
+1701-06=,17,01,-06-,Grimsnes,Iceland-SW,Tephrochronology,64.03,N,*, 20.87,W,214,Crater rows,D7,S0
+1701-07=,17,01,-07-,Prestahnukur,Iceland-SW,Radiocarbon,64.60,N,*, 20.58,W,1400,Subglacial volcano,D7,M0
+1701-08=,17,01,-08-,Hveravellir,Iceland-SW,Radiocarbon,64.75,N,, 19.98,W,1360,Subglacial volcano,D6,M0
+1701-09=,17,01,-09-,Hofsjokull,Iceland-SW,Holocene,64.78,N,, 18.92,W,1782,Subglacial volcano,U,M0
+1702-01=,17,02,-01-,Vestmannaeyjar,Iceland-S,Historical,63.43,N,*, 20.28,W,279,Submarine volcanoes,D2,M0
+1702-02=,17,02,-02-,Eyjafjoll,Iceland-S,Historical,63.63,N,, 19.62,W,1666,Stratovolcano,D3,S0
+1702-03=,17,02,-03-,Katla,Iceland-S,Historical,63.63,N,, 19.05,W,1512,Subglacial volcano,D2,M0
+1702-04=,17,02,-04-,Tindfjallajokull,Iceland-S,Holocene?,63.78,N,, 19.57,W,1463,Stratovolcano,?,M0
+1702-05=,17,02,-05-,Torfajokull,Iceland-S,Historical,63.92,N,, 19.17,W,1259,Stratovolcano,D6,S0
+1702-07=,17,02,-07-,Hekla,Iceland-S,Historical,63.98,N,, 19.70,W,1491,Stratovolcano,D1,S2
+1703-01=,17,03,-01-,Grimsvotn,Iceland-NE,Historical,64.42,N,, 17.33,W,1725,Caldera,D1,M0
+1703-03=,17,03,-03-,Bardarbunga,Iceland-NE,Historical,64.63,N,, 17.53,W,2009,Stratovolcano,D2,M0
+1703-04=,17,03,-04-,Tungnafellsjokull,Iceland-NE,Holocene,64.73,N,, 17.92,W,1535,Stratovolcano,U,M0
+1703-05=,17,03,-05-,Kverkfjoll,Iceland-NE,Historical,64.65,N,, 16.72,W,1929,Stratovolcano,D2,M0
+1703-06=,17,03,-06-,Askja,Iceland-NE,Historical,65.03,N,, 16.75,W,1516,Stratovolcano,D2,M0
+1703-07=,17,03,-07-,Fremrinamur,Iceland-NE,Tephrochronology,65.43,N,, 16.65,W,939,Stratovolcano,D7,M0
+1703-08=,17,03,-08-,Krafla,Iceland-NE,Historical,65.73,N,, 16.78,W,818,Caldera,D2,M1
+1703-09=,17,03,-09-,Theistareykjarbunga,Iceland-NE,Tephrochronology,65.88,N,, 16.83,W,564,Shield volcano,D7,M0
+1703-10=,17,03,-10-,Tjornes_Fracture_Zone,Iceland-N of,Historical,66.30,N,, 17.10,W,,Submarine volcano,D3,U0
+1704-01=,17,04,-01-,Oraefajokull,Iceland-SE,Historical,64.00,N,, 16.65,W,2119,Stratovolcano,D4,M0
+1704-02=,17,04,-02-,Esjufjoll,Iceland-SE,Historical,64.27,N,, 16.65,W,1760,Stratovolcano,D2,S0
+1705-01=,17,05,-01-,Kolbeinsey_Ridge,Iceland-N of,Historical,66.67,N,, 18.50,W,5,Submarine volcano,D4,U0
+1706-01=,17,06,-01-,Jan_Mayen,Atlantic-N-Jan Mayen,Historical,71.08,N,,  8.17,W,2277,Stratovolcano,D2,M0
+1707-01-,17,07,-01-,Unnamed,Arctic Ocean,Uncertain,88.27,N,, 65.60,W,-1500,Submarine volcano,?,U0
+1707-02-,17,07,-02-,Unnamed,Arctic Ocean,Holocene,85.58,N,, 85.00,E,-3800,Submarine volcano,U,U0
+1801-02=,18,01,-02-,Unnamed,Atlantic-N,Historical,49.00,N,, 34.50,W,-1650,Submarine volcano,D3,U0
+1801-03=,18,01,-03-,Unnamed,Atlantic-N,Uncertain,39.95,N,, 25.83,W,-2835,Submarine volcano,?,U0
+1801-04=,18,01,-04-,Unnamed,Atlantic-N,Historical,38.75,N,, 38.08,W,-4200,Submarine volcano,D3,U0
+1802-001,18,02,-001,Flores,Azores,Radiocarbon,39.462,N,, 31.216,W,914,Stratovolcanoes,D7,M0
+1802-002,18,02,-002,Corvo,Azores,Holocene,39.699,N,, 31.111,W,718,Stratovolcano,U,M0
+1802-01=,18,02,-01-,Fayal,Azores,Historical,38.60,N,, 28.73,W,1043,Stratovolcano,D2,S0
+1802-02=,18,02,-02-,Pico,Azores,Historical,38.47,N,, 28.40,W,2351,Stratovolcano,D4,M0
+1802-03=,18,02,-03-,San_Jorge,Azores,Historical,38.65,N,, 28.08,W,1053,Fissure vent,D2,M0
+1802-04=,18,02,-04-,Graciosa,Azores,Holocene,39.02,N,, 27.97,W,402,Stratovolcano,U,M0
+1802-05=,18,02,-05-,Terceira,Azores,Historical,38.73,N,, 27.32,W,1023,Stratovolcanoes,D1,M0
+1802-07=,18,02,-07-,Don_Joao_de_Castro_Bank,Azores,Historical,38.23,N,, 26.63,W,-13,Submarine volcano,D4,M0
+1802-081,18,02,-081,Picos_Volc_System,Azores,Historical,37.78,N,*, 25.67,W,350,Pyroclastic cones,D5,M0
+1802-08=,18,02,-08-,Sete_Cidades,Azores,Historical,37.87,N,, 25.78,W,856,Stratovolcano,D3,S0
+1802-09=,18,02,-09-,Agua_de_Pau,Azores,Historical,37.77,N,, 25.47,W,947,Stratovolcano,D5,S0
+1802-10=,18,02,-10-,Furnas,Azores,Historical,37.77,N,, 25.32,W,805,Stratovolcano,D5,S0
+1802-11=,18,02,-11-,Monaco_Bank,Azores,Historical,37.60,N,, 25.88,W,-197,Submarine volcano,D2,U0
+1802-12-,18,02,-12-,Madeira,Azores,Radiocarbon,32.73,N,, 16.97,W,1862,Shield volcano,D7,M0
+1803-01-,18,03,-01-,La_Palma,Canary Is,Historical,28.57,N,, 17.83,W,2426,Stratovolcanoes,D2,M0
+1803-02-,18,03,-02-,Hierro,Canary Is,Radiocarbon,27.73,N,, 18.03,W,1500,Shield volcano,D7,M0
+1803-03-,18,03,-03-,Tenerife,Canary Is,Historical,28.271,N,, 16.641,W,3715,Stratovolcano,D2,S0
+1803-04-,18,03,-04-,Gran_Canaria,Canary Is,Radiocarbon,28.00,N,, 15.58,W,1950,Fissure vents,D7,M0
+1803-05-,18,03,-05-,Fuerteventura,Canary Is,Holocene,28.358,N,, 14.02,W,529,Fissure vents,U,M0
+1803-06-,18,03,-06-,Lanzarote,Canary Is,Historical,29.03,N,, 13.63,W,670,Fissure vents,D3,M0
+1804-01=,18,04,-01-,Fogo,Cape Verde Is,Historical,14.95,N,, 24.35,W,2829,Stratovolcano,D2,S0
+1804-02-,18,04,-02-,Brava,Cape Verde Is,Holocene,14.85,N,, 24.72,W,900,Stratovolcano,U,S0
+1804-03-,18,04,-03-,Sao_Vicente,Cape Verde Is,Holocene,16.85,N,, 24.97,W,725,Stratovolcano,U,S0
+1805-01=,18,05,-01-,Unnamed,Atlantic-C,Uncertain, 7.00,N,, 21.83,W,-1415,Submarine volcano ?,?,U0
+1805-02=,18,05,-02-,Unnamed,Atlantic-C,Uncertain, 4.20,N,, 21.45,W,-2900,Submarine volcano,?,U0
+1805-03=,18,05,-03-,Unnamed,Atlantic-C,Uncertain, 0.72,S,, 20.53,W,-1528,Submarine volcano,?,U0
+1805-04=,18,05,-04-,Unnamed,Atlantic-C,Uncertain, 3.50,S,, 24.50,W,-5300,Submarine volcano,?,U0
+1805-05-,18,05,-05-,Ascension,Atlantic-C,Holocene, 7.95,S,, 14.37,W,858,Stratovolcano,U,M0
+1805-051,18,05,-051,Trindade,Atlantic-C,Holocene,20.514,S,, 29.331,W,600,Stratovolcano,U,S0
+1806-011,18,06,-011,Nightingale_Island,Atlantic-S,Historical,37.42,S,, 12.48,W,365,Stratovolcano,D1,S0
+1806-01=,18,06,-01-,Tristan_da_Cunha,Atlantic-S,Historical,37.092,S,, 12.28,W,2060,Shield volcano,D2,M1
+1806-02-,18,06,-02-,Bouvet,Atlantic-S,Magnetism,54.42,S,,  3.35,E,780,Shield volcano,D7,M0
+1806-03-,18,06,-03-,Thompson_Island,Atlantic-S,Uncertain,53.93,S,,  5.50,E,,Submarine volcano ?,?,S0
+1900-011,19,00,-011,Young_Island,Antarctica,Fumarolic,66.42,S,,162.47,E,1340,Stratovolcano,U,S0
+1900-012,19,00,-012,Sturge_Island,Antarctica,Uncertain,67.40,S,,164.83,E,1167,Stratovolcano,?,M0
+1900-013,19,00,-013,Pleiades,Antarctica,Potassium-Argon,72.67,S,,165.50,E,3040,Stratovolcano,D7,S0
+1900-014,19,00,-014,Unnamed,Antarctica,Holocene?,73.45,S,*,164.58,E,2987,Scoria cones,?,M0
+1900-015,19,00,-015,Melbourne,Antarctica,Tephrochronology,74.35,S,,164.70,E,2732,Stratovolcano,D4,S0
+1900-016,19,00,-016,Unnamed,Antarctica,Holocene?,76.83,S,,163.00,E,-500,Submarine volcano,?,U0
+1900-01=,19,00,-01-,Buckle_Island,Antarctica,Historical,66.78,S,,163.25,E,1239,Stratovolcano,D3,M0
+1900-021,19,00,-021,Royal_Society_Range,Antarctica,Holocene?,78.25,S,*,163.33,E,3000,Cinder cones,?,M0
+1900-022,19,00,-022,Berlin,Antarctica,Ar/Ar,76.05,S,,136.00,W,3478,Shield volcanoes,D7,S0
+1900-023,19,00,-023,Andrus,Antarctica,Holocene?,75.80,S,,132.33,W,2978,Shield volcanoes,?,S0
+1900-024,19,00,-024,Waesche,Antarctica,Holocene?,77.17,S,,126.88,W,3292,Shield volcanoes,?,M0
+1900-025,19,00,-025,Siple,Antarctica,Holocene?,73.43,S,,126.67,W,3110,Shield volcano,?,M0
+1900-026,19,00,-026,Toney_Mountain,Antarctica,Holocene?,75.80,S,,115.83,W,3595,Shield volcano,?,M0
+1900-027,19,00,-027,Takahe,Antarctica,Ice Core,76.28,S,,112.08,W,3460,Shield volcano,D7,S0
+1900-028,19,00,-028,Hudson_Mountains,Antarctica,Uncertain,74.33,S,*, 99.42,W,749,Stratovolcanoes,?,M0
+1900-029,19,00,-029,Peter_I_Island,Antarctica,Holocene,68.85,S,, 90.58,W,1640,Shield volcano,U,M0
+1900-02=,19,00,-02-,Erebus,Antarctica,Historical,77.53,S,,167.17,E,3794,Stratovolcano,D1,S1
+1900-031,19,00,-031,Penguin_Island,Antarctica,Lichenometry,62.10,S,, 57.93,W,180,Stratovolcano,D2,S0
+1900-03=,19,00,-03-,Deception_Island,Antarctica,Historical,62.97,S,, 60.65,W,576,Caldera,D2,S2
+1900-041,19,00,-041,Paulet,Antarctica,Holocene,63.58,S,, 55.77,W,353,Cinder cone,U,M0
+1900-04=,19,00,-04-,Bridgeman_Island,Antarctica,Uncertain,62.05,S,, 56.75,W,240,Stratovolcano,?,S0
+1900-05=,19,00,-05-,Seal_Nunataks_Group,Antarctica,Uncertain,65.03,S,*, 60.05,W,368,Pyroclastic cones,?,M0
+1900-07=,19,00,-07-,Thule_Islands,Antarctica,Historical,59.45,S,, 27.37,W,1075,Stratovolcanoes,D2,S0
+1900-081,19,00,-081,Montagu_Island,Antarctica,Historical,58.42,S,, 26.33,W,1370,Shield volcano,D1,S0
+1900-08=,19,00,-08-,Bristol_Island,Antarctica,Historical,59.03,S,, 26.58,W,1100,Stratovolcano,D2,S1
+1900-09=,19,00,-09-,Michael,Antarctica,Historical,57.78,S,, 26.45,W,990,Stratovolcano,D1,S1
+1900-10=,19,00,-10-,Candlemas_Island,Antarctica,Historical,57.08,S,, 26.67,W,550,Stratovolcano,D2,S0
+1900-11=,19,00,-11-,Hodson,Antarctica,Holocene,56.70,S,, 27.15,W,1005,Stratovolcano,U,S0
+1900-12=,19,00,-12-,Leskov_Island,Antarctica,Fumarolic,56.67,S,, 28.13,W,190,Stratovolcano,U,S0
+1900-13=,19,00,-13-,Zavodovski,Antarctica,Historical,56.30,S,, 27.57,W,551,Stratovolcano,D3,S0
+1900-14-,19,00,-14-,Protector_Shoal,Antarctica,Historical,55.92,S,, 28.08,W,-27,Submarine volcano,D2,S0
