@@ -118,13 +118,13 @@ def convert_to_grib(snapNc, basedir, ident, isotopes):
     tempfile = 'tmp.grib'
     for appendix, params in config['extracts'].items():
         outFile = os.path.join(basedir, "{ident}_{type}".format(ident=ident, type=appendix))
-        procOptions = ['fimex', '--input.file=snap.nc', '--input.config={}'.format(config['ncml']),
-                       '--output.file={}'.format(tempfile),
-                       '--output.type=grib', '--output.config={}'.format(xmlFile)]
         with open(outFile, 'wb') as gh:
             for param in params:
                 if (os.path.exists(tempfile)):
                     os.remove(tempfile)
+                procOptions = ['fimex', '--input.file=snap.nc', '--input.config={}'.format(config['ncml']),
+                       '--output.file={}'.format(tempfile),
+                       '--output.type=grib', '--output.config={}'.format(xmlFile)]
                 procOptions.append('--extract.selectVariables={}'.format(param))
                 print(" ".join(procOptions))
                 proc = subprocess.Popen(procOptions, cwd=basedir, stderr=errlog, stdout=outlog)
