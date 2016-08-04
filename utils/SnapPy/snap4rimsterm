@@ -134,9 +134,9 @@ def convert_to_grib(snapNc, basedir, ident, isotopes):
                     # append tmp-file to final grib-file
                     with (open(tempfile, 'rb')) as th:
                         while True:
-                            data = th.read(65536)
+                            data = th.read(16*1024*1024) # read max 16M blocks
                             if data:
-                                gh.write(th.read())
+                                gh.write(data)
                             else:
                                 break
                 if (os.path.exists(tempfile)):
