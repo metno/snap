@@ -31,9 +31,17 @@ class Resources():
         self.volcs = self.readVolcanoes(volcBB)
         volcStrings = []
         for tag, site in sorted(self.volcs.items(), key=lambda t: t[1]['NAME'].upper()):
-            volcStrings.append('<option value="{tag}">{site} ({lat:.2f},{lon:.2f})</options>\n'.format(tag=tag, site=site['NAME'], lat=site['LATITUDE'], lon=site['LONGITUDE']))
+            volcStrings.append('<option value="{tag}">{site} ({lat:.2f},{lon:.2f})</option>\n'.format(tag=tag, site=site['NAME'], lat=site['LATITUDE'], lon=site['LONGITUDE']))
         self.startScreen = re.sub(r'%VOLCANO_OPTIONS%',"".join(volcStrings),self.startScreen)
+
+        volcTypes = []
+        for tag, vtype in sorted(self.readVolcanoTypes().items(), key=lambda t:t[0].upper()):
+            volcTypes.append('<option value="{tag}">{vtype}: {description}</option>\n'.format(tag=tag, vtype=vtype['TYPE'], description=vtype['DESCRIPTION']))
+        self.startScreen = re.sub(r'%VOLCANOTYPE_OPTIONS%',"".join(volcTypes),self.startScreen)
+
         self.startScreen = re.sub(r'%CURRENTTIME%',strftime("%Y-%m-%d %H:00", gmtime()),self.startScreen)
+
+
 
         ecmodelruns=""
         for run in self.getECRuns():
@@ -52,6 +60,7 @@ class Resources():
         with open(os.path.join(os.path.dirname(__file__),"resources/Mastin_et_al_2009a_table3.csv"),
                         mode='r', encoding="UTF-8") as mh:
             for line in mh:
+                line.rstrip()
                 #NUMBER,RN,SN,VN,NAME,LOCATION,STATUS,LATITUDE,NS,VF,LONGITUDE,EW,ELEV,TYPE,TIMEFRAME,ERUPTION TYPE
                 if line == '':
                     continue
@@ -82,6 +91,27 @@ class Resources():
                     volcanoes[tag] = volcano
 
         return volcanoes
+
+    def readVolcanoTypes(self):
+        vtypes={}
+        fields = 'TYPE,x,BASE,H,D,dM/dt,m63,START,END,DESCRIPTION'.split(',')
+        with open(os.path.join(os.path.dirname(__file__),"resources/Mastin_et_al_2009b_table3.csv"),
+                        mode='r', encoding="UTF-8") as mh:
+            for line in mh:
+                line.rstrip()
+                if line == '':
+                    continue
+                if line[0] == '#':
+                    continue
+                typedef = line.split(',')
+                if len(typedef) != len(fields):
+                    print("volcanotype not properly defined: ", line, file=sys.stderr)
+                    continue
+                vtype = dict(zip(fields, typedef))
+                vtype['m63'] = float(vtype['m63'])
+                vtype['D'] = float(vtype['D'])
+                vtypes[vtype['TYPE']] = vtype
+        return vtypes
 
     def getECRuns(self):
         """Find ec-runs with at least 2 days of forecast"""

@@ -34,7 +34,7 @@ class Resources():
         npps = self.readNPPs(plantBB)
         nppStrings = []
         for tag, site in npps.items():
-            nppStrings.append('<option value="{tag}">{site}</options>\n'.format(tag=tag, site=site['site']))
+            nppStrings.append('<option value="{tag}">{site}</option>\n'.format(tag=tag, site=site['site']))
         self.startScreen = re.sub(r'%NPP_OPTIONS%',"".join(nppStrings),self.startScreen)
         self.startScreen = re.sub(r'%CURRENTTIME%',strftime("%Y-%m-%d %H:00", gmtime()),self.startScreen)
 
