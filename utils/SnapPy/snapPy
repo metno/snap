@@ -2,8 +2,8 @@
 
 import sys
 from PyQt5 import QtGui, QtWidgets
-from Snappy import SnapController
-from Snappy import BrowserWidget
+from Snappy.SnapController import SnapController
+from Snappy.BrowserWidget import BrowserWidget
 import Snappy.EEMEP.Resources
 
 if __name__ == "__main__":
