@@ -6,9 +6,9 @@ import traceback
 
 from time import gmtime, strftime
 import datetime
-from Snappy import BrowserWidget
+from Snappy.BrowserWidget import BrowserWidget
 from Snappy.MailImages import sendPngsFromDir
-from Snappy import Resources
+from Snappy.Resources import Resources
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtCore import QProcess, QProcessEnvironment, QThread, QIODevice, QThreadPool, pyqtSignal, pyqtSlot
 
