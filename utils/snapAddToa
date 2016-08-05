@@ -27,6 +27,10 @@ with netCDF4.Dataset(args.snapNc, "a") as nc:
     data[flying] = timeDelta # timeDelta hourly data
     toa = numpy.sum(data, axis=0)
     toa[numpy.where(toa > timeMax)] = -999
+    # snap output start at first timeDelta, not 0, so 0 means 0 - 3h
+    # make sure that timestamp means 'within this time', e.g. 0 -> 3
+    # use slightly less, so that diana is satisfied [0,3[
+    toa[numpy.where(toa != -999)] += (float(timeDelta) - 0.01)
 
     toaVar = nc.createVariable('time_of_arrival', 'f', nc.variables[exampleVar].dimensions, zlib=True, fill_value=-999)
     toaVar.units = 'hours'
