@@ -82,13 +82,20 @@ function toggle_advanced_sourceterm() {
        <legend>Source-Term</legend>
        <!--  -->
        <label>Eruption Start UTC (YYYY-MM-DD HH:MM):<br><input name="startTime" type="text" value="%CURRENTTIME%" size="20" maxlength="20" ></label>
-       <p><label>Run-Length (in hours)<br><input name="runTime" type="number" step="3" max="120" min="12" value="48"></label></p>
-       <p><label>Ash-Cloud (m over surface) if available<br><input name="cloudheight" type="number" step="500" max="16000" min="0"></label></p>
+       <br><label>Run-Length (in hours)<br><input name="runTime" type="number" step="3" max="120" min="12" value="48"></label>
+       <br><label>Ash-Cloud (m over surface) if available<br><input name="cloudheight" type="number" step="500" max="16000" min="0"></label>
+       <br>
          <fieldset>
          <legend><a href="javascript: toggle_advanced_sourceterm()">Advanced</a></legend>
          <div id="advanced_sourceterm" style="display: none">
          <label><input type="checkbox" name="restart_file" value="true">Continue previous run</label>
-         <p />MET-MODEL
+         <br /><label>Volcano-Type<br />
+           <select name="volcanotype" size="6">
+             <option selected="selected" value="default">Mastin/default</option>
+           %VOLCANOTYPE_OPTIONS%
+           </select>
+         </label>
+         <br />MET-MODEL
          <select name="metmodel">
              <option selected="selected" value="nrpa_ec_0p1">EC 0.1, NRPA-domain</option>
          </select>
@@ -104,7 +111,7 @@ function toggle_advanced_sourceterm() {
          <select name="volcano" size="20">
              <option selected="selected" value="">Use Lat-Lon</option>
            %VOLCANO_OPTIONS%
-       </select>
+         </select>
        <br>
        <fieldset>
        If <b>Use Lat-Lon</b>:<br>
