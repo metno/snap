@@ -19,6 +19,7 @@ class Resources():
     ECINPUTDIRS = ["/lustre/storeA/project/metproduction/products/ecmwf/cwf_input/", "/lustre/storeB/project/metproduction/products/ecmwf/cwf_input/"]
     #ECINPUTDIRS = ["/lustre/storeB/users/heikok/Meteorology/ecdis2cwf/"]
     EC_FILE_PATTERN = "NRPA_EUROPE_0_1_{UTC:02d}/meteo{year:04d}{month:02d}{day:02d}_{dayoffset:02d}.nc"
+    OUTPUTDIR = "/tmp/test"
 
     def __init__(self):
         '''
@@ -48,6 +49,9 @@ class Resources():
             ecmodelruns += "<option value=\"{run}\">{run}</option>\n".format(run=run)
         self.startScreen = re.sub(r'%ECMODELRUN%',ecmodelruns,self.startScreen)
 
+    def getOutputDir(self):
+        return self.OUTPUTDIR
+
     def getStartScreen(self):
         '''return the html-code of the start-screen'''
         return self.startScreen
@@ -60,7 +64,7 @@ class Resources():
         with open(os.path.join(os.path.dirname(__file__),"resources/Mastin_et_al_2009a_table3.csv"),
                         mode='r', encoding="UTF-8") as mh:
             for line in mh:
-                line.rstrip()
+                line = line.rstrip()
                 #NUMBER,RN,SN,VN,NAME,LOCATION,STATUS,LATITUDE,NS,VF,LONGITUDE,EW,ELEV,TYPE,TIMEFRAME,ERUPTION TYPE
                 if line == '':
                     continue
@@ -98,7 +102,7 @@ class Resources():
         with open(os.path.join(os.path.dirname(__file__),"resources/Mastin_et_al_2009b_table3.csv"),
                         mode='r', encoding="UTF-8") as mh:
             for line in mh:
-                line.rstrip()
+                line = line.rstrip()
                 if line == '':
                     continue
                 if line[0] == '#':
