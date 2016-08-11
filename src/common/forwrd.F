@@ -50,7 +50,6 @@ c
       real, save :: cpinv, rcpinv, ginv, vmax, dxgrid,dygrid
 c
 c..functions
-      real    vgrav,cun,roa,visc
 #if defined(TRAJ)
 cjb_2802... calculation of distance and speed
 c
@@ -74,7 +73,13 @@ c initialization
         if (j.gt.0) then
          write(9,*) 'Computing gravity tables...'
          call vgravtables
-         write(9,*) 'done'
+         write(9,*) 'Surface gravity (1000hPa, 300K):'
+         it = (300-tbasevg)/tincrvg
+         ip = (1000-pbasevg)/pincrvg
+         do i=1,ncomp
+           m= idefcomp(i)
+           write(9,*) ' particle ', compname(m), ": ", vgtable(it,ip,m)
+         end do
         else
           write(9,*) 'Computation of gravity tables not needed'
         end if
@@ -179,7 +184,7 @@ c
           if(kgravity(m).eq.2) then
             p= alevel(k1) + blevel(k1)*ps
             rtab=p*pmult
-            itab=rtab
+            itab=int(rtab)
             pi1= pitab(itab)+(pitab(itab+1)-pitab(itab))*(rtab-itab)
             p= alevel(k2) + blevel(k2)*ps
             rtab=p*pmult
@@ -198,12 +203,12 @@ c.old       gravity= vgrav(radiusmym(m),densitygcm3(m),p,t)
            if(it.ge.numtempvg) it=numtempvg-1
            tvg= tbasevg + it*tincrvg
            grav1= vgtable(it,ip,m)
-     +		   + (vgtable(it+1,ip,m)-vgtable(it,ip,m))
-     +		    *(t-tvg)/tincrvg
+     +        + (vgtable(it+1,ip,m)-vgtable(it,ip,m))
+     +        *(t-tvg)/tincrvg
            ip= ip+1
            grav2= vgtable(it,ip,m)
-     +		   + (vgtable(it+1,ip,m)-vgtable(it,ip,m))
-     +		    *(t-tvg)/tincrvg
+     +        + (vgtable(it+1,ip,m)-vgtable(it,ip,m))
+     +        *(t-tvg)/tincrvg
            gravity= grav1 + (grav2-grav1) * (p-pvg)/pincrvg
 c######################################################################
 c	    if(np.lt.21) write(6,*) '  p,t,gravity: ',p,t,gravity
