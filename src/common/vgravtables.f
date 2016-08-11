@@ -41,8 +41,8 @@ c
        do n=1,ncomp
 c
          m= idefcomp(n)
-c
-         dp= radiusmym(m)
+c radius to diameter
+         dp= 2. * radiusmym(m)
          rp= densitygcm3(m)
 c
          do ip=1,numpresvg
@@ -107,7 +107,7 @@ ccc	real c		! Cunningham factor
        real a1,a2,a3	! constants
        real dp		! particle size in micro meters
        real dp_fac	! conversion factor micro meters -> cm
- 	real l		! free path of air molecules
+     real l		! free path of air molecules
 c---------------------------------------
        l=0.0653
        a1=1.257
@@ -137,7 +137,7 @@ c---------------------------------------
        real a1,a2	! constants
        real dp		! particle size in micro meters
        real rp	        ! particle density in g/cm3
- 	real etha	! viscosity of the air
+     real etha	! viscosity of the air
        real re		! Reynolds number
 ccc	real fit	! value of the function
        real p		! atmospheric pressure
@@ -196,7 +196,7 @@ ccc	real vgrav	! gravitational setling
        real p		! atmospheric presure (hPa)
        real t		! air absolute temperature (K)
        real dp_fac	! conversion factor micro meters -> cm
- 	real etha	! viscosity of the air
+     real etha	! viscosity of the air
        real cun	! external function for calculating C
        external cun
        real roa	! external function for calculating density of the air
@@ -242,7 +242,7 @@ c---------------------------------------
        real a1,a2	! constants
        real dp		! particle size in micro meters
        real rp	        ! particle density in g/cm3
- 	real etha	! viscosity of the air
+     real etha	! viscosity of the air
        real re		! Reynolds number
        real fit	! value of the function
 ccc	real fit	! external function for calculating iterative vg
