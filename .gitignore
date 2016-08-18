@@ -1,0 +1,95 @@
+# general ignore stuff
+#files being edited
+*~
+
+# make and build files
+*.lst
+*.o
+*.eep
+*.lss
+*.map
+*.sym
+*.lo
+*.la
+*.a
+*.so
+*.mod
+
+
+# eclipse stuff
+/.cdtproject
+/.cproject
+/.settings
+/.csettings
+/.dep
+
+# /
+/bsnap_1.*
+
+# /bin
+/bin/bsnap_traj
+/bin/create_bomb_input
+/bin/bsnap_naccident
+/bin/bsnap_nbomb
+/bin/create_naccident_output
+/bin/create_traj_input
+/bin/create_naccident_input
+/bin/felt_axes.xml
+/bin/felt2nc_snap_dummy_levels.xml
+
+# /utils/SMS
+/utils/SMS/log
+/utils/SMS/binprecise
+# /utils/SMS/t/data
+/utils/SMS/t/data/work_naccident
+/utils/SMS/t/data/Hartlepool-20162306-0924_hi_res_SNAP2ARGOS.zip
+/utils/SMS/t/data/Hartlepool-20162306-0924_Rimsterm.xml
+/utils/SMS/t/data/work_traj
+/utils/SMS/t/data/backward2_TRAJ_input
+/utils/SMS/t/data/Brokdorf_test_2_TRAJ_input
+/utils/SMS/t/data/sftp.input
+/utils/SMS/t/data/nrpa_bsnap_traj.sh
+/utils/SMS/t/data/backward2_TRAJ_status
+/utils/SMS/t/data/Brokdorf_test_2_TRAJ_status
+
+# /utils/SnapPy
+/utils/SnapPy/MANIFEST
+/utils/SnapPy/dist
+/utils/SnapPy/Snappy/dist
+
+# /utils/SnapRunner
+/utils/SnapRunner/bsnap
+
+# /src
+/src/current.mk
+/src/naccident/*.inc
+/src/naccident/*.mod
+/src/naccident/bsnap_naccident
+/src/naccident/create_naccident_input
+/src/naccident/create_naccident_output
+/src/naccident/snap_batch_copy.F
+
+/src/nbomb/*.inc
+/src/nbomb/*.mod
+/src/nbomb/bsnap_nbomb
+/src/nbomb/create_bomb_input
+/src/naccident/snap_batch_copy.F
+
+/src/test/testDateCalc
+
+/src/traj/*.inc
+/src/traj/*.mod
+/src/traj/bsnap_traj
+/src/traj/create_traj_input
+/src/traj/snap_batch_copy.F
+
+/src/volcano/*.mod
+/src/volcano/*.inc
+/src/volcano/snapargos.inc
+/src/volcano/bsnap_volcano
+/src/volcano/snap_batch_copy.F
+
+
+
+
+
