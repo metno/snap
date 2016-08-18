@@ -18,7 +18,9 @@
 
 # eclipse stuff
 /.cdtproject
+/.project
 /.cproject
+/.pydevproject
 /.settings
 /.csettings
 /.dep
@@ -88,8 +90,4 @@
 /src/volcano/snapargos.inc
 /src/volcano/bsnap_volcano
 /src/volcano/snap_batch_copy.F
-
-
-
-
 
