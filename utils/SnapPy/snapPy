@@ -5,16 +5,15 @@ from PyQt5 import QtGui, QtWidgets
 from Snappy.SnapController import SnapController
 from Snappy.BrowserWidget import BrowserWidget
 import Snappy.EEMEP.Resources
+import Snappy.EEMEP.Controller
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     tabs = QtWidgets.QTabWidget()
     snap = SnapController()
-    eemep = BrowserWidget()
-    eemepRes = Snappy.EEMEP.Resources.Resources()
-    eemep.set_html(eemepRes.getStartScreen())
+    eemep = Snappy.EEMEP.Controller.Controller()
     tabs.addTab(snap.main, 'SNAP Nuclear Accident')
-    tabs.addTab(eemep, 'EEMEP Ash Cloud')
+    tabs.addTab(eemep.main, 'EEMEP Ash Cloud')
     tabs.resize(960,1024)
     tabs.setWindowTitle('SNAPpy')
     tabs.setWindowIcon(QtGui.QIcon(snap.res.getIconPath()))
