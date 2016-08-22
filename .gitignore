@@ -14,7 +14,8 @@
 *.a
 *.so
 *.mod
-
+**/__pycache__/
+**/*.py[cod]
 
 # eclipse stuff
 /.cdtproject
