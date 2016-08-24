@@ -1,0 +1,5 @@
+bsnap (1.0-2) trusty; urgency=medium
+
+  * fixing dependencies
+
+ -- Heiko Klein <heiko.klein@met.no>  Mon, 02 May 2016 10:10:17 +0200
