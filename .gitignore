@@ -33,6 +33,7 @@
 /debian
 
 # /bin
+/bin/*
 /bin/bsnap_traj
 /bin/create_bomb_input
 /bin/bsnap_naccident
