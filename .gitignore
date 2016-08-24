@@ -28,6 +28,9 @@
 
 # /
 /bsnap_1.*
+/snap-?.?
+/snap-?.?.?
+/debian
 
 # /bin
 /bin/bsnap_traj
