@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<volcanic_eruption_run run_time_hours="48" output_directory="/tmp/test/1703-06=">
+<model_setup use_restart_file="restart">
+   <!-- reference_date might also be best_estimate, e.g. mix latest forecasts -->
+   <weather_forecast reference_date="best" model_start_time="2016-09-02T00:00:00Z"/>
+</model_setup>
+<volcano name="Askja" lat="65.03" lon="-16.75" altitude="1516" />
+<eruptions>
+<!-- bottom and top of ash-cloud in m above ground -->
+<!-- rate in kg/s -->
+<eruption start="2016-09-02T08:00:00Z" end="2016-09-04T08:00:00Z" bottom="0" top="7000" rate="100000" m63="0.05"/>
+</eruptions>
+
+</volcanic_eruption_run>

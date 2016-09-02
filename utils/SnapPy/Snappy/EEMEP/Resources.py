@@ -19,6 +19,7 @@ class Resources():
     ECINPUTDIRS = ["/lustre/storeA/project/metproduction/products/ecmwf/cwf_input/", "/lustre/storeB/project/metproduction/products/ecmwf/cwf_input/"]
     #ECINPUTDIRS = ["/lustre/storeB/users/heikok/Meteorology/ecdis2cwf/"]
     EC_FILE_PATTERN = "NRPA_EUROPE_0_1_{UTC:02d}/meteo{year:04d}{month:02d}{day:02d}_{dayoffset:02d}.nc"
+    #OUTPUTDIR = "/lustre/storeB/project/fou/kl/eva/runs"
     OUTPUTDIR = "/tmp/test"
 
     def __init__(self):

@@ -155,7 +155,7 @@ class Controller():
         except:
             errors += "cannot interpret cloudheight (m): {0}\n".format(qDict['cloudheight'])
         eruptions = []
-        eruption = '<eruption start="{start}" end="{end}" bottom="{bottom:.0f}" top="{top:.0f}" rate="{rate:.0f}" m63="{m63:.2f}"/>'
+        eruption = '<eruption start="{start}Z" end="{end}Z" bottom="{bottom:.0f}" top="{top:.0f}" rate="{rate:.0f}" m63="{m63:.2f}"/>'
         eruptions.append(eruption.format(start=startDT.isoformat(),
                                          end=(startDT + datetime.timedelta(hours=runTime)).isoformat(),
                                          bottom=0,
@@ -169,7 +169,7 @@ class Controller():
 <volcanic_eruption_run run_time_hours="{runTime}" output_directory="{outdir}">
 <model_setup use_restart_file="restart">
    <!-- reference_date might also be best_estimate, e.g. mix latest forecasts -->
-   <weather_forecast reference_date="{model_run}Z" model_start_time="{model_start_time}Z"/>
+   <weather_forecast reference_date="{model_run}" model_start_time="{model_start_time}Z"/>
 </model_setup>
 <volcano name="{volcano}" lat="{lat}" lon="{lon}" altitude="{alt:.0f}" />
 <eruptions>
@@ -179,12 +179,15 @@ class Controller():
 </eruptions>
 
 </volcanic_eruption_run>"""
+        ecModelRun = qDict['ecmodelrun'];
+        if not ecModelRun == "best":
+            ecModelRun += "Z"
         self.lastSourceTerm = sourceTerm.format(lat=latf, lon=lonf,
                                                 volcano=volcano,
                                                 alt=altf,
                                                 outdir=self.lastOutputDir,
                                                 restart="true",
-                                                model_run=qDict['ecmodelrun'],
+                                                model_run=ecModelRun,
                                                 model_start_time=modelStartDT.isoformat(),
                                                 eruptions="\n".join(eruptions),
                                                 runTime=runTime)
