@@ -160,6 +160,7 @@ RELEASE.POS= 'Brunsbuttel',     53.92,    9.12
 *GRID.INPUT= 88,12
 *GRID.RUN=   88,12, 1,1,1
 ** Hirlam.24km
+GRID.SIZE = 432,349
 GRID.INPUT= 88,24
 GRID.RUN=   88,24, 1,1,1
 
