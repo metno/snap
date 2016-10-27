@@ -221,23 +221,7 @@ GRAVITY.FIXED.M/S=0.0002
             start += timedelta(days=1)
         return relevant
 
-    def calculateECMeteorologyFiles(self, outputDir, dtime: datetime, run_hours: int, latitude, longitude, fixed_run="best" ):
-        """Calculate meteorology files from global data. In the current version it will only calculate data from
-        a single input-file, and best means the last finished before the dtime (independent of positive run_hours)
-
-        Keyword arguments:
-        dtime -- start time of model run
-        run_hours -- run length in hours, possibly negative
-        fixed_run -- string of form YYYY-MM-DD_HH giving a specific model-run
-        """
-        relevant_dates = []
-
-
-
-        return relevant_dates
-
-
-    def getECMeteorologyFiles(self, dtime: datetime, run_hours: int, fixed_run="best", latitude=60., longitude=10.):
+    def getECMeteorologyFiles(self, dtime: datetime, run_hours: int, fixed_run="best"):
         """Get available meteorology files for the last few days around dtime and run_hours.
         Checks that place (latitude,longitude) fits into domain.
 
@@ -249,15 +233,6 @@ GRAVITY.FIXED.M/S=0.0002
         longitude -- float of longitude position
         """
         relevant_dates = []
-
-        if (latitude < (self.ecDefaultDomainStartY + 5.)):
-            return relevant_dates
-        if (latitude > (self.ecDefaultDomainStartY + self.ecDomainHeight - 5.)):
-            return relevant_dates
-        if (longitude < (self.ecDefaultDomainStartX + 5.)):
-            return relevant_dates
-        if (longitude > (self.ecDefaultDomainStartX+self.ecDomainWidth - 5.)):
-            return relevant_dates
 
 
         if (fixed_run == "best"):
