@@ -61,6 +61,7 @@ c      real,save     ::    t2thetafac(15000)
       character*(80) precstratiaccumv, precconaccumv
       character*(80) precstrativrt,precconvrt
       logical temp_is_abs, has_dummy_dim, manual_level_selection
+      logical sigmadot_is_omega
 
       if (istep < 0) then
 c set all 'save' variables to default values,
@@ -117,6 +118,7 @@ c ncid not needed, will close automaticall
       temp_is_abs = .false.
       has_dummy_dim = .false.
       manual_level_selection = .false.
+      sigmadot_is_omega = .false.
       if (nctype.eq.'h12') then
         xwindv = 'x_wind_ml'
         ywindv = 'y_wind_ml'
@@ -128,6 +130,7 @@ c ncid not needed, will close automaticall
         apv = 'ap'
         bv = 'b'
         sigmadotv = 'omega_ml'
+        sigmadot_is_omega = .true.
         psv = 'surface_air_pressure'
         mslpv = 'air_pressure_at_sea_level'
         precaccumv = 'precipitation_amount_acc'
@@ -836,10 +839,21 @@ c              t2(i,j,k)=t2(i,j,k) * t2thetafac(nint(p*10.))
           end do
         end do
       end if
-
-      if (sigmadotv.eq.'') then
+      
+      if (sigmadot_is_omega) then
+c..omega -> etadot, or rather etadot derived from continuity-equation (mean of both)
+         call om2edot
+      else if (sigmadotv.eq.'') then
 c..omega -> etadot, or rather etadot derived from continuity-equation
         call om2edot
+c om2edot take means of omega (=0) and continuity-equation, -> use only continuity equation
+        do k=1,nk
+          do j=1,ny
+            do i=1,nx
+              w2(i,j,k)=2.*w2(i,j,k)
+            end do
+          end do
+        end do
       end if
 
 c..sigma_dot/eta_dot 0 at surface
