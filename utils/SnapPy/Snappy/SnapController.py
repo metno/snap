@@ -45,8 +45,8 @@ class _SnapRun():
         '''initialize a QProcess with the correct environment and output-files'''
         proc = QProcess()
         proc.setWorkingDirectory(snap_controller.lastOutputDir)
-        proc.setStandardOutputFile(os.path.join(snap_controller.lastOutputDir,"snap.log.stdout"))
-        proc.setStandardErrorFile(os.path.join(snap_controller.lastOutputDir,"snap.log.stderr"))
+        proc.setStandardOutputFile(os.path.join(snap_controller.lastOutputDir,"snap.log.stdout"), QIODevice.Append)
+        proc.setStandardErrorFile(os.path.join(snap_controller.lastOutputDir,"snap.log.stderr"), QIODevice.Append)
         env = QProcessEnvironment.systemEnvironment()
         env.insert("OMP_NUM_THREADS", "1")
         proc.setProcessEnvironment(env)
@@ -98,7 +98,8 @@ class SnapController:
         self.snapRunning = "finished" # quit update-thread
         if (self.ecmet.must_calc()):
             with open(os.path.join(self.lastOutputDir,"snap.log.stdout"), "a") as logFile:
-                logFile.write("Meteorology not generated.\nResults in {}\n".format(self.lastOutputDir))
+                logFile.write("Meteorology not generated.\nErrors in {}\n".format(self.lastOutputDir))
+            self.update_log()
             return
 
         (startX, startY) = self.ecmet.get_grid_startX_Y()
@@ -112,11 +113,7 @@ class SnapController:
         self._snap_model_run()
 
     def results_add_toa(self):
-        proc = QProcess()
-        proc.setWorkingDirectory(self.lastOutputDir)
-        proc.setStandardOutputFile(os.path.join(self.lastOutputDir,"snap.log.stdout"), QIODevice.Append)
-        proc.setStandardErrorFile(os.path.join(self.lastOutputDir,"snap.log.stderr"), QIODevice.Append)
-
+        proc = _SnapRun.getQProcess(self)
         proc.start("snapAddToa", ['snap.nc'])
         proc.waitForFinished(-1)
 
@@ -142,12 +139,12 @@ m=SNAP.current t=fimex format=netcdf f={}
             fh.write(di_setup.format(os.path.join(self.lastOutputDir, "snap.nc")))
             fh.close()
 
+
+            # plots
             proc = QProcess()
             proc.setWorkingDirectory(os.path.join(prod_dir))
             proc.setStandardOutputFile(os.path.join(self.lastOutputDir,"snap.log.stdout"), QIODevice.Append)
             proc.setStandardErrorFile(os.path.join(self.lastOutputDir,"snap.log.stderr"), QIODevice.Append)
-
-            # plots
             proc.start("bdiana{}".format(diVersion), ['-i', self.res.getBSnapInputFile(), '-s', 'diana.setup', 'p={}'.format(self.lastQDict['region'])])
             proc.waitForFinished(-1)
             with open(os.path.join(self.lastOutputDir,"snap.log.stdout"), 'a') as lfh:
@@ -158,6 +155,15 @@ m=SNAP.current t=fimex format=netcdf f={}
                             prod_dir)
 
 
+    def _defaultDomainCheck(self, lonf, latf):
+        if (latf <= self.res.ecDefaultDomainStartY or
+            latf >= (self.res.ecDefaultDomainStartY + self.res.ecDomainHeight) or
+            lonf <= self.res.ecDefaultDomainStartX or
+            lonf >= self.res.ecDefaultDomainStartX + self.res.ecDomainWidth):
+            self.write_log("(lat,lon) = ({lat},{lon}) outside domain.\nTry global EC meteorology under advanced.".format(lat=latf, lon=lonf))
+            return False
+        return True
+    
 
     def run_snap_query(self, qDict):
         # make sure all files are rw for everybody (for later deletion)
@@ -247,6 +253,8 @@ RELEASE.BQ/SEC.COMP= {relCS137}, {relCS137}, 'Cs137'
             if (len(files) == 0):
                 self.write_log("no EC met-files found for {}, runtime {}".format(startDT, qDict['runTime']))
                 return
+            if (not self._defaultDomainCheck(lonf,latf)):
+                return
             self._write_ec_snap_input(files, nx=1+round(self.res.ecDomainWidth/self.res.ecDomainRes),
                                       ny=1+round(self.res.ecDomainHeight/self.res.ecDomainRes),
                                       startX=self.res.ecDefaultDomainStartX,
@@ -260,9 +268,10 @@ RELEASE.BQ/SEC.COMP= {relCS137}, {relCS137}, 'Cs137'
                 if self.ecmet.must_calc():
                     proc = _SnapRun.getQProcess(self)
                     proc.finished.connect(self._ec_finished_run_snap)
-                    proc.start('/usr/bin/bsnap_naccident', ['snap.input'])
+                    self.ecmet.calc(proc)
                     if (proc.waitForStarted(3000)) :
                         self.snapRunning = "running"
+                    # start background logging thread
                     self.snap_update = _SnapUpdateThread(self)
                     self.snap_update.update_log_signal.connect(self.update_log)
                     self.snap_update.start(QThread.LowPriority)
@@ -272,6 +281,8 @@ RELEASE.BQ/SEC.COMP= {relCS137}, {relCS137}, 'Cs137'
                 self.write_log("problems creating EC-met: {}".format(e.args[0]))
         else:
             # hirlam
+            if (not self._defaultDomainCheck(lonf,latf)):
+                return
             with open(os.path.join(self.lastOutputDir, "snap.input"),'a') as fh:
                 fh.write(self.res.getSnapInputTemplate())
             self._snap_model_run()

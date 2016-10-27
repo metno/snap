@@ -73,6 +73,7 @@ class EcMeteorologyCalculator():
         Raises:
             ECDataNotAvailableException: no data for the dtime can be found
         '''
+        self.proc = None # storage for background-process
         self.res = res
 
         lastDateFile = EcMeteorologyCalculator.findECGlobalData(dtime-timedelta(hours=3)) # no useful data in EC the first 3 hours
@@ -150,6 +151,7 @@ class EcMeteorologyCalculator():
 #            raise ECDataNotAvailableException("unable to load module")
 
         precommand = '''#! /bin/bash
+. /usr/share/modules/init/bash
 module load ecdis4cwf/1.2.0
 export OMP_NUM_THREADS=1
 export DATE='{year:04d}{month:02d}{day:02d}'
@@ -182,6 +184,7 @@ rm {outdir}/running
         if proc is None:
             subprocess.run(['/bin/bash', scriptFile])
         else:
+            self.proc = proc # make sure proc lives long enough
             proc.start('/bin/bash', [scriptFile])
 
         return
