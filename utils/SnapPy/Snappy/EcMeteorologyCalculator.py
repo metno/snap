@@ -8,7 +8,7 @@ import os
 import math
 import subprocess
 from Snappy.Resources import Resources
-from datetime import datetime
+from datetime import datetime, timedelta
 import time
 from glob import iglob
 
@@ -24,7 +24,7 @@ class ECDataNotAvailableException(Exception):
 class EcMeteorologyCalculator():
     '''Calculate ec-meteorology'''
     @staticmethod
-    def findECGlobalData(dtime):
+    def findECGlobalData(dtime: datetime):
         '''Static method to find the closest global ec dataset earlier than dtime.
 
         Args:
@@ -58,14 +58,14 @@ class EcMeteorologyCalculator():
         return lastTimeFile
 
 
-    def __init__(self, res: Resources, dtime, domainStartX, domainStartY, proc):
+    def __init__(self, res: Resources, dtime: datetime, domainCenterX, domainCenterY):
         '''Calculate the ec-meteorology unless it exists
 
         Args:
             res: resources object
             dtime: datetime object containing the earliest time expected
-            domainStartX: number where the domain should start (longitude), will be rounded
-            domainStartY: number where the domain should start (latitude), will be rounded
+            domainCenterX: number where the domain should start (longitude), will be rounded
+            domainCenterY: number where the domain should start (latitude), will be rounded
             proc: A QProcess, which will be used to run a longer process in the background.
                   STDERR/STDOUT and signal-handler should be set. If proc is None, the
                   subprocess will be run in the current-process. If proc is set, the caller
@@ -75,17 +75,18 @@ class EcMeteorologyCalculator():
         '''
         self.res = res
 
-        lastDateFile = EcMeteorologyCalculator.findECGlobalData(dtime)
+        lastDateFile = EcMeteorologyCalculator.findECGlobalData(dtime-timedelta(hours=3)) # no useful data in EC the first 3 hours
         self.date = lastDateFile[0]
         self.globalfile = lastDateFile[1]
         utc = lastDateFile[0].hour
         # domain every 10th degree
-        lon0 = math.floor(domainStartX/10.)*10
-        lat0 = math.floor(domainStartY/10.)*10
+        lat0 = math.floor((domainCenterY-(res.ecDomainHeight/2.))/10.)*10
         if (lat0 < -80): lat0 = -89
         if (lat0+res.ecDomainHeight > 89): lat0 = 89 - res.ecDomainHeight
-        if (lon0 >= 180): lon0 -= 360
-        if (lon0 < -180): lon0 += 360
+        # snap cannot cross date-line
+        lon0 = math.floor((domainCenterX-(res.ecDomainWidth/2.))/10.)*10
+        if (lon0 < -180): lon0 = -180
+        if (lon0+res.ecDomainWidth > 180): lon0 = 180 - res.ecDomainWidth
         self.lat0 = int(lat0)
         self.lon0 = int(lon0)
         self.outputdir = os.path.join(res.OUTPUTDIR, "NRPA_LON{x}_LAT{y}_{utc:02d}".format(x=self.lon0, y=self.lat0, utc=utc))
@@ -113,21 +114,11 @@ class EcMeteorologyCalculator():
                                                                           month=lastDateFile[0].month,
                                                                           day=lastDateFile[0].day,
                                                                           dayoffset=i)))
-        recalc = False
-        for f in self.files:
-            if (not os.path.isfile(f)):
-                recalc = True
-        if recalc:
-            self._run_cwf2ecdiss(proc)
         return
 
     def get_meteorology_files(self):
         '''return the meteorology files'''
-        recalc = False
-        for f in self.files:
-            if (not os.path.isfile(f)):
-                recalc = True
-        if recalc:
+        if self.must_calc():
             raise ECDataNotAvailableException("unable to create ec-data for {year}-{month}-{day} in {dir}".
                                               format(year=self.date.year,
                                                      month=self.date.month,
@@ -139,12 +130,28 @@ class EcMeteorologyCalculator():
                 files.append(f)
         return files
 
-    def _run_cwf2ecdiss(self, proc):
+    def get_grid_startX_Y(self):
+        '''return a tuple with x0 and y0'''
+        return (self.lon0, self.lat0)
+
+    def must_calc(self):
+        '''check if calculation is required or has been done earlier'''
+        recalc = False
+        for f in self.files:
+            if (not os.path.isfile(f)):
+                recalc = True
+        return recalc
+
+    def calc(self, proc):
+        '''run the calculation of ec-data if required'''
+        if (not self.must_calc()):
+            return
 #        if 'MODULESHOME' not in os.environ:
 #            raise ECDataNotAvailableException("unable to load module")
 
         precommand = '''#! /bin/bash
 module load ecdis4cwf/1.2.0
+export OMP_NUM_THREADS=1
 export DATE='{year:04d}{month:02d}{day:02d}'
 export UTC='{utc}'
 
@@ -185,4 +192,6 @@ if __name__ == "__main__":
         EcMeteorologyCalculator.findECGlobalData(datetime.strptime("2010-10-24T00", "%Y-%m-%dT%H"))
     except ECDataNotAvailableException as e:
         print(e.args[0])
-    print(EcMeteorologyCalculator(Resources(), datetime.strptime("2016-10-24T00", "%Y-%m-%dT%H"), 63, 42, None))
+#    print(EcMeteorologyCalculator(Resources(), datetime.strptime("2016-10-24T00", "%Y-%m-%dT%H"), 63, 42, None))
+    ecmet = EcMeteorologyCalculator(Resources(), datetime.strptime("2016-10-27T00", "%Y-%m-%dT%H"), -159, 20) # hawaii
+    print("recalc: ", ecmet.must_calc())
