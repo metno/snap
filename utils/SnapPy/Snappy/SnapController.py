@@ -262,7 +262,7 @@ RELEASE.BQ/SEC.COMP= {relCS137}, {relCS137}, 'Cs137'
                     proc.finished.connect(self._ec_finished_run_snap)
                     proc.start('/usr/bin/bsnap_naccident', ['snap.input'])
                     if (proc.waitForStarted(3000)) :
-                        self.snap_controller.snapRunning = "running"
+                        self.snapRunning = "running"
                     self.snap_update = _SnapUpdateThread(self)
                     self.snap_update.update_log_signal.connect(self.update_log)
                     self.snap_update.start(QThread.LowPriority)
