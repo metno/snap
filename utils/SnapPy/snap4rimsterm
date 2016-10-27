@@ -97,7 +97,7 @@ TIME.RUN = {runTime}h
     sourceTerm += res.isotopes2snapinput(isoItems.values())
 
     meteoTerm = "\n"
-    files = res.getECMeteorologyFiles(startDTime, int(runTime))
+    files = res.getECMeteorologyFiles(dtime=startDTime, run_hours=int(runTime), latitude=float(lat), longitude=float(lon))
     if (len(files) == 0):
         raise Exception("no EC met-files found for {}, runtime {}".format(startDTime, runTime))
     for f in files:

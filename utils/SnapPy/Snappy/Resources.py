@@ -20,17 +20,26 @@ class Resources():
     OUTPUTDIR = "/lustre/storeB/project/fou/kl/snap/runs"
     ECINPUTDIRS = ["/lustre/storeA/project/metproduction/products/ecmwf/cwf_input/", "/lustre/storeB/project/metproduction/products/ecmwf/cwf_input/"]
     #ECINPUTDIRS = ["/lustre/storeB/users/heikok/Meteorology/ecdis2cwf/"]
-    EC_FILE_PATTERN = "NRPA_EUROPE_0_1_{UTC:02d}/meteo{year:04d}{month:02d}{day:02d}_{dayoffset:02d}.nc"
+    EC_FILENAME_PATTERN = "meteo{year:04d}{month:02d}{day:02d}_{dayoffset:02d}.nc"
+    EC_FILE_PATTERN = os.path.join("NRPA_EUROPE_0_1_{UTC:02d}", EC_FILENAME_PATTERN)
+    ECGLOBALINPUTDIRS = ["/lustre/storeA/project/metproduction/products/ecmwf/nc/", "/lustre/storeB/project/metproduction/products/ecmwf/nc/"]
+    EC_GLOBAL_PATTERN = "ec_atmo_0_1deg_{year:04d}{month:02d}{day:02d}T{dayoffset:02d}0000Z_3h.nc"
 
     def __init__(self):
         '''
         initialize
         '''
+        self.ecDomainWidth = 125.
+        self.ecDomainHeight = 60.
+        self.ecDomainRes = 0.1
+        self.ecDefaultDomainStartX = -50.
+        self.ecDefaultDomainStartY = 25.
+
         startScreenFH = open(os.path.join(os.path.dirname(__file__),"resources/startScreen.html"),
                              mode='r', encoding="UTF-8")
         self.startScreen = startScreenFH.read()
         startScreenFH.close()
-        plantBB = {'west': -60,'east': 70,'north': 90,'south': 30}
+        plantBB = {'west': -60,'east': 70,'north': 85,'south': 30}
         npps = self.readNPPs(plantBB)
         nppStrings = []
         for tag, site in npps.items():
@@ -213,14 +222,18 @@ GRAVITY.FIXED.M/S=0.0002
         return relevant
 
     def getECMeteorologyFiles(self, dtime: datetime, run_hours: int, fixed_run="best"):
-        """Get available meteorology files for the last few days around dtime and run_hours
+        """Get available meteorology files for the last few days around dtime and run_hours.
+        Checks that place (latitude,longitude) fits into domain.
 
         Keyword arguments:
         dtime -- start time of model run
         run_hours -- run length in hours, possibly negative
         fixed_run -- string of form YYYY-MM-DD_HH giving a specific model-run
+        latitude -- float of latitude position
+        longitude -- float of longitude position
         """
         relevant_dates = []
+
 
         if (fixed_run == "best"):
             if run_hours < 0:

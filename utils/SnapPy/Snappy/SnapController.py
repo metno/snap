@@ -11,6 +11,7 @@ from Snappy.MailImages import sendPngsFromDir
 from Snappy.Resources import Resources
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtCore import QProcess, QProcessEnvironment, QThread, QIODevice, QThreadPool, pyqtSignal, pyqtSlot
+from Snappy.EcMeteorologyCalculator import EcMeteorologyCalculator, ECDataNotAvailableException
 
 def debug(*objs):
     print("DEBUG: ", *objs, file=sys.stderr)
@@ -39,20 +40,25 @@ class _SnapUpdateThread(QThread):
 
 class _SnapRun():
 
+    @staticmethod
+    def getQProcess(snap_controller):
+        '''initialize a QProcess with the correct environment and output-files'''
+        proc = QProcess()
+        proc.setWorkingDirectory(snap_controller.lastOutputDir)
+        proc.setStandardOutputFile(os.path.join(snap_controller.lastOutputDir,"snap.log.stdout"))
+        proc.setStandardErrorFile(os.path.join(snap_controller.lastOutputDir,"snap.log.stderr"))
+        env = QProcessEnvironment.systemEnvironment()
+        env.insert("OMP_NUM_THREADS", "1")
+        proc.setProcessEnvironment(env)
+        return proc
 
-    def __init__(self, snapController):
-        self.snap_controller = snapController
-        self.proc = QProcess()
+    def __init__(self, snap_controller):
+        self.snap_controller = snap_controller
+        self.proc = _SnapRun.getQProcess(snap_controller)
 
 
     def start(self):
         debug("outputdir: "+self.snap_controller.lastOutputDir)
-        self.proc.setWorkingDirectory(self.snap_controller.lastOutputDir)
-        self.proc.setStandardOutputFile(os.path.join(self.snap_controller.lastOutputDir,"snap.log.stdout"))
-        self.proc.setStandardErrorFile(os.path.join(self.snap_controller.lastOutputDir,"snap.log.stderr"))
-        env = QProcessEnvironment.systemEnvironment()
-        env.insert("OMP_NUM_THREADS", "1")
-        self.proc.setProcessEnvironment(env)
 #         self.proc.start('/home/heikok/sleepLong.sh', ['snap.input'])
         self.proc.start('/usr/bin/bsnap_naccident', ['snap.input'])
         if (self.proc.waitForStarted(3000)) :
@@ -85,6 +91,25 @@ class SnapController:
         with open(os.path.join(self.lastOutputDir,"snap.log.stdout"), "a") as logFile:
             logFile.write("All work finished. Please open diana to see results.\nResults in {}\n".format(self.lastOutputDir))
         self.update_log()
+
+    @pyqtSlot()
+    def _ec_finished_run_snap(self):
+        debug("ec_finished")
+        self.snapRunning = "finished" # quit update-thread
+        if (self.ecmet.must_calc()):
+            with open(os.path.join(self.lastOutputDir,"snap.log.stdout"), "a") as logFile:
+                logFile.write("Meteorology not generated.\nResults in {}\n".format(self.lastOutputDir))
+            return
+
+        (startX, startY) = self.ecmet.get_grid_startX_Y()
+        self._write_ec_snap_input(self.ecmet.get_meteorology_files(),
+                                  nx=1+round(self.res.ecDomainWidth/self.res.ecDomainRes),
+                                  ny=1+round(self.res.ecDomainHeight/self.res.ecDomainRes),
+                                  startX=startX,
+                                  startY=startY,
+                                  dx=self.res.ecDomainRes,
+                                  dy=self.res.ecDomainRes)
+        self._snap_model_run()
 
     def results_add_toa(self):
         proc = QProcess()
@@ -213,22 +238,58 @@ RELEASE.BQ/SEC.COMP= {relCS137}, {relCS137}, 'Cs137'
         debug("output directory: {}".format(self.lastOutputDir))
         os.mkdir(self.lastOutputDir)
 
-        fh = open(os.path.join(self.lastOutputDir, "snap.input"),'w')
-        fh.write(self.lastSourceTerm)
-        # add Cs137, I131 and Xe133
-        fh.write(self.res.isotopes2snapinput([169, 158, 148]))
+        with open(os.path.join(self.lastOutputDir, "snap.input"),'w') as fh:
+            fh.write(self.lastSourceTerm)
+            # add Cs137, I131 and Xe133
+            fh.write(self.res.isotopes2snapinput([169, 158, 148]))
         if (qDict['metmodel'] == 'nrpa_ec_0p1'):
             files = self.res.getECMeteorologyFiles(startDT, int(qDict['runTime']), qDict['ecmodelrun'])
             if (len(files) == 0):
                 self.write_log("no EC met-files found for {}, runtime {}".format(startDT, qDict['runTime']))
                 return
+            self._write_ec_snap_input(files, nx=1+round(self.res.ecDomainWidth/self.res.ecDomainRes),
+                                      ny=1+round(self.res.ecDomainHeight/self.res.ecDomainRes),
+                                      startX=self.res.ecDefaultDomainStartX,
+                                      startY=self.res.ecDefaultDomainStartY,
+                                      dx=self.res.ecDomainRes,
+                                      dy=self.res.ecDomainRes)
+            self._snap_model_run()
+        elif qDict['metmodel'] == 'nrpa_ec_0p1_global':
+            try:
+                self.ecmet = EcMeteorologyCalculator(self.res, startDT, lonf, latf)
+                if self.ecmet.must_calc():
+                    proc = _SnapRun.getQProcess(self)
+                    proc.finished.connect(self._ec_finished_run_snap)
+                    self.snap_update = _SnapUpdateThread(self)
+                    self.snap_update.update_log_signal.connect(self.update_log)
+                    self.snap_update.start(QThread.LowPriority)
+                else:
+                    self._ec_finished_run_snap()
+            except ECDataNotAvailableException as e:
+                self.write_log("problems creating EC-met: {}".format(e.args[0]))
+        else:
+            # hirlam
+            with open(os.path.join(self.lastOutputDir, "snap.input"),'a') as fh:
+                fh.write(self.res.getSnapInputTemplate())
+            self._snap_model_run()
+
+    def _write_ec_snap_input(self, files, nx, ny, startX, startY, dx, dy):
+        with open(os.path.join(self.lastOutputDir, "snap.input"),'a') as fh:
+            # GRID.GPARAM = 2, -50., 25,.1,.1, 0., 0.
+            # GRID.SIZE = 1251,601
+            fh.write("GRID.SIZE = {nx},{ny}\n".format(nx=nx, ny=ny))
+            fh.write("GRID.GPARAM = {gtype}, {startX}, {startY}, {dx}, {dy}, 0., 0.\n".
+                 format(gtype=2,
+                        startX=startX,
+                        startY=startY,
+                        dx=dx,
+                        dy=dy))
             for f in files:
                 fh.write("FIELD.INPUT={}\n".format(f))
             fh.write(self.res.getSnapInputTemplate('nrpa_ec_0p1'))
-        else:
-            fh.write(self.res.getSnapInputTemplate())
-        fh.close()
 
+
+    def _snap_model_run(self):
         self.snap_run = _SnapRun(self)
         self.snap_run.proc.finished.connect(self._snap_finished)
         self.snap_run.start()
