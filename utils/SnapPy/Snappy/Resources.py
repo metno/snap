@@ -4,13 +4,14 @@ Created on Apr 13, 2016
 @author: heikok
 '''
 
-import re
-import os
-import sys
-import math
 from collections import OrderedDict
-from time import gmtime, strftime
 from datetime import datetime, time, date, timedelta
+import math
+import os
+import re
+import sys
+from time import gmtime, strftime
+
 
 class Resources():
     '''

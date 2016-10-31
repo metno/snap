@@ -7,9 +7,10 @@
     *******************************************************************
 """
 
-import sys
 from PyQt5 import QtCore, QtGui, QtWidgets, QtWebKit, QtWebKitWidgets, QtNetwork
 from builtins import str
+import sys
+
 
 class StartWebPage(QtWebKitWidgets.QWebPage):
     formSubmitted = QtCore.pyqtSignal(QtCore.QUrl)

@@ -4,13 +4,14 @@ Created on Oct 24, 2016
 @author: heikok
 '''
 
-import os
-import math
-import subprocess
-from Snappy.Resources import Resources
 from datetime import datetime, timedelta
-import time
 from glob import iglob
+import math
+import os
+import subprocess
+import time
+
+from Snappy.Resources import Resources
 
 
 class ECDataNotAvailableException(Exception):
