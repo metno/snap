@@ -1,17 +1,18 @@
-import sys
-import re
+import datetime
 import json
 import os
+import re
+import sys
+from time import gmtime, strftime
 import traceback
 
-from time import gmtime, strftime
-import datetime
-from Snappy.BrowserWidget import BrowserWidget
-from Snappy.MailImages import sendPngsFromDir
-from Snappy.Resources import Resources
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtCore import QProcess, QProcessEnvironment, QThread, QIODevice, QThreadPool, pyqtSignal, pyqtSlot
+from Snappy.BrowserWidget import BrowserWidget
 from Snappy.EcMeteorologyCalculator import EcMeteorologyCalculator, ECDataNotAvailableException
+from Snappy.MailImages import sendPngsFromDir
+from Snappy.Resources import Resources
+
 
 def debug(*objs):
     print("DEBUG: ", *objs, file=sys.stderr)
@@ -151,7 +152,7 @@ m=SNAP.current t=fimex format=netcdf f={}
                 lfh.write("plotting finished\n")
 
             sendPngsFromDir("SNAP calculation: {}".format(self.lastTag),
-                            "Finished in {dir}. See attached file(s).\n SourceTerm: \n{sourceTerm}".format(dir=self.lastOutputDir, sourceTerm=self.lastSourceTerm),
+                            "Finished in {dir}. See attached file(s).\n SourceTerm: \n{sourceTerm}".format(wdir=self.lastOutputDir, sourceTerm=self.lastSourceTerm),
                             prod_dir)
 
 
@@ -163,7 +164,7 @@ m=SNAP.current t=fimex format=netcdf f={}
             self.write_log("(lat,lon) = ({lat},{lon}) outside domain.\nTry global EC meteorology under advanced.".format(lat=latf, lon=lonf))
             return False
         return True
-    
+
 
     def run_snap_query(self, qDict):
         # make sure all files are rw for everybody (for later deletion)

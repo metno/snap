@@ -1,16 +1,14 @@
-from subprocess import Popen, PIPE
-
-# Here are the email package modules we'll need
 from email.mime.image import MIMEImage
-from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-
+from email.mime.text import MIMEText
 import getpass
 import glob
 import os
+from subprocess import Popen, PIPE
 
-def sendPngsFromDir(subject, body, dir):
-    '''send all *.png images from the dir to myself'''
+
+def sendPngsFromDir(subject, body, wdir):
+    '''send all *.png images from the wdir to myself'''
     # Create the container (outer) email message.
     mailuser = "{}@met.no".format(getpass.getuser())
     msg = MIMEMultipart()
@@ -21,7 +19,7 @@ def sendPngsFromDir(subject, body, dir):
     msg.preamble = subject
     msg.attach(MIMEText(body))
 
-    for file in glob.glob(os.path.join(dir, '*.png')):
+    for file in glob.glob(os.path.join(wdir, '*.png')):
         # Open the files in binary mode.  Let the MIMEImage class automatically
         # guess the specific image type.
         with open(file, 'rb') as fp:
