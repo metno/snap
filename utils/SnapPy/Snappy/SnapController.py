@@ -152,7 +152,7 @@ m=SNAP.current t=fimex format=netcdf f={}
                 lfh.write("plotting finished\n")
 
             sendPngsFromDir("SNAP calculation: {}".format(self.lastTag),
-                            "Finished in {dir}. See attached file(s).\n SourceTerm: \n{sourceTerm}".format(wdir=self.lastOutputDir, sourceTerm=self.lastSourceTerm),
+                            "Finished in {wdir}. See attached file(s).\n SourceTerm: \n{sourceTerm}".format(wdir=self.lastOutputDir, sourceTerm=self.lastSourceTerm),
                             prod_dir)
 
 
