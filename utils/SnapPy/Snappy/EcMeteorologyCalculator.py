@@ -85,10 +85,8 @@ class EcMeteorologyCalculator():
         lat0 = math.floor((domainCenterY-(res.ecDomainHeight/2.))/10.)*10
         if (lat0 < -80): lat0 = -89
         if (lat0+res.ecDomainHeight > 89): lat0 = 89 - res.ecDomainHeight
-        # snap cannot cross date-line
+        # snap can only cross date-line when both start and position are negative or positive
         lon0 = math.floor((domainCenterX-(res.ecDomainWidth/2.))/10.)*10
-        if (lon0 < -180): lon0 = -180
-        if (lon0+res.ecDomainWidth > 180): lon0 = 180 - res.ecDomainWidth
         self.lat0 = int(lat0)
         self.lon0 = int(lon0)
         self.outputdir = os.path.join(res.OUTPUTDIR, "NRPA_LON{x}_LAT{y}_{utc:02d}".format(x=self.lon0, y=self.lat0, utc=utc))
