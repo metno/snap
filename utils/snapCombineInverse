@@ -1,0 +1,119 @@
+#! /usr/bin/env python3
+
+import argparse
+import netCDF4
+import numpy
+import re
+
+def finishOutput(out_nc, isotope, times, conc, prob):
+    probname = "{iso}_probability".format(iso=isotope)
+    accprobname = "{iso}_acc_probability".format(iso=isotope)
+    out_nc.variables[probname][:] = prob
+
+    accprob = prob.copy()
+    for idx, val in enumerate(times):
+        if (idx != 0):
+            accprob[idx,:,:] += accprob[idx-1,:,:]
+
+    out_nc.variables[accprobname][:] = accprob
+
+    out_nc.close()
+
+def addFile(ncFile, isotope, times, conc, prob, isMeasurement=True):
+    print(ncFile)
+    with netCDF4.Dataset(ncFile, "r") as nc:
+        varname = "{iso}_concentration".format(iso=isotope)
+        if not varname in nc.variables:
+            raise Exception("variable {vn} not in {file}".format(vn=varname,file=ncFile))
+        co = nc.variables[varname][:]
+        pr = numpy.zeros(co.shape, dtype=int)
+        if (isMeasurement):
+            pr = numpy.select([co > 0], [numpy.ones(co.shape, dtype=int)], 0)
+        else:
+            pr = numpy.select([co <= 0], [numpy.ones(co.shape, dtype=int)], 0)
+        conc = conc * co
+        prob = prob * pr
+    return (conc, prob)
+
+def initializeNc(ncFile, outNcFile, isotope):
+    print(ncFile)
+    times = []
+    conc = None
+    prob = None
+    out_nc = netCDF4.Dataset(outNcFile, "w", format="NETCDF4_CLASSIC")
+
+    with netCDF4.Dataset(ncFile, "r") as nc:
+        times = netCDF4.num2date(nc.variables['time'][:],units=nc.variables['time'].units)
+        varname = "{iso}_concentration".format(iso=isotope)
+        probname = "{iso}_probability".format(iso=isotope)
+        accprobname = "{iso}_acc_probability".format(iso=isotope)
+        if not varname in nc.variables:
+            raise Exception("variable {vn} not in {file}".format(vn=varname,file=ncFile))
+        conc = nc.variables[varname][:]
+        prob = numpy.select([conc > 0], [numpy.ones(conc.shape, dtype=int)], 0.)
+
+        # initialize the output file
+        # create dimensions
+        for dim in nc.dimensions.values():
+            size = dim.size
+            if (dim.isunlimited()):
+                size=None
+            out_nc.createDimension(dim.name, size)
+        # global attributes
+        for attr in nc.ncattrs():
+            out_nc.setncattr(attr, nc.getncattr(attr))
+        for v in nc.variables.values():
+            # avoid concentrations, depositions ...
+            if re.search(r'(concentration|deposition|precipitation|height|air|arrival)', v.name):
+                continue
+            out_v= out_nc.createVariable(varname=v.name, datatype=v.dtype, dimensions=v.dimensions,
+                                         zlib=True, shuffle=True)
+            # variable-attributes
+            for attr in v.ncattrs():
+                out_v.setncattr(attr, v.getncattr(attr))
+
+        # add extra variables for probabilities
+        vn = nc.variables[varname]
+        for pn in (probname, accprobname):
+            out_v = out_nc.createVariable(varname=pn, datatype="i2", dimensions=vn.dimensions,
+                                          zlib=True, shuffle=True)
+            # variable-attributes
+            for attr in vn.ncattrs():
+                if attr != "units" and attr != "_FillValue":
+                    out_v.setncattr(attr, v.getncattr(attr))
+
+        # data
+        for out_v in out_nc.variables.values():
+            if out_v.name in nc.variables:
+                v = nc.variables[out_v.name]
+                if (len(v.shape)):
+                    out_v[:] = v[:]
+
+
+
+
+
+
+    return (times, out_nc, conc, prob)
+
+
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-i", nargs='+', required=True, help="one or more snap.nc file from an inverse run to a measurement")
+parser.add_argument("-n", nargs='*', help="zero or more snap.nc file from an inverse run to a stations without measurement")
+parser.add_argument("-o", required=True, help="output nc file")
+parser.add_argument("-I", nargs='?', default="I131", help="isotope (default: I131)")
+args = parser.parse_args()
+
+(times, out_nc, conc, prob) = initializeNc(args.i[0], args.o, args.I)
+# remove first input
+args.i.pop(0)
+for i in args.i:
+    (conc, prob) = addFile(i, args.I, times, conc, prob)
+
+if args.n:
+    for i in args.n:
+        (conc, prob) = addFile(i, args.I, times, conc, prob, False)
+
+finishOutput(out_nc, args.I, times, conc, prob)
