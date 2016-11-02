@@ -28,9 +28,9 @@ def addFile(ncFile, isotope, times, conc, prob, isMeasurement=True):
         co = nc.variables[varname][:]
         pr = numpy.zeros(co.shape, dtype=int)
         if (isMeasurement):
-            pr = numpy.select([co > 0], [numpy.ones(co.shape, dtype=int)], 0)
+            pr = numpy.select([co > 0], [numpy.ones(co.shape, dtype=numpy.int16)], numpy.zeros(1,dtype=numpy.int16))
         else:
-            pr = numpy.select([co <= 0], [numpy.ones(co.shape, dtype=int)], 0)
+            pr = numpy.select([co <= 0], [numpy.ones(co.shape, dtype=numpy.int16)], numpy.zeros(1,dtype=numpy.int16))
         conc = conc * co
         prob = prob * pr
     return (conc, prob)
@@ -50,7 +50,7 @@ def initializeNc(ncFile, outNcFile, isotope):
         if not varname in nc.variables:
             raise Exception("variable {vn} not in {file}".format(vn=varname,file=ncFile))
         conc = nc.variables[varname][:]
-        prob = numpy.select([conc > 0], [numpy.ones(conc.shape, dtype=int)], 0.)
+        prob = numpy.select([conc > 0], [numpy.ones(conc.shape, dtype=numpy.int16)], numpy.zeros(1,dtype=numpy.int16))
 
         # initialize the output file
         # create dimensions
@@ -100,10 +100,10 @@ def initializeNc(ncFile, outNcFile, isotope):
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-i", nargs='+', required=True, help="one or more snap.nc file from an inverse run to a measurement")
-parser.add_argument("-n", nargs='*', help="zero or more snap.nc file from an inverse run to a stations without measurement")
+parser.add_argument("-i", required=True, action="append", help="one or more snap.nc file from an inverse run to a measurement")
+parser.add_argument("-n", action="append", help="zero or more snap.nc file from an inverse run to a stations without measurement")
 parser.add_argument("-o", required=True, help="output nc file")
-parser.add_argument("-I", nargs='?', default="I131", help="isotope (default: I131)")
+parser.add_argument("-I", default="I131", help="isotope (default: I131)")
 args = parser.parse_args()
 
 (times, out_nc, conc, prob) = initializeNc(args.i[0], args.o, args.I)
