@@ -4,18 +4,22 @@ Created on Aug 04, 2016
 @author: heikok
 '''
 
-import re
-import os
-import sys
-import math
-from collections import OrderedDict
-from time import gmtime, strftime
 from datetime import datetime, time, date, timedelta
+import os
+import re
+import sys
+from time import gmtime, strftime
+
 
 class Resources():
     '''
     Read the resources and combine them
     '''
+    HPC = {'USER': 'metno_op',
+           'MACHINE': 'frost.nsc.liu.se',
+           'JOB': 'emep/eemep/run_single_eemep.job',
+           'WORKDIR': 'work/emep/eemep/single_run/',
+           'RUNDIR': 'emep/eemep/single_run/'}
     ECINPUTDIRS = ["/lustre/storeA/project/metproduction/products/ecmwf/cwf_input/", "/lustre/storeB/project/metproduction/products/ecmwf/cwf_input/"]
     #ECINPUTDIRS = ["/lustre/storeB/users/heikok/Meteorology/ecdis2cwf/"]
     EC_FILE_PATTERN = "NRPA_EUROPE_0_1_{UTC:02d}/meteo{year:04d}{month:02d}{day:02d}_{dayoffset:02d}.nc"
@@ -141,44 +145,33 @@ class Resources():
         return None
 
     def getECMeteorologyFiles(self, dtime: datetime, run_hours: int, fixed_run="best"):
-        """Get available meteorology files for the last few days around dtime and run_hours
+        """Get available meteorology files starting with date of dtime, only full days
 
         Keyword arguments:
         dtime -- start time of model run
         run_hours -- run length in hours, possibly negative
         fixed_run -- string of form YYYY-MM-DD_HH giving a specific model-run
+
+        Returns: list with files, TODO: currently only 00 run supported
         """
         relevant_dates = []
 
+# TODO: this will only the todays 00 run, this is not flexible enough yet
         if (fixed_run == "best"):
-            if run_hours < 0:
-                start = dtime + timedelta(hours=run_hours)
-            else:
-                start = dtime
-
-            start -= timedelta(hours=72) # go 72 hours (forecast-length) back
-
-            today = datetime.combine(date.today(), time(0,0,0))
-            tomorrow = today + timedelta(days=1)
-            days = []
-            while (start < tomorrow):
-                days.append(start)
-                start += timedelta(days=1)
             # loop needs to have latest model runs/hindcast runs last
-            for offset in [3,2,1,0]:
-                for day in days:
-                    for utc in [0, 6, 12, 18]:
-                        file = self.EC_FILE_PATTERN.format(dayoffset=offset, UTC=utc, year=day.year, month=day.month, day=day.day)
+            startday = dtime
+            while len(relevant_dates) == 0:
+                offsets = range(0,3)
+                for offset in offsets:
+                    for utc in [0]: # only utc 0
+                        file = self.EC_FILE_PATTERN.format(dayoffset=offset, UTC=utc, year=dtime.year, month=dtime.month, day=dtime.day)
                         filename = self._findFileInPathes(file, self.ECINPUTDIRS)
                         if filename is not None: relevant_dates.append(filename)
+                startday = dtime - timedelta(days=1)
+                if (dtime - startday) > timedelta(days=3):
+                    raise Exception("no meteo data for 3 days, giving up")
         else:
-            match = re.match(r'(\d{4})-(\d{2})-(\d{2})_(\d{2})', fixed_run)
-            if (match):
-                (year,month,day,utc) = tuple(map(int, list(match.group(1,2,3,4))))
-                for offset in [0,1,2,3]:
-                    file = self.EC_FILE_PATTERN.format(dayoffset=offset, UTC=utc, year=year, month=month, day=day)
-                    filename = self._findFileInPathes(file, self.ECINPUTDIRS)
-                    if filename is not None: relevant_dates.append(filename)
+            raise Exception("not implemented")
 
         return relevant_dates
 
