@@ -46,6 +46,21 @@ my $meteoSetup = slurp($Args{meteoSetupFile});
 
 my @runs = createRuns($Args{startDate}, $Args{endDate}, \@dailyStart);
 
+if ($Args{debug}) {
+    print STDERR "# startDate\t arrayJobId\n";
+    my $i = 1;
+    foreach my $r (@runs) {
+        my @date = gmtime($r);
+        my $hour = sprintf "%02d", $date[2];
+        my $day = sprintf "%02d", $date[3];
+        my $month = sprintf "%02d", ($date[4] + 1);
+        my $year = $date[5] + 1900;
+        
+        print STDERR "$year$month${day}_$hour\t$i\n";
+        $i++;
+    }
+    exit(0);
+}
 
 if ($Args{n}  > 0) {
     my %knownChildren;
