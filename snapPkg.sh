@@ -1,4 +1,4 @@
-VERSION=1.3.3
+VERSION=1.3.4
 VERSION_=`echo -n $VERSION | tr '.' '_'`
 #svn copy https://svn.met.no/snap/trunk \
 #     https://svn.met.no/snap/tags/$VERSION -m "Release $VERSION" || exit 1
