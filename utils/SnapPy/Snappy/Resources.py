@@ -53,6 +53,21 @@ class Resources():
             ecmodelruns += "<option value=\"{run}\">{run}</option>\n".format(run=run)
         self.startScreen = re.sub(r'%ECMODELRUN%',ecmodelruns,self.startScreen)
 
+    def getDefaultMetDefinitions(self, metmodel):
+        '''get the default meteo-definitions as dict to be used as *dict for getSnapInputMetDefinitions'''
+        if metmodel == 'h12' or metmodel == 'hirlam12':
+            return {}
+        elif metmodel == 'nrpa_ec_0p1':
+            return {"nx": 1+round(self.ecDomainWidth/self.ecDomainRes),
+                    "ny": 1+round(self.ecDomainHeight/self.ecDomainRes),
+                    "startX": self.ecDefaultDomainStartX,
+                    "startY": self.ecDefaultDomainStartY,
+                    "dx": self.ecDomainRes,
+                    "dy": self.ecDomainRes,
+                    }
+
+        raise(NotImplementedError("metmodel='{}' not implememented".format(metmodel)))
+
     def getStartScreen(self):
         return self.startScreen
 
@@ -215,7 +230,7 @@ GRAVITY.FIXED.M/S=0.0002
                                 dx=dx,
                                 dy=dy))
         else:
-            raise(NotImplementedError)
+            raise(NotImplementedError("metmodel='{}' not implememented".format(metmodel)))
 
         for f in files:
             lines.append("FIELD.INPUT={}".format(f))
