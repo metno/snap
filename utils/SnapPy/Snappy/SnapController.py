@@ -103,16 +103,11 @@ class SnapController:
             self.update_log()
             return
 
-        (startX, startY) = self.ecmet.get_grid_startX_Y()
+        metdefs = self.res.getDefaultMetDefinitions(self.lastQDict['metmodel'])
+        (metdefs.startX, metdefs.startY) = self.ecmet.get_grid_startX_Y()
         with open(os.path.join(self.lastOutputDir, "snap.input"),'a') as fh:
             fh.write(self.res.getSnapInputMetDefinitions(self.lastQDict['metmodel'],
-                                self.ecmet.get_meteorology_files(),
-                                nx=1+round(self.res.ecDomainWidth/self.res.ecDomainRes),
-                                ny=1+round(self.res.ecDomainHeight/self.res.ecDomainRes),
-                                startX=startX,
-                                startY=startY,
-                                dx=self.res.ecDomainRes,
-                                dy=self.res.ecDomainRes))
+                                self.ecmet.get_meteorology_files(),*metdefs))
         self._snap_model_run()
 
     def results_add_toa(self):

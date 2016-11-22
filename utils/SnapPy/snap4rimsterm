@@ -1,12 +1,14 @@
 #! /usr/bin/env python3
-import xml.etree.ElementTree as ET
-import os
-import datetime
-import re
-import sys
-import subprocess
 from collections import OrderedDict
+import datetime
+import os
+import re
+import subprocess
+import sys
+
+from Snappy.EcMeteorologyCalculator import EcMeteorologyCalculator
 from Snappy.Resources import Resources
+import xml.etree.ElementTree as ET
 
 
 def parseIsoTimeDelta(period):
@@ -28,7 +30,7 @@ def rimstermGetIsotopes(rimxml):
         isoItems[itemXML.attrib['ItemName']] = int(itemXML.attrib['ItemNum'])
     return isoItems
 
-def rimsterm2input(rimxml):
+def rimsterm2input(rimxml, is_global):
     """create a full snap.input sourceterm from a rimsterm.xml file using the ec-nrpa meteo"""
 
     sourceTermTemplate = """
@@ -96,15 +98,20 @@ TIME.RUN = {runTime}h
 
     sourceTerm += res.isotopes2snapinput(isoItems.values())
 
-    meteoTerm = "\n"
-    files = res.getECMeteorologyFiles(dtime=startDTime, run_hours=int(runTime), latitude=float(lat), longitude=float(lon))
-    if (len(files) == 0):
-        raise Exception("no EC met-files found for {}, runtime {}".format(startDTime, runTime))
-    for f in files:
-        meteoTerm += "FIELD.INPUT={}\n".format(f)
+    metdef = res.getDefaultMetDefinitions('nrpa_ec_0p1')
+    if is_global:
+        ecmet = EcMeteorologyCalculator(res, startDTime, float(lon), float(lat))
+        ecmet.calc()
+        if ecmet.must_calc():
+            raise Exception("no EC met-files calculated for {}".format(startDTime))
+        files = ecmet.get_meteorology_files()
+        (metdef.startX, metdef.startY) = ecmet.get_grid_startX_Y()
+    else:
+        files = res.getECMeteorologyFiles(dtime=startDTime, run_hours=int(runTime), latitude=float(lat), longitude=float(lon))
+        if (len(files) == 0):
+            raise Exception("no EC met-files found for {}, runtime {}".format(startDTime, runTime))
 
-    sourceTerm += meteoTerm
-    sourceTerm += res.getSnapInputTemplate('nrpa_ec_0p1')
+    sourceTerm += res.getSnapInputMetDefinitions('nrpa_ec_0p1', files, *metdef)
 
     return sourceTerm
 
@@ -151,7 +158,7 @@ def assertReadTrajLine(line, keyword):
         return line[0:20]
     raise Exception("trajectory line does not contain {keyword}: {line}".format(keyword=keyword, line=line))
 
-def trajInput2snapInput(trajInput, ident):
+def trajInput2snapInput(trajInput, ident, is_global):
     res = Resources()
 
     with open(trajInput) as traj:
@@ -192,15 +199,19 @@ FIELD.IDENTIFICATION=1
     snapStartTime="{year} {month} {day} {hour}".format(year=sdate.year,month=sdate.month,day=sdate.day, hour=sdate.hour)
     sourceTerm = sourceTermTemplate.format(lat=lat,lon=lon,startTime=snapStartTime, runTime=duration)
 
-    meteoTerm = "\n"
-    files = res.getECMeteorologyFiles(sdate, duration)
-    if (len(files) == 0):
-        raise Exception("no EC met-files found for {}, runtime {}".format(sdate, duration))
-    for f in files:
-        meteoTerm += "FIELD.INPUT={}\n".format(f)
-
-    sourceTerm += meteoTerm
-    sourceTerm += res.getSnapInputTemplate('nrpa_ec_0p1')
+    metdef = res.getDefaultMetDefinitions('nrpa_ec_0p1')
+    if is_global:
+        ecmet = EcMeteorologyCalculator(res, sdate, float(lon), float(lat))
+        ecmet.calc()
+        if ecmet.must_calc():
+            raise Exception("no EC met-files calculated for {}".format(sdate))
+        files = ecmet.get_meteorology_files()
+        (metdef.startX, metdef.startY) = ecmet.get_grid_startX_Y()
+    else:
+        files = res.getECMeteorologyFiles(dtime=sdate, run_hours=int(duration), latitude=float(lat), longitude=float(lon))
+        if (len(files) == 0):
+            raise Exception("no EC met-files found for {}, runtime {}".format(sdate, duration))
+    sourceTerm += res.getSnapInputMetDefinitions('nrpa_ec_0p1', files, *metdef)
 
     sourceTerm += "{:d}\n".format(count)
     for i in range(0,count):
@@ -211,12 +222,12 @@ FIELD.IDENTIFICATION=1
     return sourceTerm
 
 
-def snap4traj(trajInput, basedir, ident):
+def snap4traj(trajInput, basedir, ident, is_global):
     '''run snap with traj definition in basedir dir'''
 
     if (not os.path.isdir(basedir)):
         os.makedirs(basedir)
-    snapInput = trajInput2snapInput(trajInput, ident)
+    snapInput = trajInput2snapInput(trajInput, ident, is_global)
     with open(os.path.join(basedir, "snap.input"), "w") as fh:
         fh.write(snapInput)
 
@@ -230,7 +241,7 @@ def snap4traj(trajInput, basedir, ident):
     outlog.close()
 
 
-def snap4rimsterm(rimsterm, basedir, ident):
+def snap4rimsterm(rimsterm, basedir, ident, is_global):
     '''run snap with rimsterm definition in basedir dir'''
     tree = ET.parse(rimsterm)
     root = tree.getroot()
@@ -239,7 +250,7 @@ def snap4rimsterm(rimsterm, basedir, ident):
     if (not os.path.isdir(basedir)):
         os.makedirs(basedir)
 
-    snapInput = rimsterm2input(root)
+    snapInput = rimsterm2input(root, is_global)
     with open(os.path.join(basedir, "snap.input"), "w") as fh:
         fh.write(snapInput)
 
@@ -267,13 +278,14 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="run snap from a rimsterm.xml file and convert to grib-files named ident_conc, ident_depo ident_wetd ident_dose ident_tofa")
     parser.add_argument("--rimsterm", help="source-term in rimsterm format", required=False)
+    parser.add_argument("--global", help="use global meteorology", required=False, action="store_true")
     parser.add_argument("--trajInput", help="source-term in nrpa trajectory input format", required=False)
     parser.add_argument("--dir", help="output-directory", required=True)
     parser.add_argument("--ident", help="output-file identifier", required=True)
     args = parser.parse_args()
     if args.rimsterm is not None:
-        snap4rimsterm(args.rimsterm, args.dir, args.ident)
+        snap4rimsterm(args.rimsterm, args.dir, args.ident, args["global"])
     elif args.trajInput is not None:
-        snap4traj(args.trajInput, args.dir, args.ident)
+        snap4traj(args.trajInput, args.dir, args.ident, args["global"])
     else:
         print("need one of trajInput or rimsterm options", file=sys.stderr)
