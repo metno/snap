@@ -57,7 +57,7 @@ class Resources():
         '''get the default meteo-definitions as dict to be used as *dict for getSnapInputMetDefinitions'''
         if metmodel == 'h12' or metmodel == 'hirlam12':
             return {}
-        elif metmodel == 'nrpa_ec_0p1':
+        elif (metmodel == 'nrpa_ec_0p1') or (metmodel == 'nrpa_ec_0p1_global'):
             return {"nx": 1+round(self.ecDomainWidth/self.ecDomainRes),
                     "ny": 1+round(self.ecDomainHeight/self.ecDomainRes),
                     "startX": self.ecDefaultDomainStartX,
@@ -199,8 +199,11 @@ GRAVITY.FIXED.M/S=0.0002
         """
         if (metmodel is None) or (metmodel == 'h12'):
             filename = os.path.join(os.path.dirname(__file__),"resources/snap.input.tmpl")
+        elif (metmodel == 'nrpa_ec_0p1') or (metmodel == 'nrpa_ec_0p1_global'):
+            filename = os.path.join(os.path.dirname(__file__),"resources/snap.input_nrpa_ec_0p1.tmpl")
         else:
-            filename = os.path.join(os.path.dirname(__file__),"resources/snap.input_{}.tmpl".format(metmodel))
+            raise(NotImplementedError("metmodel='{}' not implememented".format(metmodel)))
+
         f = open(filename)
         return f.read()
 
@@ -212,7 +215,7 @@ GRAVITY.FIXED.M/S=0.0002
         if (metmodel is None) or (metmodel == 'h12'):
             # no setup needed, decoded in snap-template
             pass
-        elif metmodel == 'nrpa_ec_0p1':
+        elif (metmodel == 'nrpa_ec_0p1') or (metmodel == 'nrpa_ec_0p1_global'):
             # GRID.GPARAM = 2, -50., 25,.1,.1, 0., 0.
             # GRID.SIZE = 1251,601
             if (nx == 0):
