@@ -158,7 +158,7 @@ Write a status back to the sftp.
 
 =item $run_ident  the basename for the run
 
-=item $model the model type, e.g. MLDP0, SNAP, TRAJ, SNAP-BOMB
+=item $model the model type, e.g. MLDP0, SNAP, SNAPGLOBAL, TRAJ, SNAP-BOMB
 
 =item $status, a status-number
 
