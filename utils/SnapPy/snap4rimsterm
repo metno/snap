@@ -206,7 +206,7 @@ FIELD.IDENTIFICATION=1
         if ecmet.must_calc():
             raise Exception("no EC met-files calculated for {}".format(sdate))
         files = ecmet.get_meteorology_files()
-        (metdef.startX, metdef.startY) = ecmet.get_grid_startX_Y()
+        (metdef["startX"], metdef["startY"]) = ecmet.get_grid_startX_Y()
     else:
         files = res.getECMeteorologyFiles(dtime=sdate, run_hours=int(duration), latitude=float(lat), longitude=float(lon))
         if (len(files) == 0):
