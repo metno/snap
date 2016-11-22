@@ -58,7 +58,7 @@ sub run_model {
 #\$ -o $remote_hosts_and_users->[0]{PPIdir}/OU\$JOB_NAME.\$JOB_ID
 #\$ -e $remote_hosts_and_users->[0]{PPIdir}/ER\$JOB_NAME.\$JOB_ID
 
-module load SnapPy/1.0.0
+module load SnapPy/1.1.0
 
 ulimit -c 0
 export OMP_NUM_THREADS=1
@@ -79,10 +79,16 @@ EOF
 
         $bsnap = qq[qsub $PPIdir/$qsubScript];
 
-    } elsif ($model eq q[SNAP]) {
+    } elsif (($model eq q[SNAP]) or ($model eq q[SNAPGLOBAL])) {
 
         # Do nuclear accident stuffstylesheet
-        $return_file = $run_ident . q[_hi_res_SNAP2ARGOS.zip];
+        my $worldwide = "";
+        if ($model eq q[SNAP]) {
+            $return_file = $run_ident . q[_hi_res_SNAP2ARGOS.zip];
+        } else {
+            $return_file = $run_ident . '_'.${model}.q[2ARGOS.zip];
+            $worldwide = "--worldwide";
+        }
         $return_files_ascii = 0; # grib-output
 
         $mod_dir = $smsdirs->{data}.'/work_naccident';
@@ -105,7 +111,7 @@ EOF
 #\$ -S /bin/bash
 #\$ -j n
 #\$ -r y
-#\$ -l h_rt=0:40:00
+#\$ -l h_rt=0:50:00
 #\$ -l h_vmem=8G
 ##\$ -m bea
 #\$ -pe mpi 1
@@ -114,13 +120,13 @@ EOF
 #\$ -o $remote_hosts_and_users->[0]{PPIdir}/OU\$JOB_NAME.\$JOB_ID
 #\$ -e $remote_hosts_and_users->[0]{PPIdir}/ER\$JOB_NAME.\$JOB_ID
 
-module load SnapPy/1.0.0
+module load SnapPy/1.1.0
 
 ulimit -c 0
 export OMP_NUM_THREADS=1
 
 cd $remote_hosts_and_users->[0]{PPIdir}
-snap4rimsterm --rimsterm $xmlfile --dir . --ident naccident_SNAP
+snap4rimsterm --rimsterm $xmlfile --dir . --ident naccident_SNAP $worldwide
 
 EOF
         close $qsub;
@@ -138,6 +144,8 @@ EOF
 
         die "BOMB not working with EC-data";
 
+    } else {
+        die "Don't know what to do with model '$model'";
     }
 
     if ($input_res != 0) {
@@ -162,7 +170,7 @@ EOF
     my @files;
 
     # when naccident is run, we need to do some postprocessing
-    if ($model eq q[SNAP]) {
+    if (($model eq q[SNAP]) or ($model eq q[SNAPGLOBAL])) {
         # change file names to be $run_ident... :
         my @old_files = qw(
             naccident_SNAP_conc
@@ -178,6 +186,7 @@ EOF
         foreach my $file (@old_files) {
             my $new_name = $file;
             $new_name =~ s!naccident!$run_ident!;
+            $new_name =~ s!SNAP!$model!;
             move($file, $new_name);
         }
 
@@ -285,9 +294,9 @@ The SnapEC module will run the model remotely on the PPI.
 
 =item $run_ident  the basename for the run, further input and output-files are based upon that name
 
-=item $model the model type, e.g. MLDP0, SNAP, TRAJ, SNAP-BOMB
+=item $model the model type, e.g. MLDP0, SNAP, SNAPGLOBAL, TRAJ, SNAP-BOMB
 
-currently, only SNAP and TRAJ is implemented. MLDP0 is very old, and SNAP-BOMB never worked
+currently, only SNAP, SNAPGLOBAL and TRAJ is implemented. MLDP0 is very old, and SNAP-BOMB never worked
 
 =item $error Return error status, 0 on success
 
