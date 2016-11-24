@@ -164,10 +164,10 @@ class Resources():
                 offsets = range(0,3)
                 for offset in offsets:
                     for utc in [0]: # only utc 0
-                        file = self.EC_FILE_PATTERN.format(dayoffset=offset, UTC=utc, year=dtime.year, month=dtime.month, day=dtime.day)
+                        file = self.EC_FILE_PATTERN.format(dayoffset=offset, UTC=utc, year=startday.year, month=startday.month, day=startday.day)
                         filename = self._findFileInPathes(file, self.ECINPUTDIRS)
                         if filename is not None: relevant_dates.append(filename)
-                startday = dtime - timedelta(days=1)
+                startday = startday - timedelta(days=1)
                 if (dtime - startday) > timedelta(days=3):
                     raise Exception("no meteo data for 3 days, giving up")
         else:
