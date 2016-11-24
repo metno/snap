@@ -5,11 +5,12 @@ Created on Sep 2, 2016
 '''
 import datetime
 import os
+import re
 import sys
 import unittest
 
 from Snappy.EEMEP.Resources import Resources
-import xml.etree.ElementTree as ET
+from Snappy.EEMEP.VolcanoRun import VolcanoRun
 
 
 class ModelRunner():
@@ -19,61 +20,35 @@ class ModelRunner():
         volcano_path = os.path.join(path, "volcano.xml")
         if not os.path.exists(volcano_path):
             raise Exception("no such file or directory: {}".format(volcano_path))
-        self.defs = ET.parse(volcano_path).getroot()
-        assert self.defs.tag == "volcanic_eruption_run", 'not a volcanic_eruption_run: {}'.format(volcano_path)
+        self.volcano = VolcanoRun(volcano_path)
 
-        self.path = self.defs.attrib["output_directory"]
+
+        self.path = self.volcano.outputDir
         os.makedirs(name=self.path, exist_ok=True)
         self.volcano_to_column_source()
         self.create_meteo_files()
 
     def volcano_to_column_source(self):
         '''write columnsource_location.csv and columnsource_emissions.csv from volcano.xml'''
-        locinfo = '''#NUMBER,NAME,LOCATION,LATITUDE,NS,LONGITUDE,EW,ELEV,TYPE,ERUPTION TYPE
-VOLCANOXX,{name},unknown,{latitude},{NS},{longitude},{WE},{altitude},none,v0
-'''
-        volc = self.defs.find("volcano")
-        latitude = float(volc.attrib['lat'])
-        northSouth = 'S' if (latitude < 0) else 'N'
-        latitude = abs(latitude)
-        longitude = float(volc.attrib['lon'])
-        eastWest = 'W' if (longitude < 0) else 'E'
-        longitude = abs(longitude)
         with open(os.path.join(self.path, "columnsource_location.csv"), 'wt') as lh:
-            lh.write(locinfo.format(name=volc.attrib['name'],
-                                    latitude=latitude,
-                                    longitude=longitude,
-                                    NS=northSouth,
-                                    WE=eastWest,
-                                    altitude=int(volc.attrib['altitude'])))
-
+            lh.write(self.volcano.get_columnsource_location())
         with open(os.path.join(self.path, "columnsource_emission.csv"), 'wt') as eh:
-            eh.write("#TYPE/VOLCANO,VARIABLE,BASE[km],H[km above VENT],D[h],dM/dt[kg/s],m63[-],START[code/date],END[code/date],DESCRIPTION\n")
-            eruption = "v0,,VENT,  {top},  {duration}, {rate}, {m63},{start},{end},none\n"
-            for erup in self.defs.findall("eruptions/eruption"):
-                bottom = int(erup.attrib['bottom'])
-                if (bottom != 0):
-                    print("ignoring bottom {}, setting to 0".format(bottom), file=sys.stderr)
-                start = datetime.datetime.strptime(erup.attrib['start'], "%Y-%m-%dT%H:%M:%SZ")
-                end = datetime.datetime.strptime(erup.attrib['end'], "%Y-%m-%dT%H:%M:%SZ")
-                duration = round((end - start).total_seconds() / 3600)
-                eh.write(eruption.format(top=erup.attrib['top'],
-                                         start=start.isoformat(),
-                                         end=end.isoformat(),
-                                         duration=duration,
-                                         rate=erup.attrib['rate'],
-                                         m63=erup.attrib['m63']))
-    def create_meteo_files(self):
+            eh.write(self.volcano.get_columnsource_emission())
+
+    def create_meteo_files(self, overwrite_model_start_time=None):
         '''Create meteorology files in the output-directory of volcano.xml.
         This involves linking and copying of needed meteorology. and eventually
         addition of a few timesteps at the beginning of the run
 
+        Args:
+            overwrite_model_start_time: don't used the volcano meteo, but the provided, used only for testing
+
         Returns: list of meteorology files
         '''
-        weather = self.defs.find("model_setup/weather_forecast")
-        model_start_time = datetime.datetime.strptime(weather.attrib["model_start_time"],"%Y-%m-%dT%H:%M:%SZ")
+        (ref_date, model_start_time) = self.volcano.get_meteo_dates()
+
         # TODO: this will only the todays 00 run, this is not flexible enough yet
-        files = self.res.getECMeteorologyFiles(model_start_time, 96, weather.attrib["reference_date"])
+        files = self.res.getECMeteorologyFiles(model_start_time, 96, ref_date)
         for file in files:
             outfile = os.path.join(self.path, os.path.basename(file))
             if not os.path.exists(outfile):
@@ -81,11 +56,20 @@ VOLCANOXX,{name},unknown,{latitude},{NS},{longitude},{WE},{altitude},none,v0
 
 
 
-class ModelRunnerTest(unittest.TestCase):
+class TestModelRunner(unittest.TestCase):
 
     def setUp(self):
         unittest.TestCase.setUp(self)
-        self.dir = os.path.join(os.path.dirname(__file__),"test")
+        self.indir = os.path.join(os.path.dirname(__file__),"test")
+        volcanoFile = os.path.join(self.indir, "volcano.xml")
+        volc = VolcanoRun(volcanoFile)
+        self.dir = volc.outputDir
+        os.makedirs(name=self.dir, exist_ok=True)
+        yesterday = datetime.datetime.now() - datetime.timedelta(days=1)
+        with open(os.path.join(self.dir, "volcano.xml"), "wt") as oh:
+            with open(volcanoFile, "rt") as ih:
+                for line in ih:
+                    oh.write(re.sub('2016-11-03',yesterday.strftime('%Y-%m-%d'), line))
         self.files = ('columnsource_location.csv', 'columnsource_emission.csv')
         for file in self.files:
             if (os.path.exists(file)):
