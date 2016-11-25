@@ -5,6 +5,7 @@ Created on Aug 04, 2016
 '''
 
 from datetime import datetime, time, date, timedelta
+import math
 import os
 import re
 import sys
@@ -152,28 +153,40 @@ class Resources():
         run_hours -- run length in hours, possibly negative
         fixed_run -- string of form YYYY-MM-DD_HH giving a specific model-run
 
-        Returns: list with files, TODO: currently only 00 run supported
+        Returns: list with files for day 0 to day+run_hours, TODO: currently only UTC=00 run supported
         """
-        relevant_dates = []
+        dates = []
 
-# TODO: this will only the todays 00 run, this is not flexible enough yet
+        # this will only find the 00 run, since eemep needs to start at 00
         if (fixed_run == "best"):
-            # loop needs to have latest model runs/hindcast runs last
-            startday = dtime
-            while len(relevant_dates) == 0:
-                offsets = range(0,3)
-                for offset in offsets:
+            # need to have latest model runs from dtime up to run_hours in the future
+            # find the meteo of the next days days
+            for d in range(0,1+math.ceil(float(run_hours)/24.)):
+                startday = dtime + timedelta(days=d)
+                relevant_dates = []
+                for offset in range(0,3):
+                    # lowest offset is best, but earlier forecasts will do
+                    curday = startday + timedelta(days=-1*offset)
                     for utc in [0]: # only utc 0
-                        file = self.EC_FILE_PATTERN.format(dayoffset=offset, UTC=utc, year=startday.year, month=startday.month, day=startday.day)
+                        file = self.EC_FILE_PATTERN.format(dayoffset=offset, UTC=utc, year=curday.year, month=curday.month, day=curday.day)
                         filename = self._findFileInPathes(file, self.ECINPUTDIRS)
                         if filename is not None: relevant_dates.append(filename)
-                startday = startday - timedelta(days=1)
-                if (dtime - startday) > timedelta(days=3):
-                    raise Exception("no meteo data for 3 days, giving up")
+                if (len(relevant_dates) == 0):
+                    return dates # longest continuous series
+                else:
+                    dates.append(relevant_dates[0])
         else:
-            raise Exception("not implemented")
+            startday = datetime.strptime(fixed_run, "%Y-%m-%d_%H")
+            assert isinstance(startday, datetime), "getECMeteorology: fixed_run must be 'best' or YYYY-MM-DD_HH"
+            for offset in range(0,math.ceil(run_hours/24.)):
+                file = self.EC_FILE_PATTERN.format(dayoffset=offset, UTC=startday.hour, year=startday.year, month=startday.month, day=startday.day)
+                filename = self._findFileInPathes(file, self.ECINPUTDIRS)
+                if filename is None:
+                    return dates # longest continuous series
+                else:
+                    dates.append(filename)
 
-        return relevant_dates
+        return dates
 
 
 
@@ -181,7 +194,7 @@ if __name__ == "__main__":
     res = Resources()
     print(res.getStartScreen())
     print(res.getECMeteorologyFiles(datetime.combine(date.today(),time(0)), 48))
-    print(res.getECMeteorologyFiles(datetime.combine(date.today(),time(0)), -72))
+    print(res.getECMeteorologyFiles(datetime.combine(date.today()-timedelta(days=1),time(0)), 48))
     runs = res.getECRuns()
     print(runs)
     print(res.getECMeteorologyFiles(datetime.combine(date.today(),time(0)), 48, runs[1]))
