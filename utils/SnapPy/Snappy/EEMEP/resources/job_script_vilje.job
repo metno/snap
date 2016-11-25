@@ -1,6 +1,14 @@
 #!/bin/bash
 
-# qsub -l select=4:ncpus=32:mpiprocs=32,walltime=24:00:00 -A mifa03kl -N eemep modrun.sh
+#PBS -o /prod/forecast/work/emep/eemep/tmp/eemep.log
+#PBS -j oe
+#PBS -N eemep2
+#PBS -k n
+#PBS -l select=4:ncpus=32:mem=16GB
+#PBS -l walltime=01:00:00
+#PBS -m n
+#PBS -W umask=0022
+#PBS -A mipa01kl
 
 
 logfile=$HOME/work/emep/eemep2/eemep.log
@@ -10,10 +18,11 @@ exec 1>$logfile 2>&1
 
 set -x
 
+#
 RUNTAG={runtag}
-WORKDIR={workdir}
+# /prod/forecast/run/eemep2/
 RUNDIR={rundir}
-SRCDIR={srcdir}
+SRCDIR=/prod/forecast/emep/eemep2/src/
 VERSION=active
 
 
@@ -23,20 +32,23 @@ DAY={day}
 HOUR={hour}
 RUNTIME={runhour}
 STARTDATE=`date -d "$YEAR-$DAY-$MONTH $HOUR" +%Y,%m,%d,%H0000`
-ENDDATE=`date -d "$YEAR-$DAY-$MONTH $HOUR +${RUNTIME}hours" +%Y,%m,%d,%H0000`
+ENDDATE=`date -d "$YEAR-$DAY-$MONTH $HOUR +{runhour}hours" +%Y,%m,%d,%H0000`
 
+if [ "x$RUNDIR" == "x" ]; then
+    echo "no rundir"
+    exit(1)
+fi
 
 # cleanup older runs
-cd $RUNDIR
-for old in eemep_*; do
-    rm -r $old
-done
+cd $RUNDIR && find . -mtime +2 -type f -delete
 
 cd $RUNTAG
-
+if [ $? > 0 ]; then
+    exit(1)
+fi
 echo "running" > status
 
-# Link the input data (no longer needed du to config_emep.nml)
+# Link the input data (no longer needed due to config_emep.nml)
 #inputdir=/prod/forecast/emep/eemep2/input/eEMEP_OpenSource
 #ln -s $inputdir/* .   # input files except meteorology
 sed -e " s/startdate.*/startdate = $STARTDATE/;s/enddate.*/enddate = $ENDDATE/" $SRCDIR/Unimod.$VERSION/config_emep.nml > config_emep.nml

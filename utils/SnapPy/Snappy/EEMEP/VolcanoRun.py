@@ -34,6 +34,7 @@ class VolcanoRun():
         self.get_columnsource_emission()
         self.get_columnsource_location()
         self.get_meteo_dates()
+        self.run_as_restart()
 
     def get_meteo_dates(self):
         '''Returns (reference_date, model_start_time) of the meteorology,
@@ -97,6 +98,12 @@ class VolcanoRun():
 
         return ''.join(out)
 
+    def run_as_restart(self):
+        model_run = self.root.find('model_setup[@use_restart_file]')
+        if (model_run.attrib["use_restart_file"] == "restart"):
+            return True
+        return False
+
 
 class TestVolcanoRun(unittest.TestCase):
 
@@ -129,7 +136,9 @@ M0,,VENT,  7.0,  1.0,  100000,  0.05,2016-11-03 08:00:00,2016-11-03 09:00:00, no
 '''
         self.assertEqual(volc.get_columnsource_emission(), expected, "columnsource_emission")
 
-
+    def test_run_restart(self):
+        volc = VolcanoRun(self.volcFile)
+        self.assertTrue(volc.run_as_restart(), "restart run")
 
 
 if __name__ == "__main__":

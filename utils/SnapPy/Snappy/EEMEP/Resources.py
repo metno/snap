@@ -16,11 +16,8 @@ class Resources():
     '''
     Read the resources and combine them
     '''
-    HPC = {'USER': 'metno_op',
-           'MACHINE': 'frost.nsc.liu.se',
-           'JOB': 'emep/eemep/run_single_eemep.job',
-           'WORKDIR': 'work/emep/eemep/single_run/',
-           'RUNDIR': 'emep/eemep/single_run/'}
+    HPC = {"vilje": {'RUNDIR': '/prod/forecast/run/emep/eemep/single_run/'},
+           }
     ECINPUTDIRS = ["/lustre/storeA/project/metproduction/products/ecmwf/cwf_input/", "/lustre/storeB/project/metproduction/products/ecmwf/cwf_input/"]
     #ECINPUTDIRS = ["/lustre/storeB/users/heikok/Meteorology/ecdis2cwf/"]
     EC_FILE_PATTERN = "NRPA_EUROPE_0_1_{UTC:02d}/meteo{year:04d}{month:02d}{day:02d}_{dayoffset:02d}.nc"
@@ -61,6 +58,12 @@ class Resources():
     def getStartScreen(self):
         '''return the html-code of the start-screen'''
         return self.startScreen
+
+    def get_job_script(self, hpcName):
+        '''get the contents of the job-script for a certain hpc-machine'''
+        with open(os.path.join(os.path.dirname(__file__),"resources/job_script_{}.job".format(hpcName))) as fh:
+            job = fh.read()
+        return job
 
 
     def readVolcanoes(self, bb={'west': -180., 'east': 180., 'north': 90., 'south': -90.}):
