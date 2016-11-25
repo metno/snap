@@ -35,7 +35,7 @@ class ModelRunner():
         with open(os.path.join(self.path, "columnsource_emission.csv"), 'wt') as eh:
             eh.write(self.volcano.get_columnsource_emission())
 
-    def create_meteo_files(self, overwrite_model_start_time=None):
+    def create_meteo_files(self):
         '''Create meteorology files in the output-directory of volcano.xml.
         This involves linking and copying of needed meteorology. and eventually
         addition of a few timesteps at the beginning of the run
@@ -49,8 +49,9 @@ class ModelRunner():
 
         # TODO: this will only the todays 00 run, this is not flexible enough yet
         files = self.res.getECMeteorologyFiles(model_start_time, 96, ref_date)
-        for file in files:
-            outfile = os.path.join(self.path, os.path.basename(file))
+        for i, file in enumerate(files):
+            file_date = model_start_time + datetime.timedelta(days=i)
+            outfile = os.path.join(self.path, "meteo{date}.nc".format(date=file_date.strftime("%Y%m%d")))
             if not os.path.exists(outfile):
                 os.symlink(file, outfile)
 
@@ -74,6 +75,10 @@ class TestModelRunner(unittest.TestCase):
         for file in self.files:
             if (os.path.exists(file)):
                 os.unlink(file)
+        for f in os.scandir(self.dir):
+            if f.is_symlink():
+                os.unlink(f.path)
+
 
     def testModelRunner(self):
         mr = ModelRunner(self.dir)
@@ -81,6 +86,11 @@ class TestModelRunner(unittest.TestCase):
         #self.assertTrue(os.path.exists(self.files[0]))
         for x in self.files:
             self.assertTrue(os.path.exists(os.path.join(mr.path, x)), "file created: {}".format(x))
+        meteo_count = 0
+        for x in os.scandir(self.dir):
+            if x.is_symlink() and re.search(r'meteo\d{8}.nc', x.path):
+                meteo_count += 1
+        self.assertEqual(meteo_count, 4, "meteo files created")
 
 
 
