@@ -15,10 +15,10 @@ from Snappy.EEMEP.VolcanoRun import VolcanoRun
 
 
 class ModelRunner():
-    upload_files = []
 
 
     def __init__(self, path, hpcMachine):
+        self.upload_files = set()
         self.jobscript = "eemep_script.job"
         self.res = Resources()
         self.hpc = HPC.by_name(hpcMachine)
@@ -47,12 +47,12 @@ class ModelRunner():
         location = os.path.join(self.path, "columnsource_location.csv")
         with open(location, 'wt') as lh:
             lh.write(self.volcano.get_columnsource_location())
-        self.upload_files.append(location)
+        self.upload_files.add(location)
 
         emission = os.path.join(self.path, "columnsource_emission.csv")
         with open(emission, 'wt') as eh:
             eh.write(self.volcano.get_columnsource_emission())
-        self.upload_files.append(emission)
+        self.upload_files.add(emission)
 
     def _get_meteo_files(self):
         '''Create meteorology files in the output-directory of volcano.xml.
@@ -73,14 +73,20 @@ class ModelRunner():
             outfile = os.path.join(self.path, "meteo{date}.nc".format(date=file_date.strftime("%Y%m%d")))
             if not os.path.exists(outfile):
                 os.symlink(file, outfile)
-            self.upload_files.append(outfile)
+            self.upload_files.add(outfile)
+        # vlevel-definition
+        vlevels = self.res.getVerticalLevelDefinition()
+        vfile = os.path.join(self.path, "Vertical_levels.txt")
+        with open(vfile, 'w') as vh:
+            vh.write(vlevels)
+            self.upload_files.add(vfile)
 
     def _get_restart_file(self):
         if (self.volcano.run_as_restart()):
             model_start_time = self.volcano.get_meteo_dates()[1]
             restart_file = os.path.join(self.path, "EMEP_IN_{date}.nc".format(date=model_start_time.strftime("%Y%m%d")))
             if (os.path.exists(restart_file)):
-                self.upload_files.append(restart_file)
+                self.upload_files.add(restart_file)
 
     def _create_job_script(self):
         job = self.res.get_job_script(self.hpcMachine)
@@ -96,7 +102,7 @@ class ModelRunner():
         filename = os.path.join(self.path, self.jobscript)
         with open(filename, 'wt') as jh:
             jh.write(job.format(**defs))
-        self.upload_files.append(filename)
+        self.upload_files.add(filename)
 
     def do_upload_files(self):
         self._write_log("uploading to {}:{}".format(self.hpcMachine, self.hpc_outdir))
