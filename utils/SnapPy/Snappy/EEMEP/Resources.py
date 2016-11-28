@@ -16,9 +16,10 @@ class Resources():
     '''
     Read the resources and combine them
     '''
-    HPC = {"vilje": {'RUNDIR': '/prod/forecast/run/emep/eemep/single_run/'},
+    HPC = {"vilje": {'RUNDIR': '/prod/forecast/run/eemep/single_run/'},
            }
     ECINPUTDIRS = ["/lustre/storeA/project/metproduction/products/ecmwf/cwf_input/", "/lustre/storeB/project/metproduction/products/ecmwf/cwf_input/"]
+    ECVLEVELS = "Vertical_levels48.txt"
     #ECINPUTDIRS = ["/lustre/storeB/users/heikok/Meteorology/ecdis2cwf/"]
     EC_FILE_PATTERN = "NRPA_EUROPE_0_1_{UTC:02d}/meteo{year:04d}{month:02d}{day:02d}_{dayoffset:02d}.nc"
     #OUTPUTDIR = "/lustre/storeB/project/fou/kl/eva/runs"
@@ -51,6 +52,7 @@ class Resources():
         for run in self.getECRuns():
             ecmodelruns += "<option value=\"{run}\">{run}</option>\n".format(run=run)
         self.startScreen = re.sub(r'%ECMODELRUN%',ecmodelruns,self.startScreen)
+
 
     def getOutputDir(self):
         return self.OUTPUTDIR
@@ -147,6 +149,13 @@ class Resources():
             if os.path.isfile(filename):
                 return filename
         return None
+
+    def getVerticalLevelDefinition(self):
+        """Get the definition for the vertical levels"""
+        with open(os.path.join(os.path.dirname(__file__),"resources",self.ECVLEVELS),
+                        mode='r') as fh:
+            vlevels = fh.read()
+        return vlevels
 
     def getECMeteorologyFiles(self, dtime: datetime, run_hours: int, fixed_run="best"):
         """Get available meteorology files starting with date of dtime, only full days
