@@ -135,6 +135,7 @@ class Controller():
         if (abs(lonf) > 180):
             errors += "longitude {0} outside bounds\n".format(lonf)
         debug("volcano: {0} {1:.2f} {2:.2f} {3} {4}".format(volcano, latf, lonf, altf, type))
+        tag = re.sub(r'[^\w_-]', '', tag)
         self.lastTag = "{0} {1}".format(tag, startTime)
 
         if (len(errors) > 0):
@@ -163,7 +164,7 @@ class Controller():
                                          rate=rate,
                                          m63=types[type]['m63']))
 
-        self.lastOutputDir = os.path.join(self.res.getOutputDir(), "{0}".format(tag, strftime("%Y-%m-%dT%H%M%S", gmtime())))
+        self.lastOutputDir = os.path.join(self.res.getOutputDir(), "{0}".format(tag))
         self.lastQDict = qDict
         sourceTerm = """<?xml version="1.0" encoding="UTF-8"?>
 <volcanic_eruption_run run_time_hours="{runTime}" output_directory="{outdir}">
