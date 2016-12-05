@@ -422,9 +422,9 @@ c..store the files base-time
      +                       "kg/m2", "precipitation_amount", "")
 
         call nc_declare_3d(iunit, dimids3d, ihbl_varid,
-     +                     chksz3d, "initial_height_boundary_layer",
+     +                     chksz3d, "instant_height_boundary_layer",
      +                     "m", "height",
-     +                     "initial_height_boundary_layer")
+     +                     "instant_height_boundary_layer")
         call nc_declare_3d(iunit, dimids3d, ahbl_varid,
      +                     chksz3d, "average_height_boundary_layer",
      +                     "m", "height",
