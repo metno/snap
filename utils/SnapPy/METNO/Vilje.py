@@ -69,7 +69,7 @@ echo "finished" > {}
         self.vilje.put_files([self.testFiles[0]], self.rdir)
         qjob = self.vilje.submit_job(os.path.join(self.rdir, self.testFiles[0]), [])
         self.assertIsNotNone(qjob, "job submitted")
-        qjob.status_file = StatusFile(status_file)
+        qjob.status_file = StatusFile(status_file, "finished")
         count = 100
         status = self.vilje.get_status(qjob)
         while not (status == QJobStatus.finished or status == QJobStatus.failed):

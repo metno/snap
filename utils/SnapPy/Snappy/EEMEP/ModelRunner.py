@@ -7,9 +7,10 @@ import datetime
 import os
 import re
 import sys
+from time import sleep
 import unittest
 
-from METNO.HPC import HPC
+from METNO.HPC import HPC, StatusFile, QJobStatus
 from Snappy.EEMEP.Resources import Resources
 from Snappy.EEMEP.VolcanoRun import VolcanoRun
 
@@ -20,6 +21,7 @@ class ModelRunner():
     def __init__(self, path, hpcMachine):
         self.upload_files = set()
         self.jobscript = "eemep_script.job"
+        self.statusfile = "status"
         self.res = Resources()
         self.hpc = HPC.by_name(hpcMachine)
         self.hpcMachine = hpcMachine
@@ -40,7 +42,7 @@ class ModelRunner():
         self._create_job_script()
 
     def _write_log(self, msg):
-        print("{}: {}\n".format(datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ"), msg))
+        print("{}: {}".format(datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ"), msg))
 
     def _volcano_to_column_source(self):
         '''write columnsource_location.csv and columnsource_emissions.csv from volcano.xml'''
@@ -67,7 +69,7 @@ class ModelRunner():
         (ref_date, model_start_time) = self.volcano.get_meteo_dates()
 
         # TODO: this will only the todays 00 run, this is not flexible enough yet
-        files = self.res.getECMeteorologyFiles(model_start_time, 96, ref_date)
+        files = self.res.getECMeteorologyFiles(model_start_time, 72, ref_date)
         for i, file in enumerate(files):
             file_date = model_start_time + datetime.timedelta(days=i)
             outfile = os.path.join(self.path, "meteo{date}.nc".format(date=file_date.strftime("%Y%m%d")))
@@ -111,6 +113,33 @@ class ModelRunner():
             self._write_log("uploading '{}'".format(f))
             self.hpc.put_files([f], self.hpc_outdir, 600)
 
+    def run_and_wait(self):
+        '''Start the model and wait for it to finish
+
+        Returns QJobStatus code
+        '''
+        self._write_log("removing old status on {}: {}".format(self.hpcMachine, self.hpc_outdir))
+        self.hpc.syscall("rm", ["-f", os.path.join(self.hpc_outdir, self.statusfile)])
+        self._write_log("starting run on hpc {}: {}".format(self.hpcMachine, self.hpc_outdir))
+        remote_jobscript = os.path.join(self.hpc_outdir, self.jobscript)
+        qjob = self.hpc.submit_job(remote_jobscript, [])
+        qjob.status_file = StatusFile(os.path.join(self.hpc_outdir, self.statusfile), "finished")
+
+        # wait for 60 minutes to finish, check every minute
+        sleep_time = 60 # seconds
+        count = 60 # * sleep_time
+        status = self.hpc.get_status(qjob)
+        while not (status == QJobStatus.finished or status == QJobStatus.failed):
+            sleep(sleep_time)
+            count -= 1
+            if count == 0:
+                break
+            status = self.hpc.get_status(qjob)
+            self._write_log("jobstatus on hpc {}: {}".format(self.hpcMachine, status))
+
+        return status
+
+
 class TestModelRunner(unittest.TestCase):
 
     def setUp(self):
@@ -146,9 +175,11 @@ class TestModelRunner(unittest.TestCase):
                 meteo_count += 1
         self.assertEqual(meteo_count, 4, "meteo files created")
 
-    def test_upload_files(self):
+    def test_upload_files_and_run(self):
         mr = ModelRunner(self.dir, "vilje")
         mr.do_upload_files()
+        status = mr.run_and_wait()
+        print(status)
 
 
 if __name__ == "__main__":

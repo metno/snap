@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<volcanic_eruption_run run_time_hours="48" output_directory="/tmp/test/1703-06">
+<volcanic_eruption_run run_time_hours="32" output_directory="/tmp/test/1703-06">
   <model_setup use_restart_file="restart">
    <!-- reference_date might also be best_estimate, e.g. mix latest forecasts -->
    <weather_forecast reference_date="best" model_start_time="2016-11-03T00:00:00Z"/>
