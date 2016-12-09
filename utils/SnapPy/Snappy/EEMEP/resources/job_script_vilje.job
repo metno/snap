@@ -4,7 +4,7 @@
 #PBS -j oe
 #PBS -N eemep2
 #PBS -k n
-#PBS -l select=4:ncpus=32:mem=16GB
+#PBS -l select=4:ncpus=32:mpiprocs=32
 #PBS -l walltime=01:00:00
 #PBS -m n
 #PBS -W umask=0022

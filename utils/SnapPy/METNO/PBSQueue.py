@@ -11,7 +11,7 @@ from METNO.HPC import typed_property, Queue, QJob, QJobStatus
 
 
 class PBSQJob(QJob):
-    jobid = typed_property("jobid", int)
+    jobid = typed_property("jobid", str)
 
     def __init__(self, jobid):
         super().__init__()
@@ -39,7 +39,7 @@ class PBSQueue(Queue):
     def parse_submit(self, command_output, command_error, returncode):
         '''parse the output from the job-submission and return a QJob object'''
         if (returncode == 0):
-            jobid = self._parse_int(command_output)
+            jobid = command_output.strip()
             assert(jobid != 0)
             return PBSQJob(jobid)
         else:
@@ -68,7 +68,7 @@ class PBSQueue(Queue):
     def _pure_parse_status(self, qJob, status_output):
         for s in status_output.splitlines():
             fields = s.split()
-            if len(fields) >= 5 and self._parse_int(fields[0]) == qJob.jobid:
+            if len(fields) >= 5 and fields[0] == qJob.jobid:
                 if fields[4] == "F":
                     return QJobStatus.finished
                 if fields[4] == "E":
