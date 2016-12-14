@@ -32,8 +32,11 @@ MONTH={month}
 DAY={day}
 HOUR={hour}
 RUNTIME={runhour}
-STARTDATE=`date -d "$YEAR-$MONTH-$DAY $HOUR" +%Y,%m,%d,%H0000`
+# always start at midnight (eemep requirement, and for restart)
+STARTDATE=`date -d "$YEAR-$MONTH-$DAY $HOUR" +%Y,%m,%d,000000`
 ENDDATE=`date -d "$YEAR-$MONTH-$DAY $HOUR +{runhour}hours" +%Y,%m,%d,%H0000`
+# restart at midnight the next day
+RESTARTDATE=`date -d "$YEAR-$MONTH-$DAY $HOUR +1days" +%Y,%m,%d,000000`
 
 if [ "x$RUNDIR" == "x" ]; then
     echo "no rundir"
@@ -51,7 +54,7 @@ echo "running" > status
 
 # Link the input data
 ln -s $DATA_DIR/* .   # input files except meteorology
-sed -e " s/startdate.*/startdate = $STARTDATE/;s/enddate.*/enddate = $ENDDATE/" $SRCDIR/Unimod.$VERSION/config_emep.nml > config_emep.nml
+sed -e " s/startdate\s*=.*/startdate = $STARTDATE/;s/enddate.*/enddate = $ENDDATE/;s/outdate\s*=.*/outdate = $RESTARTDATE/" $SRCDIR/Unimod.$VERSION/config_emep.nml > config_emep.nml
 
 
 # Run the model
