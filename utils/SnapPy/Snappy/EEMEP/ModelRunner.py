@@ -20,6 +20,7 @@ class ModelRunner():
 
     def __init__(self, path, hpcMachine):
         self.upload_files = set()
+        self.timestamp = datetime.datetime.now()
         self.jobscript = "eemep_script.job"
         self.statusfile = "status"
         self.res = Resources()
@@ -139,6 +140,43 @@ class ModelRunner():
 
         return status
 
+    def download_results(self):
+        '''download the result-files, and rename them as appropriate'''
+        start_time = self.volcano.get_meteo_dates()[1]
+        tomorrow = (start_time + datetime.timedelta(days=1)).strftime("%Y%m%d")
+        timestamp = self.timestamp.strftime("%Y%m%dT%H%M%S")
+
+        file = 'eemep_hourInst.nc'
+        self._write_log("downloading {}:{} to {}".format(file, self.hpcMachine, self.path))
+        self.hpc.get_files([os.path.join(self.hpc_outdir, file)], self.path, 1200)
+        os.rename(os.path.join(self.path, file),
+                  os.path.join(self.path, 'eemep_hourInst_{}.nc'.format(timestamp)))
+
+        file = 'eemep_hour.nc'
+        self._write_log("downloading {}:{} to {}".format(file, self.hpcMachine, self.path))
+        self.hpc.get_files([os.path.join(self.hpc_outdir, file)], self.path, 1200)
+        os.rename(os.path.join(self.path, file),
+                  os.path.join(self.path, 'eemep_hour_{}.nc'.format(timestamp)))
+
+
+        file = 'EMEP_OUT_{}.nc'.format(tomorrow)
+        self._write_log("downloading {}:{} to {}".format(file, self.hpcMachine, self.path))
+        try :
+             self.hpc.get_files([os.path.join(self.hpc_outdir, file)], self.path, 1200)
+        except Exception as ex:
+            # not dangerous if it fail, but remove file
+            self._write_log("couldn't download '{}', ignoring: {}".format(file, ex.args))
+            filename = os.path.join(self.hpc_outdir, file)
+            if os.path.exists(filename): os.unlink(filename)
+        else:
+            os.rename(os.path.join(self.path, file),
+                      os.path.join(self.path, 'EMEP_IN_{}.nc'.format(tomorrow)))
+
+    def work(self):
+        '''do the complete work, e.g. upload, run, wait and download'''
+        self.do_upload_files()
+        self.run_and_wait()
+        self.download_results()
 
 class TestModelRunner(unittest.TestCase):
 
@@ -180,6 +218,10 @@ class TestModelRunner(unittest.TestCase):
         mr.do_upload_files()
         status = mr.run_and_wait()
         print(status)
+
+    def test_download(self):
+        mr = ModelRunner(self.dir, "vilje")
+        mr.download_results()
 
 
 if __name__ == "__main__":
