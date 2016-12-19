@@ -1,9 +1,9 @@
 #!/bin/bash
 
 #SBATCH -A met
-#SBATCH --nodes=4 --ntasks-per-core=2 --time=01:00:00
+#SBATCH --nodes=6 --ntasks-per-core=2 --time=01:00:00
 #SBATCH -D /home/metno_op/work/emep/eemep/
-#SBATCH -J eemep_00 -o /home/metno_op/work/emep/eemep/tmp/eemep_single.log
+#SBATCH -J eemep2 -o /home/metno_op/work/emep/eemep/tmp/eemep_single.log
 #SBATCH -e /home/metno_op/work/emep/eemep/tmp/eemep_single.log
 #SBATCH --mail-type=FAIL --mail-user=heiko.klein@met.no
 #SBATCH --exclusive
@@ -13,6 +13,10 @@ logfile=$HOME/work/emep/eemep2/eemep_single.log
 rm -f $logfile
 
 exec 1>$logfile 2>&1
+
+source $HOME/status/Status_Funcs.sh
+maxnodes=6
+jobname=eemep2
 
 set -x
 
@@ -48,6 +52,10 @@ cd $RUNTAG
 if [ $? -ne 0 ]; then
     exit 1
 fi
+
+Runstatus "start ...." "$jobname" $maxnodes
+trap 'Runstatus "FAILED ..." "$jobname" $maxnodes; echo "$jobname FAILED" > status; exit 159' 0
+
 echo "running" > status
 
 # Link the input data
@@ -70,5 +78,8 @@ fi
 
 # Clean the links to the input data
 find . -type l -print0 | xargs -0 rm
+
+Runstatus "end ......" "$jobname" $maxnodes
+trap 0
 
 
