@@ -239,9 +239,12 @@ class HPC():
         '''
         Initialize a HPC by names, e.g. vilje, frost
         '''
-        from . import Vilje
         if (name == "vilje"):
+            from . import Vilje
             return Vilje.Vilje()
+        elif (name == "frost"):
+            from . import Frost
+            return Frost.Frost()
         else:
             raise NotImplementedError("no HPC named '{}'".format(name))
         return
