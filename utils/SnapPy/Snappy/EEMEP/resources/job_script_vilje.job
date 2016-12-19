@@ -15,6 +15,10 @@ rm -f $logfile
 
 exec 1>$logfile 2>&1
 
+source $HOME/status/Status_Funcs.sh
+maxnodes=4
+jobname=eemep2
+
 set -x
 
 #
@@ -49,6 +53,10 @@ cd $RUNTAG
 if [ $? -ne 0 ]; then
     exit 1
 fi
+
+Runstatus "start ...." "$jobname" $maxnodes
+trap 'Runstatus "FAILED ..." "$jobname" $maxnodes; echo "$jobname FAILED" > status; exit 159' 0
+
 echo "running" > status
 
 # Link the input data
@@ -72,4 +80,6 @@ fi
 # Clean the links to the input data
 find . -type l -print0 | xargs -0 rm
 
+Runstatus "end ......" "$jobname" $maxnodes
+trap 0
 
