@@ -26,6 +26,7 @@ class ModelRunner():
         self.res = Resources()
         self.hpc = HPC.by_name(hpcMachine)
         self.hpcMachine = hpcMachine
+        self.inpath = path
 
         self.rundir = self.res.HPC[self.hpcMachine]["RUNDIR"]
         volcano_path = os.path.join(path, "volcano.xml")
@@ -43,7 +44,8 @@ class ModelRunner():
         self._create_job_script()
 
     def _write_log(self, msg):
-        print("{}: {}".format(datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ"), msg))
+        with open(os.path.join(self.inpath, 'volcano.log'), 'a') as fh:
+            print("{}: {}".format(datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ"), msg), file=fh)
 
     def _volcano_to_column_source(self):
         '''write columnsource_location.csv and columnsource_emissions.csv from volcano.xml'''
@@ -136,7 +138,7 @@ class ModelRunner():
             if count == 0:
                 break
             status = self.hpc.get_status(qjob)
-            self._write_log("jobstatus on hpc {}: {}".format(self.hpcMachine, status))
+            self._write_log("jobstatus on hpc {} jobid={}: {}".format(self.hpcMachine, qjob.jobid, status))
 
         return status
 
