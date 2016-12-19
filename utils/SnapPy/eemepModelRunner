@@ -1,0 +1,82 @@
+'''
+Created on Nov 23, 2016
+
+The eemep model runner parses a input directory for model-setup files (volcano.xml)
+and runs the model on a super-computer. eemepModelRunner should be started from an
+environment which starts the model-runner regularly, e.g. crontab
+
+@author: heikok
+'''
+import atexit
+import datetime
+import os
+import re
+import sys
+import traceback
+
+from METNO.HPC import typed_property, HPC
+from Snappy.EEMEP.ModelRunner import ModelRunner
+
+
+class EemepModelRunner():
+    hpc = typed_property("hpc", HPC)
+    directory = typed_property("directory", str)
+    statusfile = typed_property("statusfile", str)
+
+    def __call__(self):
+        '''atexit callback'''
+        os.unlink(self.statusfile)
+
+    def __init__(self, directory, hpc):
+        self.directory = directory
+        self.statusfile = os.path.join(self.directory, "eemepModelRunning_working")
+        # make sure only one instance is running, not failsafe (no flock on lustre)
+        if (os.path.exists(self.statusfile)):
+            return
+        else:
+            with open(self.statusfile, 'w') as fh:
+                atexit.register(self)
+                fh.write("working pid: {} on node: {}".format(os.getpid(), os.uname().nodename))
+        self.hpc = HPC.by_name(hpc)
+
+        for (dirpath, dirnames, filenames) in os.walk(self.directory):
+            for x in filenames:
+                if re.match(r'volcano.xml', x):
+                    try:
+                        with open(os.path.join(dirpath, 'volcano.log'), 'a') as fh:
+                            print("{date}: Starting run".
+                                  format(date=datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ")),
+                                  file=fh)
+                        mr = ModelRunner(dirpath, hpc)
+                        mr.do_upload_files()
+                        mr.run_and_wait()
+                        mr.download_results()
+                        with open(os.path.join(dirpath, 'volcano.log'), 'a') as fh:
+                            print("{date}: Finished run".
+                                  format(date=datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ"),
+                                         dir=dirpath),
+                                  file=fh)
+                    except Exception as ex:
+                        print('Run failed in {}: {}'.format(dirpath,ex.args),file=sys.stderr)
+                        traceback.print_exc(file=sys.stderr)
+                        with open(os.path.join(dirpath, 'volcano.log'), 'a') as fh:
+                            print("{date}: Run failed: {ex}".
+                                  format(date=datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ"),
+                                         dir=dirpath,
+                                         ex=ex.args),
+                                  file=fh)
+                    else:
+                        os.rename(os.path.join(dirpath, x), os.path.join(dirpath,"{}.bak".format(x)))
+
+
+
+
+
+
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser(description="Search for volcano.xml files in the top-level directory and run the model on a HPC machine")
+    parser.add_argument("--dir", help="top-level dir to search for volcano.xml files", required=True)
+    parser.add_argument("--hpc", help="HPC-machine to run job on")
+    args = parser.parse_args()
+    EemepModelRunner(args.dir, args.hpc)
