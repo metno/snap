@@ -10,7 +10,7 @@ import unittest
 from METNO.HPC import typed_property, Queue, QJob, QJobStatus
 
 
-class PBSQJob(QJob):
+class SLURMQJob(QJob):
     jobid = typed_property("jobid", str)
 
     def __init__(self, jobid):
@@ -18,7 +18,7 @@ class PBSQJob(QJob):
         self.jobid = jobid
 
 
-class PBSQueue(Queue):
+class SLURMQueue(Queue):
 
     def __init__(self):
         super().__init__()
@@ -34,29 +34,29 @@ class PBSQueue(Queue):
         '''
         jobargs = [jobscript]
         jobargs.extend(args)
-        return ("qsub", jobargs)
+        return ("sbatch", jobargs)
 
     def parse_submit(self, command_output, command_error, returncode):
         '''parse the output from the job-submission and return a QJob object'''
         if (returncode == 0):
-            jobid = command_output.strip()
-            assert(jobid != '')
-            return PBSQJob(jobid)
+            fields = command_output.split()
+            jobid = fields[3]
+            return SLURMQJob(jobid)
         else:
-            print("qsub failed with code {}: {}".format(returncode, command_error),
+            print("sbatch failed with code {}: {}".format(returncode, command_error),
                   file=sys.stderr)
         return None
 
 
     def status_command(self, qJob):
         '''return the status command for the QJob'''
-        assert(isinstance(qJob, PBSQJob))
-        return ("qstat", ["{}".format(qJob.jobid)])
+        assert(isinstance(qJob, SLURMQJob))
+        return ("squeue", ['-j', "{}".format(qJob.jobid)])
 
     def delete_command(self, qJob):
         '''return the delete command for the QJob'''
-        assert(isinstance(qJob, PBSQJob))
-        return ("qdel", ["{}".format(qJob.jobid)])
+        assert(isinstance(qJob, SLURMQJob))
+        return ("scancel", ["{}".format(qJob.jobid)])
 
 
     def _parse_int(self, string):
@@ -66,7 +66,9 @@ class PBSQueue(Queue):
         return 0
 
     def _pure_parse_status(self, qJob, status_output):
+        lines = 0
         for s in status_output.splitlines():
+            lines += 1
             fields = s.split()
             if len(fields) >= 5 and fields[0] == qJob.jobid:
                 if fields[4] == "F":
@@ -79,51 +81,44 @@ class PBSQueue(Queue):
                     return QJobStatus.running
                 else:
                     return QJobStatus.queued
+        if lines >= 1:
+            return QJobStatus.finished
         return QJobStatus.unknown
 
 
     def parse_status(self, qJob, status_output, status_err, returncode):
         '''return the QJobStatus the QJob, except for testing for the status-file'''
 
-        assert(isinstance(qJob, PBSQJob))
-        if returncode == 153:
-            # unknown jobid = no longer existing
-            return QJobStatus.finished
-        elif returncode == 35:
-            # job has finished
-            return QJobStatus.finished
-        elif returncode == 0:
+        assert(isinstance(qJob, SLURMQJob))
+        if returncode == 0:
             return self._pure_parse_status(qJob, status_output)
         else:
             return QJobStatus.unknown
 
 
 
-class TestPBSQueue(unittest.TestCase):
+class TestSLURMQueue(unittest.TestCase):
 
     def setUp(self):
         super().setUp()
-        self.queue = PBSQueue()
-        self.jobid = "7483866.service2"
+        self.queue = SLURMQueue()
+        self.jobid = "2839455"
 
 
     def test_parse_status(self):
         status_output = '''
-Job id            Name             User              Time Use S Queue
-----------------  ---------------- ----------------  -------- - -----
-7483866.service2  podV01.2         catharfl          00:00:07 R workq
+             JOBID PARTITION     NAME     USER ST       TIME  NODES NODELIST(REASON)
+           2839455     frost interact   cooper  R    1:17:46      1 n362
 '''
-        qJob = PBSQJob(self.jobid)
-        self.assertEqual(self.queue.parse_status(qJob, status_output, "", 35),
-                         QJobStatus.finished, "parsing returncode")
+        qJob = SLURMQJob(self.jobid)
         self.assertEqual(self.queue.parse_status(qJob, status_output, "", 0),
                          QJobStatus.running, "parsing output")
 
     def test_parse_submit(self):
-        command_output = '''7483866.service2
+        command_output = '''Submitted batch job 2839455
 '''
         self.assertEqual(self.queue.parse_submit(command_output, "", 0).jobid,
-                         self.jobid, "parsing qsub command")
+                         self.jobid, "parsing squeue command")
 
 
 if __name__ == "__main__":
