@@ -179,6 +179,8 @@ class ModelRunner():
         self.download_results()
 
 class TestModelRunner(unittest.TestCase):
+    hpcMachine = "frost"
+    doRun = False
 
     def setUp(self):
         unittest.TestCase.setUp(self)
@@ -202,7 +204,7 @@ class TestModelRunner(unittest.TestCase):
 
 
     def testModelRunner(self):
-        mr = ModelRunner(self.dir, "vilje")
+        mr = ModelRunner(self.dir, TestModelRunner.hpcMachine)
         self.assertTrue(len(self.files) == 3)
         #self.assertTrue(os.path.exists(self.files[0]))
         for x in self.files:
@@ -213,14 +215,22 @@ class TestModelRunner(unittest.TestCase):
                 meteo_count += 1
         self.assertEqual(meteo_count, 4, "meteo files created")
 
+
+    @unittest.skipIf(doRun, "testet in upload and run")
+    def test_upload_files(self):
+        mr = ModelRunner(self.dir, TestModelRunner.hpcMachine)
+        mr.do_upload_files()
+
+    @unittest.skipIf(doRun == False, "no run")
     def test_upload_files_and_run(self):
-        mr = ModelRunner(self.dir, "vilje")
+        mr = ModelRunner(self.dir, TestModelRunner.hpcMachine)
         mr.do_upload_files()
         status = mr.run_and_wait()
         print(status)
 
+    @unittest.skipIf(doRun == False, "no run")
     def test_download(self):
-        mr = ModelRunner(self.dir, "vilje")
+        mr = ModelRunner(self.dir, TestModelRunner.hpcMachine)
         mr.download_results()
 
 
