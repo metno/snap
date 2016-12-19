@@ -9,7 +9,6 @@
 #PBS -m n
 #PBS -W umask=0022
 #PBS -A mipa01kl
- ee
 
 logfile=$HOME/work/emep/eemep2/eemep_single.log
 rm -f $logfile
