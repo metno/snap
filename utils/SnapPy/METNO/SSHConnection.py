@@ -5,9 +5,9 @@ Created on Nov 15, 2016
 '''
 
 import os
-import unittest
 import subprocess
 import sys
+import unittest
 
 from METNO.HPC import typed_property, Connection
 
@@ -126,7 +126,7 @@ class SSHConnection(Connection):
                 return (output.decode(self.remote_charset),
                         '',
                         0)
-            except CalledProcessError as cpe:
+            except subprocess.CalledProcessError as cpe:
                 return (cpe.output.decode(self.remote_charset),
                         '',
                         cpe.returncode)

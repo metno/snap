@@ -29,6 +29,12 @@ class EemepModelRunner():
         '''atexit callback'''
         os.unlink(self.statusfile)
 
+    def _log(self, dir, msg):
+        with open(os.path.join(dir, 'volcano.log'), 'a') as fh:
+            print("{date}: {msg}".format(date=datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ"),
+                                         msg=msg),
+                  file=fh)
+
     def __init__(self, directory, hpc):
         self.directory = directory
         self.statusfile = os.path.join(self.directory, "eemepModelRunning_working")
@@ -45,40 +51,44 @@ class EemepModelRunner():
             for x in filenames:
                 if x == 'volcano.xml':
                     try:
-                        with open(os.path.join(dirpath, 'volcano.log'), 'a') as fh:
-                            print("{date}: Starting run".
-                                  format(date=datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ")),
-                                  file=fh)
+                        self.log(dirpath, 'Starting run')
                         mr = ModelRunner(dirpath, hpc)
+                        os.rename(os.path.join(dirpath, x), os.path.join(dirpath,"{}.run".format(x)))
                         mr.do_upload_files()
                         mr.run_and_wait()
                         mr.download_results()
-                        with open(os.path.join(dirpath, 'volcano.log'), 'a') as fh:
-                            print("{date}: Finished run".
-                                  format(date=datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ"),
-                                         dir=dirpath),
-                                  file=fh)
+                        self._log(dirpath, 'Finished run')
                     except Exception as ex:
                         print('Run failed in {}: {}'.format(dirpath,ex.args),file=sys.stderr)
                         traceback.print_exc(file=sys.stderr)
-                        with open(os.path.join(dirpath, 'volcano.log'), 'a') as fh:
-                            print("{date}: Run failed: {ex}".
-                                  format(date=datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ"),
-                                         dir=dirpath,
-                                         ex=ex.args),
-                                  file=fh)
+                        self._log(dirpath, 'Run failed: {}'.format(ex.args))
                     else:
-                        os.rename(os.path.join(dirpath, x), os.path.join(dirpath,"{}.bak".format(x)))
+                        for file in ('volcano.xml', 'volcano.xml.run'):
+                            infile = os.path.join(dirpath, file)
+                            if (os.path.exists(infile)):
+                                os.rename(infile,
+                                          os.path.join(dirpath,"volcano.xml.{}".format(datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ"))))
 
 
 
-
+def delete_oldfiles(dir_to_search, age_in_days):
+    for dirpath, dirnames, filenames in os.walk(dir_to_search):
+        for file in filenames:
+            curpath = os.path.join(dirpath, file)
+            file_modified = datetime.datetime.fromtimestamp(os.lstat(curpath).st_mtime)
+            if datetime.datetime.now() - file_modified > datetime.timedelta(days=age_in_days):
+                os.remove(curpath)
 
 
 if __name__ == '__main__':
+    os.umask(0)
     import argparse
     parser = argparse.ArgumentParser(description="Search for volcano.xml files in the top-level directory and run the model on a HPC machine")
     parser.add_argument("--dir", help="top-level dir to search for volcano.xml files", required=True)
-    parser.add_argument("--hpc", help="HPC-machine to run job on")
+    parser.add_argument("--hpc", help="HPC-machine to run job on", required=True)
+    parser.add_argument("--cleanup", type=int, default=0, help="remove files in dir older than cleanup days")
     args = parser.parse_args()
     EemepModelRunner(args.dir, args.hpc)
+
+    if (args.cleanup > 0):
+        delete_oldfiles(args.dir, args.cleanup)
