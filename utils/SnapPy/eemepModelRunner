@@ -51,7 +51,7 @@ class EemepModelRunner():
             for x in filenames:
                 if x == 'volcano.xml':
                     try:
-                        self.log(dirpath, 'Starting run')
+                        self._log(dirpath, 'Starting run')
                         mr = ModelRunner(dirpath, hpc)
                         os.rename(os.path.join(dirpath, x), os.path.join(dirpath,"{}.run".format(x)))
                         mr.do_upload_files()
