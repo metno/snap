@@ -50,10 +50,12 @@ class EemepModelRunner():
         for (dirpath, dirnames, filenames) in os.walk(self.directory):
             for x in filenames:
                 if x == 'volcano.xml':
+                    infile = os.path.join(dirpath, x)
                     try:
-                        self._log(dirpath, 'Starting run')
+                        self._log(dirpath, 'Starting run for: {}'.format(infile))
                         mr = ModelRunner(dirpath, hpc)
-                        os.rename(os.path.join(dirpath, x), os.path.join(dirpath,"{}.run".format(x)))
+                        os.rename(infile,
+                                  os.path.join(dirpath,"volcano.xml.{}".format(datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ"))))
                         mr.do_upload_files()
                         mr.run_and_wait()
                         mr.download_results()
@@ -62,12 +64,9 @@ class EemepModelRunner():
                         print('Run failed in {}: {}'.format(dirpath,ex.args),file=sys.stderr)
                         traceback.print_exc(file=sys.stderr)
                         self._log(dirpath, 'Run failed: {}'.format(ex.args))
-                    else:
-                        for file in ('volcano.xml', 'volcano.xml.run'):
-                            infile = os.path.join(dirpath, file)
-                            if (os.path.exists(infile)):
-                                os.rename(infile,
-                                          os.path.join(dirpath,"volcano.xml.{}".format(datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ"))))
+                        if (os.path.exists(infile)):
+                            os.rename(infile,
+                                      os.path.join(dirpath,"volcano.xml.{}".format(datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ"))))
 
 
 
