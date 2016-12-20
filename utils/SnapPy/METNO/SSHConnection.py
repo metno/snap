@@ -79,8 +79,11 @@ class SSHConnection(Connection):
                                                     machine=self.machine,
                                                     path=remote_path))
 
-        proc = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout)
-        proc.check_returncode()
+        if sys.version_info > (3, 5, 0):
+            proc = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout)
+            proc.check_returncode()
+        else
+            subprocess.check_output(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout)
         return True
 
     def get_files(self, files, local_path=None, timeout=None):
@@ -96,8 +99,12 @@ class SSHConnection(Connection):
             local_path = "."
         args.append(local_path)
 
-        proc = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout)
-        proc.check_returncode()
+        if sys.version_info > (3, 5, 0):
+            proc = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout)
+            proc.check_returncode()
+        else
+            subprocess.check_output(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout)
+
         return True
 
     def syscall(self, program, args, timeout=None):
@@ -107,10 +114,22 @@ class SSHConnection(Connection):
         remote_command = " ".join(args)
         ssh_args.append(remote_command)
 
-        proc = subprocess.run(ssh_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout)
-        return (proc.stdout.decode(self.remote_charset),
-                proc.stderr.decode(self.remote_charset),
-                proc.returncode)
+        if sys.version_info > (3, 5, 0):
+            proc = subprocess.run(ssh_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout)
+            return (proc.stdout.decode(self.remote_charset),
+                    proc.stderr.decode(self.remote_charset),
+                    proc.returncode)
+        else
+            try:
+                output = subprocess.check_output(ssh_args, timeout=timeout)
+                return (output.decode(self.remote_charset),
+                        '',
+                        0)
+            except CalledProcessError as cpe:
+                return (cpe.output.decode(self.remote_charset),
+                        '',
+                        cpe.returncode)
+
 
 
 class TestSSHConnection(unittest.TestCase):
