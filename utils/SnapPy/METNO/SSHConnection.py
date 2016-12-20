@@ -7,6 +7,7 @@ Created on Nov 15, 2016
 import os
 import unittest
 import subprocess
+import sys
 
 from METNO.HPC import typed_property, Connection
 
@@ -82,8 +83,8 @@ class SSHConnection(Connection):
         if sys.version_info > (3, 5, 0):
             proc = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout)
             proc.check_returncode()
-        else
-            subprocess.check_output(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout)
+        else:
+            subprocess.check_output(args, timeout=timeout)
         return True
 
     def get_files(self, files, local_path=None, timeout=None):
@@ -102,8 +103,8 @@ class SSHConnection(Connection):
         if sys.version_info > (3, 5, 0):
             proc = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout)
             proc.check_returncode()
-        else
-            subprocess.check_output(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout)
+        else:
+            subprocess.check_output(args, timeout=timeout)
 
         return True
 
@@ -119,7 +120,7 @@ class SSHConnection(Connection):
             return (proc.stdout.decode(self.remote_charset),
                     proc.stderr.decode(self.remote_charset),
                     proc.returncode)
-        else
+        else:
             try:
                 output = subprocess.check_output(ssh_args, timeout=timeout)
                 return (output.decode(self.remote_charset),
