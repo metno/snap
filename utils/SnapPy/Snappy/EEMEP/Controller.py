@@ -4,16 +4,20 @@ Created on Aug 9, 2016
 @author: heikok
 '''
 
-import sys
-import os
-import re
+from PyQt5 import QtWidgets
+from collections import deque
 import datetime
 import json
-from collections import deque
+import os
+import re
+import sys
 from time import gmtime, strftime
+import traceback
+
+from PyQt5.QtCore import QProcess, QProcessEnvironment, QThread, QIODevice, QThreadPool, pyqtSignal, pyqtSlot
 from Snappy.BrowserWidget import BrowserWidget
 from Snappy.EEMEP.Resources import Resources
-from PyQt5 import QtWidgets
+
 
 def debug(*objs):
     print("DEBUG: ", *objs, file=sys.stderr)
@@ -24,6 +28,28 @@ def tail(f, n):
         for line in fh:
             lines.append(line)
     return "".join(lines)
+
+class _UpdateThread(QThread):
+    update_log_signal = pyqtSignal()
+
+    def __init__(self, controller):
+        QThread.__init__(self)
+        self.controller = controller
+
+    def __del__(self):
+        self.wait()
+
+    def run(self):
+        debug("run-status:" + self.controller.eemepRunning)
+        try:
+            while self.controller.eemepRunning == "running":
+                debug("running")
+                self.update_log_signal.emit()
+                self.sleep(3)
+        except:
+            traceback.print_exc()
+
+
 
 
 class Controller():
@@ -39,26 +65,31 @@ class Controller():
         self.res = Resources()
         self.main = BrowserWidget()
         self.main.set_html(self.res.getStartScreen())
-        self.main.set_form_handler(self._create_snap_form_handler())
+        self.main.set_form_handler(self._create_form_handler())
         self.main.show()
         self.eemepRunning = "inactive"
         self.lastOutputDir = ""
         self.lastQDict = {}
+        self.lastLog = ""
 
     def write_log(self, txt:str):
-        debug(txt)
-        self.main.evaluate_javaScript('updateSnapLog({0});'.format(json.dumps(txt)))
+        if (txt != self.lastLog):
+            self.lastLog = txt
+            debug(txt)
+            self.main.evaluate_javaScript('updateEemepLog({0});'.format(json.dumps(txt)))
 
     def update_log_query(self, qDict):
         #MainBrowserWindow._default_form_handler(qDict)
-        self.write_log("updating...")
-        if os.path.isfile(os.path.join(self.lastOutputDir,"snap.log.stdout")) :
-            lfh = open(os.path.join(self.lastOutputDir,"snap.log.stdout"))
-            debug(tail(os.path.join(self.lastOutputDir,"snap.log.stdout"),30))
-            self.write_log(tail(os.path.join(self.lastOutputDir,"snap.log.stdout"), 30))
-            lfh.close()
+        #self.write_log("updating...")
+        logfile = os.path.join(self.lastOutputDir,"volcano.log")
+        if os.path.isfile(logfile) :
+            self.write_log(tail(logfile, 30))
 
-    def _create_snap_form_handler(self):
+    @pyqtSlot()
+    def update_log(self):
+        self.update_log_query({})
+
+    def _create_form_handler(self):
         def handler(queryDict):
             """a form-handler with closure for self"""
             options = { 'Run' : self.run_eemep_query,
@@ -195,15 +226,18 @@ class Controller():
         debug("output directory: {}".format(self.lastOutputDir))
         os.makedirs(self.lastOutputDir,exist_ok=True)
 
+        logfile = os.path.join(self.lastOutputDir,"volcano.log")
+        if (os.path.exists(logfile)):
+            logdate = datetime.datetime.fromtimestamp(os.path.getmtime(logfile))
+            os.rename(logfile, "{}_{}".format(logfile, logdate.strftime("%Y%m%dT%H%M%S")))
         with open(os.path.join(self.lastOutputDir, "volcano.xml"),'w') as fh:
             fh.write(self.lastSourceTerm)
-#         self.snap_run = _SnapRun(self)
-#         self.snap_run.proc.finished.connect(self._snap_finished)
-#         self.snap_run.start()
-#
-#         self.snap_update = _SnapUpdateThread(self)
-#         self.snap_update.update_log_signal.connect(self.update_log)
-#         self.snap_update.start(QThread.LowPriority)
+        self.eemepRunning = "running"
+        self.update_log_query({})
+
+        self.model_update = _UpdateThread(self)
+        self.model_update.update_log_signal.connect(self.update_log)
+        self.model_update.start(QThread.LowPriority)
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
