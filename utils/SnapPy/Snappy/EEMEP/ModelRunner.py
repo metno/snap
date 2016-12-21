@@ -76,8 +76,8 @@ class ModelRunner():
         for i, file in enumerate(files):
             file_date = model_start_time + datetime.timedelta(days=i)
             outfile = os.path.join(self.path, "meteo{date}.nc".format(date=file_date.strftime("%Y%m%d")))
-	    if os.path.islink(outfile):
-	        os.unlink(outfile)
+            if os.path.islink(outfile):
+                os.unlink(outfile)
             if not os.path.lexists(outfile):
                 os.symlink(file, outfile)
             self.upload_files.add(outfile)
