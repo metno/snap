@@ -78,7 +78,7 @@ class ModelRunner():
             outfile = os.path.join(self.path, "meteo{date}.nc".format(date=file_date.strftime("%Y%m%d")))
 	    if os.path.islink(outfile):
 	        os.unlink(outfile)
-            if not os.path.exists(outfile):
+            if not os.path.lexists(outfile):
                 os.symlink(file, outfile)
             self.upload_files.add(outfile)
         # vlevel-definition
@@ -171,7 +171,7 @@ class ModelRunner():
             # not dangerous if it fail, but remove file
             self._write_log("couldn't download '{}', ignoring: {}".format(file, ex.args))
             filename = os.path.join(self.hpc_outdir, file)
-            if os.path.exists(filename): os.unlink(filename)
+            if os.path.lexists(filename): os.unlink(filename)
         else:
             os.rename(os.path.join(self.path, file),
                       os.path.join(self.path, 'EMEP_IN_{}.nc'.format(tomorrow)))
@@ -200,7 +200,7 @@ class TestModelRunner(unittest.TestCase):
                     oh.write(re.sub('2016-11-03',yesterday.strftime('%Y-%m-%d'), line))
         self.files = ('columnsource_location.csv', 'columnsource_emission.csv', 'eemep_script.job')
         for file in self.files:
-            if (os.path.exists(file)):
+            if (os.path.lexists(file)):
                 os.unlink(file)
         for f in os.scandir(self.dir):
             if f.is_symlink():
