@@ -60,13 +60,13 @@ class EemepModelRunner():
             for x in filenames:
                 if x == 'volcano.xml':
                     file = os.path.join(dirpath, x)
-                    volcanoes.append(file)
+                    volcanoes.append((file, dirpath))
 
         if (len(volcanoes) == 0):
             return
 
         # work only on newest volcano.xml file and exit, avoiding timeouts
-        infile = max(volcanoes, key=lambda x: os.lstat(x).st_mtime)
+        (infile, dirpath) = max(volcanoes, key=lambda x: os.lstat(x[0]).st_mtime)
         try:
             self._log(dirpath, 'Starting run for: {}'.format(infile))
             mr = ModelRunner(dirpath, hpc)
