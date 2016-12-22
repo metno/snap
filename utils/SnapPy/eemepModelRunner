@@ -12,7 +12,6 @@ environment which starts the model-runner regularly, e.g. crontab
 import atexit
 import datetime
 import os
-import re
 import sys
 import traceback
 
@@ -20,30 +19,39 @@ from METNO.HPC import typed_property, HPC
 from Snappy.EEMEP.ModelRunner import ModelRunner
 
 
+
+def _cleanupFileCallable(filename):
+    '''closure for cleaning up a file atexit'''
+    def cleanup():
+        os.unlink(filename)
+    return cleanup
+
+
 class EemepModelRunner():
     hpc = typed_property("hpc", HPC)
     directory = typed_property("directory", str)
     statusfile = typed_property("statusfile", str)
 
-    def __call__(self):
-        '''atexit callback'''
-        os.unlink(self.statusfile)
-
-    def _log(self, dir, msg):
-        with open(os.path.join(dir, 'volcano.log'), 'a') as fh:
+    def _log(self, dirname, msg):
+        with open(os.path.join(dirname, 'volcano.log'), 'a') as fh:
             print("{date}: {msg}".format(date=datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ"),
                                          msg=msg),
                   file=fh)
 
     def __init__(self, directory, hpc):
         self.directory = directory
-        self.statusfile = os.path.join(self.directory, "eemepModelRunning_working")
+        self.statusfile = os.path.join(self.directory, "eemepModelRunner_working")
         # make sure only one instance is running, not failsafe (no flock on lustre)
         if (os.path.exists(self.statusfile)):
+            file_modified = datetime.datetime.fromtimestamp(os.lstat(self.statusfile).st_mtime)
+            if datetime.datetime.now() - file_modified > datetime.timedelta(hours=7):
+                # return statusfile if hanging for more than 7 hours
+                print("cleaning up {} after 7 hours".format(self.statusfile), file=sys.stderr)
+                _cleanupFileCallable(self.statusfile)()
             return
         else:
             with open(self.statusfile, 'w') as fh:
-                atexit.register(self)
+                atexit.register(_cleanupFileCallable(self.statusfile))
                 fh.write("working pid: {} on node: {}".format(os.getpid(), os.uname().nodename))
         self.hpc = HPC.by_name(hpc)
 
@@ -74,10 +82,12 @@ def delete_oldfiles(dir_to_search, age_in_days):
     for dirpath, dirnames, filenames in os.walk(dir_to_search):
         for file in filenames:
             curpath = os.path.join(dirpath, file)
-            file_modified = datetime.datetime.fromtimestamp(os.lstat(curpath).st_mtime)
-            if datetime.datetime.now() - file_modified > datetime.timedelta(days=age_in_days):
-                os.remove(curpath)
-
+            try:
+                file_modified = datetime.datetime.fromtimestamp(os.lstat(curpath).st_mtime)
+                if datetime.datetime.now() - file_modified > datetime.timedelta(days=age_in_days):
+                    os.remove(curpath)
+            except FileNotFoundError:
+                pass
 
 if __name__ == '__main__':
     os.umask(0)
