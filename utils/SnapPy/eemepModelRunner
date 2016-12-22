@@ -55,8 +55,8 @@ class EemepModelRunner():
                 fh.write("working pid: {} on node: {}".format(os.getpid(), os.uname().nodename))
         self.hpc = HPC.by_name(hpc)
 
+        volcanoes = []
         for (dirpath, dirnames, filenames) in os.walk(self.directory):
-            volcanoes = []
             for x in filenames:
                 if x == 'volcano.xml':
                     file = os.path.join(dirpath, x)

@@ -139,11 +139,10 @@ class Controller():
             type = 'M0'
         else:
             type = qDict['volcanotype']
-        tag = "latlon"
         volcanoes = self.res.readVolcanoes()
         if (qDict['volcano'] and volcanoes[qDict['volcano']]):
             tag = qDict['volcano']
-            volcano = volcanoes[qDict['volcano']]['NAME']
+            volcano = re.sub(r'[^\w.-_]','_',volcanoes[qDict['volcano']]['NAME'])
             latf = volcanoes[qDict['volcano']]['LATITUDE']
             lonf = volcanoes[qDict['volcano']]['LONGITUDE']
             altf = volcanoes[qDict['volcano']]['ELEV']
@@ -169,8 +168,6 @@ class Controller():
         if (abs(lonf) > 180):
             errors += "longitude {0} outside bounds\n".format(lonf)
         debug("volcano: {0} {1:.2f} {2:.2f} {3} {4}".format(volcano, latf, lonf, altf, type))
-        tag = re.sub(r'[^\w_-]', '', tag)
-        self.lastTag = "{0} {1}".format(tag, startTime)
 
         if (len(errors) > 0):
             debug('updateLog("{0}");'.format(json.dumps("ERRORS:\n\n"+errors)))
@@ -198,7 +195,7 @@ class Controller():
                                          rate=rate,
                                          m63=types[type]['m63']))
 
-        self.lastOutputDir = os.path.join(self.res.getOutputDir(), "{0}".format(tag))
+        self.lastOutputDir = os.path.join(self.res.getOutputDir(), "{0}_ondemand".format(volcano))
         self.lastQDict = qDict
         sourceTerm = """<?xml version="1.0" encoding="UTF-8"?>
 <volcanic_eruption_run run_time_hours="{runTime}" output_directory="{outdir}">
