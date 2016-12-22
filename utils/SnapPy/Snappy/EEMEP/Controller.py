@@ -131,6 +131,9 @@ class Controller():
         except:
             errors += "Cannot interpret runTime: {}\n".format(qDict['runTime'])
 
+        restart = "false"
+        if ('restart_file' in qDict and qDict['restart_file'].lower() == 'true'):
+            restart = 'restart'
 
         if qDict['volcanotype'] == 'default':
             type = 'M0'
@@ -199,7 +202,7 @@ class Controller():
         self.lastQDict = qDict
         sourceTerm = """<?xml version="1.0" encoding="UTF-8"?>
 <volcanic_eruption_run run_time_hours="{runTime}" output_directory="{outdir}">
-<model_setup use_restart_file="restart">
+<model_setup use_restart_file="{restart}">
    <!-- reference_date might also be best_estimate, e.g. mix latest forecasts -->
    <weather_forecast reference_date="{model_run}" model_start_time="{model_start_time}Z"/>
 </model_setup>
@@ -218,7 +221,7 @@ class Controller():
                                                 volcano=volcano,
                                                 alt=altf,
                                                 outdir=self.lastOutputDir,
-                                                restart="true",
+                                                restart=restart,
                                                 model_run=ecModelRun,
                                                 model_start_time=modelStartDT.isoformat(),
                                                 eruptions="\n".join(eruptions),
