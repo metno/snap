@@ -44,9 +44,9 @@ class EemepModelRunner():
         # make sure only one instance is running, not failsafe (no flock on lustre)
         if (os.path.exists(self.statusfile)):
             file_modified = datetime.datetime.fromtimestamp(os.lstat(self.statusfile).st_mtime)
-            if datetime.datetime.now() - file_modified > datetime.timedelta(hours=7):
-                # return statusfile if hanging for more than 7 hours
-                print("cleaning up {} after 7 hours".format(self.statusfile), file=sys.stderr)
+            if datetime.datetime.now() - file_modified > datetime.timedelta(hours=3):
+                # return statusfile if hanging for more than 3 hours
+                print("cleaning up {} after 3 hours".format(self.statusfile), file=sys.stderr)
                 _cleanupFileCallable(self.statusfile)()
             return
         else:
