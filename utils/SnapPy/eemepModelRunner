@@ -62,6 +62,9 @@ class EemepModelRunner():
                     file = os.path.join(dirpath, x)
                     volcanoes.append(file)
 
+        if (len(volcanoes) == 0):
+            return
+
         # work only on newest volcano.xml file and exit, avoiding timeouts
         infile = max(volcanoes, key=lambda x: os.lstat(x).st_mtime)
         try:
