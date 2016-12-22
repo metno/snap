@@ -56,26 +56,31 @@ class EemepModelRunner():
         self.hpc = HPC.by_name(hpc)
 
         for (dirpath, dirnames, filenames) in os.walk(self.directory):
+            volcanoes = []
             for x in filenames:
                 if x == 'volcano.xml':
-                    infile = os.path.join(dirpath, x)
-                    try:
-                        self._log(dirpath, 'Starting run for: {}'.format(infile))
-                        mr = ModelRunner(dirpath, hpc)
-                        os.rename(infile,
-                                  os.path.join(dirpath,"volcano.xml.{}".format(datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ"))))
-                        mr.do_upload_files()
-                        mr.run_and_wait()
-                        mr.download_results()
-                        self._log(dirpath, 'Finished run')
-                    except Exception as ex:
-                        print('Run failed in {}: {}'.format(dirpath,ex.args),file=sys.stderr)
-                        traceback.print_exc(file=sys.stderr)
-                        self._log(dirpath, 'Run failed: {}'.format(ex.args))
-                        if (os.path.exists(infile)):
-                            os.rename(infile,
-                                      os.path.join(dirpath,"volcano.xml.{}".format(datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ"))))
+                    file = os.path.join(dirpath, x)
+                    volcanoes.append(file)
 
+        # work only on newest volcano.xml file and exit, avoiding timeouts
+        infile = max(volcanoes, key=lambda x: os.lstat(x).st_mtime)
+        try:
+            self._log(dirpath, 'Starting run for: {}'.format(infile))
+            mr = ModelRunner(dirpath, hpc)
+            os.rename(infile,
+                      os.path.join(dirpath,"volcano.xml.{}".format(datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ"))))
+            mr.do_upload_files()
+            mr.run_and_wait()
+            mr.download_results()
+            self._log(dirpath, 'Finished run')
+        except Exception as ex:
+            print('Run failed in {}: {}'.format(dirpath,ex.args),file=sys.stderr)
+            traceback.print_exc(file=sys.stderr)
+            self._log(dirpath, 'Run failed: {}'.format(ex.args))
+            if (os.path.exists(infile)):
+                os.rename(infile,
+                          os.path.join(dirpath,"volcano.xml.{}".format(datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ"))))
+        return
 
 
 def delete_oldfiles(dir_to_search, age_in_days):
@@ -92,7 +97,7 @@ def delete_oldfiles(dir_to_search, age_in_days):
 if __name__ == '__main__':
     os.umask(0)
     import argparse
-    parser = argparse.ArgumentParser(description="Search for volcano.xml files in the top-level directory and run the model on a HPC machine")
+    parser = argparse.ArgumentParser(description="Search for volcano.xml files in the top-level directory, take the newest one and run the model on a HPC machine")
     parser.add_argument("--dir", help="top-level dir to search for volcano.xml files", required=True)
     parser.add_argument("--hpc", help="HPC-machine to run job on", required=True)
     parser.add_argument("--cleanup", type=int, default=0, help="remove files in dir older than cleanup days")
