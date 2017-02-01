@@ -1,0 +1,111 @@
+#! /usr/bin/env python3
+
+'''
+Created on Nov 23, 2016
+
+The eemep model runner parses a input directory for model-setup files (volcano.xml)
+and runs the model on a super-computer. eemepModelRunner should be started from an
+environment which starts the model-runner regularly, e.g. crontab
+
+@author: heikok
+'''
+import atexit
+import datetime
+import os
+import sys
+import traceback
+
+from METNO.HPC import typed_property, HPC
+from Snappy.EEMEP.ModelRunner import ModelRunner
+
+
+
+def _cleanupFileCallable(filename):
+    '''closure for cleaning up a file atexit'''
+    def cleanup():
+        os.unlink(filename)
+    return cleanup
+
+
+class EemepModelRunner():
+    hpc = typed_property("hpc", HPC)
+    directory = typed_property("directory", str)
+    statusfile = typed_property("statusfile", str)
+
+    def _log(self, dirname, msg):
+        with open(os.path.join(dirname, 'volcano.log'), 'a') as fh:
+            print("{date}: {msg}".format(date=datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ"),
+                                         msg=msg),
+                  file=fh)
+
+    def __init__(self, directory, hpc):
+        self.directory = directory
+        self.statusfile = os.path.join(self.directory, "eemepModelRunner_working")
+        # make sure only one instance is running, not failsafe (no flock on lustre)
+        if (os.path.exists(self.statusfile)):
+            file_modified = datetime.datetime.fromtimestamp(os.lstat(self.statusfile).st_mtime)
+            if datetime.datetime.now() - file_modified > datetime.timedelta(hours=3):
+                # return statusfile if hanging for more than 3 hours
+                print("cleaning up {} after 3 hours".format(self.statusfile), file=sys.stderr)
+                _cleanupFileCallable(self.statusfile)()
+            return
+        else:
+            with open(self.statusfile, 'w') as fh:
+                atexit.register(_cleanupFileCallable(self.statusfile))
+                fh.write("working pid: {} on node: {}".format(os.getpid(), os.uname().nodename))
+        self.hpc = HPC.by_name(hpc)
+
+        volcanoes = []
+        for (dirpath, dirnames, filenames) in os.walk(self.directory):
+            for x in filenames:
+                if x == 'volcano.xml':
+                    file = os.path.join(dirpath, x)
+                    volcanoes.append((file, dirpath))
+
+        if (len(volcanoes) == 0):
+            return
+
+        # work only on newest volcano.xml file and exit, avoiding timeouts
+        (infile, dirpath) = max(volcanoes, key=lambda x: os.lstat(x[0]).st_mtime)
+        try:
+            self._log(dirpath, 'Starting run for: {}'.format(infile))
+            mr = ModelRunner(dirpath, hpc)
+            os.rename(infile,
+                      os.path.join(dirpath,"volcano.xml.{}".format(datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ"))))
+            mr.do_upload_files()
+            mr.run_and_wait()
+            mr.download_results()
+            self._log(dirpath, 'Finished run')
+        except Exception as ex:
+            print('Run failed in {}: {}'.format(dirpath,ex.args),file=sys.stderr)
+            traceback.print_exc(file=sys.stderr)
+            self._log(dirpath, 'Run failed: {}'.format(ex.args))
+            if (os.path.exists(infile)):
+                os.rename(infile,
+                          os.path.join(dirpath,"volcano.xml.{}".format(datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ"))))
+        return
+
+
+def delete_oldfiles(dir_to_search, age_in_days):
+    for dirpath, dirnames, filenames in os.walk(dir_to_search):
+        for file in filenames:
+            curpath = os.path.join(dirpath, file)
+            try:
+                file_modified = datetime.datetime.fromtimestamp(os.lstat(curpath).st_mtime)
+                if datetime.datetime.now() - file_modified > datetime.timedelta(days=age_in_days):
+                    os.remove(curpath)
+            except FileNotFoundError:
+                pass
+
+if __name__ == '__main__':
+    os.umask(0)
+    import argparse
+    parser = argparse.ArgumentParser(description="Search for volcano.xml files in the top-level directory, take the newest one and run the model on a HPC machine")
+    parser.add_argument("--dir", help="top-level dir to search for volcano.xml files", required=True)
+    parser.add_argument("--hpc", help="HPC-machine to run job on", required=True)
+    parser.add_argument("--cleanup", type=int, default=0, help="remove files in dir older than cleanup days")
+    args = parser.parse_args()
+    EemepModelRunner(args.dir, args.hpc)
+
+    if (args.cleanup > 0):
+        delete_oldfiles(args.dir, args.cleanup)

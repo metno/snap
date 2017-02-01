@@ -67,10 +67,7 @@ class EcMeteorologyCalculator():
             dtime: datetime object containing the earliest time expected
             domainCenterX: number where the domain should start (longitude), will be rounded
             domainCenterY: number where the domain should start (latitude), will be rounded
-            proc: A QProcess, which will be used to run a longer process in the background.
-                  STDERR/STDOUT and signal-handler should be set. If proc is None, the
-                  subprocess will be run in the current-process. If proc is set, the caller
-                  needs to wait for the proc to finish before calling other methods of this object
+
         Raises:
             ECDataNotAvailableException: no data for the dtime can be found
         '''
@@ -142,8 +139,15 @@ class EcMeteorologyCalculator():
                 recalc = True
         return recalc
 
-    def calc(self, proc):
-        '''run the calculation of ec-data if required'''
+    def calc(self, proc=None):
+        '''run the calculation of ec-data if required.
+        
+        Args:
+           proc -- A QProcess, which will be used to run a longer process in the background.
+                  STDERR/STDOUT and signal-handler should be set. If proc is None, the
+                  subprocess will be run in the current-process. If proc is set, the caller
+                  needs to wait for the proc to finish before calling other methods of this object
+'''
         if (not self.must_calc()):
             return
 #        if 'MODULESHOME' not in os.environ:
@@ -156,6 +160,7 @@ export OMP_NUM_THREADS=1
 export DATE='{year:04d}{month:02d}{day:02d}'
 export UTC='{utc}'
 
+umask 000
 cd {outdir}
 touch {outdir}/running
 WORKDIR={outdir}/work
@@ -181,7 +186,7 @@ rm {outdir}/running
             script.write(command)
 
         if proc is None:
-            subprocess.run(['/bin/bash', scriptFile])
+            subprocess.call(['/bin/bash', scriptFile])
         else:
             self.proc = proc # make sure proc lives long enough
             proc.start('/bin/bash', [scriptFile])

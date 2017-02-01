@@ -53,6 +53,21 @@ class Resources():
             ecmodelruns += "<option value=\"{run}\">{run}</option>\n".format(run=run)
         self.startScreen = re.sub(r'%ECMODELRUN%',ecmodelruns,self.startScreen)
 
+    def getDefaultMetDefinitions(self, metmodel):
+        '''get the default meteo-definitions as dict to be used as *dict for getSnapInputMetDefinitions'''
+        if metmodel == 'h12' or metmodel == 'hirlam12':
+            return {}
+        elif (metmodel == 'nrpa_ec_0p1') or (metmodel == 'nrpa_ec_0p1_global'):
+            return {"nx": 1+round(self.ecDomainWidth/self.ecDomainRes),
+                    "ny": 1+round(self.ecDomainHeight/self.ecDomainRes),
+                    "startX": self.ecDefaultDomainStartX,
+                    "startY": self.ecDefaultDomainStartY,
+                    "dx": self.ecDomainRes,
+                    "dy": self.ecDomainRes,
+                    }
+
+        raise(NotImplementedError("metmodel='{}' not implememented".format(metmodel)))
+
     def getStartScreen(self):
         return self.startScreen
 
@@ -176,18 +191,56 @@ GRAVITY.FIXED.M/S=0.0002
         nppsFile.close()
         return OrderedDict(sorted(npps.items(), key=lambda t: t[0].lower()))
 
-    def getSnapInputTemplate(self, metmodel=None):
+    def _getSnapInputTemplate(self, metmodel=None):
         """Read a snap input file without source-term parameters, isotopes (isotopes2snapinput) and eventually without meteorology files.
 
         Keyword arguments:
-        metmodel -- h12, hirlam12 including files (default), or nrpa_ec_0p1 without met-files
+        metmodel -- h12, hirlam12 including files (default), or nrpa_ec_0p1 without met-definitions (see getSnapInputMetDefinitions)
         """
         if (metmodel is None) or (metmodel == 'h12'):
             filename = os.path.join(os.path.dirname(__file__),"resources/snap.input.tmpl")
+        elif (metmodel == 'nrpa_ec_0p1') or (metmodel == 'nrpa_ec_0p1_global'):
+            filename = os.path.join(os.path.dirname(__file__),"resources/snap.input_nrpa_ec_0p1.tmpl")
         else:
-            filename = os.path.join(os.path.dirname(__file__),"resources/snap.input_{}.tmpl".format(metmodel))
+            raise(NotImplementedError("metmodel='{}' not implememented".format(metmodel)))
+
         f = open(filename)
         return f.read()
+
+    def getSnapInputMetDefinitions(self, metmodel, files, nx=0, ny=0, startX=0, startY=0, dx=0, dy=0):
+        '''Get the definitions for the metmodel, including met-files and domain (unless default).
+        This should be written to the snap.input file, in addition to the source-term. files may be empty for e.g. h12
+        '''
+        lines = []
+        if (metmodel is None) or (metmodel == 'h12'):
+            # no setup needed, decoded in snap-template
+            pass
+        elif (metmodel == 'nrpa_ec_0p1') or (metmodel == 'nrpa_ec_0p1_global'):
+            # GRID.GPARAM = 2, -50., 25,.1,.1, 0., 0.
+            # GRID.SIZE = 1251,601
+            if (nx == 0):
+                nx = 1+round(self.ecDomainWidth/self.ecDomainRes)
+                ny = 1+round(self.ecDomainHeight/self.ecDomainRes)
+                startX = self.ecDefaultDomainStartX
+                startY = self.ecDefaultDomainStartY
+                dx=self.ecDomainRes
+                dy=self.ecDomainRes
+            lines.append("GRID.SIZE = {nx},{ny}".format(nx=nx, ny=ny))
+            lines.append("GRID.GPARAM = {gtype}, {startX}, {startY}, {dx}, {dy}, 0., 0.".
+                         format(gtype=2,
+                                startX=startX,
+                                startY=startY,
+                                dx=dx,
+                                dy=dy))
+        else:
+            raise(NotImplementedError("metmodel='{}' not implememented".format(metmodel)))
+
+        for f in files:
+            lines.append("FIELD.INPUT={}".format(f))
+
+        lines.append("")
+        lines.append(self._getSnapInputTemplate(metmodel))
+        return "\n".join(lines)
 
     def getSendmailScript(self):
         filename = os.path.join(os.path.dirname(__file__),"resources/sendmail.sh")

@@ -103,14 +103,11 @@ class SnapController:
             self.update_log()
             return
 
-        (startX, startY) = self.ecmet.get_grid_startX_Y()
-        self._write_ec_snap_input(self.ecmet.get_meteorology_files(),
-                                  nx=1+round(self.res.ecDomainWidth/self.res.ecDomainRes),
-                                  ny=1+round(self.res.ecDomainHeight/self.res.ecDomainRes),
-                                  startX=startX,
-                                  startY=startY,
-                                  dx=self.res.ecDomainRes,
-                                  dy=self.res.ecDomainRes)
+        metdefs = self.res.getDefaultMetDefinitions(self.lastQDict['metmodel'])
+        (metdefs["startX"], metdefs["startY"]) = self.ecmet.get_grid_startX_Y()
+        with open(os.path.join(self.lastOutputDir, "snap.input"),'a') as fh:
+            fh.write(self.res.getSnapInputMetDefinitions(self.lastQDict['metmodel'],
+                                self.ecmet.get_meteorology_files(), **metdefs))
         self._snap_model_run()
 
     def results_add_toa(self):
@@ -256,12 +253,8 @@ RELEASE.BQ/SEC.COMP= {relCS137}, {relCS137}, 'Cs137'
                 return
             if (not self._defaultDomainCheck(lonf,latf)):
                 return
-            self._write_ec_snap_input(files, nx=1+round(self.res.ecDomainWidth/self.res.ecDomainRes),
-                                      ny=1+round(self.res.ecDomainHeight/self.res.ecDomainRes),
-                                      startX=self.res.ecDefaultDomainStartX,
-                                      startY=self.res.ecDefaultDomainStartY,
-                                      dx=self.res.ecDomainRes,
-                                      dy=self.res.ecDomainRes)
+            with open(os.path.join(self.lastOutputDir, "snap.input"),'a') as fh:
+                fh.write(self.res.getSnapInputMetDefinitions(qDict['metmodel'], files))
             self._snap_model_run()
         elif qDict['metmodel'] == 'nrpa_ec_0p1_global':
             try:
@@ -285,24 +278,8 @@ RELEASE.BQ/SEC.COMP= {relCS137}, {relCS137}, 'Cs137'
             if (not self._defaultDomainCheck(lonf,latf)):
                 return
             with open(os.path.join(self.lastOutputDir, "snap.input"),'a') as fh:
-                fh.write(self.res.getSnapInputTemplate())
+                fh.write(self.res.getSnapInputMetDefinitions(qDict['metmodel'], []))
             self._snap_model_run()
-
-    def _write_ec_snap_input(self, files, nx, ny, startX, startY, dx, dy):
-        with open(os.path.join(self.lastOutputDir, "snap.input"),'a') as fh:
-            # GRID.GPARAM = 2, -50., 25,.1,.1, 0., 0.
-            # GRID.SIZE = 1251,601
-            fh.write("GRID.SIZE = {nx},{ny}\n".format(nx=nx, ny=ny))
-            fh.write("GRID.GPARAM = {gtype}, {startX}, {startY}, {dx}, {dy}, 0., 0.\n".
-                 format(gtype=2,
-                        startX=startX,
-                        startY=startY,
-                        dx=dx,
-                        dy=dy))
-            for f in files:
-                fh.write("FIELD.INPUT={}\n".format(f))
-            fh.write(self.res.getSnapInputTemplate('nrpa_ec_0p1'))
-
 
     def _snap_model_run(self):
         self.snap_run = _SnapRun(self)
