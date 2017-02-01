@@ -133,6 +133,7 @@
 #    2013-10-16::<siris>: a small old fix
 #    2013-10-18::<arildb>: Fixed format error in change log
 #    2016-06-27::<heikok>: moving put_statusfile and run_model to modules
+#    2016-11-22::<heikok>: enabling model SNAPGLOBAL for EC, requiring SnapPy/1.1.0 on PPI
 #
 ##########################################################################
 %end
@@ -181,7 +182,7 @@ my $remote_home_directory = '/metno/nrpa';
 my $remote_ftp_upload     = '/metno/nrpa/upload';
 my $remote_ftp_download   = '/metno/nrpa';
 
-my $send_mail_to = [ 'jerzy.bartnicki@met.no' ];
+my $send_mail_to = [ 'jerzy.bartnicki@met.no', 'heiko.klein@met.no' ];
 my $reply_to = 'jerzy.bartnicki@met.no';
 
 my $max_try_number = 2;
@@ -295,9 +296,9 @@ if ( $#requests < 0 ) {		# Nothing happens
 
       ## Do some cleaning on lustre:
       foreach my $tmp_dir ( @{ $remote_hosts_and_users->[0]{'PPIbasedirs'}}) {
-	my $cmd = "find $tmp_dir/* -maxdepth 0 -mtime +31 -exec 'rm -rf \\\{\} \;'";
-	print $cmd . "\n";
-	system_ppi($remote_hosts_and_users, $cmd);
+    my $cmd = "find $tmp_dir/* -maxdepth 0 -mtime +31 -exec 'rm -rf \\\{\} \;'";
+    print $cmd . "\n";
+    system_ppi($remote_hosts_and_users, $cmd);
     }
 
       my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = gmtime(time);
