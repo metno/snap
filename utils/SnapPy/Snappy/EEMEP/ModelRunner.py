@@ -6,8 +6,7 @@ Created on Sep 2, 2016
 import datetime
 import os
 import re
-import sys
-from time import sleep
+import subprocess
 import unittest
 
 from METNO.HPC import HPC, StatusFile, QJobStatus
@@ -149,16 +148,21 @@ class ModelRunner():
         start_time = self.volcano.get_meteo_dates()[1]
         tomorrow = (start_time + datetime.timedelta(days=1)).strftime("%Y%m%d")
         timestamp = self.timestamp.strftime("%Y%m%dT%H%M%S")
+        simulationstart = self.timestamp.strftime("%Y-%m-%d_%H:%M:%S")
 
         file = 'eemep_hourInst.nc'
         self._write_log("downloading {}:{} to {}".format(file, self.hpcMachine, self.path))
         self.hpc.get_files([os.path.join(self.hpc_outdir, file)], self.path, 1200)
+        subprocess.call(args=['ncatted', '-a', 'SIMULATION_START_DATE,global,o,c,{}'.format(simulationstart),
+                              os.path.join(self.path, file)])
         os.rename(os.path.join(self.path, file),
                   os.path.join(self.path, 'eemep_hourInst_{}.nc'.format(timestamp)))
 
         file = 'eemep_hour.nc'
         self._write_log("downloading {}:{} to {}".format(file, self.hpcMachine, self.path))
         self.hpc.get_files([os.path.join(self.hpc_outdir, file)], self.path, 1200)
+        subprocess.call(args=['ncatted', '-a', 'SIMULATION_START_DATE,global,o,c,{}'.format(simulationstart),
+                              os.path.join(self.path, file)])
         os.rename(os.path.join(self.path, file),
                   os.path.join(self.path, 'eemep_hour_{}.nc'.format(timestamp)))
 
