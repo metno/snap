@@ -7,6 +7,7 @@ import datetime
 import os
 import re
 import subprocess
+from time import sleep
 import unittest
 
 from METNO.HPC import HPC, StatusFile, QJobStatus
