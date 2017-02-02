@@ -214,9 +214,11 @@ m=SNAP.current t=fimex format=netcdf f={}
             return
         self.write_log("working with lat/lon=({0}/{1}) starting at {2}".format(latf, lonf, startTime))
 
-        self.lastOutputDir = os.path.join(self.res.getSnapOutputDir(), "{0}_{1}".format(tag, strftime("%Y-%m-%dT%H%M%S", gmtime())))
+        curtime = gmtime()
+        self.lastOutputDir = os.path.join(self.res.getSnapOutputDir(), "{0}_{1}".format(tag, strftime("%Y-%m-%dT%H%M%S", curtime)))
         self.lastQDict = qDict
         sourceTerm = """
+SIMULATION.START.DATE={simStart}
 SET_RELEASE.POS= P=   {lat},   {lon}
 TIME.START= {startTime}
 TIME.RUN = {runTime}h
@@ -231,7 +233,8 @@ RELEASE.BQ/SEC.COMP= {relI131}, {relI131}, 'I131'
 RELEASE.BQ/SEC.COMP= {relXE133}, {relXE133}, 'Xe133'
 RELEASE.BQ/SEC.COMP= {relCS137}, {relCS137}, 'Cs137'
 """
-        self.lastSourceTerm = sourceTerm.format(lat=latf, lon=lonf, startTime=startTime,
+        self.lastSourceTerm = sourceTerm.format(simStart=strftime("%Y-%m-%d_%H:%M:%S",curtime),
+                                                lat=latf, lon=lonf, startTime=startTime,
                                                 runTime=qDict['runTime'],
                                                 releaseTime=qDict['releaseTime'],
                                                 radius=qDict['radius'],
