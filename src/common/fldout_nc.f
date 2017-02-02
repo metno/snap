@@ -373,7 +373,8 @@ c..remove an existing file and create a completely new one
        call check(nf_def_dim(iunit, "k", nk-1, k_dimid), "k-dim")
 
        call nc_set_projection(iunit, x_dimid, y_dimid,
-     +                              igtype,nx,ny,gparam)
+     +                              igtype,nx,ny,gparam,
+     +                              simulation_start)
        if (imodlevel.eq.1)
      + call nc_set_vtrans(iunit, k_dimid, k_varid, ap_varid, b_varid)
 
@@ -1660,15 +1661,17 @@ c       call check(nf_put_var_real(iunit, ap_varid, blevel))
       end subroutine nc_set_vtrans
 
       subroutine nc_set_projection(iunit, xdimid, ydimid,
-     +                              igtype,nx,ny,gparam)
+     +                              igtype,nx,ny,gparam,
+     +                              simulation_start)
        implicit none
        include 'netcdf.inc'
        INTEGER, INTENT(IN) :: iunit, xdimid, ydimid, igtype, nx, ny
        REAL(KIND=4), INTENT(IN):: gparam(6)
+       CHARACTER(LEN=19), INTENT(IN)  :: simulation_start
+
 
        INTEGER :: i, j, ierror, x_varid, y_varid, proj_varid,
-     +             lon_varid, lat_varid, dimids(2), date_time(8)
-       CHARACTER(LEN=19)  :: simulation_start
+     +             lon_varid, lat_varid, dimids(2)
        REAL(KIND=4) :: xvals(nx), yvals(ny), lon(nx,ny), lat(nx,ny),
      +      val, pi, incr, llparam(6)
 
@@ -1686,12 +1689,6 @@ c       call check(nf_put_var_real(iunit, ap_varid, blevel))
      +   LEN_TRIM("CF-1.0"), "CF-1.0"))
 
 c a reference-time, same as in WRF
-c timestamp of the form 0000-00-00_00:00:00
-       call DATE_AND_TIME(VALUES=date_time)
-       write (simulation_start, 9999) (date_time(i),i=1,3),
-     +                                (date_time(i),i=5,7)
-9999   FORMAT(I4.4,'-',I2.2,'-',I2.2,'_',I2.2,':',I2.2,':',I2.2)
-       write(*,*) "SIMULATION_START_DATE: ", simulation_start
        call check(nf_put_att_text(iunit, NF_GLOBAL,
      +   "SIMULATION_START_DATE", LEN_TRIM("0000-00-00_00:00:00"),
      +    simulation_start))

@@ -113,6 +113,8 @@ c FIELD_TIME.VALID
 c FIELD.OUTPUT= snap.felt
 c FIELD.OUTTYPE=netcdf/felt
 c FIELD.DAILY.OUTPUT.ON
+c * timestamp which will also be written to netcdf-files, default: now
+c SIMULATION.START.DATE=2010-01-01_10:00:00
 c LOG.FILE=     snap.log
 c DEBUG.OFF ..................................... (default)
 c DEBUG.ON
@@ -243,7 +245,7 @@ c
       integer ierr1,ierr2,nsteph,nstep,nstepr,iunito
       integer nxtinf,ihread,isteph,lstepr,iendrel,istep,ihr1,ihr2,nhleft
       integer ierr,ihdiff,ihr,ifldout,idailyout,ihour,istop
-      integer  :: timeStart(6), timeCurrent(6)
+      integer  :: timeStart(6), timeCurrent(6), date_time(8)
       integer(kind=8) :: epochSecs
       real    tstep,rmlimit,rnhrun,rnhrel,glat,glong,tf1,tf2,tnow,tnext
       real    x,y
@@ -474,6 +476,11 @@ c output type
       fldfil= 'snap.dat'
       logfile='snap.log'
       relfile='*'
+c timestamp of the form 0000-00-00_00:00:00
+      call DATE_AND_TIME(VALUES=date_time)
+      write (simulation_start, 9999) (date_time(i),i=1,3),
+     +                               (date_time(i),i=5,7)
+9999  FORMAT(I4.4,'-',I2.2,'-',I2.2,'_',I2.2,':',I2.2,':',I2.2)
 c
       iensemble=0
       ensemblefile='ensemble.list'
@@ -1260,6 +1267,8 @@ c..field.outtype= <'felt|netcdf'>
             idailyout = 1
           elseif(cinput(k1:k2).eq.'field.daily.output.off') then
             idailyout = 0
+          elseif(cinput(k1:k2).eq.'simulation.start.date') then
+            simulation_start = ciname(1:nkv)
           elseif(cinput(k1:k2).eq.'log.file') then
 c..log.file= <'log_file_name'>
             if(kv1.lt.1) goto 12
@@ -1378,6 +1387,9 @@ c
       if (iexit.ne.0) then
         call exit(1)
       end if
+c
+      write(*,*) "SIMULATION_START_DATE: ", simulation_start
+
 c
       if (relfile.ne.'*') then
         call releasefile(relfile)
