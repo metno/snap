@@ -31,10 +31,11 @@ c fdata(maxsiz), idata(ldata)
       integer*2, pointer :: idata(:)
       character*1024 filef(mfilef)
       character*72 nctype
+      CHARACTER(LEN=19)  :: simulation_start
 c
       common/cfiles/nhfmin,nhfmax,nfilef,navail
      -             ,iavail,kavail,navailt1,navailt2
      -             ,itimer,limfcf
      -             ,fdata,idata
-     -             ,filef,nctype
+     -             ,filef,nctype,simulation_start
 c-----------------------------------------------------------------------
