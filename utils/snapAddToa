@@ -21,8 +21,8 @@ with netCDF4.Dataset(args.snapNc, "a") as nc:
         if (v[-18:] == "_acc_concentration"):
             exampleVar = v
             data += nc.variables[v][:]
-    arrived = numpy.where(data >= 1)
-    flying = numpy.where(data < 1)
+    arrived = numpy.where(data >= 0.0001)
+    flying = numpy.where(data < 0.0001)
     data[arrived] = 0
     data[flying] = timeDelta # timeDelta hourly data
     toa = numpy.sum(data, axis=0)
@@ -34,7 +34,8 @@ with netCDF4.Dataset(args.snapNc, "a") as nc:
 
     toaVar = nc.createVariable('time_of_arrival', 'f', nc.variables[exampleVar].dimensions, zlib=True, fill_value=-999)
     toaVar.units = 'hours'
-    toaVar.grid_mapping = nc.variables[exampleVar].grid_mapping
+    if 'grid_mapping' in nc.variables[exampleVar]:
+        toaVar.grid_mapping = nc.variables[exampleVar].grid_mapping
     toaVar[0,:] = toa
 
     # add also total depositions
@@ -43,7 +44,9 @@ with netCDF4.Dataset(args.snapNc, "a") as nc:
             comp = v[:-19]
 #            print(comp)
             total = nc.variables[v][:] + nc.variables["{}_acc_dry_deposition".format(comp)][:]
-            totalVar = nc.createVariable('{}_acc_total_deposition'.format(comp), 'f', nc.variables[v].dimensions, zlib=True)
-            totalVar.units = nc.variables[v].units
-            totalVar.grid_mapping =  nc.variables[v].grid_mapping
-            totalVar[:] = total
+	    totalVarName = '{}_acc_total_deposition'.format(comp)
+	    if not totalVarName in nc.variables:
+                totalVar = nc.createVariable(totalVarName, 'f', nc.variables[v].dimensions, zlib=True)
+                totalVar.units = nc.variables[v].units
+                totalVar.grid_mapping =  nc.variables[v].grid_mapping
+                totalVar[:] = total
