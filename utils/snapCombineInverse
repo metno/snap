@@ -22,7 +22,7 @@ def finishOutput(out_nc, isotope, times, conc, prob):
 def addFile(ncFile, isotope, times, conc, prob, isMeasurement=True):
     print(ncFile)
     with netCDF4.Dataset(ncFile, "r") as nc:
-        varname = "{iso}_concentration".format(iso=isotope)
+        varname = "{iso}_avg_concentration_bl".format(iso=isotope)
         if not varname in nc.variables:
             raise Exception("variable {vn} not in {file}".format(vn=varname,file=ncFile))
         co = nc.variables[varname][:]
