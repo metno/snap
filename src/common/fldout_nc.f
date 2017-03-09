@@ -1786,8 +1786,6 @@ c..lcc
          call check(nf_put_att_text(iunit,proj_varid,
      +     "grid_mapping_name", LEN_TRIM("lambert_conformal_conic"),
      +                              TRIM("lambert_conformal_conic")))
-         val = 180+gparam(5)
-         if (val > 360) val = val - 360
          call check(nf_put_att_real(iunit,proj_varid,
      +     "longitude_of_central_meridian", NF_FLOAT, 1, gparam(5)))
          call check(nf_put_att_real(iunit,proj_varid,
@@ -1798,17 +1796,17 @@ c..lcc
          xvals(1) = gparam(1)
          yvals(1) = gparam(2)
          ierror = 0
-         call xyconvert(1, xvals(1), yvals(1), 6, gparam,
-     +                                         2, llparam, ierror)
+         call xyconvert(1, xvals(1), yvals(1), 2, llparam,
+     +                                         6, gparam, ierror)
          if (ierror.ne.0) then
            write(*,*) "error converting lcc to ll"
            call exit(1)
          end if
          do i=2,nx
-           xvals(i) = xvals(1) + (i-1)*gparam(3)
+           xvals(i) = xvals(1) + (i-1)*gparam(3)*1000
          end do
          do i=1,ny
-           yvals(i) = yvals(1) + (i-1)*gparam(4)
+           yvals(i) = yvals(1) + (i-1)*gparam(4)*1000
          end do
        else
          write(*,*) "unkown grid-type:", igtype
