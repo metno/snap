@@ -55,7 +55,7 @@ c      real,save     ::    t2thetafac(15000)
       real    unitScale
 
       integer varid, retval, timepos
-      integer start3d(3), start4d(4), count3d(3), count4d(4)
+      integer start3d(7), start4d(7), count3d(7), count4d(7)
       character*(80) xwindv,ywindv,xwind10mv,ywind10mv,pottempv,ptopv
       character*(80) sigmadotv,apv,bv,sigmav,psv,mslpv,precaccumv
       character*(80) precstratiaccumv, precconaccumv
@@ -427,14 +427,8 @@ c
 c..input model level no.
         ilevel=klevel(k)
 
-        start4d(1) = 1
-        start4d(2) = 1
-        start4d(3) = ilevel
-        start4d(4) = timepos
-        count4d(1) = nx
-        count4d(2) = ny
-        count4d(3) = 1
-        count4d(4) = 1
+        call calc_2d_start_length(start4d, count4d, nx, ny, ilevel,
+     &            enspos, timepos, has_dummy_dim)
 c
 c..u
 !     Get the varid of the data variable, based on its name.
@@ -512,30 +506,11 @@ c
 c..surface pressure, 10m wind and possibly mean sea level pressure,
 c..precipitation
 c
-      start3d(1) = 1
-      start3d(2) = 1
-      start3d(3) = timepos
-      count3d(1) = nx
-      count3d(2) = ny
-      count3d(3) = 1
-
-      if (has_dummy_dim) then
-        start4d(1) = 1
-        start4d(2) = 1
-        start4d(3) = 1
-        start4d(4) = timepos
-        count4d(1) = nx
-        count4d(2) = ny
-        count4d(3) = 1
-        count4d(4) = 1
-      end if
+      call calc_2d_start_length(start3d, count3d, nx, ny, -1,
+     &            enspos, timepos, has_dummy_dim)
 
 c ps
-      if (has_dummy_dim) then
-       call nfcheckload(ncid, psv, start4d, count4d, ps2(1,1))
-      else
-       call nfcheckload(ncid, psv, start3d, count3d, ps2(1,1))
-      endif
+      call nfcheckload(ncid, psv, start3d, count3d, ps2(1,1))
 c  input ps, must be hPa, otherwise:
       if (nctype.eq.'arome'.or.nctype.eq.'dmi_eps'.or.
      &    nctype.eq.'ec_det'.or.nctype.eq.'h12_grib') then
@@ -550,13 +525,8 @@ c      call readfd(iunit,navps,ivc,8,ilevel,0,ps2(1,1),ierror)
 
 c u10m
 c v10m
-      if (has_dummy_dim) then
-        call nfcheckload(ncid, xwind10mv, start4d, count4d, u2(1,1,1))
-        call nfcheckload(ncid, ywind10mv, start4d, count4d, v2(1,1,1))
-      else
-        call nfcheckload(ncid, xwind10mv, start3d, count3d, u2(1,1,1))
-        call nfcheckload(ncid, ywind10mv, start3d, count3d, v2(1,1,1))
-      endif
+      call nfcheckload(ncid, xwind10mv, start3d, count3d, u2(1,1,1))
+      call nfcheckload(ncid, ywind10mv, start3d, count3d, v2(1,1,1))
 
 c..mean sea level pressure, not used in computations,
 c..(only for graphics and/or output to results file)
@@ -565,11 +535,7 @@ c..(only for graphics and/or output to results file)
           write(9,*) 'Mslp not found. Not important.'
           imslp=0
         else
-          if (has_dummy_dim) then
-            call nfcheckload(ncid, mslpv, start4d, count4d, pmsl2(1,1))
-          else
-            call nfcheckload(ncid, mslpv, start3d, count3d, pmsl2(1,1))
-          endif
+          call nfcheckload(ncid, mslpv, start3d, count3d, pmsl2(1,1))
 c        call readfd(iunit,nav,ivc,58,ilevel,0,pmsl2(1,1),ierror)
         end if
       end if
@@ -579,23 +545,15 @@ c
       if (precaccumv.ne.'') then
 c..precipitation between input time 't1' and 't2'
         if (timepos .ne. 1) then
-          if (has_dummy_dim) then
-            start4d(4) = timepos - 1
-            call nfcheckload(ncid, precaccumv,
-     +                        start4d, count4d, field1(1,1))
+          call calc_2d_start_length(start3d, count3d, nx, ny, -1,
+     &            enspos, timepos - 1, has_dummy_dim)
+          call nfcheckload(ncid, precaccumv,
+     +                     start3d, count3d, field1(1,1))
 c         call readfd(iunit,nav,ivc,17,ilevel,ihrpr1,field1,ierror)
-            start4d(4) = timepos
-            call nfcheckload(ncid, precaccumv,
-     +                      start4d, count4d, field2(1,1))
-          else
-            start3d(3) = timepos - 1
-            call nfcheckload(ncid, precaccumv,
-     +                        start3d, count3d, field1(1,1))
-c         call readfd(iunit,nav,ivc,17,ilevel,ihrpr1,field1,ierror)
-            start3d(3) = timepos
-            call nfcheckload(ncid, precaccumv,
-     +                      start3d, count3d, field2(1,1))
-         endif
+          call calc_2d_start_length(start3d, count3d, nx, ny, -1,
+     &            enspos, timepos, has_dummy_dim)
+          call nfcheckload(ncid, precaccumv,
+     +                     start3d, count3d, field2(1,1))
 c         call readfd(iunit,nav,ivc,17,ilevel,ihrpr2,field2,ierror)
 c..the difference below may get negative due to different scaling
           do j=1,ny
@@ -611,30 +569,18 @@ c..the difference below may get negative due to different scaling
 c accumulated stratiform and convective precipitation
 c..precipitation between input time 't1' and 't2'
         if (timepos .ne. 1) then
-          if (has_dummy_dim) then
-            start4d(4) = timepos - 1
-            call nfcheckload(ncid, precstratiaccumv,
-     +                        start4d, count4d, field1(1,1))
-            call nfcheckload(ncid, precconaccumv,
-     +                        start4d, count4d, field2(1,1))
-c and the next timestep
-            start4d(4) = timepos
-            call nfcheckload(ncid, precstratiaccumv,
-     +                        start4d, count4d, field3(1,1))
-            call nfcheckload(ncid, precconaccumv,
-     +                        start4d, count4d, field4(1,1))
-          else
-            start3d(3) = timepos - 1
-            call nfcheckload(ncid, precstratiaccumv,
-     +                        start3d, count3d, field1(1,1))
-            call nfcheckload(ncid, precconaccumv,
-     +                        start3d, count3d, field2(1,1))
-            start3d(3) = timepos
-            call nfcheckload(ncid, precstratiaccumv,
-     +                        start3d, count3d, field3(1,1))
-            call nfcheckload(ncid, precconaccumv,
-     +                        start3d, count3d, field4(1,1))
-         endif
+          call calc_2d_start_length(start3d, count3d, nx, ny, -1,
+     &            enspos, timepos - 1, has_dummy_dim)
+          call nfcheckload(ncid, precstratiaccumv,
+     +                     start3d, count3d, field1(1,1))
+          call nfcheckload(ncid, precconaccumv,
+     +                     start3d, count3d, field2(1,1))
+          call calc_2d_start_length(start3d, count3d, nx, ny, -1,
+     &            enspos, timepos, has_dummy_dim)
+          call nfcheckload(ncid, precstratiaccumv,
+     +                     start3d, count3d, field3(1,1))
+          call nfcheckload(ncid, precconaccumv,
+     +                     start3d, count3d, field4(1,1))
 c..the difference below may get negative due to different scaling
          unitScale = 1.
          if (nctype .eq. 'ec_det') unitScale = 1000.
@@ -649,19 +595,12 @@ c..the difference below may get negative due to different scaling
           end do
         else
 c timepos eq 1, check if precipitation already present / assume dummy step 0
-          if (has_dummy_dim) then
-            start4d(4) = timepos
-            call nfcheckload(ncid, precstratiaccumv,
-     +                        start4d, count4d, field3(1,1))
-            call nfcheckload(ncid, precconaccumv,
-     +                        start4d, count4d, field4(1,1))
-          else
-            start3d(3) = timepos
-            call nfcheckload(ncid, precstratiaccumv,
-     +                        start3d, count3d, field3(1,1))
-            call nfcheckload(ncid, precconaccumv,
-     +                        start3d, count3d, field4(1,1))
-          endif
+          call calc_2d_start_length(start3d, count3d, nx, ny, -1,
+     &            enspos, timepos, has_dummy_dim)
+          call nfcheckload(ncid, precstratiaccumv,
+     +                     start3d, count3d, field3(1,1))
+          call nfcheckload(ncid, precconaccumv,
+     +                     start3d, count3d, field4(1,1))
           totalprec = 0
           do j=1,ny
             do i=1,nx
@@ -689,17 +628,10 @@ c..the difference below may get negative due to different scaling
         end if
       else
 c..non-accumulated emissions in stratiform an convective
-        if (has_dummy_dim) then
-          call nfcheckload(ncid, precstrativrt,
-     +                    start4d, count4d, field1(1,1))
-          call nfcheckload(ncid, precconvrt,
-     +                    start4d, count4d, field2(1,1))
-        else
-          call nfcheckload(ncid, precstrativrt,
-     +                    start3d, count3d, field1(1,1))
-          call nfcheckload(ncid, precconvrt,
-     +                    start3d, count3d, field2(1,1))
-        endif
+        call nfcheckload(ncid, precstrativrt,
+     +                  start3d, count3d, field1(1,1))
+        call nfcheckload(ncid, precconvrt,
+     +                  start3d, count3d, field2(1,1))
 
         do j=1,ny
           do i=1,nx
@@ -839,7 +771,7 @@ c              t2(i,j,k)=t2(i,j,k) * t2thetafac(nint(p*10.))
           end do
         end do
       end if
-      
+
       if (sigmadot_is_omega) then
 c..omega -> etadot, or rather etadot derived from continuity-equation (mean of both)
          call om2edot
@@ -980,6 +912,43 @@ c
 
 
       end subroutine readfield_nc
+
+
+      subroutine calc_2d_start_length(start, length, nx, ny, zpos,
+     &            enspos, tpos, has_2d_dummy_height)
+! calculate the start and length paramters for slicing
+! a 2d field from a 3-5d dataset
+        integer, intent (inout) :: start(7), length(7)
+        integer, intent (in) :: nx, ny, zpos, enspos, tpos
+        logical, intent (in) :: has_2d_dummy_height
+        integer pos
+
+        do pos = 1, 7
+          start(pos) = 1
+          length(pos) = 1
+        end do
+
+        length(1) = nx
+        length(2) = ny
+
+        pos = 2
+! ensemble enspos given in C notation, e.g. first member = 0
+        if (enspos >= 0) then
+          pos = pos + 1
+          start(pos) = enspos+1
+        end if
+! z
+        if (zpos >= 1) then
+          pos = pos + 1
+          start(pos) = zpos
+        elseif (has_2d_dummy_height) then
+          pos = pos + 1
+        end if
+! time
+        pos = pos + 1
+        start(pos) = tpos
+
+      end subroutine calc_2d_start_length
 
 
       subroutine check(status, errmsg)

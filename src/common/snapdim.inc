@@ -56,10 +56,10 @@ ccc   parameter (mxyargos=nx*ny)
 c.......................................................
 c
 c
-c..mplume:  max. no. of plume releases
-c..mpart:   max. no. of particles, total in all plumes, preset, can be configured in snap.input
+c..mplumepre:  max. no. of plume releases, preset, can be configured in snap.input
+c..mpartpre:   max. no. of particles, total in all plumes, preset, can be configured in snap.input
 c
-      integer mplume,mplumepre,mpart,mpartpre
+      integer mplumepre,mpartpre
 c mplume should be timesteps (model) * release-heights
       parameter (mplumepre=50000)
       parameter (mpartpre =10000000)

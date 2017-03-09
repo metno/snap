@@ -36,7 +36,7 @@ c..totalbq:   total release in unit Bq, accumulated during run
 c..numtotal:  total no. of particles released, accumulated during run
 c..compname:  a component name (not much used, really)
 c
-      integer      ndefcomp,nplume,npart,nparnum
+      integer      ndefcomp,nplume,npart,nparnum, mpart, mplume
 c      integer      iplume(2,mplume)
       INTEGER, DIMENSION(:,:), POINTER :: iplume
       integer      kdrydep(mdefcomp),kwetdep(mdefcomp),kdecay(mdefcomp)
