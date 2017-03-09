@@ -100,6 +100,8 @@ c * Norlam (sigma levels)
 c DATA.SIGMA.LEVELS
 c * Hirlam (eta levels)
 c DATA.ETA.LEVELS
+c * select the ensemble member (0=first, -1=no ensemble-input)
+c ENSEMBLE_MEMBER.INPUT = 0
 c * wind.surface = wind.10m (one 0 level first in list)
 c LEVELS.INPUT= 14, 0,31,30,29,28,27,26,25,23,21,17,13,7,1
 c * forecast.hour.min/max for following files (may change between files)
@@ -481,7 +483,9 @@ c timestamp of the form 0000-00-00_00:00:00
       write (simulation_start, 9999) (date_time(i),i=1,3),
      +                               (date_time(i),i=5,7)
 9999  FORMAT(I4.4,'-',I2.2,'-',I2.2,'_',I2.2,':',I2.2,':',I2.2)
-c
+c input ensemble member, default to no ensembles
+      enspos = -1
+c ensemble output
       iensemble=0
       ensemblefile='ensemble.list'
       ensembleparticipant=09
@@ -1192,6 +1196,8 @@ c..grid.gparam=<igtype,gparam(6)>
 c..grid.run=<producer,grid,ixbase,iybase,ixystp>
             if(kv1.lt.1) goto 12
             read(cipart,*,err=12) iprodr,igridr,ixbase,iybase,ixystp
+          elseif(cinput(k1:k2).eq.'ensemble_member.input') then
+            read(cipart,*,err=12) enspos
           elseif(cinput(k1:k2).eq.'data.sigma.levels') then
 c..data.sigma.levels
             ivcoor=2

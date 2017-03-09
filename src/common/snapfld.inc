@@ -21,6 +21,7 @@ c	   for graphics and/or output (possible if nxad=nx and nyad=ny)
 c..precip: hourly precipitation intensity (mm/hour)
 c..nprecip: no. of steps stored
 c..iprecip: the current precipitation field
+c..enspos: the ensemble-member to read met-data from
 c
       REAL(kind=4), DIMENSION(:,:,:), POINTER ::
      +   u1, v1, w1, t1, hlevel1, hlayer1,
@@ -33,14 +34,14 @@ c
      +  xm, ym, garea, field1, field2, field3,
      +  field4, pmsl1, pmsl2
 
-      integer nprecip,iprecip
+      integer nprecip,iprecip,enspos
 c
       common/fieldi/u1,v1,w1,t1,ps1,bl1,hbl1,hlevel1,hlayer1
      -             ,u2,v2,w2,t2,ps2,bl2,hbl2,hlevel2,hlayer2
      -             ,xm,ym,garea
      -             ,field1,field2,field3,field4
      -             ,pmsl1,pmsl2
-     -             ,precip,nprecip,iprecip
+     -             ,precip,nprecip,iprecip,enspos
 c
 c
 c..dgarea:  grid square area (m**2) ... double precision
