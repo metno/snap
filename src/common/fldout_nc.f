@@ -1673,7 +1673,7 @@ c       call check(nf_put_var_real(iunit, ap_varid, blevel))
        INTEGER :: i, j, ierror, x_varid, y_varid, proj_varid,
      +             lon_varid, lat_varid, dimids(2)
        REAL(KIND=4) :: xvals(nx), yvals(ny), lon(nx,ny), lat(nx,ny),
-     +      val, pi, incr, llparam(6)
+     +      val, pi, incr, llparam(6), gparam2(6)
 
        DATA llparam /1., 1., 1., 1., 0., 0./
        call check(nf_def_var(iunit, "x",
@@ -1795,17 +1795,27 @@ c..lcc
 
          xvals(1) = gparam(1)
          yvals(1) = gparam(2)
+! gparam(5) and gparam(6) are the reference-point of the projection
+         gparam2(1) = gparam(5)
+         gparam2(2) = gparam(6)
+         do i=3,6 
+           gparam2(i) = gparam(i)
+         end do
          ierror = 0
          call xyconvert(1, xvals(1), yvals(1), 2, llparam,
-     +                                         6, gparam, ierror)
+     +                                         6, gparam2, ierror)
          if (ierror.ne.0) then
            write(*,*) "error converting lcc to ll"
            call exit(1)
          end if
+         xvals(1) = (xvals(1)-1)*gparam(3)*1000
+         yvals(1) = (yvals(1)-1)*gparam(4)*1000
+! xvals is currently the lowerd left corner in plane-coordinates
+! but must be in m from center
          do i=2,nx
            xvals(i) = xvals(1) + (i-1)*gparam(3)*1000
          end do
-         do i=1,ny
+         do i=2,ny
            yvals(i) = yvals(1) + (i-1)*gparam(4)*1000
          end do
        else
