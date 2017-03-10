@@ -1666,7 +1666,7 @@ c       call check(nf_put_var_real(iunit, ap_varid, blevel))
        implicit none
        include 'netcdf.inc'
        INTEGER, INTENT(IN) :: iunit, xdimid, ydimid, igtype, nx, ny
-       REAL(KIND=4), INTENT(IN):: gparam(6)
+       REAL(KIND=4), INTENT(IN):: gparam(8)
        CHARACTER(LEN=19), INTENT(IN)  :: simulation_start
 
 
@@ -1762,13 +1762,11 @@ c..polar_stereographic
      +     "latitude_of_projection_origin", NF_INT, 1, 90))
          pi = 4.D0*DATAN(1.D0)
 c..increment
-         val = 6371000*(1+sin(gparam(5)*pi/180)) / gparam(3)
-c         write(*,*) "gparam dx", gparam, val
          do i=1,nx
-           xvals(i) = (i-gparam(1))*val
+           xvals(i) = (i-gparam(1))*gparam(7)
          end do
          do i=1,ny
-           yvals(i) = (i-gparam(2))*val
+           yvals(i) = (i-gparam(2))*gparam(8)
          end do
 
        else if (igtype.eq.6) then
@@ -1808,15 +1806,15 @@ c..lcc
            write(*,*) "error converting lcc to ll"
            call exit(1)
          end if
-         xvals(1) = (xvals(1)-1)*gparam(3)*1000
-         yvals(1) = (yvals(1)-1)*gparam(4)*1000
+         xvals(1) = (xvals(1)-1)*gparam(7)
+         yvals(1) = (yvals(1)-1)*gparam(8)
 ! xvals is currently the lowerd left corner in plane-coordinates
 ! but must be in m from center
          do i=2,nx
-           xvals(i) = xvals(1) + (i-1)*gparam(3)*1000
+           xvals(i) = xvals(1) + (i-1)*gparam(7)
          end do
          do i=2,ny
-           yvals(i) = yvals(1) + (i-1)*gparam(4)*1000
+           yvals(i) = yvals(1) + (i-1)*gparam(8)
          end do
        else
          write(*,*) "unkown grid-type:", igtype
