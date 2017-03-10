@@ -281,8 +281,8 @@ c
 c
 c..mercator or lambert grid
 c
-        west =grid(1)*zpir18
-        south=grid(2)*zpir18
+        xw   =grid(1)*zpir18
+        ys   =grid(2)*zpir18
         dx   =grid(3)*1000.
         dy   =grid(4)*1000.
         if (igtype.eq.5) then
