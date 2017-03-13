@@ -11,7 +11,7 @@ Standards-Version: 3.9.5
 
 Package: snap-py
 Architecture: all
-Depends: ${misc:Depends}, ${python3:Depends}, bsnap, python3-pyqt5, python3-pyqt5.qtwebkit
+Depends: ${misc:Depends}, ${python3:Depends}, bsnap (>= 1.3.5), python3-pyqt5, python3-pyqt5.qtwebkit
 Description: SNAP GUI in python
 
 
