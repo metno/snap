@@ -206,6 +206,8 @@ GRAVITY.FIXED.M/S=0.0002
             filename = os.path.join(os.path.dirname(__file__),"resources/snap.input.tmpl")
         elif (metmodel == 'nrpa_ec_0p1') or (metmodel == 'nrpa_ec_0p1_global'):
             filename = os.path.join(os.path.dirname(__file__),"resources/snap.input_nrpa_ec_0p1.tmpl")
+        elif (metmodel == 'meps_2_5km'):
+            filename = os.path.join(os.path.dirname(__file__),"resources/snap.input_meps_2_5km.tmpl")
         else:
             raise(NotImplementedError("metmodel='{}' not implememented".format(metmodel)))
 
