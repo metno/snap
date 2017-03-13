@@ -233,8 +233,6 @@ SET_RELEASE.POS= P=   {lat},   {lon}
 TIME.START= {startTime}
 TIME.RUN = {runTime}h
 TIME.RELEASE.PROFILE.STEPS
-MAX.PARTICLES.PER.RELEASE= 2000
-MAX.TOTALPARTICLES= 20000000
 RELEASE.HOUR= 0, {releaseTime}
 RELEASE.RADIUS.M= {radius}, {radius}
 RELEASE.LOWER.M= {lowerHeight}, {lowerHeight}
