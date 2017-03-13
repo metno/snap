@@ -202,6 +202,7 @@ c upward_air_velocity_ml, not used yet?
      &    'lwe_thickness_of_convective_precipitation_amount'
 c..get grid parameters from field identification
       else if (nctype.eq.'arome') then
+        manual_level_selection = .true.
         has_dummy_dim = .true.
         xwindv = 'x_wind_ml'
         ywindv = 'y_wind_ml'
@@ -711,10 +712,14 @@ c..alevel and blevel are in the middle of each layer
         ahalf(1)=alevel(1)
         bhalf(1)=blevel(1)
         vhalf(1)=vlevel(1)
-c..is the following the best we can do ???
+c..check if subselection of levels
         do k=2,nk-1
-          if((.not.manual_level_selection)
-     &       .and.(klevel(k+1).eq.klevel(k)-1)) then
+          if (klevel(k+1).ne.klevel(k)-1) then
+            manual_level_selection = .true.
+          endif
+        end do
+        do k=2,nk-1
+          if (.not.manual_level_selection) then
             ahalf(k)=alevel(k)+(alevel(k)-ahalf(k-1))
             bhalf(k)=blevel(k)+(blevel(k)-bhalf(k-1))
             vhalf(k)=ahalf(k)/1013.26+bhalf(k)
