@@ -162,6 +162,16 @@ m=SNAP.current t=fimex format=netcdf f={}
             return False
         return True
 
+    def _meps25DomainCheck(self, lonf, latf):
+        if (latf <= 53. or
+            latf >= 72. or
+            lonf <= 0. or
+            lonf >= 36.):
+            self.write_log("(lat,lon) = ({lat},{lon}) outside domain for meps.\n".format(lat=latf, lon=lonf))
+            return False
+        return True
+
+
 
     def run_snap_query(self, qDict):
         # make sure all files are rw for everybody (for later deletion)
@@ -276,6 +286,16 @@ RELEASE.BQ/SEC.COMP= {relCS137}, {relCS137}, 'Cs137'
                     self._ec_finished_run_snap()
             except ECDataNotAvailableException as e:
                 self.write_log("problems creating EC-met: {}".format(e.args[0]))
+        elif qDict['metmodel'] == 'meps_2_5km':
+            files = self.res.getMEPS25MeteorologyFiles(startDT, int(qDict['runTime']), "best")
+            if (len(files) == 0):
+                self.write_log("no MEPS2_5 met-files found for {}, runtime {}".format(startDT, qDict['runTime']))
+                return
+            if (not self._meps25DomainCheck(lonf,latf)):
+                return
+            with open(os.path.join(self.lastOutputDir, "snap.input"),'a') as fh:
+                fh.write(self.res.getSnapInputMetDefinitions(qDict['metmodel'], files))
+            self._snap_model_run()
         else:
             # hirlam
             if (not self._defaultDomainCheck(lonf,latf)):

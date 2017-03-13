@@ -26,6 +26,9 @@ class Resources():
     ECGLOBALINPUTDIRS = ["/lustre/storeA/project/metproduction/products/ecmwf/nc/", "/lustre/storeB/project/metproduction/products/ecmwf/nc/"]
     EC_GLOBAL_PATTERN = "ec_atmo_0_1deg_{year:04d}{month:02d}{day:02d}T{dayoffset:02d}0000Z_3h.nc"
 
+    MEPSINPUTDIRS = ["/lustre/storeA/project/metproduction/products/meps/", "/lustre/storeB/project/metproduction/products/meps/"]
+    MEPS25_FILENAME_PATTERN = "meps_full_2_5km_{year:04d}{month:02d}{day:02d}T{UTC:02d}Z.nc"
+
     def __init__(self):
         '''
         initialize
@@ -65,6 +68,8 @@ class Resources():
                     "dx": self.ecDomainRes,
                     "dy": self.ecDomainRes,
                     }
+        elif (metmodel == 'meps_2_5km'):
+            return {}
 
         raise(NotImplementedError("metmodel='{}' not implememented".format(metmodel)))
 
@@ -232,6 +237,9 @@ GRAVITY.FIXED.M/S=0.0002
                                 startY=startY,
                                 dx=dx,
                                 dy=dy))
+        elif (metmodel == 'meps_2_5km'):
+            # no setup needed, decoded in snap-template
+            pass
         else:
             raise(NotImplementedError("metmodel='{}' not implememented".format(metmodel)))
 
@@ -274,6 +282,44 @@ GRAVITY.FIXED.M/S=0.0002
                     relevant.append("{year:04d}-{month:02d}-{day:02d}_{UTC:02d}".format(UTC=utc, year=start.year, month=start.month, day=start.day))
             start += timedelta(days=1)
         return relevant
+
+    def getMEPS25MeteorologyFiles(self, dtime: datetime, run_hours: int, fixed_run="best"):
+        """Get available meteorology files for the last few days around dtime and run_hours.
+
+        Keyword arguments:
+        dtime -- start time of model run
+        run_hours -- run length in hours, possibly negative
+        fixed_run -- string of form YYYY-MM-DD_HH giving a specific model-run
+        latitude -- float of latitude position
+        longitude -- float of longitude position
+        """
+        relevant_dates = []
+
+
+        # only best currently implemented
+        if (fixed_run == "best"):
+            if run_hours < 0:
+                start = dtime + timedelta(hours=run_hours)
+            else:
+                start = dtime
+
+            start -= timedelta(hours=66) # go 66 hours (forecast-length) back
+
+            today = datetime.combine(date.today(), time(0,0,0))
+            tomorrow = today + timedelta(days=1)
+            days = []
+            while (start < tomorrow):
+                days.append(start)
+                start += timedelta(days=1)
+            # loop needs to have latest model runs/hindcast runs last
+            for day in days:
+                for utc in [0, 6, 12, 18]:
+                    file = self.MEPS25_FILENAME_PATTERN.format(UTC=utc, year=day.year, month=day.month, day=day.day)
+                    filename = self._findFileInPathes(file, self.MEPSINPUTDIRS)
+                    if filename is not None: relevant_dates.append(filename)
+
+        return relevant_dates
+
 
     def getECMeteorologyFiles(self, dtime: datetime, run_hours: int, fixed_run="best"):
         """Get available meteorology files for the last few days around dtime and run_hours.
@@ -331,3 +377,5 @@ if __name__ == "__main__":
     print(runs)
     print(Resources().getECMeteorologyFiles(datetime.combine(date.today(),time(0)), 48, runs[1]))
     print(Resources().isotopes2snapinput([169, 158, 148]))
+    print(Resources().getMEPS25MeteorologyFiles(datetime.combine(date.today(),time(0)), -48))
+    print(Resources().getMEPS25MeteorologyFiles(datetime.combine(date.today(),time(0)), -72))
