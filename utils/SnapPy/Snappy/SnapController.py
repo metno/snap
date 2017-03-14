@@ -237,19 +237,25 @@ RELEASE.HOUR= 0, {releaseTime}
 RELEASE.RADIUS.M= {radius}, {radius}
 RELEASE.LOWER.M= {lowerHeight}, {lowerHeight}
 RELEASE.UPPER.M= {upperHeight}, {upperHeight}
-RELEASE.BQ/SEC.COMP= {relI131}, {relI131}, 'I131'
-RELEASE.BQ/SEC.COMP= {relXE133}, {relXE133}, 'Xe133'
-RELEASE.BQ/SEC.COMP= {relCS137}, {relCS137}, 'Cs137'
 """
         self.lastSourceTerm = sourceTerm.format(simStart=strftime("%Y-%m-%d_%H:%M:%S",curtime),
                                                 lat=latf, lon=lonf, startTime=startTime,
                                                 runTime=qDict['runTime'],
                                                 releaseTime=qDict['releaseTime'],
                                                 radius=qDict['radius'],
-                                                lowerHeight=qDict['lowerHeight'], upperHeight=qDict['upperHeight'],
-                                                relI131=qDict['relI131'],
-                                                relXE133=qDict['relXE133'],
-                                                relCS137=qDict['relCS137'])
+                                                lowerHeight=qDict['lowerHeight'], upperHeight=qDict['upperHeight'])
+        isotopes = {'relI131': 'I131',
+                    'relXE133': 'Xe133',
+                    'relCS137': 'Cs137'}
+        for rel, iso in isotopes.items():
+            emis = 0.
+            try:
+                emis = float(qDict[rel])
+            except:
+                pass
+            if (emis > 0.):
+                self.lastSourceTerm += "RELEASE.BQ/SEC.COMP= {rel}, {rel}, '{iso}'\n".format(rel=qDict[rel], iso=iso)
+
         debug("output directory: {}".format(self.lastOutputDir))
         os.mkdir(self.lastOutputDir)
 
