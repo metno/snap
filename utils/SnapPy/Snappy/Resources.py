@@ -10,6 +10,7 @@ import math
 import os
 import re
 import sys
+import time as mtime
 from time import gmtime, strftime
 
 
@@ -318,7 +319,10 @@ GRAVITY.FIXED.M/S=0.0002
                 for utc in [0, 6, 12, 18]:
                     file = self.MEPS25_FILENAME_PATTERN.format(UTC=utc, year=day.year, month=day.month, day=day.day)
                     filename = self._findFileInPathes(file, self.MEPSINPUTDIRS)
-                    if filename is not None: relevant_dates.append(filename)
+                    if filename is not None:
+                        fmtime = os.stat(filename).st_mtime
+                        if ((mtime.time() - fmtime) > (60*10)): # file older than 10min -> no longer under production
+                            relevant_dates.append(filename)
 
         return relevant_dates
 
