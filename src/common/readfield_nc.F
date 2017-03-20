@@ -51,7 +51,7 @@
       integer kk, ifb, kfb
       real    rcp, dred, red, p, px, dp, p1, p2,ptop
       real    totalprec
-c      real,save     ::    t2thetafac(15000)
+      real,save     ::    t2thetafac(15000)
       real    unitScale
 
       integer varid, retval, timepos
@@ -754,9 +754,9 @@ c..size of each grid square (m**2)
         if (temp_is_abs) then
           rcp=r/cp
 c create precomputed table for pressures between 0.1 and 1500hPa
-c          do i=1,15000
-c            t2thetafac(i) = 1./((real(i)/10.*0.001)**rcp)
-c          end do
+          do i=1,15000
+            t2thetafac(i) = 1./((real(i)/10.*0.001)**rcp)
+          end do
         end if
 
 c end initialization
@@ -769,9 +769,8 @@ c..abs.temp. -> pot.temp.
             do i=1,nx
               p=alevel(k)+blevel(k)*ps2(i,j)
 c t2thetafac is 50% faster, and less then 0.5% difference in theta
-c but very large differences in hbl
-c              t2(i,j,k)=t2(i,j,k) * t2thetafac(nint(p*10.))
-              t2(i,j,k)=t2(i,j,k)/((p*0.001)**rcp)
+              t2(i,j,k)=t2(i,j,k) * t2thetafac(nint(p*10.+.5))
+              !t2(i,j,k)=t2(i,j,k)/((p*0.001)**rcp)
             end do
           end do
         end do
