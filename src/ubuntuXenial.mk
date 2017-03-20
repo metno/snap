@@ -5,11 +5,11 @@ F77 = gfortran
 CXX = g++
 CC  = gcc
 
-F77FLAGS=-O2 -g -msse2 -cpp -ffpe-trap=invalid,zero,overflow -fbounds-check -Wall
+F77FLAGS=-O2 -g -mavx -cpp -ffpe-trap=invalid,zero,overflow -fbounds-check -Wall -fopenmp
 CXXFLAGS=-O3
-CCFLAGS=-O3
+CCFLAGS=-O3 -g 
 
-LDFLAGS=
+LDFLAGS=-fopenmp
 
 # NCDIR required even if /usr or /usr/local
 NCDIR = /usr
