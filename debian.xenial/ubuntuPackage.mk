@@ -7,7 +7,7 @@ CC  = gcc
 
 F77FLAGS=-O2 -g -mavx -cpp -ftree-vectorize -fno-math-errno
 CXXFLAGS=-O2 -mavx -ftree-vectorize -fno-math-errno
-CCFLAGS=-O2 -mavx -ftree-vectorize -fno-math-errno
+CCFLAGS=-O2 -g -mavx -ftree-vectorize -fno-math-errno
 
 LDFLAGS=
 
