@@ -5,11 +5,15 @@ F77 = gfortran
 CXX = g++
 CC  = gcc
 
-F77FLAGS=-O2 -g -mavx -cpp -ffpe-trap=invalid,zero,overflow -fbounds-check -Wall -fopenmp
-CXXFLAGS=-O3
-CCFLAGS=-O3 -g 
+# PROFILES not working for gcc 5.4 and fortran MODULES
+#PROFILE=-fprofile-generate=/tmp/snapprof.dat
+#PROFILE=-fprofile-use=/tmp/snapprof.dat -Wcoverage-mismatch
+#F77FLAGS=-O2 -g -mavx -cpp -ffpe-trap=invalid,zero,overflow -fbounds-check -Wall
+F77FLAGS=-O2 -ftree-vectorize -fno-math-errno -ffpe-trap=invalid,zero,overflow -g -mavx -cpp -fopt-info-optimized-vec -fopenmp $(PROFILE)
+CXXFLAGS=-O3 $(PROFILE)
+CCFLAGS=-O3 -g $(PROFILE)
 
-LDFLAGS=-fopenmp
+LDFLAGS=-fopenmp $(PROFILE)
 
 # NCDIR required even if /usr or /usr/local
 NCDIR = /usr
