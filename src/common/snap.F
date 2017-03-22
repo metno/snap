@@ -2214,13 +2214,9 @@ c
        if(iensemble.eq.1)
      +    call ensemble(5,itime,tf1,tf2,tnext,istep,nstep,nsteph,0)
 c
-!$OMP PARALLEL DO REDUCTION(max : mhmax)
+!$OMP PARALLEL DO REDUCTION(max : mhmax) REDUCTION(min : mhmin)
        do n=1,npart
           if(pdata(n)%hbl .gt. mhmax) mhmax=pdata(n)%hbl
-       enddo
-!$OMP END PARALLEL DO
-!$OMP PARALLEL DO REDUCTION(min : mhmin)
-       do n=1,npart
           if(pdata(n)%hbl .lt. mhmin) mhmin=pdata(n)%hbl
        enddo
 !$OMP END PARALLEL DO

@@ -39,6 +39,9 @@ c
         fsum=0.
         if(iundef.eq.0) then
 
+!$OMP PARALLEL DO PRIVATE(j,i) REDUCTION(max : fmax)
+!$OMP&            REDUCTION(min : fmin) REDUCTION( + : fsum)
+!$OMP&            COLLAPSE(2)
           do j=1,ny
             do i=1,nx
               fmin=min(fmin,field(i,j,k))
@@ -46,9 +49,13 @@ c
               fsum=fsum+field(i,j,k)
             end do
           end do
+!$OMP END PARALLEL DO
           ndef=nx*ny
         else
           ndef=0
+!$OMP PARALLEL DO PRIVATE(j,i) REDUCTION(max : fmax)
+!$OMP&            REDUCTION(min : fmin) REDUCTION( + : fsum, ndef)
+!$OMP&            COLLAPSE(2)
           do j=1,ny
             do i=1,nx
               if(field(i,j,k).lt.ud) then
@@ -59,6 +66,7 @@ c
               end if
             end do
           end do
+!$OMP END PARALLEL DO
         end if
         if(ndef.gt.0) then
           fmean=fsum/dble(ndef)
