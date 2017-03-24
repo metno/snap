@@ -37,7 +37,7 @@ c particle loop index, np = 0 is initalization
       include 'snapgrd.inc'
 
       TYPE(particle) :: nparticle
-      REAL :: dx1, dx2, dy1, dy2, dz1, dz2, u, v
+      REAL*8 :: dx1, dx2, dy1, dy2, dz1, dz2, u, v
 #if defined(TRAJ)
 c... calculation of distance and speed
       real speed

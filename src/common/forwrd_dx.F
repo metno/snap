@@ -27,7 +27,7 @@ c       u, v: wind-speed in x/y
       real, INTENT(IN) :: tf1,tf2,tnow,tstep
       INTEGER, INTENT(IN) :: np
       TYPE(particle), INTENT(IN) :: nparticle
-      REAL, INTENT(OUT) :: delx, dely, delz, u, v
+      REAL*8, INTENT(OUT) :: delx, dely, delz, u, v
 
       include 'snapdim.inc'
       include 'snapgrd.inc'
@@ -36,13 +36,13 @@ c       u, v: wind-speed in x/y
       include 'snaptab.inc'
 
       integer i,j,m,ilvl,k1,k2,itab,kt1,kt2,ip,it
-      real    dt,rt1,rt2,dx,dy,c1,c2,c3,c4,vlvl
-      real    dz1,dz2,uk1,uk2,vk1,vk2,wk1,wk2,w
-      real    th,tk1,tk2,ps,p,pi,t,gravity,grav1,grav2,pvg,tvg
-      real    pi1,pi2,dz,deta,wg,rtab
+      real*8    dt,rt1,rt2,dx,dy,c1,c2,c3,c4,vlvl
+      real*8    dz1,dz2,uk1,uk2,vk1,vk2,wk1,wk2,w
+      real*8    th,tk1,tk2,ps,p,pi,t,gravity,grav1,grav2,pvg,tvg
+      real*8    pi1,pi2,dz,deta,wg,rtab
 ccc
 c
-      real, save :: cpinv, rcpinv, ginv, vmax, dxgrid,dygrid
+      real*8, save :: cpinv, rcpinv, ginv, vmax, dxgrid,dygrid
 c
 c
 
