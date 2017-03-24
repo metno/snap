@@ -4,7 +4,7 @@
 MODELOBJ= allocateFields.o argoswrite.o bldp.o compheight.o copyfield.o checkDomain.o \
 decay.o decayDeps.o drydep1.o drydep2.o \
 dateCalc.o edcomp.o \
-ensemble.o epinterp.o fileInfoML.o filesort_nc.o fldout_nc.o forwrd.o ftest.o \
+ensemble.o epinterp.o fileInfoML.o filesort_nc.o fldout_nc.o forwrd_dx.o forwrd.o ftest.o \
 init_random_seed.o om2edot.o particleML.o fileInfoML.o posint.o \
 readfield_nc.o release.o releasefile.o rmpart.o rwalk.o tabcon.o \
 vgravtables.o wetdep1.o wetdep2.o
@@ -74,6 +74,8 @@ fldout.o: ../common/fldout.f $(INCFILES)
 fldout_nc.o: ../common/fldout_nc.f $(INCFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 feltio_dummy.o: ../common/feltio_dummy.f $(INCFILES)
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+forwrd_dx.o: ../common/forwrd_dx.F $(INCFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 forwrd.o: ../common/forwrd.F $(INCFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
