@@ -8,6 +8,8 @@ CC  = gcc
 # PROFILES not working for gcc 5.4 and fortran MODULES
 #PROFILE=-fprofile-generate=/tmp/snapprof.dat
 #PROFILE=-fprofile-use=/tmp/snapprof.dat -Wcoverage-mismatch
+#
+#PROFILE=-flto # this is a few % slower with gcc 5.4
 #F77FLAGS=-O2 -g -mavx -cpp -ffpe-trap=invalid,zero,overflow -fbounds-check -Wall
 F77FLAGS=-O2 -ftree-vectorize -fno-math-errno -ffpe-trap=invalid,zero,overflow -g -mavx -cpp -fopt-info-optimized-vec -fopenmp $(PROFILE)
 CXXFLAGS=-O3 $(PROFILE)
