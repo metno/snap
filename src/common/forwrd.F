@@ -35,9 +35,11 @@ c particle loop index, np = 0 is initalization
       INTEGER, INTENT(IN) :: np
       TYPE(extraParticle), INTENT(INOUT) :: pextra
       include 'snapgrd.inc'
+      include 'snapdim.inc'
 
       TYPE(particle) :: nparticle
       REAL*8 :: dx1, dx2, dy1, dy2, dz1, dz2, u, v
+      REAL :: vmin, vmax
 #if defined(TRAJ)
 c... calculation of distance and speed
       real speed
@@ -74,12 +76,25 @@ c..store u,v for rwalk
       nparticle%x=nparticle%x+dx1*pextra%rmx
       nparticle%y=nparticle%y+dy1*pextra%rmy
       nparticle%z=nparticle%z+dz1
-      if(nparticle%z .gt. vlevel(1)) nparticle%z=vlevel( 1)
-      call forwrd_dx(tf1,tf2,tnow+tstep,tstep,
-     +                np,nparticle, dx2, dy2, dz2, u, v)
-      pdata(np)%x=pdata(np)%x+.5*(dx1 + dx2)*pextra%rmx
-      pdata(np)%y=pdata(np)%y+.5*(dy1 + dy2)*pextra%rmy
-      pdata(np)%z=pdata(np)%z+.5*(dz1 + dz2)
+      if (nparticle%x.lt.1. .or. nparticle%y.lt.1. .or.
+     +    nparticle%x.gt.nx .or. nparticle%y.gt.ny) then
+        nparticle%active = .false.
+        pdata(np) = nparticle
+      else
+        vmin=vlevel(nk)
+        vmax=vlevel( 1)
+        if (nparticle%z .gt. vmax) then
+          nparticle%z = vmax
+        else if (nparticle%z .lt. vmin) then
+          nparticle%z = vmin
+        end if
+
+        call forwrd_dx(tf1,tf2,tnow+tstep,tstep,
+     +                 np,nparticle, dx2, dy2, dz2, u, v)
+        pdata(np)%x=pdata(np)%x+.5*(dx1 + dx2)*pextra%rmx
+        pdata(np)%y=pdata(np)%y+.5*(dy1 + dy2)*pextra%rmy
+        pdata(np)%z=pdata(np)%z+.5*(dz1 + dz2)
+      endif
 #else
       pdata(np)%x=pdata(np)%x+dx1*pextra%rmx
       pdata(np)%y=pdata(np)%y+dy1*pextra%rmy
