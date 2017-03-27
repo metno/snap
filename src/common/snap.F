@@ -2160,7 +2160,7 @@ c setting particle-number to 0 means init
        end if
 c
 c particle loop
-!$OMP PARALLEL DO PRIVATE(pextra) !np is private by default
+!$OMP PARALLEL DO PRIVATE(pextra) SCHEDULE(guided) !np is private by default
        do np=1,npart
         if (pdata(np)%active) then
          pdata(np)%ageInSteps = pdata(np)%ageInSteps + 1
