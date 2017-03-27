@@ -2163,7 +2163,6 @@ c particle loop
 !$OMP PARALLEL DO PRIVATE(pextra) !np is private by default
        do np=1,npart
         if (pdata(np)%active) then
-         narg = narg + 1
          pdata(np)%ageInSteps = pdata(np)%ageInSteps + 1
 c..interpolation of boundary layer top, height, precipitation etc.
 c  creates and save temporary data to pextra%prc, pextra%
