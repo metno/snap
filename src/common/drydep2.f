@@ -22,7 +22,7 @@ c
       include 'snapfld.inc'
       include 'snappar.inc'
 c
-      real    tstep
+      real, INTENT(IN) ::    tstep
 c
 c particle loop index, n = 0 means init
       INTEGER, INTENT(IN) :: n

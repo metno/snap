@@ -22,7 +22,7 @@ c
       include 'snappar.inc'
       include 'snaptab.inc'
 c
-      real    tstep
+      real, INTENT(IN) ::    tstep
 c
       real    a0,a1,a2,b0,b1,b2,b3
 c
