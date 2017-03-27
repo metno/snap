@@ -2057,8 +2057,8 @@ c
             relpos(3,irelpos)=x
             relpos(4,irelpos)=y
 c
-            if(iensemble.eq.1)
-     +        call ensemble(0,itime1,tf1,tf2,tnow,istep,nstep,nsteph,0)
+c            if(iensemble.eq.1)
+c     +        call ensemble(0,itime1,tf1,tf2,tnow,istep,nstep,nsteph,0)
 c
             nxtinf=1
             ifldout=0
@@ -2066,8 +2066,8 @@ c continue istep loop after initialization
             goto 200
           end if
 c
-          if(iensemble.eq.1)
-     +      call ensemble(1,itime,tf1,tf2,tnow,istep,nstep,nsteph,0)
+c          if(iensemble.eq.1)
+c     +      call ensemble(1,itime,tf1,tf2,tnow,istep,nstep,nsteph,0)
 c
           call hrdiff(0,0,itimei,itimefi,ihdiff,ierr1,ierr2)
           tf1=0.
@@ -2171,24 +2171,24 @@ c..radioactive decay
 c
          if(idecay.eq.1) call decay(np)
 c
-         if(iensemble.eq.1)
-     +      call ensemble(2,itime,tf1,tf2,tnow,istep,nstep,nsteph,np)
+c         if(iensemble.eq.1)
+c     +      call ensemble(2,itime,tf1,tf2,tnow,istep,nstep,nsteph,np)
 c
 c..dry deposition (1=old, 2=new version)
 c
           if(idrydep.eq.1) call drydep1(np)
           if(idrydep.eq.2) call drydep2(tstep,np)
 c
-          if(iensemble.eq.1)
-     +      call ensemble(3,itime,tf1,tf2,tnow,istep,nstep,nsteph,np)
+c          if(iensemble.eq.1)
+c     +      call ensemble(3,itime,tf1,tf2,tnow,istep,nstep,nsteph,np)
 c
 c..wet deposition (1=old, 2=new version)
 c
           if(iwetdep.eq.1) call wetdep1(np, pextra)
           if(iwetdep.eq.2) call wetdep2(tstep,np, pextra)
 c
-          if(iensemble.eq.1)
-     +      call ensemble(4,itime,tf1,tf2,tnow,istep,nstep,nsteph,np)
+c          if(iensemble.eq.1)
+c     +      call ensemble(4,itime,tf1,tf2,tnow,istep,nstep,nsteph,np)
 c
 c..move all particles forward, save u and v to pextra
 c
@@ -2210,8 +2210,8 @@ c end of particle loop over active particles
 c..remove inactive particles or without any mass left
        call rmpart(rmlimit)
 c
-       if(iensemble.eq.1)
-     +    call ensemble(5,itime,tf1,tf2,tnext,istep,nstep,nsteph,0)
+c       if(iensemble.eq.1)
+c     +    call ensemble(5,itime,tf1,tf2,tnext,istep,nstep,nsteph,0)
 c
 !$OMP PARALLEL DO REDUCTION(max : mhmax) REDUCTION(min : mhmin)
        do n=1,npart
@@ -2363,8 +2363,8 @@ c
 c
  3333 continue
 c
-      if(iensemble.eq.1 .and. isteph.eq.0)
-     +  call ensemble(6,itime,tf1,tf2,tnext,istep,nstep,nsteph,0)
+c      if(iensemble.eq.1 .and. isteph.eq.0)
+c     +  call ensemble(6,itime,tf1,tf2,tnext,istep,nstep,nsteph,0)
 c
 c..field output if ifldout=1, always accumulation for average fields
       if (idailyout.eq.1) then
@@ -2489,8 +2489,8 @@ c
 c
   990 continue
 c
-      if(iensemble.eq.1)
-     +  call ensemble(7,itimefa,tf1,tf2,tnext,istep,nstep,nsteph,0)
+c      if(iensemble.eq.1)
+c     +  call ensemble(7,itimefa,tf1,tf2,tnext,istep,nstep,nsteph,0)
 c
       if(iargos.eq.1) then
         close(91)
