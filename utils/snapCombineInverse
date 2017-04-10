@@ -4,6 +4,7 @@ import argparse
 import netCDF4
 import numpy
 import re
+import sys
 
 def finishOutput(out_nc, isotope, times, conc, prob):
     probname = "{iso}_probability".format(iso=isotope)
@@ -22,17 +23,26 @@ def finishOutput(out_nc, isotope, times, conc, prob):
 def addFile(ncFile, isotope, times, conc, prob, isMeasurement=True):
     print(ncFile)
     with netCDF4.Dataset(ncFile, "r") as nc:
+        ftimes = netCDF4.num2date(nc.variables['time'][:],units=nc.variables['time'].units).tolist()
         varname = "{iso}_avg_concentration_bl".format(iso=isotope)
         if not varname in nc.variables:
             raise Exception("variable {vn} not in {file}".format(vn=varname,file=ncFile))
         co = nc.variables[varname][:]
         pr = numpy.zeros(co.shape, dtype=int)
+        nu = numpy.zeros(co.shape, dtype=int)
         if (isMeasurement):
             pr = numpy.select([co > 0], [numpy.ones(co.shape, dtype=numpy.int16)], numpy.zeros(1,dtype=numpy.int16))
         else:
             pr = numpy.select([co <= 0], [numpy.ones(co.shape, dtype=numpy.int16)], numpy.zeros(1,dtype=numpy.int16))
-        conc = conc * co
-        prob = prob * pr
+            nu += 1
+        for i,t in enumerate(times):
+            try:
+                j = ftimes.index(t)
+                conc[i,:] *= co[j,:]
+                prob[i,:] *= pr[j,:]
+            except ValueError as ve:
+                print("{} not defined in file: {}".format(t,ncFile), file=sys.stderr)
+                prob[i,:] *= nu[j,:]
     return (conc, prob)
 
 def initializeNc(ncFile, outNcFile, isotope):
