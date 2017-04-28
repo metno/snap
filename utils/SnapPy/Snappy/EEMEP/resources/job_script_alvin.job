@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH -A met
-#SBATCH --nodes=6 --ntasks-per-core=2 --time=01:00:00
+#SBATCH --nodes=10 --ntasks-per-core=2 --time=01:00:00
 #SBATCH -D /home/metno_op/work/emep/eemep/
 #SBATCH -J eemep2 -o /home/metno_op/work/emep/eemep/tmp/eemep_single.log
 #SBATCH -e /home/metno_op/work/emep/eemep/tmp/eemep_single.log
@@ -15,7 +15,7 @@ rm -f $logfile
 exec 1>$logfile 2>&1
 
 source $HOME/status/Status_Funcs.sh
-maxnodes=6
+maxnodes=10
 jobname=eemep2
 
 set -x

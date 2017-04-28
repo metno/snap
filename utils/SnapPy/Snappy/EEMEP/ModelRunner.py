@@ -188,7 +188,7 @@ class ModelRunner():
         self.download_results()
 
 class TestModelRunner(unittest.TestCase):
-    hpcMachine = "alvin"
+    hpcMachine = "frost"
     doRun = False
 
     def setUp(self):
