@@ -245,6 +245,9 @@ class HPC():
         elif (name == "frost"):
             from . import Frost
             return Frost.Frost()
+        elif (name == "alvin"):
+            from . import Alvin
+            return Alvin.Alvin()
         else:
             raise NotImplementedError("no HPC named '{}'".format(name))
         return
