@@ -1,5 +1,5 @@
 '''
-Created on Nov 7, 2016
+Created on Apr 28, 2017
 
 @author: heikok
 '''
@@ -13,9 +13,9 @@ from METNO.SLURMQueue import SLURMQueue
 from METNO.SSHConnection import SSHConnection
 
 
-class Frost(HPC):
+class Alvin(HPC):
     '''
-    Implementation of a HPC machine for frost.nsc.liu.se
+    Implementation of a HPC machine for alvin.nsc.liu.se
     '''
 
 
@@ -23,16 +23,16 @@ class Frost(HPC):
         '''
         Constructor
         '''
-        connection = SSHConnection(username="metno_op", machine="frost.nsc.liu.se", port=22)
+        connection = SSHConnection(username="metno_op", machine="alvin.nsc.liu.se", port=22)
         queue = SLURMQueue()
         super().__init__(connection, queue)
 
 
 class TestFrost(unittest.TestCase):
-    '''tests for frost, only working when having an existing forecast account on frost'''
+    '''tests for alvin, only working when having an existing forecast account on alvin'''
     def setUp(self):
         unittest.TestCase.setUp(self)
-        self.hpc = HPC.by_name("frost")
+        self.hpc = HPC.by_name("alvin")
         self.rdir = "/home/metno_op/work/emep/metno_hpc_test"
         self.testFiles = ["script.job", "status"]
 
