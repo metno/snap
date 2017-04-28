@@ -289,17 +289,21 @@ if ( $#requests < 0 ) {		# Nothing happens
 
   # The model is started right  here!
   my ( $error, @output_files );
-  if (substr($run_ident,0,4) eq "EC01") {
+  if (substr($run_ident,0,5) eq "HIR12") {
+    ( $error, @output_files ) = SnapHirlam12::run_model( \%smsdirs, $remote_hosts_and_users,
+                        $remote_ftp_download,
+                        $run_ident, $model );
+  } else {
       # run the ec-model on the PPI machines
       my $ppiHost = GET_PPI_LOGIN_HOST($remote_hosts_and_users->[0]{'PPIuser'}) or die "cannot GET_PPI_LOGIN_HOST() with user ".$remote_hosts_and_users->[0]{'PPIuser'}."\n";
       $remote_hosts_and_users->[0]{PPIhost} = $ppiHost;
 
       ## Do some cleaning on lustre:
       foreach my $tmp_dir ( @{ $remote_hosts_and_users->[0]{'PPIbasedirs'}}) {
-    my $cmd = "find $tmp_dir/* -maxdepth 0 -mtime +31 -exec 'rm -rf \\\{\} \;'";
-    print $cmd . "\n";
-    system_ppi($remote_hosts_and_users, $cmd);
-    }
+        my $cmd = "find $tmp_dir/* -maxdepth 0 -mtime +31 -exec 'rm -rf \\\{\} \;'";
+        print $cmd . "\n";
+        system_ppi($remote_hosts_and_users, $cmd);
+      }
 
       my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = gmtime(time);
       $year+=1900; $mon++;
@@ -307,10 +311,6 @@ if ( $#requests < 0 ) {		# Nothing happens
       my $ppiDir = create_ppi_dir($remote_hosts_and_users, [map {$_ . '/' . $dateStr . "_$run_ident"} @{ $remote_hosts_and_users->[0]{'PPIbasedirs'} } ]);
       $remote_hosts_and_users->[0]{PPIdir} = $ppiDir;
       ( $error, @output_files ) = SnapEC::run_model( \%smsdirs, $remote_hosts_and_users,
-                        $remote_ftp_download,
-                        $run_ident, $model );
-  } else {
-    ( $error, @output_files ) = SnapHirlam12::run_model( \%smsdirs, $remote_hosts_and_users,
                         $remote_ftp_download,
                         $run_ident, $model );
   }
