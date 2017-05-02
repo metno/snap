@@ -28,7 +28,7 @@ DRHOOKLIB = -L../../utils/drhook_CY31R2.032 -ldrhook -lmpi_serial
 
 ##########################################################
 
-BINDIR=/modules/trusty/user-apps/SnapPy/1.0.0/bin/
+BINDIR=/modules/trusty/user-apps/SnapPy/1.1.0/bin/
 
 INCLUDES = -I. $(MIINC)
 
