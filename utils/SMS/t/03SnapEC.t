@@ -22,7 +22,7 @@ my %smsdirs = (data => "$Bin/data",
 my $remote_hosts_and_users = [ { host => "x",
                               user => "x",
                               PPIuser => 'heikok',
-                              PPIhost => 'vis-m2',
+                              PPIhost => 'vis-m1',
                                } ];
 my $PPIdir = Snap::create_ppi_dir($remote_hosts_and_users, ['/lustre/storeB/project/fou/kl/snap/nrpa_runs/test'.$$]);
 $remote_hosts_and_users->[0]{PPIdir} = $PPIdir;
