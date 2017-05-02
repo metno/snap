@@ -256,7 +256,7 @@ SnapEC - general functionality to run snap with EC0.1 meteorology on PPI
 
 =over 8
 
-=item PPI host with SnapPy/1.0.0 module installed, and run with SGE qsub with access to the queue 'operational.q'
+=item PPI host with SnapPy/1.1.0 module installed, and run with SGE qsub with access to the queue 'operational.q'
 
 =item zip
 
