@@ -107,7 +107,7 @@ TIME.RUN = {runTime}h
         files = ecmet.get_meteorology_files()
         (metdef["startX"], metdef["startY"]) = ecmet.get_grid_startX_Y()
     else:
-        files = res.getECMeteorologyFiles(dtime=startDTime, run_hours=int(runTime), latitude=float(lat), longitude=float(lon))
+        files = res.getECMeteorologyFiles(dtime=startDTime, run_hours=int(runTime))
         if (len(files) == 0):
             raise Exception("no EC met-files found for {}, runtime {}".format(startDTime, runTime))
 
@@ -208,7 +208,7 @@ FIELD.IDENTIFICATION=1
         files = ecmet.get_meteorology_files()
         (metdef["startX"], metdef["startY"]) = ecmet.get_grid_startX_Y()
     else:
-        files = res.getECMeteorologyFiles(dtime=sdate, run_hours=int(duration), latitude=float(lat), longitude=float(lon))
+        files = res.getECMeteorologyFiles(dtime=sdate, run_hours=int(duration))
         if (len(files) == 0):
             raise Exception("no EC met-files found for {}, runtime {}".format(sdate, duration))
     sourceTerm += res.getSnapInputMetDefinitions('nrpa_ec_0p1', files, *metdef)

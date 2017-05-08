@@ -329,14 +329,11 @@ GRAVITY.FIXED.M/S=0.0002
 
     def getECMeteorologyFiles(self, dtime: datetime, run_hours: int, fixed_run="best"):
         """Get available meteorology files for the last few days around dtime and run_hours.
-        Checks that place (latitude,longitude) fits into domain.
 
         Keyword arguments:
         dtime -- start time of model run
         run_hours -- run length in hours, possibly negative
         fixed_run -- string of form YYYY-MM-DD_HH giving a specific model-run
-        latitude -- float of latitude position
-        longitude -- float of longitude position
         """
         relevant_dates = []
 
