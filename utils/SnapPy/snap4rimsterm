@@ -117,7 +117,8 @@ TIME.RUN = {runTime}h
 
 def convert_to_grib(snapNc, basedir, ident, isotopes):
     config = Resources().getGribWriterConfig(isotopes)
-    xmlFile = os.path.join(basedir, "cdmGribWriterCongfig.xml")
+    writerConfig = "cdmGribWriterConfig.xml"
+    xmlFile = os.path.join(basedir, writerConfig)
     with open(xmlFile, 'w') as xh:
         xh.write(config['xml'])
     errlog = open(os.path.join(basedir, "fimex.errlog"), "w")
@@ -131,7 +132,7 @@ def convert_to_grib(snapNc, basedir, ident, isotopes):
                     os.remove(tempfile)
                 procOptions = ['fimex', '--input.file=snap.nc', '--input.config={}'.format(config['ncml']),
                        '--output.file={}'.format(tempfile),
-                       '--output.type=grib', '--output.config={}'.format(xmlFile)]
+                       '--output.type=grib', '--output.config={}'.format(writerConfig)]
                 procOptions.append('--extract.selectVariables={}'.format(param))
                 print(" ".join(procOptions))
                 proc = subprocess.Popen(procOptions, cwd=basedir, stderr=errlog, stdout=outlog)
