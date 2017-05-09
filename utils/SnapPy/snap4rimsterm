@@ -214,7 +214,7 @@ FIELD.IDENTIFICATION=1
         files = res.getECMeteorologyFiles(dtime=sdate, run_hours=int(duration))
         if (len(files) == 0):
             raise Exception("no EC met-files found for {}, runtime {}".format(sdate, duration))
-    sourceTerm += res.getSnapInputMetDefinitions('nrpa_ec_0p1', files, *metdef)
+    sourceTerm += res.getSnapInputMetDefinitions('nrpa_ec_0p1', files, **metdef)
 
     sourceTerm += "{:d}\n".format(count)
     for i in range(0,count):
