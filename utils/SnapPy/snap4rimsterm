@@ -117,22 +117,24 @@ TIME.RUN = {runTime}h
 
 def convert_to_grib(snapNc, basedir, ident, isotopes):
     config = Resources().getGribWriterConfig(isotopes)
-    writerConfig = "cdmGribWriterConfig.xml"
-    xmlFile = os.path.join(basedir, writerConfig)
-    with open(xmlFile, 'w') as xh:
+    xmlFile = "cdmGribWriterConfig.xml"
+    basexmlFile = os.path.join(basedir, xmlFile)
+    with open(basexmlFile, 'w') as xh:
         xh.write(config['xml'])
     errlog = open(os.path.join(basedir, "fimex.errlog"), "w")
     outlog = open(os.path.join(basedir, "fimex.outlog"), "w")
     tempfile = 'tmp.grib'
+    basetempfile = os.path.join(basedir, tempfile)
+    # fimex works in basedir, so it does not need the basefiles
     for appendix, params in config['extracts'].items():
         outFile = os.path.join(basedir, "{ident}_{type}".format(ident=ident, type=appendix))
         with open(outFile, 'wb') as gh:
             for param in params:
-                if (os.path.exists(tempfile)):
-                    os.remove(tempfile)
+                if (os.path.exists(basetempfile)):
+                    os.remove(basetempfile)
                 procOptions = ['fimex', '--input.file=snap.nc', '--input.config={}'.format(config['ncml']),
                        '--output.file={}'.format(tempfile),
-                       '--output.type=grib', '--output.config={}'.format(writerConfig)]
+                       '--output.type=grib', '--output.config={}'.format(xmlFile)]
                 procOptions.append('--extract.selectVariables={}'.format(param))
                 print(" ".join(procOptions))
                 proc = subprocess.Popen(procOptions, cwd=basedir, stderr=errlog, stdout=outlog)
@@ -140,15 +142,15 @@ def convert_to_grib(snapNc, basedir, ident, isotopes):
                     errlog.write("'{fimex}' in {dir} failed".format(fimex=' '.join(procOptions), dir=basedir))
                 else:
                     # append tmp-file to final grib-file
-                    with (open(tempfile, 'rb')) as th:
+                    with (open(basetempfile, 'rb')) as th:
                         while True:
                             data = th.read(16*1024*1024) # read max 16M blocks
                             if data:
                                 gh.write(data)
                             else:
                                 break
-                if (os.path.exists(tempfile)):
-                    os.remove(tempfile)
+                if (os.path.exists(basetempfile)):
+                    os.remove(basetempfile)
 
     errlog.close()
     outlog.close()
