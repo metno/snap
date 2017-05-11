@@ -373,7 +373,7 @@ c..remove an existing file and create a completely new one
        call check(nf_def_dim(iunit, "k", nk-1, k_dimid), "k-dim")
 
        call nc_set_projection(iunit, x_dimid, y_dimid,
-     +                              igtype,nx,ny,gparam,
+     +                              igtype,nx,ny,gparam, garea,
      +                              simulation_start)
        if (imodlevel.eq.1)
      + call nc_set_vtrans(iunit, k_dimid, k_varid, ap_varid, b_varid)
@@ -1580,8 +1580,8 @@ c       call check(NF_DEF_VAR_CHUNKING(iunit, varid, NF_CHUNKED, chksz))
 !     +    call check(nf_put_att_text(iunit,varid,"metno_name",
 !     +    LEN_TRIM(metnm), TRIM(metnm)))
 
-c       call check(nf_put_att_text(iunit,varid,"coordinates",
-c     +    LEN_TRIM("lon lat"), "lon lat"))
+       call check(nf_put_att_text(iunit,varid,"coordinates",
+     +    LEN_TRIM("longitude latitude"), "longitude latitude"))
        call check(nf_put_att_text(iunit,varid,"grid_mapping",
      +    LEN_TRIM("projection"), "projection"))
 
@@ -1661,27 +1661,32 @@ c       call check(nf_put_var_real(iunit, ap_varid, blevel))
       end subroutine nc_set_vtrans
 
       subroutine nc_set_projection(iunit, xdimid, ydimid,
-     +                              igtype,nx,ny,gparam,
+     +                              igtype,nx,ny,gparam,garea,
      +                              simulation_start)
        implicit none
        include 'netcdf.inc'
        INTEGER, INTENT(IN) :: iunit, xdimid, ydimid, igtype, nx, ny
        REAL(KIND=4), INTENT(IN):: gparam(8)
+       REAL(kind=4), INTENT(IN), DIMENSION(nx,ny) :: garea
        CHARACTER(LEN=19), INTENT(IN)  :: simulation_start
 
 
        INTEGER :: i, j, ierror, x_varid, y_varid, proj_varid,
-     +             lon_varid, lat_varid, dimids(2)
+     +             lon_varid, lat_varid, carea_varid, dimids(2)
        REAL(KIND=4) :: xvals(nx), yvals(ny), lon(nx,ny), lat(nx,ny),
-     +      val, pi, incr, llparam(6), gparam2(6)
+     +      val, pi, deg2rad, incr, llparam(6), gparam2(6)
 
        DATA llparam /1., 1., 1., 1., 0., 0./
+       pi = 4.D0*DATAN(1.D0)
+       deg2rad = pi/180.
+
        call check(nf_def_var(iunit, "x",
      +     NF_FLOAT, 1, xdimid, x_varid))
        call check(nf_def_var(iunit, "y",
      +     NF_FLOAT, 1, ydimid, y_varid))
        dimids(1)=xdimid
        dimids(2)=ydimid
+
        call check(nf_def_var(iunit, "projection",
      +     NF_SHORT, 0, 0, proj_varid))
 
@@ -1728,7 +1733,7 @@ c..rot_geographic
      +     "grid_north_pole_longitude", NF_FLOAT, 1, val))
          call check(nf_put_att_real(iunit,proj_varid,
      +     "grid_north_pole_latitude", NF_FLOAT, 1,90-gparam(6)))
-       call check(nf_sync(iunit))
+         call check(nf_sync(iunit))
 
          do i=1,nx
            xvals(i) = gparam(1) + (i-1)*gparam(3)
@@ -1736,6 +1741,7 @@ c..rot_geographic
          do i=1,ny
            yvals(i) = gparam(2) + (i-1)*gparam(4)
          end do
+
 
        elseif (igtype.eq.1.or.igtype.eq.4) then
 c..polar_stereographic
@@ -1760,7 +1766,6 @@ c..polar_stereographic
      +     "standard_parallel", NF_FLOAT, 1,gparam(5)))
          call check(nf_put_att_int(iunit,proj_varid,
      +     "latitude_of_projection_origin", NF_INT, 1, 90))
-         pi = 4.D0*DATAN(1.D0)
 c..increment
          do i=1,nx
            xvals(i) = (i-gparam(1))*gparam(7)
@@ -1796,7 +1801,7 @@ c..lcc
 ! gparam(5) and gparam(6) are the reference-point of the projection
          gparam2(1) = gparam(5)
          gparam2(2) = gparam(6)
-         do i=3,6 
+         do i=3,6
            gparam2(i) = gparam(i)
          end do
          ierror = 0
@@ -1825,38 +1830,48 @@ c..lcc
        call check(nf_put_var_real(iunit, y_varid, yvals))
        call check(nf_sync(iunit))
 
-c       if (igtype.ne.2) then  !!!! can't get coordinates working yet, but I have projections, so not needed
-        if (igtype.eq.1000) then
-         call check(nf_def_var(iunit, "lon",
+       call check(nf_def_var(iunit, "longitude",
      +       NF_FLOAT, 2, dimids, lon_varid))
-         call check(NF_DEF_VAR_DEFLATE(iunit, lon_varid, 1,1,1))
-         call check(nf_sync(iunit))
-         call check(nf_def_var(iunit, "lat",
+       call check(NF_DEF_VAR_DEFLATE(iunit, lon_varid, 1,1,1))
+       call check(nf_sync(iunit))
+       call check(nf_def_var(iunit, "latitude",
      +       NF_FLOAT, 2, dimids, lat_varid))
        call check(nf_sync(iunit))
-         call check(nf_put_att_text(iunit,lon_varid, "units",
+       call check(nf_put_att_text(iunit,lon_varid, "units",
      +     LEN_TRIM("degrees_east"), TRIM("degrees_east")))
-         call check(nf_put_att_text(iunit,lat_varid, "units",
+       call check(nf_put_att_text(iunit,lat_varid, "units",
      +     LEN_TRIM("degrees_north"), TRIM("degrees_north")))
 
-        call check(nf_sync(iunit))
-        do j=1,ny
-          do i=1,nx
-            lon(i,j) = xvals(i)
-            lat(i,j) = yvals(j)
-          end do
-        end do
-        ierror = 0
-        call xyconvert(nx*ny, lon, lat, igtype, gparam,
-     +                                       2, llparam, ierror)
-        if (ierror.ne.0) then
-          write(*,*) "error converting pos to latlon-projection"
-          call exit(1)
-        end if
-        call check(nf_put_var_real(iunit, lon_varid, lon))
-        call check(nf_put_var_real(iunit, lat_varid, lat))
+       call check(nf_sync(iunit))
 
+c.... create latitude/longitude variable-values
+       do j=1,ny
+         do i=1,nx
+           lon(i,j) = i
+           lat(i,j) = j
+         end do
+       end do
+       call xyconvert(nx*ny, lon, lat,igtype, gparam,
+     +                         2, llparam, ierror)
+       if (ierror.ne.0) then
+        write(*,*) "error converting pos to latlon-projection"
+         call exit(1)
        end if
+       call check(nf_put_var_real(iunit, lon_varid, lon))
+       call check(nf_put_var_real(iunit, lat_varid, lat))
+
+c.... create cell_area
+       call check(nf_def_var(iunit, "cell_area",
+     +       NF_FLOAT, 2, dimids, carea_varid))
+       call check(nf_put_att_text(iunit,carea_varid, "units",
+     +     LEN_TRIM("m2"), TRIM("m2")))
+       call check(nf_put_att_text(iunit,carea_varid, "grid_mapping",
+     +     LEN_TRIM("projection"), TRIM("projection")))
+       call check(nf_put_att_text(iunit,carea_varid, "coordinates",
+     +     LEN_TRIM("longitude latitude"), TRIM("longitude latitude")))
+
+       call check(nf_put_var_real(iunit, carea_varid, garea))
+
 
        call check(nf_sync(iunit))
 
