@@ -63,6 +63,7 @@ for drywet in sorted(odata.keys()):
                 out = interpolate.splev(unew, tck)
                 ax.plot(x, y, 'orange', out[0], out[1])
         ax.set_ylim(ymin=10)
+        ax.set_xlim(xmax=1800)
         ax.legend(legend)
     fig.savefig("flightDistance_{}.png".format(drywet))
     #plt.show()
