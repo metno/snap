@@ -42,6 +42,8 @@ class EemepModelRunner():
 
     def _dirIsWritable(self, directory):
         '''check if directory is writable'''
+        if not directory:
+            return False
         try:
             with tempfile.TemporaryFile(dir=directory) as fh:
                 return True
@@ -155,9 +157,9 @@ if __name__ == '__main__':
         dir2 = args.dir2
     else:
         dir2 = ""
-    EemepModelRunner(directory=args.dir, hpc=args.hpc, directory2=args.dir2)
+    EemepModelRunner(directory=args.dir, hpc=args.hpc, directory2=dir2)
 
     if (args.cleanup > 0):
         delete_oldfiles(args.dir, args.cleanup)
-        if "dir2" in args:
-            delete_oldfiles(args.dir2, args.cleanup)
+        if dir2:
+            delete_oldfiles(dir2, args.cleanup)
