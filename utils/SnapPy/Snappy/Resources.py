@@ -19,7 +19,7 @@ class Resources():
     Read the resources and combine them
     '''
     #OUTPUTDIR = "/disk1/tmp"
-    OUTPUTDIR = "/lustre/storeB/project/fou/kl/snap/runs"
+    OUTPUTDIR = "{LUSTREDIR}/project/fou/kl/snap/runs"
     ECINPUTDIRS = ["/lustre/storeA/project/metproduction/products/ecmwf/cwf_input/", "/lustre/storeB/project/metproduction/products/ecmwf/cwf_input/"]
     #ECINPUTDIRS = ["/lustre/storeB/users/heikok/Meteorology/ecdis2cwf/"]
     EC_FILENAME_PATTERN = "meteo{year:04d}{month:02d}{day:02d}_{dayoffset:02d}.nc"
@@ -262,7 +262,14 @@ GRAVITY.FIXED.M/S=0.0002
         return filename
 
     def getSnapOutputDir(self):
-        return self.OUTPUTDIR
+        outputdir = self.OUTPUTDIR
+        lustredirfile = os.path.join(os.environ['HOME'],'.lustredir')
+        lustredir = "/lustre/storeB"
+        if (os.path.isfile(lustredirfile)):
+            with open(lustredirfile, 'r') as lh:
+                lustredir = lh.read().rstrip()
+        outputdir = outputdir.format(LUSTREDIR=lustredir)
+        return outputdir
 
     def _findFileInPathes(self, file, pathes):
         for path in pathes:
