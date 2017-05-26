@@ -53,7 +53,7 @@ class EemepModelRunner():
     def _findVolcanoFiles(self):
         '''find volcano.xml files in directory and directory2'''
         volcanoes = []
-        dirs = (self.directory)
+        dirs = [self.directory]
         if self.directory2:
             dirs.append(self.directory2)
         for directory in dirs:
