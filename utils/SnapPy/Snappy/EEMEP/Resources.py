@@ -23,7 +23,7 @@ class Resources():
     ECVLEVELS = "Vertical_levels48.txt"
     #ECINPUTDIRS = ["/lustre/storeB/users/heikok/Meteorology/ecdis2cwf/"]
     EC_FILE_PATTERN = "NRPA_EUROPE_0_1_{UTC:02d}/meteo{year:04d}{month:02d}{day:02d}_{dayoffset:02d}.nc"
-    OUTPUTDIR = "/lustre/storeB/project/fou/kl/eva/eemep/runs/"
+    OUTPUTDIR = "{LUSTREDIR}/project/fou/kl/eva/eemep/runs/"
     #OUTPUTDIR = "/tmp/test"
 
     def __init__(self):
@@ -56,7 +56,14 @@ class Resources():
 
 
     def getOutputDir(self):
-        return self.OUTPUTDIR
+        outputdir = self.OUTPUTDIR
+        lustredirfile = os.path.join(os.environ['HOME'],'.lustredir')
+        lustredir = "/lustre/storeB"
+        if (os.path.isfile(lustredirfile)):
+            with open(lustredirfile, 'r') as lh:
+                lustredir = lh.read().rstrip()
+        outputdir = outputdir.format(LUSTREDIR=lustredir)
+        return outputdir
 
     def getStartScreen(self):
         '''return the html-code of the start-screen'''
