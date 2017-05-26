@@ -13,6 +13,7 @@ import atexit
 import datetime
 import os
 import sys
+import tempfile
 import traceback
 
 from METNO.HPC import typed_property, HPC
@@ -30,6 +31,7 @@ def _cleanupFileCallable(filename):
 class EemepModelRunner():
     hpc = typed_property("hpc", HPC)
     directory = typed_property("directory", str)
+    directory2 = typed_property("directory2", str)
     statusfile = typed_property("statusfile", str)
 
     def _log(self, dirname, msg):
@@ -38,8 +40,52 @@ class EemepModelRunner():
                                          msg=msg),
                   file=fh)
 
-    def __init__(self, directory, hpc):
-        self.directory = directory
+    def _dirIsWritable(self, directory):
+        '''check if directory is writable'''
+        try:
+            with tempfile.TemporaryFile(dir=directory) as fh:
+                return True
+        except:
+            return False
+
+    def _findVolcanoFiles(self):
+        '''find volcano.xml files in directory and directory2'''
+        volcanoes = []
+        dirs = (self.directory)
+        if self.directory2:
+            dirs.append(self.directory2)
+        for directory in dirs:
+            if directory:
+                for (dirpath, dirnames, filenames) in os.walk(self.directory):
+                    for x in filenames:
+                        if x == 'volcano.xml':
+                            file = os.path.join(dirpath, x)
+                            volcanoes.append((file, dirpath))
+        return volcanoes
+
+    def _copyResults(self, dirPath):
+        '''make a copy from dirPath to directory2 (or directory)'''
+        if self.directory2:
+            outdir = self.directory2
+            if dirPath.startswith(self.directory2):
+                outdir = self.directory
+            indir = dirPath.rstrip('/') #remove trailing slash to copy directory-name, too
+            os.system("rsync -a {indir} {outdir}".format(indir=indir, outdir=outdir))
+
+
+    def __init__(self, directory, hpc, directory2):
+        if self._dirIsWritable(directory):
+            self.directory = directory
+            if self._dirIsWritable(directory2):
+                self.directory2 = directory2
+            else:
+                self.directory2 = ""
+        elif self._dirIsWritable(directory2):
+            self.directory = directory2
+            self.directory2 = ""
+        else:
+            raise Exception("{dir1} and {dir2} not writable".format(dir1=directory, dir2=directory2))
+
         self.statusfile = os.path.join(self.directory, "eemepModelRunner_working")
         # make sure only one instance is running, not failsafe (no flock on lustre)
         if (os.path.exists(self.statusfile)):
@@ -55,13 +101,8 @@ class EemepModelRunner():
                 fh.write("working pid: {} on node: {}".format(os.getpid(), os.uname().nodename))
         self.hpc = HPC.by_name(hpc)
 
-        volcanoes = []
-        for (dirpath, dirnames, filenames) in os.walk(self.directory):
-            for x in filenames:
-                if x == 'volcano.xml':
-                    file = os.path.join(dirpath, x)
-                    volcanoes.append((file, dirpath))
 
+        volcanoes = self._findVolcanoFiles()
         if (len(volcanoes) == 0):
             return
 
@@ -83,6 +124,10 @@ class EemepModelRunner():
             if (os.path.exists(infile)):
                 os.rename(infile,
                           os.path.join(dirpath,"volcano.xml.{}".format(datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ"))))
+        try:
+            self._copyResults(dirpath)
+        except:
+            pass
         return
 
 
@@ -102,10 +147,17 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description="Search for volcano.xml files in the top-level directory, take the newest one and run the model on a HPC machine")
     parser.add_argument("--dir", help="top-level dir to search for volcano.xml files", required=True)
+    parser.add_argument("--dir2", help="second top-level dir, main-dir if --dir is not writable")
     parser.add_argument("--hpc", help="HPC-machine to run job on", required=True)
     parser.add_argument("--cleanup", type=int, default=0, help="remove files in dir older than cleanup days")
     args = parser.parse_args()
-    EemepModelRunner(args.dir, args.hpc)
+    if "dir2" in args:
+        dir2 = args.dir2
+    else:
+        dir2 = ""
+    EemepModelRunner(directory=args.dir, hpc=args.hpc, directory2=args.dir2)
 
     if (args.cleanup > 0):
         delete_oldfiles(args.dir, args.cleanup)
+        if "dir2" in args:
+            delete_oldfiles(args.dir2, args.cleanup)
