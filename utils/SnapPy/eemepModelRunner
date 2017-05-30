@@ -33,6 +33,7 @@ class EemepModelRunner():
     directory = typed_property("directory", str)
     directory2 = typed_property("directory2", str)
     statusfile = typed_property("statusfile", str)
+    dryrun = typed_property("dryrun", bool)
 
     def _log(self, dirname, msg):
         with open(os.path.join(dirname, 'volcano.log'), 'a') as fh:
@@ -48,6 +49,7 @@ class EemepModelRunner():
             with tempfile.TemporaryFile(dir=directory) as fh:
                 return True
         except:
+            print("directory {} not writable".format(directory))
             return False
 
     def _findVolcanoFiles(self):
@@ -56,6 +58,8 @@ class EemepModelRunner():
         dirs = [self.directory]
         if self.directory2:
             dirs.append(self.directory2)
+        print(dirs)
+        exit(1)
         for directory in dirs:
             if directory:
                 for (dirpath, dirnames, filenames) in os.walk(self.directory):
@@ -75,14 +79,19 @@ class EemepModelRunner():
             os.system("rsync -a {indir} {outdir}".format(indir=indir, outdir=outdir))
 
 
-    def __init__(self, directory, hpc, directory2):
+    def __init__(self, directory, hpc, directory2, dryrun=False):
+        self.dryrun = dryrun
         if self._dirIsWritable(directory):
             self.directory = directory
             if self._dirIsWritable(directory2):
                 self.directory2 = directory2
             else:
+                if (self.dryrun):
+                    print("directory2: '{}' not writable and disabled".format(directory2), file=sys.stderr)
                 self.directory2 = ""
         elif self._dirIsWritable(directory2):
+            if (self.dryrun):
+                print("directory: '{}' not writable and disabled, using '{}' as default ".format(directory, directory2), file=sys.stderr)
             self.directory = directory2
             self.directory2 = ""
         else:
@@ -92,24 +101,36 @@ class EemepModelRunner():
         # make sure only one instance is running, not failsafe (no flock on lustre)
         if (os.path.exists(self.statusfile)):
             file_modified = datetime.datetime.fromtimestamp(os.lstat(self.statusfile).st_mtime)
+            if (self.dryrun):
+                with open(self.statusfile, 'rt') as fh: msg = fh.read()
+                print("status-file exists at '{}' with:".format(self.statusfile), file=sys.stderr)
+                print(msg, file=sys.stderr)
             if datetime.datetime.now() - file_modified > datetime.timedelta(hours=3):
                 # return statusfile if hanging for more than 3 hours
                 print("cleaning up {} after 3 hours".format(self.statusfile), file=sys.stderr)
                 _cleanupFileCallable(self.statusfile)()
             return
         else:
-            with open(self.statusfile, 'w') as fh:
-                atexit.register(_cleanupFileCallable(self.statusfile))
-                fh.write("working pid: {} on node: {}".format(os.getpid(), os.uname().nodename))
+            if not self.dryrun:
+                with open(self.statusfile, 'wt') as fh:
+                    atexit.register(_cleanupFileCallable(self.statusfile))
+                    fh.write("working pid: {} on node: {}\n".format(os.getpid(), os.uname().nodename))
         self.hpc = HPC.by_name(hpc)
 
 
         volcanoes = self._findVolcanoFiles()
+        if self.dryrun:
+            print("volcano stack:", file=sys.stderr)
+            for (ifile,dpath) in sorted(volcanoes, key=lambda x: os.lstat(x[0]).st_mtime, reverse=True):
+                print(ifile, sys.stderr)
+            return
         if (len(volcanoes) == 0):
             return
 
         # work only on newest volcano.xml file and exit, avoiding timeouts
         (infile, dirpath) = max(volcanoes, key=lambda x: os.lstat(x[0]).st_mtime)
+        with open(self.statusfile, 'at') as fh:
+            fh.write("current volcano: '{}' in dir '{}'\n".format(infile, dirpath))
         try:
             self._log(dirpath, 'Starting run for: {}'.format(infile))
             mr = ModelRunner(dirpath, hpc)
@@ -152,14 +173,15 @@ if __name__ == '__main__':
     parser.add_argument("--dir2", help="second top-level dir, main-dir if --dir is not writable")
     parser.add_argument("--hpc", help="HPC-machine to run job on", required=True)
     parser.add_argument("--cleanup", type=int, default=0, help="remove files in dir older than cleanup days")
+    parser.add_argument("--dryrun", action='store_true', default=False, help="just test what would be done, don't do anything but write debug messages")
     args = parser.parse_args()
     if "dir2" in args:
         dir2 = args.dir2
     else:
         dir2 = ""
-    EemepModelRunner(directory=args.dir, hpc=args.hpc, directory2=dir2)
+    EemepModelRunner(directory=args.dir, hpc=args.hpc, directory2=dir2, dryrun=args.dryrun)
 
-    if (args.cleanup > 0):
+    if (args.cleanup > 0) and not args.dryrun:
         delete_oldfiles(args.dir, args.cleanup)
         if dir2:
             delete_oldfiles(dir2, args.cleanup)
