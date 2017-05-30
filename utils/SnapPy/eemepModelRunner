@@ -58,8 +58,6 @@ class EemepModelRunner():
         dirs = [self.directory]
         if self.directory2:
             dirs.append(self.directory2)
-        print(dirs)
-        exit(1)
         for directory in dirs:
             if directory:
                 for (dirpath, dirnames, filenames) in os.walk(self.directory):
