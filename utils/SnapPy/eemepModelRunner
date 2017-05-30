@@ -59,7 +59,7 @@ class EemepModelRunner():
             dirs.append(self.directory2)
         for directory in dirs:
             if directory:
-                for (dirpath, dirnames, filenames) in os.walk(self.directory):
+                for (dirpath, dirnames, filenames) in os.walk(directory):
                     for x in filenames:
                         if x == 'volcano.xml':
                             file = os.path.join(dirpath, x)
@@ -102,11 +102,12 @@ class EemepModelRunner():
                 with open(self.statusfile, 'rt') as fh: msg = fh.read()
                 print("status-file exists at '{}' with:".format(self.statusfile), file=sys.stderr)
                 print(msg, file=sys.stderr)
-            if datetime.datetime.now() - file_modified > datetime.timedelta(hours=3):
-                # return statusfile if hanging for more than 3 hours
-                print("cleaning up {} after 3 hours".format(self.statusfile), file=sys.stderr)
-                _cleanupFileCallable(self.statusfile)()
-            return
+            else:
+                if datetime.datetime.now() - file_modified > datetime.timedelta(hours=3):
+                    # return statusfile if hanging for more than 3 hours
+                    print("cleaning up {} after 3 hours".format(self.statusfile), file=sys.stderr)
+                    _cleanupFileCallable(self.statusfile)()
+                return
         else:
             if not self.dryrun:
                 with open(self.statusfile, 'wt') as fh:
