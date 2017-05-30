@@ -65,6 +65,15 @@ class Resources():
         outputdir = outputdir.format(LUSTREDIR=lustredir)
         return outputdir
 
+    def getModelRunnerLogs(self):
+        logfile = os.path.join(self.OUTPUTDIR, 'eemepModelRunner_working')
+        msg = ""
+        for lustredir in ['/lustre/storeB', '/lustre/storeA']:
+            ll = logfile.format(LUSTREDIR=lustredir)
+            if os.path.isfile(ll):
+                with open(ll, 'rt') as lh: msg = msg + lh.read()
+        return msg
+
     def getStartScreen(self):
         '''return the html-code of the start-screen'''
         return self.startScreen

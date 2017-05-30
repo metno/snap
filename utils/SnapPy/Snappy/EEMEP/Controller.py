@@ -84,6 +84,8 @@ class Controller():
         logfile = os.path.join(self.lastOutputDir,"volcano.log")
         if os.path.isfile(logfile) :
             self.write_log(tail(logfile, 30))
+        else:
+            self.write_log("Waiting to work with {}\n".format(self.lastOutputDir)+ "Queue busy {:%Y-%m-%d %H:%M:%S}\n".format(datetime.datetime.now())+self.res.getModelRunnerLogs())
 
     @pyqtSlot()
     def update_log(self):
