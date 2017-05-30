@@ -44,7 +44,7 @@ TIME.RUN = {runTime}h
     startTime = rimxml.find("TimeOfInitialRelease").text
     startDTime = datetime.datetime.strptime(startTime, '%Y-%m-%dT%H:%M:%SZ')
     snapStartTime="{year} {month} {day} {hour}".format(year=startDTime.year,month=startDTime.month,day=startDTime.day, hour=startDTime.hour)
-    runTime = "72"
+    runTime = "120"
     sourceTerm = sourceTermTemplate.format(lat=lat,lon=lon,startTime=snapStartTime, runTime=runTime)
 
     isoItems = rimstermGetIsotopes(rimxml)
