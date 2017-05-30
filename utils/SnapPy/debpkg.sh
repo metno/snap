@@ -1,5 +1,5 @@
 # results appear under dist
-VERSION=1.5.0
+VERSION=1.5.1
 dch -v ${VERSION}-1 -U "initial upload"
 dch -r ''
 VERSION=$VERSION python3 setup.py sdist
