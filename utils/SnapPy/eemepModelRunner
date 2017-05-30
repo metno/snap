@@ -49,7 +49,6 @@ class EemepModelRunner():
             with tempfile.TemporaryFile(dir=directory) as fh:
                 return True
         except:
-            print("directory {} not writable".format(directory))
             return False
 
     def _findVolcanoFiles(self):
