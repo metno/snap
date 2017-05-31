@@ -49,26 +49,34 @@ my $data = $area->zeroes;
 foreach my $p (split ',', $param) {
     $data += $nc->get($p, [0,0,$lastTime], [$nx, $ny, 1]);
 }
-$data = $data->slice(":,:,(0)") * $area;
+my $dataBq = $data->slice(":,:,(0)") * $area;
 #my ($min, $max) = $dist->minmax;
 #print STDERR "lastTime=$lastTime, distMinMax=$min,$max\n";
 
 
 my %outputBins;
+my %maxBins;
+my %binAreas;
 for (my $i = 0; $i < $nx; $i++) {
     for (my $j = 0; $j < $ny; $j++) {
         my $dep = $data->at($i, $j);
-        if ($dep > 0) {
+        my $depBq = $dataBq->at($i, $j);
+        if ($dep >= 1) {
             my $d = $dist->at($i, $j);
             my $dBin = int($d/$binDist)*$binDist; # bins of 10km
-            $outputBins{$dBin} += $dep;
+            #print join " ", $dBin, $i, $j, $dep;
+            #print "\n";
+            $outputBins{$dBin} += $depBq;
+            $maxBins{$dBin} = 0 unless exists $maxBins{$dBin};
+            $maxBins{$dBin} = ($dep > $maxBins{$dBin}) ? $dep : $maxBins{$dBin};
+            $binAreas{$dBin} += $area->at($i,$j);
         }
     }
 }
 
-print join ("\t", "#name", "km", "$param [MBq]"), "\n";
+print join ("\t", "#name", "km", "avg [Bq/m2]", "max [Bq/m2]", "[km2]"), "\n";
 foreach my $dBin (sort {$a <=> $b} keys %outputBins) {
-    print join ("\t", $param, $dBin, $outputBins{$dBin}/1e6), "\n";
+    print join ("\t", $param, $dBin, $outputBins{$dBin}/$binAreas{$dBin}, $maxBins{$dBin}, $binAreas{$dBin}/1e6), "\n";
 }
 
 # calculate the great circle distance from
@@ -94,6 +102,9 @@ __END__
 calculateFlightDistance.pl - calculate different flight distances
 
 =head1 SYNOPSIS
+
+  calculateFlightDistance.pl  --input=gremikhaParticles.nc --binDist=50 --parameter=accum.wet.dep_Total,accum.dry.dep_Total --latitude=68.07 --longitude=39.47
+
 
 =head1 DESCRIPTION
 
