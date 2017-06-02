@@ -231,7 +231,8 @@ class Resources():
                 if filename is None:
                     return dates # longest continuous series
                 else:
-                    dates.append(filename)
+                    # TODO: currently working only with 00-UTC run
+                    dates.append((filename, 8))
 
         return dates
 
