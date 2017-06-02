@@ -59,6 +59,65 @@ class ModelRunner():
             eh.write(self.volcano.get_columnsource_emission())
         self.upload_files.add(emission)
 
+    def _generate_meteo_file(self, outfile, date_files):
+        '''Generate a meteo file, eventually by concatenting several input-files to get a file with 8 timesteps
+
+        Args:
+           outfile: output filename
+           date_files: list of pairs, each pair consisting of a input-file and the number of time-steps (3hourly) containted in this timestep
+        '''
+        if os.path.islink(outfile):
+            os.unlink(outfile)
+        if (date_files[0][1] == 8):
+            # no file-concatenation needed, just create a link
+            if not os.path.lexists(outfile):
+                os.symlink(date_files[0][0], outfile)
+        else:
+            # find the number of steps needed for which file (latest date first)
+            timesteps_in_file = 0
+            totalsteps = 0
+            use_steps = []
+            for (file, tsteps) in date_files:
+                newsteps = tsteps - timesteps_in_file
+                if newsteps <= 0:
+                    continue
+                use_steps.append((file, newsteps, timesteps_in_file))
+                timesteps_in_file = timesteps_in_file + newsteps
+                assert(timesteps_in_file <= 8)
+                if (timesteps_in_file == 8):
+                    break
+                step = 0
+            # create a list of all files needed (first date first) and
+            # find the timesteps to select from the joined files. (from first date to last date)
+            steps = []
+            files = []
+            pos = 0
+            for (file, use_steps, skip_steps) in reversed(use_steps):
+                for i in range(0, use_steps):
+                    steps.append(pos)
+                    pos = pos + 1
+                pos = pos + skip_steps
+                files.append('<netcdf location="{file}" />'.format(file=file))
+
+            # run fimex on files/steps
+            joinfiles = '''<?xml version="1.0" encoding="UTF-8"?>
+<netcdf xmlns="http://www.unidata.ucar.edu/namespaces/netcdf/ncml-2.2"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<aggregation type="joinExisting">
+    {files}
+</aggregation>
+</netcdf>
+'''
+            ncml_file = os.path.join(self.path, 'joinMeteo.ncml')
+            with open(ncml_file, 'wt') as fh:
+                fh.write(joinfiles.format(files="\n".join(files)))
+            subprocess.call(args=['fimex', '--input.file', ncml_file,
+                                  '--output.file', outfile,
+                                  '--output.type=nc4',
+                                  '--extract.pickDimension.name=time',
+                                  '--extract.pickDimension.list={}'.format(','.join(str(x) for x in steps))])
+
+
     def _get_meteo_files(self):
         '''Create meteorology files in the output-directory of volcano.xml.
         This involves linking and copying of needed meteorology. and eventually
@@ -71,15 +130,11 @@ class ModelRunner():
         '''
         (ref_date, model_start_time) = self.volcano.get_meteo_dates()
 
-        # TODO: this will only the todays 00 run, this is not flexible enough yet
         files = self.res.getECMeteorologyFiles(model_start_time, 72, ref_date)
-        for i, file in enumerate(files):
+        for i, date_files in enumerate(files):
             file_date = model_start_time + datetime.timedelta(days=i)
             outfile = os.path.join(self.path, "meteo{date}.nc".format(date=file_date.strftime("%Y%m%d")))
-            if os.path.islink(outfile):
-                os.unlink(outfile)
-            if not os.path.lexists(outfile):
-                os.symlink(file, outfile)
+            self._generate_meteo_file(outfile, date_files)
             self.upload_files.add(outfile)
         # vlevel-definition
         vlevels = self.res.getVerticalLevelDefinition()
@@ -220,7 +275,7 @@ class TestModelRunner(unittest.TestCase):
             self.assertTrue(os.path.exists(os.path.join(mr.path, x)), "file created: {}".format(x))
         meteo_count = 0
         for x in os.scandir(self.dir):
-            if x.is_symlink() and re.search(r'meteo\d{8}.nc', x.path):
+            if re.search(r'meteo\d{8}.nc', x.path):
                 meteo_count += 1
         self.assertEqual(meteo_count, 4, "meteo files created")
 

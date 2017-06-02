@@ -182,7 +182,11 @@ class Resources():
         run_hours -- run length in hours, possibly negative
         fixed_run -- string of form YYYY-MM-DD_HH giving a specific model-run
 
-        Returns: list with files for day 0 to day+run_hours, TODO: currently only UTC=00 run supported
+        Returns: list with file-objects from day 0 to day+run_hours
+                 each file-object contains of a list of (subfiles, run-steps-per-day) tuples, e.g.
+                 [ [(file_day1, 3), (file_day1, 6), (file_day1, 8)],
+                   [(file_day2, 8)]
+                   [(file_day3, 8)]
         """
         dates = []
 
@@ -196,10 +200,24 @@ class Resources():
                 for offset in range(0,3):
                     # lowest offset is best, but earlier forecasts will do
                     curday = startday + timedelta(days=-1*offset)
-                    for utc in [0]: # only utc 0
+                    day_files = []
+                    utc_hours = [(18,8), (12,8), (6,8), (0,8)]
+                    if offset == 0:
+                        # limited hours for day 0
+                        utc_hours =  [(18, 3), (12, 5), (6, 7), (0, 8)]
+                    for (utc, hours) in utc_hours:
                         file = self.EC_FILE_PATTERN.format(dayoffset=offset, UTC=utc, year=curday.year, month=curday.month, day=curday.day)
                         filename = self._findFileInPathes(file, self.ECINPUTDIRS)
-                        if filename is not None: relevant_dates.append(filename)
+                        if filename is not None: day_files.append((filename, hours))
+                    if offset == 0:
+                        # check previous days 1 day offset forecast, in case complete data not available for today (i.e. 00 run missing)
+                        last_day = curday + timedelta(days=-1)
+                        utc_hours = [(18,8), (12,8), (6,8), (0,8)]
+                        for (utc, hours) in utc_hours:
+                            file = self.EC_FILE_PATTERN.format(dayoffset=1, UTC=utc, year=last_day.year, month=last_day.month, day=last_day.day)
+                            filename = self._findFileInPathes(file, self.ECINPUTDIRS)
+                            if filename is not None: day_files.append((filename, hours))
+                    if len(day_files) > 0: relevant_dates.append(day_files)
                 if (len(relevant_dates) == 0):
                     return dates # longest continuous series
                 else:
