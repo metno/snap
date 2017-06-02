@@ -13,6 +13,7 @@ import unittest
 from METNO.HPC import HPC, StatusFile, QJobStatus
 from Snappy.EEMEP.Resources import Resources
 from Snappy.EEMEP.VolcanoRun import VolcanoRun
+from posix import R_OK
 
 
 class ModelRunner():
@@ -68,6 +69,12 @@ class ModelRunner():
         '''
         if os.path.islink(outfile):
             os.unlink(outfile)
+        if os.path.isfile(outfile):
+            if os.access(outfile, os.W_OK):
+                os.unlink(outfile)
+            elif os.access(outfile, os.R_OK):
+                # file only readable, forced to that file
+                return
         if (date_files[0][1] == 8):
             # no file-concatenation needed, just create a link
             if not os.path.lexists(outfile):
