@@ -73,7 +73,7 @@ class EemepModelRunner():
             if dirPath.startswith(self.directory2):
                 outdir = self.directory
             indir = dirPath.rstrip('/') #remove trailing slash to copy directory-name, too
-            os.system("rsync -a {indir} {outdir}".format(indir=indir, outdir=outdir))
+            os.system("rsync -a -O --no-perms {indir} {outdir}".format(indir=indir, outdir=outdir))
 
 
     def __init__(self, directory, hpc, directory2, dryrun=False):
