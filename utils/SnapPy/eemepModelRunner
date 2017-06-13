@@ -27,6 +27,17 @@ def _cleanupFileCallable(filename):
         os.unlink(filename)
     return cleanup
 
+def dirIsWritable(directory):
+    '''check if directory is writable'''
+    if not directory:
+        return False
+    try:
+        with tempfile.TemporaryFile(dir=directory) as fh:
+            return True
+    except:
+        return False
+
+
 
 class EemepModelRunner():
     hpc = typed_property("hpc", HPC)
@@ -41,15 +52,6 @@ class EemepModelRunner():
                                          msg=msg),
                   file=fh)
 
-    def _dirIsWritable(self, directory):
-        '''check if directory is writable'''
-        if not directory:
-            return False
-        try:
-            with tempfile.TemporaryFile(dir=directory) as fh:
-                return True
-        except:
-            return False
 
     def _findVolcanoFiles(self):
         '''find volcano.xml files in directory and directory2'''
@@ -78,15 +80,15 @@ class EemepModelRunner():
 
     def __init__(self, directory, hpc, directory2, dryrun=False):
         self.dryrun = dryrun
-        if self._dirIsWritable(directory):
+        if dirIsWritable(directory):
             self.directory = directory
-            if self._dirIsWritable(directory2):
+            if dirIsWritable(directory2):
                 self.directory2 = directory2
             else:
                 if (self.dryrun):
                     print("directory2: '{}' not writable and disabled".format(directory2), file=sys.stderr)
                 self.directory2 = ""
-        elif self._dirIsWritable(directory2):
+        elif dirIsWritable(directory2):
             if (self.dryrun):
                 print("directory: '{}' not writable and disabled, using '{}' as default ".format(directory, directory2), file=sys.stderr)
             self.directory = directory2
@@ -180,6 +182,7 @@ if __name__ == '__main__':
     EemepModelRunner(directory=args.dir, hpc=args.hpc, directory2=dir2, dryrun=args.dryrun)
 
     if (args.cleanup > 0) and not args.dryrun:
-        delete_oldfiles(args.dir, args.cleanup)
-        if dir2:
+        if dirIsWritable(args.dir):
+            delete_oldfiles(args.dir, args.cleanup)
+        if dir2 and dirIsWritable(dir2):
             delete_oldfiles(dir2, args.cleanup)
