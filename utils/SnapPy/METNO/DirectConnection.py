@@ -30,7 +30,9 @@ class DirectConnection(Connection):
             shutil.copy2(f, remote_path)
         return True
 
-    def get_files(self, files, local_path='.', timeout=None):
+    def get_files(self, files, local_path=None, timeout=None):
+        if not local_path:
+            local_path = "."
         for f in files:
             shutil.copy2(f, local_path)
         return True

@@ -51,7 +51,7 @@ class SGEQueue(Queue):
     def status_command(self, qJob):
         '''return the status command for the QJob'''
         assert(isinstance(qJob, SGEQJob))
-        return ("qstat")
+        return ("qstat", [])
 
     def delete_command(self, qJob):
         '''return the delete command for the QJob'''
