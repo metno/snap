@@ -33,7 +33,7 @@ class TestPPI_Direct(unittest.TestCase):
     def setUp(self):
         unittest.TestCase.setUp(self)
         self.hpc = HPC.by_name("ppi_direct")
-        self.rdir = "/tmp/metno_hpc_test"
+        self.rdir = "/lustre/storeB/users/heikok/tmp/metno_hpc_test"
         self.testFiles = ["script.job", "status"]
 
     def tearDown(self):
