@@ -102,6 +102,17 @@ EOF
         # Define XML file
         my $xmlfile = qq[$run_ident] . q[_Rimsterm.xml];
         my $xmlinfile = $smsdirs->{data}.qq[/$xmlfile];
+        
+        my $requestfile = qq[$run_ident] . q[_] . $model . q[_request.xml];
+        my $requestinfile = $smsdirs->{data}.qq[/$requestfile];
+        my $argosrequest = "";
+        if (-f $requestinfile) {
+            $argosrequest = '--argosrequest ' . $requestfile;
+        } else {
+            $requestinfile = "";
+        }
+
+        
         # Create qsub script
         my $qsubScript = "nrpa\_bsnap.sh";
         open(my $qsub, "> $qsubScript") or die "Cannot write '$qsubScript': $!\n";
@@ -120,19 +131,19 @@ EOF
 #\$ -o $remote_hosts_and_users->[0]{PPIdir}/OU\$JOB_NAME.\$JOB_ID
 #\$ -e $remote_hosts_and_users->[0]{PPIdir}/ER\$JOB_NAME.\$JOB_ID
 
-module load SnapPy/1.1.0
+module load SnapPy/1.2.0
 
 ulimit -c 0
 export OMP_NUM_THREADS=1
 
 cd $remote_hosts_and_users->[0]{PPIdir}
-snap4rimsterm --rimsterm $xmlfile --dir . --ident naccident_SNAP $worldwide
+snap4rimsterm --rimsterm $xmlfile $argosrequest --dir . --ident naccident_SNAP $worldwide
 
 EOF
         close $qsub;
 
         print qq[Moving input to PPI\n];
-        my $scp_command = qq[scp $qsubScript $xmlinfile $PPIuser\@$PPIhost:$PPIdir];
+        my $scp_command = qq[scp $qsubScript $xmlinfile $requestinfile $PPIuser\@$PPIhost:$PPIdir];
 
         if (system($scp_command) != 0) {
             print STDERR "error on command: '$scp_command'";
