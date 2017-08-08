@@ -233,6 +233,7 @@ SET_RELEASE.POS= P=   {lat},   {lon}
 TIME.START= {startTime}
 TIME.RUN = {runTime}h
 TIME.RELEASE.PROFILE.STEPS
+STEP.HOUR.OUTPUT.FIELDS= 3
 RELEASE.HOUR= 0, {releaseTime}
 RELEASE.RADIUS.M= {radius}, {radius}
 RELEASE.LOWER.M= {lowerHeight}, {lowerHeight}
