@@ -248,6 +248,9 @@ class HPC():
         elif (name == "alvin"):
             from . import Alvin
             return Alvin.Alvin()
+        elif (name == "ppi"):
+            from . import PPI
+            return PPI.PPI()
         elif (name == "ppi_direct"):
             from . import PPI_Direct
             return PPI_Direct.PPI_Direct()
