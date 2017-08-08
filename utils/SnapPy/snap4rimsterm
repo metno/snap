@@ -30,22 +30,33 @@ def rimstermGetIsotopes(rimxml):
         isoItems[itemXML.attrib['ItemName']] = int(itemXML.attrib['ItemNum'])
     return isoItems
 
-def rimsterm2input(rimxml, is_global):
+def rimsterm2input(rimxml, argosxml, is_global):
     """create a full snap.input sourceterm from a rimsterm.xml file using the ec-nrpa meteo"""
 
     sourceTermTemplate = """
 SET_RELEASE.POS= P=   {lat},   {lon}
 TIME.START= {startTime}
-TIME.RUN = {runTime}h
+TIME.RUN = {runTime:d}h
+STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
 """
     res = Resources()
     lat = rimxml.find("Header/Place/Location/[@Latitude]").attrib['Latitude']
     lon = rimxml.find("Header/Place/Location/[@Longitude]").attrib['Longitude']
+
     startTime = rimxml.find("TimeOfInitialRelease").text
+    runTime = 120
+    outputTimestep = 3    
+    if argosxml:
+        runTime = int(argosxml.find("RunLength").text)
+        outputTimestep = int(argosxml.find("OutputTimestep").text)
+        if runTime < 0: # backward run
+            startTime = argosxml.find("EndTime").text
+
     startDTime = datetime.datetime.strptime(startTime, '%Y-%m-%dT%H:%M:%SZ')
     snapStartTime="{year} {month} {day} {hour}".format(year=startDTime.year,month=startDTime.month,day=startDTime.day, hour=startDTime.hour)
-    runTime = "120"
-    sourceTerm = sourceTermTemplate.format(lat=lat,lon=lon,startTime=snapStartTime, runTime=runTime)
+            
+    
+    sourceTerm = sourceTermTemplate.format(lat=lat,lon=lon,startTime=snapStartTime, runTime=runTime, outputTimestep=outputTimestep)
 
     isoItems = rimstermGetIsotopes(rimxml)
     isos = res.getIsotopes()
@@ -244,16 +255,22 @@ def snap4traj(trajInput, basedir, ident, is_global):
     outlog.close()
 
 
-def snap4rimsterm(rimsterm, basedir, ident, is_global):
+def snap4rimsterm(rimsterm, argosrequest, basedir, ident, is_global):
     '''run snap with rimsterm definition in basedir dir'''
     tree = ET.parse(rimsterm)
     root = tree.getroot()
     assert root.tag == 'CBRN_Sourceterm', "Not a rimsterm input file: {}".format(rimsterm)
 
+    argosRoot = None
+    if argosrequest:
+        argosTree = ET.parse(argosrequest)
+        argosRoot = argosTree.getroot()
+        assert argosRoot.tag == 'Request', "Not a argos request xml file: {}". format(argosrequest)
+
     if (not os.path.isdir(basedir)):
         os.makedirs(basedir)
 
-    snapInput = rimsterm2input(root, is_global)
+    snapInput = rimsterm2input(root, argosRoot, is_global)
     with open(os.path.join(basedir, "snap.input"), "w") as fh:
         fh.write(snapInput)
 
@@ -282,13 +299,14 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="run snap from a rimsterm.xml file and convert to grib-files named ident_conc, ident_depo ident_wetd ident_dose ident_tofa")
     parser.add_argument("--rimsterm", help="source-term in rimsterm format", required=False)
+    parser.add_argument("--argosrequest", help="optional argos-request xml file in addition to --rimsterm file", required=False)
     parser.add_argument("--worldwide", help="use global meteorology", required=False, action="store_true")
     parser.add_argument("--trajInput", help="source-term in nrpa trajectory input format", required=False)
     parser.add_argument("--dir", help="output-directory", required=True)
     parser.add_argument("--ident", help="output-file identifier", required=True)
     args = parser.parse_args()
     if args.rimsterm is not None:
-        snap4rimsterm(args.rimsterm, args.dir, args.ident, args.worldwide)
+        snap4rimsterm(args.rimsterm, args.argosrequest, args.dir, args.ident, args.worldwide)
     elif args.trajInput is not None:
         snap4traj(args.trajInput, args.dir, args.ident, args.worldwide)
     else:
