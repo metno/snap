@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<Request>
+<StartTime>2017-08-02T13:54:00Z</StartTime>
+<EndTime>2017-08-03T13:54:00Z</EndTime>
+<RunLength>-66</RunLength>
+<OutputTimestep>3</OutputTimestep>
+<ModelDirection>Backward</ModelDirection>
+</Request>

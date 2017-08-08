@@ -27,16 +27,19 @@ my $remote_hosts_and_users = [ { host => "x",
 my $PPIdir = Snap::create_ppi_dir($remote_hosts_and_users, ['/lustre/storeB/project/fou/kl/snap/nrpa_runs/test'.$$]);
 $remote_hosts_and_users->[0]{PPIdir} = $PPIdir;
 
-my (undef,undef,undef,$mday, $mon, $year) = gmtime(time);
+my $time = time;
+my (undef,undef,undef,$mday, $mon, $year) = gmtime($time);
 $mon++;$year += 1900;
 my $date = sprintf("%04d-%02d-%02d", $year, $mon, $mday);
-{
+my (undef,undef,undef,$ymday, $ymon, $yyear) = gmtime($time - 24*60*60);
+my $yesterday = sprintf("%04d-%02d-%02d", $yyear, $ymon, $ymday);
+foreach my $file ("$Bin/data/Hartlepool-20162306-0924_Rimsterm.xml", "$Bin/data/TestBackModeling_Rimsterm.xml", "$Bin/data/TestBackModeling_SNAP_request.xml") {
     # fix date of test-input
-    my $file = "$Bin/data/Hartlepool-20162306-0924_Rimsterm.xml";
     open my $fh, "$file.org" or die "Cannot read $file.org: $!\n";
     local $/ = undef;
     my $content = <$fh>;
-    $content =~ s/2016-06-23/$date/g;
+    $content =~ s/2017-08-02/$yesterday/g;
+    $content =~ s/2017-08-03/$date/g;
     close $fh;
     open my $nfh, ">$file" or die "Cannot write $file: $!\n";
     print $nfh $content;
@@ -69,6 +72,15 @@ SKIP: {
 
     ok(-f "$Bin/data/Hartlepool-20162306-0924_hi_res_SNAP2ARGOS.zip", "SNAP2ARGOS file created");
     unlink "$Bin/data/Hartlepool-20162306-0924_hi_res_SNAP2ARGOS.zip";
+
+    # backward dispersion
+    ($error, @files) = SnapEC::run_model(\%smsdirs, $remote_hosts_and_users, '',
+            'TestBackModeling', 'SNAP');
+    ok($error == 0, "running backward model: SNAP");
+
+    ok(-f "$Bin/data/TestBackModeling_hi_res_SNAP2ARGOS.zip", "SNAP2ARGOS file created");
+    unlink "$Bin/data/TestBackModeling_hi_res_SNAP2ARGOS.zip";
+    
 
     # forward trajectory
     my $ident = 'Brokdorf_test_2';
