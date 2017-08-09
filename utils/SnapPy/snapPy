@@ -3,6 +3,7 @@
 import sys
 from PyQt5 import QtGui, QtWidgets
 from Snappy.SnapController import SnapController
+from Snappy.SnapControllerInverse import SnapControllerInverse
 from Snappy.BrowserWidget import BrowserWidget
 import Snappy.EEMEP.Resources
 import Snappy.EEMEP.Controller
@@ -11,8 +12,10 @@ if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     tabs = QtWidgets.QTabWidget()
     snap = SnapController()
+    snapBack = SnapControllerInverse()
     eemep = Snappy.EEMEP.Controller.Controller()
     tabs.addTab(snap.main, 'SNAP Nuclear Accident')
+    tabs.addTab(snapBack.main, 'SNAP Backtracking')
     tabs.addTab(eemep.main, 'EEMEP Ash Cloud')
     tabs.resize(960,1024)
     tabs.setWindowTitle('SNAPpy')

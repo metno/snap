@@ -1,0 +1,189 @@
+<html>
+<head>
+<title>SNAP-Runner Backward</title>
+<style type="text/css">
+<!--
+ /* The Modal (background) */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+/* Modal Content/Box */
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto; /* 15% from the top and centered */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%; /* Could be more or less, depending on screen size */
+}
+
+/* The Close Button */
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+
+-->
+</style>
+<script type="text/javascript">
+function toggle_advanced_sourceterm() {
+        var e = document.getElementById("advanced_sourceterm");
+        if(e.style.display == 'block') {
+            e.style.display = 'none';
+        } else {
+            e.style.display = 'block';
+        }
+    }
+
+var currentIndex = 0
+function addFields() {
+    var myTable = document.getElementById("measurements");
+    currentIndex++;
+    var currentRow = myTable.insertRow(-1);
+    
+    var currentCell = currentRow.insertCell(-1);
+    var nameBox = document.createElement("input");
+    nameBox.setAttribute("type", "text");
+    nameBox.setAttribute("name", "measurement"+currentIndex);
+    nameBox.setAttribute("value", "Meas"+currentIndex);
+    nameBox.setAttribute("size","8");
+    nameBox.setAttribute("maxlength","8");
+    currentCell.appendChild(nameBox);
+    
+    currentCell = currentRow.insertCell(-1);
+    nameBox = document.createElement("input");
+    nameBox.setAttribute("type", "text");
+    nameBox.setAttribute("name", "lat"+currentIndex);
+    nameBox.setAttribute("size","4");
+    nameBox.setAttribute("maxlength","8");
+    currentCell.appendChild(nameBox);
+    
+    currentCell = currentRow.insertCell(-1);
+    nameBox = document.createElement("input");
+    nameBox.setAttribute("type", "text");
+    nameBox.setAttribute("name", "lon"+currentIndex);
+    nameBox.setAttribute("size","4");
+    nameBox.setAttribute("maxlength","8");
+    currentCell.appendChild(nameBox);
+    
+    currentCell = currentRow.insertCell(-1);
+    nameBox = document.createElement("input");
+    nameBox.setAttribute("type", "text");
+    nameBox.setAttribute("name", "start"+currentIndex);
+    nameBox.setAttribute("size","16");
+    nameBox.setAttribute("maxlength","16");
+    currentCell.appendChild(nameBox);
+    
+    currentCell = currentRow.insertCell(-1);
+    nameBox = document.createElement("input");
+    nameBox.setAttribute("type", "text");
+    nameBox.setAttribute("name", "end"+currentIndex);
+    nameBox.setAttribute("size","16");
+    nameBox.setAttribute("maxlength","16");
+    currentCell.appendChild(nameBox);
+
+    currentCell = currentRow.insertCell(-1);
+    nameBox = document.createElement("input");
+    nameBox.setAttribute("type", "button");
+    nameBox.setAttribute("value", "Delete");
+    nameBox.setAttribute("onclick","deleteRow(this)");
+    currentCell.appendChild(nameBox);
+
+}
+
+function deleteRow(btn) {
+  var row = btn.parentNode.parentNode;
+  row.parentNode.removeChild(row);
+}
+
+
+</script>
+</head>
+<body onLoad="addFields()">
+<div id="snap_working" class="modal">
+
+  <!-- Modal content -->
+  <div class="modal-content">
+    <span class="close">x</span>
+    <h2>SNAP Log</h2>
+    <pre id="log">
+
+    </pre>
+    <!-- no update wanted by forecasters
+    <form method="get" action="http://localhost/snaprunner/run">
+    <fieldset>
+        <input type="submit" name="action" value="Update" />
+    </fieldset>
+    </form>
+     -->
+  </div>
+
+</div>
+
+
+<!-- <h1>SNAP-Runner</h1>  -->
+    <form method="get" action="http://localhost/snaprunner/run">
+     <div style="float: left;">
+     <fieldset>
+     <legend>Case-Setup</legend>
+        <table id="run">
+        <tr><th>output-dir</th><td><input type="text" size="80" maxlength="1024" name="outputDir" value="OUTPUTDIR" /></td></tr>
+        <tr><th>run-time</th><td><input type="text" size="4" maxlength="4" name="runTime" value="-96" /></td></tr>
+        </table>
+     </fieldset>
+     <fieldset>
+       <legend>Measurements</legend>
+       <table id="measurements">
+        <tr><th>Name</th><th>Latitude</th><th>Longitude</th><th>Starttime</th><th>Endtime</th><tr>
+        <tr><th></th><th>e.g. 60.10</th><th>e.g. -10.3</th><th>[YYYY-MM-DD HH:MM]</th><th>[YYYY-MM-DD HH:MM]</th><tr>
+       </table>
+       <input type="button" class="button" value="Add another line" onclick="addFields();"/>
+       
+     </fieldset>
+     <fieldset><legend>Special Meteorology Input</legend>optional, e.g. <br>/lustre/storeB/project/fou/kl/cerad/Projects/2017_Ephsogam/EC_MET/NRPA_EUROPE_0_1_{UTC:02d}/meteo{year:04d}{month:02d}{day:02d}_{dayoffset:02d}.nc<br>
+       <input name="metpattern" type="text" size="90" value="" maxSize="1024" />
+     </fieldset>
+     </div>
+     <div style="clear: both;">
+     <input type="submit" name="action" value="Run" />
+     </div>
+    </form>
+
+</body>
+
+<script type="text/javascript">
+var btnClose = document.getElementsByClassName("close")[0];
+//When the user clicks on <span> (x), close the modal
+btnClose.onclick = function() {
+    snap.style.display = "none";
+}
+var snap = document.getElementById('snap_working');
+var snapLog = document.getElementById('log');
+
+function updateSnapLog(text) {
+    snapLog.innerHTML = text;
+    snap.style.display = "block";
+    //alert(text);
+}
+</script>
+
+</html>

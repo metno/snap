@@ -77,6 +77,11 @@ class Resources():
     def getStartScreen(self):
         return self.startScreen
 
+    def getStartScreenInverse(self):
+        with open(os.path.join(os.path.dirname(__file__),"resources/startScreenInverse.html"), mode='r', encoding="UTF-8") as sfh:
+            startScreenInverse = sfh.read()
+        return startScreenInverse
+
     def getIconPath(self):
         return os.path.join(os.path.dirname(__file__),"resources/radioMapIcon.png")
 
@@ -334,7 +339,7 @@ GRAVITY.FIXED.M/S=0.0002
         return relevant_dates
 
 
-    def getECMeteorologyFiles(self, dtime: datetime, run_hours: int, fixed_run="best"):
+    def getECMeteorologyFiles(self, dtime: datetime, run_hours: int, fixed_run="best", pattern=""):
         """Get available meteorology files for the last few days around dtime and run_hours.
 
         Keyword arguments:
@@ -343,6 +348,8 @@ GRAVITY.FIXED.M/S=0.0002
         fixed_run -- string of form YYYY-MM-DD_HH giving a specific model-run
         """
         relevant_dates = []
+        if not pattern:
+            pattern = Resources.EC_FILE_PATTERN
 
 
         if (fixed_run == "best"):
@@ -363,7 +370,7 @@ GRAVITY.FIXED.M/S=0.0002
             for offset in [3,2,1,0]:
                 for day in days:
                     for utc in [0, 6, 12, 18]:
-                        file = self.EC_FILE_PATTERN.format(dayoffset=offset, UTC=utc, year=day.year, month=day.month, day=day.day)
+                        file = pattern.format(dayoffset=offset, UTC=utc, year=day.year, month=day.month, day=day.day)
                         filename = self._findFileInPathes(file, self.ECINPUTDIRS)
                         if filename is not None: relevant_dates.append(filename)
         else:
