@@ -17,7 +17,7 @@ from Snappy.Resources import Resources
 def debug(*objs):
     print("DEBUG: ", *objs, file=sys.stderr)
 
-class _SnapUpdateThread(QThread):
+class SnapUpdateThread(QThread):
     update_log_signal = pyqtSignal()
 
     def __init__(self, snapController):
@@ -39,7 +39,7 @@ class _SnapUpdateThread(QThread):
             traceback.print_exc()
 
 
-class _SnapRun():
+class SnapRun():
 
     @staticmethod
     def getQProcess(snap_controller):
@@ -55,7 +55,7 @@ class _SnapRun():
 
     def __init__(self, snap_controller):
         self.snap_controller = snap_controller
-        self.proc = _SnapRun.getQProcess(snap_controller)
+        self.proc = SnapRun.getQProcess(snap_controller)
 
 
     def start(self):
@@ -111,7 +111,7 @@ class SnapController:
         self._snap_model_run()
 
     def results_add_toa(self):
-        proc = _SnapRun.getQProcess(self)
+        proc = SnapRun.getQProcess(self)
         proc.start("snapAddToa", ['snap.nc'])
         proc.waitForFinished(-1)
 
@@ -278,13 +278,13 @@ RELEASE.UPPER.M= {upperHeight}, {upperHeight}
             try:
                 self.ecmet = EcMeteorologyCalculator(self.res, startDT, lonf, latf)
                 if self.ecmet.must_calc():
-                    proc = _SnapRun.getQProcess(self)
+                    proc = SnapRun.getQProcess(self)
                     proc.finished.connect(self._ec_finished_run_snap)
                     self.ecmet.calc(proc)
                     if (proc.waitForStarted(3000)) :
                         self.snapRunning = "running"
                     # start background logging thread
-                    self.snap_update = _SnapUpdateThread(self)
+                    self.snap_update = SnapUpdateThread(self)
                     self.snap_update.update_log_signal.connect(self.update_log)
                     self.snap_update.start(QThread.LowPriority)
                 else:
@@ -310,11 +310,11 @@ RELEASE.UPPER.M= {upperHeight}, {upperHeight}
             self._snap_model_run()
 
     def _snap_model_run(self):
-        self.snap_run = _SnapRun(self)
+        self.snap_run = SnapRun(self)
         self.snap_run.proc.finished.connect(self._snap_finished)
         self.snap_run.start()
 
-        self.snap_update = _SnapUpdateThread(self)
+        self.snap_update = SnapUpdateThread(self)
         self.snap_update.update_log_signal.connect(self.update_log)
         self.snap_update.start(QThread.LowPriority)
 
