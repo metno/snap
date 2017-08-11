@@ -51,6 +51,18 @@ function toggle_advanced_sourceterm() {
             e.style.display = 'block';
         }
     }
+function togglebomb(element)
+{
+  var b = document.getElementById("bombRelease");
+  var i = document.getElementById("isotopeRelease");
+  if (element.checked) {
+    b.style.display = 'block'
+    i.style.display = 'none'
+  } else {
+    b.style.display = 'none'
+    i.style.display = 'block'
+  }
+}
 </script>
 </head>
 <body>
@@ -86,12 +98,28 @@ function toggle_advanced_sourceterm() {
          <fieldset>
          <legend><a href="javascript: toggle_advanced_sourceterm()">Advanced</a></legend>
          <div id="advanced_sourceterm" style="display: none">
+         <label>Nuclear bomb: <input type="checkbox" name="isBomb" value="1" onchange="togglebomb(this)"></label>
+         <div id="bombRelease" style="display: none">
+         Bomb: Explosive yield: <select name="yield" size="1">
+         <option value="1">1kt</option>
+         <option value="3">3kt</option>
+         <option selected="selected" value="10">10kt</option>
+         <option value="30">30kt</option>
+         <option value="100">100kt</option>
+         <option value="300">300kt</option>
+         <option value="1000">1000kt</option>
+         <option value="3000">3000kt</option>
+         </select>
+         </div>
+         <p />
+         <div id="isotopeRelease">
          Height (lower/heigher in m)<br><input name="lowerHeight" type="text" size="4" maxlength="4" value="15"><input name="upperHeight" type="text" size="4" maxlength="4" value="500"><br />
          Radius (in m)<br><input name="radius" type="text" size="4" maxlength="4" value="50">
          <p />
          Release CS-137 (in Bq/s)<br><input name="relCS137" type="text" size="8" maxlength="8" value="2.6e+11"><br />
          Release XE-133 (in Bq/s)<br><input name="relXE133" type="text" size="8" maxlength="8" value="1.0e+13"><br />
          Release I-131 (in Bq/s)<br><input name="relI131" type="text" size="8" maxlength="8" value="1.39e+13"><br />
+         </div>
          <p />MET-MODEL
          <select name="metmodel">
              <option selected="selected" value="nrpa_ec_0p1">EC 0.1, NRPA-domain</option>

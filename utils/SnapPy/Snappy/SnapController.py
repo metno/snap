@@ -171,7 +171,202 @@ m=SNAP.current t=fimex format=netcdf f={}
             return False
         return True
 
+    def get_bomb_yield(self, yld):
+        if yld == 1:
+            lower=500.0
+            upper=1500.0
+            radius=600.0
+            activity=2.0e19
+        elif (yld == 3):
+            lower=1400.0
+            upper=3100.0
+            radius=1000.0
+            activity=6.0e19
+        elif (yld == 10):
+            lower=2250.0
+            upper=4750.0
+            radius=1400.0
+            activity=2.0e20
+        elif (yld == 30):
+            lower=4100.0
+            upper=8400.0
+            radius=2300.0
+            activity=6.0e20
+        elif (yld == 100):
+            lower=5950.0
+            upper=12050.0
+            radius=3200.0
+            activity=2.0e21
+        elif (yld == 300):
+            lower=8000.0
+            upper=18500.0
+            radius=5800.0
+            activity=6.0e21
+        elif (yld == 1000):
+            lower=10000.0
+            upper=25000.0
+            radius=8500.0
+            activity=2.0e22
+        elif(yld == 3000):
+            lower=12000.0
+            upper=32000.0
+            radius=11100.0
+            activity=6.0e22
+        else: 
+            lower=0.0
+            upper=0.0
+            radius=0.0
+            activity=0  
+        return (lower, upper, radius, activity)
+    
+    def get_bomb_release(self, qDict):
+        source_tmpl = '''
+MAX.PARTICLES.PER.RELEASE= 1000000
 
+* PARTICLE CLASSES
+COMPONENT= Aerosol_2.2mym
+DRY.DEP.ON
+WET.DEP.ON
+RADIOACTIVE.DECAY.OFF
+RADIUS.MICROMETER= 2.2
+*DENSITY.G/CM3=2.95
+GRAVITY.FIXED.CM/S= 0.2
+FIELD.IDENTIFICATION=01
+*
+COMPONENT= Aerosol_4.4mym
+DRY.DEP.ON
+WET.DEP.ON
+RADIOACTIVE.DECAY.OFF
+RADIUS.MICROMETER= 4.4
+GRAVITY.FIXED.CM/S= 0.7
+FIELD.IDENTIFICATION=2
+*
+COMPONENT= Aerosol_8.6mym
+DRY.DEP.ON
+WET.DEP.ON
+RADIOACTIVE.DECAY.OFF
+RADIUS.MICROMETER= 8.6
+GRAVITY.FIXED.CM/S= 2.5
+FIELD.IDENTIFICATION=3
+*
+COMPONENT= Aerosol_14.6mym
+DRY.DEP.ON
+WET.DEP.ON
+RADIOACTIVE.DECAY.OFF
+RADIUS.MICROMETER= 14.6
+GRAVITY.FIXED.CM/S= 6.9
+FIELD.IDENTIFICATION=4
+*
+COMPONENT= Aerosol_22.8mym
+DRY.DEP.ON
+WET.DEP.ON
+RADIOACTIVE.DECAY.OFF
+RADIUS.MICROMETER= 22.8
+GRAVITY.FIXED.CM/S= 15.9
+FIELD.IDENTIFICATION=5
+*
+COMPONENT= Aerosol_36.1mym
+DRY.DEP.ON
+WET.DEP.ON
+RADIOACTIVE.DECAY.OFF
+RADIUS.MICROMETER= 36.1
+GRAVITY.FIXED.CM/S= 35.6
+FIELD.IDENTIFICATION=6
+*
+COMPONENT= Aerosol_56.5mym
+DRY.DEP.ON
+WET.DEP.ON
+RADIOACTIVE.DECAY.OFF
+RADIUS.MICROMETER= 56.5
+GRAVITY.FIXED.CM/S= 71.2
+FIELD.IDENTIFICATION=7
+*
+COMPONENT= Aerosol_92.3mym
+DRY.DEP.ON
+WET.DEP.ON
+RADIOACTIVE.DECAY.OFF
+RADIUS.MICROMETER= 92.3
+GRAVITY.FIXED.CM/S= 137.0
+FIELD.IDENTIFICATION=8
+*
+COMPONENT= Aerosol_173.2mym
+DRY.DEP.ON
+WET.DEP.ON
+RADIOACTIVE.DECAY.OFF
+RADIUS.MICROMETER=173.2
+GRAVITY.FIXED.CM/S= 277.3
+FIELD.IDENTIFICATION=9
+*
+COMPONENT= Aerosol_250.0mym
+DRY.DEP.ON
+WET.DEP.ON
+RADIOACTIVE.DECAY.OFF
+RADIUS.MICROMETER= 250.0
+GRAVITY.FIXED.CM/S= 10000.0
+FIELD.IDENTIFICATION=10
+
+** Explosive yield = {yld}kt
+TIME.RELEASE.PROFILE.BOMB
+RELEASE.SECOND=    0
+RELEASE.RADIUS.M={radius}
+RELEASE.LOWER.M= {lowerHeight}
+RELEASE.UPPER.M= {upperHeight}
+
+'''
+        errors = ""
+        try:
+            yld = int(qDict['yield'])
+            (lowerHeight, upperHeight, radius, activity) = self.get_bomb_yield(yld)
+            if (activity == 0.):
+                raise Exception()
+        except:
+            errors += "unknown yield\n"
+  
+        source_term = source_tmpl.format(radius=radius, lowerHeight=lowerHeight, upperHeight=upperHeight, yld=yld)
+  
+        release = []
+        tags = ('2.2', '4.4', '8.6', '14.6', '22.8', '36.1', '56.5', '92.3', '173.2', '250.0')
+        for tag in tags:
+            release.append("RELEASE.BQ/STEP.COMP= {amount:.3E} 'Aerosol_{tag}mym'\n".format(tag=tag, amount=activity/len(tags)))
+
+        source_term += "".join(release)
+        
+        return (source_term, errors)
+
+    def get_isotope_release(self, qDict):
+        errors = ""
+        for tag in ('releaseTime', 'radius', 'lowerHeight', 'upperHeight'):
+            if not re.search('\d+', qDict[tag]):
+                errors += "Cannot interprete {}: {}".format(tag, qDict[tag])
+
+        source_tmpl = '''
+MAX.PARTICLES.PER.RELEASE= 2000
+TIME.RELEASE.PROFILE.STEPS
+RELEASE.HOUR= 0, {releaseTime}
+RELEASE.RADIUS.M= {radius}, {radius}
+RELEASE.LOWER.M= {lowerHeight}, {lowerHeight}
+RELEASE.UPPER.M= {upperHeight}, {upperHeight}
+'''
+        source_term = source_tmpl.format(releaseTime=qDict['releaseTime'],
+                                         radius=qDict['radius'],
+                                         lowerHeight=qDict['lowerHeight'], upperHeight=qDict['upperHeight'])
+
+        isotopes = {'relI131': 'I131',
+                    'relXE133': 'Xe133',
+                    'relCS137': 'Cs137'}
+        for rel, iso in isotopes.items():
+            emis = 0.
+            try:
+                emis = float(qDict[rel])
+            except:
+                pass
+            if (emis > 0.):
+                source_term += "RELEASE.BQ/SEC.COMP= {rel}, {rel}, '{iso}'\n".format(rel=qDict[rel], iso=iso)
+
+        # add Cs137, I131 and Xe133
+        source_term += self.res.isotopes2snapinput([169, 158, 148])
+
+        return (source_term, errors)
 
     def run_snap_query(self, qDict):
         # make sure all files are rw for everybody (for later deletion)
@@ -190,8 +385,6 @@ m=SNAP.current t=fimex format=netcdf f={}
         if not re.search('-?\d+(.\d+)?', qDict['runTime']):
             errors += "Cannot interprete runTime: {}\n".format(qDict['runTime'])
 
-        if not re.search('\d+', qDict['releaseTime']):
-            errors += "Cannot interprete releaseTime: {}".format(qDict['releaseTime'])
 
         lat = qDict['latitude']
         lon = qDict['longitude']
@@ -232,38 +425,27 @@ SIMULATION.START.DATE={simStart}
 SET_RELEASE.POS= P=   {lat},   {lon}
 TIME.START= {startTime}
 TIME.RUN = {runTime}h
-TIME.RELEASE.PROFILE.STEPS
 STEP.HOUR.OUTPUT.FIELDS= 3
-RELEASE.HOUR= 0, {releaseTime}
-RELEASE.RADIUS.M= {radius}, {radius}
-RELEASE.LOWER.M= {lowerHeight}, {lowerHeight}
-RELEASE.UPPER.M= {upperHeight}, {upperHeight}
 """
         self.lastSourceTerm = sourceTerm.format(simStart=strftime("%Y-%m-%d_%H:%M:%S",curtime),
                                                 lat=latf, lon=lonf, startTime=startTime,
-                                                runTime=qDict['runTime'],
-                                                releaseTime=qDict['releaseTime'],
-                                                radius=qDict['radius'],
-                                                lowerHeight=qDict['lowerHeight'], upperHeight=qDict['upperHeight'])
-        isotopes = {'relI131': 'I131',
-                    'relXE133': 'Xe133',
-                    'relCS137': 'Cs137'}
-        for rel, iso in isotopes.items():
-            emis = 0.
-            try:
-                emis = float(qDict[rel])
-            except:
-                pass
-            if (emis > 0.):
-                self.lastSourceTerm += "RELEASE.BQ/SEC.COMP= {rel}, {rel}, '{iso}'\n".format(rel=qDict[rel], iso=iso)
+                                                runTime=qDict['runTime'])
+
+        if 'isBomb' in qDict:
+            (term, errors) = self.get_bomb_release(qDict)
+        else:
+            (term, errors) = self.get_isotope_release(qDict)
+        if (len(errors) > 0):
+            debug('updateSnapLog("{0}");'.format(json.dumps("ERRORS:\n\n"+errors)))
+            self.write_log("ERRORS:\n\n{0}".format(errors))
+            return
+        self.lastSourceTerm += term
 
         debug("output directory: {}".format(self.lastOutputDir))
         os.mkdir(self.lastOutputDir)
 
         with open(os.path.join(self.lastOutputDir, "snap.input"),'w') as fh:
             fh.write(self.lastSourceTerm)
-            # add Cs137, I131 and Xe133
-            fh.write(self.res.isotopes2snapinput([169, 158, 148]))
         if (qDict['metmodel'] == 'nrpa_ec_0p1'):
             files = self.res.getECMeteorologyFiles(startDT, int(qDict['runTime']), qDict['ecmodelrun'])
             if (len(files) == 0):
