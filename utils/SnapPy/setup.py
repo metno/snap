@@ -3,7 +3,7 @@
 from distutils.core import setup
 import os
 
-version=os.getenv('VERSION', "0.4")
+version=os.getenv('VERSION', "0.5")
 
 setup(name='Snappy',
       version=version,
