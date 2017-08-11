@@ -164,7 +164,7 @@ RELEASE.UPPER.M= {upperHeight}, {upperHeight}
 RELEASE.BQ/SEC.COMP= 1e12, 1e12, 'Cs137'
 """
             self.lastSourceTerm = sourceTerm.format(simStart=strftime("%Y-%m-%d_%H:%M:%S",curtime),
-                                                lat=latf, lon=lonf, startTime=mes.end.strftime("%Y %m %d %H"),
+                                                lat=mes.lat, lon=mes.lon, startTime=mes.end.strftime("%Y %m %d %H"),
                                                 runTime=runTime,
                                                 releaseTime=releaseH,
                                                 radius=500,
@@ -192,7 +192,6 @@ RELEASE.BQ/SEC.COMP= 1e12, 1e12, 'Cs137'
                     return                
                 snapIn = self.res.getSnapInputMetDefinitions(metmodel, files)
                 snapIn = snapIn.replace("snap.", "snap{}.".format(mes.id)) # replace snap.nc and snap.log to snap1.nc snap1.log
-                snapIn = snapIn.replace("MAX.PARTICLES.PER.RELEASE= 2000", "MAX_PARTICLES.PER.RELEASE= 5000") # tune statistics
                 with open(os.path.join(self.lastOutputDir, "snap.input{}".format(mes.id)),'a') as fh:
                     fh.write(snapIn)
         
@@ -209,7 +208,7 @@ RELEASE.BQ/SEC.COMP= 1e12, 1e12, 'Cs137'
         with open(os.path.join(self.lastOutputDir, "diana.setup"), 'w') as fh:
             fh.write('''
 %include /etc/diana/setup/diana.setup-COMMON
-<FIELD_PLOTS>
+<FIELD_PLOT>
 field=source_probability
   colour=off minvalue=0.1 line.interval=1. palettecolours=gray_rev
   plot=FILL_CELL(Cs137_probability)
@@ -218,7 +217,14 @@ end.field
 field=acc_source_probability
   colour=off minvalue=0.1 line.interval=3. palettecolours=who_uvi
   plot=FILL_CELL(Cs137_acc_probability)
-</FIELD_PLOTS>
+end.field
+
+field=Cs137_avg_in_boundary_layer
+  colour=off minvalue=0.1 line.values=0,1 palettecolours=gray_rev
+  plot=FILL_CELL(Cs137_concentration_bl)
+end.field
+
+</FIELD_PLOT>
 
 <FIELD_FILES>
 filegroup=snapBacktrack
