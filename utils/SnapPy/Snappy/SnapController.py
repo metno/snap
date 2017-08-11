@@ -123,27 +123,35 @@ class SnapController:
         else :
             diVersion = ""
 
-        if 'region' in self.lastQDict:
+        if 'region' in self.lastQDict and self.lastQDict['region']:
             prod_dir = os.path.join(self.lastOutputDir, "prod")
             os.mkdir(prod_dir)
-            fh = open(os.path.join(prod_dir, "diana.setup"),'w')
-            di_setup = """
+            with open(os.path.join(prod_dir, "diana.setup"),'wt') as fh:
+                di_setup = """
 %include /etc/diana/setup/diana.setup-COMMON
 <FIELD_FILES>
 filegroup=SNAP
 m=SNAP.current t=fimex format=netcdf f={}
 </FIELD_FILES>
 """
-            fh.write(di_setup.format(os.path.join(self.lastOutputDir, "snap.nc")))
-            fh.close()
+                fh.write(di_setup.format(os.path.join(self.lastOutputDir, "snap.nc")))
 
+            hours = ",".join(["{x} | {y}".format(x=x, y=x+3) for x in range(0,abs(int(self.lastQDict['runTime'])),3)])
+            component = 'Cs137'
+            if 'isBomb' in self.lastQDict:
+                component = 'Aerosol'
+            dianaIn = os.path.join(prod_dir, "diana.in")
+            with open(self.res.getBSnapInputFile(), 'rt') as fh:
+                dianaInTmpl = fh.read()
+            with open(dianaIn, 'wt') as fh:
+                fh.write(dianaInTmpl.format(hours=hours, component=component))
 
             # plots
             proc = QProcess()
             proc.setWorkingDirectory(os.path.join(prod_dir))
             proc.setStandardOutputFile(os.path.join(self.lastOutputDir,"snap.log.stdout"), QIODevice.Append)
             proc.setStandardErrorFile(os.path.join(self.lastOutputDir,"snap.log.stderr"), QIODevice.Append)
-            proc.start("bdiana{}".format(diVersion), ['-i', self.res.getBSnapInputFile(), '-s', 'diana.setup', 'p={}'.format(self.lastQDict['region'])])
+            proc.start("bdiana{}".format(diVersion), ['-i', dianaIn, '-s', 'diana.setup', 'p={}'.format(self.lastQDict['region'])])
             proc.waitForFinished(-1)
             with open(os.path.join(self.lastOutputDir,"snap.log.stdout"), 'a') as lfh:
                 lfh.write("plotting finished\n")
