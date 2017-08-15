@@ -75,7 +75,11 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
                 isoBqs[isoName] = float(relValXML.find('BinStrength').attrib['Value'])
             else:
                 isoBqs[isoName] = 0
-        releases.append({'endtime': endtime, 'lower': lHeight, 'upper': uHeight, 'isoBqs': isoBqs})
+        releaseDef =  {'endtime': endtime, 'lower': lHeight, 'upper': uHeight, 'isoBqs': isoBqs}
+        if runTime >= 0:
+            releases.append(releaseDef)
+        else:
+            releases.insert(0, releaseDef)
 
     timevals = ["0"]
     radiusvals = []
