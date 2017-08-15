@@ -49,20 +49,19 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
     if argosxml:
         runTime = int(argosxml.find("RunLength").text)
         outputTimestep = int(argosxml.find("OutputTimestep").text)
-        if runTime < 0: # backward run
-            startTime = argosxml.find("EndTime").text
-
-    startDTime = datetime.datetime.strptime(startTime, '%Y-%m-%dT%H:%M:%SZ')
-    snapStartTime="{year} {month} {day} {hour}".format(year=startDTime.year,month=startDTime.month,day=startDTime.day, hour=startDTime.hour)
-            
     
-    sourceTerm = sourceTermTemplate.format(lat=lat,lon=lon,startTime=snapStartTime, runTime=runTime, outputTimestep=outputTimestep)
+    startDTime = datetime.datetime.strptime(startTime, '%Y-%m-%dT%H:%M:%SZ')
 
     isoItems = rimstermGetIsotopes(rimxml)
     isos = res.getIsotopes()
     releases = []
     for relXML in rimxml.findall("Source/TimeDependent/ReleaseInterval"):
         endtime = parseIsoTimeDelta(relXML.find("SourceTime/[@EndTime]").attrib['EndTime'])
+        if runTime < 0: # backward run
+            # StartTime is earliest measuremnt, Endtime end of measurement after starttime
+            # snap needs to start at the end of the measurements, i.e. the last time 
+            #     and run backupward in time
+            startDTime = startDTime + endtime
         posXML = relXML.find("SourcePosition")
         lHeight = posXML.attrib['HeightAboveGround']
         uHeight = posXML.attrib['HeightAboveGroundMax']
@@ -105,6 +104,9 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
         vals.append("'{}'".format(isos[isoId]['isotope']))
         releaseTerm += "RELEASE.BQ/SEC.COMP= {}\n".format(','.join(vals))
 
+
+    snapStartTime="{year} {month} {day} {hour}".format(year=startDTime.year,month=startDTime.month,day=startDTime.day, hour=startDTime.hour)
+    sourceTerm = sourceTermTemplate.format(lat=lat,lon=lon,startTime=snapStartTime, runTime=runTime, outputTimestep=outputTimestep)
     sourceTerm += releaseTerm + "\n"
 
     sourceTerm += res.isotopes2snapinput(isoItems.values())
@@ -290,7 +292,17 @@ def snap4rimsterm(rimsterm, argosrequest, basedir, ident, is_global):
     errlog.close()
     outlog.close()
 
-    convert_to_grib(os.path.join(basedir,"snap.nc"), basedir, ident, rimstermGetIsotopes(root).values())
+    if argosRoot:
+        for oformat in argosRoot.find("OutputFormat"):
+            if oformat.text == 'GRIB':
+                convert_to_grib(os.path.join(basedir,"snap.nc"), basedir, ident, rimstermGetIsotopes(root).values())
+            elif oformat.text == 'NetCDF':
+                # create a filename which can be picked up by SMS
+                os.symlink(os.path.join(basedir,"snap.nc"), os.path.join(basedir,"naccident_SNAP_all.nc"))
+            else:
+                raise Exception("unknown OutputFormat in request: {}".format(oformat.text))
+    else:
+        convert_to_grib(os.path.join(basedir,"snap.nc"), basedir, ident, rimstermGetIsotopes(root).values())
 
 
 
