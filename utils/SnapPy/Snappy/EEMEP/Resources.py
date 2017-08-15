@@ -66,7 +66,7 @@ class Resources():
         return outputdir
 
     def getModelRunnerLogs(self):
-        logfile = os.path.join(self.OUTPUTDIR, 'eemepModelRunner_working')
+        logfile = os.path.join(self.getOutputDir(), 'eemepModelRunner_working')
         msg = ""
         for lustredir in ['/lustre/storeB', '/lustre/storeA']:
             ll = logfile.format(LUSTREDIR=lustredir)

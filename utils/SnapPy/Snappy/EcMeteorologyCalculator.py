@@ -86,12 +86,12 @@ class EcMeteorologyCalculator():
         lon0 = math.floor((domainCenterX-(res.ecDomainWidth/2.))/10.)*10
         self.lat0 = int(lat0)
         self.lon0 = int(lon0)
-        self.outputdir = os.path.join(res.OUTPUTDIR, "NRPA_LON{x}_LAT{y}_{utc:02d}".format(x=self.lon0, y=self.lat0, utc=utc))
+        self.outputdir = os.path.join(res.getSnapOutputDir(), "NRPA_LON{x}_LAT{y}_{utc:02d}".format(x=self.lon0, y=self.lat0, utc=utc))
 
         # try to avoid conflicting processes (not 100% save)
         i = 1
         while (os.path.isfile(os.path.join(self.outputdir, "running"))):
-            self.outputdir =  os.path.join(res.OUTPUTDIR, "NRPA_TEMP_{utc:02d}_{i}".format(utc=utc, i=i))
+            self.outputdir =  os.path.join(res.getSnapOutputDir(), "NRPA_TEMP_{utc:02d}_{i}".format(utc=utc, i=i))
             i+=1
 
         if (not os.path.exists(self.outputdir)):
