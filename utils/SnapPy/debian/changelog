@@ -1,3 +1,9 @@
+snap-py (1.6.1-1) xenial; urgency=medium
+
+  * initial upload
+
+ -- Heiko Klein <heikok@pc4631.pc.met.no>  Tue, 15 Aug 2017 19:35:54 +0200
+
 snap-py (1.6-1) xenial; urgency=medium
 
   * initial upload
