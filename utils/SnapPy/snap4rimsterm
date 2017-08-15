@@ -291,13 +291,12 @@ def snap4rimsterm(rimsterm, argosrequest, basedir, ident, is_global):
     proc2 = subprocess.Popen(['snapAddToa', 'snap.nc'], cwd=basedir, stderr=errlog, stdout=outlog)
     if (proc2.wait() != 0):
         raise Exception("snapAddToa snap.nc in {} failed".format(basedir))
-
-
     errlog.close()
     outlog.close()
 
     if argosRoot:
-        for oformat in argosRoot.find("OutputFormat"):
+        for oformat in argosRoot.findall("OutputFormat"):
+            print("output in format: {}".format(oformat.text))
             if oformat.text == 'GRIB':
                 convert_to_grib(os.path.join(basedir,"snap.nc"), basedir, ident, rimstermGetIsotopes(root).values())
             elif oformat.text == 'NetCDF':
