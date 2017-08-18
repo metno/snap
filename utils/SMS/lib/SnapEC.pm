@@ -53,12 +53,12 @@ sub run_model {
 #\$ -l h_vmem=8G
 ##\$ -m bea
 #\$ -pe mpi 1
-#\$ -q operational.q
+#\$ -q operationalx.q
 #\$ -sync yes
 #\$ -o $remote_hosts_and_users->[0]{PPIdir}/OU\$JOB_NAME.\$JOB_ID
 #\$ -e $remote_hosts_and_users->[0]{PPIdir}/ER\$JOB_NAME.\$JOB_ID
 
-module load SnapPy/1.1.0
+module load SnapPy/1.2.0
 
 ulimit -c 0
 export OMP_NUM_THREADS=1
@@ -79,14 +79,11 @@ EOF
 
         $bsnap = qq[qsub $PPIdir/$qsubScript];
 
-    } elsif (($model eq q[SNAP]) or ($model eq q[SNAPGLOBAL])) {
-
-        # Do nuclear accident stuffstylesheet
+    } elsif (($model =~ m[SNAP]) {
+        $return_file = $run_ident . '_'.${model}.q[2ARGOS.zip];
+        # Do nuclear accident stuff
         my $worldwide = "";
-        if ($model eq q[SNAP]) {
-            $return_file = $run_ident . q[_hi_res_SNAP2ARGOS.zip];
-        } else {
-            $return_file = $run_ident . '_'.${model}.q[2ARGOS.zip];
+        if ($model =~ m[GLOBAL]) {
             $worldwide = "--worldwide";
         }
         $return_files_ascii = 0; # grib-output
@@ -126,7 +123,7 @@ EOF
 #\$ -l h_vmem=8G
 ##\$ -m bea
 #\$ -pe mpi 1
-#\$ -q operational.q
+#\$ -q operationalx.q
 #\$ -sync yes
 #\$ -o $remote_hosts_and_users->[0]{PPIdir}/OU\$JOB_NAME.\$JOB_ID
 #\$ -e $remote_hosts_and_users->[0]{PPIdir}/ER\$JOB_NAME.\$JOB_ID
@@ -181,7 +178,7 @@ EOF
     my @files;
 
     # when naccident is run, we need to do some postprocessing
-    if (($model eq q[SNAP]) or ($model eq q[SNAPGLOBAL])) {
+    if ($model =~ m[SNAP]) {
         # change file names to be $run_ident... :
         my @old_files = qw(
             naccident_SNAP_conc
@@ -190,6 +187,7 @@ EOF
             naccident_SNAP_wetd
             naccident_SNAP_prec
             naccident_SNAP_tofa
+            naccident_SNAP_all.nc
             );
         my $scp_command = "scp $PPIuser\@$PPIhost:$PPIdir/naccident_SNAP_* .";
         print qq[Running '$scp_command'\n];
@@ -201,8 +199,8 @@ EOF
             move($file, $new_name);
         }
 
-        print qq[Add files $mod_dir/*_{conc,dose,depo,prec,wetd,tofa} to $return_file:\n];
-        @files = glob($run_ident . qq[*_{conc,dose,depo,prec,wetd,tofa}]);
+        print qq[Add files $mod_dir/*_{conc,dose,depo,prec,wetd,tofa,all.nc} to $return_file:\n];
+        @files = glob($run_ident . qq[*_{conc,dose,depo,prec,wetd,tofa,all.nc}]);
     } elsif ($model eq q[TRAJ]) {
         my $scp_command = "scp $PPIuser\@$PPIhost:$PPIdir/Trajectory*\.DAT .";
         print qq[Running '$scp_command'\n];
