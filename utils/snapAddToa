@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
 import netCDF4
 import argparse
@@ -13,8 +13,8 @@ with netCDF4.Dataset(args.snapNc, "a") as nc:
     if ('time_of_arrival' in nc.variables):
         exit(0)
     times = netCDF4.num2date(nc.variables['time'][:],units=nc.variables['time'].units)
-    timeMax = int((times[-1] - times[0]).total_seconds() / (60*60))
-    timeDelta = int((times[1] - times[0]).total_seconds() / (60*60))
+    timeMax = abs(int((times[-1] - times[0]).total_seconds() / (60*60)))
+    timeDelta = abs(int((times[1] - times[0]).total_seconds() / (60*60)))
     data = 0
     exampleVar = ""
     for v in nc.variables.keys():
@@ -34,7 +34,7 @@ with netCDF4.Dataset(args.snapNc, "a") as nc:
 
     toaVar = nc.createVariable('time_of_arrival', 'f', nc.variables[exampleVar].dimensions, zlib=True, fill_value=-999)
     toaVar.units = 'hours'
-    if 'grid_mapping' in nc.variables[exampleVar]:
+    if 'grid_mapping' in nc.variables[exampleVar].ncattrs():
         toaVar.grid_mapping = nc.variables[exampleVar].grid_mapping
     toaVar[0,:] = toa
 
@@ -44,8 +44,8 @@ with netCDF4.Dataset(args.snapNc, "a") as nc:
             comp = v[:-19]
 #            print(comp)
             total = nc.variables[v][:] + nc.variables["{}_acc_dry_deposition".format(comp)][:]
-	    totalVarName = '{}_acc_total_deposition'.format(comp)
-	    if not totalVarName in nc.variables:
+            totalVarName = '{}_acc_total_deposition'.format(comp)
+            if not totalVarName in nc.variables:
                 totalVar = nc.createVariable(totalVarName, 'f', nc.variables[v].dimensions, zlib=True)
                 totalVar.units = nc.variables[v].units
                 totalVar.grid_mapping =  nc.variables[v].grid_mapping
