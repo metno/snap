@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <Request>
-<RunLength>-66</RunLength>
+<RunLength>-24</RunLength>
 <OutputTimestep>3</OutputTimestep>
 <OutputFormat>NetCDF</OutputFormat>
 </Request>
