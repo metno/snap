@@ -17,7 +17,7 @@ with netCDF4.Dataset(args.snapNc, "a") as nc:
     timeDelta = abs(int((times[1] - times[0]).total_seconds() / (60*60)))
     data = 0
     exampleVar = ""
-    for v in nc.variables.keys():
+    for v in list(nc.variables.keys()):
         if (v[-18:] == "_acc_concentration"):
             exampleVar = v
             data += nc.variables[v][:]
