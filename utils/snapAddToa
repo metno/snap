@@ -39,7 +39,7 @@ with netCDF4.Dataset(args.snapNc, "a") as nc:
     toaVar[0,:] = toa
 
     # add also total depositions
-    for v in nc.variables.keys():
+    for v in list(nc.variables.keys()):
         if (v[-19:] == "_acc_wet_deposition"):
             comp = v[:-19]
 #            print(comp)
