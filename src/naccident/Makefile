@@ -4,7 +4,9 @@ include ../current.mk
 
 F77FLAGS += -DACCIDENT
 
-all: bsnap_naccident create_naccident_input create_naccident_output
+all: bsnap_naccident 
+
+# create_naccident_input create_naccident_output
 
 include ../common/snap.mk
 
@@ -21,9 +23,11 @@ bsnap_naccident: link_incfiles $(BOBJ) $(MODELOBJ) milib.o c2fgetvar.o c2fgetarg
 clean: clean_links
 	rm -f *.o *~ snap_batch_copy.* bsnap_naccident create_naccident_input create_naccident_output
 
-install: bsnap_naccident create_naccident_input create_naccident_output
+
+#create_naccident_input create_naccident_output
+install: bsnap_naccident ../../utils/snapAddToa
 	install $^ $(BINDIR)/
-	cp ../../utils/snapAddToa $(BINDIR)/
+#	cp ../../utils/snapAddToa $(BINDIR)/
 
 
 create_naccident_input.o: create_naccident_input.f

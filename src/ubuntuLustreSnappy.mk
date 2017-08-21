@@ -16,10 +16,12 @@ CCFLAGS=-O2 -mavx -ftree-vectorize -fno-math-errno
 LDFLAGS=
 
 # NCDIR not required if /usr or /usr/local
-NCDIR = /modules/trusty/NETCDF/4.3.2/C/
+#NCDIR = /modules/trusty/NETCDF/4.3.2/C/
+NCDIR=$(shell nf-config --prefix)
+NCINC=$(shell nf-config --fflags)
+NCLIBS=$(shell nf-config --flibs)
 
 
-MIINC = -I/home/heikok/local/include
 MILIB = -L/home/heikok/local/lib -lmi
 EXLIBS = -lpthread -ldl
 
@@ -28,18 +30,18 @@ DRHOOKLIB = -L../../utils/drhook_CY31R2.032 -ldrhook -lmpi_serial
 
 ##########################################################
 
-BINDIR=/modules/trusty/user-apps/SnapPy/1.1.0/bin/
+BINDIR=/modules/xenial/user-apps/SnapPy/$(VERSION)/bin/
 
-INCLUDES = -I. $(MIINC)
+INCLUDES = -I. 
 
 
 ifdef NCDIR
-BLIBS += -L$(NCDIR)/lib -Wl,-rpath,$(NCDIR)/lib
-INCLUDES += -I$(NCDIR)/include
+BLIBS += $(NCLIBS) -Wl,-rpath,$(NCDIR)/lib
+INCLUDES += $(NCINC)
 endif
 
 LIBS= $(MILIB) $(EXLIBS)
-BLIBS += $(MILIB) -lnetcdff
+BLIBS += $(MILIB) $(NCLIBS)
 
 ifdef DR_HOOK
 $(info DR_HOOK defined)

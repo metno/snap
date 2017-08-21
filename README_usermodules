@@ -1,0 +1,16 @@
+# Installed from snap sources at git@gitlab.met.no:emep/snap.git
+
+module load netcdf-fortran/4.4.4
+
+export VERSION=1.3.0
+
+cd utils/SnapPy
+python3 setup.py install --prefix=/modules/xenial/user-apps/SnapPy/$VERSION/
+cd ../..
+
+cd src
+# edit BINDIR to match version in ubuntuLustreSnappy.mk
+ln -sf ubuntuLustreSnappy.mk current.mk
+make install
+
+
