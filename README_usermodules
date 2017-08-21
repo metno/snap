@@ -9,7 +9,6 @@ python3 setup.py install --prefix=/modules/xenial/user-apps/SnapPy/$VERSION/
 cd ../..
 
 cd src
-# edit BINDIR to match version in ubuntuLustreSnappy.mk
 ln -sf ubuntuLustreSnappy.mk current.mk
 make install
 
