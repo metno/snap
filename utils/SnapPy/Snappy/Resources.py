@@ -363,6 +363,9 @@ GRAVITY.FIXED.M/S=0.0002
             today = datetime.combine(date.today(), time(0,0,0))
             tomorrow = today + timedelta(days=1)
             days = []
+            if ((tomorrow-start).days > 100):
+                raise Exception("too long timespan: " + str(start)
+                                + " to " + str(tomorrow))
             while (start < tomorrow):
                 days.append(start)
                 start += timedelta(days=1)

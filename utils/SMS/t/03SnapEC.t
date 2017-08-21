@@ -32,6 +32,7 @@ my (undef,undef,undef,$mday, $mon, $year) = gmtime($time);
 $mon++;$year += 1900;
 my $date = sprintf("%04d-%02d-%02d", $year, $mon, $mday);
 my (undef,undef,undef,$ymday, $ymon, $yyear) = gmtime($time - 24*60*60);
+$ymon++;$yyear += 1900;
 my $yesterday = sprintf("%04d-%02d-%02d", $yyear, $ymon, $ymday);
 foreach my $file ("$Bin/data/Hartlepool-20162306-0924_Rimsterm.xml", "$Bin/data/TestBackModeling_Rimsterm.xml", "$Bin/data/TestBackModeling_SNAP_request.xml") {
     # fix date of test-input
