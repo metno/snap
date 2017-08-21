@@ -71,16 +71,16 @@ SKIP: {
             'Hartlepool-20162306-0924', 'SNAP');
     ok($error == 0, "running model: SNAP");
 
-    ok(-f "$Bin/data/Hartlepool-20162306-0924_hi_res_SNAP2ARGOS.zip", "SNAP2ARGOS file created");
-    unlink "$Bin/data/Hartlepool-20162306-0924_hi_res_SNAP2ARGOS.zip";
+    ok(-f "$Bin/data/Hartlepool-20162306-0924_SNAP2ARGOS.zip", "SNAP2ARGOS file created");
+    unlink "$Bin/data/Hartlepool-20162306-0924_SNAP2ARGOS.zip";
 
     # backward dispersion
     ($error, @files) = SnapEC::run_model(\%smsdirs, $remote_hosts_and_users, '',
             'TestBackModeling', 'SNAP');
     ok($error == 0, "running backward model: SNAP");
 
-    ok(-f "$Bin/data/TestBackModeling_hi_res_SNAP2ARGOS.zip", "SNAP2ARGOS file created");
-    unlink "$Bin/data/TestBackModeling_hi_res_SNAP2ARGOS.zip";
+    ok(-f "$Bin/data/TestBackModeling_SNAP2ARGOS.zip", "SNAP2ARGOS file created");
+    unlink "$Bin/data/TestBackModeling_SNAP2ARGOS.zip";
     
 
     # forward trajectory
