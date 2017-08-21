@@ -1,6 +1,6 @@
 #! /usr/bin/perl -w
 
-use Test::More tests => 8;
+use Test::More tests => 10;
 use strict;
 use warnings;
 use FindBin qw( $Bin );
