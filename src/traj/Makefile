@@ -3,7 +3,8 @@ include ../current.mk
 
 F77FLAGS += -DTRAJ
 
-all: bsnap_traj create_traj_input
+all: bsnap_traj
+#create_traj_input
 
 include ../common/snap.mk
 
@@ -19,7 +20,7 @@ bsnap_traj: link_incfiles $(BOBJ) $(MODELOBJ)
 clean: clean_links
 	rm -f *.o *~ snap_batch_copy.* bsnap_traj snap_traj create_traj_input
 
-install: bsnap_traj create_traj_input
+install: bsnap_traj
 	install $^ $(BINDIR)
 
 create_traj_input.o: create_traj_input.f

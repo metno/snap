@@ -3,7 +3,8 @@ include ../current.mk
 
 F77FLAGS += -DBOMB
 
-all: bsnap_nbomb create_bomb_input
+all: bsnap_nbomb
+#create_bomb_input
 
 include ../common/snap.mk
 
@@ -16,7 +17,7 @@ bsnap_nbomb: link_incfiles $(BOBJ) $(MODELOBJ) milib.o c2fgetvar.o c2fgetarg.o
 clean: clean_links
 	rm -f *.o *~ snap_batch_copy.* bsnap_nbomb create_bomb_input
 
-install: bsnap_nbomb create_bomb_input
+install: bsnap_nbomb 
 	cp $^ $(BINDIR)
 
 create_bomb_input.o: create_bomb_input.f
