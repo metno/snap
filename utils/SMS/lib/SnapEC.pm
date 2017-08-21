@@ -80,7 +80,7 @@ EOF
 
         $bsnap = qq[qsub $PPIdir/$qsubScript];
 
-    } elsif (($model =~ m[SNAP]) {
+    } elsif ($model =~ m[SNAP]) {
         $return_file = $run_ident . '_'.${model}.q[2ARGOS.zip];
         # Do nuclear accident stuff
         my $worldwide = "";
