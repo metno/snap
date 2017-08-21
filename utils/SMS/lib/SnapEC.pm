@@ -47,6 +47,7 @@ sub run_model {
 #!/bin/bash
 #\$ -N nrpa_bsnap_traj
 #\$ -S /bin/bash
+#\$ -V
 #\$ -j n
 #\$ -r y
 #\$ -l h_rt=0:10:00
@@ -58,7 +59,7 @@ sub run_model {
 #\$ -o $remote_hosts_and_users->[0]{PPIdir}/OU\$JOB_NAME.\$JOB_ID
 #\$ -e $remote_hosts_and_users->[0]{PPIdir}/ER\$JOB_NAME.\$JOB_ID
 
-module load SnapPy/1.2.0
+module load SnapPy/1.3.0
 
 ulimit -c 0
 export OMP_NUM_THREADS=1
@@ -117,6 +118,7 @@ EOF
 #!/bin/bash
 #\$ -N nrpa_bsnap
 #\$ -S /bin/bash
+#\$ -V
 #\$ -j n
 #\$ -r y
 #\$ -l h_rt=0:50:00
@@ -128,7 +130,7 @@ EOF
 #\$ -o $remote_hosts_and_users->[0]{PPIdir}/OU\$JOB_NAME.\$JOB_ID
 #\$ -e $remote_hosts_and_users->[0]{PPIdir}/ER\$JOB_NAME.\$JOB_ID
 
-module load SnapPy/1.2.0
+module load SnapPy/1.3.0
 
 ulimit -c 0
 export OMP_NUM_THREADS=1
@@ -265,7 +267,7 @@ SnapEC - general functionality to run snap with EC0.1 meteorology on PPI
 
 =over 8
 
-=item PPI host with SnapPy/1.1.0 module installed, and run with SGE qsub with access to the queue 'operational.q'
+=item PPI host with SnapPy/1.3.0 module installed, and run with SGE qsub with access to the queue 'operationalx.q'
 
 =item zip
 
