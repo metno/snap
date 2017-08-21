@@ -301,7 +301,7 @@ def snap4rimsterm(rimsterm, argosrequest, basedir, ident, is_global):
                 convert_to_grib(os.path.join(basedir,"snap.nc"), basedir, ident, rimstermGetIsotopes(root).values())
             elif oformat.text == 'NetCDF':
                 # create a filename which can be picked up by SMS
-                os.symlink(os.path.join(basedir,"snap.nc"), os.path.join(basedir,"{}_all.nc".format(ident)))
+                os.link(os.path.join(basedir,"snap.nc"), os.path.join(basedir,"{}_all.nc".format(ident)))
             else:
                 raise Exception("unknown OutputFormat in request: {}".format(oformat.text))
     else:
