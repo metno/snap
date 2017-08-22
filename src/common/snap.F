@@ -1837,9 +1837,9 @@ c      write(9,*) 'nxad,nyad: ',nxad,nyad
         ncsummary = trim(ncsummary) // ". Release " // trim(compname(m))
      +     // " (hour, Bq/hr): "
        do i=1,ntprof
-          write(9,*) '  hour,Bq/hour: ',
+          write(9,*) '  hour,Bq/s: ',
      +      frelhour(i),(relbqsec(i,n,ih)*3600.,ih=1,nrelheight)
-          write(tempstr, '("(",f5.1,",",E9.2,")")')
+          write(tempstr, '("(",f5.1,",",ES9.2,")")')
      +      frelhour(i), relbqsec(i,n,1)
           ncsummary = trim(ncsummary) // " " // trim(tempstr)
        end do
