@@ -280,7 +280,7 @@ def snap4rimsterm(rimsterm, argosrequest, basedir, ident, is_global):
     if (not os.path.isdir(basedir)):
         os.makedirs(basedir)
 
-    snapInput = rimsterm2input(root, argosRoot, is_global)
+    snapInput = "title={}\n".format(ident) + rimsterm2input(root, argosRoot, is_global)
     with open(os.path.join(basedir, "snap.input"), "w") as fh:
         fh.write(snapInput)
 
