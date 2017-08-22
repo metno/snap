@@ -76,11 +76,11 @@ SKIP: {
 
     # backward dispersion
     ($error, @files) = SnapEC::run_model(\%smsdirs, $remote_hosts_and_users, '',
-            'TestBackModeling', 'SNAP');
-    ok($error == 0, "running backward model: SNAP");
+            'TestBackModeling', 'SNAPBACK');
+    ok($error == 0, "running backward model: SNAPBACK");
 
-    ok(-f "$Bin/data/TestBackModeling_SNAP2ARGOS.zip", "SNAP2ARGOS file created");
-    unlink "$Bin/data/TestBackModeling_SNAP2ARGOS.zip";
+    ok(-f "$Bin/data/TestBackModeling_SNAPBACK2ARGOS.zip", "SNAPBACK2ARGOS file created");
+    unlink "$Bin/data/TestBackModeling_SNAPBACK2ARGOS.zip";
     
 
     # forward trajectory
