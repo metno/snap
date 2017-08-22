@@ -1835,9 +1835,9 @@ c      write(9,*) 'nxad,nyad: ',nxad,nyad
         write(9,*) '  densitygcm3:',densitygcm3(m)
         write(9,*) '  Relase time profile:   ntprof: ',ntprof
         ncsummary = trim(ncsummary) // ". Release " // trim(compname(m))
-     +     // " (hour, Bq/hr): "
+     +     // " (hour, Bq/s): "
        do i=1,ntprof
-          write(9,*) '  hour,Bq/s: ',
+          write(9,*) '  hour,Bq/hour: ',
      +      frelhour(i),(relbqsec(i,n,ih)*3600.,ih=1,nrelheight)
           write(tempstr, '("(",f5.1,",",ES9.2,")")')
      +      frelhour(i), relbqsec(i,n,1)
