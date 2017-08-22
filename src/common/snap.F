@@ -1783,8 +1783,8 @@ c      write(9,*) 'nxad,nyad: ',nxad,nyad
       write(9,*) 'modleveldump (h), steps:', modleveldump/nsteph,
      +                                       modleveldump
       write(9,*) 'itime1:  ',(itime1(i),i=1,5)
-      write(tempstr, '("Starttime: ",I4,"-",I2,"-",I2,"T",I2
-     +   ,":",I2,".")') (itime1(i),i=1,5)
+      write(tempstr, '("Starttime: ",I4,"-",I02,"-",I02,"T",I02
+     +   ,":",I02,".")') (itime1(i),i=1,5)
       ncsummary = trim(ncsummary) // " " // trim(tempstr)
       do n=1,nrelpos
         write(tempstr, '("Release Pos (lat, lon): (", F4.1, ",", F4.1
