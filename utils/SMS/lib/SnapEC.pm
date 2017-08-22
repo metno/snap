@@ -197,7 +197,6 @@ EOF
         foreach my $file (@old_files) {
             my $new_name = $file;
             $new_name =~ s!naccident!$run_ident!;
-            $new_name =~ s!SNAP!$model!;
             move($file, $new_name);
         }
 
