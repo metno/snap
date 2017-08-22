@@ -31,6 +31,8 @@ c fdata(maxsiz), idata(ldata)
       integer*2, pointer :: idata(:)
       character*1024 filef(mfilef)
       character*72 nctype
+      character*80 nctitle
+      character*1024 ncsummary
       CHARACTER(LEN=19)  :: simulation_start
 c
       common/cfiles/nhfmin,nhfmax,nfilef,navail

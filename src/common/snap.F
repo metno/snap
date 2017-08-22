@@ -12,6 +12,7 @@ c POSITIONS.DEGREE+MINUTE
 c TIME.START=        1993,1,25,12
 c TIME.RUN  =        5d
 c TIME.RELEASE=      12h
+c TITLE=  This is a optional title
 c SET_RELEASE.POS=   P.1
 c RANDOM.WALK.ON
 c RANDOM.WALK.OFF
@@ -272,6 +273,7 @@ c
       character*8   cpos1,cpos2
       character*1   tchar
       character*32  bqcomponent
+      character*1024 tempstr
 c
       integer lenstr
 c
@@ -477,6 +479,8 @@ c output type
       fldtype='felt'
       fldfil= 'snap.dat'
       logfile='snap.log'
+      nctitle=''
+      ncsummary=''
       relfile='*'
 c timestamp of the form 0000-00-00_00:00:00
       call DATE_AND_TIME(VALUES=date_time)
@@ -1269,6 +1273,8 @@ c..field.output= <'file_name'>
 c..field.outtype= <'felt|netcdf'>
             if(kv1.lt.1) goto 12
             fldtype=ciname(1:nkv)
+          elseif(cinput(k1:k2).eq.'title') then
+            nctitle=ciname(1:nkv)
           elseif(cinput(k1:k2).eq.'field.daily.output.on') then
             idailyout = 1
           elseif(cinput(k1:k2).eq.'field.daily.output.off') then
@@ -1777,6 +1783,15 @@ c      write(9,*) 'nxad,nyad: ',nxad,nyad
       write(9,*) 'modleveldump (h), steps:', modleveldump/nsteph,
      +                                       modleveldump
       write(9,*) 'itime1:  ',(itime1(i),i=1,5)
+      write(tempstr, '("Starttime: ",I4,"-",I2,"-",I2,"T",I2
+     +   ,":",I2,".")') (itime1(i),i=1,5)
+      ncsummary = trim(ncsummary) // " " // trim(tempstr)
+      do n=1,nrelpos
+        write(tempstr, '("Release Pos (lat, lon): (", F4.1, ",", F4.1
+     +   ,")")') relpos(1,n), relpos(2,n)
+        ncsummary = trim(ncsummary) // ". " // trim(tempstr)
+      end do
+
       write(9,*) 'itime2:  ',(itime2(i),i=1,5)
       write(9,*) 'itimer1: ',(itimer(i,1),i=1,5)
       write(9,*) 'itimer2: ',(itimer(i,2),i=1,5)
@@ -1819,9 +1834,14 @@ c      write(9,*) 'nxad,nyad: ',nxad,nyad
         write(9,*) '  radiusmym:  ',radiusmym(m)
         write(9,*) '  densitygcm3:',densitygcm3(m)
         write(9,*) '  Relase time profile:   ntprof: ',ntprof
+        ncsummary = trim(ncsummary) // ". Release " // trim(compname(m))
+     +     // " (hour, Bq/hr): "
        do i=1,ntprof
           write(9,*) '  hour,Bq/hour: ',
-     +			frelhour(i),(relbqsec(i,n,ih)*3600.,ih=1,nrelheight)
+     +      frelhour(i),(relbqsec(i,n,ih)*3600.,ih=1,nrelheight)
+          write(tempstr, '("(",f5.1,",",E9.2,")")')
+     +      frelhour(i), relbqsec(i,n,1)
+          ncsummary = trim(ncsummary) // " " // trim(tempstr)
        end do
       end do
       write(9,*) 'itotcomp:   ',itotcomp
@@ -1829,6 +1849,9 @@ c      write(9,*) 'nxad,nyad: ',nxad,nyad
       write(9,*) 'iensemble:  ',iensemble
       write(9,*) 'iargos:     ',iargos
       write(9,*) 'blfulmix:   ',blfullmix
+      write(*,*) 'Title:      ', trim(nctitle)
+      write(*,*) 'Summary:    ', trim(ncsummary)
+
 c
 c..initialize files, deposition fields etc.
       m=0

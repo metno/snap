@@ -372,6 +372,10 @@ c..remove an existing file and create a completely new one
        call check(nf_def_dim(iunit, "y", ny, y_dimid), "y-dim")
        call check(nf_def_dim(iunit, "k", nk-1, k_dimid), "k-dim")
 
+       if (nctitle /= "")  call check(nf_put_att_text(iunit, nf_global,
+     +            len_trim(nctitle), trim(nctitle)))
+       call check(nf_put_att_text(iunit, nf_global,
+     +            len_trim(ncsummary), trim(ncsummary)))
        call nc_set_projection(iunit, x_dimid, y_dimid,
      +                              igtype,nx,ny,gparam, garea,
      +                              simulation_start)
