@@ -39,5 +39,5 @@ c
      -             ,iavail,kavail,navailt1,navailt2
      -             ,itimer,limfcf
      -             ,fdata,idata
-     -             ,filef,nctype,simulation_start
+     -             ,filef,nctype,nctitle, ncsummary, simulation_start
 c-----------------------------------------------------------------------
