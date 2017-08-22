@@ -44,7 +44,7 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
     lon = rimxml.find("Header/Place/Location/[@Longitude]").attrib['Longitude']
 
     startTime = rimxml.find("TimeOfInitialRelease").text
-    runTime = 120
+    runTime = 48
     outputTimestep = 3    
     if argosxml:
         runTime = int(argosxml.find("RunLength").text)
