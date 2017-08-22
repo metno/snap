@@ -429,13 +429,15 @@ RELEASE.UPPER.M= {upperHeight}, {upperHeight}
         self.lastOutputDir = os.path.join(self.res.getSnapOutputDir(), "{0}_{1}".format(tag, strftime("%Y-%m-%dT%H%M%S", curtime)))
         self.lastQDict = qDict
         sourceTerm = """
+TITLE={tag}
 SIMULATION.START.DATE={simStart}
 SET_RELEASE.POS= P=   {lat},   {lon}
 TIME.START= {startTime}
 TIME.RUN = {runTime}h
 STEP.HOUR.OUTPUT.FIELDS= 3
 """
-        self.lastSourceTerm = sourceTerm.format(simStart=strftime("%Y-%m-%d_%H:%M:%S",curtime),
+        self.lastSourceTerm = sourceTerm.format(tag=self.lastTag,
+                                                simStart=strftime("%Y-%m-%d_%H:%M:%S",curtime),
                                                 lat=latf, lon=lonf, startTime=startTime,
                                                 runTime=qDict['runTime'])
 
