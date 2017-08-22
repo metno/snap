@@ -101,7 +101,7 @@ EOF
         my $xmlfile = qq[$run_ident] . q[_Rimsterm.xml];
         my $xmlinfile = $smsdirs->{data}.qq[/$xmlfile];
         
-        my $requestfile = qq[$run_ident] . q[_] . $model . q[_request.xml];
+        my $requestfile = qq[$run_ident] . q[_SNAP_request.xml];
         my $requestinfile = $smsdirs->{data}.qq[/$requestfile];
         my $argosrequest = "";
         if (-f $requestinfile) {
