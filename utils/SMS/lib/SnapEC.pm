@@ -137,6 +137,7 @@ export OMP_NUM_THREADS=1
 
 cd $remote_hosts_and_users->[0]{PPIdir}
 snap4rimsterm --rimsterm $xmlfile $argosrequest --dir . --ident naccident_SNAP $worldwide
+ncatted -a title,global,o,c,"$run_ident" snap.nc
 
 EOF
         close $qsub;
