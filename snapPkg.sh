@@ -1,4 +1,4 @@
-VERSION=1.3.5
+VERSION=1.3.6
 VERSION_=`echo -n $VERSION | tr '.' '_'`
 PLATFORM=xenial
 #svn copy https://svn.met.no/snap/trunk \
