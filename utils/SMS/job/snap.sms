@@ -174,7 +174,8 @@ my $remote_host_alias = 'nrpa.met.no';
 my $remote_user = 'nrpa';
 my $remote_hosts_and_users = [ { host => "$remote_host_alias",
                  user => "$remote_user",
-                 PPIuser => "sms",
+                 PPIuser => "ecf-prod",
+
                  PPIbasedirs => [qw(/lustre/storeB/project/fou/kl/snap/nrpa_runs
                                     /lustre/storeA/project/fou/kl/snap/nrpa_runs)] } ];
 
@@ -195,10 +196,11 @@ my $sftpinp;
 chdir $upload_dir;
 
 # Start with removing all old files from the ftp-server
-my $serr = SECURECOMMAND("$remote_host_alias -l $remote_user -n 'find $remote_home_directory/* -maxdepth 0 -mtime +31 -type f -delete'");
-print "\nReturned value from SECURECOMMAND (RSHVALUE):\n$RSHVALUE\n";
-print "\nReturned error from SECURECOMMAND (RSHERROR):\n$RSHERROR\n" ;
-die ("Error from SECURECOMMAND\n") if ( $serr );
+# THIS DOES NOT WORK, SINCE nrpa@nrpa.met.no has no shell! HK; 2017-08-23
+#my $serr = SECURECOMMAND("$remote_host_alias -l $remote_user -n 'find $remote_home_directory/* -maxdepth 0 -mtime +31 -type f -delete'");
+#print "\nReturned value from SECURECOMMAND (RSHVALUE):\n$RSHVALUE\n";
+#print "\nReturned error from SECURECOMMAND (RSHERROR):\n$RSHERROR\n" ;
+#die ("Error from SECURECOMMAND\n") if ( $serr );
 
 # Now let's see what's left on the server...
 
@@ -295,12 +297,12 @@ if ( $#requests < 0 ) {		# Nothing happens
                         $run_ident, $model );
   } else {
       # run the ec-model on the PPI machines
-      my $ppiHost = GET_PPI_LOGIN_HOST($remote_hosts_and_users->[0]{'PPIuser'}) or die "cannot GET_PPI_LOGIN_HOST() with user ".$remote_hosts_and_users->[0]{'PPIuser'}."\n";
+      my $ppiHost = GET_PPI_LOGIN_HOST_X($remote_hosts_and_users->[0]{'PPIuser'}) or die "cannot GET_PPI_LOGIN_HOST() with user ".$remote_hosts_and_users->[0]{'PPIuser'}."\n";
       $remote_hosts_and_users->[0]{PPIhost} = $ppiHost;
 
       ## Do some cleaning on lustre:
       foreach my $tmp_dir ( @{ $remote_hosts_and_users->[0]{'PPIbasedirs'}}) {
-        my $cmd = "find $tmp_dir/* -maxdepth 0 -mtime +31 -exec 'rm -rf \\\{\} \;'";
+        my $cmd = "find $tmp_dir/* -maxdepth 0 -mtime +31 -exec rm -rf \\\{\\\} \\\;";
         print $cmd . "\n";
         system_ppi($remote_hosts_and_users, $cmd);
       }
