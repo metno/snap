@@ -1787,7 +1787,7 @@ c      write(9,*) 'nxad,nyad: ',nxad,nyad
      +   ,":",I2.2)') (itime1(i),i=1,5)
       ncsummary = trim(ncsummary) // " " // trim(tempstr)
       do n=1,nrelpos
-        write(tempstr, '("Release Pos (lat, lon): (", F4.1, ",", F4.1
+        write(tempstr, '("Release Pos (lat, lon): (", F5.1, ",", F6.1
      +   ,")")') relpos(1,n), relpos(2,n)
         ncsummary = trim(ncsummary) // ". " // trim(tempstr)
       end do
