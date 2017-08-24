@@ -279,6 +279,9 @@ def snap4rimsterm(rimsterm, argosrequest, basedir, ident, is_global):
 
     if (not os.path.isdir(basedir)):
         os.makedirs(basedir)
+    snapNC = os.path.join(basedir, 'snap.nc')
+    if os.path.exists(snapNC):
+        os.remove(snapNC)
 
     snapInput = "title={}\n".format(ident) + rimsterm2input(root, argosRoot, is_global)
     with open(os.path.join(basedir, "snap.input"), "w") as fh:
@@ -289,12 +292,15 @@ def snap4rimsterm(rimsterm, argosrequest, basedir, ident, is_global):
     print("bsnap_naccident snap.input")
     proc = subprocess.Popen(['bsnap_naccident', 'snap.input'], cwd=basedir, stderr=errlog, stdout=outlog)
     if (proc.wait() != 0):
-        raise Exception("bsnap_naccident in {} failed".format(basedir))
+        if os.path.exists(snapNC):
+            errlog.write("bsnap_naccident in {} did not finished completely. Continuing anyway.\n".format(basedir))
+        else:
+            raise Exception("bsnap_naccident in {} failed".format(basedir))
 
     print("snapAddToa snap.nc")
     proc2 = subprocess.Popen(['snapAddToa', 'snap.nc'], cwd=basedir, stderr=errlog, stdout=outlog)
     if (proc2.wait() != 0):
-        raise Exception("snapAddToa snap.nc in {} failed".format(basedir))
+        errlog.write("snapAddToa snap.nc in {} failed\n".format(basedir))
     errlog.close()
     outlog.close()
 
@@ -302,14 +308,14 @@ def snap4rimsterm(rimsterm, argosrequest, basedir, ident, is_global):
         for oformat in argosRoot.findall("OutputFormat"):
             print("output in format: {}".format(oformat.text))
             if oformat.text == 'GRIB':
-                convert_to_grib(os.path.join(basedir,"snap.nc"), basedir, ident, rimstermGetIsotopes(root).values())
+                convert_to_grib(snapNC, basedir, ident, rimstermGetIsotopes(root).values())
             elif oformat.text == 'NetCDF':
                 # create a filename which can be picked up by SMS
-                os.link(os.path.join(basedir,"snap.nc"), os.path.join(basedir,"{}_all.nc".format(ident)))
+                os.symlink(snapNC, os.path.join(basedir,"{}_all.nc".format(ident)))
             else:
                 raise Exception("unknown OutputFormat in request: {}".format(oformat.text))
     else:
-        convert_to_grib(os.path.join(basedir,"snap.nc"), basedir, ident, rimstermGetIsotopes(root).values())
+        convert_to_grib(snapNC, basedir, ident, rimstermGetIsotopes(root).values())
 
 
 
