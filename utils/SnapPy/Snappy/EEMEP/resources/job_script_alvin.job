@@ -77,7 +77,8 @@ fi
 
 
 # Clean the links to the input data
-find . -type l -print0 | xargs -0 rm
+# cleanup now done during download
+# find . -type l -print0 | xargs -0 rm
 
 Runstatus "end ......" "$jobname" $maxnodes
 trap 0

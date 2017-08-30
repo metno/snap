@@ -233,7 +233,7 @@ class ModelRunner():
         file = 'EMEP_OUT_{}.nc'.format(tomorrow)
         self._write_log("downloading {}:{} to {}".format(file, self.hpcMachine, self.path))
         try :
-             self.hpc.get_files([os.path.join(self.hpc_outdir, file)], self.path, 1200)
+            self.hpc.get_files([os.path.join(self.hpc_outdir, file)], self.path, 1200)
         except Exception as ex:
             # not dangerous if it fail, but remove file
             self._write_log("couldn't download '{}', ignoring: {}".format(file, ex.args))
@@ -242,6 +242,14 @@ class ModelRunner():
         else:
             os.rename(os.path.join(self.path, file),
                       os.path.join(self.path, 'EMEP_IN_{}.nc'.format(tomorrow)))
+            
+        # cleanup softlinks in output-dir
+        findArgs = [self.hpc_outdir, '-type', 'l', '-print']
+        try:
+            self.hpc.syscall('find', findArgs, timeout=30)
+        except Exception as ex:
+            self._write_log("cannot excecute command 'find {args}': {ex}".format(args=" ".join(findArgs),
+                                                                                 ex=ex.args))
 
     def work(self):
         '''do the complete work, e.g. upload, run, wait and download'''
