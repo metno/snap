@@ -244,7 +244,7 @@ class ModelRunner():
                       os.path.join(self.path, 'EMEP_IN_{}.nc'.format(tomorrow)))
             
         # cleanup softlinks in output-dir
-        findArgs = [self.hpc_outdir, '-type', 'l', '-print']
+        findArgs = [self.hpc_outdir, '-type', 'l', '-delete']
         try:
             self.hpc.syscall('find', findArgs, timeout=30)
         except Exception as ex:
