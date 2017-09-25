@@ -147,10 +147,10 @@ c..h12 results converted directly from grib-files via fimex
         ywind10mv = 'y_wind_10m'
 c       !! real temperature, convert to pot-temp later
 c semipalatinsk uses air_temp
-c        pottempv = 'air_temperature_ml'
-c        temp_is_abs = .true.
+        pottempv = 'air_temperature_ml'
+        temp_is_abs = .true.
 c chernobyl uses pot-temp
-        pottempv = 'air_potential_temperature_ml'
+c        pottempv = 'air_potential_temperature_ml'
         sigmav = ''
         ptopv = ''
 c this is a bug in the arome test-file, apv and bv are therefore
