@@ -8,18 +8,19 @@ CC  = gcc
 #F77FLAGS=-O2 -ftree-vectorize -fno-math-errno -fopenmp -cpp
 #      -ftree-vectorizer-verbose=2
 #-ffpe-trap=invalid,zero,overflow
-F77FLAGS=-O2 -g -msse2 -cpp -ffpe-trap=invalid,zero,overflow
-#F77FLAGS=-O2 -g -msse2 -cpp
+#F77FLAGS=-O2 -g -ftree-vectorize -fno-math-errno -ffpe-trap=invalid,zero,overflow -g -mavx -cpp -fopt-info-optimized-vec #-fopenmp
+F77FLAGS=-O2 -g -msse2 -cpp
 CXXFLAGS=-O2 -mavx -ftree-vectorize -fno-math-errno
 CCFLAGS=-O2 -mavx -ftree-vectorize -fno-math-errno
 
 LDFLAGS=
 
 # NCDIR not required if /usr or /usr/local
-NCDIR = /modules/trusty/NETCDF/4.3.2/C/
+#NCDIR = /modules/trusty/NETCDF/4.3.2/C/
+NCDIR=$(shell nf-config --prefix)
+NCINC=$(shell nf-config --fflags)
+NCLIBS=$(shell nf-config --flibs)
 
-
-MIINC = -I/home/heikok/local/include
 MILIB = -L/home/heikok/local/lib -lmi
 EXLIBS = -lpthread -ldl
 
@@ -30,16 +31,16 @@ DRHOOKLIB = -L../../utils/drhook_CY31R2.032 -ldrhook -lmpi_serial
 
 BINDIR=../../bin/
 
-INCLUDES = -I. $(MIINC)
+INCLUDES = -I.
 
 
 ifdef NCDIR
-BLIBS += -L$(NCDIR)/lib -Wl,-rpath,$(NCDIR)/lib
-INCLUDES += -I$(NCDIR)/include
+BLIBS += $(NCLIBS) -Wl,-rpath,$(NCDIR)/lib
+INCLUDES += $(NCINC)
 endif
 
 LIBS= $(MILIB) $(EXLIBS)
-BLIBS += $(MILIB) -lnetcdff
+BLIBS += $(MILIB) $(NCLIBS)
 
 ifdef DR_HOOK
 $(info DR_HOOK defined)
