@@ -42,7 +42,7 @@ def addFile(ncFile, isotope, times, conc, prob, isMeasurement=True):
                 prob[i,:] *= pr[j,:]
             except ValueError as ve:
                 print("{} not defined in file: {}".format(t,ncFile), file=sys.stderr)
-                prob[i,:] *= nu[j,:]
+                prob[i,:] *= nu[0,:]
     return (conc, prob)
 
 def initializeNc(ncFile, outNcFile, isotope):
