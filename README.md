@@ -2,7 +2,8 @@
 
 SNAP, the Severe Nuclear Accident Programme is a lagrangian type
 atmospheric dispersion model specialized on modelling dispersion
-of radioactive debris.
+of radioactive debris. A model description can be found at 
+https://drive.google.com/open?id=0B8SjSRklVkHkQXoxY1VQdE0wdnM
 
 
 ## Meteorological input fields
