@@ -57,6 +57,22 @@ the command
 
 ## License
 
-SNAP is licensed under the GPL. Please see COPYING for more information.
+SNAP: Servere Nuclear Accident Programme
+Copyright (C) 1992-2017   Norwegian Meteorological Institute
+
+SNAP is free software: you can 
+redistribute it and/or modify it under the terms of the 
+GNU General Public License as published by the 
+Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program, i.e. see COPYING for more information.
+If not, see <https://www.gnu.org/licenses/>.
 
 
