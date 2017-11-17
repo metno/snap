@@ -29,6 +29,7 @@ from Snappy.BrowserWidget import BrowserWidget
 from Snappy.EcMeteorologyCalculator import EcMeteorologyCalculator, ECDataNotAvailableException
 from Snappy.MailImages import sendPngsFromDir
 from Snappy.Resources import Resources
+import Snappy.Utils
 
 
 def debug(*objs):
@@ -424,17 +425,13 @@ RELEASE.UPPER.M= {upperHeight}, {upperHeight}
         self.lastTag = "{0} {1}".format(tag, startTime)
 
         try:
-            latf = float(lat)
-            lonf = float(lon)
-        except:
+            latf = Snappy.Utils.parseLat(lat)
+            lonf = Snappy.Utils.parseLon(lon)
+            raise ValueError("nothing")
+        except ValueError as ve:
             latf = 0.
             lonf = 0.
-            errors += "Cannot interprete latitude/longitude: {0}/{1}\n".format(lat,lon);
-
-        if (abs(latf) > 90):
-            errors += "latitude {0} outside bounds\n".format(latf)
-        if (abs(lonf) > 180):
-            errors += "longitude {0} outside bounds\n".format(lonf)
+            errors += "Cannot interprete latitude/longitude: {lat}/{lon}: {ex}\n".format(lat=lat,lon=lon,ex=ve)
 
         if (len(errors) > 0):
             debug('updateSnapLog("{0}");'.format(json.dumps("ERRORS:\n\n"+errors)))
