@@ -427,7 +427,6 @@ RELEASE.UPPER.M= {upperHeight}, {upperHeight}
         try:
             latf = Snappy.Utils.parseLat(lat)
             lonf = Snappy.Utils.parseLon(lon)
-            raise ValueError("nothing")
         except ValueError as ve:
             latf = 0.
             lonf = 0.
