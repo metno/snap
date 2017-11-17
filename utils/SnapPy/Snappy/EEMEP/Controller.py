@@ -34,7 +34,7 @@ import traceback
 from PyQt5.QtCore import QProcess, QProcessEnvironment, QThread, QIODevice, QThreadPool, pyqtSignal, pyqtSlot
 from Snappy.BrowserWidget import BrowserWidget
 from Snappy.EEMEP.Resources import Resources
-
+import Snappy.Utils
 
 def debug(*objs):
     print("DEBUG: ", *objs, file=sys.stderr)
@@ -171,21 +171,17 @@ class Controller():
             lat = qDict['latitude']
             lon = qDict['longitude']
             alt = qDict['altitude']
-            volcano = "{lat}N_{lon}E".format(lat=lat, lon=lon)
             try:
-                latf = float(lat)
-                lonf = float(lon)
+                latf = Snappy.Utils.parseLat(lat)
+                lonf = Snappy.Utils.parseLon(lon)
                 altf = float(alt)
             except:
                 latf = 0.
                 lonf = 0.
                 altf = 0.
                 errors += "Cannot interpret latitude/longitude/altitude: {0}/{1}/{2}\n".format(lat,lon,alt);
+            volcano = "{lat}N_{lon}E".format(lat=latf, lon=lonf)
 
-        if (abs(latf) > 90):
-            errors += "latitude {0} outside bounds\n".format(latf)
-        if (abs(lonf) > 180):
-            errors += "longitude {0} outside bounds\n".format(lonf)
         debug("volcano: {0} {1:.2f} {2:.2f} {3} {4}".format(volcano, latf, lonf, altf, type))
 
         if (len(errors) > 0):

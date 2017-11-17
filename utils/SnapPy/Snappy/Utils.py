@@ -20,50 +20,107 @@ Created on Oct 15, 2017
 
 @author: heikok
 '''
+
+import numbers
 import re
+import unittest
 
 
 def _parseLLNumber(llstr):
-    ''' parse a latitude or longitude string to a desimal returning (desimal, character)
+    ''' parse a latitude or longitude string to a decimal returning (decimal, character)
     where character can should be NSEW or empty.
     Possible formats: -3.54, 3:5:3 S, 3° 5' 34"S
 
     Raises a ValueError if the format doesn't match
     '''
 
+    if isinstance(llstr, numbers.Number):
+        return (float(llstr), '')
+
     llstr = llstr.strip()
-    desimal = 0
-    character = 'N'
+    decimal = 0
+    
+    # fetch and remove last character (NSEW)
+    character = ''
     if re.search(r'[A-Za-z]$', llstr):
         character = llstr[-1].upper()
-        llstr = llstr[0:-2]
+        llstr = llstr[0:-1]
         llstr = llstr.strip()
     
-    # just a numper
-    if re.match(r'^(-?\d+)', llstr):
-        desimal = float(llstr)
-    elif m = re.match(r'^(-?\d+\.\d+)'):
-        desimal = float(llstr)
-    elif m = re.match(r'^(-?\d+)\s*:\s*(\d+)\s*(\:\s*\d+)?'):
-        desimal
-    return (desimal, character)
+    # just a number
+    if re.search(r'^(-?\d+)$', llstr):
+        decimal = float(llstr)
+    elif re.search(r'^(-?\d+\.\d+)$', llstr):
+        decimal = float(llstr)
+    else:
+        # degree:minutes(:second)
+        m = re.search(r'^(-?\d+)\s*[:°]\s*(\d+)(\s*[\:\']\s*)?(\d+)?', llstr)
+        if m:
+            decimal = float(m.group(1)) + float(m.group(2))/60
+            if len(m.groups()) > 2:
+                print(llstr, "  ", m.group(4))
+                decimal += float(m.group(4))/3600
+        else:
+            raise ValueError("unable to parse lon/lat number: '" + llstr + "'")
+    return (decimal, character.upper())
 
 
 def parseLat(latStr):
-    ''' parse a latitude string to desimal degrees, raise an exception on error
+    ''' parse a latitude string to decimal degrees, raise an exception on error
     Possible formats: -3.54, 3:5:3 S, 3° 5' 34"S
     '''
-    (desimal, northSouth) = _parseLLNumber(latStr)
+    try:
+        (decimal, northSouth) = _parseLLNumber(latStr)
+    except TypeError as te:
+        raise ValueError("cannot parse latitude: {}".format(te))
+        
     if northSouth == 'S':
-        desimal *= -1
+        decimal *= -1
     elif northSouth == "" or northSouth == 'N':
         pass
     else:
-        raise ValueError("Not a latitude: "+str)
-    if desimal < -90.0001 or desimal > 90.0001:
-        raise ValueError("Not a latitude: "+str)
-    return desimal
+        raise ValueError("Not a latitude: "+latStr)
+    if decimal < -90.0001 or decimal > 90.0001:
+        raise ValueError("Not a latitude: "+latStr)
+    return decimal
 
+def parseLon(lonStr):
+    ''' parse a longitude string to decimal degrees, raise an exception on error
+    Possible formats: -3.54, 3:5:3 W, 3° 5' 34"W
+    '''
+    try:
+        (decimal, eastWest) = _parseLLNumber(lonStr)
+    except TypeError as te:
+        raise ValueError("cannot parse longitude: {}".format(te))
+    if eastWest == 'W':
+        decimal *= -1
+    elif eastWest == "" or eastWest == 'E':
+        pass
+    else:
+        raise ValueError("Not a longitude: "+lonStr)
+    if decimal < -180.0001 or decimal > 180.0001:
+        raise ValueError("Not a longitude: "+lonStr)
+    return decimal
+
+class IsLatLonTests(unittest.TestCase):
+
+    def testParseLat(self):
+        self.assertAlmostEqual(parseLat(-3.54), -3.54, msg="parseLat(\"-3.54\")", delta=1e-3)
+        self.assertAlmostEqual(parseLat("-3.54"), -3.54, msg="parseLat(\"-3.54\")", delta=1e-3)
+        self.assertAlmostEqual(parseLat("3.54 S"), -3.54, msg="parseLat(\"-3.54\")", delta=1e-3)
+        self.assertAlmostEqual(parseLat("3:5:3 S"), -3.0841, msg="parseLat(\"3:5:3 S\")", delta=1e-3)
+        self.assertAlmostEqual(parseLat("3 °5' 3\" S"), -3.0841, msg="parseLat(\"3 °5' 3\" S\")", delta=1e-3)
+        self.assertAlmostEqual(parseLat("60°5'5\"N"), 60.084722, msg="parseLat(\"60°5'5\"N\")", delta=1e-3)
+        self.assertRaises(ValueError, parseLat, "195")
+    
+    def testParseLon(self):
+        self.assertAlmostEqual(parseLon(-3.54), -3.54, msg="parseLon(\"-3.54\")", delta=1e-3)
+        self.assertAlmostEqual(parseLon("-3.54"), -3.54, msg="parseLon(\"-3.54\")", delta=1e-3)
+        self.assertAlmostEqual(parseLon("3.54 W"), -3.54, msg="parseLon(\"-3.54\")", delta=1e-3)
+        self.assertAlmostEqual(parseLon("3:5:3 W"), -3.0841, msg="parseLon(\"3:5:3 W\")", delta=1e-3)
+        self.assertAlmostEqual(parseLon("10:5:5W"), -10.084722, msg="parseLon(\"10:5:5W\")", delta=1e-3)
+        self.assertAlmostEqual(parseLon("3 °5' 3\" W"), -3.0841, msg="parseLon(\"3 °5' 3\" W\")", delta=1e-3)
+        self.assertRaises(ValueError, parseLon, "370")
 
 if __name__ == '__main__':
-    pass
+    unittest.main()

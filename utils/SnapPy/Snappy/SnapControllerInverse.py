@@ -22,16 +22,13 @@ import os
 import re
 import sys
 from time import gmtime, strftime
-import traceback
 
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtCore import QProcess, QProcessEnvironment, QThread, QIODevice, QThreadPool, pyqtSignal, pyqtSlot
 from Snappy.BrowserWidget import BrowserWidget
-from Snappy.EcMeteorologyCalculator import EcMeteorologyCalculator, ECDataNotAvailableException
 from Snappy.Resources import Resources
 from Snappy.SnapController import SnapRun, SnapUpdateThread
-from apt.progress.text import long
-
+import Snappy.Utils
 
 def debug(*objs):
     print("DEBUG: ", *objs, file=sys.stderr)
@@ -132,16 +129,12 @@ class SnapControllerInverse:
             lat = qDict['lat{}'.format(i)]
             lon = qDict['lon{}'.format(i)]
             try:
-                latf = float(lat)
-                lonf = float(lon)
-            except:
+                latf = Snappy.Utils.parseLat(lat)
+                lonf = Snappy.Utils.parseLon(lon)
+            except ValueError as ve:
                 latf = 0.
                 lonf = 0.
-                errors += "Cannot interprete latitude/longitude: {0}/{1}\n".format(lat,lon);
-            if (abs(latf) > 90):
-                errors += "latitude {0} outside bounds\n".format(latf)
-            if (abs(lonf) > 180):
-                errors += "longitude {0} outside bounds\n".format(lonf)
+                errors += "Cannot interprete latitude/longitude: {lat}/{lon}: {ex}\n".format(lat=lat,lon=lon,ex=ve);
             if len(errors) == 0:
                 self.measurements.append(Measurement(i,name,lonf, latf, startDT, endDT))
 
