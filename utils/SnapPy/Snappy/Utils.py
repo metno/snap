@@ -57,8 +57,7 @@ def _parseLLNumber(llstr):
         m = re.search(r'^(-?\d+)\s*[:°]\s*(\d+)(\s*[\:\']\s*)?(\d+)?', llstr)
         if m:
             decimal = float(m.group(1)) + float(m.group(2))/60
-            if len(m.groups()) > 2:
-                print(llstr, "  ", m.group(4))
+            if m.group(4):
                 decimal += float(m.group(4))/3600
         else:
             raise ValueError("unable to parse lon/lat number: '" + llstr + "'")
@@ -119,7 +118,9 @@ class IsLatLonTests(unittest.TestCase):
         self.assertAlmostEqual(parseLon("3.54 W"), -3.54, msg="parseLon(\"-3.54\")", delta=1e-3)
         self.assertAlmostEqual(parseLon("3:5:3 W"), -3.0841, msg="parseLon(\"3:5:3 W\")", delta=1e-3)
         self.assertAlmostEqual(parseLon("10:5:5W"), -10.084722, msg="parseLon(\"10:5:5W\")", delta=1e-3)
+        self.assertAlmostEqual(parseLon("10:5W"), -10.08333, msg="parseLon(\"10:5W\")", delta=1e-3)
         self.assertAlmostEqual(parseLon("3 °5' 3\" W"), -3.0841, msg="parseLon(\"3 °5' 3\" W\")", delta=1e-3)
+        self.assertAlmostEqual(parseLon("10°4'W"), -10.06666, msg="parseLon(\"10°4'W\")", delta=1e-3)
         self.assertRaises(ValueError, parseLon, "370")
 
 if __name__ == '__main__':
