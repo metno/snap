@@ -139,8 +139,14 @@ class SnapControllerInverse:
                 self.measurements.append(Measurement(i,name,lonf, latf, startDT, endDT))
 
 
-        #if not re.search('-?\d+(.\d+)?', qDict['runTime']):
-        #    errors += "Cannot interprete runTime: {}\n".format(qDict['runTime'])
+        debug("output directory: {}".format(self.lastOutputDir))
+        if not os.path.isdir(self.lastOutputDir):
+            try:
+                os.mkdir(self.lastOutputDir)
+            except:
+                errors += "cannot create directory: {}".format(self.lastOutputDir)
+        else:
+            errors += "cowardly refusing to write into existing directory: {}".format(self.lastOutputDir)
 
         if (len(errors) > 0):
             debug('updateSnapLog("{0}");'.format(json.dumps("ERRORS:\n\n"+errors)))
@@ -148,9 +154,6 @@ class SnapControllerInverse:
             return
 
         curtime = gmtime()
-        debug("output directory: {}".format(self.lastOutputDir))
-        if not os.path.isdir(self.lastOutputDir):
-            os.mkdir(self.lastOutputDir)
         self.lastQDict = qDict
         self.write_log("working with {number} measurements in {dir}".format(number=len(self.measurements), dir=self.lastOutputDir))
         
