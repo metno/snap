@@ -89,7 +89,10 @@ def initializeNc(ncFile, outNcFile, isotope):
             out_nc.createDimension(dim.name, size)
         # global attributes
         for attr in nc.ncattrs():
-            out_nc.setncattr(attr, nc.getncattr(attr))
+            try:
+                out_nc.setncattr(attr, nc.getncattr(attr))
+            except:
+                print("unable to set global attribute '{}', ignoring".format(attr), file=sys.stderr)
         for v in nc.variables.values():
             # avoid concentrations, depositions ...
             if re.search(r'(concentration|deposition|precipitation|height|air|arrival)', v.name):
@@ -98,7 +101,10 @@ def initializeNc(ncFile, outNcFile, isotope):
                                          zlib=True, shuffle=True)
             # variable-attributes
             for attr in v.ncattrs():
-                out_v.setncattr(attr, v.getncattr(attr))
+                try:
+                    out_v.setncattr(attr, v.getncattr(attr))
+                except:
+                    print("unable to set attribute '{attr}' of variable '{var}'".format(attr=attr, var=v.name))
 
         # add extra variables for probabilities
         vn = nc.variables[varname]
@@ -108,18 +114,20 @@ def initializeNc(ncFile, outNcFile, isotope):
             # variable-attributes
             for attr in vn.ncattrs():
                 if attr != "units" and attr != "_FillValue":
-                    out_v.setncattr(attr, v.getncattr(attr))
+                    try:
+                        out_v.setncattr(attr, vn.getncattr(attr))
+                    except:
+                        print("unable to set attribute '{attr}' of variable '{var}'".format(attr=attr, var=pn))
 
         # data
         for out_v in out_nc.variables.values():
             if out_v.name in nc.variables:
                 v = nc.variables[out_v.name]
                 if (len(v.shape)):
-                    out_v[:] = v[:]
-
-
-
-
+                    try:
+                        out_v[:] = v[:]
+                    except:
+                        print("unable to write data of variable '{var}'".format(var=out_v.name))
 
 
     return (times, out_nc, conc, prob)
