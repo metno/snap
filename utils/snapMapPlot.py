@@ -36,7 +36,7 @@ def plotMap(data, lons, lats, ax, title="", bb={"south":65, "north":75, "west":1
     x, y = m(lons, lats)
     # draw coastlines, state and country boundaries, edge of map.
     m.drawcoastlines()
-    m.drawlsmask(resolution='i')
+    m.drawlsmask(grid=1.25, resolution='i')
     m.drawcountries()
     # draw parallels.
     parallels = np.arange(0.,90,10.)
