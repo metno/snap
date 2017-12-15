@@ -53,6 +53,12 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+# switch global to local logfile
+locallog=eemep.log
+cp $logfile $locallog
+exec 1>$locallog 2>&1
+
+
 Runstatus "start ...." "$jobname" $maxnodes
 trap 'Runstatus "FAILED ..." "$jobname" $maxnodes; echo "$jobname FAILED" > status; exit 159' 0
 
