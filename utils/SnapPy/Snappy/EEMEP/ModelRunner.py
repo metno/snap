@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+from builtins import False
 '''
 Created on Sep 2, 2016
 
@@ -30,11 +31,48 @@ import unittest
 from METNO.HPC import HPC, StatusFile, QJobStatus
 from Snappy.EEMEP.Resources import Resources
 from Snappy.EEMEP.VolcanoRun import VolcanoRun
+import os
 from posix import R_OK
+import sys
 
-
+class AbortFile():
+    """Abort control with a filename. Abort as soon as the file disappears.
+    
+    The file must be read and writable, or abort is not supported."""
+    def __init__(self, filename):
+        self.filename = None
+        if filename:
+            try:
+                if os.path.exists(filename):
+                    print("abortfile '{}' exists, removing".format(filename), sys.stderr)
+                    os.remove(filename)
+                with os.open(filename, 'wt') as fh:
+                    fh.write("delete this file to abort processing")
+                self.filename = filename
+            except OSError:
+                print("cannot write filename: '{}', modelrunner abort disabled".format(filename),
+                      sys.stderr)
+    
+    def abortRequested(self):
+        """return TRUE if abort requested, FALSE if we should continue"""
+        if self.filename:
+            if os.path.exists(self.filename):
+                return False
+            else
+                return True
+        return False
+        
+    def __del__(self):
+        if self.filename and os.path.exists(self.filename):
+            try:
+                os.remove(self.filename)
+            except:
+                pass
+        
 class ModelRunner():
 
+    VOLCANO_FILENAME = "volcano.xml"
+    ABORT_FILENAME = "deleteToRequestAbort"
 
     def __init__(self, path, hpcMachine):
         self.upload_files = set()
@@ -47,7 +85,7 @@ class ModelRunner():
         self.inpath = path
 
         self.rundir = self.res.HPC[self.hpcMachine]["RUNDIR"]
-        volcano_path = os.path.join(path, "volcano.xml")
+        volcano_path = os.path.join(path, ModelRunner.VOLCANO_FILENAME)
         if not os.path.exists(volcano_path):
             raise Exception("no such file or directory: {}".format(volcano_path))
         self.volcano = VolcanoRun(volcano_path)
@@ -56,6 +94,7 @@ class ModelRunner():
 
         self.path = self.volcano.outputDir
         os.makedirs(name=self.path, exist_ok=True)
+        self.abortRequest = AbortFile(os.path.join(self.inpath), ModelRunner.ABORT_FILENAME)
         self._volcano_to_column_source()
         self._get_meteo_files()
         self._get_restart_file()
@@ -216,7 +255,8 @@ class ModelRunner():
         while not (status == QJobStatus.finished or status == QJobStatus.failed):
             sleep(sleep_time)
             count -= 1
-            if count == 0:
+            if count == 0 or self.abortRequest.abortRequested():
+                self.hpc.delete_job(qjob)
                 break
             status = self.hpc.get_status(qjob)
             self._write_log("jobstatus on hpc {} jobid={}: {}".format(self.hpcMachine, qjob.jobid, status))
