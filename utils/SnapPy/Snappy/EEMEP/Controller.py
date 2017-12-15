@@ -24,6 +24,7 @@ Created on Aug 9, 2016
 from PyQt5 import QtWidgets
 from collections import deque
 import datetime
+import getpass
 import json
 import os
 import re
@@ -34,6 +35,7 @@ import traceback
 from PyQt5.QtCore import QProcess, QProcessEnvironment, QThread, QIODevice, QThreadPool, pyqtSignal, pyqtSlot
 from Snappy.BrowserWidget import BrowserWidget
 from Snappy.EEMEP.Resources import Resources
+from Snappy.EEMEP.ModelRunner import ModelRunner
 import Snappy.Utils
 
 def debug(*objs):
@@ -104,6 +106,31 @@ class Controller():
         else:
             self.write_log("Waiting to work with {}\n".format(self.lastOutputDir)+ "Queue busy {:%Y-%m-%d %H:%M:%S}\n".format(datetime.datetime.now())+self.res.getModelRunnerLogs())
 
+    def cancel_first_in_queue(self, qDict):
+        '''Mark all currently active model-runs for abort'''
+        for dirpath, dirs, files in os.walk(self.res.getOutputDir()):
+            for file in files:
+                if file == ModelRunner.ABORT_FILENAME:
+                    try:
+                        self.write_log("trying to abort {}".format(dirpath))
+                        abortLogFile = datetime.datetime.now().strftime('{fname}_%Y%m%d-%H%M%S').format(fname=ModelRunner.ABORT_FILENAME)
+                        with open(os.path.join(dirpath, abortLogFile)) as lh:
+                            lh.write("aborted by {}".format(getpass.getuser()))
+                        os.remove(os.path.join(dirpath, file))
+                    except:
+                        self.write_log("abort not succeeded".format(dirpath))
+        pass
+    
+    def cancel_submitted(self, qDict):
+        '''Cancel the last submitted volcano-file'''
+        try:
+            self.write_log("{} deleted".format(os.path.join(self.lastOutputDir, ModelRunner.VOLCANO_FILENAME)))
+            os.remove(os.path.join(self.lastOutputDir, ModelRunner.VOLCANO_FILENAME))
+            self.eemepRunning = "inactive"
+        except:
+            self.write_log("could not cancel the currently submitted volcano")
+            pass
+
     @pyqtSlot()
     def update_log(self):
         self.update_log_query({})
@@ -112,7 +139,9 @@ class Controller():
         def handler(queryDict):
             """a form-handler with closure for self"""
             options = { 'Run' : self.run_eemep_query,
-                        'Update' : self.update_log_query
+                        'Update' : self.update_log_query,
+                        'Cancel+active': self.cancel_first_in_queue,
+                        'Cancel+submitted': self.cancel_submitted
             }
             # mapping from QList<QPair> to simple dictionary
             qDict = dict()
@@ -245,7 +274,7 @@ class Controller():
         if (os.path.exists(logfile)):
             logdate = datetime.datetime.fromtimestamp(os.path.getmtime(logfile))
             os.rename(logfile, "{}_{}".format(logfile, logdate.strftime("%Y%m%dT%H%M%S")))
-        with open(os.path.join(self.lastOutputDir, "volcano.xml"),'w') as fh:
+        with open(os.path.join(self.lastOutputDir, ModelRunner.VOLCANO_FILENAME),'w') as fh:
             fh.write(self.lastSourceTerm)
         self.eemepRunning = "running"
         self.update_log_query({})
