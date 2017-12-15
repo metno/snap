@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-from builtins import False
 '''
 Created on Sep 2, 2016
 
@@ -58,7 +57,7 @@ class AbortFile():
         if self.filename:
             if os.path.exists(self.filename):
                 return False
-            else
+            else:
                 return True
         return False
         
