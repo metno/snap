@@ -93,7 +93,7 @@ class ModelRunner():
 
         self.path = self.volcano.outputDir
         os.makedirs(name=self.path, exist_ok=True)
-        self.abortRequest = AbortFile(os.path.join(self.inpath), ModelRunner.ABORT_FILENAME)
+        self.abortRequest = AbortFile(os.path.join(self.inpath, ModelRunner.ABORT_FILENAME))
         self._volcano_to_column_source()
         self._get_meteo_files()
         self._get_restart_file()
