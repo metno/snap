@@ -114,10 +114,11 @@ class Controller():
                     try:
                         self.write_log("trying to abort {}".format(dirpath))
                         abortLogFile = datetime.datetime.now().strftime('{fname}_%Y%m%d-%H%M%S').format(fname=ModelRunner.ABORT_FILENAME)
-                        with open(os.path.join(dirpath, abortLogFile)) as lh:
+                        with open(os.path.join(dirpath, abortLogFile), 'wt') as lh:
                             lh.write("aborted by {}".format(getpass.getuser()))
                         os.remove(os.path.join(dirpath, file))
                     except:
+                        traceback.print_exc()
                         self.write_log("abort not succeeded".format(dirpath))
         pass
     
