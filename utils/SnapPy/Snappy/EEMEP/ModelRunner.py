@@ -45,7 +45,7 @@ class AbortFile():
                 if os.path.exists(filename):
                     print("abortfile '{}' exists, removing".format(filename), sys.stderr)
                     os.remove(filename)
-                with os.open(filename, 'wt') as fh:
+                with open(filename, 'wt') as fh:
                     fh.write("delete this file to abort processing")
                 self.filename = filename
             except OSError:
