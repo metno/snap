@@ -72,31 +72,30 @@ c################################################################
         totinp=totinp+dble(pdata(n)%rad)
 c################################################################
        m= icomp(n)
-c######	if(kdrydep(m).eq.1 .and. pdata(n)%z.lt.pdata(n)%tbl) then
-cjb	if(kdrydep(m).eq.1 .and. pdata(n)%z.gt.pdata(n)%tbl) then
+c#### 30m = surface-layer (deposition-layer); sigma(hybrid)=0.996 ~ 30m
        if(kdrydep(m).eq.1 .and. pdata(n)%z.gt. 0.996) then
-cjb	  h=pdata(n)%hbl
          h=30.0
-c..gravityms=pdata(n)%grv
 cjb...23.04.12... difference between particle and gas
 c
          if(radiusmym(m) .le. 0.05) then
-           deprate= 1.0-exp(-tstep*(0.008)/h)	!gas
+           ! gas
+           deprate= 1.0-exp(-tstep*(0.008)/h)	
+         else if (radiusmym(m) .le. 10.0) then
+           ! particle 0.05<r<10
+           deprate= 1.0-exp(-tstep*(0.002)/h)	
+         else
+           ! particle r>=10                                   
+           deprate= 1.0-exp(-tstep*(0.002+pdata(n)%grv)/h)	
+           ! complete deposition when particle hits ground
+           if (pdata(n)%z .eq. vlevel(1)) deprate = 1.
          endif
-         if(radiusmym(m) .gt. 0.05 .and. radiusmym(m) .le. 10.0) then
-           deprate= 1.0-exp(-tstep*(0.002)/h)	!particle 0.05<r<10
-         endif
-         if(radiusmym(m) .gt. 10.0) then
-           deprate= 1.0-exp(-tstep*(0.002+pdata(n)%grv)/h)	!particle r>10
-           if (pdata(n)%z .eq. vlevel(1)) deprate = 1.  ! complete deposition when particle hits ground
-         endif
-          dep=deprate*pdata(n)%rad
-          pdata(n)%rad=pdata(n)%rad-dep
+         dep=deprate*pdata(n)%rad
+         pdata(n)%rad=pdata(n)%rad-dep
          i=nint(pdata(n)%x)
          j=nint(pdata(n)%y)
          mm=iruncomp(m)
 !$omp atomic
-          depdry(i,j,mm)=depdry(i,j,mm)+dble(dep)
+         depdry(i,j,mm)=depdry(i,j,mm)+dble(dep)
 c################################################################
          if(hblmin.gt.h) hblmin=h
          if(hblmax.lt.h) hblmax=h
