@@ -65,8 +65,6 @@ i.e. calculate the 6hour mean of the last six hours (running) (average also the 
             ash.append(nc['D3_ug_ASH'][t,:,:,:])
             ps.append(nc['PS'][t,:,:])
 
-            print(len(ps), len(ash))
-
             pa = sum(ps) / len(ps)
             asha = sum(ash) / len(ash)
                             
