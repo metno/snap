@@ -270,14 +270,17 @@ class ModelRunner():
         timestamp = self.timestamp.strftime("%Y%m%dT%H%M%S")
         simulationstart = self.timestamp.strftime("%Y-%m-%d_%H:%M:%S")
 
+        self._write_log("postprocessing {}".format(instantFilename))
         with Dataset(os.path.join(self.path, instantFilename), 'a') as nc:
             nc.setncattr('SIMULATION_START_DATE', simulationstart)
         
+        self._write_log("postprocessing (adding 6h_vmax) {}".format(averageFilename))
         with Dataset(os.path.join(self.path, averageFilename), 'a') as nc:
             nc.setncattr('SIMULATION_START_DATE', simulationstart)
             nc['time'][:] += (0.5 / 24.) # add halv an hour as 'days since'
             SixHourMax(nc)
 
+        self._write_log("making files available: {} and {}".format(instantFilename, averageFilename))
         os.rename(instantFilename,
                   os.path.join(self.path, 'eemep_hourInst_{}.nc'.format(timestamp)))
 
