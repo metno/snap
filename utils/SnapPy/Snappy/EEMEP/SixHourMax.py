@@ -41,7 +41,8 @@ i.e. calculate the 6hour mean of the last six hours (running) (average also the 
 
     FL = (200, 350, 550)
     
-    def __init__(self, Dataset: nc):
+    def __init__(self, nc):
+        '''Initialize with Dataset nc'''
         pFL = [flightlevel_in_pressure(x) for x in SixHourMax.FL]
         
         # ap and b at layer interface, from troposphere to surface
