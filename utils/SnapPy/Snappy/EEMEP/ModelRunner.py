@@ -20,19 +20,22 @@ Created on Sep 2, 2016
 
 @author: heikok
 '''
+from METNO.HPC import HPC, StatusFile, QJobStatus
 import datetime
+from netCDF4 import Dataset
 import os
+import os
+from posix import R_OK
 import re
 import subprocess
+import sys
 from time import sleep
 import unittest
 
-from METNO.HPC import HPC, StatusFile, QJobStatus
 from Snappy.EEMEP.Resources import Resources
+from Snappy.EEMEP.SixHourMax import SixHourMax
 from Snappy.EEMEP.VolcanoRun import VolcanoRun
-import os
-from posix import R_OK
-import sys
+
 
 class AbortFile():
     """Abort control with a filename. Abort as soon as the file disappears.
@@ -262,28 +265,42 @@ class ModelRunner():
 
         return status
 
+    def _postprocess_files(self, instantFilename, averageFilename):
+        # rename files, make them available to further processes
+        timestamp = self.timestamp.strftime("%Y%m%dT%H%M%S")
+        simulationstart = self.timestamp.strftime("%Y-%m-%d_%H:%M:%S")
+
+        with Dataset(os.path.join(self.path, instantFilename), 'a') as nc:
+            nc.setncattr('SIMULATION_START_DATE', simulationstart)
+        
+        with Dataset(os.path.join(self.path, averageFilename), 'a') as nc:
+            nc.setncattr('SIMULATION_START_DATE', simulationstart)
+            nc['time'][:] += (0.5 / 24.) # add halv an hour as 'days since'
+            SixHourMax(nc)
+
+        os.rename(instantFilename,
+                  os.path.join(self.path, 'eemep_hourInst_{}.nc'.format(timestamp)))
+
+        os.rename(averageFilename,
+                  os.path.join(self.path, 'eemep_hour_{}.nc'.format(timestamp)))
+
+
     def download_results(self):
         '''download the result-files, and rename them as appropriate'''
         start_time = self.volcano.get_meteo_dates()[1]
         tomorrow = (start_time + datetime.timedelta(days=1)).strftime("%Y%m%d")
-        timestamp = self.timestamp.strftime("%Y%m%dT%H%M%S")
-        simulationstart = self.timestamp.strftime("%Y-%m-%d_%H:%M:%S")
 
-        file = 'eemep_hourInst.nc'
-        self._write_log("downloading {}:{} to {}".format(file, self.hpcMachine, self.path))
-        self.hpc.get_files([os.path.join(self.hpc_outdir, file)], self.path, 1200)
-        subprocess.call(args=['ncatted', '-a', 'SIMULATION_START_DATE,global,o,c,{}'.format(simulationstart),
-                              os.path.join(self.path, file)])
-        os.rename(os.path.join(self.path, file),
-                  os.path.join(self.path, 'eemep_hourInst_{}.nc'.format(timestamp)))
+        fileI = 'eemep_hourInst.nc'
+        self._write_log("downloading {}:{} to {}".format(fileI, self.hpcMachine, self.path))
+        self.hpc.get_files([os.path.join(self.hpc_outdir, fileI)], self.path, 1200)
 
-        file = 'eemep_hour.nc'
-        self._write_log("downloading {}:{} to {}".format(file, self.hpcMachine, self.path))
-        self.hpc.get_files([os.path.join(self.hpc_outdir, file)], self.path, 1200)
-        subprocess.call(args=['ncatted', '-a', 'SIMULATION_START_DATE,global,o,c,{}'.format(simulationstart),
-                              os.path.join(self.path, file)])
-        os.rename(os.path.join(self.path, file),
-                  os.path.join(self.path, 'eemep_hour_{}.nc'.format(timestamp)))
+        fileA = 'eemep_hour.nc'
+        self._write_log("downloading {}:{} to {}".format(fileA, self.hpcMachine, self.path))
+        self.hpc.get_files([os.path.join(self.hpc_outdir, fileA)], self.path, 1200)
+
+        self._postprocess_files(os.path.join(self.path, fileI),
+                                os.path.join(self.path, fileA))
+        
 
 
         file = 'EMEP_OUT_{}.nc'.format(tomorrow)
