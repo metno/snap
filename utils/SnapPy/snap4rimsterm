@@ -176,8 +176,8 @@ def convert_to_grib(snapNc, basedir, ident, isotopes):
                 procOptions = ['fimex', '--input.file=snap.nc', '--input.config={}'.format(config['ncml']),
                        # avoid problem with lat/lon variables
                        # in fimex grib-writer< 0.64
-                       '--extract.removeVariable=longitude',
-                       '--extract.removeVariable=latitude',
+                       # '--extract.removeVariable=longitude',
+                       # '--extract.removeVariable=latitude',
                        '--output.file={}'.format(tempfile),
                        '--output.type=grib', '--output.config={}'.format(xmlFile)]
                 procOptions.append('--extract.selectVariables={}'.format(param))
