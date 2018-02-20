@@ -52,8 +52,9 @@ with netCDF4.Dataset(args.snapNc, "a") as nc:
 
     toaVar = nc.createVariable('time_of_arrival', 'f', nc.variables[exampleVar].dimensions, zlib=True, fill_value=-999)
     toaVar.units = 'hours'
-    if 'grid_mapping' in nc.variables[exampleVar].ncattrs():
-        toaVar.grid_mapping = nc.variables[exampleVar].grid_mapping
+    for attr in ('grid_mapping', 'coordinates'):
+        if attr in nc.variables[exampleVar].ncattrs():
+            toaVar.setncattr(attr, nc.variables[exampleVar].getncattr(attr))
     toaVar[0,:] = toa
 
     # add also total depositions
@@ -66,5 +67,7 @@ with netCDF4.Dataset(args.snapNc, "a") as nc:
             if not totalVarName in nc.variables:
                 totalVar = nc.createVariable(totalVarName, 'f', nc.variables[v].dimensions, zlib=True)
                 totalVar.units = nc.variables[v].units
-                totalVar.grid_mapping =  nc.variables[v].grid_mapping
+                for attr in ('grid_mapping', 'coordinates', 'standard_name'):
+                    if attr in nc.variables[v].ncattrs():
+                        totalVar.setncattr(attr, nc.variables[v].getncattr(attr))
                 totalVar[:] = total
