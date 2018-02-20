@@ -48,7 +48,7 @@ def rimstermGetIsotopes(rimxml):
         isoItems[itemXML.attrib['ItemName']] = int(itemXML.attrib['ItemNum'])
     return isoItems
 
-def rimsterm2input(rimxml, argosxml, is_global):
+def rimsterm2input(rimxml, argosxml, met_model):
     """create a full snap.input sourceterm from a rimsterm.xml file using the ec-nrpa meteo"""
 
     sourceTermTemplate = """
@@ -133,20 +133,26 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
 
     sourceTerm += res.isotopes2snapinput(isoItems.values())
 
-    metdef = res.getDefaultMetDefinitions('nrpa_ec_0p1')
-    if is_global:
+    metdef = res.getDefaultMetDefinitions(met_model)
+    if (met_model == 'nrpa_ec_0p1'):
+        files = res.getECMeteorologyFiles(dtime=startDTime, run_hours=int(runTime))
+        if (len(files) == 0):
+            raise Exception("no EC met-files found for {}, runtime {}".format(startDTime, runTime))
+    elif met_model == 'nrpa_ec_0p1_global':
         ecmet = EcMeteorologyCalculator(res, startDTime, float(lon), float(lat))
         ecmet.calc()
         if ecmet.must_calc():
             raise Exception("no EC met-files calculated for {}".format(startDTime))
         files = ecmet.get_meteorology_files()
         (metdef["startX"], metdef["startY"]) = ecmet.get_grid_startX_Y()
-    else:
-        files = res.getECMeteorologyFiles(dtime=startDTime, run_hours=int(runTime))
+    elif met_model == 'meps_2_5km':
+        files = res.getMEPS25MeteorologyFiles(startDTime, runTime, "best")
         if (len(files) == 0):
-            raise Exception("no EC met-files found for {}, runtime {}".format(startDTime, runTime))
+            raise Exception("no MEPS2_5 met-files found for {}, runtime {}".format(startDTime, runTime))
+    else:
+        raise Exception('unknown met_model: {}'.format(met_model))
 
-    sourceTerm += res.getSnapInputMetDefinitions('nrpa_ec_0p1', files, **metdef)
+    sourceTerm += res.getSnapInputMetDefinitions(met_model, files, **metdef)
 
     return sourceTerm
 
@@ -283,7 +289,7 @@ def snap4traj(trajInput, basedir, ident, is_global):
     outlog.close()
 
 
-def snap4rimsterm(rimsterm, argosrequest, basedir, ident, is_global):
+def snap4rimsterm(rimsterm, argosrequest, basedir, ident, met_model):
     '''run snap with rimsterm definition in basedir dir'''
     tree = ET.parse(rimsterm)
     root = tree.getroot()
@@ -301,7 +307,7 @@ def snap4rimsterm(rimsterm, argosrequest, basedir, ident, is_global):
     if os.path.exists(snapNC):
         os.remove(snapNC)
 
-    snapInput = "title={}\n".format(ident) + rimsterm2input(root, argosRoot, is_global)
+    snapInput = "title={}\n".format(ident) + rimsterm2input(root, argosRoot, met_model)
     with open(os.path.join(basedir, "snap.input"), "w") as fh:
         fh.write(snapInput)
 
@@ -343,14 +349,19 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="run snap from a rimsterm.xml file and convert to grib-files named ident_conc, ident_depo ident_wetd ident_dose ident_tofa")
     parser.add_argument("--rimsterm", help="source-term in rimsterm format", required=False)
     parser.add_argument("--argosrequest", help="optional argos-request xml file in addition to --rimsterm file", required=False)
-    parser.add_argument("--worldwide", help="use global meteorology", required=False, action="store_true")
+    parser.add_argument("--worldwide", help="use global meteorology (deprecated, use metmodel=nrpa_ec_0p1_global)", required=False, action="store_true")
+    parser.add_argument("--metmodel", help="select the NWP input model, nrpa_ec_0p1, nrpa_ec_0p1_global, meps_2_5km", required=False, default='nrpa_ec_0p1')
     parser.add_argument("--trajInput", help="source-term in nrpa trajectory input format", required=False)
     parser.add_argument("--dir", help="output-directory", required=True)
     parser.add_argument("--ident", help="output-file identifier", required=True)
     args = parser.parse_args()
     if args.rimsterm is not None:
-        snap4rimsterm(args.rimsterm, args.argosrequest, args.dir, args.ident, args.worldwide)
+        if args.worldwide:
+            args.metmodel = 'nrpa_ec_0p1_global'
+        snap4rimsterm(args.rimsterm, args.argosrequest, args.dir, args.ident, args.metmodel)
     elif args.trajInput is not None:
+        if args.metmodel and args.metmodel.endswith('global'):
+            args.worldwide = True
         snap4traj(args.trajInput, args.dir, args.ident, args.worldwide)
     else:
         print("need one of trajInput or rimsterm options", file=sys.stderr)
