@@ -51,7 +51,8 @@ class TestFrost(unittest.TestCase):
         unittest.TestCase.setUp(self)
         self.hpc = HPC.by_name("frost")
         self.rdir = "/home/metno_op/work/emep/metno_hpc_test"
-        self.testFiles = ["script.job", "status"]
+        self.strangeFiles = ["file with spaces", "file with wildcards*"]
+        self.testFiles = ["script.job", "status"] + self.strangeFiles
 
     def tearDown(self):
         unittest.TestCase.tearDown(self)
@@ -73,6 +74,13 @@ class TestFrost(unittest.TestCase):
         status_file = os.path.join(self.rdir, "status")
         self.hpc.syscall("rm", ["-r", self.rdir])
         self.hpc.syscall("mkdir", ["-p", self.rdir])
+        
+        for f in self.strangeFiles:
+            with open(f, 'w') as fh:
+                fh.write(f)
+            self.hpc.put_files([f], self.rdir)
+            self.hpc.syscall("ls", [f])
+        
         with open(self.testFiles[0], "w") as fh:
             fh.write('''#! /bin/bash
 
