@@ -21,12 +21,12 @@ Created on Nov 15, 2016
 @author: heikok
 '''
 
+from METNO.HPC import typed_property, Connection
 import os
+import shlex
 import subprocess
 import sys
 import unittest
-
-from METNO.HPC import typed_property, Connection
 
 
 class SSHConnection(Connection):
@@ -128,6 +128,7 @@ class SSHConnection(Connection):
     def syscall(self, program, args, timeout=None):
         ssh_args = self._build_ssh_args()
         args.insert(0, program)
+        args = [ shlex.quote(a) for a in args ]
         # print(args)
         remote_command = " ".join(args)
         ssh_args.append(remote_command)
