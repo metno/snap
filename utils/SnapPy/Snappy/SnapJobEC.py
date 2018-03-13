@@ -46,17 +46,16 @@ class SnapJobEC():
     def get_input_files(self):
         '''return a list of input-files for each model'''
         if self.task.model == 'TRAJ':
-            return (self.task.id + '_TRAJ_input')
+            return [self.task.id + '_TRAJ_input']
         elif re.match(r'^SNAP.*', self.task.model):
-            return (self.task.id +'_Rimsterm.xml', self.task.id + '_SNAP_request.xml')
+            return [self.task.id +'_Rimsterm.xml', self.task.id + '_SNAP_request.xml']
         else:
             raise Exception('unknown model:' + self.task.model)
                     
     def job_script(self):
         ''' return a sge job-script for the different models '''
         if self.task.model == 'TRAJ':
-            script = '''
-#!/bin/bash
+            script = '''#!/bin/bash
 #$ -N nrpa_bsnap_traj
 #$ -S /bin/bash
 #$ -V
@@ -81,17 +80,18 @@ snap4rimsterm --trajInput {traj_in} --dir . --ident {ident}
 
 # create and deliver the file
 zip -l {zipreturnfile} Trajectory*.DAT
-scp {zipreturnfile} {scpdestination}
+scp {scpoptions} {zipreturnfile} {scpdestination}
 
 echo ":Finished extracting {model} data for ARGOS" >> {statusfile}
-scp {statusfile} {scpdestination}
+scp {scpoptions} {statusfile} {scpdestination}
 
 '''.format(rundir=self.task.rundir,
-           ident=self.task.ident,
+           ident=self.task.id,
            traj_in=self.get_input_files()[0],
            zipreturnfile=self.get_return_filename(),
            model=self.task.model,
-           statusfile=self.task.status_file,
+           statusfile=self.task.status_filename(),
+           scpoptions=self.task.scpoptions,
            scpdestination=self.task.scpdestination
            )
         
@@ -106,8 +106,7 @@ scp {statusfile} {scpdestination}
                 argosrequest = '--argosrequest ' + requestfile
         
             # Create qsub script
-            script = '''
-#!/bin/bash
+            script = '''#!/bin/bash
 #$ -N nrpa_bsnap
 #$ -S /bin/bash
 #$ -V
@@ -134,10 +133,10 @@ ncatted -a title,global,o,c,"{ident}" snap.nc
 
 # create and deliver the file
 zip {zipreturnfile} {ident}_SNAP_conc {ident}_SNAP_dose {ident}_SNAP_depo {ident}_SNAP_prec {ident}_SNAP_wetd {ident}_SNAP_tofa {ident}_SNAP_all.nc
-scp {zipreturnfile} {scpdestination}
+scp {scpoptions} {zipreturnfile} {scpdestination}
 
 echo ":Finished extracting {model} data for ARGOS" >> {statusfile}
-scp {statusfile} {scpdestination}
+scp {scpoptions} {statusfile} {scpdestination}
 
 '''.format(rundir=self.task.rundir,
            ident=self.task.id,
@@ -146,7 +145,8 @@ scp {statusfile} {scpdestination}
            worldwide=worldwide,
            zipreturnfile=self.get_return_filename(),
            model=self.task.model,
-           statusfile=self.task.status_file,
+           statusfile=self.task.status_filename(),
+           scpoptions=self.task.scpoptions,
            scpdestination=self.task.scpdestination
            )
         
