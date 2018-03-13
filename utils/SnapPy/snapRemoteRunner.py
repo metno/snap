@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+from METNO.SSHConnection import SSHConnection
 '''
 Created on Mar 2, 2018
 
@@ -131,6 +132,7 @@ class SnapRemoteRunner():
     
     
     hpc = typed_property("hpc", HPC)
+    ssh = typed_property("ssh", SSHConnection)
     directory = typed_property("directory", str)
     directory2 = typed_property("directory2", str)
     dryrun = typed_property("dryrun", bool)
@@ -145,7 +147,7 @@ class SnapRemoteRunner():
         self.remote = remote
         self.remote_user = remoteUser
         self.remote_dir = remoteDir
-        
+        self.ssh = SSHConnection(remoteUser, remote)
         self.scpdestination = "{remote}:{remoteDir}".format(remote=self.remote, remoteDir=self.remote_dir)
         if self.remote_user:
             self.scpdestination = self.remote_user + '@' + self.scpdestination
@@ -226,7 +228,7 @@ class SnapRemoteRunner():
         local_rejected = os.path.join(self.directory, self.REJECTED_DIR)
         if not os.path.isdir(local_rejected):
             os.mkdir(local_rejected)
-        self.hpc.get_files(remote_files, local_upload, 30)
+        self.ssh.get_files(remote_files, local_upload, 30)
         
         delete_in_upload = []
         if DEBUG: print("checking files in uploaddir: {}".format(local_upload))
@@ -258,7 +260,7 @@ class SnapRemoteRunner():
         delete_upload_files = [os.path.join(self.UPLOAD_DIR, f) for f in delete_in_upload]
         if DEBUG: print("deleting remotely: " + delete_upload_files)
         if not self.dryrun:
-            self.hpc.syscall('rm', delete_upload_files, 30)
+            self.ssh.syscall('rm', delete_upload_files, 30)
 
 
 if __name__ == '__main__':
