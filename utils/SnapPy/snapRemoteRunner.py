@@ -221,7 +221,7 @@ class SnapRemoteRunner():
         
         throws an exception when download / unpack failed unexpectedly
         '''
-        remote_files = os.path.join(self.UPLOAD_DIR, '*')
+        remote_files = os.path.join(self.remote_dir, self.UPLOAD_DIR, '*')
         local_upload = os.path.join(self.directory, self.UPLOAD_DIR)
         if not os.path.isdir(local_upload):
             os.mkdir(local_upload)
