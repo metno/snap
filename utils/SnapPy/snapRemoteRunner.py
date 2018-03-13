@@ -228,7 +228,7 @@ class SnapRemoteRunner():
         local_rejected = os.path.join(self.directory, self.REJECTED_DIR)
         if not os.path.isdir(local_rejected):
             os.mkdir(local_rejected)
-        self.ssh.get_files(remote_files, local_upload, 30)
+        self.ssh.get_files([remote_files], local_upload, 30)
         
         delete_in_upload = []
         if DEBUG: print("checking files in uploaddir: {}".format(local_upload))
