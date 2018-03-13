@@ -79,11 +79,9 @@ rimsterm_back = '''<?xml version="1.0" encoding="Windows-1252"?>
 '''
 request_back = '''<?xml version="1.0" encoding="Windows-1252"?>
 <Request>
-<StartTime>{date}T13:54:00Z</StartTime>
-<EndTime>{tomorrow}T13:54:00Z</EndTime>
-<RunLength>-66</RunLength>
+<RunLength>-24</RunLength>
 <OutputTimestep>3</OutputTimestep>
-<ModelDirection>Backward</ModelDirection>
+<OutputFormat>NetCDF</OutputFormat>
 </Request>
 '''
 
@@ -119,8 +117,7 @@ with zipfile.ZipFile('Hartlepool-777_ARGOS2SNAP.zip', 'w') as zh:
 
 with zipfile.ZipFile('TestBackModeling_ARGOS2SNAP.zip', 'w') as zh:
     zh.writestr('TestBackModeling_Rimsterm.xml', rimsterm_back.format(date=today.strftime('%Y-%m-%d')))
-    zh.writestr('TestBackModeling_SNAP_request.xml', request_back.format(tomorrow=tomorrow.strftime('%Y-%m-%d'),
-                                                                         date=today.strftime('%Y-%m-%d')))
+    zh.writestr('TestBackModeling_SNAP_request.xml', request_back)
     
 with zipfile.ZipFile('Brokdorf_test_2_ARGOS2TRAJ.zip', 'w') as zh:
     zh.writestr('Brokdorf_test_2_TRAJ_input', traj_input.format(date=today.strftime('%Y%m%d')))

@@ -65,12 +65,13 @@ class SnapTask():
     timestamp = typed_property('timestamp', datetime.datetime)
     rundir = typed_property('rundir', str)
 
-    def __init__(self, topdir, zip_file, model, ident, scpdestination):
+    def __init__(self, topdir, zip_file, model, ident, scpdestination, scpoptions):
         self.topdir = topdir
         self.zipfile = zip_file
         self.model = model
         self.id = ident
         self.scpdestination = scpdestination
+        self.scpoptions = scpoptions
         self.timestamp = datetime.datetime.now()
 
     def status_filename(self):
@@ -90,7 +91,7 @@ class SnapTask():
         ''' Handle the job on the hpc. HPC directories must be writable locally. Return True if job is submitted '''
         retval = False
         try:
-            retval = self.handle(hpc)
+            retval = self._handle(hpc)
         except:
             traceback.print_exc()
         return retval
@@ -117,7 +118,7 @@ class SnapTask():
         with open(jobfile, 'w') as jh:
             jh.write(jobscript)
         # push the job into the queue, no feedback
-        qjob = hpc.submit_job(jobfile)
+        qjob = hpc.submit_job(jobfile, args=[])
         if (qjob == None):
             return False
         return True
@@ -169,6 +170,9 @@ class SnapRemoteRunner():
         else:
             raise Exception("{dir1} and {dir2} not writable".format(dir1=directory, dir2=directory2))
 
+        workdir = os.path.join(self.directory, self.WORK_DIR)
+        if not os.path.isdir(workdir): os.mkdir(workdir)
+
         self.statusfile = os.path.join(self.directory, "snapRemoteRunner_working")
         # make sure only one instance is running, not failsafe (no flock on lustre, eventually in different directories, but good enough)
         if (os.path.exists(self.statusfile)):
@@ -196,7 +200,7 @@ class SnapRemoteRunner():
         filename = task.status_filename()
         work_file = os.path.join(self.directory, self.WORK_DIR, filename)
         timestamp = datetime.datetime.now().strftime('%Y%m%d%H%m')
-        with open(work_file, 'a') as fh:
+        with open(work_file, 'a+') as fh:
             if (tag == 'downloading'):
                 fh.write(":{ts} downloading run-description {file}\n".format(ts=timestamp, file=task.zipfile))
             elif (tag == 'success'):
@@ -206,7 +210,7 @@ class SnapRemoteRunner():
             elif (tag == 'running'):
                 fh.write("{ts} running\n".format(ts=timestamp))
             elif (tag == 'internal'):
-                fh.write(":internal error, cannot start job in queue in dir '{rundir}'".format(rundir=task.rundir))
+                fh.write(":internal error, cannot start job in queue in dir '{rundir}'\n".format(rundir=task.rundir))
             else:
                 fh.write("{tag}:{ts} {msg}\n".format(ts=timestamp, tag=tag, msg=msg))
         self.hpc.put_files([work_file], self.remote_dir, 30)
@@ -242,7 +246,8 @@ class SnapRemoteRunner():
                                     zip_file=f,
                                     ident=m.group(1),
                                     model=m.group(2),
-                                    scpdestination=self.scpdestination)
+                                    scpdestination=self.scpdestination,
+                                    scpoptions=" ".join(self.ssh.scp_options))
                     if task.is_complete(reldir=self.UPLOAD_DIR):
                         if DEBUG: print("handling zipfile: {}".format(f))
                         if not self.dryrun:
