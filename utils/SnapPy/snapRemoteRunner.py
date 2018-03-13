@@ -258,7 +258,7 @@ class SnapRemoteRunner():
                     delete_in_upload.append(f)
 
         delete_upload_files = [os.path.join(self.UPLOAD_DIR, f) for f in delete_in_upload]
-        if DEBUG: print("deleting remotely: " + delete_upload_files)
+        if DEBUG: print("deleting remotely: " + ", ".join(delete_upload_files))
         if not self.dryrun:
             self.ssh.syscall('rm', delete_upload_files, 30)
 
