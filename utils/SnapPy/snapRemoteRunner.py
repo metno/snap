@@ -46,6 +46,9 @@ import zipfile
 from Snappy.SnapJobEC import SnapJobEC
 
 
+DEBUG = 0
+
+
 def _cleanupFileCallable(filename):
     '''closure for cleaning up a file atexit'''
     def cleanup():
@@ -83,7 +86,7 @@ class SnapTask():
         return False
     
     def handle(self, hpc):
-        ''' Handle the job on the hpc. Return True if job is submitted '''
+        ''' Handle the job on the hpc. HPC directories must be writable locally. Return True if job is submitted '''
         retval = False
         try:
             retval = self.handle(hpc)
@@ -183,7 +186,9 @@ class SnapRemoteRunner():
                 with open(self.statusfile, 'wt') as fh:
                     atexit.register(_cleanupFileCallable(self.statusfile))
                     fh.write("working pid: {} on node: {}\n".format(os.getpid(), os.uname().nodename))
+                    if DEBUG: print("working pid: {} on node: {}\n".format(os.getpid(), os.uname().nodename))
 
+        self._check_and_unpack_new_files()
 
     def write_status(self, task, tag, msg=""):
         filename = task.status_filename()
@@ -224,20 +229,25 @@ class SnapRemoteRunner():
         self.hpc.get_files(remote_files, local_upload, 30)
         
         delete_in_upload = []
+        if DEBUG: print("checking files in uploaddir: {}".format(local_upload))
         for f in os.listdir(local_upload):
+            if DEBUG: print("found file: {}".format(f))
             if os.path.isfile(os.path.join(local_upload, f)):
                 m = re.match(r'([\w\-\.:]*)_ARGOS2(.*)\.zip', f)
                 if m:
+                    if DEBUG: print("found zip-file: '{}'".format(f))
                     task = SnapTask(topdir=self.directory,
-                                    zipfile=f,
+                                    zip_file=f,
                                     ident=m.group(1),
                                     model=m.group(2),
                                     scpdestination=self.scpdestination)
                     if task.is_complete(reldir=self.UPLOAD_DIR):
-                        if task.handle(self.hpc):
-                            self.write_status(task, tag='running')
-                        else:
-                            self.write_status(task, tag='internal')
+                        if DEBUG: print("handling zipfile: {}".format(f))
+                        if not self.dryrun:
+                            if task.handle(self.hpc):
+                                self.write_status(task, tag='running')
+                            else:
+                                self.write_status(task, tag='internal')
                         delete_in_upload.append(f)
                     else:
                         self.write_status(task, tag='downloading')
@@ -246,7 +256,9 @@ class SnapRemoteRunner():
                     delete_in_upload.append(f)
 
         delete_upload_files = [os.path.join(self.UPLOAD_DIR, f) for f in delete_in_upload]
-        self.hpc.syscall('rm', delete_upload_files, 30)
+        if DEBUG: print("deleting remotely: " + delete_upload_files)
+        if not self.dryrun:
+            self.hpc.syscall('rm', delete_upload_files, 30)
 
 
 if __name__ == '__main__':
@@ -261,7 +273,14 @@ if __name__ == '__main__':
     parser.add_argument("--hpc", help="HPC-machine to run job on", required=True)
     parser.add_argument("--cleanup", type=int, default=0, help="remove files in dir older than cleanup days")
     parser.add_argument("--dryrun", action='store_true', default=False, help="just test what would be done, don't do anything but write debug messages")
+    parser.add_argument("--debug", action='store_true', default=False, help="write many debug messages")
     args = parser.parse_args()
+    
+    if args.debug:
+        DEBUG += 1
+    if args.dryrun:
+        DEBUG += 1
+    
     if "dir2" in args:
         dir2 = args.dir2
     else:
