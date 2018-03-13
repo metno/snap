@@ -31,12 +31,11 @@ import atexit
 import datetime
 import os
 import sys
-import tempfile
 import traceback
 
 from METNO.HPC import typed_property, HPC
 from Snappy.EEMEP.ModelRunner import ModelRunner
-
+from Snappy.Utils import dirIsWritable, delete_oldfiles
 
 
 def _cleanupFileCallable(filename):
@@ -44,18 +43,6 @@ def _cleanupFileCallable(filename):
     def cleanup():
         os.unlink(filename)
     return cleanup
-
-def dirIsWritable(directory):
-    '''check if directory is writable'''
-    if not directory:
-        return False
-    try:
-        with tempfile.TemporaryFile(dir=directory) as fh:
-            return True
-    except:
-        return False
-
-
 
 class EemepModelRunner():
     hpc = typed_property("hpc", HPC)
@@ -172,16 +159,6 @@ class EemepModelRunner():
         return
 
 
-def delete_oldfiles(dir_to_search, age_in_days):
-    for dirpath, dirnames, filenames in os.walk(dir_to_search):
-        for file in filenames:
-            curpath = os.path.join(dirpath, file)
-            try:
-                file_modified = datetime.datetime.fromtimestamp(os.lstat(curpath).st_mtime)
-                if datetime.datetime.now() - file_modified > datetime.timedelta(days=age_in_days):
-                    os.remove(curpath)
-            except FileNotFoundError:
-                pass
 
 if __name__ == '__main__':
     os.umask(0)

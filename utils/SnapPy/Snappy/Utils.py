@@ -21,8 +21,11 @@ Created on Oct 15, 2017
 @author: heikok
 '''
 
+import datetime
 import numbers
+import os
 import re
+import tempfile
 import unittest
 
 
@@ -122,6 +125,33 @@ class IsLatLonTests(unittest.TestCase):
         self.assertAlmostEqual(parseLon("3 °5' 3\" W"), -3.0841, msg="parseLon(\"3 °5' 3\" W\")", delta=1e-3)
         self.assertAlmostEqual(parseLon("10°4'W"), -10.06666, msg="parseLon(\"10°4'W\")", delta=1e-3)
         self.assertRaises(ValueError, parseLon, "370")
+
+
+def dirIsWritable(directory):
+    '''check if directory is writable'''
+    if not directory:
+        return False
+    try:
+        with tempfile.TemporaryFile(dir=directory) as fh:
+            return True
+    except:
+        return False
+
+def delete_oldfiles(dir_to_search, age_in_days):
+    '''delete files older than age_in_days'''
+    for dirpath, dirnames, filenames in os.walk(dir_to_search):
+        for file in filenames:
+            curpath = os.path.join(dirpath, file)
+            try:
+                file_modified = datetime.datetime.fromtimestamp(os.lstat(curpath).st_mtime)
+                if datetime.datetime.now() - file_modified > datetime.timedelta(days=age_in_days):
+                    os.remove(curpath)
+            except FileNotFoundError:
+                pass
+
+
+
+
 
 if __name__ == '__main__':
     unittest.main()
