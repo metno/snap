@@ -189,7 +189,7 @@ class HPC():
             jobfile -- hpc-filename to send to the HPC-queue
             args -- job-arguments
 
-        Returns: a QJob object
+        Returns: a QJob object, None on failure
         '''
         (command, args) = self.queue.submit_command(jobfile, args)
         (stdout, stderr, retval) = self.syscall(command, args, timeout=None)
