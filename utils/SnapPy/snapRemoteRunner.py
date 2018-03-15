@@ -40,6 +40,7 @@ import atexit
 import datetime
 import os
 import re
+import subprocess
 import sys
 import traceback
 import zipfile
@@ -127,7 +128,7 @@ class SnapTask():
 
 class SnapRemoteRunner():
     UPLOAD_DIR = 'upload'
-    RUN_DIR = 'run'
+    RUN_DIR = 'runs'
     REJECTED_DIR = 'rejected'
     WORK_DIR = 'work'
     
@@ -197,6 +198,13 @@ class SnapRemoteRunner():
         self._check_and_unpack_new_files()
 
     def write_status(self, task, tag, msg=""):
+        '''Write a status file to the remote host. All errors here are ignored'''
+        try:
+            return self._write_status(task, tag, msg)
+        except:
+            traceback.print_exc()    
+
+    def _write_status(self, task, tag, msg=""):
         filename = task.status_filename()
         work_file = os.path.join(self.directory, self.WORK_DIR, filename)
         timestamp = datetime.datetime.now().strftime('%Y%m%d%H%m')
@@ -213,7 +221,7 @@ class SnapRemoteRunner():
                 fh.write(":internal error, cannot start job in queue in dir '{rundir}'\n".format(rundir=task.rundir))
             else:
                 fh.write("{tag}:{ts} {msg}\n".format(ts=timestamp, tag=tag, msg=msg))
-        self.hpc.put_files([work_file], self.remote_dir, 30)
+        self.ssh.put_files([work_file], self.remote_dir, 30)
 
     def _check_and_unpack_new_files(self):
         '''Download new files from the remote machine to the upload directory.
@@ -232,7 +240,12 @@ class SnapRemoteRunner():
         local_rejected = os.path.join(self.directory, self.REJECTED_DIR)
         if not os.path.isdir(local_rejected):
             os.mkdir(local_rejected)
-        self.ssh.get_files([remote_files], local_upload, 30)
+        try:
+            self.ssh.get_files([remote_files], local_upload, 30)
+        except subprocess.CalledProcessError as cpe:
+            # code 1 is generic error, e.g. no files, 2 is connection error
+            if cpe.returncode != 1: raise cpe
+        
         
         delete_in_upload = []
         if DEBUG: print("checking files in uploaddir: {}".format(local_upload))
