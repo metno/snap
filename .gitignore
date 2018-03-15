@@ -63,6 +63,7 @@
 /utils/SnapPy/MANIFEST
 /utils/SnapPy/dist
 /utils/SnapPy/Snappy/dist
+/utils/SnapPy/snapRunner.sh
 
 # /utils/SnapRunner
 /utils/SnapRunner/bsnap
