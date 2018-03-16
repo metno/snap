@@ -70,6 +70,9 @@ class SnapJobEC():
 #$ -o {rundir}/$JOB_NAME.$JOB_ID.logout
 #$ -e {rundir}/$JOB_NAME.$JOB_ID.logerr
 
+chmod g+rw {rundir}/$JOB_NAME.$JOB_ID.logout
+chmod g+rw {rundir}/$JOB_NAME.$JOB_ID.logerr
+
 module load SnapPy/1.3.0
 
 ulimit -c 0
@@ -120,6 +123,9 @@ scp {scpoptions} {statusfile} {scpdestination}
 #$ -sync no
 #$ -o {rundir}/$JOB_NAME.$JOB_ID.logout
 #$ -e {rundir}/$JOB_NAME.$JOB_ID.logerr
+
+chmod g+rw {rundir}/$JOB_NAME.$JOB_ID.logout
+chmod g+rw {rundir}/$JOB_NAME.$JOB_ID.logerr
 
 module load SnapPy/1.3.0
 
