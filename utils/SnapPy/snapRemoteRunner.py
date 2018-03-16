@@ -59,6 +59,7 @@ def _cleanupFileCallable(filename):
 
 class SnapTask():
     topdir = typed_property('topdir', str)
+    backupdir = typed_property('backupdir', str)
     zipfile = typed_property('zipfile', str)
     model = typed_property('model', str)
     id = typed_property('id', str)
@@ -66,8 +67,9 @@ class SnapTask():
     timestamp = typed_property('timestamp', datetime.datetime)
     rundir = typed_property('rundir', str)
 
-    def __init__(self, topdir, zip_file, model, ident, scpdestination, scpoptions):
+    def __init__(self, topdir, backupdir, zip_file, model, ident, scpdestination, scpoptions):
         self.topdir = topdir
+        self.backupdir = backupdir
         self.zipfile = zip_file
         self.model = model
         self.id = ident
@@ -118,6 +120,16 @@ class SnapTask():
         jobfile = os.path.join(self.rundir, 'snap.job')
         with open(jobfile, 'w') as jh:
             jh.write(jobscript)
+            if self.backupdir:
+                back_rundir = os.path.join(self.backupdir, SnapRemoteRunner.RUN_DIR)
+                jh.write('''
+# create files in backup directory
+mkdir {back_rundir}
+rsync -av {rundir} {back_rundir}
+'''.format(back_rundir=back_rundir,
+           rundir=self.rundir)
+                )
+        
         # push the job into the queue, no feedback
         qjob = hpc.submit_job(jobfile, args=[])
         if (qjob == None):
@@ -256,6 +268,7 @@ class SnapRemoteRunner():
                 if m:
                     if DEBUG: print("found zip-file: '{}'".format(f))
                     task = SnapTask(topdir=self.directory,
+                                    backupdir=self.directory2,
                                     zip_file=f,
                                     ident=m.group(1),
                                     model=m.group(2),
@@ -282,7 +295,7 @@ class SnapRemoteRunner():
 
 
 if __name__ == '__main__':
-    os.umask(0)
+    os.umask(0o002)
     import argparse
     parser = argparse.ArgumentParser(description="Read snap-job description files from a remote machine, and run the model on a HPC-like machine")
     parser.add_argument("--dir", help="top-level working dir", required=True)
