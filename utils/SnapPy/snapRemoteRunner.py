@@ -233,7 +233,7 @@ class SnapRemoteRunner():
 '''
         filename = task.status_filename()
         work_file = os.path.join(self.directory, self.WORK_DIR, filename)
-        timestamp = datetime.datetime.now().strftime('%Y%m%d%H%m')
+        timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M')
         with open(work_file, 'a+') as fh:
             if (tag == 'downloading'):
                 fh.write("{x}:{ts}::Getting ARGOS data from server\n".format(x=100,ts=timestamp))
