@@ -64,6 +64,8 @@ class SnapJobEC():
 #$ -l h_rt=0:10:00
 #$ -l h_vmem=8G
 ##$ -m bea
+#$ -M heikok@met.no
+#$ -m a
 #$ -pe mpi 1
 #$ -q operationalx.q
 #$ -sync no
@@ -84,8 +86,8 @@ snap4rimsterm --trajInput {traj_in} --dir . --ident {ident}
 # create and deliver the file
 zip -l {zipreturnfile} Trajectory*.DAT
 scp {scpoptions} {zipreturnfile} {scpdestination}
-
-echo ":Finished extracting {model} data for ARGOS" >> {statusfile}
+TS=`date +%Y%m%d%H%M`
+echo "202:"$TS":Finished extracting {model} data for ARGOS" >> {statusfile}
 scp {scpoptions} {statusfile} {scpdestination}
 
 '''.format(rundir=self.task.rundir,
@@ -118,6 +120,8 @@ scp {scpoptions} {statusfile} {scpdestination}
 #$ -l h_rt=0:50:00
 #$ -l h_vmem=8G
 ##$ -m bea
+#$ -M heikok@met.no
+#$ -m a
 #$ -pe mpi 1
 #$ -q operationalx.q
 #$ -sync no
@@ -140,8 +144,8 @@ ncatted -a title,global,o,c,"{ident}" snap.nc
 # create and deliver the file
 zip {zipreturnfile} {ident}_SNAP_conc {ident}_SNAP_dose {ident}_SNAP_depo {ident}_SNAP_prec {ident}_SNAP_wetd {ident}_SNAP_tofa {ident}_SNAP_all.nc
 scp {scpoptions} {zipreturnfile} {scpdestination}
-
-echo ":Finished extracting {model} data for ARGOS" >> {statusfile}
+TS=`date +%Y%m%d%H%M`
+echo "202:"$TS":Finished extracting {model} data for ARGOS" >> {statusfile}
 scp {scpoptions} {statusfile} {scpdestination}
 
 '''.format(rundir=self.task.rundir,
