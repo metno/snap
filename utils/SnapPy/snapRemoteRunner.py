@@ -218,7 +218,8 @@ class SnapRemoteRunner():
 
     def _write_status(self, task, tag, msg=""):
         '''
-            if ($status_number == 100) {$text = ":Getting ARGOS data from server";}
+    Old codes from perl:
+    if ($status_number == 100) {$text = ":Getting ARGOS data from server";}
     if ($status_number == 200) {$text = ":Finished getting ARGOS-data from server";}
     if ($status_number == 201) {$text = ":Finished running ${model}";}
     if ($status_number == 202) {$text = ":Finished extracting ${model} data for ARGOS";}
@@ -228,21 +229,22 @@ class SnapRemoteRunner():
     if ($status_number == 404) {$text = ":Inconsistent isotope identification (isotop-navn)";}
     if ($status_number == 408) {$text = ":Initial time not covered by NWP database";}
     if ($status_number == 409) {$text = ":${model} output data do not exist";}
+    my $message = "$status_number" . ":" . "$timestamp" . ":" . "$text";
 '''
         filename = task.status_filename()
         work_file = os.path.join(self.directory, self.WORK_DIR, filename)
         timestamp = datetime.datetime.now().strftime('%Y%m%d%H%m')
         with open(work_file, 'a+') as fh:
             if (tag == 'downloading'):
-                fh.write("{x}:{ts}:Getting ARGOS data from server\n".format(x=100,ts=timestamp))
+                fh.write("{x}:{ts}::Getting ARGOS data from server\n".format(x=100,ts=timestamp))
             elif (tag == 'success'):
-                fh.write("{x}:{ts}:Finished extracting {model} data for ARGOS\n".format(x=202,ts=timestamp,model=task.model))
+                fh.write("{x}:{ts}::Finished extracting {model} data for ARGOS\n".format(x=202,ts=timestamp,model=task.model))
             elif (tag == 'error'):
-                fh.write("{x}:{ts}:{model} output data do not exist\n".format(x=409,ts=timestamp,model=task.model))
+                fh.write("{x}:{ts}::{model} output data do not exist\n".format(x=409,ts=timestamp,model=task.model))
             elif (tag == 'running'):
                 fh.write("{ts} running\n".format(ts=timestamp))
             elif (tag == 'internal'):
-                fh.write("{x}:{ts}:internal error, cannot start job in queue in dir '{rundir}'\n".format(x=500, ts=timestamp, rundir=task.rundir))
+                fh.write("{x}:{ts}::internal error, cannot start job in queue in dir '{rundir}'\n".format(x=500, ts=timestamp, rundir=task.rundir))
             else:
                 fh.write("{tag}:{ts} {msg}\n".format(ts=timestamp, tag=tag, msg=msg))
         self.ssh.put_files([work_file], self.remote_dir, 30)
