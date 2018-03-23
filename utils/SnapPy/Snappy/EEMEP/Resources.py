@@ -73,10 +73,7 @@ class Resources():
         self.startScreen = re.sub(r'%ECMODELRUN%',ecmodelruns,self.startScreen)
 
     def getHPCRunDir(self, hpcname):
-        if hpcname in self.HPC:
-            return self.HPC[hpcname]["RUNDIR"]
-        else
-            raise Exception("cannot find rundir for HPC '{}' in resources".format(hpcname))
+        return self.HPC[hpcname]["RUNDIR"]
 
     def getOutputDir(self):
         outputdir = self.OUTPUTDIR
