@@ -86,7 +86,7 @@ class ModelRunner():
         self.hpcMachine = hpcMachine
         self.inpath = path
 
-        self.rundir = self.res.HPC[self.hpcMachine]["RUNDIR"]
+        self.rundir = self.res.getHPCRunDir(self.hpcMachine)
         volcano_path = os.path.join(path, ModelRunner.VOLCANO_FILENAME)
         if not os.path.exists(volcano_path):
             raise Exception("no such file or directory: {}".format(volcano_path))

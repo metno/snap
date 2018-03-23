@@ -1,0 +1,92 @@
+#!/bin/bash
+
+#$ -N eemep
+#$ -l h_rt=23:59:00
+#$ -pe ib-fn 96
+#$ -l h_vmem=4G
+#$ -q ibx.q
+#$ -M heiko.klein@met.no
+#$ -S /bin/bash
+#$ -m a
+#$ -o /lustre/storeB/project/fou/kl/eva/eemep/HPC/work/emep/eemep/tmp/eemep_single.log
+#$ -e /lustre/storeB/project/fou/kl/eva/eemep/HPC/work/emep/eemep/tmp/eemep_single.log
+#$ -R y
+#$ -j y
+
+
+HDIR=/lustre/storeB/project/fou/kl/eva/eemep/HPC
+
+logfile=$HDIR/work/emep/eemep2/eemep_single.log
+rm -f $logfile
+
+exec 1>$logfile 2>&1
+
+maxnodes=6
+jobname=eemep2
+
+set -x
+
+#
+RUNTAG="{runtag}"
+# /prod/forecast/run/eemep2/
+RUNDIR={rundir}
+SRCDIR=$HDIR/emep/eemep2/src/
+DATA_DIR=$HDIR/emep/eemep2/input/eEMEP_OpenSource
+VERSION=active
+
+
+YEAR={year}
+MONTH={month}
+DAY={day}
+HOUR={hour}
+RUNTIME={runhour}
+# always start at midnight (eemep requirement, and for restart)
+STARTDATE=`date -d "$YEAR-$MONTH-$DAY $HOUR" +%Y,%m,%d,000000`
+ENDDATE=`date -d "$YEAR-$MONTH-$DAY $HOUR +{runhour}hours" +%Y,%m,%d,%H0000`
+# restart at midnight the next day
+RESTARTDATE=`date -d "$YEAR-$MONTH-$DAY $HOUR +1days" +%Y,%m,%d,000000`
+
+if [ "x$RUNDIR" == "x" ]; then
+    echo "no rundir"
+    exit 1
+fi
+
+# cleanup older runs
+cd $RUNDIR && find . -mtime +2 -type f -delete
+
+cd $RUNTAG
+if [ $? -ne 0 ]; then
+    exit 1
+fi
+
+# switch global to local logfile
+locallog=eemep.log
+cp $logfile $locallog
+exec 1>$locallog 2>&1
+
+
+echo "running" > status
+
+# Link the input data
+ln -s $DATA_DIR/* .   # input files except meteorology
+sed -e " s/startdate\s*=.*/startdate = $STARTDATE/;s/enddate.*/enddate = $ENDDATE/;s/outdate\s*=.*/outdate = $RESTARTDATE/" $SRCDIR/Unimod.$VERSION/config_emep.nml > config_emep.nml
+
+
+# Run the model
+# source the modules for unimod
+# Load necessary modules
+source $SRCDIR/Unimod.$VERSION/Unimod_modules.sh
+mpprun $SRCDIR/Unimod.$VERSION/Unimod
+
+if [ $? -ne 0 ]; then
+    echo "failed" > status
+else
+    echo "finished" > status
+fi
+
+
+# Clean the links to the input data
+# cleanup now done during download
+# find . -type l -print0 | xargs -0 rm
+
+
