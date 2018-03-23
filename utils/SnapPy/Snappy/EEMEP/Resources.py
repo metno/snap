@@ -36,7 +36,7 @@ class Resources():
     HPC = {"vilje": {'RUNDIR': '/prod/forecast/run/eemep/single_run/'},
            "frost": {'RUNDIR': '/home/metno_op/run/eemep/single_run/'},
            "alvin": {'RUNDIR': '/home/metno_op/run/eemep/single_run/'},
-           "ppi_direct:" {'RUNDIR': '/lustre/storeB/project/fou/kl/eva/eemep/HPC/run/eemep/single_run/'}}
+           "ppi_direct": {'RUNDIR': '/lustre/storeB/project/fou/kl/eva/eemep/HPC/run/eemep/single_run/'}}
     ECINPUTDIRS = ["/lustre/storeA/project/metproduction/products/ecmwf/cwf_input/", "/lustre/storeB/project/metproduction/products/ecmwf/cwf_input/"]
     ECVLEVELS = "Vertical_levels48.txt"
     #ECINPUTDIRS = ["/lustre/storeB/users/heikok/Meteorology/ecdis2cwf/"]
