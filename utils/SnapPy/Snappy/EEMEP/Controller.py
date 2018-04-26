@@ -214,15 +214,20 @@ class Controller():
 
         debug("volcano: {0} {1:.2f} {2:.2f} {3} {4}".format(volcano, latf, lonf, altf, type))
 
+        try:
+            volctype = self.res.readVolcanoType(type)
+        except Exception as ex:
+            errors += str(ex) + "\n"
+            errors +=  'Please select Height and Type (Advanced) manually.\n'
+        
         if (len(errors) > 0):
             debug('updateLog("{0}");'.format(json.dumps("ERRORS:\n\n"+errors)))
             self.write_log("ERRORS:\n\n{0}".format(errors))
             return
         self.write_log("working with lat/lon=({0}/{1}) starting at {2}".format(latf, lonf, startTime))
 
-        types = self.res.readVolcanoTypes()
-        cheight = float(types[type]['H']) * 1000 # km -> m
-        rate = float(types[type]['dM/dt'])
+        cheight = float(volctype['H']) * 1000 # km -> m
+        rate = float(volctype['dM/dt'])
         try:
             if qDict['cloudheight']:
                 cheight = float(qDict['cloudheight'])
@@ -238,7 +243,7 @@ class Controller():
                                          bottom=0,
                                          top=cheight,
                                          rate=rate,
-                                         m63=types[type]['m63']))
+                                         m63=volctype['m63']))
 
         self.lastOutputDir = os.path.join(self.res.getOutputDir(), "{0}_ondemand".format(volcano))
         self.lastQDict = qDict

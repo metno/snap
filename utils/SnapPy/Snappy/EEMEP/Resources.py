@@ -145,6 +145,8 @@ class Resources():
         return volcanoes
 
     def readVolcanoTypes(self):
+        '''return the results of the mastin et al 2009b table3 as dict of dict
+        with m63, BASE, D, dM/dt, m63, START, END, DESCRIPTION as different fields'''  
         vtypes={}
         fields = 'TYPE,x,BASE,H,D,dM/dt,m63,START,END,DESCRIPTION'.split(',')
         with open(os.path.join(os.path.dirname(__file__),"resources/Mastin_et_al_2009b_table3.csv"),
@@ -165,6 +167,20 @@ class Resources():
                 vtypes[vtype['TYPE']] = vtype
         return vtypes
 
+    def readVolcanoType(self, type):
+        '''return the mastin et al 2009 table3 volcano of type 'type' as dict
+        with the same fields as readVolcanoTypes(). 
+        
+        Throws an Exception if type is undefined.'''
+        
+        types = self.readVolcanoTypes()
+        if type and type.startswith('U'):
+            raise Exception('{}-type volcano, i.e. submarine in >50m depth without any known ash-emissions.'.format(type))
+        if not type in types:
+            raise Exception('{}-type volcano.'.format(type))
+        return types[type]
+    
+    
     def getECRuns(self):
         """Find ec-runs with at least 2 days of forecast"""
         relevant = []
