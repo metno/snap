@@ -64,7 +64,6 @@
       integer, save :: ntav1, ntav2 = 0
       character*(1024), save :: file_name = ""
       real     alev(nk),blev(nk),db, precip1,dxgrid,dygrid
-      real     astatic(65), bstatic(65)
       integer kk, ifb, kfb
       real    rcp, dred, red, p, px, dp, p1, p2,ptop
       real    totalprec
@@ -92,45 +91,6 @@ c ncid not needed, will close automaticall
 ! Before the very first statement
       IF (LHOOK) CALL DR_HOOK('READFIELD_NC',0,ZHOOK_HANDLE)
 #endif
-
-      astatic = (/1000., 3000.1064453125, 5001.1552734375,
-     & 6956.677734375, 8772.134765625,
-     & 10401.19140625, 11845.974609375, 13108.7890625, 14192.05859375,
-     & 15098.3046875, 15831.09375, 16393.41015625, 16786.13671875,
-     & 17011.248046875, 17073.814453125, 16981.732421875, 16745.3867187,
-     & 16377.24609375, 15891.423828125, 15303.205078125, 14628.5859375,
-     & 13883.833984375, 13085.064453125, 12247.884765625, 11387.0859375,
-     & 10516.384765625, 9648.2421875, 8793.732421875, 7962.462890625,
-     & 7162.55078125, 6400.638671875, 5681.939453125, 5010.318359375,
-     & 4388.38745117188, 3817.61083984375, 3298.43225097656, 2830.3980,
-     & 2412.28137207031, 2042.20617675781, 1717.76794433594, 1436.1484,
-     & 1193.76184082031, 986.16552734375, 809.11083984375, 658.9615478,
-     & 532.382568359375, 426.338134765625, 338.084106445312, 265.156356,
-     & 205.356636047363, 156.736114501953, 117.57788848877, 86.37949371,
-     & 61.8351898193359, 42.8186264038086, 28.3661956787109, 17.6612434,
-     & 10.0193367004395, 4.87473726272583, 1.76825225353241, 0.33672177,
-     & 0., 0., 0., 0. /)
-      bstatic =  (/ 0., 0., 0., 0.000477339955978096, 0.00239018991123,
-     & 0.00622448418289423,
-     & 0.0119905434548855, 0.0196991395205259, 0.0293618012219667,
-     & 0.0409907661378384, 0.054624704644084, 0.0703164525330067,
-     & 0.0880625545978546, 0.107799530029297, 0.129433423280716,
-     & 0.152842253446579, 0.177879512310028, 0.204378187656403,
-     & 0.232155054807663, 0.261015236377716, 0.290756821632385,
-     & 0.321175336837769, 0.352067738771439, 0.383236020803452,
-     & 0.414490222930908, 0.445650935173035, 0.476551234722137,
-     & 0.507037848234177, 0.53697195649147, 0.566229432821274,
-     & 0.594700753688812, 0.6222904920578, 0.648916512727737, 0.6745090,
-     & 0.699009656906128, 0.722369998693466, 0.74455052614212,
-     & 0.765519380569458, 0.78525111079216, 0.80372542142868, 0.8209261,
-     & 0.836873173713684, 0.851647526025772, 0.865336537361145,
-     & 0.878005385398865, 0.889716595411301, 0.90053004026413,
-     & 0.910503029823303, 0.91969045996666, 0.928144991397858,
-     & 0.935917228460312, 0.943055868148804, 0.949608027935028,
-     & 0.955619394779205, 0.96113446354866, 0.966196745634079, 0.970849,
-     & 0.975133717060089, 0.97909289598465, 0.982768833637238,
-     & 0.986204296350479, 0.989445954561234, 0.992544859647751,
-     & 0.995552182197571, 0.998519629240036 /)
 
       temp_is_abs = .false.
       has_dummy_dim = .false.
@@ -170,8 +130,6 @@ c chernobyl uses pot-temp
 c        pottempv = 'air_potential_temperature_ml'
         sigmav = ''
         ptopv = ''
-c this is a bug in the arome test-file, apv and bv are therefore
-c hardcoded, see below
         apv = 'ap'
         bv = 'b'
 c upward_air_velocity_ml, not used yet?
@@ -202,8 +160,6 @@ c       !! real temperature, convert to pot-temp later
         temp_is_abs = .true.
         sigmav = ''
         ptopv = ''
-c this is a bug in the arome test-file, apv and bv are therefore
-c hardcoded, see below
         apv = 'ap'
         bv = 'b'
 c upward_air_velocity_ml, not used yet?
@@ -230,10 +186,8 @@ c       !! real temperature, convert to pot-temp later
         temp_is_abs = .true.
         sigmav = ''
         ptopv = ''
-c this is a bug in the arome test-file, apv and bv are therefore
-c hardcoded, see below
-        apv = 'arome'
-        bv = 'arome'
+        apv = 'ap'
+        bv = 'b'
 c upward_air_velocity_ml, not used yet?
         sigmadotv = ''
         psv = 'surface_air_pressure'
@@ -482,13 +436,8 @@ c..p0 for hybrid loaded to ptop, ap is a * p0
         end if
 c..alevel (here) only for eta levels
         if (.not.apv.eq.'') then
-          if (apv.eq.'arome') then
-            alev(k) = astatic(ilevel)
-            blev(k) = bstatic(ilevel)
-          else
-            call nfcheckload(ncid, apv, (/ilevel/), (/1/), alev(k))
-            call nfcheckload(ncid, bv, (/ilevel/), (/1/), blev(k))
-          end if
+          call nfcheckload(ncid, apv, (/ilevel/), (/1/), alev(k))
+          call nfcheckload(ncid, bv, (/ilevel/), (/1/), blev(k))
           if (ivcoor.ne.2 .and. .not.ptopv.eq.'') then
 c..p0 for hybrid loaded to ptop, ap is a * p0
             alev(k) = alev(k) * ptop
