@@ -24,7 +24,7 @@ NCDIR = /usr
 
 MIINC = -I/usr/include
 # uncomment MILIB if felt-support not required
-MILIB = -L/usr/lib -lmi
+#MILIB = -L/usr/lib -lmi
 EXLIBS = -lpthread -ldl
 
 DRHOOKINC = -I../../utils/drhook_CY31R2.032
