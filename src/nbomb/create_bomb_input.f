@@ -158,8 +158,7 @@ c       write(2,*) 'TIME.START=   2010 10 14 06'
        write(2,"('SET_RELEASE.POS= P=',f10.4,',',f10.4)")
      &lat,long
        write(2,"('TIME.RUN  = ',i3,'h')") iforecast
-       write(2,"(1(A))") 'GRAPHICS.OFF',
-     & 'VIDEO.SAVE.OFF','RANDOM.WALK.ON',
+       write(2,"(1(A))") 'RANDOM.WALK.ON',
      & 'BOUNDARY.LAYER.FULL.MIX.OFF','DRY.DEPOSITION.NEW',
      & 'WET.DEPOSITION.NEW',
      & 'TIME.RELEASE.PROFILE.BOMB',
