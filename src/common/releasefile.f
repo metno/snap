@@ -25,10 +25,8 @@ c  frelhour
 c  relbqsec(time, comp, height)
 c
 c for each release-step, rellower/relupper/relradius are copied from (1,x)
+      USE snapparML
       implicit none
-
-      include 'snapdim.inc'
-      include 'snappar.inc'
 
 c input
       character*72 filename

@@ -19,11 +19,13 @@ endif
 
 BOBJ = snap_batch_copy.o
 
-INCFILES = snapdim.inc snapfil.inc snapfld.inc snapgrd.inc snappar.inc \
-snappos.inc snaptab.inc snapgrp.inc snapeps.inc snapargos.inc snapdebug.inc
+MODFILES = dateCalc.o fileInfoML.o particleML.o snapdimML.o snapfilML.o snapfldML.o snapgrdML.o snapparML.o\
+snapposML.o snaptabML.o  snapepsML.o snapargosML.o snapdebugML.o
+
+INCFILES = 
 
 link_incfiles:
-	for i in ../common/*.inc; do bn=`basename $$i`; if [ ! -L $$bn ]; then ln -s $$i .; fi; done
+	rm -f *.inc
 
 clean_links:
 	for i in *.inc; do if [ -L $$i ]; then rm $$i; fi done
@@ -31,7 +33,7 @@ clean_links:
 
 #--------------------------------
 
-snap_batch_copy.o: ../common/snap.F dateCalc.o fileInfoML.o particleML.o $(INCFILES)
+snap_batch_copy.o: ../common/snap.F $(MODFILES)
 	cp -p ../common/snap.F snap_batch_copy.F
 	${F77} -c $(F77FLAGS) $(INCLUDES) -DBATCH snap_batch_copy.F
 
@@ -103,6 +105,28 @@ rmpart.o: ../common/rmpart.f $(INCFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 rwalk.o: ../common/rwalk.F $(INCFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+snapargosML.o: ../common/snapargosML.f90
+	${F77} -c ${F77FLAGS} $<
+snapdebugML.o: ../common/snapdebugML.f90
+	${F77} -c ${F77FLAGS} $<
+snapdimML.o: ../common/snapdimML.f90
+	${F77} -c ${F77FLAGS} $<
+snapepsML.o: ../common/snapepsML.f90
+	${F77} -c ${F77FLAGS} $<
+snapfilML.o: ../common/snapfilML.f90 fileInfoML.o
+	${F77} -c ${F77FLAGS} $<
+snapfldML.o: ../common/snapfldML.f90
+	${F77} -c ${F77FLAGS} $<
+snapgrdML.o: ../common/snapgrdML.f90
+	${F77} -c ${F77FLAGS} $<
+snapposML.o: ../common/snapposML.f90
+	${F77} -c ${F77FLAGS} $<
+snapparML.o: ../common/snapparML.f90
+	${F77} -c ${F77FLAGS} $<
+snaptabML.o: ../common/snaptabML.f90
+	${F77} -c ${F77FLAGS} $<
+
+
 tabcon.o: ../common/tabcon.f $(INCFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 vgravtables.o: ../common/vgravtables.f $(INCFILES)

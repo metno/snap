@@ -207,6 +207,16 @@ c
 c
       program bsnap
       USE DateCalc  ,ONLY : epochToDate, timeGM
+      USE snapdebugML
+      USE snapargosML
+      USE snapepsML
+      USE snapdimML
+      USE snapfilML
+      USE snapfldML
+      USE snapparML
+      USE snapposML
+      USE snapgrdML
+      USE snaptabML
       USE particleML
       USE fileInfoML
 #if defined(DRHOOK)
@@ -231,17 +241,6 @@ c
       REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
 #endif
 c
-      include 'snapdim.inc'
-      include 'snapfil.inc'
-      include 'snapgrd.inc'
-      include 'snapfld.inc'
-      include 'snappar.inc'
-      include 'snappos.inc'
-      include 'snaptab.inc'
-      include 'snapeps.inc'
-      include 'snapdebug.inc'
-      include 'snapargos.inc'
-      include 'snapgrp.inc'
 c
       integer   iaction,iexit,allocatestatus
 c
@@ -323,10 +322,8 @@ c..used in xyconvert (longitude,latitude -> x,y)
 c
       data pendingOutput/.false./
 c
-      data nx/nxpre/
-      data ny/nypre/
-      data mpart/mpartpre/
-      data mplume/mplumepre/
+      mpart = mpartpre
+      mplume = mplumepre
 
       iaction=0
 #if defined(DRHOOK)
@@ -395,35 +392,8 @@ c..default values
       nhfmax =12
       nhfout =3
       isynoptic=0
-      igraphics=0
-      igrspec( 1)=0
-      igrspec( 2)=1
-      igrspec( 3)=1
-      igrspec( 4)=0
-      igrspec( 5)=1
-      igrspec( 6)=1
-      igrspec( 7)=1
-      igrspec( 8)=0
-      igrspec( 9)=0
-      igrspec(10)=-1
-      igrspec(11)=-1
-      cgrspec='*'
-      rgrspec(1)=  0.
-      rgrspec(2)=100.
-      rgrspec(3)=  0.
-      rgrspec(4)=100.
-      rgrspec(5)=  5.
-      rgrspec(6)= 95.
-      rgrspec(7)=  5.
-      rgrspec(8)= 95.
-      nlandfile=0
       nrelheight=1
 c
-      savePNGstep= 0
-      saveXPMstep= 0
-      saveBMPstep= 0
-c
-      isvideo=0
 c
       do m=1,mdefcomp
         compname(m)   ='Unknown'
@@ -569,147 +539,7 @@ c
 c
 c=======================================================================
 c
-          if(cinput(k1:k2).eq.'graphics.on') then
-c..graphics.on
-            igraphics=1
-          elseif(cinput(k1:k2).eq.'graphics.off') then
-c..graphics.off
-            igraphics=0
-          elseif(cinput(k1:k2).eq.'graphics.precip.on') then
-c..graphics.precip.on
-            igrspec(1)=1
-          elseif(cinput(k1:k2).eq.'graphics.precip.off') then
-c..graphics.precip.off
-            igrspec(1)=0
-          elseif(cinput(k1:k2).eq.'graphics.dry.dep.on') then
-c..graphics.dry.dep.on
-            igrspec(2)=1
-          elseif(cinput(k1:k2).eq.'graphics.dry.dep.off') then
-c..graphics.dry.dep.off
-            igrspec(2)=0
-          elseif(cinput(k1:k2).eq.'graphics.wet.dep.on') then
-c..graphics.wet.dep.on
-            igrspec(3)=1
-          elseif(cinput(k1:k2).eq.'graphics.wet.dep.off') then
-c..graphics.wet.dep.off
-            igrspec(3)=0
-          elseif(cinput(k1:k2).eq.'graphics.total.dep.on') then
-c..graphics.total.dep.on
-            igrspec(4)=1
-          elseif(cinput(k1:k2).eq.'graphics.total.dep.off') then
-c..graphics.total.dep.off
-            igrspec(4)=0
-          elseif(cinput(k1:k2).eq.'graphics.mslp.on') then
-c..graphics.mslp.on
-            igrspec(9)=1
-          elseif(cinput(k1:k2).eq.'graphics.mslp.off') then
-c..graphics.mslp.off
-            igrspec(9)=0
-          elseif(cinput(k1:k2).eq.'graphics.component') then
-c..graphics.component= name
-            if(kv1.lt.1) goto 12
-            if(cgrspec.ne.'*' .or. igrspec(10).ne.-1) goto 12
-            cgrspec=ciname(1:nkv)
-          elseif(cinput(k1:k2).eq.'graphics.components.total') then
-c..graphics.components.total
-            if(cgrspec.ne.'*' .or. igrspec(10).ne.-1) goto 12
-            igrspec(10)=0
-          elseif(cinput(k1:k2).eq.'graphics.particles.keep.mass') then
-c..graphics.particles.keep.mass
-            if(igrspec(11).ne.-1) goto 12
-            igrspec(11)=1
-          elseif(cinput(k1:k2).eq.
-     +          'graphics.particles.keep.positions') then
-c..graphics.particles.keep.positions
-            if(igrspec(11).ne.-1) goto 12
-            igrspec(11)=0
-          elseif(cinput(k1:k2).eq.
-     +           'graphics.particles.in.boundary.layer.on') then
-c..graphics.particles.in.boundary.layer.on
-            igrspec(5)=1
-          elseif(cinput(k1:k2).eq.
-     +           'graphics.particles.in.boundary.layer.off') then
-c..graphics.particles.in.boundary.layer.off
-            igrspec(5)=0
-          elseif(cinput(k1:k2).eq.
-     +           'graphics.particles.above.boundary.layer.on') then
-c..graphics.particles.above.boundary.layer.on
-            igrspec(6)=1
-          elseif(cinput(k1:k2).eq.
-     +           'graphics.particles.above.boundary.layer.off') then
-c..graphics.particles.above.boundary.layer.off
-            igrspec(6)=0
-          elseif(cinput(k1:k2).eq.'graphics.freeze.off') then
-c..graphics.freeze.off
-            igrspec(7)=0
-          elseif(cinput(k1:k2).eq.'graphics.freeze.at.start') then
-c..graphics.freeze.at.start
-            igrspec(7)=1
-          elseif(cinput(k1:k2).eq.
-     +           'graphics.freeze.at.start.and.end') then
-c..graphics.freeze.at.start.and.end
-            igrspec(7)=2
-          elseif(cinput(k1:k2).eq.'graphics.freeze.at.end') then
-c..graphics.freeze.at.end
-            igrspec(7)=3
-          elseif(cinput(k1:k2).eq.
-     +           'graphics.freeze.at.every.timestep') then
-c..graphics.freeze.at.every.timestep
-            igrspec(7)=4
-          elseif(cinput(k1:k2).eq.
-     +           'graphics.freeze.at.time.of.field.output') then
-c..graphics.freeze.at.time.of.field.output
-            igrspec(7)=5
-          elseif(cinput(k1:k2).eq.'graphics.background.black') then
-c..graphics.background.black
-            igrspec(8)=0
-          elseif(cinput(k1:k2).eq.'graphics.background.white') then
-c..graphics.background.white
-            igrspec(8)=1
-          elseif(cinput(k1:k2).eq.
-     +           'graphics.area.percent.x1.x2.y1.y2') then
-c..graphics.area.percent.x1.x2.y1.y2=
-            if(kv1.lt.1) goto 12
-            read(cipart,*,err=12) (rgrspec(i),i=1,4)
-            if(rgrspec(1).lt.0. .or. rgrspec(1).ge.rgrspec(2) .or.
-     +         rgrspec(2).gt.100. .or.
-     +         rgrspec(3).lt.0. .or. rgrspec(3).ge.rgrspec(4) .or.
-     +         rgrspec(4).gt.100.) goto 12
-          elseif(cinput(k1:k2).eq.
-     +           'graphics.screen.percent.x1.x2.y1.y2') then
-c..graphics.screen.percent.x1.x2.y1.y2=
-            if(kv1.lt.1) goto 12
-            read(cipart,*,err=12) (rgrspec(i),i=5,8)
-            if(rgrspec(5).lt.0. .or. rgrspec(5).ge.rgrspec(6) .or.
-     +         rgrspec(6).gt.100. .or.
-     +         rgrspec(7).lt.0. .or. rgrspec(7).ge.rgrspec(8) .or.
-     +         rgrspec(8).gt.100.) goto 12
-          elseif(cinput(k1:k2).eq.'graphics.land') then
-c..graphics.land= file_name
-            if(nlandfile.lt.mlandfile) then
-              if(kv1.lt.1) goto 12
-              nlandfile=nlandfile+1
-              landfile(nlandfile)=ciname(1:nkv)
-            end if
-          elseif(cinput(k1:k2).eq.'save.png.step') then
-c..save.png.step= 1
-            if(kv1.lt.1) goto 12
-            read(cipart,*,err=12) savePNGstep
-          elseif(cinput(k1:k2).eq.'save.xpm.step') then
-c..save.xpm.step= 0
-            if(kv1.lt.1) goto 12
-            read(cipart,*,err=12) saveXPMstep
-          elseif(cinput(k1:k2).eq.'save.bmp.step') then
-c..save.bmp.step= 0
-            if(kv1.lt.1) goto 12
-            read(cipart,*,err=12) saveBMPstep
-          elseif(cinput(k1:k2).eq.'video.save.on') then
-c..video.save.on
-            isvideo=1
-          elseif(cinput(k1:k2).eq.'video.save.off') then
-c..video.save.off
-            isvideo=0
-          elseif(cinput(k1:k2).eq.'positions.decimal') then
+          if(cinput(k1:k2).eq.'positions.decimal') then
 c..positions.decimal
             ipostyp=1
           elseif(cinput(k1:k2).eq.'positions.degree_minute') then
@@ -1631,30 +1461,7 @@ c
       if(iprodr.eq.0) iprodr=iprod
       if(igridr.eq.0) igridr=igrid
 c
-      if(idrydep.ne.1) igrspec(2)=0
-      if(iwetdep.ne.1) igrspec(3)=0
 c
-      if(igrspec(4).eq.1) igrspec(2)=0
-      if(igrspec(4).eq.1) igrspec(3)=0
-c
-c..possibly only read mslp
-      if(igrspec(9).eq.1 .and. imslp.eq.0) imslp=-1
-c
-c..default graphics.component is the first
-      if(igrspec(10).eq.-1 .and. cgrspec.ne.'*') then
-        do m=1,ncomp
-          if(cgrspec.eq.compname(m)) igrspec(10)=m
-        end do
-      end if
-      if(igrspec(10).eq.0 .and. ncomp.eq.1) igrspec(10)=1
-      if(igrspec(10).lt.0) igrspec(10)=1
-c
-c..default graphics.particles.keep.mass
-      if(igrspec(11).lt.0) igrspec(11)=1
-c
-c..precipitation is needed for wet depositions and possibly graphics
-      if(iwetdep.eq.1) inprecip=1
-      if(igrspec(1).eq.1 .and. inprecip.eq.0) inprecip=-1
 c
       write(6,*) 'Input o.k.'
 c-------------------------------------------------------------------

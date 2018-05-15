@@ -16,7 +16,6 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !
       subroutine wetdep2(tstep,np,pextra)
-      use particleML
 c
 c  Purpose:  Compute wet deposition for each particle and each component
 c            and store depositions in nearest gridpoint in a field
@@ -24,6 +23,11 @@ c  Method:   J.Bartnicki 2003
 c
 c ... 23.04.12 - gas, particle 0.1<d<10, particle d>10 - J. Bartnicki|
 c ... 12.12.13 - gas 'particle size' changed to 0.05um - H. Klein
+      use particleML
+      USE snapgrdML
+      USE snapfldML
+      USE snapparML
+      USE snaptabML
 #if defined(DRHOOK)
       USE PARKIND1  ,ONLY : JPIM     ,JPRB
       USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
@@ -33,11 +37,6 @@ c ... 12.12.13 - gas 'particle size' changed to 0.05um - H. Klein
       REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
 #endif
 c
-      include 'snapdim.inc'
-      include 'snapgrd.inc'
-      include 'snapfld.inc'
-      include 'snappar.inc'
-      include 'snaptab.inc'
 c
       real, INTENT(IN) ::    tstep
 c

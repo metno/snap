@@ -16,7 +16,6 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !
       subroutine rwalk(tstep,blfullmix,np,pextra)
-      use particleML
 c
 c  Purpose:  Diffusion, in and above boudary layer.
 c
@@ -39,6 +38,10 @@ c   In ABL: l-eta=0.28*(mh/2500m)*(tstep/tstep-mix)
 c   Above ABL: l-eta=0.003*(tstep/tstep-mix)
 c   Entrainment zone = 10%*h
 c
+      USE particleML
+      USE snapgrdML
+      USE snapparML
+c
 #if defined(DRHOOK)
       USE PARKIND1  ,ONLY : JPIM     ,JPRB
       USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
@@ -47,10 +50,6 @@ c
 #if defined(DRHOOK)
       REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
 #endif
-c
-      include 'snapdim.inc'
-      include 'snapgrd.inc'
-      include 'snappar.inc'
 c
       REAL, INTENT(IN) ::    tstep
       LOGICAL, INTENT(IN) :: blfullmix

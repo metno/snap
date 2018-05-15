@@ -21,6 +21,8 @@ c
 c   program for calculating the gravitational settling velocities
 c   for small and large particles (outside the Stokes low)
 c---------------------------------------
+      USE snapparML
+
 #if defined(DRHOOK)
       USE PARKIND1  ,ONLY : JPIM     ,JPRB
       USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
@@ -42,8 +44,6 @@ c
 c---------------------------------------
 c
 c
-      include 'snapdim.inc'
-      include 'snappar.inc'
 #if defined(DRHOOK)
       ! Before the very first statement
       IF (LHOOK) CALL DR_HOOK('VGRAVTABLES',0,ZHOOK_HANDLE)

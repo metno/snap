@@ -16,7 +16,6 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !
       subroutine rmpart(rmlimit)
-      use particleML
 c
 c  Purpose: Remove particles which are inactive
 c           or have lost (almost) all mass, in the last case the
@@ -24,6 +23,9 @@ c           remaining mass is transferred to to the other particles
 c           in the same plume (or to the next plume if none left).
 c
 c
+      USE particleML
+      USE snapgrdML
+      USE snapparML
 #if defined(DRHOOK)
       USE PARKIND1  ,ONLY : JPIM     ,JPRB
       USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
@@ -33,9 +35,7 @@ c
       REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
 #endif
 c
-      include 'snapdim.inc'
-      include 'snapgrd.inc'
-      include 'snappar.inc'
+      
 c
       real    rmlimit
 c

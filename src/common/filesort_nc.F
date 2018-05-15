@@ -38,6 +38,10 @@ c         kavail(2): pointer to first backward sorted timestep
 c
       USE DateCalc
       USE fileInfoML
+      USE snapfilML
+      USE snapgrdML
+      USE snapfldML
+      USE snapdebugML
 #if defined(DRHOOK)
       USE PARKIND1  ,ONLY : JPIM     ,JPRB
       USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
@@ -46,11 +50,7 @@ c
 #if defined(DRHOOK)
       REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
 #endif
-      include 'snapdim.inc'
-      include 'snapfil.inc'
-      include 'snapgrd.inc'
-      include 'snapfld.inc'
-      include 'snapdebug.inc'
+      
 ! netcdf
       include 'netcdf.inc'
 

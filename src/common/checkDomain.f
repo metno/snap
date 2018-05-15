@@ -16,6 +16,8 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !
       subroutine checkDomain(np)
+        USE snapgrdML
+        USE snapdimML, only: nx,ny,nk
 c Purpose:
 c    check if particle is inside domain (set active = .false. if outside)
 c    move particle to lowest (highest) level if below lowest (highest) level
@@ -29,8 +31,7 @@ c    move particle to lowest (highest) level if below lowest (highest) level
 #if defined(DRHOOK)
       REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
 #endif
-      include 'snapdim.inc'
-      include 'snapgrd.inc'
+      
       INTEGER, INTENT(IN) :: np
       REAL vmin, vmax
 

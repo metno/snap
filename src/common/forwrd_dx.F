@@ -18,7 +18,11 @@
 
       subroutine forwrd_dx(tf1,tf2,tnow,tstep,np,nparticle,
      +                     delx, dely, delz, u, v)
-      use particleML
+      USE particleML
+      USE snapgrdML
+      USE snapfldML
+      USE snapparML
+      USE snaptabML
 c
 c  Purpose:  calculate dx,dy,dz forward movement of particle at pos np
 c
@@ -45,12 +49,6 @@ c       u, v: wind-speed in x/y
       INTEGER, INTENT(IN) :: np
       TYPE(particle), INTENT(IN) :: nparticle
       REAL*8, INTENT(OUT) :: delx, dely, delz, u, v
-
-      include 'snapdim.inc'
-      include 'snapgrd.inc'
-      include 'snapfld.inc'
-      include 'snappar.inc'
-      include 'snaptab.inc'
 
       integer i,j,m,ilvl,k1,k2,itab,kt1,kt2,ip,it
       real*8    dt,rt1,rt2,dx,dy,c1,c2,c3,c4,vlvl

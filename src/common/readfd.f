@@ -32,13 +32,12 @@ c            ilevel - level or level no.
 c            ihdisp - time displacement in hours (forecast length)
 c
 c
-      use fileInfoML
+      USE fileInfoML
+      USE snapfilML
+      USE snapgrdML
+      USE snapdebugML
       implicit none
 c
-      include 'snapdim.inc'
-      include 'snapfil.inc'
-      include 'snapgrd.inc'
-      include 'snapdebug.inc'
 c
 c..input
       integer   iunit,nav,ivcord,iparam,ilevel,ihdisp

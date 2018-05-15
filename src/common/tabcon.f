@@ -20,10 +20,8 @@ c
 c  Purpose:  Define fixed tables and constans
 c            (independant of input data)
 c
+      USE snaptabML
       implicit none
-c
-      include 'snapdim.inc'
-      include 'snaptab.inc'
 c
       integer i,j,n
       real    rcp,p,prestep,precint,probab

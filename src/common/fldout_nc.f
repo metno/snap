@@ -17,6 +17,13 @@
 !
       subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep,
      *                  istep,nsteph,ierror)
+      USE snapfilML
+      USE snapgrdML
+      USE snapfldML
+      USE snapparML
+      USE snaptabML
+      USE snapargosML
+      USE snapdebugML
 ! netcdf
 c  Purpose:  Accumulation for average fields (iwrite=0,1).
 c            Make and write output fields (iwrite=1).
@@ -85,14 +92,8 @@ c
       REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
 #endif
 c
-      include 'snapdim.inc'
-      include 'snapfil.inc'
-      include 'snapgrd.inc'
-      include 'snapfld.inc'
-      include 'snappar.inc'
-      include 'snaptab.inc'
-      include 'snapargos.inc'
-      include 'snapdebug.inc'
+      
+
       include 'netcdf.inc'
 c
 c     *   ps 8 - surface pressure (if model level output) (hPa)
