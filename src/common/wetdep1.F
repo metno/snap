@@ -16,7 +16,11 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !
       subroutine wetdep1(n,pextra)
-      use particleML
+      USE particleML
+      USE snapgrdML
+      USE snapfldML
+      USE snapparML
+      USE snaptabML
 c
 c  Purpose:  Compute wet deposition for each particle and each component
 c            and store depositions in nearest gridpoint in a field
@@ -32,11 +36,6 @@ c
       REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
 #endif
 c
-      include 'snapdim.inc'
-      include 'snapgrd.inc'
-      include 'snapfld.inc'
-      include 'snappar.inc'
-      include 'snaptab.inc'
 c
 c particle loop index, n = 0 means init
       INTEGER, INTENT(IN) :: n

@@ -16,7 +16,10 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !
       subroutine bldp
-c
+        USE snapdimML, only: nx,ny,nk, mprepro, mpretab
+        USE snaptabML
+        USE snapgrdML
+        USE snapfldML
 c  Purpose:  Compute boundary layer top and height
 c
 c  Method:   Computing Richardson no. and critical Richardson no.
@@ -40,11 +43,6 @@ c
 #if defined(DRHOOK)
       REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
 #endif
-c
-      include 'snapdim.inc'
-      include 'snapgrd.inc'
-      include 'snapfld.inc'
-      include 'snaptab.inc'
 c
       real    pih(nk),pif(nk),zh(nk),zf(nk),thh(nk)
 c

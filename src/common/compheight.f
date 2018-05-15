@@ -16,6 +16,10 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !
       subroutine compheight
+        USE snapgrdML
+        USE snapfldML
+        USE snaptabML
+        USE snapdimML, only: nx,ny,nk
 c
 c  Purpose:  Compute height of model levels and thickness of model layers
 c
@@ -34,10 +38,7 @@ c
       REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
 #endif
 c
-      include 'snapdim.inc'
-      include 'snapgrd.inc'
-      include 'snapfld.inc'
-      include 'snaptab.inc'
+      
 c
       integer i,j,k,itab
       real    ginv,rtab,p,pih,pif,h1,h2

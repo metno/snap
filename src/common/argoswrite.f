@@ -17,6 +17,8 @@
 !
       subroutine argoswrite(iunit,name,iparam,itimeargos,nx,ny,dblfield)
 c
+      USE snapdebugML
+
 #if defined(DRHOOK)
       USE PARKIND1  ,ONLY : JPIM     ,JPRB
       USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
@@ -25,8 +27,6 @@ c
 #if defined(DRHOOK)
       REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
 #endif
-c
-      include 'snapdebug.inc'
 c
 c..input
       integer iunit,iparam,nx,ny,itimeargos(5)

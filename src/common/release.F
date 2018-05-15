@@ -21,22 +21,21 @@ c  Purpose:  Release one plume of particles
 c            The particles are spread in a cylinder volume if radius>0,
 c	     otherwise in a column
 c
+      USE particleML
+      USE snapgrdML
+      USE snapfldML
+      USE snapparML
+      USE snapposML
+      USE snaptabML
+
 #if defined(DRHOOK)
       USE PARKIND1  ,ONLY : JPIM     ,JPRB
       USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
 #endif
-      USE particleML
       implicit none
 #if defined(DRHOOK)
       REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
 #endif
-c
-      include 'snapdim.inc'
-      include 'snapgrd.inc'
-      include 'snappar.inc'
-      include 'snappos.inc'
-      include 'snapfld.inc'
-      include 'snaptab.inc'
 c
 c..input/output
       integer istep,nsteph

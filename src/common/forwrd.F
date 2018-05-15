@@ -16,7 +16,6 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !
       subroutine forwrd(tf1,tf2,tnow,tstep,np,pextra)
-      use particleML
 c
 c  Purpose:  Move all particles one timestep forward
 c
@@ -37,6 +36,8 @@ c       tnow:  time in seconds for current paricle positions
 c       tstep: timestep in seconds
 c
 c
+      USE particleML
+      USE snapgrdML
 #if defined(DRHOOK)
       USE PARKIND1  ,ONLY : JPIM     ,JPRB
       USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
@@ -51,8 +52,6 @@ c
 c particle loop index, np = 0 is initalization
       INTEGER, INTENT(IN) :: np
       TYPE(extraParticle), INTENT(INOUT) :: pextra
-      include 'snapgrd.inc'
-      include 'snapdim.inc'
 
       TYPE(particle) :: nparticle
       REAL*8 :: dx1, dx2, dy1, dy2, dz1, dz2, u, v

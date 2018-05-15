@@ -16,7 +16,7 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !
       subroutine decay(n)
-c
+        USE snapparML
 c  Purpose:  Decrease radioactive contents due to decay
 c    WARNING:   make sure decayDeps is run once before running decay
 c
@@ -30,12 +30,7 @@ c
       REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
 #endif
 c
-      include 'snapdim.inc'
-ccc   include 'snapgrd.inc'
-ccc      include 'snapfld.inc'
-      include 'snappar.inc'
-c
-c
+      
       integer, INTENT(IN) :: n
       integer m
 c

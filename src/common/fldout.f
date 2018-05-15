@@ -80,19 +80,19 @@ c
 #endif
       USE particleML
       USE fileInfoML
+      USE snapfilML
+      USE snapgrdML
+      USE snapfldML
+      USE snapparML
+      USE snaptabML
+      USE snapargosML
+      USE snapdebugML
       implicit none
 #if defined(DRHOOK)
       REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
 #endif
 c
-      include 'snapdim.inc'
-      include 'snapfil.inc'
-      include 'snapgrd.inc'
-      include 'snapfld.inc'
-      include 'snappar.inc'
-      include 'snaptab.inc'
-      include 'snapargos.inc'
-      include 'snapdebug.inc'
+      
 c
       integer   iwrite,iunit,istep,nsteph,ierror
       integer   itime(5)

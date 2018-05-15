@@ -16,7 +16,9 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !
       subroutine decayDeps(tstep)
-c
+        USE snapfldML
+        USE snapparML
+        USE snapdimML, only: nx,ny,nk
 c  Purpose:  Decrease radioactive contents of deposition fields
 c            due to decay
 c     NEEDS TO BE RUN BEFORE 1 decay
@@ -26,10 +28,6 @@ c
       USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
 #endif
       implicit none
-      include 'snapdim.inc'
-ccc   include 'snapgrd.inc'
-      include 'snapfld.inc'
-      include 'snappar.inc'
 c
       real tstep
 c

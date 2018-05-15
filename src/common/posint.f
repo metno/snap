@@ -29,12 +29,11 @@ c       tnow:  time in seconds for current paricle positions
 c
 c
       USE particleML
+      USE snapgrdML
+      USE snapfldML
+      USE snapparML
+
       implicit none
-c
-      include 'snapdim.inc'
-      include 'snapgrd.inc'
-      include 'snapfld.inc'
-      include 'snappar.inc'
 c
       INTEGER, INTENT(IN) :: np
       REAL, INTENT(IN) ::    tf1,tf2,tnow

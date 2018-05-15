@@ -30,13 +30,18 @@
 !             itimefi(5) final time (output)
 !             ierror     error (output)
 !
+      USE particleML
+      USE fileInfoML
+      USE snapfilML
+      USE snapgrdML
+      USE snapfldML
+      USE snaptabML
+      USE snapdebugML
 
 #if defined(DRHOOK)
       USE PARKIND1  ,ONLY : JPIM     ,JPRB
       USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
 #endif
-      USE particleML
-      USE fileInfoML
       implicit none
 #if defined(DRHOOK)
       REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
@@ -47,12 +52,6 @@
      +                           itimei(5)
       integer, INTENT(OUT) :: itimefi(5),ierror
 
-      include 'snapdim.inc'
-      include 'snapfil.inc'
-      include 'snapgrd.inc'
-      include 'snapfld.inc'
-      include 'snaptab.inc'
-      include 'snapdebug.inc'
 ! netcdf
       include 'netcdf.inc'
 !

@@ -16,18 +16,18 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !
       subroutine allocateFields
-      use particleML
-      use fileInfoML
+      USE particleML
+      USE fileInfoML
+      USE snapdimML, only: nx, ny, nk
+      USE snapparML
+      USE snapfldML
+      USE snapfilML
+      USE snapgrdML
       implicit none
       TYPE(particle), DIMENSION(:), POINTER :: x
       logical, save :: FirstCall = .TRUE.
       integer :: AllocateStatus
-      include 'snapdim.inc'
-      include 'snapfld.inc'
-      include 'snapfil.inc'
-      include 'snapgrd.inc'
-      include 'snappar.inc'
-
+      
       if (.not. FirstCall) return
       FirstCall = .FALSE.
 
@@ -155,15 +155,16 @@ c the plumes
 
 
       subroutine deAllocateFields
-      use particleML
-      use fileInfoML
+      USE particleML
+      USE fileInfoML
+      USE snapparML
+      USE snapdimML, only: nx, ny, nk
+      USE snapfldML
+      USE snapfilML
+      USE snapgrdML
+      use snapdimML
       implicit none
-      include 'snapdim.inc'
-      include 'snapfld.inc'
-      include 'snapfil.inc'
-      include 'snapgrd.inc'
-      include 'snappar.inc'
-
+      
       DEALLOCATE ( alevel )
       DEALLOCATE ( blevel )
       DEALLOCATE ( vlevel )

@@ -36,14 +36,14 @@ c       pointers to lists in iavail:
 c         kavail(1): pointer to first forward  sorted timestep
 c         kavail(2): pointer to first backward sorted timestep
 c
-      use fileInfoML
+      USE fileInfoML
+      USE snapfldML
+      USE snapdebugML
+      USE snapgrdML
+
       implicit none
 c
-      include 'snapdim.inc'
-      include 'snapfil.inc'
-      include 'snapgrd.inc'
-      include 'snapfld.inc'
-      include 'snapdebug.inc'
+      
 c
 c..input/output
       integer   iunit,ierror

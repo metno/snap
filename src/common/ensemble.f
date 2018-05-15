@@ -17,7 +17,12 @@
 !
       subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph,
      +                     np)
-      use particleML
+        USE particleML
+        USE snapepsML
+        USE snapfldML
+        USE snapparML
+        USE snapgrdML
+        USE snapdimML, only: nx,ny,nk
 c
 c  Purpose: Interpolate particle positions to ENSEMBLE grid,
 c           and store data in this grid (and model levels),
@@ -43,14 +48,6 @@ c
 #if defined(DRHOOK)
       REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
 #endif
-c
-      include 'snapdim.inc'
-cxx   include 'snapfil.inc'
-      include 'snapgrd.inc'
-      include 'snapfld.inc'
-      include 'snappar.inc'
-      include 'snaptab.inc'
-      include 'snapeps.inc'
 c
 c..input
       integer, INTENT(IN) :: icall,istep,nstep,nsteph, np

@@ -37,17 +37,15 @@ c
 #endif
       USE particleML
       USE fileInfoML
+      USE snapfilML
+      USE snapgrdML
+      USE snapfldML
+      USE snaptabML
+      USE snapdebugML
       implicit none
 #if defined(DRHOOK)
       REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
 #endif
-c
-      include 'snapdim.inc'
-      include 'snapfil.inc'
-      include 'snapgrd.inc'
-      include 'snapfld.inc'
-      include 'snaptab.inc'
-      include 'snapdebug.inc'
 c
 c..input/output
       integer   iunit,istep,nhleft,ihr1,ihr2,ierror

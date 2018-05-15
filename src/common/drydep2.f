@@ -16,7 +16,11 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !
       subroutine drydep2(tstep,n)
-      use particleML
+        USE particleML
+        USE snapfldML
+        USE snapparML
+        USE snapgrdML, only: vlevel
+        USE snapdimML, only: nx,ny,nk
 c
 c  Purpose:  Compute dry deposition for each particle and each component
 c            and store depositions in nearest gridpoint in a field
@@ -33,11 +37,6 @@ c
 #if defined(DRHOOK)
       REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
 #endif
-c
-      include 'snapdim.inc'
-      include 'snapgrd.inc'
-      include 'snapfld.inc'
-      include 'snappar.inc'
 c
       real, INTENT(IN) ::    tstep
 c

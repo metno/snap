@@ -15,26 +15,21 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !
-c-----------------------------------------------------------------------
-c snapeps.inc
-c
-c..include file  -  common for ENSEMBLE PROJECT OUTPUT
-c
-c
-c..ensemblefile
-c..ensembleStepHours
-c..ensembleparticipant
-c..ensembleRandomKey
-c
-      integer iensemble
-      integer ensembleStepHours
-      integer ensembleparticipant
-      character*128 ensemblefile
-      character*7   ensembleRandomKey
-c
-      common/ensemb/iensemble,
-     +              ensembleStepHours,
-     +              ensembleparticipant,
-     +              ensemblefile,ensembleRandomKey
-c
-c-----------------------------------------------------------------------
+module snapargosML
+!
+!..include file  -  common for SSV ARGOS OUTPUT
+!
+      integer margos
+      parameter (margos=500)
+!
+      integer iargos,nargos
+      integer argoshourstep,argoshoursrelease,argoshoursrun
+      integer argostime(5,margos)
+      character*100 argosdepofile,argosconcfile,argosdosefile
+!
+      common/argoscom/iargos,nargos,argoshourstep, &
+           argoshoursrelease,argoshoursrun, &
+           argostime, &
+           argosdepofile,argosconcfile,argosdosefile
+!
+end module snapargosML

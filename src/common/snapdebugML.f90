@@ -15,17 +15,16 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !
-c-----------------------------------------------------------------------
-c snapdebug.inc
-c
-c..include file  -  common for debugging.....
-c
-c..idebug - 0 = debug off
-c	    1 = debug on, note that mrfturbo/mrfelt only
-c		          prints to standard out (not the log file)
-c
+module snapdebugML
+!
+!..include file  -  common for debugging.....
+!
+!..idebug - 0 = debug off
+!    1 = debug on, note that mrfturbo/mrfelt only
+!        prints to standard out (not the log file)
+!
       integer idebug
-c
+!
       common/debugcom/idebug
-c
-c-----------------------------------------------------------------------
+!
+end module snapdebugML

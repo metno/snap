@@ -16,7 +16,9 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !
       subroutine om2edot
-c
+      USE snapgrdML
+      USE snapfldML
+      USE snapdimML, only: nx,ny,nk
 c  Purpose:  Convert omega (in model levels) to etadot,
 c            (added in order to use ECMWF model data).
 c
@@ -50,9 +52,6 @@ c                  level are required.
 c
       implicit none
 c
-      include 'snapdim.inc'
-      include 'snapgrd.inc'
-      include 'snapfld.inc'
 c
       real xmd2h(nx,ny),ymd2h(nx,ny)
 c
