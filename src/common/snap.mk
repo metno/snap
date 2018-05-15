@@ -19,10 +19,8 @@ endif
 
 BOBJ = snap_batch_copy.o
 
-MODFILES = dateCalc.o fileInfoML.o particleML.o snapdimML.o snapfilML.o snapfldML.o snapgrdML.o snapparML.o\
+MODFILES = dateCalc.o fileInfoML.o particleML.o snapdimML.o snapfilML.o snapfldML.o snapgrdML.o snapparML.o \
 snapposML.o snaptabML.o  snapepsML.o snapargosML.o snapdebugML.o
-
-INCFILES = 
 
 link_incfiles:
 	rm -f *.inc
@@ -37,73 +35,73 @@ snap_batch_copy.o: ../common/snap.F $(MODFILES)
 	cp -p ../common/snap.F snap_batch_copy.F
 	${F77} -c $(F77FLAGS) $(INCLUDES) -DBATCH snap_batch_copy.F
 
-allocateFields.o: ../common/allocateFields.F $(INCFILES)
+allocateFields.o: ../common/allocateFields.F $(MODFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-argoswrite.o: ../common/argoswrite.f $(INCFILES)
+argoswrite.o: ../common/argoswrite.f $(MODFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-bldp.o: ../common/bldp.f $(INCFILES)
+bldp.o: ../common/bldp.f $(MODFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-compheight.o: ../common/compheight.f  $(INCFILES)
+compheight.o: ../common/compheight.f  $(MODFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-copyfield.o: ../common/copyfield.f $(INCFILES)
+copyfield.o: ../common/copyfield.f $(MODFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-checkDomain.o: ../common/checkDomain.f $(INCFILES)
+checkDomain.o: ../common/checkDomain.f $(MODFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-dateCalc.o: ../common/dateCalc.F90 $(INCFILES)
+dateCalc.o: ../common/dateCalc.F90
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-decay.o: ../common/decay.f $(INCFILES)
+decay.o: ../common/decay.f $(MODFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-decayDeps.o: ../common/decayDeps.f $(INCFILES)
+decayDeps.o: ../common/decayDeps.f $(MODFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-drydep1.o: ../common/drydep1.f $(INCFILES)
+drydep1.o: ../common/drydep1.f $(MODFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-drydep2.o: ../common/drydep2.f $(INCFILES)
+drydep2.o: ../common/drydep2.f $(MODFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-edcomp.o: ../common/edcomp.f $(INCFILES)
+edcomp.o: ../common/edcomp.f $(MODFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-ensemble.o: ../common/ensemble.f $(INCFILES)
+ensemble.o: ../common/ensemble.f $(MODFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-epinterp.o: ../common/epinterp.f $(INCFILES)
+epinterp.o: ../common/epinterp.f $(MODFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 fileInfoML.o: ../common/fileInfoML.f90
 	${F77} -c ${F77FLAGS} $<
-filesort.o: ../common/filesort.f $(INCFILES)
+filesort.o: ../common/filesort.f $(MODFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-filesort_nc.o: ../common/filesort_nc.F $(INCFILES)
+filesort_nc.o: ../common/filesort_nc.F $(MODFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-fldout.o: ../common/fldout.f $(INCFILES)
+fldout.o: ../common/fldout.f $(MODFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-fldout_nc.o: ../common/fldout_nc.f $(INCFILES)
+fldout_nc.o: ../common/fldout_nc.f $(MODFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-feltio_dummy.o: ../common/feltio_dummy.f $(INCFILES)
+feltio_dummy.o: ../common/feltio_dummy.f $(MODFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-forwrd_dx.o: ../common/forwrd_dx.F $(INCFILES)
+forwrd_dx.o: ../common/forwrd_dx.F $(MODFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-forwrd.o: ../common/forwrd.F $(INCFILES)
+forwrd.o: ../common/forwrd.F $(MODFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-ftest.o: ../common/ftest.f $(INCFILES)
+ftest.o: ../common/ftest.f $(MODFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 init_random_seed.o: ../common/init_random_seed.f
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-om2edot.o: ../common/om2edot.f $(INCFILES)
+om2edot.o: ../common/om2edot.f $(MODFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 particleML.o: ../common/particleML.f90
 	${F77} -c ${F77FLAGS} $<
-posint.o: ../common/posint.f $(INCFILES)
+posint.o: ../common/posint.f $(MODFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-readfd.o: ../common/readfd.f $(INCFILES)
+readfd.o: ../common/readfd.f $(MODFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-readfield.o: ../common/readfield.f $(INCFILES)
+readfield.o: ../common/readfield.f $(MODFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-readfield_nc.o: ../common/readfield_nc.F $(INCFILES)
+readfield_nc.o: ../common/readfield_nc.F $(MODFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-releasefile.o: ../common/releasefile.f $(INCFILES)
+releasefile.o: ../common/releasefile.f $(MODFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-release.o: ../common/release.F $(INCFILES)
+release.o: ../common/release.F $(MODFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-rmpart.o: ../common/rmpart.f $(INCFILES)
+rmpart.o: ../common/rmpart.f $(MODFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-rwalk.o: ../common/rwalk.F $(INCFILES)
+rwalk.o: ../common/rwalk.F $(MODFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 snapargosML.o: ../common/snapargosML.f90
 	${F77} -c ${F77FLAGS} $<
@@ -127,13 +125,13 @@ snaptabML.o: ../common/snaptabML.f90
 	${F77} -c ${F77FLAGS} $<
 
 
-tabcon.o: ../common/tabcon.f $(INCFILES)
+tabcon.o: ../common/tabcon.f $(MODFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-vgravtables.o: ../common/vgravtables.f $(INCFILES)
+vgravtables.o: ../common/vgravtables.f $(MODFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-wetdep1.o: ../common/wetdep1.F $(INCFILES)
+wetdep1.o: ../common/wetdep1.F $(MODFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-wetdep2.o: ../common/wetdep2.F $(INCFILES)
+wetdep2.o: ../common/wetdep2.F $(MODFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 
 
