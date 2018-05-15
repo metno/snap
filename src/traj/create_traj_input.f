@@ -91,8 +91,6 @@ c	write(2,*) 'TIME.START=   2010 10 14 06'
      &lat,long
 c	write(2,*) 'TIME.RUN  = 48h'
         write(2,'('' TIME.RUN  = '',i3,''h'')') iforecast
-        write(2,*) 'GRAPHICS.OFF'
-        write(2,*) 'VIDEO.SAVE.OFF'
         write(2,*) 'RANDOM.WALK.OFF'
         write(2,*) 'BOUNDARY.LAYER.FULL.MIX.OFF'
         write(2,*) 'DRY.DEPOSITION.NEW'
