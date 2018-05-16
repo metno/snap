@@ -42,6 +42,7 @@ c
       USE snapgrdML
       USE snapfldML
       USE snapdebugML
+      USE snapmetML, only: init_meteo_params
 #if defined(DRHOOK)
       USE PARKIND1  ,ONLY : JPIM     ,JPRB
       USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
@@ -66,6 +67,8 @@ c
 ! Before the very first statement
       IF (LHOOK) CALL DR_HOOK('FILESORT_NC',0,ZHOOK_HANDLE)
 #endif
+
+      call init_meteo_params()
 
 ! position in iavail
       navail = 0
