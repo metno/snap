@@ -1,13 +1,15 @@
 # this file contains the common parts to compile bsnap
 # should be included after all: target
 
+MODFILES = dateCalc.o fileInfoML.o particleML.o snapdimML.o snapfilML.o snapfldML.o snapgrdML.o snapmetML.o snapparML.o \
+snapposML.o snaptabML.o  snapepsML.o snapargosML.o snapdebugML.o
+
 MODELOBJ= allocateFields.o argoswrite.o bldp.o compheight.o copyfield.o checkDomain.o \
-decay.o decayDeps.o drydep1.o drydep2.o \
-dateCalc.o edcomp.o \
-ensemble.o epinterp.o fileInfoML.o filesort_nc.o fldout_nc.o forwrd_dx.o forwrd.o ftest.o \
-init_random_seed.o om2edot.o particleML.o fileInfoML.o posint.o \
+decay.o decayDeps.o drydep1.o drydep2.o edcomp.o \
+ensemble.o epinterp.o filesort_nc.o fldout_nc.o forwrd_dx.o forwrd.o ftest.o \
+init_random_seed.o om2edot.o posint.o \
 readfield_nc.o release.o releasefile.o rmpart.o rwalk.o tabcon.o \
-vgravtables.o wetdep1.o wetdep2.o
+vgravtables.o wetdep1.o wetdep2.o $(MODFILES)
 
 ifdef MILIB
   MODELOBJ += fldout.o filesort.o readfield.o readfd.o  
@@ -18,9 +20,6 @@ else
 endif
 
 BOBJ = snap_batch_copy.o
-
-MODFILES = dateCalc.o fileInfoML.o particleML.o snapdimML.o snapfilML.o snapfldML.o snapgrdML.o snapparML.o \
-snapposML.o snaptabML.o  snapepsML.o snapargosML.o snapdebugML.o
 
 link_incfiles:
 	rm -f *.inc
@@ -116,6 +115,8 @@ snapfilML.o: ../common/snapfilML.f90 fileInfoML.o
 snapfldML.o: ../common/snapfldML.f90
 	${F77} -c ${F77FLAGS} $<
 snapgrdML.o: ../common/snapgrdML.f90
+	${F77} -c ${F77FLAGS} $<
+snapmetML.o: ../common/snapmetML.f90 snapfilML.o
 	${F77} -c ${F77FLAGS} $<
 snapposML.o: ../common/snapposML.f90
 	${F77} -c ${F77FLAGS} $<

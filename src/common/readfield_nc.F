@@ -33,8 +33,9 @@
       USE particleML
       USE fileInfoML
       USE snapfilML
-      USE snapgrdML
       USE snapfldML
+      USE snapgrdML
+      USE snapmetML
       USE snaptabML
       USE snapdebugML
 
@@ -70,13 +71,6 @@
       real    unitScale
 
       integer varid, retval, timepos
-      integer start3d(7), start4d(7), count3d(7), count4d(7)
-      character*(80) xwindv,ywindv,xwind10mv,ywind10mv,pottempv,ptopv
-      character*(80) sigmadotv,apv,bv,sigmav,psv,mslpv,precaccumv
-      character*(80) precstratiaccumv, precconaccumv
-      character*(80) precstrativrt,precconvrt
-      logical temp_is_abs, has_dummy_dim, manual_level_selection
-      logical sigmadot_is_omega
 
       if (istep < 0) then
 c set all 'save' variables to default values,
@@ -91,180 +85,6 @@ c ncid not needed, will close automaticall
       IF (LHOOK) CALL DR_HOOK('READFIELD_NC',0,ZHOOK_HANDLE)
 #endif
 
-      temp_is_abs = .false.
-      has_dummy_dim = .false.
-      manual_level_selection = .false.
-      sigmadot_is_omega = .false.
-      if (nctype.eq.'h12') then
-        xwindv = 'x_wind_ml'
-        ywindv = 'y_wind_ml'
-        xwind10mv = 'x_wind_10m'
-        ywind10mv = 'y_wind_10m'
-        pottempv = 'air_potential_temperature_ml'
-        sigmav = ''
-        ptopv = ''
-        apv = 'ap'
-        bv = 'b'
-        sigmadotv = 'omega_ml'
-        sigmadot_is_omega = .true.
-        psv = 'surface_air_pressure'
-        mslpv = 'air_pressure_at_sea_level'
-        precaccumv = 'precipitation_amount_acc'
-        precstrativrt = ''
-        precconvrt = ''
-c..get grid parameters from field identification
-      else if (nctype.eq.'h12_grib') then
-c..h12 results converted directly from grib-files via fimex
-        manual_level_selection = .true.
-        has_dummy_dim = .true.
-        xwindv = 'x_wind_ml'
-        ywindv = 'y_wind_ml'
-        xwind10mv = 'x_wind_10m'
-        ywind10mv = 'y_wind_10m'
-c       !! real temperature, convert to pot-temp later
-c semipalatinsk uses air_temp
-        pottempv = 'air_temperature_ml'
-        temp_is_abs = .true.
-c chernobyl uses pot-temp
-c        pottempv = 'air_potential_temperature_ml'
-        sigmav = ''
-        ptopv = ''
-        apv = 'ap'
-        bv = 'b'
-c upward_air_velocity_ml, not used yet?
-c semipalatinsk
-        sigmadotv = ''
-c chernobyl
-c        sigmadotv = 'omega_ml'
-        psv = 'surface_air_pressure'
-        mslpv = ''
-        precaccumv = ''
-        precstrativrt = ''
-        precconvrt = ''
-        precstratiaccumv =
-     &    'lwe_thickness_of_stratiform_precipitation_amount'
-        precconaccumv =
-     &    'lwe_thickness_of_convective_precipitation_amount'
-c..get grid parameters from field identification
-
-      else if (nctype.eq.'ec_det') then
-        manual_level_selection = .true.
-        has_dummy_dim = .true.
-        xwindv = 'x_wind_ml'
-        ywindv = 'y_wind_ml'
-        xwind10mv = 'x_wind_10m'
-        ywind10mv = 'y_wind_10m'
-c       !! real temperature, convert to pot-temp later
-        pottempv = 'air_temperature_ml'
-        temp_is_abs = .true.
-        sigmav = ''
-        ptopv = ''
-        apv = 'ap'
-        bv = 'b'
-c upward_air_velocity_ml, not used yet?
-        sigmadotv = ''
-        psv = 'surface_air_pressure'
-        mslpv = ''
-        precaccumv = ''
-        precstrativrt = ''
-        precconvrt = ''
-        precstratiaccumv =
-     &    'lwe_thickness_of_stratiform_precipitation_amount'
-        precconaccumv =
-     &    'lwe_thickness_of_convective_precipitation_amount'
-c..get grid parameters from field identification
-      else if (nctype.eq.'arome') then
-        manual_level_selection = .true.
-        has_dummy_dim = .true.
-        xwindv = 'x_wind_ml'
-        ywindv = 'y_wind_ml'
-        xwind10mv = 'x_wind_10m'
-        ywind10mv = 'y_wind_10m'
-c       !! real temperature, convert to pot-temp later
-        pottempv = 'air_temperature_ml'
-        temp_is_abs = .true.
-        sigmav = ''
-        ptopv = ''
-        apv = 'ap'
-        bv = 'b'
-c upward_air_velocity_ml, not used yet?
-        sigmadotv = ''
-        psv = 'surface_air_pressure'
-        mslpv = 'air_pressure_at_sea_level'
-        precaccumv = 'precipitation_amount_acc'
-        precstrativrt = ''
-        precconvrt = ''
-c..get grid parameters from field identification
-      else if (nctype.eq.'dmi_eps') then
-        has_dummy_dim = .true.
-        xwindv = 'x_wind_ml'
-        ywindv = 'y_wind_ml'
-        xwind10mv = 'x_wind_10m'
-        ywind10mv = 'y_wind_10m'
-c       !! real temperature, convert to pot-temp later
-        pottempv = 'air_temperature_ml'
-        temp_is_abs = .true.
-        sigmav = ''
-        ptopv = ''
-        apv = 'ap'
-        bv = 'b'
-c upward_air_velocity_ml, not used yet?
-        sigmadotv = ''
-        psv = 'surface_air_pressure'
-c        mslpv = 'air_pressure_at_sea_level'
-        precaccumv = ''
-        precstratiaccumv = 'stratiform_precipitation_amount_acc'
-        precconaccumv = 'convective_precipitation_amount_acc'
-        precstrativrt = ''
-        precconvrt = ''
-
-      else if (nctype.eq.'emep') then
-        manual_level_selection = .true.
-        xwindv = 'u_wind'
-        ywindv = 'v_wind'
-        xwind10mv = 'u10'
-        ywind10mv = 'v10'
-        pottempv = 'potential_temperature'
-        sigmav = 'k'
-        ptopv = ''
-        apv = ''
-        bv = ''
-        sigmadotv = ''
-        psv = 'surface_pressure'
-        mslpv = 'air_pressure_at_sea_level'
-        precaccumv = ''
-        precstratiaccumv = ''
-!.. non accumulated precipitation rates in m/s
-        precstrativrt = 'large_scale_precipitations'
-        precconvrt = 'convective_precipitations'
-c..get grid parameters from field identification
-c set as long as sortfield still is called
-        ivcoor = 2
-      else if (nctype.eq.'ecemep') then
-        manual_level_selection = .true.
-        xwindv = 'u_wind'
-        ywindv = 'v_wind'
-        xwind10mv = 'u10'
-        ywind10mv = 'v10'
-        pottempv = 'potential_temperature'
-        sigmav = ''
-        ptopv = 'P0'
-        apv = 'hyai'
-        bv = 'hybi'
-        sigmadotv = ''
-        psv = 'surface_pressure'
-!        mslpv = 'air_pressure_at_sea_level'
-        precaccumv = ''
-        precstratiaccumv = ''
-!.. non accumulated precipitation rates in m/s
-        precstrativrt = 'large_scale_precipitations'
-        precconvrt = 'convective_precipitations'
-c..get grid parameters from field identification
-c set as long as sortfield still is called
-      else
-        write(*,*) "undefined grid.nctype: ", nctype
-        call exit(1)
-      end if
 
 
 !..get time offset in hours (as iavail(n)%oHour)
