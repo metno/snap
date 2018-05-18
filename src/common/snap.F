@@ -213,6 +213,7 @@ c
       USE snapdimML
       USE snapfilML
       USE snapfldML
+      USE snapmetML, only: init_meteo_params
       USE snapparML
       USE snapposML
       USE snapgrdML
@@ -1460,6 +1461,8 @@ c
 c
       if(iprodr.eq.0) iprodr=iprod
       if(igridr.eq.0) igridr=igrid
+
+      call init_meteo_params()
 c
 c
 c

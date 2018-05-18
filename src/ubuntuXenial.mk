@@ -12,7 +12,8 @@ CC  = gcc
 #PROFILE=-flto # this is a few % slower with gcc 5.4
 #F77FLAGS=-O2 -g -mavx -cpp -ffpe-trap=invalid,zero,overflow -fbounds-check -Wall
 #-DPETTERSEN
-F77FLAGS=-O2 -ftree-vectorize -fno-math-errno -ffpe-trap=invalid,zero,overflow -g -mavx -cpp -fopt-info-optimized-vec -fopenmp $(PROFILE)
+# -ffpe-trap=invalid,zero,overflow no longer usable, conflict/bug in gfortran with IEEE_VALUE(IEEE_QUIET_NAN)
+F77FLAGS=-O2 -ftree-vectorize -fno-math-errno -g -mavx -cpp -fopt-info-optimized-vec -fopenmp $(PROFILE)
 CXXFLAGS=-O3 $(PROFILE)
 CCFLAGS=-O3 -g $(PROFILE)
 
