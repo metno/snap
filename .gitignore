@@ -81,7 +81,7 @@
 /src/nbomb/*.mod
 /src/nbomb/bsnap_nbomb
 /src/nbomb/create_bomb_input
-/src/naccident/snap_batch_copy.f90
+/src/nbomb/snap_batch_copy.f90
 
 /src/test/testDateCalc
 
