@@ -754,13 +754,14 @@ c
       end subroutine check
 
       subroutine nfcheckload(ncid, varname, start, length, field)
+      use, intrinsic :: IEEE_ARITHMETIC
       implicit none
       include 'netcdf.inc'
       integer, intent ( in) :: ncid, start(7), length(7)
       character(len=*), intent(in) :: varname
       real(kind=4), intent (inout) :: field(*)
 
-      real(kind=4) factor, offset
+      real(kind=4) factor, offset, fillvalue, nan
       integer :: varid, attlen, atttype, status, ndims, siz, i
 
 !      write(*,*) "inq ", varname
@@ -768,6 +769,26 @@ c
 !      write(*,*) "get ", varname
       call check(nf_get_vara_real(ncid, varid, start, length,
      +             field), varname)
+!
+! calculate the field size
+      call check(nf_inq_varndims(ncid, varid,ndims), "dims"//varname)
+      siz=1
+      do i =1,ndims
+        siz = siz * length(i)
+      end do
+
+! translate fill-value to IEEE undefined
+      status = NF_GET_ATT_REAL(ncid, varid, "_FillValue", fillvalue)
+
+      if (status == NF_NOERR) then
+        nan = IEEE_VALUE(nan, IEEE_QUIET_NAN)
+        call check(nf_inq_varndims(ncid, varid,ndims), "dims"//varname)
+        do i = 1, siz
+          if (field(i) == fillvalue) then
+            field(i) = nan
+          end if
+        end do
+      end if
 !  check add_offset and scale_factor
       factor = 1.
       offset = 0.
@@ -782,11 +803,6 @@ c
      +      "add_offset "//varname)
       end if
       if (factor /= 1. .or. offset /= 0.) then
-        call check(nf_inq_varndims(ncid, varid,ndims), "dims"//varname)
-        siz=1
-        do i =1,ndims
-          siz = siz * length(i)
-        end do
 c        write(*,*) "scaling:", varname, factor, offset, siz
         do i = 1, siz
           field(i) = field(i)*factor + offset

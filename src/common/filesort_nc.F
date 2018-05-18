@@ -41,8 +41,9 @@ c
       USE snapfilML
       USE snapgrdML
       USE snapfldML
+      USE snapmetML, ONLY: start4d, count4d, xwindv, has_dummy_dim
       USE snapdebugML
-      USE snapmetML, only: init_meteo_params
+!      USE snapmetML, only:
 #if defined(DRHOOK)
       USE PARKIND1  ,ONLY : JPIM     ,JPRB
       USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
@@ -57,7 +58,7 @@ c
 
       integer i, j, ncid, nf, varid, dimid, tsize, ierror
       real(kind=8) times(mavail)
-      integer zeroHour, tunitLen, status
+      integer zeroHour, tunitLen, status, count_nan
       integer(kind=8) eTimes(mavail)
       integer(kind=8) :: add_offset, scalef
       integer, dimension(6) :: dateTime
@@ -67,8 +68,6 @@ c
 ! Before the very first statement
       IF (LHOOK) CALL DR_HOOK('FILESORT_NC',0,ZHOOK_HANDLE)
 #endif
-
-      call init_meteo_params()
 
 ! position in iavail
       navail = 0
@@ -100,6 +99,18 @@ c
         add_offset = timeUnitOffset(tunits)
         scalef = timeUnitScale(tunits)
         do i = 1, tsize
+          call calc_2d_start_length(start4d, count4d, nx, ny, 1,
+     &            enspos, i, has_dummy_dim)
+          call nfcheckload(ncid, xwindv, start4d, count4d, field1(1,1))
+          ! test 4 arbitrary values in field
+          count_nan = 0
+          do j = 1, 4
+            if (isnan(field1(j,j))) count_nan = count_nan + 1
+          end do
+          if (count_nan == 4) then
+            write(*,*) xwindv, " at time ", i , " undefined, skipping"
+            CYCLE
+          end if
           navail = navail + 1
           if(navail.gt.mavail) then
             if (navail.eq.mavail) then
