@@ -1,4 +1,5 @@
 #!/bin/bash
+## {runtag} {rundir} {year}-{month}-{day}T{hour} {runhour}
 
 #$ -N eemep
 #$ -l h_rt=23:59:00
@@ -60,9 +61,11 @@ if [ $? -ne 0 ]; then
 fi
 
 # switch global to local logfile
-locallog=eemep.log
+locallog=eemep_${YEAR}-${MONTH}-${DAY}T${HOUR}.log
 cp $logfile $locallog
 exec 1>$locallog 2>&1
+ls -l
+head -n 3 eemep_script.job
 
 
 echo "running" > status

@@ -1,4 +1,5 @@
 #!/bin/bash
+## {runtag} {rundir} {year}-{month}-{day}T{hour} {runhour}
 
 #SBATCH -A met
 #SBATCH --nodes=6 --ntasks-per-core=1 --time=01:00:00
@@ -54,9 +55,11 @@ if [ $? -ne 0 ]; then
 fi
 
 # switch global to local logfile
-locallog=eemep.log
+locallog=eemep_${YEAR}-${MONTH}-${DAY}T${HOUR}.log
 cp $logfile $locallog
 exec 1>$locallog 2>&1
+ls -l
+head -n 3 eemep_script.job
 
 
 Runstatus "start ...." "$jobname" $maxnodes
