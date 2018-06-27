@@ -55,7 +55,7 @@ if [ $? -ne 0 ]; then
 fi
 
 # switch global to local logfile
-locallog=eemep_$YEAR-$MONTH-$DAY_$HOUR.log
+locallog=eemep_$YEAR-$MONTH-$DAY--$HOUR.log
 cp $logfile $locallog
 exec 1>$locallog 2>&1
 ls -l
