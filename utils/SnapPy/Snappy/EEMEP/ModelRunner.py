@@ -24,8 +24,6 @@ from METNO.HPC import HPC, StatusFile, QJobStatus
 import datetime
 from netCDF4 import Dataset
 import os
-import os
-from posix import R_OK
 import re
 import subprocess
 import sys
@@ -140,7 +138,6 @@ class ModelRunner():
         else:
             # find the number of steps needed for which file (latest date first)
             timesteps_in_file = 0
-            totalsteps = 0
             use_steps = []
             for (file, tsteps) in date_files:
                 newsteps = tsteps - timesteps_in_file
@@ -151,7 +148,6 @@ class ModelRunner():
                 assert(timesteps_in_file <= 8)
                 if (timesteps_in_file == 8):
                     break
-                step = 0
             # create a list of all files needed (first date first) and
             # find the timesteps to select from the joined files. (from first date to last date)
             steps = []
@@ -330,8 +326,15 @@ class ModelRunner():
     def work(self):
         '''do the complete work, e.g. upload, run, wait and download'''
         self.do_upload_files()
-        self.run_and_wait()
-        self.download_results()
+        status = self.run_and_wait()
+        if (status == QJobStatus.failed):
+            self._write_log("HPC-job failed: Not downloading any results.")
+        elif (status == QJobStatus.queued):
+            self._write_log("HPC-resource not available on {}, giving up.".format(self.hpcMachine))
+        elif (status == QJobStatus.running):
+            self._write_log("HPC-job on {} not finished in time, downloading partial".format(self.hpcMachine))
+        else:
+            self.download_results()
 
 class TestModelRunner(unittest.TestCase):
     hpcMachine = "frost"
