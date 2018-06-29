@@ -40,6 +40,8 @@ def _parseLLNumber(llstr):
     if isinstance(llstr, numbers.Number):
         return (float(llstr), '')
 
+    # remove + character coming from url-queries (space)
+    llstr = llstr.replace('+','')
     llstr = llstr.strip()
     decimal = 0
     
@@ -113,6 +115,7 @@ class IsLatLonTests(unittest.TestCase):
         self.assertAlmostEqual(parseLat("3:5:3 S"), -3.0841, msg="parseLat(\"3:5:3 S\")", delta=1e-3)
         self.assertAlmostEqual(parseLat("3 °5' 3\" S"), -3.0841, msg="parseLat(\"3 °5' 3\" S\")", delta=1e-3)
         self.assertAlmostEqual(parseLat("60°5'5\"N"), 60.084722, msg="parseLat(\"60°5'5\"N\")", delta=1e-3)
+        self.assertAlmostEqual(parseLat("8°20′2+″S+"), -8.333, msg="parseLat(\"8°20′27″S \")", delta=1e-3)        
         self.assertRaises(ValueError, parseLat, "195")
     
     def testParseLon(self):
