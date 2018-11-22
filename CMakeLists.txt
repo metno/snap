@@ -11,7 +11,7 @@ add_compile_options(
     -fopt-info-optimized-vec
     -Wall
     -Wextra
-    -fdefault-real-8
+    # -fdefault-real-8
     -fimplicit-none
     # -std=f95
     # -pedantic
