@@ -63,9 +63,10 @@ subroutine c2fgetvar(nvar,var,nilarg,ilarg,iprint,ierror)
 !-----------------------------------------------------------------------
 
 !..input/output:
-  integer ::       nvar,iprint,ierror,nilarg
-  integer ::       ilarg(nilarg)
-  character*(*) var(nvar)
+  integer, intent(in) :: nvar,iprint,nilarg
+  integer, intent(out) :: ierror
+  integer, intent(in) :: ilarg(nilarg)
+  character*(*), intent(out) :: var(nvar)
 
 !..local:
   integer ::       lvarx,nbeg,nend
@@ -73,6 +74,8 @@ subroutine c2fgetvar(nvar,var,nilarg,ilarg,iprint,ierror)
   character(256) :: var2,var3
   character(1) ::   cbeg(nbeg),cend(nend)
   logical ::       search
+  integer :: i,iarg,ibeg,iend,k1,k2,km,kr,kv,k
+  integer :: lenvar,lvar,n,narg,nv
 
 ! ccc integer       iargc
   integer ::       c2fiargc

@@ -12,7 +12,7 @@ add_compile_options(
     -Wall
     -Wextra
     -fdefault-real-8
-    # -fimplicit-none
+    -fimplicit-none
     # -std=f95
     # -pedantic
     $<$<CONFIG:Debug>:-fbounds-check>
