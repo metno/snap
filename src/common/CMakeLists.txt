@@ -7,7 +7,6 @@ add_library(common
     checkDomain.f90
     compheight.f90
     copyfield.f90
-    dateCalc.f90
     decayDeps.f90
     decay.f90
     drydep1.f90
@@ -85,9 +84,23 @@ set_target_properties(milib
         Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/common_modules
 )
 
+add_library(datecalc
+    dateCalc.f90
+)
+
+set_target_properties(datecalc
+    PROPERTIES
+        Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/common_modules
+)
+
+target_include_directories(datecalc
+    PUBLIC $<TARGET_PROPERTY:datecalc,Fortran_MODULE_DIRECTORY>
+)
+
 target_link_libraries(common
     PRIVATE
         netcdf::Fortran
+        datecalc
         milib
 )
 
