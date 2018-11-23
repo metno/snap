@@ -97,11 +97,22 @@ target_include_directories(datecalc
     PUBLIC $<TARGET_PROPERTY:datecalc,Fortran_MODULE_DIRECTORY>
 )
 
+target_compile_definitions(common
+    PRIVATE
+        $<$<BOOL:${USE_OPENMP}>:HAVE_OMP>
+)
+
+target_compile_options(common
+    PRIVATE
+        $<$<BOOL:${USE_OPENMP}>:${OpenMP_Fortran_FLAGS}>
+)
+
 target_link_libraries(common
     PRIVATE
         netcdf::Fortran
         datecalc
         milib
+        $<$<BOOL:${USE_OPENMP}>:${OpenMP_Fortran_FLAGS}>
 )
 
 set_target_properties(common

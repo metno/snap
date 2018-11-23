@@ -2,9 +2,10 @@ cmake_minimum_required(VERSION 3.5.1)
 project(SNAP LANGUAGES Fortran VERSION 3.10.0)
 
 option(DR_HOOK "Build with the DR hook" OFF)
-option(BUILD_DOCS "Build docs using Doxygen" ON)
-option(BUILD_TESTS "Build tests" ON)
-option(BUILD_PACKAGE "Create a package" ON)
+option(BUILD_DOCS "Create build target for docs" ON)
+option(BUILD_TESTS "Create build target for tests" ON)
+option(BUILD_PACKAGE "cpack support" ON)
+option(USE_OPENMP "Compile with openmp support" OFF)
 
 # set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/CMake)
@@ -31,6 +32,10 @@ find_package(netcdf REQUIRED COMPONENTS Fortran)
 
 if (${DR_HOOK})
     find_package(DR_HOOK REQUIRED)
+endif()
+
+if (${USE_OPENMP})
+    find_package(OpenMP REQUIRED)
 endif()
 
 add_subdirectory(src)
