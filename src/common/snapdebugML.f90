@@ -16,6 +16,8 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !
 module snapdebugML
+    implicit none
+    public
 !
 !..include file  -  common for debugging.....
 !

@@ -16,6 +16,7 @@ add_compile_options(
     -fimplicit-none
     # -std=f95
     # -pedantic
+    -fmodule-private
     $<$<CONFIG:Debug>:-fbounds-check>
     $<$<CONFIG:Debug>:-ffpe-trap=invalid,overflow,zero>
     $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>:-O3>

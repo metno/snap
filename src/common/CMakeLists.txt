@@ -77,6 +77,7 @@ target_compile_options(milib
     PRIVATE
         -std=gnu
         -fno-implicit-none
+        -fno-module-private
 )
 
 set_target_properties(milib

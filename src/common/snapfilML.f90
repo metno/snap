@@ -19,6 +19,7 @@ module snapfilML
     use fileInfoML
     use snapdimML
     implicit none
+    public
 !
 !..include file  -  common for input felt files
 !

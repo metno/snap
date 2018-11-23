@@ -18,6 +18,7 @@
 module snapposML
   use snapdimML, only: mrelpos
   implicit none
+  public
 !-----------------------------------------------------------------------
 ! snappos.inc
 !
