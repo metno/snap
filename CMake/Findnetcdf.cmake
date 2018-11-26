@@ -27,15 +27,15 @@ if(_find_all OR _find_c)
 
     find_path(netcdf_INCLUDE_DIR_C
         NAMES netcdf.h
-        PATHS /usr/include ${PC_Config_C_INCLUDE_DIRS}
+        PATHS /usr/include "${PC_Config_C_INCLUDE_DIRS}" "$ENV{NETCDF_DIR}/include"
     )
 
     find_library(netcdf_LIBRARY_NAMES_C
         NAMES netcdf
-        PATHS ${PC_Config_LIBRARY_NAMES}
+        PATHS "${PC_Config_LIBRARY_NAMES}" "$ENV{NETCDF_DIR}/lib"
     )
 
-    set(netcdf_VERSION_C ${PC_Config_C_VERSION})
+    set(netcdf_VERSION_C "${PC_Config_C_VERSION}")
 
     if ("${netcdf_INCLUDE_DIR_C}" STREQUAL "netcdf_INCLUDE_DIR_C-NOTFOUND" OR
         "${netcdf_LIBRARY_NAMES_C}" STREQUAL "netcdf_LIBRARY_NAMES_C-NOTFOUND" OR
@@ -76,12 +76,12 @@ if(_find_all OR _find_fortran)
 
     find_path(netcdf_INCLUDE_DIR_Fortran
         NAMES netcdf.mod
-        PATHS /usr/include "${PC_Config_Fortran_INCLUDE_DIRS}"
+        PATHS /usr/include "${PC_Config_Fortran_INCLUDE_DIRS}" "$ENV{NETCDF_DIR}/include"
     )
 
     find_library(netcdf_LIBRARY_NAMES_Fortran
         NAMES netcdff
-        PATHS "${PC_Config_Fortran_LIBRARY_NAMES}"
+        PATHS "${PC_Config_Fortran_LIBRARY_NAMES}" "$ENV{NETCDF_DIR}/lib"
     )
 
     set(netcdf_VERSION_Fortran "${PC_Config_Fortran_VERSION}")
