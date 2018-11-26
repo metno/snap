@@ -1,3 +1,7 @@
+# This library contains all the shared files between the different versions of
+# SNAP. Should any of these files be modified with a preprocessor directive
+# (e.g. #ifdef NACCIDENT), the file must be moved out of this list and added
+# to all the respective versions of SNAP.
 add_library(common
     allocateFields.f90
     argoswrite.f90
@@ -20,8 +24,6 @@ add_library(common
     filesort_nc.f90
     fldout.f90
     fldout_nc.f90
-    # forwrd_dx.f90 # DEFINE(...)
-    # forwrd.f90 # DEFINE(...)
     ftest.f90
     init_random_seed.f90
     om2edot.f90
@@ -51,39 +53,6 @@ add_library(common
     wetdep2.f90
 )
 
-add_library(milib
-    milib/chcase.f
-    milib/earthr.f
-    milib/getvar.f
-    milib/gridpar.f
-    milib/hrdiff.f
-    milib/keywrd.f
-    milib/lam2sph.f
-    milib/lenstr.f
-    milib/mapfield.f
-    milib/mer2sph.f
-    milib/pol2sph.f
-    milib/prhelp.f
-    milib/rlunit.f
-    milib/rmfile.f
-    milib/sph2rot.f
-    milib/termchar.f
-    milib/vtime.f
-    milib/xyconvert.f
-)
-
-target_compile_options(milib
-    PRIVATE
-        -std=gnu
-        -fno-implicit-none
-        -fno-module-private
-)
-
-set_target_properties(milib
-    PROPERTIES
-        Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/common_modules
-)
-
 add_library(datecalc
     dateCalc.f90
 )
@@ -106,6 +75,8 @@ target_compile_options(common
     PRIVATE
         $<$<BOOL:${USE_OPENMP}>:${OpenMP_Fortran_FLAGS}>
 )
+
+add_subdirectory(milib)
 
 target_link_libraries(common
     PRIVATE
