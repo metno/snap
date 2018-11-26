@@ -38,6 +38,51 @@ compilation
 
 ## Installation
 
+### Using CMake
+
+Create a build folder to create an out-of-tree build
+```
+mkdir build
+cd build
+cmake .. -DCMAKE_BUILD_TYPE=Debug/RelWithDebInfo/Release -DCMAKE_INSTALL_PREFIX=/usr/local -DCMAKE_Fortran_COMPILER=gfortran
+make -j
+make install
+```
+
+To see invocations of make, use
+```
+env VERBOSE=1 make
+```
+
+#### Build-types
+The debug option will include some extra options such as fault trapping and
+bounds checking, and is meant for quick test-change-compile cycles. The
+release options includes a set of optimisation flags to increase
+the efficiency of the program. These should be tested on a machine basis to
+ensure optimal performance of the resulting program.
+
+
+#### Installing cmake (bootstrapping)
+The version of cmake required by SNAP (3.5.1) is for some systems higher than what
+is currently installed. This section describes how to create a more up to date
+version of cmake that can build SNAP.
+
+Download an archive of cmake from the [cmake downloads page](https://cmake.org/download/)
+unpack the archive using the command
+```
+tar -xf cmake-M.M.P.tar.gz
+```
+Enter the newly created directory and start the build
+```
+cd cmake-M.M.P
+module load gcc/6.2.0 # For certain systems
+./bootstrap --prefix=???
+make -j
+make install
+```
+
+### Legacy
+
 Create a file `current.mk` in the `src` directory. Use e.g the file `ubuntuXenail.mk`
 as template. Most important are the NCDIR and 
 the BINDIR where final files will be installed.
