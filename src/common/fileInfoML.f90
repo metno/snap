@@ -17,6 +17,7 @@
 !
 module fileInfoML
     implicit none
+    private
     ! information about file and file-order
     !          previous implementation
     !          iavail( 1,n): year    )
@@ -31,7 +32,7 @@ module fileInfoML
     !          iavail(10,n): pointer to next backward (time) data
     !                    n=1,navail
 
-    TYPE fileInfo
+    TYPE, PUBLIC :: fileInfo
         ! analysis/forecast reference time
         SEQUENCE
         INTEGER(KIND=2) :: AYEAR

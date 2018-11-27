@@ -5,9 +5,9 @@ F77 = gfortran
 CXX = g++
 CC  = gcc
 
-F77FLAGS=-O3 -cpp
-CXXFLAGS=-O3
-CCFLAGS=-O3
+F77FLAGS=-O3 -cpp -Wall -Wextra -fimplicit-none -fmodule-private
+CXXFLAGS=-O3 -Wall -Wextra
+CCFLAGS=-O3 -Wall -Wextra
 
 LDFLAGS=
 

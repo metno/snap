@@ -16,6 +16,8 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !
 module snapargosML
+    implicit none
+    public
 !
 !..include file  -  common for SSV ARGOS OUTPUT
 !

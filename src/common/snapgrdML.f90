@@ -16,6 +16,9 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !
 module snapgrdML
+
+    implicit none
+    public
 !
 !..include file  -  common for grid specifications etc.
 !
