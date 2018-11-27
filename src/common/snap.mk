@@ -136,49 +136,51 @@ wetdep2.o: ../common/wetdep2.f90 $(MODFILES)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 
 
+MILIB_FLAGS = -fno-implicit-none -fno-module-private
+
 milib.o: ../common/milib.c ../common/milib.h
 	$(CC)  -c $(CCFLAGS) -I../common $<
 c2fgetvar.o: ../common/c2fgetvar.f90
-	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 c2fgetarg.o: ../common/c2fgetarg.f90
-	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 
 # libmi
 chcase.o: ../common/milib/chcase.f
-	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 gridpar.o: ../common/milib/gridpar.f
-	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 getvar.o: ../common/milib/getvar.f
-	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 hrdiff.o: ../common/milib/hrdiff.f
-	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 keywrd.o: ../common/milib/keywrd.f
-	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 lenstr.o: ../common/milib/lenstr.f
-	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 mapfield.o: ../common/milib/mapfield.f
-	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 prhelp.o: ../common/milib/prhelp.f
-	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 rlunit.o: ../common/milib/rlunit.f
-	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 rmfile.o: ../common/milib/rmfile.f
-	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 vtime.o: ../common/milib/vtime.f
-	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 xyconvert.o: ../common/milib/xyconvert.f
-	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 termchar.o: ../common/milib/termchar.f
-	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 earthr.o: ../common/milib/earthr.f
-	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 pol2sph.o: ../common/milib/pol2sph.f
-	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 sph2rot.o: ../common/milib/sph2rot.f
-	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 lam2sph.o: ../common/milib/lam2sph.f
-	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 mer2sph.o: ../common/milib/mer2sph.f
-	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 #---------------------------------------------------------
 

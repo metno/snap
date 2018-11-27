@@ -17,6 +17,7 @@
 !
 module snapmetML
   IMPLICIT NONE
+  public
   ! meteorology parameter definitions
   ! many of these definitions can be changed in
   ! from the setup-file with a call to init_meteo_params
