@@ -38,6 +38,7 @@ subroutine filesort(iunit,ierror)
 
   USE fileInfoML
   USE snapfldML
+  USE snapfilML
   USE snapdebugML
   USE snapgrdML
 
