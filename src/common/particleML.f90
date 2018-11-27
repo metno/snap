@@ -17,8 +17,9 @@
 !
 module particleML
     implicit none
+    private
     ! a simple particle to be stored
-    TYPE particle
+    TYPE, PUBLIC :: particle
 ! old definition
 !..pdata:   pdata(1,n) - x position in grid
 !           pdata(2,n) - y position in grid
@@ -43,7 +44,7 @@ module particleML
     END TYPE particle
 
 ! storage for extra particle data
-    TYPE extraParticle
+    TYPE, PUBLIC :: extraParticle
        SEQUENCE
        REAL    :: u ! u-speed
        REAL    :: v ! v-speed
@@ -53,6 +54,6 @@ module particleML
     END TYPE extraParticle
 
 ! the actual particle storage, will be allocated in allocateFields.F
-    TYPE(particle), DIMENSION(:), POINTER :: pdata
+    TYPE(particle), DIMENSION(:), POINTER, PUBLIC :: pdata
 
 end module particleML

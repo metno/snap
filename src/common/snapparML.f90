@@ -18,6 +18,8 @@
 
 module snapparML
   use snapdimML
+  implicit none
+  public
 !-----------------------------------------------------------------------
 ! snappar.inc
 !
