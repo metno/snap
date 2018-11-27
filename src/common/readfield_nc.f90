@@ -757,7 +757,7 @@ subroutine nfcheckload(ncid, varname, start, length, field)
   use, intrinsic :: IEEE_ARITHMETIC
   implicit none
   include 'netcdf.inc'
-  integer, intent ( in) :: ncid, start(7), length(7)
+  integer, intent (in) :: ncid, start(*), length(*)
   character(len=*), intent(in) :: varname
   real(kind=4), intent (inout) :: field(*)
 

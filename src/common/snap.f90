@@ -220,6 +220,7 @@ PROGRAM bsnap
   USE snaptabML
   USE particleML
   USE fileInfoML
+  USE iso_fortran_env, only: error_unit
 #if defined(DRHOOK)
   USE PARKIND1  ,ONLY : JPIM     ,JPRB
   USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
@@ -701,7 +702,10 @@ PROGRAM bsnap
         ntprof=i2
         if(frelhour(1) /= 0) goto 12
         do i=2,ntprof
-          if(frelhour(i-1) >= frelhour(i)) goto 12
+          if(frelhour(i-1) >= frelhour(i)) then
+              write(error_unit, *) 'ERROR: Relase hours must be monotonically increasing'
+              goto 12
+          endif
         end do
       elseif(cinput(k1:k2) == 'release.radius.m') then
       !..release.radius.m

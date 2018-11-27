@@ -18,6 +18,7 @@
 module snaptabML
   use snapdimML, only: mpretab,mprepro
   implicit none
+  public
 !
 !..include file  - fixed tables and constants
 !                  (independant of input data)

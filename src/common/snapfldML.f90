@@ -16,6 +16,8 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !
 module snapfldML
+    implicit none
+    public
 !
 !..include file  -  common for fields
 !

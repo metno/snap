@@ -17,6 +17,8 @@
 !
 module DateCalc
     implicit none
+    private
+
     public timeGM
 ! this function is similar to gmtime, except that values are month: 1-12, mday 1-31 and year in YYYY
     public epochToDate
