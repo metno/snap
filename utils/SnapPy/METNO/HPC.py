@@ -235,7 +235,7 @@ class HPC():
                     qstatus = QJobStatus.failed
                 else:
                     qstatus = QJobStatus.unknown
-            except SubprocessError:
+            except SubprocessError as spe:
                 print(spe, file=sys.stderr)
                 qstatus = QJobStatus.unknown
         return qstatus
