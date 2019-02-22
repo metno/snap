@@ -262,6 +262,9 @@ class HPC():
         elif (name == "frost"):
             from . import Frost
             return Frost.Frost()
+        elif (name == "stratus"):
+            from . import Stratus
+            return Stratus.Stratus()
         elif (name == "alvin"):
             from . import Alvin
             return Alvin.Alvin()
