@@ -315,7 +315,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   call nfcheckload(ncid, ywind10mv, start3d, count3d, v2(1,1,1))
 
 !..mean sea level pressure, not used in computations,
-!..(only for graphics and/or output to results file)
+!..(only for output to results file)
   if(imslp /= 0) then
     if ( .NOT. mslpv == '') then
       write(9,*) 'Mslp not found. Not important.'

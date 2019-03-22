@@ -35,7 +35,7 @@ module snapfldML
 !..garea:  grid square area (m**2)
 !..field*: work arrays
 !..pmsl:   mean sea level pressure (mslp, not used in computations)
-!	   for graphics and/or output (possible if nxad=nx and nyad=ny)
+!	   for output (possible if nxad=nx and nyad=ny)
 !..precip: hourly precipitation intensity (mm/hour)
 !..nprecip: no. of steps stored
 !..iprecip: the current precipitation field

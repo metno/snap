@@ -262,7 +262,7 @@ PROGRAM bsnap
   integer :: ikey,k1,k2,kv1,kv2,nkv,i,kh,kd,ig,igd,igm,i1,i2,l,n,idmin
   integer :: iscale,ih
   integer :: idrydep,iwetdep,idecay
-  integer :: iulog,ntimefo,iunitf,iunitx,nh1,nh2
+  integer :: iulog,ntimefo,iunitf,nh1,nh2
   integer :: ierr1,ierr2,nsteph,nstep,nstepr,iunito
   integer :: nxtinf,ihread,isteph,lstepr,iendrel,istep,ihr1,ihr2,nhleft
   integer :: ierr,ihdiff,ihr,ifldout,idailyout,ihour,istop
@@ -1487,9 +1487,6 @@ PROGRAM bsnap
 !..file unit for all input field files
   iunitf=20
 
-!..file unit for temporary open files (graphics etc.)
-  iunitx=90
-
 !..check input FELT files and make sorted lists of available data
 !..make main list based on x wind comp. (u) in upper used level
   if (ftype == "netcdf") then
@@ -2254,15 +2251,6 @@ PROGRAM bsnap
         endif
         if(ierror /= 0) goto 910
       end if
-    
-    !###c..select particles to be displayed (graphics) or saved in video files.
-    !###      if(igraphics.eq.1 .or. isvideo.eq.1)
-    !###     +  call pselect(igrspec,idrydep,iwetdep)
-    
-    !..store data for 'video replay'
-    !      if(isvideo.eq.1)
-    !     +   call videosave(iunitx,istep,nstep,itime,isteph,nsteph,itime1,
-    !     +                  igrspec)
     
       if(isteph == 0 .AND. iprecip < nprecip) iprecip=iprecip+1
     
