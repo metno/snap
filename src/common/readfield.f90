@@ -350,7 +350,7 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   if(ierror /= 0) goto 200
 
 !..mean sea level pressure, not used in computations,
-!..(only for graphics and/or output to results file)
+!..(only for output to results file)
   if(imslp /= 0) then
     call readfd(iunit,nav,ivc,58,ilevel,0,pmsl2(1,1),ierror)
     if(ierror /= 0) then

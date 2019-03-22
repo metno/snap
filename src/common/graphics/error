@@ -1,6 +1,0 @@
-make
-g++ -O3 glSnapPlot.o glMapPlot.o glFieldPlot.o diFontManager.o diColour.o diLinetype.o diContouring.o diTesselation.o diArea.o diProjection.o diRectangle.o snap.o snapInterface.o argoswrite.o bldp.o compheight.o copyfield.o decay.o drydep1.o drydep2.o edcomp.o ensemble.o epinterp.o filesort.o fldout.o forwrd.o ftest.o om2edot.o posint.o pselect.o readfd.o readfield.o release.o rmpart.o rwalk.o tabcon.o vgravtables.o videosave.o wetdep1.o wetdep2.o -L/metno/local/lib -lpuTools -lglText -lGLP -lmic -lpuCtools -L/usr/lib -lftgl -Lusr/lib -lfreetype -L/usr/lib/qt-3.3/lib -lqt-mt -L/usr/lib -lGL -lGLU -L/usr/X11R6/lib -lXmu -lX11 -lXext -lXt -lXinerama -lXft -lXrandr -lXcursor -lXrender -lSM -lXxf86vm -lICE -L/metno/local/lib -lmi -L/usr/lib -lg2c -lpthread -ldl -o ../snap
-glSnapPlot.o: In function `GLwidget::draw()':
-glSnapPlot.cc:(.text+0xeec): undefined reference to `miutil::miTime::isoTime(bool, bool) const'
-collect2: ld returned 1 exit status
-make: *** [../snap] Error 1

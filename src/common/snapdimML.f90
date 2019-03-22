@@ -112,13 +112,6 @@ module snapdimML
 !..2: remove large arrays for concentration
 !      parameter (nxmc=1,nymc=1)
 !
-!      integer nxad,nyad
-!..use 1 or 2 below:
-!..1: keep additional fields (for output/graphics, not used in comp.)
-!      parameter (nxad=nx,nyad=ny)
-!..2: remove additional fields
-!c    parameter (nxad=1,nyad=1)
-!
 !
 !..mbuffr:  max. length of buffer (for misc. reading from 'snap.input')
 !..mrelpos: max. no. of release positions available (in list)
@@ -143,13 +136,6 @@ module snapdimML
       integer numtempvg,numpresvg
       parameter (numtempvg=  41)
       parameter (numpresvg=  25)
-!
-!
-!..for graphics:
-!..mlandfile: max. no. of landcontour (etc.) files
-!
-      integer mlandfile
-      parameter (mlandfile=6)
 !
 !-----------------------------------------------------------------------
       common /gridsize/nx,ny,nk, nxmc, nymc, maxsiz,ldata
