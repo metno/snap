@@ -17,7 +17,6 @@
 
 module fldout_ncML
   USE readfield_ncML, only: check
-  USE ftestML, only: ftest
   implicit none
   private
 
@@ -34,6 +33,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   USE snaptabML
   USE snapargosML
   USE snapdebugML
+  USE ftestML, only: ftest
+  USE netcdf
 ! netcdf
 !  Purpose:  Accumulation for average fields (iwrite=0,1).
 !            Make and write output fields (iwrite=1).
@@ -103,8 +104,6 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 #endif
 
         
-
-  include 'netcdf.inc'
 
 !     *   ps 8 - surface pressure (if model level output) (hPa)
 !     *  accum_prc 17 - precipitation accummulated from start of run (mm)
@@ -388,22 +387,22 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   !..initialization of file
   !..remove an existing file and create a completely new one
     if (iunit /= 30) &
-    call check(nf_close(iunit))
+    call check(nf90_close(iunit))
     numfields=0
     call rmfile(filnam,0,ierror)
     write(9,*) 'creating fldout_nc: ',filnam
     ihrs_pos = 0
-    call check(nf_create(filnam, NF_NETCDF4, iunit), filnam)
-    call check(nf_def_dim(iunit, "time", NF_UNLIMITED, t_dimid), &
+    call check(nf90_create(filnam, NF90_NETCDF4, iunit), filnam)
+    call check(nf90_def_dim(iunit, "time", NF90_UNLIMITED, t_dimid), &
     "t-dim")
-    call check(nf_def_dim(iunit, "x", nx, x_dimid), "x-dim")
-    call check(nf_def_dim(iunit, "y", ny, y_dimid), "y-dim")
-    call check(nf_def_dim(iunit, "k", nk-1, k_dimid), "k-dim")
+    call check(nf90_def_dim(iunit, "x", nx, x_dimid), "x-dim")
+    call check(nf90_def_dim(iunit, "y", ny, y_dimid), "y-dim")
+    call check(nf90_def_dim(iunit, "k", nk-1, k_dimid), "k-dim")
 
-    if (nctitle /= "")  call check(nf_put_att_text(iunit, nf_global, &
-    "title", len_trim(nctitle), trim(nctitle)))
-    call check(nf_put_att_text(iunit, nf_global, &
-    "summary", len_trim(ncsummary), trim(ncsummary)))
+    if (nctitle /= "")  call check(nf90_put_att(iunit, NF90_GLOBAL, &
+    "title", trim(nctitle)))
+    call check(nf90_put_att(iunit, NF90_GLOBAL, &
+    "summary", trim(ncsummary)))
 
     call nc_set_projection(iunit, x_dimid, y_dimid, &
     igtype,nx,ny,gparam, garea, xm, ym, &
@@ -411,12 +410,12 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     if (imodlevel == 1) &
     call nc_set_vtrans(iunit, k_dimid, k_varid, ap_varid, b_varid)
 
-    call check(nf_def_var(iunit, "time",NF_FLOAT,1,t_dimid,t_varid))
+    call check(nf90_def_var(iunit, "time",NF90_FLOAT,t_dimid,t_varid))
     write(string,'(A12,I4,A1,I0.2,A1,I0.2,A1,I0.2,A12)') &
     "hours since ",itime(1),"-",itime(2),"-",itime(3)," ", &
     itime(4),":00:00 +0000"
-    call check(nf_put_att_text(iunit, t_varid, "units", &
-    len_trim(string), trim(string)))
+    call check(nf90_put_att(iunit, t_varid, "units", &
+    trim(string)))
   
   !..store the files base-time
     do i=1,4
@@ -553,13 +552,13 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         "total_accumulated_wet_deposition")
       end if
     end if
-    call check(nf_enddef(iunit))
+    call check(nf90_enddef(iunit))
   end if
 
 ! set the runtime
   ihrs_pos = ihrs_pos + 1
   call hrdiff(0,0,iftime,itime,ihrs,ierror,ierror)
-  call check(NF_PUT_VAR1_REAL(iunit,t_varid,ihrs_pos,FLOAT(ihrs)), &
+  call check(nf90_put_var(iunit,t_varid,start=[ihrs_pos],values=FLOAT(ihrs)), &
   "set time")
   ipos(1) = 1
   ipos(2) = 1
@@ -683,7 +682,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     if(idebug == 1) call ftest('ps',1,1,nx,ny,1,field1,0)
     idata( 6)=8
     idata(20)=-32767
-    call check(NF_PUT_VARA_REAL(iunit, ps_varid,ipos,isize,field1), &
+    call check(nf90_put_var(iunit, ps_varid,start=[ipos],count=[isize],values=field1), &
     "set_ps")
   !       call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
   !     +              ldata,idata,ierror)
@@ -705,8 +704,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     idata(20)=-32767
   !       call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
   !     +              ldata,idata,ierror)
-    call check(NF_PUT_VARA_REAL(iunit, accum_prc_varid, ipos, isize, &
-    field1), "set_accum_prc")
+    call check(nf90_put_var(iunit, accum_prc_varid, start=[ipos], count=[isize], &
+    values=field1), "set_accum_prc")
     if(ierror /= 0) goto 900
     idata(19)=0
   end if
@@ -723,8 +722,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   !        idata(20)=-32767
   !       call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
   !     +              ldata,idata,ierror)
-    call check(NF_PUT_VARA_REAL(iunit, mslp_varid, ipos, isize, &
-    field1), "set_mslp")
+    call check(nf90_put_var(iunit, mslp_varid, start=[ipos], count=[isize], &
+    values=field1), "set_mslp")
   end if
 
 !..instant height of boundary layer
@@ -738,8 +737,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   idata(20)=-32767
 !      call mwfelt(2,filnam,iunit,1,nx*ny,field4,1.0,
 !     +            ldata,idata,ierror)
-  call check(NF_PUT_VARA_REAL(iunit, ihbl_varid, ipos, isize, &
-  field1), "set_ihbl")
+  call check(nf90_put_var(iunit, ihbl_varid, start=[ipos], count=[isize], &
+  values=field1), "set_ihbl")
   if(ierror /= 0) goto 900
 
 !..average height of boundary layer
@@ -753,8 +752,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   idata(20)=-32767
 !      call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
 !     +            ldata,idata,ierror)
-  call check(NF_PUT_VARA_REAL(iunit, ahbl_varid, ipos, isize, &
-  field1), "set_ahbl")
+  call check(nf90_put_var(iunit, ahbl_varid, start=[ipos], count=[isize], &
+  values=field1), "set_ahbl")
   if(ierror /= 0) goto 900
 
 !..precipitation accummulated between field output // currently disable use 1 to write
@@ -771,8 +770,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     idata(20)=-32767
   !        call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
   !     +              ldata,idata,ierror)
-    call check(NF_PUT_VARA_REAL(iunit, prc_varid, ipos, isize, &
-    field1), "set_prc")
+    call check(nf90_put_var(iunit, prc_varid, start=[ipos], count=[isize], &
+    values=field1), "set_prc")
     if(ierror /= 0) goto 900
     idata(19)=0
   end if
@@ -850,8 +849,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     idata(20)=-32767
   !        call mwfelt(2,filnam,iunit,1,nx*ny,field2,1.0,
   !     +              ldata,idata,ierror)
-    call check(NF_PUT_VARA_REAL(iunit, icbl_varid(m), ipos, isize, &
-    field2), "set_icbl")
+    call check(nf90_put_var(iunit, icbl_varid(m), start=[ipos], count=[isize], &
+    values=field2), "set_icbl")
     if(ierror /= 0) goto 900
   
   !..average concentration in boundary layer
@@ -866,8 +865,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     idata(20)=-32767
   !        call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
   !     +              ldata,idata,ierror)
-    call check(NF_PUT_VARA_REAL(iunit, acbl_varid(m), ipos, isize, &
-    field1), "set_acbl")
+    call check(nf90_put_var(iunit, acbl_varid(m), start=[ipos], count=[isize], &
+    values=field1), "set_acbl")
     if(ierror /= 0) goto 900
   
   !..dry deposition
@@ -883,8 +882,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       idata(20)=-32767
     !          call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
     !     +                ldata,idata,ierror)
-      call check(NF_PUT_VARA_REAL(iunit, idd_varid(m), ipos, isize, &
-      field1), "set_idd(m)")
+      call check(nf90_put_var(iunit, idd_varid(m), start=[ipos], count=[isize], &
+      values=field1), "set_idd(m)")
       if(ierror /= 0) goto 900
     end if
   
@@ -901,8 +900,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       idata(20)=-32767
     !          call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
     !     +                ldata,idata,ierror)
-      call check(NF_PUT_VARA_REAL(iunit, iwd_varid(m), ipos, isize, &
-      field1), "set_iwd(m)")
+      call check(nf90_put_var(iunit, iwd_varid(m), start=[ipos], count=[isize], &
+      values=field1), "set_iwd(m)")
       if(ierror /= 0) goto 900
     end if
   
@@ -918,8 +917,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       idata(20)=-32767
     !          call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
     !     +                ldata,idata,ierror)
-      call check(NF_PUT_VARA_REAL(iunit, accdd_varid(m),ipos,isize, &
-      field1), "set_accdd(m)")
+      call check(nf90_put_var(iunit, accdd_varid(m),start=[ipos],count=[isize], &
+      values=field1), "set_accdd(m)")
 
       if(ierror /= 0) goto 900
     end if
@@ -936,8 +935,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       idata(20)=-32767
     !          call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
     !     +                ldata,idata,ierror)
-      call check(NF_PUT_VARA_REAL(iunit, accwd_varid(m),ipos,isize, &
-      field1), "set_accwd(m)")
+      call check(nf90_put_var(iunit, accwd_varid(m),start=[ipos],count=[isize], &
+      values=field1), "set_accwd(m)")
       if(ierror /= 0) goto 900
     end if
   
@@ -975,8 +974,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       end do
     end do
     if(idebug == 1) call ftest('concen',1,1,nx,ny,1,field3,1)
-    call check(NF_PUT_VARA_REAL(iunit, ic_varid(m),ipos,isize, &
-    field3), "set_ic(m)")
+    call check(nf90_put_var(iunit, ic_varid(m),start=[ipos],count=[isize], &
+    values=field3), "set_ic(m)")
 
   !..accumulated/integrated concentration surface = dose
     do j=1,ny
@@ -989,8 +988,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     idata(20)=-32767
   !        call mwfelt(2,filnam,iunit,2,nx*ny,field3,1.0,
   !     +              ldata,idata,ierror)
-    call check(NF_PUT_VARA_REAL(iunit, ac_varid(m),ipos,isize, &
-    field3), "set_ac(m)")
+    call check(nf90_put_var(iunit, ac_varid(m),start=[ipos],count=[isize], &
+    values=field3), "set_ac(m)")
     if(ierror /= 0) goto 900
   
   !.....end do m=1,ncomp
@@ -1047,8 +1046,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     idata(20)=-32767
   !        call mwfelt(2,filnam,iunit,1,nx*ny,field2,1.0,
   !     +              ldata,idata,ierror)
-    call check(NF_PUT_VARA_REAL(iunit, icblt_varid,ipos,isize, &
-    field2), "set_icblt(m)")
+    call check(nf90_put_var(iunit, icblt_varid,start=[ipos],count=[isize], &
+    values=field2), "set_icblt(m)")
     if(ierror /= 0) goto 900
   
   !..total average concentration in boundary layer
@@ -1075,8 +1074,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     idata(20)=-32767
   !        call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
   !     +              ldata,idata,ierror)
-    call check(NF_PUT_VARA_REAL(iunit, acblt_varid,ipos,isize, &
-    field1), "set_acblt")
+    call check(nf90_put_var(iunit, acblt_varid,start=[ipos],count=[isize], &
+    values=field1), "set_acblt")
     if(ierror /= 0) goto 900
   
   !..total dry deposition
@@ -1106,8 +1105,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       idata(20)=-32767
     !          call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
     !     +                ldata,idata,ierror)
-      call check(NF_PUT_VARA_REAL(iunit, iddt_varid,ipos,isize, &
-      field1), "set_iddt")
+      call check(nf90_put_var(iunit, iddt_varid,start=[ipos],count=[isize], &
+      values=field1), "set_iddt")
 
       if(ierror /= 0) goto 900
     end if
@@ -1139,8 +1138,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       idata(20)=-32767
     !          call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
     !     +                ldata,idata,ierror)
-      call check(NF_PUT_VARA_REAL(iunit, iwdt_varid,ipos,isize, &
-      field1), "set_iwdt")
+      call check(nf90_put_var(iunit, iwdt_varid,start=[ipos],count=[isize], &
+      values=field1), "set_iwdt")
       if(ierror /= 0) goto 900
     end if
   
@@ -1171,8 +1170,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       idata(20)=-32767
     !          call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
     !     +                ldata,idata,ierror)
-      call check(NF_PUT_VARA_REAL(iunit, accddt_varid,ipos,isize, &
-      field1), "set_accddt")
+      call check(nf90_put_var(iunit, accddt_varid,start=[ipos],count=[isize], &
+      values=field1), "set_accddt")
       if(ierror /= 0) goto 900
     end if
   
@@ -1203,8 +1202,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       idata(20)=-32767
     !          call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
     !     +                ldata,idata,ierror)
-      call check(NF_PUT_VARA_REAL(iunit, accwdt_varid,ipos,isize, &
-      field1), "set_accwdt")
+      call check(nf90_put_var(iunit, accwdt_varid,start=[ipos],count=[isize], &
+      values=field1), "set_accwdt")
       if(ierror /= 0) goto 900
     end if
   
@@ -1267,8 +1266,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     idata(20)=-32767
   !        call mwfelt(2,filnam,iunit,2,nx*ny,field3,1.0,
   !     +              ldata,idata,ierror)
-    call check(NF_PUT_VARA_REAL(iunit, act_varid,ipos,isize, &
-    field3), "set_act")
+    call check(nf90_put_var(iunit, act_varid,start=[ipos],count=[isize], &
+    values=field3), "set_act")
 
     if(ierror /= 0) goto 900
   
@@ -1370,9 +1369,9 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   if(imodlevel /= 1) goto 800
 
 ! write k, ap, b - will be overwritten several times, but not data/timecritical
-  call check(nf_put_var_real(iunit, k_varid, vlevel(2)), "set_k")
-  call check(nf_put_var_real(iunit, ap_varid, alevel(2)), "set_ap")
-  call check(nf_put_var_real(iunit, b_varid, blevel(2)), "set_b")
+  call check(nf90_put_var(iunit, k_varid, vlevel(2)), "set_k")
+  call check(nf90_put_var(iunit, ap_varid, alevel(2)), "set_ap")
+  call check(nf90_put_var(iunit, b_varid, blevel(2)), "set_b")
 
 
 !..concentration in each layer
@@ -1499,8 +1498,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       !        end if
         if (loop == 2) then
           ipos(3) = k
-          call check(NF_PUT_VARA_REAL(iunit, icml_varid(m),ipos, &
-          isize,field1), "icml(m)")
+          call check(nf90_put_var(iunit, icml_varid(m), start=ipos, &
+          count=isize, values=field1), "icml(m)")
         ! reset ipos(3) for 3d fields to time-pos (=ipos(4))
           ipos(3) = ipos(4)
           if(ierror /= 0) goto 900
@@ -1568,7 +1567,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 !..close output felt (field) file
 !      call mwfelt(13,filnam,iunit,1,nx*ny,field1,1.0,
 !     +            ldata,idata,ierror)
-  call check(nf_sync(iunit))
+  call check(nf90_sync(iunit))
 #if defined(DRHOOK)
 !     before the return statement
   IF (LHOOK) CALL DR_HOOK('FLDOUT_NC',1,ZHOOK_HANDLE)
@@ -1592,39 +1591,35 @@ end subroutine fldout_nc
 subroutine nc_declare_3d(iunit, dimids, varid, &
   chksz, varnm, &
   units, stdnm, metnm)
+  USE netcdf
   implicit none
-  include 'netcdf.inc'
   INTEGER, INTENT(OUT)   :: varid
   INTEGER, INTENT(IN)    :: iunit, dimids(3), chksz(3)
   CHARACTER(LEN=*), INTENT(IN) :: varnm, stdnm, metnm, units
 
   write(9,*) "declaring ", iunit, TRIM(varnm), TRIM(units) &
   ,TRIM(stdnm),TRIM(metnm)
-  call check(nf_def_var(iunit, TRIM(varnm), &
-  NF_FLOAT, 3, dimids, varid), "def_"//varnm)
+  call check(nf90_def_var(iunit, TRIM(varnm), &
+  NF90_FLOAT, dimids, varid), "def_"//varnm)
 !       call check(NF_DEF_VAR_CHUNKING(iunit, varid, NF_CHUNKED, chksz))
-  call check(NF_DEF_VAR_DEFLATE(iunit, varid, 1,1,1))
-  call check(nf_put_att_text(iunit,varid, "units", &
-  LEN_TRIM(units), TRIM(units)))
+  call check(NF90_DEF_VAR_DEFLATE(iunit, varid, 1,1,1))
+  call check(nf90_put_att(iunit,varid, "units", TRIM(units)))
   if (LEN_TRIM(stdnm) > 0) &
-  call check(nf_put_att_text(iunit,varid,"standard_name", &
-  LEN_TRIM(stdnm), TRIM(stdnm)))
+  call check(nf90_put_att(iunit,varid,"standard_name", TRIM(stdnm)))
 !       if (LEN_TRIM(metnm).gt.0)
 !     +    call check(nf_put_att_text(iunit,varid,"metno_name",
 !     +    LEN_TRIM(metnm), TRIM(metnm)))
 
-  call check(nf_put_att_text(iunit,varid,"coordinates", &
-  LEN_TRIM("longitude latitude"), "longitude latitude"))
-  call check(nf_put_att_text(iunit,varid,"grid_mapping", &
-  LEN_TRIM("projection"), "projection"))
+  call check(nf90_put_att(iunit,varid,"coordinates", "longitude latitude"))
+  call check(nf90_put_att(iunit,varid,"grid_mapping", "projection"))
 
 end subroutine nc_declare_3d
 
 subroutine nc_declare_4d(iunit, dimids, varid, &
   chksz, varnm, &
   units, stdnm, metnm)
+  USE netcdf
   implicit none
-  include 'netcdf.inc'
   INTEGER, INTENT(OUT)   :: varid
   INTEGER, INTENT(IN)    :: iunit, dimids(4), chksz(4)
   CHARACTER(LEN=*), INTENT(IN) :: varnm, stdnm, metnm, units
@@ -1632,72 +1627,62 @@ subroutine nc_declare_4d(iunit, dimids, varid, &
 
   write(9,*) "declaring ", iunit, TRIM(varnm), TRIM(units) &
   ,TRIM(stdnm),TRIM(metnm)
-  call check(nf_def_var(iunit, TRIM(varnm), &
-  NF_FLOAT, 4, dimids, varid), "def_"//varnm)
-  call check(NF_DEF_VAR_CHUNKING(iunit, varid, NF_CHUNKED, chksz))
-  call check(NF_DEF_VAR_DEFLATE(iunit, varid, 1,1,1))
-  call check(nf_put_att_text(iunit,varid, "units", &
-  LEN_TRIM(units), TRIM(units)))
+  call check(nf90_def_var(iunit, TRIM(varnm), &
+  NF90_FLOAT, dimids, varid), "def_"//varnm)
+  call check(NF90_DEF_VAR_CHUNKING(iunit, varid, NF90_CHUNKED, chksz))
+  call check(NF90_DEF_VAR_DEFLATE(iunit, varid, 1,1,1))
+  call check(nf90_put_att(iunit,varid, "units", TRIM(units)))
   if (LEN_TRIM(stdnm) > 0) &
-  call check(nf_put_att_text(iunit,varid,"standard_name", &
-  LEN_TRIM(stdnm), TRIM(stdnm)))
+  call check(nf90_put_att(iunit,varid,"standard_name", TRIM(stdnm)))
 !       if (LEN_TRIM(metnm).gt.0)
 !     +    call check(nf_put_att_text(iunit,varid,"metno_name",
 !     +    LEN_TRIM(metnm), TRIM(metnm)))
 
-  call check(nf_put_att_text(iunit,varid,"coordinates", &
-  LEN_TRIM("x y"), "x y"))
-  call check(nf_put_att_text(iunit,varid,"grid_mapping", &
-  LEN_TRIM("projection"), "projection"))
+  call check(nf90_put_att(iunit,varid,"coordinates", "x y"))
+  call check(nf90_put_att(iunit,varid,"grid_mapping", "projection"))
 
 end subroutine nc_declare_4d
 
 subroutine nc_set_vtrans(iunit, kdimid,k_varid,ap_varid,b_varid)
+  USE netcdf
   implicit none
-  include 'netcdf.inc'
   INTEGER, INTENT(IN) :: iunit, kdimid
   INTEGER, INTENT(OUT) :: k_varid, ap_varid, b_varid
   INTEGER ::p0_varid
 
-  call check(nf_def_var(iunit, "k", &
-  NF_FLOAT, 1, kdimid, k_varid), "def_k")
-  call check(nf_put_att_text(iunit,k_varid, "standard_name", &
-  LEN_TRIM("atmosphere_hybrid_sigma_pressure_coordinate"), &
+  call check(nf90_def_var(iunit, "k", &
+  NF90_FLOAT, kdimid, k_varid), "def_k")
+  call check(nf90_put_att(iunit,k_varid, "standard_name", &
   TRIM("atmosphere_hybrid_sigma_pressure_coordinate")))
-  call check(nf_put_att_text(iunit,k_varid, "formula", &
-  LEN_TRIM("p(n,k,j,i) = ap(k) + b(k)*ps(n,j,i)"), &
+  call check(nf90_put_att(iunit,k_varid, "formula", &
   TRIM("p(n,k,j,i) = ap(k) + b(k)*ps(n,j,i)")))
-  call check(nf_put_att_text(iunit,k_varid, "formula_terms", &
-  LEN_TRIM("ap: ap b: b ps: surface_air_pressure p0: p0"), &
+  call check(nf90_put_att(iunit,k_varid, "formula_terms", &
   TRIM("ap: ap b: b ps: surface_air_pressure p0: p0")))
-  call check(nf_put_att_text(iunit,k_varid, "positive", &
-  LEN_TRIM("down"), &
-  TRIM("down")))
+  call check(nf90_put_att(iunit,k_varid, "positive", TRIM("down")))
 !       call check(nf_put_var_real(iunit, k_varid, vlevel))
 
-  call check(nf_def_var(iunit, "ap", &
-  NF_FLOAT, 1, kdimid, ap_varid), "def_ap")
-  call check(nf_put_att_text(iunit,ap_varid, "units", &
-  LEN_TRIM("hPa"), TRIM("hPa")))
+  call check(nf90_def_var(iunit, "ap", &
+  NF90_FLOAT, kdimid, ap_varid), "def_ap")
+  call check(nf90_put_att(iunit,ap_varid, "units", TRIM("hPa")))
 !       call check(nf_put_var_real(iunit, ap_varid, alevel))
 
-  call check(nf_def_var(iunit, "b", &
-  NF_FLOAT, 1, kdimid, b_varid), "def_b")
+  call check(nf90_def_var(iunit, "b", &
+  NF90_FLOAT, kdimid, b_varid), "def_b")
 !       call check(nf_put_var_real(iunit, ap_varid, blevel))
 
-  call check(nf_def_var(iunit, "p0", &
-  NF_FLOAT, 0, 0, p0_varid))
-  call check(nf_put_att_text(iunit,p0_varid, "units", &
-  LEN_TRIM("hPa"), TRIM("hPa")))
-  call check(nf_put_var_real(iunit, p0_varid, 100))
+  call check(nf90_def_var(iunit, "p0", &
+  NF90_FLOAT, 0, p0_varid))
+  call check(nf90_put_att(iunit,p0_varid, "units", &
+  TRIM("hPa")))
+  call check(nf90_put_var(iunit, p0_varid, 100))
 
 end subroutine nc_set_vtrans
 
 subroutine nc_set_projection(iunit, xdimid, ydimid, &
   igtype,nx,ny,gparam,garea, xm, ym, &
   simulation_start)
+  USE netcdf
   implicit none
-  include 'netcdf.inc'
   INTEGER, INTENT(IN) :: iunit, xdimid, ydimid, igtype, nx, ny
   REAL(KIND=4), INTENT(IN):: gparam(8)
   REAL(kind=4), INTENT(IN), DIMENSION(nx,ny) :: garea
@@ -1715,33 +1700,31 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
   pi = 4.D0*DATAN(1.D0)
   deg2rad = pi/180.
 
-  call check(nf_def_var(iunit, "x", &
-  NF_FLOAT, 1, xdimid, x_varid))
-  call check(nf_def_var(iunit, "y", &
-  NF_FLOAT, 1, ydimid, y_varid))
+  call check(nf90_def_var(iunit, "x", &
+  NF90_FLOAT, xdimid, x_varid))
+  call check(nf90_def_var(iunit, "y", &
+  NF90_FLOAT, ydimid, y_varid))
   dimids(1)=xdimid
   dimids(2)=ydimid
 
-  call check(nf_def_var(iunit, "projection", &
-  NF_SHORT, 0, 0, proj_varid))
+  call check(nf90_def_var(iunit, "projection", &
+  NF90_SHORT, varid=proj_varid))
 
-  call check(nf_put_att_text(iunit,NF_GLOBAL, "Conventions", &
-  LEN_TRIM("CF-1.0"), "CF-1.0"))
+  call check(nf90_put_att(iunit, NF90_GLOBAL, "Conventions", &
+  "CF-1.0"))
 
 ! a reference-time, same as in WRF
-  call check(nf_put_att_text(iunit, NF_GLOBAL, &
-  "SIMULATION_START_DATE", LEN_TRIM("0000-00-00_00:00:00"), &
-  simulation_start))
+  call check(nf90_put_att(iunit, NF90_GLOBAL, &
+  "SIMULATION_START_DATE", trim(simulation_start)))
 
   if (igtype == 2) then
   !..geographic
-    call check(nf_put_att_text(iunit,x_varid, "units", &
-    LEN_TRIM("degrees_east"), TRIM("degrees_east")))
-    call check(nf_put_att_text(iunit,y_varid, "units", &
-    LEN_TRIM("degrees_north"), TRIM("degrees_north")))
-    call check(nf_put_att_text(iunit,proj_varid, &
-    "grid_mapping_name", LEN_TRIM("latitude_longitude"), &
-    TRIM("latitude_longitude")))
+    call check(nf90_put_att(iunit,x_varid, "units", &
+    TRIM("degrees_east")))
+    call check(nf90_put_att(iunit,y_varid, "units", &
+    TRIM("degrees_north")))
+    call check(nf90_put_att(iunit,proj_varid, &
+    "grid_mapping_name", TRIM("latitude_longitude")))
     do i=1,nx
       xvals(i) = gparam(1) + (i-1)*gparam(3)
     end do
@@ -1751,24 +1734,23 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
 
   elseif (igtype == 3) then
   !..rot_geographic
-    call check(nf_put_att_text(iunit,x_varid, "units", &
-    LEN_TRIM("degrees"), TRIM("degrees")))
-    call check(nf_put_att_text(iunit,y_varid, "units", &
-    LEN_TRIM("degrees"), TRIM("degrees")))
-    call check(nf_put_att_text(iunit,x_varid, "standard_name", &
-    LEN_TRIM("grid_longitude"), TRIM("grid_longitude")))
-    call check(nf_put_att_text(iunit,y_varid, "standard_name", &
-    LEN_TRIM("grid_latitude"), TRIM("grid_latitude")))
-    call check(nf_put_att_text(iunit,proj_varid, &
-    "grid_mapping_name", LEN_TRIM("rotated_latitude_longitude"), &
-    TRIM("rotated_latitude_longitude")))
+    call check(nf90_put_att(iunit,x_varid, "units", &
+    TRIM("degrees")))
+    call check(nf90_put_att(iunit,y_varid, "units", &
+    TRIM("degrees")))
+    call check(nf90_put_att(iunit,x_varid, "standard_name", &
+    TRIM("grid_longitude")))
+    call check(nf90_put_att(iunit,y_varid, "standard_name", &
+    TRIM("grid_latitude")))
+    call check(nf90_put_att(iunit,proj_varid, &
+    "grid_mapping_name", TRIM("rotated_latitude_longitude")))
     val = 180+gparam(5)
     if (val > 360) val = val - 360
-    call check(nf_put_att_real(iunit,proj_varid, &
-    "grid_north_pole_longitude", NF_FLOAT, 1, val))
-    call check(nf_put_att_real(iunit,proj_varid, &
-    "grid_north_pole_latitude", NF_FLOAT, 1,90-gparam(6)))
-    call check(nf_sync(iunit))
+    call check(nf90_put_att(iunit,proj_varid, &
+    "grid_north_pole_longitude", val))
+    call check(nf90_put_att(iunit,proj_varid, &
+    "grid_north_pole_latitude", 90.0-gparam(6)))
+    call check(nf90_sync(iunit))
 
     do i=1,nx
       xvals(i) = gparam(1) + (i-1)*gparam(3)
@@ -1780,27 +1762,22 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
 
   elseif (igtype == 1 .OR. igtype == 4) then
   !..polar_stereographic
-    call check(nf_put_att_text(iunit,x_varid, "units", &
-    LEN_TRIM("m"), TRIM("m")))
-    call check(nf_put_att_text(iunit,y_varid, "units", &
-    LEN_TRIM("m"), TRIM("m")))
-    call check(nf_put_att_text(iunit,x_varid, "standard_name", &
-    LEN_TRIM("projection_x_coordinate"), &
+    call check(nf90_put_att(iunit,x_varid, "units", TRIM("m")))
+    call check(nf90_put_att(iunit,y_varid, "units", TRIM("m")))
+    call check(nf90_put_att(iunit,x_varid, "standard_name", &
     TRIM("projection_x_coordinate")))
-    call check(nf_put_att_text(iunit,y_varid, "standard_name", &
-    LEN_TRIM("projection_y_coordinate"), &
+    call check(nf90_put_att(iunit,y_varid, "standard_name", &
     TRIM("projection_y_coordinate")))
-    call check(nf_put_att_text(iunit,proj_varid, &
-    "grid_mapping_name", LEN_TRIM("polar_stereographic"), &
-    TRIM("polar_stereographic")))
+    call check(nf90_put_att(iunit,proj_varid, &
+    "grid_mapping_name", TRIM("polar_stereographic")))
     val = 180+gparam(5)
     if (val > 360) val = val - 360
-    call check(nf_put_att_real(iunit,proj_varid, &
-    "straight_vertical_longitude_from_pole",NF_FLOAT,1,gparam(4)))
-    call check(nf_put_att_real(iunit,proj_varid, &
-    "standard_parallel", NF_FLOAT, 1,gparam(5)))
-    call check(nf_put_att_int(iunit,proj_varid, &
-    "latitude_of_projection_origin", NF_INT, 1, 90))
+    call check(nf90_put_att(iunit,proj_varid, &
+    "straight_vertical_longitude_from_pole", gparam(4)))
+    call check(nf90_put_att(iunit,proj_varid, &
+    "standard_parallel", gparam(5)))
+    call check(nf90_put_att(iunit,proj_varid, &
+    "latitude_of_projection_origin", 90))
   !..increment
     do i=1,nx
       xvals(i) = (i-gparam(1))*gparam(7)
@@ -1811,25 +1788,20 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
 
   else if (igtype == 6) then
   !..lcc
-    call check(nf_put_att_text(iunit,x_varid, "units", &
-    LEN_TRIM("m"), TRIM("m")))
-    call check(nf_put_att_text(iunit,y_varid, "units", &
-    LEN_TRIM("m"), TRIM("m")))
-    call check(nf_put_att_text(iunit,x_varid, "standard_name", &
-    LEN_TRIM("projection_x_coordinate"), &
+    call check(nf90_put_att(iunit,x_varid, "units", TRIM("m")))
+    call check(nf90_put_att(iunit,y_varid, "units", TRIM("m")))
+    call check(nf90_put_att(iunit,x_varid, "standard_name", &
     TRIM("projection_x_coordinate")))
-    call check(nf_put_att_text(iunit,y_varid, "standard_name", &
-    LEN_TRIM("projection_y_coordinate"), &
+    call check(nf90_put_att(iunit,y_varid, "standard_name", &
     TRIM("projection_y_coordinate")))
-    call check(nf_put_att_text(iunit,proj_varid, &
-    "grid_mapping_name", LEN_TRIM("lambert_conformal_conic"), &
+    call check(nf90_put_att(iunit,proj_varid, "grid_mapping_name", &
     TRIM("lambert_conformal_conic")))
-    call check(nf_put_att_real(iunit,proj_varid, &
-    "longitude_of_central_meridian", NF_FLOAT, 1, gparam(5)))
-    call check(nf_put_att_real(iunit,proj_varid, &
-    "standard_parallel", NF_FLOAT, 1,gparam(6)))
-    call check(nf_put_att_real(iunit,proj_varid, &
-    "latitude_of_projection_origin", NF_FLOAT, 1, gparam(6)))
+    call check(nf90_put_att(iunit,proj_varid, &
+    "longitude_of_central_meridian", gparam(5)))
+    call check(nf90_put_att(iunit,proj_varid, &
+    "standard_parallel", gparam(6)))
+    call check(nf90_put_att(iunit,proj_varid, &
+    "latitude_of_projection_origin", gparam(6)))
 
     xvals(1) = gparam(1)
     yvals(1) = gparam(2)
@@ -1861,23 +1833,23 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
     call exit(1)
   end if
 
-  call check(nf_put_var_real(iunit, x_varid, xvals))
-  call check(nf_put_var_real(iunit, y_varid, yvals))
-  call check(nf_sync(iunit))
+  call check(nf90_put_var(iunit, x_varid, xvals))
+  call check(nf90_put_var(iunit, y_varid, yvals))
+  call check(nf90_sync(iunit))
 
-  call check(nf_def_var(iunit, "longitude", &
-  NF_FLOAT, 2, dimids, lon_varid))
-  call check(NF_DEF_VAR_DEFLATE(iunit, lon_varid, 1,1,1))
-  call check(nf_sync(iunit))
-  call check(nf_def_var(iunit, "latitude", &
-  NF_FLOAT, 2, dimids, lat_varid))
-  call check(nf_sync(iunit))
-  call check(nf_put_att_text(iunit,lon_varid, "units", &
-  LEN_TRIM("degrees_east"), TRIM("degrees_east")))
-  call check(nf_put_att_text(iunit,lat_varid, "units", &
-  LEN_TRIM("degrees_north"), TRIM("degrees_north")))
+  call check(nf90_def_var(iunit, "longitude", &
+  NF90_FLOAT, dimids, lon_varid))
+  call check(NF90_DEF_VAR_DEFLATE(iunit, lon_varid, 1,1,1))
+  call check(nf90_sync(iunit))
+  call check(nf90_def_var(iunit, "latitude", &
+  NF90_FLOAT, dimids, lat_varid))
+  call check(nf90_sync(iunit))
+  call check(nf90_put_att(iunit,lon_varid, "units", &
+  TRIM("degrees_east")))
+  call check(nf90_put_att(iunit,lat_varid, "units", &
+  TRIM("degrees_north")))
 
-  call check(nf_sync(iunit))
+  call check(nf90_sync(iunit))
 
 !.... create latitude/longitude variable-values
   do j=1,ny
@@ -1892,46 +1864,46 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
     write(*,*) "error converting pos to latlon-projection"
     call exit(1)
   end if
-  call check(nf_put_var_real(iunit, lon_varid, lon))
-  call check(nf_put_var_real(iunit, lat_varid, lat))
+  call check(nf90_put_var(iunit, lon_varid, lon))
+  call check(nf90_put_var(iunit, lat_varid, lat))
 
 !.... create cell_area
-  call check(nf_def_var(iunit, "cell_area", &
-  NF_FLOAT, 2, dimids, carea_varid))
-  call check(nf_put_att_text(iunit,carea_varid, "units", &
-  LEN_TRIM("m2"), TRIM("m2")))
-  call check(nf_put_att_text(iunit,carea_varid, "grid_mapping", &
-  LEN_TRIM("projection"), TRIM("projection")))
-  call check(nf_put_att_text(iunit,carea_varid, "coordinates", &
-  LEN_TRIM("longitude latitude"), TRIM("longitude latitude")))
+  call check(nf90_def_var(iunit, "cell_area", &
+  NF90_FLOAT, dimids, carea_varid))
+  call check(nf90_put_att(iunit,carea_varid, "units", &
+  TRIM("m2")))
+  call check(nf90_put_att(iunit,carea_varid, "grid_mapping", &
+  TRIM("projection")))
+  call check(nf90_put_att(iunit,carea_varid, "coordinates", &
+  TRIM("longitude latitude")))
 
-  call check(nf_put_var_real(iunit, carea_varid, garea))
+  call check(nf90_put_var(iunit, carea_varid, garea))
 
 !.... add map_factor_x and map_factor_y
-  call check(nf_def_var(iunit, "map_factor_x", &
-  NF_FLOAT, 2, dimids, mapx_varid))
-  call check(nf_put_att_text(iunit,mapx_varid, "units", &
-  LEN_TRIM("1"), TRIM("1")))
-  call check(nf_put_att_text(iunit,mapx_varid, "grid_mapping", &
-  LEN_TRIM("projection"), TRIM("projection")))
-  call check(nf_put_att_text(iunit,mapx_varid, "coordinates", &
-  LEN_TRIM("longitude latitude"), TRIM("longitude latitude")))
+  call check(nf90_def_var(iunit, "map_factor_x", &
+  NF90_FLOAT, dimids, mapx_varid))
+  call check(nf90_put_att(iunit,mapx_varid, "units", &
+  TRIM("1")))
+  call check(nf90_put_att(iunit,mapx_varid, "grid_mapping", &
+  TRIM("projection")))
+  call check(nf90_put_att(iunit,mapx_varid, "coordinates", &
+  TRIM("longitude latitude")))
 
-  call check(nf_put_var_real(iunit, mapx_varid, xm))
+  call check(nf90_put_var(iunit, mapx_varid, xm))
 
-  call check(nf_def_var(iunit, "map_factor_y", &
-  NF_FLOAT, 2, dimids, mapy_varid))
-  call check(nf_put_att_text(iunit,mapy_varid, "units", &
-  LEN_TRIM("1"), TRIM("1")))
-  call check(nf_put_att_text(iunit,mapy_varid, "grid_mapping", &
-  LEN_TRIM("projection"), TRIM("projection")))
-  call check(nf_put_att_text(iunit,mapy_varid, "coordinates", &
-  LEN_TRIM("longitude latitude"), TRIM("longitude latitude")))
+  call check(nf90_def_var(iunit, "map_factor_y", &
+  NF90_FLOAT, dimids, mapy_varid))
+  call check(nf90_put_att(iunit,mapy_varid, "units", &
+  TRIM("1")))
+  call check(nf90_put_att(iunit,mapy_varid, "grid_mapping", &
+  TRIM("projection")))
+  call check(nf90_put_att(iunit,mapy_varid, "coordinates", &
+  TRIM("longitude latitude")))
 
-  call check(nf_put_var_real(iunit, mapy_varid, ym))
+  call check(nf90_put_var(iunit, mapy_varid, ym))
   
 
-  call check(nf_sync(iunit))
+  call check(nf90_sync(iunit))
 
 end subroutine nc_set_projection
 end module fldout_ncML
