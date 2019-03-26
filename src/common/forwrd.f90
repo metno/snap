@@ -15,6 +15,14 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module forwrdML
+  implicit none
+  private
+
+  public forwrd
+
+  contains
+
 subroutine forwrd(tf1,tf2,tnow,tstep,np,pextra)
 
 !  Purpose:  Move all particles one timestep forward
@@ -38,6 +46,7 @@ subroutine forwrd(tf1,tf2,tnow,tstep,np,pextra)
 
   USE particleML
   USE snapgrdML
+  USE forwrd_dxML, only: forwrd_dx
 #if defined(DRHOOK)
   USE PARKIND1  ,ONLY : JPIM     ,JPRB
   USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
@@ -124,3 +133,4 @@ subroutine forwrd(tf1,tf2,tnow,tstep,np,pextra)
 #endif
   return
 end subroutine forwrd
+end module forwrdML

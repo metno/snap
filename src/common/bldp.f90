@@ -15,11 +15,20 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module bldpML
+  implicit none
+  private
+
+  public bldp
+
+  contains
+
 subroutine bldp
   USE snapdimML, only: nx,ny,nk, mprepro, mpretab
   USE snaptabML
   USE snapgrdML
   USE snapfldML
+  USE ftestML, only: ftest
 !  Purpose:  Compute boundary layer top and height
 
 !  Method:   Computing Richardson no. and critical Richardson no.
@@ -316,3 +325,4 @@ subroutine bldp
 #endif
   return
 end subroutine bldp
+end module bldpML

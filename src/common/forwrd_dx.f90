@@ -15,6 +15,13 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module forwrd_dxML
+  implicit none
+  private
+
+  public forwrd_dx
+
+  contains
 
 subroutine forwrd_dx(tf1,tf2,tnow,tstep,np,nparticle, &
   delx, dely, delz, u, v)
@@ -23,6 +30,7 @@ subroutine forwrd_dx(tf1,tf2,tnow,tstep,np,nparticle, &
   USE snapfldML
   USE snapparML
   USE snaptabML
+  USE vgravtablesML, only: vgravtables
 
 !  Purpose:  calculate dx,dy,dz forward movement of particle at pos np
 
@@ -251,3 +259,4 @@ subroutine forwrd_dx(tf1,tf2,tnow,tstep,np,nparticle, &
 
   return
 end subroutine forwrd_dx
+end module forwrd_dxML

@@ -15,6 +15,12 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module ensembleML
+  implicit none
+  private
+
+  contains
+
 subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
   np)
   USE particleML
@@ -784,3 +790,4 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
 #endif
   return
 end subroutine ensemble
+end module ensembleML

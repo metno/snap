@@ -15,6 +15,17 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module readfield_ncML
+  USE ftestML, only: ftest
+  USE om2edotML, only: om2edot
+  USE copyfieldML, only: copyfield
+  implicit none
+  private
+
+  public readfield_nc, check, nfcheckload, calc_2d_start_length
+
+  contains
+
 subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   itimefi,ierror)
 
@@ -38,6 +49,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   USE snapmetML
   USE snaptabML
   USE snapdebugML
+  USE copyfieldML, only: copyfield
 
 #if defined(DRHOOK)
   USE PARKIND1  ,ONLY : JPIM     ,JPRB
@@ -49,8 +61,8 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
 #endif
 
 !..input/output
-  integer, INTENT(INOUT) ::  iunit,istep,nhleft,ihr1,ihr2, &
-  itimei(5)
+  integer, intent(in) :: iunit, istep, nhleft
+  integer, INTENT(INOUT) ::  ihr1,ihr2, itimei(5)
   integer, INTENT(OUT) :: itimefi(5),ierror
 
 ! netcdf
@@ -66,6 +78,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   real ::     alev(nk),blev(nk),db, precip1,dxgrid,dygrid
   integer :: kk, ifb, kfb
   real ::    rcp, dred, red, p, px, dp, p1, p2,ptop
+  real :: ptoptmp(1)
   real ::    totalprec
   real,save     ::    t2thetafac(15000)
   real ::    unitScale
@@ -223,12 +236,12 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   
   !..u
   !     Get the varid of the data variable, based on its name.
-    call nfcheckload(ncid, xwindv, start4d, count4d, u2(1,1,k))
+    call nfcheckload(ncid, xwindv, start4d, count4d, u2(:,:,k))
   !        call readfd(iunit,nav,ivc,iu,ilevel,0,u2(1,1,k),ierror)
   !        if(ierror.ne.0) goto 100
   
   !..v
-    call nfcheckload(ncid, ywindv, start4d, count4d, v2(1,1,k))
+    call nfcheckload(ncid, ywindv, start4d, count4d, v2(:,:,k))
   !        call readfd(iunit,nav,ivc,iv,ilevel,0,v2(1,1,k),ierror)
   !        if(ierror.ne.0) goto 100
   ! bug in chernobyl borders from destaggering
@@ -240,7 +253,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
 
   
   !..pot.temp. or abs.temp.
-    call nfcheckload(ncid, pottempv, start4d, count4d, t2(1,1,k))
+    call nfcheckload(ncid, pottempv, start4d, count4d, t2(:,:,k))
   !        call readfd(iunit,nav,ivc,it,ilevel,0,t2(1,1,k),ierror)
   !        if(ierror.ne.0) goto 100
   
@@ -251,7 +264,8 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   !       if(ivcoor.eq.2) ptop=idata(19)
   !..p0 for hybrid loaded to ptop, ap is a * p0
     if (ivcoor /= 2 .AND. .NOT. ptopv == '') then
-      call nfcheckload(ncid, ptopv, (/0/), (/1/), ptop)
+      call nfcheckload(ncid, ptopv, (/0/), (/1/), ptoptmp)
+      ptop = ptoptmp(1)
     end if
   !..alevel (here) only for eta levels
     if ( .NOT. apv == '') then
@@ -280,7 +294,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
       end do
     else
       call nfcheckload(ncid, sigmadotv, &
-      start4d, count4d, w2(1,1,k))
+      start4d, count4d, w2(:,:,k))
     end if
   !        call readfd(iunit,nav,ivc,iw,ilevel,0,w2(1,1,k),ierror)
   !        if(ierror.ne.0) goto 100
@@ -296,7 +310,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   enspos, timepos, has_dummy_dim)
 
 ! ps
-  call nfcheckload(ncid, psv, start3d, count3d, ps2(1,1))
+  call nfcheckload(ncid, psv, start3d, count3d, ps2(:,:))
 !  input ps, must be hPa, otherwise:
   if (nctype == 'arome' .OR. nctype == 'dmi_eps' .OR. &
   nctype == 'ec_det' .OR. nctype == 'h12_grib') then
@@ -311,8 +325,8 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
 
 ! u10m
 ! v10m
-  call nfcheckload(ncid, xwind10mv, start3d, count3d, u2(1,1,1))
-  call nfcheckload(ncid, ywind10mv, start3d, count3d, v2(1,1,1))
+  call nfcheckload(ncid, xwind10mv, start3d, count3d, u2(:,:,:))
+  call nfcheckload(ncid, ywind10mv, start3d, count3d, v2(:,:,:))
 
 !..mean sea level pressure, not used in computations,
 !..(only for output to results file)
@@ -321,7 +335,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
       write(9,*) 'Mslp not found. Not important.'
       imslp=0
     else
-      call nfcheckload(ncid, mslpv, start3d, count3d, pmsl2(1,1))
+      call nfcheckload(ncid, mslpv, start3d, count3d, pmsl2(:,:))
     !        call readfd(iunit,nav,ivc,58,ilevel,0,pmsl2(1,1),ierror)
     end if
   end if
@@ -334,12 +348,12 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
       call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
       enspos, timepos - 1, has_dummy_dim)
       call nfcheckload(ncid, precaccumv, &
-      start3d, count3d, field1(1,1))
+      start3d, count3d, field1(:,:))
     !         call readfd(iunit,nav,ivc,17,ilevel,ihrpr1,field1,ierror)
       call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
       enspos, timepos, has_dummy_dim)
       call nfcheckload(ncid, precaccumv, &
-      start3d, count3d, field2(1,1))
+      start3d, count3d, field2(:,:))
     !         call readfd(iunit,nav,ivc,17,ilevel,ihrpr2,field2,ierror)
     !..the difference below may get negative due to different scaling
       do j=1,ny
@@ -358,15 +372,15 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
       call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
       enspos, timepos - 1, has_dummy_dim)
       call nfcheckload(ncid, precstratiaccumv, &
-      start3d, count3d, field1(1,1))
+      start3d, count3d, field1(:,:))
       call nfcheckload(ncid, precconaccumv, &
-      start3d, count3d, field2(1,1))
+      start3d, count3d, field2(:,:))
       call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
       enspos, timepos, has_dummy_dim)
       call nfcheckload(ncid, precstratiaccumv, &
-      start3d, count3d, field3(1,1))
+      start3d, count3d, field3(:,:))
       call nfcheckload(ncid, precconaccumv, &
-      start3d, count3d, field4(1,1))
+      start3d, count3d, field4(:,:))
     !..the difference below may get negative due to different scaling
       unitScale = 1.
       if (nctype == 'ec_det') unitScale = 1000.
@@ -384,9 +398,9 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
       call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
       enspos, timepos, has_dummy_dim)
       call nfcheckload(ncid, precstratiaccumv, &
-      start3d, count3d, field3(1,1))
+      start3d, count3d, field3(:,:))
       call nfcheckload(ncid, precconaccumv, &
-      start3d, count3d, field4(1,1))
+      start3d, count3d, field4(:,:))
       totalprec = 0
       do j=1,ny
         do i=1,nx
@@ -415,9 +429,9 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   else
   !..non-accumulated emissions in stratiform an convective
     call nfcheckload(ncid, precstrativrt, &
-    start3d, count3d, field1(1,1))
+    start3d, count3d, field1(:,:))
     call nfcheckload(ncid, precconvrt, &
-    start3d, count3d, field2(1,1))
+    start3d, count3d, field2(:,:))
 
     do j=1,ny
       do i=1,nx
@@ -745,10 +759,14 @@ subroutine check(status, errmsg)
 ! netcdf
   include 'netcdf.inc'
   integer, intent ( in) :: status
-  character(len=*), intent(in) :: errmsg
+  character(len=*), intent(in), optional :: errmsg
 
   if(status /= nf_noerr) then
-    print *, trim(nf_strerror(status)), ": ", trim(errmsg)
+    if (present(errmsg)) then
+      print *, trim(nf_strerror(status)), ": ", trim(errmsg)
+    else
+      print *, trim(nf_strerror(status))
+    endif
     call exit(1)
   endif
 end subroutine check
@@ -757,7 +775,7 @@ subroutine nfcheckload(ncid, varname, start, length, field)
   use, intrinsic :: IEEE_ARITHMETIC
   implicit none
   include 'netcdf.inc'
-  integer, intent (in) :: ncid, start(*), length(*)
+  integer, intent (in) :: ncid, start(:), length(:)
   character(len=*), intent(in) :: varname
   real(kind=4), intent (inout) :: field(*)
 
@@ -811,3 +829,4 @@ subroutine nfcheckload(ncid, varname, start, length, field)
 
 
 end subroutine nfcheckload
+end module readfield_ncML
