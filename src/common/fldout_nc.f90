@@ -396,7 +396,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     "summary", len_trim(ncsummary), trim(ncsummary)))
 
     call nc_set_projection(iunit, x_dimid, y_dimid, &
-    igtype,nx,ny,gparam, garea, &
+    igtype,nx,ny,gparam, garea, xm, ym, &
     simulation_start)
     if (imodlevel == 1) &
     call nc_set_vtrans(iunit, k_dimid, k_varid, ap_varid, b_varid)
@@ -1684,18 +1684,20 @@ subroutine nc_set_vtrans(iunit, kdimid,k_varid,ap_varid,b_varid)
 end subroutine nc_set_vtrans
 
 subroutine nc_set_projection(iunit, xdimid, ydimid, &
-  igtype,nx,ny,gparam,garea, &
+  igtype,nx,ny,gparam,garea, xm, ym, &
   simulation_start)
   implicit none
   include 'netcdf.inc'
   INTEGER, INTENT(IN) :: iunit, xdimid, ydimid, igtype, nx, ny
   REAL(KIND=4), INTENT(IN):: gparam(8)
   REAL(kind=4), INTENT(IN), DIMENSION(nx,ny) :: garea
+  REAL(kind=4), INTENT(IN), DIMENSION(nx,ny) :: xm
+  REAL(kind=4), INTENT(IN), DIMENSION(nx,ny) :: ym
   CHARACTER(LEN=19), INTENT(IN)  :: simulation_start
 
-
   INTEGER :: i, j, ierror, x_varid, y_varid, proj_varid, &
-  lon_varid, lat_varid, carea_varid, dimids(2)
+  lon_varid, lat_varid, carea_varid, mapx_varid, mapy_varid, &
+  dimids(2)
   REAL(KIND=4) :: xvals(nx), yvals(ny), lon(nx,ny), lat(nx,ny), &
   val, pi, deg2rad, incr, llparam(6), gparam2(6)
 
@@ -1895,6 +1897,29 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
 
   call check(nf_put_var_real(iunit, carea_varid, garea))
 
+!.... add map_factor_x and map_factor_y
+  call check(nf_def_var(iunit, "map_factor_x", &
+  NF_FLOAT, 2, dimids, mapx_varid))
+  call check(nf_put_att_text(iunit,mapx_varid, "units", &
+  LEN_TRIM("1"), TRIM("1")))
+  call check(nf_put_att_text(iunit,mapx_varid, "grid_mapping", &
+  LEN_TRIM("projection"), TRIM("projection")))
+  call check(nf_put_att_text(iunit,mapx_varid, "coordinates", &
+  LEN_TRIM("longitude latitude"), TRIM("longitude latitude")))
+
+  call check(nf_put_var_real(iunit, mapx_varid, xm))
+
+  call check(nf_def_var(iunit, "map_factor_y", &
+  NF_FLOAT, 2, dimids, mapy_varid))
+  call check(nf_put_att_text(iunit,mapy_varid, "units", &
+  LEN_TRIM("1"), TRIM("1")))
+  call check(nf_put_att_text(iunit,mapy_varid, "grid_mapping", &
+  LEN_TRIM("projection"), TRIM("projection")))
+  call check(nf_put_att_text(iunit,mapy_varid, "coordinates", &
+  LEN_TRIM("longitude latitude"), TRIM("longitude latitude")))
+
+  call check(nf_put_var_real(iunit, mapy_varid, ym))
+  
 
   call check(nf_sync(iunit))
 
