@@ -15,6 +15,14 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module decaydepsML
+  implicit none
+  private
+
+  public decayDeps
+
+  contains
+
 subroutine decayDeps(tstep)
   USE snapfldML
   USE snapparML
@@ -73,3 +81,4 @@ subroutine decayDeps(tstep)
 #endif
   return
 end subroutine decayDeps
+end module decaydepsML

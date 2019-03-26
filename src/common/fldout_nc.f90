@@ -15,6 +15,16 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module fldout_ncML
+  USE readfield_ncML, only: check
+  USE ftestML, only: ftest
+  implicit none
+  private
+
+  public fldout_nc
+
+  contains
+
 subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   istep,nsteph,ierror)
   USE snapfilML
@@ -1924,3 +1934,4 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
   call check(nf_sync(iunit))
 
 end subroutine nc_set_projection
+end module fldout_ncML

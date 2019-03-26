@@ -15,6 +15,14 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module fldoutML
+  implicit none
+  private
+
+  public fldout
+
+  contains
+
 subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   istep,nsteph,ierror)
 
@@ -87,6 +95,8 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   USE snaptabML
   USE snapargosML
   USE snapdebugML
+  USE argoswriteML, only: argoswrite
+  USE ftestML, only: ftest
   implicit none
 #if defined(DRHOOK)
   REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
@@ -873,13 +883,13 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   !..argos "conc" output
     do m=1,ncomp
       call argoswrite(92,'conc',idcomp(idefcomp(m)), &
-      itimeargos,nx,ny,concen(1,1,m))
+      itimeargos,nx,ny,concen(:,:,m))
     end do
   
   !..argos "dose" output
     do m=1,ncomp
       call argoswrite(93,'dose',idcomp(idefcomp(m)), &
-      itimeargos,nx,ny,concacc(1,1,m))
+      itimeargos,nx,ny,concacc(:,:,m))
     end do
   
   end if
@@ -1431,3 +1441,4 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 #endif
   return
 end subroutine fldout
+end module fldoutML

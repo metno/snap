@@ -15,6 +15,14 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module rmpartML
+  implicit none
+  private
+
+  public rmpart
+
+  contains
+
 subroutine rmpart(rmlimit)
 
 !  Purpose: Remove particles which are inactive
@@ -156,3 +164,4 @@ subroutine rmpart(rmlimit)
 #endif
   return
 end subroutine rmpart
+end module rmpartML

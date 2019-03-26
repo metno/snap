@@ -15,6 +15,14 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module drydep2ML
+  implicit none
+  private
+
+  public drydep2
+
+  contains
+
 subroutine drydep2(tstep,n)
   USE particleML
   USE snapfldML
@@ -129,3 +137,4 @@ subroutine drydep2(tstep,n)
 #endif
   return
 end subroutine drydep2
+end module drydep2ML

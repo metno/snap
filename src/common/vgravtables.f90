@@ -15,6 +15,14 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module vgravtablesML
+  implicit none
+  private
+
+  public vgravtables
+
+  contains
+
 subroutine vgravtables
 !==========================================
 
@@ -32,8 +40,6 @@ subroutine vgravtables
   REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
 #endif
   real :: t        ! absolute temperature (K)
-  external vgrav
-  real :: vgrav    ! external function for calculating initial vg
   real :: dp        ! particle size um
   real :: rp        ! particle density in g/m3
   real :: vg        ! gravitational setling in cm/s (Stokes low)
@@ -159,12 +165,6 @@ end subroutine vgravtables
 ! c    real fit    ! value of the function
   real :: p        ! atmospheric pressure
   real :: t        ! temperature of the air
-  external vgrav
-  real :: vgrav    ! external function for calculating initial vg
-  external visc
-  real :: visc    ! external function for calculating viscosity
-  external roa
-  real :: roa    ! external function for calculating viscosity
 !---------------------------------------
   a1=0.15
   a2=0.687
@@ -214,12 +214,6 @@ end subroutine vgravtables
   real :: t        ! air absolute temperature (K)
   real :: dp_fac    ! conversion factor micro meters -> cm
   real :: etha    ! viscosity of the air
-  real :: cun    ! external function for calculating C
-  external cun
-  real :: roa    ! external function for calculating density of the air
-  external roa
-  real :: visc    ! external function for calculating viscosity of the air
-  external visc
 !---------------------------------------
   dp_fac=1.0e-4
   ra=roa(p,t)
@@ -261,8 +255,6 @@ subroutine iter(vg,u0,dp,rp,p,t)
   real :: rp            ! particle density in g/cm3
   real :: etha    ! viscosity of the air
   real :: re        ! Reynolds number
-  real :: fit    ! value of the function
-! c    real fit    ! external function for calculating iterative vg
 ! c    real dpdata(4)    ! particle sizes um
   real :: eps    ! accuracy of computed vg (0.1%)
   real :: x1,x2    ! boundary of the domain for fit
@@ -359,3 +351,4 @@ end subroutine iter
 
   return
   end function roa
+end module vgravtablesML

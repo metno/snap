@@ -15,6 +15,12 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module c2fgetargML
+  implicit none
+  private
+
+  contains
+
 subroutine c2fgetarg(iarg,carg)
 
 !	SET arguments from C/C++ (main) program (iarg=-1,-2,-3,...)
@@ -101,3 +107,4 @@ end subroutine c2fgetarg
 
   return
   end function c2fiargc
+end module c2fgetargML

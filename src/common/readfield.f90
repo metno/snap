@@ -15,6 +15,14 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module readfieldML
+  implicit none
+  private
+
+  public readfield
+
+  contains
+
 subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   itimefi,ierror)
 
@@ -42,6 +50,10 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   USE snapfldML
   USE snaptabML
   USE snapdebugML
+  USE copyfieldML, only: copyfield
+  USE readfdML, only: readfd
+  USE om2edotML, only: om2edot
+  USE ftestML, only: ftest
   implicit none
 #if defined(DRHOOK)
   REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
@@ -220,15 +232,15 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
       ilevel=klevel(k)
     
     !..u
-      call readfd(iunit,nav,ivc,iu,ilevel,0,u2(1,1,k),ierror)
+      call readfd(iunit,nav,ivc,iu,ilevel,0,u2(:,:,k),ierror)
       if(ierror /= 0) goto 100
     
     !..v
-      call readfd(iunit,nav,ivc,iv,ilevel,0,v2(1,1,k),ierror)
+      call readfd(iunit,nav,ivc,iv,ilevel,0,v2(:,:,k),ierror)
       if(ierror /= 0) goto 100
     
     !..pot.temp. or abs.temp.
-      call readfd(iunit,nav,ivc,it,ilevel,0,t2(1,1,k),ierror)
+      call readfd(iunit,nav,ivc,it,ilevel,0,t2(:,:,k),ierror)
       if(ierror /= 0) goto 100
     
     !..alevel (here) only for eta levels
@@ -246,11 +258,11 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
             end do
           end do
         elseif(ilevel /= levelw) then
-          call readfd(iunit,nav,ivc,iw,ilevel,0,field1(1,1),ierror)
+          call readfd(iunit,nav,ivc,iw,ilevel,0,field1(:,:),ierror)
           if(ierror /= 0) goto 100
         end if
         if(ilevel+1 < klevel(2)) then
-          call readfd(iunit,nav,ivc,iw,ilevel+1,0,w2(1,1,k),ierror)
+          call readfd(iunit,nav,ivc,iw,ilevel+1,0,w2(:,:,k),ierror)
           if(ierror /= 0) goto 100
         else
           do j=1,ny
@@ -269,7 +281,7 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
         levelw=ilevel+1
       else
       !..eta: eta_dot (or omega) stored in the same levels as u,v,th.
-        call readfd(iunit,nav,ivc,iw,ilevel,0,w2(1,1,k),ierror)
+        call readfd(iunit,nav,ivc,iw,ilevel,0,w2(:,:,k),ierror)
         if(ierror /= 0) goto 100
       end if
     
@@ -322,13 +334,13 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   if(imslp == 0) imslp=0
 
 !..surface pressure
-  call readfd(iunit,navps,ivc,8,ilevel,0,ps2(1,1),ierror)
+  call readfd(iunit,navps,ivc,8,ilevel,0,ps2(:,:),ierror)
   if(ierror /= 0 .AND. navps /= nav) then
-    call readfd(iunit,nav,ivc,8,ilevel,0,ps2(1,1),ierror)
+    call readfd(iunit,nav,ivc,8,ilevel,0,ps2(:,:),ierror)
   end if
   if(ierror /= 0 .AND. iprod == 98) then
   !..trying ln(surface.pressure), ln(Pa) ... Ecmwf MARS data
-    call readfd(iunit,nav,ivc,152,ilevel,0,ps2(1,1),ierror)
+    call readfd(iunit,nav,ivc,152,ilevel,0,ps2(:,:),ierror)
     if(ierror == 0) then
       do j=1,ny
         do i=1,nx
@@ -343,16 +355,16 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   if(ivcoor == 2) ptop=idata(19)
 
 !..u10m
-  call readfd(iunit,nav,ivc,33,ilevel,0,u2(1,1,1),ierror)
+  call readfd(iunit,nav,ivc,33,ilevel,0,u2(:,:,:),ierror)
   if(ierror /= 0) goto 200
 !..v10m
-  call readfd(iunit,nav,ivc,34,ilevel,0,v2(1,1,1),ierror)
+  call readfd(iunit,nav,ivc,34,ilevel,0,v2(:,:,:),ierror)
   if(ierror /= 0) goto 200
 
 !..mean sea level pressure, not used in computations,
 !..(only for output to results file)
   if(imslp /= 0) then
-    call readfd(iunit,nav,ivc,58,ilevel,0,pmsl2(1,1),ierror)
+    call readfd(iunit,nav,ivc,58,ilevel,0,pmsl2(:,:),ierror)
     if(ierror /= 0) then
       write(9,*) 'Mslp not found. Not important.'
     !..stop input of mslp at later timesteps
@@ -499,11 +511,11 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
 
 !..3 hours frontal and convective precipitation
   nav=navailt1
-  call readfd(iunit,nav,ivc,19,ilevel,+0,precip(1,1,1),ierr1)
-  call readfd(iunit,nav,ivc,20,ilevel,+0,precip(1,1,2),ierr2)
+  call readfd(iunit,nav,ivc,19,ilevel,+0,precip(:,:,1),ierr1)
+  call readfd(iunit,nav,ivc,20,ilevel,+0,precip(:,:,2),ierr2)
   if(ierr1 == 0 .AND. ierr2 == 0) then
-    call readfd(iunit,nav,ivc,19,ilevel,+3,precip(1,1,3),ierr1)
-    call readfd(iunit,nav,ivc,20,ilevel,+3,precip(1,1,4),ierr2)
+    call readfd(iunit,nav,ivc,19,ilevel,+3,precip(:,:,3),ierr1)
+    call readfd(iunit,nav,ivc,20,ilevel,+3,precip(:,:,4),ierr2)
     if(ierr1 == 0 .AND. ierr2 == 0) then
       nav=navailt2
       call readfd(iunit,nav,ivc,19,ilevel,-3,field1,ierr1)
@@ -937,7 +949,7 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   200 continue
 
 !..close last used FELT file
-  call readfd(iunit,0,0,0,0,0,0.,ierr)
+  call readfd(iunit,0,0,0,0,0,u2(:,:,k),ierr)
 
   if(ierror /= 0) then
     navailt2=0
@@ -1001,3 +1013,4 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
 #endif
   return
 end subroutine readfield
+end module readfieldML

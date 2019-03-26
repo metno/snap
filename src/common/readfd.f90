@@ -15,6 +15,14 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module readfdML
+  implicit none
+  private
+
+  public readfd
+
+  contains
+
 subroutine readfd(iunit,nav,ivcord,iparam,ilevel,ihdisp, &
   field,ierror)
 
@@ -246,3 +254,4 @@ subroutine readfd(iunit,nav,ivcord,iparam,ilevel,ihdisp, &
 
   return
 end subroutine readfd
+end module readfdML

@@ -15,6 +15,14 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module wetdep1ML
+  implicit none
+  private
+
+  public wetdep1
+
+  contains
+
 subroutine wetdep1(n,pextra)
   USE particleML
   USE snapgrdML
@@ -81,3 +89,4 @@ subroutine wetdep1(n,pextra)
 #endif
   return
 end subroutine wetdep1
+end module wetdep1ML

@@ -15,6 +15,14 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module releaseML
+  implicit none
+  private
+
+  public release
+
+  contains
+
 subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
 
 !  Purpose:  Release one plume of particles
@@ -449,3 +457,4 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
 #endif
   return
 end subroutine release
+end module releaseML

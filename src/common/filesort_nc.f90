@@ -15,6 +15,14 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module filesort_ncML
+  implicit none
+  private
+
+  public filesort_nc
+
+  contains
+
 subroutine filesort_nc
 
 !       check and sort felt file contents
@@ -43,6 +51,7 @@ subroutine filesort_nc
   USE snapfldML
   USE snapmetML, ONLY: start4d, count4d, xwindv, has_dummy_dim
   USE snapdebugML
+  USE readfield_ncML, only: check, calc_2d_start_length, nfcheckload
 !      USE snapmetML, only:
 #if defined(DRHOOK)
   USE PARKIND1  ,ONLY : JPIM     ,JPRB
@@ -101,7 +110,7 @@ subroutine filesort_nc
     do i = 1, tsize
       call calc_2d_start_length(start4d, count4d, nx, ny, 1, &
       enspos, i, has_dummy_dim)
-      call nfcheckload(ncid, xwindv, start4d, count4d, field1(1,1))
+      call nfcheckload(ncid, xwindv, start4d, count4d, field1(:,:))
     ! test 4 arbitrary values in field
       count_nan = 0
       do j = 1, 4
@@ -257,3 +266,4 @@ subroutine filesort_nc
 #endif
   RETURN
 end subroutine filesort_nc
+end module filesort_ncML

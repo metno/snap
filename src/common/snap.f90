@@ -220,6 +220,35 @@ PROGRAM bsnap
   USE snaptabML
   USE particleML
   USE fileInfoML
+  USE allocateFieldsML
+  USE fldout_ncML
+  USE rmpartML, only: rmpart
+  USE checkdomainML, only: checkdomain
+  USE rwalkML, only: rwalk
+  USE forwrdML, only: forwrd
+  USE forwrd_dxML, only: forwrd_dx
+  USE wetdep1ML, only: wetdep1
+  USE wetdep2ML, only: wetdep2
+  USE drydep1ML, only: drydep1
+  USE drydep2ML, only: drydep2
+  USE decayML, only: decay
+  USE posintML, only: posint
+  USE decayDepsML, only: decayDeps
+  USE bldpML, only: bldp
+  USE releaseML, only: release
+  USE init_random_seedML, only: init_random_seed
+  USE compheightML, only: compheight
+  USE readfield_ncML, only: readfield_nc
+  USE tabconML, only: tabcon
+  USE releasefileML, only: releasefile
+  USE filesort_ncML, only: filesort_nc
+#if defined(MILIB)
+  use filesortML, only: filesort
+  use fldoutML, only: fldout
+  use readfieldML, only: readfield
+#else
+  USE feltio_dummy, only: readfd, readfield, filesort, fldout
+#endif
   USE iso_fortran_env, only: error_unit
 #if defined(DRHOOK)
   USE PARKIND1  ,ONLY : JPIM     ,JPRB
@@ -1490,7 +1519,7 @@ PROGRAM bsnap
 !..check input FELT files and make sorted lists of available data
 !..make main list based on x wind comp. (u) in upper used level
   if (ftype == "netcdf") then
-    call filesort_nc(iunitf, ierror)
+    call filesort_nc ! (iunitf, ierror)
   else
     call filesort(iunitf,ierror)
   end if
@@ -2004,9 +2033,9 @@ PROGRAM bsnap
       if (init) then
       ! setting particle-number to 0 means init
         call posint(0,tf1,tf2,tnow, pextra)
-        if(iwetdep == 2) call wetdep2(tstep,0)
-        call forwrd(tf1,tf2,tnow,tstep,0)
-        if(irwalk /= 0) call rwalk(tstep,blfullmix,0)
+        if(iwetdep == 2) call wetdep2(tstep,0,pextra)
+        call forwrd(tf1,tf2,tnow,tstep,0,pextra)
+        if(irwalk /= 0) call rwalk(tstep,blfullmix,0,pextra)
         init = .FALSE. 
       end if
     
