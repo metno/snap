@@ -2,7 +2,7 @@
 ## {runtag} {rundir} {year}-{month}-{day}T{hour} {runhour}
 
 #$ -N eemep
-#$ -l h_rt=23:59:00
+#$ -l h_rt=01:30:00
 #$ -pe ib-fn 96
 #$ -l h_vmem=4G
 #$ -q ibx.q
