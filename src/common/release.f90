@@ -35,6 +35,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
   USE snapparML
   USE snapposML
   USE snaptabML
+  USE snapdimML, only: nx, ny, nk, mcomp
 
 #if defined(DRHOOK)
   USE PARKIND1  ,ONLY : JPIM     ,JPRB

@@ -34,6 +34,7 @@ subroutine  releasefile(filename)
 
 ! for each release-step, rellower/relupper/relradius are copied from (1,x)
   USE snapparML
+  USE snapdimML, only: mcomp, mrelheight, mtprof
   implicit none
 
 ! input

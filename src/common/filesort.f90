@@ -49,6 +49,7 @@ subroutine filesort(iunit,ierror)
   USE snapfilML
   USE snapdebugML
   USE snapgrdML
+  USE snapdimML, only: mavail, nk
 
   implicit none
 

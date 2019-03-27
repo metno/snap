@@ -29,6 +29,7 @@ subroutine tabcon
 !            (independant of input data)
 
   USE snaptabML
+  USE snapdimML, only: mpretab
   implicit none
 
   integer :: i,j,n

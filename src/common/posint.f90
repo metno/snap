@@ -40,6 +40,7 @@ subroutine posint(np,tf1,tf2,tnow,pextra)
   USE snapgrdML
   USE snapfldML
   USE snapparML
+  USE snapdimML, only: nk
 
   implicit none
 

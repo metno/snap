@@ -19,6 +19,11 @@ module forwrdML
   implicit none
   private
 
+#if defined(TRAJ)
+!... calculation of distance and speed
+  real, save, public :: speed
+#endif
+
   public forwrd
 
   contains
@@ -65,11 +70,6 @@ subroutine forwrd(tf1,tf2,tnow,tstep,np,pextra)
   TYPE(particle) :: nparticle
   REAL*8 :: dx1, dx2, dy1, dy2, dz1, dz2, u, v
   REAL :: vmin, vmax
-#if defined(TRAJ)
-!... calculation of distance and speed
-  real :: speed
-  common /speed/ speed
-#endif
 
 #if defined(DRHOOK)
 ! Before the very first statement

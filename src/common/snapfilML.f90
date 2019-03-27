@@ -16,10 +16,12 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !
 module snapfilML
+    use iso_fortran_env, only: int16
     use fileInfoML
     use snapdimML
     implicit none
-    public
+
+    private
 !
 !..include file  -  common for input felt files
 !
@@ -42,22 +44,17 @@ module snapfilML
 !..filef:  file names
 !..nctype: type of meteorology, used for different nc-inputs (emep,hirlam12)
 !
-      integer      nhfmin,nhfmax,nfilef,navail,navailt1,navailt2
-      integer      kavail(2)
-      TYPE(fileInfo) ::  iavail(mavail)
-      integer      itimer(5,2),limfcf(2,mfilef)
+      integer, save, public :: nhfmin,nhfmax,nfilef,navail,navailt1,navailt2
+      integer, save, public :: kavail(2)
+      TYPE(fileInfo), save, public ::  iavail(mavail)
+      integer, save, public :: itimer(5,2),limfcf(2,mfilef)
 ! fdata(maxsiz), idata(ldata)
-      real, pointer ::  fdata(:)
-      integer*2, pointer :: idata(:)
-      character*1024 filef(mfilef)
-      character*72 nctype
-      character*80 nctitle
-      character*1024 ncsummary
-      CHARACTER(LEN=19)  :: simulation_start
-!
-      common/cfiles/nhfmin,nhfmax,nfilef,navail &
-                  ,iavail,kavail,navailt1,navailt2 &
-                  ,itimer,limfcf &
-                  ,fdata,idata &
-                  ,filef,nctype,nctitle, ncsummary, simulation_start
+      real, pointer, save, public ::  fdata(:)
+      integer(int16), pointer, save, public :: idata(:)
+      character(len=1024), save, public :: filef(mfilef)
+      character(len=72), save, public :: nctype
+      character(len=80), save, public :: nctitle
+      character(len=1024), save, public :: ncsummary
+      CHARACTER(LEN=19), save, public :: simulation_start
+
 end module snapfilML

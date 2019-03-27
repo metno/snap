@@ -26,7 +26,7 @@ module allocateFieldsML
 subroutine allocateFields
   USE particleML
   USE fileInfoML
-  USE snapdimML, only: nx, ny, nk
+  USE snapdimML, only: nx, ny, nk, ldata, maxsiz, mcomp, mprecip, nxmc, nymc
   USE snapparML
   USE snapfldML
   USE snapfilML

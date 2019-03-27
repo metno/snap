@@ -34,6 +34,7 @@ subroutine rmpart(rmlimit)
   USE particleML
   USE snapgrdML
   USE snapparML
+  USE snapdimML, only: mdefcomp, nx, ny, nk
 #if defined(DRHOOK)
   USE PARKIND1  ,ONLY : JPIM     ,JPRB
   USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
