@@ -17,21 +17,15 @@
 !
 module snapargosML
     implicit none
-    public
+    private
 !
 !..include file  -  common for SSV ARGOS OUTPUT
 !
-      integer margos
-      parameter (margos=500)
+    integer, parameter, public :: margos=500
 !
-      integer iargos,nargos
-      integer argoshourstep,argoshoursrelease,argoshoursrun
-      integer argostime(5,margos)
-      character*100 argosdepofile,argosconcfile,argosdosefile
-!
-      common/argoscom/iargos,nargos,argoshourstep, &
-           argoshoursrelease,argoshoursrun, &
-           argostime, &
-           argosdepofile,argosconcfile,argosdosefile
+    integer, save, public :: iargos,nargos
+    integer, save, public :: argoshourstep,argoshoursrelease,argoshoursrun
+    integer, save, public :: argostime(5,margos)
+    character(len=100), save, public :: argosdepofile,argosconcfile,argosdosefile
 !
 end module snapargosML

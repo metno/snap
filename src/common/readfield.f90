@@ -54,6 +54,7 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   USE readfdML, only: readfd
   USE om2edotML, only: om2edot
   USE ftestML, only: ftest
+  USE snapdimML, only: nx, ny, nk, ldata, mavail, mprecip
   implicit none
 #if defined(DRHOOK)
   REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
@@ -75,9 +76,7 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   real ::    whelp,ptop,prec1,prec2,db,p1,p2,dp,dxgrid,dygrid
   real ::    rcp,p,dred,red,px
 
-  integer :: itryprecip
-
-  data itryprecip/1/
+  integer, save :: itryprecip=1
 
 #if defined(DRHOOK)
 ! Before the very first statement

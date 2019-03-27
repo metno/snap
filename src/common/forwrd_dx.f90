@@ -31,6 +31,7 @@ subroutine forwrd_dx(tf1,tf2,tnow,tstep,np,nparticle, &
   USE snapparML
   USE snaptabML
   USE vgravtablesML, only: vgravtables
+  USE snapdimML, only: nk, numpresvg, numtempvg
 
 !  Purpose:  calculate dx,dy,dz forward movement of particle at pos np
 

@@ -35,6 +35,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   USE snapdebugML
   USE ftestML, only: ftest
   USE netcdf
+  USE snapdimML, only: mcomp, ldata, nx, ny, nk, nxmc, nymc
 ! netcdf
 !  Purpose:  Accumulation for average fields (iwrite=0,1).
 !            Make and write output fields (iwrite=1).
@@ -150,8 +151,10 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   real ::      tf1,tf2,tnow,tstep
   character*(*) filnam
 
-  integer ::   igeofield,naverage,initacc,initargos,ihr
-  real ::      geoparam(6)
+  integer, save :: igeofield=0,naverage=0,initargos=0,initacc=0
+  integer :: ihr
+!..used in xyconvert (x,y -> longitude,latitude)
+  real, save :: geoparam(6) = [1.0, 1.0, 1.0, 1.0, 0.0, 0.0]
 
 
   integer :: dimids2d(2),dimids3d(3),dimids4d(4), ipos(4), isize(4), &
@@ -167,27 +170,19 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
   integer :: iyear,month,iday,ihour,minute,isecond,maxage
   integer :: i,j,k,m,mm,n,id03,id04,ivlvl,idextr,idry,iwet,loop,iparx
-  integer :: itab,ko,lvla,lvlb,ipar,ierr,numfields,ios,iu,i1,i2
+  integer :: itab,ko,lvla,lvlb,ipar,ierr,ios,iu,i1,i2
+  integer, save :: numfields = 0
   real ::    rt1,rt2,scale,undef,average,averinv,cscale,dscale,hbl
   real ::    avg,hrstep,dh,splon,splat,total
 
   integer ::   itypef,ltimef,itimef(5),icodef,lspecf,loptf,ioptf
-  integer ::   itimeargos(5)
+  integer, save :: itimeargos(5) = [0, 0, 0, 0, 0]
   integer*2 :: ispecf(3)
 
   character(256) :: filename
 
   character(256) :: string
   integer :: lenstr
-
-
-!..used in xyconvert (x,y -> longitude,latitude)
-  data geoparam/1.,1.,1.,1.,0.,0./
-
-  data initacc,initargos,igeofield,naverage/0,0,0,0/
-  data numfields/0/
-
-  data itimeargos/5*0/
 
 #if defined(DRHOOK)
 ! Before the very first statement

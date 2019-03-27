@@ -55,6 +55,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   USE snaptabML
   USE snapdebugML
   USE netcdf
+  USE snapdimML, only: nx, ny, nk
 
 #if defined(DRHOOK)
   USE PARKIND1  ,ONLY : JPIM     ,JPRB

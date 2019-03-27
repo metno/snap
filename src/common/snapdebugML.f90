@@ -17,7 +17,7 @@
 !
 module snapdebugML
     implicit none
-    public
+    private
 !
 !..include file  -  common for debugging.....
 !
@@ -25,8 +25,6 @@ module snapdebugML
 !    1 = debug on, note that mrfturbo/mrfelt only
 !        prints to standard out (not the log file)
 !
-      integer idebug
-!
-      common/debugcom/idebug
+    integer, public, save :: idebug
 !
 end module snapdebugML

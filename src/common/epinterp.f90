@@ -19,6 +19,8 @@ module epinterpML
   implicit none
   private
 
+  public epinterp
+
   contains
 
 subroutine epinterp(nxf,nyf,field,npos,xpos,ypos,zpos,inside)

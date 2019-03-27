@@ -53,6 +53,7 @@ subroutine filesort_nc
   USE snapdebugML
   USE readfield_ncML, only: check, calc_2d_start_length, nfcheckload
   USE netcdf
+  USE snapdimML, only: nx, ny, mavail
 !      USE snapmetML, only:
 #if defined(DRHOOK)
   USE PARKIND1  ,ONLY : JPIM     ,JPRB

@@ -209,7 +209,7 @@ PROGRAM bsnap
   USE DateCalc  ,ONLY : epochToDate, timeGM
   USE snapdebugML
   USE snapargosML
-  USE snapepsML
+  USE snapepsML, only: ensemblefile, ensembleparticipant, ensemblerandomkey, ensemblestephours, iensemble
   USE snapdimML
   USE snapfilML
   USE snapfldML
@@ -225,7 +225,11 @@ PROGRAM bsnap
   USE rmpartML, only: rmpart
   USE checkdomainML, only: checkdomain
   USE rwalkML, only: rwalk
+#if defined(TRAJ)
+  USE forwrdML, only: forwrd, speed
+#else
   USE forwrdML, only: forwrd
+#endif
   USE forwrd_dxML, only: forwrd_dx
   USE wetdep1ML, only: wetdep1
   USE wetdep2ML, only: wetdep2
@@ -278,7 +282,8 @@ PROGRAM bsnap
   integer ::   itime1(5),itime2(5),itime(5),itimei(5),itimeo(5)
   integer ::   itimefi(5),itimefa(5),itimefo(5,2)
 
-  real ::      geoparam(6)
+!..used in xyconvert (longitude,latitude -> x,y)
+  real, save :: geoparam(6) = [1.0, 1.0, 1.0, 1.0, 0.0, 0.0]
 
   integer :: maxkey
   parameter (maxkey=10)
@@ -324,7 +329,7 @@ PROGRAM bsnap
 
   integer :: lenstr
 
-  logical :: pendingOutput
+  logical, save :: pendingOutput = .FALSE.
 #if defined(VOLCANO) || defined(TRAJ)
 ! b 02.05
 
@@ -342,16 +347,10 @@ PROGRAM bsnap
   real :: tlevel(100)
   character(80) :: tname(10)	! name for the trajectory
   integer :: tyear, tmon, tday, thour, tmin
-  real :: distance, speed
-  common /speed/ speed
+  real :: distance
 #endif
 #endif
 
-
-!..used in xyconvert (longitude,latitude -> x,y)
-  data geoparam/1.,1.,1.,1.,0.,0./
-
-  data pendingOutput/ .FALSE. /
 
   mpart = mpartpre
   mplume = mplumepre

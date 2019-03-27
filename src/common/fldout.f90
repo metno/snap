@@ -97,6 +97,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   USE snapdebugML
   USE argoswriteML, only: argoswrite
   USE ftestML, only: ftest
+  USE snapdimML, only: nx, ny, nk, nxmc, nymc, ldata
   implicit none
 #if defined(DRHOOK)
   REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
@@ -109,8 +110,8 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   real ::      tf1,tf2,tnow,tstep
   character*(*) filnam
 
-  integer ::   igeofield,naverage,initacc,initargos
-  real ::      geoparam(6)
+  integer, save ::   igeofield=0,naverage=0,initacc=0,initargos=0
+  real, save :: geoparam(6) = [1.0, 1.0, 1.0, 1.0, 0.0, 0.0]
 
   integer ::          nptot1,nptot2
   double precision :: bqtot1,bqtot2
@@ -119,12 +120,13 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
   integer :: iyear,month,iday,ihour,minute,isecond
   integer :: i,j,k,m,mm,n,id03,id04,ivlvl,idextr,idry,iwet,loop,iparx
-  integer :: itab,ko,lvla,lvlb,ipar,ierr,numfields,ios,iu,i1,i2
+  integer :: itab,ko,lvla,lvlb,ipar,ierr,ios,iu,i1,i2
+  integer, save :: numfields=0
   real ::    rt1,rt2,scale,undef,average,averinv,cscale,dscale,hbl
   real ::    avg,hrstep,dh,splon,splat
 
   integer ::   itypef,ltimef,itimef(5),icodef,lspecf,loptf,ioptf
-  integer ::   itimeargos(5)
+  integer, save :: itimeargos(5) = [0, 0, 0, 0, 0]
   integer*2 :: ispecf(3)
 
   character(256) :: filename
@@ -136,13 +138,6 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 !      equivalence (field1(1,1),field1print(1))
 !      equivalence (field2(1,1),field2print(1))
 
-!..used in xyconvert (x,y -> longitude,latitude)
-  data geoparam/1.,1.,1.,1.,0.,0./
-
-  data initacc,initargos,igeofield,naverage/0,0,0,0/
-  data numfields/0/
-
-  data itimeargos/5*0/
 
 #if defined(DRHOOK)
 ! Before the very first statement

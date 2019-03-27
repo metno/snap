@@ -36,6 +36,7 @@ subroutine wetdep2(tstep,np,pextra)
   USE snapfldML
   USE snapparML
   USE snaptabML
+  USE snapdimML, only: mdefcomp
 #if defined(DRHOOK)
   USE PARKIND1  ,ONLY : JPIM     ,JPRB
   USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK

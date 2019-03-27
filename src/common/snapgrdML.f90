@@ -16,9 +16,8 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !
 module snapgrdML
-
     implicit none
-    public
+    private
 !
 !..include file  -  common for grid specifications etc.
 !
@@ -48,16 +47,13 @@ module snapgrdML
 !		  (e.g. when each component is released with a mass unit)
 !                 1=output of total of all components
 !
-      integer iprod,igrid
+    integer, save, public :: iprod,igrid
 ! klevel needs to get allocated in main program while reading parameters
-      INTEGER, DIMENSION(:), POINTER ::  klevel
-      integer iprodr,igridr,ixbase,iybase,ixystp
-      integer inprecip,imslp,imodlevel,itotcomp
-      real modleveldump
+    INTEGER, DIMENSION(:), POINTER, save, public ::  klevel
+    integer, save, public :: iprodr,igridr,ixbase,iybase,ixystp
+    integer, save, public :: inprecip,imslp,imodlevel,itotcomp
+    real, save, public :: modleveldump
 !
-      common/cgrid1/iprod,igrid,klevel &
-                  ,iprodr,igridr,ixbase,iybase,ixystp &
-                  ,inprecip,imslp,imodlevel,itotcomp,modleveldump
 !
 !
 !..gparam:  grid parameters (depending on the grid type)
@@ -97,16 +93,11 @@ module snapgrdML
 !..ivlayer:   tabel of layer numbers for concentration in model levels
 !..	      (key is vlevel*10000)
 !
-      real    gparam(8)
+    real, save, public :: gparam(8)
 ! nk dependent arrays
-      REAL, DIMENSION(:), POINTER :: alevel,blevel,vlevel
-      REAL, DIMENSION(:), POINTER :: ahalf,bhalf,vhalf
-      integer igtype,ivcoor,kadd
-      integer ivlevel(0:10000),ivlayer(0:10000)
-!
-      common/cgrid2/gparam &
-                  ,alevel,blevel,vlevel &
-                  ,ahalf,bhalf,vhalf &
-                  ,igtype,ivcoor,kadd &
-                  ,ivlevel,ivlayer
+    REAL, DIMENSION(:), POINTER, save, public :: alevel,blevel,vlevel
+    REAL, DIMENSION(:), POINTER, save, public :: ahalf,bhalf,vhalf
+    integer, save, public :: igtype,ivcoor,kadd
+    integer, save, public :: ivlevel(0:10000),ivlayer(0:10000)
+
 end module snapgrdML

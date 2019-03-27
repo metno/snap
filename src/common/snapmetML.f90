@@ -17,18 +17,21 @@
 !
 module snapmetML
   IMPLICIT NONE
-  public
+  private
+
   ! meteorology parameter definitions
   ! many of these definitions can be changed in
   ! from the setup-file with a call to init_meteo_params
 
-  integer start3d(7), start4d(7), count3d(7), count4d(7)
-  character*(80) xwindv,ywindv,xwind10mv,ywind10mv,pottempv,ptopv
-  character*(80) sigmadotv,apv,bv,sigmav,psv,mslpv,precaccumv
-  character*(80) precstratiaccumv, precconaccumv
-  character*(80) precstrativrt,precconvrt
-  logical temp_is_abs, has_dummy_dim, manual_level_selection
-  logical sigmadot_is_omega
+  integer, save, public :: start3d(7), start4d(7), count3d(7), count4d(7)
+  character(len=80), save, public :: xwindv,ywindv,xwind10mv,ywind10mv,pottempv,ptopv
+  character(len=80), save, public :: sigmadotv,apv,bv,sigmav,psv,mslpv,precaccumv
+  character(len=80), save, public :: precstratiaccumv, precconaccumv
+  character(len=80), save, public :: precstrativrt,precconvrt
+  logical, save, public :: temp_is_abs, has_dummy_dim, manual_level_selection
+  logical, save, public :: sigmadot_is_omega
+
+  public init_meteo_params
 
   CONTAINS
 

@@ -30,6 +30,7 @@ subroutine vgravtables
 !   for small and large particles (outside the Stokes low)
 !---------------------------------------
   USE snapparML
+  use snapdimML, only: numpresvg, numtempvg
 
 #if defined(DRHOOK)
   USE PARKIND1  ,ONLY : JPIM     ,JPRB

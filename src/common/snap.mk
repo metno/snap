@@ -8,7 +8,8 @@ ensemble.o vgravtables.o forwrd.o tabcon.o wetdep1.o wetdep2.o drydep1.o drydep2
 argoswrite.o bldp.o compheight.o checkDomain.o \
 filesort_nc.o fldout_nc.o \
 init_random_seed.o decayDeps.o\
-release.o releasefile.o rmpart.o allocateFields.o copyfield.o forwrd_dx.o
+release.o releasefile.o rmpart.o allocateFields.o copyfield.o forwrd_dx.o \
+snapepsML.o
 
 ifdef MILIB
   F77FLAGS += -DMILIB
@@ -30,111 +31,109 @@ clean_links:
 
 snap_batch_copy.o: ../common/snap.f90 $(MODELOBJ)
 	cp -p ../common/snap.f90 snap_batch_copy.f90
-	${F77} -c $(F77FLAGS) $(INCLUDES) -DBATCH snap_batch_copy.f90 -std=gnu
+	${F77} -c $(F77FLAGS) $(INCLUDES) -DBATCH snap_batch_copy.f90
 
 #--------------------------------
 
 allocateFields.o: ../common/allocateFields.f90 particleML.o snapparML.o fileInfoML.o snapfldML.o snapfilML.o snapgrdML.o
-	${F77} -c $(F77FLAGS) $(INCLUDES) $< -std=gnu
+	${F77} -c $(F77FLAGS) $(INCLUDES) $<
 snapdimML.o: ../common/snapdimML.f90
-	${F77} -c $(F77FLAGS) $(INCLUDES) $< -std=gnu
+	${F77} -c $(F77FLAGS) $(INCLUDES) $<
 copyfield.o: ../common/copyfield.f90
-	${F77} -c $(F77FLAGS) $(INCLUDES) $< -std=gnu
+	${F77} -c $(F77FLAGS) $(INCLUDES) $<
 decayDeps.o: ../common/decayDeps.f90
-	${F77} -c $(F77FLAGS) $(INCLUDES) $< -std=gnu
+	${F77} -c $(F77FLAGS) $(INCLUDES) $<
 forwrd_dx.o: ../common/forwrd_dx.f90
-	${F77} -c $(F77FLAGS) $(INCLUDES) $< -std=gnu
+	${F77} -c $(F77FLAGS) $(INCLUDES) $<
 snaptabML.o: ../common/snaptabML.f90 snapdimML.o
-	${F77} -c $(F77FLAGS) $(INCLUDES) $< -std=gnu
+	${F77} -c $(F77FLAGS) $(INCLUDES) $<
 snapfldML.o: ../common/snapfldML.f90
-	${F77} -c $(F77FLAGS) $(INCLUDES) $< -std=gnu
+	${F77} -c $(F77FLAGS) $(INCLUDES) $<
 ftest.o: ../common/ftest.f90 snapdebugML.o
-	${F77} -c $(F77FLAGS) $(INCLUDES) $< -std=gnu
+	${F77} -c $(F77FLAGS) $(INCLUDES) $<
 snapdebugML.o: ../common/snapdebugML.f90
-	${F77} -c $(F77FLAGS) $(INCLUDES) $< -std=gnu
+	${F77} -c $(F77FLAGS) $(INCLUDES) $<
 snapgrdML.o: ../common/snapgrdML.f90
-	${F77} -c $(F77FLAGS) $(INCLUDES) $< -std=gnu
+	${F77} -c $(F77FLAGS) $(INCLUDES) $<
 bldp.o: ../common/bldp.f90 snapdimML.o snaptabML.o snapfldML.o ftest.o snapdebugML.o snapgrdML.o
-	${F77} -c ${F77FLAGS} $(INCLUDES) $< -std=gnu
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 edcomp.o: ../common/edcomp.f90
-	${F77} -c ${F77FLAGS} $(INCLUDES) $< -std=gnu
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 particleML.o: ../common/particleML.f90
-	${F77} -c ${F77FLAGS} $< -std=gnu
+	${F77} -c ${F77FLAGS} $<
 decay.o: ../common/decay.f90 snapdimML.o particleML.o snapfldML.o snapparML.o decayDeps.o
-	${F77} -c ${F77FLAGS} $(INCLUDES) $< -std=gnu
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 compheight.o: ../common/compheight.f90 snapgrdML.o snapfldML.o snaptabML.o
-	${F77} -c ${F77FLAGS} $(INCLUDES) $< -std=gnu
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 snapparML.o: ../common/snapparML.f90 snapdimML.o
-	${F77} -c ${F77FLAGS} $< -std=gnu
+	${F77} -c ${F77FLAGS} $<
 ensemble.o: ../common/ensemble.f90 particleML.o snapparML.o snapgrdML.o snapdimML.o epinterp.o ftest.o snapdebugML.o snapfldML.o snapepsML.o
-	${F77} -c ${F77FLAGS} $(INCLUDES) $< -std=gnu
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 checkDomain.o: ../common/checkDomain.f90 snapgrdML.o snapdimML.o particleML.o
-	${F77} -c ${F77FLAGS} $(INCLUDES) $< -std=gnu
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 snapepsML.o: ../common/snapepsML.f90
-	${F77} -c ${F77FLAGS} $(INCLUDES) $< -std=gnu
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 dateCalc.o: ../common/dateCalc.f90
-	${F77} -c ${F77FLAGS} $(INCLUDES) $< -std=gnu
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 drydep1.o: ../common/drydep1.f90 particleML.o snapfldML.o snapparML.o snapgrdML.o
-	${F77} -c ${F77FLAGS} $(INCLUDES) $< -std=gnu
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 drydep2.o: ../common/drydep2.f90 particleML.o snapfldML.o snapparML.o snapgrdML.o
-	${F77} -c ${F77FLAGS} $(INCLUDES) $< -std=gnu
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 epinterp.o: ../common/epinterp.f90
-	${F77} -c ${F77FLAGS} $(INCLUDES) $< -std=gnu
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 argoswrite.o: ../common/argoswrite.f90
-	${F77} -c ${F77FLAGS} $(INCLUDES) $< -std=gnu
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 fileInfoML.o: ../common/fileInfoML.f90
-	${F77} -c ${F77FLAGS} $< -std=gnu
+	${F77} -c ${F77FLAGS} $<
 snapfilML.o: ../common/snapfilML.f90 fileInfoML.o snapdimML.o
-	${F77} -c ${F77FLAGS} $< -std=gnu
+	${F77} -c ${F77FLAGS} $<
 filesort.o: ../common/filesort.f90 fileInfoML.o snapfldML.o snapfilML.o snapdebugML.o snapgrdML.o snapdimML.o
-	${F77} -c ${F77FLAGS} $(INCLUDES) $< -std=gnu
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 om2edot.o: ../common/om2edot.f90 snapgrdML.o snapfldML.o snapdimML.o edcomp.o
-	${F77} -c ${F77FLAGS} $(INCLUDES) $< -std=gnu
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 readfield_nc.o: ../common/readfield_nc.f90 particleML.o fileInfoML.o snapfilML.o snapgrdML.o snapmetML.o snaptabML.o snapdebugML.o snapdimML.o om2edot.o ftest.o copyfield.o
-	${F77} -c ${F77FLAGS} $(INCLUDES) $< -std=gnu
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 filesort_nc.o: ../common/filesort_nc.f90 dateCalc.o fileInfoML.o snapfilML.o snapdimML.o snapgrdML.o snapfldML.o snapmetML.o snapdebugML.o readfield_nc.o
-	${F77} -c ${F77FLAGS} $(INCLUDES) $< -std=gnu
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 fldout.o: ../common/fldout.f90 particleML.o fileInfoML.o snapfilML.o snapgrdML.o snapfldML.o snapparML.o snapargosML.o snapdebugML.o snapdimML.o ftest.o argoswrite.o snaptabML.o
-	${F77} -c ${F77FLAGS} $(INCLUDES) $< -std=gnu
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 fldout_nc.o: ../common/fldout_nc.f90 snapfilML.o snapgrdML.o snapfldML.o snapparML.o snaptabML.o snapargosML.o snapdebugML.o snapdimML.o readfield_nc.o ftest.o
-	${F77} -c ${F77FLAGS} $(INCLUDES) $< -std=gnu
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 feltio_dummy.o: ../common/feltio_dummy.f90
-	${F77} -c ${F77FLAGS} $(INCLUDES) $< -std=gnu
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 forwrd.o: ../common/forwrd.f90 particleML.o snapgrdML.o snapfldML.o snapparML.o snaptabML.o snapdimML.o snapdebugML.o vgravtables.o forwrd_dx.o
-	${F77} -c ${F77FLAGS} $(INCLUDES) $< -std=gnu
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 init_random_seed.o: ../common/init_random_seed.f90
-	${F77} -c ${F77FLAGS} $(INCLUDES) $< -std=gnu
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 posint.o: ../common/posint.f90 snapgrdML.o snapdimML.o snapdebugML.o particleML.o snapfldML.o snapparML.o snapgrdML.o
-	${F77} -c ${F77FLAGS} $(INCLUDES) $< -std=gnu
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 readfd.o: ../common/readfd.f90 fileInfoML.o snapfilML.o snapgrdML.o snapdebugML.o snapdimML.o
-	${F77} -c ${F77FLAGS} $(INCLUDES) $< -std=gnu
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 readfield.o: ../common/readfield.f90 particleML.o fileInfoML.o snapfilML.o snapgrdML.o snapfldML.o snaptabML.o snapdimML.o snapdebugML.o readfd.o om2edot.o ftest.o
-	${F77} -c ${F77FLAGS} $(INCLUDES) $< -std=gnu
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 releasefile.o: ../common/releasefile.f90 snapparML.o snapdimML.o
-	${F77} -c ${F77FLAGS} $(INCLUDES) $< -std=gnu
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 release.o: ../common/release.f90 particleML.o snapgrdML.o snapfldML.o snapparML.o snapposML.o snaptabML.o snapdimML.o snapdebugML.o
-	${F77} -c ${F77FLAGS} $(INCLUDES) $< -std=gnu
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 rmpart.o: ../common/rmpart.f90 particleML.o snapgrdML.o snapparML.o snapdimML.o decay.o
-	${F77} -c ${F77FLAGS} $(INCLUDES) $< -std=gnu
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 rwalk.o: ../common/rwalk.f90 particleML.o snapgrdML.o snapparML.o
-	${F77} -c ${F77FLAGS} $(INCLUDES) $< -std=gnu
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 snapargosML.o: ../common/snapargosML.f90
-	${F77} -c ${F77FLAGS} $< -std=gnu
+	${F77} -c ${F77FLAGS} $<
 snapmetML.o: ../common/snapmetML.f90 snapfilML.o
-	${F77} -c ${F77FLAGS} $< -std=gnu
+	${F77} -c ${F77FLAGS} $<
 snapposML.o: ../common/snapposML.f90 snapdimML.o
-	${F77} -c ${F77FLAGS} $< -std=gnu
+	${F77} -c ${F77FLAGS} $<
 tabcon.o: ../common/tabcon.f90 snaptabML.o snapdimML.o snapdebugML.o
-	${F77} -c ${F77FLAGS} $(INCLUDES) $< -std=gnu
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 vgravtables.o: ../common/vgravtables.f90 snapparML.o snapdimML.o
-	${F77} -c ${F77FLAGS} $(INCLUDES) $< -std=gnu
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 wetdep2.o: ../common/wetdep2.f90 particleML.o snapgrdML.o snapfldML.o snapparML.o snaptabML.o snapdimML.o
-	${F77} -c ${F77FLAGS} $(INCLUDES) $< -std=gnu
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 wetdep1.o: ../common/wetdep1.f90 particleML.o snapgrdML.o snapfldML.o snapparML.o snaptabML.o snapdimML.o
-	${F77} -c ${F77FLAGS} $(INCLUDES) $< -std=gnu
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 
-
-MILIB_FLAGS = -fno-implicit-none -fno-module-private -Wno-all -Wno-extra
 
 milib.o: ../common/milib.c ../common/milib.h
 	$(CC)  -c $(CCFLAGS) -I../common $<
