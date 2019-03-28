@@ -49,8 +49,8 @@ module snapfilML
       TYPE(fileInfo), save, public ::  iavail(mavail)
       integer, save, public :: itimer(5,2),limfcf(2,mfilef)
 ! fdata(maxsiz), idata(ldata)
-      real, pointer, save, public ::  fdata(:)
-      integer(int16), pointer, save, public :: idata(:)
+      real, allocatable, save, public ::  fdata(:)
+      integer(int16), allocatable, save, public :: idata(:)
       character(len=1024), save, public :: filef(mfilef)
       character(len=72), save, public :: nctype
       character(len=80), save, public :: nctitle

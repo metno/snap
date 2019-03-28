@@ -16,6 +16,7 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !
 module snapfldML
+    USE iso_fortran_env, only: real32, real64
     implicit none
     private
 !
@@ -41,12 +42,12 @@ module snapfldML
 !..iprecip: the current precipitation field
 !..enspos: the ensemble-member to read met-data from
 !
-      REAL(kind=4), DIMENSION(:,:,:), POINTER, save, public :: &
+      REAL(kind=real32), DIMENSION(:,:,:), allocatable, save, public :: &
         u1, v1, w1, t1, hlevel1, hlayer1, &
         u2, v2, w2, t2, hlevel2, hlayer2, &
         precip
 
-      REAL(kind=4), DIMENSION(:,:), POINTER, save, public :: &
+      REAL(kind=real32), DIMENSION(:,:), allocatable, save, public :: &
         ps1, bl1, hbl1, &
         ps2, bl2, hbl2, &
         xm, ym, garea, field1, field2, field3, &
@@ -69,12 +70,12 @@ module snapfldML
 !..avgbq:   average Bq (per square area) in each layer (accum.)
 !..	    only used if (nxmc=nx, nymc=ny and imodlevel=1)
 !
-      REAL(kind=8), DIMENSION(:,:), POINTER, save, public :: &
+      REAL(kind=real64), DIMENSION(:,:), allocatable, save, public :: &
         dgarea, avghbl, avgprec, accprec
-      REAL(kind=8), DIMENSION(:,:,:), POINTER, save, public :: &
+      REAL(kind=real64), DIMENSION(:,:,:), allocatable, save, public :: &
         depdry, depwet, accdry, accwet, &
         concen, concacc, avgbq1, avgbq2
-      REAL(kind=8), DIMENSION(:,:,:,:), POINTER, save, public :: &
+      REAL(kind=real64), DIMENSION(:,:,:,:), allocatable, save, public :: &
         avgbq
 !
 end module snapfldML

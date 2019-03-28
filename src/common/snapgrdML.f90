@@ -49,7 +49,7 @@ module snapgrdML
 !
     integer, save, public :: iprod,igrid
 ! klevel needs to get allocated in main program while reading parameters
-    INTEGER, DIMENSION(:), POINTER, save, public ::  klevel
+    INTEGER, DIMENSION(:), allocatable, save, public ::  klevel
     integer, save, public :: iprodr,igridr,ixbase,iybase,ixystp
     integer, save, public :: inprecip,imslp,imodlevel,itotcomp
     real, save, public :: modleveldump
@@ -95,8 +95,8 @@ module snapgrdML
 !
     real, save, public :: gparam(8)
 ! nk dependent arrays
-    REAL, DIMENSION(:), POINTER, save, public :: alevel,blevel,vlevel
-    REAL, DIMENSION(:), POINTER, save, public :: ahalf,bhalf,vhalf
+    REAL, DIMENSION(:), allocatable, save, public :: alevel,blevel,vlevel
+    REAL, DIMENSION(:), allocatable, save, public :: ahalf,bhalf,vhalf
     integer, save, public :: igtype,ivcoor,kadd
     integer, save, public :: ivlevel(0:10000),ivlayer(0:10000)
 

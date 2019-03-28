@@ -55,6 +55,6 @@ module particleML
     END TYPE extraParticle
 
 ! the actual particle storage, will be allocated in allocateFields.F
-    TYPE(particle), DIMENSION(:), POINTER, PUBLIC :: pdata
+    TYPE(particle), DIMENSION(:), allocatable, PUBLIC :: pdata
 
 end module particleML

@@ -62,7 +62,7 @@ module snapparML
 !
       integer, save, public :: ndefcomp,nplume,npart,nparnum, mpart, mplume
 !      integer      iplume(2,mplume)
-      INTEGER, DIMENSION(:,:), POINTER, save, public :: iplume
+      INTEGER, DIMENSION(:,:), allocatable, save, public :: iplume
       integer, save, public :: kdrydep(mdefcomp),kwetdep(mdefcomp),kdecay(mdefcomp)
       integer, save, public :: kgravity(mdefcomp)
       real, save, public :: drydephgt(mdefcomp) &
@@ -121,7 +121,7 @@ module snapparML
 !..ipwork:  work array
 !
 !      REAL, DIMENSION(:,:), POINTER :: pwork
-      INTEGER, DIMENSION(:), POINTER, save, public :: icomp, iparnum
+      INTEGER, DIMENSION(:), allocatable, save, public :: icomp, iparnum
 !
 !     -  pwork, ipwork
 !
