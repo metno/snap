@@ -15,6 +15,14 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module edcompML
+  implicit none
+  private
+
+  public edcomp
+
+  contains
+
 subroutine edcomp(nx,ny,nz,u,v,edot,ps,xmd2h,ymd2h, &
   ahalf,bhalf,vhalf, &
   uu,vv,dpsdt,edoth)
@@ -136,3 +144,4 @@ subroutine edcomp(nx,ny,nz,u,v,edot,ps,xmd2h,ymd2h, &
 
   return
 end subroutine edcomp
+end module edcompML

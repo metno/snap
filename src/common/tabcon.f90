@@ -15,12 +15,21 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module tabconML
+  implicit none
+  private
+
+  public tabcon
+
+  contains
+
 subroutine tabcon
 
 !  Purpose:  Define fixed tables and constans
 !            (independant of input data)
 
   USE snaptabML
+  USE snapdimML, only: mpretab
   implicit none
 
   integer :: i,j,n
@@ -73,3 +82,4 @@ subroutine tabcon
 
   return
 end subroutine tabcon
+end module tabconML

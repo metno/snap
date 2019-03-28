@@ -15,6 +15,14 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module readfdML
+  implicit none
+  private
+
+  public readfd
+
+  contains
+
 subroutine readfd(iunit,nav,ivcord,iparam,ilevel,ihdisp, &
   field,ierror)
 
@@ -36,6 +44,7 @@ subroutine readfd(iunit,nav,ivcord,iparam,ilevel,ihdisp, &
   USE snapfilML
   USE snapgrdML
   USE snapdebugML
+  USE snapdimML, only: nx, ny, maxsiz, ldata
   implicit none
 
 
@@ -47,15 +56,13 @@ subroutine readfd(iunit,nav,ivcord,iparam,ilevel,ihdisp, &
   real ::      field(nx*ny)
 
 !..local
-  integer ::   iopen,itotal,ix1,ix2,iy1,iy2
+  integer, save :: iopen=0, itotal=0
+  integer, save :: ix1=0,ix2=0,iy1=0,iy2=0
   integer ::   ierr(3),ihelp(6),in9(2)
   integer*2 :: in(16)
   integer*2 :: i2dum
 
   integer :: imo,imr,imc,nf,ipack,i,ix,iy,no,j,ni
-
-  data iopen,itotal/0,0/
-  data ix1,ix2,iy1,iy2/4*0/
 
 
   if(idebug == 0) then
@@ -246,3 +253,4 @@ subroutine readfd(iunit,nav,ivcord,iparam,ilevel,ihdisp, &
 
   return
 end subroutine readfd
+end module readfdML

@@ -15,6 +15,14 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module posintML
+  implicit none
+  private
+
+  public posint
+
+  contains
+
 subroutine posint(np,tf1,tf2,tnow,pextra)
 
 !  Purpose:  Interpolation of boundary layer top and height
@@ -32,6 +40,7 @@ subroutine posint(np,tf1,tf2,tnow,pextra)
   USE snapgrdML
   USE snapfldML
   USE snapparML
+  USE snapdimML, only: nk
 
   implicit none
 
@@ -132,3 +141,4 @@ subroutine posint(np,tf1,tf2,tnow,pextra)
 
   return
 end subroutine posint
+end module posintML

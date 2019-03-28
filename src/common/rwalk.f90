@@ -15,6 +15,14 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module rwalkML
+  implicit none
+  private
+
+  public rwalk
+
+  contains
+
 subroutine rwalk(tstep,blfullmix,np,pextra)
 
 !  Purpose:  Diffusion, in and above boudary layer.
@@ -248,3 +256,4 @@ subroutine rwalk(tstep,blfullmix,np,pextra)
 #endif
   return
 end subroutine rwalk
+end module rwalkML

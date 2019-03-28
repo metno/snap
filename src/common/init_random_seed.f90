@@ -15,6 +15,14 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module init_random_seedML
+  implicit none
+  private
+
+  public init_random_seed
+
+  contains
+
   SUBROUTINE init_random_seed()
   INTEGER :: i,n
   INTEGER, DIMENSION(:), ALLOCATABLE :: seed
@@ -27,3 +35,4 @@
 
 !  DEALLOCATE(seed), not called unsure if this doesn't break later calls to random-generator
   END SUBROUTINE
+end module init_random_seedML

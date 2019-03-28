@@ -15,6 +15,12 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module ensembleML
+  implicit none
+  private
+
+  contains
+
 subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
   np)
   USE particleML
@@ -22,7 +28,10 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
   USE snapfldML
   USE snapparML
   USE snapgrdML
-  USE snapdimML, only: nx,ny,nk
+  USE snapdimML, only: nx,ny,nk,mcomp,nxep,nyep
+  USE epinterpML, only: epinterp
+  USE ftestML, only: ftest
+  USE copyfieldML, only: copyfield
 
 !  Purpose: Interpolate particle positions to ENSEMBLE grid,
 !           and store data in this grid (and model levels),
@@ -57,16 +66,15 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
 !---------------------------------------------------------
 ! ccc parameter (nxep=151,nyep=91)
 
-  integer :: nheights
-  parameter (nheights=5)
+  integer, parameter :: nheights=5
 
-  integer :: nepout
-  parameter (nepout=nheights+4)
+  integer, parameter :: nepout=nheights+4
 
-  real ::    heights(nheights)
+  real, save :: heights(nheights) = [0.0, 200.0, 500.0, 1300.0, 3000.0]
 
-  integer :: igridep, AllocStat
-  real ::     gparep(6)
+  integer, save :: igridep = 2
+  integer :: AllocStat
+  real, save :: gparep(6) = [-15.,30.,0.5,0.5,0.,0.]
 
 ! nxep,nyep,mcomp arrays, (nxep,nyep,nk,mcomp in case of concep)
   real(kind=8), allocatable, save :: drydepep(:,:,:), &
@@ -105,12 +113,13 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
 ! 5,matimev
   integer, allocatable :: iatimev(:,:)
 
-  real :: dxgr(5),dygr(5)
+  real, save :: dxgr(5) = [-0.5,-0.5,+0.5,+0.5,0.0]
+  real, save :: dygr(5) = [-0.5,+0.5,-0.5,+0.5,0.0]
 
-  integer :: itimerel(5)
+  integer, save :: itimerel(5) = [0,0,0,0,0]
   integer :: itimev(5)
 
-  integer :: nsaveconc,ntoutput
+  integer, save :: nsaveconc=0,ntoutput=0
 
   real ::    hh,dh,rt1,rt2,rk1,rk2
   real ::    hl(nk),cl(nk)
@@ -125,16 +134,6 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
 
   character(128) :: filename
 
-  data heights/0.,200.,500.,1300.,3000./
-  data igridep/2/
-  data  gparep/-15.,30.,0.5,0.5,0.,0./
-
-  data dxgr/-0.5,-0.5,+0.5,+0.5,0.0/
-  data dygr/-0.5,+0.5,-0.5,+0.5,0.0/
-
-  data itimerel/0,0,0,0,0/
-  data nsaveconc/0/
-  data ntoutput/0/
 
 !---------------------------------------------------------
 #if defined(DRHOOK)
@@ -339,13 +338,13 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
   !..height of model levels and thickness of model layers
   
     do k=1,nk
-      call epinterp(nx,ny,hlevel2(1,1,k), &
+      call epinterp(nx,ny,hlevel2(:,:,k), &
       nxep*nyep,xmodel,ymodel, &
       hlevel2ep(1,1,k),inside)
     end do
   
     do k=1,nk
-      call epinterp(nx,ny,hlayer2(1,1,k), &
+      call epinterp(nx,ny,hlayer2(:,:,k), &
       nxep*nyep,xmodel,ymodel, &
       hlayer2ep(1,1,k),inside)
     end do
@@ -506,7 +505,7 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
   
   !..precipitation (from intensity per hour)
     scale= 1./float(nsteph)
-    call epinterp(nx,ny,precip(1,1,iprecip), &
+    call epinterp(nx,ny,precip(:,:,iprecip), &
     nxep*nyep,xmodel,ymodel,prectmp,inside)
     do j=1,nyep
       do i=1,nxep
@@ -784,3 +783,4 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
 #endif
   return
 end subroutine ensemble
+end module ensembleML

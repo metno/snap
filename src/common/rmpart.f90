@@ -15,6 +15,14 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module rmpartML
+  implicit none
+  private
+
+  public rmpart
+
+  contains
+
 subroutine rmpart(rmlimit)
 
 !  Purpose: Remove particles which are inactive
@@ -26,6 +34,7 @@ subroutine rmpart(rmlimit)
   USE particleML
   USE snapgrdML
   USE snapparML
+  USE snapdimML, only: mdefcomp, nx, ny, nk
 #if defined(DRHOOK)
   USE PARKIND1  ,ONLY : JPIM     ,JPRB
   USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
@@ -156,3 +165,4 @@ subroutine rmpart(rmlimit)
 #endif
   return
 end subroutine rmpart
+end module rmpartML

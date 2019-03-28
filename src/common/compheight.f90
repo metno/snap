@@ -15,11 +15,20 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module compheightML
+  implicit none
+  private
+
+  public compheight
+
+  contains
+
 subroutine compheight
   USE snapgrdML
   USE snapfldML
   USE snaptabML
   USE snapdimML, only: nx,ny,nk
+  USE ftestML, only: ftest
 
 !  Purpose:  Compute height of model levels and thickness of model layers
 
@@ -147,3 +156,4 @@ subroutine compheight
 #endif
   return
 end subroutine compheight
+end module compheightML

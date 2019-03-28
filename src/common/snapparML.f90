@@ -19,7 +19,9 @@
 module snapparML
   use snapdimML
   implicit none
-  public
+
+  private
+
 !-----------------------------------------------------------------------
 ! snappar.inc
 !
@@ -58,12 +60,12 @@ module snapparML
 !..numtotal:  total no. of particles released, accumulated during run
 !..compname:  a component name (not much used, really)
 !
-      integer      ndefcomp,nplume,npart,nparnum, mpart, mplume
+      integer, save, public :: ndefcomp,nplume,npart,nparnum, mpart, mplume
 !      integer      iplume(2,mplume)
-      INTEGER, DIMENSION(:,:), POINTER :: iplume
-      integer      kdrydep(mdefcomp),kwetdep(mdefcomp),kdecay(mdefcomp)
-      integer      kgravity(mdefcomp)
-      real         drydephgt(mdefcomp) &
+      INTEGER, DIMENSION(:,:), POINTER, save, public :: iplume
+      integer, save, public :: kdrydep(mdefcomp),kwetdep(mdefcomp),kdecay(mdefcomp)
+      integer, save, public :: kgravity(mdefcomp)
+      real, save, public :: drydephgt(mdefcomp) &
                  ,drydeprat(mdefcomp),wetdeprat(mdefcomp) &
                  ,halftime(mdefcomp),decayrate(mdefcomp) &
                  ,gravityms(mdefcomp) &
@@ -71,20 +73,10 @@ module snapparML
                  ,vgtable(numtempvg,numpresvg,mdefcomp) &
                  ,tbasevg,tincrvg,pbasevg,pincrvg &
                  ,totalbq(mdefcomp)
-      integer      numtotal(mdefcomp)
-      integer      idcomp(mdefcomp),iruncomp(mdefcomp)
-      character*32 compname(mdefcomp),compnamemc(mdefcomp)
+      integer, save, public :: numtotal(mdefcomp)
+      integer, save, public :: idcomp(mdefcomp),iruncomp(mdefcomp)
+      character(len=32), save, public :: compname(mdefcomp),compnamemc(mdefcomp)
 !
-      common/plume/ndefcomp,nplume,npart,nparnum &
-                 ,iplume,mplume &
-                 ,kdrydep,kwetdep,kdecay,kgravity &
-                 ,drydephgt,drydeprat,wetdeprat &
-                 ,halftime,decayrate &
-                 ,idcomp,iruncomp &
-                 ,gravityms,radiusmym,densitygcm3 &
-                 ,vgtable,tbasevg,tincrvg,pbasevg,pincrvg &
-                 ,totalbq,numtotal &
-                 ,compname,compnamemc
 !
 !
 !..itprof:  time profile type:
@@ -110,23 +102,15 @@ module snapparML
 !..      n=1,ncomp
 !..      h=1,nrelheight
 !
-      integer       itprof,ntprof,ncomp,nrelheight,mprel
-      integer       idefcomp(mcomp)
-      real          frelhour(mtprof)
-      real          relradius(mtprof,mrelheight)
-      real          relupper(mtprof,mrelheight)
-      real          rellower(mtprof,mrelheight)
-      real          relstemradius(mtprof)
-      real          relbqsec(mtprof,mcomp,mrelheight)
-      character*32  component(mcomp)
-!
-      common/relcom/itprof,ntprof,ncomp,nrelheight,mprel &
-                  ,idefcomp &
-                  ,frelhour &
-                  ,relradius,relupper,rellower &
-                  ,relstemradius &
-                  ,relbqsec &
-                  ,component
+      integer, save, public :: itprof,ntprof,ncomp,nrelheight,mprel
+      integer, save, public :: idefcomp(mcomp)
+      real, save, public :: frelhour(mtprof)
+      real, save, public :: relradius(mtprof,mrelheight)
+      real, save, public :: relupper(mtprof,mrelheight)
+      real, save, public :: rellower(mtprof,mrelheight)
+      real, save, public :: relstemradius(mtprof)
+      real, save, public :: relbqsec(mtprof,mcomp,mrelheight)
+      character(len=32), save, public :: component(mcomp)
 !
 !
 !..pdata:   now defined in particleML.f90, no more npdata
@@ -137,9 +121,8 @@ module snapparML
 !..ipwork:  work array
 !
 !      REAL, DIMENSION(:,:), POINTER :: pwork
-      INTEGER, DIMENSION(:), POINTER :: icomp, iparnum
+      INTEGER, DIMENSION(:), POINTER, save, public :: icomp, iparnum
 !
-      common/part/ icomp,iparnum,mpart
 !     -  pwork, ipwork
 !
 end module snapparML

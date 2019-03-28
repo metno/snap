@@ -15,6 +15,14 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module wetdep2ML
+  implicit none
+  private
+
+  public wetdep2
+
+  contains
+
 subroutine wetdep2(tstep,np,pextra)
 
 !  Purpose:  Compute wet deposition for each particle and each component
@@ -28,6 +36,7 @@ subroutine wetdep2(tstep,np,pextra)
   USE snapfldML
   USE snapparML
   USE snaptabML
+  USE snapdimML, only: mdefcomp
 #if defined(DRHOOK)
   USE PARKIND1  ,ONLY : JPIM     ,JPRB
   USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
@@ -216,3 +225,4 @@ subroutine wetdep2(tstep,np,pextra)
 #endif
   return
 end subroutine wetdep2
+end module wetdep2ML

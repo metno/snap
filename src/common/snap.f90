@@ -209,7 +209,7 @@ PROGRAM bsnap
   USE DateCalc  ,ONLY : epochToDate, timeGM
   USE snapdebugML
   USE snapargosML
-  USE snapepsML
+  USE snapepsML, only: ensemblefile, ensembleparticipant, ensemblerandomkey, ensemblestephours, iensemble
   USE snapdimML
   USE snapfilML
   USE snapfldML
@@ -220,6 +220,39 @@ PROGRAM bsnap
   USE snaptabML
   USE particleML
   USE fileInfoML
+  USE allocateFieldsML
+  USE fldout_ncML
+  USE rmpartML, only: rmpart
+  USE checkdomainML, only: checkdomain
+  USE rwalkML, only: rwalk
+#if defined(TRAJ)
+  USE forwrdML, only: forwrd, speed
+#else
+  USE forwrdML, only: forwrd
+#endif
+  USE forwrd_dxML, only: forwrd_dx
+  USE wetdep1ML, only: wetdep1
+  USE wetdep2ML, only: wetdep2
+  USE drydep1ML, only: drydep1
+  USE drydep2ML, only: drydep2
+  USE decayML, only: decay
+  USE posintML, only: posint
+  USE decayDepsML, only: decayDeps
+  USE bldpML, only: bldp
+  USE releaseML, only: release
+  USE init_random_seedML, only: init_random_seed
+  USE compheightML, only: compheight
+  USE readfield_ncML, only: readfield_nc
+  USE tabconML, only: tabcon
+  USE releasefileML, only: releasefile
+  USE filesort_ncML, only: filesort_nc
+#if defined(MILIB)
+  use filesortML, only: filesort
+  use fldoutML, only: fldout
+  use readfieldML, only: readfield
+#else
+  USE feltio_dummy, only: readfd, readfield, filesort, fldout
+#endif
   USE iso_fortran_env, only: error_unit
 #if defined(DRHOOK)
   USE PARKIND1  ,ONLY : JPIM     ,JPRB
@@ -249,7 +282,8 @@ PROGRAM bsnap
   integer ::   itime1(5),itime2(5),itime(5),itimei(5),itimeo(5)
   integer ::   itimefi(5),itimefa(5),itimefo(5,2)
 
-  real ::      geoparam(6)
+!..used in xyconvert (longitude,latitude -> x,y)
+  real, save :: geoparam(6) = [1.0, 1.0, 1.0, 1.0, 0.0, 0.0]
 
   integer :: maxkey
   parameter (maxkey=10)
@@ -262,7 +296,7 @@ PROGRAM bsnap
   integer :: ikey,k1,k2,kv1,kv2,nkv,i,kh,kd,ig,igd,igm,i1,i2,l,n,idmin
   integer :: iscale,ih
   integer :: idrydep,iwetdep,idecay
-  integer :: iulog,ntimefo,iunitf,iunitx,nh1,nh2
+  integer :: iulog,ntimefo,iunitf,nh1,nh2
   integer :: ierr1,ierr2,nsteph,nstep,nstepr,iunito
   integer :: nxtinf,ihread,isteph,lstepr,iendrel,istep,ihr1,ihr2,nhleft
   integer :: ierr,ihdiff,ihr,ifldout,idailyout,ihour,istop
@@ -295,7 +329,7 @@ PROGRAM bsnap
 
   integer :: lenstr
 
-  logical :: pendingOutput
+  logical, save :: pendingOutput = .FALSE.
 #if defined(VOLCANO) || defined(TRAJ)
 ! b 02.05
 
@@ -313,16 +347,10 @@ PROGRAM bsnap
   real :: tlevel(100)
   character(80) :: tname(10)	! name for the trajectory
   integer :: tyear, tmon, tday, thour, tmin
-  real :: distance, speed
-  common /speed/ speed
+  real :: distance
 #endif
 #endif
 
-
-!..used in xyconvert (longitude,latitude -> x,y)
-  data geoparam/1.,1.,1.,1.,0.,0./
-
-  data pendingOutput/ .FALSE. /
 
   mpart = mpartpre
   mplume = mplumepre
@@ -1487,13 +1515,10 @@ PROGRAM bsnap
 !..file unit for all input field files
   iunitf=20
 
-!..file unit for temporary open files (graphics etc.)
-  iunitx=90
-
 !..check input FELT files and make sorted lists of available data
 !..make main list based on x wind comp. (u) in upper used level
   if (ftype == "netcdf") then
-    call filesort_nc(iunitf, ierror)
+    call filesort_nc ! (iunitf, ierror)
   else
     call filesort(iunitf,ierror)
   end if
@@ -2007,9 +2032,9 @@ PROGRAM bsnap
       if (init) then
       ! setting particle-number to 0 means init
         call posint(0,tf1,tf2,tnow, pextra)
-        if(iwetdep == 2) call wetdep2(tstep,0)
-        call forwrd(tf1,tf2,tnow,tstep,0)
-        if(irwalk /= 0) call rwalk(tstep,blfullmix,0)
+        if(iwetdep == 2) call wetdep2(tstep,0,pextra)
+        call forwrd(tf1,tf2,tnow,tstep,0,pextra)
+        if(irwalk /= 0) call rwalk(tstep,blfullmix,0,pextra)
         init = .FALSE. 
       end if
     
@@ -2254,15 +2279,6 @@ PROGRAM bsnap
         endif
         if(ierror /= 0) goto 910
       end if
-    
-    !###c..select particles to be displayed (graphics) or saved in video files.
-    !###      if(igraphics.eq.1 .or. isvideo.eq.1)
-    !###     +  call pselect(igrspec,idrydep,iwetdep)
-    
-    !..store data for 'video replay'
-    !      if(isvideo.eq.1)
-    !     +   call videosave(iunitx,istep,nstep,itime,isteph,nsteph,itime1,
-    !     +                  igrspec)
     
       if(isteph == 0 .AND. iprecip < nprecip) iprecip=iprecip+1
     

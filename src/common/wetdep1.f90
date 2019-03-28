@@ -15,12 +15,21 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module wetdep1ML
+  implicit none
+  private
+
+  public wetdep1
+
+  contains
+
 subroutine wetdep1(n,pextra)
   USE particleML
   USE snapgrdML
   USE snapfldML
   USE snapparML
   USE snaptabML
+  USE snapdimML, only: mpretab
 
 !  Purpose:  Compute wet deposition for each particle and each component
 !            and store depositions in nearest gridpoint in a field
@@ -81,3 +90,4 @@ subroutine wetdep1(n,pextra)
 #endif
   return
 end subroutine wetdep1
+end module wetdep1ML

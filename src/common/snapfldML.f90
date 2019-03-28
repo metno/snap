@@ -17,7 +17,7 @@
 !
 module snapfldML
     implicit none
-    public
+    private
 !
 !..include file  -  common for fields
 !
@@ -35,31 +35,24 @@ module snapfldML
 !..garea:  grid square area (m**2)
 !..field*: work arrays
 !..pmsl:   mean sea level pressure (mslp, not used in computations)
-!	   for graphics and/or output (possible if nxad=nx and nyad=ny)
+!	   for output (possible if nxad=nx and nyad=ny)
 !..precip: hourly precipitation intensity (mm/hour)
 !..nprecip: no. of steps stored
 !..iprecip: the current precipitation field
 !..enspos: the ensemble-member to read met-data from
 !
-      REAL(kind=4), DIMENSION(:,:,:), POINTER :: &
+      REAL(kind=4), DIMENSION(:,:,:), POINTER, save, public :: &
         u1, v1, w1, t1, hlevel1, hlayer1, &
         u2, v2, w2, t2, hlevel2, hlayer2, &
         precip
 
-      REAL(kind=4), DIMENSION(:,:), POINTER :: &
+      REAL(kind=4), DIMENSION(:,:), POINTER, save, public :: &
         ps1, bl1, hbl1, &
         ps2, bl2, hbl2, &
         xm, ym, garea, field1, field2, field3, &
         field4, pmsl1, pmsl2
 
-      integer nprecip,iprecip,enspos
-!
-      common/fieldi/u1,v1,w1,t1,ps1,bl1,hbl1,hlevel1,hlayer1 &
-                  ,u2,v2,w2,t2,ps2,bl2,hbl2,hlevel2,hlayer2 &
-                  ,xm,ym,garea &
-                  ,field1,field2,field3,field4 &
-                  ,pmsl1,pmsl2 &
-                  ,precip,nprecip,iprecip,enspos
+      integer, save, public :: nprecip,iprecip,enspos
 !
 !
 !..dgarea:  grid square area (m**2) ... double precision
@@ -76,18 +69,12 @@ module snapfldML
 !..avgbq:   average Bq (per square area) in each layer (accum.)
 !..	    only used if (nxmc=nx, nymc=ny and imodlevel=1)
 !
-      REAL(kind=8), DIMENSION(:,:), POINTER :: &
+      REAL(kind=8), DIMENSION(:,:), POINTER, save, public :: &
         dgarea, avghbl, avgprec, accprec
-      REAL(kind=8), DIMENSION(:,:,:), POINTER :: &
+      REAL(kind=8), DIMENSION(:,:,:), POINTER, save, public :: &
         depdry, depwet, accdry, accwet, &
         concen, concacc, avgbq1, avgbq2
-      REAL(kind=8), DIMENSION(:,:,:,:), POINTER :: &
+      REAL(kind=8), DIMENSION(:,:,:,:), POINTER, save, public :: &
         avgbq
 !
-      common/fieldo/dgarea &
-              ,depdry,depwet,accdry,accwet &
-              ,concen,concacc &
-              ,avghbl,avgprec,accprec &
-              ,avgbq1,avgbq2 &
-              ,avgbq
 end module snapfldML

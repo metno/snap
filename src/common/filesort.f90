@@ -15,6 +15,14 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module filesortML
+  implicit none
+  private
+
+  public filesort
+
+  contains
+
 subroutine filesort(iunit,ierror)
 
 !       check and sort felt file contents
@@ -41,6 +49,7 @@ subroutine filesort(iunit,ierror)
   USE snapfilML
   USE snapdebugML
   USE snapgrdML
+  USE snapdimML, only: mavail, nk
 
   implicit none
 
@@ -378,3 +387,4 @@ subroutine filesort(iunit,ierror)
 
   return
 end subroutine filesort
+end module filesortML

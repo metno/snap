@@ -15,6 +15,14 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module filesort_ncML
+  implicit none
+  private
+
+  public filesort_nc
+
+  contains
+
 subroutine filesort_nc
 
 !       check and sort felt file contents
@@ -43,6 +51,9 @@ subroutine filesort_nc
   USE snapfldML
   USE snapmetML, ONLY: start4d, count4d, xwindv, has_dummy_dim
   USE snapdebugML
+  USE readfield_ncML, only: check, calc_2d_start_length, nfcheckload
+  USE netcdf
+  USE snapdimML, only: nx, ny, mavail
 !      USE snapmetML, only:
 #if defined(DRHOOK)
   USE PARKIND1  ,ONLY : JPIM     ,JPRB
@@ -53,8 +64,6 @@ subroutine filesort_nc
   REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
 #endif
         
-! netcdf
-  include 'netcdf.inc'
 
   integer :: i, j, ncid, nf, varid, dimid, tsize, ierror
   real(kind=8) times(mavail)
@@ -74,25 +83,25 @@ subroutine filesort_nc
 ! loop over all file-names
   do nf = 1,nfilef
   ! get the time steps from the files "time" variable
-    status = nf_open(filef(nf), NF_NOWRITE, ncid)
-    if(status /= nf_noerr) then
+    status = nf90_open(filef(nf), NF90_NOWRITE, ncid)
+    if(status /= NF90_NOERR) then
       write(*,*) "cannot open ", trim(filef(nf)), ":", &
-      trim(nf_strerror(status))
+      trim(nf90_strerror(status))
       write(9,*) "cannot open ", trim(filef(nf)), ":", &
-      trim(nf_strerror(status))
+      trim(nf90_strerror(status))
       cycle
     endif
-    call check(nf_inq_varid(ncid, "time", varid), "time")
-    call check(nf_inq_dimid(ncid, "time", dimid), "tdim-id")
-    call check(nf_inq_dimlen(ncid, dimid, tsize), "tdim-len")
+    call check(nf90_inq_varid(ncid, "time", varid), "time")
+    call check(nf90_inq_dimid(ncid, "time", dimid), "tdim-id")
+    call check(nf90_inquire_dimension(ncid, dimid, len=tsize), "tdim-len")
     if (tsize > size(times)) then
       write(*,*) "to many time-steps in ", filef(nf), ": ", tsize
       call exit(1)
     end if
-    call check(nf_get_vara_double(ncid, varid, (/1/), (/tsize/), &
-    times), "time")
-    call check(nf_inq_attlen(ncid, varid, "units", tunitLen))
-    call check(nf_get_att_text(ncid, varid, "units", tunits), &
+    call check(nf90_get_var(ncid, varid, times, (/1/), (/tsize/)), &
+    "time")
+    call check(nf90_inquire_attribute(ncid, varid, "units", len=tunitLen))
+    call check(nf90_get_att(ncid, varid, "units", tunits), &
     "time units")
   ! shrink units-string to actual size
     tunits = tunits(:tunitLen)
@@ -101,7 +110,7 @@ subroutine filesort_nc
     do i = 1, tsize
       call calc_2d_start_length(start4d, count4d, nx, ny, 1, &
       enspos, i, has_dummy_dim)
-      call nfcheckload(ncid, xwindv, start4d, count4d, field1(1,1))
+      call nfcheckload(ncid, xwindv, start4d, count4d, field1(:,:))
     ! test 4 arbitrary values in field
       count_nan = 0
       do j = 1, 4
@@ -257,3 +266,4 @@ subroutine filesort_nc
 #endif
   RETURN
 end subroutine filesort_nc
+end module filesort_ncML

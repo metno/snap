@@ -15,6 +15,14 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module copyfieldML
+  implicit none
+  private
+
+  public copyfield
+
+  contains
+
 subroutine copyfield(fromfield,tofield,nx,ny,nz)
 
   implicit none
@@ -34,3 +42,4 @@ subroutine copyfield(fromfield,tofield,nx,ny,nz)
 
   return
 end subroutine copyfield
+end module copyfieldML
