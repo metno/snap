@@ -230,10 +230,8 @@ PROGRAM bsnap
 #else
   USE forwrdML, only: forwrd
 #endif
-  USE wetdep1ML, only: wetdep1
-  USE wetdep2ML, only: wetdep2
-  USE drydep1ML, only: drydep1
-  USE drydep2ML, only: drydep2
+  USE wetdep, only: wetdep1, wetdep2
+  USE drydep, only: drydep1, drydep2
   USE decayML, only: decay
   USE posintML, only: posint
   USE decayDepsML, only: decayDeps

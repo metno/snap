@@ -15,13 +15,64 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-module wetdep2ML
+module wetdep
   implicit none
   private
 
-  public wetdep2
+  public wetdep1, wetdep2
 
   contains
+
+subroutine wetdep1(n,pextra)
+  USE particleML
+  USE snapgrdML
+  USE snapfldML
+  USE snapparML
+  USE snaptabML
+  USE snapdimML, only: mpretab
+
+!  Purpose:  Compute wet deposition for each particle and each component
+!            and store depositions in nearest gridpoint in a field
+!  Method:   J.Saltbones 1994
+
+
+  implicit none
+
+
+! particle loop index, n = 0 means init
+  INTEGER, INTENT(IN) :: n
+  TYPE(extraParticle), INTENT(INOUT) :: pextra
+  integer :: m,itab,i,j,mm
+  real ::    precint,probab,prand,dep
+
+
+!      do n=1,npart // particle loop moved outside subroutine
+  m= icomp(n)
+  if(kwetdep(m) == 1 .AND. pextra%prc > 0.0) then
+  !..find particles with wet deposition and
+  !..reset precipitation to zero if not wet deposition
+    precint=pextra%prc
+    itab=nint(precint*premult)
+    itab=min(itab,mpretab)
+    probab=pretab(itab)
+  !..the rand function returns random real numbers between 0.0 and 1.0
+    call random_number(prand)
+    if(prand > probab) then
+      pextra%prc=0.0
+    else
+      dep=wetdeprat(m)*pdata(n)%rad
+      pdata(n)%rad=pdata(n)%rad-dep
+      i=nint(pdata(n)%x)
+      j=nint(pdata(n)%y)
+      mm=iruncomp(m)
+    ! omp atomic
+      depwet(i,j,mm)=depwet(i,j,mm)+dble(dep)
+    end if
+  end if
+!      end do
+
+  return
+end subroutine wetdep1
 
 subroutine wetdep2(tstep,np,pextra)
 
@@ -206,4 +257,4 @@ subroutine wetdep2(tstep,np,pextra)
 !################################################################
   return
 end subroutine wetdep2
-end module wetdep2ML
+end module wetdep
