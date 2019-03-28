@@ -276,12 +276,11 @@ class ModelRunner():
             nc['time'][:] += (0.5 / 24.) # add halv an hour as 'days since'
             SixHourMax(nc)
 
-        self._write_log("making files available: {} and {}".format(instantFilename, averageFilename))
-        os.rename(instantFilename,
-                  os.path.join(self.path, 'eemep_hourInst_{}.nc'.format(timestamp)))
-
-        os.rename(averageFilename,
-                  os.path.join(self.path, 'eemep_hour_{}.nc'.format(timestamp)))
+        newInstFile = os.path.join(self.path, 'eemep_hourInst_{}.nc'.format(timestamp)) 
+        newAvgFile = os.path.join(self.path, 'eemep_hour_{}.nc'.format(timestamp)) 
+        self._write_log("making files available as {} and {}".format(newInstFile, newAvgFile))
+        os.rename(instantFilename, newInstFile)
+        os.rename(averageFilename, newAvgFile)
 
 
     def download_results(self):
