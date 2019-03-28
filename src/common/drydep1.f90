@@ -15,6 +15,14 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module drydep1ML
+  implicit none
+  private
+
+  public drydep1
+
+  contains
+
 subroutine drydep1(n)
   USE particleML
   USE snapfldML
@@ -70,3 +78,4 @@ subroutine drydep1(n)
 #endif
   return
 end subroutine drydep1
+end module drydep1ML

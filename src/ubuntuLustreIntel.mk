@@ -5,11 +5,11 @@ F77 = ifort
 CXX = icc
 CC  = icc
 
-F77FLAGS=-O2 -cpp -openmp
-CXXFLAGS=-O2 -openmp
-CCFLAGS=-O2 -openmp
+F77FLAGS=-O2 -cpp -qopenmp -warn all -nogen-interfaces
+CXXFLAGS=-O2 -qopenmp
+CCFLAGS=-O2 -qopenmp
 
-LDFLAGS=-openmp
+LDFLAGS=-qopenmp
 
 # NCDIR not required if /usr or /usr/local
 NCDIR=$(shell nf-config --prefix)

@@ -15,10 +15,18 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module allocateFieldsML
+  implicit none
+  private
+
+  public allocateFields, deAllocateFields
+
+  contains
+
 subroutine allocateFields
   USE particleML
   USE fileInfoML
-  USE snapdimML, only: nx, ny, nk
+  USE snapdimML, only: nx, ny, nk, ldata, maxsiz, mcomp, mprecip, nxmc, nymc
   USE snapparML
   USE snapfldML
   USE snapfilML
@@ -232,3 +240,4 @@ subroutine deAllocateFields
   DEALLOCATE ( iplume )
 
 end subroutine deAllocateFields
+end module allocateFieldsML

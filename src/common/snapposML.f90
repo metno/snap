@@ -16,9 +16,9 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !
 module snapposML
-  use snapdimML, only: mrelpos
-  implicit none
-  public
+    use snapdimML, only: mrelpos
+    implicit none
+    private
 !-----------------------------------------------------------------------
 ! snappos.inc
 !
@@ -34,12 +34,8 @@ module snapposML
 !..relnam(n)  : name of release positions
 !..srelnam    : name of selected release position
 !
-      integer      irelpos,nrelpos
-      real         relpos(4,mrelpos)
-      character*40 relnam(mrelpos),srelnam
-!
-      common/poscom/irelpos,nrelpos &
-                  ,relpos &
-                  ,relnam,srelnam
+    integer, save, public :: irelpos,nrelpos
+    real, save, public :: relpos(4,mrelpos)
+    character(len=40), save, public :: relnam(mrelpos),srelnam
 !
 end module snapposML

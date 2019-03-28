@@ -15,6 +15,14 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module epinterpML
+  implicit none
+  private
+
+  public epinterp
+
+  contains
+
 subroutine epinterp(nxf,nyf,field,npos,xpos,ypos,zpos,inside)
 
 !  simple bilinear interpolation
@@ -52,3 +60,4 @@ subroutine epinterp(nxf,nyf,field,npos,xpos,ypos,zpos,inside)
 
   return
 end subroutine epinterp
+end module epinterpML

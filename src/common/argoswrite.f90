@@ -15,6 +15,14 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module argoswriteML
+  implicit none
+  private
+
+  public argoswrite
+
+  contains
+
 subroutine argoswrite(iunit,name,iparam,itimeargos,nx,ny,dblfield)
 
   USE snapdebugML
@@ -89,3 +97,4 @@ subroutine argoswrite(iunit,name,iparam,itimeargos,nx,ny,dblfield)
   stop 'ARGOSWRITE'
 
 end subroutine argoswrite
+end module argoswriteML

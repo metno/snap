@@ -15,6 +15,14 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module decayML
+  implicit none
+  private
+
+  public decay
+
+  contains
+
 subroutine decay(n)
   USE snapparML
 !  Purpose:  Decrease radioactive contents due to decay
@@ -56,3 +64,4 @@ subroutine decay(n)
 #endif
   return
 end subroutine decay
+end module decayML

@@ -15,10 +15,19 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module om2edotML
+  implicit none
+  private
+
+  public om2edot
+
+  contains
+
 subroutine om2edot
   USE snapgrdML
   USE snapfldML
   USE snapdimML, only: nx,ny,nk
+  USE edcompML, only: edcomp
 !  Purpose:  Convert omega (in model levels) to etadot,
 !            (added in order to use ECMWF model data).
 
@@ -96,11 +105,12 @@ subroutine om2edot
     write(9,*) 'OM2EDOT call EDCOMP'
   
     k=2
-    call edcomp(nx,ny,kk,u2(1,1,k),v2(1,1,k),w2(1,1,k),ps2(1,1), &
-    xmd2h,ymd2h,ahalf(1),bhalf(1),vhalf(1), &
+    call edcomp(nx,ny,kk,u2(:,:,k),v2(:,:,k),w2(:,:,k),ps2(:,:), &
+    xmd2h,ymd2h,ahalf(:),bhalf(:),vhalf(:), &
     field1,field2,field3,field4)
   
   end if
 
   return
 end subroutine om2edot
+end module om2edotML

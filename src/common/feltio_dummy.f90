@@ -15,22 +15,42 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module feltio_dummy
+  implicit none
+  private
+
+  public readfd, readfield, filesort, fldout
+
+  contains
+
 subroutine readfd()
-  write(*,*) "readfd not implemented"
-  call exit(1)
+  error stop "readfd not implemented"
 end subroutine readfd
 
-subroutine readfield()
-  write(*,*) "readfield not implemented"
-  call exit(1)
+subroutine readfield(x0, x1, x2, x3, x4, x5, x6, x7)
+  integer :: x0, x1, x2, x3(:), x4, x5, x6(:), x7
+  if (.false.) then ! Silence the sompiler
+    write(*,*) x0, x1, x2, x3, x4, x5, x6, x7
+  endif
+  error stop "readfield not implemented"
 end subroutine
 
-subroutine filesort()
-  write(*,*) "filesort not implemented"
-  call exit(1)
+subroutine filesort(x, y)
+  integer :: x, y
+  if (.false.) then
+    write(*, *) x, y ! Silence the compiler
+  endif
+  error stop "filesort not implemented"
 end subroutine
 
-subroutine fldout()
-  write(*,*) "fldout not implemented"
-  call exit(1)
+subroutine fldout(x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x11)
+  integer :: x0, x1, x8, x9, x10, x11
+  character(len=*) :: x2
+  integer :: x3(:)
+  real :: x4, x5, x6, x7
+  if (.false.) then ! Silence the compiler
+    write(*,*) x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11
+  endif
+  error stop "fldout not implemented"
 end subroutine
+end module feltio_dummy

@@ -15,6 +15,14 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module ftestML
+  implicit none
+  private
+
+  public ftest
+
+  contains
+
 subroutine ftest(name,k1,k2,nx,ny,nk,field,iundef)
 
 !  Purpose: Test field, print min,mean,max values.
@@ -108,3 +116,4 @@ subroutine ftest(name,k1,k2,nx,ny,nk,field,iundef)
 #endif
   return
 end subroutine ftest
+end module ftestML

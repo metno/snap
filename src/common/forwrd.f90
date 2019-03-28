@@ -15,6 +15,19 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module forwrdML
+  implicit none
+  private
+
+#if defined(TRAJ)
+!... calculation of distance and speed
+  real, save, public :: speed
+#endif
+
+  public forwrd
+
+  contains
+
 subroutine forwrd(tf1,tf2,tnow,tstep,np,pextra)
 
 !  Purpose:  Move all particles one timestep forward
@@ -38,6 +51,7 @@ subroutine forwrd(tf1,tf2,tnow,tstep,np,pextra)
 
   USE particleML
   USE snapgrdML
+  USE forwrd_dxML, only: forwrd_dx
 #if defined(DRHOOK)
   USE PARKIND1  ,ONLY : JPIM     ,JPRB
   USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
@@ -56,11 +70,6 @@ subroutine forwrd(tf1,tf2,tnow,tstep,np,pextra)
   TYPE(particle) :: nparticle
   REAL*8 :: dx1, dx2, dy1, dy2, dz1, dz2, u, v
   REAL :: vmin, vmax
-#if defined(TRAJ)
-!... calculation of distance and speed
-  real :: speed
-  common /speed/ speed
-#endif
 
 #if defined(DRHOOK)
 ! Before the very first statement
@@ -124,3 +133,4 @@ subroutine forwrd(tf1,tf2,tnow,tstep,np,pextra)
 #endif
   return
 end subroutine forwrd
+end module forwrdML

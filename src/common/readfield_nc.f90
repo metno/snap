@@ -15,6 +15,22 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module readfield_ncML
+  USE ftestML, only: ftest
+  USE om2edotML, only: om2edot
+  USE copyfieldML, only: copyfield
+
+  implicit none
+  private
+
+  public readfield_nc, check, nfcheckload, calc_2d_start_length
+
+interface nfcheckload
+  module procedure nfcheckloadscalar, nfcheckload1d, nfcheckload2d, nfcheckload3d
+end interface
+
+  contains
+
 subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   itimefi,ierror)
 
@@ -38,6 +54,8 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   USE snapmetML
   USE snaptabML
   USE snapdebugML
+  USE netcdf
+  USE snapdimML, only: nx, ny, nk
 
 #if defined(DRHOOK)
   USE PARKIND1  ,ONLY : JPIM     ,JPRB
@@ -49,12 +67,10 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
 #endif
 
 !..input/output
-  integer, INTENT(INOUT) ::  iunit,istep,nhleft,ihr1,ihr2, &
+  integer, intent(in) :: iunit, istep
+  integer, INTENT(INOUT) ::  nhleft,ihr1,ihr2, &
   itimei(5)
   integer, INTENT(OUT) :: itimefi(5),ierror
-
-! netcdf
-  include 'netcdf.inc'
 
 ! local variables
   integer :: i, j, k, n, ilevel, ierr1, ierr2, i1, i2
@@ -66,6 +82,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   real ::     alev(nk),blev(nk),db, precip1,dxgrid,dygrid
   integer :: kk, ifb, kfb
   real ::    rcp, dred, red, p, px, dp, p1, p2,ptop
+  real :: ptoptmp(1)
   real ::    totalprec
   real,save     ::    t2thetafac(15000)
   real ::    unitScale
@@ -140,16 +157,6 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
     end if
   end do
 
-  if(idebug == 1) then
-    write(9,*) 'MODEL LEVEL SEARCH LIST.   ntav2=',ntav2
-    write(9,*) 'nx,ny,nk: ',nx,ny,nk
-    write(9,*) 'istep,nhleft: ',istep,nhleft
-    write(9,*) 'itimei(5), ihr1, ihr2:',(itimei(i),i=1,5),ihr1,ihr2
-    write(9,*) 'kfb,ifb,ihdif1,ihdif2:',kfb,ifb,ihdif1,ihdif2
-    write(9,fmt='(7(1x,i4),1x,i6,2i5)') (iavail(ntav2))
-    flush(9)
-  end if
-
   if(ntav2 < 1) then
     write(9,*) '*READFIELD* No model level data available'
     write(6,*) '*READFIELD* No model level data available'
@@ -161,14 +168,25 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
     return
   end if
 
+
+  if(idebug == 1) then
+    write(9,*) 'MODEL LEVEL SEARCH LIST.   ntav2=',ntav2
+    write(9,*) 'nx,ny,nk: ',nx,ny,nk
+    write(9,*) 'istep,nhleft: ',istep,nhleft
+    write(9,*) 'itimei(5), ihr1, ihr2:',(itimei(i),i=1,5),ihr1,ihr2
+    write(9,*) 'kfb,ifb,ihdif1,ihdif2:',kfb,ifb,ihdif1,ihdif2
+    write(9,fmt='(7(1x,i4),1x,i6,2i5)') (iavail(ntav2))
+    flush(9)
+  end if
+
 ! time between two inputs
 ! open the correct file, if required
   if (file_name /= filef(iavail(ntav2)%fileNo)) then
     if (ncid /= 0) then
-      call check(nf_close(ncid), "close ncid")
+      call check(nf90_close(ncid), "close ncid")
     end if
     file_name = filef(iavail(ntav2)%fileNo)
-    call check(nf_open(file_name, NF_NOWRITE, ncid), file_name)
+    call check(nf90_open(file_name, NF90_NOWRITE, ncid), file_name)
   end if
 
 !     set timepos and nhdiff
@@ -223,12 +241,12 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   
   !..u
   !     Get the varid of the data variable, based on its name.
-    call nfcheckload(ncid, xwindv, start4d, count4d, u2(1,1,k))
+    call nfcheckload(ncid, xwindv, start4d, count4d, u2(:,:,k))
   !        call readfd(iunit,nav,ivc,iu,ilevel,0,u2(1,1,k),ierror)
   !        if(ierror.ne.0) goto 100
   
   !..v
-    call nfcheckload(ncid, ywindv, start4d, count4d, v2(1,1,k))
+    call nfcheckload(ncid, ywindv, start4d, count4d, v2(:,:,k))
   !        call readfd(iunit,nav,ivc,iv,ilevel,0,v2(1,1,k),ierror)
   !        if(ierror.ne.0) goto 100
   ! bug in chernobyl borders from destaggering
@@ -240,7 +258,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
 
   
   !..pot.temp. or abs.temp.
-    call nfcheckload(ncid, pottempv, start4d, count4d, t2(1,1,k))
+    call nfcheckload(ncid, pottempv, start4d, count4d, t2(:,:,k))
   !        call readfd(iunit,nav,ivc,it,ilevel,0,t2(1,1,k),ierror)
   !        if(ierror.ne.0) goto 100
   
@@ -251,12 +269,13 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   !       if(ivcoor.eq.2) ptop=idata(19)
   !..p0 for hybrid loaded to ptop, ap is a * p0
     if (ivcoor /= 2 .AND. .NOT. ptopv == '') then
-      call nfcheckload(ncid, ptopv, (/0/), (/1/), ptop)
+      call nfcheckload(ncid, ptopv, (/0/), (/1/), ptoptmp)
+      ptop = ptoptmp(1)
     end if
   !..alevel (here) only for eta levels
     if ( .NOT. apv == '') then
-      call nfcheckload(ncid, apv, (/ilevel/), (/1/), alev(k))
-      call nfcheckload(ncid, bv, (/ilevel/), (/1/), blev(k))
+      call nfcheckload(ncid, apv, (/ilevel/), (/1/), alev(k:k))
+      call nfcheckload(ncid, bv, (/ilevel/), (/1/), blev(k:k))
       if (ivcoor /= 2 .AND. .NOT. ptopv == '') then
       !..p0 for hybrid loaded to ptop, ap is a * p0
         alev(k) = alev(k) * ptop
@@ -266,7 +285,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
     end if
     if ( .NOT. sigmav == '') then
     ! reusing blev(k) for sigma(k) later
-      call nfcheckload(ncid, sigmav, (/ilevel/), (/1/), blev(k))
+      call nfcheckload(ncid, sigmav, (/ilevel/), (/1/), blev(k:k))
     end if
   
   !..sigma_dot/eta_dot (0 at surface)
@@ -280,7 +299,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
       end do
     else
       call nfcheckload(ncid, sigmadotv, &
-      start4d, count4d, w2(1,1,k))
+      start4d, count4d, w2(:,:,k))
     end if
   !        call readfd(iunit,nav,ivc,iw,ilevel,0,w2(1,1,k),ierror)
   !        if(ierror.ne.0) goto 100
@@ -296,7 +315,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   enspos, timepos, has_dummy_dim)
 
 ! ps
-  call nfcheckload(ncid, psv, start3d, count3d, ps2(1,1))
+  call nfcheckload(ncid, psv, start3d, count3d, ps2(:,:))
 !  input ps, must be hPa, otherwise:
   if (nctype == 'arome' .OR. nctype == 'dmi_eps' .OR. &
   nctype == 'ec_det' .OR. nctype == 'h12_grib') then
@@ -311,17 +330,17 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
 
 ! u10m
 ! v10m
-  call nfcheckload(ncid, xwind10mv, start3d, count3d, u2(1,1,1))
-  call nfcheckload(ncid, ywind10mv, start3d, count3d, v2(1,1,1))
+  call nfcheckload(ncid, xwind10mv, start3d, count3d, u2(:,:,:))
+  call nfcheckload(ncid, ywind10mv, start3d, count3d, v2(:,:,:))
 
 !..mean sea level pressure, not used in computations,
-!..(only for graphics and/or output to results file)
+!..(only for output to results file)
   if(imslp /= 0) then
     if ( .NOT. mslpv == '') then
       write(9,*) 'Mslp not found. Not important.'
       imslp=0
     else
-      call nfcheckload(ncid, mslpv, start3d, count3d, pmsl2(1,1))
+      call nfcheckload(ncid, mslpv, start3d, count3d, pmsl2(:,:))
     !        call readfd(iunit,nav,ivc,58,ilevel,0,pmsl2(1,1),ierror)
     end if
   end if
@@ -334,12 +353,12 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
       call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
       enspos, timepos - 1, has_dummy_dim)
       call nfcheckload(ncid, precaccumv, &
-      start3d, count3d, field1(1,1))
+      start3d, count3d, field1(:,:))
     !         call readfd(iunit,nav,ivc,17,ilevel,ihrpr1,field1,ierror)
       call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
       enspos, timepos, has_dummy_dim)
       call nfcheckload(ncid, precaccumv, &
-      start3d, count3d, field2(1,1))
+      start3d, count3d, field2(:,:))
     !         call readfd(iunit,nav,ivc,17,ilevel,ihrpr2,field2,ierror)
     !..the difference below may get negative due to different scaling
       do j=1,ny
@@ -358,15 +377,15 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
       call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
       enspos, timepos - 1, has_dummy_dim)
       call nfcheckload(ncid, precstratiaccumv, &
-      start3d, count3d, field1(1,1))
+      start3d, count3d, field1(:,:))
       call nfcheckload(ncid, precconaccumv, &
-      start3d, count3d, field2(1,1))
+      start3d, count3d, field2(:,:))
       call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
       enspos, timepos, has_dummy_dim)
       call nfcheckload(ncid, precstratiaccumv, &
-      start3d, count3d, field3(1,1))
+      start3d, count3d, field3(:,:))
       call nfcheckload(ncid, precconaccumv, &
-      start3d, count3d, field4(1,1))
+      start3d, count3d, field4(:,:))
     !..the difference below may get negative due to different scaling
       unitScale = 1.
       if (nctype == 'ec_det') unitScale = 1000.
@@ -384,9 +403,9 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
       call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
       enspos, timepos, has_dummy_dim)
       call nfcheckload(ncid, precstratiaccumv, &
-      start3d, count3d, field3(1,1))
+      start3d, count3d, field3(:,:))
       call nfcheckload(ncid, precconaccumv, &
-      start3d, count3d, field4(1,1))
+      start3d, count3d, field4(:,:))
       totalprec = 0
       do j=1,ny
         do i=1,nx
@@ -415,9 +434,9 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   else
   !..non-accumulated emissions in stratiform an convective
     call nfcheckload(ncid, precstrativrt, &
-    start3d, count3d, field1(1,1))
+    start3d, count3d, field1(:,:))
     call nfcheckload(ncid, precconvrt, &
-    start3d, count3d, field2(1,1))
+    start3d, count3d, field2(:,:))
 
     do j=1,ny
       do i=1,nx
@@ -741,73 +760,162 @@ end subroutine calc_2d_start_length
 
 
 subroutine check(status, errmsg)
+  use netcdf
   implicit none
 ! netcdf
-  include 'netcdf.inc'
   integer, intent ( in) :: status
-  character(len=*), intent(in) :: errmsg
+  character(len=*), intent(in), optional :: errmsg
 
-  if(status /= nf_noerr) then
-    print *, trim(nf_strerror(status)), ": ", trim(errmsg)
+  if(status /= NF90_NOERR) then
+    if (present(errmsg)) then
+      print *, trim(nf90_strerror(status)), ": ", trim(errmsg)
+    else
+      print *, trim(nf90_strerror(status))
+    endif
     call exit(1)
   endif
 end subroutine check
 
-subroutine nfcheckload(ncid, varname, start, length, field)
-  use, intrinsic :: IEEE_ARITHMETIC
+subroutine fillscaleoffset(ncid, varid, fillvalue, scalefactor, offset, status)
+  use iso_fortran_env, only: real32
+  use netcdf
   implicit none
-  include 'netcdf.inc'
-  integer, intent (in) :: ncid, start(*), length(*)
+
+  integer, intent(in) :: ncid, varid
+  real(kind=real32), intent(out) :: fillvalue, scalefactor, offset
+  integer, intent(out) :: status
+
+  status = nf90_get_att(ncid, varid, "_FillValue", fillvalue)
+  if (status == NF90_ENOTATT) then
+    fillvalue = NF90_FILL_FLOAT
+  else if (status /= NF90_NOERR) then
+    return
+  endif
+
+  status = nf90_get_att(ncid, varid, "scale_factor", scalefactor)
+  if (status == NF90_ENOTATT) then
+    scalefactor = 1
+  else if (status /= NF90_NOERR) then
+    return
+  endif
+
+  status = nf90_get_att(ncid, varid, "add_offset", offset)
+  if (status == NF90_ENOTATT) then
+    offset = 0
+    status = NF90_NOERR
+  else if (status /= NF90_NOERR) then
+    return
+  endif
+end subroutine fillscaleoffset
+
+subroutine nfcheckloadscalar(ncid, varname, start, length, field)
+  use, intrinsic :: IEEE_ARITHMETIC
+  use iso_fortran_env, only: real32
+  use netcdf
+  implicit none
+  integer, intent (in) :: ncid, start(:), length
   character(len=*), intent(in) :: varname
-  real(kind=4), intent (inout) :: field(*)
+  real(real32), intent (inout) :: field
 
-  real(kind=4) factor, offset, fillvalue, nan
-  integer :: varid, attlen, atttype, status, ndims, siz, i
+  real(real32) :: factor, offset, fillvalue
+  integer :: varid, status
 
-!      write(*,*) "inq ", varname
-  call check(nf_inq_varid(ncid, varname, varid), varname)
-!      write(*,*) "get ", varname
-  call check(nf_get_vara_real(ncid, varid, start, length, &
-  field), varname)
-
-! calculate the field size
-  call check(nf_inq_varndims(ncid, varid,ndims), "dims"//varname)
-  siz=1
-  do i =1,ndims
-    siz = siz * length(i)
-  end do
+  call check(nf90_inq_varid(ncid, varname, varid), varname)
+  call check(nf90_get_var(ncid, varid, field), varname)
 
 ! translate fill-value to IEEE undefined
-  status = NF_GET_ATT_REAL(ncid, varid, "_FillValue", fillvalue)
+  call fillscaleoffset(ncid, varid, fillvalue, factor, offset, status)
+  call check(status)
 
-  if (status == NF_NOERR) then
-    nan = IEEE_VALUE(nan, IEEE_QUIET_NAN)
-    call check(nf_inq_varndims(ncid, varid,ndims), "dims"//varname)
-    do i = 1, siz
-      if (field(i) == fillvalue) then
-        field(i) = nan
-      end if
-    end do
-  end if
+  if (field == fillvalue) then
+    field = IEEE_VALUE(fillvalue, IEEE_QUIET_NAN)
+  endif
+
 !  check add_offset and scale_factor
-  factor = 1.
-  offset = 0.
-  status = nf_inq_att(ncid, varid, "scale_factor", attlen, atttype)
-  if (status == nf_noerr) then
-    call check(nf_get_att_real(ncid, varid, "scale_factor",factor), &
-    "scale_factor "//varname)
-  end if
-  status = nf_inq_att(ncid, varid, "add_offset", attlen, atttype)
-  if (status == nf_noerr) then
-    call check(nf_get_att_real(ncid, varid, "add_offset", offset), &
-    "add_offset "//varname)
-  end if
   if (factor /= 1. .OR. offset /= 0.) then
-  !        write(*,*) "scaling:", varname, factor, offset, siz
-    do i = 1, siz
-      field(i) = field(i)*factor + offset
-    end do
+    field = field*factor + offset
   end if
 
+end subroutine nfcheckloadscalar
 
-end subroutine nfcheckload
+subroutine nfcheckload1d(ncid, varname, start, length, field)
+  use, intrinsic :: IEEE_ARITHMETIC
+  use iso_fortran_env, only: real32
+  use netcdf
+  implicit none
+  integer, intent (in) :: ncid, start(:), length(:)
+  character(len=*), intent(in) :: varname
+  real(real32), intent (inout) :: field(:)
+
+  real(real32) :: factor, offset, fillvalue
+  integer :: varid, status
+
+  call check(nf90_inq_varid(ncid, varname, varid), varname)
+  call check(nf90_get_var(ncid, varid, field, start=start, count=length), varname)
+
+  call fillscaleoffset(ncid, varid, fillvalue, factor, offset, status)
+  call check(status)
+
+  where (field == fillvalue)
+    field = IEEE_VALUE(fillvalue, IEEE_QUIET_NAN)
+  end where
+
+  if (factor /= 1. .OR. offset /= 0.) then
+    field = field*factor + offset
+  end if
+end subroutine nfcheckload1d
+
+subroutine nfcheckload2d(ncid, varname, start, length, field)
+  use, intrinsic :: IEEE_ARITHMETIC
+  use iso_fortran_env, only: real32
+  use netcdf
+  implicit none
+  integer, intent (in) :: ncid, start(:), length(:)
+  character(len=*), intent(in) :: varname
+  real(real32), intent (inout) :: field(:,:)
+
+  real(real32) :: factor, offset, fillvalue
+  integer :: varid, status
+
+  call check(nf90_inq_varid(ncid, varname, varid), varname)
+  call check(nf90_get_var(ncid, varid, field, start=start, count=length), varname)
+
+  call fillscaleoffset(ncid, varid, fillvalue, factor, offset, status)
+  call check(status)
+
+  where (field == fillvalue)
+    field = IEEE_VALUE(fillvalue, IEEE_QUIET_NAN)
+  end where
+
+  if (factor /= 1. .OR. offset /= 0.) then
+    field = field*factor + offset
+  end if
+end subroutine nfcheckload2d
+
+subroutine nfcheckload3d(ncid, varname, start, length, field)
+  use, intrinsic :: IEEE_ARITHMETIC
+  use iso_fortran_env, only: real32
+  use netcdf
+  implicit none
+  integer, intent (in) :: ncid, start(:), length(:)
+  character(len=*), intent(in) :: varname
+  real(real32), intent (inout) :: field(:,:,:)
+
+  real(real32) :: factor, offset, fillvalue
+  integer :: varid, status
+
+  call check(nf90_inq_varid(ncid, varname, varid), varname)
+  call check(nf90_get_var(ncid, varid, field, start=start, count=length), varname)
+
+  call fillscaleoffset(ncid, varid, fillvalue, factor, offset, status)
+  call check(status)
+
+  where (field == fillvalue)
+    field = IEEE_VALUE(fillvalue, IEEE_QUIET_NAN)
+  end where
+
+  if (factor /= 1. .OR. offset /= 0.) then
+    field = field*factor + offset
+  end if
+end subroutine nfcheckload3d
+end module readfield_ncML

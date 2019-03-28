@@ -17,7 +17,7 @@
 !
 module snapepsML
     implicit none
-    public
+    private
 !
 !..include file  -  common for ENSEMBLE PROJECT OUTPUT
 !
@@ -27,14 +27,10 @@ module snapepsML
 !..ensembleparticipant
 !..ensembleRandomKey
 !
-      integer iensemble
-      integer ensembleStepHours
-      integer ensembleparticipant
-      character*128 ensemblefile
-      character*7   ensembleRandomKey
+    integer, save, public :: iensemble
+    integer, save, public :: ensembleStepHours
+    integer, save, public :: ensembleparticipant
+    character(len=128), save, public :: ensemblefile
+    character(len=7), save, public :: ensembleRandomKey
 !
-      common/ensemb/iensemble, &
-                   ensembleStepHours, &
-                   ensembleparticipant, &
-                   ensemblefile,ensembleRandomKey
 end module snapepsML

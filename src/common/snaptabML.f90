@@ -18,7 +18,7 @@
 module snaptabML
   use snapdimML, only: mpretab,mprepro
   implicit none
-  public
+  private
 !
 !..include file  - fixed tables and constants
 !                  (independant of input data)
@@ -30,10 +30,8 @@ module snaptabML
 !..r    :  ...
 !..cp   :  ...
 !
-      real    pmult,pitab(0:130),g,r,cp
-!
-      common/table1/pitab
-      parameter (g=9.81, r=287., cp=1004., pmult=0.1)
+      real, parameter, public :: pmult=0.1,g=9.81,r=287.0,cp=1004.0
+      real, save, public :: pitab(0:130)
 !
 !
 !..premult: multiply precipitation intensity (mm/hour) by this value
@@ -43,11 +41,8 @@ module snaptabML
 !..prepro(1,n): precipitation intensity (mm/hour)
 !..prepro(2,n): probability for precipitation (0. - 1.)
 !
-      real    premult,pretab(0:mpretab)
-      integer nprepro
-      real    prepro(2,mprepro+1)
-!
-      common/table2/premult,pretab &
-                   ,nprepro,prepro
+      real, save, public :: premult,pretab(0:mpretab)
+      integer, save, public :: nprepro
+      real, save, public :: prepro(2,mprepro+1)
 !
 end module snaptabML

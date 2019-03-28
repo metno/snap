@@ -15,6 +15,14 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module checkDomainML
+  implicit none
+  private
+
+  public checkDomain
+
+  contains
+
 subroutine checkDomain(np)
   USE snapgrdML
   USE snapdimML, only: nx,ny,nk
@@ -59,3 +67,4 @@ subroutine checkDomain(np)
   return
 
 end subroutine checkDomain
+end module checkDomainML

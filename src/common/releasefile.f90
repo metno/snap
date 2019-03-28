@@ -15,6 +15,14 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module releasefileML
+  implicit none
+  private
+
+  public releasefile
+
+  contains
+
 subroutine  releasefile(filename)
 ! reading of input-files with hourly data (hours since run-start)
 ! comment-rows start with #
@@ -26,6 +34,7 @@ subroutine  releasefile(filename)
 
 ! for each release-step, rellower/relupper/relradius are copied from (1,x)
   USE snapparML
+  USE snapdimML, only: mcomp, mrelheight, mtprof
   implicit none
 
 ! input
@@ -163,3 +172,4 @@ subroutine  releasefile(filename)
 
 
 end subroutine  releasefile
+end module releasefileML

@@ -15,6 +15,12 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+module c2fgetvarML
+  implicit none
+  private
+
+  contains
+
 subroutine c2fgetvar(nvar,var,nilarg,ilarg,iprint,ierror)
 
 !  PURPOSE: Search for Environment variables and Command line arguments
@@ -255,3 +261,4 @@ subroutine c2fgetvar(nvar,var,nilarg,ilarg,iprint,ierror)
 
   return
 end subroutine c2fgetvar
+end module c2fgetvarML
