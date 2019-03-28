@@ -26,6 +26,7 @@ module fldout_ncML
 
 subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   istep,nsteph,ierror)
+  USE iso_fortran_env, only: int16
   USE snapfilML
   USE snapgrdML
   USE snapfldML
@@ -169,11 +170,11 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
   integer ::   itypef,ltimef,itimef(5),icodef,lspecf,loptf,ioptf
   integer, save :: itimeargos(5) = [0, 0, 0, 0, 0]
-  integer*2 :: ispecf(3)
+  integer(int16) :: ispecf(3)
 
-  character(256) :: filename
+  character(len=256) :: filename
 
-  character(256) :: string
+  character(len=256) :: string
   integer :: lenstr
 
 
@@ -1785,7 +1786,7 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
     &                                          6, gparam2, ierror)
     if (ierror /= 0) then
       write(*,*) "error converting lcc to ll"
-      call exit(1)
+      error stop 1
     end if
     xvals(1) = (xvals(1)-1)*gparam(7)
     yvals(1) = (yvals(1)-1)*gparam(8)
@@ -1799,7 +1800,7 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
     end do
   else
     write(*,*) "unkown grid-type:", igtype
-    call exit(1)
+    error stop 1
   end if
 
   call check(nf90_put_var(iunit, x_varid, xvals))
@@ -1831,7 +1832,7 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
   &                          2, llparam, ierror)
   if (ierror /= 0) then
     write(*,*) "error converting pos to latlon-projection"
-    call exit(1)
+    error stop 1
   end if
   call check(nf90_put_var(iunit, lon_varid, lon))
   call check(nf90_put_var(iunit, lat_varid, lat))

@@ -749,7 +749,7 @@ subroutine check(status, errmsg)
     else
       print *, trim(nf90_strerror(status))
     endif
-    call exit(1)
+    error stop 1
   endif
 end subroutine check
 

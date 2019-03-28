@@ -204,7 +204,7 @@ module snapmetML
 ! set as long as sortfield still is called
       else
         write(*,*) "undefined grid.nctype: ", nctype
-        call exit(1)
+        error stop 1
       end if
   end subroutine init_meteo_params
 

@@ -43,7 +43,8 @@ subroutine filesort_nc
 !       pointers to lists in iavail:
 !         kavail(1): pointer to first forward  sorted timestep
 !         kavail(2): pointer to first backward sorted timestep
-  USE iso_fortran_env, only: error_unit
+  USE iso_fortran_env, only: error_unit, real64, int64
+  USE ieee_arithmetic, only: ieee_is_nan
   USE DateCalc
   USE fileInfoML
   USE snapfilML
@@ -59,12 +60,12 @@ subroutine filesort_nc
         
 
   integer :: i, j, ncid, nf, varid, dimid, tsize, ierror
-  real(kind=8) times(mavail)
+  real(real64) times(mavail)
   integer :: zeroHour, tunitLen, status, count_nan
-  integer(kind=8) eTimes(mavail)
-  integer(kind=8) :: add_offset, scalef
+  integer(int64) eTimes(mavail)
+  integer(int64) :: add_offset, scalef
   integer, dimension(6) :: dateTime
-  character(80) :: tunits
+  character(len=80) :: tunits
 
 
 ! position in iavail
@@ -85,7 +86,7 @@ subroutine filesort_nc
     call check(nf90_inquire_dimension(ncid, dimid, len=tsize), "tdim-len")
     if (tsize > size(times)) then
       write(*,*) "to many time-steps in ", filef(nf), ": ", tsize
-      call exit(1)
+      error stop 1
     end if
     call check(nf90_get_var(ncid, varid, times, (/1/), (/tsize/)), &
     "time")
@@ -103,7 +104,7 @@ subroutine filesort_nc
     ! test 4 arbitrary values in field
       count_nan = 0
       do j = 1, 4
-        if (isnan(field1(j,j))) count_nan = count_nan + 1
+        if (ieee_is_nan(field1(j, j))) count_nan = count_nan + 1
       end do
       if (count_nan == 4) then
         write(*,*) xwindv, " at time ", i , " undefined, skipping"

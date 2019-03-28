@@ -38,8 +38,7 @@ subroutine readfd(iunit,nav,ivcord,iparam,ilevel,ihdisp, &
 !            iparam - parameter
 !            ilevel - level or level no.
 !            ihdisp - time displacement in hours (forecast length)
-
-
+  USE iso_fortran_env, only: int16, error_unit
   USE fileInfoML
   USE snapfilML
   USE snapgrdML
@@ -59,8 +58,8 @@ subroutine readfd(iunit,nav,ivcord,iparam,ilevel,ihdisp, &
   integer, save :: iopen=0, itotal=0
   integer, save :: ix1=0,ix2=0,iy1=0,iy2=0
   integer ::   ierr(3),ihelp(6),in9(2)
-  integer*2 :: in(16)
-  integer*2 :: i2dum
+  integer(int16) :: in(16)
+  integer(int16) :: i2dum
 
   integer :: imo,imr,imc,nf,ipack,i,ix,iy,no,j,ni
 

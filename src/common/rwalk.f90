@@ -45,7 +45,7 @@ subroutine rwalk(tstep,blfullmix,np,pextra)
 !   In ABL: l-eta=0.28*(mh/2500m)*(tstep/tstep-mix)
 !   Above ABL: l-eta=0.003*(tstep/tstep-mix)
 !   Entrainment zone = 10%*h
-
+  USE iso_fortran_env, only: real64
   USE particleML
   USE snapgrdML
   USE snapparML
@@ -60,15 +60,15 @@ subroutine rwalk(tstep,blfullmix,np,pextra)
 
 
   integer :: i
-  real*8, save ::    a,cona,conb,vrange,vrdbla,vrdblb,vrqrt
-  real*8, save :: hmax ! maximum mixing height = 2500m
-  real*8, save :: tmix ! Characteristic mixing time = 15 min
-  real*8, save :: lmax ! Maximum l-eta in the mixing layer = 0.28
-  real*8, save :: labove ! Standard l-eta above the mixing layer
-  real*8, save :: tfactor ! tfactor=tstep/tmix
+  real(real64), save ::    a,cona,conb,vrange,vrdbla,vrdblb,vrqrt
+  real(real64), save :: hmax ! maximum mixing height = 2500m
+  real(real64), save :: tmix ! Characteristic mixing time = 15 min
+  real(real64), save :: lmax ! Maximum l-eta in the mixing layer = 0.28
+  real(real64), save :: labove ! Standard l-eta above the mixing layer
+  real(real64), save :: tfactor ! tfactor=tstep/tmix
 
-  real*8 :: rnd(3), xrand, yrand, zrand, u, v, rl, vabs
-  real*8 :: hfactor, rv, rvmax
+  real(real64) :: rnd(3), xrand, yrand, zrand, u, v, rl, vabs
+  real(real64) :: hfactor, rv, rvmax
 
 
 ! initialization

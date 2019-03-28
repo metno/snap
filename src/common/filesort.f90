@@ -43,7 +43,7 @@ subroutine filesort(iunit,ierror)
 !       pointers to lists in iavail:
 !         kavail(1): pointer to first forward  sorted timestep
 !         kavail(2): pointer to first backward sorted timestep
-
+  USE iso_fortran_env, only: int16, error_unit
   USE fileInfoML
   USE snapfldML
   USE snapfilML
@@ -62,9 +62,9 @@ subroutine filesort(iunit,ierror)
   integer ::   maxinh
   parameter (maxinh=64*8)
 
-  integer*2 :: inh(16,maxinh),idfile(32)
+  integer(int16) :: inh(16,maxinh),idfile(32)
   integer ::   ifound(maxinh),itime(5),itimev(5),itimeref(5)
-  integer*2 :: i2dum
+  integer(int16) :: i2dum
 
   integer :: lenstr
   integer :: nf,i,mhdiff,minhfc,maxhfc,nbegin,iend,nfound,ioerr
