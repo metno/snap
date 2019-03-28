@@ -25,7 +25,7 @@ module argoswriteML
 
 subroutine argoswrite(iunit,name,iparam,itimeargos,nx,ny,dblfield)
 
-  USE snapdebugML
+  USE snapdebug, only: idebug, iulog
 
   implicit none
 
@@ -72,7 +72,7 @@ subroutine argoswrite(iunit,name,iparam,itimeargos,nx,ny,dblfield)
       dblmin=0.0d0
       dblmax=0.0d0
     end if
-    write(9,*) 'ARGOS ',name,iparam,dblmin,dblmax
+    write(iulog,*) 'ARGOS ',name,iparam,dblmin,dblmax
   end if
 
   return

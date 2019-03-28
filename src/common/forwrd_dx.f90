@@ -32,6 +32,7 @@ subroutine forwrd_dx(tf1,tf2,tnow,tstep,np,nparticle, &
   USE snaptabML
   USE vgravtablesML, only: vgravtables
   USE snapdimML, only: nk, numpresvg, numtempvg
+  USE snapdebug, only: iulog
 
 !  Purpose:  calculate dx,dy,dz forward movement of particle at pos np
 
@@ -78,17 +79,17 @@ subroutine forwrd_dx(tf1,tf2,tnow,tstep,np,nparticle, &
       if(kgravity(m) > 1) j=j+1
     end do
     if (j > 0) then
-      write(9,*) 'Computing gravity tables...'
+      write(iulog,*) 'Computing gravity tables...'
       call vgravtables
-      write(9,*) 'Surface gravity (1000hPa, 300K):'
+      write(iulog,*) 'Surface gravity (1000hPa, 300K):'
       it = (300-tbasevg)/tincrvg
       ip = (1000-pbasevg)/pincrvg
       do i=1,ncomp
         m= idefcomp(i)
-        write(9,*) ' particle ', compname(m), ": ", vgtable(it,ip,m)
+        write(iulog,*) ' particle ', compname(m), ": ", vgtable(it,ip,m)
       end do
     else
-      write(9,*) 'Computation of gravity tables not needed'
+      write(iulog,*) 'Computation of gravity tables not needed'
     end if
     ginv= 1./g
     cpinv= 1./cp

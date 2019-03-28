@@ -28,6 +28,7 @@ subroutine om2edot
   USE snapfldML
   USE snapdimML, only: nx,ny,nk
   USE edcompML, only: edcomp
+  USE snapdebug, only: iulog
 !  Purpose:  Convert omega (in model levels) to etadot,
 !            (added in order to use ECMWF model data).
 
@@ -67,7 +68,7 @@ subroutine om2edot
   integer :: i,j,k,kk,km
   real ::    deta,omega,p1,p2,d2hx,d2hy
 
-  write(9,*) 'OM2EDOT'
+  write(iulog,*) 'OM2EDOT'
 
   do k=2,nk-kadd
   
@@ -102,7 +103,7 @@ subroutine om2edot
       end do
     end do
   
-    write(9,*) 'OM2EDOT call EDCOMP'
+    write(iulog,*) 'OM2EDOT call EDCOMP'
   
     k=2
     call edcomp(nx,ny,kk,u2(:,:,k),v2(:,:,k),w2(:,:,k),ps2(:,:), &

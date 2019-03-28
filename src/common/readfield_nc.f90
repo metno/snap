@@ -52,7 +52,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   USE snapgrdML
   USE snapmetML
   USE snaptabML
-  USE snapdebugML
+  USE snapdebug, only: iulog, idebug
   USE netcdf
   USE snapdimML, only: nx, ny, nk
 
@@ -108,9 +108,9 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   ihdif1=ihours(1)
   ihdif2=ihours(2)
 
-  write(9,*) '*READFIELD* Requested time: ',(itime(i,1),i=1,4)
-  write(9,*) '                Time limit: ',(itime(i,2),i=1,4)
-  write(9,*) '                 ihr1,ihr2: ', ihr1, ihr2
+  write(iulog,*) '*READFIELD* Requested time: ',(itime(i,1),i=1,4)
+  write(iulog,*) '                Time limit: ',(itime(i,2),i=1,4)
+  write(iulog,*) '                 ihr1,ihr2: ', ihr1, ihr2
 
 
 !..search in list of available timesteps with model level data
@@ -143,7 +143,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   end do
 
   if(ntav2 < 1) then
-    write(9,*) '*READFIELD* No model level data available'
+    write(iulog,*) '*READFIELD* No model level data available'
     write(6,*) '*READFIELD* No model level data available'
     ierror=1
     return
@@ -151,13 +151,13 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
 
 
   if(idebug == 1) then
-    write(9,*) 'MODEL LEVEL SEARCH LIST.   ntav2=',ntav2
-    write(9,*) 'nx,ny,nk: ',nx,ny,nk
-    write(9,*) 'istep,nhleft: ',istep,nhleft
-    write(9,*) 'itimei(5), ihr1, ihr2:',(itimei(i),i=1,5),ihr1,ihr2
-    write(9,*) 'kfb,ifb,ihdif1,ihdif2:',kfb,ifb,ihdif1,ihdif2
-    write(9,fmt='(7(1x,i4),1x,i6,2i5)') (iavail(ntav2))
-    flush(9)
+    write(iulog,*) 'MODEL LEVEL SEARCH LIST.   ntav2=',ntav2
+    write(iulog,*) 'nx,ny,nk: ',nx,ny,nk
+    write(iulog,*) 'istep,nhleft: ',istep,nhleft
+    write(iulog,*) 'itimei(5), ihr1, ihr2:',(itimei(i),i=1,5),ihr1,ihr2
+    write(iulog,*) 'kfb,ifb,ihdif1,ihdif2:',kfb,ifb,ihdif1,ihdif2
+    write(iulog,fmt='(7(1x,i4),1x,i6,2i5)') (iavail(ntav2))
+    flush(iulog)
   end if
 
 ! time between two inputs
@@ -184,8 +184,8 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   itimefi(5) = iavail(ntav2)%fcHour
 
   if(idebug == 1) then
-    write(9,*) 'READING DATA FROM file=',trim(file_name)
-    write(9,*) 'READING DATA FROM position=',timepos, ' for ', &
+    write(iulog,*) 'READING DATA FROM file=',trim(file_name)
+    write(iulog,*) 'READING DATA FROM position=',timepos, ' for ', &
     itimefi
   end if
 
@@ -318,7 +318,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
 !..(only for output to results file)
   if(imslp /= 0) then
     if ( .NOT. mslpv == '') then
-      write(9,*) 'Mslp not found. Not important.'
+      write(iulog,*) 'Mslp not found. Not important.'
       imslp=0
     else
       call nfcheckload(ncid, mslpv, start3d, count3d, pmsl2(:,:))
@@ -397,7 +397,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
       end do
       if (totalprec > 1e-5) then
       !..the difference below may get negative due to different scaling
-        write(9,*) "found precip in first timestep, assuming ", &
+        write(iulog,*) "found precip in first timestep, assuming ", &
         "empty 0 timestep to deaccumulate precip"
         unitScale = 1.
         if (nctype == 'ec_det') unitScale = 1000.
@@ -522,7 +522,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
     call mapfield(1,0,igtype,gparam,nx,ny,xm,ym,0., &
     dxgrid,dygrid,ierror)
     if(ierror /= 0) then
-      write(9,*) 'MAPFIELD ERROR. ierror= ',ierror
+      write(iulog,*) 'MAPFIELD ERROR. ierror= ',ierror
       write(6,*) 'MAPFIELD ERROR. ierror= ',ierror
       stop 255
     end if
@@ -623,11 +623,11 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
 
 
 ! test---------------------------------------------------------------
-  write(9,*) 'k,k_model,alevel,blevel,vlevel,p,dp:'
+  write(iulog,*) 'k,k_model,alevel,blevel,vlevel,p,dp:'
   px=alevel(nk)+blevel(nk)*1000.
   do k=nk,1,-1
     p=alevel(k)+blevel(k)*1000.
-    write(9,fmt='(1x,2i5,f9.2,2f9.5,f8.0,f6.0)') &
+    write(iulog,fmt='(1x,2i5,f9.2,2f9.5,f8.0,f6.0)') &
     k,klevel(k),alevel(k),blevel(k),vlevel(k),p,p-px
     px=p
   end do
@@ -649,11 +649,11 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
 
   if (istep == 0) then
   ! test---------------------------------------------------------------
-    write(9,*) 'k,ahalf,bhalf,vhalf,p,dp:'
+    write(iulog,*) 'k,ahalf,bhalf,vhalf,p,dp:'
     px=ahalf(nk)+bhalf(nk)*1000.
     do k=nk,1,-1
       p=ahalf(k)+bhalf(k)*1000.
-      write(9,fmt='(1x,i5,f9.2,2f9.5,f8.0,f6.0)') &
+      write(iulog,fmt='(1x,i5,f9.2,2f9.5,f8.0,f6.0)') &
       k,ahalf(k),bhalf(k),vhalf(k),p,p-px
       px=p
     end do
@@ -662,8 +662,8 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   !..level table for (vertical) interpolation
   !..(remember that fields are stored bottom to top
   !.. and that all parameters now are in the same levels)
-    write(9,*) 'ivlevel:'
-    write(9,*) 'k,i1,i2,vlevel(k+1),vlevel(k)'
+    write(iulog,*) 'ivlevel:'
+    write(iulog,*) 'k,i1,i2,vlevel(k+1),vlevel(k)'
     i2=-1
     do k=nk-1,1,-1
       i1=i2+1
@@ -672,14 +672,14 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
       do i=i1,i2
         ivlevel(i)=k
       end do
-      write(9,*) k,i1,i2,vlevel(k+1),vlevel(k)
+      write(iulog,*) k,i1,i2,vlevel(k+1),vlevel(k)
     end do
   
   !..level table for concentration in each sigma/eta layer
   !..(layers here as in the input model, no '10m' layer,
   !.. but ordering bottom to top, reorder at time of output)
-    write(9,*) 'ivlayer:'
-    write(9,*) 'k,i1,i2,vhalf(k+1),vhalf(k)'
+    write(iulog,*) 'ivlayer:'
+    write(iulog,*) 'k,i1,i2,vhalf(k+1),vhalf(k)'
     i2=-1
     do k=nk-1,1,-1
       i1=i2+1
@@ -688,7 +688,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
       do i=i1,i2
         ivlayer(i)=k
       end do
-      write(9,*) k,i1,i2,vhalf(k+1),vhalf(k)
+      write(iulog,*) k,i1,i2,vhalf(k+1),vhalf(k)
     end do
   end if
 

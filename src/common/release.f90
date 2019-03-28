@@ -36,6 +36,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
   USE snapposML
   USE snaptabML
   USE snapdimML, only: nx, ny, nk, mcomp
+  USE snapdebug, only: iulog
 
   implicit none
 
@@ -146,10 +147,10 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
   !      if(mod(istep,nsteph).eq.0) then
     do m=1,ncomp
     ! c	  write(6,*) 'release comp,num,bq:',m,nrel(m),pbq(m)
-      write(9,*) 'release comp,num,bq:',m,nrel(m),pbq(m)
+      write(iulog,*) 'release comp,num,bq:',m,nrel(m),pbq(m)
     end do
   ! c	write(6,*) 'nprel: ',nprel
-    write(9,*) 'nprel: ',nprel
+    write(iulog,*) 'nprel: ',nprel
   !      end if
   !################################################################
   
@@ -420,11 +421,11 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
       m=idefcomp(n)
     ! c	  write(6,*) 'comp,m,totalbq,numtotal: ',
     ! c  +			n,m,totalbq(m),numtotal(m)
-      write(9,*) 'comp,m,totalbq,numtotal: ', &
+      write(iulog,*) 'comp,m,totalbq,numtotal: ', &
       n,m,totalbq(m),numtotal(m)
     end do
   ! c	write(6,*) 'nparnum: ',nparnum
-    write(9,*) 'nparnum: ',nparnum
+    write(iulog,*) 'nparnum: ',nparnum
   !      end if
   !################################################################
   
@@ -434,7 +435,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
   !.....end do ih=1,nrelheight
   end do
 
-  write(9,*) '*RELEASE*  plumes,particles: ',nplume,npart
+  write(iulog,*) '*RELEASE*  plumes,particles: ',nplume,npart
 !#######################################################################
 !     write(6,*) '*RELEASE*  plumes,particles: ',nplume,npart
 !#######################################################################

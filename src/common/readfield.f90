@@ -45,7 +45,7 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   USE snapgrdML
   USE snapfldML
   USE snaptabML
-  USE snapdebugML
+  USE snapdebug, only: idebug, iulog
   USE readfdML, only: readfd
   USE om2edotML, only: om2edot
   USE ftestML, only: ftest
@@ -89,9 +89,9 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   ihdif1=ihours(1)
   ihdif2=ihours(2)
 
-  write(9,*) '*READFIELD* Requested time: ',(itime(i,1),i=1,4)
-  write(9,*) '                Time limit: ',(itime(i,2),i=1,4)
-  write(9,*) '                 ihr1,ihr2: ', ihr1, ihr2
+  write(iulog,*) '*READFIELD* Requested time: ',(itime(i,1),i=1,4)
+  write(iulog,*) '                Time limit: ',(itime(i,2),i=1,4)
+  write(iulog,*) '                 ihr1,ihr2: ', ihr1, ihr2
 
   if(navailt2 > 0) then
   
@@ -132,8 +132,8 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   end if
 
   if(idebug == 1) then
-    write(9,*) 'istep,nhleft: ',istep,nhleft
-    write(9,*) 'kfb,ifb,ihdif1,ihdif2:',kfb,ifb,ihdif1,ihdif2
+    write(iulog,*) 'istep,nhleft: ',istep,nhleft
+    write(iulog,*) 'kfb,ifb,ihdif1,ihdif2:',kfb,ifb,ihdif1,ihdif2
   end if
 
   mtav=0
@@ -154,15 +154,15 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   end do
 
   if(idebug == 1) then
-    write(9,*) 'MODEL LEVEL SEARCH LIST.   mtav=',mtav
+    write(iulog,*) 'MODEL LEVEL SEARCH LIST.   mtav=',mtav
     do j=1,mtav
       n=itav(j)
-      write(9,fmt='(7(1x,i4),1x,i6,2i5)') (iavail(n))
+      write(iulog,fmt='(7(1x,i4),1x,i6,2i5)') (iavail(n))
     end do
   end if
 
   if(mtav < 1) then
-    write(9,*) '*READFIELD* No model level data available'
+    write(iulog,*) '*READFIELD* No model level data available'
     write(6,*) '*READFIELD* No model level data available'
     ierror=1
     return
@@ -277,7 +277,7 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   end do
 
   if(ierror /= 0) then
-    write(9,*) 'Model level data not found'
+    write(iulog,*) 'Model level data not found'
     write(6,*) 'Model level data not found'
     goto 200
   end if
@@ -289,7 +289,7 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   itimefi(3)=idata(13)-itimefi(2)*100
   itimefi(4)=idata(14)/100
   itimefi(5)=idata( 4)
-  write(9,*) '*READFIELD* Used time: ',(itimefi(i),i=1,5)
+  write(iulog,*) '*READFIELD* Used time: ',(itimefi(i),i=1,5)
 
 
 !..surface pressure, 10m wind and possibly mean sea level pressure
@@ -349,7 +349,7 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   if(imslp /= 0) then
     call readfd(iunit,nav,ivc,58,ilevel,0,pmsl2(:,:),ierror)
     if(ierror /= 0) then
-      write(9,*) 'Mslp not found. Not important.'
+      write(iulog,*) 'Mslp not found. Not important.'
     !..stop input of mslp at later timesteps
       imslp=0
     end if
@@ -374,9 +374,9 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
     write(6,*) '*READFIELD* PRECIPITATION PROBLEM'
     write(6,*) '     nhdiff,mprecip: ',nhdiff,mhprecip
     write(6,*) '   Recompile with mprecip=',nhdiff
-    write(9,*) '*READFIELD* PRECIPITATION PROBLEM'
-    write(9,*) '     nhdiff,mprecip: ',nhdiff,mhprecip
-    write(9,*) '   Recompile with mprecip=',nhdiff
+    write(iulog,*) '*READFIELD* PRECIPITATION PROBLEM'
+    write(iulog,*) '     nhdiff,mprecip: ',nhdiff,mhprecip
+    write(iulog,*) '   Recompile with mprecip=',nhdiff
     ierror=1
     return
   end if
@@ -597,9 +597,9 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
     write(6,*) '================================================='
     write(6,*) 'WARNING: CHECK USE OF EC ERA PRECIPITATION !!!!!!'
     write(6,*) '================================================='
-    write(9,*) '================================================='
-    write(9,*) 'WARNING: CHECK USE OF EC ERA PRECIPITATION !!!!!!'
-    write(9,*) '================================================='
+    write(iulog,*) '================================================='
+    write(iulog,*) 'WARNING: CHECK USE OF EC ERA PRECIPITATION !!!!!!'
+    write(iulog,*) '================================================='
     do j=1,ny
       do i=1,nx
         prec1=field1(i,j)/6.0
@@ -634,9 +634,9 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
       write(6,*) '================================================='
       write(6,*) 'WARNING: CHECK USE OF EC ERA PRECIPITATION !!!!!!'
       write(6,*) '================================================='
-      write(9,*) '================================================='
-      write(9,*) 'WARNING: CHECK USE OF EC ERA PRECIPITATION !!!!!!'
-      write(9,*) '================================================='
+      write(iulog,*) '================================================='
+      write(iulog,*) 'WARNING: CHECK USE OF EC ERA PRECIPITATION !!!!!!'
+      write(iulog,*) '================================================='
       do j=1,ny
         do i=1,nx
           prec1=(field1(i,j)+field2(i,j))/6.0
@@ -690,10 +690,10 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   180 continue
 
   write(6,*) 'NO PRECIPITATION FOUND !!!!!!!!!!!!!!!!!!!'
-  write(9,*) 'NO PRECIPITATION FOUND !!!!!!!!!!!!!!!!!!!'
+  write(iulog,*) 'NO PRECIPITATION FOUND !!!!!!!!!!!!!!!!!!!'
   if(inprecip == -1) then
     write(6,*) 'Not important, not wet depositions.'
-    write(9,*) 'Not important, not wet depositions.'
+    write(iulog,*) 'Not important, not wet depositions.'
     do n=1,nhdiff
       do j=1,ny
         do i=1,nx
@@ -797,7 +797,7 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   !..get grid parameters from field identification
     call gridpar(+1,ldata,idata,igtype,ix,iy,gparam,ierror)
     if(ierror /= 0) then
-      write(9,*) 'GRIDPAR ERROR. ierror= ',ierror
+      write(iulog,*) 'GRIDPAR ERROR. ierror= ',ierror
       write(6,*) 'GRIDPAR ERROR. ierror= ',ierror
       stop 255
     end if
@@ -813,7 +813,7 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
         gparam(3)=gparam(3)*float(ixystp)
         gparam(4)=gparam(4)*float(ixystp)
       else
-        write(9,*) 'UNKNOWN gridtype: ',igtype
+        write(iulog,*) 'UNKNOWN gridtype: ',igtype
         write(6,*) 'UNKNOWN gridtype: ',igtype
         stop 255
       end if
@@ -822,7 +822,7 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
     call mapfield(1,0,igtype,gparam,nx,ny,xm,ym,0., &
     dxgrid,dygrid,ierror)
     if(ierror /= 0) then
-      write(9,*) 'MAPFIELD ERROR. ierror= ',ierror
+      write(iulog,*) 'MAPFIELD ERROR. ierror= ',ierror
       write(6,*) 'MAPFIELD ERROR. ierror= ',ierror
       stop 255
     end if
@@ -892,11 +892,11 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   end if
 
 ! test---------------------------------------------------------------
-  write(9,*) 'k,k_model,alevel,blevel,vlevel,p,dp:'
+  write(iulog,*) 'k,k_model,alevel,blevel,vlevel,p,dp:'
   px=alevel(nk)+blevel(nk)*1000.
   do k=nk,1,-1
     p=alevel(k)+blevel(k)*1000.
-    write(9,fmt='(1x,2i5,f9.2,2f9.5,f8.0,f6.0)') &
+    write(iulog,fmt='(1x,2i5,f9.2,2f9.5,f8.0,f6.0)') &
     k,klevel(k),alevel(k),blevel(k),vlevel(k),p,p-px
     px=p
   end do
@@ -938,11 +938,11 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   if(istep == 0) then
   
   ! test---------------------------------------------------------------
-    write(9,*) 'k,ahalf,bhalf,vhalf,p,dp:'
+    write(iulog,*) 'k,ahalf,bhalf,vhalf,p,dp:'
     px=ahalf(nk)+bhalf(nk)*1000.
     do k=nk,1,-1
       p=ahalf(k)+bhalf(k)*1000.
-      write(9,fmt='(1x,i5,f9.2,2f9.5,f8.0,f6.0)') &
+      write(iulog,fmt='(1x,i5,f9.2,2f9.5,f8.0,f6.0)') &
       k,ahalf(k),bhalf(k),vhalf(k),p,p-px
       px=p
     end do
@@ -951,8 +951,8 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   !..level table for (vertical) interpolation
   !..(remember that fields are stored bottom to top
   !.. and that all parameters now are in the same levels)
-    write(9,*) 'ivlevel:'
-    write(9,*) 'k,i1,i2,vlevel(k+1),vlevel(k)'
+    write(iulog,*) 'ivlevel:'
+    write(iulog,*) 'k,i1,i2,vlevel(k+1),vlevel(k)'
     i2=-1
     do k=nk-1,1,-1
       i1=i2+1
@@ -961,14 +961,14 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
       do i=i1,i2
         ivlevel(i)=k
       end do
-      write(9,*) k,i1,i2,vlevel(k+1),vlevel(k)
+      write(iulog,*) k,i1,i2,vlevel(k+1),vlevel(k)
     end do
   
   !..level table for concentration in each sigma/eta layer
   !..(layers here as in the input model, no '10m' layer,
   !.. but ordering bottom to top, reorder at time of output)
-    write(9,*) 'ivlayer:'
-    write(9,*) 'k,i1,i2,vhalf(k+1),vhalf(k)'
+    write(iulog,*) 'ivlayer:'
+    write(iulog,*) 'k,i1,i2,vhalf(k+1),vhalf(k)'
     i2=-1
     do k=nk-1,1,-1
       i1=i2+1
@@ -977,7 +977,7 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
       do i=i1,i2
         ivlayer(i)=k
       end do
-      write(9,*) k,i1,i2,vhalf(k+1),vhalf(k)
+      write(iulog,*) k,i1,i2,vhalf(k+1),vhalf(k)
     end do
   
   end if

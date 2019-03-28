@@ -29,6 +29,7 @@ subroutine bldp
   USE snapgrdML
   USE snapfldML
   USE ftestML, only: ftest
+  USE snapdebug, only: iulog
 !  Purpose:  Compute boundary layer top and height
 
 !  Method:   Computing Richardson no. and critical Richardson no.
@@ -66,7 +67,7 @@ subroutine bldp
   ginv=1./g
 
   ricfac=1.8
-  write(9,*) '*BLDP*  ricfac = ',ricfac
+  write(iulog,*) '*BLDP*  ricfac = ',ricfac
 
 !..lower model level is k=2
 
@@ -108,17 +109,17 @@ subroutine bldp
 ! test----------------------------------------------
 
 !######################################################################
-!     write(9,*) 'k,ahalf,bhalf,alevel,blevel,phalf,pfull,phalf-pfull:'
+!     write(iulog,*) 'k,ahalf,bhalf,alevel,blevel,phalf,pfull,phalf-pfull:'
 !     do k=nk,1,-1
 !	phalf=ahalf(k)+bhalf(k)*1000.
 !	pfull=alevel(k)+blevel(k)*1000.
-!	write(9,fmt='(1x,i2,7(1x,f9.3))')
+!	write(iulog,fmt='(1x,i2,7(1x,f9.3))')
 !    +		k,ahalf(k),bhalf(k),alevel(k),blevel(k),phalf,pfull,
 !    +	          phalf-pfull
-!	write(9,*) '      vhalf= ',vhalf(k)
+!	write(iulog,*) '      vhalf= ',vhalf(k)
 !     end do
-!     write(9,*) 'kbltop,vbltop: ',kbltop,vbltop
-!     write(9,*) 'kblbot,vblbot: ',kblbot,vblbot
+!     write(iulog,*) 'kbltop,vbltop: ',kbltop,vbltop
+!     write(iulog,*) 'kblbot,vblbot: ',kblbot,vblbot
 !######################################################################
 
   do j=1,ny
@@ -261,8 +262,8 @@ subroutine bldp
     
     !..height of boundary layer (linear interp. in 'vlevel')
     !######################################################################
-    !	  write(9,*) 'kblbot,ktop,kstop= ',kblbot,ktop,kstop
-    !	  write(9,*) k,zh(k),zh(k+1),vbl,vhalf(k),vhalf(k+1)
+    !	  write(iulog,*) 'kblbot,ktop,kstop= ',kblbot,ktop,kstop
+    !	  write(iulog,*) k,zh(k),zh(k+1),vbl,vhalf(k),vhalf(k+1)
     !######################################################################
       hbl=  zh(k) &
       +(zh(k+1)-zh(k))*(vhalf(k)-vbl)/(vhalf(k)-vhalf(k+1))
@@ -275,11 +276,11 @@ subroutine bldp
       v2(i,j,1)=vhelp
     !######################################################################
     !	  if(mod(i,20).eq.0 .and. mod(j,20).eq.0) then
-    !	    write(9,*) '---------- I,J: ',i,j
-    !	    write(9,*) 'vbl,hbl: ',vbl,hbl
-    !	    write(9,*) 'k,pih,pif,zh,zf,thh,ri,ric:'
+    !	    write(iulog,*) '---------- I,J: ',i,j
+    !	    write(iulog,*) 'vbl,hbl: ',vbl,hbl
+    !	    write(iulog,*) 'k,pih,pif,zh,zf,thh,ri,ric:'
     !	    do k=kstop,1,-1
-    !	      write(9,fmt='(1x,i2,7(1x,f10.2))')
+    !	      write(iulog,fmt='(1x,i2,7(1x,f10.2))')
     !    +		k,pih(k),pif(k),zh(k),zf(k),thh(k),riri(k),ricric(k)
     !	    end do
     !	  end if
@@ -290,20 +291,20 @@ subroutine bldp
   end do
 
 ! test----------------------------------------------
-  write(9,*) '*BLDP*'
+  write(iulog,*) '*BLDP*'
   call ftest('bl ',1,1,nx,ny,1, bl2,0)
   call ftest('hbl',1,1,nx,ny,1,hbl2,0)
 ! test----------------------------------------------
 
 ! test----------------------------------------------
-  write(9,*) ' max. vlevel,k,vhalf(k): ', &
+  write(iulog,*) ' max. vlevel,k,vhalf(k): ', &
   vbltop,kbltop,vhalf(kbltop)
-  write(9,*) ' min. vlevel,k,vhalf(k): ', &
+  write(iulog,*) ' min. vlevel,k,vhalf(k): ', &
   vblbot,kblbot,vhalf(kblbot)
-  write(9,*) '   k   no.    ri_min    ri_max   ric_min   ric_max'
+  write(iulog,*) '   k   no.    ri_min    ri_max   ric_min   ric_max'
   do k=nk,1,-1
     if(nrri(k) > 0) &
-    write(9,fmt='(3x,i2,i6,4(1x,f9.4))') &
+    write(iulog,fmt='(3x,i2,i6,4(1x,f9.4))') &
     k,nrri(k),(rri(i,k),i=1,4)
   end do
 ! test----------------------------------------------

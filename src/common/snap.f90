@@ -207,7 +207,7 @@
 
 PROGRAM bsnap
   USE DateCalc  ,ONLY : epochToDate, timeGM
-  USE snapdebugML
+  USE snapdebug, only: iulog, idebug
   USE snapargosML
   USE snapepsML, only: ensemblefile, ensembleparticipant, ensemblerandomkey, ensemblestephours, iensemble
   USE snapdimML
@@ -287,7 +287,7 @@ PROGRAM bsnap
   integer :: ikey,k1,k2,kv1,kv2,nkv,i,kh,kd,ig,igd,igm,i1,i2,l,n,idmin
   integer :: iscale,ih
   integer :: idrydep,iwetdep,idecay
-  integer :: iulog,ntimefo,iunitf,nh1,nh2
+  integer :: ntimefo,iunitf,nh1,nh2
   integer :: ierr1,ierr2,nsteph,nstep,nstepr,iunito
   integer :: nxtinf,ihread,isteph,lstepr,iendrel,istep,ihr1,ihr2,nhleft
   integer :: ierr,ihdiff,ihr,ifldout,idailyout,ihour,istop
@@ -1489,7 +1489,6 @@ PROGRAM bsnap
 !-------------------------------------------------------------------
 
 !..log file
-  iulog=9
   open(iulog,file=logfile, &
   access='sequential',form='formatted', &
   status='unknown')
@@ -1522,8 +1521,8 @@ PROGRAM bsnap
 
   call vtime(itime1,ierror)
   if(ierror /= 0) then
-    write(9,*) 'Requested start time is wrong:'
-    write(9,*) (itime1(i),i=1,4)
+    write(iulog,*) 'Requested start time is wrong:'
+    write(iulog,*) (itime1(i),i=1,4)
     write(6,*) 'Requested start time is wrong:'
     write(6,*) (itime1(i),i=1,4)
     goto 910
@@ -1538,22 +1537,22 @@ PROGRAM bsnap
   call hrdiff(0,0,itimer(1,1),itime1,nh1,ierr1,ierr2)
   call hrdiff(0,0,itime2,itimer(1,2),nh2,ierr1,ierr2)
   if(nh1 < 0 .OR. nh2 < 0) then
-    write(9,*) 'Not able to run requested time periode.'
-    write(9,*) 'Start:        ',(itime1(i),i=1,4)
-    write(9,*) 'End:          ',(itime2(i),i=1,4)
-    write(9,*) 'First fields: ',(itimer(i,1),i=1,4)
-    write(9,*) 'Last  fields: ',(itimer(i,2),i=1,4)
+    write(iulog,*) 'Not able to run requested time periode.'
+    write(iulog,*) 'Start:        ',(itime1(i),i=1,4)
+    write(iulog,*) 'End:          ',(itime2(i),i=1,4)
+    write(iulog,*) 'First fields: ',(itimer(i,1),i=1,4)
+    write(iulog,*) 'Last  fields: ',(itimer(i,2),i=1,4)
     write(6,*) 'Not able to run requested time periode.'
     write(6,*) 'Start:        ',(itime1(i),i=1,4)
     write(6,*) 'End:          ',(itime2(i),i=1,4)
     write(6,*) 'First fields: ',(itimer(i,1),i=1,4)
     write(6,*) 'Last  fields: ',(itimer(i,2),i=1,4)
     if(nh1 < 0) then
-      write(9,*) 'NO DATA AT START OF RUN'
+      write(iulog,*) 'NO DATA AT START OF RUN'
       write(6,*) 'NO DATA AT START OF RUN'
       goto 910
     end if
-    write(9,*) 'Running until end of data'
+    write(iulog,*) 'Running until end of data'
     write(6,*) 'Running until end of data'
     do i=1,5
       itime2(i)=itimer(i,2)
@@ -1614,18 +1613,18 @@ PROGRAM bsnap
     iunito=30
   
   !..information to log file
-    write(9,*) 'nx,ny,nk:  ',nx,ny,nk
-  !      write(9,*) 'nxad,nyad: ',nxad,nyad
-    write(9,*) 'nxmc,nymc: ',nxmc,nymc
-    write(9,*) 'kadd:      ',kadd
-    write(9,*) 'klevel:'
-    write(9,*) (klevel(i),i=1,nk)
-    write(9,*) 'imslp:     ',imslp
-    write(9,*) 'inprecip:  ',inprecip
-    write(9,*) 'imodlevel: ',imodlevel
-    write(9,*) 'modleveldump (h), steps:', modleveldump/nsteph, &
+    write(iulog,*) 'nx,ny,nk:  ',nx,ny,nk
+  !      write(iulog,*) 'nxad,nyad: ',nxad,nyad
+    write(iulog,*) 'nxmc,nymc: ',nxmc,nymc
+    write(iulog,*) 'kadd:      ',kadd
+    write(iulog,*) 'klevel:'
+    write(iulog,*) (klevel(i),i=1,nk)
+    write(iulog,*) 'imslp:     ',imslp
+    write(iulog,*) 'inprecip:  ',inprecip
+    write(iulog,*) 'imodlevel: ',imodlevel
+    write(iulog,*) 'modleveldump (h), steps:', modleveldump/nsteph, &
     modleveldump
-    write(9,*) 'itime1:  ',(itime1(i),i=1,5)
+    write(iulog,*) 'itime1:  ',(itime1(i),i=1,5)
     write(tempstr, '("Starttime: ",I4,"-",I2.2,"-",I2.2,"T",I2.2 &
     ,":",I2.2)') (itime1(i),i=1,5)
     ncsummary = trim(ncsummary) // " " // trim(tempstr)
@@ -1635,63 +1634,63 @@ PROGRAM bsnap
       ncsummary = trim(ncsummary) // ". " // trim(tempstr)
     end do
 
-    write(9,*) 'itime2:  ',(itime2(i),i=1,5)
-    write(9,*) 'itimer1: ',(itimer(i,1),i=1,5)
-    write(9,*) 'itimer2: ',(itimer(i,2),i=1,5)
-    write(9,*) 'nhfmin:  ',nhfmin
-    write(9,*) 'nhfmax:  ',nhfmax
-    write(9,*) 'nhrun:   ',nhrun
-    write(9,*) 'nhrel:   ',nhrel
-    write(9,*) 'tstep:   ',tstep
-    write(9,*) 'nsteph:  ',nsteph
-    write(9,*) 'nstep:   ',nstep
-    write(9,*) 'nstepr:  ',nstepr
-    write(9,*) 'mprel:   ',mprel
-    write(9,*) 'ifltim:  ',ifltim
-    write(9,*) 'irwalk:  ',irwalk
-    write(9,*) 'idrydep: ',idrydep
-    write(9,*) 'iwetdep: ',iwetdep
-    write(9,*) 'idecay:  ',idecay
-    write(9,*) 'rmlimit: ',rmlimit
-    write(9,*) 'ndefcomp:',ndefcomp
-    write(9,*) 'ncomp:   ',ncomp
-    write(9,fmt='(1x,a,40(1x,i2))') 'idefcomp: ', &
+    write(iulog,*) 'itime2:  ',(itime2(i),i=1,5)
+    write(iulog,*) 'itimer1: ',(itimer(i,1),i=1,5)
+    write(iulog,*) 'itimer2: ',(itimer(i,2),i=1,5)
+    write(iulog,*) 'nhfmin:  ',nhfmin
+    write(iulog,*) 'nhfmax:  ',nhfmax
+    write(iulog,*) 'nhrun:   ',nhrun
+    write(iulog,*) 'nhrel:   ',nhrel
+    write(iulog,*) 'tstep:   ',tstep
+    write(iulog,*) 'nsteph:  ',nsteph
+    write(iulog,*) 'nstep:   ',nstep
+    write(iulog,*) 'nstepr:  ',nstepr
+    write(iulog,*) 'mprel:   ',mprel
+    write(iulog,*) 'ifltim:  ',ifltim
+    write(iulog,*) 'irwalk:  ',irwalk
+    write(iulog,*) 'idrydep: ',idrydep
+    write(iulog,*) 'iwetdep: ',iwetdep
+    write(iulog,*) 'idecay:  ',idecay
+    write(iulog,*) 'rmlimit: ',rmlimit
+    write(iulog,*) 'ndefcomp:',ndefcomp
+    write(iulog,*) 'ncomp:   ',ncomp
+    write(iulog,fmt='(1x,a,40(1x,i2))') 'idefcomp: ', &
     (idefcomp(i),i=1,ncomp)
-    write(9,fmt='(1x,a,40(1x,i2))') 'iruncomp: ', &
+    write(iulog,fmt='(1x,a,40(1x,i2))') 'iruncomp: ', &
     (iruncomp(i),i=1,ndefcomp)
     do n=1,ncomp
       m=idefcomp(n)
-      write(9,*) 'component no:  ',n
-      write(9,*) 'compname:   ',compname(m)
-      write(9,*) '  field id:   ',idcomp(m)
-      write(9,*) '  kdrydep:    ',kdrydep(m)
-      write(9,*) '  drydephgt:  ',drydephgt(m)
-      write(9,*) '  drydeprat:  ',drydeprat(m)
-      write(9,*) '  kwetdep:    ',kwetdep(m)
-      write(9,*) '  wetdeprat:  ',wetdeprat(m)
-      write(9,*) '  kdecay:     ',kdecay(m)
-      write(9,*) '  halftime:   ',halftime(m)
-      write(9,*) '  decayrate:  ',decayrate(m)
-      write(9,*) '  kgravity:   ',kgravity(m)
-      write(9,*) '  gravityms:  ',gravityms(m)
-      write(9,*) '  radiusmym:  ',radiusmym(m)
-      write(9,*) '  densitygcm3:',densitygcm3(m)
-      write(9,*) '  Relase time profile:   ntprof: ',ntprof
+      write(iulog,*) 'component no:  ',n
+      write(iulog,*) 'compname:   ',compname(m)
+      write(iulog,*) '  field id:   ',idcomp(m)
+      write(iulog,*) '  kdrydep:    ',kdrydep(m)
+      write(iulog,*) '  drydephgt:  ',drydephgt(m)
+      write(iulog,*) '  drydeprat:  ',drydeprat(m)
+      write(iulog,*) '  kwetdep:    ',kwetdep(m)
+      write(iulog,*) '  wetdeprat:  ',wetdeprat(m)
+      write(iulog,*) '  kdecay:     ',kdecay(m)
+      write(iulog,*) '  halftime:   ',halftime(m)
+      write(iulog,*) '  decayrate:  ',decayrate(m)
+      write(iulog,*) '  kgravity:   ',kgravity(m)
+      write(iulog,*) '  gravityms:  ',gravityms(m)
+      write(iulog,*) '  radiusmym:  ',radiusmym(m)
+      write(iulog,*) '  densitygcm3:',densitygcm3(m)
+      write(iulog,*) '  Relase time profile:   ntprof: ',ntprof
       ncsummary = trim(ncsummary) // ". Release " // trim(compname(m)) &
       // " (hour, Bq/s): "
       do i=1,ntprof
-        write(9,*) '  hour,Bq/hour: ', &
+        write(iulog,*) '  hour,Bq/hour: ', &
         frelhour(i),(relbqsec(i,n,ih)*3600.,ih=1,nrelheight)
         write(tempstr, '("(",f5.1,",",ES9.2,")")') &
         frelhour(i), relbqsec(i,n,1)
         ncsummary = trim(ncsummary) // " " // trim(tempstr)
       end do
     end do
-    write(9,*) 'itotcomp:   ',itotcomp
-    write(9,*) 'nprepro:    ',nprepro
-    write(9,*) 'iensemble:  ',iensemble
-    write(9,*) 'iargos:     ',iargos
-    write(9,*) 'blfulmix:   ',blfullmix
+    write(iulog,*) 'itotcomp:   ',itotcomp
+    write(iulog,*) 'nprepro:    ',nprepro
+    write(iulog,*) 'iensemble:  ',iensemble
+    write(iulog,*) 'iargos:     ',iargos
+    write(iulog,*) 'blfulmix:   ',blfullmix
     write(*,*) 'Title:      ', trim(nctitle)
     write(*,*) 'Summary:    ', trim(ncsummary)
 
@@ -1808,8 +1807,8 @@ PROGRAM bsnap
   ! start time loop
     do 200 istep=0,nstep
     
-      write(9,*) 'istep,nplume,npart: ',istep,nplume,npart
-      flush(9)
+      write(iulog,*) 'istep,nplume,npart: ',istep,nplume,npart
+      flush(iulog)
       if(mod(istep,nsteph) == 0) then
         write(6,*) 'istep,nplume,npart: ',istep,nplume,npart
         flush(6)
@@ -1857,7 +1856,7 @@ PROGRAM bsnap
           itimefi,ierror)
         end if
         if (idebug >= 1) then
-          write(9,*) "igtype, gparam(8): ", igtype, gparam
+          write(iulog,*) "igtype, gparam(8): ", igtype, gparam
         end if
       !          write (*,*) "readfield(", iunitf, istep, nhleft, itimei, ihr1
       !     +          ,ihr2, itimefi, ierror, ")"
@@ -1887,7 +1886,7 @@ PROGRAM bsnap
         !..release position from geographic to polarstereographic coordinates
           y=relpos(1,irelpos)
           x=relpos(2,irelpos)
-          write(9,*) 'release lat,long: ',y,x
+          write(iulog,*) 'release lat,long: ',y,x
 #if defined(TRAJ)
         !	write(*,*) istep,x,y,rellower(1)
         !	write(13,'(i6,3f12.3)') istep,x,y,rellower(1)
@@ -1905,18 +1904,18 @@ PROGRAM bsnap
 #endif
           call xyconvert(1,x,y,2,geoparam,igtype,gparam,ierror)
           if(ierror /= 0) then
-            write(9,*) 'ERROR: xyconvert'
-            write(9,*) '   igtype: ',igtype
-            write(9,*) '   gparam: ',gparam
+            write(iulog,*) 'ERROR: xyconvert'
+            write(iulog,*) '   igtype: ',igtype
+            write(iulog,*) '   gparam: ',gparam
             write(6,*) 'ERROR: xyconvert'
             write(6,*) '   igtype: ',igtype
             write(6,*) '   gparam: ',gparam
             goto 910
           end if
-          write(9,*) 'release   x,y:    ',x,y
+          write(iulog,*) 'release   x,y:    ',x,y
           if(x < 1.01 .OR. x > nx-0.01 .OR. &
           y < 1.01 .OR. y > ny-0.01) then
-            write(9,*) 'ERROR: Release position outside field area'
+            write(iulog,*) 'ERROR: Release position outside field area'
             write(6,*) 'ERROR: Release position outside field area'
             goto 910
           end if
@@ -1969,8 +1968,8 @@ PROGRAM bsnap
         if(ierror == 0) then
           lstepr=istep
         else
-          write(9,*) 'WARNING. Out of space for plumes/particles'
-          write(9,*) 'WARNING. End release, continue running'
+          write(iulog,*) 'WARNING. Out of space for plumes/particles'
+          write(iulog,*) 'WARNING. End release, continue running'
           write(6,*) 'WARNING. Out of space for plumes/particles'
           write(6,*) 'WARNING. End release, continue running'
           iendrel=1
@@ -1981,7 +1980,7 @@ PROGRAM bsnap
     !#############################################################
     !     write(6,*) 'tf1,tf2,tnow,tnext,tstep,ipr: ',
     !    +		  tf1,tf2,tnow,tnext,tstep,iprecip
-    !     write(9,*) 'tf1,tf2,tnow,tnext,tstep,ipr: ',
+    !     write(iulog,*) 'tf1,tf2,tnow,tnext,tstep,ipr: ',
     !    +		  tf1,tf2,tnow,tnext,tstep,iprecip
     !#############################################################
     
@@ -2091,7 +2090,7 @@ PROGRAM bsnap
     !	write(6,
     !    +  fmt='(''istep,nstep,isteph,nsteph,iprecip,nprecip: '',6i4)')
     !    +          istep,nstep,isteph,nsteph,iprecip,nprecip
-    !	write(9,
+    !	write(iulog,
     !    +  fmt='(''istep,nstep,isteph,nsteph,iprecip,nprecip: '',6i4)')
     !    +          istep,nstep,isteph,nsteph,iprecip,nprecip
     !###################################################################
@@ -2222,7 +2221,7 @@ PROGRAM bsnap
           do i=1,5
             itimefo(i,2)=itimeo(i)
           end do
-          write(9,*) 'fldout. ',itimeo
+          write(iulog,*) 'fldout. ',itimeo
         end if
       end if
     
@@ -2356,10 +2355,10 @@ PROGRAM bsnap
   end if
 
   if(istop == 0 .AND. lstepr < nstep .AND. lstepr < nstepr) then
-    write(9,*) 'ERROR: Due to space problems the release period was'
-    write(9,*) '       shorter than requested.'
-    write(9,*) '   No. of requested release timesteps: ',nstepr
-    write(9,*) '   No. of simulated release timesteps: ',lstepr
+    write(iulog,*) 'ERROR: Due to space problems the release period was'
+    write(iulog,*) '       shorter than requested.'
+    write(iulog,*) '   No. of requested release timesteps: ',nstepr
+    write(iulog,*) '   No. of simulated release timesteps: ',lstepr
     write(6,*) 'ERROR: Due to space problems the release period was'
     write(6,*) '       shorter than requested.'
     write(6,*) '   No. of requested release timesteps: ',nstepr
@@ -2374,10 +2373,10 @@ PROGRAM bsnap
     write(*,'(''mhmin='',f10.2)') mhmin
     write(*,*)
   ! b_end
-    write(9,*) ' SNAP run finished'
+    write(iulog,*) ' SNAP run finished'
     write(6,*) ' SNAP run finished'
   else
-    write(9,*) ' ------- SNAP ERROR EXIT -------'
+    write(iulog,*) ' ------- SNAP ERROR EXIT -------'
     write(6,*) ' ------- SNAP ERROR EXIT -------'
   end if
 

@@ -47,9 +47,9 @@ subroutine filesort(iunit,ierror)
   USE fileInfoML
   USE snapfldML
   USE snapfilML
-  USE snapdebugML
   USE snapgrdML
   USE snapdimML, only: mavail, nk
+  USE snapdebug, only: iulog, idebug
 
   implicit none
 
@@ -72,13 +72,13 @@ subroutine filesort(iunit,ierror)
   integer :: k,ihrmin,iprmin,nmin,ihrmax,iprmax,nmax,ktest,modsurf,j
 
   if(idebug == 1) then
-    write(9,*)
-    write(9,*) 'FILESORT------------------------------------------'
-    write(9,*) 'iprod,igrid:   ',iprod,igrid
-    write(9,*) 'FILES.    nfilef= ',nfilef
+    write(iulog,*)
+    write(iulog,*) 'FILESORT------------------------------------------'
+    write(iulog,*) 'iprod,igrid:   ',iprod,igrid
+    write(iulog,*) 'FILES.    nfilef= ',nfilef
     do nf=1,nfilef
-      write(9,*) nf,'  ',filef(nf)(1:lenstr(filef(nf),1))
-      write(9,*) '      min,max fc:',(limfcf(i,nf),i=1,2)
+      write(iulog,*) nf,'  ',filef(nf)(1:lenstr(filef(nf),1))
+      write(iulog,*) '      min,max fc:',(limfcf(i,nf),i=1,2)
     end do
   end if
 
@@ -219,9 +219,9 @@ subroutine filesort(iunit,ierror)
   end do
 
   if(navail > mavail) then
-    write(9,*) 'WARNING : TOO MANY AVAILABLE TIME STEPS'
-    write(9,*) '          no.,max(MAVAIL): ',navail,mavail
-    write(9,*) '    CONTINUING WITH RECORDED DATA'
+    write(iulog,*) 'WARNING : TOO MANY AVAILABLE TIME STEPS'
+    write(iulog,*) '          no.,max(MAVAIL): ',navail,mavail
+    write(iulog,*) '    CONTINUING WITH RECORDED DATA'
     write(6,*) 'WARNING : TOO MANY AVAILABLE TIME STEPS'
     write(6,*) '          max (MAVAIL): ',mavail
     write(6,*) '    CONTINUING WITH RECORDED DATA'
@@ -230,9 +230,9 @@ subroutine filesort(iunit,ierror)
 
 !#############################################################################
 !      if(idebug.eq.1) then
-!        write(9,*) 'ALL STEPS UNSORTED AVAILABLE    navail=',navail
+!        write(iulog,*) 'ALL STEPS UNSORTED AVAILABLE    navail=',navail
 !        do n=1,navail
-!          write(9,fmt='(i4,'':'',7(1x,i4),1x,i6,2i5)')
+!          write(iulog,fmt='(i4,'':'',7(1x,i4),1x,i6,2i5)')
 !     +				n,(iavail(i,n),i=1,10)
 !        end do
 !      end if
@@ -263,16 +263,16 @@ subroutine filesort(iunit,ierror)
   end do
 
   if(idebug == 1) then
-    write(9,*) 'UNSORTED AVAILABLE    navail=',navail
+    write(iulog,*) 'UNSORTED AVAILABLE    navail=',navail
     do n=1,navail
-      write(9,fmt='(i4,'':'',7(1x,i4),1x,i6,2i5)') &
+      write(iulog,fmt='(i4,'':'',7(1x,i4),1x,i6,2i5)') &
       n,(iavail(n))
     end do
   end if
 
   if(navail < 2) then
-    write(9,*) 'NOT ENOUGH AVAILABLE DATA'
-    write(9,*) '  Total no. of recorded timesteps: ',navail
+    write(iulog,*) 'NOT ENOUGH AVAILABLE DATA'
+    write(iulog,*) '  Total no. of recorded timesteps: ',navail
     write(6,*) 'NOT ENOUGH AVAILABLE DATA'
     write(6,*) '  Total no. of recorded timesteps: ',navail
     ierror=1
@@ -350,22 +350,22 @@ subroutine filesort(iunit,ierror)
   end do
 
   if(idebug == 1) then
-    write(9,*) 'FORWARD SORTED AVAILABLE    navail=',navail
+    write(iulog,*) 'FORWARD SORTED AVAILABLE    navail=',navail
     n=iaforw
     do while (n > 0)
-      write(9,fmt='(i4,'':'',7(1x,i4),1x,i6,2i5)') &
+      write(iulog,fmt='(i4,'':'',7(1x,i4),1x,i6,2i5)') &
       n,(iavail(n))
       n=iavail(n)%nAvail
     end do
-    write(9,*) 'BACKWARD SORTED AVAILABLE    navail=',navail
+    write(iulog,*) 'BACKWARD SORTED AVAILABLE    navail=',navail
     n=iaback
     do while (n > 0)
-      write(9,fmt='(i4,'':'',7(1x,i4),1x,i6,2i5)') &
+      write(iulog,fmt='(i4,'':'',7(1x,i4),1x,i6,2i5)') &
       n,(iavail(n))
       n=iavail(n)%pAvail
     end do
-    write(9,*) '--------------------------------------------------'
-    write(9,*)
+    write(iulog,*) '--------------------------------------------------'
+    write(iulog,*)
   end if
 
 !..time range
