@@ -11,7 +11,7 @@ include ../common/snap.mk
 create_bomb_input: create_bomb_input.o
 	$(F77) ${F77FLAGS} -I. $< -o $@
 
-bsnap_nbomb: link_incfiles $(BOBJ) $(MODELOBJ) milib.o c2fgetvar.o c2fgetarg.o
+bsnap_nbomb: $(BOBJ) $(MODELOBJ) milib.o c2fgetvar.o c2fgetarg.o
 	$(F77) $(F77FLAGS) $(BOBJ) $(MODELOBJ) $(BLIBS) -o $@
 
 clean: clean_links

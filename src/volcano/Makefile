@@ -7,7 +7,7 @@ all: bsnap_volcano
 
 include ../common/snap.mk
 
-bsnap_volcano: link_incfiles $(BOBJ) $(MODELOBJ)
+bsnap_volcano: $(BOBJ) $(MODELOBJ)
 	$(F77) $(F77FLAGS) $(BOBJ) $(MODELOBJ) $(BLIBS) -o $@
 
 clean: clean_links

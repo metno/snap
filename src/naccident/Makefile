@@ -16,7 +16,7 @@ create_naccident_input: create_naccident_input.o
 create_naccident_output: create_naccident_output.o
 	${F77} ${F77FLAGS} -I. $< -o $@
 
-bsnap_naccident: link_incfiles $(BOBJ) $(MODELOBJ) milib.o c2fgetvar.o c2fgetarg.o
+bsnap_naccident: $(BOBJ) $(MODELOBJ) milib.o c2fgetvar.o c2fgetarg.o
 	${F77} $(F77FLAGS) $(BOBJ) $(MODELOBJ) $(BLIBS) -o bsnap_naccident
 
 
