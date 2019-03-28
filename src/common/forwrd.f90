@@ -52,14 +52,7 @@ subroutine forwrd(tf1,tf2,tnow,tstep,np,pextra)
   USE particleML
   USE snapgrdML
   USE forwrd_dxML, only: forwrd_dx
-#if defined(DRHOOK)
-  USE PARKIND1  ,ONLY : JPIM     ,JPRB
-  USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
-#endif
   implicit none
-#if defined(DRHOOK)
-  REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
-#endif
 
   real, INTENT(IN) :: tf1,tf2,tnow,tstep
 
@@ -71,20 +64,10 @@ subroutine forwrd(tf1,tf2,tnow,tstep,np,pextra)
   REAL*8 :: dx1, dx2, dy1, dy2, dz1, dz2, u, v
   REAL :: vmin, vmax
 
-#if defined(DRHOOK)
-! Before the very first statement
-  IF (LHOOK) CALL DR_HOOK('FORWRD',0,ZHOOK_HANDLE)
-#endif
-
 
   if (np == 0) then
   ! init
     call forwrd_dx(tf1,tf2,tnow,tstep,np,nparticle,dx1,dy1,dz1,u,v)
-#if defined(DRHOOK)
-  !     before the return statement
-    IF (LHOOK) CALL DR_HOOK('FORWRD',1,ZHOOK_HANDLE)
-#endif
-
     return
   endif
 
@@ -127,10 +110,6 @@ subroutine forwrd(tf1,tf2,tnow,tstep,np,pextra)
 #endif
   if(pdata(np)%z > vlevel(1)) pdata(np)%z=vlevel( 1)
 
-#if defined(DRHOOK)
-!     before the return statement
-  IF (LHOOK) CALL DR_HOOK('FORWRD',1,ZHOOK_HANDLE)
-#endif
   return
 end subroutine forwrd
 end module forwrdML

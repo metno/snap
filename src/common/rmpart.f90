@@ -35,15 +35,7 @@ subroutine rmpart(rmlimit)
   USE snapgrdML
   USE snapparML
   USE snapdimML, only: mdefcomp, nx, ny, nk
-#if defined(DRHOOK)
-  USE PARKIND1  ,ONLY : JPIM     ,JPRB
-  USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
-#endif
   implicit none
-#if defined(DRHOOK)
-  REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
-#endif
-
         
 
   real ::    rmlimit
@@ -56,10 +48,6 @@ subroutine rmpart(rmlimit)
   real ::    pbqdist(mdefcomp)
 
 
-#if defined(DRHOOK)
-! Before the very first statement
-  IF (LHOOK) CALL DR_HOOK('RMPART',0,ZHOOK_HANDLE)
-#endif
   xmin=1.
   ymin=1.
   xmax=float(nx)
@@ -159,10 +147,6 @@ subroutine rmpart(rmlimit)
 !..note: if pmlost>0 we lost mass inside the grid area
 !..      (no later plumes to take the mass).
 
-#if defined(DRHOOK)
-!     before the return statement
-  IF (LHOOK) CALL DR_HOOK('RMPART',1,ZHOOK_HANDLE)
-#endif
   return
 end subroutine rmpart
 end module rmpartML

@@ -31,10 +31,6 @@ subroutine decayDeps(tstep)
 !            due to decay
 !     NEEDS TO BE RUN BEFORE 1 decay
 
-#if defined(DRHOOK)
-  USE PARKIND1  ,ONLY : JPIM     ,JPRB
-  USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
-#endif
   implicit none
 
   real :: tstep
@@ -44,10 +40,6 @@ subroutine decayDeps(tstep)
   logical, save :: prepare = .TRUE. 
 
 
-#if defined(DRHOOK)
-! Before the very first statement
-  IF (LHOOK) CALL DR_HOOK('DECAYDEPS',0,ZHOOK_HANDLE)
-#endif
 
   if(prepare) then
   
@@ -75,10 +67,6 @@ subroutine decayDeps(tstep)
       enddo
     endif
   enddo
-#if defined(DRHOOK)
-!     before the return statement
-  IF (LHOOK) CALL DR_HOOK('DECAYDEPS',1,ZHOOK_HANDLE)
-#endif
   return
 end subroutine decayDeps
 end module decaydepsML

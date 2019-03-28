@@ -28,26 +28,11 @@ subroutine decay(n)
 !  Purpose:  Decrease radioactive contents due to decay
 !    WARNING:   make sure decayDeps is run once before running decay
 
-#if defined(DRHOOK)
-  USE PARKIND1  ,ONLY : JPIM     ,JPRB
-  USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
-#endif
   use particleML
   implicit none
-#if defined(DRHOOK)
-  REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
-#endif
 
-        
   integer, INTENT(IN) :: n
   integer :: m
-
-
-
-#if defined(DRHOOK)
-! Before the very first statement
-  IF (LHOOK) CALL DR_HOOK('DECAY',0,ZHOOK_HANDLE)
-#endif
 
 
 !      do n=1,npart loop outside this function
@@ -57,11 +42,6 @@ subroutine decay(n)
   end if
 !      end do
 
-
-#if defined(DRHOOK)
-!     before the return statement
-  IF (LHOOK) CALL DR_HOOK('DECAY',1,ZHOOK_HANDLE)
-#endif
   return
 end subroutine decay
 end module decayML

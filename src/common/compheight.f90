@@ -38,14 +38,7 @@ subroutine compheight
 !    - lower model level is level 2
 
 
-#if defined(DRHOOK)
-  USE PARKIND1  ,ONLY : JPIM     ,JPRB
-  USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
-#endif
   implicit none
-#if defined(DRHOOK)
-  REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
-#endif
 
         
 
@@ -53,10 +46,6 @@ subroutine compheight
   real ::    ginv,rtab,p,pih,pif,h1,h2
   real ::    pihl(nx,ny),hlev(nx,ny)
 
-#if defined(DRHOOK)
-! Before the very first statement
-  IF (LHOOK) CALL DR_HOOK('COMPHEIGHT',0,ZHOOK_HANDLE)
-#endif
 
 !##################################################################
 !     real dz1min,dz1max,dz2min,dz2max,hhhmin,hhhmax,dzz
@@ -150,10 +139,6 @@ subroutine compheight
 !     end do
 !##################################################################
 
-#if defined(DRHOOK)
-!     before the return statement
-  IF (LHOOK) CALL DR_HOOK('COMPHEIGHT',1,ZHOOK_HANDLE)
-#endif
   return
 end subroutine compheight
 end module compheightML

@@ -49,14 +49,7 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
 
 !  np: particle-id from particle loop for icall=2,3,4
 
-#if defined(DRHOOK)
-  USE PARKIND1  ,ONLY : JPIM     ,JPRB
-  USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
-#endif
   implicit none
-#if defined(DRHOOK)
-  REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
-#endif
 
 !..input
   integer, INTENT(IN) :: icall,istep,nstep,nsteph, np
@@ -136,10 +129,6 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
 
 
 !---------------------------------------------------------
-#if defined(DRHOOK)
-! Before the very first statement
-  IF (LHOOK) CALL DR_HOOK('ENSEMBLE',0,ZHOOK_HANDLE)
-#endif
 
   if (nxep < 2 .OR. nyep < 2) return
 
@@ -777,10 +766,6 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
 
   end if
 
-#if defined(DRHOOK)
-!     before the return statement
-  IF (LHOOK) CALL DR_HOOK('ENSEMBLE',1,ZHOOK_HANDLE)
-#endif
   return
 end subroutine ensemble
 end module ensembleML

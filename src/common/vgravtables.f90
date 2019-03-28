@@ -32,14 +32,7 @@ subroutine vgravtables
   USE snapparML
   use snapdimML, only: numpresvg, numtempvg
 
-#if defined(DRHOOK)
-  USE PARKIND1  ,ONLY : JPIM     ,JPRB
-  USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
-#endif
   implicit none
-#if defined(DRHOOK)
-  REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
-#endif
   real :: t        ! absolute temperature (K)
   real :: dp        ! particle size um
   real :: rp        ! particle density in g/m3
@@ -50,11 +43,6 @@ subroutine vgravtables
   integer :: n,m,ip,it
 !---------------------------------------
 
-
-#if defined(DRHOOK)
-! Before the very first statement
-  IF (LHOOK) CALL DR_HOOK('VGRAVTABLES',0,ZHOOK_HANDLE)
-#endif
 
   tincrvg= 200./float(numtempvg-1)
   tbasevg= 273. - 120. - tincrvg
@@ -90,10 +78,6 @@ subroutine vgravtables
   
   end do
 
-#if defined(DRHOOK)
-!     before the return statement
-  IF (LHOOK) CALL DR_HOOK('VGRAVTABLES',1,ZHOOK_HANDLE)
-#endif
   return
 end subroutine vgravtables
 

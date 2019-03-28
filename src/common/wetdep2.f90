@@ -37,15 +37,7 @@ subroutine wetdep2(tstep,np,pextra)
   USE snapparML
   USE snaptabML
   USE snapdimML, only: mdefcomp
-#if defined(DRHOOK)
-  USE PARKIND1  ,ONLY : JPIM     ,JPRB
-  USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
-#endif
   implicit none
-#if defined(DRHOOK)
-  REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
-#endif
-
 
   real, INTENT(IN) ::    tstep
 
@@ -77,10 +69,6 @@ subroutine wetdep2(tstep,np,pextra)
 
   save depconst
 
-#if defined(DRHOOK)
-! Before the very first statement
-  IF (LHOOK) CALL DR_HOOK('WETDEP2',0,ZHOOK_HANDLE)
-#endif
 ! initalization
   if(np == 0) then
   
@@ -132,10 +120,6 @@ subroutine wetdep2(tstep,np,pextra)
     write(9,*) '-------------------------------------------------'
   !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   ! end init
-#if defined(DRHOOK)
-  !     before the return statement
-    IF (LHOOK) CALL DR_HOOK('WETDEP1',1,ZHOOK_HANDLE)
-#endif
     return
   end if
 
@@ -219,10 +203,6 @@ subroutine wetdep2(tstep,np,pextra)
 !     +   write(88,*) 'WETDEP2 depmin,depmax: ',depmin,depmax
 !      write(88,*) '---------------------------------------'
 !################################################################
-#if defined(DRHOOK)
-!     before the return statement
-  IF (LHOOK) CALL DR_HOOK('WETDEP1',1,ZHOOK_HANDLE)
-#endif
   return
 end subroutine wetdep2
 end module wetdep2ML

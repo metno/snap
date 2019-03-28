@@ -44,14 +44,7 @@ subroutine bldp
 !    - lower model level is level 2
 
 
-#if defined(DRHOOK)
-  USE PARKIND1  ,ONLY : JPIM     ,JPRB
-  USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
-#endif
   implicit none
-#if defined(DRHOOK)
-  REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
-#endif
 
   real ::    pih(nk),pif(nk),zh(nk),zf(nk),thh(nk)
 
@@ -64,10 +57,6 @@ subroutine bldp
   real ::    rri(4,nk)
   integer :: nrri(nk)
 
-#if defined(DRHOOK)
-! Before the very first statement
-  IF (LHOOK) CALL DR_HOOK('BLDP',0,ZHOOK_HANDLE)
-#endif
 
 ! test----------------------------------------------
 !######################################################################
@@ -319,10 +308,6 @@ subroutine bldp
   end do
 ! test----------------------------------------------
 
-#if defined(DRHOOK)
-!     before the return statement
-  IF (LHOOK) CALL DR_HOOK('BLDP',1,ZHOOK_HANDLE)
-#endif
   return
 end subroutine bldp
 end module bldpML

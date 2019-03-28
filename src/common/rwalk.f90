@@ -50,14 +50,7 @@ subroutine rwalk(tstep,blfullmix,np,pextra)
   USE snapgrdML
   USE snapparML
 
-#if defined(DRHOOK)
-  USE PARKIND1  ,ONLY : JPIM     ,JPRB
-  USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
-#endif
   implicit none
-#if defined(DRHOOK)
-  REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
-#endif
 
   REAL, INTENT(IN) ::    tstep
   LOGICAL, INTENT(IN) :: blfullmix
@@ -78,10 +71,6 @@ subroutine rwalk(tstep,blfullmix,np,pextra)
   real*8 :: hfactor, rv, rvmax
 
 
-#if defined(DRHOOK)
-! Before the very first statement
-  IF (LHOOK) CALL DR_HOOK('RWALK',0,ZHOOK_HANDLE)
-#endif
 ! initialization
   if (np == 0) then
     hmax = 2500.0
@@ -105,10 +94,6 @@ subroutine rwalk(tstep,blfullmix,np,pextra)
   ! l-eta below mixing height
     vrdblb=lmax*tfactor
     vrqrt=vrange*0.25
-#if defined(DRHOOK)
-  !     before the return statement
-    IF (LHOOK) CALL DR_HOOK('RWALK',1,ZHOOK_HANDLE)
-#endif
     return
   end if
 
@@ -250,10 +235,6 @@ subroutine rwalk(tstep,blfullmix,np,pextra)
   end if
 !--------------------------------------
 
-#if defined(DRHOOK)
-!     before the return statement
-  IF (LHOOK) CALL DR_HOOK('RWALK',1,ZHOOK_HANDLE)
-#endif
   return
 end subroutine rwalk
 end module rwalkML

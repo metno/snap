@@ -27,14 +27,7 @@ subroutine argoswrite(iunit,name,iparam,itimeargos,nx,ny,dblfield)
 
   USE snapdebugML
 
-#if defined(DRHOOK)
-  USE PARKIND1  ,ONLY : JPIM     ,JPRB
-  USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
-#endif
   implicit none
-#if defined(DRHOOK)
-  REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
-#endif
 
 !..input
   integer :: iunit,iparam,nx,ny,itimeargos(5)
@@ -44,11 +37,6 @@ subroutine argoswrite(iunit,name,iparam,itimeargos,nx,ny,dblfield)
 !..local
   integer :: nxy,ij,ij1,ij2,i
   double precision :: dblmin,dblmax
-
-#if defined(DRHOOK)
-! Before the very first statement
-  IF (LHOOK) CALL DR_HOOK('ARGOSWRITE',0,ZHOOK_HANDLE)
-#endif
 
   nxy=nx*ny
 
@@ -87,10 +75,6 @@ subroutine argoswrite(iunit,name,iparam,itimeargos,nx,ny,dblfield)
     write(9,*) 'ARGOS ',name,iparam,dblmin,dblmax
   end if
 
-#if defined(DRHOOK)
-!     before the return statement
-  IF (LHOOK) CALL DR_HOOK('ARGOSWRITE',1,ZHOOK_HANDLE)
-#endif
   return
 
   900 continue
