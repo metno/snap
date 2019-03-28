@@ -54,10 +54,10 @@ subroutine compheight
 !..compute height of model levels (in the model grid)
 
 !##################################################################
-!       write(9,*) 'nk: ',nk
-!       write(9,*) 'k,alevel,blevel,vlevel,ahalf,bhalf,vhalf:'
+!       write(iulog,*) 'nk: ',nk
+!       write(iulog,*) 'k,alevel,blevel,vlevel,ahalf,bhalf,vhalf:'
 !       do k=nk,1,-1
-!         write(9,fmt='(1x,i2,'':'',2(f10.2,2f7.4))')
+!         write(iulog,fmt='(1x,i2,'':'',2(f10.2,2f7.4))')
 !    +		  k,alevel(k),blevel(k),vlevel(k),
 !    +		    ahalf(k),bhalf(k),vhalf(k)
 !       end do
@@ -119,8 +119,8 @@ subroutine compheight
       end do
     end do
   !##################################################################
-  !	write(9,*) 'k,hhhmin,hhhmax: ',k,':',hhhmin,hhhmax
-  !	write(9,*) 'dz1min,dz1max,dz2min,dz2max:',
+  !	write(iulog,*) 'k,hhhmin,hhhmax: ',k,':',hhhmin,hhhmax
+  !	write(iulog,*) 'dz1min,dz1max,dz2min,dz2max:',
   !    +              dz1min,dz1max,dz2min,dz2max
   !##################################################################
   end do
@@ -134,7 +134,7 @@ subroutine compheight
 !     i=nx/2
 !     j=ny/2
 !     do k=nk,1,-1
-!	write(9,fmt='(''    k,hlayer,hlevel:'',i3,2f8.0)')
+!	write(iulog,fmt='(''    k,hlayer,hlevel:'',i3,2f8.0)')
 !    +			    k,hlayer2(i,j,k),hlevel2(i,j,k)
 !     end do
 !##################################################################

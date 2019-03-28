@@ -50,7 +50,7 @@ subroutine filesort_nc
   USE snapgrdML
   USE snapfldML
   USE snapmetML, ONLY: start4d, count4d, xwindv, has_dummy_dim
-  USE snapdebugML
+  USE snapdebug, only: iulog, idebug
   USE readfield_ncML, only: check, calc_2d_start_length, nfcheckload
   USE netcdf
   USE snapdimML, only: nx, ny, mavail
@@ -76,7 +76,7 @@ subroutine filesort_nc
     if(status /= NF90_NOERR) then
       write(*,*) "cannot open ", trim(filef(nf)), ":", &
       trim(nf90_strerror(status))
-      write(9,*) "cannot open ", trim(filef(nf)), ":", &
+      write(iulog,*) "cannot open ", trim(filef(nf)), ":", &
       trim(nf90_strerror(status))
       cycle
     endif
@@ -112,9 +112,9 @@ subroutine filesort_nc
       navail = navail + 1
       if(navail > mavail) then
         if (navail == mavail) then
-          write(9,*) 'WARNING : TOO MANY AVAILABLE TIME STEPS'
-          write(9,*) '          no.,max(MAVAIL): ',navail,mavail
-          write(9,*) '    CONTINUING WITH RECORDED DATA'
+          write(iulog,*) 'WARNING : TOO MANY AVAILABLE TIME STEPS'
+          write(iulog,*) '          no.,max(MAVAIL): ',navail,mavail
+          write(iulog,*) '    CONTINUING WITH RECORDED DATA'
           write(6,*) 'WARNING : TOO MANY AVAILABLE TIME STEPS'
           write(6,*) '          max (MAVAIL): ',mavail
           write(6,*) '    CONTINUING WITH RECORDED DATA'
@@ -226,22 +226,22 @@ subroutine filesort_nc
   end do
 
   if(idebug == 1) then
-    write(9,*)
-    write(9,*) 'FILESORT------------------------------------------'
+    write(iulog,*)
+    write(iulog,*) 'FILESORT------------------------------------------'
   !..debug message of forward list
     j = kavail(1)
     do while (j > 0)
-      write(9,*) "file info forward",j,": ",iavail(j)%aYear, &
+      write(iulog,*) "file info forward",j,": ",iavail(j)%aYear, &
       iavail(j)%aMonth, &
       iavail(j)%aDay,iavail(j)%aHour,trim(filef(iavail(j)%fileNo))
       j = iavail(j)%nAvail
     end do
 
-    write(9,*)
-    write(9,*) 'FILESORT--backward--------------------------------'
+    write(iulog,*)
+    write(iulog,*) 'FILESORT--backward--------------------------------'
     j = kavail(2)
     do while (j > 0)
-      write(9,*) "file info backward",j,": ",iavail(j)%aYear, &
+      write(iulog,*) "file info backward",j,": ",iavail(j)%aYear, &
       iavail(j)%aMonth, &
       iavail(j)%aDay,iavail(j)%aHour,trim(filef(iavail(j)%fileNo))
       j = iavail(j)%pAvail

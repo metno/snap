@@ -26,6 +26,7 @@ module ftestML
 subroutine ftest(name,k1,k2,nx,ny,nk,field,iundef)
 
 !  Purpose: Test field, print min,mean,max values.
+  USE snapdebug, only: iulog
 
 
   implicit none
@@ -90,14 +91,14 @@ subroutine ftest(name,k1,k2,nx,ny,nk,field,iundef)
       fmean=0.
     end if
     if(k1 /= k2) then
-      write(9,fmt='(5x,a8,1x,i3,3(1x,e13.5))') &
+      write(iulog,fmt='(5x,a8,1x,i3,3(1x,e13.5))') &
       name,k,fmin,fmean,fmax
     else
-      write(9,fmt='(5x,a8,1x,3x,3(1x,e13.5))') &
+      write(iulog,fmt='(5x,a8,1x,3x,3(1x,e13.5))') &
       name,  fmin,fmean,fmax
     end if
   end do
-  flush(9)
+  flush(iulog)
 
   return
 end subroutine ftest

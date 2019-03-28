@@ -15,7 +15,7 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !
-module snapdebugML
+module snapdebug
     implicit none
     private
 !
@@ -26,5 +26,6 @@ module snapdebugML
 !        prints to standard out (not the log file)
 !
     integer, public, save :: idebug
+    integer, parameter, public :: iulog = 9
 !
-end module snapdebugML
+end module snapdebug

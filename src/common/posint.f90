@@ -41,6 +41,7 @@ subroutine posint(np,tf1,tf2,tnow,pextra)
   USE snapfldML
   USE snapparML
   USE snapdimML, only: nk
+  USE snapdebug, only: iulog
 
   implicit none
 
@@ -74,7 +75,7 @@ subroutine posint(np,tf1,tf2,tnow,pextra)
       else
         vminprec=vlevel(nk)
       end if
-      write(9,*) 'POSINT. precmin,vminprec: ',precmin,vminprec
+      write(iulog,*) 'POSINT. precmin,vminprec: ',precmin,vminprec
     end if
   ! end initialization
     return

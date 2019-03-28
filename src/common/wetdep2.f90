@@ -37,6 +37,7 @@ subroutine wetdep2(tstep,np,pextra)
   USE snapparML
   USE snaptabML
   USE snapdimML, only: mdefcomp
+  USE snapdebug, only: iulog
   implicit none
 
   real, INTENT(IN) ::    tstep
@@ -76,13 +77,13 @@ subroutine wetdep2(tstep,np,pextra)
       rm=radiusmym(m)
       depconst(m)=b0 + b1*rm + b2*rm*rm + b3*rm*rm*rm
     !################################################################
-      write(9,*) 'WETDEP2 m,r,depconst(m): ',m,rm,depconst(m)
+      write(iulog,*) 'WETDEP2 m,r,depconst(m): ',m,rm,depconst(m)
     !################################################################
     end do
   
   !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    write(9,*) '-------------------------------------------------'
-    write(9,*) 'WETDEP2 PREPARE .... q,deprate(1:ndefcomp):'
+    write(iulog,*) '-------------------------------------------------'
+    write(iulog,*) 'WETDEP2 PREPARE .... q,deprate(1:ndefcomp):'
   !##############################################
   ! c	dep=radiusmym(1)
   ! c	radiusmym(1)=1.0
@@ -111,13 +112,13 @@ subroutine wetdep2(tstep,np,pextra)
         deprate= 1.0 - exp(-tstep*rkw)
         ratdep(m)=deprate
       end do
-      write(9,1010) q,(ratdep(m),m=1,ndefcomp)
+      write(iulog,1010) q,(ratdep(m),m=1,ndefcomp)
       1010 format(1x,f5.1,':',12f7.4)
     end do
   !##############################################
   ! c	radiusmym(1)=dep
   !##############################################
-    write(9,*) '-------------------------------------------------'
+    write(iulog,*) '-------------------------------------------------'
   !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   ! end init
     return

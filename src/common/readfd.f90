@@ -43,7 +43,7 @@ subroutine readfd(iunit,nav,ivcord,iparam,ilevel,ihdisp, &
   USE fileInfoML
   USE snapfilML
   USE snapgrdML
-  USE snapdebugML
+  USE snapdebug, only: iulog, idebug
   USE snapdimML, only: nx, ny, maxsiz, ldata
   implicit none
 
@@ -92,7 +92,7 @@ subroutine readfd(iunit,nav,ivcord,iparam,ilevel,ihdisp, &
   
   elseif(nav > navail) then
   
-    write(9,*) 'PROGRAM ERROR IN READFD. nav,navail: ',nav,navail
+    write(iulog,*) 'PROGRAM ERROR IN READFD. nav,navail: ',nav,navail
     write(6,*) 'PROGRAM ERROR IN READFD. nav,navail: ',nav,navail
     ierror=1
     return
@@ -161,7 +161,7 @@ subroutine readfd(iunit,nav,ivcord,iparam,ilevel,ihdisp, &
     call mrfturbo(imr,filef(nf),iunit,in,ipack,nx*ny,field, &
     &                 1.0,ldata,idata,ierror)
   !###################################################################
-    if(ierror == 0) write(9,fmt='(1x,11i6)') (idata(i),i=1,2), &
+    if(ierror == 0) write(iulog,fmt='(1x,11i6)') (idata(i),i=1,2), &
     (idata(i),i=12,14), &
     (idata(i),i=3,8)
   !###################################################################
@@ -175,7 +175,7 @@ subroutine readfd(iunit,nav,ivcord,iparam,ilevel,ihdisp, &
   call mrfturbo(imr,filef(nf),iunit,in,ipack,maxsiz,fdata, &
   &               1.0,ldata,idata,ierror)
 !###################################################################
-  if(ierror == 0) write(9,fmt='(1x,11i6)') (idata(i),i=1,2), &
+  if(ierror == 0) write(iulog,fmt='(1x,11i6)') (idata(i),i=1,2), &
   (idata(i),i=12,14), &
   (idata(i),i=3,8)
 !###################################################################
@@ -204,21 +204,21 @@ subroutine readfd(iunit,nav,ivcord,iparam,ilevel,ihdisp, &
       iy1=iy-(ny-1)*ixystp
     end if
     if(ix1 < 1 .OR. iy1 < 1) then
-      write(9,*) '*READFD* Field dimension problem.'
-      write(9,*) '         Input x,y base:  ',ixbase,iybase
-      write(9,*) '         Input x/y step:  ',ixystp
-      write(9,*) '         Program x,y dim: ',nx,ny
-      write(9,*) '         Field       dim: ',ix,iy
+      write(iulog,*) '*READFD* Field dimension problem.'
+      write(iulog,*) '         Input x,y base:  ',ixbase,iybase
+      write(iulog,*) '         Input x/y step:  ',ixystp
+      write(iulog,*) '         Program x,y dim: ',nx,ny
+      write(iulog,*) '         Field       dim: ',ix,iy
       close(iunit)
       stop 1
     end if
     if(ix1 /= ixbase .OR. iy1 /= iybase) then
-      write(9,*) '*READFD* Field area moved.'
-      write(9,*) '         Input x,y base:  ',ixbase,iybase
-      write(9,*) '         Input x/y step:  ',ixystp
-      write(9,*) '         Program x,y dim: ',nx,ny
-      write(9,*) '         Field       dim: ',ix,iy
-      write(9,*) '         Used  x,y base:  ',ix1,iy1
+      write(iulog,*) '*READFD* Field area moved.'
+      write(iulog,*) '         Input x,y base:  ',ixbase,iybase
+      write(iulog,*) '         Input x/y step:  ',ixystp
+      write(iulog,*) '         Program x,y dim: ',nx,ny
+      write(iulog,*) '         Field       dim: ',ix,iy
+      write(iulog,*) '         Used  x,y base:  ',ix1,iy1
       ixbase=ix1
       iybase=iy1
     end if

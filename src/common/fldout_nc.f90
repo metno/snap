@@ -32,7 +32,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   USE snapparML
   USE snaptabML
   USE snapargosML
-  USE snapdebugML
+  USE snapdebug, only: iulog, idebug
   USE ftestML, only: ftest
   USE netcdf
   USE snapdimML, only: mcomp, ldata, nx, ny, nk, nxmc, nymc
@@ -356,7 +356,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
 !..output...............................................................
 
-  write(9,*) '*FLDOUT_NC*', numfields
+  write(iulog,*) '*FLDOUT_NC*', numfields
 
   if(numfields > 0) then
   !..initialization of file
@@ -365,7 +365,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     call check(nf90_close(iunit))
     numfields=0
     call rmfile(filnam,0,ierror)
-    write(9,*) 'creating fldout_nc: ',filnam
+    write(iulog,*) 'creating fldout_nc: ',filnam
     ihrs_pos = 0
     call check(nf90_create(filnam, NF90_NETCDF4, iunit), filnam)
     call check(nf90_def_dim(iunit, "time", NF90_UNLIMITED, t_dimid), &
@@ -793,10 +793,10 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       end if
     end do
   
-    write(9,*) ' component: ',compname(mm)
-    write(9,*) '   Bq,particles in    abl: ',bqtot1,nptot1
-    write(9,*) '   Bq,particles above abl: ',bqtot2,nptot2
-    write(9,*) '   Bq,particles          : ',bqtot1+bqtot2, &
+    write(iulog,*) ' component: ',compname(mm)
+    write(iulog,*) '   Bq,particles in    abl: ',bqtot1,nptot1
+    write(iulog,*) '   Bq,particles above abl: ',bqtot2,nptot2
+    write(iulog,*) '   Bq,particles          : ',bqtot1+bqtot2, &
     nptot1+nptot2
   
   !..instant part of Bq in boundary layer
@@ -1265,7 +1265,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     
       mm= idefcomp(m)
     
-      if(idebug == 1) write(9,*) ' component: ',compname(mm)
+      if(idebug == 1) write(iulog,*) ' component: ',compname(mm)
     
     !..using the field level identifier to identify the component
       idata(7)=idcomp(mm)
@@ -1549,7 +1549,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 !..close output felt (field) file
 !      call mwfelt(13,filnam,iunit,1,nx*ny,field1,1.0,
 !     +            ldata,idata,ierr)
-  920 write(9,*) '*FLDOUT_NC*  Terminates due to write error.'
+  920 write(iulog,*) '*FLDOUT_NC*  Terminates due to write error.'
 
   return
 end subroutine fldout_nc
@@ -1559,12 +1559,13 @@ subroutine nc_declare_3d(iunit, dimids, varid, &
   chksz, varnm, &
   units, stdnm, metnm)
   USE netcdf
+  USE snapdebug, only: iulog
   implicit none
   INTEGER, INTENT(OUT)   :: varid
   INTEGER, INTENT(IN)    :: iunit, dimids(3), chksz(3)
   CHARACTER(LEN=*), INTENT(IN) :: varnm, stdnm, metnm, units
 
-  write(9,*) "declaring ", iunit, TRIM(varnm), TRIM(units) &
+  write(iulog,*) "declaring ", iunit, TRIM(varnm), TRIM(units) &
   ,TRIM(stdnm),TRIM(metnm)
   call check(nf90_def_var(iunit, TRIM(varnm), &
   NF90_FLOAT, dimids, varid), "def_"//varnm)
@@ -1586,13 +1587,14 @@ subroutine nc_declare_4d(iunit, dimids, varid, &
   chksz, varnm, &
   units, stdnm, metnm)
   USE netcdf
+  USE snapdebug, only: iulog
   implicit none
   INTEGER, INTENT(OUT)   :: varid
   INTEGER, INTENT(IN)    :: iunit, dimids(4), chksz(4)
   CHARACTER(LEN=*), INTENT(IN) :: varnm, stdnm, metnm, units
 
 
-  write(9,*) "declaring ", iunit, TRIM(varnm), TRIM(units) &
+  write(iulog,*) "declaring ", iunit, TRIM(varnm), TRIM(units) &
   ,TRIM(stdnm),TRIM(metnm)
   call check(nf90_def_var(iunit, TRIM(varnm), &
   NF90_FLOAT, dimids, varid), "def_"//varnm)

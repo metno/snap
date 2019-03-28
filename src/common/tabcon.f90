@@ -30,6 +30,7 @@ subroutine tabcon
 
   USE snaptabML
   USE snapdimML, only: mpretab
+  USE snapdebug, only: iulog
   implicit none
 
   integer :: i,j,n
@@ -65,12 +66,12 @@ subroutine tabcon
     pretab(mpretab)=prepro(2,nprepro)
   !######################################################################
     do n=1,nprepro
-      write(9,*) '...n,prepro: ',n,prepro(1,n),prepro(2,n)
+      write(iulog,*) '...n,prepro: ',n,prepro(1,n),prepro(2,n)
     end do
-    write(9,*) '...premult: ',premult
+    write(iulog,*) '...premult: ',premult
     do n=0,mpretab,20
       precint=prestep*n
-      write(9,*) '...n,pretab: ',n,precint,pretab(n)
+      write(iulog,*) '...n,pretab: ',n,precint,pretab(n)
     end do
   !######################################################################
   else

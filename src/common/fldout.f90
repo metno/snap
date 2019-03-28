@@ -90,7 +90,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   USE snapparML
   USE snaptabML
   USE snapargosML
-  USE snapdebugML
+  USE snapdebug, only: iulog, idebug
   USE argoswriteML, only: argoswrite
   USE ftestML, only: ftest
   USE snapdimML, only: nx, ny, nk, nxmc, nymc, ldata
@@ -213,7 +213,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     & 		       2,geoparam,ierror)
     if(ierror /= 0) then
       write(6,*) 'XYCONVERT ERROR (ARGOS) !!!!!!!!!!!!!!!!!!'
-      write(9,*) 'XYCONVERT ERROR (ARGOS) !!!!!!!!!!!!!!!!!!'
+      write(iulog,*) 'XYCONVERT ERROR (ARGOS) !!!!!!!!!!!!!!!!!!'
     end if
   
     if(igtype == 3) then
@@ -406,7 +406,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
 !..output...............................................................
 
-  write(9,*) '*FLDOUT*'
+  write(iulog,*) '*FLDOUT*'
 
   if(numfields > 0) then
   !..remove an existing file
@@ -428,7 +428,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     ioptf=0
     call crefelt(filnam,iunit,itypef,ltimef,itimef, &
     icodef,lspecf,ispecf,loptf,ioptf,ierror)
-    write(9,*) 'creating fldout: ',filnam
+    write(iulog,*) 'creating fldout: ',filnam
     if(ierror /= 0) write(6,*) 'fldout: crefelt ERROR'
     if(ierror /= 0) then
       return
@@ -683,10 +683,10 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       end if
     end do
   
-    write(9,*) ' component: ',compname(mm)
-    write(9,*) '   Bq,particles in    abl: ',bqtot1,nptot1
-    write(9,*) '   Bq,particles above abl: ',bqtot2,nptot2
-    write(9,*) '   Bq,particles          : ',bqtot1+bqtot2, &
+    write(iulog,*) ' component: ',compname(mm)
+    write(iulog,*) '   Bq,particles in    abl: ',bqtot1,nptot1
+    write(iulog,*) '   Bq,particles above abl: ',bqtot2,nptot2
+    write(iulog,*) '   Bq,particles          : ',bqtot1+bqtot2, &
     nptot1+nptot2
   
   !..instant part of Bq in boundary layer
@@ -1151,7 +1151,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     
       mm= idefcomp(m)
     
-      if(idebug == 1) write(9,*) ' component: ',compname(mm)
+      if(idebug == 1) write(iulog,*) ' component: ',compname(mm)
     
     !..using the field level identifier to identify the component
       idata(7)=idcomp(mm)
@@ -1399,7 +1399,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 !..close output felt (field) file
   call mwfelt(13,filnam,iunit,1,nx*ny,field1,1.0, &
   ldata,idata,ierr)
-  920 write(9,*) '*FLDOUT*  Terminates due to write error.'
+  920 write(iulog,*) '*FLDOUT*  Terminates due to write error.'
 
   return
 end subroutine fldout

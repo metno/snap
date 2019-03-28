@@ -31,6 +31,7 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
   USE snapdimML, only: nx,ny,nk,mcomp,nxep,nyep
   USE epinterpML, only: epinterp
   USE ftestML, only: ftest
+  USE snapdebug, only: iulog
 
 !  Purpose: Interpolate particle positions to ENSEMBLE grid,
 !           and store data in this grid (and model levels),
@@ -133,7 +134,7 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
 
 !##################################################################
   write(6,*) '========== ENSEMBLE  icall= ',icall
-  write(9,*) '========== ENSEMBLE  icall= ',icall
+  write(iulog,*) '========== ENSEMBLE  icall= ',icall
 !##################################################################
 
   undef=+1.e+35
@@ -204,7 +205,7 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
     nxep,nyep,xmodel,ymodel,0., &
     dxgridep,dygridep,ierror)
     if(ierror /= 0) then
-      write(9,*) 'ensemble MAPFIELD ERROR. ierror= ',ierror
+      write(iulog,*) 'ensemble MAPFIELD ERROR. ierror= ',ierror
       write(6,*) 'ensemble MAPFIELD ERROR. ierror= ',ierror
       stop 255
     end if
@@ -235,7 +236,7 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
       igridep,gparep,igtype,gparam,ierror)
       if(ierror /= 0) then
         write(6,*) 'ensemble XYCONVERT ERROR'
-        write(9,*) 'ensemble XYCONVERT ERROR'
+        write(iulog,*) 'ensemble XYCONVERT ERROR'
         stop 17
       end if
       x1=1.
@@ -259,7 +260,7 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
   !##################################################################
     write(6,*) 'nxep*nyep,ninside,noutside: ', &
     nxep*nyep,ninside,nxep*nyep-ninside
-    write(9,*) 'nxep*nyep,ninside,noutside: ', &
+    write(iulog,*) 'nxep*nyep,ninside,noutside: ', &
     nxep*nyep,ninside,nxep*nyep-ninside
     call ftest('xmodel',1,1,nxep,nyep,1,xmodel,0)
     call ftest('ymodel',1,1,nxep,nyep,1,ymodel,0)
@@ -344,7 +345,7 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
     i=nxep/2
     j=nyep/2
     do k=nk,1,-1
-      write(9,fmt='(''    k,hlayer,hlevel:'',i3,2f8.0)') &
+      write(iulog,fmt='(''    k,hlayer,hlevel:'',i3,2f8.0)') &
       k,hlayer2ep(i,j,k),hlevel2ep(i,j,k)
     end do
   !##################################################################
@@ -377,7 +378,7 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
     igridep,gparep,ierror)
     if(ierror /= 0) then
       write(6,*) 'ensemble XYCONVERT ERROR'
-      write(9,*) 'ensemble XYCONVERT ERROR'
+      write(iulog,*) 'ensemble XYCONVERT ERROR'
       stop 17
     end if
 
@@ -404,7 +405,7 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
     igridep,gparep,ierror)
     if(ierror /= 0) then
       write(6,*) 'ensemble XYCONVERT ERROR'
-      write(9,*) 'ensemble XYCONVERT ERROR'
+      write(iulog,*) 'ensemble XYCONVERT ERROR'
       stop 17
     end if
   
@@ -485,7 +486,7 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
         end if
       end do
     !##################################################################
-    !      write(9,*) 'minv,maxv,mink,maxk: ',minv,maxv,mink,maxk
+    !      write(iulog,*) 'minv,maxv,mink,maxk: ',minv,maxv,mink,maxk
     !##################################################################
     end if
   
@@ -505,9 +506,9 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
   if(icall == 6) then
   
     write(6,*) 'istep,nstep,nsteph,itime,tf1,tf2,tnow:'
-    write(9,*) 'istep,nstep,nsteph,itime,tf1,tf2,tnow:'
+    write(iulog,*) 'istep,nstep,nsteph,itime,tf1,tf2,tnow:'
     write(6,900) istep,nstep,nsteph,itime,tf1,tf2,tnow
-    write(9,900) istep,nstep,nsteph,itime,tf1,tf2,tnow
+    write(iulog,900) istep,nstep,nsteph,itime,tf1,tf2,tnow
     900 format(1x,3i4,4x,i4,4i3,4x,3f9.1)
   
     do i=1,5
@@ -666,12 +667,12 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
     write(6,*) 'mbuffer,ntoutput: ',mbuffer,ntoutput
     write(6,*) 'matimev:          ',matimev
     write(6,*) 'npos:             ',npos
-    write(9,*) 'Final ENSEMBLE PROJECT output'
-    write(9,*) 'lepdata,nepout:   ',lepdata,nepout
-    write(9,*) 'mbuffer,ntoutput: ',mbuffer,ntoutput
-    write(9,*) 'matimev:          ',matimev
-    write(9,*) 'npos:             ',npos
-    write(9,*) 'file: ',ensemblefile(1:lenstr(ensemblefile,1))
+    write(iulog,*) 'Final ENSEMBLE PROJECT output'
+    write(iulog,*) 'lepdata,nepout:   ',lepdata,nepout
+    write(iulog,*) 'mbuffer,ntoutput: ',mbuffer,ntoutput
+    write(iulog,*) 'matimev:          ',matimev
+    write(iulog,*) 'npos:             ',npos
+    write(iulog,*) 'file: ',ensemblefile(1:lenstr(ensemblefile,1))
   
     if (npos < 1) stop 17
     if (ntoutput > matimev) stop 17
