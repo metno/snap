@@ -31,7 +31,6 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
   USE snapdimML, only: nx,ny,nk,mcomp,nxep,nyep
   USE epinterpML, only: epinterp
   USE ftestML, only: ftest
-  USE copyfieldML, only: copyfield
 
 !  Purpose: Interpolate particle positions to ENSEMBLE grid,
 !           and store data in this grid (and model levels),
@@ -316,10 +315,8 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
   end if
 
   if (icall == 1) then
-  
-    call copyfield(hlayer2ep,hlayer1ep,nxep,nyep,nk)
-    call copyfield(hlevel2ep,hlevel1ep,nxep,nyep,nk)
-  
+    hlayer1ep = hlayer2ep
+    hlevel1ep = hlevel1ep
   end if
 
   if (icall == 0 .OR. icall == 1) then

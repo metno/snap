@@ -8,7 +8,7 @@ ensemble.o vgravtables.o forwrd.o tabcon.o wetdep1.o wetdep2.o drydep1.o drydep2
 argoswrite.o bldp.o compheight.o checkDomain.o \
 filesort_nc.o fldout_nc.o \
 init_random_seed.o decayDeps.o\
-release.o releasefile.o rmpart.o allocateFields.o copyfield.o forwrd_dx.o \
+release.o releasefile.o rmpart.o allocateFields.o forwrd_dx.o \
 snapepsML.o
 
 ifdef MILIB
@@ -35,8 +35,6 @@ snap_batch_copy.o: ../common/snap.f90 $(MODELOBJ)
 allocateFields.o: ../common/allocateFields.f90 particleML.o snapparML.o fileInfoML.o snapfldML.o snapfilML.o snapgrdML.o
 	${F77} -c $(F77FLAGS) $(INCLUDES) $<
 snapdimML.o: ../common/snapdimML.f90
-	${F77} -c $(F77FLAGS) $(INCLUDES) $<
-copyfield.o: ../common/copyfield.f90
 	${F77} -c $(F77FLAGS) $(INCLUDES) $<
 decayDeps.o: ../common/decayDeps.f90
 	${F77} -c $(F77FLAGS) $(INCLUDES) $<
@@ -88,7 +86,7 @@ filesort.o: ../common/filesort.f90 fileInfoML.o snapfldML.o snapfilML.o snapdebu
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 om2edot.o: ../common/om2edot.f90 snapgrdML.o snapfldML.o snapdimML.o edcomp.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-readfield_nc.o: ../common/readfield_nc.f90 particleML.o fileInfoML.o snapfilML.o snapgrdML.o snapmetML.o snaptabML.o snapdebugML.o snapdimML.o om2edot.o ftest.o copyfield.o
+readfield_nc.o: ../common/readfield_nc.f90 particleML.o fileInfoML.o snapfilML.o snapgrdML.o snapmetML.o snaptabML.o snapdebugML.o snapdimML.o om2edot.o ftest.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 filesort_nc.o: ../common/filesort_nc.f90 dateCalc.o fileInfoML.o snapfilML.o snapdimML.o snapgrdML.o snapfldML.o snapmetML.o snapdebugML.o readfield_nc.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
