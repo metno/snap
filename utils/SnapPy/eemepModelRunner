@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-
 '''
 Created on Nov 23, 2016
 
@@ -27,9 +26,11 @@ environment which starts the model-runner regularly, e.g. crontab
 
 @author: heikok
 '''
+
 import atexit
 import datetime
 import os
+import pwd
 import sys
 import traceback
 
@@ -135,7 +136,13 @@ class EemepModelRunner():
         # work only on newest volcano.xml file and exit, avoiding timeouts
         (infile, dirpath) = max(volcanoes, key=lambda x: os.lstat(x[0]).st_mtime)
         with open(self.statusfile, 'at') as fh:
-            fh.write("current volcano: '{}' in dir '{}'\n".format(infile, dirpath))
+            fh.write("current volcano: '{}'\n".format(infile))
+            try:
+                (login, fullname) = pwd.getpwuid(os.lstat(infile).st_uid)[0,4]
+                fh.write("  started by: {} ({})".format(fullname, login))
+            except:
+                pass
+                
         try:
             self._log(dirpath, 'Starting run for: {}'.format(infile))
             mr = ModelRunner(dirpath, hpc)
