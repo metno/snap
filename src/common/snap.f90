@@ -355,11 +355,11 @@ PROGRAM bsnap
 !-------------------------------------------------------------------
   narg=iargc()
   if(narg < 1) then
-    write(6,*)
-    write(6,*) '  usage: snap <snap.input>'
-    write(6,*) '     or: snap <snap.input> <arguments>'
-    write(6,*) '     or: snap <snap.input> ?     (to get help)'
-    write(6,*)
+    write(error_unit,*)
+    write(error_unit,*) '  usage: snap <snap.input>'
+    write(error_unit,*) '     or: snap <snap.input> <arguments>'
+    write(error_unit,*) '     or: snap <snap.input> ?     (to get help)'
+    write(error_unit,*)
     stop 1
   endif
   call getarg(1,finput)
@@ -369,7 +369,7 @@ PROGRAM bsnap
   access='sequential',form='formatted', &
   status='old',iostat=ios)
   if(ios /= 0) then
-    write(6,*) 'Open Error: ',finput(1:lenstr(finput,1))
+    write(error_unit,*) 'Open Error: ',finput(1:lenstr(finput,1))
     stop 1
   endif
 
@@ -381,8 +381,8 @@ PROGRAM bsnap
   endif
 
 
-  write(6,*) 'Reading input file:'
-  write(6,*)  TRIM(finput)
+  write(error_unit,*) 'Reading input file:'
+  write(error_unit,*)  TRIM(finput)
 
   nlines=0
 
@@ -1044,8 +1044,8 @@ PROGRAM bsnap
             relpos(2,nrelpos)=float(igd)+float(igm)/60.
           end if
         else
-          write(6,*) 'WARNING. Too many RELEASE POSITIONS'
-          write(6,*) '  ==> ',cinput(kv1:kv2)
+          write(error_unit,*) 'WARNING. Too many RELEASE POSITIONS'
+          write(error_unit,*) '  ==> ',cinput(kv1:kv2)
         end if
       elseif(cinput(k1:k2) == 'grid.input') then
       !..grid.input=<producer,grid>
@@ -1123,8 +1123,8 @@ PROGRAM bsnap
             filef(nfilef)=ciname(1:nkv)
           end if
         else
-          write(6,*) 'WARNING. Too many FIELD INPUT files'
-          write(6,*) '  ==> ',cinput(kv1:kv2)
+          write(error_unit,*) 'WARNING. Too many FIELD INPUT files'
+          write(error_unit,*) '  ==> ',cinput(kv1:kv2)
         end if
       elseif(cinput(k1:k2) == 'field_time.forecast') then
       !..field_time.forecast ... use forecast length in output field ident.
@@ -1224,8 +1224,8 @@ PROGRAM bsnap
 #endif
         iend=1
       else
-        write(6,*) 'ERROR.  Unknown input:'
-        write(6,*) cinput
+        write(error_unit,*) 'ERROR.  Unknown input:'
+        write(error_unit,*) cinput
         goto 12
       end if
     
@@ -1235,28 +1235,28 @@ PROGRAM bsnap
 
   goto 18
 
-  11 write(6,*) 'ERROR reading file: ',finput(1:lenstr(finput,1))
-  write(6,*) 'At line no. ',nlines
+  11 write(error_unit,*) 'ERROR reading file: ',finput(1:lenstr(finput,1))
+  write(error_unit,*) 'At line no. ',nlines
   iexit=2
   goto 18
 
-  12 write(6,*) 'ERROR reading file: ',finput(1:lenstr(finput,1))
-  write(6,*) 'At line no. ',nlines,' :'
-  write(6,*)  cinput(1:lenstr(cinput,1))
+  12 write(error_unit,*) 'ERROR reading file: ',finput(1:lenstr(finput,1))
+  write(error_unit,*) 'At line no. ',nlines,' :'
+  write(error_unit,*)  cinput(1:lenstr(cinput,1))
   iexit=2
   goto 18
 
-  13 write(6,*) 'ERROR reading file:'
-  write(6,*)  finput
-  write(6,*) 'At line no. ',nlines,' :'
-  write(6,*)  cinput(1:lenstr(cinput,1))
-  write(6,*) 'SOME LIMIT WAS EXCEEDED !!!!!!!!!!!!!!!!!'
+  13 write(error_unit,*) 'ERROR reading file:'
+  write(error_unit,*)  finput
+  write(error_unit,*) 'At line no. ',nlines,' :'
+  write(error_unit,*)  cinput(1:lenstr(cinput,1))
+  write(error_unit,*) 'SOME LIMIT WAS EXCEEDED !!!!!!!!!!!!!!!!!'
   iexit=2
   goto 18
 
   14 l=index(finput,' ')-1
   if(l < 1) l=len(finput)
-  write(6,*) 'Help from ',finput(1:l),' :'
+  write(error_unit,*) 'Help from ',finput(1:l),' :'
   call prhelp(iuinp,'*=>')
   iexit=2
   goto 18
@@ -1298,28 +1298,28 @@ PROGRAM bsnap
   end do
   if(irelpos == 0 .AND. nrelpos == 1) irelpos=1
   if(irelpos == 0) then
-    write(6,*) 'No (known) release position selected'
+    write(error_unit,*) 'No (known) release position selected'
     ierror=1
   end if
 
   if(ivcoor == 0) then
-    write(6,*) 'Input model level type (sigma,eta) not specified'
+    write(error_unit,*) 'Input model level type (sigma,eta) not specified'
     ierror=1
   end if
   if(nlevel == 0) then
-    write(6,*) 'Input model levels not specified'
+    write(error_unit,*) 'Input model levels not specified'
     ierror=1
   end if
   if(ftype /= "felt" .AND. ftype /= "netcdf") then
-    write(6,*) 'Input type not felt or netcdf:', ftype
+    write(error_unit,*) 'Input type not felt or netcdf:', ftype
     ierror=1
   end if
   if(ftype /= "felt" .AND. ftype /= "netcdf") then
-    write(6,*) 'Output type not felt or netcdf:', ftype
+    write(error_unit,*) 'Output type not felt or netcdf:', ftype
     ierror=1
   end if
   if(nfilef == 0) then
-    write(6,*) 'No input field files specified'
+    write(error_unit,*) 'No input field files specified'
     ierror=1
   end if
 
@@ -1329,11 +1329,11 @@ PROGRAM bsnap
   if(nxep < 2 .OR. nyep < 2) iensemble=0
 
   if(ntprof < 1) then
-    write(6,*) 'No time profile(s) specified'
+    write(error_unit,*) 'No time profile(s) specified'
     ierror=1
   end if
   if(itprof < 1) then
-    write(6,*) 'No time profile type specified'
+    write(error_unit,*) 'No time profile type specified'
     ierror=1
   end if
   k=0
@@ -1346,28 +1346,28 @@ PROGRAM bsnap
     relupper(i,1)=rellower(i,1)+1.
   end do
   if(k == 1) then
-    write(6,*) 'ERROR in relase profiles ', &
+    write(error_unit,*) 'ERROR in relase profiles ', &
     'of upper,lower and/or radius'
     ierror=1
   end if
 
   if(ncomp < 0) then
-    write(6,*) 'No (release) components specified for run'
+    write(error_unit,*) 'No (release) components specified for run'
     ierror=1
   end if
   if(ndefcomp < 0) then
-    write(6,*) 'No (release) components defined'
+    write(error_unit,*) 'No (release) components defined'
     ierror=1
   end if
 
   do m=1,ndefcomp-1
     if(idcomp(m) < 1) then
-      write(6,*) 'Component has no field identification: ', &
+      write(error_unit,*) 'Component has no field identification: ', &
       compname(m)(1:lenstr(compname(m),1))
     end if
     do i=m+1,ndefcomp
       if(compname(m) == compname(i)) then
-        write(6,*) 'Component defined more than once: ', &
+        write(error_unit,*) 'Component defined more than once: ', &
         compname(m)(1:lenstr(compname(m),1))
         ierror=1
       end if
@@ -1377,7 +1377,7 @@ PROGRAM bsnap
   do m=1,ncomp-1
     do i=m+1,ncomp
       if(component(m) == component(i)) then
-        write(6,*) 'Released component defined more than once: ', &
+        write(error_unit,*) 'Released component defined more than once: ', &
         component(m)(1:lenstr(component(m),1))
         ierror=1
       end if
@@ -1394,7 +1394,7 @@ PROGRAM bsnap
       idefcomp(m)= k
       iruncomp(k)= m
     else
-      write(6,*) 'Released component ', &
+      write(error_unit,*) 'Released component ', &
       component(m)(1:lenstr(component(m),1)), &
       ' is not defined'
       ierror=1
@@ -1407,7 +1407,7 @@ PROGRAM bsnap
     if(kgravity(m) < 0) kgravity(m)= 2
     if(kgravity(m) == 2 .AND. &
     (radiusmym(m) <= 0. .OR. densitygcm3(m) <= 0.)) then
-      write(6,*) 'Gravity error. radius,density: ', &
+      write(error_unit,*) 'Gravity error. radius,density: ', &
       radiusmym(m),densitygcm3(m)
       ierror=1
     end if
@@ -1425,7 +1425,7 @@ PROGRAM bsnap
       if(drydeprat(m) > 0. .AND. drydephgt(m) > 0.) then
         i1=i1+1
       else
-        write(6,*) 'Dry deposition error. rate,height: ', &
+        write(error_unit,*) 'Dry deposition error. rate,height: ', &
         drydeprat(m),drydephgt(m)
         ierror=1
       end if
@@ -1435,7 +1435,7 @@ PROGRAM bsnap
       elseif(kgravity(m) == 2) then
         i1=i1+1
       else
-        write(6,*) 'Dry deposition error. gravity: ', &
+        write(error_unit,*) 'Dry deposition error. gravity: ', &
         gravityms(m)
         ierror=1
       end if
@@ -1445,7 +1445,7 @@ PROGRAM bsnap
       if(wetdeprat(m) > 0.) then
         i2=i2+1
       else
-        write(6,*) 'Wet deposition error. rate: ', &
+        write(error_unit,*) 'Wet deposition error. rate: ', &
         wetdeprat(m)
         ierror=1
       end if
@@ -1453,7 +1453,7 @@ PROGRAM bsnap
       if(radiusmym(m) > 0.) then
         i2=i2+1
       else
-        write(6,*) 'Wet deposition error. radius: ', &
+        write(error_unit,*) 'Wet deposition error. radius: ', &
         radiusmym(m)
         ierror=1
       end if
@@ -1485,7 +1485,7 @@ PROGRAM bsnap
 
 
 
-  write(6,*) 'Input o.k.'
+  write(error_unit,*) 'Input o.k.'
 !-------------------------------------------------------------------
 
 !..log file
@@ -1523,8 +1523,8 @@ PROGRAM bsnap
   if(ierror /= 0) then
     write(iulog,*) 'Requested start time is wrong:'
     write(iulog,*) (itime1(i),i=1,4)
-    write(6,*) 'Requested start time is wrong:'
-    write(6,*) (itime1(i),i=1,4)
+    write(error_unit,*) 'Requested start time is wrong:'
+    write(error_unit,*) (itime1(i),i=1,4)
     goto 910
   end if
 
@@ -1542,18 +1542,18 @@ PROGRAM bsnap
     write(iulog,*) 'End:          ',(itime2(i),i=1,4)
     write(iulog,*) 'First fields: ',(itimer(i,1),i=1,4)
     write(iulog,*) 'Last  fields: ',(itimer(i,2),i=1,4)
-    write(6,*) 'Not able to run requested time periode.'
-    write(6,*) 'Start:        ',(itime1(i),i=1,4)
-    write(6,*) 'End:          ',(itime2(i),i=1,4)
-    write(6,*) 'First fields: ',(itimer(i,1),i=1,4)
-    write(6,*) 'Last  fields: ',(itimer(i,2),i=1,4)
+    write(error_unit,*) 'Not able to run requested time periode.'
+    write(error_unit,*) 'Start:        ',(itime1(i),i=1,4)
+    write(error_unit,*) 'End:          ',(itime2(i),i=1,4)
+    write(error_unit,*) 'First fields: ',(itimer(i,1),i=1,4)
+    write(error_unit,*) 'Last  fields: ',(itimer(i,2),i=1,4)
     if(nh1 < 0) then
       write(iulog,*) 'NO DATA AT START OF RUN'
-      write(6,*) 'NO DATA AT START OF RUN'
+      write(error_unit,*) 'NO DATA AT START OF RUN'
       goto 910
     end if
     write(iulog,*) 'Running until end of data'
-    write(6,*) 'Running until end of data'
+    write(error_unit,*) 'Running until end of data'
     do i=1,5
       itime2(i)=itimer(i,2)
     end do
@@ -1810,8 +1810,8 @@ PROGRAM bsnap
       write(iulog,*) 'istep,nplume,npart: ',istep,nplume,npart
       flush(iulog)
       if(mod(istep,nsteph) == 0) then
-        write(6,*) 'istep,nplume,npart: ',istep,nplume,npart
-        flush(6)
+        write(error_unit,*) 'istep,nplume,npart: ',istep,nplume,npart
+        flush(error_unit)
       end if
     
     !#######################################################################
@@ -1872,7 +1872,7 @@ PROGRAM bsnap
       
         n=itimefi(5)
         call vtime(itimefi,ierr)
-        write(6,fmt='(''input data: '',i4,3i3.2,''  prog='',i4)') &
+        write(error_unit,fmt='(''input data: '',i4,3i3.2,''  prog='',i4)') &
         (itimefi(i),i=1,4),n
       
       !..compute model level heights
@@ -1907,16 +1907,16 @@ PROGRAM bsnap
             write(iulog,*) 'ERROR: xyconvert'
             write(iulog,*) '   igtype: ',igtype
             write(iulog,*) '   gparam: ',gparam
-            write(6,*) 'ERROR: xyconvert'
-            write(6,*) '   igtype: ',igtype
-            write(6,*) '   gparam: ',gparam
+            write(error_unit,*) 'ERROR: xyconvert'
+            write(error_unit,*) '   igtype: ',igtype
+            write(error_unit,*) '   gparam: ',gparam
             goto 910
           end if
           write(iulog,*) 'release   x,y:    ',x,y
           if(x < 1.01 .OR. x > nx-0.01 .OR. &
           y < 1.01 .OR. y > ny-0.01) then
             write(iulog,*) 'ERROR: Release position outside field area'
-            write(6,*) 'ERROR: Release position outside field area'
+            write(error_unit,*) 'ERROR: Release position outside field area'
             goto 910
           end if
           relpos(3,irelpos)=x
@@ -1970,15 +1970,15 @@ PROGRAM bsnap
         else
           write(iulog,*) 'WARNING. Out of space for plumes/particles'
           write(iulog,*) 'WARNING. End release, continue running'
-          write(6,*) 'WARNING. Out of space for plumes/particles'
-          write(6,*) 'WARNING. End release, continue running'
+          write(error_unit,*) 'WARNING. Out of space for plumes/particles'
+          write(error_unit,*) 'WARNING. End release, continue running'
           iendrel=1
         end if
       
       end if
     
     !#############################################################
-    !     write(6,*) 'tf1,tf2,tnow,tnext,tstep,ipr: ',
+    !     write(error_unit,*) 'tf1,tf2,tnow,tnext,tstep,ipr: ',
     !    +		  tf1,tf2,tnow,tnext,tstep,iprecip
     !     write(iulog,*) 'tf1,tf2,tnow,tnext,tstep,ipr: ',
     !    +		  tf1,tf2,tnow,tnext,tstep,iprecip
@@ -2087,7 +2087,7 @@ PROGRAM bsnap
     
     
     !###################################################################
-    !	write(6,
+    !	write(error_unit,
     !    +  fmt='(''istep,nstep,isteph,nsteph,iprecip,nprecip: '',6i4)')
     !    +          istep,nstep,isteph,nsteph,iprecip,nprecip
     !	write(iulog,
@@ -2111,7 +2111,7 @@ PROGRAM bsnap
       enddo
     ! cc
     !	if(mod(istep,nsteph).eq.0) then
-    !     +    write(6,*) 'istep,nplume,npart: ',istep,nplume,npart
+    !     +    write(error_unit,*) 'istep,nplume,npart: ',istep,nplume,npart
     ! b... START
     ! b... output with concentrations after 6 hours
       if(istep > 1 .AND. mod(istep,72) == 0) then
@@ -2122,9 +2122,9 @@ PROGRAM bsnap
         itimev(5)= itime(5)+1
         call vtime(itimev,ierror)
         write(*,*) (itimev(i),i=1,5)
-      !     +    write(6,*) 'istep,nplume,npart: ',istep,nplume,npart
-      !	write(6,*)
-      !	write(6,*) 'istep,hour,npart=',istep,istep/72,npart
+      !     +    write(error_unit,*) 'istep,nplume,npart: ',istep,nplume,npart
+      !	write(error_unit,*)
+      !	write(error_unit,*) 'istep,hour,npart=',istep,istep/72,npart
       
       !... calculate number of non zero model grids
       
@@ -2175,8 +2175,8 @@ PROGRAM bsnap
           enddo
         enddo
       
-        write(6,*) 'npart all=',npart
-        write(6,*) 'ngrid all=',m
+        write(error_unit,*) 'npart all=',npart
+        write(error_unit,*) 'ngrid all=',m
       endif
       close (12)
     ! b... END
@@ -2359,10 +2359,10 @@ PROGRAM bsnap
     write(iulog,*) '       shorter than requested.'
     write(iulog,*) '   No. of requested release timesteps: ',nstepr
     write(iulog,*) '   No. of simulated release timesteps: ',lstepr
-    write(6,*) 'ERROR: Due to space problems the release period was'
-    write(6,*) '       shorter than requested.'
-    write(6,*) '   No. of requested release timesteps: ',nstepr
-    write(6,*) '   No. of simulated release timesteps: ',lstepr
+    write(error_unit,*) 'ERROR: Due to space problems the release period was'
+    write(error_unit,*) '       shorter than requested.'
+    write(error_unit,*) '   No. of requested release timesteps: ',nstepr
+    write(error_unit,*) '   No. of simulated release timesteps: ',lstepr
     istop=1
   end if
 
@@ -2374,10 +2374,10 @@ PROGRAM bsnap
     write(*,*)
   ! b_end
     write(iulog,*) ' SNAP run finished'
-    write(6,*) ' SNAP run finished'
+    write(error_unit,*) ' SNAP run finished'
   else
     write(iulog,*) ' ------- SNAP ERROR EXIT -------'
-    write(6,*) ' ------- SNAP ERROR EXIT -------'
+    write(error_unit,*) ' ------- SNAP ERROR EXIT -------'
   end if
 
   close(iulog)

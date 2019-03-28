@@ -33,6 +33,7 @@ subroutine  releasefile(filename)
 !  relbqsec(time, comp, height)
 
 ! for each release-step, rellower/relupper/relradius are copied from (1,x)
+  USE iso_fortran_env, only: error_unit
   USE snapparML
   USE snapdimML, only: mcomp, mrelheight, mtprof
   implicit none
@@ -62,7 +63,7 @@ subroutine  releasefile(filename)
   access='sequential',form='formatted', &
   status='old',iostat=ios)
   if(ios /= 0) then
-    write(6,*) 'Open Error: ',filename(1:len(filename,1))
+    write(error_unit,*) 'Open Error: ',filename(1:len(filename,1))
     stop 1
   endif
 
@@ -128,14 +129,14 @@ subroutine  releasefile(filename)
   end do
   goto 18
 
-  11 write(6,*) 'ERROR reading file: ',filename(1:len(filename,1))
-  write(6,*) 'At line no. ',nlines
+  11 write(error_unit,*) 'ERROR reading file: ',filename(1:len(filename,1))
+  write(error_unit,*) 'At line no. ',nlines
   iexit=2
   goto 18
 
-  12 write(6,*) 'ERROR reading file: ',filename(1:len(filename,1))
-  write(6,*) 'At line no. ',nlines,' :'
-  write(6,*)  cinput
+  12 write(error_unit,*) 'ERROR reading file: ',filename(1:len(filename,1))
+  write(error_unit,*) 'At line no. ',nlines,' :'
+  write(error_unit,*)  cinput
   iexit=2
   goto 18
 

@@ -28,7 +28,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
 !  Purpose:  Release one plume of particles
 !            The particles are spread in a cylinder volume if radius>0,
 !	     otherwise in a column
-
+  USE iso_fortran_env, only: error_unit
   USE particleML
   USE snapgrdML
   USE snapfldML
@@ -146,10 +146,10 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
   !################################################################
   !      if(mod(istep,nsteph).eq.0) then
     do m=1,ncomp
-    ! c	  write(6,*) 'release comp,num,bq:',m,nrel(m),pbq(m)
+    ! c	  write(error_unit,*) 'release comp,num,bq:',m,nrel(m),pbq(m)
       write(iulog,*) 'release comp,num,bq:',m,nrel(m),pbq(m)
     end do
-  ! c	write(6,*) 'nprel: ',nprel
+  ! c	write(error_unit,*) 'nprel: ',nprel
     write(iulog,*) 'nprel: ',nprel
   !      end if
   !################################################################
@@ -279,7 +279,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
     
       if (x-dx < 1.01 .OR. x+dx > nx-0.01 .OR. &
       y-dy < 1.01 .OR. y+dy > ny-0.01) then
-        write(6,*) 'RELEASE ERROR: Bad position'
+        write(error_unit,*) 'RELEASE ERROR: Bad position'
         ierror=1
         return
       end if
@@ -419,12 +419,12 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
   !      if(mod(istep,nsteph).eq.0) then
     do n=1,ncomp
       m=idefcomp(n)
-    ! c	  write(6,*) 'comp,m,totalbq,numtotal: ',
+    ! c	  write(error_unit,*) 'comp,m,totalbq,numtotal: ',
     ! c  +			n,m,totalbq(m),numtotal(m)
       write(iulog,*) 'comp,m,totalbq,numtotal: ', &
       n,m,totalbq(m),numtotal(m)
     end do
-  ! c	write(6,*) 'nparnum: ',nparnum
+  ! c	write(error_unit,*) 'nparnum: ',nparnum
     write(iulog,*) 'nparnum: ',nparnum
   !      end if
   !################################################################
@@ -437,7 +437,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
 
   write(iulog,*) '*RELEASE*  plumes,particles: ',nplume,npart
 !#######################################################################
-!     write(6,*) '*RELEASE*  plumes,particles: ',nplume,npart
+!     write(error_unit,*) '*RELEASE*  plumes,particles: ',nplume,npart
 !#######################################################################
 
   ierror= 0

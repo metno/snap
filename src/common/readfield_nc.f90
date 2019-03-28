@@ -44,7 +44,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
 !             ihr2       maximal time-offset?
 !             itimefi(5) final time (output)
 !             ierror     error (output)
-
+  USE iso_fortran_env, only: error_unit
   USE particleML
   USE fileInfoML
   USE snapfilML
@@ -144,7 +144,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
 
   if(ntav2 < 1) then
     write(iulog,*) '*READFIELD* No model level data available'
-    write(6,*) '*READFIELD* No model level data available'
+    write(error_unit,*) '*READFIELD* No model level data available'
     ierror=1
     return
   end if
@@ -461,7 +461,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
           alevel(k)=p1-blevel(k)*1000.
         end do
       else
-        write(6,*) 'PROGRAM ERROR.  ivcoor= ',ivcoor
+        write(error_unit,*) 'PROGRAM ERROR.  ivcoor= ',ivcoor
         stop 255
       end if
     end if
@@ -488,7 +488,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
         vlevel(k)=alevel(k)/1013.26 + blevel(k)
       end do
     else
-      write(6,*) 'PROGRAM ERROR.  ivcoor= ',ivcoor
+      write(error_unit,*) 'PROGRAM ERROR.  ivcoor= ',ivcoor
       stop 255
     end if
   
@@ -523,7 +523,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
     dxgrid,dygrid,ierror)
     if(ierror /= 0) then
       write(iulog,*) 'MAPFIELD ERROR. ierror= ',ierror
-      write(6,*) 'MAPFIELD ERROR. ierror= ',ierror
+      write(error_unit,*) 'MAPFIELD ERROR. ierror= ',ierror
       stop 255
     end if
     gparam(7)=dxgrid

@@ -43,7 +43,7 @@ subroutine filesort_nc
 !       pointers to lists in iavail:
 !         kavail(1): pointer to first forward  sorted timestep
 !         kavail(2): pointer to first backward sorted timestep
-
+  USE iso_fortran_env, only: error_unit
   USE DateCalc
   USE fileInfoML
   USE snapfilML
@@ -115,9 +115,9 @@ subroutine filesort_nc
           write(iulog,*) 'WARNING : TOO MANY AVAILABLE TIME STEPS'
           write(iulog,*) '          no.,max(MAVAIL): ',navail,mavail
           write(iulog,*) '    CONTINUING WITH RECORDED DATA'
-          write(6,*) 'WARNING : TOO MANY AVAILABLE TIME STEPS'
-          write(6,*) '          max (MAVAIL): ',mavail
-          write(6,*) '    CONTINUING WITH RECORDED DATA'
+          write(error_unit,*) 'WARNING : TOO MANY AVAILABLE TIME STEPS'
+          write(error_unit,*) '          max (MAVAIL): ',mavail
+          write(error_unit,*) '    CONTINUING WITH RECORDED DATA'
         end if
         navail=mavail
       end if

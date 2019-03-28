@@ -222,9 +222,9 @@ subroutine filesort(iunit,ierror)
     write(iulog,*) 'WARNING : TOO MANY AVAILABLE TIME STEPS'
     write(iulog,*) '          no.,max(MAVAIL): ',navail,mavail
     write(iulog,*) '    CONTINUING WITH RECORDED DATA'
-    write(6,*) 'WARNING : TOO MANY AVAILABLE TIME STEPS'
-    write(6,*) '          max (MAVAIL): ',mavail
-    write(6,*) '    CONTINUING WITH RECORDED DATA'
+    write(error_unit,*) 'WARNING : TOO MANY AVAILABLE TIME STEPS'
+    write(error_unit,*) '          max (MAVAIL): ',mavail
+    write(error_unit,*) '    CONTINUING WITH RECORDED DATA'
     navail=mavail
   end if
 
@@ -273,8 +273,8 @@ subroutine filesort(iunit,ierror)
   if(navail < 2) then
     write(iulog,*) 'NOT ENOUGH AVAILABLE DATA'
     write(iulog,*) '  Total no. of recorded timesteps: ',navail
-    write(6,*) 'NOT ENOUGH AVAILABLE DATA'
-    write(6,*) '  Total no. of recorded timesteps: ',navail
+    write(error_unit,*) 'NOT ENOUGH AVAILABLE DATA'
+    write(error_unit,*) '  Total no. of recorded timesteps: ',navail
     ierror=1
     return
   end if

@@ -93,7 +93,7 @@ subroutine readfd(iunit,nav,ivcord,iparam,ilevel,ihdisp, &
   elseif(nav > navail) then
   
     write(iulog,*) 'PROGRAM ERROR IN READFD. nav,navail: ',nav,navail
-    write(6,*) 'PROGRAM ERROR IN READFD. nav,navail: ',nav,navail
+    write(error_unit,*) 'PROGRAM ERROR IN READFD. nav,navail: ',nav,navail
     ierror=1
     return
   

@@ -215,7 +215,7 @@ subroutine forwrd_dx(tf1,tf2,tnow,tstep,np,nparticle, &
       *(t-tvg)/tincrvg
       gravity= grav1 + (grav2-grav1) * (p-pvg)/pincrvg
     !######################################################################
-    !     if(np.lt.21) write(6,*) '  p,t,gravity: ',p,t,gravity
+    !     if(np.lt.21) write(error_unit,*) '  p,t,gravity: ',p,t,gravity
     !######################################################################
     else
       gravity= gravityms(m)
@@ -243,7 +243,7 @@ subroutine forwrd_dx(tf1,tf2,tnow,tstep,np,nparticle, &
     deta= vhalf(k1)-vhalf(k2)
     wg= gravity*deta/dz
   !######################################################################
-  !   if(np.lt.21) write(6,*) 'np,k2,w,wg: ',np,k2,w,wg
+  !   if(np.lt.21) write(error_unit,*) 'np,k2,w,wg: ',np,k2,w,wg
   !######################################################################
 #if !defined(TRAJ)
     w= w + wg

@@ -212,7 +212,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     call xyconvert(nx*ny,field1,field2,igtype,gparam, &
     & 		       2,geoparam,ierror)
     if(ierror /= 0) then
-      write(6,*) 'XYCONVERT ERROR (ARGOS) !!!!!!!!!!!!!!!!!!'
+      write(error_unit,*) 'XYCONVERT ERROR (ARGOS) !!!!!!!!!!!!!!!!!!'
       write(iulog,*) 'XYCONVERT ERROR (ARGOS) !!!!!!!!!!!!!!!!!!'
     end if
   
@@ -429,7 +429,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     call crefelt(filnam,iunit,itypef,ltimef,itimef, &
     icodef,lspecf,ispecf,loptf,ioptf,ierror)
     write(iulog,*) 'creating fldout: ',filnam
-    if(ierror /= 0) write(6,*) 'fldout: crefelt ERROR'
+    if(ierror /= 0) write(error_unit,*) 'fldout: crefelt ERROR'
     if(ierror /= 0) then
       return
     end if
