@@ -22,11 +22,8 @@ endif
 
 BOBJ = snap_batch_copy.o
 
-link_incfiles:
-	rm -f *.inc
 
 clean_links:
-	for i in *.inc; do if [ -L $$i ]; then rm $$i; fi done
 	rm -f *.mod *.o *~
 
 snap_batch_copy.o: ../common/snap.f90 $(MODELOBJ)

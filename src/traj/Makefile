@@ -8,13 +8,13 @@ all: bsnap_traj
 
 include ../common/snap.mk
 
-snap_traj: link_incfiles $(CCOBJ) $(OBJ) $(MODELOBJ)
+snap_traj: $(CCOBJ) $(OBJ) $(MODELOBJ)
 	$(CXX) $(CXXFLAGS) $(CCOBJ) $(OBJ) $(MODELOBJ) $(LIBS) -o $@
 
 create_traj_input: create_traj_input.o
 	$(F77) $< -o $@
 
-bsnap_traj: link_incfiles $(BOBJ) $(MODELOBJ)
+bsnap_traj: $(BOBJ) $(MODELOBJ)
 	$(F77) $(F77FLAGS) $(BOBJ) $(MODELOBJ) $(BLIBS) -o $@
 
 clean: clean_links
