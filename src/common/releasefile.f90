@@ -168,7 +168,7 @@ subroutine  releasefile(filename)
 
   if (iexit /= 0) then
     write(*,*) 'aborted in releasefile.f'
-    call exit(1)
+    error stop 1
   end if
 
 

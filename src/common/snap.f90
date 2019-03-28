@@ -328,15 +328,15 @@ PROGRAM bsnap
 
 !   vcon(nx,ny,3)
   real, allocatable :: vcon(:,:,:)
-  character(60) :: cfile
+  character(len=60) :: cfile
 ! b 19.05
   integer :: itimev(5),j
 #if defined(TRAJ)
   real :: zzz
-  character(60) :: tr_file
+  character(len=60) :: tr_file
   integer :: ntraj,itraj
   real :: tlevel(100)
-  character(80) :: tname(10)	! name for the trajectory
+  character(len=80) :: tname(10)	! name for the trajectory
   integer :: tyear, tmon, tday, thour, tmin
   real :: distance
 #endif
@@ -353,7 +353,7 @@ PROGRAM bsnap
 
 
 !-------------------------------------------------------------------
-  narg=iargc()
+  narg = command_argument_count()
   if(narg < 1) then
     write(error_unit,*)
     write(error_unit,*) '  usage: snap <snap.input>'
@@ -362,7 +362,7 @@ PROGRAM bsnap
     write(error_unit,*)
     stop 1
   endif
-  call getarg(1,finput)
+  call get_command_argument(1, finput)
 
   iuinp=8
   open(iuinp,file=finput, &
@@ -374,7 +374,7 @@ PROGRAM bsnap
   endif
 
   if(narg == 2) then
-    call getarg(2,cinput)
+    call get_command_argument(2, cinput)
     iprhlp=1
     if(cinput(1:1) == '?') goto 14
     iprhlp=0
@@ -1264,7 +1264,7 @@ PROGRAM bsnap
   18 close(iuinp)
 
   if (iexit /= 0) then
-    call exit(1)
+    error stop 1
   end if
 
   write(*,*) "SIMULATION_START_DATE: ", simulation_start
@@ -1471,7 +1471,7 @@ PROGRAM bsnap
   if(i2 == 0) iwetdep=0
 
   if(ierror /= 0) then
-    call exit(1)
+    error stop 1
   end if
 
   if(itotcomp == 1 .AND. ncomp == 1) itotcomp=0
@@ -2384,6 +2384,11 @@ PROGRAM bsnap
 
 ! deallocate all fields
   CALL deAllocateFields()
-  if(istop > 0) call exit(istop)
-  stop
+  if (istop == 1) then
+    error stop 1
+  elseif (istop == 2) then
+    error stop 2
+  else
+    error stop 3
+  endif
 END PROGRAM

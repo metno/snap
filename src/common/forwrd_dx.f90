@@ -25,6 +25,7 @@ module forwrd_dxML
 
 subroutine forwrd_dx(tf1,tf2,tnow,tstep,np,nparticle, &
   delx, dely, delz, u, v)
+  USE iso_fortran_env, only: real64
   USE particleML
   USE snapgrdML
   USE snapfldML
@@ -58,16 +59,16 @@ subroutine forwrd_dx(tf1,tf2,tnow,tstep,np,nparticle, &
   real, INTENT(IN) :: tf1,tf2,tnow,tstep
   INTEGER, INTENT(IN) :: np
   TYPE(particle), INTENT(IN) :: nparticle
-  REAL*8, INTENT(OUT) :: delx, dely, delz, u, v
+  REAL(real64), INTENT(OUT) :: delx, dely, delz, u, v
 
   integer :: i,j,m,ilvl,k1,k2,itab,kt1,kt2,ip,it
-  real*8 ::    dt,rt1,rt2,dx,dy,c1,c2,c3,c4,vlvl
-  real*8 ::    dz1,dz2,uk1,uk2,vk1,vk2,wk1,wk2,w
-  real*8 ::    th,tk1,tk2,ps,p,pi,t,gravity,grav1,grav2,pvg,tvg
-  real*8 ::    pi1,pi2,dz,deta,wg,rtab
+  real(real64) ::    dt,rt1,rt2,dx,dy,c1,c2,c3,c4,vlvl
+  real(real64) ::    dz1,dz2,uk1,uk2,vk1,vk2,wk1,wk2,w
+  real(real64) ::    th,tk1,tk2,ps,p,pi,t,gravity,grav1,grav2,pvg,tvg
+  real(real64) ::    pi1,pi2,dz,deta,wg,rtab
 ! c
 
-  real*8, save :: cpinv, rcpinv, ginv, vmax, dxgrid,dygrid
+  real(real64), save :: cpinv, rcpinv, ginv, vmax, dxgrid,dygrid
 
 
 

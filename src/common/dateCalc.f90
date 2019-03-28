@@ -16,6 +16,7 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !
 module DateCalc
+    USE iso_fortran_env, only: real64, int32
     implicit none
     private
 
@@ -32,14 +33,14 @@ module DateCalc
 contains
 ! scale of timeUnit in seconds
   function timeUnitScale(unit)
-    character(*), intent(in) :: unit
-    integer(kind=8) timeUnitScale
+    character(len=*), intent(in) :: unit
+    integer(real64) timeUnitScale
     integer :: ind=0
-    character(25) :: tmp
+    character(len=25) :: tmp
     ind=index(unit," since ")
     if (ind .eq. 0) then
       write(*,*) "' since ' not found in time-units: ", unit
-      call exit(1)
+      stop 1
     end if
     tmp = trim(unit(:ind-1))
     timeUnitScale = 0
@@ -49,33 +50,33 @@ contains
     if (tmp .eq. "days") timeUnitScale = 60*60*24
     if (timeUnitScale .eq. 0) then
       write(*,*) "' since ' not found in time-units: ", unit
-      call exit(1)
+      stop 1
     end if
     return
   end function timeUnitScale
 
 ! offset in seconds to 1.1.1970
   function timeUnitOffset(unit)
-    character(*), intent(in) :: unit
-    integer(kind=8) timeUnitOffset
+    character(len=*), intent(in) :: unit
+    integer(real64) timeUnitOffset
     integer :: ind=0
-    character(25) :: date
+    character(len=25) :: date
     ind=index(unit," since ")
     if (ind .eq. 0) then
       write(*,*) "' since ' not found in time-units: ", unit
-      call exit(1)
+      stop 1
     end if
     date = trim(unit(ind+7:))
     timeUnitOffset = timeGM(parseIsoDate(date))
   end function timeUnitOffset
 
   function epochToDate(epochSeconds) result(values)
-    integer(kind=8), intent(in) :: epochSeconds
+    integer(real64), intent(in) :: epochSeconds
     integer :: values(6)
     integer :: gmvalues(9)
-    integer(kind=4) :: gmtimeIn
+    integer(int32) :: gmtimeIn
 
-    gmtimeIn = INT(epochSeconds, KIND=4)
+    gmtimeIn = INT(epochSeconds, KIND=int32)
     call gmtime(gmtimeIn, gmvalues)
     values = gmvalues(1:6)
     values(5) = values(5) + 1
@@ -86,12 +87,12 @@ contains
 ! calculate from values(6)=(/secs,min,hours,mday(1-31),month(1-12),year(since 0)
   function timeGM(values)
     integer, intent(in) :: values(6)
-    integer(kind=8) :: timeGM
+    integer(real64) :: timeGM
     timeGM = values(1) + 60 * (values(2) + 60 * values(3)) + daygm(values)
   end function timeGM
 
   function daygm(values)
-    integer(kind=8) :: daygm
+    integer(real64) :: daygm
     integer, intent(in) :: values(6)
     integer i, ydays
     daygm = 0
@@ -142,9 +143,9 @@ contains
 ! convert a string to a list of values(6) = secs,min,hours, days,month,year
   function parseIsoDate(str) result(values)
     USE iso_c_binding, ONLY: C_NULL_CHAR
-    character(*), intent(in)       :: str
+    character(len=*), intent(in)       :: str
     integer                         :: values(6), ind, ind2
-    character(80)                   :: substr
+    character(len=80)                   :: substr
 
     values = 0
     ! year

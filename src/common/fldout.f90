@@ -81,7 +81,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 !	    Bq above boundary layer
 !		= (1.0-part_of_bq_in_bl)*concentration/(garea*hbl)
 !---------------------------------------------------------------------
-
+  USE iso_fortran_env, only: int16, error_unit
   USE particleML
   USE fileInfoML
   USE snapfilML
@@ -118,9 +118,9 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
   integer ::   itypef,ltimef,itimef(5),icodef,lspecf,loptf,ioptf
   integer, save :: itimeargos(5) = [0, 0, 0, 0, 0]
-  integer*2 :: ispecf(3)
+  integer(int16) :: ispecf(3)
 
-  character(256) :: filename
+  character(len=256) :: filename
 
   integer :: lenstr
 

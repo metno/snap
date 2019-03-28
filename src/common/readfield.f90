@@ -37,8 +37,7 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
 !             ihr2       maximal time-offset?
 !             itimefi(5) final time (output)
 !             ierror     error (output)
-
-
+  USE iso_fortran_env, only: error_unit
   USE particleML
   USE fileInfoML
   USE snapfilML

@@ -47,8 +47,7 @@ subroutine forwrd(tf1,tf2,tnow,tstep,np,pextra)
 !       tf2:   time in seconds for field set 2 (e.g. 21600, if 6 hours)
 !       tnow:  time in seconds for current paricle positions
 !       tstep: timestep in seconds
-
-
+  USE iso_fortran_env, only: real64
   USE particleML
   USE snapgrdML
   USE forwrd_dxML, only: forwrd_dx
@@ -61,7 +60,7 @@ subroutine forwrd(tf1,tf2,tnow,tstep,np,pextra)
   TYPE(extraParticle), INTENT(INOUT) :: pextra
 
   TYPE(particle) :: nparticle
-  REAL*8 :: dx1, dx2, dy1, dy2, dz1, dz2, u, v
+  REAL(real64) :: dx1, dx2, dy1, dy2, dz1, dz2, u, v
   REAL :: vmin, vmax
 
 
