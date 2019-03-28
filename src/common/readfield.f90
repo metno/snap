@@ -46,7 +46,6 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   USE snapfldML
   USE snaptabML
   USE snapdebugML
-  USE copyfieldML, only: copyfield
   USE readfdML, only: readfd
   USE om2edotML, only: om2edot
   USE ftestML, only: ftest
@@ -100,20 +99,20 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   
     navailt1=navailt2
     navailt2=0
-  
-    call copyfield(u2,u1,nx,ny,nk)
-    call copyfield(v2,v1,nx,ny,nk)
-    call copyfield(w2,w1,nx,ny,nk)
-    call copyfield(t2,t1,nx,ny,nk)
-    call copyfield(hlevel2,hlevel1,nx,ny,nk)
-    call copyfield(hlayer2,hlayer1,nx,ny,nk)
-  
-    call copyfield(ps2,ps1,nx,ny,1)
-    call copyfield(bl2,bl1,nx,ny,1)
-    call copyfield(hbl2,hbl1,nx,ny,1)
+ 
+    u1 = u2
+    v1 = v2
+    w1 = w2
+    t1 = t2
+    hlevel1 = hlevel2
+    hlayer1 = hlayer2
+
+    ps1 = ps2
+    bl1 = bl2
+    hbl1 = hbl2
   
     if(imslp /= 0) then
-      call copyfield(pmsl2,pmsl1,nx,ny,1)
+      pmsl1 = pmsl2
     end if
   
   end if
