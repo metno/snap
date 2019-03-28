@@ -33,7 +33,6 @@ subroutine allocateFields
   USE snapgrdML
   implicit none
 
-  TYPE(particle), DIMENSION(:), POINTER :: x
   logical, save :: FirstCall = .TRUE. 
   integer :: AllocateStatus
         
