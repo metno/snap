@@ -138,10 +138,10 @@ class EemepModelRunner():
         with open(self.statusfile, 'at') as fh:
             fh.write("current volcano: '{}'\n".format(infile))
             try:
-                (login, fullname) = pwd.getpwuid(os.lstat(infile).st_uid)[0,4]
-                fh.write("  started by: {} ({})".format(fullname, login))
+                pwstruct = pwd.getpwuid(os.lstat(infile).st_uid)
+                fh.write("  started by: {} ({})".format(pwstruct.pw_gecos, pwstruct.pw_name))
             except:
-                pass
+                fh. write("  started by: unknown")
                 
         try:
             self._log(dirpath, 'Starting run for: {}'.format(infile))
