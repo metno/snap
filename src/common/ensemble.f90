@@ -23,6 +23,7 @@ module ensembleML
 
 subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
   np)
+  USE iso_fortran_env, only: error_unit
   USE particleML
   USE snapepsML
   USE snapfldML
@@ -133,7 +134,7 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
   if (nxep < 2 .OR. nyep < 2) return
 
 !##################################################################
-  write(6,*) '========== ENSEMBLE  icall= ',icall
+  write(error_unit,*) '========== ENSEMBLE  icall= ',icall
   write(iulog,*) '========== ENSEMBLE  icall= ',icall
 !##################################################################
 
@@ -206,7 +207,7 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
     dxgridep,dygridep,ierror)
     if(ierror /= 0) then
       write(iulog,*) 'ensemble MAPFIELD ERROR. ierror= ',ierror
-      write(6,*) 'ensemble MAPFIELD ERROR. ierror= ',ierror
+      write(error_unit,*) 'ensemble MAPFIELD ERROR. ierror= ',ierror
       stop 255
     end if
   !..size of each grid square (m**2)
@@ -235,7 +236,7 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
       call xyconvert(nxep*nyep,xmodel,ymodel, &
       igridep,gparep,igtype,gparam,ierror)
       if(ierror /= 0) then
-        write(6,*) 'ensemble XYCONVERT ERROR'
+        write(error_unit,*) 'ensemble XYCONVERT ERROR'
         write(iulog,*) 'ensemble XYCONVERT ERROR'
         stop 17
       end if
@@ -258,7 +259,7 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
       end do
     end do
   !##################################################################
-    write(6,*) 'nxep*nyep,ninside,noutside: ', &
+    write(error_unit,*) 'nxep*nyep,ninside,noutside: ', &
     nxep*nyep,ninside,nxep*nyep-ninside
     write(iulog,*) 'nxep*nyep,ninside,noutside: ', &
     nxep*nyep,ninside,nxep*nyep-ninside
@@ -377,7 +378,7 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
     call xyconvert(1,xep,yep,igtype,gparam, &
     igridep,gparep,ierror)
     if(ierror /= 0) then
-      write(6,*) 'ensemble XYCONVERT ERROR'
+      write(error_unit,*) 'ensemble XYCONVERT ERROR'
       write(iulog,*) 'ensemble XYCONVERT ERROR'
       stop 17
     end if
@@ -404,7 +405,7 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
     call xyconvert(npart,xep,yep,igtype,gparam, &
     igridep,gparep,ierror)
     if(ierror /= 0) then
-      write(6,*) 'ensemble XYCONVERT ERROR'
+      write(error_unit,*) 'ensemble XYCONVERT ERROR'
       write(iulog,*) 'ensemble XYCONVERT ERROR'
       stop 17
     end if
@@ -505,9 +506,9 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
 
   if(icall == 6) then
   
-    write(6,*) 'istep,nstep,nsteph,itime,tf1,tf2,tnow:'
+    write(error_unit,*) 'istep,nstep,nsteph,itime,tf1,tf2,tnow:'
     write(iulog,*) 'istep,nstep,nsteph,itime,tf1,tf2,tnow:'
-    write(6,900) istep,nstep,nsteph,itime,tf1,tf2,tnow
+    write(error_unit,900) istep,nstep,nsteph,itime,tf1,tf2,tnow
     write(iulog,900) istep,nstep,nsteph,itime,tf1,tf2,tnow
     900 format(1x,3i4,4x,i4,4i3,4x,3f9.1)
   
@@ -524,7 +525,7 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
     
     !..output
     !################################################################
-      write(6,*) 'out nsaveconc= ',nsaveconc
+      write(error_unit,*) 'out nsaveconc= ',nsaveconc
     !################################################################
     
     !..fixed base scaling for concentrations (unit 10**-12 g/m3 = 1 picog/m3)
@@ -605,7 +606,7 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
       
       !..write temporary binary file
       !################################################################
-      !      write(6,*) 'WRITE unit,rec: ',60+m,ntoutput
+      !      write(error_unit,*) 'WRITE unit,rec: ',60+m,ntoutput
       !################################################################
         write(60+m,rec=ntoutput) itimev,epfield
       
@@ -617,7 +618,7 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
     nsaveconc=-1
     if(mod(ihour+1,ensembleStepHours) == 0) nsaveconc=0
   !################################################################
-    write(6,*) 'set nsaveconc= ',nsaveconc
+    write(error_unit,*) 'set nsaveconc= ',nsaveconc
   !################################################################
   
   end if
@@ -662,11 +663,11 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
   
     npos= mbuffer/ntoutput
   
-    write(6,*) 'Final ENSEMBLE PROJECT output'
-    write(6,*) 'lepdata,nepout:   ',lepdata,nepout
-    write(6,*) 'mbuffer,ntoutput: ',mbuffer,ntoutput
-    write(6,*) 'matimev:          ',matimev
-    write(6,*) 'npos:             ',npos
+    write(error_unit,*) 'Final ENSEMBLE PROJECT output'
+    write(error_unit,*) 'lepdata,nepout:   ',lepdata,nepout
+    write(error_unit,*) 'mbuffer,ntoutput: ',mbuffer,ntoutput
+    write(error_unit,*) 'matimev:          ',matimev
+    write(error_unit,*) 'npos:             ',npos
     write(iulog,*) 'Final ENSEMBLE PROJECT output'
     write(iulog,*) 'lepdata,nepout:   ',lepdata,nepout
     write(iulog,*) 'mbuffer,ntoutput: ',mbuffer,ntoutput
@@ -713,12 +714,12 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
       
         n2=min(n1+npos-1,nxep*nyep)
       
-        write(6,*) 'read/write  n1,n2,nxep*nyep: ',n1,n2,nxep*nyep
+        write(error_unit,*) 'read/write  n1,n2,nxep*nyep: ',n1,n2,nxep*nyep
       
         do it=1,ntoutput
         
         !################################################################
-        !        write(6,*) 'READ unit,rec: ',60+m,it
+        !        write(error_unit,*) 'READ unit,rec: ',60+m,it
         !################################################################
           read(60+m,rec=it) itimev,epfield
         

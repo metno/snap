@@ -163,7 +163,7 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
 
   if(mtav < 1) then
     write(iulog,*) '*READFIELD* No model level data available'
-    write(6,*) '*READFIELD* No model level data available'
+    write(error_unit,*) '*READFIELD* No model level data available'
     ierror=1
     return
   end if
@@ -278,7 +278,7 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
 
   if(ierror /= 0) then
     write(iulog,*) 'Model level data not found'
-    write(6,*) 'Model level data not found'
+    write(error_unit,*) 'Model level data not found'
     goto 200
   end if
 
@@ -371,9 +371,9 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   end if
 
   if(nhdiff > mprecip) then
-    write(6,*) '*READFIELD* PRECIPITATION PROBLEM'
-    write(6,*) '     nhdiff,mprecip: ',nhdiff,mhprecip
-    write(6,*) '   Recompile with mprecip=',nhdiff
+    write(error_unit,*) '*READFIELD* PRECIPITATION PROBLEM'
+    write(error_unit,*) '     nhdiff,mprecip: ',nhdiff,mhprecip
+    write(error_unit,*) '   Recompile with mprecip=',nhdiff
     write(iulog,*) '*READFIELD* PRECIPITATION PROBLEM'
     write(iulog,*) '     nhdiff,mprecip: ',nhdiff,mhprecip
     write(iulog,*) '   Recompile with mprecip=',nhdiff
@@ -594,9 +594,9 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   nav=navailt2
   call readfd(iunit,nav,ivc,17,ilevel,+0,field2,ierr2)
   if(ierr1 == 0 .AND. ierr2 == 0) then
-    write(6,*) '================================================='
-    write(6,*) 'WARNING: CHECK USE OF EC ERA PRECIPITATION !!!!!!'
-    write(6,*) '================================================='
+    write(error_unit,*) '================================================='
+    write(error_unit,*) 'WARNING: CHECK USE OF EC ERA PRECIPITATION !!!!!!'
+    write(error_unit,*) '================================================='
     write(iulog,*) '================================================='
     write(iulog,*) 'WARNING: CHECK USE OF EC ERA PRECIPITATION !!!!!!'
     write(iulog,*) '================================================='
@@ -631,9 +631,9 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
     call readfd(iunit,nav,ivc,19,ilevel,+0,field3,ierr2)
     call readfd(iunit,nav,ivc,20,ilevel,+0,field4,ierr2)
     if(ierr1 == 0 .AND. ierr2 == 0) then
-      write(6,*) '================================================='
-      write(6,*) 'WARNING: CHECK USE OF EC ERA PRECIPITATION !!!!!!'
-      write(6,*) '================================================='
+      write(error_unit,*) '================================================='
+      write(error_unit,*) 'WARNING: CHECK USE OF EC ERA PRECIPITATION !!!!!!'
+      write(error_unit,*) '================================================='
       write(iulog,*) '================================================='
       write(iulog,*) 'WARNING: CHECK USE OF EC ERA PRECIPITATION !!!!!!'
       write(iulog,*) '================================================='
@@ -689,10 +689,10 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
 
   180 continue
 
-  write(6,*) 'NO PRECIPITATION FOUND !!!!!!!!!!!!!!!!!!!'
+  write(error_unit,*) 'NO PRECIPITATION FOUND !!!!!!!!!!!!!!!!!!!'
   write(iulog,*) 'NO PRECIPITATION FOUND !!!!!!!!!!!!!!!!!!!'
   if(inprecip == -1) then
-    write(6,*) 'Not important, not wet depositions.'
+    write(error_unit,*) 'Not important, not wet depositions.'
     write(iulog,*) 'Not important, not wet depositions.'
     do n=1,nhdiff
       do j=1,ny
@@ -742,7 +742,7 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
           alevel(k)=p1-blevel(k)*1000.
         end do
       else
-        write(6,*) 'PROGRAM ERROR.  ivcoor= ',ivcoor
+        write(error_unit,*) 'PROGRAM ERROR.  ivcoor= ',ivcoor
         stop 255
       end if
     end if
@@ -769,7 +769,7 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
         vlevel(k)=alevel(k)/1013.26 + blevel(k)
       end do
     else
-      write(6,*) 'PROGRAM ERROR.  ivcoor= ',ivcoor
+      write(error_unit,*) 'PROGRAM ERROR.  ivcoor= ',ivcoor
       stop 255
     end if
   
@@ -798,7 +798,7 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
     call gridpar(+1,ldata,idata,igtype,ix,iy,gparam,ierror)
     if(ierror /= 0) then
       write(iulog,*) 'GRIDPAR ERROR. ierror= ',ierror
-      write(6,*) 'GRIDPAR ERROR. ierror= ',ierror
+      write(error_unit,*) 'GRIDPAR ERROR. ierror= ',ierror
       stop 255
     end if
     if(ixbase /= 1 .OR. iybase /= 1 .OR. ixystp /= 1) then
@@ -814,7 +814,7 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
         gparam(4)=gparam(4)*float(ixystp)
       else
         write(iulog,*) 'UNKNOWN gridtype: ',igtype
-        write(6,*) 'UNKNOWN gridtype: ',igtype
+        write(error_unit,*) 'UNKNOWN gridtype: ',igtype
         stop 255
       end if
     end if
@@ -823,7 +823,7 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
     dxgrid,dygrid,ierror)
     if(ierror /= 0) then
       write(iulog,*) 'MAPFIELD ERROR. ierror= ',ierror
-      write(6,*) 'MAPFIELD ERROR. ierror= ',ierror
+      write(error_unit,*) 'MAPFIELD ERROR. ierror= ',ierror
       stop 255
     end if
     gparam(7)=dxgrid
