@@ -37,14 +37,7 @@ subroutine drydep2(tstep,n)
 ! ... 23.04.12 - gas, particle 0.1<d<10, particle d>10 - J. Bartnicki|
 
 
-#if defined(DRHOOK)
-  USE PARKIND1  ,ONLY : JPIM     ,JPRB
-  USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
-#endif
   implicit none
-#if defined(DRHOOK)
-  REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
-#endif
 
   real, INTENT(IN) ::    tstep
 
@@ -57,10 +50,6 @@ subroutine drydep2(tstep,n)
   real :: depmin,depmax,ratmin,ratmax,hblmin,hblmax
   double precision :: totinp,depsum,totsum
 
-#if defined(DRHOOK)
-! Before the very first statement
-  IF (LHOOK) CALL DR_HOOK('DRYDEP2',0,ZHOOK_HANDLE)
-#endif
 
   numdep=0
   hblmin=+1.e+38
@@ -131,10 +120,6 @@ subroutine drydep2(tstep,n)
 !     +   write(88,*) 'DRYDEP2 depmin,depmax: ',depmin,depmax
 !      write(88,*) '--------'
 !################################################################
-#if defined(DRHOOK)
-!     before the return statement
-  IF (LHOOK) CALL DR_HOOK('DRYDEP2',1,ZHOOK_HANDLE)
-#endif
   return
 end subroutine drydep2
 end module drydep2ML

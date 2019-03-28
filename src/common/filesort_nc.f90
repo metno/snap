@@ -55,14 +55,7 @@ subroutine filesort_nc
   USE netcdf
   USE snapdimML, only: nx, ny, mavail
 !      USE snapmetML, only:
-#if defined(DRHOOK)
-  USE PARKIND1  ,ONLY : JPIM     ,JPRB
-  USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
-#endif
   implicit none
-#if defined(DRHOOK)
-  REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
-#endif
         
 
   integer :: i, j, ncid, nf, varid, dimid, tsize, ierror
@@ -73,10 +66,6 @@ subroutine filesort_nc
   integer, dimension(6) :: dateTime
   character(80) :: tunits
 
-#if defined(DRHOOK)
-! Before the very first statement
-  IF (LHOOK) CALL DR_HOOK('FILESORT_NC',0,ZHOOK_HANDLE)
-#endif
 
 ! position in iavail
   navail = 0
@@ -260,10 +249,6 @@ subroutine filesort_nc
   end if
 
 
-#if defined(DRHOOK)
-! Before the return statement
-  IF (LHOOK) CALL DR_HOOK('FILESORT_NC',1,ZHOOK_HANDLE)
-#endif
   RETURN
 end subroutine filesort_nc
 end module filesort_ncML

@@ -28,14 +28,7 @@ subroutine ftest(name,k1,k2,nx,ny,nk,field,iundef)
 !  Purpose: Test field, print min,mean,max values.
 
 
-#if defined(DRHOOK)
-  USE PARKIND1  ,ONLY : JPIM     ,JPRB
-  USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
-#endif
   implicit none
-#if defined(DRHOOK)
-  REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
-#endif
 
   integer ::       k1,k2,nx,ny,nk,iundef
   real ::          field(nx,ny,nk)
@@ -46,10 +39,6 @@ subroutine ftest(name,k1,k2,nx,ny,nk,field,iundef)
 
   double precision :: fsum
 
-#if defined(DRHOOK)
-! Before the very first statement
-  IF (LHOOK) CALL DR_HOOK('FTEST',0,ZHOOK_HANDLE)
-#endif
   if(k1 < 1 .OR. k1 > nk) k1=1
   if(k2 < 1 .OR. k2 > nk) k2=nk
   kstep=+1
@@ -110,10 +99,6 @@ subroutine ftest(name,k1,k2,nx,ny,nk,field,iundef)
   end do
   flush(9)
 
-#if defined(DRHOOK)
-!     before the return statement
-  IF (LHOOK) CALL DR_HOOK('FTEST',1,ZHOOK_HANDLE)
-#endif
   return
 end subroutine ftest
 end module ftestML

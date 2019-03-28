@@ -31,22 +31,11 @@ subroutine checkDomain(np)
 !    move particle to lowest (highest) level if below lowest (highest) level
 
   use particleML
-#if defined(DRHOOK)
-  USE PARKIND1  ,ONLY : JPIM     ,JPRB
-  USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
-#endif
   implicit none
-#if defined(DRHOOK)
-  REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
-#endif
-        
+
   INTEGER, INTENT(IN) :: np
   REAL :: vmin, vmax
 
-#if defined(DRHOOK)
-! Before the very first statement
-  IF (LHOOK) CALL DR_HOOK('CHECKDOMAIN',0,ZHOOK_HANDLE)
-#endif
 
   if (pdata(np)%x < 1. .OR. pdata(np)%y < 1. .OR. &
   pdata(np)%x > nx .OR. pdata(np)%y > ny) then
@@ -60,10 +49,6 @@ subroutine checkDomain(np)
       pdata(np)%z = vmin
     end if
   end if
-#if defined(DRHOOK)
-!     before the return statement
-  IF (LHOOK) CALL DR_HOOK('CHECKDOMAIN',1,ZHOOK_HANDLE)
-#endif
   return
 
 end subroutine checkDomain

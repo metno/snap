@@ -254,11 +254,6 @@ PROGRAM bsnap
   USE feltio_dummy, only: readfd, readfield, filesort, fldout
 #endif
   USE iso_fortran_env, only: error_unit
-#if defined(DRHOOK)
-  USE PARKIND1  ,ONLY : JPIM     ,JPRB
-  USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
-#endif
-
 
 ! SNAP - Severe Nuclear Accident Program
 
@@ -272,10 +267,6 @@ PROGRAM bsnap
 !	iexit=2   : some error, exit
 
   implicit none
-#if defined(DRHOOK)
-  REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
-#endif
-
 
   integer ::   iaction,iexit,allocatestatus
 
@@ -356,10 +347,6 @@ PROGRAM bsnap
   mplume = mplumepre
 
   iaction=0
-#if defined(DRHOOK)
-! Before the very first statement
-  IF (LHOOK) CALL DR_HOOK('SNAP',0,ZHOOK_HANDLE)
-#endif
 ! initialize random number generator for rwalk and release
   CALL init_random_seed()
   iexit=0
@@ -2399,9 +2386,5 @@ PROGRAM bsnap
 ! deallocate all fields
   CALL deAllocateFields()
   if(istop > 0) call exit(istop)
-#if defined(DRHOOK)
-! Before the very last statement
-  IF (LHOOK) CALL DR_HOOK('SNAP',1,ZHOOK_HANDLE)
-#endif
   stop
 END PROGRAM

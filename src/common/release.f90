@@ -37,14 +37,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
   USE snaptabML
   USE snapdimML, only: nx, ny, nk, mcomp
 
-#if defined(DRHOOK)
-  USE PARKIND1  ,ONLY : JPIM     ,JPRB
-  USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
-#endif
   implicit none
-#if defined(DRHOOK)
-  REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
-#endif
 
 !..input/output
   integer :: istep,nsteph
@@ -82,10 +75,6 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
 !..for random number functions
   real :: rnd(3)
 
-#if defined(DRHOOK)
-! Before the very first statement
-  IF (LHOOK) CALL DR_HOOK('RELEASE',0,ZHOOK_HANDLE)
-#endif
 
   if(itprof == 2) then
   !..single bomb release
@@ -452,10 +441,6 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
 
   ierror= 0
 
-#if defined(DRHOOK)
-!     before the return statement
-  IF (LHOOK) CALL DR_HOOK('RELEASE',1,ZHOOK_HANDLE)
-#endif
   return
 end subroutine release
 end module releaseML

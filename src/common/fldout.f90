@@ -82,10 +82,6 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 !		= (1.0-part_of_bq_in_bl)*concentration/(garea*hbl)
 !---------------------------------------------------------------------
 
-#if defined(DRHOOK)
-  USE PARKIND1  ,ONLY : JPIM     ,JPRB
-  USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
-#endif
   USE particleML
   USE fileInfoML
   USE snapfilML
@@ -99,11 +95,6 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   USE ftestML, only: ftest
   USE snapdimML, only: nx, ny, nk, nxmc, nymc, ldata
   implicit none
-#if defined(DRHOOK)
-  REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
-#endif
-
-        
 
   integer ::   iwrite,iunit,istep,nsteph,ierror
   integer ::   itime(5)
@@ -139,10 +130,6 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 !      equivalence (field2(1,1),field2print(1))
 
 
-#if defined(DRHOOK)
-! Before the very first statement
-  IF (LHOOK) CALL DR_HOOK('FLDOUT',0,ZHOOK_HANDLE)
-#endif
 
   ierror=0
 
@@ -185,10 +172,6 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     do i=1,5
       itimeargos(i)=itime(i)
     end do
-#if defined(DRHOOK)
-  !     before the return statement
-    IF (LHOOK) CALL DR_HOOK('FLDOUT',1,ZHOOK_HANDLE)
-#endif
     return
   end if
 
@@ -410,10 +393,6 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   end if
 
   if(iwrite == 0) then
-#if defined(DRHOOK)
-  !     before the return statement
-    IF (LHOOK) CALL DR_HOOK('FLDOUT',1,ZHOOK_HANDLE)
-#endif
     return
   end if
 
@@ -452,10 +431,6 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     write(9,*) 'creating fldout: ',filnam
     if(ierror /= 0) write(6,*) 'fldout: crefelt ERROR'
     if(ierror /= 0) then
-#if defined(DRHOOK)
-    !     before the return statement
-      IF (LHOOK) CALL DR_HOOK('FLDOUT',1,ZHOOK_HANDLE)
-#endif
       return
     end if
     numfields=0
@@ -1418,10 +1393,6 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 !..close output felt (field) file
   call mwfelt(13,filnam,iunit,1,nx*ny,field1,1.0, &
   ldata,idata,ierror)
-#if defined(DRHOOK)
-!     before the return statement
-  IF (LHOOK) CALL DR_HOOK('FLDOUT',1,ZHOOK_HANDLE)
-#endif
   return
 
   900 ierror=1
@@ -1430,10 +1401,6 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   ldata,idata,ierr)
   920 write(9,*) '*FLDOUT*  Terminates due to write error.'
 
-#if defined(DRHOOK)
-!     before the return statement
-  IF (LHOOK) CALL DR_HOOK('FLDOUT',1,ZHOOK_HANDLE)
-#endif
   return
 end subroutine fldout
 end module fldoutML

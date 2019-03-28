@@ -93,18 +93,10 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 !		= (1.0-part_of_bq_in_bl)*concentration/(garea*hbl)
 !---------------------------------------------------------------------
 
-#if defined(DRHOOK)
-  USE PARKIND1  ,ONLY : JPIM     ,JPRB
-  USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
-#endif
   USE particleML
   USE fileInfoML
   implicit none
-#if defined(DRHOOK)
-  REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
-#endif
 
-        
 
 !     *   ps 8 - surface pressure (if model level output) (hPa)
 !     *  accum_prc 17 - precipitation accummulated from start of run (mm)
@@ -184,10 +176,6 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   character(256) :: string
   integer :: lenstr
 
-#if defined(DRHOOK)
-! Before the very first statement
-  IF (LHOOK) CALL DR_HOOK('FLDOUT_NC',0,ZHOOK_HANDLE)
-#endif
 
   idry=0
   iwet=0
@@ -239,10 +227,6 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     do i=1,5
       itimeargos(i)=itime(i)
     end do
-#if defined(DRHOOK)
-  !     before the return statement
-    IF (LHOOK) CALL DR_HOOK('FLDOUT_NC',1,ZHOOK_HANDLE)
-#endif
     return
   end if
 
@@ -366,10 +350,6 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   end if
 
   if(iwrite == 0) then
-#if defined(DRHOOK)
-  !     before the return statement
-    IF (LHOOK) CALL DR_HOOK('FLDOUT_NC',1,ZHOOK_HANDLE)
-#endif
     return
   end if
 
@@ -1563,10 +1543,6 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 !      call mwfelt(13,filnam,iunit,1,nx*ny,field1,1.0,
 !     +            ldata,idata,ierror)
   call check(nf90_sync(iunit))
-#if defined(DRHOOK)
-!     before the return statement
-  IF (LHOOK) CALL DR_HOOK('FLDOUT_NC',1,ZHOOK_HANDLE)
-#endif
   return
 
   900 ierror=1
@@ -1575,10 +1551,6 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 !     +            ldata,idata,ierr)
   920 write(9,*) '*FLDOUT_NC*  Terminates due to write error.'
 
-#if defined(DRHOOK)
-!     before the return statement
-  IF (LHOOK) CALL DR_HOOK('FLDOUT_NC',1,ZHOOK_HANDLE)
-#endif
   return
 end subroutine fldout_nc
 

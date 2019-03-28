@@ -29,9 +29,6 @@ MILIB_FLAGS = -fno-implicit-none -fno-module-private -Wno-all -Wno-extra
 #MILIB = -L/usr/lib -lmi
 EXLIBS = -lpthread -ldl
 
-DRHOOKINC = -I../../utils/drhook_CY31R2.032
-DRHOOKLIB = -L../../utils/drhook_CY31R2.032 -ldrhook -lmpi_serial
-
 ##########################################################
 
 BINDIR=../../bin/
@@ -47,11 +44,6 @@ endif
 LIBS= $(MILIB) $(EXLIBS)
 BLIBS += $(MILIB) -lnetcdff
 
-ifdef DR_HOOK
-$(info DR_HOOK defined)
-F77FLAGS += -DDRHOOK $(DRHOOKINC)
-BLIBS += $(DRHOOKLIB)
-endif
 
 # clear out all suffixes
 .SUFFIXES:

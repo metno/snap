@@ -35,24 +35,13 @@ subroutine drydep1(n)
 !  Method:   J.Saltbones 1994
 
 
-#if defined(DRHOOK)
-  USE PARKIND1  ,ONLY : JPIM     ,JPRB
-  USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
-#endif
   implicit none
-#if defined(DRHOOK)
-  REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
-#endif
 
 ! particle loop index, n=0 means init
   INTEGER, INTENT(IN) :: n
   integer :: m,i,j,mm
   real ::    h,dep
 
-#if defined(DRHOOK)
-! Before the very first statement
-  IF (LHOOK) CALL DR_HOOK('DRYDEP1',0,ZHOOK_HANDLE)
-#endif
 
 !      do n=1,npart // particle loop now outside
   m= icomp(n)
@@ -72,10 +61,6 @@ subroutine drydep1(n)
   end if
 !      end do
 
-#if defined(DRHOOK)
-!     before the return statement
-  IF (LHOOK) CALL DR_HOOK('DRYDEP1',1,ZHOOK_HANDLE)
-#endif
   return
 end subroutine drydep1
 end module drydep1ML

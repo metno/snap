@@ -39,10 +39,6 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
 !             ierror     error (output)
 
 
-#if defined(DRHOOK)
-  USE PARKIND1  ,ONLY : JPIM     ,JPRB
-  USE YOMHOOK   ,ONLY : LHOOK,   DR_HOOK
-#endif
   USE particleML
   USE fileInfoML
   USE snapfilML
@@ -56,9 +52,6 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   USE ftestML, only: ftest
   USE snapdimML, only: nx, ny, nk, ldata, mavail, mprecip
   implicit none
-#if defined(DRHOOK)
-  REAL(KIND=JPRB) :: ZHOOK_HANDLE ! Stack variable i.e. do not use SAVE
-#endif
 
 !..input/output
   integer ::   iunit,istep,nhleft,ihr1,ihr2,ierror
@@ -78,10 +71,6 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
 
   integer, save :: itryprecip=1
 
-#if defined(DRHOOK)
-! Before the very first statement
-  IF (LHOOK) CALL DR_HOOK('READFIELD',0,ZHOOK_HANDLE)
-#endif
 !..get time offset in hours (as iavail(n)%oHour)
   if (nhleft < 0) then
     ihr1 = -ihr1
@@ -177,10 +166,6 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
     write(9,*) '*READFIELD* No model level data available'
     write(6,*) '*READFIELD* No model level data available'
     ierror=1
-#if defined(DRHOOK)
-  !     before the return statement
-    IF (LHOOK) CALL DR_HOOK('READFIELD',1,ZHOOK_HANDLE)
-#endif
     return
   end if
 
@@ -394,10 +379,6 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
     write(9,*) '     nhdiff,mprecip: ',nhdiff,mhprecip
     write(9,*) '   Recompile with mprecip=',nhdiff
     ierror=1
-#if defined(DRHOOK)
-  !     before the return statement
-    IF (LHOOK) CALL DR_HOOK('READFIELD',1,ZHOOK_HANDLE)
-#endif
     return
   end if
 
@@ -952,10 +933,6 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
 
   if(ierror /= 0) then
     navailt2=0
-#if defined(DRHOOK)
-  !     before the return statement
-    IF (LHOOK) CALL DR_HOOK('READFIELD',1,ZHOOK_HANDLE)
-#endif
     return
   end if
 
@@ -1006,10 +983,6 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   
   end if
 
-#if defined(DRHOOK)
-!     before the return statement
-  IF (LHOOK) CALL DR_HOOK('READFIELD',1,ZHOOK_HANDLE)
-#endif
   return
 end subroutine readfield
 end module readfieldML
