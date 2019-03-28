@@ -8,7 +8,7 @@ ensemble.o vgravtables.o forwrd.o tabcon.o wetdep1.o wetdep2.o drydep1.o drydep2
 argoswrite.o bldp.o compheight.o checkDomain.o \
 filesort_nc.o fldout_nc.o \
 init_random_seed.o decayDeps.o\
-release.o releasefile.o rmpart.o allocateFields.o forwrd_dx.o \
+release.o releasefile.o rmpart.o allocateFields.o \
 snapepsML.o
 
 ifdef MILIB
@@ -37,8 +37,6 @@ allocateFields.o: ../common/allocateFields.f90 particleML.o snapparML.o fileInfo
 snapdimML.o: ../common/snapdimML.f90
 	${F77} -c $(F77FLAGS) $(INCLUDES) $<
 decayDeps.o: ../common/decayDeps.f90
-	${F77} -c $(F77FLAGS) $(INCLUDES) $<
-forwrd_dx.o: ../common/forwrd_dx.f90
 	${F77} -c $(F77FLAGS) $(INCLUDES) $<
 snaptabML.o: ../common/snaptabML.f90 snapdimML.o
 	${F77} -c $(F77FLAGS) $(INCLUDES) $<
@@ -96,7 +94,7 @@ fldout_nc.o: ../common/fldout_nc.f90 snapfilML.o snapgrdML.o snapfldML.o snappar
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 feltio_dummy.o: ../common/feltio_dummy.f90
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-forwrd.o: ../common/forwrd.f90 particleML.o snapgrdML.o snapfldML.o snapparML.o snaptabML.o snapdimML.o snapdebugML.o vgravtables.o forwrd_dx.o
+forwrd.o: ../common/forwrd.f90 particleML.o snapgrdML.o snapfldML.o snapparML.o snaptabML.o snapdimML.o snapdebugML.o vgravtables.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 init_random_seed.o: ../common/init_random_seed.f90
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
