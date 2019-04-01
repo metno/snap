@@ -17,8 +17,8 @@
 !
 module snapfilML
     use iso_fortran_env, only: int16
-    use fileInfoML
-    use snapdimML
+    use fileInfoML, only: fileInfo
+    use snapdimML, only: mavail, mfilef
     implicit none
 
     private

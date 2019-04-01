@@ -26,7 +26,7 @@ module decaydepsML
 subroutine decayDeps(tstep)
   USE snapfldML
   USE snapparML
-  USE snapdimML, only: nx,ny,nk
+  USE snapdimML, only: nx,ny
 !  Purpose:  Decrease radioactive contents of deposition fields
 !            due to decay
 !     NEEDS TO BE RUN BEFORE 1 decay

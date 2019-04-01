@@ -33,10 +33,9 @@ subroutine tabcon
   USE snapdebug, only: iulog
   implicit none
 
-  integer :: i,j,n
-  real ::    rcp,p,prestep,precint,probab
-
-  rcp=r/cp
+  integer :: i,n
+  real :: p,prestep,precint,probab
+  real, parameter :: rcp = r/cp
 
 !..Exner function, pitab(0:130) for p=0,10,20,...1300 hPa
 

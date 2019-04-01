@@ -114,7 +114,7 @@ end subroutine vgravtables
 ! c    real c        ! Cunningham factor
   real :: a1,a2,a3    ! constants
   real :: dp        ! particle size in micro meters
-  real :: dp_fac    ! conversion factor micro meters -> cm
+! real :: dp_fac    ! conversion factor micro meters -> cm
   real :: l        ! free path of air molecules
 !---------------------------------------
   l=0.0653
@@ -235,11 +235,11 @@ subroutine iter(vg,u0,dp,rp,p,t)
   implicit none
   real :: vg        ! computed gravitational settling velocity
   real :: u0        ! vg according to Stokes low
-  real :: a1,a2    ! constants
+! real :: a1,a2    ! constants
   real :: dp        ! particle size in micro meters
   real :: rp            ! particle density in g/cm3
-  real :: etha    ! viscosity of the air
-  real :: re        ! Reynolds number
+! real :: etha    ! viscosity of the air
+! real :: re        ! Reynolds number
 ! c    real dpdata(4)    ! particle sizes um
   real :: eps    ! accuracy of computed vg (0.1%)
   real :: x1,x2    ! boundary of the domain for fit

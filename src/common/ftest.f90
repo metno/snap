@@ -36,7 +36,7 @@ subroutine ftest(name,k1,k2,nx,ny,nk,field,iundef)
   character*(*) name
 
   integer :: kstep,i,j,k,ndef
-  real ::    undef,ud,f,fmin,fmax,fmean
+  real ::    undef,ud,fmin,fmax,fmean
 
   double precision :: fsum
 

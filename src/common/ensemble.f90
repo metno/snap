@@ -19,6 +19,8 @@ module ensembleML
   implicit none
   private
 
+  public ensemble
+
   contains
 
 subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
@@ -119,11 +121,11 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
   real ::    hh,dh,rt1,rt2,rk1,rk2
   real ::    hl(nk),cl(nk)
 
-  integer :: i,j,k,l,m,mm,n,ierror,ninside,ivlvl,ihour,kk,npos,nc
-  integer :: imc,iex,n1,n2,it,lrunit,iu,no,mtoutput
+  integer :: i,j,k,l,m,mm,n,ierror,ninside,ivlvl,ihour,kk,npos
+  integer :: n1,n2,it,lrunit,no,mtoutput
 
   real ::    undef,dxgridep,dygridep,x1,y1,x2,y2,hrstep,scale
-  real ::    cscale,dscale,cavg,hmax,glon,glat,ttmax,ginv
+  real ::    cscale,dscale,cavg,hmax,glon,glat,ttmax
 
   character(128) :: filename
 

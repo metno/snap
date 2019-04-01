@@ -40,7 +40,7 @@ subroutine rmpart(rmlimit)
 
   real ::    rmlimit
 
-  integer :: nkeep,idep,m,n,npl,i,i1,i2,keep,iredist,j
+  integer :: nkeep,idep,m,n,npl,i,i1,i2,iredist
   real ::    xmin,xmax,ymin,ymax,vmin,vmax
 
   integer :: npkeep(mdefcomp)

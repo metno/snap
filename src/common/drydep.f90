@@ -27,7 +27,6 @@ subroutine drydep1(n)
   USE particleML
   USE snapfldML
   USE snapparML
-  USE snapdimML, only: nx,ny,nk
 
 
 !  Purpose:  Compute dry deposition for each particle and each component
@@ -69,7 +68,6 @@ subroutine drydep2(tstep,n)
   USE snapfldML
   USE snapparML
   USE snapgrdML, only: vlevel
-  USE snapdimML, only: nx,ny,nk
 
 !  Purpose:  Compute dry deposition for each particle and each component
 !            and store depositions in nearest gridpoint in a field

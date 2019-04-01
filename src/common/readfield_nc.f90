@@ -68,10 +68,10 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
 ! local variables
   integer :: i, j, k, n, ilevel, ierr1, ierr2, i1, i2
   integer :: itime(5,4),ihours(4)
-  integer :: ihdiff, ihdif1, ihdif2, nhdiff
+  integer :: ihdif1, ihdif2, nhdiff
   integer, save :: ncid = 0
   integer, save :: ntav1, ntav2 = 0
-  character*(1024), save :: file_name = ""
+  character(len=1024), save :: file_name = ""
   real ::     alev(nk),blev(nk),db, precip1,dxgrid,dygrid
   integer :: kk, ifb, kfb
   real ::    rcp, dred, red, p, px, dp, p1, p2,ptop
@@ -80,7 +80,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   real,save     ::    t2thetafac(15000)
   real ::    unitScale
 
-  integer :: varid, retval, timepos
+  integer :: timepos
 
   if (istep < 0) then
   ! set all 'save' variables to default values,
