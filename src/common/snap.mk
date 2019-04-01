@@ -17,7 +17,7 @@ ifdef MILIB
 else
   MODELOBJ += feltio_dummy.o chcase.o  gridpar.o  keywrd.o  mapfield.o  rlunit.o  termchar.o  xyconvert.o \
      getvar.o  hrdiff.o   lenstr.o  prhelp.o    rmfile.o  vtime.o \
-     earthr.o pol2sph.o sph2rot.o lam2sph.o mer2sph.o
+     earthr.o pol2sph.o sph2rot.o lam2sph.o mer2sph.o milibML.o
 endif
 
 BOBJ = snap_batch_copy.o
@@ -60,7 +60,7 @@ compheight.o: ../common/compheight.f90 snapgrdML.o snapfldML.o snaptabML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 snapparML.o: ../common/snapparML.f90 snapdimML.o
 	${F77} -c ${F77FLAGS} $<
-ensemble.o: ../common/ensemble.f90 particleML.o snapparML.o snapgrdML.o snapdimML.o epinterp.o ftest.o snapdebugML.o snapfldML.o snapepsML.o
+ensemble.o: ../common/ensemble.f90 particleML.o snapparML.o snapgrdML.o snapdimML.o epinterp.o ftest.o snapdebugML.o snapfldML.o snapepsML.o milibML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 checkDomain.o: ../common/checkDomain.f90 snapgrdML.o snapdimML.o particleML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
@@ -82,7 +82,7 @@ filesort.o: ../common/filesort.f90 fileInfoML.o snapfldML.o snapfilML.o snapdebu
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 om2edot.o: ../common/om2edot.f90 snapgrdML.o snapfldML.o snapdimML.o edcomp.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-readfield_nc.o: ../common/readfield_nc.f90 particleML.o fileInfoML.o snapfilML.o snapgrdML.o snapmetML.o snaptabML.o snapdebugML.o snapdimML.o om2edot.o ftest.o
+readfield_nc.o: ../common/readfield_nc.f90 particleML.o fileInfoML.o snapfilML.o snapgrdML.o snapmetML.o snaptabML.o snapdebugML.o snapdimML.o om2edot.o ftest.o milibML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 filesort_nc.o: ../common/filesort_nc.f90 dateCalc.o fileInfoML.o snapfilML.o snapdimML.o snapgrdML.o snapfldML.o snapmetML.o snapdebugML.o readfield_nc.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
@@ -123,6 +123,8 @@ vgravtables.o: ../common/vgravtables.f90 snapparML.o snapdimML.o
 wetdep.o: ../common/wetdep.f90 particleML.o snapgrdML.o snapfldML.o snapparML.o snaptabML.o snapdimML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 
+milibML.o: ../common/milibML.f90
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 
 milib.o: ../common/milib.c ../common/milib.h
 	$(CC)  -c $(CCFLAGS) -I../common $<

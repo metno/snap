@@ -50,6 +50,7 @@ subroutine filesort(iunit,ierror)
   USE snapgrdML
   USE snapdimML, only: mavail, nk
   USE snapdebug, only: iulog, idebug
+  USE milibML, only: lenstr, hrdiff, vtime
 
   implicit none
 
@@ -66,7 +67,6 @@ subroutine filesort(iunit,ierror)
   integer ::   ifound(maxinh),itime(5),itimev(5),itimeref(5)
   integer(int16) :: i2dum
 
-  integer :: lenstr
   integer :: nf,i,mhdiff,minhfc,maxhfc,nbegin,iend,nfound,ioerr
   integer :: n,ihdiff,ierr1,ierr2,iaforw,iaback,laforw,laback
   integer :: k,ihrmin,iprmin,nmin,ihrmax,iprmax,nmax,ktest,modsurf,j

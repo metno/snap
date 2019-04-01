@@ -33,6 +33,7 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
   USE epinterpML, only: epinterp
   USE ftestML, only: ftest
   USE snapdebug, only: iulog
+  USE milibML, only: lenstr, xyconvert, mapfield, rlunit, vtime
 
 !  Purpose: Interpolate particle positions to ENSEMBLE grid,
 !           and store data in this grid (and model levels),
@@ -124,8 +125,6 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
   real ::    undef,dxgridep,dygridep,x1,y1,x2,y2,hrstep,scale
   real ::    cscale,dscale,cavg,hmax,glon,glat,ttmax,ginv
 
-  integer :: lenstr
-
   character(128) :: filename
 
 
@@ -203,7 +202,8 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
   
   !..compute map ratio
     call mapfield(1,0,igridep,gparep, &
-    nxep,nyep,xmodel,ymodel,0., &
+    nxep,nyep,xmodel,ymodel, &
+    xmodel, & ! Ignored when icori = 0
     dxgridep,dygridep,ierror)
     if(ierror /= 0) then
       write(iulog,*) 'ensemble MAPFIELD ERROR. ierror= ',ierror
