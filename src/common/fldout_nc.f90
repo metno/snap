@@ -37,6 +37,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   USE ftestML, only: ftest
   USE netcdf
   USE snapdimML, only: mcomp, ldata, nx, ny, nk, nxmc, nymc
+  USE milibML, only: xyconvert, gridpar, hrdiff, rmfile
 ! netcdf
 !  Purpose:  Accumulation for average fields (iwrite=0,1).
 !            Make and write output fields (iwrite=1).
@@ -175,7 +176,6 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   character(len=256) :: filename
 
   character(len=256) :: string
-  integer :: lenstr
 
 
   idry=0

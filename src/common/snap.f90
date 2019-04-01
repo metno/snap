@@ -225,6 +225,7 @@ PROGRAM bsnap
   USE rmpartML, only: rmpart
   USE checkdomainML, only: checkdomain
   USE rwalkML, only: rwalk
+  USE milibML, only: lenstr, xyconvert, keywrd, chcase, getvar, hrdiff, prhelp, vtime
 #if defined(TRAJ)
   USE forwrdML, only: forwrd, speed
 #else
@@ -291,7 +292,7 @@ PROGRAM bsnap
   integer :: timeStart(6), timeCurrent(6), date_time(8)
   integer(kind=8) :: epochSecs
   real ::    tstep,rmlimit,rnhrun,rnhrel,glat,glong,tf1,tf2,tnow,tnext
-  real ::    x,y
+  real ::    x(1),y(1)
   TYPE(extraParticle) pextra
   real ::    rscale,actweight
 ! ipcount(mdefcomp, nk)
@@ -315,7 +316,6 @@ PROGRAM bsnap
   character(32) ::  bqcomponent
   character(1024) :: tempstr
 
-  integer :: lenstr
 
   logical, save :: pendingOutput = .FALSE.
 #if defined(VOLCANO) || defined(TRAJ)
@@ -529,7 +529,7 @@ PROGRAM bsnap
         cinput(k:k)=' '
       end do
     !..check if input as environment variables or command line arguments
-      call getvar(1,cinput,1,1,1,ierror)
+      call getvar(1,cinput,1,[1],1,ierror)
       if(ierror /= 0) goto 14
     !..find keywords and values
       mkey=maxkey
@@ -1910,14 +1910,14 @@ PROGRAM bsnap
             goto 910
           end if
           write(iulog,*) 'release   x,y:    ',x,y
-          if(x < 1.01 .OR. x > nx-0.01 .OR. &
-          y < 1.01 .OR. y > ny-0.01) then
+          if(x(1) < 1.01 .OR. x(1) > nx-0.01 .OR. &
+          y(1) < 1.01 .OR. y(1) > ny-0.01) then
             write(iulog,*) 'ERROR: Release position outside field area'
             write(error_unit,*) 'ERROR: Release position outside field area'
             goto 910
           end if
-          relpos(3,irelpos)=x
-          relpos(4,irelpos)=y
+          relpos(3,irelpos)=x(1)
+          relpos(4,irelpos)=y(1)
         
         !            if(iensemble.eq.1)
         !     +        call ensemble(0,itime1,tf1,tf2,tnow,istep,nstep,nsteph,0)
@@ -2294,8 +2294,8 @@ PROGRAM bsnap
         !	write(*,*) istep,pdata(k)%x,pdata(k)%y,pdata(k)%z
           x=pdata(k)%x
           y=pdata(k)%y
-          i=int(x)
-          j=int(y)
+          i=int(x(1))
+          j=int(y(1))
           call xyconvert(1,x,y,igtype,gparam,2,geoparam,ierror)
           vlvl=pdata(k)%z
           ilvl=vlvl*10000.

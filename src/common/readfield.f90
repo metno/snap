@@ -49,6 +49,7 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   USE om2edotML, only: om2edot
   USE ftestML, only: ftest
   USE snapdimML, only: nx, ny, nk, ldata, mavail, mprecip
+  USE milibML, only: gridpar, mapfield, hrdiff
   implicit none
 
 !..input/output
@@ -818,7 +819,8 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
       end if
     end if
   !..compute map ratio
-    call mapfield(1,0,igtype,gparam,nx,ny,xm,ym,0., &
+    call mapfield(1,0,igtype,gparam,nx,ny,xm,ym, &
+    xm, & ! Ignored when icori = 0
     dxgrid,dygrid,ierror)
     if(ierror /= 0) then
       write(iulog,*) 'MAPFIELD ERROR. ierror= ',ierror

@@ -94,6 +94,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   USE argoswriteML, only: argoswrite
   USE ftestML, only: ftest
   USE snapdimML, only: nx, ny, nk, nxmc, nymc, ldata
+  USE milibML, only: lenstr, xyconvert, gridpar, rmfile, vtime
   implicit none
 
   integer ::   iwrite,iunit,istep,nsteph,ierror
@@ -121,8 +122,6 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   integer(int16) :: ispecf(3)
 
   character(len=256) :: filename
-
-  integer :: lenstr
 
   real :: field1print(nx*ny),field2print(nx*ny)
 
