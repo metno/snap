@@ -16,7 +16,9 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 module fldout_ncML
+  USE iso_fortran_env, only: real32
   USE readfield_ncML, only: check
+  USE milibML, only: xyconvert, gridpar, hrdiff, rmfile
   implicit none
   private
 
@@ -37,7 +39,6 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   USE ftestML, only: ftest
   USE netcdf
   USE snapdimML, only: mcomp, ldata, nx, ny, nk, nxmc, nymc
-  USE milibML, only: xyconvert, gridpar, hrdiff, rmfile
 ! netcdf
 !  Purpose:  Accumulation for average fields (iwrite=0,1).
 !            Make and write output fields (iwrite=1).
@@ -136,23 +137,21 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   icbl_varid(mcomp), &
   acbl_varid(mcomp), idd_varid(mcomp), iwd_varid(mcomp), &
   accdd_varid(mcomp), accwd_varid(mcomp), ac_varid(mcomp), &
-  ic_varid(mcomp), icml_varid(mcomp), acml_varid(mcomp), &
-  bdd_varid(mcomp), bwd_varid(mcomp), accbdd_varid(mcomp), &
-  accbwd_varid(mcomp)
+  ic_varid(mcomp), icml_varid(mcomp)
+! intger, save :: acml_varid(mcomp)
 
   integer ::   iwrite,iunit,istep,nsteph,ierror
   integer ::   itime(5)
   real ::      tf1,tf2,tnow,tstep
   character*(*) filnam
 
-  integer, save :: igeofield=0,naverage=0,initargos=0,initacc=0
-  integer :: ihr
+  integer, save :: igeofield=0,naverage=0,initacc=0
 !..used in xyconvert (x,y -> longitude,latitude)
   real, save :: geoparam(6) = [1.0, 1.0, 1.0, 1.0, 0.0, 0.0]
 
 
   integer :: dimids2d(2),dimids3d(3),dimids4d(4), ipos(4), isize(4), &
-  varid, chksz3d(3), chksz4d(4)
+             chksz3d(3), chksz4d(4)
   integer, save :: x_dimid, y_dimid, k_dimid, t_dimid
   integer, save :: t_varid, k_varid, ap_varid, b_varid
   integer, save  :: iftime(5), ihrs, ihrs_pos
@@ -162,18 +161,14 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   double precision :: bqtot1,bqtot2
   double precision :: dblscale
 
-  integer :: iyear,month,iday,ihour,minute,isecond,maxage
+  integer :: maxage
   integer :: i,j,k,m,mm,n,id03,id04,ivlvl,idextr,idry,iwet,loop,iparx
-  integer :: itab,ko,lvla,lvlb,ipar,ierr,ios,iu,i1,i2
+  integer :: ko,lvla,lvlb,ipar
   integer, save :: numfields = 0
   real ::    rt1,rt2,scale,undef,average,averinv,cscale,dscale,hbl
-  real ::    avg,hrstep,dh,splon,splat,total
+  real ::    avg,hrstep,dh,total
 
-  integer ::   itypef,ltimef,itimef(5),icodef,lspecf,loptf,ioptf
   integer, save :: itimeargos(5) = [0, 0, 0, 0, 0]
-  integer(int16) :: ispecf(3)
-
-  character(len=256) :: filename
 
   character(len=256) :: string
 
@@ -1550,7 +1545,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 !..close output felt (field) file
 !      call mwfelt(13,filnam,iunit,1,nx*ny,field1,1.0,
 !     +            ldata,idata,ierr)
-  920 write(iulog,*) '*FLDOUT_NC*  Terminates due to write error.'
+  write(iulog,*) '*FLDOUT_NC*  Terminates due to write error.'
 
   return
 end subroutine fldout_nc
@@ -1663,10 +1658,10 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
   INTEGER :: i, j, ierror, x_varid, y_varid, proj_varid, &
   lon_varid, lat_varid, carea_varid, mapx_varid, mapy_varid, &
   dimids(2)
-  REAL(KIND=4) :: xvals(nx), yvals(ny), lon(nx,ny), lat(nx,ny), &
-  val, pi, deg2rad, incr, llparam(6), gparam2(6)
+  REAL(KIND=real32) :: xvals(nx), yvals(ny), lon(nx,ny), lat(nx,ny), &
+  val, pi, deg2rad, gparam2(6)
+  real(kind=real32) :: llparam(6) = [1.0, 1.0, 1.0, 1.0, 0.0, 0.0]
 
-  DATA llparam /1., 1., 1., 1., 0., 0./
   pi = 4.D0*DATAN(1.D0)
   deg2rad = pi/180.
 

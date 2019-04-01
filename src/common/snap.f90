@@ -206,6 +206,7 @@
 
 
 PROGRAM bsnap
+  USE iso_fortran_env, only: real64
   USE DateCalc  ,ONLY : epochToDate, timeGM
   USE snapdebug, only: iulog, idebug
   USE snapargosML
@@ -278,29 +279,25 @@ PROGRAM bsnap
   parameter (maxkey=10)
   integer ::   kwhere(5,maxkey)
 
-  integer :: iargc,c2fiargc
   integer :: narg,iuinp,ios,iprhlp,nlines,nhrun,nhrel,irwalk,nhfout
-  integer :: isynoptic,isvideo,m,np,nlevel,minhfc,maxhfc,ifltim
+  integer :: isynoptic,m,np,nlevel,minhfc,maxhfc,ifltim
   integer :: ipostyp,lcinp,iend,ks,nkey,k,ierror,mkey
-  integer :: ikey,k1,k2,kv1,kv2,nkv,i,kh,kd,ig,igd,igm,i1,i2,l,n,idmin
-  integer :: iscale,ih
+  integer :: ikey,k1,k2,kv1,kv2,nkv,i,kh,kd,ig,igd,igm,i1,i2,l,n
+  integer :: ih
   integer :: idrydep,iwetdep,idecay
   integer :: ntimefo,iunitf,nh1,nh2
   integer :: ierr1,ierr2,nsteph,nstep,nstepr,iunito
   integer :: nxtinf,ihread,isteph,lstepr,iendrel,istep,ihr1,ihr2,nhleft
   integer :: ierr,ihdiff,ihr,ifldout,idailyout,ihour,istop
-  integer :: timeStart(6), timeCurrent(6), date_time(8)
-  integer(kind=8) :: epochSecs
+  integer :: date_time(8)
   real ::    tstep,rmlimit,rnhrun,rnhrel,glat,glong,tf1,tf2,tnow,tnext
   real ::    x(1),y(1)
   TYPE(extraParticle) pextra
-  real ::    rscale,actweight
+  real ::    rscale
 ! ipcount(mdefcomp, nk)
   integer, dimension(:,:), allocatable:: ipcount
 ! npcount(nk)
   integer, dimension(:), allocatable:: npcount
-  integer :: ilvl
-  real ::    vlvl
 ! b_start
   real :: mhmin, mhmax	! minimum and maximum of mixing height
 ! b_end
@@ -308,22 +305,26 @@ PROGRAM bsnap
   logical :: blfullmix
   logical :: init = .TRUE. 
 
-  character(1024) ::  finput,fldfil,fldfilX,fldfilN,logfile,ftype, &
+  character(len=1024) ::  finput,fldfil,fldfilX,fldfilN,logfile,ftype, &
   fldtype, relfile
-  character(256) :: cinput,ciname,cipart,cipart2
-  character(8) ::   cpos1,cpos2
-  character(1) ::   tchar
-  character(32) ::  bqcomponent
-  character(1024) :: tempstr
+  character(len=256) :: cinput,ciname,cipart
+  character(len=8) ::   cpos1,cpos2
+  character(len=1) ::   tchar
+  character(len=1024) :: tempstr
 
+#if defined(TRAJ)
+  integer :: timeStart(6), timeCurrent(6)
+  integer :: ilvl
+  real ::    vlvl
+#endif
 
-  logical, save :: pendingOutput = .FALSE.
 #if defined(VOLCANO) || defined(TRAJ)
 ! b 02.05
 
 !... matrix for calculating volcanic ash concentrations + file name
 
 !   vcon(nx,ny,3)
+  integer(kind=real64) :: epochSecs
   real, allocatable :: vcon(:,:,:)
   character(len=60) :: cfile
 ! b 19.05
@@ -536,7 +537,8 @@ PROGRAM bsnap
       call keywrd(1,cinput,'=',';',mkey,kwhere,nkey,ierror)
       if(ierror /= 0) goto 12
     end if
-  
+ 
+    nkv = 0
     do ikey=1,nkey
     
     ! c         l=kwhere(1,ikey)
@@ -1775,7 +1777,6 @@ PROGRAM bsnap
   
 #endif
 
-    1111 continue
   ! b_start
     mhmin=10000.0
     mhmax=-10.0
@@ -2221,10 +2222,7 @@ PROGRAM bsnap
           write(iulog,*) 'fldout. ',itimeo
         end if
       end if
-    
-    
-      3333 continue
-    
+
     !      if(iensemble.eq.1 .and. isteph.eq.0)
     !     +  call ensemble(6,itime,tf1,tf2,tnext,istep,nstep,nsteph,0)
     
@@ -2331,8 +2329,6 @@ PROGRAM bsnap
   end do
 #endif
 
-
-  2222 continue
 
   istop=0
   goto 990

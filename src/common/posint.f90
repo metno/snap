@@ -49,7 +49,7 @@ subroutine posint(np,tf1,tf2,tnow,pextra)
   REAL, INTENT(IN) ::    tf1,tf2,tnow
   TYPE(extraParticle), INTENT(OUT) :: pextra
 
-  integer :: i,j,i1,i2,k
+  integer :: i,j,k
   real ::    rt1,rt2,dxgrid,dygrid,dx,dy,c1,c2,c3,c4,bl,hbl,rmx,rmy
   real ::    pr,precmin,p1,p2,plim
 

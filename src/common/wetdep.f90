@@ -106,8 +106,8 @@ subroutine wetdep2(tstep,np,pextra)
 ! particle loop index, np = 0 means init
   INTEGER, INTENT(IN) :: np
   TYPE(extraParticle), INTENT(IN) :: pextra
-  integer :: m,n,itab,i,j,mm
-  real ::    precint,probab,prand,deprate,dep,q,rkw
+  integer :: m,n,i,j,mm
+  real ::    precint,deprate,dep,q,rkw
   real ::    depconst(mdefcomp)
 
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

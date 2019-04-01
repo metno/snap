@@ -59,7 +59,6 @@ subroutine rwalk(tstep,blfullmix,np,pextra)
   TYPE(extraParticle), INTENT(IN) :: pextra
 
 
-  integer :: i
   real(real64), save ::    a,cona,conb,vrange,vrdbla,vrdblb,vrqrt
   real(real64), save :: hmax ! maximum mixing height = 2500m
   real(real64), save :: tmix ! Characteristic mixing time = 15 min

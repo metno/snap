@@ -59,8 +59,11 @@ subroutine forwrd(tf1,tf2,tnow,tstep,np,pextra)
   TYPE(extraParticle), INTENT(INOUT) :: pextra
 
   TYPE(particle) :: nparticle
-  REAL(real64) :: dx1, dx2, dy1, dy2, dz1, dz2, u, v
+  REAL(real64) :: dx1, dy1, dz1, u, v
+#if defined(PETTERSEN)
+  REAL(real64) :: dx2, dy2, dz2
   REAL :: vmin, vmax
+#endif
 
 
   if (np == 0) then

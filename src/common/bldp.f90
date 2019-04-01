@@ -24,7 +24,7 @@ module bldpML
   contains
 
 subroutine bldp
-  USE snapdimML, only: nx,ny,nk, mprepro, mpretab
+  USE snapdimML, only: nx,ny,nk
   USE snaptabML
   USE snapgrdML
   USE snapfldML
