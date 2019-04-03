@@ -26,7 +26,7 @@ module readfield_ncML
   public readfield_nc, check, nfcheckload, calc_2d_start_length
 
 interface nfcheckload
-  module procedure nfcheckloadscalar, nfcheckload1d, nfcheckload2d, nfcheckload3d
+  module procedure nfcheckload1d, nfcheckload2d, nfcheckload3d
 end interface
 
   contains
@@ -74,7 +74,8 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   character(len=1024), save :: file_name = ""
   real ::     alev(nk),blev(nk),db, precip1,dxgrid,dygrid
   integer :: kk, ifb, kfb
-  real ::    rcp, dred, red, p, px, dp, p1, p2,ptop
+  real :: dred, red, p, px, dp, p1, p2,ptop
+  real, parameter :: rcp = r/cp
   real :: ptoptmp(1)
   real ::    totalprec
   real,save     ::    t2thetafac(15000)
@@ -100,9 +101,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   ihours(3)=0
   ihours(4)=nhleft
   do n=1,4
-    do i=1,5
-      itime(i,n)=itimei(i)
-    end do
+    itime(:,n) = itimei
     itime(5,n)=itime(5,n)+ihours(n)
     call hrdiff(0,1,itimer(1,1),itime(1,n),ihours(n),ierr1,ierr2)
   end do
@@ -232,11 +231,9 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   !        call readfd(iunit,nav,ivc,iv,ilevel,0,v2(1,1,k),ierror)
   !        if(ierror.ne.0) goto 100
   ! bug in chernobyl borders from destaggering
-    do j=1,ny
-      do i=1,nx
-        if (v2(i,j,k) >= 1e+30) v2(i,j,k) = 0.
-      end do
-    end do
+    where (v2 >= 1e+30)
+      v2 = 0.0
+    end where
 
   
   !..pot.temp. or abs.temp.
@@ -273,12 +270,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   !..sigma_dot/eta_dot (0 at surface)
   !..eta: eta_dot (or omega) stored in the same levels as u,v,th.
     if (sigmadotv == '') then
-      do j=1,ny
-        do i=1,nx
-        ! no vertical velocity
-          w2(i,j,k) = 0
-        end do
-      end do
+      w2 = 0
     else
       call nfcheckload(ncid, sigmadotv, &
       start4d, count4d, w2(:,:,k))
@@ -301,11 +293,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
 !  input ps, must be hPa, otherwise:
   if (nctype == 'arome' .OR. nctype == 'dmi_eps' .OR. &
   nctype == 'ec_det' .OR. nctype == 'h12_grib') then
-    do j=1,ny
-      do i=1,nx
-        ps2(i,j) = ps2(i,j) *0.01
-      end do
-    end do
+    ps2 = ps2*0.01
   endif
 !      call readfd(iunit,navps,ivc,8,ilevel,0,ps2(1,1),ierror)
 
@@ -346,9 +334,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
       do j=1,ny
         do i=1,nx
           precip1=max(field2(i,j)-field1(i,j),0.)/nhdiff
-          do k=1,nprecip
-            precip(i,j,k)=precip1
-          end do
+          precip(i,j,:) = precip1
         end do
       end do
     end if
@@ -375,9 +361,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
         do i=1,nx
           precip1=max(field3(i,j)+field4(i,j)- &
           (field1(i,j)+field2(i,j)),0.)/nhdiff
-          do k=1,nprecip
-            precip(i,j,k)=precip1 * unitScale
-          end do
+          precip(i,j,:) = precip1 * unitScale
         end do
       end do
     else
@@ -388,14 +372,11 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
       start3d, count3d, field3(:,:))
       call nfcheckload(ncid, precconaccumv, &
       start3d, count3d, field4(:,:))
-      totalprec = 0
-      do j=1,ny
-        do i=1,nx
-          field1(i,j) = 0.
-          field2(i,j) = 0.
-          totalprec = totalprec + field3(i,j) + field4(i,j)
-        end do
-      end do
+
+      field1 = 0.0
+      field2 = 0.0
+      totalprec = sum(field3) + sum(field4)
+
       if (totalprec > 1e-5) then
       !..the difference below may get negative due to different scaling
         write(iulog,*) "found precip in first timestep, assuming ", &
@@ -406,9 +387,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
           do i=1,nx
             precip1=max(field3(i,j)+field4(i,j)- &
             (field1(i,j)+field2(i,j)),0.)/nhdiff
-            do k=1,nprecip
-              precip(i,j,k)=precip1 * unitScale
-            end do
+            precip(i,j,:) = precip1 * unitScale
           end do
         end do
       endif
@@ -424,9 +403,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
       do i=1,nx
       !..precipitation must be larger 0, m/s -> mm/h
         precip1=max(field1(i,j)+field2(i,j),0.)*3600*1000
-        do k=1,nprecip
-          precip(i,j,k)=precip1
-        end do
+        precip(i,j,:) = precip1
       end do
     end do
 
@@ -480,14 +457,10 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   
     if(ivcoor == 2) then
     !..sigma levels ... vlevel=sigma
-      do k=1,nk
-        vlevel(k)=blevel(k)
-      end do
+      vlevel = blevel
     elseif(ivcoor == 10) then
     !..eta (hybrid) levels ... vlevel=eta (eta as defined in Hirlam)
-      do k=1,nk
-        vlevel(k)=alevel(k)/1013.26 + blevel(k)
-      end do
+      vlevel = alevel/1013.26 + blevel
     else
       write(error_unit,*) 'PROGRAM ERROR.  ivcoor= ',ivcoor
       stop 255
@@ -531,15 +504,10 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
     gparam(7)=dxgrid
     gparam(8)=dygrid
   !..size of each grid square (m**2)
-    do j=1,ny
-      do i=1,nx
-        garea(i,j)=(dxgrid/xm(i,j))*(dygrid/ym(i,j))
-        dgarea(i,j)=dble(garea(i,j))
-      end do
-    end do
+    garea = (dxgrid/xm) * (dygrid/ym)
+    dgarea = garea
 
     if (temp_is_abs) then
-      rcp=r/cp
     ! create precomputed table for pressures between 0.1 and 1500hPa
       do i=1,15000
         t2thetafac(i) = 1./((real(i)/10.*0.001)**rcp)
@@ -570,28 +538,14 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   !..omega -> etadot, or rather etadot derived from continuity-equation
     call om2edot
   ! om2edot take means of omega (=0) and continuity-equation, -> use only continuity equation
-    do k=1,nk
-      do j=1,ny
-        do i=1,nx
-          w2(i,j,k)=2.*w2(i,j,k)
-        end do
-      end do
-    end do
+    w2 = 2.0*w2
   end if
 
 !..sigma_dot/eta_dot 0 at surface
-  do j=1,ny
-    do i=1,nx
-      w2(i,j,1)=0.
-    end do
-  end do
+  w2(:,:,1) = 0.0
 
 !..no temperature at or near surface (not used, yet)
-  do j=1,ny
-    do i=1,nx
-      t2(i,j,1)=-999.
-    end do
-  end do
+  t2(:,:,1) = -999.0
   if(kadd > 0) then
   !..levels added at the top
     dred=0.5/float(kadd)
@@ -599,28 +553,18 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
     kk=nk-kadd
     do k=nk-kadd+1,nk
       red=red-dred
-      do j=1,ny
-        do i=1,nx
-          u2(i,j,k)=u2(i,j,kk)
-          v2(i,j,k)=v2(i,j,kk)
-          w2(i,j,k)=w2(i,j,kk)*red
-          t2(i,j,k)=t2(i,j,kk)
-        end do
-      end do
+      u2(:,:,k) = u2(:,:,kk)
+      v2(:,:,k) = v2(:,:,kk)
+      w2(:,:,k) = w2(:,:,kk)*red
+      t2(:,:,k) = t2(:,:,kk)
     end do
   end if
 
   if(nhleft < 0) then
   ! backward-calculation, switch sign of winds
-    do k=1,nk
-      do j=1,ny
-        do i=1,nx
-          u2(i,j,k)=-u2(i,j,k)
-          v2(i,j,k)=-v2(i,j,k)
-          w2(i,j,k)=-w2(i,j,k)
-        end do
-      end do
-    end do
+    u2 = -u2
+    v2 = -v2
+    w2 = -w2
   end if
 
 
@@ -705,15 +649,13 @@ subroutine calc_2d_start_length(start, length, nx, ny, zpos, &
   enspos, tpos, has_2d_dummy_height)
 ! calculate the start and length paramters for slicing
 ! a 2d field from a 3-5d dataset
-  integer, intent (inout) :: start(7), length(7)
+  integer, intent (out) :: start(7), length(7)
   integer, intent (in) :: nx, ny, zpos, enspos, tpos
   logical, intent (in) :: has_2d_dummy_height
   integer :: pos
 
-  do pos = 1, 7
-    start(pos) = 1
-    length(pos) = 1
-  end do
+  start = 1
+  length = 1
 
   length(1) = nx
   length(2) = ny
@@ -786,36 +728,6 @@ subroutine fillscaleoffset(ncid, varid, fillvalue, scalefactor, offset, status)
     return
   endif
 end subroutine fillscaleoffset
-
-subroutine nfcheckloadscalar(ncid, varname, start, length, field)
-  use, intrinsic :: IEEE_ARITHMETIC
-  use iso_fortran_env, only: real32
-  use netcdf
-  implicit none
-  integer, intent (in) :: ncid, start(:), length
-  character(len=*), intent(in) :: varname
-  real(real32), intent (inout) :: field
-
-  real(real32) :: factor, offset, fillvalue
-  integer :: varid, status
-
-  call check(nf90_inq_varid(ncid, varname, varid), varname)
-  call check(nf90_get_var(ncid, varid, field), varname)
-
-! translate fill-value to IEEE undefined
-  call fillscaleoffset(ncid, varid, fillvalue, factor, offset, status)
-  call check(status)
-
-  if (field == fillvalue) then
-    field = IEEE_VALUE(fillvalue, IEEE_QUIET_NAN)
-  endif
-
-!  check add_offset and scale_factor
-  if (factor /= 1. .OR. offset /= 0.) then
-    field = field*factor + offset
-  end if
-
-end subroutine nfcheckloadscalar
 
 subroutine nfcheckload1d(ncid, varname, start, length, field)
   use, intrinsic :: IEEE_ARITHMETIC
