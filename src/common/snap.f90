@@ -2381,7 +2381,7 @@ PROGRAM bsnap
     error stop 1
   elseif (istop == 2) then
     error stop 2
-  else
+  elseif (istop /= 0) then
     error stop 3
   endif
 END PROGRAM
