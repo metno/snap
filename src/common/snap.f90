@@ -133,6 +133,7 @@
 ! FIELD.OUTPUT= snap.felt
 ! FIELD.OUTTYPE=netcdf/felt
 ! FIELD.DAILY.OUTPUT.ON
+! FIELD.USE_MODEL_WIND_INSTEAD_OF_10M= [.false.]/.true
 ! * timestamp which will also be written to netcdf-files, default: now
 ! SIMULATION.START.DATE=2010-01-01_10:00:00
 ! LOG.FILE=     snap.log
@@ -214,7 +215,7 @@ PROGRAM bsnap
   USE snapdimML
   USE snapfilML
   USE snapfldML
-  USE snapmetML, only: init_meteo_params
+  USE snapmetML, only: init_meteo_params, use_model_wind_for_10m
   USE snapparML
   USE snapposML
   USE snapgrdML
@@ -958,6 +959,10 @@ PROGRAM bsnap
         do i=1,ndefcomp-1
           if(idcomp(i) == idcomp(ndefcomp)) goto 12
         end do
+      elseif (cinput(k1:k2) == 'field.use_model_wind_instead_of_10m') then
+        if (kv1 < 1) goto 12
+        read(cipart,*,err=12) use_model_wind_for_10m
+! FIELD.USE_MODEL_WIND_INSTEAD_OF_10M= [.false.]/.true
       elseif(cinput(k1:k2) == 'precip(mm/h).probab') then
       !..precip(mm/h).probab=<precip_intensity,probability, ...>
         if(kv1 < 1) goto 12
