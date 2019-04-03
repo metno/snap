@@ -30,6 +30,8 @@ module snapmetML
   character(len=80), save, public :: precstrativrt,precconvrt
   logical, save, public :: temp_is_abs, has_dummy_dim, manual_level_selection
   logical, save, public :: sigmadot_is_omega
+!< Use model wind (bottom layer) in place of 10m wind
+  logical, save, public :: use_model_wind_for_10m = .false.
 
   public init_meteo_params
 

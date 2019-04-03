@@ -300,8 +300,18 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
 
 ! u10m
 ! v10m
-  call nfcheckload(ncid, xwind10mv, start3d, count3d, u2(:,:,:))
-  call nfcheckload(ncid, ywind10mv, start3d, count3d, v2(:,:,:))
+  if (.not.use_model_wind_for_10m) then
+    call nfcheckload(ncid, xwind10mv, start3d, count3d, u2(:,:,1))
+    call nfcheckload(ncid, ywind10mv, start3d, count3d, v2(:,:,1))
+  else
+    if (enspos >= 0) then
+      call nfcheckload(ncid, xwindv, [1, 1, enspos+1, nk, timepos], [nx, ny, 1, 1, 1], u2(:,:,1))
+      call nfcheckload(ncid, ywindv, [1, 1, enspos+1, nk, timepos], [nx, ny, 1, 1, 1], v2(:,:,1))
+    else
+      call nfcheckload(ncid, xwindv, [1, 1, nk, timepos], [nx, ny, 1, 1], u2(:,:,1))
+      call nfcheckload(ncid, ywindv, [1, 1, nk, timepos], [nx, ny, 1, 1], v2(:,:,1))
+    endif
+  endif
 
 !..mean sea level pressure, not used in computations,
 !..(only for output to results file)
@@ -734,9 +744,9 @@ subroutine nfcheckload1d(ncid, varname, start, length, field)
   use iso_fortran_env, only: real32
   use netcdf
   implicit none
-  integer, intent (in) :: ncid, start(:), length(:)
+  integer, intent(in) :: ncid, start(:), length(:)
   character(len=*), intent(in) :: varname
-  real(real32), intent (inout) :: field(:)
+  real(real32), intent(out) :: field(:)
 
   real(real32) :: factor, offset, fillvalue
   integer :: varid, status
@@ -761,9 +771,9 @@ subroutine nfcheckload2d(ncid, varname, start, length, field)
   use iso_fortran_env, only: real32
   use netcdf
   implicit none
-  integer, intent (in) :: ncid, start(:), length(:)
+  integer, intent(in) :: ncid, start(:), length(:)
   character(len=*), intent(in) :: varname
-  real(real32), intent (inout) :: field(:,:)
+  real(real32), intent(out) :: field(:,:)
 
   real(real32) :: factor, offset, fillvalue
   integer :: varid, status
@@ -788,9 +798,9 @@ subroutine nfcheckload3d(ncid, varname, start, length, field)
   use iso_fortran_env, only: real32
   use netcdf
   implicit none
-  integer, intent (in) :: ncid, start(:), length(:)
+  integer, intent(in) :: ncid, start(:), length(:)
   character(len=*), intent(in) :: varname
-  real(real32), intent (inout) :: field(:,:,:)
+  real(real32), intent(out) :: field(:,:,:)
 
   real(real32) :: factor, offset, fillvalue
   integer :: varid, status
