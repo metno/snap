@@ -128,10 +128,6 @@ milibML.o: ../common/milibML.f90
 
 milib.o: ../common/milib.c ../common/milib.h
 	$(CC)  -c $(CCFLAGS) -I../common $<
-c2fgetvar.o: ../common/c2fgetvar.f90
-	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
-c2fgetarg.o: ../common/c2fgetarg.f90
-	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 
 # libmi
 chcase.o: ../common/milib/chcase.f
