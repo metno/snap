@@ -16,19 +16,16 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !
 
+!> Common for particles
 module snapparML
   use snapdimML
   implicit none
 
   private
 
-!-----------------------------------------------------------------------
-! snappar.inc
-!
-!..include file  -  common for particles
-!
-!
-!..ndefcomp:  no. of components defined (aerosol,gas,noble.gas,...)
+!> no. of components defined (aerosol,gas,noble.gas,...)
+  integer, save, public :: ndefcomp
+
 !..nplume:    no. of released plumes
 !..npart:     total no. of particles (in all released plumes)
 !..nparnum:   counter for unique particle identifier
@@ -60,7 +57,7 @@ module snapparML
 !..numtotal:  total no. of particles released, accumulated during run
 !..compname:  a component name (not much used, really)
 !
-      integer, save, public :: ndefcomp,nplume,npart,nparnum, mpart, mplume
+      integer, save, public :: nplume,npart,nparnum, mpart, mplume
 !      integer      iplume(2,mplume)
       INTEGER, DIMENSION(:,:), allocatable, save, public :: iplume
       integer, save, public :: kdrydep(mdefcomp),kwetdep(mdefcomp),kdecay(mdefcomp)
@@ -76,16 +73,17 @@ module snapparML
       integer, save, public :: numtotal(mdefcomp)
       integer, save, public :: idcomp(mdefcomp),iruncomp(mdefcomp)
       character(len=32), save, public :: compname(mdefcomp),compnamemc(mdefcomp)
-!
-!
-!
+
+
+!>   no. of components used in the run
+  integer, save, public :: ncomp
+
 !..itprof:  time profile type:
 !             1= constant
 !             2= bomb (only one initial release)
 !             3= linear (between specified timesteps)
 !             4= steps  (constant between the specified timesteps)
 !..ntprof:  no. of timesteps in the release profiles
-!..ncomp:   no. of components used in the run
 !..nrelheight: no. of height classes in the run
 !..mprel:   max no. of particles released in each plume
 !              (scaled according to max mass released
@@ -102,7 +100,7 @@ module snapparML
 !..      n=1,ncomp
 !..      h=1,nrelheight
 !
-      integer, save, public :: itprof,ntprof,ncomp,nrelheight,mprel
+      integer, save, public :: itprof,ntprof,nrelheight,mprel
       integer, save, public :: idefcomp(mcomp)
       real, save, public :: frelhour(mtprof)
       real, save, public :: relradius(mtprof,mrelheight)
