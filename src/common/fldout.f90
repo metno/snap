@@ -94,7 +94,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   USE argoswriteML, only: argoswrite
   USE ftestML, only: ftest
   USE snapdimML, only: nx, ny, nk, nxmc, nymc, ldata
-  USE milibML, only: lenstr, xyconvert, gridpar, rmfile, vtime
+  USE milibML, only: xyconvert, gridpar, rmfile, vtime
   implicit none
 
   integer ::   iwrite,iunit,istep,nsteph,ierror
@@ -434,13 +434,12 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     end if
     numfields=0
   
-    filename=filnam(1:lenstr(filnam,1))//'_level_names'
+    filename=trim(filnam)//'_level_names'
     open (90,file=filename,access='sequential',form='formatted')
     write(90,1090) 0,'Total'
     do m=1,ncomp
       mm=idefcomp(m)
-      k=lenstr(compnamemc(mm),1)
-      write(90,1090) idcomp(mm),compnamemc(mm)(1:k)
+      write(90,1090) idcomp(mm),trim(compnamemc(mm))
     end do
     1090 format(1x,i5,1x,'"',a,'"')
     close(90)

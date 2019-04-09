@@ -227,7 +227,7 @@ PROGRAM bsnap
   USE rmpartML, only: rmpart
   USE checkdomainML, only: checkdomain
   USE rwalkML, only: rwalk
-  USE milibML, only: lenstr, xyconvert, keywrd, chcase, getvar, hrdiff, prhelp, vtime
+  USE milibML, only: xyconvert, keywrd, chcase, getvar, hrdiff, prhelp, vtime
 #if defined(TRAJ)
   USE forwrdML, only: forwrd, speed
 #else
@@ -368,7 +368,7 @@ PROGRAM bsnap
   access='sequential',form='formatted', &
   status='old',iostat=ios)
   if(ios /= 0) then
-    write(error_unit,*) 'Open Error: ',finput(1:lenstr(finput,1))
+    write(error_unit,*) 'Open Error: ', trim(finput)
     stop 1
   endif
 
@@ -1239,21 +1239,21 @@ PROGRAM bsnap
 
   goto 18
 
-  11 write(error_unit,*) 'ERROR reading file: ',finput(1:lenstr(finput,1))
+  11 write(error_unit,*) 'ERROR reading file: ', trim(finput)
   write(error_unit,*) 'At line no. ',nlines
   iexit=2
   goto 18
 
-  12 write(error_unit,*) 'ERROR reading file: ',finput(1:lenstr(finput,1))
+  12 write(error_unit,*) 'ERROR reading file: ', trim(finput)
   write(error_unit,*) 'At line no. ',nlines,' :'
-  write(error_unit,*)  cinput(1:lenstr(cinput,1))
+  write(error_unit,*)  trim(cinput)
   iexit=2
   goto 18
 
   13 write(error_unit,*) 'ERROR reading file:'
   write(error_unit,*)  finput
   write(error_unit,*) 'At line no. ',nlines,' :'
-  write(error_unit,*)  cinput(1:lenstr(cinput,1))
+  write(error_unit,*)  trim(cinput)
   write(error_unit,*) 'SOME LIMIT WAS EXCEEDED !!!!!!!!!!!!!!!!!'
   iexit=2
   goto 18
@@ -1377,12 +1377,12 @@ PROGRAM bsnap
   do m=1,ndefcomp-1
     if(idcomp(m) < 1) then
       write(error_unit,*) 'Component has no field identification: ', &
-      compname(m)(1:lenstr(compname(m),1))
+      trim(compname(m))
     end if
     do i=m+1,ndefcomp
       if(compname(m) == compname(i)) then
         write(error_unit,*) 'Component defined more than once: ', &
-        compname(m)(1:lenstr(compname(m),1))
+        trim(compname(m))
         ierror=1
       end if
     end do
@@ -1392,7 +1392,7 @@ PROGRAM bsnap
     do i=m+1,ncomp
       if(component(m) == component(i)) then
         write(error_unit,*) 'Released component defined more than once: ', &
-        component(m)(1:lenstr(component(m),1))
+        trim(component(m))
         ierror=1
       end if
     end do
@@ -1409,8 +1409,7 @@ PROGRAM bsnap
       iruncomp(k)= m
     else
       write(error_unit,*) 'Released component ', &
-      component(m)(1:lenstr(component(m),1)), &
-      ' is not defined'
+      trim(component(m)), ' is not defined'
       ierror=1
     end if
   end do

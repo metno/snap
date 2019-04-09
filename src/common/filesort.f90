@@ -50,7 +50,7 @@ subroutine filesort(iunit,ierror)
   USE snapgrdML
   USE snapdimML, only: mavail, nk
   USE snapdebug, only: iulog, idebug
-  USE milibML, only: lenstr, hrdiff, vtime
+  USE milibML, only: hrdiff, vtime
 
   implicit none
 
@@ -77,7 +77,7 @@ subroutine filesort(iunit,ierror)
     write(iulog,*) 'iprod,igrid:   ',iprod,igrid
     write(iulog,*) 'FILES.    nfilef= ',nfilef
     do nf=1,nfilef
-      write(iulog,*) nf,'  ',filef(nf)(1:lenstr(filef(nf),1))
+      write(iulog,*) nf,'  ', trim(filef)
       write(iulog,*) '      min,max fc:',(limfcf(i,nf),i=1,2)
     end do
   end if
