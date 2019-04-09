@@ -26,138 +26,139 @@ module allocateFieldsML
 subroutine allocateFields
   USE particleML
   USE fileInfoML
-  USE snapdimML, only: nx, ny, nk, ldata, maxsiz, mcomp, mprecip, nxmc, nymc
-  USE snapparML
+  USE snapdimML, only: nx, ny, nk, ldata, maxsiz, mprecip, nxmc, nymc
+  USE snapparML, only: ncomp, mpart, mplume, icomp, iparnum, iplume
   USE snapfldML
   USE snapfilML
   USE snapgrdML
   implicit none
 
-  logical, save :: FirstCall = .TRUE. 
+  logical, save :: FirstCall = .TRUE.
   integer :: AllocateStatus
-        
+  character(len=*), parameter :: errmsg = "*** Not enough memory ***"
+
   if ( .NOT. FirstCall) return
-  FirstCall = .FALSE. 
+  FirstCall = .FALSE.
 
   ALLOCATE ( alevel(nk), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
   ALLOCATE ( blevel(nk), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
   ALLOCATE ( vlevel(nk), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
   ALLOCATE ( ahalf(nk), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
   ALLOCATE ( bhalf(nk), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
   ALLOCATE ( vhalf(nk), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
 
 
   ALLOCATE ( u1(nx,ny,nk), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
   ALLOCATE ( v1(nx,ny,nk), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
   ALLOCATE ( w1(nx,ny,nk), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
   ALLOCATE ( t1(nx,ny,nk), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
   ALLOCATE ( ps1(nx,ny), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
   ALLOCATE ( bl1(nx,ny), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
   ALLOCATE ( hbl1(nx,ny), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
   ALLOCATE ( hlevel1(nx,ny,nk), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
   ALLOCATE ( hlayer1(nx,ny,nk), STAT = AllocateStatus)
 
   ALLOCATE ( u2(nx,ny,nk), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
   ALLOCATE ( v2(nx,ny,nk), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
   ALLOCATE ( w2(nx,ny,nk), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
   ALLOCATE ( t2(nx,ny,nk), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
   ALLOCATE ( ps2(nx,ny), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
   ALLOCATE ( bl2(nx,ny), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
   ALLOCATE ( hbl2(nx,ny), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
   ALLOCATE ( hlevel2(nx,ny,nk), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
   ALLOCATE ( hlayer2(nx,ny,nk), STAT = AllocateStatus)
 
   ALLOCATE ( idata(ldata), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
   ALLOCATE ( fdata(maxsiz), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
 
   ALLOCATE ( xm(nx,ny), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
   ALLOCATE ( ym(nx,ny), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
   ALLOCATE ( garea(nx,ny), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
   ALLOCATE ( field1(nx,ny), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
   ALLOCATE ( field2(nx,ny), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
   ALLOCATE ( field3(nx,ny), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
   ALLOCATE ( field4(nx,ny), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
 
   ALLOCATE ( pmsl1(nx,ny), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
   ALLOCATE ( pmsl2(nx,ny), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
 
   ALLOCATE ( precip(nx,ny,mprecip), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
 
 ! the calculation-fields
   ALLOCATE ( dgarea(nx,ny), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
   ALLOCATE ( avghbl(nx,ny), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
   ALLOCATE ( avgprec(nx,ny), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
   ALLOCATE ( accprec(nx,ny), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
 
-  ALLOCATE ( depdry(nx,ny,mcomp), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
-  ALLOCATE ( depwet(nx,ny,mcomp), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
-  ALLOCATE ( accdry(nx,ny,mcomp), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
-  ALLOCATE ( accwet(nx,ny,mcomp), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
-  ALLOCATE ( concen(nx,ny,mcomp), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
-  ALLOCATE ( concacc(nx,ny,mcomp), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
-  ALLOCATE ( avgbq1(nx,ny,mcomp), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
-  ALLOCATE ( avgbq2(nx,ny,mcomp), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  ALLOCATE ( depdry(nx,ny,ncomp), STAT = AllocateStatus)
+  IF (AllocateStatus /= 0) STOP errmsg
+  ALLOCATE ( depwet(nx,ny,ncomp), STAT = AllocateStatus)
+  IF (AllocateStatus /= 0) STOP errmsg
+  ALLOCATE ( accdry(nx,ny,ncomp), STAT = AllocateStatus)
+  IF (AllocateStatus /= 0) STOP errmsg
+  ALLOCATE ( accwet(nx,ny,ncomp), STAT = AllocateStatus)
+  IF (AllocateStatus /= 0) STOP errmsg
+  ALLOCATE ( concen(nx,ny,ncomp), STAT = AllocateStatus)
+  IF (AllocateStatus /= 0) STOP errmsg
+  ALLOCATE ( concacc(nx,ny,ncomp), STAT = AllocateStatus)
+  IF (AllocateStatus /= 0) STOP errmsg
+  ALLOCATE ( avgbq1(nx,ny,ncomp), STAT = AllocateStatus)
+  IF (AllocateStatus /= 0) STOP errmsg
+  ALLOCATE ( avgbq2(nx,ny,ncomp), STAT = AllocateStatus)
+  IF (AllocateStatus /= 0) STOP errmsg
 
-  ALLOCATE ( avgbq(nxmc,nymc,nk-1,mcomp), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  ALLOCATE ( avgbq(nxmc,nymc,nk-1,ncomp), STAT = AllocateStatus)
+  IF (AllocateStatus /= 0) STOP errmsg
 
 ! the part particles fields
   ALLOCATE ( pdata(mpart), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
   ALLOCATE ( icomp(mpart), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
   ALLOCATE ( iparnum(mpart), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
 
 ! the plumes
   ALLOCATE ( iplume(2,mplume), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+  IF (AllocateStatus /= 0) STOP errmsg
 
 end subroutine allocateFields
 
@@ -172,7 +173,7 @@ subroutine deAllocateFields
   USE snapgrdML
   use snapdimML
   implicit none
-        
+
   DEALLOCATE ( alevel )
   DEALLOCATE ( blevel )
   DEALLOCATE ( vlevel )
