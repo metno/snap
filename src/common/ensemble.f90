@@ -35,7 +35,7 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
   USE epinterpML, only: epinterp
   USE ftestML, only: ftest
   USE snapdebug, only: iulog
-  USE milibML, only: lenstr, xyconvert, mapfield, rlunit, vtime
+  USE milibML, only: xyconvert, mapfield, rlunit, vtime
 
 !  Purpose: Interpolate particle positions to ENSEMBLE grid,
 !           and store data in this grid (and model levels),
@@ -675,7 +675,7 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
     write(iulog,*) 'mbuffer,ntoutput: ',mbuffer,ntoutput
     write(iulog,*) 'matimev:          ',matimev
     write(iulog,*) 'npos:             ',npos
-    write(iulog,*) 'file: ',ensemblefile(1:lenstr(ensemblefile,1))
+    write(iulog,*) 'file: ', trim(ensemblefile)
   
     if (npos < 1) stop 17
     if (ntoutput > matimev) stop 17
