@@ -16,7 +16,7 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 module fldout_ncML
-  USE iso_fortran_env, only: real32
+  USE iso_fortran_env, only: real32, real64
   USE readfield_ncML, only: check
   USE milibML, only: xyconvert, gridpar, hrdiff, rmfile
   implicit none
@@ -145,9 +145,11 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   real ::      tf1,tf2,tnow,tstep
   character*(*) filnam
 
-  integer, save :: igeofield=0,naverage=0,initacc=0
+  integer, save :: naverage = 0
+  logical, save :: geofield_initialized = .false.
+  logical, save :: acc_initialized = .false.
 !..used in xyconvert (x,y -> longitude,latitude)
-  real, save :: geoparam(6) = [1.0, 1.0, 1.0, 1.0, 0.0, 0.0]
+  real, parameter :: geoparam(6) = [1.0, 1.0, 1.0, 1.0, 0.0, 0.0]
 
 
   integer :: dimids2d(2),dimids3d(3),dimids4d(4), ipos(4), isize(4), &
@@ -158,28 +160,26 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
 
   integer ::          nptot1,nptot2
-  double precision :: bqtot1,bqtot2
-  double precision :: dblscale
+  real(real64) :: bqtot1,bqtot2
+  real(real64) :: dblscale
 
   integer :: maxage
-  integer :: i,j,k,m,mm,n,id03,id04,ivlvl,idextr,idry,iwet,loop,iparx
+  integer :: i,j,k,m,mm,n,ivlvl,idextr,loop,iparx
+  logical :: is_dry_deposition
+  logical :: is_wet_deposition
+  integer :: id(3:4)
   integer :: ko,lvla,lvlb,ipar
   integer, save :: numfields = 0
-  real ::    rt1,rt2,scale,undef,average,averinv,cscale,dscale,hbl
+  real ::    rt1,rt2,scale,average,averinv,cscale,dscale,hbl
+  real, parameter :: undef = NF90_FILL_FLOAT
   real ::    avg,hrstep,dh,total
 
   integer, save :: itimeargos(5) = [0, 0, 0, 0, 0]
 
   character(len=256) :: string
 
-
-  idry=0
-  iwet=0
-  do m=1,ncomp
-    mm=idefcomp(m)
-    if(kdrydep(mm) == 1) idry=1
-    if(kwetdep(mm) == 1) iwet=1
-  end do
+  is_dry_deposition = any(kdrydep == 1)
+  is_wet_deposition = any(kwetdep == 1)
 
   ierror=0
 
@@ -187,7 +187,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
   if(imodlevel == 1 .AND. (nxmc /= nx .OR. nymc /= ny)) imodlevel=0
 
-  if(initacc == 0) then
+  if(.not.acc_initialized) then
     do m=1,ncomp
       do j=1,ny
         do i=1,nx
@@ -205,7 +205,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         accprec(i,j)=0.0d0
       end do
     end do
-    initacc=1
+    acc_initialized = .true.
   end if
 
   if(iwrite == -1) then
@@ -389,28 +389,15 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     trim(string)))
   
   !..store the files base-time
-    do i=1,4
-      iftime(i) = itime(i)
-    end do
+    iftime = itime
     iftime(5) = 0
 
-    dimids2d(1) = x_dimid
-    dimids3d(1) = x_dimid
-    dimids4d(1) = x_dimid
-    dimids2d(2) = y_dimid
-    dimids3d(2) = y_dimid
-    dimids4d(2) = y_dimid
-    dimids3d(3) = t_dimid
-    dimids4d(3) = k_dimid
-    dimids4d(4) = t_dimid
+    dimids2d = [x_dimid, y_dimid]
+    dimids3d = [x_dimid, y_dimid, t_dimid]
+    dimids4d = [x_dimid, y_dimid, k_dimid, t_dimid]
 
-    chksz3d(1) = nx
-    chksz3d(2) = ny
-    chksz3d(3) = 1
-    chksz4d(1) = nx
-    chksz4d(2) = ny
-    chksz4d(3) = 1
-    chksz4d(4) = 1
+    chksz3d = [nx, ny, 1]
+    chksz4d = [nx, ny, 1, 1]
 
     if (imodlevel == 1) &
     call nc_declare_3d(iunit, dimids3d, ps_varid, &
@@ -531,15 +518,9 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   call hrdiff(0,0,iftime,itime,ihrs,ierror,ierror)
   call check(nf90_put_var(iunit,t_varid,start=[ihrs_pos],values=FLOAT(ihrs)), &
   "set time")
-  ipos(1) = 1
-  ipos(2) = 1
-  ipos(3) = ihrs_pos
-  ipos(4) = ihrs_pos
-  isize(1) = nx
-  isize(2) = ny
-  isize(3) = 1
-  isize(4) = 1
 
+  ipos = [1, 1, ihrs_pos, ihrs_pos]
+  isize = [nx, ny, 1, 1]
 
 !..open output felt (field) file
 !      call mwfelt(1,filnam,iunit,1,nx*ny,field1,1.0,
@@ -549,9 +530,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
 !..common field identification.............
 
-  do i=1,20
-    idata(i)=0
-  end do
+  idata(1:20) = 0
   idata( 1)=iprodr
   idata( 2)=igridr
   idata( 3)=2
@@ -579,15 +558,14 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   call gridpar(-1,ldata,idata,igtype,nx,ny,gparam,ierror)
 
 !..geographic coordinates etc.
-  if(igeofield == 0) then
+  if(.not.geofield_initialized) then
     do j=1,ny
       do i=1,nx
         field1(i,j)=float(i)
         field2(i,j)=float(j)
       end do
     end do
-    id03=idata(3)
-    id04=idata(4)
+    id(3:4)=idata(3:4)
     idata( 3)=4
     idata( 4)=0
     idata( 5)=0
@@ -614,9 +592,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   !       call mwfelt(2,filnam,iunit,1,nx*ny,garea,1.0,
   !     +              ldata,idata,ierror)
     if(ierror /= 0) goto 900
-    idata(3)=id03
-    idata(4)=id04
-    igeofield=1
+    idata(3:4)=id(3:4)
+    geofield_initialized = .true.
   end if
 
   idata( 5)=2
@@ -624,7 +601,6 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   idata( 8)=0
   idata(19)=0
 
-  undef=+1.e+35
 
   average=float(naverage)
   averinv=1./float(naverage)
@@ -1050,7 +1026,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     if(ierror /= 0) goto 900
   
   !..total dry deposition
-    if(idry == 1) then
+    if(is_dry_deposition) then
       do j=1,ny
         do i=1,nx
           field1(i,j)=0.
@@ -1083,7 +1059,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     end if
   
   !..total wet deposition
-    if(iwet == 1) then
+    if(is_wet_deposition) then
       do j=1,ny
         do i=1,nx
           field1(i,j)=0.
@@ -1115,7 +1091,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     end if
   
   !..total accumulated dry deposition
-    if(idry == 1) then
+    if(is_dry_deposition) then
       do j=1,ny
         do i=1,nx
           field1(i,j)=0.
@@ -1147,7 +1123,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     end if
   
   !..total accumulated wet deposition
-    if(iwet == 1) then
+    if(is_wet_deposition) then
       do j=1,ny
         do i=1,nx
           field1(i,j)=0.
@@ -1561,6 +1537,8 @@ subroutine nc_declare_3d(iunit, dimids, varid, &
   INTEGER, INTENT(IN)    :: iunit, dimids(3), chksz(3)
   CHARACTER(LEN=*), INTENT(IN) :: varnm, stdnm, metnm, units
 
+  if (.false.) write(*,*) chksz ! Silence compiler
+
   write(iulog,*) "declaring ", iunit, TRIM(varnm), TRIM(units) &
   ,TRIM(stdnm),TRIM(metnm)
   call check(nf90_def_var(iunit, TRIM(varnm), &
@@ -1649,28 +1627,24 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
   USE netcdf
   implicit none
   INTEGER, INTENT(IN) :: iunit, xdimid, ydimid, igtype, nx, ny
-  REAL(KIND=4), INTENT(IN):: gparam(8)
-  REAL(kind=4), INTENT(IN), DIMENSION(nx,ny) :: garea
-  REAL(kind=4), INTENT(IN), DIMENSION(nx,ny) :: xm
-  REAL(kind=4), INTENT(IN), DIMENSION(nx,ny) :: ym
+  REAL(real32), INTENT(IN):: gparam(8)
+  REAL(real32), INTENT(IN), DIMENSION(nx,ny) :: garea
+  REAL(real32), INTENT(IN), DIMENSION(nx,ny) :: xm
+  REAL(real32), INTENT(IN), DIMENSION(nx,ny) :: ym
   CHARACTER(LEN=19), INTENT(IN)  :: simulation_start
 
   INTEGER :: i, j, ierror, x_varid, y_varid, proj_varid, &
   lon_varid, lat_varid, carea_varid, mapx_varid, mapy_varid, &
   dimids(2)
   REAL(KIND=real32) :: xvals(nx), yvals(ny), lon(nx,ny), lat(nx,ny), &
-  val, pi, deg2rad, gparam2(6)
+  val, gparam2(6)
   real(kind=real32) :: llparam(6) = [1.0, 1.0, 1.0, 1.0, 0.0, 0.0]
-
-  pi = 4.D0*DATAN(1.D0)
-  deg2rad = pi/180.
 
   call check(nf90_def_var(iunit, "x", &
   NF90_FLOAT, xdimid, x_varid))
   call check(nf90_def_var(iunit, "y", &
   NF90_FLOAT, ydimid, y_varid))
-  dimids(1)=xdimid
-  dimids(2)=ydimid
+  dimids = [xdimid, ydimid]
 
   call check(nf90_def_var(iunit, "projection", &
   NF90_SHORT, varid=proj_varid))
@@ -1773,9 +1747,8 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
   ! gparam(5) and gparam(6) are the reference-point of the projection
     gparam2(1) = gparam(5)
     gparam2(2) = gparam(6)
-    do i=3,6
-      gparam2(i) = gparam(i)
-    end do
+    gparam2(3:6) = gparam(3:6)
+
     ierror = 0
     call xyconvert(1, xvals(1), yvals(1), 2, llparam, &
     &                                          6, gparam2, ierror)
