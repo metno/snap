@@ -66,7 +66,7 @@ subroutine decayDeps(tstep)
   if(prepare) then
   
   !..radioactive decay rate
-    do m=1,ndefcomp
+    do m=1,ncomp
       if (kdecay(m) == 1) then
         decayrate(m)= exp(-log(2.0)*tstep/(halftime(m)*3600.))
       else
@@ -77,7 +77,7 @@ subroutine decayDeps(tstep)
     prepare= .FALSE. 
   end if
 
-  do m=1,ndefcomp
+  do m=1,ncomp
     if(kdecay(m) == 1) then
       do j=1,ny
         do i=1,nx
