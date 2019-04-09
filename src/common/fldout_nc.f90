@@ -146,7 +146,6 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   character*(*) filnam
 
   integer, save :: naverage = 0
-  logical, save :: geofield_initialized = .false.
   logical, save :: acc_initialized = .false.
 !..used in xyconvert (x,y -> longitude,latitude)
   real, parameter :: geoparam(6) = [1.0, 1.0, 1.0, 1.0, 0.0, 0.0]
@@ -164,13 +163,17 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   real(real64) :: dblscale
 
   integer :: maxage
-  integer :: i,j,k,m,mm,n,ivlvl,idextr,loop,iparx
+  integer :: i,j,k,m,mm,n,ivlvl,idextr,loop
   logical :: is_dry_deposition
   logical :: is_wet_deposition
-  integer :: id(3:4)
-  integer :: ko,lvla,lvlb,ipar
+  integer :: ko,lvla,lvlb
   integer, save :: numfields = 0
-  real ::    rt1,rt2,scale,average,averinv,cscale,dscale,hbl
+  real ::    rt1,rt2,scale,average,averinv,hbl
+!> fixed base scaling for concentrations (unit 10**-12 g/m3 = 1 picog/m3)
+  real, parameter :: cscale= 1.0
+!> fixed base scaling for depositions (unit 10**-9 g/m2 = 1 nanog/m3)
+  real, parameter :: dscale = 1.0
+
   real, parameter :: undef = NF90_FILL_FLOAT
   real ::    avg,hrstep,dh,total
 
@@ -188,23 +191,14 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   if(imodlevel == 1 .AND. (nxmc /= nx .OR. nymc /= ny)) imodlevel=0
 
   if(.not.acc_initialized) then
-    do m=1,ncomp
-      do j=1,ny
-        do i=1,nx
-          depdry(i,j,m)=0.0d0
-          depwet(i,j,m)=0.0d0
-          accdry(i,j,m)=0.0d0
-          accwet(i,j,m)=0.0d0
-          concen(i,j,m)=0.0d0
-          concacc(i,j,m)=0.0d0
-        end do
-      end do
-    end do
-    do j=1,ny
-      do i=1,nx
-        accprec(i,j)=0.0d0
-      end do
-    end do
+    depdry = 0.0
+    depwet = 0.0
+    accdry = 0.0
+    accwet = 0.0
+    concen = 0.0
+    concacc = 0.0
+    accprec = 0.0
+
     acc_initialized = .true.
   end if
 
@@ -229,36 +223,16 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 !..accumulation for average fields......................................
 
   if(naverage == 0) then
-  
-    do j=1,ny
-      do i=1,nx
-        avghbl(i,j)=0.0d0
-        avgprec(i,j)=0.0d0
-      end do
-    end do
-  
-    do m=1,ncomp
-      do j=1,ny
-        do i=1,nx
-          avgbq1(i,j,m)=0.0d0
-          avgbq2(i,j,m)=0.0d0
-        end do
-      end do
-    end do
-  
+    avghbl = 0.0
+    avgprec = 0.0
+
+    avgbq1 = 0.0
+    avgbq2 = 0.0
+
   !..note: model level output on if nxmc=nx, nymc=ny and imodlevel=1
     if(imodlevel == 1) then
-      do m=1,ncomp
-        do k=1,nk-1
-          do j=1,nymc
-            do i=1,nxmc
-              avgbq(i,j,k,m)=0.0d0
-            end do
-          end do
-        end do
-      end do
+      avgbq = 0.0
     end if
-  
   end if
 
   naverage=naverage+1
@@ -300,13 +274,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
 !..accumulated/integrated concentration
 
-  do m=1,ncomp
-    do j=1,ny
-      do i=1,nx
-        concen(i,j,m)=0.0d0
-      end do
-    end do
-  end do
+  concen = 0.0
 
   do n=1,npart
     ivlvl=pdata(n)%z*10000.
@@ -332,7 +300,6 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   end do
 
   if(imodlevel == 1) then
-  
     do n=1,npart
       i=nint(pdata(n)%x)
       j=nint(pdata(n)%y)
@@ -342,7 +309,6 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     !..in each sigma/eta (input model) layer
       avgbq(i,j,k,m)=avgbq(i,j,k,m)+pdata(n)%rad
     end do
-  
   end if
 
   if(iwrite == 0) then
@@ -387,7 +353,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     itime(4),":00:00 +0000"
     call check(nf90_put_att(iunit, t_varid, "units", &
     trim(string)))
-  
+
   !..store the files base-time
     iftime = itime
     iftime(5) = 0
@@ -522,12 +488,6 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   ipos = [1, 1, ihrs_pos, ihrs_pos]
   isize = [nx, ny, 1, 1]
 
-!..open output felt (field) file
-!      call mwfelt(1,filnam,iunit,1,nx*ny,field1,1.0,
-!     +            ldata,idata,ierror)
-!      if(ierror.ne.0) goto 920
-!      call check(nf_open(filnam, NF_WRITE, iunit))
-
 !..common field identification.............
 
   idata(1:20) = 0
@@ -556,64 +516,12 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 !..put grid parameters into field identification
 !..(into the first 20 words and possibly also after space for data)
   call gridpar(-1,ldata,idata,igtype,nx,ny,gparam,ierror)
-
-!..geographic coordinates etc.
-  if(.not.geofield_initialized) then
-    do j=1,ny
-      do i=1,nx
-        field1(i,j)=float(i)
-        field2(i,j)=float(j)
-      end do
-    end do
-    id(3:4)=idata(3:4)
-    idata( 3)=4
-    idata( 4)=0
-    idata( 5)=0
-    idata( 7)=0
-    idata( 8)=0
-    idata(19)=0
-    call xyconvert(nx*ny,field1,field2, &
-    igtype,gparam,2,geoparam,ierror)
-    if(idebug == 1) call ftest('lat',1,1,nx,ny,1,field2,0)
-    idata( 6)=901
-    idata(20)=-32767
-  !      call mwfelt(2,filnam,iunit,1,nx*ny,field2,1.0,
-  !    +              ldata,idata,ierror)
-    if(ierror /= 0) goto 900
-    if(idebug == 1) call ftest('long',1,1,nx,ny,1,field1,0)
-    idata( 6)=902
-    idata(20)=-32767
-  !       call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
-  !     +              ldata,idata,ierror)
-    if(ierror /= 0) goto 900
-    if(idebug == 1) call ftest('area',1,1,nx,ny,1,garea,0)
-    idata( 6)=903
-    idata(20)=-32767
-  !       call mwfelt(2,filnam,iunit,1,nx*ny,garea,1.0,
-  !     +              ldata,idata,ierror)
-    if(ierror /= 0) goto 900
-    idata(3:4)=id(3:4)
-    geofield_initialized = .true.
-  end if
-
-  idata( 5)=2
-  idata( 7)=1000
-  idata( 8)=0
-  idata(19)=0
+  if(ierror /= 0) goto 900
 
 
   average=float(naverage)
   averinv=1./float(naverage)
   naverage=0
-
-!..fixed base scaling for concentrations (unit 10**-12 g/m3 = 1 picog/m3)
-! c   cscale=10.**12
-
-!..fixed base scaling for depositions (unit 10**-9 g/m2 = 1 nanog/m3)
-! c   dscale=10.**9
-
-  cscale= 1.0
-  dscale= 1.0
 
 !..for linear interpolation in time
   rt1=(tf2-tnow)/(tf2-tf1)
@@ -627,13 +535,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       end do
     end do
     if(idebug == 1) call ftest('ps',1,1,nx,ny,1,field1,0)
-    idata( 6)=8
-    idata(20)=-32767
     call check(nf90_put_var(iunit, ps_varid,start=[ipos],count=[isize],values=field1), &
     "set_ps")
-  !       call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
-  !     +              ldata,idata,ierror)
-    if(ierror /= 0) goto 900
   end if
 
 !..total accumulated precipitation from start of run
@@ -646,15 +549,9 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     end do
     idextr=nint(float(istep)/float(nsteph))
     if(idebug == 1) call ftest('accprec',1,1,nx,ny,1,field1,0)
-    idata( 6)=17
-    idata(19)=idextr
-    idata(20)=-32767
-  !       call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
-  !     +              ldata,idata,ierror)
+
     call check(nf90_put_var(iunit, accum_prc_varid, start=[ipos], count=[isize], &
     values=field1), "set_accum_prc")
-    if(ierror /= 0) goto 900
-    idata(19)=0
   end if
 
 !..mslp (if switched on)
@@ -665,10 +562,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       end do
     end do
     if(idebug == 1) call ftest('mslp',1,1,nx,ny,1,field1,0)
-  !        idata( 6)=58
-  !        idata(20)=-32767
-  !       call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
-  !     +              ldata,idata,ierror)
+
     call check(nf90_put_var(iunit, mslp_varid, start=[ipos], count=[isize], &
     values=field1), "set_mslp")
   end if
@@ -676,17 +570,13 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 !..instant height of boundary layer
   do j=1,ny
     do i=1,nx
-      field4(i,j)=rt1*hbl1(i,j)+rt2*hbl2(i,j)
+      field1(i,j)=rt1*hbl1(i,j)+rt2*hbl2(i,j)
     end do
   end do
   if(idebug == 1) call ftest('hbl',1,1,nx,ny,1,field4,0)
-  idata( 6)=500
-  idata(20)=-32767
-!      call mwfelt(2,filnam,iunit,1,nx*ny,field4,1.0,
-!     +            ldata,idata,ierror)
+
   call check(nf90_put_var(iunit, ihbl_varid, start=[ipos], count=[isize], &
   values=field1), "set_ihbl")
-  if(ierror /= 0) goto 900
 
 !..average height of boundary layer
   do j=1,ny
@@ -695,13 +585,9 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     end do
   end do
   if(idebug == 1) call ftest('avghbl',1,1,nx,ny,1,field1,0)
-  idata( 6)=501
-  idata(20)=-32767
-!      call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
-!     +            ldata,idata,ierror)
+
   call check(nf90_put_var(iunit, ahbl_varid, start=[ipos], count=[isize], &
   values=field1), "set_ahbl")
-  if(ierror /= 0) goto 900
 
 !..precipitation accummulated between field output // currently disable use 1 to write
   if(inprecip == -1) then
@@ -712,43 +598,25 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     end do
     idextr=nint(average*tstep/3600.)
     if(idebug == 1) call ftest('prec',1,1,nx,ny,1,field1,0)
-    idata( 6)=502
-    idata(19)=idextr
-    idata(20)=-32767
-  !        call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
-  !     +              ldata,idata,ierror)
+
     call check(nf90_put_var(iunit, prc_varid, start=[ipos], count=[isize], &
     values=field1), "set_prc")
-    if(ierror /= 0) goto 900
-    idata(19)=0
   end if
 
 !..parameters for each component......................................
 
-! c   idata( 5)=3
-  idata( 5)=0
-  idata( 8)=0
-  idata(19)=0
-
   do m=1,ncomp
-  
+
     mm=idefcomp(m)
-  
-  !..using the field level identifier to identify the component
-    idata(7)=idcomp(mm)
-  
+
   !..instant Bq in and above boundary layer
-    do j=1,ny
-      do i=1,nx
-        field1(i,j)=0.
-        field2(i,j)=0.
-      end do
-    end do
+    field1 = 0.0
+    field2 = 0.0
     bqtot1=0.0d0
     bqtot2=0.0d0
     nptot1=0
     nptot2=0
-  
+
     do n=1,npart
       if(icomp(n) == mm) then
         i=nint(pdata(n)%x)
@@ -764,13 +632,13 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         end if
       end if
     end do
-  
+
     write(iulog,*) ' component: ',compname(mm)
     write(iulog,*) '   Bq,particles in    abl: ',bqtot1,nptot1
     write(iulog,*) '   Bq,particles above abl: ',bqtot2,nptot2
     write(iulog,*) '   Bq,particles          : ',bqtot1+bqtot2, &
     nptot1+nptot2
-  
+
   !..instant part of Bq in boundary layer
     scale=100.
     do j=1,ny
@@ -782,7 +650,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         end if
       end do
     end do
-  
+
   !..instant concentration in boundary layer
     do j=1,ny
       do i=1,nx
@@ -792,14 +660,10 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       end do
     end do
     if(idebug == 1) call ftest('conc',1,1,nx,ny,1,field2,0)
-    idata( 6)=510
-    idata(20)=-32767
-  !        call mwfelt(2,filnam,iunit,1,nx*ny,field2,1.0,
-  !     +              ldata,idata,ierror)
+
     call check(nf90_put_var(iunit, icbl_varid(m), start=[ipos], count=[isize], &
     values=field2), "set_icbl")
-    if(ierror /= 0) goto 900
-  
+
   !..average concentration in boundary layer
     do j=1,ny
       do i=1,nx
@@ -808,14 +672,10 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       end do
     end do
     if(idebug == 1) call ftest('avgconc',1,1,nx,ny,1,field1,0)
-    idata( 6)=511
-    idata(20)=-32767
-  !        call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
-  !     +              ldata,idata,ierror)
+
     call check(nf90_put_var(iunit, acbl_varid(m), start=[ipos], count=[isize], &
     values=field1), "set_acbl")
-    if(ierror /= 0) goto 900
-  
+
   !..dry deposition
     if(kdrydep(mm) == 1) then
       do j=1,ny
@@ -825,15 +685,11 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         end do
       end do
       if(idebug == 1) call ftest('dry',1,1,nx,ny,1,field1,0)
-      idata( 6)=512
-      idata(20)=-32767
-    !          call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
-    !     +                ldata,idata,ierror)
+
       call check(nf90_put_var(iunit, idd_varid(m), start=[ipos], count=[isize], &
       values=field1), "set_idd(m)")
-      if(ierror /= 0) goto 900
     end if
-  
+
   !..wet deposition
     if(kwetdep(mm) == 1) then
       do j=1,ny
@@ -843,15 +699,11 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         end do
       end do
       if(idebug == 1) call ftest('wet',1,1,nx,ny,1,field1,0)
-      idata( 6)=513
-      idata(20)=-32767
-    !          call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
-    !     +                ldata,idata,ierror)
+
       call check(nf90_put_var(iunit, iwd_varid(m), start=[ipos], count=[isize], &
       values=field1), "set_iwd(m)")
-      if(ierror /= 0) goto 900
     end if
-  
+
   !..accumulated dry deposition
     if(kdrydep(mm) == 1) then
       do j=1,ny
@@ -860,16 +712,11 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         end do
       end do
       if(idebug == 1) call ftest('adry',1,1,nx,ny,1,field1,0)
-      idata( 6)=514
-      idata(20)=-32767
-    !          call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
-    !     +                ldata,idata,ierror)
+
       call check(nf90_put_var(iunit, accdd_varid(m),start=[ipos],count=[isize], &
       values=field1), "set_accdd(m)")
-
-      if(ierror /= 0) goto 900
     end if
-  
+
   !..accumulated wet deposition
     if(kwetdep(mm) == 1) then
       do j=1,ny
@@ -878,23 +725,14 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         end do
       end do
       if(idebug == 1) call ftest('awet',1,1,nx,ny,1,field1,0)
-      idata( 6)=515
-      idata(20)=-32767
-    !          call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
-    !     +                ldata,idata,ierror)
+
       call check(nf90_put_var(iunit, accwd_varid(m),start=[ipos],count=[isize], &
       values=field1), "set_accwd(m)")
-      if(ierror /= 0) goto 900
     end if
-  
+
   !..instant part of Bq in boundary layer
     if(idebug == 1) call ftest('pbq',1,1,nx,ny,1,field3,1)
-    idata( 6)=516
-    idata(20)=-32767
-  !        call mwfelt(2,filnam,iunit,2,nx*ny,field3,1.0,
-  !     +              ldata,idata,ierror)
-    if(ierror /= 0) goto 900
-  
+
   !..average part of Bq in boundary layer
     scale=100.
     do j=1,ny
@@ -908,12 +746,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       end do
     end do
     if(idebug == 1) call ftest('apbq',1,1,nx,ny,1,field3,1)
-    idata( 6)=517
-    idata(20)=-32767
-  !        call mwfelt(2,filnam,iunit,2,nx*ny,field3,1.0,
-  !     +              ldata,idata,ierror)
-    if(ierror /= 0) goto 900
-  
+
   !..instant concentration on surface (not in felt-format)
     do j=1,ny
       do i=1,nx
@@ -931,14 +764,9 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       end do
     end do
     if(idebug == 1) call ftest('concac',1,1,nx,ny,1,field3,1)
-    idata( 6)=518
-    idata(20)=-32767
-  !        call mwfelt(2,filnam,iunit,2,nx*ny,field3,1.0,
-  !     +              ldata,idata,ierror)
+
     call check(nf90_put_var(iunit, ac_varid(m),start=[ipos],count=[isize], &
     values=field3), "set_ac(m)")
-    if(ierror /= 0) goto 900
-  
   !.....end do m=1,ncomp
   end do
 
@@ -946,18 +774,11 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 !..total parameters (sum of all components).............................
 
   if(ncomp > 1 .AND. itotcomp == 1) then
-  
-  !..using the field level identifier to identify component, 0=total
-    idata(7)=0
-  
+
   !..total instant Bq in and above boundary layer
-    do j=1,ny
-      do i=1,nx
-        field1(i,j)=0.
-        field2(i,j)=0.
-      end do
-    end do
-  
+    field1 = 0.0
+    field2 = 0.0
+
     do n=1,npart
       i=nint(pdata(n)%x)
       j=nint(pdata(n)%y)
@@ -967,7 +788,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         field2(i,j)=field2(i,j)+pdata(n)%rad
       end if
     end do
-  
+
   !..total instant part of Bq in boundary layer
     scale=100.
     do j=1,ny
@@ -979,7 +800,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         end if
       end do
     end do
-  
+
   !..total instant concentration in boundary layer
     do j=1,ny
       do i=1,nx
@@ -989,20 +810,11 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       end do
     end do
     if(idebug == 1) call ftest('tconc',1,1,nx,ny,1,field2,0)
-    idata( 6)=510
-    idata(20)=-32767
-  !        call mwfelt(2,filnam,iunit,1,nx*ny,field2,1.0,
-  !     +              ldata,idata,ierror)
     call check(nf90_put_var(iunit, icblt_varid,start=[ipos],count=[isize], &
     values=field2), "set_icblt(m)")
-    if(ierror /= 0) goto 900
-  
+
   !..total average concentration in boundary layer
-    do j=1,ny
-      do i=1,nx
-        field1(i,j)=0.
-      end do
-    end do
+    field1 = 0.0
     do m=1,ncomp
       do j=1,ny
         do i=1,nx
@@ -1017,21 +829,12 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       end do
     end do
     if(idebug == 1) call ftest('tavgconc',1,1,nx,ny,1,field1,0)
-    idata( 6)=511
-    idata(20)=-32767
-  !        call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
-  !     +              ldata,idata,ierror)
     call check(nf90_put_var(iunit, acblt_varid,start=[ipos],count=[isize], &
     values=field1), "set_acblt")
-    if(ierror /= 0) goto 900
-  
+
   !..total dry deposition
     if(is_dry_deposition) then
-      do j=1,ny
-        do i=1,nx
-          field1(i,j)=0.
-        end do
-      end do
+      field1 = 0.0
       do m=1,ncomp
         mm=idefcomp(m)
         if(kdrydep(mm) == 1) then
@@ -1048,23 +851,14 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         end do
       end do
       if(idebug == 1) call ftest('tdry',1,1,nx,ny,1,field1,0)
-      idata( 6)=512
-      idata(20)=-32767
-    !          call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
-    !     +                ldata,idata,ierror)
       call check(nf90_put_var(iunit, iddt_varid,start=[ipos],count=[isize], &
       values=field1), "set_iddt")
 
-      if(ierror /= 0) goto 900
     end if
-  
+
   !..total wet deposition
     if(is_wet_deposition) then
-      do j=1,ny
-        do i=1,nx
-          field1(i,j)=0.
-        end do
-      end do
+      field1 = 0.0
       do m=1,ncomp
         mm=idefcomp(m)
         if(kwetdep(mm) == 1) then
@@ -1081,22 +875,13 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         end do
       end do
       if(idebug == 1) call ftest('twet',1,1,nx,ny,1,field1,0)
-      idata( 6)=513
-      idata(20)=-32767
-    !          call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
-    !     +                ldata,idata,ierror)
       call check(nf90_put_var(iunit, iwdt_varid,start=[ipos],count=[isize], &
       values=field1), "set_iwdt")
-      if(ierror /= 0) goto 900
     end if
-  
+
   !..total accumulated dry deposition
     if(is_dry_deposition) then
-      do j=1,ny
-        do i=1,nx
-          field1(i,j)=0.
-        end do
-      end do
+      field1 = 0.0
       do m=1,ncomp
         mm=idefcomp(m)
         if(kdrydep(mm) == 1) then
@@ -1113,22 +898,13 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         end do
       end do
       if(idebug == 1) call ftest('tadry',1,1,nx,ny,1,field1,0)
-      idata( 6)=514
-      idata(20)=-32767
-    !          call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
-    !     +                ldata,idata,ierror)
       call check(nf90_put_var(iunit, accddt_varid,start=[ipos],count=[isize], &
       values=field1), "set_accddt")
-      if(ierror /= 0) goto 900
     end if
-  
+
   !..total accumulated wet deposition
     if(is_wet_deposition) then
-      do j=1,ny
-        do i=1,nx
-          field1(i,j)=0.
-        end do
-      end do
+      field1 = 0.0
       do m=1,ncomp
         mm=idefcomp(m)
         if(kwetdep(mm) == 1) then
@@ -1145,31 +921,18 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         end do
       end do
       if(idebug == 1) call ftest('tawet',1,1,nx,ny,1,field1,0)
-      idata( 6)=515
-      idata(20)=-32767
-    !          call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
-    !     +                ldata,idata,ierror)
       call check(nf90_put_var(iunit, accwdt_varid,start=[ipos],count=[isize], &
       values=field1), "set_accwdt")
-      if(ierror /= 0) goto 900
     end if
-  
+
   !..total instant part of Bq in boundary layer
     if(idebug == 1) call ftest('tpbq',1,1,nx,ny,1,field3,1)
-    idata( 6)=516
-    idata(20)=-32767
-  !        call mwfelt(2,filnam,iunit,2,nx*ny,field3,1.0,
-  !     +              ldata,idata,ierror)
-    if(ierror /= 0) goto 900
-  
+
+
   !..total average part of Bq in boundary layer
     scale=100.
-    do j=1,ny
-      do i=1,nx
-        field1(i,j)=0.
-        field2(i,j)=0.
-      end do
-    end do
+    field1 = 0.0
+    field2 = 0.0
     do m=1,ncomp
       do j=1,ny
         do i=1,nx
@@ -1189,18 +952,9 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       end do
     end do
     if(idebug == 1) call ftest('tapbq',1,1,nx,ny,1,field3,1)
-    idata( 6)=517
-    idata(20)=-32767
-  !        call mwfelt(2,filnam,iunit,2,nx*ny,field3,1.0,
-  !     +              ldata,idata,ierror)
-    if(ierror /= 0) goto 900
-  
+
   !..total accumulated/integrated concentration
-    do j=1,ny
-      do i=1,nx
-        field3(i,j)=0.
-      end do
-    end do
+    field3 = 0.0
     do m=1,ncomp
       do j=1,ny
         do i=1,nx
@@ -1209,15 +963,10 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       end do
     end do
     if(idebug == 1) call ftest('concac',1,1,nx,ny,1,field3,1)
-    idata( 6)=518
-    idata(20)=-32767
-  !        call mwfelt(2,filnam,iunit,2,nx*ny,field3,1.0,
-  !     +              ldata,idata,ierror)
+
     call check(nf90_put_var(iunit, act_varid,start=[ipos],count=[isize], &
     values=field3), "set_act")
 
-    if(ierror /= 0) goto 900
-  
   !.....end if(ncomp.gt.1 .and. itotcomp.eq.1) then
   end if
 
@@ -1225,26 +974,18 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 !..BOMB fields..........................................................
 
   if (itprof == 2) then
-  
+
   !..bomb parameters for each component.........
-  
-  ! c     idata( 5)=3
-    idata( 5)=0
-    idata( 8)=0
-    idata(19)=0
-  
+
     do m=1,ncomp
-    
+
       mm= idefcomp(m)
-    
+
       if(idebug == 1) write(iulog,*) ' component: ',compname(mm)
-    
-    !..using the field level identifier to identify the component
-      idata(7)=idcomp(mm)
-    
+
     !..scale to % of total released Bq (in a single bomb)
       dblscale= 100.0d0/dble(totalbq(mm))
-    
+
     !..dry deposition
       if(kdrydep(mm) == 1) then
         do j=1,ny
@@ -1253,13 +994,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
           end do
         end do
         if(idebug == 1) call ftest('dry%',1,1,nx,ny,1,field1,0)
-        idata( 6)=521
-        idata(20)=-32767
-      !            call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
-      !     +                  ldata,idata,ierror)
-        if(ierror /= 0) goto 900
       end if
-    
+
     !..wet deposition
       if(kwetdep(mm) == 1) then
         do j=1,ny
@@ -1268,13 +1004,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
           end do
         end do
         if(idebug == 1) call ftest('wet%',1,1,nx,ny,1,field1,0)
-        idata( 6)=522
-        idata(20)=-32767
-      !            call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
-      !     +                  ldata,idata,ierror)
-        if(ierror /= 0) goto 900
       end if
-    
+
     !..accumulated dry deposition
       if(kdrydep(mm) == 1) then
         do j=1,ny
@@ -1283,13 +1014,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
           end do
         end do
         if(idebug == 1) call ftest('adry%',1,1,nx,ny,1,field1,0)
-        idata( 6)=523
-        idata(20)=-32767
-      !            call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
-      !     +                  ldata,idata,ierror)
-        if(ierror /= 0) goto 900
       end if
-    
+
     !..accumulated wet deposition
       if(kwetdep(mm) == 1) then
         do j=1,ny
@@ -1298,16 +1024,11 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
           end do
         end do
         if(idebug == 1) call ftest('awet%',1,1,nx,ny,1,field1,0)
-        idata( 6)=524
-        idata(20)=-32767
-      !            call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
-      !     +                  ldata,idata,ierror)
-        if(ierror /= 0) goto 900
       end if
-    
+
     !.......end do m=1,ncomp
     end do
-  
+
   end if
 
 
@@ -1324,35 +1045,20 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 !..concentration in each layer
 !..(height only computed at time of output)
 
-  idata( 5)=ivcoor
-
 !..loop for 1=average and 2=instant concentration
 !..(now computing average first, then using the same arrays for instant)
 
   do loop=1,2
-  
+
     if(loop == 1) then
-    
       avg=average
-      iparx=570
-    
     else
-    
       avg=1.
-      iparx=540
       total=0.
       maxage=0
-    
-      do m=1,ncomp
-        do k=1,nk-1
-          do j=1,nymc
-            do i=1,nxmc
-              avgbq(i,j,k,m)=0.0d0
-            end do
-          end do
-        end do
-      end do
-    
+
+      avgbq = 0.0
+
       do n=1,npart
         i=nint(pdata(n)%x)
         j=nint(pdata(n)%y)
@@ -1367,7 +1073,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
             maxage=pdata(n)%ageInSteps
             avgbq(i,j,k,m)=avgbq(i,j,k,m)+pdata(n)%rad
             total = total + pdata(n)%rad
-            pdata(n)%active = .FALSE. 
+            pdata(n)%active = .FALSE.
             pdata(n)%rad = 0.
           end if
         else
@@ -1378,7 +1084,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         write(*,*) "dumped; maxage, total", maxage, total
       endif
     end if
-  
+
     do k=1,nk-1
       do j=1,ny
         do i=1,nx
@@ -1393,15 +1099,6 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         lvla=nint(alevel(k+1)*10.)
         lvlb=nint(blevel(k+1)*10000.)
         if(ivcoor == 2) lvla=0
-      ! use parameter z (1)
-        idata( 6)=1
-        idata( 7)=ko
-        idata( 8)=lvla
-        idata(19)=lvlb
-        idata(20)=-32767
-      !           call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
-      !     +               ldata,idata,ierror)
-        if(ierror /= 0) goto 900
       end if
 
       do m=1,ncomp
@@ -1412,7 +1109,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         end do
       end do
     end do
-  
+
   !..average concentration in each layer for each type
     do m=1,ncomp
       do k=1,nk-1
@@ -1426,34 +1123,17 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         lvla=nint(alevel(k+1)*10.)
         lvlb=nint(blevel(k+1)*10000.)
         if(ivcoor == 2) lvla=0
-        ipar=iparx+idcomp(m)
-        idata( 6)=ipar
-        idata( 7)=ko
-        idata( 8)=lvla
-        idata(19)=lvlb
-        idata(20)=-32767
-      ! don't write average currently, only instant (loop = 2)
-      !        if (loop .eq. 1) then
-      !           ipos(3) = k
-      !           call check(NF_PUT_VARA_REAL(iunit, acml_varid(m),ipos,isize,
-      !     +            field1))
-      ! reset ipos(3) for 3d fields to time-pos (=ipos(4))
-      !           ipos(3) = ipos(4)
-      !     +       call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
-      !     +                  ldata,idata,ierror)
-      
-      !        end if
+
         if (loop == 2) then
           ipos(3) = k
           call check(nf90_put_var(iunit, icml_varid(m), start=ipos, &
           count=isize, values=field1), "icml(m)")
         ! reset ipos(3) for 3d fields to time-pos (=ipos(4))
           ipos(3) = ipos(4)
-          if(ierror /= 0) goto 900
         endif
       end do
     end do
-  
+
   !..total average concentration in each layer
     if(ncomp > 1 .AND. itotcomp == 1) then
       do m=2,ncomp
@@ -1476,18 +1156,9 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         lvla=nint(alevel(k+1)*10.)
         lvlb=nint(blevel(k+1)*10000.)
         if(ivcoor == 2) lvla=0
-        ipar=iparx+0
-        idata( 6)=ipar
-        idata( 7)=ko
-        idata( 8)=lvla
-        idata(19)=lvlb
-        idata(20)=-32767
-      !            call mwfelt(2,filnam,iunit,1,nx*ny,field1,1.0,
-      !     +                  ldata,idata,ierror)
-        if(ierror /= 0) goto 900
       end do
     end if
-  
+
   !.....end do loop=1,2
   end do
 
@@ -1496,31 +1167,17 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   do m=1,ncomp
     mm=idefcomp(m)
     if(kdrydep(mm) == 1) then
-      do j=1,ny
-        do i=1,nx
-          depdry(i,j,m)=0.0d0
-        end do
-      end do
+      depdry(:,:,m) = 0.0
     end if
     if(kwetdep(mm) == 1) then
-      do j=1,ny
-        do i=1,nx
-          depwet(i,j,m)=0.0d0
-        end do
-      end do
+      depwet(:,:,m) = 0.0
     end if
   end do
 
-!..close output felt (field) file
-!      call mwfelt(13,filnam,iunit,1,nx*ny,field1,1.0,
-!     +            ldata,idata,ierror)
   call check(nf90_sync(iunit))
   return
 
   900 ierror=1
-!..close output felt (field) file
-!      call mwfelt(13,filnam,iunit,1,nx*ny,field1,1.0,
-!     +            ldata,idata,ierr)
   write(iulog,*) '*FLDOUT_NC*  Terminates due to write error.'
 
   return
@@ -1839,7 +1496,7 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
   TRIM("longitude latitude")))
 
   call check(nf90_put_var(iunit, mapy_varid, ym))
-  
+
 
   call check(nf90_sync(iunit))
 
