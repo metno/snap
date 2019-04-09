@@ -19,7 +19,7 @@ module decayML
   implicit none
   private
 
-  public decay
+  public decay, decayDeps
 
   contains
 
@@ -44,4 +44,51 @@ subroutine decay(n)
 
   return
 end subroutine decay
+
+subroutine decayDeps(tstep)
+  USE snapfldML
+  USE snapparML
+  USE snapdimML, only: nx,ny
+!  Purpose:  Decrease radioactive contents of deposition fields
+!            due to decay
+!     NEEDS TO BE RUN BEFORE 1 decay
+
+  implicit none
+
+  real :: tstep
+
+  integer :: i,j,m
+
+  logical, save :: prepare = .TRUE. 
+
+
+
+  if(prepare) then
+  
+  !..radioactive decay rate
+    do m=1,ndefcomp
+      if (kdecay(m) == 1) then
+        decayrate(m)= exp(-log(2.0)*tstep/(halftime(m)*3600.))
+      else
+        decayrate(m)=1.0
+      end if
+    end do
+  
+    prepare= .FALSE. 
+  end if
+
+  do m=1,ndefcomp
+    if(kdecay(m) == 1) then
+      do j=1,ny
+        do i=1,nx
+          depdry(i,j,m)=depdry(i,j,m)*decayrate(m)
+          depwet(i,j,m)=depwet(i,j,m)*decayrate(m)
+          accdry(i,j,m)=accdry(i,j,m)*decayrate(m)
+          accwet(i,j,m)=accwet(i,j,m)*decayrate(m)
+        enddo
+      enddo
+    endif
+  enddo
+  return
+end subroutine decayDeps
 end module decayML

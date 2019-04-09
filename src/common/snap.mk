@@ -7,7 +7,7 @@ edcomp.o om2edot.o ftest.o readfield_nc.o rwalk.o epinterp.o \
 ensemble.o vgravtables.o forwrd.o tabcon.o wetdep.o drydep.o \
 argoswrite.o bldp.o compheight.o checkDomain.o \
 filesort_nc.o fldout_nc.o \
-init_random_seed.o decayDeps.o\
+init_random_seed.o\
 release.o releasefile.o rmpart.o allocateFields.o \
 snapepsML.o
 
@@ -36,8 +36,6 @@ allocateFields.o: ../common/allocateFields.f90 particleML.o snapparML.o fileInfo
 	${F77} -c $(F77FLAGS) $(INCLUDES) $<
 snapdimML.o: ../common/snapdimML.f90
 	${F77} -c $(F77FLAGS) $(INCLUDES) $<
-decayDeps.o: ../common/decayDeps.f90
-	${F77} -c $(F77FLAGS) $(INCLUDES) $<
 snaptabML.o: ../common/snaptabML.f90 snapdimML.o
 	${F77} -c $(F77FLAGS) $(INCLUDES) $<
 snapfldML.o: ../common/snapfldML.f90
@@ -54,7 +52,7 @@ edcomp.o: ../common/edcomp.f90
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 particleML.o: ../common/particleML.f90
 	${F77} -c ${F77FLAGS} $<
-decay.o: ../common/decay.f90 snapdimML.o particleML.o snapfldML.o snapparML.o decayDeps.o
+decay.o: ../common/decay.f90 snapdimML.o particleML.o snapfldML.o snapparML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 compheight.o: ../common/compheight.f90 snapgrdML.o snapfldML.o snaptabML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
