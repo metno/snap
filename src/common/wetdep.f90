@@ -124,7 +124,7 @@ subroutine wetdep2(tstep,np,pextra)
 ! initalization
   if(np == 0) then
   
-    do m=1,ndefcomp
+    do m=1,np
       rm=radiusmym(m)
       depconst(m)=b0 + b1*rm + b2*rm*rm + b3*rm*rm*rm
     !################################################################
@@ -134,14 +134,14 @@ subroutine wetdep2(tstep,np,pextra)
   
   !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     write(iulog,*) '-------------------------------------------------'
-    write(iulog,*) 'WETDEP2 PREPARE .... q,deprate(1:ndefcomp):'
+    write(iulog,*) 'WETDEP2 PREPARE .... q,deprate(1:ncomp):'
   !##############################################
   ! c	dep=radiusmym(1)
   ! c	radiusmym(1)=1.0
   !##############################################
     do n=1,200
       q=float(n)*0.1
-      do m=1,ndefcomp
+      do m=1,ncomp
       
       ! b... 25.04.12 wet deposition for convective and gases
       
@@ -163,7 +163,7 @@ subroutine wetdep2(tstep,np,pextra)
         deprate= 1.0 - exp(-tstep*rkw)
         ratdep(m)=deprate
       end do
-      write(iulog,1010) q,(ratdep(m),m=1,ndefcomp)
+      write(iulog,1010) q,(ratdep(m),m=1,ncomp)
       1010 format(1x,f5.1,':',12f7.4)
     end do
   !##############################################

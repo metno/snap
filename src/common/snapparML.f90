@@ -23,8 +23,14 @@ module snapparML
 
   private
 
-!> no. of components defined (aerosol,gas,noble.gas,...)
-  integer, save, public :: ndefcomp
+!> an identifier used in the field identification
+!>      (stored as level_1 for single level fields,
+!>       model level fields adds this number to a 'basic'
+!>       parameter no., 0 is used for the total if more than
+!>       one component present)
+      integer, save, public :: idcomp(mdefcomp)
+!>  run comp. (1,...ncomp) or 0 if not used
+      integer, save, public :: iruncomp(mdefcomp)
 
 !..nplume:    no. of released plumes
 !..npart:     total no. of particles (in all released plumes)
@@ -47,12 +53,7 @@ module snapparML
 !..densitygcm3: density in unit g/cm3     (for gravity computation)
 !..vgtable:     table of gravity in m/s
 !		(temperature as first index, pressure second)
-!..idcomp:    an identifier used in the field identification
-!	      (stored as level_1 for single level fields,
-!	       model level fields adds this number to a 'basic'
-!	       parameter no., 0 is used for the total if more than
-!	       one component present)
-!..iruncomp:  run comp. (1,...ncomp) or 0 if not used
+
 !..totalbq:   total release in unit Bq, accumulated during run
 !..numtotal:  total no. of particles released, accumulated during run
 !..compname:  a component name (not much used, really)
@@ -71,7 +72,6 @@ module snapparML
                  ,tbasevg,tincrvg,pbasevg,pincrvg &
                  ,totalbq(mdefcomp)
       integer, save, public :: numtotal(mdefcomp)
-      integer, save, public :: idcomp(mdefcomp),iruncomp(mdefcomp)
       character(len=32), save, public :: compname(mdefcomp),compnamemc(mdefcomp)
 
 

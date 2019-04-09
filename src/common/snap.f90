@@ -301,6 +301,7 @@ PROGRAM bsnap
 ! b_start
   real :: mhmin, mhmax	! minimum and maximum of mixing height
 ! b_end
+  integer :: ndefcomp
 
   logical :: blfullmix
   logical :: init = .TRUE. 
@@ -1361,6 +1362,16 @@ PROGRAM bsnap
   if(ndefcomp < 0) then
     write(error_unit,*) 'No (release) components defined'
     ierror=1
+  end if
+  if (ncomp /= ndefcomp) then
+    ! Could handle unknown components by setting ndefcomp = ncomp
+    write(error_unit,*) "Number of components defined/given do not match"
+    write(error_unit,*) "Maybe missing a RELEASE.BQ/*.COMP or COMPONENT?"
+    ierror = 1
+  end if
+  if (maxval(idefcomp) > ncomp) then
+    write(error_unit,*) "Field identification is higher than total number of fields"
+    ierror = 1
   end if
 
   do m=1,ndefcomp-1
