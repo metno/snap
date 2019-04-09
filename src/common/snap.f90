@@ -235,9 +235,8 @@ PROGRAM bsnap
 #endif
   USE wetdep, only: wetdep1, wetdep2
   USE drydep, only: drydep1, drydep2
-  USE decayML, only: decay
+  USE decayML, only: decay, decayDeps
   USE posintML, only: posint
-  USE decayDepsML, only: decayDeps
   USE bldpML, only: bldp
   USE releaseML, only: release
   USE init_random_seedML, only: init_random_seed
