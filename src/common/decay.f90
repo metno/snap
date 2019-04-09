@@ -22,21 +22,20 @@ module decayML
   public decay, decayDeps
 
   contains
-
+!>  Purpose:  Decrease radioactive contents due to decay
+!>
+!>  WARNING:   make sure decayDeps is run once before running decay
 subroutine decay(n)
-  USE snapparML
-!  Purpose:  Decrease radioactive contents due to decay
-!    WARNING:   make sure decayDeps is run once before running decay
+  USE snapparML, only: kdecay, decayrate, icomp
+  use particleML, only: pdata
 
-  use particleML
   implicit none
 
   integer, INTENT(IN) :: n
   integer :: m
 
-
 !      do n=1,npart loop outside this function
-  m= icomp(n)
+  m = icomp(n)
   if(kdecay(m) == 1) then
     pdata(n)%rad= pdata(n)%rad * decayrate(m)
   end if
@@ -45,26 +44,24 @@ subroutine decay(n)
   return
 end subroutine decay
 
+!>  Purpose:  Decrease radioactive contents of deposition fields
+!>            due to decay
+!>
+!>     NEEDS TO BE RUN BEFORE 1 decay
 subroutine decayDeps(tstep)
-  USE snapfldML
-  USE snapparML
-  USE snapdimML, only: nx,ny
-!  Purpose:  Decrease radioactive contents of deposition fields
-!            due to decay
-!     NEEDS TO BE RUN BEFORE 1 decay
+  USE snapfldML, only: depdry, depwet, accdry, accwet
+  USE snapparML, only: kdecay, decayrate, icomp, ncomp, halftime
 
   implicit none
 
-  real :: tstep
+  real, intent(in) :: tstep
 
-  integer :: i,j,m
-
-  logical, save :: prepare = .TRUE. 
-
+  integer :: m
+  logical, save :: prepare = .TRUE.
 
 
   if(prepare) then
-  
+
   !..radioactive decay rate
     do m=1,ncomp
       if (kdecay(m) == 1) then
@@ -73,20 +70,16 @@ subroutine decayDeps(tstep)
         decayrate(m)=1.0
       end if
     end do
-  
-    prepare= .FALSE. 
+
+    prepare= .FALSE.
   end if
 
   do m=1,ncomp
     if(kdecay(m) == 1) then
-      do j=1,ny
-        do i=1,nx
-          depdry(i,j,m)=depdry(i,j,m)*decayrate(m)
-          depwet(i,j,m)=depwet(i,j,m)*decayrate(m)
-          accdry(i,j,m)=accdry(i,j,m)*decayrate(m)
-          accwet(i,j,m)=accwet(i,j,m)*decayrate(m)
-        enddo
-      enddo
+      depdry(:,:,m) = depdry(:,:,m)*decayrate(m)
+      depwet(:,:,m) = depwet(:,:,m)*decayrate(m)
+      accdry(:,:,m) = accdry(:,:,m)*decayrate(m)
+      accwet(:,:,m) = accwet(:,:,m)*decayrate(m)
     endif
   enddo
   return
