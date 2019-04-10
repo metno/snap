@@ -219,7 +219,7 @@ PROGRAM bsnap
   USE snapparML
   USE snapposML
   USE snapgrdML
-  USE snaptabML
+  USE snaptabML, only: tabcon, nprepro, prepro
   USE particleML
   USE fileInfoML
   USE allocateFieldsML
@@ -242,7 +242,6 @@ PROGRAM bsnap
   USE init_random_seedML, only: init_random_seed
   USE compheightML, only: compheight
   USE readfield_ncML, only: readfield_nc
-  USE tabconML, only: tabcon
   USE releasefileML, only: releasefile
   USE filesort_ncML, only: filesort_nc
 #if defined(MILIB)

@@ -4,7 +4,7 @@
 MODELOBJ = dateCalc.o fileInfoML.o particleML.o snapdimML.o snapfilML.o snapfldML.o snapgrdML.o snapmetML.o snapparML.o \
 snapposML.o snaptabML.o snapargosML.o snapdebugML.o posint.o decay.o \
 edcomp.o om2edot.o ftest.o readfield_nc.o rwalk.o epinterp.o \
-ensemble.o vgravtables.o forwrd.o tabcon.o wetdep.o drydep.o \
+ensemble.o vgravtables.o forwrd.o wetdep.o drydep.o \
 argoswrite.o bldp.o compheight.o checkDomain.o \
 filesort_nc.o fldout_nc.o \
 init_random_seed.o\
@@ -36,7 +36,7 @@ allocateFields.o: ../common/allocateFields.f90 particleML.o snapparML.o fileInfo
 	${F77} -c $(F77FLAGS) $(INCLUDES) $<
 snapdimML.o: ../common/snapdimML.f90
 	${F77} -c $(F77FLAGS) $(INCLUDES) $<
-snaptabML.o: ../common/snaptabML.f90 snapdimML.o
+snaptabML.o: ../common/snaptabML.f90 snapdimML.o snapdebugML.o
 	${F77} -c $(F77FLAGS) $(INCLUDES) $<
 snapfldML.o: ../common/snapfldML.f90
 	${F77} -c $(F77FLAGS) $(INCLUDES) $<
@@ -114,8 +114,6 @@ snapmetML.o: ../common/snapmetML.f90 snapfilML.o
 	${F77} -c ${F77FLAGS} $<
 snapposML.o: ../common/snapposML.f90 snapdimML.o
 	${F77} -c ${F77FLAGS} $<
-tabcon.o: ../common/tabcon.f90 snaptabML.o snapdimML.o snapdebugML.o
-	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 vgravtables.o: ../common/vgravtables.f90 snapparML.o snapdimML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 wetdep.o: ../common/wetdep.f90 particleML.o snapgrdML.o snapfldML.o snapparML.o snaptabML.o snapdimML.o
