@@ -14,23 +14,22 @@
 !
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
-!
+
+!> meteorology parameter definitions
+!>
+!> many of these definitions can be changed in
+!> from the setup-file with a call to init_meteo_params()
 module snapmetML
   IMPLICIT NONE
   private
 
-  ! meteorology parameter definitions
-  ! many of these definitions can be changed in
-  ! from the setup-file with a call to init_meteo_params
-
-  integer, save, public :: start3d(7), start4d(7), count3d(7), count4d(7)
   character(len=80), save, public :: xwindv,ywindv,xwind10mv,ywind10mv,pottempv,ptopv
   character(len=80), save, public :: sigmadotv,apv,bv,sigmav,psv,mslpv,precaccumv
   character(len=80), save, public :: precstratiaccumv, precconaccumv
   character(len=80), save, public :: precstrativrt,precconvrt
   logical, save, public :: temp_is_abs, has_dummy_dim, manual_level_selection
   logical, save, public :: sigmadot_is_omega
-!< Use model wind (bottom layer) in place of 10m wind
+!> Use model wind (bottom layer) in place of 10m wind
   logical, save, public :: use_model_wind_for_10m = .false.
 
   public init_meteo_params
