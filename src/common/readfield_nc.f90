@@ -82,6 +82,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   real ::    unitScale
 
   integer :: timepos
+  integer :: start3d(7), start4d(7), count3d(7), count4d(7)
 
   if (istep < 0) then
   ! set all 'save' variables to default values,

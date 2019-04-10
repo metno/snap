@@ -50,7 +50,7 @@ subroutine filesort_nc
   USE snapfilML
   USE snapgrdML
   USE snapfldML
-  USE snapmetML, ONLY: start4d, count4d, xwindv, has_dummy_dim
+  USE snapmetML, ONLY: xwindv, has_dummy_dim
   USE snapdebug, only: iulog, idebug
   USE readfield_ncML, only: check, calc_2d_start_length, nfcheckload
   USE netcdf
@@ -67,6 +67,7 @@ subroutine filesort_nc
   integer(int64) :: add_offset, scalef
   integer, dimension(6) :: dateTime
   character(len=80) :: tunits
+  integer :: start4d(7), count4d(7)
 
 
 ! position in iavail
