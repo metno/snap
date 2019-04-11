@@ -147,9 +147,6 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
   integer, save :: naverage = 0
   logical, save :: acc_initialized = .false.
-!..used in xyconvert (x,y -> longitude,latitude)
-  real, parameter :: geoparam(6) = [1.0, 1.0, 1.0, 1.0, 0.0, 0.0]
-
 
   integer :: dimids2d(2),dimids3d(3),dimids4d(4), ipos(4), isize(4), &
              chksz3d(3), chksz4d(4)
@@ -570,13 +567,13 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 !..instant height of boundary layer
   do j=1,ny
     do i=1,nx
-      field1(i,j)=rt1*hbl1(i,j)+rt2*hbl2(i,j)
+      field4(i,j)=rt1*hbl1(i,j)+rt2*hbl2(i,j)
     end do
   end do
   if(idebug == 1) call ftest('hbl',1,1,nx,ny,1,field4,0)
 
   call check(nf90_put_var(iunit, ihbl_varid, start=[ipos], count=[isize], &
-  values=field1), "set_ihbl")
+  values=field4), "set_ihbl")
 
 !..average height of boundary layer
   do j=1,ny
