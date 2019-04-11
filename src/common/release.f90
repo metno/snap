@@ -15,6 +15,11 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+
+!> Purpose:  Release one plume of particles
+!>
+!>           The particles are spread in a cylinder volume if radius>0,
+!>     otherwise in a column
 module releaseML
   implicit none
   private
@@ -24,36 +29,34 @@ module releaseML
   contains
 
 subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
-
-!  Purpose:  Release one plume of particles
-!            The particles are spread in a cylinder volume if radius>0,
-!	     otherwise in a column
   USE iso_fortran_env, only: error_unit
-  USE particleML
-  USE snapgrdML
-  USE snapfldML
+  USE particleML, only: pdata
+  USE snapgrdML, only: gparam, vlevel, alevel, ahalf, blevel, bhalf
+  USE snapfldML, only: xm, ym, t1, t2, ps1, ps2
   USE snapparML
-  USE snapposML
-  USE snaptabML
+  USE snapposML, only: irelpos, relpos
+  USE snaptabML, only: g, pmult, pitab
   USE snapdimML, only: nx, ny, nk, mcomp
   USE snapdebug, only: iulog
 
   implicit none
 
 !..input/output
-  integer :: istep,nsteph
-  real ::    tf1,tf2,tnow
-  integer :: ierror
+  integer, intent(in) :: istep,nsteph
+  real, intent(in) ::    tf1,tf2,tnow
+  integer, intent(out) :: ierror
 
 !..local
   integer :: ih,i,j,n,k,m,itab,nprel,nt,npar1,numradius,nrad
   integer :: nrel(mcomp),nrel2(mcomp,2)
   real ::    x,y,dxgrid,dygrid,dx,dy,xrand,yrand,zrand,twodx,twody
   real ::    rt1,rt2,dxx,dyy,c1,c2,c3,c4,tstep
-  real ::    ginv,ps,rtab,th,p,pihu,pih,pif,hhu,h1,h2,h,vlev
+  real :: ps,rtab,th,p,pihu,pih,pif,hhu,h1,h2,h,vlev
+  real, parameter :: pi = 4*atan(1.0)
+  real, parameter :: ginv =  1.0/g
   real ::    e,a,b,c,ecos,esin,s,gcos,gsin,rcos,smax,b2,en,en2
   real ::    rbqmax,rbq,pscale,radius,hlower,hupper,stemradius
-  real ::    pi,volume1,volume2
+  real :: volume1,volume2
   real ::    relbq(mcomp),pbq(mcomp)
   real ::    hlevel(nk)
   real ::    hlower2(2),hupper2(2),radius2(2)
@@ -70,12 +73,10 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
 ! d) reuse existing code
 
 
-
-
-
 !..for random number functions
   real :: rnd(3)
 
+  ierror = 0
 
   if(itprof == 2) then
   !..single bomb release
@@ -87,13 +88,8 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
 !..particle number scaled according to max Bq released
   rbqmax=0.
   do n=1,ntprof
-    rbq=0.
-    do m=1,ncomp
-      do ih=1,nrelheight
-        rbq=rbq+relbqsec(n,m,ih)
-      end do
-    end do
-    if(rbqmax < rbq) rbqmax=rbq
+    rbq = sum(relbqsec(n, :, :))
+    rbqmax = max(rbqmax, rbq)
   end do
   pscale= float(mprel)/(rbqmax*tstep)
 
@@ -104,7 +100,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
 
 ! loop over all heights
   do ih=1,nrelheight
-  
+
     if(itprof /= 4 .AND. nt < ntprof) then
       c1=frelhour(nt)  *nsteph
       c2=frelhour(nt+1)*nsteph
@@ -129,7 +125,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
     ! stemradius not with height profiles, nrelheight must be 1
       stemradius= relstemradius(nt)
     end if
-  
+
     nprel=0
     do m=1,ncomp
     ! Number of particles equal for each component, but not Bq
@@ -142,7 +138,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
         pbq(m)=0.
       end if
     end do
-  
+
   !################################################################
   !      if(mod(istep,nsteph).eq.0) then
     do m=1,ncomp
@@ -153,23 +149,23 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
     write(iulog,*) 'nprel: ',nprel
   !      end if
   !################################################################
-  
+
     if(nplume+1 > mplume .OR. npart+nprel > mpart) then
       ierror=1
       return
     end if
-  
+
     npar1= npart+1
-  
+
   !---------------------------------------------------
-  
+
     x= relpos(3,irelpos)
     y= relpos(4,irelpos)
     i= nint(x)
     j= nint(y)
-  
+
   !..compute height in model (eta/sigma) levels
-  
+
     rt1=(tf2-tnow)/(tf2-tf1)
     rt2=(tnow-tf1)/(tf2-tf1)
     i= int(x)
@@ -192,57 +188,55 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
 
     hlevel(1)= 0.
     hhu= 0.
-  
-    ginv=1./g
-  
+
     do k=2,nk
-    
+
       th= rt1*(c1*t1(i,j,  k)+c2*t1(i+1,j,  k) &
       +c3*t1(i,j+1,k)+c4*t1(i+1,j+1,k)) &
       +rt2*(c1*t2(i,j,  k)+c2*t2(i+1,j,  k) &
       +c3*t2(i,j+1,k)+c4*t2(i+1,j+1,k))
-    
+
       p=ahalf(k)+bhalf(k)*ps
       rtab=p*pmult
       itab=rtab
       pih= pitab(itab)+(pitab(itab+1)-pitab(itab))*(rtab-itab)
-    
+
       p=alevel(k)+blevel(k)*ps
       rtab=p*pmult
       itab=rtab
       pif= pitab(itab)+(pitab(itab+1)-pitab(itab))*(rtab-itab)
-    
+
       h1=hhu
       h2=h1 + th*(pihu-pih)*ginv
       hlevel(k)= h1 + (h2-h1)*(pihu-pif)/(pihu-pih)
-    
+
       hhu= h2
       pihu=pih
-    
+
     end do
-  
+
     if (hupper > hlevel(nk)) hupper= hlevel(nk)
-  
+
   !---------------------------------------------------
-  
+
   !..release types:
   !..1) one coloumn
   !..2) one cylinder
   !..3) two cylinders, mushroom (upside/down mushroom is possible!)
-  
+
     if(stemradius <= 0. .OR. hlower < 1. .OR. radius <= 0.)then
-    
+
       numradius=1
       hlower2(1)=hlower
       hupper2(1)=hupper
       radius2(1)=radius
-    
+
       do m=1,ncomp
         nrel2(m,1)=nrel(m)
       end do
-    
+
     else
-    
+
       numradius=2
       hlower2(1)=0.
       hupper2(1)=hlower
@@ -250,53 +244,52 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
       hlower2(2)=hlower
       hupper2(2)=hupper
       radius2(2)=radius
-    
-      pi=3.141592654
+
       volume1=pi * stemradius**2 * hlower
       volume2=pi * radius**2 * (hupper - hlower)
-    
+
       do m=1,ncomp
         nrel2(m,1)= nint(nrel(m)*volume1/(volume1+volume2))
         nrel2(m,2)= nrel(m)-nrel2(m,1)
       end do
-    
+
     end  if
-  
+
   !---------------------------------------------------
-  
+
   !++++++++++++++++++++++++++++++++++++++++++
     do nrad=1,numradius
     !++++++++++++++++++++++++++++++++++++++++++
-    
+
       radius=radius2(nrad)
       hlower=hlower2(nrad)
       hupper=hupper2(nrad)
-    
+
       dxgrid= gparam(7)
       dygrid= gparam(8)
       dx= radius/(dxgrid/xm(i,j))
       dy= radius/(dygrid/ym(i,j))
-    
+
       if (x-dx < 1.01 .OR. x+dx > nx-0.01 .OR. &
       y-dy < 1.01 .OR. y+dy > ny-0.01) then
         write(error_unit,*) 'RELEASE ERROR: Bad position'
         ierror=1
         return
       end if
-    
+
       twodx= 2.*dx
       twody= 2.*dy
-    
-    
+
+
     !----------------------------------------------
       if (dx > 0.01 .AND. dy > 0.01) then
       !----------------------------------------------
-      
+
       !..want an uniform spread in x,y,z within a real cylinder,
       !..i.e. usually an ellipse in the model grid
       !..(ellipse code from DIANA diFieldEdit.cc FieldEdit::editWeight,
       !.. and is probably more general than needed here (axis in x/y direction))
-      
+
         if (dx >= dy) then
           e= sqrt(1.-(dy*dy)/(dx*dx))
         else
@@ -304,36 +297,36 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
         end if
         a= sqrt(dx*dx+dy*dy)
         b= a*sqrt(1.-e*e)
-        c= 2.*sqrt(a*a-b*b)
+        c= 2.*sqrt(max(a*a-b*b, 0.0)) ! keep (a*a >= b*b) through optimisation pass
         ecos= dx/a
         esin= dy/a
         en=   0.5*c/a
         en2=  en*en
         b2=   b*b
-      
+
         do m=1,ncomp
-        
+
           nprel= npart+nrel2(m,nrad)
-        
+
           do while (npart < nprel)
-          
+
           !..the rand function returns random real numbers between 0.0 and 1.0
             call random_number(rnd)
             xrand=rnd(1)
             yrand=rnd(2)
             zrand=rnd(3)
-          
+
             dx= twodx*(xrand-0.5)
             dy= twody*(yrand-0.5)
-          
+
             s= sqrt(dx*dx + dy*dy)
             gcos= dx/s
             gsin= dy/s
             rcos= gcos*ecos + gsin*esin
             smax= sqrt(b2/(1.-en2*rcos*rcos))
-          
+
             if(s <= smax) then
-            
+
               h= hlower + (hupper-hlower)*zrand
               k= 2
               do while (k < nk .AND. h > hlevel(k))
@@ -341,41 +334,41 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
               end do
               vlev= vlevel(k-1) + (vlevel(k)-vlevel(k-1)) &
               *(h-hlevel(k-1))/(hlevel(k)-hlevel(k-1))
-            
+
               npart=npart+1
               pdata(npart)%x= x+dx
               pdata(npart)%y= y+dy
               pdata(npart)%z= vlev
               pdata(npart)%rad= pbq(m)
               pdata(npart)%grv= 0
-              pdata(npart)%active = .TRUE. 
+              pdata(npart)%active = .TRUE.
               icomp(npart)=   idefcomp(m)
             !..an unique particle identifier (for testing...)
               nparnum=nparnum+1
               iparnum(npart)=nparnum
-            
+
             end if
-          
+
           end do
-        
+
         end do
-      
+
       !----------------------------------------------
       else
       !----------------------------------------------
-      
+
       !..distribution in a column (radius=0)
-      
+
         do m=1,ncomp
-        
+
           nprel= nrel2(m,nrad)
-        
+
           do n=1,nprel
-          
+
           !..the rand function returns random real numbers between 0.0 and 1.0
           !                zrand=rand()
             call random_number(zrand)
-          
+
             h= hlower + (hupper-hlower)*zrand
             k= 2
             do while (k < nk .AND. h > hlevel(k))
@@ -383,37 +376,37 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
             end do
             vlev= vlevel(k-1) + (vlevel(k)-vlevel(k-1)) &
             *(h-hlevel(k-1))/(hlevel(k)-hlevel(k-1))
-          
+
             npart=npart+1
             pdata(npart)%x= x
             pdata(npart)%y= y
             pdata(npart)%z= vlev
             pdata(npart)%rad= pbq(m)
-            pdata(npart)%active = .TRUE. 
+            pdata(npart)%active = .TRUE.
             icomp(npart)=   idefcomp(m)
           !..an unique particle identifier (for testing...)
             nparnum=nparnum+1
             iparnum(npart)=nparnum
-          
+
           end do
-        
+
         end do
-      
+
       !----------------------------------------------
       end if
     !----------------------------------------------
-    
+
     !++++++++++++++++++++++++++++++++++++++++++
     !.....end do nrad=1,numradius
     end do
   !++++++++++++++++++++++++++++++++++++++++++
-  
+
     do n=1,ncomp
       m=idefcomp(n)
       totalbq(m)= totalbq(m) + pbq(n)*nrel(n)
       numtotal(m)=  numtotal(m) + nrel(n)
     end do
-  
+
   !################################################################
   ! c   if(mod(istep,nsteph*3).eq.0) then
   !      if(mod(istep,nsteph).eq.0) then
@@ -428,7 +421,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
     write(iulog,*) 'nparnum: ',nparnum
   !      end if
   !################################################################
-  
+
     nplume=nplume+1
     iplume(1,nplume)=npar1
     iplume(2,nplume)=npart
