@@ -26,9 +26,9 @@ BOBJ = snap_batch_copy.o
 clean_links:
 	rm -f *.mod *.o *~
 
-snap_batch_copy.o: ../common/snap.f90 $(MODELOBJ)
-	cp -p ../common/snap.f90 snap_batch_copy.f90
-	${F77} -c $(F77FLAGS) $(INCLUDES) -DBATCH snap_batch_copy.f90
+snap_batch_copy.o: ../common/snap.F90 $(MODELOBJ)
+	cp -p ../common/snap.F90 snap_batch_copy.F90
+	${F77} -c $(F77FLAGS) $(INCLUDES) -DBATCH snap_batch_copy.F90
 
 #--------------------------------
 
@@ -90,7 +90,7 @@ fldout_nc.o: ../common/fldout_nc.f90 snapfilML.o snapgrdML.o snapfldML.o snappar
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 feltio_dummy.o: ../common/feltio_dummy.f90
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-forwrd.o: ../common/forwrd.f90 particleML.o snapgrdML.o snapfldML.o snapparML.o snaptabML.o snapdimML.o snapdebugML.o vgravtables.o
+forwrd.o: ../common/forwrd.F90 particleML.o snapgrdML.o snapfldML.o snapparML.o snaptabML.o snapdimML.o snapdebugML.o vgravtables.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 init_random_seed.o: ../common/init_random_seed.f90
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<

@@ -5,7 +5,7 @@ F77 = ifort
 CXX = icc
 CC  = icc
 
-F77FLAGS=-O2 -cpp -qopenmp -warn all
+F77FLAGS=-O2 -qopenmp -warn all
 CXXFLAGS=-O2 -qopenmp
 CCFLAGS=-O2 -qopenmp
 

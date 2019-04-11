@@ -5,7 +5,7 @@ F77 = gfortran
 CXX = g++
 CC  = gcc
 
-F77FLAGS=-O2 -g -msse2 -cpp -ffpe-trap=invalid,zero,overflow -fbounds-check -Wall -Wextra -fimplicit-none -fmodule-private
+F77FLAGS=-O2 -g -msse2 -ffpe-trap=invalid,zero,overflow -fbounds-check -Wall -Wextra -fimplicit-none -fmodule-private
 CXXFLAGS=-O3 -Wall -Wextra
 CCFLAGS=-O3 -Wall -Wextra
 
