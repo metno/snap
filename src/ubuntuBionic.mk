@@ -10,10 +10,10 @@ CC  = gcc
 #PROFILE=-fprofile-use=/tmp/snapprof.dat -Wcoverage-mismatch
 #
 #PROFILE=-flto # this is a few % slower with gcc 5.4
-#F77FLAGS=-O2 -g -mavx -cpp -ffpe-trap=invalid,zero,overflow -fbounds-check -Wall
+#F77FLAGS=-O2 -g -mavx -ffpe-trap=invalid,zero,overflow -fbounds-check -Wall
 #-DPETTERSEN
 # -ffpe-trap=invalid,zero,overflow no longer usable, conflict/bug in gfortran with IEEE_VALUE(IEEE_QUIET_NAN)
-F77FLAGS=-O2 -ftree-vectorize -fno-math-errno -g -mavx -cpp -fopt-info-optimized-vec -fopenmp $(PROFILE) -Wall -Wextra -fimplicit-none -fmodule-private -std=gnu -Wuse-without-only
+F77FLAGS=-O2 -ftree-vectorize -fno-math-errno -g -mavx -fopt-info-optimized-vec -fopenmp $(PROFILE) -Wall -Wextra -fimplicit-none -fmodule-private -std=gnu -Wuse-without-only
 CXXFLAGS=-O3 $(PROFILE) -Wall -Wextra
 CCFLAGS=-O3 -g $(PROFILE) -Wall -Wextra
 
