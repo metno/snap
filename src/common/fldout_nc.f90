@@ -18,7 +18,7 @@
 module fldout_ncML
   USE iso_fortran_env, only: real32, real64
   USE readfield_ncML, only: check
-  USE milibML, only: xyconvert, gridpar, hrdiff, rmfile
+  USE milibML, only: xyconvert, gridpar, hrdiff
   implicit none
   private
 
@@ -323,10 +323,9 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     if (iunit /= 30) &
     call check(nf90_close(iunit))
     numfields=0
-    call rmfile(filnam,0,ierror)
     write(iulog,*) 'creating fldout_nc: ',filnam
     ihrs_pos = 0
-    call check(nf90_create(filnam, NF90_NETCDF4, iunit), filnam)
+    call check(nf90_create(filnam, ior(NF90_NETCDF4, NF90_CLOBBER), iunit), filnam)
     call check(nf90_def_dim(iunit, "time", NF90_UNLIMITED, t_dimid), &
     "t-dim")
     call check(nf90_def_dim(iunit, "x", nx, x_dimid), "x-dim")
