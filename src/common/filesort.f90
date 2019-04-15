@@ -77,7 +77,7 @@ subroutine filesort(iunit,ierror)
     write(iulog,*) 'iprod,igrid:   ',iprod,igrid
     write(iulog,*) 'FILES.    nfilef= ',nfilef
     do nf=1,nfilef
-      write(iulog,*) nf,'  ', trim(filef)
+      write(iulog,*) nf,'  ', trim(filef(nf))
       write(iulog,*) '      min,max fc:',(limfcf(i,nf),i=1,2)
     end do
   end if
