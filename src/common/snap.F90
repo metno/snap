@@ -307,7 +307,7 @@ PROGRAM bsnap
 
   character(len=1024) ::  finput,fldfil,fldfilX,fldfilN,logfile,ftype, &
   fldtype, relfile
-  character(len=256) :: cinput,ciname,cipart
+  character(len=1024) :: cinput,ciname,cipart
   character(len=8) ::   cpos1,cpos2
   character(len=1) ::   tchar
   character(len=1024) :: tempstr
