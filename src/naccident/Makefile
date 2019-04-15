@@ -4,7 +4,7 @@ include ../current.mk
 
 F77FLAGS += -DACCIDENT
 
-all: bsnap_naccident 
+all: bsnap_naccident
 
 # create_naccident_input create_naccident_output
 
@@ -21,8 +21,10 @@ bsnap_naccident: $(BOBJ) $(MODELOBJ) milib.o
 
 
 clean: clean_links
-	rm -f *.o *~ snap_batch_copy.* bsnap_naccident create_naccident_input create_naccident_output
+	rm -f *.o *~ snap_batch_copy.F90 *__genmod.*
 
+distclean: clean
+	rm -f bsnap_naccident create_naccident_input create_naccident_output
 
 #create_naccident_input create_naccident_output
 install: bsnap_naccident ../../utils/snapAddToa
@@ -35,4 +37,6 @@ create_naccident_input.o: create_naccident_input.f
 
 create_naccident_output.o: create_naccident_output.f
 	${F77} ${F77FLAGS} -c -I. $< -o $@
-	
+
+
+.PHONY: all clean distclean
