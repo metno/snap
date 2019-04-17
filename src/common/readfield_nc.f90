@@ -293,7 +293,8 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   call nfcheckload(ncid, psv, start3d, count3d, ps2(:,:))
 !  input ps, must be hPa, otherwise:
   if (nctype == 'arome' .OR. nctype == 'dmi_eps' .OR. &
-  nctype == 'ec_det' .OR. nctype == 'h12_grib') then
+  nctype == 'ec_det' .OR. nctype == 'h12_grib' .OR. &
+  nctype == "ec_n1s") then
     ps2 = ps2*0.01
   endif
 !      call readfd(iunit,navps,ivc,8,ilevel,0,ps2(1,1),ierror)
@@ -367,7 +368,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
       start3d, count3d, field4(:,:))
     !..the difference below may get negative due to different scaling
       unitScale = 1.
-      if (nctype == 'ec_det') unitScale = 1000.
+      if (nctype == 'ec_det' .or. nctype == "ec_n1s") unitScale = 1000.
       do j=1,ny
         do i=1,nx
           precip1=max(field3(i,j)+field4(i,j)- &
@@ -393,7 +394,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
         write(iulog,*) "found precip in first timestep, assuming ", &
         "empty 0 timestep to deaccumulate precip"
         unitScale = 1.
-        if (nctype == 'ec_det') unitScale = 1000.
+        if (nctype == 'ec_det' .or. nctype == "ec_n1s") unitScale = 1000.
         do j=1,ny
           do i=1,nx
             precip1=max(field3(i,j)+field4(i,j)- &
