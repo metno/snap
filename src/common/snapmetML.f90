@@ -203,6 +203,26 @@ module snapmetML
         precconvrt = 'convective_precipitations'
 !..get grid parameters from field identification
 ! set as long as sortfield still is called
+      else if (nctype.eq.'ec_n1s') then
+        manual_level_selection = .true.
+        has_dummy_dim = .true.
+        xwindv = 'x_wind_ml'
+        ywindv = 'y_wind_ml'
+        xwind10mv = 'x_wind_10m'
+        ywind10mv = 'y_wind_10m'
+        pottempv = 'air_temperature_ml'
+        temp_is_abs = .true.
+        sigmav = ''
+        ptopv = ''
+        apv = 'ap'
+        bv = 'b'
+        sigmadotv = ''
+        psv = 'surface_air_pressure'
+        precaccumv = ''
+        precstratiaccumv = 'lwe_thickness_of_stratiform_precipitation_amount_acc'
+        precconaccumv = 'lwe_thickness_of_convective_precipitation_amount_acc'
+        precstrativrt = ''
+        precconvrt = ''
       else
         write(*,*) "undefined grid.nctype: ", nctype
         error stop 1
