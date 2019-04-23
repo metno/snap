@@ -122,9 +122,6 @@ wetdep.o: ../common/wetdep.f90 particleML.o snapgrdML.o snapfldML.o snapparML.o 
 milibML.o: ../common/milibML.f90
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 
-milib.o: ../common/milib.c ../common/milib.h
-	$(CC)  -c $(CCFLAGS) -I../common $<
-
 # libmi
 chcase.o: ../common/milib/chcase.f
 	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
