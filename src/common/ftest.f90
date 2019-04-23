@@ -23,48 +23,38 @@ module ftestML
 
   contains
 
+!> Purpose: Test field, print min,mean,max values.
 subroutine ftest(name,k1,k2,nx,ny,nk,field,iundef)
-
-!  Purpose: Test field, print min,mean,max values.
+  use iso_fortran_env, only: real64
   USE snapdebug, only: iulog
-
 
   implicit none
 
-  integer ::       k1,k2,nx,ny,nk,iundef
-  real ::          field(nx,ny,nk)
-  character*(*) name
+  integer, value :: k1, k2
+  integer, intent(in) :: nx, ny, nk, iundef
+  real, intent(in) :: field(nx,ny,nk)
+  character(len=*), intent(in) :: name
 
   integer :: kstep,i,j,k,ndef
-  real ::    undef,ud,fmin,fmax,fmean
+  real :: fmin,fmax,fmean
+  real, parameter :: undef = 1.0e35
+  real, parameter :: ud = undef*0.9
 
-  double precision :: fsum
+  real(real64) :: fsum
 
   if(k1 < 1 .OR. k1 > nk) k1=1
   if(k2 < 1 .OR. k2 > nk) k2=nk
   kstep=+1
   if(k1 > k2) kstep=-1
 
-  undef=+1.e+35
-  ud=undef*0.9
-
   do k=k1,k2,kstep
-    fmin=+undef
-    fmax=-undef
+    fmin = huge(fmin)
+    fmax = -huge(fmax)
     fsum=0.
     if(iundef == 0) then
-
-    ! OMP PARALLEL DO PRIVATE(j,i) REDUCTION(max : fmax)
-    ! OMP&            REDUCTION(min : fmin) REDUCTION( + : fsum)
-    ! OMP&            COLLAPSE(2)
-      do j=1,ny
-        do i=1,nx
-          fmin=min(fmin,field(i,j,k))
-          fmax=max(fmax,field(i,j,k))
-          fsum=fsum+field(i,j,k)
-        end do
-      end do
-    ! OMP END PARALLEL DO
+      fmin = minval(field(:,:,k))
+      fmax = maxval(field(:,:,k))
+      fsum = sum(field(:,:,k))
       ndef=nx*ny
     else
       ndef=0
