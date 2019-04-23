@@ -775,9 +775,10 @@ PROGRAM bsnap
           do i=1,ntprof
             relbqsec(i,ncomp,1)= relbqsec(i,ncomp,1)*rscale
           end do
-        elseif(ntprof > 1 .AND. relbqsec(ntprof,ncomp,1) /= 0.)then
-          goto 12
         elseif(ntprof > 1) then
+          if (relbqsec(ntprof,ncomp,1) /= 0) then
+            write(error_unit,*) "Too many release occurences, the releases will be truncated"
+          endif
           do i=1,ntprof-1
             rscale=1./(3600.*(frelhour(i+1)-frelhour(i)))
             relbqsec(i,ncomp,1)= relbqsec(i,ncomp,1)*rscale
