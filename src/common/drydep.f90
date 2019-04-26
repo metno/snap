@@ -16,10 +16,18 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 module drydep
+  use snapdimML, only: mdefcomp
   implicit none
   private
 
   public drydep1, drydep2
+
+!> dry deposition rate
+  real, save, public :: drydeprat(mdefcomp)
+!> max height above ground for dry deposition
+  real, save, public :: drydephgt(mdefcomp)
+!> for each component: 0=dry deposition off  1=dry dep. on
+  integer, save, public :: kdrydep(mdefcomp)
 
   contains
 

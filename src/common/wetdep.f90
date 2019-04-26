@@ -16,10 +16,17 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 module wetdep
+  use snapdimML, only: mdefcomp
   implicit none
   private
 
   public wetdep1, wetdep2
+
+!> wet deposition rate
+  real, save, public :: wetdeprat(mdefcomp)
+
+!> for each component: 0=wet deposition off  1=wet dep. on
+  integer, save, public :: kwetdep(mdefcomp)
 
   contains
 
