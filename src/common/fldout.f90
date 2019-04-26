@@ -96,6 +96,8 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   USE snapdimML, only: nx, ny, nk, nxmc, nymc, ldata
   USE milibML, only: xyconvert, gridpar, rmfile, vtime
   USE releaseML, only: npart
+  USE drydep, only: kdrydep
+  USE wetdep, only: kwetdep
   implicit none
 
   integer ::   iwrite,iunit,istep,nsteph,ierror
