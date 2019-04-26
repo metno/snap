@@ -237,12 +237,12 @@ PROGRAM bsnap
 #endif
   USE wetdep, only: wetdep1, wetdep2, wetdeprat, kwetdep
   USE drydep, only: drydep1, drydep2, drydeprat, drydephgt, kdrydep
-  USE decayML, only: decay, decayDeps
+  USE decayML, only: decay, decayDeps, kdecay, halftime, decayrate
   USE posintML, only: posint
   USE bldpML, only: bldp
   USE releaseML, only: release, frelhour, relradius, rellower, relupper, &
                        relstemradius, relbqsec, nrelheight, ntprof, mprel, &
-                       mplume, nplume, npart, mpart
+                       mplume, nplume, npart, mpart, numtotal
   USE init_random_seedML, only: init_random_seed
   USE compheightML, only: compheight
   USE readfield_ncML, only: readfield_nc
@@ -413,28 +413,29 @@ PROGRAM bsnap
   do m=1,mdefcomp
     compname(m)   ='Unknown'
     compnamemc(m) ='Unknown'
-    kdrydep(m)    =-1
-    kwetdep(m)    =-1
-    kdecay(m)     =-1
-    drydephgt(m)  =-1.
-    drydeprat(m)  =-1.
-    wetdeprat(m)  =-1.
-    halftime(m)   =-1.
-    kgravity(m)   =-1
-    gravityms(m)  = 0.
-    radiusmym(m)  = 0.
-    densitygcm3(m)= 0.
-    idcomp(m)     =-1
-    iruncomp(m)   = 0
-    totalbq(m)    = 0.
-    numtotal(m)   = 0
   end do
-  ncomp=0
-  ndefcomp=0
-  itotcomp=0
-  rmlimit=-1.
-  nprepro=0
-  itprof=0
+
+  kdrydep = -1
+  kwetdep = -1
+  kdecay = -1
+  drydephgt = -1.0
+  drydeprat = -1.0
+  wetdeprat = -1.0
+  halftime = -1.0
+  kgravity = -1
+  gravityms = 0.0
+  radiusmym = 0.0
+  densitygcm3 = 0.0
+  idcomp = -1
+  iruncomp = 0
+  totalbq = 0.0
+  numtotal = 0
+  ncomp = 0
+  ndefcomp = 0
+  itotcomp = 0
+  rmlimit = -1.0
+  nprepro = 0
+  itprof = 0
 
   relradius = -1.0
   relupper = -1.0
@@ -624,7 +625,7 @@ PROGRAM bsnap
             cpos2(8:8)='W'
           end if
           srelnam=cpos1(k1+1:8)//' '//cpos2(k2+1:8)
-          if(nrelpos < mrelpos) nrelpos=nrelpos+1
+          if(nrelpos < size(relnam)) nrelpos=nrelpos+1
           relnam(nrelpos)=srelnam
           relpos(1,nrelpos)=glat
           relpos(2,nrelpos)=glong
@@ -961,7 +962,7 @@ PROGRAM bsnap
         i2=nprepro
         ios=0
         do while (ios == 0)
-          if(i2 > mprepro) goto 12
+          if(i2 > size(prepro,2)) goto 12
           i2=i2+1
           read(cipart,*,iostat=ios) &
           ((prepro(k,i),k=1,2),i=i1,i2)
@@ -1024,7 +1025,7 @@ PROGRAM bsnap
       elseif(cinput(k1:k2) == 'release.pos') then
       !..release.pos=<'name',latitude,longitude>
         if(kv1 < 1) goto 12
-        if(nrelpos < mrelpos) then
+        if(nrelpos < size(relnam)) then
           nrelpos=nrelpos+1
           read(cipart,*,err=12) relnam(nrelpos), &
           (relpos(i,nrelpos),i=1,2)
@@ -1108,7 +1109,7 @@ PROGRAM bsnap
       elseif(cinput(k1:k2) == 'field.input') then
       !..field.input=  felt_file_name
         if(kv1 < 1) goto 12
-        if(nfilef < mfilef) then
+        if(nfilef < size(limfcf,2)) then
           nfilef=nfilef+1
           limfcf(1,nfilef)=minhfc
           limfcf(2,nfilef)=maxhfc

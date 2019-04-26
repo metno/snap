@@ -21,7 +21,7 @@
 !>           The particles are spread in a cylinder volume if radius>0,
 !>     otherwise in a column
 module releaseML
-  use snapdimML, only: mcomp
+  use snapdimML, only: mcomp, mdefcomp
   implicit none
   private
 
@@ -81,6 +81,8 @@ module releaseML
 !> max. no. of particles, total in all plumes, preset, can be configured in snap.input
   integer, save, public :: mpart = mpartpre
 
+!>  total no. of particles released, accumulated during run
+  integer, save, public :: numtotal(mdefcomp)
 
   contains
 

@@ -18,9 +18,13 @@
 !> fixed tables and constants
 !>                  (independent of input data)
 module snaptabML
-    use snapdimML, only: mpretab,mprepro
     implicit none
     private
+
+!> max. no. of steps in input precipitation probability table
+    integer, parameter :: mprepro = 40
+!> max. no. of steps in precipitation probability table
+    integer, parameter, public :: mpretab = 500
 
 !> multiply pressure by this value to get index in pitab
     real, parameter, public :: pmult = 0.1
@@ -42,6 +46,7 @@ module snaptabML
 !> prepro(2,n): probability for precipitation (0. - 1.)
     real, save, public :: prepro(2,mprepro+1)
 
+
     public tabcon
 
     contains
@@ -50,7 +55,6 @@ module snaptabML
 !> Purpose:  Define fixed tables and constans
 !>           (independent of input data)
       subroutine tabcon
-        USE snapdimML, only: mpretab
         USE snapdebug, only: iulog
         implicit none
 

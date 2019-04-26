@@ -35,9 +35,10 @@ subroutine rmpart(rmlimit)
   USE snapgrdML
   USE snapparML
   USE snapdimML, only: mdefcomp, nx, ny, nk
-  USE releaseML, only: iplume, nplume, npart
+  USE releaseML, only: iplume, nplume, npart, numtotal
   USE drydep, only: kdrydep
   USE wetdep, only: kwetdep
+  USE decayML, only: kdecay
   implicit none
         
 

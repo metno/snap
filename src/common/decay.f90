@@ -16,17 +16,25 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 module decayML
+  use snapdimML, only: mdefcomp
   implicit none
   private
 
   public decay, decayDeps
+
+!> for each component: 0=radioactive decay off  1=decay on
+  integer, save, public :: kdecay(mdefcomp)
+!> radioactive half lifetime (hours)
+  real, save, public :: halftime(mdefcomp)
+!> radioactive decay (rate)
+  real, save, public :: decayrate(mdefcomp)
 
   contains
 !>  Purpose:  Decrease radioactive contents due to decay
 !>
 !>  WARNING:   make sure decayDeps is run once before running decay
 subroutine decay(n)
-  USE snapparML, only: kdecay, decayrate, icomp
+  USE snapparML, only: icomp
   use particleML, only: pdata
 
   implicit none
@@ -50,7 +58,7 @@ end subroutine decay
 !>     NEEDS TO BE RUN BEFORE 1 decay
 subroutine decayDeps(tstep)
   USE snapfldML, only: depdry, depwet, accdry, accwet
-  USE snapparML, only: kdecay, decayrate, icomp, ncomp, halftime
+  USE snapparML, only: icomp, ncomp
 
   implicit none
 

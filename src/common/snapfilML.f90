@@ -19,10 +19,13 @@
 module snapfilML
     use iso_fortran_env, only: int16
     use fileInfoML, only: fileInfo
-    use snapdimML, only: mavail, mfilef
+    use snapdimML, only: mavail
     implicit none
 
     private
+
+!> max. no. of input FELT files
+    integer, parameter :: mfilef = 1024
 
 !> min. step in hours between field input
     integer, save, public :: nhfmin

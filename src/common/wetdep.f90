@@ -35,8 +35,7 @@ subroutine wetdep1(n,pextra)
   USE snapgrdML
   USE snapfldML
   USE snapparML
-  USE snaptabML
-  USE snapdimML, only: mpretab
+  USE snaptabML, only: mpretab, premult, pretab
 
 !  Purpose:  Compute wet deposition for each particle and each component
 !            and store depositions in nearest gridpoint in a field
