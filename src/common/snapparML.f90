@@ -45,10 +45,6 @@ module snapparML
 !..halftime:  radioactive half lifetime (hours)
 !..decayrate: radioactive decay (rate)
 !..gravityms:   fixed gravity in unit m/s
-!..radiusmym:   radius in unit micrometer (for gravity computation)
-!..densitygcm3: density in unit g/cm3     (for gravity computation)
-!..vgtable:     table of gravity in m/s
-!		(temperature as first index, pressure second)
 
 !..totalbq:   total release in unit Bq, accumulated during run
 !..numtotal:  total no. of particles released, accumulated during run
@@ -61,9 +57,6 @@ module snapparML
                  ,drydeprat(mdefcomp),wetdeprat(mdefcomp) &
                  ,halftime(mdefcomp),decayrate(mdefcomp) &
                  ,gravityms(mdefcomp) &
-                 ,radiusmym(mdefcomp),densitygcm3(mdefcomp) &
-                 ,vgtable(numtempvg,numpresvg,mdefcomp) &
-                 ,tbasevg,tincrvg,pbasevg,pincrvg &
                  ,totalbq(mdefcomp)
       integer, save, public :: numtotal(mdefcomp)
       character(len=32), save, public :: compname(mdefcomp),compnamemc(mdefcomp)

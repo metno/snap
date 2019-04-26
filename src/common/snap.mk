@@ -32,7 +32,7 @@ snap_batch_copy.o: ../common/snap.F90 $(MODELOBJ)
 
 #--------------------------------
 
-allocateFields.o: ../common/allocateFields.f90 particleML.o snapparML.o fileInfoML.o snapfldML.o snapfilML.o snapgrdML.o
+allocateFields.o: ../common/allocateFields.f90 particleML.o snapparML.o fileInfoML.o snapfldML.o snapfilML.o snapgrdML.o release.o
 	${F77} -c $(F77FLAGS) $(INCLUDES) $<
 snapdimML.o: ../common/snapdimML.f90
 	${F77} -c $(F77FLAGS) $(INCLUDES) $<
@@ -100,11 +100,11 @@ readfd.o: ../common/readfd.f90 fileInfoML.o snapfilML.o snapgrdML.o snapdebugML.
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 readfield.o: ../common/readfield.f90 particleML.o fileInfoML.o snapfilML.o snapgrdML.o snapfldML.o snaptabML.o snapdimML.o snapdebugML.o readfd.o om2edot.o ftest.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-releasefile.o: ../common/releasefile.f90 snapparML.o snapdimML.o
+releasefile.o: ../common/releasefile.f90 snapparML.o snapdimML.o release.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 release.o: ../common/release.f90 particleML.o snapgrdML.o snapfldML.o snapparML.o snapposML.o snaptabML.o snapdimML.o snapdebugML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-rmpart.o: ../common/rmpart.f90 particleML.o snapgrdML.o snapparML.o snapdimML.o decay.o
+rmpart.o: ../common/rmpart.f90 particleML.o snapgrdML.o snapparML.o snapdimML.o decay.o release.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 rwalk.o: ../common/rwalk.f90 particleML.o snapgrdML.o snapparML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<

@@ -68,6 +68,7 @@ subroutine drydep2(tstep,n)
   USE snapfldML
   USE snapparML
   USE snapgrdML, only: vlevel
+  USE vgravtablesML, only: radiusmym
 
 !  Purpose:  Compute dry deposition for each particle and each component
 !            and store depositions in nearest gridpoint in a field

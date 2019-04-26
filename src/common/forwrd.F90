@@ -122,8 +122,8 @@ subroutine forwrd_dx(tf1,tf2,tnow,tstep,np,nparticle, &
   USE snapfldML
   USE snapparML
   USE snaptabML
-  USE vgravtablesML, only: vgravtables
-  USE snapdimML, only: nk, numpresvg, numtempvg
+  USE vgravtablesML, only: vgravtables, vgtable, pbasevg, tbasevg, pincrvg, tincrvg
+  USE snapdimML, only: nk
   USE snapdebug, only: iulog
 
 !  Purpose:  calculate dx,dy,dz forward movement of particle at pos np
@@ -292,11 +292,11 @@ subroutine forwrd_dx(tf1,tf2,tnow,tstep,np,nparticle, &
     ! old       gravity= vgrav(radiusmym(m),densitygcm3(m),p,t)
       ip= (p-pbasevg)/pincrvg
       if(ip < 1) ip=1
-      if(ip >= numpresvg) ip=numpresvg-1
+      if(ip >= size(vgtable,2)) ip=size(vgtable,2)-1
       pvg= pbasevg + ip*pincrvg
       it= (t-tbasevg)/tincrvg
       if(it < 1) it=1
-      if(it >= numtempvg) it=numtempvg-1
+      if(it >= size(vgtable,1)) it=size(vgtable,1)-1
       tvg= tbasevg + it*tincrvg
       grav1= vgtable(it,ip,m) &
       + (vgtable(it+1,ip,m)-vgtable(it,ip,m)) &
