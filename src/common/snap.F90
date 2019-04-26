@@ -227,6 +227,7 @@ PROGRAM bsnap
   USE rmpartML, only: rmpart
   USE checkdomainML, only: checkdomain
   USE rwalkML, only: rwalk
+  USE vgravtablesML, only: radiusmym, densitygcm3
   USE milibML, only: xyconvert, keywrd, chcase, getvar, hrdiff, prhelp, vtime
 #if defined(TRAJ)
   USE forwrdML, only: forwrd, speed

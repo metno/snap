@@ -89,6 +89,7 @@ subroutine wetdep2(tstep,np,pextra)
   USE snaptabML
   USE snapdimML, only: mdefcomp
   USE snapdebug, only: iulog
+  USE vgravtablesML, only: radiusmym
   implicit none
 
   real, INTENT(IN) ::    tstep

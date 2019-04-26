@@ -16,8 +16,29 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 module vgravtablesML
+  use snapdimML, only: mdefcomp
   implicit none
   private
+
+!> number of temperature levels in ::vgtable
+  integer, parameter, public :: numtempvg = 41
+!> number of pressure levels in ::vgtable
+  integer, parameter, public :: numpresvg = 25
+
+!> table of gravity in m/s
+!>
+!>	(temperature as first index, pressure second)
+  real, save, public :: vgtable(numtempvg,numpresvg,mdefcomp)
+
+  real, parameter, public :: tincrvg = 200.0/float(numtempvg - 1)
+  real, parameter, public :: tbasevg = 273. - 120. - tincrvg
+  real, parameter, public :: pincrvg = 1200./float(numpresvg-1)
+  real, parameter, public :: pbasevg = 0. - pincrvg
+
+!> radius in unit micrometer (for gravity computation)
+  real, save, public :: radiusmym(mdefcomp)
+!> density in unit g/cm3     (for gravity computation)
+  real, save, public :: densitygcm3(mdefcomp)
 
   public vgravtables
 
@@ -26,8 +47,7 @@ module vgravtablesML
 !>  program for calculating the gravitational settling velocities
 !>  for small and large particles (outside the Stokes low)
 subroutine vgravtables
-  USE snapparML
-  use snapdimML, only: numpresvg, numtempvg
+  USE snapparML, only: ncomp, idefcomp
 
   real :: t        ! absolute temperature (K)
   real :: dp        ! particle size um
@@ -39,12 +59,6 @@ subroutine vgravtables
   integer :: n,m,ip,it
 !---------------------------------------
 
-
-  tincrvg= 200./float(numtempvg-1)
-  tbasevg= 273. - 120. - tincrvg
-
-  pincrvg= 1200./float(numpresvg-1)
-  pbasevg= 0. - pincrvg
 
   do n=1,ncomp
 

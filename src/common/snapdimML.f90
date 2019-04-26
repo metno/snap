@@ -101,9 +101,5 @@ module snapdimML
       integer, parameter, public :: mrelpos=30
       integer, parameter, public :: mprepro=40,mpretab=500
 !
-!..for gravity tables
-!
-      integer, parameter, public :: numtempvg=41, numpresvg=25
-!
 !-----------------------------------------------------------------------
 end module snapdimML
