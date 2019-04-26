@@ -71,13 +71,11 @@ module snapdimML
 !
       integer, parameter, public :: mcomp=51
       integer, parameter, public :: mdefcomp=51
-!
-!
-!..mfilef: max. no. of input FELT files
+
+
 !..mavail: max. no. of available timesteps with data
-!
-      integer, parameter, public :: mfilef=1024,mavail=8192
-!
+      integer, parameter, public :: mavail = 8192
+
       integer, save, public :: nxmc,nymc
 !..use 1 or 2 below:
 !..1: keep large arrays for concentration of each component in each layer
@@ -86,14 +84,6 @@ module snapdimML
 !      parameter (nxmc=1,nymc=1)
 !
 !
-!..mbuffr:  max. length of buffer (for misc. reading from 'snap.input')
-!..mrelpos: max. no. of release positions available (in list)
-!..mprepro: max. no. of steps in input precipitation probability table
-!..mpretab: max. no. of steps in precipitation probability table
-!
-      integer, parameter, public :: mbuffr=60
-      integer, parameter, public :: mrelpos=30
-      integer, parameter, public :: mprepro=40,mpretab=500
 !
 !-----------------------------------------------------------------------
 end module snapdimML

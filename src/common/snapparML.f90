@@ -34,24 +34,16 @@ module snapparML
 
 !> counter for unique particle identifier
       integer, save, public :: nparnum
-!> for each component: 0=radioactive decay off  1=decay on
-      integer, save, public :: kdecay(mdefcomp)
 !> gravity type:
 !> * 0=off
 !> * 1=fixed
 !> * 2=computed
       integer, save, public :: kgravity(mdefcomp)
-!> radioactive half lifetime (hours)
-    real, save, public :: halftime(mdefcomp)
-!> radioactive decay (rate)
-    real, save, public :: decayrate(mdefcomp)
 !> fixed gravity in unit m/s
     real, save, public :: gravityms(mdefcomp)
 
 !> total release in unit Bq, accumulated during run
   real, save, public :: totalbq(mdefcomp)
-!>  total no. of particles released, accumulated during run
-      integer, save, public :: numtotal(mdefcomp)
 !> a component name (not much used, really)
       character(len=32), save, public :: compname(mdefcomp)
       character(len=32), save, public :: compnamemc(mdefcomp)
