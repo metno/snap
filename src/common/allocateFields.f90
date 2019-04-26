@@ -27,10 +27,11 @@ subroutine allocateFields
   USE particleML
   USE fileInfoML
   USE snapdimML, only: nx, ny, nk, ldata, maxsiz, mprecip, nxmc, nymc
-  USE snapparML, only: ncomp, mpart, mplume, icomp, iparnum, iplume
+  USE snapparML, only: ncomp, icomp, iparnum
   USE snapfldML
   USE snapfilML
   USE snapgrdML
+  USE releaseML, only: mplume, iplume, mpart
   implicit none
 
   logical, save :: FirstCall = .TRUE.
@@ -167,11 +168,11 @@ subroutine deAllocateFields
   USE particleML
   USE fileInfoML
   USE snapparML
-  USE snapdimML, only: nx, ny, nk
   USE snapfldML
   USE snapfilML
   USE snapgrdML
   use snapdimML
+  USE releaseML, only: iplume
   implicit none
 
   DEALLOCATE ( alevel )

@@ -34,8 +34,10 @@ subroutine  releasefile(filename)
 
 ! for each release-step, rellower/relupper/relradius are copied from (1,x)
   USE iso_fortran_env, only: error_unit
-  USE snapparML
-  USE snapdimML, only: mcomp, mrelheight, mtprof
+  USE snapparML, only: ncomp, component
+  USE snapdimML, only: mcomp
+  USE releaseML, only: mrelheight, mtprof, frelhour, relbqsec, rellower, &
+                       relupper, relradius,  nrelheight, ntprof
   implicit none
 
 ! input

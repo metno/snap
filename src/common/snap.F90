@@ -207,7 +207,7 @@
 
 
 PROGRAM bsnap
-  USE iso_fortran_env, only: real64
+  USE iso_fortran_env, only: real64, error_unit
   USE DateCalc  ,ONLY : epochToDate, timeGM
   USE snapdebug, only: iulog, idebug
   USE snapargosML
@@ -238,7 +238,9 @@ PROGRAM bsnap
   USE decayML, only: decay, decayDeps
   USE posintML, only: posint
   USE bldpML, only: bldp
-  USE releaseML, only: release
+  USE releaseML, only: release, frelhour, relradius, rellower, relupper, &
+                       relstemradius, relbqsec, nrelheight, ntprof, mprel, &
+                       mplume, nplume, npart, mpart
   USE init_random_seedML, only: init_random_seed
   USE compheightML, only: compheight
   USE readfield_ncML, only: readfield_nc
@@ -251,7 +253,6 @@ PROGRAM bsnap
 #else
   USE feltio_dummy, only: readfd, readfield, filesort, fldout
 #endif
-  USE iso_fortran_env, only: error_unit
 
 ! SNAP - Severe Nuclear Accident Program
 
@@ -340,9 +341,6 @@ PROGRAM bsnap
 #endif
 #endif
 
-
-  mpart = mpartpre
-  mplume = mplumepre
 
   iaction=0
 ! initialize random number generator for rwalk and release
@@ -436,20 +434,11 @@ PROGRAM bsnap
   nprepro=0
   itprof=0
 
-  do i=1,mtprof
-    do ih=1,mrelheight
-      relradius(i,ih)= -1.
-      relupper(i,ih)=  -1.
-      rellower(i,ih)=  -1.
-    end do
-    relstemradius(i)= -1.
-  end do
-
-  do m=1,mcomp
-    do ih=1,mrelheight
-      relbqsec(1,m,ih)= -1.
-    end do
-  end do
+  relradius = -1.0
+  relupper = -1.0
+  rellower = -1.0
+  relstemradius = -1.0
+  relbqsec(1,:,:) = -1.0
 
   nrelpos=0
   iprod  =0
@@ -704,7 +693,7 @@ PROGRAM bsnap
         i2=ntprof
         ios=0
         do while (ios == 0)
-          if(i2 > mtprof) goto 13
+          if(i2 > size(frelhour)) goto 13
           i2=i2+1
           read(cipart,*,iostat=ios) (frelhour(i),i=i1,i2)
         end do
@@ -795,7 +784,7 @@ PROGRAM bsnap
         i2=nrelheight
         ios=0
         do while (ios == 0)
-          if(i2 > mrelheight) goto 13
+          if(i2 > size(rellower, 2)) goto 13
           i2=i2+1
           read(cipart,*,iostat=ios) (rellower(1,ih),ih=i1,i2)
         end do
