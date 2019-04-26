@@ -95,6 +95,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   USE ftestML, only: ftest
   USE snapdimML, only: nx, ny, nk, nxmc, nymc, ldata
   USE milibML, only: xyconvert, gridpar, rmfile, vtime
+  USE releaseML, only: npart
   implicit none
 
   integer ::   iwrite,iunit,istep,nsteph,ierror

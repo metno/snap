@@ -35,6 +35,7 @@ subroutine rmpart(rmlimit)
   USE snapgrdML
   USE snapparML
   USE snapdimML, only: mdefcomp, nx, ny, nk
+  USE releaseML, only: iplume, nplume, npart
   implicit none
         
 

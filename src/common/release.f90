@@ -21,10 +21,66 @@
 !>           The particles are spread in a cylinder volume if radius>0,
 !>     otherwise in a column
 module releaseML
+  use snapdimML, only: mcomp
   implicit none
   private
 
   public release
+
+!> max. no. of timesteps in release profiles
+  integer, parameter, public :: mtprof = 500
+!> mrelheight: max. no. of height classes for releases
+  integer, parameter, public :: mrelheight = 20
+
+!> specified release hours in time profile
+  real, save, public :: frelhour(mtprof)
+!> release radius in unit meter
+  real, save, public :: relradius(mtprof,mrelheight)
+!> release upper height in unit meter
+  real, save, public :: relupper(mtprof,mrelheight)
+!> release lower height in unit meter
+  real, save, public :: rellower(mtprof,mrelheight)
+!> release radius in unit meter for a mushroom stem
+  real, save, public :: relstemradius(mtprof)
+!>  radioactive release in unit Bq/sec
+!>
+!>      dimension(1:ntprof,1:ncomp,1:nrelheight)
+  real, save, public :: relbqsec(mtprof,mcomp,mrelheight)
+
+!> no. of height classes in the run
+  integer, save, public :: nrelheight
+!> no. of timesteps in the release profiles
+  integer, save, public :: ntprof
+
+!> max no. of particles released in each plume
+!>
+!>             (scaled according to max mass released
+!>              and divided between components according to mass)
+  integer, save, public :: mprel
+
+!> preset for ::mplume
+  integer, parameter :: mplumepre = 50000
+!> max. no. of plume releases, can be configured in snap.input
+!>
+!> should be timesteps (model) * release-heights
+  integer, save, public :: mplume = mplumepre
+
+!> pointers to first and last particle in each plume
+!>
+!>            (0,-1 means no particles left in the grid domain)
+  integer, allocatable, save, public :: iplume(:,:)
+
+!> no. of released plumes
+  integer, save, public :: nplume
+
+!> total no. of particles (in all released plumes)
+  integer, save, public :: npart
+
+!> preset for ::mpart
+  integer, parameter :: mpartpre = 10000000
+!> max. no. of particles, total in all plumes, preset, can be configured in snap.input
+  integer, save, public :: mpart = mpartpre
+
 
   contains
 

@@ -36,6 +36,7 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
   USE ftestML, only: ftest
   USE snapdebug, only: iulog
   USE milibML, only: xyconvert, mapfield, rlunit, vtime
+  USE releaseML, only: npart, mpart
 
 !  Purpose: Interpolate particle positions to ENSEMBLE grid,
 !           and store data in this grid (and model levels),

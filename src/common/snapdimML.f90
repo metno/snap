@@ -28,7 +28,7 @@ module snapdimML
 !..nxpre,nypre: nx and ny if not in input-file
 !..nk:     number of levels
 !
-      integer, parameter, public :: nxpre=864, nypre=698, nkpre=61
+      integer, parameter :: nxpre=864, nypre=698, nkpre=61
       integer, save, public :: nx = nxpre,ny=nypre,nk=nkpre
       integer, save, public :: maxsiz,ldata
 !cc   parameter (nx=121,ny=97,nk=14)
@@ -40,9 +40,6 @@ module snapdimML
 !cc h12sf and h12snap (12km)
 !c default parameters, if input.gridsize and input.levels not in snap.input
 
-
-!cc emep latlon 1x1,
-!c      parameter (nxpre=360,nypre=180)
 
 !
 !..mprecip: max no. og hourly precipitation fields
@@ -72,15 +69,8 @@ module snapdimML
 !..enable SSV ARGOS output, set maximum grid sizes
 !cc   parameter (mxyargos=nx*ny)
 !.......................................................
-!
-!
-!..mplumepre:  max. no. of plume releases, preset, can be configured in snap.input
-!..mpartpre:   max. no. of particles, total in all plumes, preset, can be configured in snap.input
-!
-      integer, parameter, public :: mplumepre=50000,mpartpre=10000000
-! mplume should be timesteps (model) * release-heights
-!cc   parameter (mpartpre =300000)
-!
+
+
 !..mdefcomp: max. no. of components defined in input file (aerosol,gas,....)
 !..mcomp:    max no. of components used in one run
 !            (keep as small as "possible", it dimensions 2d/3d output fields)
@@ -104,14 +94,11 @@ module snapdimML
 !
 !..mbuffr:  max. length of buffer (for misc. reading from 'snap.input')
 !..mrelpos: max. no. of release positions available (in list)
-!..mtprof:  max. no. of timesteps in release profiles
-!..mrelheight: max. no. of height classes for releases
 !..mprepro: max. no. of steps in input precipitation probability table
 !..mpretab: max. no. of steps in precipitation probability table
 !
       integer, parameter, public :: mbuffr=60
       integer, parameter, public :: mrelpos=30
-      integer, parameter, public :: mtprof=500, mrelheight=20
       integer, parameter, public :: mprepro=40,mpretab=500
 !
 !..for gravity tables

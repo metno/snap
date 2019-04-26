@@ -39,6 +39,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   USE ftestML, only: ftest
   USE netcdf
   USE snapdimML, only: mcomp, ldata, nx, ny, nk, nxmc, nymc
+  USE releaseML, only: npart
 ! netcdf
 !  Purpose:  Accumulation for average fields (iwrite=0,1).
 !            Make and write output fields (iwrite=1).
