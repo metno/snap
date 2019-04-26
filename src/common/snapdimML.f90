@@ -55,12 +55,6 @@ module snapdimML
 !      parameter (ldata=20+maxsiz+50)
 !
 !
-!..ENSEMBLE PROJECT.....................................
-      integer, parameter, public :: nxep=151, nyep=91
-!..disable ENSEMBLE PROJECT computation and output
-!cc   parameter (nxep=1,nyep=1)
-!..enable ENSEMBLE PROJECT computation and output
-!.......................................................
 !
 !
 !..SSV ARGOS............................................

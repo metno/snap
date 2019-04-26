@@ -228,6 +228,7 @@ PROGRAM bsnap
   USE checkdomainML, only: checkdomain
   USE rwalkML, only: rwalk
   USE vgravtablesML, only: radiusmym, densitygcm3
+  USE ensembleML, only: nxep, nyep
   USE milibML, only: xyconvert, keywrd, chcase, getvar, hrdiff, prhelp, vtime
 #if defined(TRAJ)
   USE forwrdML, only: forwrd, speed

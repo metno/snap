@@ -19,19 +19,21 @@ module ensembleML
   implicit none
   private
 
+  integer, parameter, public :: nxep=151, nyep=91
+
   public ensemble
 
   contains
 
 subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
   np)
-  USE iso_fortran_env, only: error_unit
+  USE iso_fortran_env, only: error_unit, real32, real64
   USE particleML
   USE snapepsML
   USE snapfldML
   USE snapparML
   USE snapgrdML
-  USE snapdimML, only: nx,ny,nk,mcomp,nxep,nyep
+  USE snapdimML, only: nx,ny,nk,mcomp
   USE epinterpML, only: epinterp
   USE ftestML, only: ftest
   USE snapdebug, only: iulog
@@ -75,22 +77,22 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
   real, save :: gparep(6) = [-15.,30.,0.5,0.5,0.,0.]
 
 ! nxep,nyep,mcomp arrays, (nxep,nyep,nk,mcomp in case of concep)
-  real(kind=8), allocatable, save :: drydepep(:,:,:), &
+  real(real64), allocatable, save :: drydepep(:,:,:), &
   wetdepep(:,:,:), concsurfep(:,:,:), conc(:,:,:), concep(:,:,:,:)
 
 ! nxep,nyep,mk arrays
-  real(kind=4), allocatable, save :: hlayer1ep(:,:,:), &
+  real(real32), allocatable, save :: hlayer1ep(:,:,:), &
   hlayer2ep(:,:,:), hlevel1ep(:,:,:),hlevel2ep(:,:,:)
 ! nxep, nyep arrays
-  real(kind=4), allocatable, save :: precipep(:,:), gareaep(:,:), &
+  real(real32), allocatable, save :: precipep(:,:), gareaep(:,:), &
   xmodel(:,:), ymodel(:,:), prectmp(:,:)
 
 ! mpart arrays
-  real(kind=4), allocatable, save :: pbq1(:),pbq2(:), &
+  real(real32), allocatable, save :: pbq1(:),pbq2(:), &
   xep(:),yep(:)
 
 ! nxep, nyep, nepout
-  real(kind=4), allocatable, save :: epfield(:,:,:)
+  real(real32), allocatable, save :: epfield(:,:,:)
 
 ! nxep, nyep
   integer, allocatable, save :: inside(:,:)
