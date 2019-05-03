@@ -1267,7 +1267,7 @@ subroutine nc_set_vtrans(iunit, kdimid,k_varid,ap_varid,b_varid)
 !       call check(nf_put_var_real(iunit, ap_varid, blevel))
 
   call check(nf90_def_var(iunit, "p0", &
-  NF90_FLOAT, 0, p0_varid))
+  NF90_FLOAT, varid=p0_varid))
   call check(nf90_put_att(iunit,p0_varid, "units", &
   TRIM("hPa")))
   call check(nf90_put_var(iunit, p0_varid, 100))
