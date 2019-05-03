@@ -593,13 +593,13 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
 ! test---------------------------------------------------------------
 
   if(idebug == 1) then
-    call ftest('u  ',nk,1,nx,ny,nk,   u2,0)
-    call ftest('v  ',nk,1,nx,ny,nk,   v2,0)
-    call ftest('w  ',nk,1,nx,ny,nk,   w2,0)
-    call ftest('t  ',nk,1,nx,ny,nk,   t2,0)
-    call ftest('ps ',1, 1,nx,ny, 1,  ps2,0)
+    call ftest('u  ', u2(:,:,nk:1))
+    call ftest('v  ', v2(:,:,nk:1))
+    call ftest('w  ', w2(:,:,nk:1))
+    call ftest('t  ', t2(:,:,nk:1))
+    call ftest('ps ', ps2)
     if (istep > 0) &
-    call ftest('pre',1,nprecip,nx,ny,nprecip,precip,0)
+    call ftest('pre', precip)
   end if
 
 ! close file

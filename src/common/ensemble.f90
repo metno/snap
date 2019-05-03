@@ -268,9 +268,9 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
     nxep*nyep,ninside,nxep*nyep-ninside
     write(iulog,*) 'nxep*nyep,ninside,noutside: ', &
     nxep*nyep,ninside,nxep*nyep-ninside
-    call ftest('xmodel',1,1,nxep,nyep,1,xmodel,0)
-    call ftest('ymodel',1,1,nxep,nyep,1,ymodel,0)
-    call ftest('gareap',1,1,nxep,nyep,1,gareaep,0)
+    call ftest('xmodel', xmodel)
+    call ftest('ymodel', ymodel)
+    call ftest('gareap', gareaep)
   !##################################################################
   
   !..output position sequence
