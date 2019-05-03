@@ -21,10 +21,181 @@ module ftestML
 
   public ftest
 
-  contains
+  real, parameter :: undef = 1.0e35
+  real, parameter :: ud = undef*0.9
 
 !> Purpose: Test field, print min,mean,max values.
-subroutine ftest(name,k1,k2,nx,ny,nk,field,iundef)
+  interface ftest
+    module procedure ftest_2d_orig, ftest_3d_orig, ftest_2d, ftest_3d
+  end interface
+
+  contains
+
+subroutine slice_stats(field, fmin, fmax, fsum, fmean, contains_undef)
+  use iso_fortran_env, only: real64
+
+  real, intent(in) :: field(:, :)
+  real, intent(out) :: fmin, fmax, fmean
+  real(real64), intent(out) :: fsum
+  logical, intent(in) :: contains_undef
+
+  integer :: nx, ny, i, j, ndef
+
+  nx = size(field, 1)
+  ny = size(field, 2)
+
+  fmin = huge(fmin)
+  fmax = -huge(fmax)
+  fsum = 0.0
+  if(.not.contains_undef) then
+    fmin = minval(field)
+    fmax = maxval(field)
+    fsum = sum(field)
+    ndef = size(field)
+  else
+    ndef=0
+    do j=1,ny
+      do i=1,nx
+        if(field(i,j) < ud) then
+          fmin = min(fmin,field(i,j))
+          fmax = max(fmax,field(i,j))
+          fsum = fsum+field(i,j)
+          ndef = ndef+1
+        end if
+      end do
+    end do
+  end if
+
+  if(ndef > 0) then
+    fmean=fsum/dble(ndef)
+  else
+    fmin=0.
+    fmax=0.
+    fmean=0.
+  end if
+end subroutine slice_stats
+
+subroutine ftest_2d(name, field, contains_undef)
+  use iso_fortran_env, only: real64
+  USE snapdebug, only: iulog
+
+  character(len=*), intent(in) :: name
+  real, intent(in) :: field(:,:)
+  logical, optional, intent(in) :: contains_undef
+
+  real :: fmin, fmax, fmean
+  real(real64) :: fsum
+  logical :: check_for_undef
+
+  check_for_undef = .false.
+  if (present(contains_undef)) then
+    check_for_undef = contains_undef
+  endif
+
+  call slice_stats(field, fmin, fmax, fsum, fmean, check_for_undef)
+
+  write(iulog,fmt='(5x,a8,1x,3x,3(1x,e13.5))') &
+      name,  fmin,fmean,fmax
+
+  flush(iulog)
+end subroutine ftest_2d
+
+subroutine ftest_3d(name, field, contains_undef)
+  use iso_fortran_env, only: real64
+  USE snapdebug, only: iulog
+
+  character(len=*), intent(in) :: name
+  real, intent(in) :: field(:,:,:)
+  logical, optional, intent(in) :: contains_undef
+
+  integer :: nx, ny, nk
+
+  integer :: k
+  real :: fmin,fmax,fmean
+  real(real64) :: fsum
+  logical :: has_undef
+
+  has_undef = .false.
+  if (present(contains_undef)) then
+    has_undef = contains_undef
+  endif
+
+  nx = size(field, 1)
+  ny = size(field, 2)
+  nk = size(field, 3)
+
+  do k=1,nk
+    call slice_stats(field(:,:,k), fmin, fmax, fsum, fmean, has_undef)
+    if(nk /= 1) then
+      write(iulog,fmt='(5x,a8,1x,i3,3(1x,e13.5))') &
+      name,k,fmin,fmean,fmax
+    else
+      write(iulog,fmt='(5x,a8,1x,3x,3(1x,e13.5))') &
+      name,  fmin,fmean,fmax
+    end if
+  end do
+  flush(iulog)
+
+  return
+end subroutine ftest_3d
+
+subroutine ftest_2d_orig(name,k1,k2,nx,ny,nk,field,iundef)
+  use iso_fortran_env, only: real64
+  USE snapdebug, only: iulog
+
+  integer, value :: k1, k2
+  integer, intent(in) :: nx, ny, nk, iundef
+  real, intent(in) :: field(nx,ny)
+  character(len=*), intent(in) :: name
+
+  integer :: kstep,i,j,k,ndef
+real :: fmin,fmax,fmean
+  real, parameter :: undef = 1.0e35
+  real, parameter :: ud = undef*0.9
+
+  real(real64) :: fsum
+
+  fmin = huge(fmin)
+  fmax = -huge(fmax)
+  fsum=0.
+  if(iundef == 0) then
+    fmin = minval(field)
+    fmax = maxval(field)
+    fsum = sum(field)
+    ndef=nx*ny
+  else
+    ndef=0
+    do j=1,ny
+      do i=1,nx
+        if(field(i,j) < ud) then
+          fmin=min(fmin,field(i,j))
+          fmax=max(fmax,field(i,j))
+          fsum=fsum+field(i,j)
+          ndef=ndef+1
+        end if
+      end do
+    end do
+  end if
+
+  if(ndef > 0) then
+    fmean=fsum/dble(ndef)
+  else
+    fmin=0.
+    fmax=0.
+    fmean=0.
+  end if
+  if(k1 /= k2) then
+    write(iulog,fmt='(5x,a8,1x,i3,3(1x,e13.5))') &
+      name,k,fmin,fmean,fmax
+  else
+    write(iulog,fmt='(5x,a8,1x,3x,3(1x,e13.5))') &
+      name,  fmin,fmean,fmax
+  end if
+
+  flush(iulog)
+end subroutine ftest_2d_orig
+
+subroutine ftest_3d_orig(name,k1,k2,nx,ny,nk,field,iundef)
   use iso_fortran_env, only: real64
   USE snapdebug, only: iulog
 
@@ -91,5 +262,5 @@ subroutine ftest(name,k1,k2,nx,ny,nk,field,iundef)
   flush(iulog)
 
   return
-end subroutine ftest
+end subroutine ftest_3d_orig
 end module ftestML

@@ -146,7 +146,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   integer ::   iwrite,iunit,istep,nsteph,ierror
   integer ::   itime(5)
   real ::      tf1,tf2,tnow,tstep
-  character*(*) filnam
+  character(len=*) :: filnam
 
   integer, save :: naverage = 0
   logical, save :: acc_initialized = .false.
@@ -158,7 +158,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   integer, save  :: iftime(5), ihrs, ihrs_pos
 
 
-  integer ::          nptot1,nptot2
+  integer :: nptot1,nptot2
   real(real64) :: bqtot1,bqtot2
   real(real64) :: dblscale
 
@@ -168,9 +168,9 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   logical :: is_wet_deposition
   integer :: ko,lvla,lvlb
   integer, save :: numfields = 0
-  real ::    rt1,rt2,scale,average,averinv,hbl
+  real :: rt1,rt2,scale,average,averinv,hbl
 !> fixed base scaling for concentrations (unit 10**-12 g/m3 = 1 picog/m3)
-  real, parameter :: cscale= 1.0
+  real, parameter :: cscale = 1.0
 !> fixed base scaling for depositions (unit 10**-9 g/m2 = 1 nanog/m3)
   real, parameter :: dscale = 1.0
 
@@ -214,9 +214,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     if(imodlevel > 0) numfields=numfields+n*nk*2+nk+1
     numfields= numfields*istep + 4
     if(numfields > 32767) numfields=32767
-    do i=1,5
-      itimeargos(i)=itime(i)
-    end do
+    itimeargos = itime
+
     return
   end if
 
@@ -533,7 +532,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         field1(i,j)=rt1*ps1(i,j)+rt2*ps2(i,j)
       end do
     end do
-    if(idebug == 1) call ftest('ps',1,1,nx,ny,1,field1,0)
+    if(idebug == 1) call ftest('ps', field1)
     call check(nf90_put_var(iunit, ps_varid,start=[ipos],count=[isize],values=field1), &
     "set_ps")
   end if
@@ -547,7 +546,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       end do
     end do
     idextr=nint(float(istep)/float(nsteph))
-    if(idebug == 1) call ftest('accprec',1,1,nx,ny,1,field1,0)
+    if(idebug == 1) call ftest('accprec', field1)
 
     call check(nf90_put_var(iunit, accum_prc_varid, start=[ipos], count=[isize], &
     values=field1), "set_accum_prc")
@@ -560,7 +559,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         field1(i,j)=rt1*pmsl1(i,j)+rt2*pmsl2(i,j)
       end do
     end do
-    if(idebug == 1) call ftest('mslp',1,1,nx,ny,1,field1,0)
+    if(idebug == 1) call ftest('mslp', field1)
 
     call check(nf90_put_var(iunit, mslp_varid, start=[ipos], count=[isize], &
     values=field1), "set_mslp")
@@ -572,7 +571,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       field4(i,j)=rt1*hbl1(i,j)+rt2*hbl2(i,j)
     end do
   end do
-  if(idebug == 1) call ftest('hbl',1,1,nx,ny,1,field4,0)
+  if(idebug == 1) call ftest('hbl', field4)
 
   call check(nf90_put_var(iunit, ihbl_varid, start=[ipos], count=[isize], &
   values=field4), "set_ihbl")
@@ -583,7 +582,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       field1(i,j)=avghbl(i,j)*averinv
     end do
   end do
-  if(idebug == 1) call ftest('avghbl',1,1,nx,ny,1,field1,0)
+  if(idebug == 1) call ftest('avghbl', field1)
 
   call check(nf90_put_var(iunit, ahbl_varid, start=[ipos], count=[isize], &
   values=field1), "set_ahbl")
@@ -596,7 +595,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       end do
     end do
     idextr=nint(average*tstep/3600.)
-    if(idebug == 1) call ftest('prec',1,1,nx,ny,1,field1,0)
+    if(idebug == 1) call ftest('prec', field1)
 
     call check(nf90_put_var(iunit, prc_varid, start=[ipos], count=[isize], &
     values=field1), "set_prc")
@@ -658,7 +657,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         field2(i,j)=cscale*field1(i,j)/(hbl*garea(i,j))
       end do
     end do
-    if(idebug == 1) call ftest('conc',1,1,nx,ny,1,field2,0)
+    if(idebug == 1) call ftest('conc', field2)
 
     call check(nf90_put_var(iunit, icbl_varid(m), start=[ipos], count=[isize], &
     values=field2), "set_icbl")
@@ -670,7 +669,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         /(garea(i,j)*avghbl(i,j))
       end do
     end do
-    if(idebug == 1) call ftest('avgconc',1,1,nx,ny,1,field1,0)
+    if(idebug == 1) call ftest('avgconc', field1)
 
     call check(nf90_put_var(iunit, acbl_varid(m), start=[ipos], count=[isize], &
     values=field1), "set_acbl")
@@ -683,7 +682,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
           accdry(i,j,m)=accdry(i,j,m)+depdry(i,j,m)
         end do
       end do
-      if(idebug == 1) call ftest('dry',1,1,nx,ny,1,field1,0)
+      if(idebug == 1) call ftest('dry', field1)
 
       call check(nf90_put_var(iunit, idd_varid(m), start=[ipos], count=[isize], &
       values=field1), "set_idd(m)")
@@ -697,7 +696,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
           accwet(i,j,m)=accwet(i,j,m)+depwet(i,j,m)
         end do
       end do
-      if(idebug == 1) call ftest('wet',1,1,nx,ny,1,field1,0)
+      if(idebug == 1) call ftest('wet', field1)
 
       call check(nf90_put_var(iunit, iwd_varid(m), start=[ipos], count=[isize], &
       values=field1), "set_iwd(m)")
@@ -710,7 +709,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
           field1(i,j)=dscale*sngl(accdry(i,j,m))/garea(i,j)
         end do
       end do
-      if(idebug == 1) call ftest('adry',1,1,nx,ny,1,field1,0)
+      if(idebug == 1) call ftest('adry', field1)
 
       call check(nf90_put_var(iunit, accdd_varid(m),start=[ipos],count=[isize], &
       values=field1), "set_accdd(m)")
@@ -723,14 +722,14 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
           field1(i,j)=dscale*sngl(accwet(i,j,m))/garea(i,j)
         end do
       end do
-      if(idebug == 1) call ftest('awet',1,1,nx,ny,1,field1,0)
+      if(idebug == 1) call ftest('awet', field1)
 
       call check(nf90_put_var(iunit, accwd_varid(m),start=[ipos],count=[isize], &
       values=field1), "set_accwd(m)")
     end if
 
   !..instant part of Bq in boundary layer
-    if(idebug == 1) call ftest('pbq',1,1,nx,ny,1,field3,1)
+    if(idebug == 1) call ftest('pbq', field3, contains_undef=.true.)
 
   !..average part of Bq in boundary layer
     scale=100.
@@ -744,7 +743,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         end if
       end do
     end do
-    if(idebug == 1) call ftest('apbq',1,1,nx,ny,1,field3,1)
+    if(idebug == 1) call ftest('apbq', field3, contains_undef=.true.)
 
   !..instant concentration on surface (not in felt-format)
     do j=1,ny
@@ -752,7 +751,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         field3(i,j)= sngl(concen(i,j,m))
       end do
     end do
-    if(idebug == 1) call ftest('concen',1,1,nx,ny,1,field3,1)
+    if(idebug == 1) call ftest('concen', field3, contains_undef=.true.)
     call check(nf90_put_var(iunit, ic_varid(m),start=[ipos],count=[isize], &
     values=field3), "set_ic(m)")
 
@@ -762,7 +761,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         field3(i,j)= sngl(concacc(i,j,m))
       end do
     end do
-    if(idebug == 1) call ftest('concac',1,1,nx,ny,1,field3,1)
+    if(idebug == 1) call ftest('concac', field3, contains_undef=.true.)
 
     call check(nf90_put_var(iunit, ac_varid(m),start=[ipos],count=[isize], &
     values=field3), "set_ac(m)")
@@ -808,7 +807,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         field2(i,j)=cscale*field1(i,j)/(hbl*garea(i,j))
       end do
     end do
-    if(idebug == 1) call ftest('tconc',1,1,nx,ny,1,field2,0)
+    if(idebug == 1) call ftest('tconc', field2)
     call check(nf90_put_var(iunit, icblt_varid,start=[ipos],count=[isize], &
     values=field2), "set_icblt(m)")
 
@@ -827,7 +826,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         /(garea(i,j)*avghbl(i,j))
       end do
     end do
-    if(idebug == 1) call ftest('tavgconc',1,1,nx,ny,1,field1,0)
+    if(idebug == 1) call ftest('tavgconc', field1)
     call check(nf90_put_var(iunit, acblt_varid,start=[ipos],count=[isize], &
     values=field1), "set_acblt")
 
@@ -849,7 +848,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
           field1(i,j)=dscale*field1(i,j)/garea(i,j)
         end do
       end do
-      if(idebug == 1) call ftest('tdry',1,1,nx,ny,1,field1,0)
+      if(idebug == 1) call ftest('tdry', field1)
       call check(nf90_put_var(iunit, iddt_varid,start=[ipos],count=[isize], &
       values=field1), "set_iddt")
 
@@ -873,7 +872,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
           field1(i,j)=dscale*field1(i,j)/garea(i,j)
         end do
       end do
-      if(idebug == 1) call ftest('twet',1,1,nx,ny,1,field1,0)
+      if(idebug == 1) call ftest('twet', field1)
       call check(nf90_put_var(iunit, iwdt_varid,start=[ipos],count=[isize], &
       values=field1), "set_iwdt")
     end if
@@ -896,7 +895,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
           field1(i,j)=dscale*field1(i,j)/garea(i,j)
         end do
       end do
-      if(idebug == 1) call ftest('tadry',1,1,nx,ny,1,field1,0)
+      if(idebug == 1) call ftest('tadry', field1)
       call check(nf90_put_var(iunit, accddt_varid,start=[ipos],count=[isize], &
       values=field1), "set_accddt")
     end if
@@ -919,13 +918,13 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
           field1(i,j)=dscale*field1(i,j)/garea(i,j)
         end do
       end do
-      if(idebug == 1) call ftest('tawet',1,1,nx,ny,1,field1,0)
+      if(idebug == 1) call ftest('tawet', field1)
       call check(nf90_put_var(iunit, accwdt_varid,start=[ipos],count=[isize], &
       values=field1), "set_accwdt")
     end if
 
   !..total instant part of Bq in boundary layer
-    if(idebug == 1) call ftest('tpbq',1,1,nx,ny,1,field3,1)
+    if(idebug == 1) call ftest('tpbq', field3, contains_undef=.true.)
 
 
   !..total average part of Bq in boundary layer
@@ -950,7 +949,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         end if
       end do
     end do
-    if(idebug == 1) call ftest('tapbq',1,1,nx,ny,1,field3,1)
+    if(idebug == 1) call ftest('tapbq', field3, contains_undef=.true.)
 
   !..total accumulated/integrated concentration
     field3 = 0.0
@@ -961,7 +960,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         end do
       end do
     end do
-    if(idebug == 1) call ftest('concac',1,1,nx,ny,1,field3,1)
+    if(idebug == 1) call ftest('concac', field3, contains_undef=.true.)
 
     call check(nf90_put_var(iunit, act_varid,start=[ipos],count=[isize], &
     values=field3), "set_act")
@@ -992,7 +991,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
             field1(i,j)=sngl(dblscale*depdry(i,j,m))
           end do
         end do
-        if(idebug == 1) call ftest('dry%',1,1,nx,ny,1,field1,0)
+        if(idebug == 1) call ftest('dry%', field1)
       end if
 
     !..wet deposition
@@ -1002,7 +1001,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
             field1(i,j)=sngl(dblscale*depwet(i,j,m))
           end do
         end do
-        if(idebug == 1) call ftest('wet%',1,1,nx,ny,1,field1,0)
+        if(idebug == 1) call ftest('wet%', field1)
       end if
 
     !..accumulated dry deposition
@@ -1012,7 +1011,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
             field1(i,j)=sngl(dblscale*accdry(i,j,m))
           end do
         end do
-        if(idebug == 1) call ftest('adry%',1,1,nx,ny,1,field1,0)
+        if(idebug == 1) call ftest('adry%', field1)
       end if
 
     !..accumulated wet deposition
@@ -1022,7 +1021,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
             field1(i,j)=sngl(dblscale*accwet(i,j,m))
           end do
         end do
-        if(idebug == 1) call ftest('awet%',1,1,nx,ny,1,field1,0)
+        if(idebug == 1) call ftest('awet%', field1)
       end if
 
     !.......end do m=1,ncomp
@@ -1117,7 +1116,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
             field1(i,j)=cscale*sngl(avgbq(i,j,k,m))
           end do
         end do
-        if(idebug == 1) call ftest('avconcl',1,1,nx,ny,1,field1,0)
+        if(idebug == 1) call ftest('avconcl', field1)
         ko=klevel(k+1)
         lvla=nint(alevel(k+1)*10.)
         lvlb=nint(blevel(k+1)*10000.)
@@ -1150,7 +1149,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
             field1(i,j)=cscale*avgbq(i,j,k,1)
           end do
         end do
-        if(idebug == 1) call ftest('tavconcl',1,1,nx,ny,1,field1,0)
+        if(idebug == 1) call ftest('tavconcl', field1)
         ko=klevel(k+1)
         lvla=nint(alevel(k+1)*10.)
         lvlb=nint(blevel(k+1)*10000.)

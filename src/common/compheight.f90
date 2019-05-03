@@ -126,8 +126,8 @@ subroutine compheight
   end do
 
 !##################################################################
-  call ftest('hlayer',nk,1,nx,ny,nk,hlayer2,1)
-  call ftest('hlevel',nk,1,nx,ny,nk,hlevel2,1)
+  call ftest('hlayer', hlayer2(:,:,nk:1), contains_undef=.true.)
+  call ftest('hlevel', hlevel2(:,:,nk:1), contains_undef=.true.)
 !##################################################################
 
 !##################################################################

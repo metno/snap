@@ -292,8 +292,8 @@ subroutine bldp
 
 ! test----------------------------------------------
   write(iulog,*) '*BLDP*'
-  call ftest('bl ',1,1,nx,ny,1, bl2,0)
-  call ftest('hbl',1,1,nx,ny,1,hbl2,0)
+  call ftest('bl ', bl2)
+  call ftest('hbl', hbl2)
 ! test----------------------------------------------
 
 ! test----------------------------------------------
