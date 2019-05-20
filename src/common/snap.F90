@@ -310,7 +310,7 @@ PROGRAM bsnap
 
   character(len=1024) ::  finput,fldfil,fldfilX,fldfilN,logfile,ftype, &
   fldtype, relfile
-  character(len=1024) :: cinput,ciname,cipart
+  character(len=1024*8) :: cinput,ciname,cipart
   character(len=8) ::   cpos1,cpos2
   character(len=1) ::   tchar
   character(len=1024) :: tempstr
@@ -768,13 +768,18 @@ PROGRAM bsnap
             relbqsec(i,ncomp,1)= relbqsec(i,ncomp,1)*rscale
           end do
         elseif(ntprof > 1) then
-          if (relbqsec(ntprof,ncomp,1) /= 0) then
-            write(error_unit,*) "Too many release occurences, the releases will be truncated"
-          endif
-          do i=1,ntprof-1
-            rscale=1./(3600.*(frelhour(i+1)-frelhour(i)))
-            relbqsec(i,ncomp,1)= relbqsec(i,ncomp,1)*rscale
-          end do
+          if(cinput(k1:k2) == 'release.bq/step.comp') then
+            if (relbqsec(ntprof,ncomp,1) /= 0) then
+              write(error_unit,*) "Last element at line ", nlines, " is not zero"
+              write(error_unit,*) "this release will not be included when computing"
+              write(error_unit,*) "Consider appending a zero for correct handling of"
+              write(error_unit,*) "releases close to the end of the run"
+            endif
+            do i=1,ntprof-1
+              rscale=1./(3600.*(frelhour(i+1)-frelhour(i)))
+              relbqsec(i,ncomp,1)= relbqsec(i,ncomp,1)*rscale
+            end do
+          end if
         end if
 
       !..releases with different height classes
