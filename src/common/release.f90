@@ -28,7 +28,7 @@ module releaseML
   public release
 
 !> max. no. of timesteps in release profiles
-  integer, parameter, public :: mtprof = 500
+  integer, parameter, public :: mtprof = 600
 !> mrelheight: max. no. of height classes for releases
   integer, parameter, public :: mrelheight = 20
 
@@ -50,7 +50,7 @@ module releaseML
 !> no. of height classes in the run
   integer, save, public :: nrelheight
 !> no. of timesteps in the release profiles
-  integer, save, public :: ntprof
+  integer, save, public :: ntprof = 0
 
 !> max no. of particles released in each plume
 !>
