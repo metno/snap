@@ -174,11 +174,12 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
 !     set timepos and nhdiff
   nhdiff = 3
   if (ntav1 /= 0) &
-  nhdiff = abs(iavail(ntav2)%oHour - iavail(ntav1)%oHour)
+    nhdiff = abs(iavail(ntav2)%oHour - iavail(ntav1)%oHour)
   nprecip = nhdiff
 
   timepos = iavail(ntav2)%timePos
-  if (iavail(ntav2)%fileNo .eq. iavail(ntav1)%fileNo) then
+  if (ntav1 /= 0 .and. &
+      (iavail(ntav2)%fileNo .eq. iavail(ntav1)%fileNo)) then
     ! previous timestep in same file for deaccumulation
     timeposm1 = iavail(ntav1)%timePos
   else
@@ -194,7 +195,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   if(idebug == 1) then
     write(iulog,*) 'READING DATA FROM file=',trim(file_name)
     write(iulog,*) 'READING DATA FROM position=',timepos, ' for ', &
-    itimefi
+      itimefi, ', prev. position=',timeposm1,', hours:',nhdiff
   end if
 
 
@@ -353,7 +354,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
       do j=1,ny
         do i=1,nx
           precip1=max(field2(i,j)-field1(i,j),0.)/nhdiff
-          precip(i,j,:) = precip1
+          precip(i,j,1:nprecip) = precip1
         end do
       end do
     end if
@@ -606,7 +607,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
     call ftest('t  ', t2(:,:,nk:1))
     call ftest('ps ', ps2)
     if (istep > 0) &
-    call ftest('pre', precip)
+      call ftest('pre', precip(:,:,1:nprecip))
   end if
 
 ! close file
