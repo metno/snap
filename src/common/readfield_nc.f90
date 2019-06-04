@@ -81,7 +81,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   real,save     ::    t2thetafac(15000)
   real ::    unitScale
 
-  integer :: timepos
+  integer :: timepos, timeposm1
   integer :: start3d(7), start4d(7), count3d(7), count4d(7)
 
   if (istep < 0) then
@@ -178,6 +178,13 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   nprecip = nhdiff
 
   timepos = iavail(ntav2)%timePos
+  if (iavail(ntav2)%fileNo .eq. iavail(ntav1)%fileNo) then
+    ! previous timestep in same file for deaccumulation
+    timeposm1 = iavail(ntav1)%timePos
+  else
+    ! no deaccumulation possible
+    timeposm1 = timepos
+  end if
   itimefi(1) = iavail(ntav2)%aYear
   itimefi(2) = iavail(ntav2)%aMonth
   itimefi(3) = iavail(ntav2)%aDay
@@ -333,7 +340,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   !..precipitation between input time 't1' and 't2'
     if (timepos /= 1) then
       call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
-      enspos, timepos - 1, has_dummy_dim)
+      enspos, timeposm1, has_dummy_dim)
       call nfcheckload(ncid, precaccumv, &
       start3d, count3d, field1(:,:))
     !         call readfd(iunit,nav,ivc,17,ilevel,ihrpr1,field1,ierror)
@@ -355,7 +362,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   !..precipitation between input time 't1' and 't2'
     if (timepos /= 1) then
       call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
-      enspos, timepos - 1, has_dummy_dim)
+      enspos, timeposm1, has_dummy_dim)
       call nfcheckload(ncid, precstratiaccumv, &
       start3d, count3d, field1(:,:))
       call nfcheckload(ncid, precconaccumv, &
