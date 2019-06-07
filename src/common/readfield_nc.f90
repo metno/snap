@@ -178,14 +178,13 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   nprecip = nhdiff
 
   timepos = iavail(ntav2)%timePos
-  if (ntav1 /= 0 .and. &
-      (iavail(ntav2)%fileNo .eq. iavail(ntav1)%fileNo)) then
-    ! previous timestep in same file for deaccumulation
-    timeposm1 = iavail(ntav1)%timePos
-  else
-    ! no deaccumulation possible
-    timeposm1 = timepos
-  end if
+  timeposm1 = timepos ! Default: No deaccumulation possible
+  if (ntav1 /= 0) then
+    if (iavail(ntav2)%fileNo .eq. iavail(ntav1)%fileNo) then
+      ! previous timestep in same file for deaccumulation
+      timeposm1 = iavail(ntav1)%timePos
+    endif
+  endif
   itimefi(1) = iavail(ntav2)%aYear
   itimefi(2) = iavail(ntav2)%aMonth
   itimefi(3) = iavail(ntav2)%aDay
