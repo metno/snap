@@ -1360,10 +1360,9 @@ PROGRAM bsnap
     write(error_unit,*) 'No (release) components defined'
     ierror=1
   end if
-  if (ncomp /= ndefcomp) then
-    ! Could handle unknown components by setting ndefcomp = ncomp
-    write(error_unit,*) "Number of components defined/given do not match"
-    write(error_unit,*) "Maybe missing a RELEASE.BQ/*.COMP or COMPONENT?"
+  if (ncomp > ndefcomp) then
+    write(error_unit,*) "Number of RELEASE.BQ components is higher than the"
+    write(error_unit,*) "number of defined components"
     ierror = 1
   end if
   if (maxval(idefcomp) > ncomp) then

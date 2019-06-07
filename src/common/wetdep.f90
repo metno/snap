@@ -131,7 +131,7 @@ subroutine wetdep2(tstep,np,pextra)
 ! initalization
   if(np == 0) then
   
-    do m=1,np
+    do m=1,ncomp
       rm=radiusmym(m)
       depconst(m)=b0 + b1*rm + b2*rm*rm + b3*rm*rm*rm
     !################################################################
