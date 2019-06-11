@@ -207,7 +207,7 @@
 
 
 PROGRAM bsnap
-  USE iso_fortran_env, only: real64, error_unit
+  USE iso_fortran_env, only: real64, output_unit, error_unit
   USE DateCalc  ,ONLY : epochToDate, timeGM
   USE snapdebug, only: iulog, idebug
   USE snapargosML
@@ -361,6 +361,14 @@ PROGRAM bsnap
     stop 1
   endif
   call get_command_argument(1, finput)
+  if (finput == "--version") then
+#if defined(VERSION)
+    write(output_unit,*) "snap version: ", VERSION
+#else
+    write(output_unit,*) "snap version: UNVERSIONED"
+#endif
+    stop
+  endif
 
   iuinp=8
   open(iuinp,file=finput, &
