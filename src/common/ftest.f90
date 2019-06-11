@@ -100,17 +100,18 @@ subroutine ftest_2d(name, field, contains_undef)
   flush(iulog)
 end subroutine ftest_2d
 
-subroutine ftest_3d(name, field, contains_undef)
+subroutine ftest_3d(name, field, contains_undef, reverse_third_dim)
   use iso_fortran_env, only: real64
   USE snapdebug, only: iulog
 
   character(len=*), intent(in) :: name
   real, intent(in) :: field(:,:,:)
   logical, optional, intent(in) :: contains_undef
+  logical, optional, intent(in) :: reverse_third_dim
 
   integer :: nx, ny, nk
 
-  integer :: k
+  integer :: k, kbot, ktop, kstep
   real :: fmin,fmax,fmean
   real(real64) :: fsum
   logical :: has_undef
@@ -124,7 +125,18 @@ subroutine ftest_3d(name, field, contains_undef)
   ny = size(field, 2)
   nk = size(field, 3)
 
-  do k=1,nk
+  kbot = 1
+  kstep = 1
+  ktop = nk
+  if (present(reverse_third_dim)) then
+    if (reverse_third_dim) then
+      kbot = nk
+      kstep = -1
+      ktop = 1
+    endif
+  endif
+
+  do k=kbot,ktop,kstep
     call slice_stats(field(:,:,k), fmin, fmax, fsum, fmean, has_undef)
     if(nk /= 1) then
       write(iulog,fmt='(5x,a8,1x,i3,3(1x,e13.5))') &
