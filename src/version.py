@@ -1,6 +1,19 @@
 #! /usr/bin/env python3
-from subprocess import check_output, DEVNULL
+from subprocess import call, check_output, DEVNULL
 import sys
+
+TIMEOUT = 30  # [seconds]
+
+
+def no_git_available():
+    """
+    Checks whether git is available
+    """
+    try:
+        call(["git", "--version"], stdout=DEVNULL)
+    except FileNotFoundError:
+        return True
+    return False
 
 
 def git_dirty():
@@ -40,7 +53,15 @@ def git_tag_remote_consistent(tag, commithash):
     pushed to remote.
     """
     # stderr contains the "From ..." line, which we ignore
-    output = check_output(["git", "ls-remote", "--tags"], stderr=DEVNULL)
+    try:
+        output = check_output(["git", "ls-remote", "--tags"],
+                              stderr=DEVNULL,
+                              timeout=TIMEOUT)
+    except TimeoutExpired:
+        print("Could not connect to remote in a suitable amount of time",
+              file=sys.stderr)
+        return None
+
     output = output.decode("utf-8").splitlines()
 
     for line in output:
@@ -51,6 +72,11 @@ def git_tag_remote_consistent(tag, commithash):
 
 
 if __name__ == "__main__":
+    if no_git_available():
+        print("git is not available", file=sys.stderr)
+        print("git.unavailable")
+        exit(1)
+
     if git_dirty():
         print("The current directory is (git) dirty", file=sys.stderr)
         print("git.DIRTY")
@@ -68,6 +94,9 @@ if __name__ == "__main__":
 
     commithash = git_hash(short_hash=False)
     remote_consistent = git_tag_remote_consistent(tags[0], commithash)
+    if remote_consistent is None:
+        print("git.UNKNOWNTAG+git.hash.{}".format(git_hash()))
+        exit(1)
     if not remote_consistent:
         # Local tag not consistent with remote tag
         print("Tag was not found on the remote server matching the local hash",
