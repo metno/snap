@@ -30,7 +30,7 @@ def git_tags():
     """
     Gets the latest git tag that points at current HEAD
     """
-    git_tags = check_output(["git", "tag", "--points-at"])
+    git_tags = check_output(["git", "tag", "--points-at", "HEAD"])
     tags = git_tags.decode("utf-8").splitlines()
     return tags
 
