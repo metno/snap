@@ -600,10 +600,10 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
 ! test---------------------------------------------------------------
 
   if(idebug == 1) then
-    call ftest('u  ', u2(:,:,nk:1:-1))
-    call ftest('v  ', v2(:,:,nk:1:-1))
-    call ftest('w  ', w2(:,:,nk:1:-1))
-    call ftest('t  ', t2(:,:,nk:1:-1))
+    call ftest('u  ', u2, reverse_third_dim=.true.)
+    call ftest('v  ', v2, reverse_third_dim=.true.)
+    call ftest('w  ', w2, reverse_third_dim=.true.)
+    call ftest('t  ', t2, reverse_third_dim=.true.)
     call ftest('ps ', ps2)
     if (istep > 0) &
       call ftest('pre', precip(:,:,1:nprecip))
