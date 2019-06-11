@@ -1,17 +1,18 @@
 SUBDIRS = naccident nbomb traj volcano
-# version from environment
-VERSION ?= "1.0"
+GIT_VERSION ?= git.$(shell git rev-parse --verify --short HEAD)
+# Version from environment, fall back on commit hash
+VERSION ?= $(GIT_VERSION)
+export VERSION
+
 
 all:
 	for i in $(SUBDIRS); do \
-		cd $$i && $(MAKE); \
-		cd ..; \
+		$(MAKE) -C $$i; \
 	done
 
 clean:
 	for i in $(SUBDIRS); do \
-		cd $$i && $(MAKE) clean; \
-		cd ..; \
+		$(MAKE) -C $$i clean; \
 	done
 
 dist: clean
@@ -22,18 +23,15 @@ dist: clean
 
 install:
 	for i in $(SUBDIRS); do \
-		cd $$i && $(MAKE) install; \
-		cd ..; \
+		$(MAKE) -C $$i install; \
 	done
 
 naccident_install:
 	for i in naccident; do \
-		cd $$i && $(MAKE) install; \
-		cd ..; \
+		$(MAKE) -C $$i install; \
 	done
 
 nbomb_install:
 	for i in nbomb; do \
-		cd $$i && $(MAKE) install; \
-		cd ..; \
+		$(MAKE) -C $$i install; \
 	done
