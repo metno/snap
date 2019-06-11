@@ -1,7 +1,6 @@
 SUBDIRS = naccident nbomb traj volcano
-GIT_VERSION ?= git.$(shell git rev-parse --verify --short HEAD)
-# Version from environment, fall back on commit hash
-VERSION ?= $(GIT_VERSION)
+# Version from environment, fall back on git versions
+VERSION ?= $(shell ./version.py)
 export VERSION
 
 
