@@ -1,4 +1,5 @@
 #! /usr/bin/env python3
+import argparse
 from subprocess import call, check_output, DEVNULL
 import sys
 
@@ -72,6 +73,21 @@ def git_tag_remote_consistent(tag, commithash):
 
 
 if __name__ == "__main__":
+    argparser = argparse.ArgumentParser(
+            description="Creates a VERSION string that can be embedded in a"
+                        + " program. The preffered VERSION consists of a"
+                        + " git tag, but in untagged releases/builds, VERSION"
+                        + " will instead consist of the commit hash. VERSION"
+                        + " is returned on STDOUT, errors will return a"
+                        + " non-zero return code.")
+    argparser.add_argument("--skip-remote-check",
+                           action="store_true",
+                           help="Do not check whether remote has the tag, or"
+                                + " that the tag matches the same commit as"
+                                + "the local repo")
+
+    args = argparser.parse_args()
+
     if no_git_available():
         print("git is not available", file=sys.stderr)
         print("git.unavailable")
@@ -86,23 +102,26 @@ if __name__ == "__main__":
     if len(tags) == 0:
         commithash = git_hash()
         print("git.hash.{}".format(commithash))
-        exit(1)
+        exit(0)
 
     if len(tags) == 2:
         print("More than one tag detected, using tag {}".format(tags[0]),
               file=sys.stderr)
 
     commithash = git_hash(short_hash=False)
-    remote_consistent = git_tag_remote_consistent(tags[0], commithash)
+    if not args.skip_remote_check:
+        remote_consistent = git_tag_remote_consistent(tags[0], commithash)
+    else:
+        remote_consistent = None
     if remote_consistent is None:
-        print("git.UNKNOWNTAG+git.hash.{}".format(git_hash()))
+        print("git.tag.UNKNOWN_CONSISTENT+git.hash.{}".format(git_hash()))
         exit(1)
     if not remote_consistent:
         # Local tag not consistent with remote tag
         print("Tag was not found on the remote server matching the local hash",
               file=sys.stderr)
 
-        print("git.BADTAG+git.hash.{}".format(git_hash()))
+        print("git.tag.BAD+git.hash.{}".format(git_hash()))
         exit(1)
 
     print(tags[0])
