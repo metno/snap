@@ -9,7 +9,7 @@ CC  = gcc
 #      -ftree-vectorizer-verbose=2
 #-ffpe-trap=invalid,zero,overflow
 #F77FLAGS=-O2 -g -ftree-vectorize -fno-math-errno -ffpe-trap=invalid,zero,overflow -g -mavx -fopt-info-optimized-vec #-fopenmp
-F77FLAGS=-O2 -g -msse2 -Wall -Wextra -fimplicit-none -fmodule-private
+F77FLAGS=-DVERSION=\"$(VERSION)\" -O2 -g -msse2 -Wall -Wextra -fimplicit-none -fmodule-private
 CXXFLAGS=-O2 -mavx -ftree-vectorize -fno-math-errno -Wall -Wextra
 CCFLAGS=-O2 -mavx -ftree-vectorize -fno-math-errno -Wall -Wextra
 

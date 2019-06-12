@@ -13,7 +13,7 @@ CC  = gcc
 #F77FLAGS=-O2 -g -mavx -ffpe-trap=invalid,zero,overflow -fbounds-check -Wall
 #-DPETTERSEN
 # -ffpe-trap=invalid,zero,overflow no longer usable, conflict/bug in gfortran with IEEE_VALUE(IEEE_QUIET_NAN)
-F77FLAGS=-O2 -ftree-vectorize -fno-math-errno -g -mavx -fopt-info-optimized-vec -fopenmp $(PROFILE) -Wall -Wextra -fimplicit-none -fmodule-private -std=gnu -Wuse-without-only
+F77FLAGS=-DVERSION=\"$(VERSION)\" -O2 -ftree-vectorize -fno-math-errno -g -mavx -fopt-info-optimized-vec -fopenmp $(PROFILE) -Wall -Wextra -fimplicit-none -fmodule-private -std=gnu -Wuse-without-only
 CXXFLAGS=-O3 $(PROFILE) -Wall -Wextra
 CCFLAGS=-O3 -g $(PROFILE) -Wall -Wextra
 
@@ -47,4 +47,3 @@ BLIBS += $(MILIB) -lnetcdff
 
 # clear out all suffixes
 .SUFFIXES:
-
