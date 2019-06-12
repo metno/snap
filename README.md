@@ -33,7 +33,8 @@ compilation
  * fortran77/90 compiler, e.g. gfortran or ifort
  * NetCDF (netcdf > 4.1.1)
  * NetCDF-fortran
-
+ * Python3 (optional)
+ * git (optional)
 
 
 ## Installation
@@ -58,6 +59,13 @@ bsnap_naccident snap.input
 ```
 
 Examples of `snap.input` can be found in the directory [src/naccident/examples/](src/naccident/examples).
+
+### Versioning
+
+The build system uses automatic versioning based on git tags and revision numbers and embeds this into the resulting program. If git or python3 is unavailable, this logic should be bypassed by setting the environment variable VERSION to some value, e.g.
+```sh
+env VERSION="some_version_number" make install
+```
 
 
 ## License
