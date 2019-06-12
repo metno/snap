@@ -5,7 +5,7 @@ F77 = gfortran
 CXX = g++
 CC  = gcc
 
-F77FLAGS=-O3 -Wall -Wextra -fimplicit-none -fmodule-private
+F77FLAGS=-DVERSION=\"$(VERSION)\" -O3 -Wall -Wextra -fimplicit-none -fmodule-private
 CXXFLAGS=-O3 -Wall -Wextra
 CCFLAGS=-O3 -Wall -Wextra
 
