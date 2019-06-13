@@ -47,7 +47,7 @@ module vgravtablesML
 !>  program for calculating the gravitational settling velocities
 !>  for small and large particles (outside the Stokes low)
 subroutine vgravtables
-  USE snapparML, only: ncomp, idefcomp
+  USE snapparML, only: ncomp, idefcomp, kgravity
 
   real :: t        ! absolute temperature (K)
   real :: dp        ! particle size um
@@ -60,9 +60,12 @@ subroutine vgravtables
 !---------------------------------------
 
 
-  do n=1,ncomp
+do_comp: do n=1,ncomp
 
     m= idefcomp(n)
+    if (kgravity(m) /= 2) then ! Not using gravity table
+      cycle do_comp
+    endif
   ! radius to diameter
     dp= 2. * radiusmym(m)
     rp= densitygcm3(m)
@@ -84,7 +87,7 @@ subroutine vgravtables
 
       end do
     end do
-  end do
+  end do do_comp
 end subroutine vgravtables
 
 !>  function for calculating viscosity of the air depending on
