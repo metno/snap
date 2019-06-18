@@ -25,26 +25,15 @@ module readfield_ncML
 
   public readfield_nc, check, nfcheckload, calc_2d_start_length
 
-interface nfcheckload
-  module procedure nfcheckload1d, nfcheckload2d, nfcheckload3d
-end interface
+  interface nfcheckload
+    module procedure nfcheckload1d, nfcheckload2d, nfcheckload3d
+  end interface
 
   contains
 
-subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
-  itimefi,ierror)
-
-!  Purpose:  Read fields from NetCDF files. (see readfile.f for felt-files)
-
-!  Parameters:
-!             iunit      filehandle-unit (dummy)
-!             istep      current timestep (always positive), negative istep means reset
-!             nhleft     remaining run-hours (negative for backward-calculations)
-!             itimei(5)  initial time
-!             ihr1       minimal time-offset?
-!             ihr2       maximal time-offset?
-!             itimefi(5) final time (output)
-!             ierror     error (output)
+!> Read fields from NetCDF files. (see readfield.f90 for felt-files)
+subroutine readfield_nc(iunit, istep, nhleft, itimei, ihr1, ihr2, &
+    itimefi,ierror)
   USE iso_fortran_env, only: error_unit
   USE particleML
   USE fileInfoML
@@ -56,30 +45,40 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   USE snapdebug, only: iulog, idebug
   USE netcdf
   USE snapdimML, only: nx, ny, nk
-
-  implicit none
-
-!..input/output
-  integer, intent(in) :: iunit, istep
-  integer, INTENT(INOUT) ::  nhleft,ihr1,ihr2, &
-  itimei(5)
-  integer, INTENT(OUT) :: itimefi(5),ierror
+!> filehandle-unit (dummy)
+  integer, intent(in) :: iunit
+!> current timestep (always positive), negative istep means reset
+  integer, intent(in) :: istep
+!> remaining run-hours (negative for backward-calculations)
+  integer, intent(inout) :: nhleft
+!> minimal time-offset?
+  integer, intent(inout) :: ihr1
+!> maximal time-offset?
+  integer, intent(inout) :: ihr2
+!> initial time
+  integer, intent(inout) :: itimei(5)
+!> final time (output)
+  integer, intent(out) :: itimefi(5)
+!> error (output)
+  integer, intent(out) :: ierror
 
 ! local variables
-  integer :: i, j, k, n, ilevel, ierr1, ierr2, i1, i2
-  integer :: itime(5,4),ihours(4)
-  integer :: ihdif1, ihdif2, nhdiff
   integer, save :: ncid = 0
   integer, save :: ntav1, ntav2 = 0
+  real, save :: t2thetafac(15000)
   character(len=1024), save :: file_name = ""
-  real ::     alev(nk),blev(nk),db, precip1,dxgrid,dygrid
+
+  integer :: i, j, k, n, ilevel, ierr1, ierr2, i1, i2
+  integer :: itime(5,4), ihours(4)
+  integer :: ihdif1, ihdif2, nhdiff
+  real :: alev(nk), blev(nk), db, precip1, dxgrid, dygrid
   integer :: kk, ifb, kfb
   real :: dred, red, p, px, dp, p1, p2,ptop
   real, parameter :: rcp = r/cp
   real :: ptoptmp(1)
-  real ::    totalprec
-  real,save     ::    t2thetafac(15000)
-  real ::    unitScale
+  real :: totalprec
+  real :: unitScale
+  real, parameter :: mean_surface_air_pressure = 1013.26
 
   integer :: timepos, timeposm1
   integer :: start3d(7), start4d(7), count3d(7), count4d(7)
@@ -97,17 +96,14 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
     ihr1 = -ihr1
     ihr2 = -ihr2
   end if
-  ihours(1)=ihr1
-  ihours(2)=ihr2
-  ihours(3)=0
-  ihours(4)=nhleft
+  ihours = [ihr1, ihr2, 0, nhleft]
   do n=1,4
     itime(:,n) = itimei
-    itime(5,n)=itime(5,n)+ihours(n)
+    itime(5,n) = itime(5,n) + ihours(n)
     call hrdiff(0,1,itimer(1,1),itime(1,n),ihours(n),ierr1,ierr2)
   end do
-  ihdif1=ihours(1)
-  ihdif2=ihours(2)
+  ihdif1 = ihours(1)
+  ihdif2 = ihours(2)
 
   write(iulog,*) '*READFIELD* Requested time: ',(itime(i,1),i=1,4)
   write(iulog,*) '                Time limit: ',(itime(i,2),i=1,4)
@@ -117,19 +113,19 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
 !..search in list of available timesteps with model level data
   if(ihdif1 > ihdif2) then
   !..using the backward list
-    i=ihdif1
-    ihdif1=ihdif2
-    ihdif2=i
-    kfb=2
-    ifb=10
+    i = ihdif1
+    ihdif1 = ihdif2
+    ihdif2 = i
+    kfb = 2
+    ifb = 10
   else
-    kfb=1
-    ifb=9
+    kfb = 1
+    ifb = 9
   end if
 
   ntav1 = ntav2
   ntav2 = 0
-  n=kavail(kfb)
+  n = kavail(kfb)
   do while ((ntav2 == 0) .AND. (n > 0))
     if(iavail(n)%oHour >= ihdif1 .AND. &
     iavail(n)%oHour <= ihdif2) then
@@ -202,7 +198,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
 
   if( .TRUE. ) then
   !..move data from input time step 2 to 1
- 
+
     u1 = u2
     v1 = v2
     w1 = w2
@@ -217,41 +213,33 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
     if(imslp /= 0) then
       pmsl1 = pmsl2
     end if
-  
+
   end if
 
   do k=nk-kadd,2,-1
-  
+
   !..input model level no.
     ilevel=klevel(k)
 
     call calc_2d_start_length(start4d, count4d, nx, ny, ilevel, &
-    enspos, timepos, has_dummy_dim)
-  
+        enspos, timepos, has_dummy_dim)
+
   !..u
   !     Get the varid of the data variable, based on its name.
     call nfcheckload(ncid, xwindv, start4d, count4d, u2(:,:,k))
-  !        call readfd(iunit,nav,ivc,iu,ilevel,0,u2(1,1,k),ierror)
-  !        if(ierror.ne.0) goto 100
-  
+
   !..v
     call nfcheckload(ncid, ywindv, start4d, count4d, v2(:,:,k))
-  !        call readfd(iunit,nav,ivc,iv,ilevel,0,v2(1,1,k),ierror)
-  !        if(ierror.ne.0) goto 100
   ! bug in chernobyl borders from destaggering
     where (v2 >= 1e+30)
       v2 = 0.0
     end where
 
-  
   !..pot.temp. or abs.temp.
     call nfcheckload(ncid, pottempv, start4d, count4d, t2(:,:,k))
-  !        call readfd(iunit,nav,ivc,it,ilevel,0,t2(1,1,k),ierror)
-  !        if(ierror.ne.0) goto 100
-  
 
-  
-  !   TOOD read ptop from file (only needed for sigma), but not in emep data
+
+  !   TODO read ptop from file (only needed for sigma), but not in emep data
     ptop=100.
   !       if(ivcoor.eq.2) ptop=idata(19)
   !..p0 for hybrid loaded to ptop, ap is a * p0
@@ -274,27 +262,24 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
     ! reusing blev(k) for sigma(k) later
       call nfcheckload(ncid, sigmav, (/ilevel/), (/1/), blev(k:k))
     end if
-  
+
   !..sigma_dot/eta_dot (0 at surface)
   !..eta: eta_dot (or omega) stored in the same levels as u,v,th.
     if (sigmadotv == '') then
       w2 = 0
     else
       call nfcheckload(ncid, sigmadotv, &
-      start4d, count4d, w2(:,:,k))
+          start4d, count4d, w2(:,:,k))
     end if
-  !        call readfd(iunit,nav,ivc,iw,ilevel,0,w2(1,1,k),ierror)
-  !        if(ierror.ne.0) goto 100
-  
-  !.....end do k=nk-kadd,2,-1
-  end do
+
+  end do ! k=nk-kadd,2,-1
 
 
 !..surface pressure, 10m wind and possibly mean sea level pressure,
 !..precipitation
-
   call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
   enspos, timepos, has_dummy_dim)
+
 
 ! ps
   call nfcheckload(ncid, psv, start3d, count3d, ps2(:,:))
@@ -304,7 +289,6 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   nctype == "ec_n1s") then
     ps2 = ps2*0.01
   endif
-!      call readfd(iunit,navps,ivc,8,ilevel,0,ps2(1,1),ierror)
 
 
 ! u10m
@@ -314,11 +298,15 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
     call nfcheckload(ncid, ywind10mv, start3d, count3d, v2(:,:,1))
   else
     if (enspos >= 0) then
-      call nfcheckload(ncid, xwindv, [1, 1, enspos+1, nk, timepos], [nx, ny, 1, 1, 1], u2(:,:,1))
-      call nfcheckload(ncid, ywindv, [1, 1, enspos+1, nk, timepos], [nx, ny, 1, 1, 1], v2(:,:,1))
+      call nfcheckload(ncid, xwindv, [1, 1, enspos+1, nk, timepos], &
+          [nx, ny, 1, 1, 1], u2(:,:,1))
+      call nfcheckload(ncid, ywindv, [1, 1, enspos+1, nk, timepos], &
+          [nx, ny, 1, 1, 1], v2(:,:,1))
     else
-      call nfcheckload(ncid, xwindv, [1, 1, nk, timepos], [nx, ny, 1, 1], u2(:,:,1))
-      call nfcheckload(ncid, ywindv, [1, 1, nk, timepos], [nx, ny, 1, 1], v2(:,:,1))
+      call nfcheckload(ncid, xwindv, [1, 1, nk, timepos], &
+          [nx, ny, 1, 1], u2(:,:,1))
+      call nfcheckload(ncid, ywindv, [1, 1, nk, timepos], &
+          [nx, ny, 1, 1], v2(:,:,1))
     endif
   endif
 
@@ -330,25 +318,23 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
       imslp=0
     else
       call nfcheckload(ncid, mslpv, start3d, count3d, pmsl2(:,:))
-    !        call readfd(iunit,nav,ivc,58,ilevel,0,pmsl2(1,1),ierror)
     end if
   end if
 
 !..precipitation......................................................
-
   if (precaccumv /= '') then
   !..precipitation between input time 't1' and 't2'
     if (timepos /= 1) then
       call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
-      enspos, timeposm1, has_dummy_dim)
+          enspos, timeposm1, has_dummy_dim)
       call nfcheckload(ncid, precaccumv, &
-      start3d, count3d, field1(:,:))
-    !         call readfd(iunit,nav,ivc,17,ilevel,ihrpr1,field1,ierror)
+          start3d, count3d, field1(:,:))
+
       call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
-      enspos, timepos, has_dummy_dim)
+          enspos, timepos, has_dummy_dim)
       call nfcheckload(ncid, precaccumv, &
-      start3d, count3d, field2(:,:))
-    !         call readfd(iunit,nav,ivc,17,ilevel,ihrpr2,field2,ierror)
+          start3d, count3d, field2(:,:))
+
     !..the difference below may get negative due to different scaling
       do j=1,ny
         do i=1,nx
@@ -362,35 +348,35 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   !..precipitation between input time 't1' and 't2'
     if (timepos /= 1) then
       call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
-      enspos, timeposm1, has_dummy_dim)
+          enspos, timeposm1, has_dummy_dim)
       call nfcheckload(ncid, precstratiaccumv, &
-      start3d, count3d, field1(:,:))
+          start3d, count3d, field1)
       call nfcheckload(ncid, precconaccumv, &
-      start3d, count3d, field2(:,:))
+          start3d, count3d, field2)
       call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
-      enspos, timepos, has_dummy_dim)
+          enspos, timepos, has_dummy_dim)
       call nfcheckload(ncid, precstratiaccumv, &
-      start3d, count3d, field3(:,:))
+          start3d, count3d, field3)
       call nfcheckload(ncid, precconaccumv, &
-      start3d, count3d, field4(:,:))
+          start3d, count3d, field4)
     !..the difference below may get negative due to different scaling
       unitScale = 1.
       if (nctype == 'ec_det' .or. nctype == "ec_n1s") unitScale = 1000.
       do j=1,ny
         do i=1,nx
           precip1=max(field3(i,j)+field4(i,j)- &
-          (field1(i,j)+field2(i,j)),0.)/nhdiff
+              (field1(i,j)+field2(i,j)),0.)/nhdiff
           precip(i,j,:) = precip1 * unitScale
         end do
       end do
     else
     ! timepos eq 1, check if precipitation already present / assume dummy step 0
       call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
-      enspos, timepos, has_dummy_dim)
+          enspos, timepos, has_dummy_dim)
       call nfcheckload(ncid, precstratiaccumv, &
-      start3d, count3d, field3(:,:))
+          start3d, count3d, field3(:,:))
       call nfcheckload(ncid, precconaccumv, &
-      start3d, count3d, field4(:,:))
+          start3d, count3d, field4(:,:))
 
       field1 = 0.0
       field2 = 0.0
@@ -399,13 +385,13 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
       if (totalprec > 1e-5) then
       !..the difference below may get negative due to different scaling
         write(iulog,*) "found precip in first timestep, assuming ", &
-        "empty 0 timestep to deaccumulate precip"
+            "empty 0 timestep to deaccumulate precip"
         unitScale = 1.
         if (nctype == 'ec_det' .or. nctype == "ec_n1s") unitScale = 1000.
         do j=1,ny
           do i=1,nx
             precip1=max(field3(i,j)+field4(i,j)- &
-            (field1(i,j)+field2(i,j)),0.)/nhdiff
+                (field1(i,j)+field2(i,j)),0.)/nhdiff
             precip(i,j,:) = precip1 * unitScale
           end do
         end do
@@ -414,9 +400,9 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   else
   !..non-accumulated emissions in stratiform an convective
     call nfcheckload(ncid, precstrativrt, &
-    start3d, count3d, field1(:,:))
+        start3d, count3d, field1(:,:))
     call nfcheckload(ncid, precconvrt, &
-    start3d, count3d, field2(:,:))
+        start3d, count3d, field2(:,:))
 
     do j=1,ny
       do i=1,nx
@@ -430,12 +416,12 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
 
 ! first time initialized data
   if(istep == 0) then
-  
+
     do k=2,nk-kadd
       alevel(k)=alev(k)
       blevel(k)=blev(k)
     end do
-  
+
     if(kadd > 0) then
       if(ivcoor == 2) then
       !..sigma levels ... blevel=sigma
@@ -459,32 +445,32 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
         end do
       else
         write(error_unit,*) 'PROGRAM ERROR.  ivcoor= ',ivcoor
-        stop 255
+        error stop 255
       end if
     end if
-  
+
     if(ivcoor == 2) then
     !..sigma levels (norlam)
       do k=2,nk
         alevel(k)=ptop*(1.-blevel(k))
       end do
     end if
-  
+
   !..surface
     alevel(1)=0.
     blevel(1)=1.
-  
+
     if(ivcoor == 2) then
     !..sigma levels ... vlevel=sigma
       vlevel = blevel
     elseif(ivcoor == 10) then
     !..eta (hybrid) levels ... vlevel=eta (eta as defined in Hirlam)
-      vlevel = alevel/1013.26 + blevel
+      vlevel = alevel/mean_surface_air_pressure + blevel
     else
       write(error_unit,*) 'PROGRAM ERROR.  ivcoor= ',ivcoor
-      stop 255
+      error stop 255
     end if
-  
+
   !..half levels where height is found,
   !..alevel and blevel are in the middle of each layer
     ahalf(1)=alevel(1)
@@ -493,18 +479,18 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   !..check if subselection of levels
     do k=2,nk-1
       if (klevel(k+1) /= klevel(k)-1) then
-        manual_level_selection = .TRUE. 
+        manual_level_selection = .TRUE.
       endif
     end do
     do k=2,nk-1
       if ( .NOT. manual_level_selection) then
         ahalf(k)=alevel(k)+(alevel(k)-ahalf(k-1))
         bhalf(k)=blevel(k)+(blevel(k)-bhalf(k-1))
-        vhalf(k)=ahalf(k)/1013.26+bhalf(k)
+        vhalf(k)=ahalf(k)/mean_surface_air_pressure+bhalf(k)
       else
         ahalf(k)=(alevel(k)+alevel(k+1))*0.5
         bhalf(k)=(blevel(k)+blevel(k+1))*0.5
-        vhalf(k)=ahalf(k)/1013.26+bhalf(k)
+        vhalf(k)=ahalf(k)/mean_surface_air_pressure+bhalf(k)
       end if
     end do
     ahalf(nk)=alevel(nk)
@@ -513,12 +499,12 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
 
   !..compute map ratio
     call mapfield(1,0,igtype,gparam,nx,ny,xm,ym,&
-      xm, & ! Ignored when icori = 0
-    dxgrid,dygrid,ierror)
+        xm, & ! Ignored when icori = 0
+        dxgrid,dygrid,ierror)
     if(ierror /= 0) then
       write(iulog,*) 'MAPFIELD ERROR. ierror= ',ierror
       write(error_unit,*) 'MAPFIELD ERROR. ierror= ',ierror
-      stop 255
+      error stop 255
     end if
     gparam(7)=dxgrid
     gparam(8)=dygrid
@@ -528,7 +514,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
 
     if (temp_is_abs) then
     ! create precomputed table for pressures between 0.1 and 1500hPa
-      do i=1,15000
+      do i=1,size(t2thetafac)
         t2thetafac(i) = 1./((real(i)/10.*0.001)**rcp)
       end do
     end if
@@ -593,7 +579,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   do k=nk,1,-1
     p=alevel(k)+blevel(k)*1000.
     write(iulog,fmt='(1x,2i5,f9.2,2f9.5,f8.0,f6.0)') &
-    k,klevel(k),alevel(k),blevel(k),vlevel(k),p,p-px
+        k,klevel(k),alevel(k),blevel(k),vlevel(k),p,p-px
     px=p
   end do
 
@@ -609,8 +595,6 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
       call ftest('pre', precip(:,:,1:nprecip))
   end if
 
-! close file
-!      call check(nf_close(ncid), "")
 
   if (istep == 0) then
   ! test---------------------------------------------------------------
@@ -619,11 +603,11 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
     do k=nk,1,-1
       p=ahalf(k)+bhalf(k)*1000.
       write(iulog,fmt='(1x,i5,f9.2,2f9.5,f8.0,f6.0)') &
-      k,ahalf(k),bhalf(k),vhalf(k),p,p-px
+          k,ahalf(k),bhalf(k),vhalf(k),p,p-px
       px=p
     end do
   ! test---------------------------------------------------------------
-  
+
   !..level table for (vertical) interpolation
   !..(remember that fields are stored bottom to top
   !.. and that all parameters now are in the same levels)
@@ -639,7 +623,7 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
       end do
       write(iulog,*) k,i1,i2,vlevel(k+1),vlevel(k)
     end do
-  
+
   !..level table for concentration in each sigma/eta layer
   !..(layers here as in the input model, no '10m' layer,
   !.. but ordering bottom to top, reorder at time of output)
@@ -658,16 +642,13 @@ subroutine readfield_nc(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   end if
 
   return
-
-
-
 end subroutine readfield_nc
 
 
+!> calculate the start and length paramters for slicing
+!> a 2d field from a 3-5d dataset
 subroutine calc_2d_start_length(start, length, nx, ny, zpos, &
   enspos, tpos, has_2d_dummy_height)
-! calculate the start and length paramters for slicing
-! a 2d field from a 3-5d dataset
   integer, intent (out) :: start(7), length(7)
   integer, intent (in) :: nx, ny, zpos, enspos, tpos
   logical, intent (in) :: has_2d_dummy_height
@@ -701,8 +682,6 @@ end subroutine calc_2d_start_length
 
 subroutine check(status, errmsg)
   use netcdf
-  implicit none
-! netcdf
   integer, intent ( in) :: status
   character(len=*), intent(in), optional :: errmsg
 
@@ -752,7 +731,6 @@ subroutine nfcheckload1d(ncid, varname, start, length, field)
   use, intrinsic :: IEEE_ARITHMETIC
   use iso_fortran_env, only: real32
   use netcdf
-  implicit none
   integer, intent(in) :: ncid, start(:), length(:)
   character(len=*), intent(in) :: varname
   real(real32), intent(out) :: field(:)
@@ -779,7 +757,6 @@ subroutine nfcheckload2d(ncid, varname, start, length, field)
   use, intrinsic :: IEEE_ARITHMETIC
   use iso_fortran_env, only: real32
   use netcdf
-  implicit none
   integer, intent(in) :: ncid, start(:), length(:)
   character(len=*), intent(in) :: varname
   real(real32), intent(out) :: field(:,:)
@@ -806,7 +783,6 @@ subroutine nfcheckload3d(ncid, varname, start, length, field)
   use, intrinsic :: IEEE_ARITHMETIC
   use iso_fortran_env, only: real32
   use netcdf
-  implicit none
   integer, intent(in) :: ncid, start(:), length(:)
   character(len=*), intent(in) :: varname
   real(real32), intent(out) :: field(:,:,:)
