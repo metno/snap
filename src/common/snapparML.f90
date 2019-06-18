@@ -24,45 +24,49 @@ module snapparML
   private
 
 !> an identifier used in the field identification
-!>      (stored as level_1 for single level fields,
-!>       model level fields adds this number to a 'basic'
-!>       parameter no., 0 is used for the total if more than
-!>       one component present)
-      integer, save, public :: idcomp(mdefcomp)
-!>  run comp. (1,...ncomp) or 0 if not used
-      integer, save, public :: iruncomp(mdefcomp)
+!>
+!> (stored as level_1 for single level fields,
+!> model level fields adds this number to a 'basic'
+!> parameter no., 0 is used for the total if more than
+!> one component present)
+  integer, save, public :: idcomp(mdefcomp)
+!> run comp. (1,...,ncomp) or 0 if not used
+  integer, save, public :: iruncomp(mdefcomp)
 
 !> counter for unique particle identifier
-      integer, save, public :: nparnum
+  integer, save, public :: nparnum
 !> gravity type:
+!>
 !> * 0=off
 !> * 1=fixed
 !> * 2=computed
-      integer, save, public :: kgravity(mdefcomp)
+  integer, save, public :: kgravity(mdefcomp)
 !> fixed gravity in unit m/s
-    real, save, public :: gravityms(mdefcomp)
+  real, save, public :: gravityms(mdefcomp)
 
 !> total release in unit Bq, accumulated during run
   real, save, public :: totalbq(mdefcomp)
 !> a component name (not much used, really)
-      character(len=32), save, public :: compname(mdefcomp)
-      character(len=32), save, public :: compnamemc(mdefcomp)
-
+  character(len=32), save, public :: compname(mdefcomp)
+  character(len=32), save, public :: compnamemc(mdefcomp)
 
 
 !>   no. of components used in the run
   integer, save, public :: ncomp
 
 !>  time profile type:
-!> *           1= constant
-!> *           2= bomb (only one initial release)
-!> *           3= linear (between specified timesteps)
-!> *           4= steps  (constant between the specified timesteps)
-      integer, save, public :: itprof
+!> * 1= constant
+!> * 2= bomb (only one initial release)
+!> * 3= linear (between specified timesteps)
+!> * 4= steps  (constant between the specified timesteps)
+  integer, save, public :: itprof
 !>  component name
-      character(len=32), save, public :: component(mcomp)
-!>    component no. as defined in input file sequence
-      integer, save, public :: idefcomp(mcomp)
+  character(len=32), save, public :: component(mcomp)
+!> component no. as defined in input file sequence
+!>
+!> Mapping from number of active components to the active component,
+!> as components can be defined but not used
+  integer, save, public :: idefcomp(mcomp)
 
 
 !> component no. in particle
