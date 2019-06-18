@@ -26,18 +26,19 @@ module snapposML
 !> no. of release positions (in list)
   integer, save, public :: nrelpos
 
-!> relpos(1,n): geographic latitude  for release positions
-!>
-!> relpos(2,n): geographic longitude for release positions
-!>
-!> relpos(3,n): grid x coordinat for release positions
-!>
-!> relpos(4,n): grid y coordinat for release positions
-  real, save, public :: relpos(4,mrelpos)
-
+  type :: release_position
+!> geographic latitude for release position
+    real :: geo_latitude
+!> geographic longitude for release position
+    real :: geo_longitude
+!> grid x coordinate for release position
+    real :: grid_x
+!> grid y coordinate for release positions
+    real :: grid_y
 !> name of release positions
-  character(len=40), save, public :: relnam(mrelpos)
-!> name of selected release position
-  character(len=40), save, public :: srelnam
+    character(len=40) :: name
+  end type
+
+  type(release_position), save, public :: release_positions(mrelpos)
 
 end module snapposML

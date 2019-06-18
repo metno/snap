@@ -217,7 +217,7 @@ PROGRAM bsnap
   USE snapfldML
   USE snapmetML, only: init_meteo_params, use_model_wind_for_10m
   USE snapparML
-  USE snapposML
+  USE snapposML, only: irelpos, nrelpos, release_positions
   USE snapgrdML
   USE snaptabML, only: tabcon, nprepro, prepro
   USE particleML
@@ -314,6 +314,9 @@ PROGRAM bsnap
   character(len=8) ::   cpos1,cpos2
   character(len=1) ::   tchar
   character(len=1024) :: tempstr
+
+!> name of selected release position
+  character(len=40), save :: srelnam
 
 #if defined(TRAJ)
   integer :: timeStart(6), timeCurrent(6)
@@ -633,10 +636,10 @@ PROGRAM bsnap
             cpos2(8:8)='W'
           end if
           srelnam=cpos1(k1+1:8)//' '//cpos2(k2+1:8)
-          if(nrelpos < size(relnam)) nrelpos=nrelpos+1
-          relnam(nrelpos)=srelnam
-          relpos(1,nrelpos)=glat
-          relpos(2,nrelpos)=glong
+          if(nrelpos < size(release_positions)) nrelpos=nrelpos+1
+          release_positions(nrelpos)%name = srelnam
+          release_positions(nrelpos)%geo_latitude = glat
+          release_positions(nrelpos)%geo_longitude = glong
         end if
       elseif(cinput(k1:k2) == 'random.walk.on') then
       !..random.walk.on
@@ -1038,19 +1041,22 @@ PROGRAM bsnap
       elseif(cinput(k1:k2) == 'release.pos') then
       !..release.pos=<'name',latitude,longitude>
         if(kv1 < 1) goto 12
-        if(nrelpos < size(relnam)) then
+        if(nrelpos < size(release_positions)) then
           nrelpos=nrelpos+1
-          read(cipart,*,err=12) relnam(nrelpos), &
-          (relpos(i,nrelpos),i=1,2)
+          read(cipart,*,err=12) release_positions(nrelpos)%name, &
+              release_positions(nrelpos)%geo_latitude, &
+              release_positions(nrelpos)%geo_longitude
           if(ipostyp == 2) then
-            ig=nint(relpos(1,nrelpos))
-            igd=ig/100
-            igm=ig-igd*100
-            relpos(1,nrelpos)=float(igd)+float(igm)/60.
-            ig=nint(relpos(2,nrelpos))
-            igd=ig/100
-            igm=ig-igd*100
-            relpos(2,nrelpos)=float(igd)+float(igm)/60.
+            ig = nint(release_positions(nrelpos)%geo_latitude)
+            igd = ig/100
+            igm = ig - igd*100
+            release_positions(nrelpos)%geo_latitude = &
+                float(igd) + float(igm)/60.
+            ig = nint(release_positions(nrelpos)%geo_longitude)
+            igd = ig/100
+            igm = ig - igd*100
+            release_positions(nrelpos)%geo_longitude = &
+                float(igd) + float(igm)/60.
           end if
         else
           write(error_unit,*) 'WARNING. Too many RELEASE POSITIONS'
@@ -1297,13 +1303,15 @@ PROGRAM bsnap
 
 !..convert names to uppercase letters
   call chcase(2,1,srelnam)
-  if(nrelpos > 0) call chcase(2,nrelpos,relnam)
+  do n=1,nrelpos
+    call chcase(2, 1, release_positions(n)%name)
+  end do
   if(ndefcomp > 0) call chcase(2,ndefcomp,compname)
   if(ncomp > 0)    call chcase(2,ncomp,component)
 
   ierror=0
   do n=1,nrelpos
-    if(srelnam == relnam(n)) irelpos=n
+    if(srelnam == release_positions(n)%name) irelpos=n
   end do
   if(irelpos == 0 .AND. nrelpos == 1) irelpos=1
   if(irelpos == 0) then
@@ -1647,7 +1655,7 @@ PROGRAM bsnap
     ncsummary = trim(ncsummary) // " " // trim(tempstr)
     do n=1,nrelpos
       write(tempstr, '("Release Pos (lat, lon): (", F5.1, ",", F6.1 &
-      ,")")') relpos(1,n), relpos(2,n)
+      ,")")') release_positions(n)%geo_latitude, release_positions(n)%geo_longitude
       ncsummary = trim(ncsummary) // ". " // trim(tempstr)
     end do
 
@@ -1672,9 +1680,9 @@ PROGRAM bsnap
     write(iulog,*) 'ndefcomp:',ndefcomp
     write(iulog,*) 'ncomp:   ',ncomp
     write(iulog,fmt='(1x,a,40(1x,i2))') 'idefcomp: ', &
-    (idefcomp(i),i=1,ncomp)
+        (idefcomp(i),i=1,ncomp)
     write(iulog,fmt='(1x,a,40(1x,i2))') 'iruncomp: ', &
-    (iruncomp(i),i=1,ndefcomp)
+        (iruncomp(i),i=1,ndefcomp)
     do n=1,ncomp
       m=idefcomp(n)
       write(iulog,*) 'component no:  ',n
@@ -1900,8 +1908,8 @@ PROGRAM bsnap
         if(istep == 0) then
         
         !..release position from geographic to polarstereographic coordinates
-          y=relpos(1,irelpos)
-          x=relpos(2,irelpos)
+          y = release_positions(irelpos)%geo_latitude
+          x = release_positions(irelpos)%geo_longitude
           write(iulog,*) 'release lat,long: ',y,x
 #if defined(TRAJ)
         !	write(*,*) istep,x,y,rellower(1)
@@ -1935,8 +1943,8 @@ PROGRAM bsnap
             write(error_unit,*) 'ERROR: Release position outside field area'
             goto 910
           end if
-          relpos(3,irelpos)=x(1)
-          relpos(4,irelpos)=y(1)
+          release_positions(irelpos)%grid_x = x(1)
+          release_positions(irelpos)%grid_y = y(1)
         
         !            if(iensemble.eq.1)
         !     +        call ensemble(0,itime1,tf1,tf2,tnow,istep,nstep,nsteph,0)

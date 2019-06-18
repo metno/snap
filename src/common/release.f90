@@ -92,7 +92,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
   USE snapgrdML, only: gparam, vlevel, alevel, ahalf, blevel, bhalf
   USE snapfldML, only: xm, ym, t1, t2, ps1, ps2
   USE snapparML
-  USE snapposML, only: irelpos, relpos
+  USE snapposML, only: irelpos, release_positions
   USE snaptabML, only: g, pmult, pitab
   USE snapdimML, only: nx, ny, nk, mcomp
   USE snapdebug, only: iulog
@@ -217,8 +217,8 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
 
   !---------------------------------------------------
 
-    x= relpos(3,irelpos)
-    y= relpos(4,irelpos)
+    x= release_positions(irelpos)%grid_x
+    y= release_positions(irelpos)%grid_y
     i= nint(x)
     j= nint(y)
 
