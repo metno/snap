@@ -26,29 +26,14 @@ module fldout_ncML
 
   contains
 
-subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
-  istep,nsteph,ierror)
-  USE iso_fortran_env, only: int16
-  USE snapfilML
-  USE snapgrdML
-  USE snapfldML
-  USE snapparML
-  USE snaptabML
-  USE snapargosML
-  USE snapdebug, only: iulog, idebug
-  USE ftestML, only: ftest
-  USE netcdf
-  USE snapdimML, only: mcomp, ldata, nx, ny, nk, nxmc, nymc
-  USE releaseML, only: npart
-  USE drydep, only: kdrydep
-  USE wetdep, only: kwetdep
-! netcdf
-!  Purpose:  Accumulation for average fields (iwrite=0,1).
-!            Make and write output fields (iwrite=1).
-!	     Initialization of output accumulation arrays (iwrite=-1).
-!            Fields written to a sequential 'model output' file,
-!            not opened here.
-
+!> Accumulation for average fields (iwrite=0,1).
+!>
+!> Make and write output fields (iwrite=1).
+!>
+!> Initialization of output accumulation arrays (iwrite=-1).
+!>
+!> Fields written to a sequential 'model output' file,
+!> not opened here.
 !---------------------------------------------------------------------
 !  Field parameter numbers used here:
 !     *   8 - surface pressure (if model level output) (hPa)
@@ -98,12 +83,6 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 !	    Bq above boundary layer
 !		= (1.0-part_of_bq_in_bl)*concentration/(garea*hbl)
 !---------------------------------------------------------------------
-
-  USE particleML
-  USE fileInfoML
-  implicit none
-
-
 !     *   ps 8 - surface pressure (if model level output) (hPa)
 !     *  accum_prc 17 - precipitation accummulated from start of run (mm)
 !     *  mslp 58 - mean sea level pressure, mslp (if switched on) (hPa)
@@ -131,31 +110,89 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 !     * 902 - geographic longitude (degrees)
 !     * 903 - grid square area (m2)
 !     ^------- current output
+subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
+    istep,nsteph,ierror)
+  USE iso_fortran_env, only: int16
+  USE snapfilML, only: idata, ncsummary, nctitle, simulation_start
+  USE snapgrdML, only: gparam, igridr, igtype, imodlevel, imslp, inprecip, &
+      iprodr, itotcomp, ivcoor, modleveldump, ivlayer, &
+      alevel, blevel, vlevel, klevel
+  USE snapfldML
+  USE snapparML, only: itprof, ncomp, icomp, idefcomp, iruncomp, &
+      compnamemc, compname, totalbq
+  USE snapdebug, only: iulog, idebug
+  USE ftestML, only: ftest
+  USE netcdf
+  USE snapdimML, only: mcomp, ldata, nx, ny, nk, nxmc, nymc
+  USE releaseML, only: npart
+  USE drydep, only: kdrydep
+  USE wetdep, only: kwetdep
+  USE particleML, only: pdata
 
-  integer, save :: ps_varid, accum_prc_varid, prc_varid, &
-  mslp_varid, &
-  icblt_varid,acblt_varid,act_varid,iddt_varid,iwdt_varid, &
-  accddt_varid,accwdt_varid, &
-  ihbl_varid, ahbl_varid, &
-  icbl_varid(mcomp), &
-  acbl_varid(mcomp), idd_varid(mcomp), iwd_varid(mcomp), &
-  accdd_varid(mcomp), accwd_varid(mcomp), ac_varid(mcomp), &
-  ic_varid(mcomp), icml_varid(mcomp)
-! intger, save :: acml_varid(mcomp)
+  integer, intent(in) :: iwrite
+  integer, intent(inout) :: iunit
+  character(len=*), intent(in) :: filnam
+  integer, intent(inout) :: itime(5)
+  real, intent(in) :: tf1
+  real, intent(in) :: tf2
+  real, intent(in) :: tnow
+  real, intent(in) :: tstep
+  integer, intent(in) :: istep
+  integer, intent(in) :: nsteph
+  integer, intent(out) :: ierror
 
-  integer ::   iwrite,iunit,istep,nsteph,ierror
-  integer ::   itime(5)
-  real ::      tf1,tf2,tnow,tstep
-  character(len=*) :: filnam
+! Variables for each component
+  type :: component_var
+    integer :: icbl
+    integer :: acbl
+    integer :: idd
+    integer :: iwd
+    integer :: accdd
+    integer :: accwd
+    integer :: ac
+    integer :: ic
+    integer :: icml
+  end type
+
+! Variables in a file
+  type :: common_var
+    integer :: ps
+    integer :: accum_prc
+    integer :: prc
+    integer :: mslp
+    integer :: icblt
+    integer :: acblt
+    integer :: act
+    integer :: iddt
+    integer :: iwdt
+    integer :: accddt
+    integer :: accwdt
+    integer :: ihbl
+    integer :: ahbl
+    integer :: t
+    integer :: k
+    integer :: ap
+    integer :: b
+    type(component_var) :: comp(mcomp)
+  end type
+  type(common_var), save :: varid
+
+  type :: common_dim
+    integer :: x
+    integer :: y
+    integer :: k
+    integer :: t
+  end type
+  type(common_dim), save :: dimid
+
+
 
   integer, save :: naverage = 0
   logical, save :: acc_initialized = .false.
 
   integer :: dimids2d(2),dimids3d(3),dimids4d(4), ipos(4), isize(4), &
              chksz3d(3), chksz4d(4)
-  integer, save :: x_dimid, y_dimid, k_dimid, t_dimid
-  integer, save :: t_varid, k_varid, ap_varid, b_varid
-  integer, save  :: iftime(5), ihrs, ihrs_pos
+  integer, save :: iftime(5), ihrs, ihrs_pos
 
 
   integer :: nptot1,nptot2
@@ -169,13 +206,13 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   integer :: ko,lvla,lvlb
   integer, save :: numfields = 0
   real :: rt1,rt2,scale,average,averinv,hbl
-!> fixed base scaling for concentrations (unit 10**-12 g/m3 = 1 picog/m3)
+! fixed base scaling for concentrations (unit 10**-12 g/m3 = 1 picog/m3)
   real, parameter :: cscale = 1.0
-!> fixed base scaling for depositions (unit 10**-9 g/m2 = 1 nanog/m3)
+! fixed base scaling for depositions (unit 10**-9 g/m2 = 1 nanog/m3)
   real, parameter :: dscale = 1.0
 
   real, parameter :: undef = NF90_FILL_FLOAT
-  real ::    avg,hrstep,dh,total
+  real :: avg,hrstep,dh,total
 
   integer, save :: itimeargos(5) = [0, 0, 0, 0, 0]
 
@@ -328,101 +365,107 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     write(iulog,*) 'creating fldout_nc: ',filnam
     ihrs_pos = 0
     call check(nf90_create(filnam, ior(NF90_NETCDF4, NF90_CLOBBER), iunit), filnam)
-    call check(nf90_def_dim(iunit, "time", NF90_UNLIMITED, t_dimid), &
-    "t-dim")
-    call check(nf90_def_dim(iunit, "x", nx, x_dimid), "x-dim")
-    call check(nf90_def_dim(iunit, "y", ny, y_dimid), "y-dim")
-    call check(nf90_def_dim(iunit, "k", nk-1, k_dimid), "k-dim")
+    call check(nf90_def_dim(iunit, "time", NF90_UNLIMITED, dimid%t), &
+        "t-dim")
+    call check(nf90_def_dim(iunit, "x", nx, dimid%x), "x-dim")
+    call check(nf90_def_dim(iunit, "y", ny, dimid%y), "y-dim")
+    call check(nf90_def_dim(iunit, "k", nk-1, dimid%k), "k-dim")
 
-    if (nctitle /= "")  call check(nf90_put_att(iunit, NF90_GLOBAL, &
-    "title", trim(nctitle)))
+    if (nctitle /= "") then
+      call check(nf90_put_att(iunit, NF90_GLOBAL, &
+          "title", trim(nctitle)))
+    endif
     call check(nf90_put_att(iunit, NF90_GLOBAL, &
-    "summary", trim(ncsummary)))
+        "summary", trim(ncsummary)))
 
-    call nc_set_projection(iunit, x_dimid, y_dimid, &
-    igtype,nx,ny,gparam, garea, xm, ym, &
-    simulation_start)
-    if (imodlevel == 1) &
-    call nc_set_vtrans(iunit, k_dimid, k_varid, ap_varid, b_varid)
+    call nc_set_projection(iunit, dimid%x, dimid%y, &
+        igtype,nx,ny,gparam, garea, xm, ym, &
+        simulation_start)
+    if (imodlevel == 1) then
+      call nc_set_vtrans(iunit, dimid%k, varid%k, varid%ap, varid%b)
+    endif
 
-    call check(nf90_def_var(iunit, "time",NF90_FLOAT,t_dimid,t_varid))
+    call check(nf90_def_var(iunit, "time", NF90_FLOAT, dimid%t, varid%t))
     write(string,'(A12,I4,A1,I0.2,A1,I0.2,A1,I0.2,A12)') &
-    "hours since ",itime(1),"-",itime(2),"-",itime(3)," ", &
-    itime(4),":00:00 +0000"
-    call check(nf90_put_att(iunit, t_varid, "units", &
-    trim(string)))
+        "hours since ",itime(1),"-",itime(2),"-",itime(3)," ", &
+        itime(4),":00:00 +0000"
+    call check(nf90_put_att(iunit, varid%t, "units", &
+        trim(string)))
 
   !..store the files base-time
     iftime = itime
     iftime(5) = 0
 
-    dimids2d = [x_dimid, y_dimid]
-    dimids3d = [x_dimid, y_dimid, t_dimid]
-    dimids4d = [x_dimid, y_dimid, k_dimid, t_dimid]
+    dimids2d = [dimid%x, dimid%y]
+    dimids3d = [dimid%x, dimid%y, dimid%t]
+    dimids4d = [dimid%x, dimid%y, dimid%k, dimid%t]
 
     chksz3d = [nx, ny, 1]
     chksz4d = [nx, ny, 1, 1]
 
-    if (imodlevel == 1) &
-    call nc_declare_3d(iunit, dimids3d, ps_varid, &
-    chksz3d, "surface_air_pressure", &
-    "hPa", "surface_air_pressure", "")
-    if (imslp == 1) &
-    call nc_declare_3d(iunit, dimids3d, mslp_varid, &
-    chksz3d, "air_pressure_at_sea_level", &
-    "hPa", "air_pressure_at_sea_level", "")
-    if (inprecip == 1) &
-    call nc_declare_3d(iunit, dimids3d, accum_prc_varid, &
-    chksz3d, "precipitation_amount_acc", &
-    "kg/m2", "precipitation_amount", "")
+    if (imodlevel == 1) then
+      call nc_declare_3d(iunit, dimids3d, varid%ps, &
+          chksz3d, "surface_air_pressure", &
+          "hPa", "surface_air_pressure", "")
+    endif
+    if (imslp == 1) then
+      call nc_declare_3d(iunit, dimids3d, varid%mslp, &
+          chksz3d, "air_pressure_at_sea_level", &
+          "hPa", "air_pressure_at_sea_level", "")
+    endif
+    if (inprecip == 1) then
+      call nc_declare_3d(iunit, dimids3d, varid%accum_prc, &
+          chksz3d, "precipitation_amount_acc", &
+          "kg/m2", "precipitation_amount", "")
+    endif
 
-    call nc_declare_3d(iunit, dimids3d, ihbl_varid, &
-    chksz3d, "instant_height_boundary_layer", &
-    "m", "height", &
-    "instant_height_boundary_layer")
-    call nc_declare_3d(iunit, dimids3d, ahbl_varid, &
-    chksz3d, "average_height_boundary_layer", &
-    "m", "height", &
-    "average_height_boundary_layer")
+    call nc_declare_3d(iunit, dimids3d, varid%ihbl, &
+        chksz3d, "instant_height_boundary_layer", &
+        "m", "height", &
+        "instant_height_boundary_layer")
+    call nc_declare_3d(iunit, dimids3d, varid%ahbl, &
+        chksz3d, "average_height_boundary_layer", &
+        "m", "height", &
+        "average_height_boundary_layer")
 
 
     do m=1,ncomp
       mm=idefcomp(m)
-      call nc_declare_3d(iunit, dimids3d, ic_varid(m), &
-      chksz3d, TRIM(compnamemc(mm))//"_concentration", &
-      "Bq/m3","", &
-      TRIM(compnamemc(mm))//"_concentration")
-      call nc_declare_3d(iunit, dimids3d, icbl_varid(m), &
-      chksz3d, TRIM(compnamemc(mm))//"_concentration_bl", &
-      "Bq/m3","", &
-      TRIM(compnamemc(mm))//"_concentration_boundary_layer")
-      call nc_declare_3d(iunit, dimids3d, ac_varid(m), &
-      chksz3d, TRIM(compnamemc(mm))//"_acc_concentration", &
-      "Bq*hr/m3","", &
-      TRIM(compnamemc(mm))//"_accumulated_concentration")
-      call nc_declare_3d(iunit, dimids3d, acbl_varid(m), &
-      chksz3d, TRIM(compnamemc(mm))//"_avg_concentration_bl", &
-      "Bq/m3","", &
-      TRIM(compnamemc(mm))//"_average_concentration_bl")
+      call nc_declare_3d(iunit, dimids3d, varid%comp(m)%ic, &
+          chksz3d, TRIM(compnamemc(mm))//"_concentration", &
+          "Bq/m3","", &
+          TRIM(compnamemc(mm))//"_concentration")
+      call nc_declare_3d(iunit, dimids3d, varid%comp(m)%icbl, &
+          chksz3d, TRIM(compnamemc(mm))//"_concentration_bl", &
+          "Bq/m3","", &
+          TRIM(compnamemc(mm))//"_concentration_boundary_layer")
+      call nc_declare_3d(iunit, dimids3d, varid%comp(m)%ac, &
+          chksz3d, TRIM(compnamemc(mm))//"_acc_concentration", &
+          "Bq*hr/m3","", &
+          TRIM(compnamemc(mm))//"_accumulated_concentration")
+      call nc_declare_3d(iunit, dimids3d, varid%comp(m)%acbl, &
+          chksz3d, TRIM(compnamemc(mm))//"_avg_concentration_bl", &
+          "Bq/m3","", &
+          TRIM(compnamemc(mm))//"_average_concentration_bl")
       if (kdrydep(mm) > 0) then
-        call nc_declare_3d(iunit, dimids3d, idd_varid(m), &
-        chksz3d, TRIM(compnamemc(mm))//"_dry_deposition", &
-        "Bq/m2","", &
-        TRIM(compnamemc(mm))//"_dry_deposition")
-        call nc_declare_3d(iunit, dimids3d, accdd_varid(m), &
-        chksz3d, TRIM(compnamemc(mm))//"_acc_dry_deposition", &
-        "Bq/m2","", &
-        TRIM(compnamemc(mm))//"_accumulated_dry_deposition")
+        call nc_declare_3d(iunit, dimids3d, varid%comp(m)%idd, &
+            chksz3d, TRIM(compnamemc(mm))//"_dry_deposition", &
+            "Bq/m2","", &
+            TRIM(compnamemc(mm))//"_dry_deposition")
+        call nc_declare_3d(iunit, dimids3d, varid%comp(m)%accdd, &
+            chksz3d, TRIM(compnamemc(mm))//"_acc_dry_deposition", &
+            "Bq/m2","", &
+            TRIM(compnamemc(mm))//"_accumulated_dry_deposition")
       end if
       if (kwetdep(mm) > 0) then
-        call nc_declare_3d(iunit, dimids3d, iwd_varid(m), &
-        chksz3d, TRIM(compnamemc(mm))//"_wet_deposition", &
-        "Bq/m2","", &
-        TRIM(compnamemc(mm))//"_wet_deposition")
-        call nc_declare_3d(iunit, dimids3d, accwd_varid(m), &
-        chksz3d, TRIM(compnamemc(mm))//"_acc_wet_deposition", &
-        "Bq/m2","", &
-        TRIM(compnamemc(mm))//"_accumulated_wet_deposition")
+        call nc_declare_3d(iunit, dimids3d, varid%comp(m)%iwd, &
+            chksz3d, TRIM(compnamemc(mm))//"_wet_deposition", &
+            "Bq/m2","", &
+            TRIM(compnamemc(mm))//"_wet_deposition")
+        call nc_declare_3d(iunit, dimids3d, varid%comp(m)%accwd, &
+            chksz3d, TRIM(compnamemc(mm))//"_acc_wet_deposition", &
+            "Bq/m2","", &
+            TRIM(compnamemc(mm))//"_accumulated_wet_deposition")
       end if
       if (imodlevel == 1) then
         if (modleveldump > 0.) then
@@ -430,10 +473,10 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         else
           string = TRIM(compnamemc(mm))//"_concentration_ml"
         endif
-        call nc_declare_4d(iunit, dimids4d, icml_varid(m), &
-        chksz4d, TRIM(string), &
-        "Bq/m3","", &
-        TRIM(string))
+        call nc_declare_4d(iunit, dimids4d, varid%comp(m)%icml, &
+            chksz4d, TRIM(string), &
+            "Bq/m3","", &
+            TRIM(string))
       !           call nc_declare_4d(iunit, dimids4d, acml_varid(m),
       !     +          chksz4d, TRIM(compnamemc(mm))//"_avg_concentration_ml",
       !     +          "Bq*hour/m3","",
@@ -441,37 +484,37 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       end if
     end do
     if (itotcomp == 1) then
-      call nc_declare_3d(iunit, dimids3d, icblt_varid, &
-      chksz3d, "total_concentration_bl", &
-      "Bq/m3","", &
-      "total_concentration_bl")
-      call nc_declare_3d(iunit, dimids3d, acblt_varid, &
-      chksz3d, "total_avg_concentration_bl", &
-      "Bq/m3","", &
-      "total_average_concentration_bl")
-      call nc_declare_3d(iunit, dimids3d, act_varid, &
-      chksz3d, "total_acc_concentration", &
-      "Bq/m3","", &
-      "total_accumulated_concentration")
+      call nc_declare_3d(iunit, dimids3d, varid%icblt, &
+          chksz3d, "total_concentration_bl", &
+          "Bq/m3","", &
+          "total_concentration_bl")
+      call nc_declare_3d(iunit, dimids3d, varid%acblt, &
+          chksz3d, "total_avg_concentration_bl", &
+          "Bq/m3","", &
+          "total_average_concentration_bl")
+      call nc_declare_3d(iunit, dimids3d, varid%act, &
+          chksz3d, "total_acc_concentration", &
+          "Bq/m3","", &
+          "total_accumulated_concentration")
       if (kdrydep(mm) > 0) then
-        call nc_declare_3d(iunit, dimids3d, iddt_varid, &
-        chksz3d, "total_dry_deposition", &
-        "Bq/m2","", &
-        "total_dry_deposition")
-        call nc_declare_3d(iunit, dimids3d, accddt_varid, &
-        chksz3d, "total_acc_dry_deposition", &
-        "Bq/m2","", &
-        "total_accumulated_dry_deposition")
+        call nc_declare_3d(iunit, dimids3d, varid%iddt, &
+            chksz3d, "total_dry_deposition", &
+            "Bq/m2","", &
+            "total_dry_deposition")
+        call nc_declare_3d(iunit, dimids3d, varid%accddt, &
+            chksz3d, "total_acc_dry_deposition", &
+            "Bq/m2","", &
+            "total_accumulated_dry_deposition")
       end if
       if (kwetdep(mm) > 0) then
-        call nc_declare_3d(iunit, dimids3d, iwdt_varid, &
-        chksz3d, "total_wet_deposition", &
-        "Bq/m2","", &
-        "total_wet_deposition")
-        call nc_declare_3d(iunit, dimids3d, accwdt_varid, &
-        chksz3d, "total_acc_wet_deposition", &
-        "Bq/m2","", &
-        "total_accumulated_wet_deposition")
+        call nc_declare_3d(iunit, dimids3d, varid%iwdt, &
+            chksz3d, "total_wet_deposition", &
+            "Bq/m2","", &
+            "total_wet_deposition")
+        call nc_declare_3d(iunit, dimids3d, varid%accwdt, &
+            chksz3d, "total_acc_wet_deposition", &
+            "Bq/m2","", &
+            "total_accumulated_wet_deposition")
       end if
     end if
     call check(nf90_enddef(iunit))
@@ -480,8 +523,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 ! set the runtime
   ihrs_pos = ihrs_pos + 1
   call hrdiff(0,0,iftime,itime,ihrs,ierror,ierror)
-  call check(nf90_put_var(iunit,t_varid,start=[ihrs_pos],values=FLOAT(ihrs)), &
-  "set time")
+  call check(nf90_put_var(iunit, varid%t, start=[ihrs_pos], values=FLOAT(ihrs)), &
+      "set time")
 
   ipos = [1, 1, ihrs_pos, ihrs_pos]
   isize = [nx, ny, 1, 1]
@@ -533,8 +576,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       end do
     end do
     if(idebug == 1) call ftest('ps', field1)
-    call check(nf90_put_var(iunit, ps_varid,start=[ipos],count=[isize],values=field1), &
-    "set_ps")
+    call check(nf90_put_var(iunit, varid%ps, start=[ipos], count=[isize], &
+        values=field1), "set_ps")
   end if
 
 !..total accumulated precipitation from start of run
@@ -548,8 +591,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     idextr=nint(float(istep)/float(nsteph))
     if(idebug == 1) call ftest('accprec', field1)
 
-    call check(nf90_put_var(iunit, accum_prc_varid, start=[ipos], count=[isize], &
-    values=field1), "set_accum_prc")
+    call check(nf90_put_var(iunit, varid%accum_prc, start=[ipos], count=[isize], &
+        values=field1), "set_accum_prc")
   end if
 
 !..mslp (if switched on)
@@ -561,8 +604,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     end do
     if(idebug == 1) call ftest('mslp', field1)
 
-    call check(nf90_put_var(iunit, mslp_varid, start=[ipos], count=[isize], &
-    values=field1), "set_mslp")
+    call check(nf90_put_var(iunit, varid%mslp, start=[ipos], count=[isize], &
+        values=field1), "set_mslp")
   end if
 
 !..instant height of boundary layer
@@ -573,8 +616,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   end do
   if(idebug == 1) call ftest('hbl', field4)
 
-  call check(nf90_put_var(iunit, ihbl_varid, start=[ipos], count=[isize], &
-  values=field4), "set_ihbl")
+  call check(nf90_put_var(iunit, varid%ihbl, start=[ipos], count=[isize], &
+      values=field4), "set_ihbl")
 
 !..average height of boundary layer
   do j=1,ny
@@ -584,8 +627,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   end do
   if(idebug == 1) call ftest('avghbl', field1)
 
-  call check(nf90_put_var(iunit, ahbl_varid, start=[ipos], count=[isize], &
-  values=field1), "set_ahbl")
+  call check(nf90_put_var(iunit, varid%ahbl, start=[ipos], count=[isize], &
+      values=field1), "set_ahbl")
 
 !..precipitation accummulated between field output // currently disable use 1 to write
   if(inprecip == -1) then
@@ -597,8 +640,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     idextr=nint(average*tstep/3600.)
     if(idebug == 1) call ftest('prec', field1)
 
-    call check(nf90_put_var(iunit, prc_varid, start=[ipos], count=[isize], &
-    values=field1), "set_prc")
+    call check(nf90_put_var(iunit, varid%prc, start=[ipos], count=[isize], &
+        values=field1), "set_prc")
   end if
 
 !..parameters for each component......................................
@@ -610,10 +653,10 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   !..instant Bq in and above boundary layer
     field1 = 0.0
     field2 = 0.0
-    bqtot1=0.0d0
-    bqtot2=0.0d0
-    nptot1=0
-    nptot2=0
+    bqtot1 = 0.0
+    bqtot2 = 0.0
+    nptot1 = 0
+    nptot2 = 0
 
     do n=1,npart
       if(icomp(n) == mm) then
@@ -635,10 +678,10 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     write(iulog,*) '   Bq,particles in    abl: ',bqtot1,nptot1
     write(iulog,*) '   Bq,particles above abl: ',bqtot2,nptot2
     write(iulog,*) '   Bq,particles          : ',bqtot1+bqtot2, &
-    nptot1+nptot2
+        nptot1+nptot2
 
   !..instant part of Bq in boundary layer
-    scale=100.
+    scale = 100.
     do j=1,ny
       do i=1,nx
         if(field1(i,j)+field2(i,j) > 0.) then
@@ -659,20 +702,15 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     end do
     if(idebug == 1) call ftest('conc', field2)
 
-    call check(nf90_put_var(iunit, icbl_varid(m), start=[ipos], count=[isize], &
-    values=field2), "set_icbl")
+    call check(nf90_put_var(iunit, varid%comp(m)%icbl, start=[ipos], count=[isize], &
+        values=field2), "set_icbl")
 
   !..average concentration in boundary layer
-    do j=1,ny
-      do i=1,nx
-        field1(i,j)=cscale*avgbq1(i,j,m) &
-        /(garea(i,j)*avghbl(i,j))
-      end do
-    end do
+    field1 = cscale*avgbq1(:,:,m)/(garea*avghbl)
     if(idebug == 1) call ftest('avgconc', field1)
 
-    call check(nf90_put_var(iunit, acbl_varid(m), start=[ipos], count=[isize], &
-    values=field1), "set_acbl")
+    call check(nf90_put_var(iunit, varid%comp(m)%acbl, start=[ipos], count=[isize], &
+        values=field1), "set_acbl")
 
   !..dry deposition
     if(kdrydep(mm) == 1) then
@@ -684,48 +722,36 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       end do
       if(idebug == 1) call ftest('dry', field1)
 
-      call check(nf90_put_var(iunit, idd_varid(m), start=[ipos], count=[isize], &
-      values=field1), "set_idd(m)")
+      call check(nf90_put_var(iunit, varid%comp(m)%idd, start=[ipos], count=[isize], &
+          values=field1), "set_idd(m)")
     end if
 
   !..wet deposition
     if(kwetdep(mm) == 1) then
-      do j=1,ny
-        do i=1,nx
-          field1(i,j)=dscale*sngl(depwet(i,j,m))/garea(i,j)
-          accwet(i,j,m)=accwet(i,j,m)+depwet(i,j,m)
-        end do
-      end do
+      field1 = dscale*sngl(depwet(:,:,m))/garea
+      accwet(:,:,m) = accwet(:,:,m) + depwet(:,:,m)
       if(idebug == 1) call ftest('wet', field1)
 
-      call check(nf90_put_var(iunit, iwd_varid(m), start=[ipos], count=[isize], &
-      values=field1), "set_iwd(m)")
+      call check(nf90_put_var(iunit, varid%comp(m)%iwd, start=[ipos], count=[isize], &
+          values=field1), "set_iwd(m)")
     end if
 
   !..accumulated dry deposition
     if(kdrydep(mm) == 1) then
-      do j=1,ny
-        do i=1,nx
-          field1(i,j)=dscale*sngl(accdry(i,j,m))/garea(i,j)
-        end do
-      end do
+      field1 = dscale*sngl(accdry(:,:,m))/garea
       if(idebug == 1) call ftest('adry', field1)
 
-      call check(nf90_put_var(iunit, accdd_varid(m),start=[ipos],count=[isize], &
-      values=field1), "set_accdd(m)")
+      call check(nf90_put_var(iunit, varid%comp(m)%accdd, start=[ipos], count=[isize], &
+          values=field1), "set_accdd(m)")
     end if
 
   !..accumulated wet deposition
     if(kwetdep(mm) == 1) then
-      do j=1,ny
-        do i=1,nx
-          field1(i,j)=dscale*sngl(accwet(i,j,m))/garea(i,j)
-        end do
-      end do
+      field1 = dscale*sngl(accwet(:,:,m))/garea
       if(idebug == 1) call ftest('awet', field1)
 
-      call check(nf90_put_var(iunit, accwd_varid(m),start=[ipos],count=[isize], &
-      values=field1), "set_accwd(m)")
+      call check(nf90_put_var(iunit, varid%comp(m)%accwd, start=[ipos], count=[isize], &
+          values=field1), "set_accwd(m)")
     end if
 
   !..instant part of Bq in boundary layer
@@ -737,7 +763,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       do i=1,nx
         if(avgbq1(i,j,m)+avgbq2(i,j,m) > 0.) then
           field3(i,j)=scale*avgbq1(i,j,m) &
-          /(avgbq1(i,j,m)+avgbq2(i,j,m))
+              /(avgbq1(i,j,m)+avgbq2(i,j,m))
         else
           field3(i,j)=undef
         end if
@@ -746,25 +772,17 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     if(idebug == 1) call ftest('apbq', field3, contains_undef=.true.)
 
   !..instant concentration on surface (not in felt-format)
-    do j=1,ny
-      do i=1,nx
-        field3(i,j)= sngl(concen(i,j,m))
-      end do
-    end do
+    field3 = concen(:,:,m)
     if(idebug == 1) call ftest('concen', field3, contains_undef=.true.)
-    call check(nf90_put_var(iunit, ic_varid(m),start=[ipos],count=[isize], &
-    values=field3), "set_ic(m)")
+    call check(nf90_put_var(iunit, varid%comp(m)%ic, start=[ipos], count=[isize], &
+        values=field3), "set_ic(m)")
 
   !..accumulated/integrated concentration surface = dose
-    do j=1,ny
-      do i=1,nx
-        field3(i,j)= sngl(concacc(i,j,m))
-      end do
-    end do
+    field3 = concacc(:,:,m)
     if(idebug == 1) call ftest('concac', field3, contains_undef=.true.)
 
-    call check(nf90_put_var(iunit, ac_varid(m),start=[ipos],count=[isize], &
-    values=field3), "set_ac(m)")
+    call check(nf90_put_var(iunit, varid%comp(m)%ac, start=[ipos], count=[isize], &
+        values=field3), "set_ac(m)")
   !.....end do m=1,ncomp
   end do
 
@@ -800,35 +818,18 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     end do
 
   !..total instant concentration in boundary layer
-    do j=1,ny
-      do i=1,nx
-      ! c         hbl=rt1*hbl1(i,j)+rt2*hbl2(i,j)
-        hbl=field4(i,j)
-        field2(i,j)=cscale*field1(i,j)/(hbl*garea(i,j))
-      end do
-    end do
+  ! field4 : hbl
+    field2 = cscale*field1/(field4*garea)
     if(idebug == 1) call ftest('tconc', field2)
-    call check(nf90_put_var(iunit, icblt_varid,start=[ipos],count=[isize], &
-    values=field2), "set_icblt(m)")
+    call check(nf90_put_var(iunit, varid%icblt, start=[ipos], count=[isize], &
+        values=field2), "set_icblt(m)")
 
   !..total average concentration in boundary layer
-    field1 = 0.0
-    do m=1,ncomp
-      do j=1,ny
-        do i=1,nx
-          field1(i,j)=field1(i,j)+avgbq1(i,j,m)
-        end do
-      end do
-    end do
-    do j=1,ny
-      do i=1,nx
-        field1(i,j)=cscale*field1(i,j) &
-        /(garea(i,j)*avghbl(i,j))
-      end do
-    end do
+    field1 = sum(avgbq1, dim=3)
+    field1 = cscale*field1/(garea*avghbl)
     if(idebug == 1) call ftest('tavgconc', field1)
-    call check(nf90_put_var(iunit, acblt_varid,start=[ipos],count=[isize], &
-    values=field1), "set_acblt")
+    call check(nf90_put_var(iunit, varid%acblt, start=[ipos], count=[isize], &
+        values=field1), "set_acblt")
 
   !..total dry deposition
     if(is_dry_deposition) then
@@ -836,22 +837,13 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       do m=1,ncomp
         mm=idefcomp(m)
         if(kdrydep(mm) == 1) then
-          do j=1,ny
-            do i=1,nx
-              field1(i,j)=field1(i,j)+sngl(depdry(i,j,m))
-            end do
-          end do
+          field1 = field1 + depdry(:,:,m)
         end if
       end do
-      do j=1,ny
-        do i=1,nx
-          field1(i,j)=dscale*field1(i,j)/garea(i,j)
-        end do
-      end do
+      field1 = dscale*field1/garea
       if(idebug == 1) call ftest('tdry', field1)
-      call check(nf90_put_var(iunit, iddt_varid,start=[ipos],count=[isize], &
-      values=field1), "set_iddt")
-
+      call check(nf90_put_var(iunit, varid%iddt, start=[ipos], count=[isize], &
+          values=field1), "set_iddt")
     end if
 
   !..total wet deposition
@@ -860,21 +852,13 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       do m=1,ncomp
         mm=idefcomp(m)
         if(kwetdep(mm) == 1) then
-          do j=1,ny
-            do i=1,nx
-              field1(i,j)=field1(i,j)+sngl(depwet(i,j,m))
-            end do
-          end do
+          field1 = field1 + depwet(:,:,m)
         end if
       end do
-      do j=1,ny
-        do i=1,nx
-          field1(i,j)=dscale*field1(i,j)/garea(i,j)
-        end do
-      end do
+      field1 = dscale*field1/garea
       if(idebug == 1) call ftest('twet', field1)
-      call check(nf90_put_var(iunit, iwdt_varid,start=[ipos],count=[isize], &
-      values=field1), "set_iwdt")
+      call check(nf90_put_var(iunit, varid%iwdt, start=[ipos], count=[isize], &
+          values=field1), "set_iwdt")
     end if
 
   !..total accumulated dry deposition
@@ -883,21 +867,13 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       do m=1,ncomp
         mm=idefcomp(m)
         if(kdrydep(mm) == 1) then
-          do j=1,ny
-            do i=1,nx
-              field1(i,j)=field1(i,j)+sngl(accdry(i,j,m))
-            end do
-          end do
+          field1 = field1 + accdry(:,:,m)
         end if
       end do
-      do j=1,ny
-        do i=1,nx
-          field1(i,j)=dscale*field1(i,j)/garea(i,j)
-        end do
-      end do
+      field1 = dscale*field1/garea
       if(idebug == 1) call ftest('tadry', field1)
-      call check(nf90_put_var(iunit, accddt_varid,start=[ipos],count=[isize], &
-      values=field1), "set_accddt")
+      call check(nf90_put_var(iunit, varid%accddt, start=[ipos], count=[isize], &
+          values=field1), "set_accddt")
     end if
 
   !..total accumulated wet deposition
@@ -906,21 +882,13 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       do m=1,ncomp
         mm=idefcomp(m)
         if(kwetdep(mm) == 1) then
-          do j=1,ny
-            do i=1,nx
-              field1(i,j)=field1(i,j)+sngl(accwet(i,j,m))
-            end do
-          end do
+          field1 = field1 + accwet(:,:,m)
         end if
       end do
-      do j=1,ny
-        do i=1,nx
-          field1(i,j)=dscale*field1(i,j)/garea(i,j)
-        end do
-      end do
+      field1 = dscale*field1/garea
       if(idebug == 1) call ftest('tawet', field1)
-      call check(nf90_put_var(iunit, accwdt_varid,start=[ipos],count=[isize], &
-      values=field1), "set_accwdt")
+      call check(nf90_put_var(iunit, varid%accwdt, start=[ipos], count=[isize], &
+          values=field1), "set_accwdt")
     end if
 
   !..total instant part of Bq in boundary layer
@@ -929,21 +897,13 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
   !..total average part of Bq in boundary layer
     scale=100.
-    field1 = 0.0
-    field2 = 0.0
-    do m=1,ncomp
-      do j=1,ny
-        do i=1,nx
-          field1(i,j)=field1(i,j)+sngl(avgbq1(i,j,m))
-          field2(i,j)=field2(i,j)+sngl(avgbq2(i,j,m))
-        end do
-      end do
-    end do
+    field1 = sum(avgbq1, dim=3)
+    field2 = sum(avgbq2, dim=3)
     do j=1,ny
       do i=1,nx
         if(field1(i,j)+field2(i,j) > 0.) then
           field3(i,j)=scale*field1(i,j) &
-          /(field1(i,j)+field2(i,j))
+              /(field1(i,j)+field2(i,j))
         else
           field3(i,j)=undef
         end if
@@ -952,18 +912,11 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     if(idebug == 1) call ftest('tapbq', field3, contains_undef=.true.)
 
   !..total accumulated/integrated concentration
-    field3 = 0.0
-    do m=1,ncomp
-      do j=1,ny
-        do i=1,nx
-          field3(i,j)= field3(i,j) + sngl(concacc(i,j,m))
-        end do
-      end do
-    end do
+    field3 = sum(concacc, dim=3)
     if(idebug == 1) call ftest('concac', field3, contains_undef=.true.)
 
-    call check(nf90_put_var(iunit, act_varid,start=[ipos],count=[isize], &
-    values=field3), "set_act")
+    call check(nf90_put_var(iunit, varid%act, start=[ipos], count=[isize], &
+        values=field3), "set_act")
 
   !.....end if(ncomp.gt.1 .and. itotcomp.eq.1) then
   end if
@@ -986,41 +939,25 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
     !..dry deposition
       if(kdrydep(mm) == 1) then
-        do j=1,ny
-          do i=1,nx
-            field1(i,j)=sngl(dblscale*depdry(i,j,m))
-          end do
-        end do
+        field1 = dblscale*depdry(:,:,m)
         if(idebug == 1) call ftest('dry%', field1)
       end if
 
     !..wet deposition
       if(kwetdep(mm) == 1) then
-        do j=1,ny
-          do i=1,nx
-            field1(i,j)=sngl(dblscale*depwet(i,j,m))
-          end do
-        end do
+        field1 = dblscale*depwet(:,:,m)
         if(idebug == 1) call ftest('wet%', field1)
       end if
 
     !..accumulated dry deposition
       if(kdrydep(mm) == 1) then
-        do j=1,ny
-          do i=1,nx
-            field1(i,j)=sngl(dblscale*accdry(i,j,m))
-          end do
-        end do
+        field1 = dblscale*accdry(:,:,m)
         if(idebug == 1) call ftest('adry%', field1)
       end if
 
     !..accumulated wet deposition
       if(kwetdep(mm) == 1) then
-        do j=1,ny
-          do i=1,nx
-            field1(i,j)=sngl(dblscale*accwet(i,j,m))
-          end do
-        end do
+        field1 = dblscale*accwet(:,:,m)
         if(idebug == 1) call ftest('awet%', field1)
       end if
 
@@ -1035,9 +972,9 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   if(imodlevel /= 1) goto 800
 
 ! write k, ap, b - will be overwritten several times, but not data/timecritical
-  call check(nf90_put_var(iunit, k_varid, vlevel(2)), "set_k")
-  call check(nf90_put_var(iunit, ap_varid, alevel(2)), "set_ap")
-  call check(nf90_put_var(iunit, b_varid, blevel(2)), "set_b")
+  call check(nf90_put_var(iunit, varid%k, vlevel(2)), "set_k")
+  call check(nf90_put_var(iunit, varid%ap, alevel(2)), "set_ap")
+  call check(nf90_put_var(iunit, varid%b, blevel(2)), "set_b")
 
 
 !..concentration in each layer
@@ -1100,22 +1037,14 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       end if
 
       do m=1,ncomp
-        do j=1,ny
-          do i=1,nx
-            avgbq(i,j,k,m)=avgbq(i,j,k,m)/field4(i,j)
-          end do
-        end do
+        avgbq(:,:,k,m) = avgbq(:,:,k,m)/field4
       end do
     end do
 
   !..average concentration in each layer for each type
     do m=1,ncomp
       do k=1,nk-1
-        do j=1,ny
-          do i=1,nx
-            field1(i,j)=cscale*sngl(avgbq(i,j,k,m))
-          end do
-        end do
+        field1 = cscale*avgbq(:,:,k,m)
         if(idebug == 1) call ftest('avconcl', field1)
         ko=klevel(k+1)
         lvla=nint(alevel(k+1)*10.)
@@ -1124,8 +1053,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
         if (loop == 2) then
           ipos(3) = k
-          call check(nf90_put_var(iunit, icml_varid(m), start=ipos, &
-          count=isize, values=field1), "icml(m)")
+          call check(nf90_put_var(iunit, varid%comp(m)%icml, start=ipos, &
+              count=isize, values=field1), "icml(m)")
         ! reset ipos(3) for 3d fields to time-pos (=ipos(4))
           ipos(3) = ipos(4)
         endif
@@ -1136,19 +1065,11 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     if(ncomp > 1 .AND. itotcomp == 1) then
       do m=2,ncomp
         do k=1,nk-1
-          do j=1,ny
-            do i=1,nx
-              avgbq(i,j,k,1)=avgbq(i,j,k,1)+avgbq(i,j,k,m)
-            end do
-          end do
+          avgbq(:,:,k,1) = avgbq(:,:,k,1) + avgbq(:,:,k,m)
         end do
       end do
       do k=1,nk-1
-        do j=1,ny
-          do i=1,nx
-            field1(i,j)=cscale*avgbq(i,j,k,1)
-          end do
-        end do
+        field1 = cscale*avgbq(:,:,k,1)
         if(idebug == 1) call ftest('tavconcl', field1)
         ko=klevel(k+1)
         lvla=nint(alevel(k+1)*10.)
@@ -1183,26 +1104,25 @@ end subroutine fldout_nc
 
 
 subroutine nc_declare_3d(iunit, dimids, varid, &
-  chksz, varnm, &
-  units, stdnm, metnm)
+    chksz, varnm, units, stdnm, metnm)
   USE netcdf
   USE snapdebug, only: iulog
-  implicit none
   INTEGER, INTENT(OUT)   :: varid
   INTEGER, INTENT(IN)    :: iunit, dimids(3), chksz(3)
   CHARACTER(LEN=*), INTENT(IN) :: varnm, stdnm, metnm, units
 
   if (.false.) write(*,*) chksz ! Silence compiler
 
-  write(iulog,*) "declaring ", iunit, TRIM(varnm), TRIM(units) &
-  ,TRIM(stdnm),TRIM(metnm)
+  write(iulog,*) "declaring ", iunit, TRIM(varnm), TRIM(units), &
+      TRIM(stdnm),TRIM(metnm)
   call check(nf90_def_var(iunit, TRIM(varnm), &
-  NF90_FLOAT, dimids, varid), "def_"//varnm)
+      NF90_FLOAT, dimids, varid), "def_"//varnm)
 !       call check(NF_DEF_VAR_CHUNKING(iunit, varid, NF_CHUNKED, chksz))
   call check(NF90_DEF_VAR_DEFLATE(iunit, varid, 1,1,1))
   call check(nf90_put_att(iunit,varid, "units", TRIM(units)))
-  if (LEN_TRIM(stdnm) > 0) &
-  call check(nf90_put_att(iunit,varid,"standard_name", TRIM(stdnm)))
+  if (LEN_TRIM(stdnm) > 0) then
+    call check(nf90_put_att(iunit,varid,"standard_name", TRIM(stdnm)))
+  endif
 !       if (LEN_TRIM(metnm).gt.0)
 !     +    call check(nf_put_att_text(iunit,varid,"metno_name",
 !     +    LEN_TRIM(metnm), TRIM(metnm)))
@@ -1213,25 +1133,23 @@ subroutine nc_declare_3d(iunit, dimids, varid, &
 end subroutine nc_declare_3d
 
 subroutine nc_declare_4d(iunit, dimids, varid, &
-  chksz, varnm, &
-  units, stdnm, metnm)
+    chksz, varnm, units, stdnm, metnm)
   USE netcdf
   USE snapdebug, only: iulog
-  implicit none
   INTEGER, INTENT(OUT)   :: varid
   INTEGER, INTENT(IN)    :: iunit, dimids(4), chksz(4)
   CHARACTER(LEN=*), INTENT(IN) :: varnm, stdnm, metnm, units
 
-
-  write(iulog,*) "declaring ", iunit, TRIM(varnm), TRIM(units) &
-  ,TRIM(stdnm),TRIM(metnm)
+  write(iulog,*) "declaring ", iunit, TRIM(varnm), TRIM(units), &
+      TRIM(stdnm),TRIM(metnm)
   call check(nf90_def_var(iunit, TRIM(varnm), &
-  NF90_FLOAT, dimids, varid), "def_"//varnm)
+      NF90_FLOAT, dimids, varid), "def_"//varnm)
   call check(NF90_DEF_VAR_CHUNKING(iunit, varid, NF90_CHUNKED, chksz))
   call check(NF90_DEF_VAR_DEFLATE(iunit, varid, 1,1,1))
   call check(nf90_put_att(iunit,varid, "units", TRIM(units)))
-  if (LEN_TRIM(stdnm) > 0) &
-  call check(nf90_put_att(iunit,varid,"standard_name", TRIM(stdnm)))
+  if (LEN_TRIM(stdnm) > 0) then
+    call check(nf90_put_att(iunit,varid,"standard_name", TRIM(stdnm)))
+  endif
 !       if (LEN_TRIM(metnm).gt.0)
 !     +    call check(nf_put_att_text(iunit,varid,"metno_name",
 !     +    LEN_TRIM(metnm), TRIM(metnm)))
@@ -1243,44 +1161,42 @@ end subroutine nc_declare_4d
 
 subroutine nc_set_vtrans(iunit, kdimid,k_varid,ap_varid,b_varid)
   USE netcdf
-  implicit none
   INTEGER, INTENT(IN) :: iunit, kdimid
   INTEGER, INTENT(OUT) :: k_varid, ap_varid, b_varid
   INTEGER ::p0_varid
 
   call check(nf90_def_var(iunit, "k", &
-  NF90_FLOAT, kdimid, k_varid), "def_k")
+      NF90_FLOAT, kdimid, k_varid), "def_k")
   call check(nf90_put_att(iunit,k_varid, "standard_name", &
-  TRIM("atmosphere_hybrid_sigma_pressure_coordinate")))
+      TRIM("atmosphere_hybrid_sigma_pressure_coordinate")))
   call check(nf90_put_att(iunit,k_varid, "formula", &
-  TRIM("p(n,k,j,i) = ap(k) + b(k)*ps(n,j,i)")))
+      TRIM("p(n,k,j,i) = ap(k) + b(k)*ps(n,j,i)")))
   call check(nf90_put_att(iunit,k_varid, "formula_terms", &
-  TRIM("ap: ap b: b ps: surface_air_pressure p0: p0")))
+      TRIM("ap: ap b: b ps: surface_air_pressure p0: p0")))
   call check(nf90_put_att(iunit,k_varid, "positive", TRIM("down")))
 !       call check(nf_put_var_real(iunit, k_varid, vlevel))
 
   call check(nf90_def_var(iunit, "ap", &
-  NF90_FLOAT, kdimid, ap_varid), "def_ap")
+      NF90_FLOAT, kdimid, ap_varid), "def_ap")
   call check(nf90_put_att(iunit,ap_varid, "units", TRIM("hPa")))
 !       call check(nf_put_var_real(iunit, ap_varid, alevel))
 
   call check(nf90_def_var(iunit, "b", &
-  NF90_FLOAT, kdimid, b_varid), "def_b")
+      NF90_FLOAT, kdimid, b_varid), "def_b")
 !       call check(nf_put_var_real(iunit, ap_varid, blevel))
 
   call check(nf90_def_var(iunit, "p0", &
-  NF90_FLOAT, varid=p0_varid))
+      NF90_FLOAT, varid=p0_varid))
   call check(nf90_put_att(iunit,p0_varid, "units", &
-  TRIM("hPa")))
+      TRIM("hPa")))
   call check(nf90_put_var(iunit, p0_varid, 100))
 
 end subroutine nc_set_vtrans
 
 subroutine nc_set_projection(iunit, xdimid, ydimid, &
-  igtype,nx,ny,gparam,garea, xm, ym, &
-  simulation_start)
+    igtype,nx,ny,gparam,garea, xm, ym, &
+    simulation_start)
   USE netcdf
-  implicit none
   INTEGER, INTENT(IN) :: iunit, xdimid, ydimid, igtype, nx, ny
   REAL(real32), INTENT(IN):: gparam(8)
   REAL(real32), INTENT(IN), DIMENSION(nx,ny) :: garea
@@ -1296,29 +1212,29 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
   real(kind=real32) :: llparam(6) = [1.0, 1.0, 1.0, 1.0, 0.0, 0.0]
 
   call check(nf90_def_var(iunit, "x", &
-  NF90_FLOAT, xdimid, x_varid))
+      NF90_FLOAT, xdimid, x_varid))
   call check(nf90_def_var(iunit, "y", &
-  NF90_FLOAT, ydimid, y_varid))
+      NF90_FLOAT, ydimid, y_varid))
   dimids = [xdimid, ydimid]
 
   call check(nf90_def_var(iunit, "projection", &
-  NF90_SHORT, varid=proj_varid))
+      NF90_SHORT, varid=proj_varid))
 
   call check(nf90_put_att(iunit, NF90_GLOBAL, "Conventions", &
-  "CF-1.0"))
+      "CF-1.0"))
 
 ! a reference-time, same as in WRF
   call check(nf90_put_att(iunit, NF90_GLOBAL, &
-  "SIMULATION_START_DATE", trim(simulation_start)))
+      "SIMULATION_START_DATE", trim(simulation_start)))
 
   if (igtype == 2) then
   !..geographic
     call check(nf90_put_att(iunit,x_varid, "units", &
-    TRIM("degrees_east")))
+        TRIM("degrees_east")))
     call check(nf90_put_att(iunit,y_varid, "units", &
-    TRIM("degrees_north")))
+        TRIM("degrees_north")))
     call check(nf90_put_att(iunit,proj_varid, &
-    "grid_mapping_name", TRIM("latitude_longitude")))
+        "grid_mapping_name", TRIM("latitude_longitude")))
     do i=1,nx
       xvals(i) = gparam(1) + (i-1)*gparam(3)
     end do
@@ -1329,21 +1245,21 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
   elseif (igtype == 3) then
   !..rot_geographic
     call check(nf90_put_att(iunit,x_varid, "units", &
-    TRIM("degrees")))
+        TRIM("degrees")))
     call check(nf90_put_att(iunit,y_varid, "units", &
-    TRIM("degrees")))
+        TRIM("degrees")))
     call check(nf90_put_att(iunit,x_varid, "standard_name", &
-    TRIM("grid_longitude")))
+        TRIM("grid_longitude")))
     call check(nf90_put_att(iunit,y_varid, "standard_name", &
-    TRIM("grid_latitude")))
+        TRIM("grid_latitude")))
     call check(nf90_put_att(iunit,proj_varid, &
-    "grid_mapping_name", TRIM("rotated_latitude_longitude")))
+        "grid_mapping_name", TRIM("rotated_latitude_longitude")))
     val = 180+gparam(5)
     if (val > 360) val = val - 360
     call check(nf90_put_att(iunit,proj_varid, &
-    "grid_north_pole_longitude", val))
+        "grid_north_pole_longitude", val))
     call check(nf90_put_att(iunit,proj_varid, &
-    "grid_north_pole_latitude", 90.0-gparam(6)))
+        "grid_north_pole_latitude", 90.0-gparam(6)))
     call check(nf90_sync(iunit))
 
     do i=1,nx
@@ -1359,19 +1275,19 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
     call check(nf90_put_att(iunit,x_varid, "units", TRIM("m")))
     call check(nf90_put_att(iunit,y_varid, "units", TRIM("m")))
     call check(nf90_put_att(iunit,x_varid, "standard_name", &
-    TRIM("projection_x_coordinate")))
+        TRIM("projection_x_coordinate")))
     call check(nf90_put_att(iunit,y_varid, "standard_name", &
-    TRIM("projection_y_coordinate")))
+        TRIM("projection_y_coordinate")))
     call check(nf90_put_att(iunit,proj_varid, &
-    "grid_mapping_name", TRIM("polar_stereographic")))
+        "grid_mapping_name", TRIM("polar_stereographic")))
     val = 180+gparam(5)
     if (val > 360) val = val - 360
     call check(nf90_put_att(iunit,proj_varid, &
-    "straight_vertical_longitude_from_pole", gparam(4)))
+        "straight_vertical_longitude_from_pole", gparam(4)))
     call check(nf90_put_att(iunit,proj_varid, &
-    "standard_parallel", gparam(5)))
+        "standard_parallel", gparam(5)))
     call check(nf90_put_att(iunit,proj_varid, &
-    "latitude_of_projection_origin", 90))
+        "latitude_of_projection_origin", 90))
   !..increment
     do i=1,nx
       xvals(i) = (i-gparam(1))*gparam(7)
@@ -1385,17 +1301,17 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
     call check(nf90_put_att(iunit,x_varid, "units", TRIM("m")))
     call check(nf90_put_att(iunit,y_varid, "units", TRIM("m")))
     call check(nf90_put_att(iunit,x_varid, "standard_name", &
-    TRIM("projection_x_coordinate")))
+        TRIM("projection_x_coordinate")))
     call check(nf90_put_att(iunit,y_varid, "standard_name", &
-    TRIM("projection_y_coordinate")))
+        TRIM("projection_y_coordinate")))
     call check(nf90_put_att(iunit,proj_varid, "grid_mapping_name", &
-    TRIM("lambert_conformal_conic")))
+        TRIM("lambert_conformal_conic")))
     call check(nf90_put_att(iunit,proj_varid, &
-    "longitude_of_central_meridian", gparam(5)))
+        "longitude_of_central_meridian", gparam(5)))
     call check(nf90_put_att(iunit,proj_varid, &
-    "standard_parallel", gparam(6)))
+        "standard_parallel", gparam(6)))
     call check(nf90_put_att(iunit,proj_varid, &
-    "latitude_of_projection_origin", gparam(6)))
+        "latitude_of_projection_origin", gparam(6)))
 
     xvals(1) = gparam(1)
     yvals(1) = gparam(2)
@@ -1431,16 +1347,16 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
   call check(nf90_sync(iunit))
 
   call check(nf90_def_var(iunit, "longitude", &
-  NF90_FLOAT, dimids, lon_varid))
+      NF90_FLOAT, dimids, lon_varid))
   call check(NF90_DEF_VAR_DEFLATE(iunit, lon_varid, 1,1,1))
   call check(nf90_sync(iunit))
   call check(nf90_def_var(iunit, "latitude", &
-  NF90_FLOAT, dimids, lat_varid))
+      NF90_FLOAT, dimids, lat_varid))
   call check(nf90_sync(iunit))
   call check(nf90_put_att(iunit,lon_varid, "units", &
-  TRIM("degrees_east")))
+      TRIM("degrees_east")))
   call check(nf90_put_att(iunit,lat_varid, "units", &
-  TRIM("degrees_north")))
+      TRIM("degrees_north")))
 
   call check(nf90_sync(iunit))
 
@@ -1452,7 +1368,7 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
     end do
   end do
   call xyconvert(nx*ny, lon, lat,igtype, gparam, &
-  &                          2, llparam, ierror)
+      2, llparam, ierror)
   if (ierror /= 0) then
     write(*,*) "error converting pos to latlon-projection"
     error stop 1
@@ -1462,41 +1378,37 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
 
 !.... create cell_area
   call check(nf90_def_var(iunit, "cell_area", &
-  NF90_FLOAT, dimids, carea_varid))
+      NF90_FLOAT, dimids, carea_varid))
   call check(nf90_put_att(iunit,carea_varid, "units", &
-  TRIM("m2")))
+      TRIM("m2")))
   call check(nf90_put_att(iunit,carea_varid, "grid_mapping", &
-  TRIM("projection")))
+      TRIM("projection")))
   call check(nf90_put_att(iunit,carea_varid, "coordinates", &
-  TRIM("longitude latitude")))
+      TRIM("longitude latitude")))
 
   call check(nf90_put_var(iunit, carea_varid, garea))
 
 !.... add map_factor_x and map_factor_y
   call check(nf90_def_var(iunit, "map_factor_x", &
-  NF90_FLOAT, dimids, mapx_varid))
-  call check(nf90_put_att(iunit,mapx_varid, "units", &
-  TRIM("1")))
+      NF90_FLOAT, dimids, mapx_varid))
+  call check(nf90_put_att(iunit,mapx_varid, "units", "1"))
   call check(nf90_put_att(iunit,mapx_varid, "grid_mapping", &
-  TRIM("projection")))
+      TRIM("projection")))
   call check(nf90_put_att(iunit,mapx_varid, "coordinates", &
-  TRIM("longitude latitude")))
+      TRIM("longitude latitude")))
 
   call check(nf90_put_var(iunit, mapx_varid, xm))
 
   call check(nf90_def_var(iunit, "map_factor_y", &
-  NF90_FLOAT, dimids, mapy_varid))
-  call check(nf90_put_att(iunit,mapy_varid, "units", &
-  TRIM("1")))
+      NF90_FLOAT, dimids, mapy_varid))
+  call check(nf90_put_att(iunit,mapy_varid, "units", "1"))
   call check(nf90_put_att(iunit,mapy_varid, "grid_mapping", &
-  TRIM("projection")))
+      TRIM("projection")))
   call check(nf90_put_att(iunit,mapy_varid, "coordinates", &
-  TRIM("longitude latitude")))
+      TRIM("longitude latitude")))
 
   call check(nf90_put_var(iunit, mapy_varid, ym))
 
-
   call check(nf90_sync(iunit))
-
 end subroutine nc_set_projection
 end module fldout_ncML
