@@ -23,41 +23,26 @@ module rmpartML
 
   contains
 
+!> Remove particles which are inactive
+!> or have lost (almost) all mass, in the last case the
+!> remaining mass is transferred to to the other particles
+!> in the same plume (or to the next plume if none left).
 subroutine rmpart(rmlimit)
-
-!  Purpose: Remove particles which are inactive
-!           or have lost (almost) all mass, in the last case the
-!           remaining mass is transferred to to the other particles
-!           in the same plume (or to the next plume if none left).
-
-
-  USE particleML
-  USE snapgrdML
-  USE snapparML
-  USE snapdimML, only: mdefcomp, nx, ny, nk
+  USE particleML, only: pdata
+  USE snapparML, only: ncomp, idefcomp, totalbq, icomp, iparnum
+  USE snapdimML, only: mdefcomp
   USE releaseML, only: iplume, nplume, npart, numtotal
   USE drydep, only: kdrydep
   USE wetdep, only: kwetdep
   USE decayML, only: kdecay
-  implicit none
-        
 
-  real ::    rmlimit
+  real, intent(in) :: rmlimit
 
-  integer :: nkeep,idep,m,n,npl,i,i1,i2,iredist
-  real ::    xmin,xmax,ymin,ymax,vmin,vmax
+  integer :: idep,m,n,npl,i,i1,i2,iredist
 
   integer :: npkeep(mdefcomp)
-  real ::    pbqmin(mdefcomp),pbqtotal(mdefcomp),pbqlost(mdefcomp)
-  real ::    pbqdist(mdefcomp)
-
-
-  xmin=1.
-  ymin=1.
-  xmax=float(nx)
-  ymax=float(ny)
-  vmin=vlevel(nk)
-  vmax=vlevel( 1)
+  real :: pbqmin(mdefcomp), pbqtotal(mdefcomp), pbqlost(mdefcomp)
+  real :: pbqdist(mdefcomp)
 
 !..rmlimit is now input, used to be 0.02 (2%)
   idep=0
@@ -76,17 +61,16 @@ subroutine rmpart(rmlimit)
   n=0
 
   do npl=1,nplume
-  
+
     i1=iplume(1,npl)
     i2=iplume(2,npl)
-  
+
   !..redistribution of lost mass (within one plume)
     if(idep == 1 .AND. i1 > 0) then
       do m=1,ncomp
         pbqtotal(m)=0.
         npkeep(m)=0
       end do
-      nkeep=0
       do i=i1,i2
         m=icomp(i)
         if(pdata(i)%rad > pbqmin(m)) then
@@ -95,7 +79,7 @@ subroutine rmpart(rmlimit)
         else
           pbqlost(m)=pbqlost(m)+pdata(i)%rad
           pdata(i)%rad=0.
-          pdata(i)%active = .FALSE. 
+          pdata(i)%active = .FALSE.
           pdata(i)%x=0.
           pdata(i)%y=0.
         end if
@@ -118,7 +102,7 @@ subroutine rmpart(rmlimit)
         end do
       end if
     end if
-  
+
   ! removal of particles outside of the domain
   ! by reordering of plumes
     iplume(1,npl)=n+1
@@ -134,7 +118,7 @@ subroutine rmpart(rmlimit)
         end if
       end if
     end do
-  
+
   ! updating plume-particle relation, or making plume empty
   ! (plumes are never removed!)
     iplume(2,npl)=n
@@ -142,7 +126,7 @@ subroutine rmpart(rmlimit)
       iplume(1,npl)=0
       iplume(2,npl)=-1
     end if
-  
+
   end do
 
 ! updating the used number of particles
