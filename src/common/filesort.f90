@@ -44,7 +44,6 @@ subroutine filesort(iunit,ierror)
 !         kavail(1): pointer to first forward  sorted timestep
 !         kavail(2): pointer to first backward sorted timestep
   USE iso_fortran_env, only: int16, error_unit
-  USE fileInfoML
   USE snapfldML
   USE snapfilML
   USE snapgrdML

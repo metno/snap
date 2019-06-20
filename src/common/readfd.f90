@@ -39,7 +39,6 @@ subroutine readfd(iunit,nav,ivcord,iparam,ilevel,ihdisp, &
 !            ilevel - level or level no.
 !            ihdisp - time displacement in hours (forecast length)
   USE iso_fortran_env, only: int16, error_unit
-  USE fileInfoML
   USE snapfilML
   USE snapgrdML
   USE snapdebug, only: iulog, idebug

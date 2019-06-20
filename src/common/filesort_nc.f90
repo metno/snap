@@ -46,7 +46,6 @@ subroutine filesort_nc
   USE iso_fortran_env, only: error_unit, real64, int64
   USE ieee_arithmetic, only: ieee_is_nan
   USE DateCalc
-  USE fileInfoML
   USE snapfilML
   USE snapgrdML
   USE snapfldML
