@@ -301,12 +301,12 @@ PROGRAM bsnap
 ! npcount(nk)
   integer, dimension(:), allocatable:: npcount
 ! b_start
-  real :: mhmin, mhmax	! minimum and maximum of mixing height
+  real :: mhmin, mhmax  ! minimum and maximum of mixing height
 ! b_end
   integer :: ndefcomp
 
   logical :: blfullmix
-  logical :: init = .TRUE. 
+  logical :: init = .TRUE.
 
   character(len=1024) ::  finput,fldfil,fldfilX,fldfilN,logfile,ftype, &
   fldtype, relfile
@@ -331,16 +331,18 @@ PROGRAM bsnap
 
 !   vcon(nx,ny,3)
   integer(kind=real64) :: epochSecs
+#if defined(VOLCANO)
   real, allocatable :: vcon(:,:,:)
   character(len=60) :: cfile
+#endif
 ! b 19.05
   integer :: itimev(5),j
 #if defined(TRAJ)
   real :: zzz
-  character(len=60) :: tr_file
+! character(len=60) :: tr_file
   integer :: ntraj,itraj
   real :: tlevel(100)
-  character(len=80) :: tname(10)	! name for the trajectory
+  character(len=80) :: tname(10) ! name for the trajectory
   integer :: tyear, tmon, tday, thour, tmin
   real :: distance
 #endif
@@ -468,7 +470,7 @@ PROGRAM bsnap
   maxhfc =+32767
   nfilef =0
   ifltim =0
-  blfullmix= .TRUE. 
+  blfullmix= .TRUE.
   idrydep=0
   iwetdep=0
 
@@ -519,13 +521,13 @@ PROGRAM bsnap
   iend=0
 
   do while (iend == 0)
-  
+
     nlines=nlines+1
     read(iuinp,fmt='(a)',err=11) cinput
-  
+
     ks=index(cinput,'*')
     if(ks < 1) ks=lcinp+1
-  
+
     if(ks == 1) then
       nkey=0
     else
@@ -540,24 +542,24 @@ PROGRAM bsnap
       call keywrd(1,cinput,'=',';',mkey,kwhere,nkey,ierror)
       if(ierror /= 0) goto 12
     end if
- 
+
     nkv = 0
     do ikey=1,nkey
-    
+
     ! c         l=kwhere(1,ikey)
       k1=kwhere(2,ikey)
       k2=kwhere(3,ikey)
       kv1=kwhere(4,ikey)
       kv2=kwhere(5,ikey)
-    
+
       if(kv1 > 0) then
         nkv=kv2-kv1+1
         ciname=cinput(kv1:kv2)
         cipart=cinput(kv1:kv2)//tchar
       end if
-    
+
     !=======================================================================
-    
+
       if(cinput(k1:k2) == 'positions.decimal') then
       !..positions.decimal
         ipostyp=1
@@ -649,10 +651,10 @@ PROGRAM bsnap
         irwalk=0
       elseif(cinput(k1:k2) == 'boundary.layer.full.mix.off') then
       !..boundary.layer.full.mix.off
-        blfullmix= .FALSE. 
+        blfullmix= .FALSE.
       elseif(cinput(k1:k2) == 'boundary.layer.full.mix.on') then
       !..boundary.layer.full.mix.on
-        blfullmix= .TRUE. 
+        blfullmix= .TRUE.
       elseif(cinput(k1:k2) == 'dry.deposition.old') then
       !..dry.deposition.old
         if(idrydep /= 0 .AND. idrydep /= 1) goto 12
@@ -1243,9 +1245,9 @@ PROGRAM bsnap
         write(error_unit,*) cinput
         goto 12
       end if
-    
+
     end do
-  
+
   end do
 
   goto 18
@@ -1465,7 +1467,7 @@ PROGRAM bsnap
         ierror=1
       end if
     end if
-  
+
     if(iwetdep == 1 .AND. kwetdep(m) == 1) then
       if(wetdeprat(m) > 0.) then
         i2=i2+1
@@ -1483,7 +1485,7 @@ PROGRAM bsnap
         ierror=1
       end if
     end if
-  
+
     if(kdecay(m) == 1 .AND. halftime(m) > 0.) then
       idecay=1
     else
@@ -1612,31 +1614,31 @@ PROGRAM bsnap
     speed=0.0
     iprecip=1
 #endif
-  
+
   !..initial no. of plumes and particles
     nplume=0
     npart=0
     nparnum=0
-  
+
   !..no. of timesteps per hour (adjust the timestep)
     nsteph=nint(3600./tstep)
     tstep=3600./float(nsteph)
   !..convert modleveldump from hours to steps
     modleveldump=modleveldump * nsteph
-  
+
   !..total no. of timesteps to run (nhrun is no. of hours to run)
     nstep=nsteph*nhrun
     if (nstep < 0) nstep = -nstep
-  
+
   !..total no. of timesteps to release particles
     nstepr=nsteph*nhrel
-  
+
   !..nuclear bomb case
     if(itprof == 2) nstepr=1
-  
+
   !..field output file unit
     iunito=30
-  
+
   !..information to log file
     write(iulog,*) 'nx,ny,nk:  ',nx,ny,nk
   !      write(iulog,*) 'nxad,nyad: ',nxad,nyad
@@ -1648,14 +1650,16 @@ PROGRAM bsnap
     write(iulog,*) 'inprecip:  ',inprecip
     write(iulog,*) 'imodlevel: ',imodlevel
     write(iulog,*) 'modleveldump (h), steps:', modleveldump/nsteph, &
-    modleveldump
+        modleveldump
     write(iulog,*) 'itime1:  ',(itime1(i),i=1,5)
     write(tempstr, '("Starttime: ",I4,"-",I2.2,"-",I2.2,"T",I2.2 &
-    ,":",I2.2)') (itime1(i),i=1,5)
+        &,":",I2.2)') (itime1(i),i=1,5)
     ncsummary = trim(ncsummary) // " " // trim(tempstr)
     do n=1,nrelpos
       write(tempstr, '("Release Pos (lat, lon): (", F5.1, ",", F6.1 &
-      ,")")') release_positions(n)%geo_latitude, release_positions(n)%geo_longitude
+          &,")")') &
+          release_positions(n)%geo_latitude, &
+          release_positions(n)%geo_longitude
       ncsummary = trim(ncsummary) // ". " // trim(tempstr)
     end do
 
@@ -1719,7 +1723,7 @@ PROGRAM bsnap
     write(*,*) 'Title:      ', trim(nctitle)
     write(*,*) 'Summary:    ', trim(ncsummary)
 
-  
+
   !..initialize files, deposition fields etc.
     m=0
     nargos=0
@@ -1767,7 +1771,7 @@ PROGRAM bsnap
     endif
     if(ierror /= 0) goto 910
 
-  
+
     do i=1,5
       itime(i)=itime1(i)
       itimefi(i)=0
@@ -1775,22 +1779,22 @@ PROGRAM bsnap
       itimefo(i,1)=0
       itimefo(i,2)=0
     end do
-  
+
     nxtinf=0
     ihread=0
     isteph=0
     lstepr=0
     iendrel=0
-  
+
     istep=-1
-  
+
 #if defined(TRAJ)
   !	write(*,*) (itime(i),i=1,5)
     do i=1,5
       itimev(i)=itime(i)
     enddo
   !	write(*,*) (itimev(i),i=1,5)
-    1110	continue
+  ! 1110 continue
   !	write(tr_file,'(''Trajectory_'',i3.3,
   !     &  ''_'',i4,3i2.2,''0000.DAT'')') itraj,(itime(i),i=1,4)
   !	open(13,file=tr_file)
@@ -1800,7 +1804,7 @@ PROGRAM bsnap
     write(*,*) tname(itraj)
 
   !	write(13,'(i6,3f12.3)') nstep
-  
+
 #endif
 
   ! b_start
@@ -1810,7 +1814,7 @@ PROGRAM bsnap
 
 #if defined(VOLCANO)
   ! b 01.05 initialize concentration (mass) matrix
-  
+
     ALLOCATE( vcon(nx,ny,3), STAT = AllocateStatus )
     IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
     do i=1,nx
@@ -1823,21 +1827,21 @@ PROGRAM bsnap
   ! b END
 #endif
 
-  
+
   ! reset readfield_nc (eventually, traj will rerun this loop)
     if (ftype == "netcdf") &
     call readfield_nc(iunitf,-1,nhleft,itimei,ihr1,ihr2, &
     itimefi,ierror)
   ! start time loop
     do 200 istep=0,nstep
-    
+
       write(iulog,*) 'istep,nplume,npart: ',istep,nplume,npart
       flush(iulog)
       if(mod(istep,nsteph) == 0) then
         write(error_unit,*) 'istep,nplume,npart: ',istep,nplume,npart
         flush(error_unit)
       end if
-    
+
     !#######################################################################
     !..test print: printing all particles in plume 'jpl'
     !       write(88,*) 'step,plume,part: ',istep,nplume,npart
@@ -1850,9 +1854,9 @@ PROGRAM bsnap
     !         end do
     !       end if
     !#######################################################################
-    
+
       if(istep == nxtinf) then
-      
+
       !..read fields
         if(istep == 0) then
           do i=1,5
@@ -1885,7 +1889,7 @@ PROGRAM bsnap
       !          write (*,*) "readfield(", iunitf, istep, nhleft, itimei, ihr1
       !     +          ,ihr2, itimefi, ierror, ")"
         if(ierror /= 0) goto 910
-      
+
       !..analysis time of input model
         if(itimefi(5) <= +6) then
           do i=1,4
@@ -1893,20 +1897,20 @@ PROGRAM bsnap
           end do
           itimefa(5)=0
         end if
-      
+
         n=itimefi(5)
         call vtime(itimefi,ierr)
         write(error_unit,fmt='(''input data: '',i4,3i3.2,''  prog='',i4)') &
         (itimefi(i),i=1,4),n
-      
+
       !..compute model level heights
         call compheight
-      
+
       !..calculate boundary layer (top and height)
         call bldp
-      
+
         if(istep == 0) then
-        
+
         !..release position from geographic to polarstereographic coordinates
           y = release_positions(irelpos)%geo_latitude
           x = release_positions(irelpos)%geo_longitude
@@ -1914,7 +1918,7 @@ PROGRAM bsnap
 #if defined(TRAJ)
         !	write(*,*) istep,x,y,rellower(1)
         !	write(13,'(i6,3f12.3)') istep,x,y,rellower(1)
-        
+
           write(13,'(''RIMPUFF'')')
           write(13,'(i2)') ntraj
           write(13,'(1x,i4,4i2.2,''00'', &
@@ -1945,19 +1949,19 @@ PROGRAM bsnap
           end if
           release_positions(irelpos)%grid_x = x(1)
           release_positions(irelpos)%grid_y = y(1)
-        
+
         !            if(iensemble.eq.1)
         !     +        call ensemble(0,itime1,tf1,tf2,tnow,istep,nstep,nsteph,0)
-        
+
           nxtinf=1
           ifldout=0
         ! continue istep loop after initialization
           goto 200
         end if
-      
+
       !          if(iensemble.eq.1)
       !     +      call ensemble(1,itime,tf1,tf2,tnow,istep,nstep,nsteph,0)
-      
+
         call hrdiff(0,0,itimei,itimefi,ihdiff,ierr1,ierr2)
         tf1=0.
         tf2=3600.*ihdiff
@@ -1974,21 +1978,21 @@ PROGRAM bsnap
           nxtinf=istep+nsteph*abs(ihdiff)
           iprecip=1
         end if
-      
+
       else
-      
+
         tnow=tnow+tstep
-      
+
       end if
-    
+
       tnext=tnow+tstep
-    
+
       if(iendrel == 0 .AND. istep <= nstepr) then
-      
+
       !..release one plume of particles
-      
+
         call release(istep-1,nsteph,tf1,tf2,tnow,ierror)
-      
+
         if(ierror == 0) then
           lstepr=istep
         else
@@ -1998,16 +2002,16 @@ PROGRAM bsnap
           write(error_unit,*) 'WARNING. End release, continue running'
           iendrel=1
         end if
-      
+
       end if
-    
+
     !#############################################################
     !     write(error_unit,*) 'tf1,tf2,tnow,tnext,tstep,ipr: ',
     !    +		  tf1,tf2,tnow,tnext,tstep,iprecip
     !     write(iulog,*) 'tf1,tf2,tnow,tnext,tstep,ipr: ',
     !    +		  tf1,tf2,tnow,tnext,tstep,iprecip
     !#############################################################
-    
+
     !#######################################################################
     !	if(npart.gt.0) then
     !          write(88,*) 'istep,nplume,npart,nk: ',istep,nplume,npart,nk
@@ -2034,7 +2038,7 @@ PROGRAM bsnap
     !          write(88,*) '----------------------------------------------'
     !        end if
     !#######################################################################
-    
+
     !..radioactive decay for depositions
     !.. and initialization of decay-parameters
       if (idecay == 1) call decayDeps(tstep)
@@ -2045,9 +2049,9 @@ PROGRAM bsnap
         if(iwetdep == 2) call wetdep2(tstep,0,pextra)
         call forwrd(tf1,tf2,tnow,tstep,0,pextra)
         if(irwalk /= 0) call rwalk(tstep,blfullmix,0,pextra)
-        init = .FALSE. 
+        init = .FALSE.
       end if
-    
+
     ! particle loop
     ! OMP PARALLEL DO PRIVATE(pextra) SCHEDULE(guided) !np is private by default
       do np=1,npart
@@ -2057,40 +2061,40 @@ PROGRAM bsnap
         !  creates and save temporary data to pextra%prc, pextra%
           call posint(np,tf1,tf2,tnow, pextra)
         !..radioactive decay
-        
+
           if(idecay == 1) call decay(np)
-        
+
         !         if(iensemble.eq.1)
         !     +      call ensemble(2,itime,tf1,tf2,tnow,istep,nstep,nsteph,np)
-        
+
         !..dry deposition (1=old, 2=new version)
-        
+
           if(idrydep == 1) call drydep1(np)
           if(idrydep == 2) call drydep2(tstep,np)
-        
+
         !          if(iensemble.eq.1)
         !     +      call ensemble(3,itime,tf1,tf2,tnow,istep,nstep,nsteph,np)
-        
+
         !..wet deposition (1=old, 2=new version)
-        
+
           if(iwetdep == 1) call wetdep1(np, pextra)
           if(iwetdep == 2) call wetdep2(tstep,np, pextra)
-        
+
         !          if(iensemble.eq.1)
         !     +      call ensemble(4,itime,tf1,tf2,tnow,istep,nstep,nsteph,np)
-        
+
         !..move all particles forward, save u and v to pextra
-        
+
           call forwrd(tf1,tf2,tnow,tstep,np, pextra)
-        
+
         !..apply the random walk method (diffusion)
-        
+
           if(irwalk /= 0) call rwalk(tstep,blfullmix,np,pextra)
-        
+
         !.. check domain (%active) after moving particle
-        
+
           call checkDomain(np)
-        
+
         ! end of particle loop over active particles
         endif
       end do
@@ -2098,18 +2102,18 @@ PROGRAM bsnap
 
     !..remove inactive particles or without any mass left
       call rmpart(rmlimit)
-    
+
     !       if(iensemble.eq.1)
     !     +    call ensemble(5,itime,tf1,tf2,tnext,istep,nstep,nsteph,0)
-    
+
     ! OMP PARALLEL DO REDUCTION(max : mhmax) REDUCTION(min : mhmin)
       do n=1,npart
         if(pdata(n)%hbl > mhmax) mhmax=pdata(n)%hbl
         if(pdata(n)%hbl < mhmin) mhmin=pdata(n)%hbl
       enddo
     ! OMP END PARALLEL DO
-    
-    
+
+
     !###################################################################
     !	write(error_unit,
     !    +  fmt='(''istep,nstep,isteph,nsteph,iprecip,nprecip: '',6i4)')
@@ -2118,7 +2122,7 @@ PROGRAM bsnap
     !    +  fmt='(''istep,nstep,isteph,nsteph,iprecip,nprecip: '',6i4)')
     !    +          istep,nstep,isteph,nsteph,iprecip,nprecip
     !###################################################################
-    
+
     !..output...................................................
 #if defined(VOLCANO)
       do k=1,npart
@@ -2149,9 +2153,9 @@ PROGRAM bsnap
       !     +    write(error_unit,*) 'istep,nplume,npart: ',istep,nplume,npart
       !	write(error_unit,*)
       !	write(error_unit,*) 'istep,hour,npart=',istep,istep/72,npart
-      
+
       !... calculate number of non zero model grids
-      
+
         m=0
         do i=1,nx
           do j=1,ny
@@ -2160,9 +2164,9 @@ PROGRAM bsnap
             enddo
           enddo
         enddo
-      
+
       !... write non zero model grids, their gegraphical coordinates and mass to output file
-      
+
       ! b 19.05 start
         write(cfile,'(''concentrations-'',i2.2)') istep/72
         open(12,file=cfile)
@@ -2172,7 +2176,7 @@ PROGRAM bsnap
         write(*,*)
         write(*,*) 'Output no.:',istep/72
         write(*,*) 'Time (hrs): ',istep/12
-      
+
         m=0
         do i=1,nx
           do j=1,ny
@@ -2190,7 +2194,7 @@ PROGRAM bsnap
             enddo
           enddo
         enddo
-      
+
         do i=1,nx
           do j=1,ny
             do k=1,3
@@ -2198,14 +2202,14 @@ PROGRAM bsnap
             enddo
           enddo
         enddo
-      
+
         write(error_unit,*) 'npart all=',npart
         write(error_unit,*) 'ngrid all=',m
       endif
       close (12)
     ! b... END
 #endif
-    
+
     !..fields
       ifldout=0
       isteph=isteph+1
@@ -2251,7 +2255,7 @@ PROGRAM bsnap
 
     !      if(iensemble.eq.1 .and. isteph.eq.0)
     !     +  call ensemble(6,itime,tf1,tf2,tnext,istep,nstep,nsteph,0)
-    
+
     !..field output if ifldout=1, always accumulation for average fields
       if (idailyout == 1) then
       !       daily output, append +x for each day
@@ -2286,9 +2290,9 @@ PROGRAM bsnap
         endif
         if(ierror /= 0) goto 910
       end if
-    
+
       if(isteph == 0 .AND. iprecip < nprecip) iprecip=iprecip+1
-    
+
 #if defined(TRAJ)
     ! b
 
