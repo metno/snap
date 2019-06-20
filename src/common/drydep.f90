@@ -31,27 +31,22 @@ module drydep
 
   contains
 
+!> Purpose:  Compute dry deposition for each particle and each component
+!>           and store depositions in nearest gridpoint in a field
+!>
+!> Method:   J.Saltbones 1994
 subroutine drydep1(n)
-  USE particleML
-  USE snapfldML
-  USE snapparML
+  USE particleML, only: pdata
+  USE snapfldML, only: depdry
+  USE snapparML, only: icomp, iruncomp
 
+!> particle loop index, n=0 means init
+  integer, intent(in) :: n
 
-!  Purpose:  Compute dry deposition for each particle and each component
-!            and store depositions in nearest gridpoint in a field
-!  Method:   J.Saltbones 1994
+  integer :: m, i, j, mm
+  real :: h, dep
 
-
-  implicit none
-
-! particle loop index, n=0 means init
-  INTEGER, INTENT(IN) :: n
-  integer :: m,i,j,mm
-  real ::    h,dep
-
-
-!      do n=1,npart // particle loop now outside
-  m= icomp(n)
+  m = icomp(n)
   if(kdrydep(m) == 1) then
   !..very rough eastimate of height,
   !..using boundary layer height, then just linear in sigma/eta !!! ????
@@ -66,61 +61,36 @@ subroutine drydep1(n)
       depdry(i,j,mm)=depdry(i,j,mm)+dble(dep)
     end if
   end if
-!      end do
 
   return
 end subroutine drydep1
 
-subroutine drydep2(tstep,n)
-  USE particleML
-  USE snapfldML
-  USE snapparML
+
+!> Purpose:  Compute dry deposition for each particle and each component
+!>           and store depositions in nearest gridpoint in a field
+!>
+!> Method:   J.Bartnicki 2003
+subroutine drydep2(tstep, n)
+  USE particleML, only: pdata
+  USE snapfldML, only: depdry
+  USE snapparML, only: icomp, iruncomp
   USE snapgrdML, only: vlevel
   USE vgravtablesML, only: radiusmym
 
-!  Purpose:  Compute dry deposition for each particle and each component
-!            and store depositions in nearest gridpoint in a field
-!  Method:   J.Bartnicki 2003
-
 ! ... 23.04.12 - gas, particle 0.1<d<10, particle d>10 - J. Bartnicki|
+  real, intent(in) :: tstep
+!> particle loop index, n = 0 means init
+  integer, intent(in) :: n
 
-
-  implicit none
-
-  real, INTENT(IN) ::    tstep
-
-! particle loop index, n = 0 means init
-  INTEGER, INTENT(IN) :: n
   integer :: m,i,j,mm
   real ::    h,deprate,dep
-!################################################################
-  integer :: numdep
-  real :: depmin,depmax,ratmin,ratmax,hblmin,hblmax
-  double precision :: totinp,depsum,totsum
 
-
-  numdep=0
-  hblmin=+1.e+38
-  hblmax=-1.e+38
-  ratmin=+1.e+38
-  ratmax=-1.e+38
-  depmin=+1.e+38
-  depmax=-1.e+38
-  totinp=0.0d0
-  depsum=0.0d0
-  totsum=0.0d0
-!################################################################
-
-!     do n=1,npart // particle loop outside
-!################################################################
-  totinp=totinp+dble(pdata(n)%rad)
-!################################################################
   m= icomp(n)
 !#### 30m = surface-layer (deposition-layer); sigma(hybrid)=0.996 ~ 30m
   if(kdrydep(m) == 1 .AND. pdata(n)%z > 0.996) then
     h=30.0
   ! b...23.04.12... difference between particle and gas
-  
+
     if(radiusmym(m) <= 0.05) then
     ! gas
       deprate= 1.0-exp(-tstep*(0.008)/h)
@@ -140,34 +110,8 @@ subroutine drydep2(tstep,n)
     mm=iruncomp(m)
   ! omp atomic
     depdry(i,j,mm)=depdry(i,j,mm)+dble(dep)
-  !################################################################
-    if(hblmin > h) hblmin=h
-    if(hblmax < h) hblmax=h
-    if(ratmin > deprate) ratmin=deprate
-    if(ratmax < deprate) ratmax=deprate
-    if(depmin > dep) depmin=dep
-    if(depmax < dep) depmax=dep
-    depsum=depsum+dble(dep)
-    numdep=numdep+1
-  !################################################################
   end if
-!################################################################
-  totsum=totsum+dble(pdata(n)%rad)
-!################################################################
-!      end do
 
-!################################################################
-!      write(88,*) 'DRYDEP2 numdep,npart:  ',numdep,npart
-!      write(88,*) 'DRYDEP2 totinp:        ',totinp
-!      write(88,*) 'DRYDEP2 totsum,depsum: ',totsum,depsum
-!      if(hblmin.le.hblmax)
-!     +   write(88,*) 'DRYDEP2 hblmin,hblmax: ',hblmin,hblmax
-!      if(ratmin.le.ratmax)
-!     +   write(88,*) 'DRYDEP2 ratmin,ratmax: ',ratmin,ratmax
-!      if(depmin.le.depmax)
-!     +   write(88,*) 'DRYDEP2 depmin,depmax: ',depmin,depmax
-!      write(88,*) '--------'
-!################################################################
   return
 end subroutine drydep2
 end module drydep
