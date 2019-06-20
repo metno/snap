@@ -15,8 +15,6 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-!-----------------------------------------------------------------------
-! snap.F
 
 ! SNAP - Severe Nuclear Accident Program
 
@@ -206,12 +204,15 @@
 !-----------------------------------------------------------------------
 
 
+
+!> SNAP - Severe Nuclear Accident Program
 PROGRAM bsnap
   USE iso_fortran_env, only: real64, output_unit, error_unit
   USE DateCalc  ,ONLY : epochToDate, timeGM
   USE snapdebug, only: iulog, idebug
   USE snapargosML
-  USE snapepsML, only: ensemblefile, ensembleparticipant, ensemblerandomkey, ensemblestephours, iensemble
+  USE snapepsML, only: ensemblefile, ensembleparticipant, ensemblerandomkey, &
+      ensemblestephours, iensemble
   USE snapdimML, only: nx, ny, nk, nxmc, nymc, ldata, maxsiz, mcomp, mdefcomp
   USE snapfilML
   USE snapfldML, only: enspos, iprecip, nprecip
@@ -256,20 +257,21 @@ PROGRAM bsnap
   USE feltio_dummy, only: readfd, readfield, filesort, fldout
 #endif
 
-! SNAP - Severe Nuclear Accident Program
+  implicit none
 
 !..BATCH input:
 !	iaction=0 : initialize
 !	iaction=1 : run one timestep
 !	iaction=2 : finish
+  integer :: iaction
 !..BATCH output:
 !	iexit=0   : ok
 !	iexit=1   : end of run
 !	iexit=2   : some error, exit
+  integer :: iexit
 
-  implicit none
-
-  integer ::   iaction,iexit,allocatestatus
+  integer :: allocatestatus
+  character(len=*), parameter :: allocateErrorMessage = "*** Not enough memory ***"
 
   integer ::   itime1(5),itime2(5),itime(5),itimei(5),itimeo(5)
   integer ::   itimefi(5),itimefa(5),itimefo(5,2)
@@ -277,8 +279,7 @@ PROGRAM bsnap
 !..used in xyconvert (longitude,latitude -> x,y)
   real, save :: geoparam(6) = [1.0, 1.0, 1.0, 1.0, 0.0, 0.0]
 
-  integer :: maxkey
-  parameter (maxkey=10)
+  integer, parameter :: maxkey = 10
   integer ::   kwhere(5,maxkey)
 
   integer :: narg,iuinp,ios,iprhlp,nlines,nhrun,nhrel,irwalk,nhfout
@@ -294,12 +295,12 @@ PROGRAM bsnap
   integer :: date_time(8)
   real ::    tstep,rmlimit,rnhrun,rnhrel,glat,glong,tf1,tf2,tnow,tnext
   real ::    x(1),y(1)
-  TYPE(extraParticle) pextra
+  type(extraParticle) :: pextra
   real ::    rscale
 ! ipcount(mdefcomp, nk)
-  integer, dimension(:,:), allocatable:: ipcount
+! integer, dimension(:,:), allocatable:: ipcount
 ! npcount(nk)
-  integer, dimension(:), allocatable:: npcount
+! integer, dimension(:), allocatable:: npcount
 ! b_start
   real :: mhmin, mhmax  ! minimum and maximum of mixing height
 ! b_end
@@ -309,7 +310,7 @@ PROGRAM bsnap
   logical :: init = .TRUE.
 
   character(len=1024) ::  finput,fldfil,fldfilX,fldfilN,logfile,ftype, &
-  fldtype, relfile
+      fldtype, relfile
   character(len=1024*8) :: cinput,ciname,cipart
   character(len=8) ::   cpos1,cpos2
   character(len=1) ::   tchar
@@ -375,13 +376,12 @@ PROGRAM bsnap
     stop
   endif
 
-  iuinp=8
-  open(iuinp,file=finput, &
-  access='sequential',form='formatted', &
-  status='old',iostat=ios)
+  open(newunit=iuinp,file=finput, &
+      access='sequential',form='formatted', &
+      status='old',iostat=ios,action='read')
   if(ios /= 0) then
     write(error_unit,*) 'Open Error: ', trim(finput)
-    stop 1
+    error stop 1
   endif
 
   if(narg == 2) then
@@ -392,8 +392,8 @@ PROGRAM bsnap
   endif
 
 
-  write(error_unit,*) 'Reading input file:'
-  write(error_unit,*)  TRIM(finput)
+  write(output_unit,*) 'Reading input file:'
+  write(output_unit,*)  TRIM(finput)
 
   nlines=0
 
@@ -403,11 +403,7 @@ PROGRAM bsnap
 !..set release position as not chosen
   irelpos=0
 
-  itime1(1)=-32767
-  itime1(2)=-32767
-  itime1(3)=-32767
-  itime1(4)=-32767
-  itime1(5)=-32767
+  itime1 = -huge(itime1)
   nhrun  =0
   nhrel  =0
   srelnam='*'
@@ -422,11 +418,8 @@ PROGRAM bsnap
   isynoptic=0
   nrelheight=1
 
-
-  do m=1,mdefcomp
-    compname(m)   ='Unknown'
-    compnamemc(m) ='Unknown'
-  end do
+  compname = 'Unknown'
+  compnamemc = 'Unknown'
 
   kdrydep = -1
   kwetdep = -1
@@ -467,7 +460,7 @@ PROGRAM bsnap
   ivcoor =0
   nlevel =0
   minhfc =+6
-  maxhfc =+32767
+  maxhfc =+huge(maxhfc)
   nfilef =0
   ifltim =0
   blfullmix= .TRUE.
@@ -492,7 +485,7 @@ PROGRAM bsnap
 ! timestamp of the form 0000-00-00_00:00:00
   call DATE_AND_TIME(VALUES=date_time)
   write (simulation_start, 9999) (date_time(i),i=1,3), &
-  (date_time(i),i=5,7)
+      (date_time(i),i=5,7)
   9999 FORMAT(I4.4,'-',I2.2,'-',I2.2,'_',I2.2,':',I2.2,':',I2.2)
 ! input ensemble member, default to no ensembles
   enspos = -1
@@ -693,9 +686,9 @@ PROGRAM bsnap
         if(itprof /= 0 .AND. itprof /= 4) goto 12
         itprof=4
       elseif(cinput(k1:k2) == 'release.day'    .OR. &
-        cinput(k1:k2) == 'release.hour'   .OR. &
-        cinput(k1:k2) == 'release.minute' .OR. &
-        cinput(k1:k2) == 'release.second') then
+          cinput(k1:k2) == 'release.hour'   .OR. &
+          cinput(k1:k2) == 'release.minute' .OR. &
+          cinput(k1:k2) == 'release.second') then
         rscale=1.
         if(cinput(k1:k2) == 'release.day')    rscale=24.
         if(cinput(k1:k2) == 'release.minute') rscale=1./60.
@@ -752,9 +745,9 @@ PROGRAM bsnap
         if(kv1 < 1 .OR. ntprof < 1) goto 12
         read(cipart,*,err=12) (relstemradius(i),i=1,ntprof)
       elseif(cinput(k1:k2) == 'release.bq/hour.comp' .OR. &
-        cinput(k1:k2) == 'release.bq/sec.comp'  .OR. &
-        cinput(k1:k2) == 'release.bq/day.comp' .OR. &
-        cinput(k1:k2) == 'release.bq/step.comp') then
+          cinput(k1:k2) == 'release.bq/sec.comp'  .OR. &
+          cinput(k1:k2) == 'release.bq/day.comp' .OR. &
+          cinput(k1:k2) == 'release.bq/step.comp') then
       !..release.bq/hour.comp
       !..release.bq/sec.comp
       !..release.bq/day.comp
@@ -772,7 +765,7 @@ PROGRAM bsnap
         ncomp= ncomp+1
         if(ncomp > mcomp) goto 13
         read(cipart,*,err=12) (relbqsec(i,ncomp,1),i=1,ntprof), &
-        component(ncomp)
+            component(ncomp)
         do i=1,ntprof
           if(relbqsec(i,ncomp,1) < 0.) goto 12
         end do
@@ -983,7 +976,7 @@ PROGRAM bsnap
           if(i2 > size(prepro,2)) goto 12
           i2=i2+1
           read(cipart,*,iostat=ios) &
-          ((prepro(k,i),k=1,2),i=i1,i2)
+              ((prepro(k,i),k=1,2),i=i1,i2)
         end do
         i2=i2-1
         if(i2 < i1) goto 12
@@ -1100,11 +1093,11 @@ PROGRAM bsnap
         read(cipart,*,err=12) nlevel
         nk = nlevel
         ALLOCATE ( klevel(nk), STAT = AllocateStatus)
-        IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
-        ALLOCATE ( ipcount(mdefcomp, nk), STAT = AllocateStatus)
-        IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
-        ALLOCATE ( npcount(nk), STAT = AllocateStatus)
-        IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
+        IF (AllocateStatus /= 0) ERROR STOP AllocateErrorMessage
+!       ALLOCATE ( ipcount(mdefcomp, nk), STAT = AllocateStatus)
+!       IF (AllocateStatus /= 0) ERROR STOP AllocateErrorMessage
+!       ALLOCATE ( npcount(nk), STAT = AllocateStatus)
+!       IF (AllocateStatus /= 0) ERROR STOP AllocateErrorMessage
 
         read(cipart,*,err=12) nlevel,(klevel(i),i=1,nlevel)
         if(klevel(1) /= 0 .OR. klevel(2) == 0) goto 12
@@ -1190,13 +1183,12 @@ PROGRAM bsnap
         if(kv1 < 1) goto 12
         read(cipart,*,err=12) ensembleparticipant
         if(ensembleparticipant < 0 .OR. &
-        ensembleparticipant > 99) goto 12
+            ensembleparticipant > 99) goto 12
       elseif(cinput(k1:k2) == 'ensemble.project.random.key') then
       !..ensemble.project.random.key= <rl52s3u>
         if(kv1 < 1) goto 12
         ensembleRandomKey=ciname(1:nkv)
-      elseif(cinput(k1:k2) == &
-        'ensemble.project.output.step.hour') then
+      elseif(cinput(k1:k2) == 'ensemble.project.output.step.hour') then
       !..ensemble.project.output.step.hour= 3
         if(kv1 < 1) goto 12
         read(cipart,*,err=12) ensembleStepHours
@@ -1210,8 +1202,7 @@ PROGRAM bsnap
       !..argos.output.deposition.file= runident_MLDP0_depo
         if(kv1 < 1) goto 12
         argosdepofile=ciname(1:nkv)
-      elseif(cinput(k1:k2) == &
-        'argos.output.concentration.file') then
+      elseif(cinput(k1:k2) == 'argos.output.concentration.file') then
       !..argos.output.concentration.file= runident_MLDP0_conc
         if(kv1 < 1) goto 12
         argosconcfile=ciname(1:nkv)
@@ -1223,8 +1214,7 @@ PROGRAM bsnap
       !..argos.output.timestep.hour= <3>
         if(kv1 < 1) goto 12
         read(cipart,*,err=12) argoshourstep
-        if(argoshourstep <= 0 .OR. &
-        argoshourstep > 240) goto 12
+        if(argoshourstep <= 0 .OR. argoshourstep > 240) goto 12
       elseif(cinput(k1:k2) == 'end') then
       !..end
 #if defined(TRAJ)
@@ -1358,15 +1348,18 @@ PROGRAM bsnap
   k=0
   do i=1,ntprof
     if(relradius(i,1) < 0. .OR. &
-    relupper(i,1) < 0. .OR. &
-    rellower(i,1) < 0. .OR. &
-    relupper(i,1) < rellower(i,1)) k=1
-    if(relupper(i,1) < rellower(i,1)+1.) &
-    relupper(i,1)=rellower(i,1)+1.
+        relupper(i,1) < 0. .OR. &
+        rellower(i,1) < 0. .OR. &
+        relupper(i,1) < rellower(i,1)) then
+      k=1
+    endif
+    if(relupper(i,1) < rellower(i,1)+1.) then
+      relupper(i,1)=rellower(i,1)+1.
+    endif
   end do
   if(k == 1) then
     write(error_unit,*) 'ERROR in relase profiles ', &
-    'of upper,lower and/or radius'
+        &'of upper,lower and/or radius'
     ierror=1
   end if
 
@@ -1391,12 +1384,12 @@ PROGRAM bsnap
   do m=1,ndefcomp-1
     if(idcomp(m) < 1) then
       write(error_unit,*) 'Component has no field identification: ', &
-      trim(compname(m))
+          trim(compname(m))
     end if
     do i=m+1,ndefcomp
       if(compname(m) == compname(i)) then
         write(error_unit,*) 'Component defined more than once: ', &
-        trim(compname(m))
+            trim(compname(m))
         ierror=1
       end if
     end do
@@ -1406,7 +1399,7 @@ PROGRAM bsnap
     do i=m+1,ncomp
       if(component(m) == component(i)) then
         write(error_unit,*) 'Released component defined more than once: ', &
-        trim(component(m))
+            trim(component(m))
         ierror=1
       end if
     end do
@@ -1423,7 +1416,7 @@ PROGRAM bsnap
       iruncomp(k)= m
     else
       write(error_unit,*) 'Released component ', &
-      trim(component(m)), ' is not defined'
+          trim(component(m)), ' is not defined'
       ierror=1
     end if
   end do
@@ -1433,9 +1426,9 @@ PROGRAM bsnap
     m=idefcomp(n)
     if(kgravity(m) < 0) kgravity(m)= 2
     if(kgravity(m) == 2 .AND. &
-    (radiusmym(m) <= 0. .OR. densitygcm3(m) <= 0.)) then
+        (radiusmym(m) <= 0. .OR. densitygcm3(m) <= 0.)) then
       write(error_unit,*) 'Gravity error. radius,density: ', &
-      radiusmym(m),densitygcm3(m)
+          radiusmym(m),densitygcm3(m)
       ierror=1
     end if
   end do
@@ -1453,7 +1446,7 @@ PROGRAM bsnap
         i1=i1+1
       else
         write(error_unit,*) 'Dry deposition error. rate,height: ', &
-        drydeprat(m),drydephgt(m)
+            drydeprat(m),drydephgt(m)
         ierror=1
       end if
     elseif(idrydep == 2 .AND. kdrydep(m) == 1) then
@@ -1463,7 +1456,7 @@ PROGRAM bsnap
         i1=i1+1
       else
         write(error_unit,*) 'Dry deposition error. gravity: ', &
-        gravityms(m)
+            gravityms(m)
         ierror=1
       end if
     end if
@@ -1473,7 +1466,7 @@ PROGRAM bsnap
         i2=i2+1
       else
         write(error_unit,*) 'Wet deposition error. rate: ', &
-        wetdeprat(m)
+            wetdeprat(m)
         ierror=1
       end if
     elseif(iwetdep == 2 .AND. kwetdep(m) == 1) then
@@ -1481,7 +1474,7 @@ PROGRAM bsnap
         i2=i2+1
       else
         write(error_unit,*) 'Wet deposition error. radius: ', &
-        radiusmym(m)
+            radiusmym(m)
         ierror=1
       end if
     end if
@@ -1555,9 +1548,7 @@ PROGRAM bsnap
     goto 910
   end if
 
-  do i=1,5
-    itime2(i)=itime1(i)
-  end do
+  itime2 = itime1
   itime2(5)=itime2(5)+nhrun
   call vtime(itime2,ierror)
 
@@ -1609,7 +1600,7 @@ PROGRAM bsnap
     tmin=0.0
     write(*,*) 'lower, upper',rellower(1,1),relupper(1,1)
     write(*,*) 'tyear, tmon, tday, thour, tmin', &
-    tyear, tmon, tday, thour, tmin
+        tyear, tmon, tday, thour, tmin
     distance=0.0
     speed=0.0
     iprecip=1
@@ -1706,12 +1697,12 @@ PROGRAM bsnap
       write(iulog,*) '  densitygcm3:',densitygcm3(m)
       write(iulog,*) '  Relase time profile:   ntprof: ',ntprof
       ncsummary = trim(ncsummary) // ". Release " // trim(compname(m)) &
-      // " (hour, Bq/s): "
+          // " (hour, Bq/s): "
       do i=1,ntprof
         write(iulog,*) '  hour,Bq/hour: ', &
-        frelhour(i),(relbqsec(i,n,ih)*3600.,ih=1,nrelheight)
+            frelhour(i),(relbqsec(i,n,ih)*3600.,ih=1,nrelheight)
         write(tempstr, '("(",f5.1,",",ES9.2,")")') &
-        frelhour(i), relbqsec(i,n,1)
+            frelhour(i), relbqsec(i,n,1)
         ncsummary = trim(ncsummary) // " " // trim(tempstr)
       end do
     end do
@@ -1764,21 +1755,17 @@ PROGRAM bsnap
   ! standard output needs to be initialized, even for daily
     if (fldtype == "netcdf") then
       call fldout_nc(-1,iunito,fldfil,itime1,0.,0.,0.,tstep, &
-      m,nsteph,ierror)
+          m,nsteph,ierror)
     else
       call fldout(-1,iunito,fldfil,itime1,0.,0.,0.,tstep, &
-      m,nsteph,ierror)
+          m,nsteph,ierror)
     endif
     if(ierror /= 0) goto 910
 
-
-    do i=1,5
-      itime(i)=itime1(i)
-      itimefi(i)=0
-      itimefa(i)=0
-      itimefo(i,1)=0
-      itimefo(i,2)=0
-    end do
+    itime = itime1
+    itimefi = 0
+    itimefa = 0
+    itimefo = 0
 
     nxtinf=0
     ihread=0
@@ -1790,9 +1777,7 @@ PROGRAM bsnap
 
 #if defined(TRAJ)
   !	write(*,*) (itime(i),i=1,5)
-    do i=1,5
-      itimev(i)=itime(i)
-    enddo
+    itimev = itime
   !	write(*,*) (itimev(i),i=1,5)
   ! 1110 continue
   !	write(tr_file,'(''Trajectory_'',i3.3,
@@ -1816,14 +1801,8 @@ PROGRAM bsnap
   ! b 01.05 initialize concentration (mass) matrix
 
     ALLOCATE( vcon(nx,ny,3), STAT = AllocateStatus )
-    IF (AllocateStatus /= 0) STOP "*** Not enough memory ***"
-    do i=1,nx
-      do j=1,ny
-        do k=1,3
-          vcon(i,j,k)=0.0
-        enddo
-      enddo
-    enddo
+    IF (AllocateStatus /= 0) ERROR STOP AllocateErrorMessage
+    vcon = 0.0
   ! b END
 #endif
 
@@ -1831,7 +1810,7 @@ PROGRAM bsnap
   ! reset readfield_nc (eventually, traj will rerun this loop)
     if (ftype == "netcdf") &
     call readfield_nc(iunitf,-1,nhleft,itimei,ihr1,ihr2, &
-    itimefi,ierror)
+        itimefi,ierror)
   ! start time loop
     do 200 istep=0,nstep
 
@@ -1859,16 +1838,12 @@ PROGRAM bsnap
 
       !..read fields
         if(istep == 0) then
-          do i=1,5
-            itimei(i)=itime1(i)
-          end do
+          itimei = itime1
           ihr1=-0
           ihr2=-nhfmax
           nhleft=nhrun
         else
-          do i=1,5
-            itimei(i)=itimefi(i)
-          end do
+          itimei = itimefi
           ihr1=+nhfmin
           ihr2=+nhfmax
           nhleft=(nstep-istep+1)/nsteph
@@ -1878,10 +1853,10 @@ PROGRAM bsnap
       !     +          ,ihr2, itimefi, ierror, ")"
         if (ftype == "netcdf") then
           call readfield_nc(iunitf,istep,nhleft,itimei,ihr1,ihr2, &
-          itimefi,ierror)
+              itimefi,ierror)
         else
           call readfield(iunitf,istep,nhleft,itimei,ihr1,ihr2, &
-          itimefi,ierror)
+              itimefi,ierror)
         end if
         if (idebug >= 1) then
           write(iulog,*) "igtype, gparam(8): ", igtype, gparam
@@ -1901,7 +1876,7 @@ PROGRAM bsnap
         n=itimefi(5)
         call vtime(itimefi,ierr)
         write(error_unit,fmt='(''input data: '',i4,3i3.2,''  prog='',i4)') &
-        (itimefi(i),i=1,4),n
+            (itimefi(i),i=1,4),n
 
       !..compute model level heights
         call compheight
@@ -1922,13 +1897,13 @@ PROGRAM bsnap
           write(13,'(''RIMPUFF'')')
           write(13,'(i2)') ntraj
           write(13,'(1x,i4,4i2.2,''00'', &
-          &   2f9.3,f12.3,f15.2,f10.2)') &
-          (itime(i),i=1,4),0,y,x,rellower(1,1), &
-          distance,speed
+              &   2f9.3,f12.3,f15.2,f10.2)') &
+              (itime(i),i=1,4),0,y,x,rellower(1,1), &
+              distance,speed
           write(*,'(i4,1x,i4,i2,i2,2i2.2,''00'', &
-          &   2f9.3,f12.3,f15.2,f10.2)') istep, &
-          (itime(i),i=1,4),0,y,x,rellower(1,1), &
-          distance,speed
+              &   2f9.3,f12.3,f15.2,f10.2)') istep, &
+              (itime(i),i=1,4),0,y,x,rellower(1,1), &
+              distance,speed
 #endif
           call xyconvert(1,x,y,2,geoparam,igtype,gparam,ierror)
           if(ierror /= 0) then
@@ -1942,7 +1917,7 @@ PROGRAM bsnap
           end if
           write(iulog,*) 'release   x,y:    ',x,y
           if(x(1) < 1.01 .OR. x(1) > nx-0.01 .OR. &
-          y(1) < 1.01 .OR. y(1) > ny-0.01) then
+              y(1) < 1.01 .OR. y(1) > ny-0.01) then
             write(iulog,*) 'ERROR: Release position outside field area'
             write(error_unit,*) 'ERROR: Release position outside field area'
             goto 910
@@ -2156,14 +2131,7 @@ PROGRAM bsnap
 
       !... calculate number of non zero model grids
 
-        m=0
-        do i=1,nx
-          do j=1,ny
-            do k=1,3
-              if(vcon(i,j,k) > 0.0) m=m+1
-            enddo
-          enddo
-        enddo
+        m=count(vcon > 0.0)
 
       !... write non zero model grids, their gegraphical coordinates and mass to output file
 
@@ -2187,7 +2155,7 @@ PROGRAM bsnap
                 y=real(j)+0.5
                 call xyconvert(1,x,y,igtype,gparam,2,geoparam,ierror)
                 write(12,'(i6,2x,3i5,2x,2f10.3,2x,e12.3)') &
-                m,i,j,k,x,y,vcon(i,j,k)/72.0
+                    m,i,j,k,x,y,vcon(i,j,k)/72.0
               !	      write(*,'(i6,2x,3i5,2x,2f10.3,2x,e12.3)')
               !     &        m,i,j,k,x,y,vcon(i,j,k)/72.0
               endif
@@ -2195,13 +2163,7 @@ PROGRAM bsnap
           enddo
         enddo
 
-        do i=1,nx
-          do j=1,ny
-            do k=1,3
-              vcon(i,j,k)=0.0
-            enddo
-          enddo
-        enddo
+        vcon =  0.0
 
         write(error_unit,*) 'npart all=',npart
         write(error_unit,*) 'ngrid all=',m
@@ -2235,20 +2197,14 @@ PROGRAM bsnap
           ifldout=1
           if(ifltim == 0) then
           !..identify fields with forecast length (hours after start)
-            do i=1,5
-              itimeo(i)=itime(i)
-            end do
+            itimeo = itime
           end if
         !..save first and last output time
           ntimefo=ntimefo+1
           if(ntimefo == 1) then
-            do i=1,5
-              itimefo(i,1)=itimeo(i)
-            end do
+            itimefo(:,1) = itimeo
           end if
-          do i=1,5
-            itimefo(i,2)=itimeo(i)
-          end do
+          itimefo(:,2) = itimeo
           write(iulog,*) 'fldout. ',itimeo
         end if
       end if
@@ -2265,28 +2221,28 @@ PROGRAM bsnap
           fldfilX = fldfilN
           if (fldtype == "netcdf") then
             call fldout_nc(-1,iunito,fldfilX,itime1,0.,0.,0.,tstep, &
-            (24/nhfout)+1,nsteph,ierror)
+                (24/nhfout)+1,nsteph,ierror)
           else
             call fldout(-1,iunito,fldfilX,itime1,0.,0.,0.,tstep, &
-            (24/nhfout)+1,nsteph,ierror)
+                (24/nhfout)+1,nsteph,ierror)
           endif
           if(ierror /= 0) goto 910
         end if
         if (fldtype == "netcdf") then
           call fldout_nc(ifldout,iunito,fldfilX,itimeo,tf1,tf2,tnext, &
-          tstep,istep,nsteph,ierror)
+              tstep,istep,nsteph,ierror)
         else
           call fldout(ifldout,iunito,fldfilX,itimeo,tf1,tf2,tnext,tstep, &
-          istep,nsteph,ierror)
+              istep,nsteph,ierror)
         endif
         if(ierror /= 0) goto 910
       else
         if (fldtype == "netcdf") then
           call fldout_nc(ifldout,iunito,fldfil,itimeo,tf1,tf2,tnext, &
-          tstep,istep,nsteph,ierror)
+              tstep,istep,nsteph,ierror)
         else
           call fldout(ifldout,iunito,fldfil,itimeo,tf1,tf2,tnext,tstep, &
-          istep,nsteph,ierror)
+              istep,nsteph,ierror)
         endif
         if(ierror /= 0) goto 910
       end if
@@ -2298,12 +2254,7 @@ PROGRAM bsnap
 
       distance=distance+speed*tstep
       if(istep > 0 .AND. mod(istep,nsteph) == 0) then
-        timeStart(1) = 0
-        timeStart(2) = 0
-        timeStart(3) = itime1(4)
-        timeStart(4) = itime1(3)
-        timeStart(5) = itime1(2)
-        timeStart(6) = itime1(1)
+        timeStart = [0, 0, itime1(4), itime1(3), itime1(2), itime1(1)]
         epochSecs = timeGm(timeStart)
         if (nhrun >= 0) then
           epochSecs = epochSecs + nint(istep*tstep)
@@ -2338,15 +2289,15 @@ PROGRAM bsnap
         !	write(*,'(1x,i4,i2,i2,2i2.2,''00'')')
         !     &(itime(i),i=1,4),mod(istep,12)*5
           write(13,'(1x,i4,4i2.2,''00'', &
-          &                  2f9.3,f12.3,f15.2,f10.2)') &
-          timeCurrent(6),timeCurrent(5),timeCurrent(4), &
-          timeCurrent(3),timeCurrent(2), &
-          y,x,zzz,distance, speed
+              &                  2f9.3,f12.3,f15.2,f10.2)') &
+              timeCurrent(6),timeCurrent(5),timeCurrent(4), &
+              timeCurrent(3),timeCurrent(2), &
+              y,x,zzz,distance, speed
           write(*,'(i4,1x,i4,i2,i2,2i2.2,''00'', &
-          &                 2f9.3,f12.3,f15.2,f10.2)') istep, &
-          timeCurrent(6),timeCurrent(5),timeCurrent(4), &
-          timeCurrent(3),timeCurrent(2), &
-          y,x,zzz,distance, speed
+              &                 2f9.3,f12.3,f15.2,f10.2)') istep, &
+              timeCurrent(6),timeCurrent(5),timeCurrent(4), &
+              timeCurrent(3),timeCurrent(2), &
+              y,x,zzz,distance, speed
         ! b-2701
           flush(13)
         enddo
