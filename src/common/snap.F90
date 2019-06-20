@@ -1512,13 +1512,13 @@ PROGRAM bsnap
 
 
 
-  write(error_unit,*) 'Input o.k.'
+  write(output_unit,*) 'Input o.k.'
 !-------------------------------------------------------------------
 
 !..log file
-  open(iulog,file=logfile, &
-  access='sequential',form='formatted', &
-  status='unknown')
+  open(newunit=iulog, file=logfile, &
+      access='sequential', form='formatted', &
+      status='replace', action='write')
 
   ntimefo=0
 
