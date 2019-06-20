@@ -212,18 +212,17 @@ PROGRAM bsnap
   USE snapdebug, only: iulog, idebug
   USE snapargosML
   USE snapepsML, only: ensemblefile, ensembleparticipant, ensemblerandomkey, ensemblestephours, iensemble
-  USE snapdimML
+  USE snapdimML, only: nx, ny, nk, nxmc, nymc, ldata, maxsiz, mcomp, mdefcomp
   USE snapfilML
-  USE snapfldML
+  USE snapfldML, only: enspos, iprecip, nprecip
   USE snapmetML, only: init_meteo_params, use_model_wind_for_10m
   USE snapparML
   USE snapposML, only: irelpos, nrelpos, release_positions
   USE snapgrdML
   USE snaptabML, only: tabcon, nprepro, prepro
-  USE particleML
-  USE fileInfoML
-  USE allocateFieldsML
-  USE fldout_ncML
+  USE particleML, only: pdata, extraParticle
+  USE allocateFieldsML, only: allocateFields, deallocateFields
+  USE fldout_ncML, only: fldout_nc
   USE rmpartML, only: rmpart
   USE checkdomainML, only: checkdomain
   USE rwalkML, only: rwalk
@@ -231,6 +230,7 @@ PROGRAM bsnap
   USE ensembleML, only: nxep, nyep
   USE milibML, only: xyconvert, keywrd, chcase, getvar, hrdiff, prhelp, vtime
 #if defined(TRAJ)
+  USE snapfldML, only: hlevel2
   USE forwrdML, only: forwrd, speed
 #else
   USE forwrdML, only: forwrd

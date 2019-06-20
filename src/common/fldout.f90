@@ -83,7 +83,6 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 !---------------------------------------------------------------------
   USE iso_fortran_env, only: int16, error_unit
   USE particleML
-  USE fileInfoML
   USE snapfilML
   USE snapgrdML
   USE snapfldML

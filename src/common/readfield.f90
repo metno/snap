@@ -39,7 +39,6 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
 !             ierror     error (output)
   USE iso_fortran_env, only: error_unit
   USE particleML
-  USE fileInfoML
   USE snapfilML
   USE snapgrdML
   USE snapfldML
