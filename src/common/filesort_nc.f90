@@ -23,48 +23,26 @@ module filesort_ncML
 
   contains
 
+!> check and sort netcdf file contents
 subroutine filesort_nc
-
-!       check and sort felt file contents
-
-!       unsorted list of files and timesteps with data:
-!         iavail(n)%aYear: year    )
-!         iavail(n)%aMonth: month   ) Time of analysis
-!         iavail(n)%aDay: day     ) (not valid time of forecast)
-!         iavail(n)%aHour: hour    )
-!         iavail(n)%fcHour: forecast hour
-!         iavail(n)%fileNo: file no. (in filename array)
-!         iavail(n)%fileType: 1=model level  2=surface  3=both
-!         iavail(n)%oHour: offset in hours from first (sorted) timestep
-!         iavail(n)%nAvail: pointer to next forward  (time) data
-!         iavail(n)%pAvail: pointer to next backward (time) data
-!                   n=1,navail
-
-!       pointers to lists in iavail:
-!         kavail(1): pointer to first forward  sorted timestep
-!         kavail(2): pointer to first backward sorted timestep
   USE iso_fortran_env, only: error_unit, real64, int64
   USE ieee_arithmetic, only: ieee_is_nan
-  USE DateCalc
-  USE snapfilML
-  USE snapgrdML
-  USE snapfldML
+  USE DateCalc, only: timeUnitOffset, timeUnitScale, epochToDate
+  USE snapfilML, only: iavail, kavail, itimer, navail, nfilef, filef
+  USE snapfldML, only: enspos, field1
   USE snapmetML, ONLY: xwindv, has_dummy_dim
   USE snapdebug, only: iulog, idebug
   USE readfield_ncML, only: check, calc_2d_start_length, nfcheckload
   USE netcdf
   USE snapdimML, only: nx, ny, mavail
   USE milibML, only: vtime
-!      USE snapmetML, only:
-  implicit none
-        
 
   integer :: i, j, ncid, nf, varid, dimid, tsize, ierror
-  real(real64) times(mavail)
+  real(real64) :: times(mavail)
   integer :: zeroHour, tunitLen, status, count_nan
-  integer(int64) eTimes(mavail)
+  integer(int64) :: eTimes(mavail)
   integer(int64) :: add_offset, scalef
-  integer, dimension(6) :: dateTime
+  integer :: dateTime(6)
   character(len=80) :: tunits
   integer :: start4d(7), count4d(7)
 
@@ -76,32 +54,32 @@ subroutine filesort_nc
   ! get the time steps from the files "time" variable
     status = nf90_open(filef(nf), NF90_NOWRITE, ncid)
     if(status /= NF90_NOERR) then
-      write(*,*) "cannot open ", trim(filef(nf)), ":", &
-      trim(nf90_strerror(status))
+      write(error_unit,*) "cannot open ", trim(filef(nf)), ":", &
+          trim(nf90_strerror(status))
       write(iulog,*) "cannot open ", trim(filef(nf)), ":", &
-      trim(nf90_strerror(status))
+          trim(nf90_strerror(status))
       cycle
     endif
     call check(nf90_inq_varid(ncid, "time", varid), "time")
     call check(nf90_inq_dimid(ncid, "time", dimid), "tdim-id")
     call check(nf90_inquire_dimension(ncid, dimid, len=tsize), "tdim-len")
     if (tsize > size(times)) then
-      write(*,*) "to many time-steps in ", filef(nf), ": ", tsize
+      write(error_unit,*) "to many time-steps in ", filef(nf), ": ", tsize
       error stop 1
     end if
-    call check(nf90_get_var(ncid, varid, times, (/1/), (/tsize/)), &
-    "time")
+    call check(nf90_get_var(ncid, varid, times, [1], [tsize]), &
+        "time")
     call check(nf90_inquire_attribute(ncid, varid, "units", len=tunitLen))
     call check(nf90_get_att(ncid, varid, "units", tunits), &
-    "time units")
+        "time units")
   ! shrink units-string to actual size
     tunits = tunits(:tunitLen)
     add_offset = timeUnitOffset(tunits)
     scalef = timeUnitScale(tunits)
     do i = 1, tsize
       call calc_2d_start_length(start4d, count4d, nx, ny, 1, &
-      enspos, i, has_dummy_dim)
-      call nfcheckload(ncid, xwindv, start4d, count4d, field1(:,:))
+          enspos, i, has_dummy_dim)
+      call nfcheckload(ncid, xwindv, start4d, count4d, field1)
     ! test 4 arbitrary values in field
       count_nan = 0
       do j = 1, 4
@@ -185,11 +163,13 @@ subroutine filesort_nc
           iavail(i)%nAvail = iavail(j)%nAvail
           iavail(i)%pAvail = iavail(j)%pAvail
         !             set next of previous if previous exists
-          if (iavail(j)%pAvail /= 0) &
-          iavail(iavail(j)%pAvail)%nAvail = i
+          if (iavail(j)%pAvail /= 0) then
+            iavail(iavail(j)%pAvail)%nAvail = i
+          endif
         !             set previous of next if next exists
-          if (iavail(j)%nAvail /= 0) &
-          iavail(iavail(j)%nAvail)%pAvail = i
+          if (iavail(j)%nAvail /= 0) then
+            iavail(iavail(j)%nAvail)%pAvail = i
+          endif
         !             reset first and last elements to i
           if (kavail(1) == j) kavail(1) = i
           if (kavail(2) == j) kavail(2) = i
@@ -199,13 +179,13 @@ subroutine filesort_nc
         iavail(i)%nAvail = iavail(j)%nAvail
         iavail(j)%nAvail = i
         iavail(i)%pAvail = j
-        if (iavail(i)%nAvail /= 0) &
-        iavail(iavail(i)%nAvail)%pAvail = i
+        if (iavail(i)%nAvail /= 0) then
+          iavail(iavail(i)%nAvail)%pAvail = i
+        endif
         if (kavail(2) == j) kavail(2) = i
       end if
     end if
   end do
-
 
 !..time range
 
