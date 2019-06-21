@@ -66,7 +66,7 @@ snapepsML.o: ../common/snapepsML.f90
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 dateCalc.o: ../common/dateCalc.f90
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-drydep.o: ../common/drydep.f90 particleML.o snapfldML.o snapparML.o snapgrdML.o
+drydep.o: ../common/drydep.f90 particleML.o snapfldML.o snapparML.o snapgrdML.o vgravtables.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 epinterp.o: ../common/epinterp.f90
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
