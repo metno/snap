@@ -1101,10 +1101,7 @@ PROGRAM bsnap
 
         read(cipart,*,err=12) nlevel,(klevel(i),i=1,nlevel)
         if(klevel(1) /= 0 .OR. klevel(2) == 0) goto 12
-        kadd=0
-        do i=nk,2,-1
-          if(klevel(i) == 0) kadd=kadd+1
-        end do
+        kadd = count(klevel(2:nk) == 0)
         do i=nk-kadd-1,2,-1
           if(klevel(i) <= klevel(i+1)) goto 12
         end do
