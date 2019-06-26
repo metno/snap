@@ -256,6 +256,7 @@ PROGRAM bsnap
 #else
   USE feltio_dummy, only: readfd, readfield, filesort, fldout
 #endif
+  USE find_parameter, only: detect_gridparams, get_klevel
 
   implicit none
 
@@ -318,6 +319,8 @@ PROGRAM bsnap
 
 !> name of selected release position
   character(len=40), save :: srelnam
+
+  integer :: experimental_stat
 
 #if defined(TRAJ)
   integer :: timeStart(6), timeCurrent(6)
@@ -1212,6 +1215,22 @@ PROGRAM bsnap
         if(kv1 < 1) goto 12
         read(cipart,*,err=12) argoshourstep
         if(argoshourstep <= 0 .OR. argoshourstep > 240) goto 12
+      elseif(cinput(k1:k2) == 'experimental.autodetect') then
+        if (kv1 < 1) then
+          write(error_unit,*) "Lacking a keyword for experimental.autodetect"
+          goto 12
+        endif
+        call detect_gridparams(ciname(1:nkv), nx, ny, igtype, gparam, experimental_stat)
+        if (experimental_stat /= 0) then
+          write(error_unit, *) "Autodetection did not work, continuing"
+          write(iulog, *) "Autodetection did not work, continuing"
+        endif
+        call get_klevel(ciname(1:nkv), klevel, experimental_stat)
+        if (experimental_stat /= 0) then
+          write(error_unit, *) "Autodetection did not work, continuing"
+          write(iulog, *) "Autodetection did not work, continuing"
+        endif
+        nlevel = size(klevel)
       elseif(cinput(k1:k2) == 'end') then
       !..end
 #if defined(TRAJ)
