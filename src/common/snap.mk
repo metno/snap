@@ -9,7 +9,7 @@ argoswrite.o bldp.o compheight.o checkDomain.o \
 filesort_nc.o fldout_nc.o \
 init_random_seed.o\
 release.o releasefile.o rmpart.o allocateFields.o \
-snapepsML.o
+snapepsML.o find_parameters.o
 
 ifdef MILIB
   F77FLAGS += -DMILIB
@@ -115,6 +115,8 @@ snapposML.o: ../common/snapposML.f90 snapdimML.o
 vgravtables.o: ../common/vgravtables.f90 snapparML.o snapdimML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 wetdep.o: ../common/wetdep.f90 particleML.o snapgrdML.o snapfldML.o snapparML.o snaptabML.o snapdimML.o
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+find_parameters.o: ../common/find_parameters.f90
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 
 milibML.o: ../common/milibML.f90
