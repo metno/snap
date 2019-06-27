@@ -26,7 +26,7 @@ module snapposML
 !> no. of release positions (in list)
   integer, save, public :: nrelpos
 
-  type :: release_position
+  type, public :: release_position
 !> geographic latitude for release position
     real :: geo_latitude
 !> geographic longitude for release position
