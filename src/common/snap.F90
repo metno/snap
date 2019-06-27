@@ -1215,22 +1215,22 @@ PROGRAM bsnap
         if(kv1 < 1) goto 12
         read(cipart,*,err=12) argoshourstep
         if(argoshourstep <= 0 .OR. argoshourstep > 240) goto 12
-      elseif(cinput(k1:k2) == 'experimental.autodetect') then
-        if (kv1 < 1) then
-          write(error_unit,*) "Lacking a keyword for experimental.autodetect"
-          goto 12
+      elseif(cinput(k1:k2) == 'experimental.autodetect.from_input') then
+        if (nfilef < 1) then
+          error stop "experimental.autodetect requires at least one field.input to be set"
         endif
-        call detect_gridparams(ciname(1:nkv), nx, ny, igtype, gparam, experimental_stat)
+        call detect_gridparams(filef(1), nx, ny, igtype, gparam, experimental_stat)
         if (experimental_stat /= 0) then
           write(error_unit, *) "Autodetection did not work, continuing"
           write(iulog, *) "Autodetection did not work, continuing"
         endif
-        call get_klevel(ciname(1:nkv), klevel, experimental_stat)
+        call get_klevel(filef(1), klevel, experimental_stat)
         if (experimental_stat /= 0) then
           write(error_unit, *) "Autodetection did not work, continuing"
           write(iulog, *) "Autodetection did not work, continuing"
         endif
         nlevel = size(klevel)
+        nk = nlevel
       elseif(cinput(k1:k2) == 'end') then
       !..end
 #if defined(TRAJ)
