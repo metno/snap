@@ -508,7 +508,7 @@ subroutine readfield_nc(iunit, istep, nhleft, itimei, ihr1, ihr2, &
     gparam(7)=dxgrid
     gparam(8)=dygrid
   !..size of each grid square (m**2)
-    garea = (dxgrid/xm) * (dygrid/ym)
+    garea = abs((dxgrid/xm) * (dygrid/ym))
     dgarea = garea
 
     if (temp_is_abs) then
