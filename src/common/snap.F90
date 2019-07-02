@@ -207,7 +207,7 @@
 
 !> SNAP - Severe Nuclear Accident Program
 PROGRAM bsnap
-  USE iso_fortran_env, only: real64, output_unit, error_unit
+  USE iso_fortran_env, only: real64, output_unit, error_unit, IOSTAT_END
   USE DateCalc  ,ONLY : epochToDate, timeGM
   USE snapdebug, only: iulog, idebug
   USE snapargosML
@@ -519,7 +519,9 @@ PROGRAM bsnap
   do while (iend == 0)
 
     nlines=nlines+1
-    read(iuinp,fmt='(a)',err=11) cinput
+    read(iuinp,fmt='(a)',iostat=ierror) cinput
+    if (ierror == IOSTAT_END) goto 18
+    if (ierror /= 0) goto 11
 
     ks=index(cinput,'*')
     if(ks < 1) ks=lcinp+1
