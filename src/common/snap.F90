@@ -226,7 +226,7 @@ PROGRAM bsnap
   USE fldout_ncML, only: fldout_nc
   USE rmpartML, only: rmpart
   USE checkdomainML, only: checkdomain
-  USE rwalkML, only: rwalk
+  USE rwalkML, only: rwalk, rwalk_init
   USE vgravtablesML, only: radiusmym, densitygcm3
   USE ensembleML, only: nxep, nyep
   USE milibML, only: xyconvert, keywrd, chcase, getvar, hrdiff, prhelp, vtime
@@ -2041,7 +2041,7 @@ PROGRAM bsnap
         call posint(0,tf1,tf2,tnow, pextra)
         if(iwetdep == 2) call wetdep2(tstep,0,pextra)
         call forwrd(tf1,tf2,tnow,tstep,0,pextra)
-        if(irwalk /= 0) call rwalk(tstep,blfullmix,0,pextra)
+        if(irwalk /= 0) call rwalk_init(tstep)
         init = .FALSE.
       end if
 
@@ -2082,7 +2082,7 @@ PROGRAM bsnap
 
         !..apply the random walk method (diffusion)
 
-          if(irwalk /= 0) call rwalk(tstep,blfullmix,np,pextra)
+          if(irwalk /= 0) call rwalk(blfullmix,pdata(np),pextra)
 
         !.. check domain (%active) after moving particle
 
