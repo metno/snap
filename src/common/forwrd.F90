@@ -100,7 +100,7 @@ subroutine forwrd(tf1, tf2, tnow, tstep, part, pextra)
   part%y = part%y + dy1*pextra%rmy
   part%z = part%z + dz1
 #endif
-  part%z = min(part%z, vlevel(1))
+  part%z = min(part%z, dble(vlevel(1)))
 
 end subroutine forwrd
 
