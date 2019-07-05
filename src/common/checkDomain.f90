@@ -23,33 +23,28 @@ module checkDomainML
 
   contains
 
-subroutine checkDomain(np)
-  USE snapgrdML
+!> Purpose:
+!>   check if particle is inside domain (set active = .false. if outside)
+!>   move particle to lowest (highest) level if below lowest (highest) level
+subroutine checkDomain(part)
   USE snapdimML, only: nx,ny,nk
-! Purpose:
-!    check if particle is inside domain (set active = .false. if outside)
-!    move particle to lowest (highest) level if below lowest (highest) level
+  use snapgrdML, only: vlevel
+  use particleML, only: Particle
 
-  use particleML
-  implicit none
+  type(Particle), intent(inout) :: part
+  real :: vmin, vmax
 
-  INTEGER, INTENT(IN) :: np
-  REAL :: vmin, vmax
-
-
-  if (pdata(np)%x < 1. .OR. pdata(np)%y < 1. .OR. &
-  pdata(np)%x > nx .OR. pdata(np)%y > ny) then
-    pdata(np)%active = .FALSE. 
+  if (part%x < 1. .OR. part%y < 1. .OR. &
+      part%x > nx .OR. part%y > ny) then
+    part%active = .FALSE.
   else
-    vmin=vlevel(nk)
-    vmax=vlevel( 1)
-    if (pdata(np)%z > vmax) then
-      pdata(np)%z = vmax
-    else if (pdata(np)%z < vmin) then
-      pdata(np)%z = vmin
+    vmin = vlevel(nk)
+    vmax = vlevel( 1)
+    if (part%z > vmax) then
+      part%z = vmax
+    else if (part%z < vmin) then
+      part%z = vmin
     end if
   end if
-  return
-
 end subroutine checkDomain
 end module checkDomainML

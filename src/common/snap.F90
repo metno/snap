@@ -2076,7 +2076,7 @@ PROGRAM bsnap
 
         !.. check domain (%active) after moving particle
 
-          call checkDomain(np)
+          call checkDomain(pdata(np))
 
         ! end of particle loop over active particles
         endif
