@@ -35,34 +35,32 @@ module drydep
 !>           and store depositions in nearest gridpoint in a field
 !>
 !> Method:   J.Saltbones 1994
-subroutine drydep1(n)
-  USE particleML, only: pdata
+subroutine drydep1(part)
+  USE particleML, only: Particle
   USE snapfldML, only: depdry
-  USE snapparML, only: icomp, iruncomp
+  USE snapparML, only: iruncomp
 
-!> particle loop index, n=0 means init
-  integer, intent(in) :: n
+!> particle
+  type(Particle), intent(inout) :: part
 
   integer :: m, i, j, mm
   real :: h, dep
 
-  m = icomp(n)
+  m = part%icomp
   if(kdrydep(m) == 1) then
   !..very rough eastimate of height,
   !..using boundary layer height, then just linear in sigma/eta !!! ????
-    h=pdata(n)%hbl*(1.-pdata(n)%z)/(1.-pdata(n)%tbl)
-    if(h < drydephgt(m)) then
-      dep=drydeprat(m)*pdata(n)%rad
-      pdata(n)%rad=pdata(n)%rad-dep
-      i=nint(pdata(n)%x)
-      j=nint(pdata(n)%y)
-      mm=iruncomp(m)
+    h = part%hbl*(1.-part%z)/(1.-part%tbl)
+    if (h < drydephgt(m)) then
+      dep = drydeprat(m)*part%rad
+      part%rad = part%rad - dep
+      i = nint(part%x)
+      j = nint(part%y)
+      mm = iruncomp(m)
     ! omp atomic
-      depdry(i,j,mm)=depdry(i,j,mm)+dble(dep)
+      depdry(i,j,mm) = depdry(i,j,mm) + dble(dep)
     end if
   end if
-
-  return
 end subroutine drydep1
 
 
@@ -70,48 +68,46 @@ end subroutine drydep1
 !>           and store depositions in nearest gridpoint in a field
 !>
 !> Method:   J.Bartnicki 2003
-subroutine drydep2(tstep, n)
-  USE particleML, only: pdata
+subroutine drydep2(tstep, part)
+  USE particleML, only: Particle
   USE snapfldML, only: depdry
-  USE snapparML, only: icomp, iruncomp
+  USE snapparML, only: iruncomp
   USE snapgrdML, only: vlevel
   USE vgravtablesML, only: radiusmym
 
 ! ... 23.04.12 - gas, particle 0.1<d<10, particle d>10 - J. Bartnicki|
   real, intent(in) :: tstep
-!> particle loop index, n = 0 means init
-  integer, intent(in) :: n
+!> particle
+  type(Particle), intent(inout) :: part
 
   integer :: m,i,j,mm
-  real ::    h,deprate,dep
+  real :: deprate, dep
+  real, parameter :: h = 30.0
 
-  m= icomp(n)
+  m = part%icomp
 !#### 30m = surface-layer (deposition-layer); sigma(hybrid)=0.996 ~ 30m
-  if(kdrydep(m) == 1 .AND. pdata(n)%z > 0.996) then
-    h=30.0
+  if(kdrydep(m) == 1 .AND. part%z > 0.996) then
   ! b...23.04.12... difference between particle and gas
 
     if(radiusmym(m) <= 0.05) then
     ! gas
-      deprate= 1.0-exp(-tstep*(0.008)/h)
+      deprate = 1.0 - exp(-tstep*(0.008)/h)
     else if (radiusmym(m) <= 10.0) then
     ! particle 0.05<r<10
-      deprate= 1.0-exp(-tstep*(0.002)/h)
+      deprate = 1.0 - exp(-tstep*(0.002)/h)
     else
     ! particle r>=10
-      deprate= 1.0-exp(-tstep*(0.002+pdata(n)%grv)/h)
+      deprate = 1.0 - exp(-tstep*(0.002+part%grv)/h)
     ! complete deposition when particle hits ground
-      if (pdata(n)%z == vlevel(1)) deprate = 1.
+      if (part%z == vlevel(1)) deprate = 1.
     endif
-    dep=deprate*pdata(n)%rad
-    pdata(n)%rad=pdata(n)%rad-dep
-    i=nint(pdata(n)%x)
-    j=nint(pdata(n)%y)
-    mm=iruncomp(m)
+    dep = deprate*part%rad
+    part%rad = part%rad - dep
+    i = nint(part%x)
+    j = nint(part%y)
+    mm = iruncomp(m)
   ! omp atomic
-    depdry(i,j,mm)=depdry(i,j,mm)+dble(dep)
+    depdry(i,j,mm) = depdry(i,j,mm) + dble(dep)
   end if
-
-  return
 end subroutine drydep2
 end module drydep

@@ -2052,8 +2052,8 @@ PROGRAM bsnap
 
         !..dry deposition (1=old, 2=new version)
 
-          if(idrydep == 1) call drydep1(np)
-          if(idrydep == 2) call drydep2(tstep,np)
+          if(idrydep == 1) call drydep1(pdata(np))
+          if(idrydep == 2) call drydep2(tstep,pdata(np))
 
         !          if(iensemble.eq.1)
         !     +      call ensemble(3,itime,tf1,tf2,tnow,istep,nstep,nsteph,np)
