@@ -2055,7 +2055,7 @@ PROGRAM bsnap
           call posint(np,tf1,tf2,tnow, pextra)
         !..radioactive decay
 
-          if(idecay == 1) call decay(np)
+          if(idecay == 1) call decay(pdata(np))
 
         !         if(iensemble.eq.1)
         !     +      call ensemble(2,itime,tf1,tf2,tnow,istep,nstep,nsteph,np)
