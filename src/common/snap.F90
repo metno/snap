@@ -260,11 +260,6 @@ PROGRAM bsnap
 
   implicit none
 
-!..BATCH input:
-!	iaction=0 : initialize
-!	iaction=1 : run one timestep
-!	iaction=2 : finish
-  integer :: iaction
 !..BATCH output:
 !	iexit=0   : ok
 !	iexit=1   : end of run
@@ -292,7 +287,7 @@ PROGRAM bsnap
   integer :: ntimefo,iunitf,nh1,nh2
   integer :: ierr1,ierr2,nsteph,nstep,nstepr,iunito
   integer :: nxtinf,ihread,isteph,lstepr,iendrel,istep,ihr1,ihr2,nhleft
-  integer :: ierr,ihdiff,ihr,ifldout,idailyout,ihour,istop
+  integer :: ierr,ihdiff,ihr,ifldout,idailyout,ihour
   integer :: date_time(8)
   real ::    tstep,rmlimit,rnhrun,rnhrel,glat,glong,tf1,tf2,tnow,tnext
   real ::    x(1),y(1)
@@ -326,22 +321,8 @@ PROGRAM bsnap
   integer :: timeStart(6), timeCurrent(6)
   integer :: ilvl
   real ::    vlvl
-#endif
 
-#if defined(VOLCANO) || defined(TRAJ)
-! b 02.05
-
-!... matrix for calculating volcanic ash concentrations + file name
-
-!   vcon(nx,ny,3)
   integer(kind=real64) :: epochSecs
-#if defined(VOLCANO)
-  real, allocatable :: vcon(:,:,:)
-  character(len=60) :: cfile
-#endif
-! b 19.05
-  integer :: itimev(5),j
-#if defined(TRAJ)
   real :: zzz
 ! character(len=60) :: tr_file
   integer :: ntraj,itraj
@@ -350,10 +331,19 @@ PROGRAM bsnap
   integer :: tyear, tmon, tday, thour, tmin
   real :: distance
 #endif
+
+#if defined(VOLCANO)
+!... matrix for calculating volcanic ash concentrations + file name
+!   vcon(nx,ny,3)
+  real, allocatable :: vcon(:,:,:)
+  character(len=60) :: cfile
+#endif
+
+#if defined(VOLCANO) || defined(TRAJ)
+  integer :: itimev(5),j
 #endif
 
 
-  iaction=0
 ! initialize random number generator for rwalk and release
   CALL init_random_seed()
   iexit=0
@@ -1546,7 +1536,7 @@ PROGRAM bsnap
   else
     call filesort(iunitf,ierror)
   end if
-  if(ierror /= 0) goto 910
+  if(ierror /= 0) call snap_error_exit()
 
 !..itime: itime(1) - year
 !         itime(2) - month
@@ -1563,7 +1553,7 @@ PROGRAM bsnap
     write(iulog,*) (itime1(i),i=1,4)
     write(error_unit,*) 'Requested start time is wrong:'
     write(error_unit,*) (itime1(i),i=1,4)
-    goto 910
+    call snap_error_exit()
   end if
 
   itime2 = itime1
@@ -1586,7 +1576,7 @@ PROGRAM bsnap
     if(nh1 < 0) then
       write(iulog,*) 'NO DATA AT START OF RUN'
       write(error_unit,*) 'NO DATA AT START OF RUN'
-      goto 910
+      call snap_error_exit()
     end if
     write(iulog,*) 'Running until end of data'
     write(error_unit,*) 'Running until end of data'
@@ -1778,7 +1768,7 @@ PROGRAM bsnap
       call fldout(-1,iunito,fldfil,itime1,0.,0.,0.,tstep, &
           m,nsteph,ierror)
     endif
-    if(ierror /= 0) goto 910
+    if(ierror /= 0) call snap_error_exit()
 
     itime = itime1
     itimefi = 0
@@ -1881,7 +1871,7 @@ PROGRAM bsnap
         end if
       !          write (*,*) "readfield(", iunitf, istep, nhleft, itimei, ihr1
       !     +          ,ihr2, itimefi, ierror, ")"
-        if(ierror /= 0) goto 910
+        if(ierror /= 0) call snap_error_exit()
 
       !..analysis time of input model
         if(itimefi(5) <= +6) then
@@ -1931,14 +1921,14 @@ PROGRAM bsnap
             write(error_unit,*) 'ERROR: xyconvert'
             write(error_unit,*) '   igtype: ',igtype
             write(error_unit,*) '   gparam: ',gparam
-            goto 910
+            call snap_error_exit()
           end if
           write(iulog,*) 'release   x,y:    ',x,y
           if(x(1) < 1.01 .OR. x(1) > nx-0.01 .OR. &
               y(1) < 1.01 .OR. y(1) > ny-0.01) then
             write(iulog,*) 'ERROR: Release position outside field area'
             write(error_unit,*) 'ERROR: Release position outside field area'
-            goto 910
+            call snap_error_exit()
           end if
           release_positions(irelpos)%grid_x = x(1)
           release_positions(irelpos)%grid_y = y(1)
@@ -2244,7 +2234,7 @@ PROGRAM bsnap
             call fldout(-1,iunito,fldfilX,itime1,0.,0.,0.,tstep, &
                 (24/nhfout)+1,nsteph,ierror)
           endif
-          if(ierror /= 0) goto 910
+          if(ierror /= 0) call snap_error_exit()
         end if
         if (fldtype == "netcdf") then
           call fldout_nc(ifldout,iunito,fldfilX,itimeo,tf1,tf2,tnext, &
@@ -2253,7 +2243,7 @@ PROGRAM bsnap
           call fldout(ifldout,iunito,fldfilX,itimeo,tf1,tf2,tnext,tstep, &
               istep,nsteph,ierror)
         endif
-        if(ierror /= 0) goto 910
+        if(ierror /= 0) call snap_error_exit()
       else
         if (fldtype == "netcdf") then
           call fldout_nc(ifldout,iunito,fldfil,itimeo,tf1,tf2,tnext, &
@@ -2262,7 +2252,7 @@ PROGRAM bsnap
           call fldout(ifldout,iunito,fldfil,itimeo,tf1,tf2,tnext,tstep, &
               istep,nsteph,ierror)
         endif
-        if(ierror /= 0) goto 910
+        if(ierror /= 0) call snap_error_exit()
       end if
 
       if(isteph == 0 .AND. iprecip < nprecip) iprecip=iprecip+1
@@ -2328,25 +2318,10 @@ PROGRAM bsnap
   end do
 #endif
 
-
-  istop=0
-  goto 990
-
-  910 istop=2
-  goto 990
-
-  990 continue
-
 !      if(iensemble.eq.1)
 !     +  call ensemble(7,itimefa,tf1,tf2,tnext,istep,nstep,nsteph,0)
 
-  if(iargos == 1) then
-    close(91)
-    close(92)
-    close(93)
-  end if
-
-  if(istop == 0 .AND. lstepr < nstep .AND. lstepr < nstepr) then
+  if(lstepr < nstep .AND. lstepr < nstepr) then
     write(iulog,*) 'ERROR: Due to space problems the release period was'
     write(iulog,*) '       shorter than requested.'
     write(iulog,*) '   No. of requested release timesteps: ',nstepr
@@ -2355,32 +2330,46 @@ PROGRAM bsnap
     write(error_unit,*) '       shorter than requested.'
     write(error_unit,*) '   No. of requested release timesteps: ',nstepr
     write(error_unit,*) '   No. of simulated release timesteps: ',lstepr
-    istop=1
+
+    call snap_error_exit()
   end if
 
-  if(istop == 0) then
   ! b_240311
-    write(*,*)
-    write(*,'(''mhmax='',f10.2)') mhmax
-    write(*,'(''mhmin='',f10.2)') mhmin
-    write(*,*)
+  write(*,*)
+  write(*,'(''mhmax='',f10.2)') mhmax
+  write(*,'(''mhmin='',f10.2)') mhmin
+  write(*,*)
   ! b_end
-    write(iulog,*) ' SNAP run finished'
-    write(error_unit,*) ' SNAP run finished'
-  else
-    write(iulog,*) ' ------- SNAP ERROR EXIT -------'
-    write(error_unit,*) ' ------- SNAP ERROR EXIT -------'
-  end if
+  write(iulog,*) ' SNAP run finished'
+  write(output_unit,*) ' SNAP run finished'
 
-  close(iulog)
+  if(iargos == 1) then
+    close(91)
+    close(92)
+    close(93)
+  end if
 
 ! deallocate all fields
   CALL deAllocateFields()
-  if (istop == 1) then
-    error stop 1
-  elseif (istop == 2) then
-    error stop 2
-  elseif (istop /= 0) then
-    error stop 3
-  endif
+
+  close(iulog)
+
+  contains
+
+  subroutine snap_error_exit()
+    character(len=*), parameter :: ERROR_MSG = ' ------- SNAP ERROR EXIT -------'
+
+    call deAllocateFields()
+    if(iargos == 1) then
+      close(91)
+      close(92)
+      close(93)
+    end if
+
+    write(iulog,*) ERROR_MSG
+    write(error_unit,*) ERROR_MSG
+    close(iulog)
+
+    error stop ERROR_MSG
+  end subroutine
 END PROGRAM
