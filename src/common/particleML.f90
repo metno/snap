@@ -41,6 +41,8 @@ module particleML
         logical        :: active = .false.
         !> age of particle since construction
         integer(int16) :: ageInSteps = 0
+        !> index to the defined component
+        integer(int16) :: icomp
     end type particle
 
 !> storage for extra particle data

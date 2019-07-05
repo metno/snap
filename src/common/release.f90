@@ -400,6 +400,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
               pdata(npart)%rad= pbq(m)
               pdata(npart)%grv= 0
               pdata(npart)%active = .TRUE.
+              pdata(npart)%icomp = idefcomp(m)
               icomp(npart)=   idefcomp(m)
             !..an unique particle identifier (for testing...)
               nparnum=nparnum+1
@@ -441,6 +442,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
             pdata(npart)%z= vlev
             pdata(npart)%rad= pbq(m)
             pdata(npart)%active = .TRUE.
+            pdata(npart)%icomp = idefcomp(m)
             icomp(npart)=   idefcomp(m)
           !..an unique particle identifier (for testing...)
             nparnum=nparnum+1
