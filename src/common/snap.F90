@@ -208,18 +208,24 @@
 !> SNAP - Severe Nuclear Accident Program
 PROGRAM bsnap
   USE iso_fortran_env, only: real64, output_unit, error_unit, IOSTAT_END
-  USE DateCalc  ,ONLY : epochToDate, timeGM
+  USE DateCalc, only : epochToDate, timeGM
   USE snapdebug, only: iulog, idebug
-  USE snapargosML
+  USE snapargosML, only: argosdepofile, argosdosefile, argoshoursrelease, &
+      argoshourstep, argoshoursrun, iargos, margos, argosconcfile, nargos, &
+      argostime
   USE snapepsML, only: ensemblefile, ensembleparticipant, ensemblerandomkey, &
       ensemblestephours, iensemble
   USE snapdimML, only: nx, ny, nk, nxmc, nymc, ldata, maxsiz, mcomp, mdefcomp
-  USE snapfilML
+  USE snapfilML, only: filef, itimer, limfcf, ncsummary, nctitle, nhfmax, nhfmin, &
+      nctype, nfilef, simulation_start
   USE snapfldML, only: enspos, iprecip, nprecip
   USE snapmetML, only: init_meteo_params, use_model_wind_for_10m
-  USE snapparML
+  USE snapparML, only: compname, kgravity, component, idefcomp, itprof, &
+      ncomp, totalbq, compnamemc, gravityms, iruncomp, idcomp, nparnum
   USE snapposML, only: irelpos, nrelpos, release_positions
-  USE snapgrdML
+  USE snapgrdML, only: modleveldump, ivcoor, ixbase, iybase, ixystp, kadd, &
+      klevel, imslp, inprecip, iprod, iprodr, itotcomp, gparam, igrid, igridr, &
+      igtype, imodlevel
   USE snaptabML, only: tabcon, nprepro, prepro
   USE particleML, only: pdata, extraParticle
   USE allocateFieldsML, only: allocateFields, deallocateFields
@@ -229,10 +235,11 @@ PROGRAM bsnap
   USE rwalkML, only: rwalk, rwalk_init
   USE vgravtablesML, only: radiusmym, densitygcm3
   USE ensembleML, only: nxep, nyep
-  USE milibML, only: xyconvert, keywrd, chcase, getvar, hrdiff, prhelp, vtime
+  USE milibML, only: xyconvert, keywrd, chcase, getvar, hrdiff, prhelp, vtime, termchar
 #if defined(TRAJ)
   USE snapfldML, only: hlevel2
   USE forwrdML, only: forwrd, forwrd_init, speed
+  USE snapgrdML, only: vlevel, ivlevel
 #else
   USE forwrdML, only: forwrd, forwrd_init
 #endif
