@@ -19,22 +19,53 @@ module posintML
   implicit none
   private
 
-  public posint
+  public posint, posint_init
+
+  real, save :: vminprec = -1.
+  real, parameter :: precmin = 0.01
 
   contains
 
-!> Purpose:  Interpolation of boundary layer top and height
-!>           and precipitation intensity to particle positions
-subroutine posint(np,tf1,tf2,tnow,pextra)
-  USE particleML, only: pdata, extraParticle
-  USE snapgrdML, only: alevel, blevel, vlevel, gparam
-  USE snapfldML, only: xm, ym, bl1, bl2, hbl1, hbl2, precip, iprecip
+!> initialisation function for ::posint
+subroutine posint_init()
+  USE snapgrdML, only: alevel, blevel, vlevel
   USE snapdimML, only: nk
   USE snapdebug, only: iulog
 
-!> particle number, np = 0 initialization
+  integer :: k
+  real :: p1,p2
+  real, parameter :: plim = 550.0
+
+  if(vminprec < 0.) then
+    p2 = 1000.
+    k = 1
+    do while (p2 > plim .AND. k < nk)
+      k = k+1
+      p1 = p2
+      p2 = alevel(k) + blevel(k)*1000.
+    end do
+    if(k > 1) then
+      vminprec = vlevel(k-1) &
+          + (vlevel(k)-vlevel(k-1))*(p1-plim)/(p1-p2)
+    else
+      vminprec = vlevel(nk)
+    end if
+    write(iulog,*) 'POSINT. precmin,vminprec: ',precmin,vminprec
+  end if
+end subroutine
+
+!> Purpose:  Interpolation of boundary layer top and height
+!>           and precipitation intensity to particle positions
+!>
+!> must call ::posint_init first
+subroutine posint(part,tf1,tf2,tnow,pextra)
+  USE particleML, only: Particle, extraParticle
+  USE snapgrdML, only: gparam
+  USE snapfldML, only: xm, ym, bl1, bl2, hbl1, hbl2, precip, iprecip
+
+!> particle
 !> (with all particles at the same horizontal position)
-  integer, intent(in) :: np
+  type(Particle), intent(inout) :: part
 !> time in seconds for field set 1 (e.g. 0.)
   real, intent(in) ::    tf1
 !> time in seconds for field set 2 (e.g. 21600, if 6 hours)
@@ -43,38 +74,11 @@ subroutine posint(np,tf1,tf2,tnow,pextra)
   real, intent(in) :: tnow
   type(extraParticle), intent(out) :: pextra
 
-  integer :: i,j,k
+  integer :: i,j
   real :: rt1,rt2,dxgrid,dygrid,dx,dy,c1,c2,c3,c4,bl,hbl,rmx,rmy
-  real :: pr,p1,p2
-  real, parameter :: plim = 550.0
-  real, parameter :: precmin = 0.01
+  real :: pr
 
-  real, save :: vminprec = -1.
-
-
-! initialization, only run once
-  if (np == 0) then
-    if(vminprec < 0.) then
-      p2=1000.
-      k=1
-      do while (p2 > plim .AND. k < nk)
-        k=k+1
-        p1=p2
-        p2=alevel(k)+blevel(k)*1000.
-      end do
-      if(k > 1) then
-        vminprec= vlevel(k-1) &
-            + (vlevel(k)-vlevel(k-1))*(p1-plim)/(p1-p2)
-      else
-        vminprec=vlevel(nk)
-      end if
-      write(iulog,*) 'POSINT. precmin,vminprec: ',precmin,vminprec
-    end if
-  ! end initialization
-    return
-  end if
-
-  if (.not.pdata(np)%active) then
+  if (.not.part%active) then
     ! No need to compute any properties on the particle
     return
   endif
@@ -87,10 +91,10 @@ subroutine posint(np,tf1,tf2,tnow,pextra)
   dygrid=gparam(8)
 
   !..for horizontal interpolations
-  i=pdata(np)%x
-  j=pdata(np)%y
-  dx=pdata(np)%x-i
-  dy=pdata(np)%y-j
+  i=part%x
+  j=part%y
+  dx=part%x-i
+  dy=part%y-j
   c1=(1.-dy)*(1.-dx)
   c2=(1.-dy)*dx
   c3=dy*(1.-dx)
@@ -120,15 +124,15 @@ subroutine posint(np,tf1,tf2,tnow,pextra)
       +c3*precip(i,j+1,iprecip)+c4*precip(i+1,j+1,iprecip)
 
   !..update boundary layer top and height, map ratio and precipitation
-  pdata(np)%tbl=bl
-  pdata(np)%hbl=hbl
+  part%tbl=bl
+  part%hbl=hbl
   pextra%rmx=rmx/dxgrid
   pextra%rmy=rmy/dygrid
   pextra%prc=pr
 
   !..reset precipitation to zero if pressure less than approx. 550 hPa.
   !..and if less than a minimum precipitation intensity (mm/hour)
-  if(pdata(np)%z < vminprec .OR. &
+  if(part%z < vminprec .OR. &
       pextra%prc < precmin) then
       pextra%prc=0.
   endif
