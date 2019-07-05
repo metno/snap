@@ -239,7 +239,7 @@ PROGRAM bsnap
   USE wetdep, only: wetdep1, wetdep2, wetdeprat, kwetdep
   USE drydep, only: drydep1, drydep2, drydeprat, drydephgt, kdrydep
   USE decayML, only: decay, decayDeps, kdecay, halftime, decayrate
-  USE posintML, only: posint
+  USE posintML, only: posint, posint_init
   USE bldpML, only: bldp
   USE releaseML, only: release, frelhour, relradius, rellower, relupper, &
                        relstemradius, relbqsec, nrelheight, ntprof, mprel, &
@@ -2028,7 +2028,7 @@ PROGRAM bsnap
     ! prepare particle functions once before loop
       if (init) then
       ! setting particle-number to 0 means init
-        call posint(0,tf1,tf2,tnow, pextra)
+        call posint_init()
         if(iwetdep == 2) call wetdep2(tstep,0,pextra)
         call forwrd(tf1,tf2,tnow,tstep,0,pextra)
         if(irwalk /= 0) call rwalk_init(tstep)
@@ -2042,7 +2042,7 @@ PROGRAM bsnap
           pdata(np)%ageInSteps = pdata(np)%ageInSteps + 1
         !..interpolation of boundary layer top, height, precipitation etc.
         !  creates and save temporary data to pextra%prc, pextra%
-          call posint(np,tf1,tf2,tnow, pextra)
+          call posint(pdata(np),tf1,tf2,tnow, pextra)
         !..radioactive decay
 
           if(idecay == 1) call decay(pdata(np))
