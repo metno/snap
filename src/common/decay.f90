@@ -30,24 +30,20 @@ module decayML
   real, save, public :: decayrate(mdefcomp)
 
   contains
+
 !>  Purpose:  Decrease radioactive contents due to decay
 !>
-!>  WARNING:   make sure decayDeps is run once before running decay
-subroutine decay(n)
-  USE snapparML, only: icomp
-  use particleML, only: pdata
+!>  WARNING:   make sure ::decayDeps is run once before running decay
+subroutine decay(part)
+  use particleML, only: Particle
 
-  implicit none
-
-  integer, INTENT(IN) :: n
+  type(Particle), intent(inout) :: part
   integer :: m
 
-!      do n=1,npart loop outside this function
-  m = icomp(n)
+  m = part%icomp
   if(kdecay(m) == 1) then
-    pdata(n)%rad= pdata(n)%rad * decayrate(m)
+    part%rad = part%rad * decayrate(m)
   end if
-!      end do
 
   return
 end subroutine decay
@@ -55,18 +51,15 @@ end subroutine decay
 !>  Purpose:  Decrease radioactive contents of deposition fields
 !>            due to decay
 !>
-!>     NEEDS TO BE RUN BEFORE 1 decay
+!>     NEEDS TO BE RUN BEFORE ::decay
 subroutine decayDeps(tstep)
   USE snapfldML, only: depdry, depwet, accdry, accwet
-  USE snapparML, only: icomp, ncomp
-
-  implicit none
+  USE snapparML, only: ncomp
 
   real, intent(in) :: tstep
 
   integer :: m
   logical, save :: prepare = .TRUE.
-
 
   if(prepare) then
 
