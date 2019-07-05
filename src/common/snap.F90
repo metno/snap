@@ -1817,10 +1817,10 @@ PROGRAM bsnap
 
   ! reset readfield_nc (eventually, traj will rerun this loop)
     if (ftype == "netcdf") &
-    call readfield_nc(iunitf,-1,nhleft,itimei,ihr1,ihr2, &
-        itimefi,ierror)
+        call readfield_nc(iunitf,-1,nhleft,itimei,ihr1,ihr2, &
+            itimefi,ierror)
   ! start time loop
-    do 200 istep=0,nstep
+    time_loop: do istep=0,nstep
 
       write(iulog,*) 'istep,nplume,npart: ',istep,nplume,npart
       flush(iulog)
@@ -1939,7 +1939,7 @@ PROGRAM bsnap
           nxtinf=1
           ifldout=0
         ! continue istep loop after initialization
-          goto 200
+          cycle time_loop
         end if
 
       !          if(iensemble.eq.1)
@@ -2037,50 +2037,44 @@ PROGRAM bsnap
 
     ! particle loop
     ! OMP PARALLEL DO PRIVATE(pextra) SCHEDULE(guided) !np is private by default
-      do np=1,npart
-        if (pdata(np)%active) then
-          pdata(np)%ageInSteps = pdata(np)%ageInSteps + 1
+      part_do: do np=1,npart
+        if (.not.pdata(np)%active) cycle part_do
+
+        pdata(np)%ageInSteps = pdata(np)%ageInSteps + 1
+
         !..interpolation of boundary layer top, height, precipitation etc.
         !  creates and save temporary data to pextra%prc, pextra%
-          call posint(pdata(np),tf1,tf2,tnow, pextra)
-        !..radioactive decay
+        call posint(pdata(np),tf1,tf2,tnow, pextra)
 
-          if(idecay == 1) call decay(pdata(np))
+        !..radioactive decay
+        if(idecay == 1) call decay(pdata(np))
 
         !         if(iensemble.eq.1)
         !     +      call ensemble(2,itime,tf1,tf2,tnow,istep,nstep,nsteph,np)
 
         !..dry deposition (1=old, 2=new version)
-
-          if(idrydep == 1) call drydep1(pdata(np))
-          if(idrydep == 2) call drydep2(tstep,pdata(np))
+        if(idrydep == 1) call drydep1(pdata(np))
+        if(idrydep == 2) call drydep2(tstep,pdata(np))
 
         !          if(iensemble.eq.1)
         !     +      call ensemble(3,itime,tf1,tf2,tnow,istep,nstep,nsteph,np)
 
         !..wet deposition (1=old, 2=new version)
-
-          if(iwetdep == 1) call wetdep1(np, pextra)
-          if(iwetdep == 2) call wetdep2(tstep,np, pextra)
+        if(iwetdep == 1) call wetdep1(np, pextra)
+        if(iwetdep == 2) call wetdep2(tstep,np, pextra)
 
         !          if(iensemble.eq.1)
         !     +      call ensemble(4,itime,tf1,tf2,tnow,istep,nstep,nsteph,np)
 
         !..move all particles forward, save u and v to pextra
-
-          call forwrd(tf1,tf2,tnow,tstep,np, pextra)
+        call forwrd(tf1,tf2,tnow,tstep,np, pextra)
 
         !..apply the random walk method (diffusion)
-
-          if(irwalk /= 0) call rwalk(blfullmix,pdata(np),pextra)
+        if(irwalk /= 0) call rwalk(blfullmix,pdata(np),pextra)
 
         !.. check domain (%active) after moving particle
-
-          call checkDomain(pdata(np))
-
-        ! end of particle loop over active particles
-        endif
-      end do
+        call checkDomain(pdata(np))
+      end do part_do
     ! OMP END PARALLEL DO
 
     !..remove inactive particles or without any mass left
@@ -2127,9 +2121,7 @@ PROGRAM bsnap
     ! b... output with concentrations after 6 hours
       if(istep > 1 .AND. mod(istep,72) == 0) then
         write(*,*) (itime(i),i=1,5)
-        do i=1,5
-          itimev(i)=itime(i)
-        enddo
+        itimev = itime
         itimev(5)= itime(5)+1
         call vtime(itimev,ierror)
         write(*,*) (itimev(i),i=1,5)
@@ -2311,7 +2303,7 @@ PROGRAM bsnap
         enddo
       endif
 #endif
-    200 END DO
+    end do time_loop
 #if defined(TRAJ)
     close (13)
 
