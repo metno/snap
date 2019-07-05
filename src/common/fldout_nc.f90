@@ -19,6 +19,7 @@ module fldout_ncML
   USE iso_fortran_env, only: real32, real64
   USE readfield_ncML, only: check
   USE milibML, only: xyconvert, gridpar, hrdiff
+  USE netcdf
   implicit none
   private
 
@@ -117,12 +118,14 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   USE snapgrdML, only: gparam, igridr, igtype, imodlevel, imslp, inprecip, &
       iprodr, itotcomp, ivcoor, modleveldump, ivlayer, &
       alevel, blevel, vlevel, klevel
-  USE snapfldML
+  USE snapfldML, only: field1, field2, field3, field4, depwet, depdry, &
+      avgbq1, avgbq2, hlayer1, hlayer2, garea, pmsl1, pmsl2, hbl1, hbl2, &
+      xm, ym, accdry, accwet, avgprec, concen, ps1, ps2, avghbl, dgarea, &
+      avgbq, concacc, accprec, iprecip, precip
   USE snapparML, only: itprof, ncomp, icomp, idefcomp, iruncomp, &
       compnamemc, compname, totalbq
   USE snapdebug, only: iulog, idebug
   USE ftestML, only: ftest
-  USE netcdf
   USE snapdimML, only: mcomp, ldata, nx, ny, nk, nxmc, nymc
   USE releaseML, only: npart
   USE drydep, only: kdrydep
@@ -1105,8 +1108,8 @@ end subroutine fldout_nc
 
 subroutine nc_declare_3d(iunit, dimids, varid, &
     chksz, varnm, units, stdnm, metnm)
-  USE netcdf
   USE snapdebug, only: iulog
+
   INTEGER, INTENT(OUT)   :: varid
   INTEGER, INTENT(IN)    :: iunit, dimids(3), chksz(3)
   CHARACTER(LEN=*), INTENT(IN) :: varnm, stdnm, metnm, units
@@ -1134,8 +1137,8 @@ end subroutine nc_declare_3d
 
 subroutine nc_declare_4d(iunit, dimids, varid, &
     chksz, varnm, units, stdnm, metnm)
-  USE netcdf
   USE snapdebug, only: iulog
+
   INTEGER, INTENT(OUT)   :: varid
   INTEGER, INTENT(IN)    :: iunit, dimids(4), chksz(4)
   CHARACTER(LEN=*), INTENT(IN) :: varnm, stdnm, metnm, units
@@ -1160,7 +1163,6 @@ subroutine nc_declare_4d(iunit, dimids, varid, &
 end subroutine nc_declare_4d
 
 subroutine nc_set_vtrans(iunit, kdimid,k_varid,ap_varid,b_varid)
-  USE netcdf
   INTEGER, INTENT(IN) :: iunit, kdimid
   INTEGER, INTENT(OUT) :: k_varid, ap_varid, b_varid
   INTEGER ::p0_varid
@@ -1196,7 +1198,6 @@ end subroutine nc_set_vtrans
 subroutine nc_set_projection(iunit, xdimid, ydimid, &
     igtype,nx,ny,gparam,garea, xm, ym, &
     simulation_start)
-  USE netcdf
   INTEGER, INTENT(IN) :: iunit, xdimid, ydimid, igtype, nx, ny
   REAL(real32), INTENT(IN):: gparam(8)
   REAL(real32), INTENT(IN), DIMENSION(nx,ny) :: garea

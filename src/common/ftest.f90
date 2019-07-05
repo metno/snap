@@ -160,12 +160,14 @@ subroutine ftest_2d_orig(name,k1,k2,nx,ny,nk,field,iundef)
   real, intent(in) :: field(nx,ny)
   character(len=*), intent(in) :: name
 
-  integer :: kstep,i,j,k,ndef
-real :: fmin,fmax,fmean
+  integer :: i,j,k,ndef
+  real :: fmin,fmax,fmean
   real, parameter :: undef = 1.0e35
   real, parameter :: ud = undef*0.9
 
   real(real64) :: fsum
+
+  if (.false.) write(*,*) nk ! Silence compiler warning
 
   fmin = huge(fmin)
   fmax = -huge(fmax)

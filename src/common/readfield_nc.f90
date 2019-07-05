@@ -19,6 +19,7 @@ module readfield_ncML
   USE ftestML, only: ftest
   USE om2edotML, only: om2edot
   USE milibML, only: mapfield, hrdiff
+  USE netcdf
 
   implicit none
   private
@@ -35,14 +36,20 @@ module readfield_ncML
 subroutine readfield_nc(iunit, istep, nhleft, itimei, ihr1, ihr2, &
     itimefi,ierror)
   USE iso_fortran_env, only: error_unit
-  USE particleML
-  USE snapfilML
-  USE snapfldML
-  USE snapgrdML
-  USE snapmetML
-  USE snaptabML
+  USE snapfilML, only: nctype, itimer, kavail, iavail, filef
+  USE snapfldML, only: field1, field2, field3, field4, &
+      xm, ym, u1, u2, v1, v2, w1, w2, t1, t2, ps1, ps2, pmsl1, pmsl2, &
+      hbl1, hbl2, hlayer1, hlayer2, garea, dgarea, hlevel1, hlevel2, &
+      hlayer1, hlayer2, bl1, bl2, enspos, nprecip, precip
+  USE snapgrdML, only: alevel, blevel, vlevel, ahalf, bhalf, vhalf, &
+      gparam, kadd, klevel, ivlevel, imslp, igtype, ivlayer, ivcoor
+  USE snapmetML, only: psv, ptopv, sigmadot_is_omega, sigmav, temp_is_abs, &
+      use_model_wind_for_10m, xwind10mv, ywind10mv, xwindv, ywindv, &
+      precconvrt, precstratiaccumv, precstrativrt, &
+      apv, bv, has_dummy_dim, manual_level_selection, &
+      pottempv, precaccumv, precconaccumv, mslpv, sigmadotv
+  USE snaptabML, only: cp, r
   USE snapdebug, only: iulog, idebug
-  USE netcdf
   USE snapdimML, only: nx, ny, nk
 !> filehandle-unit (dummy)
   integer, intent(in) :: iunit
@@ -680,7 +687,6 @@ end subroutine calc_2d_start_length
 
 
 subroutine check(status, errmsg)
-  use netcdf
   integer, intent ( in) :: status
   character(len=*), intent(in), optional :: errmsg
 
@@ -696,8 +702,6 @@ end subroutine check
 
 subroutine fillscaleoffset(ncid, varid, fillvalue, scalefactor, offset, status)
   use iso_fortran_env, only: real32
-  use netcdf
-  implicit none
 
   integer, intent(in) :: ncid, varid
   real(kind=real32), intent(out) :: fillvalue, scalefactor, offset
@@ -727,9 +731,9 @@ subroutine fillscaleoffset(ncid, varid, fillvalue, scalefactor, offset, status)
 end subroutine fillscaleoffset
 
 subroutine nfcheckload1d(ncid, varname, start, length, field)
-  use, intrinsic :: IEEE_ARITHMETIC
+  use ieee_arithmetic, only: ieee_value, IEEE_QUIET_NAN
   use iso_fortran_env, only: real32
-  use netcdf
+
   integer, intent(in) :: ncid, start(:), length(:)
   character(len=*), intent(in) :: varname
   real(real32), intent(out) :: field(:)
@@ -753,9 +757,9 @@ subroutine nfcheckload1d(ncid, varname, start, length, field)
 end subroutine nfcheckload1d
 
 subroutine nfcheckload2d(ncid, varname, start, length, field)
-  use, intrinsic :: IEEE_ARITHMETIC
+  use ieee_arithmetic, only: ieee_value, IEEE_QUIET_NAN
   use iso_fortran_env, only: real32
-  use netcdf
+
   integer, intent(in) :: ncid, start(:), length(:)
   character(len=*), intent(in) :: varname
   real(real32), intent(out) :: field(:,:)
@@ -779,9 +783,9 @@ subroutine nfcheckload2d(ncid, varname, start, length, field)
 end subroutine nfcheckload2d
 
 subroutine nfcheckload3d(ncid, varname, start, length, field)
-  use, intrinsic :: IEEE_ARITHMETIC
+  use ieee_arithmetic, only: ieee_value, IEEE_QUIET_NAN
   use iso_fortran_env, only: real32
-  use netcdf
+
   integer, intent(in) :: ncid, start(:), length(:)
   character(len=*), intent(in) :: varname
   real(real32), intent(out) :: field(:,:,:)

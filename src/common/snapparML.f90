@@ -18,7 +18,7 @@
 
 !> Common for particles
 module snapparML
-  use snapdimML
+  use snapdimML, only: mdefcomp, mcomp
   implicit none
 
   private

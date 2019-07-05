@@ -91,7 +91,8 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
   USE particleML, only: pdata
   USE snapgrdML, only: gparam, vlevel, alevel, ahalf, blevel, bhalf
   USE snapfldML, only: xm, ym, t1, t2, ps1, ps2
-  USE snapparML
+  USE snapparML, only: itprof, ncomp, nparnum, idefcomp, icomp, idefcomp, &
+      iparnum, totalbq
   USE snapposML, only: irelpos, release_positions
   USE snaptabML, only: g, pmult, pitab
   USE snapdimML, only: nx, ny, nk, mcomp
