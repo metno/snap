@@ -236,7 +236,7 @@ PROGRAM bsnap
 #else
   USE forwrdML, only: forwrd
 #endif
-  USE wetdep, only: wetdep1, wetdep2, wetdeprat, kwetdep
+  USE wetdep, only: wetdep1, wetdep2, wetdep2_init, wetdeprat, kwetdep
   USE drydep, only: drydep1, drydep2, drydeprat, drydephgt, kdrydep
   USE decayML, only: decay, decayDeps, kdecay, halftime, decayrate
   USE posintML, only: posint, posint_init
@@ -2029,7 +2029,7 @@ PROGRAM bsnap
       if (init) then
       ! setting particle-number to 0 means init
         call posint_init()
-        if(iwetdep == 2) call wetdep2(tstep,0,pextra)
+        if(iwetdep == 2) call wetdep2_init(tstep)
         call forwrd(tf1,tf2,tnow,tstep,0,pextra)
         if(irwalk /= 0) call rwalk_init(tstep)
         init = .FALSE.
@@ -2060,8 +2060,8 @@ PROGRAM bsnap
         !     +      call ensemble(3,itime,tf1,tf2,tnow,istep,nstep,nsteph,np)
 
         !..wet deposition (1=old, 2=new version)
-        if(iwetdep == 1) call wetdep1(np, pextra)
-        if(iwetdep == 2) call wetdep2(tstep,np, pextra)
+        if(iwetdep == 1) call wetdep1(pdata(np), pextra)
+        if(iwetdep == 2) call wetdep2(tstep, pdata(np), pextra)
 
         !          if(iensemble.eq.1)
         !     +      call ensemble(4,itime,tf1,tf2,tnow,istep,nstep,nsteph,np)
@@ -2108,11 +2108,11 @@ PROGRAM bsnap
         i=nint(pdata(k)%x)
         j=nint(pdata(k)%y)
         if(pdata(k)%z > 0.43) &
-        vcon(i,j,1)=vcon(i,j,1)+pdata(k)%rad/120.0				! level 1
+            vcon(i,j,1)=vcon(i,j,1)+pdata(k)%rad/120.0        ! level 1
         if(pdata(k)%z > 0.23 .AND. pdata(k)%z <= 0.43) &
-        vcon(i,j,2)=vcon(i,j,2)+pdata(k)%rad/120.0				! level 2
+            vcon(i,j,2)=vcon(i,j,2)+pdata(k)%rad/120.0        ! level 2
         if(pdata(k)%z > 0.03 .AND. pdata(k)%z <= 0.216) &
-        vcon(i,j,3)=vcon(i,j,3)+pdata(k)%rad/120.0				! level 3
+            vcon(i,j,3)=vcon(i,j,3)+pdata(k)%rad/120.0        ! level 3
       enddo
     ! cc
     !	if(mod(istep,nsteph).eq.0) then
