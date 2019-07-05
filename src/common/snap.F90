@@ -232,9 +232,9 @@ PROGRAM bsnap
   USE milibML, only: xyconvert, keywrd, chcase, getvar, hrdiff, prhelp, vtime
 #if defined(TRAJ)
   USE snapfldML, only: hlevel2
-  USE forwrdML, only: forwrd, speed
+  USE forwrdML, only: forwrd, forwrd_init, speed
 #else
-  USE forwrdML, only: forwrd
+  USE forwrdML, only: forwrd, forwrd_init
 #endif
   USE wetdep, only: wetdep1, wetdep2, wetdep2_init, wetdeprat, kwetdep
   USE drydep, only: drydep1, drydep2, drydeprat, drydephgt, kdrydep
@@ -2030,7 +2030,7 @@ PROGRAM bsnap
       ! setting particle-number to 0 means init
         call posint_init()
         if(iwetdep == 2) call wetdep2_init(tstep)
-        call forwrd(tf1,tf2,tnow,tstep,0,pextra)
+        call forwrd_init()
         if(irwalk /= 0) call rwalk_init(tstep)
         init = .FALSE.
       end if
@@ -2044,7 +2044,7 @@ PROGRAM bsnap
 
         !..interpolation of boundary layer top, height, precipitation etc.
         !  creates and save temporary data to pextra%prc, pextra%
-        call posint(pdata(np),tf1,tf2,tnow, pextra)
+        call posint(pdata(np), tf1, tf2, tnow, pextra)
 
         !..radioactive decay
         if(idecay == 1) call decay(pdata(np))
@@ -2054,7 +2054,7 @@ PROGRAM bsnap
 
         !..dry deposition (1=old, 2=new version)
         if(idrydep == 1) call drydep1(pdata(np))
-        if(idrydep == 2) call drydep2(tstep,pdata(np))
+        if(idrydep == 2) call drydep2(tstep, pdata(np))
 
         !          if(iensemble.eq.1)
         !     +      call ensemble(3,itime,tf1,tf2,tnow,istep,nstep,nsteph,np)
@@ -2067,10 +2067,10 @@ PROGRAM bsnap
         !     +      call ensemble(4,itime,tf1,tf2,tnow,istep,nstep,nsteph,np)
 
         !..move all particles forward, save u and v to pextra
-        call forwrd(tf1,tf2,tnow,tstep,np, pextra)
+        call forwrd(tf1, tf2, tnow, tstep, pdata(np), pextra)
 
         !..apply the random walk method (diffusion)
-        if(irwalk /= 0) call rwalk(blfullmix,pdata(np),pextra)
+        if(irwalk /= 0) call rwalk(blfullmix, pdata(np), pextra)
 
         !.. check domain (%active) after moving particle
         call checkDomain(pdata(np))
