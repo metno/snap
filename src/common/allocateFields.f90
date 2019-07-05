@@ -16,6 +16,17 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 module allocateFieldsML
+  USE particleML, only: pdata
+  USE snapparML, only: ncomp, icomp, iparnum
+  USE snapfldML, only: u1, u2, v1, v2, w1, w2, bl1, bl2, t1, t2, &
+      ps1, ps2, hbl1, hbl2, hlevel1, hlevel2, hlayer1, hlayer2, &
+      concacc, avgbq1, avgbq2, avgbq, accwet, accdry, concen, &
+      depdry, depwet, accprec, avgprec, avghbl, precip, &
+      pmsl1, pmsl2, field1, field2, field3, field4, xm, ym, &
+      garea, dgarea
+  USE snapfilML, only: idata, fdata
+  USE snapgrdML, only: ahalf, bhalf, vhalf, alevel, blevel, vlevel
+  USE releaseML, only: mplume, iplume, mpart
   implicit none
   private
 
@@ -24,12 +35,9 @@ module allocateFieldsML
   contains
 
 subroutine allocateFields
-  USE particleML
+  USE particleML, only: pdata
   USE snapdimML, only: nx, ny, nk, ldata, maxsiz, mprecip, nxmc, nymc
   USE snapparML, only: ncomp, icomp, iparnum
-  USE snapfldML
-  USE snapfilML
-  USE snapgrdML
   USE releaseML, only: mplume, iplume, mpart
 
   logical, save :: FirstCall = .TRUE.
@@ -163,12 +171,6 @@ end subroutine allocateFields
 
 
 subroutine deAllocateFields
-  USE particleML
-  USE snapparML
-  USE snapfldML
-  USE snapfilML
-  USE snapgrdML
-  use snapdimML
   USE releaseML, only: iplume
 
   DEALLOCATE ( alevel )
