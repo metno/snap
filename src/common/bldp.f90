@@ -23,36 +23,37 @@ module bldpML
 
   contains
 
+!> Purpose:  Compute boundary layer top and height
+!>
+!> Method:   Computing Richardson no. and critical Richardson no.
+!>           as in the DNMI NWP LAM, NORLAM.
+!>           Critical Richardson number then modified ('ricfac')
+!>
+!> Notes:
+!>   - sigma levels (norlam) or eta levels (hirlam,...)
+!>     defined by alevel and blevel
+!>   - horizontal wind components in unit m/s
+!>   - all wind components in non-staggered horizontal grid
+!>     and in the same levels
+!>   - lower model level is level 2
 subroutine bldp
   USE snapdimML, only: nx,ny,nk
-  USE snaptabML
-  USE snapgrdML
-  USE snapfldML
+  USE snaptabML, only: cp, g, pmult, pitab
+  USE snapgrdML, only: ahalf, bhalf, vhalf, alevel, blevel, kadd
+  USE snapfldML, only: u2, v2, ps2, t2, hbl2, bl2
   USE ftestML, only: ftest
   USE snapdebug, only: iulog
-!  Purpose:  Compute boundary layer top and height
 
-!  Method:   Computing Richardson no. and critical Richardson no.
-!            as in the DNMI NWP LAM, NORLAM.
-!            Critical Richardson number then modified ('ricfac')
-
-!  Notes:
-!    - sigma levels (norlam) or eta levels (hirlam,...)
-!      defined by alevel and blevel
-!    - horizontal wind components in unit m/s
-!    - all wind components in non-staggered horizontal grid
-!      and in the same levels
-!    - lower model level is level 2
-
-
-  implicit none
 
   real ::    pih(nk),pif(nk),zh(nk),zf(nk),thh(nk)
 
   integer :: kbltop,kblbot,nkk,i,j,k,itab,ktop
-  real ::    ginv,ricfac,psurf,pbltop,pblbot,p,p1,p2,vbltop,vblbot
-  real ::    vbl,uhelp,vhelp,rtab,dz
-  real ::    dv2min,dv2,dth,ri,ric,riu,ricu,dri,driu,hbl
+  real :: pbltop,pblbot,p,p1,p2,vbltop,vblbot
+  real, parameter :: ginv = 1.0/g
+  real, parameter :: ricfac = 1.8
+  real, parameter :: psurf = 1000.0
+  real :: vbl,uhelp,vhelp,rtab,dz
+  real :: dv2min,dv2,dth,ri,ric,riu,ricu,dri,driu,hbl
 
 ! test----------------------------------------------
   real ::    rri(4,nk)
@@ -64,16 +65,13 @@ subroutine bldp
 !     real riri(nk),ricric(nk)
 !######################################################################
 
-  ginv=1./g
 
-  ricfac=1.8
   write(iulog,*) '*BLDP*  ricfac = ',ricfac
 
 !..lower model level is k=2
 
 !..set valid range for boundary layer top
 
-  psurf=1000.
   pbltop=600.
   pblbot=975.
   p=ahalf(nk-1)+bhalf(nk-1)*psurf
@@ -92,11 +90,11 @@ subroutine bldp
   p2=ahalf(kbltop)  +bhalf(kbltop)  *psurf
   p1=ahalf(kbltop-1)+bhalf(kbltop-1)*psurf
   vbltop=vhalf(kbltop-1)+(vhalf(kbltop)-vhalf(kbltop-1)) &
-  *(pbltop-p1)/(p2-p1)
+      *(pbltop-p1)/(p2-p1)
   p2=ahalf(kblbot+1)+bhalf(kblbot+1)*psurf
   p1=ahalf(kblbot)  +bhalf(kblbot)  *psurf
   vblbot=vhalf(kblbot)+(vhalf(kblbot+1)-vhalf(kblbot)) &
-  *(pblbot-p1)/(p2-p1)
+      *(pblbot-p1)/(p2-p1)
 
 ! test----------------------------------------------
   do k=1,nk
@@ -123,7 +121,7 @@ subroutine bldp
 !######################################################################
 
   do j=1,ny
-  
+
     do i=1,nx
     !######################################################################
     !	  do k=1,nk
@@ -137,19 +135,19 @@ subroutine bldp
     !	  end do
     !	  kstop=0
     !######################################################################
-    
+
     !..set u=v=0 at surface (not using 10m wind)
       uhelp=u2(i,j,1)
       vhelp=v2(i,j,1)
       u2(i,j,1)=0.
       v2(i,j,1)=0.
-    
+
     !..pih: exner function in half (sigma1) levels
     !..pif: exner function in full (sigma2) levels (u,v,th levels)
     !..zh:  height of half levels
     !..zf:  height of full levels    (linear interp. in exner func.)
     !..thh: pot.temp. in half levels (linear interp. in exner func.)
-    
+
       do k=1,2
         p=ahalf(k)+bhalf(k)*ps2(i,j)
         rtab=p*pmult
@@ -160,51 +158,51 @@ subroutine bldp
         itab=rtab
         pif(k)=pitab(itab)+(pitab(itab+1)-pitab(itab))*(rtab-itab)
       end do
-    
+
       k=2
       zh(k-1)=0.
       zf(k-1)=0.
       zh(k)=zh(k-1)+t2(i,j,k)*(pih(k-1)-pih(k))*ginv
       zf(k)=  zh(k-1) &
-      +(zh(k)-zh(k-1))*(pih(k-1)-pif(k))/(pih(k-1)-pih(k))
-    
+          +(zh(k)-zh(k-1))*(pih(k-1)-pif(k))/(pih(k-1)-pih(k))
+
     !..search for top of boundary layer
-    
+
       ktop=0
       k=1
-    
+
       do while ((ktop == 0 .OR. k < kblbot) .AND. k < kbltop)
-      
+
         k=k+1
-      
+
         p=ahalf(k+1)+bhalf(k+1)*ps2(i,j)
         rtab=p*pmult
         itab=rtab
         pih(k+1)=  pitab(itab) &
-        +(pitab(itab+1)-pitab(itab))*(rtab-itab)
-      
+            +(pitab(itab+1)-pitab(itab))*(rtab-itab)
+
         p=alevel(k+1)+blevel(k+1)*ps2(i,j)
         rtab=p*pmult
         itab=rtab
         pif(k+1)=  pitab(itab) &
-        +(pitab(itab+1)-pitab(itab))*(rtab-itab)
-      
+            +(pitab(itab+1)-pitab(itab))*(rtab-itab)
+
         thh(k)=  t2(i,j,k) &
-        +(t2(i,j,k+1)-t2(i,j,k))*(pif(k)-pih(k)) &
-        /(pif(k)-pif(k+1))
-      
+            +(t2(i,j,k+1)-t2(i,j,k))*(pif(k)-pih(k)) &
+            /(pif(k)-pif(k+1))
+
         zh(k+1)=zh(k)+t2(i,j,k+1)*(pih(k)-pih(k+1))*ginv
-      
+
         zf(k+1)=  zh(k) &
         +(zh(k+1)-zh(k))*(pih(k)-pif(k+1)) &
         /(pih(k)-pih(k+1))
-      
+
         if(ktop == 0) then
-        
+
           dz=zf(k+1)-zf(k)
           dv2min=1.e-5*dz*dz
           dv2= (u2(i,j,k+1)-u2(i,j,k))*(u2(i,j,k+1)-u2(i,j,k)) &
-          +(v2(i,j,k+1)-v2(i,j,k))*(v2(i,j,k+1)-v2(i,j,k))
+              +(v2(i,j,k+1)-v2(i,j,k))*(v2(i,j,k+1)-v2(i,j,k))
           if(dv2 < dv2min) dv2=dv2min
           dth=t2(i,j,k+1)-t2(i,j,k)
         !..Richardson no.
@@ -225,24 +223,24 @@ subroutine bldp
         !	      riri(k)=ri
         !	      ricric(k)=ric
         !######################################################################
-        
+
           if(ri > ric) then
             ktop=k
           else
             riu=ri
             ricu=ric
           end if
-        
+
         end if
       !######################################################################
       !	    kstop=k
       !######################################################################
-      
+
       end do
-    
+
       k=ktop
       if(k == 0) k=kbltop
-    
+
     !..sigma/eta at top of boundary layer
       if(vhalf(k) >= vblbot) then
         vbl=vblbot
@@ -259,18 +257,18 @@ subroutine bldp
         if(vbl < vbltop) vbl=vbltop
         if(vbl > vblbot) vbl=vblbot
       end if
-    
+
     !..height of boundary layer (linear interp. in 'vlevel')
     !######################################################################
     !	  write(iulog,*) 'kblbot,ktop,kstop= ',kblbot,ktop,kstop
     !	  write(iulog,*) k,zh(k),zh(k+1),vbl,vhalf(k),vhalf(k+1)
     !######################################################################
       hbl=  zh(k) &
-      +(zh(k+1)-zh(k))*(vhalf(k)-vbl)/(vhalf(k)-vhalf(k+1))
-    
+          +(zh(k+1)-zh(k))*(vhalf(k)-vbl)/(vhalf(k)-vhalf(k+1))
+
       bl2(i,j)=vbl
       hbl2(i,j)=hbl
-    
+
     !..reset wind
       u2(i,j,1)=uhelp
       v2(i,j,1)=vhelp
@@ -285,9 +283,9 @@ subroutine bldp
     !	    end do
     !	  end if
     !######################################################################
-    
+
     end do
-  
+
   end do
 
 ! test----------------------------------------------
@@ -298,14 +296,14 @@ subroutine bldp
 
 ! test----------------------------------------------
   write(iulog,*) ' max. vlevel,k,vhalf(k): ', &
-  vbltop,kbltop,vhalf(kbltop)
+      vbltop,kbltop,vhalf(kbltop)
   write(iulog,*) ' min. vlevel,k,vhalf(k): ', &
-  vblbot,kblbot,vhalf(kblbot)
+      vblbot,kblbot,vhalf(kblbot)
   write(iulog,*) '   k   no.    ri_min    ri_max   ric_min   ric_max'
   do k=nk,1,-1
     if(nrri(k) > 0) &
-    write(iulog,fmt='(3x,i2,i6,4(1x,f9.4))') &
-    k,nrri(k),(rri(i,k),i=1,4)
+        write(iulog,fmt='(3x,i2,i6,4(1x,f9.4))') &
+            k,nrri(k),(rri(i,k),i=1,4)
   end do
 ! test----------------------------------------------
 
