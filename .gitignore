@@ -102,3 +102,6 @@
 /src/volcano/snap_batch_copy.f90
 /src/volcano/snap_batch_copy.F90
 
+
+docs/html
+docs/latex
