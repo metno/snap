@@ -390,7 +390,7 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
 
     i=nint(xep(1))
     j=nint(yep(1))
-    m=iruncomp(icomp(n))
+    m=defined_to_running_comp(icomp(n))
     if(i > 0 .AND. i <= nxep .AND. &
     j > 0 .AND. j <= nyep) then
       drydepep(i,j,m)= drydepep(i,j,m) + dble(pbq1(np)-pbq2(np))
@@ -436,7 +436,7 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
         j=nint(yep(n))
         if(i > 0 .AND. i <= nxep .AND. &
         j > 0 .AND. j <= nyep) then
-          m=iruncomp(icomp(n))
+          m=defined_to_running_comp(icomp(n))
           conc(i,j,m)= conc(i,j,m)+dble(pdata(n)%rad)
         end if
       end if
@@ -480,7 +480,7 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
         j > 0 .AND. j <= nyep) then
           ivlvl=pdata(n)%z*10000.
           k=ivlayer(ivlvl)
-          m=iruncomp(icomp(n))
+          m=defined_to_running_comp(icomp(n))
         !..in each sigma/eta (input model) layer
           concep(i,j,k,m)=concep(i,j,k,m)+dble(pdata(n)%rad)
         !##################################################################

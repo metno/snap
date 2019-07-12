@@ -221,7 +221,7 @@ PROGRAM bsnap
   USE snapfldML, only: enspos, iprecip, nprecip
   USE snapmetML, only: init_meteo_params, use_model_wind_for_10m
   USE snapparML, only: compname, kgravity, component, running_to_defined_comp, itprof, &
-      ncomp, totalbq, compnamemc, gravityms, iruncomp, idcomp, nparnum
+      ncomp, totalbq, compnamemc, gravityms, defined_to_running_comp, idcomp, nparnum
   USE snapposML, only: irelpos, nrelpos, release_positions
   USE snapgrdML, only: modleveldump, ivcoor, ixbase, iybase, ixystp, kadd, &
       klevel, imslp, inprecip, iprod, iprodr, itotcomp, gparam, igrid, igridr, &
@@ -433,7 +433,7 @@ PROGRAM bsnap
   radiusmym = 0.0
   densitygcm3 = 0.0
   idcomp = -1
-  iruncomp = 0
+  defined_to_running_comp = 0
   totalbq = 0.0
   numtotal = 0
   ncomp = 0
@@ -1428,7 +1428,7 @@ PROGRAM bsnap
     end do
     if(k > 0) then
       running_to_defined_comp(m)= k
-      iruncomp(k)= m
+      defined_to_running_comp(k)= m
     else
       write(error_unit,*) 'Released component ', &
           trim(component(m)), ' is not defined'
@@ -1691,8 +1691,8 @@ PROGRAM bsnap
     write(iulog,*) 'ncomp:   ',ncomp
     write(iulog,fmt='(1x,a,40(1x,i2))') 'running_to_defined_comp: ', &
         (running_to_defined_comp(i),i=1,ncomp)
-    write(iulog,fmt='(1x,a,40(1x,i2))') 'iruncomp: ', &
-        (iruncomp(i),i=1,ndefcomp)
+    write(iulog,fmt='(1x,a,40(1x,i2))') 'defined_to_running_comp: ', &
+        (defined_to_running_comp(i),i=1,ndefcomp)
     do n=1,ncomp
       m=running_to_defined_comp(n)
       write(iulog,*) 'component no:  ',n

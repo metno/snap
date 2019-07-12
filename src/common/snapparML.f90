@@ -30,8 +30,14 @@ module snapparML
 !> parameter no., 0 is used for the total if more than
 !> one component present)
   integer, save, public :: idcomp(mdefcomp)
-!> run comp. (1,...,ncomp) or 0 if not used
-  integer, save, public :: iruncomp(mdefcomp)
+
+!> mapping from defined component to the running component
+!>
+!> used when mapping from component given by e.g. ::particle\%icomp
+!> to defined components in e.g. ::kgravity
+!>
+!> should be 0 for components that are not running
+  integer, save, public :: defined_to_running_comp(mdefcomp)
 
 !> counter for unique particle identifier
   integer, save, public :: nparnum
