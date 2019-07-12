@@ -122,7 +122,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       avgbq1, avgbq2, hlayer1, hlayer2, garea, pmsl1, pmsl2, hbl1, hbl2, &
       xm, ym, accdry, accwet, avgprec, concen, ps1, ps2, avghbl, dgarea, &
       avgbq, concacc, accprec, iprecip, precip
-  USE snapparML, only: itprof, ncomp, icomp, idefcomp, iruncomp, &
+  USE snapparML, only: itprof, ncomp, icomp, running_to_defined_comp, iruncomp, &
       compnamemc, compname, totalbq
   USE snapdebug, only: iulog, idebug
   USE ftestML, only: ftest
@@ -433,7 +433,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
 
     do m=1,ncomp
-      mm=idefcomp(m)
+      mm= running_to_defined_comp(m)
       call nc_declare_3d(iunit, dimids3d, varid%comp(m)%ic, &
           chksz3d, TRIM(compnamemc(mm))//"_concentration", &
           "Bq/m3","", &
@@ -651,7 +651,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
   do m=1,ncomp
 
-    mm=idefcomp(m)
+    mm=running_to_defined_comp(m)
 
   !..instant Bq in and above boundary layer
     field1 = 0.0
@@ -838,7 +838,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     if(is_dry_deposition) then
       field1 = 0.0
       do m=1,ncomp
-        mm=idefcomp(m)
+        mm=running_to_defined_comp(m)
         if(kdrydep(mm) == 1) then
           field1 = field1 + depdry(:,:,m)
         end if
@@ -853,7 +853,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     if(is_wet_deposition) then
       field1 = 0.0
       do m=1,ncomp
-        mm=idefcomp(m)
+        mm=running_to_defined_comp(m)
         if(kwetdep(mm) == 1) then
           field1 = field1 + depwet(:,:,m)
         end if
@@ -868,7 +868,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     if(is_dry_deposition) then
       field1 = 0.0
       do m=1,ncomp
-        mm=idefcomp(m)
+        mm=running_to_defined_comp(m)
         if(kdrydep(mm) == 1) then
           field1 = field1 + accdry(:,:,m)
         end if
@@ -883,7 +883,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     if(is_wet_deposition) then
       field1 = 0.0
       do m=1,ncomp
-        mm=idefcomp(m)
+        mm=running_to_defined_comp(m)
         if(kwetdep(mm) == 1) then
           field1 = field1 + accwet(:,:,m)
         end if
@@ -933,7 +933,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
     do m=1,ncomp
 
-      mm= idefcomp(m)
+      mm= running_to_defined_comp(m)
 
       if(idebug == 1) write(iulog,*) ' component: ',compname(mm)
 
@@ -1087,7 +1087,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   800 ierror=0
 
   do m=1,ncomp
-    mm=idefcomp(m)
+    mm=running_to_defined_comp(m)
     if(kdrydep(mm) == 1) then
       depdry(:,:,m) = 0.0
     end if
