@@ -62,11 +62,13 @@ module snapparML
   integer, save, public :: itprof
 !>  component name
   character(len=32), save, public :: component(mcomp)
-!> component no. as defined in input file sequence
+
+
+!> Mapping from running components to the defined compont
 !>
-!> Mapping from number of active components to the active component,
-!> as components can be defined but not used
-  integer, save, public :: idefcomp(mcomp)
+!> Used when looping over all running components to pick
+!> the corresponding defined component
+  integer, save, public :: running_to_defined_comp(mcomp)
 
 
 !> component no. in particle

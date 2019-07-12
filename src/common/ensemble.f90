@@ -304,7 +304,7 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
   
     do m=1,ncomp
     
-      mm= idefcomp(m)
+      mm= running_to_defined_comp(m)
     
       filename= 'ensemble.tmp.'//compnamemc(mm)
       open(60+m,file=filename, &
@@ -685,7 +685,7 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
   
     do m=1,ncomp
     
-      mm= idefcomp(m)
+      mm= running_to_defined_comp(m)
     
       k=index(ensemblefile,' ')
       if (k < 0) k=len(ensemblefile)+1

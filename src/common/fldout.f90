@@ -440,7 +440,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     open (90,file=filename,access='sequential',form='formatted')
     write(90,1090) 0,'Total'
     do m=1,ncomp
-      mm=idefcomp(m)
+      mm=running_to_defined_comp(m)
       write(90,1090) idcomp(mm),trim(compnamemc(mm))
     end do
     1090 format(1x,i5,1x,'"',a,'"')
@@ -650,7 +650,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
   do m=1,ncomp
   
-    mm=idefcomp(m)
+    mm=running_to_defined_comp(m)
   
   !..using the field level identifier to identify the component
     idata(7)=idcomp(mm)
@@ -846,19 +846,19 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
           dblfield(i,j)=(accdry(i,j,m)+accwet(i,j,m))/dgarea(i,j)
         end do
       end do
-      call argoswrite(91,'depo',idcomp(idefcomp(m)), &
+      call argoswrite(91,'depo',idcomp(running_to_defined_comp(m)), &
       itimeargos,nx,ny,dblfield)
     end do
   
   !..argos "conc" output
     do m=1,ncomp
-      call argoswrite(92,'conc',idcomp(idefcomp(m)), &
+      call argoswrite(92,'conc',idcomp(running_to_defined_comp(m)), &
       itimeargos,nx,ny,concen(:,:,m))
     end do
   
   !..argos "dose" output
     do m=1,ncomp
-      call argoswrite(93,'dose',idcomp(idefcomp(m)), &
+      call argoswrite(93,'dose',idcomp(running_to_defined_comp(m)), &
       itimeargos,nx,ny,concacc(:,:,m))
     end do
   
@@ -946,7 +946,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     idry=0
     iwet=0
     do m=1,ncomp
-      mm=idefcomp(m)
+      mm=running_to_defined_comp(m)
       if(kdrydep(mm) == 1) idry=1
       if(kwetdep(mm) == 1) iwet=1
     end do
@@ -959,7 +959,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         end do
       end do
       do m=1,ncomp
-        mm=idefcomp(m)
+        mm=running_to_defined_comp(m)
         if(kdrydep(mm) == 1) then
           do j=1,ny
             do i=1,nx
@@ -989,7 +989,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         end do
       end do
       do m=1,ncomp
-        mm=idefcomp(m)
+        mm=running_to_defined_comp(m)
         if(kwetdep(mm) == 1) then
           do j=1,ny
             do i=1,nx
@@ -1019,7 +1019,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         end do
       end do
       do m=1,ncomp
-        mm=idefcomp(m)
+        mm=running_to_defined_comp(m)
         if(kdrydep(mm) == 1) then
           do j=1,ny
             do i=1,nx
@@ -1049,7 +1049,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         end do
       end do
       do m=1,ncomp
-        mm=idefcomp(m)
+        mm=running_to_defined_comp(m)
         if(kwetdep(mm) == 1) then
           do j=1,ny
             do i=1,nx
@@ -1149,7 +1149,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   
     do m=1,ncomp
     
-      mm= idefcomp(m)
+      mm= running_to_defined_comp(m)
     
       if(idebug == 1) write(iulog,*) ' component: ',compname(mm)
     
@@ -1373,7 +1373,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   800 ierror=0
 
   do m=1,ncomp
-    mm=idefcomp(m)
+    mm=running_to_defined_comp(m)
     if(kdrydep(mm) == 1) then
       do j=1,ny
         do i=1,nx
