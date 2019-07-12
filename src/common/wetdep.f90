@@ -39,7 +39,7 @@ module wetdep
 subroutine wetdep1(part, pextra)
   USE particleML, only: Particle, extraParticle
   USE snapfldML, only: depwet
-  USE snapparML, only: iruncomp
+  USE snapparML, only: defined_to_running_comp
   USE snaptabML, only: mpretab, premult, pretab
 
 !> particle
@@ -67,7 +67,7 @@ subroutine wetdep1(part, pextra)
       part%rad = part%rad - dep
       i = nint(part%x)
       j = nint(part%y)
-      mm = iruncomp(m)
+      mm = defined_to_running_comp(m)
     ! omp atomic
       depwet(i,j,mm) = depwet(i,j,mm) + dble(dep)
     end if
@@ -84,7 +84,7 @@ end subroutine wetdep1
 subroutine wetdep2(tstep, part, pextra)
   USE particleML, only: Particle, extraParticle
   USE snapfldML, only: depwet
-  USE snapparML, only: iruncomp
+  USE snapparML, only: defined_to_running_comp
   USE vgravtablesML, only: radiusmym
 
   real, intent(in) ::    tstep
@@ -112,7 +112,7 @@ subroutine wetdep2(tstep, part, pextra)
     part%rad = part%rad-dep
     i = nint(part%x)
     j = nint(part%y)
-    mm = iruncomp(m)
+    mm = defined_to_running_comp(m)
 
   ! omp atomic
     depwet(i,j,mm) = depwet(i,j,mm) + dble(dep)
