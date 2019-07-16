@@ -94,7 +94,7 @@ module snapfilML
 
     real, allocatable, save, public ::  fdata(:)
     integer(int16), allocatable, save, public :: idata(:)
-    character(len=80), save, public :: nctitle
+    character(len=:), save, public, allocatable :: nctitle
     character(len=1024), save, public :: ncsummary
     character(len=19), save, public :: simulation_start
 

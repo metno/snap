@@ -373,7 +373,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     call check(nf90_def_dim(iunit, "y", ny, dimid%y), "y-dim")
     call check(nf90_def_dim(iunit, "k", nk-1, dimid%k), "k-dim")
 
-    if (nctitle /= "") then
+    if (allocated(nctitle)) then
       call check(nf90_put_att(iunit, NF90_GLOBAL, &
           "title", trim(nctitle)))
     endif
