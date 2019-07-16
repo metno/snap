@@ -91,7 +91,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
   USE particleML, only: pdata
   USE snapgrdML, only: gparam, vlevel, alevel, ahalf, blevel, bhalf
   USE snapfldML, only: xm, ym, t1, t2, ps1, ps2
-  USE snapparML, only: itprof, ncomp, nparnum, running_to_defined_comp, icomp, &
+  USE snapparML, only: itprof, ncomp, nparnum, run_comp, icomp, &
       iparnum, totalbq
   USE snapposML, only: irelpos, release_positions
   USE snaptabML, only: g, pmult, pitab
@@ -401,8 +401,8 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
               pdata(npart)%rad= pbq(m)
               pdata(npart)%grv= 0
               pdata(npart)%active = .TRUE.
-              pdata(npart)%icomp = running_to_defined_comp(m)
-              icomp(npart)=   running_to_defined_comp(m)
+              pdata(npart)%icomp = run_comp(m)%to_defined
+              icomp(npart)=   run_comp(m)%to_defined
             !..an unique particle identifier (for testing...)
               nparnum=nparnum+1
               iparnum(npart)=nparnum
@@ -443,8 +443,8 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
             pdata(npart)%z= vlev
             pdata(npart)%rad= pbq(m)
             pdata(npart)%active = .TRUE.
-            pdata(npart)%icomp = running_to_defined_comp(m)
-            icomp(npart)=   running_to_defined_comp(m)
+            pdata(npart)%icomp = run_comp(m)%to_defined
+            icomp(npart)= run_comp(m)%to_defined
           !..an unique particle identifier (for testing...)
             nparnum=nparnum+1
             iparnum(npart)=nparnum
@@ -463,7 +463,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
   !++++++++++++++++++++++++++++++++++++++++++
 
     do n=1,ncomp
-      m=running_to_defined_comp(n)
+      m=run_comp(n)%to_defined
       totalbq(m)= totalbq(m) + pbq(n)*nrel(n)
       numtotal(m)=  numtotal(m) + nrel(n)
     end do
@@ -472,7 +472,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
   ! c   if(mod(istep,nsteph*3).eq.0) then
   !      if(mod(istep,nsteph).eq.0) then
     do n=1,ncomp
-      m=running_to_defined_comp(n)
+      m=run_comp(n)%to_defined
     ! c	  write(error_unit,*) 'comp,m,totalbq,numtotal: ',
     ! c  +			n,m,totalbq(m),numtotal(m)
       write(iulog,*) 'comp,m,totalbq,numtotal: ', &

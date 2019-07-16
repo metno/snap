@@ -220,8 +220,8 @@ PROGRAM bsnap
       nctype, nfilef, simulation_start
   USE snapfldML, only: enspos, iprecip, nprecip
   USE snapmetML, only: init_meteo_params, use_model_wind_for_10m
-  USE snapparML, only: compname, kgravity, component, running_to_defined_comp, itprof, &
-      ncomp, totalbq, compnamemc, gravityms, defined_to_running_comp, idcomp, nparnum
+  USE snapparML, only: compname, kgravity, component, run_comp, itprof, &
+      ncomp, totalbq, compnamemc, gravityms, def_comp, idcomp, nparnum
   USE snapposML, only: irelpos, nrelpos, release_positions
   USE snapgrdML, only: modleveldump, ivcoor, ixbase, iybase, ixystp, kadd, &
       klevel, imslp, inprecip, iprod, iprodr, itotcomp, gparam, igrid, igridr, &
@@ -433,7 +433,7 @@ PROGRAM bsnap
   radiusmym = 0.0
   densitygcm3 = 0.0
   idcomp = -1
-  defined_to_running_comp = 0
+  def_comp%to_running = 0
   totalbq = 0.0
   numtotal = 0
   ncomp = 0
@@ -1391,7 +1391,7 @@ PROGRAM bsnap
     write(error_unit,*) "number of defined components"
     ierror = 1
   end if
-  if (maxval(running_to_defined_comp) > ncomp) then
+  if (maxval(run_comp%to_defined) > ncomp) then
     write(error_unit,*) "Field identification is higher than total number of fields"
     ierror = 1
   end if
@@ -1427,8 +1427,9 @@ PROGRAM bsnap
       if(component(m) == compname(i)) k=i
     end do
     if(k > 0) then
-      running_to_defined_comp(m)= k
-      defined_to_running_comp(k)= m
+      run_comp(m)%to_defined = k
+      run_comp(m)%defined => def_comp(k)
+      def_comp(k)%to_running = m
     else
       write(error_unit,*) 'Released component ', &
           trim(component(m)), ' is not defined'
@@ -1438,7 +1439,7 @@ PROGRAM bsnap
 
 !..gravity
   do n=1,ncomp
-    m=running_to_defined_comp(n)
+    m = run_comp(n)%to_defined
     if(kgravity(m) < 0) kgravity(m)= 2
     if(kgravity(m) == 2 .AND. &
         (radiusmym(m) <= 0. .OR. densitygcm3(m) <= 0.)) then
@@ -1455,7 +1456,7 @@ PROGRAM bsnap
   idecay=0
 
   do n=1,ncomp
-    m=running_to_defined_comp(n)
+    m = run_comp(n)%to_defined
     if(idrydep == 1 .AND. kdrydep(m) == 1) then
       if(drydeprat(m) > 0. .AND. drydephgt(m) > 0.) then
         i1=i1+1
@@ -1690,11 +1691,11 @@ PROGRAM bsnap
     write(iulog,*) 'ndefcomp:',ndefcomp
     write(iulog,*) 'ncomp:   ',ncomp
     write(iulog,fmt='(1x,a,40(1x,i2))') 'running_to_defined_comp: ', &
-        (running_to_defined_comp(i),i=1,ncomp)
+        (run_comp(i)%to_defined,i=1,ncomp)
     write(iulog,fmt='(1x,a,40(1x,i2))') 'defined_to_running_comp: ', &
-        (defined_to_running_comp(i),i=1,ndefcomp)
+        (def_comp(i)%to_running,i=1,ndefcomp)
     do n=1,ncomp
-      m=running_to_defined_comp(n)
+      m = run_comp(n)%to_defined
       write(iulog,*) 'component no:  ',n
       write(iulog,*) 'compname:   ',compname(m)
       write(iulog,*) '  field id:   ',idcomp(m)

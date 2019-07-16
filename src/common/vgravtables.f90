@@ -47,7 +47,7 @@ module vgravtablesML
 !>  program for calculating the gravitational settling velocities
 !>  for small and large particles (outside the Stokes low)
 subroutine vgravtables
-  USE snapparML, only: ncomp, running_to_defined_comp, kgravity
+  USE snapparML, only: ncomp, run_comp, kgravity
 
   real :: t        ! absolute temperature (K)
   real :: dp        ! particle size um
@@ -62,7 +62,7 @@ subroutine vgravtables
 
 do_comp: do n=1,ncomp
 
-    m= running_to_defined_comp(n)
+    m= run_comp(n)%to_defined
     if (kgravity(m) /= 2) then ! Not using gravity table
       cycle do_comp
     endif

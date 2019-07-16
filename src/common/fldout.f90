@@ -336,7 +336,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     j=nint(pdata(n)%y)
   ! c     ivlvl=pdata(n)%z*10000.
   ! c     k=ivlevel(ivlvl)
-    m=iruncomp(icomp(n))
+    m = def_comp(icomp(n))%to_running
     if(pdata(n)%z >= pdata(n)%tbl) then
     !..in boundary layer
       avgbq1(i,j,m)=avgbq1(i,j,m)+pdata(n)%rad
@@ -362,7 +362,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     if(k == 1) then
       i=nint(pdata(n)%x)
       j=nint(pdata(n)%y)
-      m=iruncomp(icomp(n))
+      m = def_comp(icomp(n))%to_running
       concen(i,j,m)= concen(i,j,m)+dble(pdata(n)%rad)
     end if
   end do
@@ -386,7 +386,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       j=nint(pdata(n)%y)
       ivlvl=pdata(n)%z*10000.
       k=ivlayer(ivlvl)
-      m=iruncomp(icomp(n))
+      m = def_comp(icomp(n))%to_running
     !..in each sigma/eta (input model) layer
       avgbq(i,j,k,m)=avgbq(i,j,k,m)+pdata(n)%rad
     end do
@@ -440,7 +440,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     open (90,file=filename,access='sequential',form='formatted')
     write(90,1090) 0,'Total'
     do m=1,ncomp
-      mm=running_to_defined_comp(m)
+      mm = run_comp(m)%to_defined
       write(90,1090) idcomp(mm),trim(compnamemc(mm))
     end do
     1090 format(1x,i5,1x,'"',a,'"')
@@ -650,7 +650,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
   do m=1,ncomp
   
-    mm=running_to_defined_comp(m)
+    mm = run_comp(m)%to_defined
   
   !..using the field level identifier to identify the component
     idata(7)=idcomp(mm)
@@ -846,19 +846,19 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
           dblfield(i,j)=(accdry(i,j,m)+accwet(i,j,m))/dgarea(i,j)
         end do
       end do
-      call argoswrite(91,'depo',idcomp(running_to_defined_comp(m)), &
+      call argoswrite(91,'depo',idcomp(run_comp(m)%to_defined), &
       itimeargos,nx,ny,dblfield)
     end do
   
   !..argos "conc" output
     do m=1,ncomp
-      call argoswrite(92,'conc',idcomp(running_to_defined_comp(m)), &
+      call argoswrite(92,'conc',idcomp(run_comp(m)%to_defined), &
       itimeargos,nx,ny,concen(:,:,m))
     end do
   
   !..argos "dose" output
     do m=1,ncomp
-      call argoswrite(93,'dose',idcomp(running_to_defined_comp(m)), &
+      call argoswrite(93,'dose',idcomp(run_comp(m)%to_defined), &
       itimeargos,nx,ny,concacc(:,:,m))
     end do
   
@@ -946,7 +946,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     idry=0
     iwet=0
     do m=1,ncomp
-      mm=running_to_defined_comp(m)
+      mm = run_comp(m)%to_defined
       if(kdrydep(mm) == 1) idry=1
       if(kwetdep(mm) == 1) iwet=1
     end do
@@ -959,7 +959,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         end do
       end do
       do m=1,ncomp
-        mm=running_to_defined_comp(m)
+        mm = run_comp(m)%to_defined
         if(kdrydep(mm) == 1) then
           do j=1,ny
             do i=1,nx
@@ -989,7 +989,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         end do
       end do
       do m=1,ncomp
-        mm=running_to_defined_comp(m)
+        mm = run_comp(m)%to_defined
         if(kwetdep(mm) == 1) then
           do j=1,ny
             do i=1,nx
@@ -1019,7 +1019,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         end do
       end do
       do m=1,ncomp
-        mm=running_to_defined_comp(m)
+        mm = run_comp(m)%to_defined
         if(kdrydep(mm) == 1) then
           do j=1,ny
             do i=1,nx
@@ -1049,7 +1049,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         end do
       end do
       do m=1,ncomp
-        mm=running_to_defined_comp(m)
+        mm = run_comp(m)%to_defined
         if(kwetdep(mm) == 1) then
           do j=1,ny
             do i=1,nx
@@ -1149,7 +1149,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   
     do m=1,ncomp
     
-      mm= running_to_defined_comp(m)
+      mm = run_comp(m)%to_defined
     
       if(idebug == 1) write(iulog,*) ' component: ',compname(mm)
     
@@ -1264,7 +1264,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         j=nint(pdata(n)%y)
         ivlvl=pdata(n)%z*10000.
         k=ivlayer(ivlvl)
-        m=iruncomp(icomp(n))
+        m = def_comp(icomp(n))%to_running
       !..in each sigma/eta (input model) layer
         avgbq(i,j,k,m)=avgbq(i,j,k,m)+pdata(n)%rad
       end do
@@ -1373,7 +1373,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   800 ierror=0
 
   do m=1,ncomp
-    mm=running_to_defined_comp(m)
+    mm = run_comp(m)%to_defined
     if(kdrydep(mm) == 1) then
       do j=1,ny
         do i=1,nx
