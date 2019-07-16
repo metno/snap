@@ -88,7 +88,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
   USE particleML, only: pdata
   USE snapgrdML, only: gparam, vlevel, alevel, ahalf, blevel, bhalf
   USE snapfldML, only: xm, ym, t1, t2, ps1, ps2
-  USE snapparML, only: itprof, ncomp, nparnum, run_comp, icomp, &
+  USE snapparML, only: itprof, ncomp, nparnum, run_comp, &
       iparnum
   USE snapposML, only: irelpos, release_positions
   USE snaptabML, only: g, pmult, pitab
@@ -399,7 +399,6 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
               pdata(npart)%grv= 0
               pdata(npart)%active = .TRUE.
               pdata(npart)%icomp = run_comp(m)%to_defined
-              icomp(npart)=   run_comp(m)%to_defined
             !..an unique particle identifier (for testing...)
               nparnum=nparnum+1
               iparnum(npart)=nparnum
@@ -441,7 +440,6 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
             pdata(npart)%rad= pbq(m)
             pdata(npart)%active = .TRUE.
             pdata(npart)%icomp = run_comp(m)%to_defined
-            icomp(npart)= run_comp(m)%to_defined
           !..an unique particle identifier (for testing...)
             nparnum=nparnum+1
             iparnum(npart)=nparnum

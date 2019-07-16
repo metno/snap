@@ -29,7 +29,7 @@ module rmpartML
 !> in the same plume (or to the next plume if none left).
 subroutine rmpart(rmlimit)
   USE particleML, only: pdata
-  USE snapparML, only: ncomp, run_comp, icomp, iparnum
+  USE snapparML, only: ncomp, run_comp, iparnum
   USE snapdimML, only: mdefcomp
   USE releaseML, only: iplume, nplume, npart
   USE drydep, only: kdrydep
@@ -73,7 +73,7 @@ subroutine rmpart(rmlimit)
         npkeep(m)=0
       end do
       do i=i1,i2
-        m=icomp(i)
+        m=pdata(i)%icomp
         if(pdata(i)%rad > pbqmin(m)) then
           pbqtotal(m)=pbqtotal(m)+pdata(i)%rad
           npkeep(m)=npkeep(m)+1
@@ -97,7 +97,7 @@ subroutine rmpart(rmlimit)
       if(iredist == 1) then
         do i=i1,i2
           if(pdata(i)%rad > 0.0) then
-            m=icomp(i)
+            m=pdata(i)%icomp
             pdata(i)%rad= pdata(i)%rad+pbqdist(m)
           end if
         end do
@@ -114,7 +114,6 @@ subroutine rmpart(rmlimit)
         if(n /= i) then
         !             moving paricle to new position in pdata (n < i)
           pdata(n) = pdata(i)
-          icomp(n)=  icomp(i)
           iparnum(n)=iparnum(i)
         end if
       end if

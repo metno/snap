@@ -95,8 +95,6 @@ module snapparML
   type(running_component), save, public :: run_comp(mcomp)
 
 
-!> component no. in particle
-  integer, dimension(:), allocatable, save, public :: icomp
 !> unique identifier for each particle
   integer, dimension(:), allocatable, save, public :: iparnum
 

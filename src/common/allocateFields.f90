@@ -17,7 +17,7 @@
 
 module allocateFieldsML
   USE particleML, only: pdata
-  USE snapparML, only: ncomp, icomp, iparnum
+  USE snapparML, only: ncomp, iparnum
   USE snapfldML, only: u1, u2, v1, v2, w1, w2, bl1, bl2, t1, t2, &
       ps1, ps2, hbl1, hbl2, hlevel1, hlevel2, hlayer1, hlayer2, &
       concacc, avgbq1, avgbq2, avgbq, accwet, accdry, concen, &
@@ -37,7 +37,7 @@ module allocateFieldsML
 subroutine allocateFields
   USE particleML, only: pdata
   USE snapdimML, only: nx, ny, nk, ldata, maxsiz, mprecip, nxmc, nymc
-  USE snapparML, only: ncomp, icomp, iparnum
+  USE snapparML, only: ncomp, iparnum
   USE releaseML, only: mplume, iplume, mpart
 
   logical, save :: FirstCall = .TRUE.
@@ -158,8 +158,6 @@ subroutine allocateFields
 ! the part particles fields
   ALLOCATE ( pdata(mpart), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) STOP errmsg
-  ALLOCATE ( icomp(mpart), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
   ALLOCATE ( iparnum(mpart), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) STOP errmsg
 
@@ -233,7 +231,6 @@ subroutine deAllocateFields
   DEALLOCATE ( avgbq )
 
   DEALLOCATE ( pdata )
-  DEALLOCATE ( icomp )
   DEALLOCATE ( iparnum )
 
   DEALLOCATE ( iplume )
