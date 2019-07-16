@@ -39,6 +39,9 @@ module snapparML
 !> * 2=computed
     integer :: grav_type
 
+!> fixed gravity in unit m/s, used when \ref grav_type != 2
+    real :: gravityms
+
 !> a component name
     character(len=32) :: compname
 !> a component name (mixed case)
@@ -56,8 +59,6 @@ module snapparML
 
 !> counter for unique particle identifier
   integer, save, public :: nparnum
-!> fixed gravity in unit m/s
-  real, save, public :: gravityms(mdefcomp)
 
 
 

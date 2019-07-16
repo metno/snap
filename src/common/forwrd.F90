@@ -126,7 +126,7 @@ subroutine forwrd_dx(tf1, tf2, tnow, tstep, part, &
   USE snaptabML, only: cp, g, pmult, r, pitab
   USE vgravtablesML, only: vgtable, pbasevg, tbasevg, pincrvg, tincrvg
   USE snapdimML, only: nk
-  USE snapparML, only: gravityms, def_comp
+  USE snapparML, only: def_comp
 
 !> time in seconds for field set 1 (e.g. 0.)
   real, intent(in) :: tf1
@@ -276,7 +276,7 @@ subroutine forwrd_dx(tf1, tf2, tnow, tstep, part, &
     !     if(np.lt.21) write(error_unit,*) '  p,t,gravity: ',p,t,gravity
     !######################################################################
     else
-      gravity = gravityms(m)
+      gravity = def_comp(m)%gravityms
     end if
 
     part%grv = gravity
