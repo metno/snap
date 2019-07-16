@@ -479,7 +479,6 @@ PROGRAM bsnap
   fldtype='felt'
   fldfil= 'snap.dat'
   logfile='snap.log'
-  nctitle=''
   ncsummary=''
   relfile='*'
 ! timestamp of the form 0000-00-00_00:00:00
@@ -1150,7 +1149,8 @@ PROGRAM bsnap
         if(kv1 < 1) goto 12
         fldtype=ciname(1:nkv)
       elseif(cinput(k1:k2) == 'title') then
-        nctitle=ciname(1:nkv)
+        allocate(character(len=nkv) :: nctitle)
+        nctitle = ciname(1:nkv)
       elseif(cinput(k1:k2) == 'field.daily.output.on') then
         idailyout = 1
       elseif(cinput(k1:k2) == 'field.daily.output.off') then
