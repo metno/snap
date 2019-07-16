@@ -336,7 +336,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     j=nint(pdata(n)%y)
   ! c     ivlvl=pdata(n)%z*10000.
   ! c     k=ivlevel(ivlvl)
-    m = def_comp(icomp(n))%to_running
+    m = def_comp(pdata(n)%icomp)%to_running
     if(pdata(n)%z >= pdata(n)%tbl) then
     !..in boundary layer
       avgbq1(i,j,m)=avgbq1(i,j,m)+pdata(n)%rad
@@ -362,7 +362,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     if(k == 1) then
       i=nint(pdata(n)%x)
       j=nint(pdata(n)%y)
-      m = def_comp(icomp(n))%to_running
+      m = def_comp(pdata(n)%icomp)%to_running
       concen(i,j,m)= concen(i,j,m)+dble(pdata(n)%rad)
     end if
   end do
@@ -386,7 +386,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       j=nint(pdata(n)%y)
       ivlvl=pdata(n)%z*10000.
       k=ivlayer(ivlvl)
-      m = def_comp(icomp(n))%to_running
+      m = def_comp(pdata(n)%icomp)%to_running
     !..in each sigma/eta (input model) layer
       avgbq(i,j,k,m)=avgbq(i,j,k,m)+pdata(n)%rad
     end do
@@ -667,7 +667,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     nptot2=0
   
     do n=1,npart
-      if(icomp(n) == mm) then
+      if(pdata(n)%icomp == mm) then
         i=nint(pdata(n)%x)
         j=nint(pdata(n)%y)
         if(pdata(n)%z >= pdata(n)%tbl) then
@@ -1263,7 +1263,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         j=nint(pdata(n)%y)
         ivlvl=pdata(n)%z*10000.
         k=ivlayer(ivlvl)
-        m = def_comp(icomp(n))%to_running
+        m = def_comp(pdata(n)%icomp)%to_running
       !..in each sigma/eta (input model) layer
         avgbq(i,j,k,m)=avgbq(i,j,k,m)+pdata(n)%rad
       end do

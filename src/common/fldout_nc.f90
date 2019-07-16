@@ -122,14 +122,14 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       avgbq1, avgbq2, hlayer1, hlayer2, garea, pmsl1, pmsl2, hbl1, hbl2, &
       xm, ym, accdry, accwet, avgprec, concen, ps1, ps2, avghbl, dgarea, &
       avgbq, concacc, accprec, iprecip, precip
-  USE snapparML, only: itprof, ncomp, icomp, run_comp, def_comp
+  USE snapparML, only: itprof, ncomp, run_comp, def_comp
   USE snapdebug, only: iulog, idebug
   USE ftestML, only: ftest
   USE snapdimML, only: mcomp, ldata, nx, ny, nk, nxmc, nymc
   USE releaseML, only: npart
   USE drydep, only: kdrydep
   USE wetdep, only: kwetdep
-  USE particleML, only: pdata
+  USE particleML, only: pdata, Particle
 
   integer, intent(in) :: iwrite
   integer, intent(inout) :: iunit
@@ -219,6 +219,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   integer, save :: itimeargos(5) = [0, 0, 0, 0, 0]
 
   character(len=256) :: string
+  type(Particle) :: part
 
   is_dry_deposition = any(kdrydep == 1)
   is_wet_deposition = any(kwetdep == 1)
@@ -296,17 +297,18 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   end do
 
   do n=1,npart
-    i=nint(pdata(n)%x)
-    j=nint(pdata(n)%y)
+    part = pdata(n)
+    i = nint(part%x)
+    j = nint(part%y)
   ! c     ivlvl=pdata(n)%z*10000.
   ! c     k=ivlevel(ivlvl)
-    m = def_comp(icomp(n))%to_running
-    if(pdata(n)%z >= pdata(n)%tbl) then
+    m = def_comp(part%icomp)%to_running
+    if(part%z >= part%tbl) then
     !..in boundary layer
-      avgbq1(i,j,m)=avgbq1(i,j,m)+pdata(n)%rad
+      avgbq1(i,j,m) = avgbq1(i,j,m) + part%rad
     else
     !..above boundary layer
-      avgbq2(i,j,m)=avgbq2(i,j,m)+pdata(n)%rad
+      avgbq2(i,j,m) = avgbq2(i,j,m) + part%rad
     end if
   end do
 
@@ -315,13 +317,14 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   concen = 0.0
 
   do n=1,npart
-    ivlvl=pdata(n)%z*10000.
+    part = pdata(n)
+    ivlvl=part%z*10000.
     k=ivlayer(ivlvl)
     if(k == 1) then
-      i=nint(pdata(n)%x)
-      j=nint(pdata(n)%y)
-      m = def_comp(icomp(n))%to_running
-      concen(i,j,m)= concen(i,j,m)+dble(pdata(n)%rad)
+      i = nint(part%x)
+      j = nint(part%y)
+      m = def_comp(part%icomp)%to_running
+      concen(i,j,m) = concen(i,j,m) + dble(part%rad)
     end if
   end do
 
@@ -339,13 +342,14 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
   if(imodlevel == 1) then
     do n=1,npart
-      i=nint(pdata(n)%x)
-      j=nint(pdata(n)%y)
-      ivlvl=pdata(n)%z*10000.
-      k=ivlayer(ivlvl)
-      m = def_comp(icomp(n))%to_running
+      part = pdata(n)
+      i = nint(part%x)
+      j = nint(part%y)
+      ivlvl = part%z*10000.
+      k = ivlayer(ivlvl)
+      m = def_comp(part%icomp)%to_running
     !..in each sigma/eta (input model) layer
-      avgbq(i,j,k,m)=avgbq(i,j,k,m)+pdata(n)%rad
+      avgbq(i,j,k,m) = avgbq(i,j,k,m) + part%rad
     end do
   end if
 
@@ -661,17 +665,18 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     nptot2 = 0
 
     do n=1,npart
-      if(icomp(n) == mm) then
-        i=nint(pdata(n)%x)
-        j=nint(pdata(n)%y)
-        if(pdata(n)%z >= pdata(n)%tbl) then
-          field1(i,j)=field1(i,j)+pdata(n)%rad
-          bqtot1=bqtot1+dble(pdata(n)%rad)
-          nptot1=nptot1+1
+      part = pdata(n)
+      if(part%icomp == mm) then
+        i = nint(part%x)
+        j = nint(part%y)
+        if(part%z >= part%tbl) then
+          field1(i,j) = field1(i,j) + part%rad
+          bqtot1 = bqtot1 + dble(part%rad)
+          nptot1 = nptot1 + 1
         else
-          field2(i,j)=field2(i,j)+pdata(n)%rad
-          bqtot2=bqtot2+dble(pdata(n)%rad)
-          nptot2=nptot2+1
+          field2(i,j) = field2(i,j) + part%rad
+          bqtot2 = bqtot2 + dble(part%rad)
+          nptot2 = nptot2 + 1
         end if
       end if
     end do
@@ -997,21 +1002,22 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       avgbq = 0.0
 
       do n=1,npart
-        i=nint(pdata(n)%x)
-        j=nint(pdata(n)%y)
-        ivlvl=pdata(n)%z*10000.
-        k=ivlayer(ivlvl)
-        m = def_comp(icomp(n))%to_running
+        part = pdata(n)
+        i = nint(part%x)
+        j = nint(part%y)
+        ivlvl = part%z*10000.
+        k = ivlayer(ivlvl)
+        m = def_comp(part%icomp)%to_running
       !..in each sigma/eta (input model) layer
         if (modleveldump > 0) then
         !.. dump and remove old particles, don't touch  new ones
-          if (pdata(n)%ageInSteps >= nint(modleveldump)) then
-            if (pdata(n)%ageInSteps > maxage) &
-            maxage=pdata(n)%ageInSteps
-            avgbq(i,j,k,m)=avgbq(i,j,k,m)+pdata(n)%rad
-            total = total + pdata(n)%rad
-            pdata(n)%active = .FALSE.
-            pdata(n)%rad = 0.
+          if (part%ageInSteps >= nint(modleveldump)) then
+            maxage = max(maxage, int(part%ageInSteps, kind(maxage)))
+            avgbq(i,j,k,m) = avgbq(i,j,k,m) + part%rad
+            total = total + part%rad
+            part%active = .FALSE.
+            part%rad = 0.
+            pdata(n) = part
           end if
         else
           avgbq(i,j,k,m)=avgbq(i,j,k,m)+pdata(n)%rad
