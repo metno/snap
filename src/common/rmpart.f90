@@ -29,9 +29,9 @@ module rmpartML
 !> in the same plume (or to the next plume if none left).
 subroutine rmpart(rmlimit)
   USE particleML, only: pdata
-  USE snapparML, only: ncomp, run_comp, totalbq, icomp, iparnum
+  USE snapparML, only: ncomp, run_comp, icomp, iparnum
   USE snapdimML, only: mdefcomp
-  USE releaseML, only: iplume, nplume, npart, numtotal
+  USE releaseML, only: iplume, nplume, npart
   USE drydep, only: kdrydep
   USE wetdep, only: kwetdep
   USE decayML, only: kdecay
@@ -49,10 +49,11 @@ subroutine rmpart(rmlimit)
   do n=1,ncomp
     m = run_comp(n)%to_defined
     pbqmin(m)=0.
-    if(kdrydep(m) == 1 .OR. kwetdep(m) == 1 &
-     .OR. kdecay(m) == 1) then
-      if(numtotal(m) > 0) &
-      pbqmin(m)=(totalbq(m)/numtotal(m))*rmlimit
+    if(kdrydep(m) == 1 .or. kwetdep(m) == 1 &
+        .or. kdecay(m) == 1) then
+      if(run_comp(n)%numtotal > 0) then
+        pbqmin(m)=(run_comp(n)%totalbq/run_comp(n)%numtotal)*rmlimit
+      endif
       idep=1
     end if
     pbqlost(m)=0.

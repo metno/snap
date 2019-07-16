@@ -221,7 +221,7 @@ PROGRAM bsnap
   USE snapfldML, only: enspos, iprecip, nprecip
   USE snapmetML, only: init_meteo_params, use_model_wind_for_10m
   USE snapparML, only: compname, component, run_comp, itprof, &
-      ncomp, totalbq, compnamemc, gravityms, def_comp, idcomp, nparnum
+      ncomp, compnamemc, gravityms, def_comp, idcomp, nparnum
   USE snapposML, only: irelpos, nrelpos, release_positions
   USE snapgrdML, only: modleveldump, ivcoor, ixbase, iybase, ixystp, kadd, &
       klevel, imslp, inprecip, iprod, iprodr, itotcomp, gparam, igrid, igridr, &
@@ -250,7 +250,7 @@ PROGRAM bsnap
   USE bldpML, only: bldp
   USE releaseML, only: release, frelhour, relradius, rellower, relupper, &
                        relstemradius, relbqsec, nrelheight, ntprof, mprel, &
-                       mplume, nplume, npart, mpart, numtotal
+                       mplume, nplume, npart, mpart
   USE init_random_seedML, only: init_random_seed
   USE compheightML, only: compheight
   USE readfield_ncML, only: readfield_nc
@@ -434,8 +434,8 @@ PROGRAM bsnap
   densitygcm3 = 0.0
   idcomp = -1
   def_comp%to_running = 0
-  totalbq = 0.0
-  numtotal = 0
+  run_comp%totalbq = 0.0
+  run_comp%numtotal = 0
   ncomp = 0
   ndefcomp = 0
   itotcomp = 0

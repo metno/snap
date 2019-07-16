@@ -1157,7 +1157,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       idata(7)=idcomp(mm)
     
     !..scale to % of total released Bq (in a single bomb)
-      dblscale= 100.0d0/dble(totalbq(mm))
+      dblscale= 100.0d0/dble(run_comp(m)%totalbq)
     
     !..dry deposition
       if(kdrydep(mm) == 1) then
