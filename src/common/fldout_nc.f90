@@ -122,8 +122,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       avgbq1, avgbq2, hlayer1, hlayer2, garea, pmsl1, pmsl2, hbl1, hbl2, &
       xm, ym, accdry, accwet, avgprec, concen, ps1, ps2, avghbl, dgarea, &
       avgbq, concacc, accprec, iprecip, precip
-  USE snapparML, only: itprof, ncomp, icomp, run_comp, def_comp, &
-      compnamemc, compname
+  USE snapparML, only: itprof, ncomp, icomp, run_comp, def_comp
   USE snapdebug, only: iulog, idebug
   USE ftestML, only: ftest
   USE snapdimML, only: mcomp, ldata, nx, ny, nk, nxmc, nymc
@@ -435,55 +434,55 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     do m=1,ncomp
       mm= run_comp(m)%to_defined
       call nc_declare_3d(iunit, dimids3d, varid%comp(m)%ic, &
-          chksz3d, TRIM(compnamemc(mm))//"_concentration", &
+          chksz3d, TRIM(def_comp(mm)%compnamemc)//"_concentration", &
           "Bq/m3","", &
-          TRIM(compnamemc(mm))//"_concentration")
+          TRIM(def_comp(mm)%compnamemc)//"_concentration")
       call nc_declare_3d(iunit, dimids3d, varid%comp(m)%icbl, &
-          chksz3d, TRIM(compnamemc(mm))//"_concentration_bl", &
+          chksz3d, TRIM(def_comp(mm)%compnamemc)//"_concentration_bl", &
           "Bq/m3","", &
-          TRIM(compnamemc(mm))//"_concentration_boundary_layer")
+          TRIM(def_comp(mm)%compnamemc)//"_concentration_boundary_layer")
       call nc_declare_3d(iunit, dimids3d, varid%comp(m)%ac, &
-          chksz3d, TRIM(compnamemc(mm))//"_acc_concentration", &
+          chksz3d, TRIM(def_comp(mm)%compnamemc)//"_acc_concentration", &
           "Bq*hr/m3","", &
-          TRIM(compnamemc(mm))//"_accumulated_concentration")
+          TRIM(def_comp(mm)%compnamemc)//"_accumulated_concentration")
       call nc_declare_3d(iunit, dimids3d, varid%comp(m)%acbl, &
-          chksz3d, TRIM(compnamemc(mm))//"_avg_concentration_bl", &
+          chksz3d, TRIM(def_comp(mm)%compnamemc)//"_avg_concentration_bl", &
           "Bq/m3","", &
-          TRIM(compnamemc(mm))//"_average_concentration_bl")
+          TRIM(def_comp(mm)%compnamemc)//"_average_concentration_bl")
       if (kdrydep(mm) > 0) then
         call nc_declare_3d(iunit, dimids3d, varid%comp(m)%idd, &
-            chksz3d, TRIM(compnamemc(mm))//"_dry_deposition", &
+            chksz3d, TRIM(def_comp(mm)%compnamemc)//"_dry_deposition", &
             "Bq/m2","", &
-            TRIM(compnamemc(mm))//"_dry_deposition")
+            TRIM(def_comp(mm)%compnamemc)//"_dry_deposition")
         call nc_declare_3d(iunit, dimids3d, varid%comp(m)%accdd, &
-            chksz3d, TRIM(compnamemc(mm))//"_acc_dry_deposition", &
+            chksz3d, TRIM(def_comp(mm)%compnamemc)//"_acc_dry_deposition", &
             "Bq/m2","", &
-            TRIM(compnamemc(mm))//"_accumulated_dry_deposition")
+            TRIM(def_comp(mm)%compnamemc)//"_accumulated_dry_deposition")
       end if
       if (kwetdep(mm) > 0) then
         call nc_declare_3d(iunit, dimids3d, varid%comp(m)%iwd, &
-            chksz3d, TRIM(compnamemc(mm))//"_wet_deposition", &
+            chksz3d, TRIM(def_comp(mm)%compnamemc)//"_wet_deposition", &
             "Bq/m2","", &
-            TRIM(compnamemc(mm))//"_wet_deposition")
+            TRIM(def_comp(mm)%compnamemc)//"_wet_deposition")
         call nc_declare_3d(iunit, dimids3d, varid%comp(m)%accwd, &
-            chksz3d, TRIM(compnamemc(mm))//"_acc_wet_deposition", &
+            chksz3d, TRIM(def_comp(mm)%compnamemc)//"_acc_wet_deposition", &
             "Bq/m2","", &
-            TRIM(compnamemc(mm))//"_accumulated_wet_deposition")
+            TRIM(def_comp(mm)%compnamemc)//"_accumulated_wet_deposition")
       end if
       if (imodlevel == 1) then
         if (modleveldump > 0.) then
-          string = TRIM(compnamemc(mm))//"_concentration_dump_ml"
+          string = TRIM(def_comp(mm)%compnamemc)//"_concentration_dump_ml"
         else
-          string = TRIM(compnamemc(mm))//"_concentration_ml"
+          string = TRIM(def_comp(mm)%compnamemc)//"_concentration_ml"
         endif
         call nc_declare_4d(iunit, dimids4d, varid%comp(m)%icml, &
             chksz4d, TRIM(string), &
             "Bq/m3","", &
             TRIM(string))
       !           call nc_declare_4d(iunit, dimids4d, acml_varid(m),
-      !     +          chksz4d, TRIM(compnamemc(mm))//"_avg_concentration_ml",
+      !     +          chksz4d, TRIM(def_comp(mm)%compnamemc)//"_avg_concentration_ml",
       !     +          "Bq*hour/m3","",
-      !     +          TRIM(compnamemc(mm))//"_accumulated_concentration_ml")
+      !     +          TRIM(def_comp(mm)%compnamemc)//"_accumulated_concentration_ml")
       end if
     end do
     if (itotcomp == 1) then
@@ -677,7 +676,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       end if
     end do
 
-    write(iulog,*) ' component: ',compname(mm)
+    write(iulog,*) ' component: ', def_comp(mm)%compname
     write(iulog,*) '   Bq,particles in    abl: ',bqtot1,nptot1
     write(iulog,*) '   Bq,particles above abl: ',bqtot2,nptot2
     write(iulog,*) '   Bq,particles          : ',bqtot1+bqtot2, &
@@ -935,7 +934,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
       mm = run_comp(m)%to_defined
 
-      if(idebug == 1) write(iulog,*) ' component: ',compname(mm)
+      if(idebug == 1) write(iulog,*) ' component: ', def_comp(mm)%compname
 
     !..scale to % of total released Bq (in a single bomb)
       dblscale= 100.0d0/dble(run_comp(m)%totalbq)

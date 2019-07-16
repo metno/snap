@@ -45,6 +45,11 @@ module snapparML
 !> * 1=fixed
 !> * 2=computed
     integer :: grav_type
+
+!> a component name
+    character(len=32) :: compname
+!> a component name (mixed case)
+    character(len=32) :: compnamemc
   end type
   type(defined_component), save, public, target :: def_comp(mdefcomp)
 
@@ -53,9 +58,6 @@ module snapparML
 !> fixed gravity in unit m/s
   real, save, public :: gravityms(mdefcomp)
 
-!> a component name (not much used, really)
-  character(len=32), save, public :: compname(mdefcomp)
-  character(len=32), save, public :: compnamemc(mdefcomp)
 
 
 !>   no. of components used in the run

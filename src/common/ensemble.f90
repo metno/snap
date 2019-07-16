@@ -306,13 +306,13 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
     
       mm= run_comp(m)%to_defined
     
-      filename= 'ensemble.tmp.'//compnamemc(mm)
+      filename= 'ensemble.tmp.'//def_comp(mm)%compnamemc
       open(60+m,file=filename, &
       access='direct',form='unformatted', &
       recl=(5+nxep*nyep*nepout)*4/lrunit, &
       status='unknown')
     
-      filename= 'ensemble.test.'//compnamemc(mm)
+      filename= 'ensemble.test.'//def_comp(mm)%compnamemc
       open(70+m,file=filename, &
       access='sequential',form='formatted', &
       status='unknown')
@@ -690,7 +690,7 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
       k=index(ensemblefile,' ')
       if (k < 0) k=len(ensemblefile)+1
       k=k-1
-      filename=ensemblefile(1:k)//'_'//compnamemc(mm)
+      filename=ensemblefile(1:k)//'_'//def_comp(mm)%compnamemc
 
       open(98,file=filename, &
       access='sequential',form='formatted', &
@@ -698,7 +698,7 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
     
       write(98,fmt='(i2.2)') ensembleparticipant
       write(98,fmt='(a7)')   ensembleRandomKey
-      write(98,fmt='(a5)')   compnamemc(mm)
+      write(98,fmt='(a5)')   def_comp(mm)%compnamemc
       write(98,fmt='(i2.2)') ntoutput
     !..release start
       do i=1,5
