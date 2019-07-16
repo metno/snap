@@ -22,13 +22,6 @@ module decayML
 
   public decay, decayDeps
 
-!> for each component: 0=radioactive decay off  1=decay on
-  integer, save, public :: kdecay(mdefcomp)
-!> radioactive half lifetime (hours)
-  real, save, public :: halftime(mdefcomp)
-!> radioactive decay (rate)
-  real, save, public :: decayrate(mdefcomp)
-
   contains
 
 !>  Purpose:  Decrease radioactive contents due to decay
@@ -36,13 +29,14 @@ module decayML
 !>  WARNING:   make sure ::decayDeps is run once before running decay
 subroutine decay(part)
   use particleML, only: Particle
+  use snapparML, only: def_comp
 
   type(Particle), intent(inout) :: part
   integer :: m
 
   m = part%icomp
-  if(kdecay(m) == 1) then
-    part%rad = part%rad * decayrate(m)
+  if(def_comp(m)%kdecay == 1) then
+    part%rad = part%rad * def_comp(m)%decayrate
   end if
 
   return
@@ -54,21 +48,22 @@ end subroutine decay
 !>     NEEDS TO BE RUN BEFORE ::decay
 subroutine decayDeps(tstep)
   USE snapfldML, only: depdry, depwet, accdry, accwet
-  USE snapparML, only: ncomp
+  USE snapparML, only: ncomp, run_comp, def_comp
 
   real, intent(in) :: tstep
 
-  integer :: m
+  integer :: m, mm
   logical, save :: prepare = .TRUE.
 
   if(prepare) then
 
   !..radioactive decay rate
     do m=1,ncomp
-      if (kdecay(m) == 1) then
-        decayrate(m)= exp(-log(2.0)*tstep/(halftime(m)*3600.))
+      mm = run_comp(m)%to_defined
+      if (def_comp(mm)%kdecay == 1) then
+        def_comp(mm)%decayrate = exp(-log(2.0)*tstep/(def_comp(mm)%halftime*3600.))
       else
-        decayrate(m)=1.0
+        def_comp(mm)%decayrate = 1.0
       end if
     end do
 
@@ -76,11 +71,12 @@ subroutine decayDeps(tstep)
   end if
 
   do m=1,ncomp
-    if(kdecay(m) == 1) then
-      depdry(:,:,m) = depdry(:,:,m)*decayrate(m)
-      depwet(:,:,m) = depwet(:,:,m)*decayrate(m)
-      accdry(:,:,m) = accdry(:,:,m)*decayrate(m)
-      accwet(:,:,m) = accwet(:,:,m)*decayrate(m)
+    mm = run_comp(m)%to_defined
+    if(def_comp(mm)%kdecay == 1) then
+      depdry(:,:,m) = depdry(:,:,m)*def_comp(mm)%decayrate
+      depwet(:,:,m) = depwet(:,:,m)*def_comp(mm)%decayrate
+      accdry(:,:,m) = accdry(:,:,m)*def_comp(mm)%decayrate
+      accwet(:,:,m) = accwet(:,:,m)*def_comp(mm)%decayrate
     endif
   enddo
   return

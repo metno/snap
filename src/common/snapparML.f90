@@ -42,6 +42,13 @@ module snapparML
 !> fixed gravity in unit m/s, used when \ref grav_type != 2
     real :: gravityms
 
+!> for each component: 0=radioactive decay off  1=decay on
+    integer :: kdecay
+!> radioactive half lifetime (hours)
+    real :: halftime
+!> radioactive decay (rate)
+    real :: decayrate
+
 !> a component name
     character(len=32) :: compname
 !> a component name (mixed case)

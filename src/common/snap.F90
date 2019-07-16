@@ -245,7 +245,7 @@ PROGRAM bsnap
 #endif
   USE wetdep, only: wetdep1, wetdep2, wetdep2_init, wetdeprat, kwetdep
   USE drydep, only: drydep1, drydep2, drydeprat, drydephgt, kdrydep
-  USE decayML, only: decay, decayDeps, kdecay, halftime, decayrate
+  USE decayML, only: decay, decayDeps
   USE posintML, only: posint, posint_init
   USE bldpML, only: bldp
   USE releaseML, only: release, frelhour, relradius, rellower, relupper, &
@@ -423,11 +423,11 @@ PROGRAM bsnap
 
   kdrydep = -1
   kwetdep = -1
-  kdecay = -1
+  def_comp%kdecay = -1
   drydephgt = -1.0
   drydeprat = -1.0
   wetdeprat = -1.0
-  halftime = -1.0
+  def_comp%halftime = -1.0
   def_comp%grav_type = -1
   def_comp%gravityms = 0.0
   radiusmym = 0.0
@@ -894,35 +894,35 @@ PROGRAM bsnap
         read(cipart,*,err=12) wetdeprat(ndefcomp)
       elseif(cinput(k1:k2) == 'radioactive.decay.on') then
       !..radioactive.decay.on
-        if(ndefcomp < 1 .OR. kdecay(ndefcomp) /= -1) goto 12
-        kdecay(ndefcomp)=1
+        if(ndefcomp < 1 .OR. def_comp(ndefcomp)%kdecay /= -1) goto 12
+        def_comp(ndefcomp)%kdecay = 1
       elseif(cinput(k1:k2) == 'radioactive.decay.off') then
       !..radioactive.decay.off
-        if(ndefcomp < 1 .OR. kdecay(ndefcomp) /= -1) goto 12
-        kdecay(ndefcomp)=0
+        if(ndefcomp < 1 .OR. def_comp(ndefcomp)%kdecay /= -1) goto 12
+        def_comp(ndefcomp)%kdecay = 0
       elseif(cinput(k1:k2) == 'half.lifetime.minutes') then
       !..half.lifetime.minutes=
         if(kv1 < 1) goto 12
-        if(ndefcomp < 1 .OR. halftime(ndefcomp) >= 0.) goto 12
-        read(cipart,*,err=12) halftime(ndefcomp)
-        halftime(ndefcomp)=halftime(ndefcomp)/60.
+        if(ndefcomp < 1 .OR. def_comp(ndefcomp)%halftime >= 0.) goto 12
+        read(cipart,*,err=12) def_comp(ndefcomp)%halftime
+        def_comp(ndefcomp)%halftime = def_comp(ndefcomp)%halftime/60.
       elseif(cinput(k1:k2) == 'half.lifetime.hours') then
       !..half.lifetime.hours=
         if(kv1 < 1) goto 12
-        if(ndefcomp < 1 .OR. halftime(ndefcomp) >= 0.) goto 12
-        read(cipart,*,err=12) halftime(ndefcomp)
+        if(ndefcomp < 1 .OR. def_comp(ndefcomp)%halftime >= 0.) goto 12
+        read(cipart,*,err=12) def_comp(ndefcomp)%halftime
       elseif(cinput(k1:k2) == 'half.lifetime.days') then
       !..half.lifetime.days=
         if(kv1 < 1) goto 12
-        if(ndefcomp < 1 .OR. halftime(ndefcomp) >= 0.) goto 12
-        read(cipart,*,err=12) halftime(ndefcomp)
-        halftime(ndefcomp)=halftime(ndefcomp)*24.
+        if(ndefcomp < 1 .OR. def_comp(ndefcomp)%halftime >= 0.) goto 12
+        read(cipart,*,err=12) def_comp(ndefcomp)%halftime
+        def_comp(ndefcomp)%halftime = def_comp(ndefcomp)%halftime*24.
       elseif(cinput(k1:k2) == 'half.lifetime.years') then
       !..half.lifetime.years=
         if(kv1 < 1) goto 12
-        if(ndefcomp < 1 .OR. halftime(ndefcomp) >= 0.) goto 12
-        read(cipart,*,err=12) halftime(ndefcomp)
-        halftime(ndefcomp)=halftime(ndefcomp)*24.*365.25
+        if(ndefcomp < 1 .OR. def_comp(ndefcomp)%halftime >= 0.) goto 12
+        read(cipart,*,err=12) def_comp(ndefcomp)%halftime
+        def_comp(ndefcomp)%halftime = def_comp(ndefcomp)%halftime*24.*365.25
       elseif(cinput(k1:k2) == 'gravity.off') then
       !..gravity.off
         if(ndefcomp < 1 .OR. def_comp(ndefcomp)%grav_type /= -1) goto 12
@@ -1497,11 +1497,11 @@ PROGRAM bsnap
       end if
     end if
 
-    if(kdecay(m) == 1 .AND. halftime(m) > 0.) then
+    if(def_comp(m)%kdecay == 1 .AND. def_comp(m)%halftime > 0.) then
       idecay=1
     else
-      kdecay(m)=0
-      halftime(m)=0.
+      def_comp(m)%kdecay = 0
+      def_comp(m)%halftime = 0.0
     end if
   end do
 
@@ -1706,9 +1706,9 @@ PROGRAM bsnap
       write(iulog,*) '  drydeprat:  ',drydeprat(m)
       write(iulog,*) '  kwetdep:    ',kwetdep(m)
       write(iulog,*) '  wetdeprat:  ',wetdeprat(m)
-      write(iulog,*) '  kdecay:     ',kdecay(m)
-      write(iulog,*) '  halftime:   ',halftime(m)
-      write(iulog,*) '  decayrate:  ',decayrate(m)
+      write(iulog,*) '  kdecay:     ', def_comp(m)%kdecay
+      write(iulog,*) '  halftime:   ', def_comp(m)%halftime
+      write(iulog,*) '  decayrate:  ', def_comp(m)%decayrate
       write(iulog,*) '  kgravity:   ', def_comp(m)%grav_type
       write(iulog,*) '  gravityms:  ', def_comp(m)%gravityms
       write(iulog,*) '  radiusmym:  ',radiusmym(m)
