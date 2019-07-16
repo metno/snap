@@ -220,7 +220,7 @@ PROGRAM bsnap
       nctype, nfilef, simulation_start
   USE snapfldML, only: enspos, iprecip, nprecip
   USE snapmetML, only: init_meteo_params, use_model_wind_for_10m
-  USE snapparML, only: compname, kgravity, component, run_comp, itprof, &
+  USE snapparML, only: compname, component, run_comp, itprof, &
       ncomp, totalbq, compnamemc, gravityms, def_comp, idcomp, nparnum
   USE snapposML, only: irelpos, nrelpos, release_positions
   USE snapgrdML, only: modleveldump, ivcoor, ixbase, iybase, ixystp, kadd, &
@@ -428,7 +428,7 @@ PROGRAM bsnap
   drydeprat = -1.0
   wetdeprat = -1.0
   halftime = -1.0
-  kgravity = -1
+  def_comp%grav_type = -1
   gravityms = 0.0
   radiusmym = 0.0
   densitygcm3 = 0.0
@@ -926,19 +926,19 @@ PROGRAM bsnap
         halftime(ndefcomp)=halftime(ndefcomp)*24.*365.25
       elseif(cinput(k1:k2) == 'gravity.off') then
       !..gravity.off
-        if(ndefcomp < 1 .OR. kgravity(ndefcomp) /= -1) goto 12
-        kgravity(ndefcomp)= 0
+        if(ndefcomp < 1 .OR. def_comp(ndefcomp)%grav_type /= -1) goto 12
+        def_comp(ndefcomp)%grav_type = 0
       elseif(cinput(k1:k2) == 'gravity.fixed.m/s') then
       !..gravity.fixed.m/s
-        if(ndefcomp < 1 .OR. kgravity(ndefcomp) /= -1) goto 12
-        kgravity(ndefcomp)= 1
+        if(ndefcomp < 1 .OR. def_comp(ndefcomp)%grav_type /= -1) goto 12
+        def_comp(ndefcomp)%grav_type = 1
         if(kv1 < 1) goto 12
         read(cipart,*,err=12) gravityms(ndefcomp)
         if (gravityms(ndefcomp) <= 0.) goto 12
       elseif(cinput(k1:k2) == 'gravity.fixed.cm/s') then
       !..gravity.fixed.cm/s
-        if(ndefcomp < 1 .OR. kgravity(ndefcomp) /= -1) goto 12
-        kgravity(ndefcomp)= 1
+        if(ndefcomp < 1 .OR. def_comp(ndefcomp)%grav_type /= -1) goto 12
+        def_comp(ndefcomp)%grav_type = 1
         if(kv1 < 1) goto 12
         read(cipart,*,err=12) gravityms(ndefcomp)
         if (gravityms(ndefcomp) <= 0.) goto 12
@@ -1440,8 +1440,8 @@ PROGRAM bsnap
 !..gravity
   do n=1,ncomp
     m = run_comp(n)%to_defined
-    if(kgravity(m) < 0) kgravity(m)= 2
-    if(kgravity(m) == 2 .AND. &
+    if(def_comp(m)%grav_type < 0) def_comp(m)%grav_type = 2
+    if(def_comp(m)%grav_type == 2 .AND. &
         (radiusmym(m) <= 0. .OR. densitygcm3(m) <= 0.)) then
       write(error_unit,*) 'Gravity error. radius,density: ', &
           radiusmym(m),densitygcm3(m)
@@ -1466,9 +1466,9 @@ PROGRAM bsnap
         ierror=1
       end if
     elseif(idrydep == 2 .AND. kdrydep(m) == 1) then
-      if(kgravity(m) == 1 .AND. gravityms(m) > 0.) then
+      if(def_comp(m)%grav_type == 1 .AND. gravityms(m) > 0.) then
         i1=i1+1
-      elseif(kgravity(m) == 2) then
+      elseif(def_comp(m)%grav_type == 2) then
         i1=i1+1
       else
         write(error_unit,*) 'Dry deposition error. gravity: ', &
@@ -1707,7 +1707,7 @@ PROGRAM bsnap
       write(iulog,*) '  kdecay:     ',kdecay(m)
       write(iulog,*) '  halftime:   ',halftime(m)
       write(iulog,*) '  decayrate:  ',decayrate(m)
-      write(iulog,*) '  kgravity:   ',kgravity(m)
+      write(iulog,*) '  kgravity:   ', def_comp(m)%grav_type
       write(iulog,*) '  gravityms:  ',gravityms(m)
       write(iulog,*) '  radiusmym:  ',radiusmym(m)
       write(iulog,*) '  densitygcm3:',densitygcm3(m)

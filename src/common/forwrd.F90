@@ -126,7 +126,7 @@ subroutine forwrd_dx(tf1, tf2, tnow, tstep, part, &
   USE snaptabML, only: cp, g, pmult, r, pitab
   USE vgravtablesML, only: vgtable, pbasevg, tbasevg, pincrvg, tincrvg
   USE snapdimML, only: nk
-  USE snapparML, only: kgravity, gravityms
+  USE snapparML, only: gravityms, def_comp
 
 !> time in seconds for field set 1 (e.g. 0.)
   real, intent(in) :: tf1
@@ -222,7 +222,7 @@ subroutine forwrd_dx(tf1, tf2, tnow, tstep, part, &
 
   m = part%icomp
 
-  if(kgravity(m) > 0) then
+  if(def_comp(m)%grav_type > 0) then
 
   !..potential temperature (no pot.temp. at surface...)
     kt1 = max(k1, 2)
@@ -243,7 +243,7 @@ subroutine forwrd_dx(tf1, tf2, tnow, tstep, part, &
         +rt2*(c1*ps2(i,j)  +c2*ps2(i+1,j) &
         +c3*ps2(i,j+1)+c4*ps2(i+1,j+1))
 
-    if(kgravity(m) == 2) then
+    if(def_comp(m)%grav_type == 2) then
       p = alevel(k1) + blevel(k1)*ps
       rtab = p*pmult
       itab = int(rtab)
@@ -320,7 +320,7 @@ end subroutine forwrd_dx
 
 subroutine forwrd_init()
   USE vgravtablesML, only: vgravtables, vgtable, pbasevg, tbasevg, pincrvg, tincrvg
-  USE snapparML, only: ncomp, run_comp, kgravity, compname
+  USE snapparML, only: ncomp, run_comp, def_comp, compname
   USE snapdebug, only: iulog
 
   integer :: i,m,ip,it
@@ -329,7 +329,7 @@ subroutine forwrd_init()
   compute_grav_table = .false.
   grav_do: do i=1,ncomp
     m= run_comp(i)%to_defined
-    if(kgravity(m) > 1) then
+    if(def_comp(m)%grav_type > 1) then
       compute_grav_table = .true.
       exit grav_do
     endif

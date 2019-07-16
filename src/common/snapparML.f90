@@ -39,17 +39,17 @@ module snapparML
 !>
 !> should be 0 for components that are not running
     integer :: to_running
-  end type
-  type(defined_component), save, public, target :: def_comp(mdefcomp)
-
-!> counter for unique particle identifier
-  integer, save, public :: nparnum
 !> gravity type:
 !>
 !> * 0=off
 !> * 1=fixed
 !> * 2=computed
-  integer, save, public :: kgravity(mdefcomp)
+    integer :: grav_type
+  end type
+  type(defined_component), save, public, target :: def_comp(mdefcomp)
+
+!> counter for unique particle identifier
+  integer, save, public :: nparnum
 !> fixed gravity in unit m/s
   real, save, public :: gravityms(mdefcomp)
 
