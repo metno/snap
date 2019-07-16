@@ -220,8 +220,8 @@ PROGRAM bsnap
       nctype, nfilef, simulation_start
   USE snapfldML, only: enspos, iprecip, nprecip
   USE snapmetML, only: init_meteo_params, use_model_wind_for_10m
-  USE snapparML, only: compname, component, run_comp, itprof, &
-      ncomp, compnamemc, gravityms, def_comp, idcomp, nparnum
+  USE snapparML, only: component, run_comp, itprof, &
+      ncomp, gravityms, def_comp, idcomp, nparnum
   USE snapposML, only: irelpos, nrelpos, release_positions
   USE snapgrdML, only: modleveldump, ivcoor, ixbase, iybase, ixystp, kadd, &
       klevel, imslp, inprecip, iprod, iprodr, itotcomp, gparam, igrid, igridr, &
@@ -418,8 +418,8 @@ PROGRAM bsnap
   isynoptic=0
   nrelheight=1
 
-  compname = 'Unknown'
-  compnamemc = 'Unknown'
+  def_comp%compname = 'Unknown'
+  def_comp%compnamemc = 'Unknown'
 
   kdrydep = -1
   kwetdep = -1
@@ -860,8 +860,8 @@ PROGRAM bsnap
         if(kv1 < 1) goto 12
         ndefcomp=ndefcomp+1
         if(ndefcomp > mdefcomp) goto 12
-        compname(ndefcomp)=ciname(1:nkv)
-        compnamemc(ndefcomp)=ciname(1:nkv)
+        def_comp(ndefcomp)%compname = ciname(1:nkv)
+        def_comp(ndefcomp)%compnamemc = ciname(1:nkv)
       elseif(cinput(k1:k2) == 'dry.dep.on') then
       !..dry.dep.on
         if(ndefcomp < 1 .OR. kdrydep(ndefcomp) /= -1) goto 12
@@ -1313,7 +1313,9 @@ PROGRAM bsnap
   do n=1,nrelpos
     call chcase(2, 1, release_positions(n)%name)
   end do
-  if(ndefcomp > 0) call chcase(2,ndefcomp,compname)
+  do i=1,ndefcomp
+    call chcase(2, 1, def_comp(i)%compname)
+  enddo
   if(ncomp > 0)    call chcase(2,ncomp,component)
 
   ierror=0
@@ -1399,12 +1401,12 @@ PROGRAM bsnap
   do m=1,ndefcomp-1
     if(idcomp(m) < 1) then
       write(error_unit,*) 'Component has no field identification: ', &
-          trim(compname(m))
+          trim(def_comp(m)%compname)
     end if
     do i=m+1,ndefcomp
-      if(compname(m) == compname(i)) then
+      if(def_comp(m)%compname == def_comp(i)%compname) then
         write(error_unit,*) 'Component defined more than once: ', &
-            trim(compname(m))
+            trim(def_comp(m)%compname)
         ierror=1
       end if
     end do
@@ -1424,7 +1426,7 @@ PROGRAM bsnap
   do m=1,ncomp
     k=0
     do i=1,ndefcomp
-      if(component(m) == compname(i)) k=i
+      if(component(m) == def_comp(i)%compname) k=i
     end do
     if(k > 0) then
       run_comp(m)%to_defined = k
@@ -1697,7 +1699,7 @@ PROGRAM bsnap
     do n=1,ncomp
       m = run_comp(n)%to_defined
       write(iulog,*) 'component no:  ',n
-      write(iulog,*) 'compname:   ',compname(m)
+      write(iulog,*) 'compname:   ', def_comp(m)%compname
       write(iulog,*) '  field id:   ',idcomp(m)
       write(iulog,*) '  kdrydep:    ',kdrydep(m)
       write(iulog,*) '  drydephgt:  ',drydephgt(m)
@@ -1712,7 +1714,7 @@ PROGRAM bsnap
       write(iulog,*) '  radiusmym:  ',radiusmym(m)
       write(iulog,*) '  densitygcm3:',densitygcm3(m)
       write(iulog,*) '  Relase time profile:   ntprof: ',ntprof
-      ncsummary = trim(ncsummary) // ". Release " // trim(compname(m)) &
+      ncsummary = trim(ncsummary) // ". Release " // trim(def_comp(m)%compname) &
           // " (hour, Bq/s): "
       do i=1,ntprof
         write(iulog,*) '  hour,Bq/hour: ', &

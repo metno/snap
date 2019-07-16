@@ -440,8 +440,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     open (90,file=filename,access='sequential',form='formatted')
     write(90,1090) 0,'Total'
     do m=1,ncomp
-      mm = run_comp(m)%to_defined
-      write(90,1090) idcomp(mm),trim(compnamemc(mm))
+      write(90,1090) idcomp(mm),trim(run_comp(m)%defined%compnamemc)
     end do
     1090 format(1x,i5,1x,'"',a,'"')
     close(90)
@@ -683,7 +682,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       end if
     end do
   
-    write(iulog,*) ' component: ',compname(mm)
+    write(iulog,*) ' component: ', def_comp(mm)%compname
     write(iulog,*) '   Bq,particles in    abl: ',bqtot1,nptot1
     write(iulog,*) '   Bq,particles above abl: ',bqtot2,nptot2
     write(iulog,*) '   Bq,particles          : ',bqtot1+bqtot2, &
@@ -1151,7 +1150,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     
       mm = run_comp(m)%to_defined
     
-      if(idebug == 1) write(iulog,*) ' component: ',compname(mm)
+      if(idebug == 1) write(iulog,*) ' component: ', def_comp(mm)%compname
     
     !..using the field level identifier to identify the component
       idata(7)=idcomp(mm)

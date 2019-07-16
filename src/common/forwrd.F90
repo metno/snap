@@ -320,7 +320,7 @@ end subroutine forwrd_dx
 
 subroutine forwrd_init()
   USE vgravtablesML, only: vgravtables, vgtable, pbasevg, tbasevg, pincrvg, tincrvg
-  USE snapparML, only: ncomp, run_comp, def_comp, compname
+  USE snapparML, only: ncomp, run_comp, def_comp
   USE snapdebug, only: iulog
 
   integer :: i,m,ip,it
@@ -346,7 +346,7 @@ subroutine forwrd_init()
   ip = (1000-pbasevg)/pincrvg
   do i=1,ncomp
     m = run_comp(i)%to_defined
-    write(iulog,*) ' particle ', compname(m), ": ", vgtable(it,ip,m)
+    write(iulog,*) ' particle ', def_comp(m)%compname, ": ", vgtable(it,ip,m)
   end do
 end subroutine
 end module forwrdML
