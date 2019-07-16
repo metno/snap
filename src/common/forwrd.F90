@@ -320,7 +320,7 @@ end subroutine forwrd_dx
 
 subroutine forwrd_init()
   USE vgravtablesML, only: vgravtables, vgtable, pbasevg, tbasevg, pincrvg, tincrvg
-  USE snapparML, only: ncomp, running_to_defined_comp, kgravity, compname
+  USE snapparML, only: ncomp, run_comp, kgravity, compname
   USE snapdebug, only: iulog
 
   integer :: i,m,ip,it
@@ -328,7 +328,7 @@ subroutine forwrd_init()
 
   compute_grav_table = .false.
   grav_do: do i=1,ncomp
-    m= running_to_defined_comp(i)
+    m= run_comp(i)%to_defined
     if(kgravity(m) > 1) then
       compute_grav_table = .true.
       exit grav_do
@@ -345,7 +345,7 @@ subroutine forwrd_init()
   it = (300-tbasevg)/tincrvg
   ip = (1000-pbasevg)/pincrvg
   do i=1,ncomp
-    m = running_to_defined_comp(i)
+    m = run_comp(i)%to_defined
     write(iulog,*) ' particle ', compname(m), ": ", vgtable(it,ip,m)
   end do
 end subroutine

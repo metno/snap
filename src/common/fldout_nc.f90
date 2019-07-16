@@ -122,7 +122,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       avgbq1, avgbq2, hlayer1, hlayer2, garea, pmsl1, pmsl2, hbl1, hbl2, &
       xm, ym, accdry, accwet, avgprec, concen, ps1, ps2, avghbl, dgarea, &
       avgbq, concacc, accprec, iprecip, precip
-  USE snapparML, only: itprof, ncomp, icomp, running_to_defined_comp, defined_to_running_comp, &
+  USE snapparML, only: itprof, ncomp, icomp, run_comp, def_comp, &
       compnamemc, compname, totalbq
   USE snapdebug, only: iulog, idebug
   USE ftestML, only: ftest
@@ -301,7 +301,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     j=nint(pdata(n)%y)
   ! c     ivlvl=pdata(n)%z*10000.
   ! c     k=ivlevel(ivlvl)
-    m=defined_to_running_comp(icomp(n))
+    m = def_comp(icomp(n))%to_running
     if(pdata(n)%z >= pdata(n)%tbl) then
     !..in boundary layer
       avgbq1(i,j,m)=avgbq1(i,j,m)+pdata(n)%rad
@@ -321,7 +321,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     if(k == 1) then
       i=nint(pdata(n)%x)
       j=nint(pdata(n)%y)
-      m=defined_to_running_comp(icomp(n))
+      m = def_comp(icomp(n))%to_running
       concen(i,j,m)= concen(i,j,m)+dble(pdata(n)%rad)
     end if
   end do
@@ -344,7 +344,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       j=nint(pdata(n)%y)
       ivlvl=pdata(n)%z*10000.
       k=ivlayer(ivlvl)
-      m=defined_to_running_comp(icomp(n))
+      m = def_comp(icomp(n))%to_running
     !..in each sigma/eta (input model) layer
       avgbq(i,j,k,m)=avgbq(i,j,k,m)+pdata(n)%rad
     end do
@@ -433,7 +433,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
 
     do m=1,ncomp
-      mm= running_to_defined_comp(m)
+      mm= run_comp(m)%to_defined
       call nc_declare_3d(iunit, dimids3d, varid%comp(m)%ic, &
           chksz3d, TRIM(compnamemc(mm))//"_concentration", &
           "Bq/m3","", &
@@ -651,7 +651,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
   do m=1,ncomp
 
-    mm=running_to_defined_comp(m)
+    mm = run_comp(m)%to_defined
 
   !..instant Bq in and above boundary layer
     field1 = 0.0
@@ -838,7 +838,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     if(is_dry_deposition) then
       field1 = 0.0
       do m=1,ncomp
-        mm=running_to_defined_comp(m)
+        mm = run_comp(m)%to_defined
         if(kdrydep(mm) == 1) then
           field1 = field1 + depdry(:,:,m)
         end if
@@ -853,7 +853,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     if(is_wet_deposition) then
       field1 = 0.0
       do m=1,ncomp
-        mm=running_to_defined_comp(m)
+        mm = run_comp(m)%to_defined
         if(kwetdep(mm) == 1) then
           field1 = field1 + depwet(:,:,m)
         end if
@@ -868,7 +868,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     if(is_dry_deposition) then
       field1 = 0.0
       do m=1,ncomp
-        mm=running_to_defined_comp(m)
+        mm = run_comp(m)%to_defined
         if(kdrydep(mm) == 1) then
           field1 = field1 + accdry(:,:,m)
         end if
@@ -883,7 +883,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     if(is_wet_deposition) then
       field1 = 0.0
       do m=1,ncomp
-        mm=running_to_defined_comp(m)
+        mm = run_comp(m)%to_defined
         if(kwetdep(mm) == 1) then
           field1 = field1 + accwet(:,:,m)
         end if
@@ -933,7 +933,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
     do m=1,ncomp
 
-      mm= running_to_defined_comp(m)
+      mm = run_comp(m)%to_defined
 
       if(idebug == 1) write(iulog,*) ' component: ',compname(mm)
 
@@ -1002,7 +1002,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         j=nint(pdata(n)%y)
         ivlvl=pdata(n)%z*10000.
         k=ivlayer(ivlvl)
-        m=defined_to_running_comp(icomp(n))
+        m = def_comp(icomp(n))%to_running
       !..in each sigma/eta (input model) layer
         if (modleveldump > 0) then
         !.. dump and remove old particles, don't touch  new ones
@@ -1087,7 +1087,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   800 ierror=0
 
   do m=1,ncomp
-    mm=running_to_defined_comp(m)
+    mm = run_comp(m)%to_defined
     if(kdrydep(mm) == 1) then
       depdry(:,:,m) = 0.0
     end if

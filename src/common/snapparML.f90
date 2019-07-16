@@ -31,13 +31,16 @@ module snapparML
 !> one component present)
   integer, save, public :: idcomp(mdefcomp)
 
+  type :: defined_component
 !> mapping from defined component to the running component
 !>
 !> used when mapping from component given by e.g. ::particle\%icomp
 !> to defined components in e.g. ::kgravity
 !>
 !> should be 0 for components that are not running
-  integer, save, public :: defined_to_running_comp(mdefcomp)
+    integer :: to_running
+  end type
+  type(defined_component), save, public, target :: def_comp(mdefcomp)
 
 !> counter for unique particle identifier
   integer, save, public :: nparnum
@@ -69,12 +72,20 @@ module snapparML
 !>  component name
   character(len=32), save, public :: component(mcomp)
 
-
+!> Contains information which are applicable to active (running)
+!> components
+  type :: running_component
 !> Mapping from running components to the defined compont
 !>
 !> Used when looping over all running components to pick
 !> the corresponding defined component
-  integer, save, public :: running_to_defined_comp(mcomp)
+    integer :: to_defined
+
+!> Pointer to the definition of the component
+    type(defined_component), pointer :: defined
+  end type
+
+  type(running_component), save, public :: run_comp(mcomp)
 
 
 !> component no. in particle

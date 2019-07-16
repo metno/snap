@@ -304,7 +304,7 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
   
     do m=1,ncomp
     
-      mm= running_to_defined_comp(m)
+      mm= run_comp(m)%to_defined
     
       filename= 'ensemble.tmp.'//compnamemc(mm)
       open(60+m,file=filename, &
@@ -390,7 +390,7 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
 
     i=nint(xep(1))
     j=nint(yep(1))
-    m=defined_to_running_comp(icomp(n))
+    m=def_comp(icomp(n))%to_running
     if(i > 0 .AND. i <= nxep .AND. &
     j > 0 .AND. j <= nyep) then
       drydepep(i,j,m)= drydepep(i,j,m) + dble(pbq1(np)-pbq2(np))
@@ -436,7 +436,7 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
         j=nint(yep(n))
         if(i > 0 .AND. i <= nxep .AND. &
         j > 0 .AND. j <= nyep) then
-          m=defined_to_running_comp(icomp(n))
+          m=def_comp(icomp(n))%to_running
           conc(i,j,m)= conc(i,j,m)+dble(pdata(n)%rad)
         end if
       end if
@@ -480,7 +480,7 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
         j > 0 .AND. j <= nyep) then
           ivlvl=pdata(n)%z*10000.
           k=ivlayer(ivlvl)
-          m=defined_to_running_comp(icomp(n))
+          m=def_comp(icomp(n))%to_running
         !..in each sigma/eta (input model) layer
           concep(i,j,k,m)=concep(i,j,k,m)+dble(pdata(n)%rad)
         !##################################################################
@@ -685,7 +685,7 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
   
     do m=1,ncomp
     
-      mm= running_to_defined_comp(m)
+      mm= run_comp(m)%to_defined
     
       k=index(ensemblefile,' ')
       if (k < 0) k=len(ensemblefile)+1

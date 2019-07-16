@@ -38,7 +38,7 @@ module drydep
 subroutine drydep1(part)
   USE particleML, only: Particle
   USE snapfldML, only: depdry
-  USE snapparML, only: defined_to_running_comp
+  USE snapparML, only: def_comp
 
 !> particle
   type(Particle), intent(inout) :: part
@@ -56,7 +56,7 @@ subroutine drydep1(part)
       part%rad = part%rad - dep
       i = nint(part%x)
       j = nint(part%y)
-      mm = defined_to_running_comp(m)
+      mm = def_comp(m)%to_running
     ! omp atomic
       depdry(i,j,mm) = depdry(i,j,mm) + dble(dep)
     end if
@@ -71,7 +71,7 @@ end subroutine drydep1
 subroutine drydep2(tstep, part)
   USE particleML, only: Particle
   USE snapfldML, only: depdry
-  USE snapparML, only: defined_to_running_comp
+  USE snapparML, only: def_comp
   USE snapgrdML, only: vlevel
   USE vgravtablesML, only: radiusmym
 
@@ -105,7 +105,7 @@ subroutine drydep2(tstep, part)
     part%rad = part%rad - dep
     i = nint(part%x)
     j = nint(part%y)
-    mm = defined_to_running_comp(m)
+    mm = def_comp(m)%to_running
   ! omp atomic
     depdry(i,j,mm) = depdry(i,j,mm) + dble(dep)
   end if
