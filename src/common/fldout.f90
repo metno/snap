@@ -440,7 +440,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     open (90,file=filename,access='sequential',form='formatted')
     write(90,1090) 0,'Total'
     do m=1,ncomp
-      write(90,1090) idcomp(mm),trim(run_comp(m)%defined%compnamemc)
+      write(90,1090) def_comp(m)%idcomp,trim(run_comp(m)%defined%compnamemc)
     end do
     1090 format(1x,i5,1x,'"',a,'"')
     close(90)
@@ -652,7 +652,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     mm = run_comp(m)%to_defined
   
   !..using the field level identifier to identify the component
-    idata(7)=idcomp(mm)
+    idata(7)=def_comp(m)%idcomp
   
   !..instant Bq in and above boundary layer
     do j=1,ny
@@ -845,19 +845,19 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
           dblfield(i,j)=(accdry(i,j,m)+accwet(i,j,m))/dgarea(i,j)
         end do
       end do
-      call argoswrite(91,'depo',idcomp(run_comp(m)%to_defined), &
+      call argoswrite(91,'depo',def_comp(m)%idcomp, &
       itimeargos,nx,ny,dblfield)
     end do
   
   !..argos "conc" output
     do m=1,ncomp
-      call argoswrite(92,'conc',idcomp(run_comp(m)%to_defined), &
+      call argoswrite(92,'conc',def_comp(m)%idcomp, &
       itimeargos,nx,ny,concen(:,:,m))
     end do
   
   !..argos "dose" output
     do m=1,ncomp
-      call argoswrite(93,'dose',idcomp(run_comp(m)%to_defined), &
+      call argoswrite(93,'dose',def_comp(m)%idcomp, &
       itimeargos,nx,ny,concacc(:,:,m))
     end do
   
@@ -1153,7 +1153,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       if(idebug == 1) write(iulog,*) ' component: ', def_comp(mm)%compname
     
     !..using the field level identifier to identify the component
-      idata(7)=idcomp(mm)
+      idata(7)=def_comp(m)%idcomp
     
     !..scale to % of total released Bq (in a single bomb)
       dblscale= 100.0d0/dble(run_comp(m)%totalbq)
@@ -1317,7 +1317,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         lvla=nint(alevel(k+1)*10.)
         lvlb=nint(blevel(k+1)*10000.)
         if(ivcoor == 2) lvla=0
-        ipar=iparx+idcomp(m)
+        ipar=iparx+def_comp(m)%idcomp
         idata( 6)=ipar
         idata( 7)=ko
         idata( 8)=lvla

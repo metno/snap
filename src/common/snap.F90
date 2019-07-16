@@ -221,7 +221,7 @@ PROGRAM bsnap
   USE snapfldML, only: enspos, iprecip, nprecip
   USE snapmetML, only: init_meteo_params, use_model_wind_for_10m
   USE snapparML, only: component, run_comp, itprof, &
-      ncomp, gravityms, def_comp, idcomp, nparnum
+      ncomp, gravityms, def_comp, nparnum
   USE snapposML, only: irelpos, nrelpos, release_positions
   USE snapgrdML, only: modleveldump, ivcoor, ixbase, iybase, ixystp, kadd, &
       klevel, imslp, inprecip, iprod, iprodr, itotcomp, gparam, igrid, igridr, &
@@ -432,7 +432,7 @@ PROGRAM bsnap
   gravityms = 0.0
   radiusmym = 0.0
   densitygcm3 = 0.0
-  idcomp = -1
+  def_comp%idcomp = -1
   def_comp%to_running = 0
   run_comp%totalbq = 0.0
   run_comp%numtotal = 0
@@ -957,11 +957,11 @@ PROGRAM bsnap
       elseif(cinput(k1:k2) == 'field.identification') then
       !..field.identification=
         if(kv1 < 1) goto 12
-        if(ndefcomp < 1 .OR. idcomp(ndefcomp) >= 0) goto 12
-        read(cipart,*,err=12) idcomp(ndefcomp)
-        if(idcomp(ndefcomp) < 1) goto 12
+        if(ndefcomp < 1 .OR. def_comp(ndefcomp)%idcomp >= 0) goto 12
+        read(cipart,*,err=12) def_comp(ndefcomp)%idcomp
+        if(def_comp(ndefcomp)%idcomp < 1) goto 12
         do i=1,ndefcomp-1
-          if(idcomp(i) == idcomp(ndefcomp)) goto 12
+          if(def_comp(i)%idcomp == def_comp(ndefcomp)%idcomp) goto 12
         end do
       elseif (cinput(k1:k2) == 'field.use_model_wind_instead_of_10m') then
         if (kv1 < 1) goto 12
@@ -1399,7 +1399,7 @@ PROGRAM bsnap
   end if
 
   do m=1,ndefcomp-1
-    if(idcomp(m) < 1) then
+    if(def_comp(m)%idcomp < 1) then
       write(error_unit,*) 'Component has no field identification: ', &
           trim(def_comp(m)%compname)
     end if
@@ -1700,7 +1700,7 @@ PROGRAM bsnap
       m = run_comp(n)%to_defined
       write(iulog,*) 'component no:  ',n
       write(iulog,*) 'compname:   ', def_comp(m)%compname
-      write(iulog,*) '  field id:   ',idcomp(m)
+      write(iulog,*) '  field id:   ', def_comp(m)%idcomp
       write(iulog,*) '  kdrydep:    ',kdrydep(m)
       write(iulog,*) '  drydephgt:  ',drydephgt(m)
       write(iulog,*) '  drydeprat:  ',drydeprat(m)
