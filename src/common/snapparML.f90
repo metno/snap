@@ -23,13 +23,6 @@ module snapparML
 
   private
 
-!> an identifier used in the field identification
-!>
-!> (stored as level_1 for single level fields,
-!> model level fields adds this number to a 'basic'
-!> parameter no., 0 is used for the total if more than
-!> one component present)
-  integer, save, public :: idcomp(mdefcomp)
 
   type :: defined_component
 !> mapping from defined component to the running component
@@ -50,6 +43,14 @@ module snapparML
     character(len=32) :: compname
 !> a component name (mixed case)
     character(len=32) :: compnamemc
+
+!> an identifier used in the field identification
+!>
+!> (stored as level_1 for single level fields,
+!> model level fields adds this number to a 'basic'
+!> parameter no., 0 is used for the total if more than
+!> one component present)
+    integer :: idcomp
   end type
   type(defined_component), save, public, target :: def_comp(mdefcomp)
 
