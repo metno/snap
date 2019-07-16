@@ -53,8 +53,6 @@ module snapparML
 !> fixed gravity in unit m/s
   real, save, public :: gravityms(mdefcomp)
 
-!> total release in unit Bq, accumulated during run
-  real, save, public :: totalbq(mdefcomp)
 !> a component name (not much used, really)
   character(len=32), save, public :: compname(mdefcomp)
   character(len=32), save, public :: compnamemc(mdefcomp)
@@ -83,6 +81,12 @@ module snapparML
 
 !> Pointer to the definition of the component
     type(defined_component), pointer :: defined
+
+!> total release in unit Bq, accumulated during run
+    real :: totalbq
+
+!>  total no. of particles released, accumulated during run
+    integer :: numtotal
   end type
 
   type(running_component), save, public :: run_comp(mcomp)

@@ -123,7 +123,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       xm, ym, accdry, accwet, avgprec, concen, ps1, ps2, avghbl, dgarea, &
       avgbq, concacc, accprec, iprecip, precip
   USE snapparML, only: itprof, ncomp, icomp, run_comp, def_comp, &
-      compnamemc, compname, totalbq
+      compnamemc, compname
   USE snapdebug, only: iulog, idebug
   USE ftestML, only: ftest
   USE snapdimML, only: mcomp, ldata, nx, ny, nk, nxmc, nymc
@@ -938,7 +938,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       if(idebug == 1) write(iulog,*) ' component: ',compname(mm)
 
     !..scale to % of total released Bq (in a single bomb)
-      dblscale= 100.0d0/dble(totalbq(mm))
+      dblscale= 100.0d0/dble(run_comp(m)%totalbq)
 
     !..dry deposition
       if(kdrydep(mm) == 1) then

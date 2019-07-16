@@ -81,9 +81,6 @@ module releaseML
 !> max. no. of particles, total in all plumes, preset, can be configured in snap.input
   integer, save, public :: mpart = mpartpre
 
-!>  total no. of particles released, accumulated during run
-  integer, save, public :: numtotal(mdefcomp)
-
   contains
 
 subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
@@ -92,7 +89,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
   USE snapgrdML, only: gparam, vlevel, alevel, ahalf, blevel, bhalf
   USE snapfldML, only: xm, ym, t1, t2, ps1, ps2
   USE snapparML, only: itprof, ncomp, nparnum, run_comp, icomp, &
-      iparnum, totalbq
+      iparnum
   USE snapposML, only: irelpos, release_positions
   USE snaptabML, only: g, pmult, pitab
   USE snapdimML, only: nx, ny, nk, mcomp
@@ -463,20 +460,18 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
   !++++++++++++++++++++++++++++++++++++++++++
 
     do n=1,ncomp
-      m=run_comp(n)%to_defined
-      totalbq(m)= totalbq(m) + pbq(n)*nrel(n)
-      numtotal(m)=  numtotal(m) + nrel(n)
+      run_comp(n)%totalbq = run_comp(n)%totalbq + pbq(n)*nrel(n)
+      run_comp(n)%numtotal = run_comp(n)%numtotal + nrel(n)
     end do
 
   !################################################################
   ! c   if(mod(istep,nsteph*3).eq.0) then
   !      if(mod(istep,nsteph).eq.0) then
     do n=1,ncomp
-      m=run_comp(n)%to_defined
     ! c	  write(error_unit,*) 'comp,m,totalbq,numtotal: ',
     ! c  +			n,m,totalbq(m),numtotal(m)
-      write(iulog,*) 'comp,m,totalbq,numtotal: ', &
-      n,m,totalbq(m),numtotal(m)
+      write(iulog,*) 'comp,totalbq,numtotal: ', &
+      n, run_comp(n)%totalbq, run_comp(n)%numtotal
     end do
   ! c	write(error_unit,*) 'nparnum: ',nparnum
     write(iulog,*) 'nparnum: ',nparnum
