@@ -244,7 +244,7 @@ PROGRAM bsnap
   USE forwrdML, only: forwrd, forwrd_init
 #endif
   USE wetdep, only: wetdep1, wetdep2, wetdep2_init
-  USE drydep, only: drydep1, drydep2, drydeprat, drydephgt, kdrydep
+  USE drydep, only: drydep1, drydep2
   USE decayML, only: decay, decayDeps
   USE posintML, only: posint, posint_init
   USE bldpML, only: bldp
@@ -421,11 +421,11 @@ PROGRAM bsnap
   def_comp%compname = 'Unknown'
   def_comp%compnamemc = 'Unknown'
 
-  kdrydep = -1
+  def_comp%kdrydep = -1
   def_comp%kwetdep = -1
   def_comp%kdecay = -1
-  drydephgt = -1.0
-  drydeprat = -1.0
+  def_comp%drydephgt = -1.0
+  def_comp%drydeprat = -1.0
   def_comp%wetdeprat = -1.0
   def_comp%halftime = -1.0
   def_comp%grav_type = -1
@@ -863,12 +863,12 @@ PROGRAM bsnap
         def_comp(ndefcomp)%compnamemc = ciname(1:nkv)
       elseif(cinput(k1:k2) == 'dry.dep.on') then
       !..dry.dep.on
-        if(ndefcomp < 1 .OR. kdrydep(ndefcomp) /= -1) goto 12
-        kdrydep(ndefcomp)=1
+        if(ndefcomp < 1 .OR. def_comp(ndefcomp)%kdrydep /= -1) goto 12
+        def_comp(ndefcomp)%kdrydep = 1
       elseif(cinput(k1:k2) == 'dry.dep.off') then
       !..dry.dep.off
-        if(ndefcomp < 1 .OR. kdrydep(ndefcomp) /= -1) goto 12
-        kdrydep(ndefcomp)=0
+        if(ndefcomp < 1 .OR. def_comp(ndefcomp)%kdrydep /= -1) goto 12
+        def_comp(ndefcomp)%kdrydep = 0
       elseif(cinput(k1:k2) == 'wet.dep.on') then
       !..wet.dep.on
         if(ndefcomp < 1 .OR. def_comp(ndefcomp)%kwetdep /= -1) goto 12
@@ -880,13 +880,13 @@ PROGRAM bsnap
       elseif(cinput(k1:k2) == 'dry.dep.height') then
       !..dry.dep.height=
         if(kv1 < 1) goto 12
-        if(ndefcomp < 1 .OR. drydephgt(ndefcomp) >= 0.) goto 12
-        read(cipart,*,err=12) drydephgt(ndefcomp)
+        if(ndefcomp < 1 .OR. def_comp(ndefcomp)%drydephgt >= 0.) goto 12
+        read(cipart,*,err=12) def_comp(ndefcomp)%drydephgt
       elseif(cinput(k1:k2) == 'dry.dep.ratio') then
       !..dry.dep.ratio=
         if(kv1 < 1) goto 12
-        if(ndefcomp < 1 .OR. drydeprat(ndefcomp) >= 0.) goto 12
-        read(cipart,*,err=12) drydeprat(ndefcomp)
+        if(ndefcomp < 1 .OR. def_comp(ndefcomp)%drydeprat >= 0.) goto 12
+        read(cipart,*,err=12) def_comp(ndefcomp)%drydeprat
       elseif(cinput(k1:k2) == 'wet.dep.ratio') then
       !..wet.dep.ratio=
         if(kv1 < 1) goto 12
@@ -1459,15 +1459,15 @@ PROGRAM bsnap
 
   do n=1,ncomp
     m = run_comp(n)%to_defined
-    if(idrydep == 1 .AND. kdrydep(m) == 1) then
-      if(drydeprat(m) > 0. .AND. drydephgt(m) > 0.) then
+    if(idrydep == 1 .AND. def_comp(m)%kdrydep == 1) then
+      if(def_comp(m)%drydeprat > 0. .AND. def_comp(m)%drydephgt > 0.) then
         i1=i1+1
       else
         write(error_unit,*) 'Dry deposition error. rate,height: ', &
-            drydeprat(m),drydephgt(m)
+            def_comp(m)%drydeprat, def_comp(m)%drydephgt
         ierror=1
       end if
-    elseif(idrydep == 2 .AND. kdrydep(m) == 1) then
+    elseif(idrydep == 2 .AND. def_comp(m)%kdrydep == 1) then
       if(def_comp(m)%grav_type == 1 .AND. def_comp(m)%gravityms > 0.) then
         i1=i1+1
       elseif(def_comp(m)%grav_type == 2) then
@@ -1701,9 +1701,9 @@ PROGRAM bsnap
       write(iulog,*) 'component no:  ',n
       write(iulog,*) 'compname:   ', def_comp(m)%compname
       write(iulog,*) '  field id:   ', def_comp(m)%idcomp
-      write(iulog,*) '  kdrydep:    ',kdrydep(m)
-      write(iulog,*) '  drydephgt:  ',drydephgt(m)
-      write(iulog,*) '  drydeprat:  ',drydeprat(m)
+      write(iulog,*) '  kdrydep:    ', def_comp(m)%kdrydep
+      write(iulog,*) '  drydephgt:  ', def_comp(m)%drydephgt
+      write(iulog,*) '  drydeprat:  ', def_comp(m)%drydeprat
       write(iulog,*) '  kwetdep:    ', def_comp(m)%kwetdep
       write(iulog,*) '  wetdeprat:  ', def_comp(m)%wetdeprat
       write(iulog,*) '  kdecay:     ', def_comp(m)%kdecay

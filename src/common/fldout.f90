@@ -95,7 +95,6 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   USE snapdimML, only: nx, ny, nk, nxmc, nymc, ldata
   USE milibML, only: xyconvert, gridpar, rmfile, vtime
   USE releaseML, only: npart
-  USE drydep, only: kdrydep
 
   integer ::   iwrite,iunit,istep,nsteph,ierror
   integer ::   itime(5)
@@ -728,7 +727,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     if(ierror /= 0) goto 900
   
   !..dry deposition
-    if(kdrydep(mm) == 1) then
+    if (def_comp(mm)%kdrydep == 1) then
       do j=1,ny
         do i=1,nx
           field1(i,j)=dscale*sngl(depdry(i,j,m))/garea(i,j)
@@ -760,7 +759,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     end if
   
   !..accumulated dry deposition
-    if (kdrydep(mm) == 1) then
+    if (def_comp(mm)%kdrydep == 1) then
       do j=1,ny
         do i=1,nx
           field1(i,j)=dscale*sngl(accdry(i,j,m))/garea(i,j)
@@ -944,7 +943,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     iwet=0
     do m=1,ncomp
       mm = run_comp(m)%to_defined
-      if(kdrydep(mm) == 1) idry=1
+      if (def_comp(mm)%kdrydep == 1) idry = 1
       if (def_comp(mm)%kwetdep == 1) iwet = 1
     end do
   
@@ -957,7 +956,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       end do
       do m=1,ncomp
         mm = run_comp(m)%to_defined
-        if(kdrydep(mm) == 1) then
+        if (def_comp(mm)%kdrydep == 1) then
           do j=1,ny
             do i=1,nx
               field1(i,j)=field1(i,j)+sngl(depdry(i,j,m))
@@ -1017,7 +1016,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       end do
       do m=1,ncomp
         mm = run_comp(m)%to_defined
-        if(kdrydep(mm) == 1) then
+        if (def_comp(mm)%kdrydep == 1) then
           do j=1,ny
             do i=1,nx
               field1(i,j)=field1(i,j)+sngl(accdry(i,j,m))
@@ -1157,7 +1156,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       dblscale= 100.0d0/dble(run_comp(m)%totalbq)
     
     !..dry deposition
-      if(kdrydep(mm) == 1) then
+      if (def_comp(mm)%kdrydep == 1) then
         do j=1,ny
           do i=1,nx
             field1(i,j)=sngl(dblscale*depdry(i,j,m))
@@ -1187,7 +1186,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       end if
     
     !..accumulated dry deposition
-      if(kdrydep(mm) == 1) then
+      if (def_comp(mm)%kdrydep == 1) then
         do j=1,ny
           do i=1,nx
             field1(i,j)=sngl(dblscale*accdry(i,j,m))
@@ -1371,7 +1370,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
   do m=1,ncomp
     mm = run_comp(m)%to_defined
-    if(kdrydep(mm) == 1) then
+    if (def_comp(mm)%kdrydep == 1) then
       do j=1,ny
         do i=1,nx
           depdry(i,j,m)=0.0d0
