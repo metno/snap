@@ -49,6 +49,11 @@ module snapparML
 !> radioactive decay (rate)
     real :: decayrate
 
+!> wet deposition rate
+    real :: wetdeprat
+!> for each component: 0=wet deposition off  1=wet dep. on
+    integer :: kwetdep
+
 !> a component name
     character(len=32) :: compname
 !> a component name (mixed case)
@@ -98,6 +103,9 @@ module snapparML
 
 !>  total no. of particles released, accumulated during run
     integer :: numtotal
+
+!> deposition constant for use in wetdep
+    real :: depconst
   end type
 
   type(running_component), save, public :: run_comp(mcomp)
