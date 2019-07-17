@@ -33,7 +33,6 @@ subroutine rmpart(rmlimit)
   USE snapdimML, only: mdefcomp
   USE releaseML, only: iplume, nplume, npart
   USE drydep, only: kdrydep
-  USE wetdep, only: kwetdep
 
   real, intent(in) :: rmlimit
 
@@ -48,7 +47,7 @@ subroutine rmpart(rmlimit)
   do n=1,ncomp
     m = run_comp(n)%to_defined
     pbqmin(m)=0.
-    if(kdrydep(m) == 1 .or. kwetdep(m) == 1 &
+    if(kdrydep(m) == 1 .or. def_comp(m)%kwetdep == 1 &
         .or. def_comp(m)%kdecay == 1) then
       if(run_comp(n)%numtotal > 0) then
         pbqmin(m)=(run_comp(n)%totalbq/run_comp(n)%numtotal)*rmlimit

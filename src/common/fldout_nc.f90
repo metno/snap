@@ -128,7 +128,6 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   USE snapdimML, only: mcomp, ldata, nx, ny, nk, nxmc, nymc
   USE releaseML, only: npart
   USE drydep, only: kdrydep
-  USE wetdep, only: kwetdep
   USE particleML, only: pdata, Particle
 
   integer, intent(in) :: iwrite
@@ -222,7 +221,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   type(Particle) :: part
 
   is_dry_deposition = any(kdrydep == 1)
-  is_wet_deposition = any(kwetdep == 1)
+  is_wet_deposition = any(def_comp%kwetdep == 1)
 
   ierror=0
 
@@ -463,7 +462,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
             "Bq/m2","", &
             TRIM(def_comp(mm)%compnamemc)//"_accumulated_dry_deposition")
       end if
-      if (kwetdep(mm) > 0) then
+      if (def_comp(mm)%kwetdep > 0) then
         call nc_declare_3d(iunit, dimids3d, varid%comp(m)%iwd, &
             chksz3d, TRIM(def_comp(mm)%compnamemc)//"_wet_deposition", &
             "Bq/m2","", &
@@ -512,7 +511,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
             "Bq/m2","", &
             "total_accumulated_dry_deposition")
       end if
-      if (kwetdep(mm) > 0) then
+      if (def_comp(mm)%kwetdep > 0) then
         call nc_declare_3d(iunit, dimids3d, varid%iwdt, &
             chksz3d, "total_wet_deposition", &
             "Bq/m2","", &
@@ -734,7 +733,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     end if
 
   !..wet deposition
-    if(kwetdep(mm) == 1) then
+    if (def_comp(mm)%kwetdep == 1) then
       field1 = dscale*sngl(depwet(:,:,m))/garea
       accwet(:,:,m) = accwet(:,:,m) + depwet(:,:,m)
       if(idebug == 1) call ftest('wet', field1)
@@ -753,7 +752,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     end if
 
   !..accumulated wet deposition
-    if(kwetdep(mm) == 1) then
+    if (def_comp(mm)%kwetdep == 1) then
       field1 = dscale*sngl(accwet(:,:,m))/garea
       if(idebug == 1) call ftest('awet', field1)
 
@@ -858,7 +857,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       field1 = 0.0
       do m=1,ncomp
         mm = run_comp(m)%to_defined
-        if(kwetdep(mm) == 1) then
+        if (def_comp(mm)%kwetdep == 1) then
           field1 = field1 + depwet(:,:,m)
         end if
       end do
@@ -888,7 +887,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       field1 = 0.0
       do m=1,ncomp
         mm = run_comp(m)%to_defined
-        if(kwetdep(mm) == 1) then
+        if (def_comp(mm)%kwetdep == 1) then
           field1 = field1 + accwet(:,:,m)
         end if
       end do
@@ -951,7 +950,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       end if
 
     !..wet deposition
-      if(kwetdep(mm) == 1) then
+      if (def_comp(mm)%kwetdep == 1) then
         field1 = dblscale*depwet(:,:,m)
         if(idebug == 1) call ftest('wet%', field1)
       end if
@@ -963,7 +962,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       end if
 
     !..accumulated wet deposition
-      if(kwetdep(mm) == 1) then
+      if (def_comp(mm)%kwetdep == 1) then
         field1 = dblscale*accwet(:,:,m)
         if(idebug == 1) call ftest('awet%', field1)
       end if
@@ -1096,7 +1095,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     if(kdrydep(mm) == 1) then
       depdry(:,:,m) = 0.0
     end if
-    if(kwetdep(mm) == 1) then
+    if (def_comp(mm)%kwetdep == 1) then
       depwet(:,:,m) = 0.0
     end if
   end do

@@ -22,14 +22,6 @@ module wetdep
 
   public wetdep1, wetdep2, wetdep2_init
 
-!> wet deposition rate
-  real, save, public :: wetdeprat(mdefcomp)
-
-!> for each component: 0=wet deposition off  1=wet dep. on
-  integer, save, public :: kwetdep(mdefcomp)
-
-  real, save :: depconst(mdefcomp)
-
   contains
 
 !> Purpose:  Compute wet deposition for each particle and each component
@@ -51,7 +43,7 @@ subroutine wetdep1(part, pextra)
   real :: precint,probab,prand,dep
 
   m = part%icomp
-  if(kwetdep(m) == 1 .AND. pextra%prc > 0.0) then
+  if(def_comp(m)%kwetdep == 1 .AND. pextra%prc > 0.0) then
   !..find particles with wet deposition and
   !..reset precipitation to zero if not wet deposition
     precint = pextra%prc
@@ -63,7 +55,7 @@ subroutine wetdep1(part, pextra)
     if(prand > probab) then
       pextra%prc = 0.0
     else
-      dep = wetdeprat(m)*part%rad
+      dep = def_comp(m)%wetdeprat*part%rad
       part%rad = part%rad - dep
       i = nint(part%x)
       j = nint(part%y)
@@ -84,7 +76,7 @@ end subroutine wetdep1
 subroutine wetdep2(tstep, part, pextra)
   USE particleML, only: Particle, extraParticle
   USE snapfldML, only: depwet
-  USE snapparML, only: def_comp
+  USE snapparML, only: def_comp, run_comp
   USE vgravtablesML, only: radiusmym
 
   real, intent(in) ::    tstep
@@ -97,14 +89,16 @@ subroutine wetdep2(tstep, part, pextra)
 
 
   m = part%icomp
-  if(kwetdep(m) == 1 .AND. pextra%prc > 0.0 &
+  if(def_comp(m)%kwetdep == 1 .AND. pextra%prc > 0.0 &
       .AND. part%z > 0.67) then
   !..find particles with wet deposition and
   !..reset precipitation to zero if not wet deposition
     precint = pextra%prc
     q = precint
 
-    deprate = wet_deposition_rate(radiusmym(m), q, depconst(m), tstep)
+    mm = def_comp(m)%to_running
+
+    deprate = wet_deposition_rate(radiusmym(m), q, run_comp(mm)%depconst, tstep)
 
   ! b... 25.04.12 wet deposition for convective and gases
     dep = deprate*part%rad
@@ -127,20 +121,22 @@ subroutine wetdep2_init(tstep)
   USE snapparML, only: ncomp
   USE snapdimML, only: mdefcomp
   USE vgravtablesML, only: radiusmym
+  USE snapparML, only: run_comp
 
 !> Timestep in seconds
   real, intent(in) :: tstep
 
-  integer :: m,n
+  integer :: m, n, mm
   real :: q
 
   real :: ratdep(mdefcomp)
   real :: rm
 
   do m=1,ncomp
-    rm = radiusmym(m)
-    depconst(m) = wet_deposition_constant(rm)
-    write(iulog,*) 'WETDEP2 m,r,depconst(m): ',m,rm,depconst(m)
+    mm = run_comp(m)%to_defined
+    rm = radiusmym(mm)
+    run_comp(m)%depconst = wet_deposition_constant(rm)
+    write(iulog,*) 'WETDEP2 m,r,depconst(m): ',m,rm,run_comp(m)%depconst
   end do
 
   write(iulog,*) '-------------------------------------------------'
@@ -149,7 +145,8 @@ subroutine wetdep2_init(tstep)
   do n=1,200
     q=float(n)*0.1
     do m=1,ncomp
-      ratdep(m) = wet_deposition_rate(radiusmym(m), q, depconst(m), tstep)
+      mm = run_comp(m)%to_defined
+      ratdep(m) = wet_deposition_rate(radiusmym(mm), q, run_comp(m)%depconst, tstep)
     end do
     write(iulog,1010) q,(ratdep(m),m=1,ncomp)
 1010 format(1x,f5.1,':',12f7.4)

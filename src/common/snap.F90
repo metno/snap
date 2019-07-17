@@ -243,7 +243,7 @@ PROGRAM bsnap
 #else
   USE forwrdML, only: forwrd, forwrd_init
 #endif
-  USE wetdep, only: wetdep1, wetdep2, wetdep2_init, wetdeprat, kwetdep
+  USE wetdep, only: wetdep1, wetdep2, wetdep2_init
   USE drydep, only: drydep1, drydep2, drydeprat, drydephgt, kdrydep
   USE decayML, only: decay, decayDeps
   USE posintML, only: posint, posint_init
@@ -422,11 +422,11 @@ PROGRAM bsnap
   def_comp%compnamemc = 'Unknown'
 
   kdrydep = -1
-  kwetdep = -1
+  def_comp%kwetdep = -1
   def_comp%kdecay = -1
   drydephgt = -1.0
   drydeprat = -1.0
-  wetdeprat = -1.0
+  def_comp%wetdeprat = -1.0
   def_comp%halftime = -1.0
   def_comp%grav_type = -1
   def_comp%gravityms = 0.0
@@ -871,12 +871,12 @@ PROGRAM bsnap
         kdrydep(ndefcomp)=0
       elseif(cinput(k1:k2) == 'wet.dep.on') then
       !..wet.dep.on
-        if(ndefcomp < 1 .OR. kwetdep(ndefcomp) /= -1) goto 12
-        kwetdep(ndefcomp)=1
+        if(ndefcomp < 1 .OR. def_comp(ndefcomp)%kwetdep /= -1) goto 12
+        def_comp(ndefcomp)%kwetdep = 1
       elseif(cinput(k1:k2) == 'wet.dep.off') then
       !..wet.dep.off
-        if(ndefcomp < 1 .OR. kwetdep(ndefcomp) /= -1) goto 12
-        kwetdep(ndefcomp)=0
+        if(ndefcomp < 1 .OR. def_comp(ndefcomp)%kwetdep /= -1) goto 12
+        def_comp(ndefcomp)%kwetdep = 0
       elseif(cinput(k1:k2) == 'dry.dep.height') then
       !..dry.dep.height=
         if(kv1 < 1) goto 12
@@ -890,8 +890,8 @@ PROGRAM bsnap
       elseif(cinput(k1:k2) == 'wet.dep.ratio') then
       !..wet.dep.ratio=
         if(kv1 < 1) goto 12
-        if(ndefcomp < 1 .OR. wetdeprat(ndefcomp) >= 0.) goto 12
-        read(cipart,*,err=12) wetdeprat(ndefcomp)
+        if(ndefcomp < 1 .OR. def_comp(ndefcomp)%wetdeprat >= 0.) goto 12
+        read(cipart,*,err=12) def_comp(ndefcomp)%wetdeprat
       elseif(cinput(k1:k2) == 'radioactive.decay.on') then
       !..radioactive.decay.on
         if(ndefcomp < 1 .OR. def_comp(ndefcomp)%kdecay /= -1) goto 12
@@ -1479,15 +1479,15 @@ PROGRAM bsnap
       end if
     end if
 
-    if(iwetdep == 1 .AND. kwetdep(m) == 1) then
-      if(wetdeprat(m) > 0.) then
+    if (iwetdep == 1 .AND. def_comp(m)%kwetdep == 1) then
+      if (def_comp(m)%wetdeprat > 0.) then
         i2=i2+1
       else
         write(error_unit,*) 'Wet deposition error. rate: ', &
-            wetdeprat(m)
+            def_comp(m)%wetdeprat
         ierror=1
       end if
-    elseif(iwetdep == 2 .AND. kwetdep(m) == 1) then
+    elseif(iwetdep == 2 .AND. def_comp(m)%kwetdep == 1) then
       if(radiusmym(m) > 0.) then
         i2=i2+1
       else
@@ -1704,8 +1704,8 @@ PROGRAM bsnap
       write(iulog,*) '  kdrydep:    ',kdrydep(m)
       write(iulog,*) '  drydephgt:  ',drydephgt(m)
       write(iulog,*) '  drydeprat:  ',drydeprat(m)
-      write(iulog,*) '  kwetdep:    ',kwetdep(m)
-      write(iulog,*) '  wetdeprat:  ',wetdeprat(m)
+      write(iulog,*) '  kwetdep:    ', def_comp(m)%kwetdep
+      write(iulog,*) '  wetdeprat:  ', def_comp(m)%wetdeprat
       write(iulog,*) '  kdecay:     ', def_comp(m)%kdecay
       write(iulog,*) '  halftime:   ', def_comp(m)%halftime
       write(iulog,*) '  decayrate:  ', def_comp(m)%decayrate

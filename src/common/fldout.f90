@@ -96,8 +96,6 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   USE milibML, only: xyconvert, gridpar, rmfile, vtime
   USE releaseML, only: npart
   USE drydep, only: kdrydep
-  USE wetdep, only: kwetdep
-  implicit none
 
   integer ::   iwrite,iunit,istep,nsteph,ierror
   integer ::   itime(5)
@@ -746,7 +744,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     end if
   
   !..wet deposition
-    if(kwetdep(mm) == 1) then
+    if (def_comp(mm)%kwetdep == 1) then
       do j=1,ny
         do i=1,nx
           field1(i,j)=dscale*sngl(depwet(i,j,m))/garea(i,j)
@@ -762,7 +760,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     end if
   
   !..accumulated dry deposition
-    if(kdrydep(mm) == 1) then
+    if (kdrydep(mm) == 1) then
       do j=1,ny
         do i=1,nx
           field1(i,j)=dscale*sngl(accdry(i,j,m))/garea(i,j)
@@ -777,7 +775,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     end if
   
   !..accumulated wet deposition
-    if(kwetdep(mm) == 1) then
+    if(def_comp(mm)%kwetdep == 1) then
       do j=1,ny
         do i=1,nx
           field1(i,j)=dscale*sngl(accwet(i,j,m))/garea(i,j)
@@ -947,7 +945,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     do m=1,ncomp
       mm = run_comp(m)%to_defined
       if(kdrydep(mm) == 1) idry=1
-      if(kwetdep(mm) == 1) iwet=1
+      if (def_comp(mm)%kwetdep == 1) iwet = 1
     end do
   
   !..total dry deposition
@@ -989,7 +987,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       end do
       do m=1,ncomp
         mm = run_comp(m)%to_defined
-        if(kwetdep(mm) == 1) then
+        if (def_comp(mm)%kwetdep == 1) then
           do j=1,ny
             do i=1,nx
               field1(i,j)=field1(i,j)+sngl(depwet(i,j,m))
@@ -1049,7 +1047,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       end do
       do m=1,ncomp
         mm = run_comp(m)%to_defined
-        if(kwetdep(mm) == 1) then
+        if (def_comp(mm)%kwetdep == 1) then
           do j=1,ny
             do i=1,nx
               field1(i,j)=field1(i,j)+sngl(accwet(i,j,m))
@@ -1174,7 +1172,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       end if
     
     !..wet deposition
-      if(kwetdep(mm) == 1) then
+      if (def_comp(mm)%kwetdep == 1) then
         do j=1,ny
           do i=1,nx
             field1(i,j)=sngl(dblscale*depwet(i,j,m))
@@ -1204,7 +1202,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       end if
     
     !..accumulated wet deposition
-      if(kwetdep(mm) == 1) then
+      if (def_comp(mm)%kwetdep == 1) then
         do j=1,ny
           do i=1,nx
             field1(i,j)=sngl(dblscale*accwet(i,j,m))
@@ -1380,12 +1378,8 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         end do
       end do
     end if
-    if(kwetdep(mm) == 1) then
-      do j=1,ny
-        do i=1,nx
-          depwet(i,j,m)=0.0d0
-        end do
-      end do
+    if (def_comp(mm)%kwetdep == 1) then
+      depwet = 0.0
     end if
   end do
 
