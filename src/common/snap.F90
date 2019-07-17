@@ -306,7 +306,6 @@ PROGRAM bsnap
 ! b_start
   real :: mhmin, mhmax  ! minimum and maximum of mixing height
 ! b_end
-  integer :: ndefcomp
   type(defined_component), pointer :: d_comp
 
   logical :: blfullmix
@@ -418,10 +417,7 @@ PROGRAM bsnap
   isynoptic=0
   nrelheight=1
 
-  call push_down_dcomp(def_comp, top=d_comp)
-
   ncomp = 0
-  ndefcomp = 0
   itotcomp = 0
   rmlimit = -1.0
   nprepro = 0
@@ -841,89 +837,103 @@ PROGRAM bsnap
       elseif(cinput(k1:k2) == 'component') then
       !..component= name
         if(kv1 < 1) goto 12
-        if (ndefcomp /= 0) then
-          call push_down_dcomp(def_comp, top=d_comp)
-        endif
-        ndefcomp=ndefcomp+1
+        call push_down_dcomp(def_comp, top=d_comp)
 
         d_comp%compname = ciname(1:nkv)
         d_comp%compnamemc = ciname(1:nkv)
+        call chcase(2, 1, d_comp%compname)
       elseif(cinput(k1:k2) == 'dry.dep.on') then
       !..dry.dep.on
-        if(ndefcomp < 1 .OR. d_comp%kdrydep /= -1) goto 12
+        if (.not.associated(d_comp)) goto 12
+        if (d_comp%kdrydep /= -1) goto 12
         d_comp%kdrydep = 1
       elseif(cinput(k1:k2) == 'dry.dep.off') then
       !..dry.dep.off
-        if(ndefcomp < 1 .OR. d_comp%kdrydep /= -1) goto 12
+        if (.not.associated(d_comp)) goto 12
+        if (d_comp%kdrydep /= -1) goto 12
         d_comp%kdrydep = 0
       elseif(cinput(k1:k2) == 'wet.dep.on') then
       !..wet.dep.on
-        if(ndefcomp < 1 .OR. d_comp%kwetdep /= -1) goto 12
+        if (.not.associated(d_comp)) goto 12
+        if (d_comp%kwetdep /= -1) goto 12
         d_comp%kwetdep = 1
       elseif(cinput(k1:k2) == 'wet.dep.off') then
       !..wet.dep.off
-        if(ndefcomp < 1 .OR. d_comp%kwetdep /= -1) goto 12
+        if (.not.associated(d_comp)) goto 12
+        if (d_comp%kwetdep /= -1) goto 12
         d_comp%kwetdep = 0
       elseif(cinput(k1:k2) == 'dry.dep.height') then
       !..dry.dep.height=
         if(kv1 < 1) goto 12
-        if(ndefcomp < 1 .OR. d_comp%drydephgt >= 0.) goto 12
+        if (.not.associated(d_comp)) goto 12
+        if (d_comp%drydephgt >= 0.) goto 12
         read(cipart,*,err=12) d_comp%drydephgt
       elseif(cinput(k1:k2) == 'dry.dep.ratio') then
       !..dry.dep.ratio=
         if(kv1 < 1) goto 12
-        if(ndefcomp < 1 .OR. d_comp%drydeprat >= 0.) goto 12
+        if (.not.associated(d_comp)) goto 12
+        if (d_comp%drydeprat >= 0.) goto 12
         read(cipart,*,err=12) d_comp%drydeprat
       elseif(cinput(k1:k2) == 'wet.dep.ratio') then
       !..wet.dep.ratio=
         if(kv1 < 1) goto 12
-        if(ndefcomp < 1 .OR. d_comp%wetdeprat >= 0.) goto 12
+        if (.not.associated(d_comp)) goto 12
+        if (d_comp%wetdeprat >= 0.) goto 12
         read(cipart,*,err=12) d_comp%wetdeprat
       elseif(cinput(k1:k2) == 'radioactive.decay.on') then
       !..radioactive.decay.on
-        if(ndefcomp < 1 .OR. d_comp%kdecay /= -1) goto 12
+        if (.not.associated(d_comp)) goto 12
+        if (d_comp%kdecay /= -1) goto 12
         d_comp%kdecay = 1
       elseif(cinput(k1:k2) == 'radioactive.decay.off') then
       !..radioactive.decay.off
-        if(ndefcomp < 1 .OR. d_comp%kdecay /= -1) goto 12
+        if (.not.associated(d_comp)) goto 12
+        if (d_comp%kdecay /= -1) goto 12
         d_comp%kdecay = 0
       elseif(cinput(k1:k2) == 'half.lifetime.minutes') then
       !..half.lifetime.minutes=
         if(kv1 < 1) goto 12
-        if(ndefcomp < 1 .OR. d_comp%halftime >= 0.) goto 12
+        if (.not.associated(d_comp)) goto 12
+        if (d_comp%halftime >= 0.) goto 12
         read(cipart,*,err=12) d_comp%halftime
         d_comp%halftime = d_comp%halftime/60.
       elseif(cinput(k1:k2) == 'half.lifetime.hours') then
       !..half.lifetime.hours=
         if(kv1 < 1) goto 12
-        if(ndefcomp < 1 .OR. d_comp%halftime >= 0.) goto 12
+        if (.not.associated(d_comp)) goto 12
+        if (d_comp%halftime >= 0.) goto 12
         read(cipart,*,err=12) d_comp%halftime
       elseif(cinput(k1:k2) == 'half.lifetime.days') then
       !..half.lifetime.days=
         if(kv1 < 1) goto 12
-        if(ndefcomp < 1 .OR. d_comp%halftime >= 0.) goto 12
+        if (.not.associated(d_comp)) goto 12
+        if (d_comp%halftime >= 0.) goto 12
         read(cipart,*,err=12) d_comp%halftime
         d_comp%halftime = d_comp%halftime*24.
       elseif(cinput(k1:k2) == 'half.lifetime.years') then
       !..half.lifetime.years=
         if(kv1 < 1) goto 12
-        if(ndefcomp < 1 .OR. d_comp%halftime >= 0.) goto 12
+        if (.not.associated(d_comp)) goto 12
+        if (d_comp%halftime >= 0.) goto 12
         read(cipart,*,err=12) d_comp%halftime
         d_comp%halftime = d_comp%halftime*24.*365.25
       elseif(cinput(k1:k2) == 'gravity.off') then
       !..gravity.off
-        if(ndefcomp < 1 .OR. d_comp%grav_type /= -1) goto 12
+        if (.not.associated(d_comp)) goto 12
+        if (d_comp%grav_type /= -1) goto 12
         d_comp%grav_type = 0
       elseif(cinput(k1:k2) == 'gravity.fixed.m/s') then
       !..gravity.fixed.m/s
-        if(ndefcomp < 1 .OR. d_comp%grav_type /= -1) goto 12
+        if (.not.associated(d_comp)) goto 12
+        if (d_comp%grav_type /= -1) goto 12
         d_comp%grav_type = 1
         if(kv1 < 1) goto 12
         read(cipart,*,err=12) d_comp%gravityms
         if (d_comp%gravityms <= 0.) goto 12
       elseif(cinput(k1:k2) == 'gravity.fixed.cm/s') then
       !..gravity.fixed.cm/s
-        if(ndefcomp < 1 .OR. d_comp%grav_type /= -1) goto 12
+        if (.not.associated(d_comp)) goto 12
+        if (d_comp%grav_type /= -1) goto 12
         d_comp%grav_type = 1
         if(kv1 < 1) goto 12
         read(cipart,*,err=12) d_comp%gravityms
@@ -932,22 +942,25 @@ PROGRAM bsnap
       elseif(cinput(k1:k2) == 'radius.micrometer') then
       !..radius.micrometer  (for gravity computation)
         if(kv1 < 1) goto 12
-        if (ndefcomp < 1 .OR. d_comp%radiusmym > 0.) goto 12
+        if (.not.associated(d_comp)) goto 12
+        if (d_comp%radiusmym > 0.) goto 12
         read(cipart,*,err=12) d_comp%radiusmym
         if (d_comp%radiusmym <= 0.) goto 12
       elseif(cinput(k1:k2) == 'density.g/cm3') then
       !..density.g/cm3  (for gravity computation)
         if(kv1 < 1) goto 12
-        if(ndefcomp < 1 .OR. d_comp%densitygcm3 > 0.) goto 12
+        if (.not.associated(d_comp)) goto 12
+        if (d_comp%densitygcm3 > 0.) goto 12
         read(cipart,*,err=12) d_comp%densitygcm3
         if(d_comp%densitygcm3 <= 0.) goto 12
       elseif(cinput(k1:k2) == 'field.identification') then
       !..field.identification=
         if(kv1 < 1) goto 12
-        if(ndefcomp < 1 .OR. d_comp%idcomp >= 0) goto 12
+        if (.not.associated(d_comp)) goto 12
+        if (d_comp%idcomp >= 0) goto 12
         read(cipart,*,err=12) d_comp%idcomp
         if(d_comp%idcomp < 1) goto 12
-        do i=1,ndefcomp-1
+        do i=1,size(def_comp)-1
           if(def_comp(i)%idcomp == d_comp%idcomp) goto 12
         end do
       elseif (cinput(k1:k2) == 'field.use_model_wind_instead_of_10m') then
@@ -1300,9 +1313,6 @@ PROGRAM bsnap
   do n=1,nrelpos
     call chcase(2, 1, release_positions(n)%name)
   end do
-  do i=1,ndefcomp
-    call chcase(2, 1, def_comp(i)%compname)
-  enddo
   if(ncomp > 0)    call chcase(2,ncomp,component)
 
   ierror=0
@@ -1371,11 +1381,11 @@ PROGRAM bsnap
     write(error_unit,*) 'No (release) components specified for run'
     ierror=1
   end if
-  if(ndefcomp < 0) then
+  if (.not.allocated(def_comp)) then
     write(error_unit,*) 'No (release) components defined'
     ierror=1
   end if
-  if (ncomp > ndefcomp) then
+  if (ncomp > size(def_comp)) then
     write(error_unit,*) "Number of RELEASE.BQ components is higher than the"
     write(error_unit,*) "number of defined components"
     ierror = 1
@@ -1385,12 +1395,12 @@ PROGRAM bsnap
     ierror = 1
   end if
 
-  do m=1,ndefcomp-1
+  do m=1,size(def_comp)-1
     if(def_comp(m)%idcomp < 1) then
       write(error_unit,*) 'Component has no field identification: ', &
           trim(def_comp(m)%compname)
     end if
-    do i=m+1,ndefcomp
+    do i=m+1,size(def_comp)
       if(def_comp(m)%compname == def_comp(i)%compname) then
         write(error_unit,*) 'Component defined more than once: ', &
             trim(def_comp(m)%compname)
@@ -1416,7 +1426,7 @@ PROGRAM bsnap
 
   do m=1,ncomp
     k=0
-    do i=1,ndefcomp
+    do i=1,size(def_comp)
       if(component(m) == def_comp(i)%compname) k=i
     end do
     if(k > 0) then
@@ -1681,12 +1691,12 @@ PROGRAM bsnap
     write(iulog,*) 'iwetdep: ',iwetdep
     write(iulog,*) 'idecay:  ',idecay
     write(iulog,*) 'rmlimit: ',rmlimit
-    write(iulog,*) 'ndefcomp:',ndefcomp
+    write(iulog,*) 'ndefcomp:', size(def_comp)
     write(iulog,*) 'ncomp:   ',ncomp
     write(iulog,fmt='(1x,a,40(1x,i2))') 'running_to_defined_comp: ', &
         (run_comp(i)%to_defined,i=1,ncomp)
     write(iulog,fmt='(1x,a,40(1x,i2))') 'defined_to_running_comp: ', &
-        (def_comp(i)%to_running,i=1,ndefcomp)
+        (def_comp(i)%to_running,i=1,size(def_comp))
     do n=1,ncomp
       m = run_comp(n)%to_defined
       write(iulog,*) 'component no:  ',n
