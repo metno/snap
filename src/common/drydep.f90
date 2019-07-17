@@ -16,18 +16,10 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 module drydep
-  use snapdimML, only: mdefcomp
   implicit none
   private
 
   public drydep1, drydep2
-
-!> dry deposition rate
-  real, save, public :: drydeprat(mdefcomp)
-!> max height above ground for dry deposition
-  real, save, public :: drydephgt(mdefcomp)
-!> for each component: 0=dry deposition off  1=dry dep. on
-  integer, save, public :: kdrydep(mdefcomp)
 
   contains
 
@@ -47,12 +39,12 @@ subroutine drydep1(part)
   real :: h, dep
 
   m = part%icomp
-  if(kdrydep(m) == 1) then
+  if (def_comp(m)%kdrydep == 1) then
   !..very rough eastimate of height,
   !..using boundary layer height, then just linear in sigma/eta !!! ????
     h = part%hbl*(1.-part%z)/(1.-part%tbl)
-    if (h < drydephgt(m)) then
-      dep = drydeprat(m)*part%rad
+    if (h < def_comp(m)%drydephgt) then
+      dep = def_comp(m)%drydeprat*part%rad
       part%rad = part%rad - dep
       i = nint(part%x)
       j = nint(part%y)
@@ -86,7 +78,7 @@ subroutine drydep2(tstep, part)
 
   m = part%icomp
 !#### 30m = surface-layer (deposition-layer); sigma(hybrid)=0.996 ~ 30m
-  if(kdrydep(m) == 1 .AND. part%z > 0.996) then
+  if (def_comp(m)%kdrydep == 1 .AND. part%z > 0.996) then
   ! b...23.04.12... difference between particle and gas
 
     if(radiusmym(m) <= 0.05) then

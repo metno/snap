@@ -54,6 +54,14 @@ module snapparML
 !> for each component: 0=wet deposition off  1=wet dep. on
     integer :: kwetdep
 
+!> dry deposition rate (used in ::drydep::drydep1)
+    real :: drydeprat
+!> max height above ground for dry deposition (used in ::drydep::drydep1)
+    real :: drydephgt
+!> for each component: 0=dry deposition off  1=dry dep. on
+    integer :: kdrydep
+
+
 !> a component name
     character(len=32) :: compname
 !> a component name (mixed case)

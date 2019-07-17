@@ -127,7 +127,6 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   USE ftestML, only: ftest
   USE snapdimML, only: mcomp, ldata, nx, ny, nk, nxmc, nymc
   USE releaseML, only: npart
-  USE drydep, only: kdrydep
   USE particleML, only: pdata, Particle
 
   integer, intent(in) :: iwrite
@@ -220,7 +219,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   character(len=256) :: string
   type(Particle) :: part
 
-  is_dry_deposition = any(kdrydep == 1)
+  is_dry_deposition = any(def_comp%kdrydep == 1)
   is_wet_deposition = any(def_comp%kwetdep == 1)
 
   ierror=0
@@ -452,7 +451,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
           chksz3d, TRIM(def_comp(mm)%compnamemc)//"_avg_concentration_bl", &
           "Bq/m3","", &
           TRIM(def_comp(mm)%compnamemc)//"_average_concentration_bl")
-      if (kdrydep(mm) > 0) then
+      if (def_comp(mm)%kdrydep > 0) then
         call nc_declare_3d(iunit, dimids3d, varid%comp(m)%idd, &
             chksz3d, TRIM(def_comp(mm)%compnamemc)//"_dry_deposition", &
             "Bq/m2","", &
@@ -501,7 +500,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
           chksz3d, "total_acc_concentration", &
           "Bq/m3","", &
           "total_accumulated_concentration")
-      if (kdrydep(mm) > 0) then
+      if (def_comp(mm)%kdrydep > 0) then
         call nc_declare_3d(iunit, dimids3d, varid%iddt, &
             chksz3d, "total_dry_deposition", &
             "Bq/m2","", &
@@ -719,7 +718,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         values=field1), "set_acbl")
 
   !..dry deposition
-    if(kdrydep(mm) == 1) then
+    if (def_comp(mm)%kdrydep == 1) then
       do j=1,ny
         do i=1,nx
           field1(i,j)=dscale*sngl(depdry(i,j,m))/garea(i,j)
@@ -743,7 +742,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     end if
 
   !..accumulated dry deposition
-    if(kdrydep(mm) == 1) then
+    if (def_comp(mm)%kdrydep == 1) then
       field1 = dscale*sngl(accdry(:,:,m))/garea
       if(idebug == 1) call ftest('adry', field1)
 
@@ -842,7 +841,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       field1 = 0.0
       do m=1,ncomp
         mm = run_comp(m)%to_defined
-        if(kdrydep(mm) == 1) then
+        if (def_comp(mm)%kdrydep == 1) then
           field1 = field1 + depdry(:,:,m)
         end if
       end do
@@ -872,7 +871,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       field1 = 0.0
       do m=1,ncomp
         mm = run_comp(m)%to_defined
-        if(kdrydep(mm) == 1) then
+        if (def_comp(mm)%kdrydep == 1) then
           field1 = field1 + accdry(:,:,m)
         end if
       end do
@@ -944,7 +943,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       dblscale= 100.0d0/dble(run_comp(m)%totalbq)
 
     !..dry deposition
-      if(kdrydep(mm) == 1) then
+      if (def_comp(mm)%kdrydep == 1) then
         field1 = dblscale*depdry(:,:,m)
         if(idebug == 1) call ftest('dry%', field1)
       end if
@@ -956,7 +955,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       end if
 
     !..accumulated dry deposition
-      if(kdrydep(mm) == 1) then
+      if (def_comp(mm)%kdrydep == 1) then
         field1 = dblscale*accdry(:,:,m)
         if(idebug == 1) call ftest('adry%', field1)
       end if
@@ -1092,7 +1091,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
   do m=1,ncomp
     mm = run_comp(m)%to_defined
-    if(kdrydep(mm) == 1) then
+    if (def_comp(mm)%kdrydep == 1) then
       depdry(:,:,m) = 0.0
     end if
     if (def_comp(mm)%kwetdep == 1) then
