@@ -30,31 +30,38 @@ module rmpartML
 subroutine rmpart(rmlimit)
   USE particleML, only: pdata
   USE snapparML, only: ncomp, run_comp, iparnum, def_comp
-  USE snapdimML, only: mdefcomp
+  USE snapdimML, only: mcomp
   USE releaseML, only: iplume, nplume, npart
 
   real, intent(in) :: rmlimit
 
-  integer :: idep,m,n,npl,i,i1,i2,iredist
+  integer :: idep,m,n,npl,i,i1,i2,iredist, mm
 
-  integer :: npkeep(mdefcomp)
-  real :: pbqmin(mdefcomp), pbqtotal(mdefcomp), pbqlost(mdefcomp)
-  real :: pbqdist(mdefcomp)
+  integer, allocatable, save :: npkeep(:)
+  real, allocatable, save :: pbqmin(:), pbqtotal(:), pbqlost(:)
+  real, allocatable, save :: pbqdist(:)
+
+  if (.not.allocated(npkeep)) allocate(npkeep(ncomp))
+  if (.not.allocated(pbqmin)) allocate(pbqmin(ncomp))
+  if (.not.allocated(pbqtotal)) allocate(pbqtotal(ncomp))
+  if (.not.allocated(pbqlost)) allocate(pbqlost(ncomp))
+  if (.not.allocated(pbqdist)) allocate(pbqdist(ncomp))
 
 !..rmlimit is now input, used to be 0.02 (2%)
   idep=0
   do n=1,ncomp
     m = run_comp(n)%to_defined
-    pbqmin(m)=0.
+    pbqmin(n)=0.
     if(def_comp(m)%kdrydep == 1 .or. def_comp(m)%kwetdep == 1 &
         .or. def_comp(m)%kdecay == 1) then
       if(run_comp(n)%numtotal > 0) then
-        pbqmin(m)=(run_comp(n)%totalbq/run_comp(n)%numtotal)*rmlimit
+        pbqmin(n)=(run_comp(n)%totalbq/run_comp(n)%numtotal)*rmlimit
       endif
       idep=1
     end if
-    pbqlost(m)=0.
   end do
+
+  pbqlost = 0.
 
   n=0
 
@@ -65,17 +72,16 @@ subroutine rmpart(rmlimit)
 
   !..redistribution of lost mass (within one plume)
     if(idep == 1 .AND. i1 > 0) then
-      do m=1,ncomp
-        pbqtotal(m)=0.
-        npkeep(m)=0
-      end do
+      pbqtotal = 0.0
+      npkeep = 0
       do i=i1,i2
         m=pdata(i)%icomp
-        if(pdata(i)%rad > pbqmin(m)) then
-          pbqtotal(m)=pbqtotal(m)+pdata(i)%rad
-          npkeep(m)=npkeep(m)+1
+        mm = def_comp(m)%to_running
+        if(pdata(i)%rad > pbqmin(mm)) then
+          pbqtotal(mm)=pbqtotal(mm)+pdata(i)%rad
+          npkeep(mm) = npkeep(mm) + 1
         else
-          pbqlost(m)=pbqlost(m)+pdata(i)%rad
+          pbqlost(mm) = pbqlost(mm) + pdata(i)%rad
           pdata(i)%rad=0.
           pdata(i)%active = .FALSE.
           pdata(i)%x=0.
@@ -87,7 +93,7 @@ subroutine rmpart(rmlimit)
         pbqdist(m)=0.
         if(pbqlost(m) > 0. .AND. npkeep(m) > 0) then
           pbqdist(m)=pbqlost(m)/float(npkeep(m))
-          pbqlost(m)=0.
+          pbqlost(m) = 0.0
           iredist=1
         end if
       end do

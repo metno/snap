@@ -16,7 +16,6 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 module vgravtablesML
-  use snapdimML, only: mdefcomp
   implicit none
   private
 
@@ -28,7 +27,7 @@ module vgravtablesML
 !> table of gravity in m/s
 !>
 !>	(temperature as first index, pressure second)
-  real, save, public :: vgtable(numtempvg,numpresvg,mdefcomp)
+  real, save, allocatable, public :: vgtable(:,:,:)
 
   real, parameter, public :: tincrvg = 200.0/float(numtempvg - 1)
   real, parameter, public :: tbasevg = 273. - 120. - tincrvg
@@ -54,6 +53,8 @@ subroutine vgravtables
   integer :: n,m,ip,it
 !---------------------------------------
 
+  if (.not.allocated(vgtable)) allocate(vgtable(numtempvg,numpresvg,ncomp))
+
 
 do_comp: do n=1,ncomp
 
@@ -78,7 +79,7 @@ do_comp: do n=1,ncomp
         call iter(vgmod,vg,dp,rp,p,t)
 
       !..table in unit m/s (cm/s computed)
-        vgtable(it,ip,m)= vgmod*0.01
+        vgtable(it,ip,n)= vgmod*0.01
 
       end do
     end do

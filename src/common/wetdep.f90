@@ -16,7 +16,6 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 module wetdep
-  use snapdimML, only: mdefcomp
   implicit none
   private
 
@@ -118,7 +117,6 @@ subroutine wetdep2_init(tstep)
   USE snapdebug, only: iulog
   USE particleML, only: Particle, extraParticle
   USE snapparML, only: ncomp
-  USE snapdimML, only: mdefcomp
   USE snapparML, only: run_comp, def_comp
 
 !> Timestep in seconds
@@ -127,8 +125,10 @@ subroutine wetdep2_init(tstep)
   integer :: m, n, mm
   real :: q
 
-  real :: ratdep(mdefcomp)
+  real, allocatable :: ratdep(:)
   real :: rm
+
+  allocate(ratdep(ncomp))
 
   do m=1,ncomp
     mm = run_comp(m)%to_defined

@@ -21,7 +21,7 @@
 !>           The particles are spread in a cylinder volume if radius>0,
 !>     otherwise in a column
 module releaseML
-  use snapdimML, only: mcomp, mdefcomp
+  use snapdimML, only: mcomp
   implicit none
   private
 

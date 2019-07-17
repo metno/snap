@@ -16,7 +16,6 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 module decayML
-  use snapdimML, only: mdefcomp
   implicit none
   private
 

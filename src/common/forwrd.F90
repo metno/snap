@@ -151,6 +151,7 @@ subroutine forwrd_dx(tf1, tf2, tnow, tstep, part, &
   real(real64), intent(out) :: v
 
   integer :: i,j,m,ilvl,k1,k2,itab,kt1,kt2,ip,it
+  integer :: mrunning
   real(real64) :: dt,rt1,rt2,dx,dy,c1,c2,c3,c4,vlvl
   real(real64) :: dz1,dz2,uk1,uk2,vk1,vk2,wk1,wk2,w
   real(real64) :: th,tk1,tk2,ps,p,pi,t,gravity,grav1,grav2,pvg,tvg
@@ -264,12 +265,14 @@ subroutine forwrd_dx(tf1, tf2, tnow, tstep, part, &
       it = max(it, 1)
       it = min(size(vgtable,1)-1, it)
       tvg = tbasevg + it*tincrvg
-      grav1 = vgtable(it,ip,m) &
-          + (vgtable(it+1,ip,m)-vgtable(it,ip,m)) &
+
+      mrunning = def_comp(m)%to_running
+      grav1 = vgtable(it,ip,mrunning) &
+          + (vgtable(it+1,ip,mrunning)-vgtable(it,ip,mrunning)) &
           *(t-tvg)/tincrvg
       ip = ip + 1
-      grav2 = vgtable(it,ip,m) &
-          + (vgtable(it+1,ip,m)-vgtable(it,ip,m)) &
+      grav2 = vgtable(it,ip,mrunning) &
+          + (vgtable(it+1,ip,mrunning)-vgtable(it,ip,mrunning)) &
           *(t-tvg)/tincrvg
       gravity = grav1 + (grav2-grav1) * (p-pvg)/pincrvg
     !######################################################################
@@ -346,7 +349,7 @@ subroutine forwrd_init()
   ip = (1000-pbasevg)/pincrvg
   do i=1,ncomp
     m = run_comp(i)%to_defined
-    write(iulog,*) ' particle ', def_comp(m)%compname, ": ", vgtable(it,ip,m)
+    write(iulog,*) ' particle ', def_comp(m)%compname, ": ", vgtable(it,ip,i)
   end do
 end subroutine
 end module forwrdML
