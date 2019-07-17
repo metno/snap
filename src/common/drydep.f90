@@ -65,7 +65,6 @@ subroutine drydep2(tstep, part)
   USE snapfldML, only: depdry
   USE snapparML, only: def_comp
   USE snapgrdML, only: vlevel
-  USE vgravtablesML, only: radiusmym
 
 ! ... 23.04.12 - gas, particle 0.1<d<10, particle d>10 - J. Bartnicki|
   real, intent(in) :: tstep
@@ -81,10 +80,10 @@ subroutine drydep2(tstep, part)
   if (def_comp(m)%kdrydep == 1 .AND. part%z > 0.996) then
   ! b...23.04.12... difference between particle and gas
 
-    if(radiusmym(m) <= 0.05) then
+    if (def_comp(m)%radiusmym <= 0.05) then
     ! gas
       deprate = 1.0 - exp(-tstep*(0.008)/h)
-    else if (radiusmym(m) <= 10.0) then
+    else if (def_comp(m)%radiusmym <= 10.0) then
     ! particle 0.05<r<10
       deprate = 1.0 - exp(-tstep*(0.002)/h)
     else
