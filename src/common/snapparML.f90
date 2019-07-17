@@ -122,7 +122,7 @@ module snapparML
     real :: depconst
   end type
 
-  type(running_component), save, public :: run_comp(mcomp)
+  type(running_component), save, allocatable, public :: run_comp(:)
 
 
 !> unique identifier for each particle

@@ -420,8 +420,6 @@ PROGRAM bsnap
 
   call push_down_dcomp(def_comp, top=d_comp)
 
-  run_comp%totalbq = 0.0
-  run_comp%numtotal = 0
   ncomp = 0
   ndefcomp = 0
   itotcomp = 0
@@ -1382,7 +1380,7 @@ PROGRAM bsnap
     write(error_unit,*) "number of defined components"
     ierror = 1
   end if
-  if (maxval(run_comp%to_defined) > ncomp) then
+  if (maxval(def_comp%idcomp) > ncomp) then
     write(error_unit,*) "Field identification is higher than total number of fields"
     ierror = 1
   end if
@@ -1412,6 +1410,10 @@ PROGRAM bsnap
   end do
 
 !..match used components with defined components
+  allocate(run_comp(ncomp))
+  run_comp%totalbq = 0
+  run_comp%numtotal = 0
+
   do m=1,ncomp
     k=0
     do i=1,ndefcomp
