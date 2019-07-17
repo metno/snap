@@ -201,8 +201,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
   integer :: maxage
   integer :: i,j,k,m,mm,n,ivlvl,idextr,loop
-  logical :: is_dry_deposition
-  logical :: is_wet_deposition
+  logical :: compute_total_dry_deposition
+  logical :: compute_total_wet_deposition
   integer :: ko,lvla,lvlb
   integer, save :: numfields = 0
   real :: rt1,rt2,scale,average,averinv,hbl
@@ -219,8 +219,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   character(len=256) :: string
   type(Particle) :: part
 
-  is_dry_deposition = any(def_comp%kdrydep == 1)
-  is_wet_deposition = any(def_comp%kwetdep == 1)
+  compute_total_dry_deposition = any(def_comp%kdrydep == 1) .and. ncomp > 1
+  compute_total_wet_deposition = any(def_comp%kwetdep == 1) .and. ncomp > 1
 
   ierror=0
 
@@ -500,7 +500,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
           chksz3d, "total_acc_concentration", &
           "Bq/m3","", &
           "total_accumulated_concentration")
-      if (def_comp(mm)%kdrydep > 0) then
+      if (compute_total_dry_deposition) then
         call nc_declare_3d(iunit, dimids3d, varid%iddt, &
             chksz3d, "total_dry_deposition", &
             "Bq/m2","", &
@@ -510,7 +510,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
             "Bq/m2","", &
             "total_accumulated_dry_deposition")
       end if
-      if (def_comp(mm)%kwetdep > 0) then
+      if (compute_total_wet_deposition) then
         call nc_declare_3d(iunit, dimids3d, varid%iwdt, &
             chksz3d, "total_wet_deposition", &
             "Bq/m2","", &
@@ -837,7 +837,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         values=field1), "set_acblt")
 
   !..total dry deposition
-    if(is_dry_deposition) then
+    if(compute_total_dry_deposition) then
       field1 = 0.0
       do m=1,ncomp
         mm = run_comp(m)%to_defined
@@ -852,7 +852,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     end if
 
   !..total wet deposition
-    if(is_wet_deposition) then
+    if(compute_total_wet_deposition) then
       field1 = 0.0
       do m=1,ncomp
         mm = run_comp(m)%to_defined
@@ -867,7 +867,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     end if
 
   !..total accumulated dry deposition
-    if(is_dry_deposition) then
+    if(compute_total_dry_deposition) then
       field1 = 0.0
       do m=1,ncomp
         mm = run_comp(m)%to_defined
@@ -882,7 +882,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     end if
 
   !..total accumulated wet deposition
-    if(is_wet_deposition) then
+    if(compute_total_wet_deposition) then
       field1 = 0.0
       do m=1,ncomp
         mm = run_comp(m)%to_defined
