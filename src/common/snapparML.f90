@@ -18,58 +18,60 @@
 
 !> Common for particles
 module snapparML
-  use snapdimML, only: mdefcomp, mcomp
+  use snapdimML, only: mcomp
   implicit none
 
   private
 
+  public push_down_dcomp
 
-  type :: defined_component
+
+  type, public :: defined_component
 !> mapping from defined component to the running component
 !>
 !> used when mapping from component given by e.g. ::particle\%icomp
 !> to defined components in e.g. ::kgravity
 !>
 !> should be 0 for components that are not running
-    integer :: to_running
+    integer :: to_running = 0
 !> gravity type:
 !>
 !> * 0=off
 !> * 1=fixed
 !> * 2=computed
-    integer :: grav_type
+    integer :: grav_type = -1
 
 !> fixed gravity in unit m/s, used when \ref grav_type != 2
-    real :: gravityms
+    real :: gravityms = 0.0
 !> radius in unit micrometer
-    real :: radiusmym
+    real :: radiusmym = 0.0
 !> density in unit g/cm3
-    real :: densitygcm3
+    real :: densitygcm3 = 0.0
 
 !> for each component: 0=radioactive decay off  1=decay on
-    integer :: kdecay
+    integer :: kdecay = -1
 !> radioactive half lifetime (hours)
-    real :: halftime
+    real :: halftime = -1.0
 !> radioactive decay (rate)
-    real :: decayrate
+    real :: decayrate = -1.0
 
 !> wet deposition rate
-    real :: wetdeprat
+    real :: wetdeprat = -1.0
 !> for each component: 0=wet deposition off  1=wet dep. on
-    integer :: kwetdep
+    integer :: kwetdep = -1
 
 !> dry deposition rate (used in ::drydep::drydep1)
-    real :: drydeprat
+    real :: drydeprat = -1.0
 !> max height above ground for dry deposition (used in ::drydep::drydep1)
-    real :: drydephgt
+    real :: drydephgt = -1.0
 !> for each component: 0=dry deposition off  1=dry dep. on
-    integer :: kdrydep
+    integer :: kdrydep = -1
 
 
 !> a component name
-    character(len=32) :: compname
+    character(len=32) :: compname = "Unknown"
 !> a component name (mixed case)
-    character(len=32) :: compnamemc
+    character(len=32) :: compnamemc = "Unknown"
 
 !> an identifier used in the field identification
 !>
@@ -77,9 +79,9 @@ module snapparML
 !> model level fields adds this number to a 'basic'
 !> parameter no., 0 is used for the total if more than
 !> one component present)
-    integer :: idcomp
+    integer :: idcomp = -1
   end type
-  type(defined_component), save, public, target :: def_comp(mdefcomp)
+  type(defined_component), save, allocatable, public, target :: def_comp(:)
 
 !> counter for unique particle identifier
   integer, save, public :: nparnum
@@ -100,7 +102,7 @@ module snapparML
 
 !> Contains information which are applicable to active (running)
 !> components
-  type :: running_component
+  type, public :: running_component
 !> Mapping from running components to the defined compont
 !>
 !> Used when looping over all running components to pick
@@ -125,5 +127,36 @@ module snapparML
 
 !> unique identifier for each particle
   integer, dimension(:), allocatable, save, public :: iparnum
+
+  contains
+    !> Pushes a default component onto the array
+    subroutine push_down_dcomp(arr, top)
+      !> Growable array, increases by one every call
+      type(defined_component), intent(inout), allocatable, target :: arr(:)
+      !> pointer to the top/last element
+      type(defined_component), pointer, intent(out), optional :: top
+
+      type(defined_component), allocatable :: old_arr(:)
+      integer :: s
+
+      if (.not.allocated(arr)) then
+        allocate(arr(1))
+        arr(1) = defined_component()
+        if (present(top)) then
+          top => arr(1)
+        endif
+        return
+      endif
+
+      s = size(arr)
+      call move_alloc(from=arr, to=old_arr)
+      allocate(arr(s+1))
+
+      arr(:s) = old_arr
+      arr(s+1) = defined_component()
+      if (present(top)) then
+        top => arr(s+1)
+      endif
+    end subroutine
 
 end module snapparML

@@ -65,12 +65,10 @@ module snapdimML
 !.......................................................
 
 
-!..mdefcomp: max. no. of components defined in input file (aerosol,gas,....)
 !..mcomp:    max no. of components used in one run
 !            (keep as small as "possible", it dimensions 2d/3d output fields)
 !
       integer, parameter, public :: mcomp=51
-      integer, parameter, public :: mdefcomp=51
 
 
 !..mavail: max. no. of available timesteps with data

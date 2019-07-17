@@ -215,13 +215,13 @@ PROGRAM bsnap
       argostime
   USE snapepsML, only: ensemblefile, ensembleparticipant, ensemblerandomkey, &
       ensemblestephours, iensemble
-  USE snapdimML, only: nx, ny, nk, nxmc, nymc, ldata, maxsiz, mcomp, mdefcomp
+  USE snapdimML, only: nx, ny, nk, nxmc, nymc, ldata, maxsiz, mcomp
   USE snapfilML, only: filef, itimer, limfcf, ncsummary, nctitle, nhfmax, nhfmin, &
       nctype, nfilef, simulation_start
   USE snapfldML, only: enspos, iprecip, nprecip
   USE snapmetML, only: init_meteo_params, use_model_wind_for_10m
   USE snapparML, only: component, run_comp, itprof, &
-      ncomp, def_comp, nparnum
+      ncomp, def_comp, nparnum, defined_component, push_down_dcomp
   USE snapposML, only: irelpos, nrelpos, release_positions
   USE snapgrdML, only: modleveldump, ivcoor, ixbase, iybase, ixystp, kadd, &
       klevel, imslp, inprecip, iprod, iprodr, itotcomp, gparam, igrid, igridr, &
@@ -307,6 +307,7 @@ PROGRAM bsnap
   real :: mhmin, mhmax  ! minimum and maximum of mixing height
 ! b_end
   integer :: ndefcomp
+  type(defined_component), pointer :: d_comp
 
   logical :: blfullmix
   logical :: init = .TRUE.
@@ -417,22 +418,8 @@ PROGRAM bsnap
   isynoptic=0
   nrelheight=1
 
-  def_comp%compname = 'Unknown'
-  def_comp%compnamemc = 'Unknown'
+  call push_down_dcomp(def_comp, top=d_comp)
 
-  def_comp%kdrydep = -1
-  def_comp%kwetdep = -1
-  def_comp%kdecay = -1
-  def_comp%drydephgt = -1.0
-  def_comp%drydeprat = -1.0
-  def_comp%wetdeprat = -1.0
-  def_comp%halftime = -1.0
-  def_comp%grav_type = -1
-  def_comp%gravityms = 0.0
-  def_comp%radiusmym = 0.0
-  def_comp%densitygcm3 = 0.0
-  def_comp%idcomp = -1
-  def_comp%to_running = 0
   run_comp%totalbq = 0.0
   run_comp%numtotal = 0
   ncomp = 0
@@ -856,111 +843,114 @@ PROGRAM bsnap
       elseif(cinput(k1:k2) == 'component') then
       !..component= name
         if(kv1 < 1) goto 12
+        if (ndefcomp /= 0) then
+          call push_down_dcomp(def_comp, top=d_comp)
+        endif
         ndefcomp=ndefcomp+1
-        if(ndefcomp > mdefcomp) goto 12
-        def_comp(ndefcomp)%compname = ciname(1:nkv)
-        def_comp(ndefcomp)%compnamemc = ciname(1:nkv)
+
+        d_comp%compname = ciname(1:nkv)
+        d_comp%compnamemc = ciname(1:nkv)
       elseif(cinput(k1:k2) == 'dry.dep.on') then
       !..dry.dep.on
-        if(ndefcomp < 1 .OR. def_comp(ndefcomp)%kdrydep /= -1) goto 12
-        def_comp(ndefcomp)%kdrydep = 1
+        if(ndefcomp < 1 .OR. d_comp%kdrydep /= -1) goto 12
+        d_comp%kdrydep = 1
       elseif(cinput(k1:k2) == 'dry.dep.off') then
       !..dry.dep.off
-        if(ndefcomp < 1 .OR. def_comp(ndefcomp)%kdrydep /= -1) goto 12
-        def_comp(ndefcomp)%kdrydep = 0
+        if(ndefcomp < 1 .OR. d_comp%kdrydep /= -1) goto 12
+        d_comp%kdrydep = 0
       elseif(cinput(k1:k2) == 'wet.dep.on') then
       !..wet.dep.on
-        if(ndefcomp < 1 .OR. def_comp(ndefcomp)%kwetdep /= -1) goto 12
-        def_comp(ndefcomp)%kwetdep = 1
+        if(ndefcomp < 1 .OR. d_comp%kwetdep /= -1) goto 12
+        d_comp%kwetdep = 1
       elseif(cinput(k1:k2) == 'wet.dep.off') then
       !..wet.dep.off
-        if(ndefcomp < 1 .OR. def_comp(ndefcomp)%kwetdep /= -1) goto 12
-        def_comp(ndefcomp)%kwetdep = 0
+        if(ndefcomp < 1 .OR. d_comp%kwetdep /= -1) goto 12
+        d_comp%kwetdep = 0
       elseif(cinput(k1:k2) == 'dry.dep.height') then
       !..dry.dep.height=
         if(kv1 < 1) goto 12
-        if(ndefcomp < 1 .OR. def_comp(ndefcomp)%drydephgt >= 0.) goto 12
-        read(cipart,*,err=12) def_comp(ndefcomp)%drydephgt
+        if(ndefcomp < 1 .OR. d_comp%drydephgt >= 0.) goto 12
+        read(cipart,*,err=12) d_comp%drydephgt
       elseif(cinput(k1:k2) == 'dry.dep.ratio') then
       !..dry.dep.ratio=
         if(kv1 < 1) goto 12
-        if(ndefcomp < 1 .OR. def_comp(ndefcomp)%drydeprat >= 0.) goto 12
-        read(cipart,*,err=12) def_comp(ndefcomp)%drydeprat
+        if(ndefcomp < 1 .OR. d_comp%drydeprat >= 0.) goto 12
+        read(cipart,*,err=12) d_comp%drydeprat
       elseif(cinput(k1:k2) == 'wet.dep.ratio') then
       !..wet.dep.ratio=
         if(kv1 < 1) goto 12
-        if(ndefcomp < 1 .OR. def_comp(ndefcomp)%wetdeprat >= 0.) goto 12
-        read(cipart,*,err=12) def_comp(ndefcomp)%wetdeprat
+        if(ndefcomp < 1 .OR. d_comp%wetdeprat >= 0.) goto 12
+        read(cipart,*,err=12) d_comp%wetdeprat
       elseif(cinput(k1:k2) == 'radioactive.decay.on') then
       !..radioactive.decay.on
-        if(ndefcomp < 1 .OR. def_comp(ndefcomp)%kdecay /= -1) goto 12
-        def_comp(ndefcomp)%kdecay = 1
+        if(ndefcomp < 1 .OR. d_comp%kdecay /= -1) goto 12
+        d_comp%kdecay = 1
       elseif(cinput(k1:k2) == 'radioactive.decay.off') then
       !..radioactive.decay.off
-        if(ndefcomp < 1 .OR. def_comp(ndefcomp)%kdecay /= -1) goto 12
-        def_comp(ndefcomp)%kdecay = 0
+        if(ndefcomp < 1 .OR. d_comp%kdecay /= -1) goto 12
+        d_comp%kdecay = 0
       elseif(cinput(k1:k2) == 'half.lifetime.minutes') then
       !..half.lifetime.minutes=
         if(kv1 < 1) goto 12
-        if(ndefcomp < 1 .OR. def_comp(ndefcomp)%halftime >= 0.) goto 12
-        read(cipart,*,err=12) def_comp(ndefcomp)%halftime
-        def_comp(ndefcomp)%halftime = def_comp(ndefcomp)%halftime/60.
+        if(ndefcomp < 1 .OR. d_comp%halftime >= 0.) goto 12
+        read(cipart,*,err=12) d_comp%halftime
+        d_comp%halftime = d_comp%halftime/60.
       elseif(cinput(k1:k2) == 'half.lifetime.hours') then
       !..half.lifetime.hours=
         if(kv1 < 1) goto 12
-        if(ndefcomp < 1 .OR. def_comp(ndefcomp)%halftime >= 0.) goto 12
-        read(cipart,*,err=12) def_comp(ndefcomp)%halftime
+        if(ndefcomp < 1 .OR. d_comp%halftime >= 0.) goto 12
+        read(cipart,*,err=12) d_comp%halftime
       elseif(cinput(k1:k2) == 'half.lifetime.days') then
       !..half.lifetime.days=
         if(kv1 < 1) goto 12
-        if(ndefcomp < 1 .OR. def_comp(ndefcomp)%halftime >= 0.) goto 12
-        read(cipart,*,err=12) def_comp(ndefcomp)%halftime
-        def_comp(ndefcomp)%halftime = def_comp(ndefcomp)%halftime*24.
+        if(ndefcomp < 1 .OR. d_comp%halftime >= 0.) goto 12
+        read(cipart,*,err=12) d_comp%halftime
+        d_comp%halftime = d_comp%halftime*24.
       elseif(cinput(k1:k2) == 'half.lifetime.years') then
       !..half.lifetime.years=
         if(kv1 < 1) goto 12
-        if(ndefcomp < 1 .OR. def_comp(ndefcomp)%halftime >= 0.) goto 12
-        read(cipart,*,err=12) def_comp(ndefcomp)%halftime
-        def_comp(ndefcomp)%halftime = def_comp(ndefcomp)%halftime*24.*365.25
+        if(ndefcomp < 1 .OR. d_comp%halftime >= 0.) goto 12
+        read(cipart,*,err=12) d_comp%halftime
+        d_comp%halftime = d_comp%halftime*24.*365.25
       elseif(cinput(k1:k2) == 'gravity.off') then
       !..gravity.off
-        if(ndefcomp < 1 .OR. def_comp(ndefcomp)%grav_type /= -1) goto 12
-        def_comp(ndefcomp)%grav_type = 0
+        if(ndefcomp < 1 .OR. d_comp%grav_type /= -1) goto 12
+        d_comp%grav_type = 0
       elseif(cinput(k1:k2) == 'gravity.fixed.m/s') then
       !..gravity.fixed.m/s
-        if(ndefcomp < 1 .OR. def_comp(ndefcomp)%grav_type /= -1) goto 12
-        def_comp(ndefcomp)%grav_type = 1
+        if(ndefcomp < 1 .OR. d_comp%grav_type /= -1) goto 12
+        d_comp%grav_type = 1
         if(kv1 < 1) goto 12
-        read(cipart,*,err=12) def_comp(ndefcomp)%gravityms
-        if (def_comp(ndefcomp)%gravityms <= 0.) goto 12
+        read(cipart,*,err=12) d_comp%gravityms
+        if (d_comp%gravityms <= 0.) goto 12
       elseif(cinput(k1:k2) == 'gravity.fixed.cm/s') then
       !..gravity.fixed.cm/s
-        if(ndefcomp < 1 .OR. def_comp(ndefcomp)%grav_type /= -1) goto 12
-        def_comp(ndefcomp)%grav_type = 1
+        if(ndefcomp < 1 .OR. d_comp%grav_type /= -1) goto 12
+        d_comp%grav_type = 1
         if(kv1 < 1) goto 12
-        read(cipart,*,err=12) def_comp(ndefcomp)%gravityms
-        if (def_comp(ndefcomp)%gravityms <= 0.) goto 12
-        def_comp(ndefcomp)%gravityms = def_comp(ndefcomp)%gravityms*0.01
+        read(cipart,*,err=12) d_comp%gravityms
+        if (d_comp%gravityms <= 0.) goto 12
+        d_comp%gravityms = d_comp%gravityms*0.01
       elseif(cinput(k1:k2) == 'radius.micrometer') then
       !..radius.micrometer  (for gravity computation)
         if(kv1 < 1) goto 12
-        if (ndefcomp < 1 .OR. def_comp(ndefcomp)%radiusmym > 0.) goto 12
-        read(cipart,*,err=12) def_comp(ndefcomp)%radiusmym
-        if (def_comp(ndefcomp)%radiusmym <= 0.) goto 12
+        if (ndefcomp < 1 .OR. d_comp%radiusmym > 0.) goto 12
+        read(cipart,*,err=12) d_comp%radiusmym
+        if (d_comp%radiusmym <= 0.) goto 12
       elseif(cinput(k1:k2) == 'density.g/cm3') then
       !..density.g/cm3  (for gravity computation)
         if(kv1 < 1) goto 12
-        if(ndefcomp < 1 .OR. def_comp(ndefcomp)%densitygcm3 > 0.) goto 12
-        read(cipart,*,err=12) def_comp(ndefcomp)%densitygcm3
-        if(def_comp(ndefcomp)%densitygcm3 <= 0.) goto 12
+        if(ndefcomp < 1 .OR. d_comp%densitygcm3 > 0.) goto 12
+        read(cipart,*,err=12) d_comp%densitygcm3
+        if(d_comp%densitygcm3 <= 0.) goto 12
       elseif(cinput(k1:k2) == 'field.identification') then
       !..field.identification=
         if(kv1 < 1) goto 12
-        if(ndefcomp < 1 .OR. def_comp(ndefcomp)%idcomp >= 0) goto 12
-        read(cipart,*,err=12) def_comp(ndefcomp)%idcomp
-        if(def_comp(ndefcomp)%idcomp < 1) goto 12
+        if(ndefcomp < 1 .OR. d_comp%idcomp >= 0) goto 12
+        read(cipart,*,err=12) d_comp%idcomp
+        if(d_comp%idcomp < 1) goto 12
         do i=1,ndefcomp-1
-          if(def_comp(i)%idcomp == def_comp(ndefcomp)%idcomp) goto 12
+          if(def_comp(i)%idcomp == d_comp%idcomp) goto 12
         end do
       elseif (cinput(k1:k2) == 'field.use_model_wind_instead_of_10m') then
         if (kv1 < 1) goto 12
