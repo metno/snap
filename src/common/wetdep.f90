@@ -77,7 +77,6 @@ subroutine wetdep2(tstep, part, pextra)
   USE particleML, only: Particle, extraParticle
   USE snapfldML, only: depwet
   USE snapparML, only: def_comp, run_comp
-  USE vgravtablesML, only: radiusmym
 
   real, intent(in) ::    tstep
 !> particle
@@ -98,7 +97,7 @@ subroutine wetdep2(tstep, part, pextra)
 
     mm = def_comp(m)%to_running
 
-    deprate = wet_deposition_rate(radiusmym(m), q, run_comp(mm)%depconst, tstep)
+    deprate = wet_deposition_rate(def_comp(m)%radiusmym, q, run_comp(mm)%depconst, tstep)
 
   ! b... 25.04.12 wet deposition for convective and gases
     dep = deprate*part%rad
@@ -120,8 +119,7 @@ subroutine wetdep2_init(tstep)
   USE particleML, only: Particle, extraParticle
   USE snapparML, only: ncomp
   USE snapdimML, only: mdefcomp
-  USE vgravtablesML, only: radiusmym
-  USE snapparML, only: run_comp
+  USE snapparML, only: run_comp, def_comp
 
 !> Timestep in seconds
   real, intent(in) :: tstep
@@ -134,7 +132,7 @@ subroutine wetdep2_init(tstep)
 
   do m=1,ncomp
     mm = run_comp(m)%to_defined
-    rm = radiusmym(mm)
+    rm = def_comp(mm)%radiusmym
     run_comp(m)%depconst = wet_deposition_constant(rm)
     write(iulog,*) 'WETDEP2 m,r,depconst(m): ',m,rm,run_comp(m)%depconst
   end do
@@ -146,7 +144,7 @@ subroutine wetdep2_init(tstep)
     q=float(n)*0.1
     do m=1,ncomp
       mm = run_comp(m)%to_defined
-      ratdep(m) = wet_deposition_rate(radiusmym(mm), q, run_comp(m)%depconst, tstep)
+      ratdep(m) = wet_deposition_rate(def_comp(mm)%radiusmym, q, run_comp(m)%depconst, tstep)
     end do
     write(iulog,1010) q,(ratdep(m),m=1,ncomp)
 1010 format(1x,f5.1,':',12f7.4)

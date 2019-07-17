@@ -233,7 +233,6 @@ PROGRAM bsnap
   USE rmpartML, only: rmpart
   USE checkdomainML, only: checkdomain
   USE rwalkML, only: rwalk, rwalk_init
-  USE vgravtablesML, only: radiusmym, densitygcm3
   USE ensembleML, only: nxep, nyep
   USE milibML, only: xyconvert, keywrd, chcase, getvar, hrdiff, prhelp, vtime, termchar
 #if defined(TRAJ)
@@ -430,8 +429,8 @@ PROGRAM bsnap
   def_comp%halftime = -1.0
   def_comp%grav_type = -1
   def_comp%gravityms = 0.0
-  radiusmym = 0.0
-  densitygcm3 = 0.0
+  def_comp%radiusmym = 0.0
+  def_comp%densitygcm3 = 0.0
   def_comp%idcomp = -1
   def_comp%to_running = 0
   run_comp%totalbq = 0.0
@@ -945,15 +944,15 @@ PROGRAM bsnap
       elseif(cinput(k1:k2) == 'radius.micrometer') then
       !..radius.micrometer  (for gravity computation)
         if(kv1 < 1) goto 12
-        if(ndefcomp < 1 .OR. radiusmym(ndefcomp) > 0.) goto 12
-        read(cipart,*,err=12) radiusmym(ndefcomp)
-        if(radiusmym(ndefcomp) <= 0.) goto 12
+        if (ndefcomp < 1 .OR. def_comp(ndefcomp)%radiusmym > 0.) goto 12
+        read(cipart,*,err=12) def_comp(ndefcomp)%radiusmym
+        if (def_comp(ndefcomp)%radiusmym <= 0.) goto 12
       elseif(cinput(k1:k2) == 'density.g/cm3') then
       !..density.g/cm3  (for gravity computation)
         if(kv1 < 1) goto 12
-        if(ndefcomp < 1 .OR. densitygcm3(ndefcomp) > 0.) goto 12
-        read(cipart,*,err=12) densitygcm3(ndefcomp)
-        if(densitygcm3(ndefcomp) <= 0.) goto 12
+        if(ndefcomp < 1 .OR. def_comp(ndefcomp)%densitygcm3 > 0.) goto 12
+        read(cipart,*,err=12) def_comp(ndefcomp)%densitygcm3
+        if(def_comp(ndefcomp)%densitygcm3 <= 0.) goto 12
       elseif(cinput(k1:k2) == 'field.identification') then
       !..field.identification=
         if(kv1 < 1) goto 12
@@ -1444,9 +1443,9 @@ PROGRAM bsnap
     m = run_comp(n)%to_defined
     if(def_comp(m)%grav_type < 0) def_comp(m)%grav_type = 2
     if(def_comp(m)%grav_type == 2 .AND. &
-        (radiusmym(m) <= 0. .OR. densitygcm3(m) <= 0.)) then
+        (def_comp(m)%radiusmym <= 0. .OR. def_comp(m)%densitygcm3 <= 0.)) then
       write(error_unit,*) 'Gravity error. radius,density: ', &
-          radiusmym(m),densitygcm3(m)
+          def_comp(m)%radiusmym, def_comp(m)%densitygcm3
       ierror=1
     end if
   end do
@@ -1488,11 +1487,11 @@ PROGRAM bsnap
         ierror=1
       end if
     elseif(iwetdep == 2 .AND. def_comp(m)%kwetdep == 1) then
-      if(radiusmym(m) > 0.) then
+      if(def_comp(m)%radiusmym > 0.) then
         i2=i2+1
       else
         write(error_unit,*) 'Wet deposition error. radius: ', &
-            radiusmym(m)
+            def_comp(m)%radiusmym
         ierror=1
       end if
     end if
@@ -1711,8 +1710,8 @@ PROGRAM bsnap
       write(iulog,*) '  decayrate:  ', def_comp(m)%decayrate
       write(iulog,*) '  kgravity:   ', def_comp(m)%grav_type
       write(iulog,*) '  gravityms:  ', def_comp(m)%gravityms
-      write(iulog,*) '  radiusmym:  ',radiusmym(m)
-      write(iulog,*) '  densitygcm3:',densitygcm3(m)
+      write(iulog,*) '  radiusmym:  ', def_comp(m)%radiusmym
+      write(iulog,*) '  densitygcm3:', def_comp(m)%densitygcm3
       write(iulog,*) '  Relase time profile:   ntprof: ',ntprof
       ncsummary = trim(ncsummary) // ". Release " // trim(def_comp(m)%compname) &
           // " (hour, Bq/s): "

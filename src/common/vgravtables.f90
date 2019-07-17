@@ -35,11 +35,6 @@ module vgravtablesML
   real, parameter, public :: pincrvg = 1200./float(numpresvg-1)
   real, parameter, public :: pbasevg = 0. - pincrvg
 
-!> radius in unit micrometer (for gravity computation)
-  real, save, public :: radiusmym(mdefcomp)
-!> density in unit g/cm3     (for gravity computation)
-  real, save, public :: densitygcm3(mdefcomp)
-
   public vgravtables
 
   contains
@@ -67,8 +62,8 @@ do_comp: do n=1,ncomp
       cycle do_comp
     endif
   ! radius to diameter
-    dp= 2. * radiusmym(m)
-    rp= densitygcm3(m)
+    dp= 2. * def_comp(m)%radiusmym
+    rp= def_comp(m)%densitygcm3
 
     do ip=1,numpresvg
 

@@ -41,6 +41,10 @@ module snapparML
 
 !> fixed gravity in unit m/s, used when \ref grav_type != 2
     real :: gravityms
+!> radius in unit micrometer
+    real :: radiusmym
+!> density in unit g/cm3
+    real :: densitygcm3
 
 !> for each component: 0=radioactive decay off  1=decay on
     integer :: kdecay
