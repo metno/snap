@@ -23,122 +23,66 @@ module compheightML
 
   contains
 
-subroutine compheight
-  USE snapgrdML
-  USE snapfldML
-  USE snaptabML
+
+!> Purpose:  Compute height of model levels and thickness of model layers
+!>
+!> Notes:
+!>   - sigma levels (norlam) or eta levels (hirlam,...)
+!>     defined by alevel and blevel
+!>   - lower model level is level 2
+subroutine compheight()
+  USE snapgrdML, only: ahalf, bhalf, alevel, blevel
+  USE snapfldML, only: ps2, hlayer2, hlevel2, t2
+  USE snaptabML, only: pitab, g, pmult
   USE snapdimML, only: nx,ny,nk
   USE ftestML, only: ftest
 
-!  Purpose:  Compute height of model levels and thickness of model layers
-
-!  Notes:
-!    - sigma levels (norlam) or eta levels (hirlam,...)
-!      defined by alevel and blevel
-!    - lower model level is level 2
-
-
-  implicit none
-
-        
+  real, parameter :: ginv = 1.0/g
 
   integer :: i,j,k,itab
-  real ::    ginv,rtab,p,pih,pif,h1,h2
-  real ::    pihl(nx,ny),hlev(nx,ny)
-
-
-!##################################################################
-!     real dz1min,dz1max,dz2min,dz2max,hhhmin,hhhmax,dzz
-!##################################################################
+  real :: rtab,p,pih,pif,h1,h2
+  real :: pihl(nx,ny),hlev(nx,ny)
 
 !..compute height of model levels (in the model grid)
-
-!##################################################################
-!       write(iulog,*) 'nk: ',nk
-!       write(iulog,*) 'k,alevel,blevel,vlevel,ahalf,bhalf,vhalf:'
-!       do k=nk,1,-1
-!         write(iulog,fmt='(1x,i2,'':'',2(f10.2,2f7.4))')
-!    +		  k,alevel(k),blevel(k),vlevel(k),
-!    +		    ahalf(k),bhalf(k),vhalf(k)
-!       end do
-!##################################################################
-
-  ginv=1./g
-
+  hlev = 0.0
+  hlayer2(:,:,nk) = 9999.0
+  hlevel2(:,:,1) = 0.0
   do j=1,ny
     do i=1,nx
-      hlev(i,j)=0.
-      rtab=ps2(i,j)*pmult
-      itab=rtab
-      pihl(i,j)=pitab(itab)+(pitab(itab+1)-pitab(itab))*(rtab-itab)
-      hlayer2(i,j,nk)=9999.
-      hlevel2(i,j,1)=0.
+      rtab = ps2(i,j)*pmult
+      itab = rtab
+      pihl(i,j) = pitab(itab) + (pitab(itab+1)-pitab(itab))*(rtab-itab)
     end do
   end do
 
   do k=2,nk
-  !##################################################################
-  !	dz1min=+1.e+35
-  !	dz1max=-1.e+35
-  !	dz2min=+1.e+35
-  !	dz2max=-1.e+35
-  !	hhhmin=+1.e+35
-  !	hhhmax=-1.e+35
-  !##################################################################
     do j=1,ny
       do i=1,nx
-        p=ahalf(k)+bhalf(k)*ps2(i,j)
-        rtab=p*pmult
-        itab=rtab
-        pih=pitab(itab)+(pitab(itab+1)-pitab(itab))*(rtab-itab)
-      
-        p=alevel(k)+blevel(k)*ps2(i,j)
-        rtab=p*pmult
-        itab=rtab
-        pif=pitab(itab)+(pitab(itab+1)-pitab(itab))*(rtab-itab)
-      
-        h1=hlev(i,j)
-        h2=h1 + t2(i,j,k)*(pihl(i,j)-pih)*ginv
-      
-        hlayer2(i,j,k-1)= h2-h1
-        hlevel2(i,j,k)= h1 + (h2-h1)*(pihl(i,j)-pif) &
-        /(pihl(i,j)-pih)
-      
-        hlev(i,j)=h2
-        pihl(i,j)=pih
-      !##################################################################
-      !	    dzz=h2-h1
-      !	    dz1min=min(dz1min,dzz)
-      !	    dz1max=max(dz1max,dzz)
-      !	    dzz=hlevel2(i,j,k)-hlevel2(i,j,k-1)
-      !	    dz2min=min(dz2min,dzz)
-      !	    dz2max=max(dz2max,dzz)
-      !	    hhhmin=min(hhhmin,hlevel2(i,j,k))
-      !	    hhhmax=max(hhhmax,hlevel2(i,j,k))
-      !##################################################################
+        p = ahalf(k) + bhalf(k)*ps2(i,j)
+        rtab = p*pmult
+        itab = rtab
+        pih = pitab(itab) + (pitab(itab+1)-pitab(itab))*(rtab-itab)
+
+        p = alevel(k) + blevel(k)*ps2(i,j)
+        rtab = p*pmult
+        itab = rtab
+        pif = pitab(itab)+(pitab(itab+1)-pitab(itab))*(rtab-itab)
+
+        h1 = hlev(i,j)
+        h2 = h1 + t2(i,j,k)*(pihl(i,j)-pih)*ginv
+
+        hlayer2(i,j,k-1) = h2-h1
+        hlevel2(i,j,k) = h1 + (h2-h1)*(pihl(i,j)-pif) &
+            /(pihl(i,j)-pih)
+
+        hlev(i,j) = h2
+        pihl(i,j) = pih
       end do
     end do
-  !##################################################################
-  !	write(iulog,*) 'k,hhhmin,hhhmax: ',k,':',hhhmin,hhhmax
-  !	write(iulog,*) 'dz1min,dz1max,dz2min,dz2max:',
-  !    +              dz1min,dz1max,dz2min,dz2max
-  !##################################################################
   end do
 
-!##################################################################
   call ftest('hlayer', hlayer2, contains_undef=.true., reverse_third_dim=.true.)
   call ftest('hlevel', hlevel2, contains_undef=.true., reverse_third_dim=.true.)
-!##################################################################
 
-!##################################################################
-!     i=nx/2
-!     j=ny/2
-!     do k=nk,1,-1
-!	write(iulog,fmt='(''    k,hlayer,hlevel:'',i3,2f8.0)')
-!    +			    k,hlayer2(i,j,k),hlevel2(i,j,k)
-!     end do
-!##################################################################
-
-  return
 end subroutine compheight
 end module compheightML
