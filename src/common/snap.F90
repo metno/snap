@@ -278,7 +278,8 @@ PROGRAM bsnap
   integer, parameter :: maxkey = 10
   integer ::   kwhere(5,maxkey)
 
-  integer :: narg,iuinp,ios,iprhlp,nlines,nhrun,nhrel,irwalk,nhfout
+  integer :: narg,iuinp,ios,iprhlp,nlines,nhrun,nhrel,nhfout
+  logical :: use_random_walk
   integer :: isynoptic,m,np,nlevel,minhfc,maxhfc,ifltim
   integer :: ipostyp,lcinp,iend,ks,nkey,k,ierror,mkey
   integer :: ikey,k1,k2,kv1,kv2,nkv,i,kh,kd,ig,igd,igm,i1,i2,l,n
@@ -400,7 +401,7 @@ PROGRAM bsnap
   srelnam='*'
 
 !..default values
-  irwalk =1
+  use_random_walk = .true.
   tstep  =900.
   mprel  =200
   nhfmin =6
@@ -611,10 +612,10 @@ PROGRAM bsnap
         end if
       elseif(cinput(k1:k2) == 'random.walk.on') then
       !..random.walk.on
-        irwalk=1
+        use_random_walk = .true.
       elseif(cinput(k1:k2) == 'random.walk.off') then
       !..random.walk.off
-        irwalk=0
+        use_random_walk = .false.
       elseif(cinput(k1:k2) == 'boundary.layer.full.mix.off') then
       !..boundary.layer.full.mix.off
         blfullmix= .FALSE.
@@ -1668,7 +1669,7 @@ PROGRAM bsnap
     write(iulog,*) 'nstepr:  ',nstepr
     write(iulog,*) 'mprel:   ',mprel
     write(iulog,*) 'ifltim:  ',ifltim
-    write(iulog,*) 'irwalk:  ',irwalk
+    write(iulog,*) 'irwalk:  ', use_random_walk
     write(iulog,*) 'idrydep: ',idrydep
     write(iulog,*) 'iwetdep: ',iwetdep
     write(iulog,*) 'idecay:  ',idecay
@@ -2024,7 +2025,7 @@ PROGRAM bsnap
         call posint_init()
         if(iwetdep == 2) call wetdep2_init(tstep)
         call forwrd_init()
-        if(irwalk /= 0) call rwalk_init(tstep)
+        if(use_random_walk) call rwalk_init(tstep)
         init = .FALSE.
       end if
 
@@ -2063,7 +2064,7 @@ PROGRAM bsnap
         call forwrd(tf1, tf2, tnow, tstep, pdata(np), pextra)
 
         !..apply the random walk method (diffusion)
-        if(irwalk /= 0) call rwalk(blfullmix, pdata(np), pextra)
+        if(use_random_walk) call rwalk(blfullmix, pdata(np), pextra)
 
         !.. check domain (%active) after moving particle
         call checkDomain(pdata(np))
