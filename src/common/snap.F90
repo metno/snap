@@ -234,7 +234,7 @@ PROGRAM bsnap
   USE checkdomainML, only: checkdomain
   USE rwalkML, only: rwalk, rwalk_init
   USE ensembleML, only: nxep, nyep
-  USE milibML, only: xyconvert, keywrd, chcase, getvar, hrdiff, prhelp, vtime, termchar
+  USE milibML, only: xyconvert, keywrd, chcase, getvar, hrdiff, vtime, termchar
 #if defined(TRAJ)
   USE snapfldML, only: hlevel2
   USE forwrdML, only: forwrd, forwrd_init, speed
@@ -278,11 +278,11 @@ PROGRAM bsnap
   integer, parameter :: maxkey = 10
   integer ::   kwhere(5,maxkey)
 
-  integer :: narg,iuinp,ios,iprhlp,nlines,nhrun,nhrel,nhfout
+  integer :: narg,iuinp,ios,nlines,nhrun,nhrel,nhfout
   logical :: use_random_walk
   integer :: isynoptic,m,np,nlevel,minhfc,maxhfc,ifltim
   integer :: ipostyp,lcinp,iend,ks,nkey,k,ierror,mkey
-  integer :: ikey,k1,k2,kv1,kv2,nkv,i,kh,kd,ig,igd,igm,i1,i2,l,n
+  integer :: ikey,k1,k2,kv1,kv2,nkv,i,kh,kd,ig,igd,igm,i1,i2,n
   integer :: ih
   integer :: idrydep,iwetdep,idecay
   integer :: ntimefo,iunitf,nh1,nh2
@@ -354,7 +354,6 @@ PROGRAM bsnap
     write(error_unit,*)
     write(error_unit,*) '  usage: snap <snap.input>'
     write(error_unit,*) '     or: snap <snap.input> <arguments>'
-    write(error_unit,*) '     or: snap <snap.input> ?     (to get help)'
     write(error_unit,*)
     stop 1
   endif
@@ -374,13 +373,6 @@ PROGRAM bsnap
   if(ios /= 0) then
     write(error_unit,*) 'Open Error: ', trim(finput)
     call snap_error_exit()
-  endif
-
-  if(narg == 2) then
-    call get_command_argument(2, cinput)
-    iprhlp=1
-    if(cinput(1:1) == '?') goto 14
-    iprhlp=0
   endif
 
 
@@ -503,7 +495,7 @@ PROGRAM bsnap
       end do
     !..check if input as environment variables or command line arguments
       call getvar(1,cinput,1,[1],1,ierror)
-      if(ierror /= 0) goto 14
+      if(ierror /= 0) goto 12
     !..find keywords and values
       mkey=maxkey
       call keywrd(1,cinput,'=',';',mkey,kwhere,nkey,ierror)
@@ -1262,12 +1254,6 @@ PROGRAM bsnap
   write(error_unit,*) 'At line no. ',nlines,' :'
   write(error_unit,*)  trim(cinput)
   write(error_unit,*) 'SOME LIMIT WAS EXCEEDED !!!!!!!!!!!!!!!!!'
-  call snap_error_exit()
-
-  14 l=index(finput,' ')-1
-  if(l < 1) l=len(finput)
-  write(error_unit,*) 'Help from ',finput(1:l),' :'
-  call prhelp(iuinp,'*=>')
   call snap_error_exit()
 
   18 close(iuinp)
