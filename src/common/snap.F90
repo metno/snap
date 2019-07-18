@@ -1221,12 +1221,10 @@ PROGRAM bsnap
         call detect_gridparams(filef(1), nx, ny, igtype, gparam, experimental_stat)
         if (experimental_stat /= 0) then
           write(error_unit, *) "Autodetection did not work, continuing"
-          write(iulog, *) "Autodetection did not work, continuing"
         endif
         call get_klevel(filef(1), klevel, experimental_stat)
         if (experimental_stat /= 0) then
           write(error_unit, *) "Autodetection did not work, continuing"
-          write(iulog, *) "Autodetection did not work, continuing"
         endif
         nlevel = size(klevel)
         nk = nlevel
