@@ -266,12 +266,6 @@ PROGRAM bsnap
 
   implicit none
 
-!..BATCH output:
-!	iexit=0   : ok
-!	iexit=1   : end of run
-!	iexit=2   : some error, exit
-  integer :: iexit
-
   integer :: allocatestatus
   character(len=*), parameter :: allocateErrorMessage = "*** Not enough memory ***"
 
@@ -352,10 +346,8 @@ PROGRAM bsnap
 
 ! initialize random number generator for rwalk and release
   CALL init_random_seed()
-  iexit=0
 
 
-!-------------------------------------------------------------------
   narg = command_argument_count()
   if(narg < 1) then
     write(error_unit,*)
@@ -380,7 +372,7 @@ PROGRAM bsnap
       status='old',iostat=ios,action='read')
   if(ios /= 0) then
     write(error_unit,*) 'Open Error: ', trim(finput)
-    error stop 1
+    call snap_error_exit()
   endif
 
   if(narg == 2) then
@@ -1257,35 +1249,27 @@ PROGRAM bsnap
 
   11 write(error_unit,*) 'ERROR reading file: ', trim(finput)
   write(error_unit,*) 'At line no. ',nlines
-  iexit=2
-  goto 18
+  call snap_error_exit()
 
   12 write(error_unit,*) 'ERROR reading file: ', trim(finput)
   write(error_unit,*) 'At line no. ',nlines,' :'
   write(error_unit,*)  trim(cinput)
-  iexit=2
-  goto 18
+  call snap_error_exit()
 
   13 write(error_unit,*) 'ERROR reading file:'
   write(error_unit,*)  finput
   write(error_unit,*) 'At line no. ',nlines,' :'
   write(error_unit,*)  trim(cinput)
   write(error_unit,*) 'SOME LIMIT WAS EXCEEDED !!!!!!!!!!!!!!!!!'
-  iexit=2
-  goto 18
+  call snap_error_exit()
 
   14 l=index(finput,' ')-1
   if(l < 1) l=len(finput)
   write(error_unit,*) 'Help from ',finput(1:l),' :'
   call prhelp(iuinp,'*=>')
-  iexit=2
-  goto 18
+  call snap_error_exit()
 
   18 close(iuinp)
-
-  if (iexit /= 0) then
-    error stop 1
-  end if
 
   write(*,*) "SIMULATION_START_DATE: ", simulation_start
 
@@ -1508,7 +1492,7 @@ PROGRAM bsnap
   if(i2 == 0) iwetdep=0
 
   if(ierror /= 0) then
-    error stop 1
+    call snap_error_exit()
   end if
 
   if(itotcomp == 1 .AND. ncomp == 1) itotcomp=0
@@ -1545,7 +1529,7 @@ PROGRAM bsnap
   else
     call filesort(iunitf,ierror)
   end if
-  if(ierror /= 0) call snap_error_exit()
+  if(ierror /= 0) call snap_error_exit(iulog)
 
 !..itime: itime(1) - year
 !         itime(2) - month
@@ -1562,7 +1546,7 @@ PROGRAM bsnap
     write(iulog,*) (itime1(i),i=1,4)
     write(error_unit,*) 'Requested start time is wrong:'
     write(error_unit,*) (itime1(i),i=1,4)
-    call snap_error_exit()
+    call snap_error_exit(iulog)
   end if
 
   itime2 = itime1
@@ -1585,7 +1569,7 @@ PROGRAM bsnap
     if(nh1 < 0) then
       write(iulog,*) 'NO DATA AT START OF RUN'
       write(error_unit,*) 'NO DATA AT START OF RUN'
-      call snap_error_exit()
+      call snap_error_exit(iulog)
     end if
     write(iulog,*) 'Running until end of data'
     write(error_unit,*) 'Running until end of data'
@@ -1777,7 +1761,7 @@ PROGRAM bsnap
       call fldout(-1,iunito,fldfil,itime1,0.,0.,0.,tstep, &
           m,nsteph,ierror)
     endif
-    if(ierror /= 0) call snap_error_exit()
+    if(ierror /= 0) call snap_error_exit(iulog)
 
     itime = itime1
     itimefi = 0
@@ -1880,7 +1864,7 @@ PROGRAM bsnap
         end if
       !          write (*,*) "readfield(", iunitf, istep, nhleft, itimei, ihr1
       !     +          ,ihr2, itimefi, ierror, ")"
-        if(ierror /= 0) call snap_error_exit()
+        if(ierror /= 0) call snap_error_exit(iulog)
 
       !..analysis time of input model
         if(itimefi(5) <= +6) then
@@ -1930,14 +1914,14 @@ PROGRAM bsnap
             write(error_unit,*) 'ERROR: xyconvert'
             write(error_unit,*) '   igtype: ',igtype
             write(error_unit,*) '   gparam: ',gparam
-            call snap_error_exit()
+            call snap_error_exit(iulog)
           end if
           write(iulog,*) 'release   x,y:    ',x,y
           if(x(1) < 1.01 .OR. x(1) > nx-0.01 .OR. &
               y(1) < 1.01 .OR. y(1) > ny-0.01) then
             write(iulog,*) 'ERROR: Release position outside field area'
             write(error_unit,*) 'ERROR: Release position outside field area'
-            call snap_error_exit()
+            call snap_error_exit(iulog)
           end if
           release_positions(irelpos)%grid_x = x(1)
           release_positions(irelpos)%grid_y = y(1)
@@ -2235,7 +2219,7 @@ PROGRAM bsnap
             call fldout(-1,iunito,fldfilX,itime1,0.,0.,0.,tstep, &
                 (24/nhfout)+1,nsteph,ierror)
           endif
-          if(ierror /= 0) call snap_error_exit()
+          if(ierror /= 0) call snap_error_exit(iulog)
         end if
         if (fldtype == "netcdf") then
           call fldout_nc(ifldout,iunito,fldfilX,itimeo,tf1,tf2,tnext, &
@@ -2244,7 +2228,7 @@ PROGRAM bsnap
           call fldout(ifldout,iunito,fldfilX,itimeo,tf1,tf2,tnext,tstep, &
               istep,nsteph,ierror)
         endif
-        if(ierror /= 0) call snap_error_exit()
+        if(ierror /= 0) call snap_error_exit(iulog)
       else
         if (fldtype == "netcdf") then
           call fldout_nc(ifldout,iunito,fldfil,itimeo,tf1,tf2,tnext, &
@@ -2253,7 +2237,7 @@ PROGRAM bsnap
           call fldout(ifldout,iunito,fldfil,itimeo,tf1,tf2,tnext,tstep, &
               istep,nsteph,ierror)
         endif
-        if(ierror /= 0) call snap_error_exit()
+        if(ierror /= 0) call snap_error_exit(iulog)
       end if
 
       if(isteph == 0 .AND. iprecip < nprecip) iprecip=iprecip+1
@@ -2332,7 +2316,7 @@ PROGRAM bsnap
     write(error_unit,*) '   No. of requested release timesteps: ',nstepr
     write(error_unit,*) '   No. of simulated release timesteps: ',lstepr
 
-    call snap_error_exit()
+    call snap_error_exit(iulog)
   end if
 
   ! b_240311
@@ -2357,19 +2341,20 @@ PROGRAM bsnap
 
   contains
 
-  subroutine snap_error_exit()
-    character(len=*), parameter :: ERROR_MSG = ' ------- SNAP ERROR EXIT -------'
+  !> Exits snap ungracefully, leaving cleanup to the OS
+  !>
+  !> Additionally leaves the error msg on iulog if supplied
+  subroutine snap_error_exit(iulog)
+    !> Open file unit
+    integer, intent(in), optional :: iulog
 
-    call deAllocateFields()
-    if(iargos == 1) then
-      close(91)
-      close(92)
-      close(93)
-    end if
+    character(len=*), parameter :: ERROR_MSG = '------- SNAP ERROR EXIT -------'
 
-    write(iulog,*) ERROR_MSG
     write(error_unit,*) ERROR_MSG
-    close(iulog)
+    if (present(iulog)) then
+      write(iulog,*) ERROR_MSG
+      close(iulog)
+    endif
 
     error stop ERROR_MSG
   end subroutine
