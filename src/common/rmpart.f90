@@ -30,7 +30,6 @@ module rmpartML
 subroutine rmpart(rmlimit)
   USE particleML, only: pdata
   USE snapparML, only: ncomp, run_comp, iparnum, def_comp
-  USE snapdimML, only: mcomp
   USE releaseML, only: iplume, nplume, npart
 
   real, intent(in) :: rmlimit
