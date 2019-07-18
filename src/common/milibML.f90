@@ -68,11 +68,6 @@ module milibML
       integer, intent(out) :: ihours
     end subroutine hrdiff
 
-    subroutine prhelp(iunit, chelp)
-      integer, intent(in) :: iunit
-      character*(*), intent(in) :: chelp
-    end subroutine prhelp
-
     subroutine rmfile(filnam, iprint, ierror)
       character*(*) :: filnam
       integer, intent(in) :: iprint

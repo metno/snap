@@ -16,7 +16,7 @@ ifdef MILIB
   MODELOBJ += fldout.o filesort.o readfd.o readfield.o
 else
   MODELOBJ += feltio_dummy.o chcase.o  gridpar.o  keywrd.o  mapfield.o  rlunit.o  termchar.o  xyconvert.o \
-     getvar.o  hrdiff.o   lenstr.o  prhelp.o    rmfile.o  vtime.o \
+     getvar.o  hrdiff.o   lenstr.o  rmfile.o  vtime.o \
      earthr.o pol2sph.o sph2rot.o lam2sph.o mer2sph.o milibML.o
 endif
 
@@ -134,8 +134,6 @@ keywrd.o: ../common/milib/keywrd.f
 lenstr.o: ../common/milib/lenstr.f
 	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 mapfield.o: ../common/milib/mapfield.f
-	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
-prhelp.o: ../common/milib/prhelp.f
 	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 rlunit.o: ../common/milib/rlunit.f
 	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
