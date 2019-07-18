@@ -1,87 +1,73 @@
 ! SNAP: Servere Nuclear Accident Programme
 ! Copyright (C) 1992-2017   Norwegian Meteorological Institute
-! 
-! This file is part of SNAP. SNAP is free software: you can 
-! redistribute it and/or modify it under the terms of the 
-! GNU General Public License as published by the 
+!
+! This file is part of SNAP. SNAP is free software: you can
+! redistribute it and/or modify it under the terms of the
+! GNU General Public License as published by the
 ! Free Software Foundation, either version 3 of the License, or
 ! (at your option) any later version.
-! 
+!
 ! This program is distributed in the hope that it will be useful,
 ! but WITHOUT ANY WARRANTY; without even the implied warranty of
 ! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ! GNU General Public License for more details.
-! 
+!
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
-!
+
+!> all parameter statements (model dimensions etc.)
 module snapdimML
-  implicit none
-  private
+    implicit none
+    private
 
-!-----------------------------------------------------------------------
-!
-!..include file  - all parameter statements (model dimensions etc.)
-!
-!
-!..nx,ny:  horizontal field dimensions (for computations)
-!..nxpre,nypre: nx and ny if not in input-file
-!..nk:     number of levels
-!
-      integer, parameter :: nxpre=864, nypre=698, nkpre=61
-      integer, save, public :: nx = nxpre,ny=nypre,nk=nkpre
-      integer, save, public :: maxsiz,ldata
-!cc   parameter (nx=121,ny=97,nk=14)
-!cc   parameter (nx=127,ny=103,nk=19)
-!cc   parameter (nx=188,ny=152,nk=32)
-!cc      parameter (nx=468,ny=378,nk=41)
-!cc h12ml in archive (which is 24km)
-!cc   parameter (nx=432,ny=349,nk=61)
-!cc h12sf and h12snap (12km)
-!c default parameters, if input.gridsize and input.levels not in snap.input
+!> default size of ::nx (when input.gridsize not given)
+    integer, parameter :: nxpre = 864
+!> default size of ::ny (when input.gridsize not given)
+    integer, parameter :: nypre = 698
+!> default size of ::nk (when input.levels not given)
+    integer, parameter :: nkpre = 61
 
+!> horizontal field dimensions (for computations)
+    integer, save, public :: nx = nxpre
+!> horizontal field dimensions (for computations)
+    integer, save, public :: ny = nypre
+!> number of levels
+    integer, save, public :: nk = nkpre
 
-!
-!..mprecip: max no. og hourly precipitation fields
-!           (and then the maximum hours between field input...)
-!
-      integer, parameter, public :: mprecip=12
-!
-!..maxsiz: max. input field size (possibly larger than nx*ny)
-!..ldata:  length of buffer for field input/output
-!
-!      integer maxsiz,ldata
-!      parameter (maxsiz=nx*ny)
-!      parameter (ldata=20+maxsiz+50)
-!
-!
-!
-!
-!..SSV ARGOS............................................
-      integer, parameter, public :: mxyargos=1
-!..disable SSV ARGOS output
-!..enable SSV ARGOS output, set maximum grid sizes
-!cc   parameter (mxyargos=nx*ny)
-!.......................................................
+!> max no. of hourly precipitation fields
+!>
+!> (and then the maximum hours between field input...)
+    integer, parameter, public :: mprecip = 12
+
+!> max. input field size (possibly larger than nx*ny)
+    integer, save, public :: maxsiz
+!> length of buffer for field input/output
+    integer, save, public :: ldata
 
 
-!..mcomp:    max no. of components used in one run
-!            (keep as small as "possible", it dimensions 2d/3d output fields)
-!
-      integer, parameter, public :: mcomp=51
+!> SSV ARGOS
+!>
+!> disable SSV ARGOS output (set to 1)
+!>
+!> enable SSV ARGOS output, set maximum grid sizes (set to nx*ny)
+    integer, parameter, public :: mxyargos = 1
 
 
-!..mavail: max. no. of available timesteps with data
-      integer, parameter, public :: mavail = 8192
+!> max no. of components used in one run
+!>
+!> (keep as small as "possible", it dimensions 2d/3d output fields)
+    integer, parameter, public :: mcomp=51
 
-      integer, save, public :: nxmc,nymc
-!..use 1 or 2 below:
-!..1: keep large arrays for concentration of each component in each layer
-!c    parameter (nxmc=nx,nymc=ny)
-!..2: remove large arrays for concentration
-!      parameter (nxmc=1,nymc=1)
-!
-!
-!
-!-----------------------------------------------------------------------
+!> max. no. of available timesteps with data
+    integer, parameter, public :: mavail = 8192
+
+!> Set to ::nx to save large arrays for concentration of
+!> each component in each layer, or 1 to remove large
+!> arrays for concentration
+    integer, save, public :: nxmc
+!> Set to ::ny to save large arrays for concentration of
+!> each component in each layer, or 1 to remove large
+!> arrays for concentration
+    integer, save, public :: nymc
+
 end module snapdimML
