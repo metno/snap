@@ -247,8 +247,8 @@ PROGRAM bsnap
   USE decayML, only: decay, decayDeps
   USE posintML, only: posint, posint_init
   USE bldpML, only: bldp
-  USE releaseML, only: release, releases, nrelheight, ntprof, mprel, &
-                       mplume, nplume, npart, mpart
+  USE releaseML, only: release, releases, nrelheight, mprel, &
+                       mplume, nplume, npart, mpart, release_t
   USE init_random_seedML, only: init_random_seed
   USE compheightML, only: compheight
   USE readfield_ncML, only: readfield_nc
@@ -294,6 +294,7 @@ PROGRAM bsnap
   real ::    x(1),y(1)
   type(extraParticle) :: pextra
   real ::    rscale
+  integer :: ntprof
 ! ipcount(mdefcomp, nk)
 ! integer, dimension(:,:), allocatable:: ipcount
 ! npcount(nk)
@@ -302,6 +303,7 @@ PROGRAM bsnap
   real :: mhmin, mhmax  ! minimum and maximum of mixing height
 ! b_end
   type(defined_component), pointer :: d_comp
+  type(release_t) :: release1
 
   logical :: blfullmix
   logical :: init = .TRUE.
@@ -407,14 +409,6 @@ PROGRAM bsnap
   rmlimit = -1.0
   nprepro = 0
   itprof = 0
-
-  do i=1,size(releases)
-    releases(i)%relradius = -1.0
-    releases(i)%relupper = -1.0
-    releases(i)%rellower = -1.0
-    releases(i)%relstemradius = -1.0
-  enddo
-  releases(1)%relbqsec(:,:) = -1.0
 
   nrelpos=0
   iprod  =0
@@ -666,47 +660,54 @@ PROGRAM bsnap
       !..release.hour
       !..release.minute
       !..release.second
-        if(kv1 < 1 .OR. ntprof > 0) goto 12
-        i1=ntprof+1
-        i2=ntprof
-        ios=0
-        do while (ios == 0)
-          if(i2 > size(releases)) goto 13
-          i2=i2+1
-          read(cipart,*,iostat=ios) (releases(i)%frelhour,i=i1,i2)
-        end do
-        i2=i2-1
-        if(i2 < i1) goto 12
-        do i=i1,i2
-          releases(i)%frelhour = releases(i)%frelhour*rscale
-        end do
-        ntprof=i2
+        if(kv1 < 1 .OR. allocated(releases)) goto 12
+
+        ntprof = 0 ! Guessing how many releases from number of commas
+        do i=1,len_trim(cipart)
+          if (cipart(i:i) == ',') ntprof = ntprof + 1
+        enddo
+        ntprof = ntprof + 1 ! Fencepost
+
+        allocate(releases(ntprof))
+        do i=1,ntprof
+          releases(i)%frelhour = -1.0
+          releases(i)%relradius = -1.0
+          releases(i)%relupper = -1.0
+          releases(i)%rellower = -1.0
+          releases(i)%relstemradius = -1.0
+          releases(i)%relbqsec = -1.0
+        enddo
+
+        read(cipart,*,err=12) releases%frelhour
+
+        releases%frelhour = releases%frelhour*rscale
+
         if(releases(1)%frelhour /= 0) goto 12
         do i=2,ntprof
           if(releases(i-1)%frelhour >= releases(i)%frelhour) then
-              write(error_unit, *) 'ERROR: Relase hours must be monotonically increasing'
+              write(error_unit, *) 'ERROR: Release hours must be monotonically increasing'
               goto 12
           endif
         end do
       elseif(cinput(k1:k2) == 'release.radius.m') then
       !..release.radius.m
-        if(kv1 < 1 .OR. ntprof < 1) goto 12
-        read(cipart,*,err=12) releases(1:ntprof)%relradius(1)
-        if (any(releases(1:ntprof)%relradius(1) < 0.0)) goto 12
+        if(kv1 < 1 .OR. .not.allocated(releases)) goto 12
+        read(cipart,*,err=12) releases%relradius(1)
+        if (any(releases%relradius(1) < 0.0)) goto 12
       elseif(cinput(k1:k2) == 'release.upper.m') then
       !..release.upper.m
-        if(kv1 < 1 .OR. ntprof < 1) goto 12
-        read(cipart,*,err=12) releases(1:ntprof)%relupper(1)
-        if (any(releases(1:ntprof)%relupper(1) < 0.0)) goto 12
+        if(kv1 < 1 .OR. .not.allocated(releases)) goto 12
+        read(cipart,*,err=12) releases%relupper(1)
+        if (any(releases%relupper(1) < 0.0)) goto 12
       elseif(cinput(k1:k2) == 'release.lower.m') then
       !..release.lower.m
-        if(kv1 < 1 .OR. ntprof < 1) goto 12
-        read(cipart,*,err=12) releases(1:ntprof)%rellower(1)
-        if (any(releases(1:ntprof)%rellower(1) < 0.0)) goto 12
+        if(kv1 < 1 .OR. .not.allocated(releases)) goto 12
+        read(cipart,*,err=12) releases%rellower(1)
+        if (any(releases%rellower(1) < 0.0)) goto 12
       elseif(cinput(k1:k2) == 'release.mushroom.stem.radius.m') then
       !..release.mushroom.stem.radius.m
-        if(kv1 < 1 .OR. ntprof < 1) goto 12
-        read(cipart,*,err=12) releases(1:ntprof)%relstemradius
+        if(kv1 < 1 .OR. .not.allocated(releases)) goto 12
+        read(cipart,*,err=12) releases%relstemradius
       elseif(cinput(k1:k2) == 'release.bq/hour.comp' .OR. &
           cinput(k1:k2) == 'release.bq/sec.comp'  .OR. &
           cinput(k1:k2) == 'release.bq/day.comp' .OR. &
@@ -724,14 +725,14 @@ PROGRAM bsnap
         else
           rscale=1.
         end if
-        if(kv1 < 1 .OR. ntprof < 1) goto 12
+        if(kv1 < 1 .OR. .not.allocated(releases)) goto 12
         ncomp= ncomp+1
         if(ncomp > mcomp) goto 13
-        read(cipart,*,err=12) releases(1:ntprof)%relbqsec(ncomp,1), &
+        read(cipart,*,err=12) releases%relbqsec(ncomp,1), &
             component(ncomp)
-        if (any(releases(1:ntprof)%relbqsec(ncomp,1) < 0.0)) goto 12
+        if (any(releases%relbqsec(ncomp,1) < 0.0)) goto 12
         if(rscale > 0.) then
-          releases(1:ntprof)%relbqsec(ncomp,1) = releases(1:ntprof)%relbqsec(ncomp,1)*rscale
+          releases%relbqsec(ncomp,1) = releases%relbqsec(ncomp,1)*rscale
         elseif(ntprof > 1) then
           if(cinput(k1:k2) == 'release.bq/step.comp') then
             do i=1,ntprof-1
@@ -751,9 +752,9 @@ PROGRAM bsnap
         i2=nrelheight
         ios=0
         do while (ios == 0)
-          if(i2 > size(releases(1)%rellower)) goto 13
+          if(i2 > size(release1%rellower)) goto 13
           i2=i2+1
-          read(cipart,*,iostat=ios) (releases(1)%rellower(ih),ih=i1,i2)
+          read(cipart,*,iostat=ios) (release1%rellower(ih),ih=i1,i2)
         end do
         i2=i2-1
         if(i2 < i1) goto 12
@@ -761,16 +762,16 @@ PROGRAM bsnap
       elseif(cinput(k1:k2) == 'release.heightradius.m') then
       !..release.heightradius.m
         if(kv1 < 1 .OR. nrelheight < 1) goto 12
-        read(cipart,*,err=12) (releases(1)%relradius(ih),ih=1,nrelheight)
+        read(cipart,*,err=12) (release1%relradius(ih),ih=1,nrelheight)
         do ih=1,nrelheight
-          if(releases(1)%relradius(ih) < 0.) goto 12
+          if(release1%relradius(ih) < 0.) goto 12
         end do
       elseif(cinput(k1:k2) == 'release.heightupper.m') then
       !..release.heightupper.m
         if(kv1 < 1 .OR. nrelheight < 1) goto 12
-        read(cipart,*,err=12) (releases(1)%relupper(ih),ih=1,nrelheight)
+        read(cipart,*,err=12) (release1%relupper(ih),ih=1,nrelheight)
         do ih=1,nrelheight
-          if(releases(1)%relupper(ih) < releases(1)%rellower(ih)) goto 12
+          if(release1%relupper(ih) < release1%rellower(ih)) goto 12
         end do
       elseif(cinput(k1:k2) == 'release.file') then
       !..release.file
@@ -1249,9 +1250,8 @@ PROGRAM bsnap
 
   write(*,*) "SIMULATION_START_DATE: ", simulation_start
 
-
   if (relfile /= '*') then
-    call releasefile(relfile)
+    call releasefile(relfile, release1)
   end if
 ! initialize all arrays after reading input
   if (imodlevel == 1) then
@@ -1309,7 +1309,7 @@ PROGRAM bsnap
 !..check if compiled without ENSEMBLE PROJECT arrays
   if(nxep < 2 .OR. nyep < 2) iensemble=0
 
-  if(ntprof < 1) then
+  if(.not.allocated(releases)) then
     write(error_unit,*) 'No time profile(s) specified'
     ierror=1
   end if

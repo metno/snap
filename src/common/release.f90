@@ -27,8 +27,6 @@ module releaseML
 
   public release
 
-!> max. no. of timesteps in release profiles
-  integer, parameter :: mtprof = 600
 !> mrelheight: max. no. of height classes for releases
   integer, parameter, public :: mrelheight = 20
 
@@ -47,16 +45,14 @@ module releaseML
     real :: relstemradius
     !>  radioactive release in unit Bq/sec
     !>
-    !>      dimension(1:ntprof,1:ncomp,1:nrelheight)
+    !>      dimension(1:ncomp,1:nrelheight)
     real :: relbqsec(mcomp,mrelheight)
   end type
 
-  type(release_t), public, save :: releases(mtprof)
+  type(release_t), public, allocatable, save :: releases(:)
 
 !> no. of height classes in the run
   integer, save, public :: nrelheight
-!> no. of timesteps in the release profiles
-  integer, save, public :: ntprof = 0
 
 !> max no. of particles released in each plume
 !>
@@ -145,21 +141,21 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
 
 !..particle number scaled according to max Bq released
   rbqmax=0.
-  do n=1,ntprof
+  do n=1,size(releases)
     rbq = sum(releases(n)%relbqsec(:, :))
     rbqmax = max(rbqmax, rbq)
   end do
   pscale= float(mprel)/(rbqmax*tstep)
 
   nt=1
-  do n=2,ntprof
+  do n=2,size(releases)
     if(releases(n)%frelhour*nsteph <= istep) nt=n
   end do
 
 ! loop over all heights
   do ih=1,nrelheight
 
-    if(itprof /= 4 .AND. nt < ntprof) then
+    if(itprof /= 4 .AND. nt < size(releases)) then
       c1 = releases(nt)%frelhour*nsteph
       c2 = releases(nt+1)%frelhour*nsteph
       c3=istep
