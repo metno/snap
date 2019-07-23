@@ -289,6 +289,7 @@ PROGRAM bsnap
   integer :: nxtinf,ihread,isteph,lstepr,iendrel,istep,ihr1,ihr2,nhleft
   integer :: ierr,ihdiff,ihr,ifldout,idailyout,ihour
   integer :: date_time(8)
+  logical :: warning
   real ::    tstep,rmlimit,rnhrun,rnhrel,glat,glong,tf1,tf2,tnow,tnext
   real ::    x(1),y(1)
   type(extraParticle) :: pextra
@@ -473,6 +474,7 @@ PROGRAM bsnap
 !..ipostyp=2 : latitude,longitude as degree*100+minute (integer)
 
   ipostyp=1
+  warning = .false.
 
 
   lcinp=len(cinput)
@@ -689,28 +691,22 @@ PROGRAM bsnap
       elseif(cinput(k1:k2) == 'release.radius.m') then
       !..release.radius.m
         if(kv1 < 1 .OR. ntprof < 1) goto 12
-        read(cipart,*,err=12) (releases(i)%relradius(1),i=1,ntprof)
-        do i=1,ntprof
-          if(releases(i)%relradius(1) < 0.) goto 12
-        end do
+        read(cipart,*,err=12) releases(1:ntprof)%relradius(1)
+        if (any(releases(1:ntprof)%relradius(1) < 0.0)) goto 12
       elseif(cinput(k1:k2) == 'release.upper.m') then
       !..release.upper.m
         if(kv1 < 1 .OR. ntprof < 1) goto 12
-        read(cipart,*,err=12) (releases(i)%relupper(1),i=1,ntprof)
-        do i=1,ntprof
-          if(releases(i)%relupper(1) < 0.) goto 12
-        end do
+        read(cipart,*,err=12) releases(1:ntprof)%relupper(1)
+        if (any(releases(1:ntprof)%relupper(1) < 0.0)) goto 12
       elseif(cinput(k1:k2) == 'release.lower.m') then
       !..release.lower.m
         if(kv1 < 1 .OR. ntprof < 1) goto 12
-        read(cipart,*,err=12) (releases(i)%rellower(1),i=1,ntprof)
-        do i=1,ntprof
-          if(releases(i)%rellower(1) < 0.) goto 12
-        end do
+        read(cipart,*,err=12) releases(1:ntprof)%rellower(1)
+        if (any(releases(1:ntprof)%rellower(1) < 0.0)) goto 12
       elseif(cinput(k1:k2) == 'release.mushroom.stem.radius.m') then
       !..release.mushroom.stem.radius.m
         if(kv1 < 1 .OR. ntprof < 1) goto 12
-        read(cipart,*,err=12) (releases(i)%relstemradius,i=1,ntprof)
+        read(cipart,*,err=12) releases(1:ntprof)%relstemradius
       elseif(cinput(k1:k2) == 'release.bq/hour.comp' .OR. &
           cinput(k1:k2) == 'release.bq/sec.comp'  .OR. &
           cinput(k1:k2) == 'release.bq/day.comp' .OR. &
@@ -731,15 +727,11 @@ PROGRAM bsnap
         if(kv1 < 1 .OR. ntprof < 1) goto 12
         ncomp= ncomp+1
         if(ncomp > mcomp) goto 13
-        read(cipart,*,err=12) (releases(i)%relbqsec(ncomp,1),i=1,ntprof), &
+        read(cipart,*,err=12) releases(1:ntprof)%relbqsec(ncomp,1), &
             component(ncomp)
-        do i=1,ntprof
-          if(releases(i)%relbqsec(ncomp,1) < 0.) goto 12
-        end do
+        if (any(releases(1:ntprof)%relbqsec(ncomp,1) < 0.0)) goto 12
         if(rscale > 0.) then
-          do i=1,ntprof
-            releases(i)%relbqsec(ncomp,1) = releases(i)%relbqsec(ncomp,1)*rscale
-          end do
+          releases(1:ntprof)%relbqsec(ncomp,1) = releases(1:ntprof)%relbqsec(ncomp,1)*rscale
         elseif(ntprof > 1) then
           if(cinput(k1:k2) == 'release.bq/step.comp') then
             do i=1,ntprof-1
@@ -1035,6 +1027,7 @@ PROGRAM bsnap
                 float(igd) + float(igm)/60.
           end if
         else
+          warning = .true.
           write(error_unit,*) 'WARNING. Too many RELEASE POSITIONS'
           write(error_unit,*) '  ==> ',cinput(kv1:kv2)
         end if
@@ -1111,6 +1104,7 @@ PROGRAM bsnap
             filef(nfilef)=ciname(1:nkv)
           end if
         else
+          warning = .true.
           write(error_unit,*) 'WARNING. Too many FIELD INPUT files'
           write(error_unit,*) '  ==> ',cinput(kv1:kv2)
         end if
@@ -1245,7 +1239,7 @@ PROGRAM bsnap
   call snap_error_exit()
 
   13 write(error_unit,*) 'ERROR reading file:'
-  write(error_unit,*)  finput
+  write(error_unit,*)  trim(finput)
   write(error_unit,*) 'At line no. ',nlines,' :'
   write(error_unit,*)  trim(cinput)
   write(error_unit,*) 'SOME LIMIT WAS EXCEEDED !!!!!!!!!!!!!!!!!'
@@ -1340,6 +1334,14 @@ PROGRAM bsnap
         &'of upper,lower and/or radius'
     ierror=1
   end if
+  do i=1,ntprof-1
+    if ((releases(i+1)%frelhour - releases(i)%frelhour)*3600 < tstep) then
+      warning = .true.
+      write(error_unit, *) "WARNING: Release interval is shorter than timestep; ", &
+          "some releases may be skipped"
+      exit
+    endif
+  enddo
 
   if(ncomp < 0) then
     write(error_unit,*) 'No (release) components specified for run'
@@ -1487,8 +1489,11 @@ PROGRAM bsnap
   call init_meteo_params()
 
 
-
-  write(output_unit,*) 'Input o.k.'
+  if (warning) then
+    write(output_unit,*) 'Input o.k. (with warnings)'
+  else
+    write(output_unit,*) 'Input o.k.'
+  endif
 !-------------------------------------------------------------------
 
 !..log file

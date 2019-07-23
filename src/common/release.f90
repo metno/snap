@@ -101,11 +101,8 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
   USE snapdimML, only: nx, ny, nk, mcomp
   USE snapdebug, only: iulog
 
-  implicit none
-
-!..input/output
-  integer, intent(in) :: istep,nsteph
-  real, intent(in) ::    tf1,tf2,tnow
+  integer, intent(in) :: istep, nsteph
+  real, intent(in) :: tf1, tf2, tnow
   integer, intent(out) :: ierror
 
 !..local
@@ -123,9 +120,11 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
   real ::    hlevel(nk)
   real ::    hlower2(2),hupper2(2),radius2(2)
 
+!..for random number functions
+  real :: rnd(3)
 
 
-! tood for reading multi-layer, many-timesteps emissions from a file
+! todo for reading multi-layer, many-timesteps emissions from a file
 ! format: starttime, stoptime, hlower, hupper, radius, componentId, Emissions (kg/s)
 
 ! a) know total emissions per component (same total # of model-particles / component emitted, but with a scaling factor of total amount)
@@ -134,9 +133,6 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
 ! c) loop over all heights, set hlower, hupper, radius, nrel(m), pbq(m) (m=components)
 ! d) reuse existing code
 
-
-!..for random number functions
-  real :: rnd(3)
 
   ierror = 0
 
