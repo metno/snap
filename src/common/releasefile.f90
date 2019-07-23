@@ -32,13 +32,14 @@ module releasefileML
 !> - relbqsec(time, comp, height)
 !>
 !> for each release-step, rellower/relupper/relradius are copied from (1,x)
-subroutine  releasefile(filename)
+subroutine  releasefile(filename, release1)
   USE iso_fortran_env, only: error_unit
   USE snapparML, only: ncomp, component
   USE snapdimML, only: mcomp
-  USE releaseML, only: mrelheight, releases, nrelheight, ntprof
+  USE releaseML, only: mrelheight, releases, nrelheight, release_t
 
   character(72), intent(in) :: filename
+  type(release_t), intent(in) :: release1
 
   character(256) :: cinput
   logical :: debugrelfile
@@ -49,6 +50,8 @@ subroutine  releasefile(filename)
   integer :: ihour, iheight, icmp
   real ::    rel_s
   character(32) :: comp
+  integer :: ntprof
+  type(release_t), allocatable :: tmp_release(:)
 
   debugrelfile = .FALSE.
   iexit = 0
@@ -92,10 +95,14 @@ subroutine  releasefile(filename)
       ! add new release timestep
         lasthour = hour
         ihour = ihour + 1
-        if (ihour > size(releases)) then
-          write(*,*) 'to many release timesteps, increase mtprof'
-          goto 12
-        end if
+        if (.not.allocated(releases)) then
+          allocate(releases(1))
+        else
+          call move_alloc(from=releases, to=tmp_release)
+          allocate(releases(size(tmp_release)+1))
+          releases(1:size(tmp_release)) = tmp_release
+          deallocate(tmp_release)
+        endif
         releases(ihour)%frelhour = hour
       ! make sure all initial release are undefined
         do i=1,mcomp
@@ -116,7 +123,7 @@ subroutine  releasefile(filename)
     ! find the height
       iheight = 0
       do i=1,nrelheight
-        if(height == releases(1)%rellower(i)) iheight = i
+        if(height == release1%rellower(i)) iheight = i
       end do
       if (iheight == 0) then
         write(*,*) 'unkown lower height: ', height
@@ -145,11 +152,11 @@ subroutine  releasefile(filename)
   write (*,*) 'finished reading: ', ntprof, ' timesteps'
 ! theoretically possible to add time-varying heights/radiuses
 ! but not supported by input file format yet
-  do ihour=2,ntprof
+  do ihour=1,ntprof
     do iheight=1,nrelheight
-      releases(ihour)%rellower(iheight) = releases(1)%rellower(iheight)
-      releases(ihour)%relupper(iheight) = releases(1)%relupper(iheight)
-      releases(ihour)%relradius(iheight) = releases(1)%relradius(iheight)
+      releases(ihour)%rellower(iheight) = release1%rellower(iheight)
+      releases(ihour)%relupper(iheight) = release1%relupper(iheight)
+      releases(ihour)%relradius(iheight) = release1%relradius(iheight)
     end do
   end do
 
