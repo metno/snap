@@ -28,24 +28,30 @@ module releaseML
   public release
 
 !> max. no. of timesteps in release profiles
-  integer, parameter, public :: mtprof = 600
+  integer, parameter :: mtprof = 600
 !> mrelheight: max. no. of height classes for releases
   integer, parameter, public :: mrelheight = 20
 
-!> specified release hours in time profile
-  real, save, public :: frelhour(mtprof)
-!> release radius in unit meter
-  real, save, public :: relradius(mtprof,mrelheight)
-!> release upper height in unit meter
-  real, save, public :: relupper(mtprof,mrelheight)
-!> release lower height in unit meter
-  real, save, public :: rellower(mtprof,mrelheight)
-!> release radius in unit meter for a mushroom stem
-  real, save, public :: relstemradius(mtprof)
-!>  radioactive release in unit Bq/sec
-!>
-!>      dimension(1:ntprof,1:ncomp,1:nrelheight)
-  real, save, public :: relbqsec(mtprof,mcomp,mrelheight)
+!> type containing release information, such as time of release,
+!> amount, release volume etc..
+  type, public :: release_t
+    !> specified release hours in time profile
+    real :: frelhour
+    !> release radius in unit meter
+    real :: relradius(mrelheight)
+    !> release upper height in unit meter
+    real :: relupper(mrelheight)
+    !> release lower height in unit meter
+    real :: rellower(mrelheight)
+    !> release radius in unit meter for a mushroom stem
+    real :: relstemradius
+    !>  radioactive release in unit Bq/sec
+    !>
+    !>      dimension(1:ntprof,1:ncomp,1:nrelheight)
+    real :: relbqsec(mcomp,mrelheight)
+  end type
+
+  type(release_t), public, save :: releases(mtprof)
 
 !> no. of height classes in the run
   integer, save, public :: nrelheight
@@ -144,42 +150,42 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
 !..particle number scaled according to max Bq released
   rbqmax=0.
   do n=1,ntprof
-    rbq = sum(relbqsec(n, :, :))
+    rbq = sum(releases(n)%relbqsec(:, :))
     rbqmax = max(rbqmax, rbq)
   end do
   pscale= float(mprel)/(rbqmax*tstep)
 
   nt=1
   do n=2,ntprof
-    if(frelhour(n)*nsteph <= istep) nt=n
+    if(releases(n)%frelhour*nsteph <= istep) nt=n
   end do
 
 ! loop over all heights
   do ih=1,nrelheight
 
     if(itprof /= 4 .AND. nt < ntprof) then
-      c1=frelhour(nt)  *nsteph
-      c2=frelhour(nt+1)*nsteph
+      c1 = releases(nt)%frelhour*nsteph
+      c2 = releases(nt+1)%frelhour*nsteph
       c3=istep
       rt1=(c2-c3)/(c2-c1)
       rt2=(c3-c2)/(c2-c1)
       do n=1,ncomp
-        relbq(n)= relbqsec(nt,n,ih)*rt1 + relbqsec(nt+1,n,ih)*rt2
+        relbq(n) = releases(nt)%relbqsec(n,ih)*rt1 + releases(nt+1)%relbqsec(n,ih)*rt2
       end do
-      radius=         relradius(nt,ih)*rt1 +  relradius(nt+1,ih)*rt2
-      hupper=          relupper(nt,ih)*rt1 +   relupper(nt+1,ih)*rt2
-      hlower=          rellower(nt,ih)*rt1 +   rellower(nt+1,ih)*rt2
+      radius = releases(nt)%relradius(ih)*rt1 + releases(nt+1)%relradius(ih)*rt2
+      hupper = releases(nt)%relupper(ih)*rt1 + releases(nt+1)%relupper(ih)*rt2
+      hlower = releases(nt)%rellower(ih)*rt1 + releases(nt+1)%rellower(ih)*rt2
     ! stemradius not with height profiles, nrelheight must be 1
-      stemradius= relstemradius(nt)*rt1 + relstemradius(nt+1)*rt2
+      stemradius = releases(nt)%relstemradius*rt1 + releases(nt+1)%relstemradius*rt2
     else
       do n=1,ncomp
-        relbq(n)= relbqsec(nt,n,ih)
+        relbq(n) = releases(nt)%relbqsec(n,ih)
       end do
-      radius=         relradius(nt,ih)
-      hupper=          relupper(nt,ih)
-      hlower=          rellower(nt,ih)
+      radius = releases(nt)%relradius(ih)
+      hupper = releases(nt)%relupper(ih)
+      hlower = releases(nt)%rellower(ih)
     ! stemradius not with height profiles, nrelheight must be 1
-      stemradius= relstemradius(nt)
+      stemradius = releases(nt)%relstemradius
     end if
 
     nprel=0

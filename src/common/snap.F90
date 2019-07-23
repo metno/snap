@@ -247,8 +247,7 @@ PROGRAM bsnap
   USE decayML, only: decay, decayDeps
   USE posintML, only: posint, posint_init
   USE bldpML, only: bldp
-  USE releaseML, only: release, frelhour, relradius, rellower, relupper, &
-                       relstemradius, relbqsec, nrelheight, ntprof, mprel, &
+  USE releaseML, only: release, releases, nrelheight, ntprof, mprel, &
                        mplume, nplume, npart, mpart
   USE init_random_seedML, only: init_random_seed
   USE compheightML, only: compheight
@@ -408,11 +407,13 @@ PROGRAM bsnap
   nprepro = 0
   itprof = 0
 
-  relradius = -1.0
-  relupper = -1.0
-  rellower = -1.0
-  relstemradius = -1.0
-  relbqsec(1,:,:) = -1.0
+  do i=1,size(releases)
+    releases(i)%relradius = -1.0
+    releases(i)%relupper = -1.0
+    releases(i)%rellower = -1.0
+    releases(i)%relstemradius = -1.0
+  enddo
+  releases(1)%relbqsec(:,:) = -1.0
 
   nrelpos=0
   iprod  =0
@@ -668,19 +669,19 @@ PROGRAM bsnap
         i2=ntprof
         ios=0
         do while (ios == 0)
-          if(i2 > size(frelhour)) goto 13
+          if(i2 > size(releases)) goto 13
           i2=i2+1
-          read(cipart,*,iostat=ios) (frelhour(i),i=i1,i2)
+          read(cipart,*,iostat=ios) (releases(i)%frelhour,i=i1,i2)
         end do
         i2=i2-1
         if(i2 < i1) goto 12
         do i=i1,i2
-          frelhour(i)= frelhour(i)*rscale
+          releases(i)%frelhour = releases(i)%frelhour*rscale
         end do
         ntprof=i2
-        if(frelhour(1) /= 0) goto 12
+        if(releases(1)%frelhour /= 0) goto 12
         do i=2,ntprof
-          if(frelhour(i-1) >= frelhour(i)) then
+          if(releases(i-1)%frelhour >= releases(i)%frelhour) then
               write(error_unit, *) 'ERROR: Relase hours must be monotonically increasing'
               goto 12
           endif
@@ -688,28 +689,28 @@ PROGRAM bsnap
       elseif(cinput(k1:k2) == 'release.radius.m') then
       !..release.radius.m
         if(kv1 < 1 .OR. ntprof < 1) goto 12
-        read(cipart,*,err=12) (relradius(i,1),i=1,ntprof)
+        read(cipart,*,err=12) (releases(i)%relradius(1),i=1,ntprof)
         do i=1,ntprof
-          if(relradius(i,1) < 0.) goto 12
+          if(releases(i)%relradius(1) < 0.) goto 12
         end do
       elseif(cinput(k1:k2) == 'release.upper.m') then
       !..release.upper.m
         if(kv1 < 1 .OR. ntprof < 1) goto 12
-        read(cipart,*,err=12) (relupper(i,1),i=1,ntprof)
+        read(cipart,*,err=12) (releases(i)%relupper(1),i=1,ntprof)
         do i=1,ntprof
-          if(relupper(i,1) < 0.) goto 12
+          if(releases(i)%relupper(1) < 0.) goto 12
         end do
       elseif(cinput(k1:k2) == 'release.lower.m') then
       !..release.lower.m
         if(kv1 < 1 .OR. ntprof < 1) goto 12
-        read(cipart,*,err=12) (rellower(i,1),i=1,ntprof)
+        read(cipart,*,err=12) (releases(i)%rellower(1),i=1,ntprof)
         do i=1,ntprof
-          if(rellower(i,1) < 0.) goto 12
+          if(releases(i)%rellower(1) < 0.) goto 12
         end do
       elseif(cinput(k1:k2) == 'release.mushroom.stem.radius.m') then
       !..release.mushroom.stem.radius.m
         if(kv1 < 1 .OR. ntprof < 1) goto 12
-        read(cipart,*,err=12) (relstemradius(i),i=1,ntprof)
+        read(cipart,*,err=12) (releases(i)%relstemradius,i=1,ntprof)
       elseif(cinput(k1:k2) == 'release.bq/hour.comp' .OR. &
           cinput(k1:k2) == 'release.bq/sec.comp'  .OR. &
           cinput(k1:k2) == 'release.bq/day.comp' .OR. &
@@ -730,26 +731,20 @@ PROGRAM bsnap
         if(kv1 < 1 .OR. ntprof < 1) goto 12
         ncomp= ncomp+1
         if(ncomp > mcomp) goto 13
-        read(cipart,*,err=12) (relbqsec(i,ncomp,1),i=1,ntprof), &
+        read(cipart,*,err=12) (releases(i)%relbqsec(ncomp,1),i=1,ntprof), &
             component(ncomp)
         do i=1,ntprof
-          if(relbqsec(i,ncomp,1) < 0.) goto 12
+          if(releases(i)%relbqsec(ncomp,1) < 0.) goto 12
         end do
         if(rscale > 0.) then
           do i=1,ntprof
-            relbqsec(i,ncomp,1)= relbqsec(i,ncomp,1)*rscale
+            releases(i)%relbqsec(ncomp,1) = releases(i)%relbqsec(ncomp,1)*rscale
           end do
         elseif(ntprof > 1) then
           if(cinput(k1:k2) == 'release.bq/step.comp') then
-            if (relbqsec(ntprof,ncomp,1) /= 0) then
-              write(error_unit,*) "Last element at line ", nlines, " is not zero"
-              write(error_unit,*) "this release will not be included when computing"
-              write(error_unit,*) "Consider appending a zero for correct handling of"
-              write(error_unit,*) "releases close to the end of the run"
-            endif
             do i=1,ntprof-1
-              rscale=1./(3600.*(frelhour(i+1)-frelhour(i)))
-              relbqsec(i,ncomp,1)= relbqsec(i,ncomp,1)*rscale
+              rscale=1./(3600.*(releases(i+1)%frelhour-releases(i)%frelhour))
+              releases(i)%relbqsec(ncomp,1) = releases(i)%relbqsec(ncomp,1)*rscale
             end do
           end if
         end if
@@ -764,9 +759,9 @@ PROGRAM bsnap
         i2=nrelheight
         ios=0
         do while (ios == 0)
-          if(i2 > size(rellower, 2)) goto 13
+          if(i2 > size(releases(1)%rellower)) goto 13
           i2=i2+1
-          read(cipart,*,iostat=ios) (rellower(1,ih),ih=i1,i2)
+          read(cipart,*,iostat=ios) (releases(1)%rellower(ih),ih=i1,i2)
         end do
         i2=i2-1
         if(i2 < i1) goto 12
@@ -774,16 +769,16 @@ PROGRAM bsnap
       elseif(cinput(k1:k2) == 'release.heightradius.m') then
       !..release.heightradius.m
         if(kv1 < 1 .OR. nrelheight < 1) goto 12
-        read(cipart,*,err=12) (relradius(1,ih),ih=1,nrelheight)
+        read(cipart,*,err=12) (releases(1)%relradius(ih),ih=1,nrelheight)
         do ih=1,nrelheight
-          if(relradius(1,ih) < 0.) goto 12
+          if(releases(1)%relradius(ih) < 0.) goto 12
         end do
       elseif(cinput(k1:k2) == 'release.heightupper.m') then
       !..release.heightupper.m
         if(kv1 < 1 .OR. nrelheight < 1) goto 12
-        read(cipart,*,err=12) (relupper(1,ih),ih=1,nrelheight)
+        read(cipart,*,err=12) (releases(1)%relupper(ih),ih=1,nrelheight)
         do ih=1,nrelheight
-          if(relupper(1,ih) < rellower(1,ih)) goto 12
+          if(releases(1)%relupper(ih) < releases(1)%rellower(ih)) goto 12
         end do
       elseif(cinput(k1:k2) == 'release.file') then
       !..release.file
@@ -1315,7 +1310,7 @@ PROGRAM bsnap
     ierror=1
   end if
 
-  if(nhrel == 0 .AND. ntprof > 0) nhrel=frelhour(ntprof)
+  if(nhrel == 0 .AND. ntprof > 0) nhrel = releases(ntprof)%frelhour
 
 !..check if compiled without ENSEMBLE PROJECT arrays
   if(nxep < 2 .OR. nyep < 2) iensemble=0
@@ -1330,14 +1325,14 @@ PROGRAM bsnap
   end if
   k=0
   do i=1,ntprof
-    if(relradius(i,1) < 0. .OR. &
-        relupper(i,1) < 0. .OR. &
-        rellower(i,1) < 0. .OR. &
-        relupper(i,1) < rellower(i,1)) then
+    if(releases(i)%relradius(1) < 0. .OR. &
+        releases(i)%relupper(1) < 0. .OR. &
+        releases(i)%rellower(1) < 0. .OR. &
+        releases(i)%relupper(1) < releases(i)%rellower(1)) then
       k=1
     endif
-    if(relupper(i,1) < rellower(i,1)+1.) then
-      relupper(i,1)=rellower(i,1)+1.
+    if(releases(i)%relupper(1) < releases(i)%rellower(1)+1.) then
+      releases(i)%relupper(1) = releases(i)%rellower(1)+1.
     endif
   end do
   if(k == 1) then
@@ -1578,15 +1573,15 @@ PROGRAM bsnap
   end if
 #if defined(TRAJ)
   do itraj=1,ntraj
-    rellower(1,1)=tlevel(itraj)
+    releases(1)%rellower(1)=tlevel(itraj)
   !	relupper(1)=rellower(1)+1
-    relupper(1,1)=rellower(1,1)
+    releases(1)%relupper(1) = releases(1)%rellower(1)
     tyear=itime1(1)
     tmon=itime1(2)
     tday=itime1(3)
     thour=itime1(4)
     tmin=0.0
-    write(*,*) 'lower, upper',rellower(1,1),relupper(1,1)
+    write(*,*) 'lower, upper', releases(1)%rellower(1), releases(1)%relupper(1)
     write(*,*) 'tyear, tmon, tday, thour, tmin', &
         tyear, tmon, tday, thour, tmin
     distance=0.0
@@ -1688,9 +1683,9 @@ PROGRAM bsnap
           // " (hour, Bq/s): "
       do i=1,ntprof
         write(iulog,*) '  hour,Bq/hour: ', &
-            frelhour(i),(relbqsec(i,n,ih)*3600.,ih=1,nrelheight)
+            releases(i)%frelhour,(releases(i)%relbqsec(n,ih)*3600.,ih=1,nrelheight)
         write(tempstr, '("(",f5.1,",",ES9.2,")")') &
-            frelhour(i), relbqsec(i,n,1)
+            releases(i)%frelhour, releases(i)%relbqsec(n,1)
         ncsummary = trim(ncsummary) // " " // trim(tempstr)
       end do
     end do
@@ -1886,11 +1881,11 @@ PROGRAM bsnap
           write(13,'(i2)') ntraj
           write(13,'(1x,i4,4i2.2,''00'', &
               &   2f9.3,f12.3,f15.2,f10.2)') &
-              (itime(i),i=1,4),0,y,x,rellower(1,1), &
+              (itime(i),i=1,4),0,y,x, releases(1)%rellower(1), &
               distance,speed
           write(*,'(i4,1x,i4,i2,i2,2i2.2,''00'', &
               &   2f9.3,f12.3,f15.2,f10.2)') istep, &
-              (itime(i),i=1,4),0,y,x,rellower(1,1), &
+              (itime(i),i=1,4),0,y,x, releases(1)%rellower(1), &
               distance,speed
 #endif
           call xyconvert(1,x,y,2,geoparam,igtype,gparam,ierror)
