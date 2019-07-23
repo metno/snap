@@ -23,26 +23,24 @@ module releasefileML
 
   contains
 
+!> reading of input-files with hourly data (hours since run-start)
+!> comment-rows start with #
+!> hour height[upper_in_m] component release[kg/s]
+!>
+!> data is read to
+!> - frelhour
+!> - relbqsec(time, comp, height)
+!>
+!> for each release-step, rellower/relupper/relradius are copied from (1,x)
 subroutine  releasefile(filename)
-! reading of input-files with hourly data (hours since run-start)
-! comment-rows start with #
-! hour height[upper_in_m] component release[kg/s]
-
-! data is read to
-!  frelhour
-!  relbqsec(time, comp, height)
-
-! for each release-step, rellower/relupper/relradius are copied from (1,x)
   USE iso_fortran_env, only: error_unit
   USE snapparML, only: ncomp, component
   USE snapdimML, only: mcomp
   USE releaseML, only: mrelheight, releases, nrelheight, ntprof
-  implicit none
 
-! input
-  character(72) :: filename
+  character(72), intent(in) :: filename
+
   character(256) :: cinput
-
   logical :: debugrelfile
   integer :: ifd, ios, iend, iexit, nlines
   integer :: i,j
@@ -51,7 +49,8 @@ subroutine  releasefile(filename)
   integer :: ihour, iheight, icmp
   real ::    rel_s
   character(32) :: comp
-  debugrelfile = .FALSE. 
+
+  debugrelfile = .FALSE.
   iexit = 0
 
   write(*,*) 'reading release from: ', filename
@@ -61,10 +60,10 @@ subroutine  releasefile(filename)
 
   ifd=8
   open(ifd,file=filename, &
-  access='sequential',form='formatted', &
-  status='old',iostat=ios)
+      access='sequential',form='formatted', &
+      status='old',iostat=ios)
   if(ios /= 0) then
-    write(error_unit,*) 'Open Error: ',filename(1:len(filename,1))
+    write(error_unit,*) 'Open Error: ', trim(filename)
     stop 1
   endif
 
@@ -168,10 +167,8 @@ subroutine  releasefile(filename)
   end do
 
   if (iexit /= 0) then
-    write(*,*) 'aborted in releasefile.f'
-    error stop 1
+    error stop 'aborted in releasefile.f90'
   end if
-
 
 end subroutine  releasefile
 end module releasefileML
