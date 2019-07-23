@@ -36,8 +36,7 @@ subroutine  releasefile(filename)
   USE iso_fortran_env, only: error_unit
   USE snapparML, only: ncomp, component
   USE snapdimML, only: mcomp
-  USE releaseML, only: mrelheight, mtprof, frelhour, relbqsec, rellower, &
-                       relupper, relradius,  nrelheight, ntprof
+  USE releaseML, only: mrelheight, releases, nrelheight, ntprof
   implicit none
 
 ! input
@@ -94,15 +93,15 @@ subroutine  releasefile(filename)
       ! add new release timestep
         lasthour = hour
         ihour = ihour + 1
-        if (ihour > mtprof) then
+        if (ihour > size(releases)) then
           write(*,*) 'to many release timesteps, increase mtprof'
           goto 12
         end if
-        frelhour(ihour) = hour
+        releases(ihour)%frelhour = hour
       ! make sure all initial release are undefined
         do i=1,mcomp
           do j=1,mrelheight
-            relbqsec(ihour,i,j)= -1.
+            releases(ihour)%relbqsec(i,j)= -1.
           end do
         end do
       end if
@@ -118,14 +117,14 @@ subroutine  releasefile(filename)
     ! find the height
       iheight = 0
       do i=1,nrelheight
-        if(height == rellower(1,i)) iheight = i
+        if(height == releases(1)%rellower(i)) iheight = i
       end do
       if (iheight == 0) then
         write(*,*) 'unkown lower height: ', height
         goto 12
       end if
     ! save the release
-      relbqsec(ihour, icmp, iheight) = rel_s
+      releases(ihour)%relbqsec(icmp, iheight) = rel_s
     ! end ifnot comment '*'
     end if
   end do
@@ -149,9 +148,9 @@ subroutine  releasefile(filename)
 ! but not supported by input file format yet
   do ihour=2,ntprof
     do iheight=1,nrelheight
-      rellower(ihour,iheight) = rellower(1,iheight)
-      relupper(ihour,iheight) = relupper(1,iheight)
-      relradius(ihour,iheight) = relradius(1,iheight)
+      releases(ihour)%rellower(iheight) = releases(1)%rellower(iheight)
+      releases(ihour)%relupper(iheight) = releases(1)%relupper(iheight)
+      releases(ihour)%relradius(iheight) = releases(1)%relradius(iheight)
     end do
   end do
 
@@ -159,10 +158,10 @@ subroutine  releasefile(filename)
   do ihour=1,ntprof
     do icmp=1,ncomp
       do iheight=1,nrelheight
-        if (relbqsec(ihour,icmp,iheight) < 0) then
-          relbqsec(ihour,icmp,iheight) = 0
+        if (releases(ihour)%relbqsec(icmp,iheight) < 0) then
+          releases(ihour)%relbqsec(icmp,iheight) = 0
           write(*,*) 'no release for (',component(icmp),',', &
-          rellower(ihour,iheight),'m,',frelhour(ihour),'h)'
+          releases(ihour)%rellower(iheight),'m,',releases(ihour)%frelhour,'h)'
         end if
       end do
     end do
