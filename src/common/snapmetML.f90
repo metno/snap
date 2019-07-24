@@ -38,7 +38,6 @@ module snapmetML
 
   subroutine init_meteo_params()
       USE snapfilML, only: nctype
-      IMPLICIT NONE
 
       temp_is_abs = .false.
       has_dummy_dim = .false.
@@ -228,7 +227,5 @@ module snapmetML
         error stop 1
       end if
   end subroutine init_meteo_params
-
-
 
 end module snapmetML
