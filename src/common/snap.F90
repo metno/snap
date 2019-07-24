@@ -1389,6 +1389,7 @@ PROGRAM bsnap
   allocate(run_comp(ncomp))
   run_comp%totalbq = 0
   run_comp%numtotal = 0
+  run_comp%to_defined = 0
 
   do m=1,ncomp
     k=0
@@ -1409,6 +1410,7 @@ PROGRAM bsnap
 !..gravity
   do n=1,ncomp
     m = run_comp(n)%to_defined
+    if (m == 0) cycle
     if(def_comp(m)%grav_type < 0) def_comp(m)%grav_type = 2
     if(def_comp(m)%grav_type == 2 .AND. &
         (def_comp(m)%radiusmym <= 0. .OR. def_comp(m)%densitygcm3 <= 0.)) then
@@ -1426,6 +1428,7 @@ PROGRAM bsnap
 
   do n=1,ncomp
     m = run_comp(n)%to_defined
+    if (m == 0) cycle
     if(idrydep == 1 .AND. def_comp(m)%kdrydep == 1) then
       if(def_comp(m)%drydeprat > 0. .AND. def_comp(m)%drydephgt > 0.) then
         i1=i1+1
