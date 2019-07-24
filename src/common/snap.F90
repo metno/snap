@@ -364,8 +364,9 @@ PROGRAM bsnap
   endif
 
   open(newunit=iuinp,file=finput, &
-      access='sequential',form='formatted', &
-      status='old',iostat=ios,action='read')
+      access='stream',form='unformatted', &
+      status='old',iostat=ios,action='read', &
+      position='rewind')
   if(ios /= 0) then
     write(error_unit,*) 'Open Error: ', trim(finput)
     call snap_error_exit()
@@ -430,6 +431,7 @@ PROGRAM bsnap
   fldtype='felt'
   fldfil= 'snap.dat'
   logfile='snap.log'
+  nctype = "*"
   ncsummary=''
   relfile='*'
 ! timestamp of the form 0000-00-00_00:00:00
@@ -701,7 +703,7 @@ PROGRAM bsnap
   if(iprodr == 0) iprodr=iprod
   if(igridr == 0) igridr=igrid
 
-  call init_meteo_params()
+  if (nctype /= "*") call init_meteo_params()
 
 
   if (warning) then
@@ -1571,7 +1573,7 @@ PROGRAM bsnap
     integer, intent(in) :: iuinp
 
     integer :: nlines
-    integer :: iend
+    logical :: end_loop
     integer :: ipostyp,lcinp,ks,nkey,k,ierror,mkey
     integer :: ikey,k1,k2,kv1,kv2,nkv,i,kh,kd,ig,igd,igm,i1,i2
     real :: glat, glong
@@ -1579,7 +1581,8 @@ PROGRAM bsnap
     character(len=8) :: cpos1, cpos2
     type(defined_component), pointer :: d_comp
 
-    character(len=1024*8) :: cinput, ciname, cipart
+    character(len=:), allocatable :: cinput, ciname, cipart
+    character(len=:), allocatable :: char_tmp
 
     !..ipostyp=1 : latitude,longitude as decimal numbers (real)
     !..ipostyp=2 : latitude,longitude as degree*100+minute (integer)
@@ -1588,17 +1591,38 @@ PROGRAM bsnap
     !..termination character (machine dependant)
     call termchar(tchar)
 
-    lcinp=len(cinput)
+    end_loop = .false.
+    nlines = 0
+    allocate(character(len=256)::cinput)
+    allocate(character(len=256)::ciname)
+    allocate(character(len=256)::cipart)
 
-    iend=0
-    nlines=0
-    do while (iend == 0)
+    do while (.not.end_loop)
+      nlines = nlines+1
+      cinput(:) = ""
+      i = 0
+      read_line: do
+        i = i + 1
+        if (len(cinput) < i) then
+          call move_alloc(from=cinput, to=char_tmp)
+          allocate(character(len=len(char_tmp) + 256)::cinput)
+          cinput(:) = ""
+          cinput(:len(char_tmp)) = char_tmp(:)
+          deallocate(char_tmp)
+        endif
+        read(iuinp, iostat=ierror) cinput(i:i)
+        if (ierror == IOSTAT_END) then
+          end_loop = .true.
+          exit read_line
+        endif
+        if (ierror /= 0) goto 11
+        if (cinput(i:i) == new_line(cinput(i:i))) then
+          cinput(:) = cinput(1:i-1)
+          exit read_line
+        endif
+      enddo read_line
 
-      nlines=nlines+1
-      read(iuinp,fmt='(a)',iostat=ierror) cinput
-      if (ierror == IOSTAT_END) return
-      if (ierror /= 0) goto 11
-
+      lcinp=len(cinput)
       ks=index(cinput,'*')
       if(ks < 1) ks=lcinp+1
 
@@ -1627,9 +1651,25 @@ PROGRAM bsnap
         kv2=kwhere(5,ikey)
 
         if(kv1 > 0) then
-          nkv=kv2-kv1+1
-          ciname=cinput(kv1:kv2)
-          cipart=cinput(kv1:kv2)//tchar
+          nkv = kv2 - kv1 + 1
+
+          if (len(ciname) < nkv) then
+            call move_alloc(from=ciname, to=char_tmp)
+            allocate(character(len=len(char_tmp) + max(nkv, 256))::ciname)
+            ciname(:) = ""
+            ciname(1:len(char_tmp)) = char_tmp
+            deallocate(char_tmp)
+          endif
+          ciname(:) = cinput(kv1:kv2)
+
+          if (len(cipart) < nkv + len(tchar)) then
+            call move_alloc(from=cipart, to=char_tmp)
+            allocate(character(len=len(char_tmp) + max(nkv + len(tchar), 256))::cipart)
+            cipart(:) = ""
+            cipart(1:len(char_tmp)) = char_tmp
+            deallocate(char_tmp)
+          endif
+          cipart(:) = cinput(kv1:kv2)//tchar
         end if
 
       !=======================================================================
@@ -1895,7 +1935,7 @@ PROGRAM bsnap
         !..release.file
           relfile=ciname(1:nkv)
         !..release.component
-        elseif(cinput(k1:k2) == 'release.components') then
+        elseif(cinput(k:k2) == 'release.components') then
           ncomp=0
           if(kv1 < 1 .OR. ncomp > 0) goto 12
           i1=ncomp+1
@@ -2324,18 +2364,26 @@ PROGRAM bsnap
         elseif(cinput(k1:k2) == 'end') then
         !..end
 #if defined(TRAJ)
-          read(iuinp,*) ntraj
+          allocate(character(len=1024)::char_tmp)
+          call read_line_no_realloc(iuinp, char_tmp, ierror)
+          if (ierror /= 0) goto 12
+
+          read(char_tmp,*) ntraj
           write(*,*) 'ntraj=', ntraj
           do i=1,ntraj
-            read(iuinp,*) tlevel(i)
+            call read_line_no_realloc(iuinp, char_tmp, ierror)
+            if (ierror /= 0) goto 12
+            read(char_tmp,*) tlevel(i)
             write(*,*) tlevel(i)
           enddo
           do i=1,ntraj
-            read(iuinp,'(a80)') tname(i)
+            call read_line_no_realloc(iuinp, char_tmp, ierror)
+            if (ierror /= 0) goto 12
+            read(char_tmp,'(a80)') tname(i)
             write(*,'(i4,1x,a80)') i,tname(i)
           enddo
 #endif
-          iend=1
+          end_loop = .true.
         else
           write(error_unit,*) 'ERROR.  Unknown input:'
           write(error_unit,*) cinput
@@ -2363,6 +2411,42 @@ PROGRAM bsnap
     write(error_unit,*)  trim(cinput)
     write(error_unit,*) 'SOME LIMIT WAS EXCEEDED !!!!!!!!!!!!!!!!!'
     call snap_error_exit()
+
   end subroutine
 
+#ifdef TRAJ
+  !> Reads into a string from a file, returning if
+  !> reaching newline/end of file/len(str)
+  subroutine read_line_no_realloc(iuinp, str, ierror)
+    !> Open file unit
+    integer, intent(in) :: iuinp
+    !> String read into
+    character(len=*), intent(out) :: str
+    !> 0 if no error
+    integer, intent(out) :: ierror
+
+    integer :: i
+
+    ierror = 0
+    str(:) = ""
+    i = 0
+    do
+      i = i + 1
+      if (i > len(str)) then
+        ierror = 1
+        return
+      endif
+      read(iuinp, iostat=ierror) str(i:i)
+      if (ierror == IOSTAT_END) then
+        ierror = 0
+        return
+      endif
+      if (ierror /= 0) return
+      if (str(i:i) == new_line(str(i:i))) then
+        str(:) = str(1:i-1)
+        return
+      endif
+    enddo
+  end subroutine
+#endif
 END PROGRAM
