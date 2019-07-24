@@ -1102,6 +1102,9 @@ PROGRAM bsnap
           if(ciname(1:1) == '''' .OR. ciname(1:1) == '"') then
             read(cipart,*,err=12) filef(nfilef)
           else
+            warning = .true.
+            write(*,*) "WARNING: number of input files is larger than ", &
+                "the set size, some inputs may be ignored"
             filef(nfilef)=ciname(1:nkv)
           end if
         else
