@@ -221,7 +221,7 @@ PROGRAM bsnap
   USE snapfldML, only: enspos, iprecip, nprecip
   USE snapmetML, only: init_meteo_params, use_model_wind_for_10m
   USE snapparML, only: component, run_comp, itprof, &
-      ncomp, def_comp, nparnum, defined_component, push_down_dcomp
+      ncomp, def_comp, nparnum
   USE snapposML, only: irelpos, nrelpos, release_positions
   USE snapgrdML, only: modleveldump, ivcoor, ixbase, iybase, ixystp, kadd, &
       klevel, imslp, inprecip, iprod, iprodr, itotcomp, gparam, igrid, igridr, &
@@ -261,7 +261,6 @@ PROGRAM bsnap
 #else
   USE feltio_dummy, only: readfd, readfield, filesort, fldout
 #endif
-  USE find_parameter, only: detect_gridparams, get_klevel
 
   implicit none
 
@@ -1562,8 +1561,12 @@ PROGRAM bsnap
     error stop ERROR_MSG
   end subroutine
 
+  !> reads information from an inputfile and loads into the program
   subroutine read_inputfile(iuinp)
     use milibML, only: termchar, getvar, keywrd
+    use snapparML, only: push_down_dcomp, defined_component
+    use find_parameter, only: detect_gridparams, get_klevel
+
     !> Open file unit
     integer, intent(in) :: iuinp
 
