@@ -219,7 +219,7 @@ PROGRAM bsnap
   USE snapfilML, only: filef, itimer, limfcf, ncsummary, nctitle, nhfmax, nhfmin, &
       nctype, nfilef, simulation_start
   USE snapfldML, only: enspos, iprecip, nprecip
-  USE snapmetML, only: init_meteo_params, use_model_wind_for_10m
+  USE snapmetML, only: init_meteo_params, met_params
   USE snapparML, only: component, run_comp, itprof, &
       ncomp, def_comp, nparnum
   USE snapposML, only: irelpos, nrelpos, release_positions
@@ -703,7 +703,7 @@ PROGRAM bsnap
   if(iprodr == 0) iprodr=iprod
   if(igridr == 0) igridr=igrid
 
-  if (nctype /= "*") call init_meteo_params()
+  if (nctype /= "*") call init_meteo_params(nctype)
 
 
   if (warning) then
@@ -2095,9 +2095,9 @@ PROGRAM bsnap
             if(def_comp(i)%idcomp == d_comp%idcomp) goto 12
           end do
         elseif (cinput(k1:k2) == 'field.use_model_wind_instead_of_10m') then
+        ! FIELD.USE_MODEL_WIND_INSTEAD_OF_10M= [.false.]/.true
           if (kv1 < 1) goto 12
-          read(cipart,*,err=12) use_model_wind_for_10m
-!   FIELD.USE_MODEL_WIND_INSTEAD_OF_10M= [.false.]/.true
+          read(cipart,*,err=12) met_params%use_model_wind_for_10m
         elseif(cinput(k1:k2) == 'precip(mm/h).probab') then
         !..precip(mm/h).probab=<precip_intensity,probability, ...>
           if(kv1 < 1) goto 12
