@@ -25,7 +25,7 @@ module decayML
 
 !>  Purpose:  Decrease radioactive contents due to decay
 !>
-!>  WARNING:   make sure ::decayDeps is run once before running decay
+!>  WARNING:   make sure ::decaydeps is run once before running decay
 subroutine decay(part)
   use particleML, only: Particle
   use snapparML, only: def_comp

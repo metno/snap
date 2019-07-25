@@ -28,6 +28,7 @@ module find_parameter
   !> netcdf file, taking the projection from
   !> the #standard_var variable
   subroutine detect_gridparams(ncfile, nx, ny, igtype, gparam, stat)
+    !> Path to the netcdf file
     character(len=*), intent(in) :: ncfile
     !> Number of longitudes
     integer, intent(out) :: nx

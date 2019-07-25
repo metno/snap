@@ -77,9 +77,11 @@ subroutine wetdep2(tstep, part, pextra)
   USE snapfldML, only: depwet
   USE snapparML, only: def_comp, run_comp
 
-  real, intent(in) ::    tstep
+!> Timestep of the simulation, affects the deposition rate
+  real, intent(in) :: tstep
 !> particle
   type(Particle), intent(inout) :: part
+!> uses the precipitation at the particle position
   type(extraParticle), intent(in) :: pextra
 
   integer :: m,i,j,mm
