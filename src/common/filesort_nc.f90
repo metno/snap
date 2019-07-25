@@ -30,7 +30,7 @@ subroutine filesort_nc
   USE DateCalc, only: timeUnitOffset, timeUnitScale, epochToDate
   USE snapfilML, only: iavail, kavail, itimer, navail, nfilef, filef
   USE snapfldML, only: enspos, field1
-  USE snapmetML, ONLY: xwindv, has_dummy_dim
+  USE snapmetML, ONLY: met_params
   USE snapdebug, only: iulog, idebug
   USE readfield_ncML, only: check, calc_2d_start_length, nfcheckload
   USE netcdf
@@ -78,15 +78,15 @@ subroutine filesort_nc
     scalef = timeUnitScale(tunits)
     do i = 1, tsize
       call calc_2d_start_length(start4d, count4d, nx, ny, 1, &
-          enspos, i, has_dummy_dim)
-      call nfcheckload(ncid, xwindv, start4d, count4d, field1)
+          enspos, i, met_params%has_dummy_dim)
+      call nfcheckload(ncid, met_params%xwindv, start4d, count4d, field1)
     ! test 4 arbitrary values in field
       count_nan = 0
       do j = 1, 4
         if (ieee_is_nan(field1(j, j))) count_nan = count_nan + 1
       end do
       if (count_nan == 4) then
-        write(*,*) xwindv, " at time ", i , " undefined, skipping"
+        write(*,*) met_params%xwindv, " at time ", i , " undefined, skipping"
         CYCLE
       end if
       navail = navail + 1

@@ -20,212 +20,233 @@
 !> many of these definitions can be changed in
 !> from the setup-file with a call to init_meteo_params()
 module snapmetML
-  IMPLICIT NONE
+  implicit none
   private
 
-  character(len=80), save, public :: xwindv,ywindv,xwind10mv,ywind10mv,pottempv,ptopv
-  character(len=80), save, public :: sigmadotv,apv,bv,sigmav,psv,mslpv,precaccumv
-  character(len=80), save, public :: precstratiaccumv, precconaccumv
-  character(len=80), save, public :: precstrativrt,precconvrt
-  logical, save, public :: temp_is_abs, has_dummy_dim, manual_level_selection
-  logical, save, public :: sigmadot_is_omega
-!> Use model wind (bottom layer) in place of 10m wind
-  logical, save, public :: use_model_wind_for_10m = .false.
+  ! netcdf names for the various fields
+  type, public :: met_params_t
+    character(len=80) :: xwindv = ''
+    character(len=80) :: ywindv = ''
+    character(len=80) :: xwind10mv = ''
+    character(len=80) :: ywind10mv = ''
+    character(len=80) :: pottempv = ''
+    character(len=80) :: ptopv = ''
+    character(len=80) :: sigmadotv = ''
+    character(len=80) :: apv = ''
+    character(len=80) :: bv = ''
+    character(len=80) :: sigmav = ''
+    character(len=80) :: psv = ''
+    character(len=80) :: mslpv = ''
+    character(len=80) :: precaccumv = ''
+    character(len=80) :: precstratiaccumv = ''
+    character(len=80) :: precconaccumv = ''
+    character(len=80) :: precstrativrt = ''
+    character(len=80) :: precconvrt = ''
+
+    logical :: temp_is_abs = .false.
+    logical :: has_dummy_dim = .false.
+    logical :: manual_level_selection = .false.
+    logical :: sigmadot_is_omega = .false.
+    !> Use lowest level in #xwindv/#ywindv in place of
+    !> #xwind10mv/#ywind10mv
+    logical :: use_model_wind_for_10m = .false.
+  end type
+
+  type(met_params_t), save, public :: met_params = met_params_t()
 
   public init_meteo_params
 
-  CONTAINS
+  contains
 
-  subroutine init_meteo_params()
-      USE snapfilML, only: nctype
+  subroutine init_meteo_params(nctype)
+    character(len=*), intent(in) :: nctype
 
-      temp_is_abs = .false.
-      has_dummy_dim = .false.
-      manual_level_selection = .false.
-      sigmadot_is_omega = .false.
-      if (nctype.eq.'h12') then
-        xwindv = 'x_wind_ml'
-        ywindv = 'y_wind_ml'
-        xwind10mv = 'x_wind_10m'
-        ywind10mv = 'y_wind_10m'
-        pottempv = 'air_potential_temperature_ml'
-        sigmav = ''
-        ptopv = ''
-        apv = 'ap'
-        bv = 'b'
-        sigmadotv = 'omega_ml'
-        sigmadot_is_omega = .true.
-        psv = 'surface_air_pressure'
-        mslpv = 'air_pressure_at_sea_level'
-        precaccumv = 'precipitation_amount_acc'
-        precstrativrt = ''
-        precconvrt = ''
+    met_params = met_params_t()
+
+    select case (nctype)
+    case('h12')
+      met_params%xwindv = 'x_wind_ml'
+      met_params%ywindv = 'y_wind_ml'
+      met_params%xwind10mv = 'x_wind_10m'
+      met_params%ywind10mv = 'y_wind_10m'
+      met_params%pottempv = 'air_potential_temperature_ml'
+      met_params%sigmav = ''
+      met_params%ptopv = ''
+      met_params%apv = 'ap'
+      met_params%bv = 'b'
+      met_params%sigmadotv = 'omega_ml'
+      met_params%sigmadot_is_omega = .true.
+      met_params%psv = 'surface_air_pressure'
+      met_params%mslpv = 'air_pressure_at_sea_level'
+      met_params%precaccumv = 'precipitation_amount_acc'
+      met_params%precstrativrt = ''
+      met_params%precconvrt = ''
 !..get grid parameters from field identification
-      else if (nctype.eq.'h12_grib') then
+    case('h12_grib')
 !..h12 results converted directly from grib-files via fimex
-        manual_level_selection = .true.
-        has_dummy_dim = .true.
-        xwindv = 'x_wind_ml'
-        ywindv = 'y_wind_ml'
-        xwind10mv = 'x_wind_10m'
-        ywind10mv = 'y_wind_10m'
+      met_params%manual_level_selection = .true.
+      met_params%has_dummy_dim = .true.
+      met_params%xwindv = 'x_wind_ml'
+      met_params%ywindv = 'y_wind_ml'
+      met_params%xwind10mv = 'x_wind_10m'
+      met_params%ywind10mv = 'y_wind_10m'
 !       !! real temperature, convert to pot-temp later
 ! semipalatinsk uses air_temp
-        pottempv = 'air_temperature_ml'
-        temp_is_abs = .true.
+      met_params%pottempv = 'air_temperature_ml'
+      met_params%temp_is_abs = .true.
 ! chernobyl uses pot-temp
 !        pottempv = 'air_potential_temperature_ml'
-        sigmav = ''
-        ptopv = ''
-        apv = 'ap'
-        bv = 'b'
+      met_params%sigmav = ''
+      met_params%ptopv = ''
+      met_params%apv = 'ap'
+      met_params%bv = 'b'
 ! upward_air_velocity_ml, not used yet?
 ! semipalatinsk
-        sigmadotv = ''
+      met_params%sigmadotv = ''
 ! chernobyl
 !        sigmadotv = 'omega_ml'
-        psv = 'surface_air_pressure'
-        mslpv = ''
-        precaccumv = ''
-        precstrativrt = ''
-        precconvrt = ''
-        precstratiaccumv = 'lwe_thickness_of_stratiform_precipitation_amount'
-        precconaccumv = 'lwe_thickness_of_convective_precipitation_amount'
+      met_params%psv = 'surface_air_pressure'
+      met_params%mslpv = ''
+      met_params%precaccumv = ''
+      met_params%precstrativrt = ''
+      met_params%precconvrt = ''
+      met_params%precstratiaccumv = 'lwe_thickness_of_stratiform_precipitation_amount'
+      met_params%precconaccumv = 'lwe_thickness_of_convective_precipitation_amount'
 !..get grid parameters from field identification
 
-      else if (nctype.eq.'ec_det') then
-        manual_level_selection = .true.
-        has_dummy_dim = .true.
-        xwindv = 'x_wind_ml'
-        ywindv = 'y_wind_ml'
-        xwind10mv = 'x_wind_10m'
-        ywind10mv = 'y_wind_10m'
+    case('ec_det')
+      met_params%manual_level_selection = .true.
+      met_params%has_dummy_dim = .true.
+      met_params%xwindv = 'x_wind_ml'
+      met_params%ywindv = 'y_wind_ml'
+      met_params%xwind10mv = 'x_wind_10m'
+      met_params%ywind10mv = 'y_wind_10m'
 !       !! real temperature, convert to pot-temp later
-        pottempv = 'air_temperature_ml'
-        temp_is_abs = .true.
-        sigmav = ''
-        ptopv = ''
-        apv = 'ap'
-        bv = 'b'
+      met_params%pottempv = 'air_temperature_ml'
+      met_params%temp_is_abs = .true.
+      met_params%sigmav = ''
+      met_params%ptopv = ''
+      met_params%apv = 'ap'
+      met_params%bv = 'b'
 ! upward_air_velocity_ml, not used yet?
-        sigmadotv = ''
-        psv = 'surface_air_pressure'
-        mslpv = ''
-        precaccumv = ''
-        precstrativrt = ''
-        precconvrt = ''
-        precstratiaccumv = 'lwe_thickness_of_stratiform_precipitation_amount'
-        precconaccumv = 'lwe_thickness_of_convective_precipitation_amount'
+      met_params%sigmadotv = ''
+      met_params%psv = 'surface_air_pressure'
+      met_params%mslpv = ''
+      met_params%precaccumv = ''
+      met_params%precstrativrt = ''
+      met_params%precconvrt = ''
+      met_params%precstratiaccumv = 'lwe_thickness_of_stratiform_precipitation_amount'
+      met_params%precconaccumv = 'lwe_thickness_of_convective_precipitation_amount'
 !..get grid parameters from field identification
-      else if (nctype.eq.'arome') then
-        manual_level_selection = .true.
-        has_dummy_dim = .true.
-        xwindv = 'x_wind_ml'
-        ywindv = 'y_wind_ml'
-        xwind10mv = 'x_wind_10m'
-        ywind10mv = 'y_wind_10m'
+    case('arome')
+      met_params%manual_level_selection = .true.
+      met_params%has_dummy_dim = .true.
+      met_params%xwindv = 'x_wind_ml'
+      met_params%ywindv = 'y_wind_ml'
+      met_params%xwind10mv = 'x_wind_10m'
+      met_params%ywind10mv = 'y_wind_10m'
 !       !! real temperature, convert to pot-temp later
-        pottempv = 'air_temperature_ml'
-        temp_is_abs = .true.
-        sigmav = ''
-        ptopv = ''
-        apv = 'ap'
-        bv = 'b'
+      met_params%pottempv = 'air_temperature_ml'
+      met_params%temp_is_abs = .true.
+      met_params%sigmav = ''
+      met_params%ptopv = ''
+      met_params%apv = 'ap'
+      met_params%bv = 'b'
 ! upward_air_velocity_ml, not used yet?
-        sigmadotv = ''
-        psv = 'surface_air_pressure'
-        mslpv = 'air_pressure_at_sea_level'
-        precaccumv = 'precipitation_amount_acc'
-        precstrativrt = ''
-        precconvrt = ''
+      met_params%sigmadotv = ''
+      met_params%psv = 'surface_air_pressure'
+      met_params%mslpv = 'air_pressure_at_sea_level'
+      met_params%precaccumv = 'precipitation_amount_acc'
+      met_params%precstrativrt = ''
+      met_params%precconvrt = ''
 !..get grid parameters from field identification
-      else if (nctype.eq.'dmi_eps') then
-        has_dummy_dim = .true.
-        xwindv = 'x_wind_ml'
-        ywindv = 'y_wind_ml'
-        xwind10mv = 'x_wind_10m'
-        ywind10mv = 'y_wind_10m'
+    case('dmi_eps')
+      met_params%has_dummy_dim = .true.
+      met_params%xwindv = 'x_wind_ml'
+      met_params%ywindv = 'y_wind_ml'
+      met_params%xwind10mv = 'x_wind_10m'
+      met_params%ywind10mv = 'y_wind_10m'
 !       !! real temperature, convert to pot-temp later
-        pottempv = 'air_temperature_ml'
-        temp_is_abs = .true.
-        sigmav = ''
-        ptopv = ''
-        apv = 'ap'
-        bv = 'b'
+      met_params%pottempv = 'air_temperature_ml'
+      met_params%temp_is_abs = .true.
+      met_params%sigmav = ''
+      met_params%ptopv = ''
+      met_params%apv = 'ap'
+      met_params%bv = 'b'
 ! upward_air_velocity_ml, not used yet?
-        sigmadotv = ''
-        psv = 'surface_air_pressure'
+      met_params%sigmadotv = ''
+      met_params%psv = 'surface_air_pressure'
 !        mslpv = 'air_pressure_at_sea_level'
-        precaccumv = ''
-        precstratiaccumv = 'stratiform_precipitation_amount_acc'
-        precconaccumv = 'convective_precipitation_amount_acc'
-        precstrativrt = ''
-        precconvrt = ''
+      met_params%precaccumv = ''
+      met_params%precstratiaccumv = 'stratiform_precipitation_amount_acc'
+      met_params%precconaccumv = 'convective_precipitation_amount_acc'
+      met_params%precstrativrt = ''
+      met_params%precconvrt = ''
 
-      else if (nctype.eq.'emep') then
-        manual_level_selection = .true.
-        xwindv = 'u_wind'
-        ywindv = 'v_wind'
-        xwind10mv = 'u10'
-        ywind10mv = 'v10'
-        pottempv = 'potential_temperature'
-        sigmav = 'k'
-        ptopv = ''
-        apv = ''
-        bv = ''
-        sigmadotv = ''
-        psv = 'surface_pressure'
-        mslpv = 'air_pressure_at_sea_level'
-        precaccumv = ''
-        precstratiaccumv = ''
+    case('emep')
+      met_params%manual_level_selection = .true.
+      met_params%xwindv = 'u_wind'
+      met_params%ywindv = 'v_wind'
+      met_params%xwind10mv = 'u10'
+      met_params%ywind10mv = 'v10'
+      met_params%pottempv = 'potential_temperature'
+      met_params%sigmav = 'k'
+      met_params%ptopv = ''
+      met_params%apv = ''
+      met_params%bv = ''
+      met_params%sigmadotv = ''
+      met_params%psv = 'surface_pressure'
+      met_params%mslpv = 'air_pressure_at_sea_level'
+      met_params%precaccumv = ''
+      met_params%precstratiaccumv = ''
 !.. non accumulated precipitation rates in m/s
-        precstrativrt = 'large_scale_precipitations'
-        precconvrt = 'convective_precipitations'
-      else if (nctype.eq.'ecemep') then
-        manual_level_selection = .true.
-        xwindv = 'u_wind'
-        ywindv = 'v_wind'
-        xwind10mv = 'u10'
-        ywind10mv = 'v10'
-        pottempv = 'potential_temperature'
-        sigmav = ''
-        ptopv = 'P0'
-        apv = 'hyai'
-        bv = 'hybi'
-        sigmadotv = ''
-        psv = 'surface_pressure'
+      met_params%precstrativrt = 'large_scale_precipitations'
+      met_params%precconvrt = 'convective_precipitations'
+    case('ecemep')
+      met_params%manual_level_selection = .true.
+      met_params%xwindv = 'u_wind'
+      met_params%ywindv = 'v_wind'
+      met_params%xwind10mv = 'u10'
+      met_params%ywind10mv = 'v10'
+      met_params%pottempv = 'potential_temperature'
+      met_params%sigmav = ''
+      met_params%ptopv = 'P0'
+      met_params%apv = 'hyai'
+      met_params%bv = 'hybi'
+      met_params%sigmadotv = ''
+      met_params%psv = 'surface_pressure'
 !        mslpv = 'air_pressure_at_sea_level'
-        precaccumv = ''
-        precstratiaccumv = ''
+      met_params%precaccumv = ''
+      met_params%precstratiaccumv = ''
 !.. non accumulated precipitation rates in m/s
-        precstrativrt = 'large_scale_precipitations'
-        precconvrt = 'convective_precipitations'
+      met_params%precstrativrt = 'large_scale_precipitations'
+      met_params%precconvrt = 'convective_precipitations'
 !..get grid parameters from field identification
 ! set as long as sortfield still is called
-      else if (nctype.eq.'ec_n1s') then
-        manual_level_selection = .true.
-        has_dummy_dim = .true.
-        xwindv = 'x_wind_ml'
-        ywindv = 'y_wind_ml'
-        xwind10mv = 'x_wind_10m'
-        ywind10mv = 'y_wind_10m'
-        pottempv = 'air_temperature_ml'
-        temp_is_abs = .true.
-        sigmav = ''
-        ptopv = ''
-        apv = 'ap'
-        bv = 'b'
-        sigmadotv = ''
-        psv = 'surface_air_pressure'
-        precaccumv = ''
-        precstratiaccumv = 'lwe_thickness_of_stratiform_precipitation_amount_acc'
-        precconaccumv = 'lwe_thickness_of_convective_precipitation_amount_acc'
-        precstrativrt = ''
-        precconvrt = ''
-      else
-        write(*,*) "undefined grid.nctype: ", nctype
-        error stop 1
-      end if
+    case('ec_n1s')
+      met_params%manual_level_selection = .true.
+      met_params%has_dummy_dim = .true.
+      met_params%xwindv = 'x_wind_ml'
+      met_params%ywindv = 'y_wind_ml'
+      met_params%xwind10mv = 'x_wind_10m'
+      met_params%ywind10mv = 'y_wind_10m'
+      met_params%pottempv = 'air_temperature_ml'
+      met_params%temp_is_abs = .true.
+      met_params%sigmav = ''
+      met_params%ptopv = ''
+      met_params%apv = 'ap'
+      met_params%bv = 'b'
+      met_params%sigmadotv = ''
+      met_params%psv = 'surface_air_pressure'
+      met_params%precaccumv = ''
+      met_params%precstratiaccumv = 'lwe_thickness_of_stratiform_precipitation_amount_acc'
+      met_params%precconaccumv = 'lwe_thickness_of_convective_precipitation_amount_acc'
+      met_params%precstrativrt = ''
+      met_params%precconvrt = ''
+    case default
+      write(*,*) "undefined grid.nctype: ", nctype
+      error stop 1
+    end select
   end subroutine init_meteo_params
 
 end module snapmetML

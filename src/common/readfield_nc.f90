@@ -43,11 +43,7 @@ subroutine readfield_nc(iunit, istep, nhleft, itimei, ihr1, ihr2, &
       hlayer1, hlayer2, bl1, bl2, enspos, nprecip, precip
   USE snapgrdML, only: alevel, blevel, vlevel, ahalf, bhalf, vhalf, &
       gparam, kadd, klevel, ivlevel, imslp, igtype, ivlayer, ivcoor
-  USE snapmetML, only: psv, ptopv, sigmadot_is_omega, sigmav, temp_is_abs, &
-      use_model_wind_for_10m, xwind10mv, ywind10mv, xwindv, ywindv, &
-      precconvrt, precstratiaccumv, precstrativrt, &
-      apv, bv, has_dummy_dim, manual_level_selection, &
-      pottempv, precaccumv, precconaccumv, mslpv, sigmadotv
+  USE snapmetML, only: met_params
   USE snaptabML, only: cp, r
   USE snapdebug, only: iulog, idebug
   USE snapdimML, only: nx, ny, nk
@@ -228,53 +224,53 @@ subroutine readfield_nc(iunit, istep, nhleft, itimei, ihr1, ihr2, &
     ilevel=klevel(k)
 
     call calc_2d_start_length(start4d, count4d, nx, ny, ilevel, &
-        enspos, timepos, has_dummy_dim)
+        enspos, timepos, met_params%has_dummy_dim)
 
   !..u
   !     Get the varid of the data variable, based on its name.
-    call nfcheckload(ncid, xwindv, start4d, count4d, u2(:,:,k))
+    call nfcheckload(ncid, met_params%xwindv, start4d, count4d, u2(:,:,k))
 
   !..v
-    call nfcheckload(ncid, ywindv, start4d, count4d, v2(:,:,k))
+    call nfcheckload(ncid, met_params%ywindv, start4d, count4d, v2(:,:,k))
   ! bug in chernobyl borders from destaggering
     where (v2 >= 1e+30)
       v2 = 0.0
     end where
 
   !..pot.temp. or abs.temp.
-    call nfcheckload(ncid, pottempv, start4d, count4d, t2(:,:,k))
+    call nfcheckload(ncid, met_params%pottempv, start4d, count4d, t2(:,:,k))
 
 
   !   TODO read ptop from file (only needed for sigma), but not in emep data
     ptop=100.
   !       if(ivcoor.eq.2) ptop=idata(19)
   !..p0 for hybrid loaded to ptop, ap is a * p0
-    if (ivcoor /= 2 .AND. .NOT. ptopv == '') then
-      call nfcheckload(ncid, ptopv, (/0/), (/1/), ptoptmp)
+    if (ivcoor /= 2 .AND. .NOT. met_params%ptopv == '') then
+      call nfcheckload(ncid, met_params%ptopv, (/0/), (/1/), ptoptmp)
       ptop = ptoptmp(1)
     end if
   !..alevel (here) only for eta levels
-    if ( .NOT. apv == '') then
-      call nfcheckload(ncid, apv, (/ilevel/), (/1/), alev(k:k))
-      call nfcheckload(ncid, bv, (/ilevel/), (/1/), blev(k:k))
-      if (ivcoor /= 2 .AND. .NOT. ptopv == '') then
+    if ( .NOT. met_params%apv == '') then
+      call nfcheckload(ncid, met_params%apv, (/ilevel/), (/1/), alev(k:k))
+      call nfcheckload(ncid, met_params%bv, (/ilevel/), (/1/), blev(k:k))
+      if (ivcoor /= 2 .AND. .NOT. met_params%ptopv == '') then
       !..p0 for hybrid loaded to ptop, ap is a * p0
         alev(k) = alev(k) * ptop
       end if
     ! TODO: check unit (here Pa -> hPa
       alev(k) = alev(k) / 100
     end if
-    if ( .NOT. sigmav == '') then
+    if ( .NOT. met_params%sigmav == '') then
     ! reusing blev(k) for sigma(k) later
-      call nfcheckload(ncid, sigmav, (/ilevel/), (/1/), blev(k:k))
+      call nfcheckload(ncid, met_params%sigmav, (/ilevel/), (/1/), blev(k:k))
     end if
 
   !..sigma_dot/eta_dot (0 at surface)
   !..eta: eta_dot (or omega) stored in the same levels as u,v,th.
-    if (sigmadotv == '') then
+    if (met_params%sigmadotv == '') then
       w2 = 0
     else
-      call nfcheckload(ncid, sigmadotv, &
+      call nfcheckload(ncid, met_params%sigmadotv, &
           start4d, count4d, w2(:,:,k))
     end if
 
@@ -284,11 +280,11 @@ subroutine readfield_nc(iunit, istep, nhleft, itimei, ihr1, ihr2, &
 !..surface pressure, 10m wind and possibly mean sea level pressure,
 !..precipitation
   call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
-  enspos, timepos, has_dummy_dim)
+  enspos, timepos, met_params%has_dummy_dim)
 
 
 ! ps
-  call nfcheckload(ncid, psv, start3d, count3d, ps2(:,:))
+  call nfcheckload(ncid, met_params%psv, start3d, count3d, ps2(:,:))
 !  input ps, must be hPa, otherwise:
   if (nctype == 'arome' .OR. nctype == 'dmi_eps' .OR. &
   nctype == 'ec_det' .OR. nctype == 'h12_grib' .OR. &
@@ -299,19 +295,19 @@ subroutine readfield_nc(iunit, istep, nhleft, itimei, ihr1, ihr2, &
 
 ! u10m
 ! v10m
-  if (.not.use_model_wind_for_10m) then
-    call nfcheckload(ncid, xwind10mv, start3d, count3d, u2(:,:,1))
-    call nfcheckload(ncid, ywind10mv, start3d, count3d, v2(:,:,1))
+  if (.not.met_params%use_model_wind_for_10m) then
+    call nfcheckload(ncid, met_params%xwind10mv, start3d, count3d, u2(:,:,1))
+    call nfcheckload(ncid, met_params%ywind10mv, start3d, count3d, v2(:,:,1))
   else
     if (enspos >= 0) then
-      call nfcheckload(ncid, xwindv, [1, 1, enspos+1, nk, timepos], &
+      call nfcheckload(ncid, met_params%xwindv, [1, 1, enspos+1, nk, timepos], &
           [nx, ny, 1, 1, 1], u2(:,:,1))
-      call nfcheckload(ncid, ywindv, [1, 1, enspos+1, nk, timepos], &
+      call nfcheckload(ncid, met_params%ywindv, [1, 1, enspos+1, nk, timepos], &
           [nx, ny, 1, 1, 1], v2(:,:,1))
     else
-      call nfcheckload(ncid, xwindv, [1, 1, nk, timepos], &
+      call nfcheckload(ncid, met_params%xwindv, [1, 1, nk, timepos], &
           [nx, ny, 1, 1], u2(:,:,1))
-      call nfcheckload(ncid, ywindv, [1, 1, nk, timepos], &
+      call nfcheckload(ncid, met_params%ywindv, [1, 1, nk, timepos], &
           [nx, ny, 1, 1], v2(:,:,1))
     endif
   endif
@@ -319,26 +315,26 @@ subroutine readfield_nc(iunit, istep, nhleft, itimei, ihr1, ihr2, &
 !..mean sea level pressure, not used in computations,
 !..(only for output to results file)
   if(imslp /= 0) then
-    if ( .NOT. mslpv == '') then
+    if ( .NOT. met_params%mslpv == '') then
       write(iulog,*) 'Mslp not found. Not important.'
       imslp=0
     else
-      call nfcheckload(ncid, mslpv, start3d, count3d, pmsl2(:,:))
+      call nfcheckload(ncid, met_params%mslpv, start3d, count3d, pmsl2(:,:))
     end if
   end if
 
 !..precipitation......................................................
-  if (precaccumv /= '') then
+  if (met_params%precaccumv /= '') then
   !..precipitation between input time 't1' and 't2'
     if (timepos /= 1) then
       call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
-          enspos, timeposm1, has_dummy_dim)
-      call nfcheckload(ncid, precaccumv, &
+          enspos, timeposm1, met_params%has_dummy_dim)
+      call nfcheckload(ncid, met_params%precaccumv, &
           start3d, count3d, field1(:,:))
 
       call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
-          enspos, timepos, has_dummy_dim)
-      call nfcheckload(ncid, precaccumv, &
+          enspos, timepos, met_params%has_dummy_dim)
+      call nfcheckload(ncid, met_params%precaccumv, &
           start3d, count3d, field2(:,:))
 
     !..the difference below may get negative due to different scaling
@@ -349,21 +345,21 @@ subroutine readfield_nc(iunit, istep, nhleft, itimei, ihr1, ihr2, &
         end do
       end do
     end if
-  else if (precstratiaccumv /= '') then
+  else if (met_params%precstratiaccumv /= '') then
   ! accumulated stratiform and convective precipitation
   !..precipitation between input time 't1' and 't2'
     if (timepos /= 1) then
       call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
-          enspos, timeposm1, has_dummy_dim)
-      call nfcheckload(ncid, precstratiaccumv, &
+          enspos, timeposm1, met_params%has_dummy_dim)
+      call nfcheckload(ncid, met_params%precstratiaccumv, &
           start3d, count3d, field1)
-      call nfcheckload(ncid, precconaccumv, &
+      call nfcheckload(ncid, met_params%precconaccumv, &
           start3d, count3d, field2)
       call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
-          enspos, timepos, has_dummy_dim)
-      call nfcheckload(ncid, precstratiaccumv, &
+          enspos, timepos, met_params%has_dummy_dim)
+      call nfcheckload(ncid, met_params%precstratiaccumv, &
           start3d, count3d, field3)
-      call nfcheckload(ncid, precconaccumv, &
+      call nfcheckload(ncid, met_params%precconaccumv, &
           start3d, count3d, field4)
     !..the difference below may get negative due to different scaling
       unitScale = 1.
@@ -378,10 +374,10 @@ subroutine readfield_nc(iunit, istep, nhleft, itimei, ihr1, ihr2, &
     else
     ! timepos eq 1, check if precipitation already present / assume dummy step 0
       call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
-          enspos, timepos, has_dummy_dim)
-      call nfcheckload(ncid, precstratiaccumv, &
+          enspos, timepos, met_params%has_dummy_dim)
+      call nfcheckload(ncid, met_params%precstratiaccumv, &
           start3d, count3d, field3(:,:))
-      call nfcheckload(ncid, precconaccumv, &
+      call nfcheckload(ncid, met_params%precconaccumv, &
           start3d, count3d, field4(:,:))
 
       field1 = 0.0
@@ -405,9 +401,9 @@ subroutine readfield_nc(iunit, istep, nhleft, itimei, ihr1, ihr2, &
     end if
   else
   !..non-accumulated emissions in stratiform an convective
-    call nfcheckload(ncid, precstrativrt, &
+    call nfcheckload(ncid, met_params%precstrativrt, &
         start3d, count3d, field1(:,:))
-    call nfcheckload(ncid, precconvrt, &
+    call nfcheckload(ncid, met_params%precconvrt, &
         start3d, count3d, field2(:,:))
 
     do j=1,ny
@@ -485,11 +481,11 @@ subroutine readfield_nc(iunit, istep, nhleft, itimei, ihr1, ihr2, &
   !..check if subselection of levels
     do k=2,nk-1
       if (klevel(k+1) /= klevel(k)-1) then
-        manual_level_selection = .TRUE.
+        met_params%manual_level_selection = .TRUE.
       endif
     end do
     do k=2,nk-1
-      if ( .NOT. manual_level_selection) then
+      if ( .NOT. met_params%manual_level_selection) then
         ahalf(k)=alevel(k)+(alevel(k)-ahalf(k-1))
         bhalf(k)=blevel(k)+(blevel(k)-bhalf(k-1))
         vhalf(k)=ahalf(k)/mean_surface_air_pressure+bhalf(k)
@@ -518,7 +514,7 @@ subroutine readfield_nc(iunit, istep, nhleft, itimei, ihr1, ihr2, &
     garea = abs((dxgrid/xm) * (dygrid/ym))
     dgarea = garea
 
-    if (temp_is_abs) then
+    if (met_params%temp_is_abs) then
     ! create precomputed table for pressures between 0.1 and 1500hPa
       do i=1,size(t2thetafac)
         t2thetafac(i) = 1./((real(i)/10.*0.001)**rcp)
@@ -528,7 +524,7 @@ subroutine readfield_nc(iunit, istep, nhleft, itimei, ihr1, ihr2, &
   ! end initialization
   end if
 
-  if (temp_is_abs) then
+  if (met_params%temp_is_abs) then
   !..abs.temp. -> pot.temp.
     do k=2,nk-kadd
       do j=1,ny
@@ -542,10 +538,10 @@ subroutine readfield_nc(iunit, istep, nhleft, itimei, ihr1, ihr2, &
     end do
   end if
 
-  if (sigmadot_is_omega) then
+  if (met_params%sigmadot_is_omega) then
   !..omega -> etadot, or rather etadot derived from continuity-equation (mean of both)
     call om2edot
-  else if (sigmadotv == '') then
+  else if (met_params%sigmadotv == '') then
   !..omega -> etadot, or rather etadot derived from continuity-equation
     call om2edot
   ! om2edot take means of omega (=0) and continuity-equation, -> use only continuity equation
