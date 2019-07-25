@@ -26,11 +26,12 @@ module snapparML
   public push_down_dcomp
 
 
+!> Information defining a component
   type, public :: defined_component
 !> mapping from defined component to the running component
 !>
-!> used when mapping from component given by e.g. ::particle\%icomp
-!> to defined components in e.g. ::kgravity
+!> used when mapping from component given by e.g. particleml::particle::icomp
+!> to the currenctly running component in ::run_comp
 !>
 !> should be 0 for components that are not running
     integer :: to_running = 0

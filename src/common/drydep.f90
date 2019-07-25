@@ -67,6 +67,7 @@ subroutine drydep2(tstep, part)
   USE snapgrdML, only: vlevel
 
 ! ... 23.04.12 - gas, particle 0.1<d<10, particle d>10 - J. Bartnicki|
+!> timestep of the simulation, affects the deposition rate
   real, intent(in) :: tstep
 !> particle
   type(Particle), intent(inout) :: part

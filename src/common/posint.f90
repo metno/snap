@@ -72,6 +72,8 @@ subroutine posint(part,tf1,tf2,tnow,pextra)
   real, intent(in) :: tf2
 !> time in seconds for current paricle positions
   real, intent(in) :: tnow
+!> extra information interpolated to the particle
+!> position, mainly rmx/rmy/prc
   type(extraParticle), intent(out) :: pextra
 
   integer :: i,j

@@ -53,7 +53,7 @@ subroutine forwrd(tf1, tf2, tnow, tstep, part, pextra)
   real, intent(in) :: tstep
 !> particle
   type(Particle), intent(inout) :: part
-
+!> extra information for the particle (u, v, rm{x,y})
   type(extraParticle), intent(inout) :: pextra
 
   real(real64) :: dx1, dy1, dz1, u, v
