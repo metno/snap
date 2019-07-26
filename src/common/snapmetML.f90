@@ -61,8 +61,6 @@ module snapmetML
   subroutine init_meteo_params(nctype)
     character(len=*), intent(in) :: nctype
 
-    met_params = met_params_t()
-
     select case (nctype)
     case('h12')
       met_params%xwindv = 'x_wind_ml'
