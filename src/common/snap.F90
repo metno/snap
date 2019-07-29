@@ -1233,7 +1233,7 @@ PROGRAM bsnap
       end if
 
     ! particle loop
-    ! OMP PARALLEL DO PRIVATE(pextra) SCHEDULE(guided) !np is private by default
+    !$OMP PARALLEL DO PRIVATE(pextra) SCHEDULE(guided) !np is private by default
       part_do: do np=1,npart
         if (.not.pdata(np)%active) cycle part_do
 
@@ -1272,7 +1272,7 @@ PROGRAM bsnap
         !.. check domain (%active) after moving particle
         call checkDomain(pdata(np))
       end do part_do
-    ! OMP END PARALLEL DO
+    !$OMP END PARALLEL DO
 
     !..remove inactive particles or without any mass left
       call rmpart(rmlimit)
@@ -1280,12 +1280,12 @@ PROGRAM bsnap
     !       if(iensemble.eq.1)
     !     +    call ensemble(5,itime,tf1,tf2,tnext,istep,nstep,nsteph,0)
 
-    ! OMP PARALLEL DO REDUCTION(max : mhmax) REDUCTION(min : mhmin)
+    !$OMP PARALLEL DO REDUCTION(max : mhmax) REDUCTION(min : mhmin)
       do n=1,npart
         if(pdata(n)%hbl > mhmax) mhmax=pdata(n)%hbl
         if(pdata(n)%hbl < mhmin) mhmin=pdata(n)%hbl
       enddo
-    ! OMP END PARALLEL DO
+    !$OMP END PARALLEL DO
 
 
     !###################################################################

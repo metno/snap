@@ -243,9 +243,9 @@ subroutine ftest_3d_orig(name,k1,k2,nx,ny,nk,field,iundef)
       ndef=nx*ny
     else
       ndef=0
-    ! OMP PARALLEL DO PRIVATE(j,i) REDUCTION(max : fmax)
-    ! OMP&            REDUCTION(min : fmin) REDUCTION( + : fsum, ndef)
-    ! OMP&            COLLAPSE(2)
+    !$OMP PARALLEL DO PRIVATE(j,i) REDUCTION(max : fmax)
+    !$OMP&            REDUCTION(min : fmin) REDUCTION( + : fsum, ndef)
+    !$OMP&            COLLAPSE(2)
       do j=1,ny
         do i=1,nx
           if(field(i,j,k) < ud) then
@@ -256,7 +256,7 @@ subroutine ftest_3d_orig(name,k1,k2,nx,ny,nk,field,iundef)
           end if
         end do
       end do
-    ! OMP END PARALLEL DO
+    !$OMP END PARALLEL DO
     end if
     if(ndef > 0) then
       fmean=fsum/dble(ndef)
