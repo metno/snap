@@ -59,7 +59,7 @@ subroutine wetdep1(part, pextra)
       i = nint(part%x)
       j = nint(part%y)
       mm = def_comp(m)%to_running
-    ! omp atomic
+    !$OMP atomic
       depwet(i,j,mm) = depwet(i,j,mm) + dble(dep)
     end if
   end if
