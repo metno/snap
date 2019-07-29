@@ -49,7 +49,7 @@ subroutine drydep1(part)
       i = nint(part%x)
       j = nint(part%y)
       mm = def_comp(m)%to_running
-    ! omp atomic
+    !$OMP atomic
       depdry(i,j,mm) = depdry(i,j,mm) + dble(dep)
     end if
   end if
@@ -98,7 +98,7 @@ subroutine drydep2(tstep, part)
     i = nint(part%x)
     j = nint(part%y)
     mm = def_comp(m)%to_running
-  ! omp atomic
+  !$OMP atomic
     depdry(i,j,mm) = depdry(i,j,mm) + dble(dep)
   end if
 end subroutine drydep2
