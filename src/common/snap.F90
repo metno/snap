@@ -2283,7 +2283,7 @@ PROGRAM bsnap
           fldtype=ciname(1:nkv)
         elseif(cinput(k1:k2) == 'title') then
           allocate(character(len=nkv) :: nctitle)
-          nctitle = ciname(1:nkv)
+          nctitle(:) = ciname(1:nkv)
         elseif(cinput(k1:k2) == 'field.daily.output.on') then
           idailyout = 1
         elseif(cinput(k1:k2) == 'field.daily.output.off') then

@@ -201,19 +201,19 @@ subroutine readfield_nc(iunit, istep, nhleft, itimei, ihr1, ihr2, &
   if( .TRUE. ) then
   !..move data from input time step 2 to 1
 
-    u1 = u2
-    v1 = v2
-    w1 = w2
-    t1 = t2
-    hlevel1 = hlevel2
-    hlayer1 = hlayer2
+    u1(:,:,:) = u2
+    v1(:,:,:) = v2
+    w1(:,:,:) = w2
+    t1(:,:,:) = t2
+    hlevel1(:,:,:) = hlevel2
+    hlayer1(:,:,:) = hlayer2
 
-    ps1 = ps2
-    bl1 = bl2
-    hbl1 = hbl2
+    ps1(:,:) = ps2
+    bl1(:,:) = bl2
+    hbl1(:,:) = hbl2
 
     if(imslp /= 0) then
-      pmsl1 = pmsl2
+      pmsl1(:,:) = pmsl2
     end if
 
   end if
@@ -464,10 +464,10 @@ subroutine readfield_nc(iunit, istep, nhleft, itimei, ihr1, ihr2, &
 
     if(ivcoor == 2) then
     !..sigma levels ... vlevel=sigma
-      vlevel = blevel
+      vlevel(:) = blevel
     elseif(ivcoor == 10) then
     !..eta (hybrid) levels ... vlevel=eta (eta as defined in Hirlam)
-      vlevel = alevel/mean_surface_air_pressure + blevel
+      vlevel(:) = alevel/mean_surface_air_pressure + blevel
     else
       write(error_unit,*) 'PROGRAM ERROR.  ivcoor= ',ivcoor
       error stop 255
@@ -511,8 +511,8 @@ subroutine readfield_nc(iunit, istep, nhleft, itimei, ihr1, ihr2, &
     gparam(7)=dxgrid
     gparam(8)=dygrid
   !..size of each grid square (m**2)
-    garea = abs((dxgrid/xm) * (dygrid/ym))
-    dgarea = garea
+    garea(:,:) = abs((dxgrid/xm) * (dygrid/ym))
+    dgarea(:,:) = garea
 
     if (met_params%temp_is_abs) then
     ! create precomputed table for pressures between 0.1 and 1500hPa
