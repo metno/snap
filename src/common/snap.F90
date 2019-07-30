@@ -312,8 +312,6 @@ PROGRAM bsnap
 !> name of selected release position
   character(len=40), save :: srelnam
 
-  integer :: experimental_stat
-
 #if defined(TRAJ)
   integer :: timeStart(6), timeCurrent(6)
   integer :: ilvl, k1, k2
@@ -2347,17 +2345,20 @@ PROGRAM bsnap
           if(kv1 < 1) goto 12
           read(cipart,*,err=12) argoshourstep
           if(argoshourstep <= 0 .OR. argoshourstep > 240) goto 12
-        elseif(cinput(k1:k2) == 'experimental.autodetect.from_input') then
+        elseif(cinput(k1:k2) == 'grid.autodetect.from_input') then
           if (nfilef < 1) then
-            error stop "experimental.autodetect requires at least one field.input to be set"
+            write(error_unit,*) "grid.autodetect requires at least one field.input to be set"
+            goto 12
           endif
-          call detect_gridparams(filef(1), nx, ny, igtype, gparam, experimental_stat)
-          if (experimental_stat /= 0) then
-            write(error_unit, *) "Autodetection did not work, continuing"
+          call detect_gridparams(filef(1), nx, ny, igtype, gparam, ierror)
+          if (ierror /= 0) then
+            write(error_unit, *) "Autodetection did not work"
+            goto 12
           endif
-          call get_klevel(filef(1), klevel, experimental_stat)
-          if (experimental_stat /= 0) then
-            write(error_unit, *) "Autodetection did not work, continuing"
+          call get_klevel(filef(1), klevel, ierror)
+          if (ierror /= 0) then
+            write(error_unit, *) "Autodetection did not work"
+            goto 12
           endif
           nlevel = size(klevel)
           nk = nlevel
