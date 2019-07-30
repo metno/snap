@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 import argparse
-from subprocess import call, check_output, DEVNULL
+from subprocess import call, check_output, DEVNULL, run, PIPE
 import sys
 
 TIMEOUT = 30  # [seconds]
@@ -15,6 +15,15 @@ def no_git_available():
     except FileNotFoundError:
         return True
     return False
+
+
+def in_git_directory():
+    """
+    Checks whether we are currently in a directory
+    managed by git
+    """
+    gitrun = run(["git", "rev-parse", "--is-inside-work-tree"], stdout=PIPE)
+    return gitrun.returncode == 0
 
 
 def git_dirty():
@@ -91,6 +100,11 @@ if __name__ == "__main__":
     if no_git_available():
         print("git is not available", file=sys.stderr)
         print("git.unavailable")
+        exit(1)
+
+    if not in_git_directory():
+        print("The current directory is not versioned in git", file=sys.stderr)
+        print("git.unknown")
         exit(1)
 
     if git_dirty():
