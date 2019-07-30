@@ -1,6 +1,0 @@
-32.67           Latitude (dec.deg.)
-34.78          Longitude (dec.deg.)
-2012110912       Start Time (UTC)
-6		 Forecast time from the detonation
-3000		 Explosive Yield (1 kt, 3kt, 10 kt, 30 kt, 100kt, 300 kt, 1000 kt, 3000 kt)
-200000           Number of particles released (typical 200000, Maximum 800000)
