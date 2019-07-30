@@ -711,7 +711,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         values=field2), "set_icbl")
 
   !..average concentration in boundary layer
-    field1 = cscale*avgbq1(:,:,m)/(garea*avghbl)
+    field1(:,:) = cscale*avgbq1(:,:,m)/(garea*avghbl)
     if(idebug == 1) call ftest('avgconc', field1)
 
     call check(nf90_put_var(iunit, varid%comp(m)%acbl, start=[ipos], count=[isize], &
@@ -733,7 +733,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
   !..wet deposition
     if (def_comp(mm)%kwetdep == 1) then
-      field1 = dscale*sngl(depwet(:,:,m))/garea
+      field1(:,:) = dscale*sngl(depwet(:,:,m))/garea
       accwet(:,:,m) = accwet(:,:,m) + depwet(:,:,m)
       if(idebug == 1) call ftest('wet', field1)
 
@@ -743,7 +743,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
   !..accumulated dry deposition
     if (def_comp(mm)%kdrydep == 1) then
-      field1 = dscale*sngl(accdry(:,:,m))/garea
+      field1(:,:) = dscale*sngl(accdry(:,:,m))/garea
       if(idebug == 1) call ftest('adry', field1)
 
       call check(nf90_put_var(iunit, varid%comp(m)%accdd, start=[ipos], count=[isize], &
@@ -752,7 +752,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
   !..accumulated wet deposition
     if (def_comp(mm)%kwetdep == 1) then
-      field1 = dscale*sngl(accwet(:,:,m))/garea
+      field1(:,:) = dscale*sngl(accwet(:,:,m))/garea
       if(idebug == 1) call ftest('awet', field1)
 
       call check(nf90_put_var(iunit, varid%comp(m)%accwd, start=[ipos], count=[isize], &
@@ -777,13 +777,13 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     if(idebug == 1) call ftest('apbq', field3, contains_undef=.true.)
 
   !..instant concentration on surface (not in felt-format)
-    field3 = concen(:,:,m)
+    field3(:,:) = concen(:,:,m)
     if(idebug == 1) call ftest('concen', field3, contains_undef=.true.)
     call check(nf90_put_var(iunit, varid%comp(m)%ic, start=[ipos], count=[isize], &
         values=field3), "set_ic(m)")
 
   !..accumulated/integrated concentration surface = dose
-    field3 = concacc(:,:,m)
+    field3(:,:) = concacc(:,:,m)
     if(idebug == 1) call ftest('concac', field3, contains_undef=.true.)
 
     call check(nf90_put_var(iunit, varid%comp(m)%ac, start=[ipos], count=[isize], &
@@ -797,8 +797,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   if(ncomp > 1 .AND. itotcomp == 1) then
 
   !..total instant Bq in and above boundary layer
-    field1 = 0.0
-    field2 = 0.0
+    field1(:,:) = 0.0
+    field2(:,:) = 0.0
 
     do n=1,npart
       i=nint(pdata(n)%x)
@@ -824,14 +824,14 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
   !..total instant concentration in boundary layer
   ! field4 : hbl
-    field2 = cscale*field1/(field4*garea)
+    field2(:,:) = cscale*field1/(field4*garea)
     if(idebug == 1) call ftest('tconc', field2)
     call check(nf90_put_var(iunit, varid%icblt, start=[ipos], count=[isize], &
         values=field2), "set_icblt(m)")
 
   !..total average concentration in boundary layer
-    field1 = sum(avgbq1, dim=3)
-    field1 = cscale*field1/(garea*avghbl)
+    field1(:,:) = sum(avgbq1, dim=3)
+    field1(:,:) = cscale*field1/(garea*avghbl)
     if(idebug == 1) call ftest('tavgconc', field1)
     call check(nf90_put_var(iunit, varid%acblt, start=[ipos], count=[isize], &
         values=field1), "set_acblt")
@@ -842,10 +842,10 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       do m=1,ncomp
         mm = run_comp(m)%to_defined
         if (def_comp(mm)%kdrydep == 1) then
-          field1 = field1 + depdry(:,:,m)
+          field1(:,:) = field1 + depdry(:,:,m)
         end if
       end do
-      field1 = dscale*field1/garea
+      field1(:,:) = dscale*field1/garea
       if(idebug == 1) call ftest('tdry', field1)
       call check(nf90_put_var(iunit, varid%iddt, start=[ipos], count=[isize], &
           values=field1), "set_iddt")
@@ -857,10 +857,10 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       do m=1,ncomp
         mm = run_comp(m)%to_defined
         if (def_comp(mm)%kwetdep == 1) then
-          field1 = field1 + depwet(:,:,m)
+          field1(:,:) = field1 + depwet(:,:,m)
         end if
       end do
-      field1 = dscale*field1/garea
+      field1(:,:) = dscale*field1/garea
       if(idebug == 1) call ftest('twet', field1)
       call check(nf90_put_var(iunit, varid%iwdt, start=[ipos], count=[isize], &
           values=field1), "set_iwdt")
@@ -872,10 +872,10 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       do m=1,ncomp
         mm = run_comp(m)%to_defined
         if (def_comp(mm)%kdrydep == 1) then
-          field1 = field1 + accdry(:,:,m)
+          field1(:,:) = field1 + accdry(:,:,m)
         end if
       end do
-      field1 = dscale*field1/garea
+      field1(:,:) = dscale*field1/garea
       if(idebug == 1) call ftest('tadry', field1)
       call check(nf90_put_var(iunit, varid%accddt, start=[ipos], count=[isize], &
           values=field1), "set_accddt")
@@ -887,10 +887,10 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       do m=1,ncomp
         mm = run_comp(m)%to_defined
         if (def_comp(mm)%kwetdep == 1) then
-          field1 = field1 + accwet(:,:,m)
+          field1(:,:) = field1 + accwet(:,:,m)
         end if
       end do
-      field1 = dscale*field1/garea
+      field1(:,:) = dscale*field1/garea
       if(idebug == 1) call ftest('tawet', field1)
       call check(nf90_put_var(iunit, varid%accwdt, start=[ipos], count=[isize], &
           values=field1), "set_accwdt")
@@ -902,8 +902,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
   !..total average part of Bq in boundary layer
     scale=100.
-    field1 = sum(avgbq1, dim=3)
-    field2 = sum(avgbq2, dim=3)
+    field1(:,:) = sum(avgbq1, dim=3)
+    field2(:,:) = sum(avgbq2, dim=3)
     do j=1,ny
       do i=1,nx
         if(field1(i,j)+field2(i,j) > 0.) then
@@ -917,7 +917,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     if(idebug == 1) call ftest('tapbq', field3, contains_undef=.true.)
 
   !..total accumulated/integrated concentration
-    field3 = sum(concacc, dim=3)
+    field3(:,:) = sum(concacc, dim=3)
     if(idebug == 1) call ftest('concac', field3, contains_undef=.true.)
 
     call check(nf90_put_var(iunit, varid%act, start=[ipos], count=[isize], &
@@ -944,25 +944,25 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
     !..dry deposition
       if (def_comp(mm)%kdrydep == 1) then
-        field1 = dblscale*depdry(:,:,m)
+        field1(:,:) = dblscale*depdry(:,:,m)
         if(idebug == 1) call ftest('dry%', field1)
       end if
 
     !..wet deposition
       if (def_comp(mm)%kwetdep == 1) then
-        field1 = dblscale*depwet(:,:,m)
+        field1(:,:) = dblscale*depwet(:,:,m)
         if(idebug == 1) call ftest('wet%', field1)
       end if
 
     !..accumulated dry deposition
       if (def_comp(mm)%kdrydep == 1) then
-        field1 = dblscale*accdry(:,:,m)
+        field1(:,:) = dblscale*accdry(:,:,m)
         if(idebug == 1) call ftest('adry%', field1)
       end if
 
     !..accumulated wet deposition
       if (def_comp(mm)%kwetdep == 1) then
-        field1 = dblscale*accwet(:,:,m)
+        field1(:,:) = dblscale*accwet(:,:,m)
         if(idebug == 1) call ftest('awet%', field1)
       end if
 
@@ -1050,7 +1050,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   !..average concentration in each layer for each type
     do m=1,ncomp
       do k=1,nk-1
-        field1 = cscale*avgbq(:,:,k,m)
+        field1(:,:) = cscale*avgbq(:,:,k,m)
         if(idebug == 1) call ftest('avconcl', field1)
         ko=klevel(k+1)
         lvla=nint(alevel(k+1)*10.)
@@ -1075,7 +1075,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         end do
       end do
       do k=1,nk-1
-        field1 = cscale*avgbq(:,:,k,1)
+        field1(:,:) = cscale*avgbq(:,:,k,1)
         if(idebug == 1) call ftest('tavconcl', field1)
         ko=klevel(k+1)
         lvla=nint(alevel(k+1)*10.)
