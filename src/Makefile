@@ -1,4 +1,4 @@
-SUBDIRS = naccident nbomb traj volcano
+SUBDIRS = naccident traj volcano
 # Version from environment, fall back on git versions
 VERSION ?= $(shell ./version.py)
 export VERSION
@@ -30,7 +30,4 @@ naccident_install:
 		$(MAKE) -C $$i install; \
 	done
 
-nbomb_install:
-	for i in nbomb; do \
-		$(MAKE) -C $$i install; \
-	done
+.PHONY: all clean dist install naccident_install
