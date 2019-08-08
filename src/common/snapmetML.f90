@@ -17,9 +17,10 @@
 
 !> meteorology parameter definitions
 !>
-!> many of these definitions can be changed in
-!> from the setup-file with a call to init_meteo_params()
+!> these settings can be changed by specifying 'grid.nctype'
+!> in the input file, which calls ::init_meteo_params
 module snapmetML
+  use iso_fortran_env, only: error_unit
   implicit none
   private
 
@@ -58,9 +59,11 @@ module snapmetML
 
   contains
 
-  subroutine init_meteo_params(nctype)
+  subroutine init_meteo_params(nctype, ierr)
     character(len=*), intent(in) :: nctype
+    integer, intent(out) :: ierr
 
+    ierr = 0
     select case (nctype)
     case('h12')
       met_params%xwindv = 'x_wind_ml'
@@ -242,8 +245,8 @@ module snapmetML
       met_params%precstrativrt = ''
       met_params%precconvrt = ''
     case default
-      write(*,*) "undefined grid.nctype: ", nctype
-      error stop 1
+      write(error_unit,*) "undefined grid.nctype: ", nctype
+      ierr = 1
     end select
   end subroutine init_meteo_params
 
