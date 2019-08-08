@@ -465,17 +465,6 @@ PROGRAM bsnap
   if (relfile /= '*') then
     call releasefile(relfile, release1)
   end if
-! initialize all arrays after reading input
-  if (imodlevel == 1) then
-    nxmc = nx
-    nymc = ny
-  else
-    nxmc = 1
-    nymc = 1
-  end if
-  maxsiz = nx*ny
-  ldata=20+maxsiz+50
-  CALL allocateFields()
 
 
 !..convert names to uppercase letters
@@ -485,214 +474,33 @@ PROGRAM bsnap
   end do
   if(ncomp > 0)    call chcase(2,ncomp,component)
 
-  ierror=0
-  do n=1,nrelpos
-    if(srelnam == release_positions(n)%name) irelpos=n
-  end do
-  if(irelpos == 0 .AND. nrelpos == 1) irelpos=1
-  if(irelpos == 0) then
-    write(error_unit,*) 'No (known) release position selected'
-    ierror=1
-  end if
-
-  if(ivcoor == 0) then
-    write(error_unit,*) 'Input model level type (sigma,eta) not specified'
-    ierror=1
-  end if
-  if(nlevel == 0) then
-    write(error_unit,*) 'Input model levels not specified'
-    ierror=1
-  end if
-  if(ftype /= "felt" .AND. ftype /= "netcdf") then
-    write(error_unit,*) 'Input type not felt or netcdf:', ftype
-    ierror=1
-  end if
-  if(ftype /= "felt" .AND. ftype /= "netcdf") then
-    write(error_unit,*) 'Output type not felt or netcdf:', ftype
-    ierror=1
-  end if
-  if(nfilef == 0) then
-    write(error_unit,*) 'No input field files specified'
-    ierror=1
-  end if
-
-  if(nhrel == 0 .AND. ntprof > 0) nhrel = releases(ntprof)%frelhour
-
-!..check if compiled without ENSEMBLE PROJECT arrays
-  if(nxep < 2 .OR. nyep < 2) iensemble=0
-
-  if(.not.allocated(releases)) then
-    write(error_unit,*) 'No time profile(s) specified'
-    ierror=1
-  end if
-  if(itprof < 1) then
-    write(error_unit,*) 'No time profile type specified'
-    ierror=1
-  end if
-  k=0
-  do i=1,ntprof
-    if(releases(i)%relradius(1) < 0. .OR. &
-        releases(i)%relupper(1) < 0. .OR. &
-        releases(i)%rellower(1) < 0. .OR. &
-        releases(i)%relupper(1) < releases(i)%rellower(1)) then
-      k=1
-    endif
-    if(releases(i)%relupper(1) < releases(i)%rellower(1)+1.) then
-      releases(i)%relupper(1) = releases(i)%rellower(1)+1.
-    endif
-  end do
-  if(k == 1) then
-    write(error_unit,*) 'ERROR in relase profiles ', &
-        &'of upper,lower and/or radius'
-    ierror=1
-  end if
-  do i=1,ntprof-1
-    if ((releases(i+1)%frelhour - releases(i)%frelhour)*3600 < tstep) then
-      warning = .true.
-      write(error_unit, *) "WARNING: Release interval is shorter than timestep; ", &
-          "some releases may be skipped"
-      exit
-    endif
-  enddo
-
-  if(ncomp < 0) then
-    write(error_unit,*) 'No (release) components specified for run'
-    ierror=1
-  end if
-  if (.not.allocated(def_comp)) then
-    write(error_unit,*) 'No (release) components defined'
-    ierror=1
-  end if
-  if (ncomp > size(def_comp)) then
-    write(error_unit,*) "Number of RELEASE.BQ components is higher than the"
-    write(error_unit,*) "number of defined components"
-    ierror = 1
-  end if
-  if (maxval(def_comp%idcomp) > ncomp) then
-    write(error_unit,*) "Field identification is higher than total number of fields"
-    ierror = 1
-  end if
-
-  do m=1,size(def_comp)-1
-    if(def_comp(m)%idcomp < 1) then
-      write(error_unit,*) 'Component has no field identification: ', &
-          trim(def_comp(m)%compname)
-    end if
-    do i=m+1,size(def_comp)
-      if(def_comp(m)%compname == def_comp(i)%compname) then
-        write(error_unit,*) 'Component defined more than once: ', &
-            trim(def_comp(m)%compname)
-        ierror=1
-      end if
-    end do
-  end do
-
-  do m=1,ncomp-1
-    do i=m+1,ncomp
-      if(component(m) == component(i)) then
-        write(error_unit,*) 'Released component defined more than once: ', &
-            trim(component(m))
-        ierror=1
-      end if
-    end do
-  end do
-
-!..match used components with defined components
   allocate(run_comp(ncomp))
   run_comp%totalbq = 0
   run_comp%numtotal = 0
   run_comp%to_defined = 0
 
-  do m=1,ncomp
-    k=0
-    do i=1,size(def_comp)
-      if(component(m) == def_comp(i)%compname) k=i
-    end do
-    if(k > 0) then
-      run_comp(m)%to_defined = k
-      run_comp(m)%defined => def_comp(k)
-      def_comp(k)%to_running = m
-    else
-      write(error_unit,*) 'Released component ', &
-          trim(component(m)), ' is not defined'
-      ierror=1
-    end if
-  end do
+  call validate_input(ierror)
+  if(ierror /= 0) then
+    write(error_unit, *) "Input '", trim(finput), "' contains some invalid input"
+    stop 1
+  end if
 
-!..gravity
-  do n=1,ncomp
-    m = run_comp(n)%to_defined
-    if (m == 0) cycle
-    if(def_comp(m)%grav_type < 0) def_comp(m)%grav_type = 2
-    if(def_comp(m)%grav_type == 2 .AND. &
-        (def_comp(m)%radiusmym <= 0. .OR. def_comp(m)%densitygcm3 <= 0.)) then
-      write(error_unit,*) 'Gravity error. radius,density: ', &
-          def_comp(m)%radiusmym, def_comp(m)%densitygcm3
-      ierror=1
-    end if
-  end do
+! initialize all arrays after reading input
+  if (imodlevel == 1) then
+    nxmc = nx
+    nymc = ny
+  else
+    nxmc = 1
+    nymc = 1
+  end if
 
-  if(idrydep == 0) idrydep=1
-  if(iwetdep == 0) iwetdep=1
-  i1=0
-  i2=0
-  idecay=0
-
-  do n=1,ncomp
-    m = run_comp(n)%to_defined
-    if (m == 0) cycle
-    if(idrydep == 1 .AND. def_comp(m)%kdrydep == 1) then
-      if(def_comp(m)%drydeprat > 0. .AND. def_comp(m)%drydephgt > 0.) then
-        i1=i1+1
-      else
-        write(error_unit,*) 'Dry deposition error. rate,height: ', &
-            def_comp(m)%drydeprat, def_comp(m)%drydephgt
-        ierror=1
-      end if
-    elseif(idrydep == 2 .AND. def_comp(m)%kdrydep == 1) then
-      if(def_comp(m)%grav_type == 1 .AND. def_comp(m)%gravityms > 0.) then
-        i1=i1+1
-      elseif(def_comp(m)%grav_type == 2) then
-        i1=i1+1
-      else
-        write(error_unit,*) 'Dry deposition error. gravity: ', &
-            def_comp(m)%gravityms
-        ierror=1
-      end if
-    end if
-
-    if (iwetdep == 1 .AND. def_comp(m)%kwetdep == 1) then
-      if (def_comp(m)%wetdeprat > 0.) then
-        i2=i2+1
-      else
-        write(error_unit,*) 'Wet deposition error. rate: ', &
-            def_comp(m)%wetdeprat
-        ierror=1
-      end if
-    elseif(iwetdep == 2 .AND. def_comp(m)%kwetdep == 1) then
-      if(def_comp(m)%radiusmym > 0.) then
-        i2=i2+1
-      else
-        write(error_unit,*) 'Wet deposition error. radius: ', &
-            def_comp(m)%radiusmym
-        ierror=1
-      end if
-    end if
-
-    if(def_comp(m)%kdecay == 1 .AND. def_comp(m)%halftime > 0.) then
-      idecay=1
-    else
-      def_comp(m)%kdecay = 0
-      def_comp(m)%halftime = 0.0
-    end if
-  end do
+  maxsiz = nx*ny
+  ldata=20+maxsiz+50
+  CALL allocateFields()
 
   if(i1 == 0) idrydep=0
   if(i2 == 0) iwetdep=0
 
-  if(ierror /= 0) then
-    call snap_error_exit()
-  end if
 
   if(itotcomp == 1 .AND. ncomp == 1) itotcomp=0
 
@@ -700,8 +508,6 @@ PROGRAM bsnap
 
   if(iprodr == 0) iprodr=iprod
   if(igridr == 0) igridr=igrid
-
-  if (nctype /= "*") call init_meteo_params(nctype)
 
 
   if (warning) then
@@ -2196,6 +2002,9 @@ PROGRAM bsnap
         !..grid.nctype=<emep/hirlam12>
           if(kv1 < 1) goto 12
           read(cipart,*,err=12) nctype
+
+          call init_meteo_params(nctype, ierror)
+          if (ierror /= 0) goto 12
         elseif(cinput(k1:k2) == 'grid.size') then
         !..grid.size=<nx,ny>
           if(kv1 < 1) goto 12
@@ -2450,4 +2259,215 @@ PROGRAM bsnap
     enddo
   end subroutine
 #endif
+
+!> checks the data from the input for errors or missing information
+!>
+!> additionally copies data to internal structures (not side-effect free)
+subroutine validate_input(ierror)
+  integer, intent(out) :: ierror
+
+  logical :: error_release_profile
+
+  ierror=0
+  do n=1,nrelpos
+    if(srelnam == release_positions(n)%name) irelpos=n
+  end do
+  if(irelpos == 0 .AND. nrelpos == 1) irelpos=1
+  if(irelpos == 0) then
+    write(error_unit,*) 'No (known) release position selected'
+    ierror=1
+  end if
+
+  if(ivcoor == 0) then
+    write(error_unit,*) 'Input model level type (sigma,eta) not specified'
+    ierror=1
+  end if
+  if(nlevel == 0) then
+    write(error_unit,*) 'Input model levels not specified'
+    ierror=1
+  end if
+  if(ftype /= "felt" .AND. ftype /= "netcdf") then
+    write(error_unit,*) 'Input type not felt or netcdf:', trim(ftype)
+    ierror=1
+  end if
+  if(ftype /= "felt" .AND. ftype /= "netcdf") then
+    write(error_unit,*) 'Output type not felt or netcdf:', trim(ftype)
+    ierror=1
+  end if
+  if(nfilef == 0) then
+    write(error_unit,*) 'No input field files specified'
+    ierror=1
+  end if
+
+  if(.not.allocated(releases)) then
+    write(error_unit,*) 'No time profile(s) specified'
+    ierror=1
+    ntprof = 0
+  end if
+  if(nhrel == 0 .AND. ntprof > 0) nhrel = releases(ntprof)%frelhour
+
+!..check if compiled without ENSEMBLE PROJECT arrays
+  if(nxep < 2 .OR. nyep < 2) iensemble=0
+  if(itprof < 1) then
+    write(error_unit,*) 'No time profile type specified'
+    ierror=1
+  end if
+
+  error_release_profile = .false.
+  do i=1,ntprof
+    if(releases(i)%relradius(1) < 0. .OR. &
+        releases(i)%relupper(1) < 0. .OR. &
+        releases(i)%rellower(1) < 0. .OR. &
+        releases(i)%relupper(1) < releases(i)%rellower(1)) then
+      error_release_profile = .true.
+    endif
+    if(releases(i)%relupper(1) < releases(i)%rellower(1)+1.) then
+      releases(i)%relupper(1) = releases(i)%rellower(1)+1.
+    endif
+  end do
+  if(error_release_profile) then
+    write(error_unit,*) 'ERROR in relase profiles ', &
+        &'of upper,lower and/or radius'
+    ierror=1
+  end if
+
+  do i=1,ntprof-1
+    if ((releases(i+1)%frelhour - releases(i)%frelhour)*3600 < tstep) then
+      warning = .true.
+      write(error_unit, *) "WARNING: Release interval is shorter than timestep; ", &
+          "some releases may be skipped"
+      exit
+    endif
+  enddo
+
+  if(ncomp < 0) then
+    write(error_unit,*) 'No (release) components specified for run'
+    ierror=1
+  end if
+  if (.not.allocated(def_comp)) then
+    write(error_unit,*) 'No (release) components defined'
+    ierror=1
+  else
+    if (ncomp > size(def_comp)) then
+      write(error_unit,*) "Number of RELEASE.BQ components is higher than the"
+      write(error_unit,*) "number of defined components"
+      ierror = 1
+    end if
+    if (maxval(def_comp%idcomp) > ncomp) then
+      write(error_unit,*) "Field identification is higher than total number of fields"
+      ierror = 1
+    end if
+
+    do m=1,size(def_comp)-1
+      if(def_comp(m)%idcomp < 1) then
+        write(error_unit,*) 'Component has no field identification: ', &
+            trim(def_comp(m)%compname)
+      end if
+      do i=m+1,size(def_comp)
+        if(def_comp(m)%compname == def_comp(i)%compname) then
+          write(error_unit,*) 'Component defined more than once: ', &
+              trim(def_comp(m)%compname)
+          ierror=1
+        end if
+      end do
+    end do
+  endif
+
+  do m=1,ncomp-1
+    do i=m+1,ncomp
+      if(component(m) == component(i)) then
+        write(error_unit,*) 'Released component defined more than once: ', &
+            trim(component(m))
+        ierror=1
+      end if
+    end do
+  end do
+
+!..match used components with defined components
+
+  do m=1,ncomp
+    k=0
+    do i=1,size(def_comp)
+      if(component(m) == def_comp(i)%compname) k=i
+    end do
+    if(k > 0) then
+      run_comp(m)%to_defined = k
+      run_comp(m)%defined => def_comp(k)
+      def_comp(k)%to_running = m
+    else
+      write(error_unit,*) 'Released component ', &
+          trim(component(m)), ' is not defined'
+      ierror=1
+    end if
+  end do
+
+!..gravity
+  do n=1,ncomp
+    m = run_comp(n)%to_defined
+    if (m == 0) cycle
+    if(def_comp(m)%grav_type < 0) def_comp(m)%grav_type = 2
+    if(def_comp(m)%grav_type == 2 .AND. &
+        (def_comp(m)%radiusmym <= 0. .OR. def_comp(m)%densitygcm3 <= 0.)) then
+      write(error_unit,*) 'Gravity error. radius,density: ', &
+          def_comp(m)%radiusmym, def_comp(m)%densitygcm3
+      ierror=1
+    end if
+  end do
+
+  if(idrydep == 0) idrydep=1
+  if(iwetdep == 0) iwetdep=1
+  i1=0
+  i2=0
+  idecay=0
+
+  do n=1,ncomp
+    m = run_comp(n)%to_defined
+    if (m == 0) cycle
+    if(idrydep == 1 .AND. def_comp(m)%kdrydep == 1) then
+      if(def_comp(m)%drydeprat > 0. .AND. def_comp(m)%drydephgt > 0.) then
+        i1=i1+1
+      else
+        write(error_unit,*) 'Dry deposition error. rate,height: ', &
+            def_comp(m)%drydeprat, def_comp(m)%drydephgt
+        ierror=1
+      end if
+    elseif(idrydep == 2 .AND. def_comp(m)%kdrydep == 1) then
+      if(def_comp(m)%grav_type == 1 .AND. def_comp(m)%gravityms > 0.) then
+        i1=i1+1
+      elseif(def_comp(m)%grav_type == 2) then
+        i1=i1+1
+      else
+        write(error_unit,*) 'Dry deposition error. gravity: ', &
+            def_comp(m)%gravityms
+        ierror=1
+      end if
+    end if
+
+    if (iwetdep == 1 .AND. def_comp(m)%kwetdep == 1) then
+      if (def_comp(m)%wetdeprat > 0.) then
+        i2=i2+1
+      else
+        write(error_unit,*) 'Wet deposition error. rate: ', &
+            def_comp(m)%wetdeprat
+        ierror=1
+      end if
+    elseif(iwetdep == 2 .AND. def_comp(m)%kwetdep == 1) then
+      if(def_comp(m)%radiusmym > 0.) then
+        i2=i2+1
+      else
+        write(error_unit,*) 'Wet deposition error. radius: ', &
+            def_comp(m)%radiusmym
+        ierror=1
+      end if
+    end if
+
+    if(def_comp(m)%kdecay == 1 .AND. def_comp(m)%halftime > 0.) then
+      idecay=1
+    else
+      def_comp(m)%kdecay = 0
+      def_comp(m)%halftime = 0.0
+    end if
+  end do
+
+end subroutine
 END PROGRAM
