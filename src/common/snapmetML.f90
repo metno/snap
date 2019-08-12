@@ -1,5 +1,5 @@
 ! SNAP: Servere Nuclear Accident Programme
-! Copyright (C) 1992-2017   Norwegian Meteorological Institute
+
 !
 ! This file is part of SNAP. SNAP is free software: you can
 ! redistribute it and/or modify it under the terms of the
@@ -43,11 +43,13 @@ module snapmetML
     character(len=80) :: precconaccumv = ''
     character(len=80) :: precstrativrt = ''
     character(len=80) :: precconvrt = ''
+    character(len=80) :: total_column_rain = ''
 
     logical :: temp_is_abs = .false.
     logical :: has_dummy_dim = .false.
     logical :: manual_level_selection = .false.
     logical :: sigmadot_is_omega = .false.
+    logical :: need_precipitation = .true.
     !> Use lowest level in #xwindv/#ywindv in place of
     !> #xwind10mv/#ywind10mv
     logical :: use_model_wind_for_10m = .false.
