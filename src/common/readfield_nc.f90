@@ -37,7 +37,7 @@ subroutine readfield_nc(iunit, istep, nhleft, itimei, ihr1, ihr2, &
     itimefi,ierror)
   USE iso_fortran_env, only: error_unit
   USE snapfilML, only: nctype, itimer, kavail, iavail, filef
-  USE snapfldML, only: field1, field2, field3, field4, &
+  USE snapfldML, only: &
       xm, ym, u1, u2, v1, v2, w1, w2, t1, t2, ps1, ps2, pmsl1, pmsl2, &
       hbl1, hbl2, hlayer1, hlayer2, garea, dgarea, hlevel1, hlevel2, &
       hlayer1, hlayer2, bl1, bl2, enspos, nprecip, precip
@@ -73,13 +73,11 @@ subroutine readfield_nc(iunit, istep, nhleft, itimei, ihr1, ihr2, &
   integer :: i, j, k, n, ilevel, ierr1, ierr2, i1, i2
   integer :: itime(5,4), ihours(4)
   integer :: ihdif1, ihdif2, nhdiff
-  real :: alev(nk), blev(nk), db, precip1, dxgrid, dygrid
+  real :: alev(nk), blev(nk), db, dxgrid, dygrid
   integer :: kk, ifb, kfb
   real :: dred, red, p, px, dp, p1, p2,ptop
   real, parameter :: rcp = r/cp
   real :: ptoptmp(1)
-  real :: totalprec
-  real :: unitScale
   real, parameter :: mean_surface_air_pressure = 1013.26
 
   integer :: timepos, timeposm1
@@ -280,7 +278,7 @@ subroutine readfield_nc(iunit, istep, nhleft, itimei, ihr1, ihr2, &
 !..surface pressure, 10m wind and possibly mean sea level pressure,
 !..precipitation
   call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
-  enspos, timepos, met_params%has_dummy_dim)
+      enspos, timepos, met_params%has_dummy_dim)
 
 
 ! ps
@@ -323,98 +321,11 @@ subroutine readfield_nc(iunit, istep, nhleft, itimei, ihr1, ihr2, &
     end if
   end if
 
-!..precipitation......................................................
-  if (met_params%precaccumv /= '') then
-  !..precipitation between input time 't1' and 't2'
-    if (timepos /= 1) then
-      call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
-          enspos, timeposm1, met_params%has_dummy_dim)
-      call nfcheckload(ncid, met_params%precaccumv, &
-          start3d, count3d, field1(:,:))
-
-      call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
-          enspos, timepos, met_params%has_dummy_dim)
-      call nfcheckload(ncid, met_params%precaccumv, &
-          start3d, count3d, field2(:,:))
-
-    !..the difference below may get negative due to different scaling
-      do j=1,ny
-        do i=1,nx
-          precip1=max(field2(i,j)-field1(i,j),0.)/nhdiff
-          precip(i,j,1:nprecip) = precip1
-        end do
-      end do
-    end if
-  else if (met_params%precstratiaccumv /= '') then
-  ! accumulated stratiform and convective precipitation
-  !..precipitation between input time 't1' and 't2'
-    if (timepos /= 1) then
-      call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
-          enspos, timeposm1, met_params%has_dummy_dim)
-      call nfcheckload(ncid, met_params%precstratiaccumv, &
-          start3d, count3d, field1)
-      call nfcheckload(ncid, met_params%precconaccumv, &
-          start3d, count3d, field2)
-      call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
-          enspos, timepos, met_params%has_dummy_dim)
-      call nfcheckload(ncid, met_params%precstratiaccumv, &
-          start3d, count3d, field3)
-      call nfcheckload(ncid, met_params%precconaccumv, &
-          start3d, count3d, field4)
-    !..the difference below may get negative due to different scaling
-      unitScale = 1.
-      if (nctype == 'ec_det' .or. nctype == "ec_n1s") unitScale = 1000.
-      do j=1,ny
-        do i=1,nx
-          precip1=max(field3(i,j)+field4(i,j)- &
-              (field1(i,j)+field2(i,j)),0.)/nhdiff
-          precip(i,j,:) = precip1 * unitScale
-        end do
-      end do
-    else
-    ! timepos eq 1, check if precipitation already present / assume dummy step 0
-      call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
-          enspos, timepos, met_params%has_dummy_dim)
-      call nfcheckload(ncid, met_params%precstratiaccumv, &
-          start3d, count3d, field3(:,:))
-      call nfcheckload(ncid, met_params%precconaccumv, &
-          start3d, count3d, field4(:,:))
-
-      field1 = 0.0
-      field2 = 0.0
-      totalprec = sum(field3) + sum(field4)
-
-      if (totalprec > 1e-5) then
-      !..the difference below may get negative due to different scaling
-        write(iulog,*) "found precip in first timestep, assuming ", &
-            "empty 0 timestep to deaccumulate precip"
-        unitScale = 1.
-        if (nctype == 'ec_det' .or. nctype == "ec_n1s") unitScale = 1000.
-        do j=1,ny
-          do i=1,nx
-            precip1=max(field3(i,j)+field4(i,j)- &
-                (field1(i,j)+field2(i,j)),0.)/nhdiff
-            precip(i,j,:) = precip1 * unitScale
-          end do
-        end do
-      endif
-    end if
+  if (met_params%need_precipitation) then
+    call read_precipitation(ncid, nhdiff, timepos, timeposm1)
   else
-  !..non-accumulated emissions in stratiform an convective
-    call nfcheckload(ncid, met_params%precstrativrt, &
-        start3d, count3d, field1(:,:))
-    call nfcheckload(ncid, met_params%precconvrt, &
-        start3d, count3d, field2(:,:))
-
-    do j=1,ny
-      do i=1,nx
-      !..precipitation must be larger 0, m/s -> mm/h
-        precip1=max(field1(i,j)+field2(i,j),0.)*3600*1000
-        precip(i,j,:) = precip1
-      end do
-    end do
-
-  end if
+    precip = 0.0
+  endif
 
 ! first time initialized data
   if(istep == 0) then
@@ -645,6 +556,136 @@ subroutine readfield_nc(iunit, istep, nhleft, itimei, ihr1, ihr2, &
 
   return
 end subroutine readfield_nc
+
+!> read precipitation
+subroutine read_precipitation(ncid, nhdiff, timepos, timeposm1)
+  use iso_fortran_env, only: error_unit
+  use snapdebug, only: iulog
+  use snapmetML, only: met_params
+  use snapfldML, only: field1, field2, field3, field4, precip, &
+      enspos, precip, nprecip
+  use snapdimML, only: nx, ny
+  USE snapfilML, only: nctype
+
+!> open netcdf file
+  integer, intent(in) :: ncid
+!> time difference in hours between two precip fields
+  integer, intent(in) :: nhdiff
+!> timestep in file
+  integer, intent(in) :: timepos
+!> previous timestep
+  integer, intent(in) :: timeposm1
+
+
+  integer :: start3d(7), count3d(7)
+  integer :: i, j
+  real :: precip1
+  real :: unitScale
+  real :: totalprec
+
+  if (met_params%precaccumv /= '') then
+  !..precipitation between input time 't1' and 't2'
+    if (timepos /= 1) then
+      call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
+          enspos, timeposm1, met_params%has_dummy_dim)
+      call nfcheckload(ncid, met_params%precaccumv, &
+          start3d, count3d, field1(:,:))
+
+      call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
+          enspos, timepos, met_params%has_dummy_dim)
+      call nfcheckload(ncid, met_params%precaccumv, &
+          start3d, count3d, field2(:,:))
+
+    !..the difference below may get negative due to different scaling
+      do j=1,ny
+        do i=1,nx
+          precip1=max(field2(i,j)-field1(i,j),0.)/nhdiff
+          precip(i,j,1:nprecip) = precip1
+        end do
+      end do
+    end if
+  else if (met_params%precstratiaccumv /= '') then
+  ! accumulated stratiform and convective precipitation
+  !..precipitation between input time 't1' and 't2'
+    if (timepos /= 1) then
+      call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
+          enspos, timeposm1, met_params%has_dummy_dim)
+      call nfcheckload(ncid, met_params%precstratiaccumv, &
+          start3d, count3d, field1)
+      call nfcheckload(ncid, met_params%precconaccumv, &
+          start3d, count3d, field2)
+      call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
+          enspos, timepos, met_params%has_dummy_dim)
+      call nfcheckload(ncid, met_params%precstratiaccumv, &
+          start3d, count3d, field3)
+      call nfcheckload(ncid, met_params%precconaccumv, &
+          start3d, count3d, field4)
+    !..the difference below may get negative due to different scaling
+      unitScale = 1.
+      if (nctype == 'ec_det' .or. nctype == "ec_n1s") unitScale = 1000.
+      do j=1,ny
+        do i=1,nx
+          precip1=max(field3(i,j)+field4(i,j)- &
+              (field1(i,j)+field2(i,j)),0.)/nhdiff
+          precip(i,j,:) = precip1 * unitScale
+        end do
+      end do
+    else
+    ! timepos eq 1, check if precipitation already present / assume dummy step 0
+      call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
+          enspos, timepos, met_params%has_dummy_dim)
+      call nfcheckload(ncid, met_params%precstratiaccumv, &
+          start3d, count3d, field3(:,:))
+      call nfcheckload(ncid, met_params%precconaccumv, &
+          start3d, count3d, field4(:,:))
+
+      field1 = 0.0
+      field2 = 0.0
+      totalprec = sum(field3) + sum(field4)
+
+      if (totalprec > 1e-5) then
+      !..the difference below may get negative due to different scaling
+        write(iulog,*) "found precip in first timestep, assuming ", &
+            "empty 0 timestep to deaccumulate precip"
+        unitScale = 1.
+        if (nctype == 'ec_det' .or. nctype == "ec_n1s") unitScale = 1000.
+        do j=1,ny
+          do i=1,nx
+            precip1=max(field3(i,j)+field4(i,j)- &
+                (field1(i,j)+field2(i,j)),0.)/nhdiff
+            precip(i,j,:) = precip1 * unitScale
+          end do
+        end do
+      endif
+    end if
+  else if (met_params%total_column_rain /= '') then
+      call calc_2d_start_length(start3d, count3d, nx, ny, 1, &
+          enspos, timepos, met_params%has_dummy_dim)
+      call nfcheckload(ncid, met_params%total_column_rain, &
+          start3d, count3d, field3)
+      do j=1,ny
+        do i=1,nx
+          precip(i,j,1:nprecip) = field3(i,j)
+        enddo
+      enddo
+      write(error_unit, *) "Check precipation correctness"
+  else
+  !..non-accumulated emissions in stratiform an convective
+    call nfcheckload(ncid, met_params%precstrativrt, &
+        start3d, count3d, field1(:,:))
+    call nfcheckload(ncid, met_params%precconvrt, &
+        start3d, count3d, field2(:,:))
+
+    do j=1,ny
+      do i=1,nx
+      !..precipitation must be larger 0, m/s -> mm/h
+        precip1=max(field1(i,j)+field2(i,j),0.)*3600*1000
+        precip(i,j,:) = precip1
+      end do
+    end do
+
+  end if
+end subroutine
 
 
 !> calculate the start and length paramters for slicing
