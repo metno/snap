@@ -286,7 +286,7 @@ subroutine readfield_nc(iunit, istep, nhleft, itimei, ihr1, ihr2, &
 !  input ps, must be hPa, otherwise:
   if (nctype == 'arome' .OR. nctype == 'dmi_eps' .OR. &
   nctype == 'ec_det' .OR. nctype == 'h12_grib' .OR. &
-  nctype == "ec_n1s") then
+  nctype == "ec_n1s" .OR. nctype == "SLIM") then
     ps2 = ps2*0.01
   endif
 
