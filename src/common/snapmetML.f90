@@ -1,5 +1,5 @@
 ! SNAP: Servere Nuclear Accident Programme
-
+! Copyright (C) 1992-2017   Norwegian Meteorological Institute
 !
 ! This file is part of SNAP. SNAP is free software: you can
 ! redistribute it and/or modify it under the terms of the
@@ -246,6 +246,20 @@ module snapmetML
       met_params%precconaccumv = 'lwe_thickness_of_convective_precipitation_amount_acc'
       met_params%precstrativrt = ''
       met_params%precconvrt = ''
+    case('SLIM')
+      met_params%manual_level_selection = .true.
+      met_params%has_dummy_dim = .true.
+      met_params%xwindv = 'x_wind_ml'
+      met_params%ywindv = 'y_wind_ml'
+      met_params%xwind10mv = 'x_wind_10m'
+      met_params%ywind10mv = 'y_wind_10m'
+      met_params%pottempv = 'air_temperature_ml'
+      met_params%temp_is_abs = .true.
+      met_params%sigmadotv = 'ga_etadot_105'
+      met_params%psv = 'surface_air_pressure'
+      met_params%apv = 'ap'
+      met_params%bv = 'b'
+      met_params%need_precipitation = .false.
     case default
       write(error_unit,*) "undefined grid.nctype: ", nctype
       ierr = 1
