@@ -691,10 +691,27 @@ end subroutine
 !> calculate the start and length paramters for slicing
 !> a 2d field from a 3-5d dataset
 subroutine calc_2d_start_length(start, length, nx, ny, zpos, &
-  enspos, tpos, has_2d_dummy_height)
-  integer, intent (out) :: start(7), length(7)
-  integer, intent (in) :: nx, ny, zpos, enspos, tpos
+    enspos, tpos, has_2d_dummy_height)
+  !> Offset into field
+  integer, intent (out) :: start(7)
+  !> Length of each field
+  integer, intent(out) :: length(7)
+  !> size (x) of field
+  integer, intent (in) :: nx
+  !> size (y) of field
+  integer, intent(in) :: ny
+  !> hybrid position
+  integer, intent(in) :: zpos
+  !> ensemble member, should be given in C notation,
+  !> with 0 being the first member. Setting to a negative
+  !> value disables this.
+  integer, intent(in) :: enspos
+  !> time on which to compute
+  integer, intent(in) :: tpos
+  !> if set to true, an empty dimension (size 1) has been used
+  !> for height. Ignored if \p zpos >= 1
   logical, intent (in) :: has_2d_dummy_height
+
   integer :: pos
 
   start = 1
