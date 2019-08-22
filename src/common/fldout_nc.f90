@@ -19,11 +19,60 @@ module fldout_ncML
   USE iso_fortran_env, only: real32, real64
   USE readfield_ncML, only: check
   USE milibML, only: xyconvert, gridpar, hrdiff
+  USE snapdimML, only: mcomp
   USE netcdf
   implicit none
   private
 
   public fldout_nc
+
+!> fixed base scaling for concentrations (unit 10**-12 g/m3 = 1 picog/m3)
+  real, parameter :: cscale = 1.0
+!> fixed base scaling for depositions (unit 10**-9 g/m2 = 1 nanog/m3)
+  real, parameter :: dscale = 1.0
+
+!> Variables for each component
+  type :: component_var
+    integer :: icbl
+    integer :: acbl
+    integer :: idd
+    integer :: iwd
+    integer :: accdd
+    integer :: accwd
+    integer :: ac
+    integer :: ic
+    integer :: icml
+  end type
+
+!> Variables in a file
+  type :: common_var
+    integer :: ps
+    integer :: accum_prc
+    integer :: prc
+    integer :: mslp
+    integer :: icblt
+    integer :: acblt
+    integer :: act
+    integer :: iddt
+    integer :: iwdt
+    integer :: accddt
+    integer :: accwdt
+    integer :: ihbl
+    integer :: ahbl
+    integer :: t
+    integer :: k
+    integer :: ap
+    integer :: b
+    type(component_var) :: comp(mcomp)
+  end type
+
+!> dimensions used in a file
+  type :: common_dim
+    integer :: x
+    integer :: y
+    integer :: k
+    integer :: t
+  end type
 
   contains
 
@@ -116,8 +165,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   USE iso_fortran_env, only: int16
   USE snapfilML, only: idata, ncsummary, nctitle, simulation_start
   USE snapgrdML, only: gparam, igridr, igtype, imodlevel, imslp, inprecip, &
-      iprodr, itotcomp, ivcoor, modleveldump, ivlayer, &
-      alevel, blevel, vlevel, klevel
+      iprodr, itotcomp, modleveldump, ivlayer
   USE snapfldML, only: field1, field2, field3, field4, depwet, depdry, &
       avgbq1, avgbq2, hlayer1, hlayer2, garea, pmsl1, pmsl2, hbl1, hbl2, &
       xm, ym, accdry, accwet, avgprec, concen, ps1, ps2, avghbl, dgarea, &
@@ -125,7 +173,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   USE snapparML, only: itprof, ncomp, run_comp, def_comp
   USE snapdebug, only: iulog, idebug
   USE ftestML, only: ftest
-  USE snapdimML, only: mcomp, ldata, nx, ny, nk, nxmc, nymc
+  USE snapdimML, only: ldata, nx, ny, nk, nxmc, nymc
   USE releaseML, only: npart
   USE particleML, only: pdata, Particle
 
@@ -141,51 +189,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   integer, intent(in) :: nsteph
   integer, intent(out) :: ierror
 
-! Variables for each component
-  type :: component_var
-    integer :: icbl
-    integer :: acbl
-    integer :: idd
-    integer :: iwd
-    integer :: accdd
-    integer :: accwd
-    integer :: ac
-    integer :: ic
-    integer :: icml
-  end type
-
-! Variables in a file
-  type :: common_var
-    integer :: ps
-    integer :: accum_prc
-    integer :: prc
-    integer :: mslp
-    integer :: icblt
-    integer :: acblt
-    integer :: act
-    integer :: iddt
-    integer :: iwdt
-    integer :: accddt
-    integer :: accwdt
-    integer :: ihbl
-    integer :: ahbl
-    integer :: t
-    integer :: k
-    integer :: ap
-    integer :: b
-    type(component_var) :: comp(mcomp)
-  end type
   type(common_var), save :: varid
-
-  type :: common_dim
-    integer :: x
-    integer :: y
-    integer :: k
-    integer :: t
-  end type
   type(common_dim), save :: dimid
-
-
 
   integer, save :: naverage = 0
   logical, save :: acc_initialized = .false.
@@ -199,20 +204,14 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   real(real64) :: bqtot1,bqtot2
   real(real64) :: dblscale
 
-  integer :: maxage
-  integer :: i,j,k,m,mm,n,ivlvl,idextr,loop
+  integer :: i,j,k,m,mm,n,ivlvl,idextr
   logical :: compute_total_dry_deposition
   logical :: compute_total_wet_deposition
-  integer :: ko,lvla,lvlb
   integer, save :: numfields = 0
   real :: rt1,rt2,scale,average,averinv,hbl
-! fixed base scaling for concentrations (unit 10**-12 g/m3 = 1 picog/m3)
-  real, parameter :: cscale = 1.0
-! fixed base scaling for depositions (unit 10**-9 g/m2 = 1 nanog/m3)
-  real, parameter :: dscale = 1.0
 
   real, parameter :: undef = NF90_FILL_FLOAT
-  real :: avg,hrstep,dh,total
+  real :: hrstep, dh
 
   integer, save :: itimeargos(5) = [0, 0, 0, 0, 0]
 
@@ -561,7 +560,11 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 !..put grid parameters into field identification
 !..(into the first 20 words and possibly also after space for data)
   call gridpar(-1,ldata,idata,igtype,nx,ny,gparam,ierror)
-  if(ierror /= 0) goto 900
+  if(ierror /= 0) then
+    ierror = 1
+    write(iulog,*) '*FLDOUT_NC*  Terminates due to write error.'
+    return
+  endif
 
 
   average=float(naverage)
@@ -973,8 +976,50 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
 
 !..model level fields...................................................
+  if (imodlevel == 1) then
+    call write_ml_fields(iunit, varid, average, ipos, isize, rt1, rt2)
+  endif
 
-  if(imodlevel /= 1) goto 800
+! reset fields
+  do m=1,ncomp
+    mm = run_comp(m)%to_defined
+    if (def_comp(mm)%kdrydep == 1) then
+      depdry(:,:,m) = 0.0
+    end if
+    if (def_comp(mm)%kwetdep == 1) then
+      depwet(:,:,m) = 0.0
+    end if
+  end do
+
+  call check(nf90_sync(iunit))
+end subroutine fldout_nc
+
+
+subroutine write_ml_fields(iunit, varid, average, ipos, isize, rt1, rt2)
+  USE releaseML, only: npart
+  USE particleML, only: pdata, Particle
+  USE snapparML, only: def_comp, ncomp
+  USE snapfldML, only: field1, field4, &
+      hlayer1, hlayer2, garea, avgbq
+  USE ftestML, only: ftest
+  USE snapdebug, only: idebug
+  USE snapgrdML, only: itotcomp, ivcoor, modleveldump, ivlayer, &
+      alevel, blevel, vlevel, klevel
+  USE snapdimML, only: nx, ny, nk
+
+  integer, intent(in) :: iunit
+  type(common_var), intent(in) :: varid
+  real, intent(in) :: average
+  integer, intent(inout) :: ipos(4)
+  integer, intent(in) :: isize(4)
+  real, intent(in) :: rt1, rt2
+
+  type(Particle) :: part
+  real :: avg, dh, total
+  real :: lvla, lvlb
+  integer :: ivlvl
+  integer :: i, j, k, ko, loop, m, maxage, n
+
 
 ! write k, ap, b - will be overwritten several times, but not data/timecritical
   call check(nf90_put_var(iunit, varid%k, vlevel(2)), "set_k")
@@ -987,7 +1032,6 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
 !..loop for 1=average and 2=instant concentration
 !..(now computing average first, then using the same arrays for instant)
-
   do loop=1,2
 
     if(loop == 1) then
@@ -1083,31 +1127,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
         if(ivcoor == 2) lvla=0
       end do
     end if
-
-  !.....end do loop=1,2
   end do
-
-  800 ierror=0
-
-  do m=1,ncomp
-    mm = run_comp(m)%to_defined
-    if (def_comp(mm)%kdrydep == 1) then
-      depdry(:,:,m) = 0.0
-    end if
-    if (def_comp(mm)%kwetdep == 1) then
-      depwet(:,:,m) = 0.0
-    end if
-  end do
-
-  call check(nf90_sync(iunit))
-  return
-
-  900 ierror=1
-  write(iulog,*) '*FLDOUT_NC*  Terminates due to write error.'
-
-  return
-end subroutine fldout_nc
-
+end subroutine
 
 subroutine nc_declare_3d(iunit, dimids, varid, &
     chksz, varnm, units, stdnm, metnm)
