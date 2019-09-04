@@ -279,7 +279,7 @@ PROGRAM bsnap
   integer :: narg,iuinp,ios,nhrun,nhrel,nhfout
   logical :: use_random_walk
   integer :: isynoptic,m,np,nlevel,minhfc,maxhfc,ifltim
-  integer :: k, ierror, i, i1, i2, n
+  integer :: k, ierror, i, n
   integer :: ih
   integer :: idrydep,iwetdep,idecay
   integer :: ntimefo,iunitf,nh1,nh2
@@ -338,9 +338,12 @@ PROGRAM bsnap
   integer :: itimev(5),j
 #endif
 
+#if defined(VERSION)
+  character(len=*), parameter :: VERSION_ = VERSION
+#else
+  character(len=*), parameter :: VERSION_ = "UNVERSIONED"
+#endif
 
-! initialize random number generator for rwalk and release
-  CALL init_random_seed()
 
 
   narg = command_argument_count()
@@ -353,11 +356,7 @@ PROGRAM bsnap
   endif
   call get_command_argument(1, finput)
   if (finput == "--version") then
-#if defined(VERSION)
-    write(output_unit,*) "snap version: ", VERSION
-#else
-    write(output_unit,*) "snap version: UNVERSIONED"
-#endif
+    write(output_unit,*) "snap version: ", VERSION_
     stop
   endif
 
@@ -370,91 +369,9 @@ PROGRAM bsnap
     call snap_error_exit()
   endif
 
-
+  call set_defaults()
   write(output_unit,*) 'Reading input file:'
   write(output_unit,*)  TRIM(finput)
-
-
-!..set release position as not chosen
-  irelpos=0
-
-  itime1 = -huge(itime1)
-  nhrun  =0
-  nhrel  =0
-  srelnam='*'
-
-!..default values
-  use_random_walk = .true.
-  tstep  =900.
-  mprel  =200
-  nhfmin =6
-  nhfmax =12
-  nhfout =3
-  isynoptic=0
-  nrelheight=1
-
-  ncomp = 0
-  itotcomp = 0
-  rmlimit = -1.0
-  nprepro = 0
-  itprof = 0
-
-  nrelpos=0
-  iprod  =0
-  igrid  =0
-  iprodr =0
-  igridr =0
-  ixbase =0
-  iybase =0
-  ixystp =0
-  ivcoor =0
-  nlevel =0
-  minhfc =+6
-  maxhfc =+huge(maxhfc)
-  nfilef =0
-  ifltim =0
-  blfullmix= .TRUE.
-  idrydep=0
-  iwetdep=0
-
-  inprecip =1
-  imslp    =0
-  imodlevel=0
-  modleveldump=0.0
-
-  idebug=0
-! input type
-  ftype='felt'
-! output type
-  fldtype='felt'
-  fldfil= 'snap.dat'
-  logfile='snap.log'
-  nctype = "*"
-  ncsummary=''
-  relfile='*'
-! timestamp of the form 0000-00-00_00:00:00
-  call DATE_AND_TIME(VALUES=date_time)
-  write (simulation_start, 9999) (date_time(i),i=1,3), &
-      (date_time(i),i=5,7)
-  9999 FORMAT(I4.4,'-',I2.2,'-',I2.2,'_',I2.2,':',I2.2,':',I2.2)
-! input ensemble member, default to no ensembles
-  enspos = -1
-! ensemble output
-  iensemble=0
-  ensemblefile='ensemble.list'
-  ensembleparticipant=09
-  ensembleRandomKey='*******'
-  ensembleStepHours=3
-
-  idailyout=0
-
-  iargos=0
-  argoshourstep= 6
-  argosdepofile= 'xxx_MLDP0_depo'
-  argosconcfile= 'xxx_MLDP0_conc'
-  argosdosefile= 'xxx_MLDP0_dose'
-
-  warning = .false.
 
   call read_inputfile(iuinp)
 
@@ -479,36 +396,15 @@ PROGRAM bsnap
   run_comp%numtotal = 0
   run_comp%to_defined = 0
 
-  call validate_input(ierror)
+  call conform_input(ierror)
   if(ierror /= 0) then
     write(error_unit, *) "Input '", trim(finput), "' contains some invalid input"
     stop 1
   end if
 
-! initialize all arrays after reading input
-  if (imodlevel == 1) then
-    nxmc = nx
-    nymc = ny
-  else
-    nxmc = 1
-    nymc = 1
-  end if
-
   maxsiz = nx*ny
-  ldata=20+maxsiz+50
+  ldata = 20 + maxsiz + 50
   CALL allocateFields()
-
-  if(i1 == 0) idrydep=0
-  if(i2 == 0) iwetdep=0
-
-
-  if(itotcomp == 1 .AND. ncomp == 1) itotcomp=0
-
-  if(rmlimit < 0.0) rmlimit=0.0001
-
-  if(iprodr == 0) iprodr=iprod
-  if(igridr == 0) igridr=igrid
-
 
   if (warning) then
     write(output_unit,*) 'Input o.k. (with warnings)'
@@ -526,6 +422,9 @@ PROGRAM bsnap
 
 !..define fixed tables and constants (independant of input data)
   call tabcon
+
+! initialize random number generator for rwalk and release
+  CALL init_random_seed()
 
 !..file unit for all input field files
   iunitf=20
@@ -1366,6 +1265,90 @@ PROGRAM bsnap
 
     error stop ERROR_MSG
   end subroutine
+
+!> Sets default values for all parameters
+subroutine set_defaults()
+!..set release position as not chosen
+  irelpos=0
+
+  itime1 = -huge(itime1)
+  nhrun  =0
+  nhrel  =0
+  srelnam='*'
+
+!..default values
+  use_random_walk = .true.
+  tstep  =900.
+  mprel  =200
+  nhfmin =6
+  nhfmax =12
+  nhfout =3
+  isynoptic=0
+  nrelheight=1
+
+  ncomp = 0
+  itotcomp = 0
+  rmlimit = -1.0
+  nprepro = 0
+  itprof = 0
+
+  nrelpos=0
+  iprod  =0
+  igrid  =0
+  iprodr =0
+  igridr =0
+  ixbase =0
+  iybase =0
+  ixystp =0
+  ivcoor =0
+  nlevel =0
+  minhfc =+6
+  maxhfc =+huge(maxhfc)
+  nfilef =0
+  ifltim =0
+  blfullmix= .TRUE.
+  idrydep=0
+  iwetdep=0
+
+  inprecip =1
+  imslp    =0
+  imodlevel=0
+  modleveldump=0.0
+
+  idebug=0
+! input type
+  ftype='felt'
+! output type
+  fldtype='felt'
+  fldfil= 'snap.dat'
+  logfile='snap.log'
+  nctype = "*"
+  ncsummary=''
+  relfile='*'
+! timestamp of the form 0000-00-00_00:00:00
+  call DATE_AND_TIME(VALUES=date_time)
+  write (simulation_start, 9999) (date_time(i),i=1,3), &
+      (date_time(i),i=5,7)
+  9999 FORMAT(I4.4,'-',I2.2,'-',I2.2,'_',I2.2,':',I2.2,':',I2.2)
+! input ensemble member, default to no ensembles
+  enspos = -1
+! ensemble output
+  iensemble=0
+  ensemblefile='ensemble.list'
+  ensembleparticipant=09
+  ensembleRandomKey='*******'
+  ensembleStepHours=3
+
+  idailyout=0
+
+  iargos=0
+  argoshourstep= 6
+  argosdepofile= 'xxx_MLDP0_depo'
+  argosconcfile= 'xxx_MLDP0_conc'
+  argosdosefile= 'xxx_MLDP0_dose'
+
+  warning = .false.
+end subroutine
 
   !> reads information from an inputfile and loads into the program
   subroutine read_inputfile(iuinp)
@@ -2260,11 +2243,12 @@ PROGRAM bsnap
   end subroutine
 #endif
 
-!> checks the data from the input for errors or missing information
-!>
-!> additionally copies data to internal structures (not side-effect free)
-subroutine validate_input(ierror)
+!> checks the data from the input for errors or missing information,
+!> and copies information to structures used when running the program.
+subroutine conform_input(ierror)
   integer, intent(out) :: ierror
+
+  integer :: i1, i2
 
   logical :: error_release_profile
 
@@ -2468,6 +2452,25 @@ subroutine validate_input(ierror)
       def_comp(m)%halftime = 0.0
     end if
   end do
+
+  if (i1 == 0) idrydep=0
+  if (i2 == 0) iwetdep=0
+
+! initialize all arrays after reading input
+  if (imodlevel == 1) then
+    nxmc = nx
+    nymc = ny
+  else
+    nxmc = 1
+    nymc = 1
+  end if
+
+  if(itotcomp == 1 .AND. ncomp == 1) itotcomp=0
+
+  if(rmlimit < 0.0) rmlimit=0.0001
+
+  if(iprodr == 0) iprodr=iprod
+  if(igridr == 0) igridr=igrid
 
 end subroutine
 END PROGRAM
