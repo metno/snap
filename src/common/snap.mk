@@ -4,7 +4,7 @@
 MODELOBJ = dateCalc.o particleML.o snapdimML.o snapfilML.o snapfldML.o snapgrdML.o snapmetML.o snapparML.o \
 snapposML.o snaptabML.o snapargosML.o snapdebugML.o posint.o decay.o \
 om2edot.o ftest.o readfield_nc.o rwalk.o epinterp.o \
-ensemble.o vgravtables.o forwrd.o wetdep.o drydep.o \
+vgravtables.o forwrd.o wetdep.o drydep.o \
 argoswrite.o bldp.o compheight.o checkDomain.o \
 filesort_nc.o fldout_nc.o \
 init_random_seed.o\
@@ -80,7 +80,7 @@ filesort_nc.o: ../common/filesort_nc.f90 dateCalc.o snapfilML.o snapdimML.o snap
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 fldout.o: ../common/fldout.f90 particleML.o snapfilML.o snapgrdML.o snapfldML.o snapparML.o snapargosML.o snapdebugML.o snapdimML.o ftest.o argoswrite.o snaptabML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-fldout_nc.o: ../common/fldout_nc.f90 snapfilML.o snapgrdML.o snapfldML.o snapparML.o snaptabML.o snapargosML.o snapdebugML.o snapdimML.o readfield_nc.o ftest.o
+fldout_nc.o: ../common/fldout_nc.f90 snapfilML.o snapgrdML.o snapfldML.o snapparML.o snaptabML.o snapargosML.o snapdebugML.o snapdimML.o readfield_nc.o ftest.o release.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 feltio_dummy.o: ../common/feltio_dummy.f90
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
