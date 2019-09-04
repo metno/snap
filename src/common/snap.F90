@@ -231,8 +231,10 @@ PROGRAM bsnap
   USE rmpartML, only: rmpart
   USE checkdomainML, only: checkdomain
   USE rwalkML, only: rwalk, rwalk_init
+#if defined(ENSEMBLE)
   USE ensembleML, only: ensemblefile, ensembleparticipant, ensemblerandomkey, &
       ensemblestephours, iensemble, nxep, nyep, ensemble
+#endif
   USE milibML, only: xyconvert, chcase, hrdiff, vtime
 #if defined(TRAJ)
   USE snapfldML, only: hlevel2
@@ -615,7 +617,9 @@ PROGRAM bsnap
     end do
     write(iulog,*) 'itotcomp:   ',itotcomp
     write(iulog,*) 'nprepro:    ',nprepro
+#if defined(ENSEMBLE)
     write(iulog,*) 'iensemble:  ',iensemble
+#endif
     write(iulog,*) 'iargos:     ',iargos
     write(iulog,*) 'blfulmix:   ',blfullmix
     write(*,*) 'Title:      ', trim(nctitle)
@@ -832,8 +836,11 @@ PROGRAM bsnap
           release_positions(irelpos)%grid_x = x(1)
           release_positions(irelpos)%grid_y = y(1)
 
-        !            if(iensemble.eq.1)
-        !     +        call ensemble(0,itime1,tf1,tf2,tnow,istep,nstep,nsteph,0)
+#if defined(ENSEMBLE)
+          if(iensemble.eq.1) then
+            call ensemble(0,itime1,tf1,tf2,tnow,istep,nstep,nsteph,0)
+          endif
+#endif
 
           nxtinf=1
           ifldout=0
@@ -841,8 +848,11 @@ PROGRAM bsnap
           cycle time_loop
         end if
 
-      !          if(iensemble.eq.1)
-      !     +      call ensemble(1,itime,tf1,tf2,tnow,istep,nstep,nsteph,0)
+#if defined(ENSEMBLE)
+        if(iensemble.eq.1) then
+          call ensemble(1,itime,tf1,tf2,tnow,istep,nstep,nsteph,0)
+        endif
+#endif
 
         call hrdiff(0,0,itimei,itimefi,ihdiff,ierr1,ierr2)
         tf1=0.
@@ -948,22 +958,31 @@ PROGRAM bsnap
         !..radioactive decay
         if(idecay == 1) call decay(pdata(np))
 
-        !         if(iensemble.eq.1)
-        !     +      call ensemble(2,itime,tf1,tf2,tnow,istep,nstep,nsteph,np)
+#if defined(ENSEMBLE)
+        if(iensemble.eq.1) then
+          call ensemble(2,itime,tf1,tf2,tnow,istep,nstep,nsteph,np)
+        endif
+#endif
 
         !..dry deposition (1=old, 2=new version)
         if(idrydep == 1) call drydep1(pdata(np))
         if(idrydep == 2) call drydep2(tstep, pdata(np))
 
-        !          if(iensemble.eq.1)
-        !     +      call ensemble(3,itime,tf1,tf2,tnow,istep,nstep,nsteph,np)
+#if defined(ENSEMBLE)
+        if(iensemble.eq.1) then
+          call ensemble(3,itime,tf1,tf2,tnow,istep,nstep,nsteph,np)
+        endif
+#endif
 
         !..wet deposition (1=old, 2=new version)
         if(iwetdep == 1) call wetdep1(pdata(np), pextra)
         if(iwetdep == 2) call wetdep2(tstep, pdata(np), pextra)
 
-        !          if(iensemble.eq.1)
-        !     +      call ensemble(4,itime,tf1,tf2,tnow,istep,nstep,nsteph,np)
+#if defined(ENSEMBLE)
+        if(iensemble.eq.1) then
+          call ensemble(4,itime,tf1,tf2,tnow,istep,nstep,nsteph,np)
+        endif
+#endif
 
         !..move all particles forward, save u and v to pextra
         call forwrd(tf1, tf2, tnow, tstep, pdata(np), pextra)
@@ -979,8 +998,11 @@ PROGRAM bsnap
     !..remove inactive particles or without any mass left
       call rmpart(rmlimit)
 
-    !       if(iensemble.eq.1)
-    !     +    call ensemble(5,itime,tf1,tf2,tnext,istep,nstep,nsteph,0)
+#if defined(ENSEMBLE)
+      if(iensemble.eq.1)
+        call ensemble(5,itime,tf1,tf2,tnext,istep,nstep,nsteph,0)
+      endif
+#endif
 
     !$OMP PARALLEL DO REDUCTION(max : mhmax) REDUCTION(min : mhmin)
       do n=1,npart
@@ -1108,8 +1130,11 @@ PROGRAM bsnap
         end if
       end if
 
-    !      if(iensemble.eq.1 .and. isteph.eq.0)
-    !     +  call ensemble(6,itime,tf1,tf2,tnext,istep,nstep,nsteph,0)
+#if defined(ENSEMBLE)
+    if(iensemble.eq.1 .and. isteph.eq.0) then
+      call ensemble(6,itime,tf1,tf2,tnext,istep,nstep,nsteph,0)
+    endif
+#endif
 
     !..field output if ifldout=1, always accumulation for average fields
       if (idailyout == 1) then
@@ -1209,8 +1234,11 @@ PROGRAM bsnap
   end do
 #endif
 
-!      if(iensemble.eq.1)
-!     +  call ensemble(7,itimefa,tf1,tf2,tnext,istep,nstep,nsteph,0)
+#if defined(ENSEMBLE)
+  if(iensemble.eq.1) then
+    call ensemble(7,itimefa,tf1,tf2,tnext,istep,nstep,nsteph,0)
+  endif
+#endif
 
   if(lstepr < nstep .AND. lstepr < nstepr) then
     write(iulog,*) 'ERROR: Due to space problems the release period was'
@@ -1331,12 +1359,15 @@ subroutine set_defaults()
   9999 FORMAT(I4.4,'-',I2.2,'-',I2.2,'_',I2.2,':',I2.2,':',I2.2)
 ! input ensemble member, default to no ensembles
   enspos = -1
+
+#if defined(ENSEMBLE)
 ! ensemble output
   iensemble=0
   ensemblefile='ensemble.list'
   ensembleparticipant=09
   ensembleRandomKey='*******'
   ensembleStepHours=3
+#endif
 
   idailyout=0
 
@@ -2089,6 +2120,7 @@ end subroutine
         elseif(cinput(k1:k2) == 'debug.on') then
         !..debug.on
           idebug=1
+#if defined(ENSEMBLE)
         elseif(cinput(k1:k2) == 'ensemble.project.output.off') then
         !..ensemble.project.output.off
           iensemble=0
@@ -2113,6 +2145,7 @@ end subroutine
         !..ensemble.project.output.step.hour= 3
           if(kv1 < 1) goto 12
           read(cipart,*,err=12) ensembleStepHours
+#endif
         elseif(cinput(k1:k2) == 'argos.output.off') then
         !..argos.output.off
           iargos=0
@@ -2289,8 +2322,10 @@ subroutine conform_input(ierror)
   end if
   if(nhrel == 0 .AND. ntprof > 0) nhrel = releases(ntprof)%frelhour
 
+#if defined(ENSEMBLE)
 !..check if compiled without ENSEMBLE PROJECT arrays
   if(nxep < 2 .OR. nyep < 2) iensemble=0
+#endif
   if(itprof < 1) then
     write(error_unit,*) 'No time profile type specified'
     ierror=1
