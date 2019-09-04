@@ -213,8 +213,6 @@ PROGRAM bsnap
   USE snapargosML, only: argosdepofile, argosdosefile, argoshoursrelease, &
       argoshourstep, argoshoursrun, iargos, margos, argosconcfile, nargos, &
       argostime
-  USE snapepsML, only: ensemblefile, ensembleparticipant, ensemblerandomkey, &
-      ensemblestephours, iensemble
   USE snapdimML, only: nx, ny, nk, nxmc, nymc, ldata, maxsiz, mcomp
   USE snapfilML, only: filef, itimer, limfcf, ncsummary, nctitle, nhfmax, nhfmin, &
       nctype, nfilef, simulation_start
@@ -233,7 +231,8 @@ PROGRAM bsnap
   USE rmpartML, only: rmpart
   USE checkdomainML, only: checkdomain
   USE rwalkML, only: rwalk, rwalk_init
-  USE ensembleML, only: nxep, nyep
+  USE ensembleML, only: ensemblefile, ensembleparticipant, ensemblerandomkey, &
+      ensemblestephours, iensemble, nxep, nyep, ensemble
   USE milibML, only: xyconvert, chcase, hrdiff, vtime
 #if defined(TRAJ)
   USE snapfldML, only: hlevel2
