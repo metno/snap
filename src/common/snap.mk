@@ -9,7 +9,7 @@ argoswrite.o bldp.o compheight.o checkDomain.o \
 filesort_nc.o fldout_nc.o \
 init_random_seed.o\
 release.o releasefile.o rmpart.o allocateFields.o \
-snapepsML.o find_parameters.o
+find_parameters.o
 
 ifdef MILIB
   F77FLAGS += -DMILIB
@@ -56,11 +56,9 @@ compheight.o: ../common/compheight.f90 snapgrdML.o snapfldML.o snaptabML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 snapparML.o: ../common/snapparML.f90 snapdimML.o
 	${F77} -c ${F77FLAGS} $<
-ensemble.o: ../common/ensemble.f90 particleML.o snapparML.o snapgrdML.o snapdimML.o epinterp.o ftest.o snapdebugML.o snapfldML.o snapepsML.o milibML.o release.o
+ensemble.o: ../common/ensemble.f90 particleML.o snapparML.o snapgrdML.o snapdimML.o epinterp.o ftest.o snapdebugML.o snapfldML.o milibML.o release.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 checkDomain.o: ../common/checkDomain.f90 snapgrdML.o snapdimML.o particleML.o
-	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-snapepsML.o: ../common/snapepsML.f90
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 dateCalc.o: ../common/dateCalc.f90
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<

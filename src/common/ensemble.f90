@@ -21,15 +21,24 @@ module ensembleML
 
   integer, parameter, public :: nxep=151, nyep=91
 
+  integer, save, public :: iensemble
+  integer, save, public :: ensembleStepHours
+  integer, save, public :: ensembleparticipant
+  character(len=128), save, public :: ensemblefile
+  character(len=7), save, public :: ensembleRandomKey
+
   public ensemble
 
   contains
 
+
+!>  Purpose: Interpolate particle positions to ENSEMBLE grid,
+!>           and store data in this grid (and model levels),
+!>        interpolation of concentrations to fixed heights.
 subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
   np)
   USE iso_fortran_env, only: error_unit, real32, real64
   USE particleML
-  USE snapepsML
   USE snapfldML
   USE snapparML
   USE snapgrdML
@@ -40,26 +49,20 @@ subroutine ensemble(icall,itime,tf1,tf2,tnow,istep,nstep,nsteph, &
   USE milibML, only: xyconvert, mapfield, rlunit, vtime
   USE releaseML, only: npart, mpart
 
-!  Purpose: Interpolate particle positions to ENSEMBLE grid,
-!           and store data in this grid (and model levels),
-!        interpolation of concentrations to fixed heights.
+!> initialize (after first fields read),
+!> 1 : new fields read
+!> 2,3,4 need to be called within a particle loop (np)
+!> 2 : before drydep
+!> 3 : after drydep, before wetdep
+!> 4 : after wetdep
+!> 5 : after forwrd,rwalk
+!> 6 : output etc...
+!> 7 : final output of timeseries for each gridpoint
+  integer, INTENT(IN) :: icall
+  integer, intent(in) :: istep,nstep,nsteph
+!> particle-id from particle loop for icall=2,3,4
+  integer, intent(in) :: np
 
-!    icall=0 : initialize (after first fields read),
-!            =1 : new fields read
-! 2,3,4 need to be called within a particle loop (np)
-!            =2 : before drydep
-!            =3 : after drydep, before wetdep
-!            =4 : after wetdep
-!            =5 : after forwrd,rwalk
-!            =6 : output etc...
-!            =7 : final output of timeseries for each gridpoint
-
-!  np: particle-id from particle loop for icall=2,3,4
-
-  implicit none
-
-!..input
-  integer, INTENT(IN) :: icall,istep,nstep,nsteph, np
   integer, INTENT(IN) :: itime(5)
   real, INTENT(IN)    ::    tf1,tf2,tnow
 
