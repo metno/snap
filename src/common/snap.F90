@@ -1635,23 +1635,8 @@ end subroutine
         !..release.hour
         !..release.minute
         !..release.second
-          if(kv1 < 1 .OR. allocated(releases)) goto 12
-
-          ntprof = 0 ! Guessing how many releases from number of commas
-          do i=1,len_trim(cipart)
-            if (cipart(i:i) == ',') ntprof = ntprof + 1
-          enddo
-          ntprof = ntprof + 1 ! Fencepost
-
-          allocate(releases(ntprof))
-          do i=1,ntprof
-            releases(i)%frelhour = -1.0
-            releases(i)%relradius = -1.0
-            releases(i)%relupper = -1.0
-            releases(i)%rellower = -1.0
-            releases(i)%relstemradius = -1.0
-            releases(i)%relbqsec = -1.0
-          enddo
+          if (kv1 < 1) goto 12
+          if (.not.allocated(releases)) call allocate_releases(cipart, ntprof)
 
           read(cipart,*,err=12) releases%frelhour
 
@@ -1666,22 +1651,26 @@ end subroutine
           end do
         elseif(cinput(k1:k2) == 'release.radius.m') then
         !..release.radius.m
-          if(kv1 < 1 .OR. .not.allocated(releases)) goto 12
+          if(kv1 < 1) goto 12
+          if (.not.allocated(releases)) call allocate_releases(cipart, ntprof)
           read(cipart,*,err=12) releases%relradius(1)
           if (any(releases%relradius(1) < 0.0)) goto 12
         elseif(cinput(k1:k2) == 'release.upper.m') then
         !..release.upper.m
-          if(kv1 < 1 .OR. .not.allocated(releases)) goto 12
+          if(kv1 < 1) goto 12
+          if (.not.allocated(releases)) call allocate_releases(cipart, ntprof)
           read(cipart,*,err=12) releases%relupper(1)
           if (any(releases%relupper(1) < 0.0)) goto 12
         elseif(cinput(k1:k2) == 'release.lower.m') then
         !..release.lower.m
-          if(kv1 < 1 .OR. .not.allocated(releases)) goto 12
+          if(kv1 < 1) goto 12
+          if (.not.allocated(releases)) call allocate_releases(cipart, ntprof)
           read(cipart,*,err=12) releases%rellower(1)
           if (any(releases%rellower(1) < 0.0)) goto 12
         elseif(cinput(k1:k2) == 'release.mushroom.stem.radius.m') then
         !..release.mushroom.stem.radius.m
-          if(kv1 < 1 .OR. .not.allocated(releases)) goto 12
+          if(kv1 < 1) goto 12
+          if (.not.allocated(releases)) call allocate_releases(cipart, ntprof)
           read(cipart,*,err=12) releases%relstemradius
         elseif(cinput(k1:k2) == 'release.bq/hour.comp' .OR. &
             cinput(k1:k2) == 'release.bq/sec.comp'  .OR. &
@@ -1700,7 +1689,8 @@ end subroutine
           else
             rscale=1.
           end if
-          if(kv1 < 1 .OR. .not.allocated(releases)) goto 12
+          if(kv1 < 1) goto 12
+          if (.not.allocated(releases)) call allocate_releases(cipart, ntprof)
           ncomp= ncomp+1
           if(ncomp > mcomp) goto 13
           read(cipart,*,err=12) releases%relbqsec(ncomp,1), &
@@ -2237,6 +2227,30 @@ end subroutine
     write(error_unit,*) 'SOME LIMIT WAS EXCEEDED !!!!!!!!!!!!!!!!!'
     call snap_error_exit()
 
+  end subroutine
+
+
+  subroutine allocate_releases(string_with_commas, nelems)
+    !> Some comma separated values
+    character(len=*), intent(in) :: string_with_commas
+    !> Number of elements
+    integer, intent(out) :: nelems
+
+    nelems = 0
+    do i=1,len_trim(string_with_commas)
+      if (string_with_commas(i:i) == ',') nelems = nelems + 1
+    enddo
+    nelems = nelems + 1 ! Fencepost
+
+    allocate(releases(nelems))
+    do i=1,ntprof
+      releases(i)%frelhour = -1.0
+      releases(i)%relradius = -1.0
+      releases(i)%relupper = -1.0
+      releases(i)%rellower = -1.0
+      releases(i)%relstemradius = -1.0
+      releases(i)%relbqsec = -1.0
+    enddo
   end subroutine
 
 #ifdef TRAJ
