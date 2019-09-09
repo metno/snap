@@ -18,6 +18,8 @@ module find_parameter
 
   !> Standard name to base search of other parameters from
   character(len=*), parameter :: standard_var = "x_wind_ml"
+  !> Secondary fallback name
+  character(len=*), parameter :: standard_var2 = "u10"
 
   public detect_gridparams
   public get_klevel
@@ -71,12 +73,16 @@ module find_parameter
 
     call detect_type(ncid, projection_varid, igtype, stat)
     if (stat /= 0) then
-      write(error_unit,*) "Could not detect grid mapping type"
-      if (stat /= ERROR_THIS_MODULE) then
-        write(error_unit,*) trim(nf90_strerror(stat))
+      if (stat == NF90_ENOTATT) then
+        write(error_unit,*) "Could not detect grid mapping type from attribute'grid_mapping', assuming lat/lon grid"
+        igtype = GEOGRAPHIC
+      else
+        if (stat /= ERROR_THIS_MODULE) then
+          write(error_unit,*) trim(nf90_strerror(stat))
+        endif
+        int_dummy = nf90_close(ncid)
+        return
       endif
-      int_dummy = nf90_close(ncid)
-      return
     endif
 
     select case (igtype)
@@ -124,7 +130,12 @@ module find_parameter
     stat = 0
 
     stat = nf90_inq_varid(ncid, standard_var, varid)
-    if (stat /= 0) return
+    if (stat == NF90_ENOTVAR) then ! Retry with secondary name
+      stat = nf90_inq_varid(ncid, standard_var2, varid)
+    endif
+    if (stat /= 0) then
+      return
+    endif
 
     stat = nf90_inquire_variable(ncid, varid, dimids=dimids)
     if (stat /= 0) return
@@ -151,7 +162,12 @@ module find_parameter
 
     stat = 0
     stat = nf90_inq_varid(ncid, standard_var, varid)
-    if (stat /= 0) return
+    if (stat == NF90_ENOTVAR) then
+      stat = nf90_inq_varid(ncid, standard_var2, varid)
+    endif
+    if (stat /= 0) then
+      return
+    endif
 
     stat = nf90_inquire_attribute(ncid, varid, "grid_mapping", len=len_str)
     if (stat /= 0) return
@@ -221,6 +237,9 @@ module find_parameter
     endif
 
     stat = nf90_inq_varid(ncid, standard_var, standard_varid)
+    if (stat == NF90_ENOTVAR) then
+      stat = nf90_inq_varid(ncid, standard_var2, standard_varid)
+    endif
     if (stat /= 0) return
 
     stat = nf90_inquire_variable(ncid, standard_varid, dimids=dimids)
@@ -342,6 +361,9 @@ module find_parameter
     stat = nf90_open(ncfile, NF90_NOWRITE, ncid)
     if (stat /= 0) return
     stat = nf90_inq_dimid(ncid, "hybrid", hybrid_dimid)
+    if (stat == NF90_EBADDIM) then
+      stat = nf90_inq_dimid(ncid, "lev", hybrid_dimid)
+    endif
     if (stat /= 0) then
       dummy_int = nf90_close(ncid)
       return
