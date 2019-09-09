@@ -28,14 +28,14 @@ program autodetect
   if (stat /= 0) error stop "Could not get command argument"
 
   call detect_gridparams(ncfile, nx, ny, igtype, gparam, stat)
-  if (stat /= 0) error stop 1
+  if (stat /= 0) error stop "Could not detect gridparams"
 
   write(*,*) "GRID.SIZE= ", nx, ny
   write(*,*) "IGTYPE= ", igtype
   write(*,*) "GRID PARAMS :", gparam
 
   call get_klevel(ncfile, klevel, stat)
-  if (stat /= 0) error stop 1
+  if (stat /= 0) error stop "Could not determine klevel"
 
   write(*,*) "KLEVEL: ", size(klevel)
   write(*,'(I3)') klevel
