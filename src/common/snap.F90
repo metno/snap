@@ -1959,9 +1959,11 @@ end subroutine
         elseif(cinput(k1:k2) == 'precipitation.on') then
         !..precipitation.on
           inprecip=1
+          met_params%need_precipitation = .true.
         elseif(cinput(k1:k2) == 'precipitation.off') then
         !..precipitation.off
           inprecip=0
+          met_params%need_precipitation = .false.
         elseif(cinput(k1:k2) == 'model.level.fields.on') then
         !..model.level.fields.on
           imodlevel=1
