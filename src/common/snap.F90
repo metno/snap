@@ -1742,7 +1742,7 @@ end subroutine
         !..release.file
           relfile=ciname(1:nkv)
         !..release.component
-        elseif(cinput(k:k2) == 'release.components') then
+        elseif(cinput(k1:k2) == 'release.components') then
           ncomp=0
           if(kv1 < 1 .OR. ncomp > 0) goto 12
           i1=ncomp+1
