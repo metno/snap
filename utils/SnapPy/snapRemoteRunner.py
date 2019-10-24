@@ -103,7 +103,7 @@ class SnapTask():
         top_rundir = os.path.join(self.topdir, SnapRemoteRunner.RUN_DIR)
         if not os.path.isdir(top_rundir):
             os.mkdir(top_rundir)
-        self.rundir = os.path.join(top_rundir, "{dt}_{ident}".format(dt=self.timestamp.strftime('%Y-%m-%dT%M%H%S'),
+        self.rundir = os.path.join(top_rundir, "{dt}_{ident}".format(dt=self.timestamp.strftime('%Y-%m-%dT%H%M%S'),
                                                                      ident=self.id))
         os.mkdir(self.rundir)
         infile = os.path.join(self.topdir, SnapRemoteRunner.UPLOAD_DIR, self.zipfile)
