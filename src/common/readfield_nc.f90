@@ -673,8 +673,12 @@ subroutine read_precipitation(ncid, nhdiff, timepos, timeposm1)
   !..non-accumulated emissions in stratiform an convective
     call nfcheckload(ncid, met_params%precstrativrt, &
         start3d, count3d, field1(:,:))
-    call nfcheckload(ncid, met_params%precconvrt, &
-        start3d, count3d, field2(:,:))
+    if (met_params%precconvrt /= '') then
+      call nfcheckload(ncid, met_params%precconvrt, &
+          start3d, count3d, field2(:,:))
+    else
+      field2 = 0.
+    endif
 
     do j=1,ny
       do i=1,nx
