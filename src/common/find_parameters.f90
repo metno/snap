@@ -2,6 +2,7 @@
 !> netcdf file
 module find_parameter
   use iso_fortran_env, only: error_unit
+  use snapmetML, only: met_params
   use netcdf
   implicit none
   private
@@ -16,11 +17,6 @@ module find_parameter
 
   integer, parameter :: ERROR_THIS_MODULE = -451123435
 
-  !> Standard name to base search of other parameters from
-  character(len=*), parameter :: standard_var = "x_wind_ml"
-  !> Secondary fallback name
-  character(len=*), parameter :: standard_var2 = "u10"
-
   public detect_gridparams
   public get_klevel
 
@@ -28,7 +24,7 @@ module find_parameter
 
   !> Tries to detect grid parameters given by the
   !> netcdf file, taking the projection from
-  !> the #standard_var variable
+  !> the #met_params%xwindv variable
   subroutine detect_gridparams(ncfile, nx, ny, igtype, gparam, stat)
     !> Path to the netcdf file
     character(len=*), intent(in) :: ncfile
@@ -117,7 +113,7 @@ module find_parameter
 
   end subroutine
 
-  !> Getting the sizes of nx and ny from #standard_var,
+  !> Getting the sizes of nx and ny from #met_params%xwindv,
   !> with them set by the two first dimension sizes
   subroutine get_nx_ny(ncid, nx, ny, stat)
     integer, intent(in) :: ncid
@@ -129,10 +125,7 @@ module find_parameter
     integer :: dimids(NF90_MAX_DIMS)
     stat = 0
 
-    stat = nf90_inq_varid(ncid, standard_var, varid)
-    if (stat == NF90_ENOTVAR) then ! Retry with secondary name
-      stat = nf90_inq_varid(ncid, standard_var2, varid)
-    endif
+    stat = nf90_inq_varid(ncid, met_params%xwindv, varid)
     if (stat /= 0) then
       return
     endif
@@ -148,7 +141,7 @@ module find_parameter
   end subroutine
 
 
-  !> Take varid of #standard_var, lookup grid_mapping, check this variables
+  !> Take varid of #met_params%xwindv, lookup grid_mapping, check this variables
   !> name and set igtype
   subroutine detect_type(ncid, projection_varid, igtype, stat)
     integer, intent(in) :: ncid
@@ -161,16 +154,17 @@ module find_parameter
     character(len=:), allocatable :: grid_mapping_name
 
     stat = 0
-    stat = nf90_inq_varid(ncid, standard_var, varid)
-    if (stat == NF90_ENOTVAR) then
-      stat = nf90_inq_varid(ncid, standard_var2, varid)
-    endif
+    stat = nf90_inq_varid(ncid, met_params%xwindv, varid)
     if (stat /= 0) then
       return
     endif
 
     stat = nf90_inquire_attribute(ncid, varid, "grid_mapping", len=len_str)
-    if (stat /= 0) return
+    if (stat /= 0) then
+      ! CF defines geographic if no grid_mapping
+      igtype = GEOGRAPHIC
+      return
+    endif
     allocate(character(len=len_str) :: grid_mapping_name)
     stat = nf90_get_att(ncid, varid, "grid_mapping", grid_mapping_name)
     if (stat /= 0) return
@@ -236,10 +230,7 @@ module find_parameter
       gparam(6) = 0 + 90 - gparam(6) ! need equator projection
     endif
 
-    stat = nf90_inq_varid(ncid, standard_var, standard_varid)
-    if (stat == NF90_ENOTVAR) then
-      stat = nf90_inq_varid(ncid, standard_var2, standard_varid)
-    endif
+    stat = nf90_inq_varid(ncid, met_params%xwindv, standard_varid)
     if (stat /= 0) return
 
     stat = nf90_inquire_variable(ncid, standard_varid, dimids=dimids)
@@ -302,7 +293,7 @@ module find_parameter
 
     ! get increment in km, requires the two first dimension of
     ! a standard variable
-    stat = nf90_inq_varid(ncid, standard_var, standard_varid)
+    stat = nf90_inq_varid(ncid, met_params%xwindv, standard_varid)
     if (stat /= 0) return
     stat = nf90_inquire_variable(ncid, standard_varid, dimids=dimids)
     if (stat /= 0) return
