@@ -286,7 +286,8 @@ subroutine readfield_nc(iunit, istep, nhleft, itimei, ihr1, ihr2, &
 !  input ps, must be hPa, otherwise:
   if (nctype == 'arome' .OR. nctype == 'dmi_eps' .OR. &
   nctype == 'ec_det' .OR. nctype == 'h12_grib' .OR. &
-  nctype == "ec_n1s" .OR. nctype == "SLIM") then
+  nctype == "ec_n1s" .OR. nctype == "SLIM" .OR. &
+  nctype == 'gfs_grib_filter_fimex') then
     ps2 = ps2*0.01
   endif
 
@@ -442,6 +443,9 @@ subroutine readfield_nc(iunit, istep, nhleft, itimei, ihr1, ihr2, &
         do i=1,nx
           p=alevel(k)+blevel(k)*ps2(i,j)
         ! t2thetafac is 50% faster, and less then 0.5% difference in theta
+        !  if (i == 100 .AND. j==100) then
+        !    write(*,*) k, alevel(k), blevel(k), p, ps2(i,j), nint(p*10.+.5)
+        !  endif
           t2(i,j,k)=t2(i,j,k) * t2thetafac(nint(p*10.+.5))
         ! 2(i,j,k)=t2(i,j,k)/((p*0.001)**rcp)
         end do
@@ -671,6 +675,8 @@ subroutine read_precipitation(ncid, nhdiff, timepos, timeposm1)
       write(error_unit, *) "Check precipation correctness"
   else
   !..non-accumulated emissions in stratiform an convective
+    call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
+              enspos, timepos, met_params%has_dummy_dim)
     call nfcheckload(ncid, met_params%precstrativrt, &
         start3d, count3d, field1(:,:))
     if (met_params%precconvrt /= '') then
@@ -680,10 +686,12 @@ subroutine read_precipitation(ncid, nhdiff, timepos, timeposm1)
       field2 = 0.
     endif
 
+    unitScale = 3600.*1000.0 ! m/s -> mm/h
+    if (nctype == 'gfs_grib_filter_fimex') unitScale = 3600. !kg/m3/s -> mm/h
     do j=1,ny
       do i=1,nx
       !..precipitation must be larger 0, m/s -> mm/h
-        precip1=max(field1(i,j)+field2(i,j),0.)*3600*1000
+        precip1=max(field1(i,j)+field2(i,j),0.)*unitScale
         precip(i,j,:) = precip1
       end do
     end do

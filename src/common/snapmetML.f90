@@ -228,14 +228,14 @@ module snapmetML
 ! set as long as sortfield still is called
     case('gfs_grib_filter_fimex')
       met_params%manual_level_selection = .true.
-      met_params%xwindv = 'x_wind'
-      met_params%ywindv = 'y_wind'
+      met_params%xwindv = 'x_wind_pl'
+      met_params%ywindv = 'y_wind_pl'
       met_params%xwind10mv = 'x_wind_10m'
       met_params%ywind10mv = 'y_wind_10m'
       met_params%pottempv = 'air_temperature_pl'
       met_params%temp_is_abs = .true.
       met_params%sigmav = ''
-      met_params%ptopv = 'p0'
+      met_params%ptopv = ''
       met_params%apv = 'ap'
       met_params%bv = 'b'
       met_params%sigmadotv = ''
