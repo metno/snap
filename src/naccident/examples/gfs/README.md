@@ -6,6 +6,7 @@ This is a rough setup to use SNAP with freely available meteorological data from
 
 This guide uses fimex: https://github.com/metno/fimex for conversion of grib to netcdf and for the conversion of pressure-levels to sigma-hybrid pressure-levesl.
 
+All input files can be found in the snap repository und [src/naccident/examples/gfs/](./)
 
 ## Downloading data via grib-filter
 
@@ -61,7 +62,7 @@ fimex --input.file=all.nc --input.config=sigmaHybrid.ncml \
 
 ## Run the snap-model
 
-Adapt the contributed snap.input file with the source-term, in particular TIME.START and SET_RELEASE.POS= P=
+Adapt the contributed [snap.input](./snap.input) file with the source-term, in particular TIME.START and SET_RELEASE.POS= P=
 and run the model:
 
 ```sh
