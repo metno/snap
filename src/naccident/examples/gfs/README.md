@@ -71,3 +71,5 @@ bsnap_naccident snap.input
 
 In approximately 5min, the snap.nc file is generated and can be seen with your preferred netcdf-viewer.
 
+It is possible to declare several meteorological input file (here allVInt.nc) with the same area/resolution in the snap.input file. SNAP will automatically use the newest timesteps available.
+
