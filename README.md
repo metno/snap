@@ -24,6 +24,9 @@ And for the model layers:
 
 Parameter names can be specified in [readfield_nc.f90](src/common/readfield_nc.f90).
 
+And example on how to set up downloading of freely available meteorological data 
+from the NOAA GFS model can be found under [src/naccident/examples/gfs/](./src/naccident/examples/gfs/)
+
 
 ## Dependencies
 
