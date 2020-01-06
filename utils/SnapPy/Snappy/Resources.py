@@ -23,6 +23,7 @@ Created on Apr 13, 2016
 
 from collections import OrderedDict
 from datetime import datetime, time, date, timedelta
+import enum
 import math
 import os
 import re
@@ -30,6 +31,20 @@ import sys
 import time as mtime
 from time import gmtime, strftime
 
+@enum.unique
+class MetModel(enum.Enum):
+    H12 = 'h12'
+    Hirlam12 = 'hirlam12'
+    Meps2p5 = 'meps_2_5km'
+    NrpaEC0p1 = 'nrpa_ec_0p1'
+    NrpaEC0p1Global = 'nrpa_ec_0p1_global'
+    GfsGribFilter = 'gfs_grib_filter_fimex'
+    
+    def __eq__(self, other):
+        return self.value == str(other)
+    
+    def __hash__(self):
+        return self.value.__hash__()
 
 class Resources():
     '''
@@ -44,8 +59,15 @@ class Resources():
     ECGLOBALINPUTDIRS = ["/lustre/storeA/project/metproduction/products/ecmwf/nc/", "/lustre/storeB/project/metproduction/products/ecmwf/nc/"]
     EC_GLOBAL_PATTERN = "ec_atmo_0_1deg_{year:04d}{month:02d}{day:02d}T{dayoffset:02d}0000Z_3h.nc"
 
-    MEPSINPUTDIRS = ["/lustre/storeA/project/metproduction/products/meps/", "/lustre/storeB/project/metproduction/products/meps/"]
-    MEPS25_FILENAME_PATTERN = "meps_full_2_5km_{year:04d}{month:02d}{day:02d}T{UTC:02d}Z.nc"
+    MET_INPUTDIRS = {
+        MetModel.Meps2p5: ["/lustre/storeA/project/metproduction/products/meps/", "/lustre/storeB/project/metproduction/products/meps/"],
+        MetModel.GfsGribFilter: ['/disk1/tmp/']  
+    }
+    MET_FILENAME_PATTERN = {
+        MetModel.Meps2p5: "meps_full_2_5km_{year:04d}{month:02d}{day:02d}T{UTC:02d}Z.nc",
+        MetModel.GfsGribFilter: 'gfs_0p25deg_{year:04d}{month:02d}{day:02d}T{UTC:02d}Z.nc'  
+    }
+
 
     def __init__(self):
         '''
@@ -76,9 +98,9 @@ class Resources():
 
     def getDefaultMetDefinitions(self, metmodel):
         '''get the default meteo-definitions as dict to be used as *dict for getSnapInputMetDefinitions'''
-        if metmodel == 'h12' or metmodel == 'hirlam12':
+        if metmodel == MetModel.H12 or metmodel == MetModel.Hirlam12:
             return {}
-        elif (metmodel == 'nrpa_ec_0p1') or (metmodel == 'nrpa_ec_0p1_global'):
+        elif (metmodel == MetModel.NrpaEC0p1) or (metmodel == MetModel.NrpaEC0p1Global):
             return {"nx": 1+round(self.ecDomainWidth/self.ecDomainRes),
                     "ny": 1+round(self.ecDomainHeight/self.ecDomainRes),
                     "startX": self.ecDefaultDomainStartX,
@@ -86,7 +108,9 @@ class Resources():
                     "dx": self.ecDomainRes,
                     "dy": self.ecDomainRes,
                     }
-        elif (metmodel == 'meps_2_5km'):
+        elif (metmodel == MetModel.Meps2p5):
+            return {}
+        elif (metmodel == MetModel.GfsGribFilter):
             return {}
 
         raise(NotImplementedError("metmodel='{}' not implememented".format(metmodel)))
@@ -225,12 +249,14 @@ GRAVITY.FIXED.M/S=0.0002
         Keyword arguments:
         metmodel -- h12, hirlam12 including files (default), or nrpa_ec_0p1 without met-definitions (see getSnapInputMetDefinitions)
         """
-        if (metmodel is None) or (metmodel == 'h12'):
+        if (metmodel is None) or (metmodel == MetModel.H12):
             filename = os.path.join(os.path.dirname(__file__),"resources/snap.input.tmpl")
-        elif (metmodel == 'nrpa_ec_0p1') or (metmodel == 'nrpa_ec_0p1_global'):
+        elif (metmodel == MetModel.NrpaEC0p1) or (metmodel == MetModel.NrpaEC0p1Global):
             filename = os.path.join(os.path.dirname(__file__),"resources/snap.input_nrpa_ec_0p1.tmpl")
-        elif (metmodel == 'meps_2_5km'):
+        elif (metmodel == MetModel.Meps2p5):
             filename = os.path.join(os.path.dirname(__file__),"resources/snap.input_meps_2_5km.tmpl")
+        elif (metmodel == MetModel.GfsGribFilter):
+            filename = os.path.join(os.path.dirname(__file__),"resources/snap.input_gfs_grib_filter.tmpl")
         else:
             raise(NotImplementedError("metmodel='{}' not implememented".format(metmodel)))
 
@@ -242,10 +268,10 @@ GRAVITY.FIXED.M/S=0.0002
         This should be written to the snap.input file, in addition to the source-term. files may be empty for e.g. h12
         '''
         lines = []
-        if (metmodel is None) or (metmodel == 'h12'):
+        if (metmodel is None) or (metmodel == MetModel.H12):
             # no setup needed, decoded in snap-template
             pass
-        elif (metmodel == 'nrpa_ec_0p1') or (metmodel == 'nrpa_ec_0p1_global'):
+        elif (metmodel == MetModel.NrpaEC0p1) or (metmodel == MetModel.NrpaEC0p1Global):
             # GRID.GPARAM = 2, -50., 25,.1,.1, 0., 0.
             # GRID.SIZE = 1251,601
             if (nx == 0):
@@ -262,8 +288,11 @@ GRAVITY.FIXED.M/S=0.0002
                                 startY=startY,
                                 dx=dx,
                                 dy=dy))
-        elif (metmodel == 'meps_2_5km'):
+        elif (metmodel == MetModel.Meps2p5):
             # no setup needed, decoded in snap-template
+            pass
+        elif (metmodel == MetModel.GfsGribFilter):
+            # no setup needed, autdetection in snap
             pass
         else:
             raise(NotImplementedError("metmodel='{}' not implememented".format(metmodel)))
@@ -316,6 +345,9 @@ GRAVITY.FIXED.M/S=0.0002
         return relevant
 
     def getMEPS25MeteorologyFiles(self, dtime: datetime, run_hours: int, fixed_run="best"):
+        return self.getMeteorologyFiles(MetModel.Meps2p5, dtime, run_hours, fixed_run)
+
+    def getMeteorologyFiles(self, metmodel, dtime: datetime, run_hours: int, fixed_run="best"):
         """Get available meteorology files for the last few days around dtime and run_hours.
 
         Keyword arguments:
@@ -327,6 +359,10 @@ GRAVITY.FIXED.M/S=0.0002
         """
         relevant_dates = []
 
+        if not metmodel in self.MET_FILENAME_PATTERN:
+            raise NotImplementedError("metmodel='{}' not implememented for meteorology".format(metmodel))
+        if not metmodel in self.MET_INPUTDIRS:
+            raise NotImplementedError("metmodel='{}' not implememented for meteorology".format(metmodel))
 
         # only best currently implemented
         if (fixed_run == "best"):
@@ -346,8 +382,8 @@ GRAVITY.FIXED.M/S=0.0002
             # loop needs to have latest model runs/hindcast runs last
             for day in days:
                 for utc in [0, 6, 12, 18]:
-                    file = self.MEPS25_FILENAME_PATTERN.format(UTC=utc, year=day.year, month=day.month, day=day.day)
-                    filename = self._findFileInPathes(file, self.MEPSINPUTDIRS)
+                    file = self.MET_FILENAME_PATTERN[metmodel].format(UTC=utc, year=day.year, month=day.month, day=day.day)
+                    filename = self._findFileInPathes(file, self.MET_INPUTDIRS[metmodel])
                     if filename is not None:
                         fmtime = os.stat(filename).st_mtime
                         if ((mtime.time() - fmtime) > (60*10)): # file older than 10min -> no longer under production
