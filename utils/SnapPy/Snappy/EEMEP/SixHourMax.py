@@ -27,7 +27,7 @@ import datetime
 from collections import deque
 
 def flightlevel_in_pressure(flightlevel):
-    '''convert flightlevel (in 100 ft) to pressure in hPa using the internatinal height formula'''
+    '''convert flightlevel (in 100 ft) to pressure in hPa using the international height formula'''
     h = flightlevel * 100 * 0.3048 # feet to meter
     p = 1013.25 * math.pow(1-(0.0065*h)/288.15,5.255) # international formula
     return p

@@ -31,7 +31,7 @@ from time import sleep
 import unittest
 
 from Snappy.EEMEP.Resources import Resources
-from Snappy.EEMEP.SixHourMax import SixHourMax
+from Snappy.EEMEP.PostProcess import PostProcess
 from Snappy.EEMEP.VolcanoRun import VolcanoRun
 
 
@@ -261,28 +261,6 @@ class ModelRunner():
 
         return status
 
-    def _postprocess_files(self, instantFilename, averageFilename):
-        # rename files, make them available to further processes
-        timestamp = self.timestamp.strftime("%Y%m%dT%H%M%S")
-        simulationstart = self.timestamp.strftime("%Y-%m-%d_%H:%M:%S")
-
-        self._write_log("postprocessing {}".format(instantFilename))
-        with Dataset(os.path.join(self.path, instantFilename), 'a') as nc:
-            nc.setncattr('SIMULATION_START_DATE', simulationstart)
-        
-        self._write_log("postprocessing (adding 6h_vmax) {}".format(averageFilename))
-        with Dataset(os.path.join(self.path, averageFilename), 'a') as nc:
-            nc.setncattr('SIMULATION_START_DATE', simulationstart)
-            nc['time'][:] += (0.5 / 24.) # add halv an hour as 'days since'
-            SixHourMax(nc)
-
-        newInstFile = os.path.join(self.path, 'eemep_hourInst_{}.nc'.format(timestamp)) 
-        newAvgFile = os.path.join(self.path, 'eemep_hour_{}.nc'.format(timestamp)) 
-        self._write_log("making files available as {} and {}".format(newInstFile, newAvgFile))
-        os.rename(instantFilename, newInstFile)
-        os.rename(averageFilename, newAvgFile)
-
-
     def download_results(self):
         '''download the result-files, and rename them as appropriate'''
         start_time = self.volcano.get_meteo_dates()[1]
@@ -296,8 +274,9 @@ class ModelRunner():
         self._write_log("downloading {}:{} to {}".format(fileA, self.hpcMachine, self.path))
         self.hpc.get_files([os.path.join(self.hpc_outdir, fileA)], self.path, 1200)
 
-        self._postprocess_files(os.path.join(self.path, fileI),
-                                os.path.join(self.path, fileA))
+        pp = PostProcess(self.path, self.timestamp, logger=self)
+        pp.convert_files(os.path.join(self.path, fileI),
+                         os.path.join(self.path, fileA))
         
 
 
