@@ -196,7 +196,7 @@ class ModelRunner():
         sres = Snappy.Resources.Resources()
         border = 7
         if (self.volcano.latitude > (sres.ecDefaultDomainStartY + border) and 
-            self.volcano.latitude < (sres.ecDefaultDomannStartY + sres.ecDomainHeight - border) and 
+            self.volcano.latitude < (sres.ecDefaultDomainStartY + sres.ecDomainHeight - border) and 
             self.volcano.longitude > (sres.ecDefaultDomainStartX + border) and 
             self.volcano.longitude < (sres.ecDefaultDomainStartX + sres.ecDomainWidth - border)):
             files = self.res.getECMeteorologyFiles(model_start_time, 72, ref_date)
