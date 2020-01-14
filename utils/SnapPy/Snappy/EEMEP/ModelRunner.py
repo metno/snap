@@ -203,6 +203,7 @@ class ModelRunner():
         else:
             self._write_log("Calculating Meteorology, takes about 10min")
             ecMetCalc = EcMeteorologyCalculator(sres, model_start_time, self.volcano.longitude, self.volcano.latitude)
+            ecMetCalc.calc()
             files = ecMetCalc.get_meteorology_files()
             
         for i, date_files in enumerate(files):
