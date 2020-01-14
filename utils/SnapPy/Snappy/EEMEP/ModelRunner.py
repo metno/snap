@@ -202,11 +202,8 @@ class ModelRunner():
             files = self.res.getECMeteorologyFiles(model_start_time, 72, ref_date)
         else:
             self._write_log("Calculating Meteorology, takes about 15min")
-            start_time = new DateTime(
-                model_start_time.Year,
-                model_start_time.Month,
-                model_start_time.Day,
-                3) # make sure to use the 00UTC meteorology, eemep needs start-time at midnight
+            # make sure to use the 00UTC meteorology, eemep needs start-time at midnight
+            start_time = model_start_time.replace(hour=3)
             ecMetCalc = EcMeteorologyCalculator(sres, start_time, self.volcano.longitude, self.volcano.latitude)
             ecMetCalc.calc()
             files = [ (x, 8) for x in ecMetCalc.get_meteorology_files() ]
