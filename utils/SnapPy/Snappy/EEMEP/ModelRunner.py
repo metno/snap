@@ -207,7 +207,7 @@ class ModelRunner():
             ecMetCalc = EcMeteorologyCalculator(sres, start_time, self.volcano.longitude, self.volcano.latitude)
             ecMetCalc.calc()
             files = [ (x, 8) for x in ecMetCalc.get_meteorology_files() ]
-            self._write_log("meteorology calculated: {}".format(", ".join(files)))
+            self._write_log("meteorology calculated")
             
         for i, date_files in enumerate(files):
             file_date = model_start_time + datetime.timedelta(days=i)
