@@ -201,10 +201,16 @@ class ModelRunner():
             self.volcano.longitude < (sres.ecDefaultDomainStartX + sres.ecDomainWidth - border)):
             files = self.res.getECMeteorologyFiles(model_start_time, 72, ref_date)
         else:
-            self._write_log("Calculating Meteorology, takes about 10min")
-            ecMetCalc = EcMeteorologyCalculator(sres, model_start_time, self.volcano.longitude, self.volcano.latitude)
+            self._write_log("Calculating Meteorology, takes about 15min")
+            start_time = new DateTime(
+                model_start_time.Year,
+                model_start_time.Month,
+                model_start_time.Day,
+                3) # make sure to use the 00UTC meteorology, eemep needs start-time at midnight
+            ecMetCalc = EcMeteorologyCalculator(sres, start_time, self.volcano.longitude, self.volcano.latitude)
             ecMetCalc.calc()
-            files = ecMetCalc.get_meteorology_files()
+            files = [ (x, 8) for x in ecMetCalc.get_meteorology_files() ]
+            self._write_log("meteorology calculated: {}".format(", ".join(files)))
             
         for i, date_files in enumerate(files):
             file_date = model_start_time + datetime.timedelta(days=i)
@@ -216,7 +222,7 @@ class ModelRunner():
         vfile = os.path.join(self.path, "Vertical_levels.txt")
         with open(vfile, 'w') as vh:
             vh.write(vlevels)
-            self.upload_files.add(vfile)
+        self.upload_files.add(vfile)
 
     def _get_restart_file(self):
         if (self.volcano.run_as_restart()):
