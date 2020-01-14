@@ -86,6 +86,9 @@ class VolcanoRun():
         desc = "#NUMBER,NAME,LOCATION,LATITUDE,NS,LONGITUDE,EW,ELEV,TYPE,ERUPTION TYPE\n"
         definition = "V1702A02B,{name},XXX,{lat},{north},{lon},{east},{altitude},xxx,M0\n".format(**defs)
 
+        self.latitude = defs['lat']
+        self.longitude = defs ['lon']
+        
         return desc + definition
 
 
