@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+from Snappy.EcMeteorologyCalculator import EcMeteorologyCalculator
 '''
 Created on Sep 2, 2016
 
@@ -33,6 +34,7 @@ import unittest
 from Snappy.EEMEP.Resources import Resources
 from Snappy.EEMEP.PostProcess import PostProcess
 from Snappy.EEMEP.VolcanoRun import VolcanoRun
+import Snappy.Resources
 
 
 class AbortFile():
@@ -190,8 +192,19 @@ class ModelRunner():
         Returns: list of meteorology files
         '''
         (ref_date, model_start_time) = self.volcano.get_meteo_dates()
-
-        files = self.res.getECMeteorologyFiles(model_start_time, 72, ref_date)
+        
+        sres = Snappy.Resources.Resources()
+        border = 7
+        if (self.volcano.latitude > (sres.ecDefaultDomainStartY + border) and 
+            self.volcano.latitude < (sres.ecDefaultDomannStartY + sres.ecDomainHeight - border) and 
+            self.volcano.longitude > (sres.ecDefaultDomainStartX + border) and 
+            self.volcano.longitude < (sres.ecDefaultDomainStartX + sres.ecDomainWidth - border)):
+            files = self.res.getECMeteorologyFiles(model_start_time, 72, ref_date)
+        else:
+            self._write_log("Calculating Meteorology, takes about 10min")
+            ecMetCalc = EcMeteorologyCalculator(sres, model_start_time, self.volcano.longitude, self.volcano.latitude)
+            files = ecMetCalc.get_meteorology_files()
+            
         for i, date_files in enumerate(files):
             file_date = model_start_time + datetime.timedelta(days=i)
             outfile = os.path.join(self.path, "meteo{date}.nc".format(date=file_date.strftime("%Y%m%d")))
