@@ -234,8 +234,30 @@ class Controller():
                 # rate in kg/s from Mastin et al. 2009, formular (1) and a volume (DRE) (m3) to
                 # mass (kg) density of 2500kg/m3
                 rate = 2500.* ((.5*cheight/1000)**(1/0.241))
+                
+                # eEMEP runs up-to 23 km, so remove all ash above 23 km,
+                # See Varsling av vulkanaske i norsk luftrom - driftsfase, 
+                # February 2020 for details
+                eemep_cheight_asl_max = 23000.0
+                cheight_asl = cheight+altf
+                if (cheight_asl > eemep_cheight_asl_max):
+                    debug("Cropping ash cloud to 23 km ASL from {:.0f} km".format(cheight_asl/1000.0))
+                    rate = rate * (eemep_cheight_asl_max / cheight_asl)
+                    cheight = eemep_cheight_asl_max - altf
         except:
             errors += "cannot interpret cloudheight (m): {0}\n".format(qDict['cloudheight'])
+
+        # eEMEP runs up-to 23 km, so remove all ash above 23 km,
+        # See Varsling av vulkanaske i norsk luftrom - driftsfase, 
+        # February 2020 for details
+        eemep_cheight_max = 23000.0-altf
+        if (cheight > eemep_cheight_max):
+            debug("Cropping ash cloud to {:.0f} km ASL from {:.0f} km".format(eemep_cheight_max/1000.0, cheight/1000.0))
+            rate_fraction = eemep_cheight_max / cheight
+            debug("Ash reduction factor {:f}".format(rate_fraction))
+            rate = rate * rate_fraction
+            cheight = eemep_cheight_max
+
         eruptions = []
         eruption = '<eruption start="{start}Z" end="{end}Z" bottom="{bottom:.0f}" top="{top:.0f}" rate="{rate:.0f}" m63="{m63:.2f}"/>'
         eruptions.append(eruption.format(start=startDT.isoformat(),

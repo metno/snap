@@ -24,12 +24,29 @@
     *******************************************************************
 """
 
-from PyQt5 import QtCore, QtWidgets, QtWebKitWidgets
+
+#Get Qt version 
+from PyQt5 import Qt
+qt_version = [ int(v) for v in Qt.QT_VERSION_STR.split('.') ]
+
+#Import correct parts of Qt
+if (qt_version[0] >= 5 and qt_version[1] >= 6):
+    #Qt5.6 and later - QtWebKitWidgets is deprecated
+    from PyQt5 import QtCore, QtWidgets
+    from PyQt5.QtWebEngineWidgets import QWebEnginePage as QWebPage
+    from PyQt5.QtWebEngineWidgets import QWebEngineView as QWebView
+elif (qt_version[0] >= 5):
+    #Qt5.5 and earlier
+    from PyQt5 import QtCore, QtWidgets
+    from PyQt5.QtWebKitWidgets import QWebPage, QWebView
+else:
+    raise ImportError("Unsupported version of PyQt")
+    
 from builtins import str
 import sys
 
 
-class StartWebPage(QtWebKitWidgets.QWebPage):
+class StartWebPage(QWebPage):
     formSubmitted = QtCore.pyqtSignal(QtCore.QUrl)
 
     def __init__(self):
@@ -55,7 +72,7 @@ class BrowserWidget(QtWidgets.QWidget):
         self.layout = QtWidgets.QHBoxLayout()
         self.setLayout(self.layout)
 
-        self.webview = QtWebKitWidgets.QWebView()
+        self.webview = QWebView()
         self.layout.addWidget(self.webview)
 
         self.webview.urlChanged.connect(self.url_changed)
@@ -69,7 +86,7 @@ class BrowserWidget(QtWidgets.QWidget):
     def browse(self):
         """browse an url"""
         url = self.tb_url.text() if self.tb_url.text() else self.default_url
-        self.webview.setPage(QtWebKitWidgets.QWebPage())
+        self.webview.setPage(QWebPage())
         self.webview.load(QtCore.QUrl(url))
         self.webview.show()
 
