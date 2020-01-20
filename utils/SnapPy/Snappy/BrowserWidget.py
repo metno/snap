@@ -24,14 +24,23 @@
     *******************************************************************
 """
 
-from PyQt5 import QtCore, QtWidgets
-try:
-    #Qt5.5 and earlier
-    from PyQt5.QtWebKitWidgets import QWebPage, QWebView
-except:
+
+#Get Qt version 
+from PyQt5 import Qt
+qt_version = [ int(v) for v in Qt.QT_VERSION_STR.split('.') ]
+
+#Import correct parts of Qt
+if (qt_version[0] >= 5 and qt_version[1] >= 6):
     #Qt5.6 and later - QtWebKitWidgets is deprecated
+    from PyQt5 import QtCore, QtWidgets
     from PyQt5.QtWebEngineWidgets import QWebEnginePage as QWebPage
     from PyQt5.QtWebEngineWidgets import QWebEngineView as QWebView
+elif (qt_version[0] >= 5):
+    #Qt5.5 and earlier
+    from PyQt5 import QtCore, QtWidgets
+    from PyQt5.QtWebKitWidgets import QWebPage, QWebView
+else:
+    raise ImportError("Unsupported version of PyQt")
     
 from builtins import str
 import sys
