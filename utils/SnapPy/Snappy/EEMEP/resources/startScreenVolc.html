@@ -91,7 +91,7 @@ function toggle_advanced_sourceterm() {
        <!--  -->
        <label>Eruption Start UTC (YYYY-MM-DD HH:MM):<br><input name="startTime" type="text" value="%CURRENTTIME%" size="20" maxlength="20" ></label>
        <br><label>Run-Length (in hours)<br><input name="runTime" type="number" step="3" max="120" min="12" value="48"></label>
-       <br><label>Ash-Cloud (m over surface) if available<br><input name="cloudheight" type="number" step="500" max="16000" min="0"></label>
+       <br><label>Ash-Cloud (m above volcano vent) if available<br><input name="cloudheight" type="number" step="500" max="50000" min="0"></label>
        <br>
          <fieldset>
          <legend><a href="javascript: toggle_advanced_sourceterm()">Advanced</a></legend>
@@ -125,7 +125,7 @@ function toggle_advanced_sourceterm() {
        If <b>Use Lat-Lon</b>:<br>
        <span title="e.g. 60.15, 60:2:3N, 60°2'3 N"><label>Latitude: &nbsp;&nbsp;<input name="latitude" type="text" size="8" maxlength="10"></label></span><br>
        <span title="e.g. 10.15, 10:2:3E, 10°2'03 E"><label>Longitude: <input name="longitude" type="text" size="8" maxlength="10"></label></span><br>
-       <label>Altitude (m) (e.g. 3300): <input name="altitude" type="number" step="1" max="9000" min="0"></label>
+       <label>Vent altitude (m ASL) (e.g. 3300): <input name="altitude" type="number" step="1" max="9000" min="0"></label>
        </fieldset>
      </fieldset>
      </div>
