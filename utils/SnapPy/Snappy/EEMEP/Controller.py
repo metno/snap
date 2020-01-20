@@ -236,6 +236,18 @@ class Controller():
                 rate = 2500.* ((.5*cheight/1000)**(1/0.241))
         except:
             errors += "cannot interpret cloudheight (m): {0}\n".format(qDict['cloudheight'])
+
+        # eEMEP runs up-to 23 km, so remove all ash above 23 km,
+        # See Varsling av vulkanaske i norsk luftrom - driftsfase, 
+        # February 2020 for details
+        eemep_cheight_max = 23000.0-altf
+        if (cheight > eemep_cheight_max):
+            debug("Cropping ash cloud to {:.0f} km ASL from {:.0f} km".format(eemep_cheight_max/1000.0, cheight/1000.0))
+            rate_fraction = eemep_cheight_max / cheight
+            debug("Ash reduction factor {:f}".format(rate_fraction))
+            rate = rate * rate_fraction
+            cheight = eemep_cheight_max
+
         eruptions = []
         eruption = '<eruption start="{start}Z" end="{end}Z" bottom="{bottom:.0f}" top="{top:.0f}" rate="{rate:.0f}" m63="{m63:.2f}"/>'
         eruptions.append(eruption.format(start=startDT.isoformat(),
