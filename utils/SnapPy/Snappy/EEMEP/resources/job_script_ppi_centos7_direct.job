@@ -6,7 +6,7 @@
 #$ -pe opa-fn 108
 #$ -l h_vmem=4G
 #$ -q opath.q
-#$ -M heiko.klein@met.no
+#$ -M heiko.klein@met.no,andreb@met.no
 #$ -S /bin/bash
 #$ -m a
 #$ -o /lustre/storeB/project/fou/kl/eva/eemep/HPC/work/emep/eemep/tmp/eemep_single.log
