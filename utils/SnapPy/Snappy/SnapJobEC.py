@@ -63,9 +63,9 @@ class SnapJobEC():
 #$ -r y
 #$ -l h_rt=0:10:00
 #$ -l h_vmem=8G
-##$ -m bea
-#$ -M heikok@met.no
+#$ -M heikok@met.no,andreb@met.no
 #$ -m a
+#$ -P dsa
 #$ -pe mpi 1
 #$ -q operationalx.q
 #$ -sync no
