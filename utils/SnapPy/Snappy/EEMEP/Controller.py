@@ -233,10 +233,15 @@ class Controller():
             if qDict['cloudheight_datum'] == 'mean_sea_level':
                 # Interpret cloud height as above sea level 
                 # - remove volcano vent altitude to get plume height
+                debug("Cloud height measured from mean sea level: {:.0f} m".format(cheight/1000.0))
                 cheight = cheight - altf
+                debug("Cloud height measured from vent: {:.0f} km".format(cheight/1000.0))
+                
             elif qDict['cloudheight_datum'] == 'vent':
                 # Interpret cloud height as above vent
+                debug("Cloud height measured from vent: {:.0f} km".format(cheight/1000.0))
                 pass
+            
             else:
                 errors += "cannot interpret cloud height datum: {:s}".format(qDict['cloudheight_datum'])
                 
