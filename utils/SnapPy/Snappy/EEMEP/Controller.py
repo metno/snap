@@ -230,21 +230,22 @@ class Controller():
             except:
                 errors += "cannot interpret cloudheight (m): {0}\n".format(qDict['cloudheight'])
                 
+            if (cheight % 1 != 0):
+                self.write_log("WARNING: Ash cloud height supplied with fraction. Please check that you supplied meters, not km!")
+                
             if qDict['cloudheight_datum'] == 'mean_sea_level':
                 # Interpret cloud height as above sea level 
                 # - remove volcano vent altitude to get plume height
-                debug("Cloud height measured from mean sea level: {:.0f} m".format(cheight/1000.0))
+                self.write_log("Ash cloud height measured from mean sea level: {:.0f} m".format(cheight/1000.0))
                 cheight = cheight - altf
-                debug("Cloud height measured from vent: {:.0f} km".format(cheight/1000.0))
                 
             elif qDict['cloudheight_datum'] == 'vent':
                 # Interpret cloud height as above vent
-                debug("Cloud height measured from vent: {:.0f} km".format(cheight/1000.0))
                 pass
             
             else:
                 errors += "cannot interpret cloud height datum: {:s}".format(qDict['cloudheight_datum'])
-                
+
             # rate in kg/s from Mastin et al. 2009, formular (1) and a volume (DRE) (m3) to
             # mass (kg) density of 2500kg/m3
             rate = 2500.0 * ((0.5*cheight/1000.0)**(1.0/0.241))
@@ -252,8 +253,10 @@ class Controller():
             cheight = float(volctype['H']) * 1000 # km -> m
             rate = float(volctype['dM/dt'])
             
+        #Check negative ash cloud height
         if (cheight <= 0):
             errors += "Negative cloud height {:.0f}! Please check ash cloud datum.".format(cheight/1000.0)
+        self.write_log("Ash cloud height measured from vent: {:.0f} km, rate: {:.0f} kg/s".format(cheight/1000.0, rate))
 
         # Abort if errors
         if (len(errors) > 0):
@@ -266,9 +269,8 @@ class Controller():
         # February 2020 for details
         eemep_cheight_max = 23000.0-altf
         if (cheight > eemep_cheight_max):
-            debug("Cropping ash cloud to {:.0f} km ASL from {:.0f} km".format(eemep_cheight_max/1000.0, cheight/1000.0))
             rate_fraction = eemep_cheight_max / cheight
-            debug("Ash reduction factor {:f}".format(rate_fraction))
+            self.write_log("Cropping ash cloud to {:.0f} km ASL from {:.0f} km using factor {:f}".format(eemep_cheight_max/1000.0, cheight/1000.0, rate_fraction))
             rate = rate * rate_fraction
             cheight = eemep_cheight_max
 
