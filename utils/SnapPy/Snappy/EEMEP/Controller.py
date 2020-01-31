@@ -91,20 +91,24 @@ class Controller():
         self.lastQDict = {}
         self.lastLog = ""
 
-    def write_log(self, txt:str):
-        if (txt != self.lastLog):
-            self.lastLog = txt
-            debug(txt)
-            self.main.evaluate_javaScript('updateEemepLog({0});'.format(json.dumps(txt)))
+    def write_log(self, txt:str, clear_log=False):
+        if (clear_log):
+            self.lastLog = ""
+
+        self.lastLog += "\n" + txt
+        debug(txt)
+        self.main.evaluate_javaScript('updateEemepLog({0});'.format(json.dumps(self.lastLog)))
 
     def update_log_query(self, qDict):
         #MainBrowserWindow._default_form_handler(qDict)
         #self.write_log("updating...")
         logfile = os.path.join(self.lastOutputDir,"volcano.log")
         if os.path.isfile(logfile) :
-            self.write_log(tail(logfile, 30))
+            self.write_log(tail(logfile, 30), clear_log=True)
         else:
-            self.write_log("Waiting to work with {}\n".format(self.lastOutputDir)+ "Queue busy {:%Y-%m-%d %H:%M:%S}\n".format(datetime.datetime.now())+self.res.getModelRunnerLogs())
+            self.write_log("Queue busy {:%Y-%m-%d %H:%M:%S}".format(datetime.datetime.now()))
+            if (self.res.getModelRunnerLogs()):
+                self.write_log(self.res.getModelRunnerLogs())
 
     def cancel_first_in_queue(self, qDict):
         '''Mark all currently active model-runs for abort'''
@@ -119,7 +123,7 @@ class Controller():
                         os.remove(os.path.join(dirpath, file))
                     except:
                         traceback.print_exc()
-                        self.write_log("abort not succeeded".format(dirpath))
+                        self.write_log("aborting {} failed!".format(dirpath))
         pass
     
     def cancel_submitted(self, qDict):
@@ -163,6 +167,7 @@ class Controller():
     def run_eemep_query(self, qDict):
         # make sure all files are rw for everybody (for later deletion)
         os.umask(0)
+        self.write_log("Running EEMEP query", clear_log=True)
         debug("run_eemep_query")
         for key, value in qDict.items():
             print(str.format("{0} => {1}", key, value))
@@ -236,7 +241,7 @@ class Controller():
             if qDict['cloudheight_datum'] == 'mean_sea_level':
                 # Interpret cloud height as above sea level 
                 # - remove volcano vent altitude to get plume height
-                self.write_log("Ash cloud height measured from mean sea level: {:.0f} m".format(cheight/1000.0))
+                self.write_log("Ash cloud height measured from mean sea level: {:.2f} km".format(cheight/1000.0))
                 cheight = cheight - altf
                 
             elif qDict['cloudheight_datum'] == 'vent':
@@ -255,8 +260,8 @@ class Controller():
             
         #Check negative ash cloud height
         if (cheight <= 0):
-            errors += "Negative cloud height {:.0f}! Please check ash cloud datum.".format(cheight/1000.0)
-        self.write_log("Ash cloud height measured from vent: {:.0f} km, rate: {:.0f} kg/s".format(cheight/1000.0, rate))
+            errors += "Negative cloud height {:.2f}! Please check ash cloud datum.".format(cheight/1000.0)
+        self.write_log("Ash cloud height measured from vent: {:.2f} km, rate: {:.0f} kg/s, vent height: {:.2f}".format(cheight/1000.0, rate, altf/1000.0))
 
         # Abort if errors
         if (len(errors) > 0):
@@ -270,7 +275,7 @@ class Controller():
         eemep_cheight_max = 23000.0-altf
         if (cheight > eemep_cheight_max):
             rate_fraction = eemep_cheight_max / cheight
-            self.write_log("Cropping ash cloud to {:.0f} km ASL from {:.0f} km using factor {:f}".format(eemep_cheight_max/1000.0, cheight/1000.0, rate_fraction))
+            self.write_log("Cropping ash cloud to {:.2f} km from {:.2f} km using factor {:.3f}".format(eemep_cheight_max/1000.0, cheight/1000.0, rate_fraction))
             rate = rate * rate_fraction
             cheight = eemep_cheight_max
 
@@ -320,8 +325,8 @@ class Controller():
             os.rename(logfile, "{}_{}".format(logfile, logdate.strftime("%Y%m%dT%H%M%S")))
         with open(os.path.join(self.lastOutputDir, ModelRunner.VOLCANO_FILENAME),'w') as fh:
             fh.write(self.lastSourceTerm)
+        self.write_log("Working with {}".format(self.lastOutputDir))
         self.eemepRunning = "running"
-        self.update_log_query({})
 
         self.model_update = _UpdateThread(self)
         self.model_update.update_log_signal.connect(self.update_log)
