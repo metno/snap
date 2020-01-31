@@ -218,24 +218,40 @@ class Controller():
             volctype = self.res.readVolcanoType(type)
         except Exception as ex:
             errors += str(ex) + "\n"
-            errors +=  'Please select Height and Type (Advanced) manually.\n'
+            errors += 'Please select Height and Type (Advanced) manually.\n'
         
+        self.write_log("working with lat/lon=({0}/{1}) starting at {2}".format(latf, lonf, startTime))
+
+        
+        # Get cloud height if supplied and calculate eruption rate
+        if qDict['cloudheight']:
+            try:
+                cheight = float(qDict['cloudheight'])
+            except:
+                errors += "cannot interpret cloudheight (m): {0}\n".format(qDict['cloudheight'])
+                
+            if qDict['cloudheight_datum'] == 'mean_sea_level':
+                # Interpret cloud height as above sea level 
+                # - remove volcano vent altitude to get plume height
+                cheight = cheight - altf
+            elif qDict['cloudheight_datum'] == 'vent':
+                # Interpret cloud height as above vent
+                pass
+            else:
+                errors += "cannot interpret cloud height datum: {:s}".format(qDict['cloudheight_datum'])
+                
+            # rate in kg/s from Mastin et al. 2009, formular (1) and a volume (DRE) (m3) to
+            # mass (kg) density of 2500kg/m3
+            rate = 2500.0 * ((0.5*cheight/1000.0)**(1.0/0.241))
+        else:
+            cheight = float(volctype['H']) * 1000 # km -> m
+            rate = float(volctype['dM/dt'])
+
+        # Abort if errors
         if (len(errors) > 0):
             debug('updateLog("{0}");'.format(json.dumps("ERRORS:\n\n"+errors)))
             self.write_log("ERRORS:\n\n{0}".format(errors))
             return
-        self.write_log("working with lat/lon=({0}/{1}) starting at {2}".format(latf, lonf, startTime))
-
-        cheight = float(volctype['H']) * 1000 # km -> m
-        rate = float(volctype['dM/dt'])
-        try:
-            if qDict['cloudheight']:
-                cheight = float(qDict['cloudheight'])
-                # rate in kg/s from Mastin et al. 2009, formular (1) and a volume (DRE) (m3) to
-                # mass (kg) density of 2500kg/m3
-                rate = 2500.* ((.5*cheight/1000)**(1/0.241))
-        except:
-            errors += "cannot interpret cloudheight (m): {0}\n".format(qDict['cloudheight'])
 
         # eEMEP runs up-to 23 km, so remove all ash above 23 km,
         # See Varsling av vulkanaske i norsk luftrom - driftsfase, 
