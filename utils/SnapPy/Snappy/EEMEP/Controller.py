@@ -251,6 +251,9 @@ class Controller():
         else:
             cheight = float(volctype['H']) * 1000 # km -> m
             rate = float(volctype['dM/dt'])
+            
+        if (cheight <= 0):
+            errors += "Negative cloud height {:.0f}! Please check ash cloud datum.".format(cheight/1000.0)
 
         # Abort if errors
         if (len(errors) > 0):
