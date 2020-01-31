@@ -91,7 +91,14 @@ function toggle_advanced_sourceterm() {
        <!--  -->
        <label>Eruption Start UTC (YYYY-MM-DD HH:MM):<br><input name="startTime" type="text" value="%CURRENTTIME%" size="20" maxlength="20" ></label>
        <br><label>Run-Length (in hours)<br><input name="runTime" type="number" step="3" max="120" min="12" value="48"></label>
-       <br><label>Ash cloud height (if available)<br><input name="cloudheight" type="number" step="500" max="50000" min="0"></label>
+       <br>
+         <label>Ash cloud height (if available)</label>
+         <br>
+         <input name="cloudheight" type="number" step="500" max="50000" min="0">
+         <select name="cloudheight_datum">
+           <option selected="selected" value="mean_sea_level">meters above sea level</option>
+           <option value="vent">meters above vent</option>
+         </select>
        <br>
        <fieldset style="line-height: 1.3;">
          <legend><a href="javascript: toggle_advanced_sourceterm()">Advanced</a></legend>
@@ -99,15 +106,6 @@ function toggle_advanced_sourceterm() {
          <label>Continue previous run</label>
          <div style="float:right;">
            <input type="checkbox" name="restart_file" value="true">
-         </div>
-         
-         <br clear="both" style="clear:both;"/>
-         <label>Ash-cloud datum: </label>
-         <div style="float:right;">
-         <select name="cloudheight_datum">
-           <option selected="selected" value="mean_sea_level">Above sea level</option>
-           <option value="vent">Above vent</option>
-         </select>
          </div>
          
          <br clear="both" style="clear:both;"/>
