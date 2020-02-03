@@ -232,7 +232,7 @@ class Controller():
             errors += str(ex) + "\n"
             errors += 'Please select Height and Type (Advanced) manually.\n'
         
-        self.write_log("working with lat/lon=({0}/{1}) starting at {2}".format(latf, lonf, startTime))
+        self.write_log("working with {:s} (lat={:.2f}N lon={:.2f}E) starting at {:s}".format(volcano, latf, lonf, startTime))
 
         
         # Get cloud height if supplied and calculate eruption rate
@@ -260,7 +260,7 @@ class Controller():
 
             # rate in kg/s from Mastin et al. 2009, formular (1) and a volume (DRE) (m3) to
             # mass (kg) density of 2500kg/m3
-            rate = 2500.0 * ((0.5*cheight/1000.0)**(1.0/0.241))
+            rate = 2500.0 * ((0.5*max(0, cheight)/1000.0)**(1.0/0.241))
         else:
             cheight = float(volctype['H']) * 1000 # km -> m
             rate = float(volctype['dM/dt'])
