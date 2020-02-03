@@ -2449,10 +2449,12 @@ subroutine conform_input(ierror)
   end do
 
   if(idrydep == 0) idrydep=1
-  if (iwetdep /= 0 .or. iwetdep /= 2) then
-    write(error_unit, *) "Unknown wet deposition version, defaulting to version 2"
-    warning = .true.
+  if (iwetdep == 0) then ! Set default wetdep version
     iwetdep = 2
+  endif
+  if (iwetdep /= 2) then
+    write(error_unit, *) "Unknown wet deposition version"
+    ierror = 1
   endif
   i1=0
   i2=0
@@ -2500,7 +2502,6 @@ subroutine conform_input(ierror)
   end do
 
   if (i1 == 0) idrydep=0
-  if (i2 == 0) iwetdep=0
 
 ! initialize all arrays after reading input
   if (imodlevel == 1) then
