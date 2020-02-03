@@ -79,7 +79,7 @@ class Controller():
 
     def __init__(self):
         '''
-        Initialize Widget annd handlers
+        Initialize Widget and handlers
         '''
         self.res = Resources()
         self.main = BrowserWidget()
@@ -89,15 +89,22 @@ class Controller():
         self.eemepRunning = "inactive"
         self.lastOutputDir = ""
         self.lastQDict = {}
-        self.lastLog = ""
+        self.lastLog = []
 
-    def write_log(self, txt:str, clear_log=False):
+
+    def write_log(self, txt:str, max_lines=30, clear_log=False):
         if (clear_log):
-            self.lastLog = ""
-
-        self.lastLog += "\n" + txt
+            self.lastLog = [txt]
+        else:
+            self.lastLog += txt.splitlines()
         debug(txt)
-        self.main.evaluate_javaScript('updateEemepLog({0});'.format(json.dumps(self.lastLog)))
+                                
+        #Write at most 30 lines to screen
+        if (len(self.lastLog) > max_lines):
+            self.lastLog = self.lastLog[-max_lines:]
+        lines = None
+                                                                                                
+        self.main.evaluate_javaScript('updateEemepLog({0});'.format(json.dumps("\n".join(self.lastLog))))
 
     def update_log_query(self, qDict):
         #MainBrowserWindow._default_form_handler(qDict)
@@ -260,13 +267,13 @@ class Controller():
             
         #Check negative ash cloud height
         if (cheight <= 0):
-            errors += "Negative cloud height {:.2f}! Please check ash cloud datum.".format(cheight/1000.0)
-        self.write_log("Ash cloud height measured from vent: {:.2f} km, rate: {:.0f} kg/s, vent height: {:.2f}".format(cheight/1000.0, rate, altf/1000.0))
+            errors += "Negative cloud height {:.2f}! Please check ash cloud.".format(cheight/1000.0)
+        self.write_log("Ash cloud height measured from volcano: {:.2f} km, rate: {:.0f} kg/s, volcano height: {:.2f} km.".format(cheight/1000.0, rate, altf/1000.0))
 
         # Abort if errors
         if (len(errors) > 0):
-            debug('updateLog("{0}");'.format(json.dumps("ERRORS:\n\n"+errors)))
-            self.write_log("ERRORS:\n\n{0}".format(errors))
+            debug('updateLog("{0}");'.format(json.dumps("ERRORS:\n"+errors)))
+            self.write_log("ERRORS:\n{0}".format(errors))
             return
 
         # eEMEP runs up-to 23 km, so remove all ash above 23 km,
