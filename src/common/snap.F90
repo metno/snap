@@ -282,7 +282,7 @@ PROGRAM bsnap
   integer :: isynoptic,m,np,nlevel,minhfc,maxhfc,ifltim
   integer :: k, ierror, i, n
   integer :: ih
-  integer :: idrydep,iwetdep,idecay
+  integer :: idrydep,wetdep_version,idecay
   integer :: ntimefo,iunitf,nh1,nh2
   integer :: ierr1,ierr2,nsteph,nstep,nstepr,iunito
   integer :: nxtinf,ihread,isteph,lstepr,iendrel,istep,ihr1,ihr2,nhleft
@@ -578,7 +578,7 @@ PROGRAM bsnap
     write(iulog,*) 'ifltim:  ',ifltim
     write(iulog,*) 'irwalk:  ', use_random_walk
     write(iulog,*) 'idrydep: ',idrydep
-    write(iulog,*) 'iwetdep: ',iwetdep
+    write(iulog,*) 'wetdep_version: ',wetdep_version
     write(iulog,*) 'idecay:  ',idecay
     write(iulog,*) 'rmlimit: ',rmlimit
     write(iulog,*) 'ndefcomp:', size(def_comp)
@@ -937,7 +937,7 @@ PROGRAM bsnap
       if (init) then
       ! setting particle-number to 0 means init
         call posint_init()
-        if(iwetdep == 2) call wetdep2_init(tstep)
+        if(wetdep_version == 2) call wetdep2_init(tstep)
         call forwrd_init()
         if(use_random_walk) call rwalk_init(tstep)
         init = .FALSE.
@@ -974,7 +974,7 @@ PROGRAM bsnap
 #endif
 
         !..wet deposition (1=old, 2=new version)
-        if(iwetdep == 2) call wetdep2(tstep, pdata(np), pextra)
+        if(wetdep_version == 2) call wetdep2(tstep, pdata(np), pextra)
 
 #if defined(ENSEMBLE)
         if(iensemble.eq.1) then
@@ -1332,7 +1332,7 @@ subroutine set_defaults()
   ifltim =0
   blfullmix= .TRUE.
   idrydep=0
-  iwetdep=0
+  wetdep_version=0
 
   inprecip =1
   imslp    =0
@@ -1598,13 +1598,13 @@ end subroutine
         !..wet.deposition.new
           write(error_unit,*) "Deprecated, please use wet.deposition.version = 2"
           warning = .true.
-          if (iwetdep /= 0) then
+          if (wetdep_version /= 0) then
             write(error_unit, *) "already set"
             goto 12
           endif
-          iwetdep=2
+          wetdep_version=2
         elseif(cinput(k1:k2) == 'wet.deposition.version') then
-          if (iwetdep /= 0) then
+          if (wetdep_version /= 0) then
             write(error_unit, *) "already set"
             goto 12
           endif
@@ -1612,7 +1612,7 @@ end subroutine
             write(error_unit, *) "expected a keyword"
             goto 12
           endif
-          read(cipart, *, err=12) iwetdep
+          read(cipart, *, err=12) wetdep_version
         elseif(cinput(k1:k2) == 'time.step') then
         !..time.step=<seconds>
           if(kv1 < 1) goto 12
@@ -2449,10 +2449,10 @@ subroutine conform_input(ierror)
   end do
 
   if(idrydep == 0) idrydep=1
-  if (iwetdep == 0) then ! Set default wetdep version
-    iwetdep = 2
+  if (wetdep_version == 0) then ! Set default wetdep version
+    wetdep_version = 2
   endif
-  if (iwetdep /= 2) then
+  if (wetdep_version /= 2) then
     write(error_unit, *) "Unknown wet deposition version"
     ierror = 1
   endif
@@ -2483,7 +2483,7 @@ subroutine conform_input(ierror)
       end if
     end if
 
-    if(iwetdep == 2 .AND. def_comp(m)%kwetdep == 1) then
+    if(wetdep_version == 2 .AND. def_comp(m)%kwetdep == 1) then
       if(def_comp(m)%radiusmym > 0.) then
         i2=i2+1
       else
