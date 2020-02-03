@@ -41,12 +41,6 @@ import Snappy.Utils
 def debug(*objs):
     print("DEBUG: ", *objs, file=sys.stderr)
 
-def tail(f, n):
-    lines = deque(maxlen=n)
-    with open(f) as fh:
-        for line in fh:
-            lines.append(line)
-    return "".join(lines)
 
 class _UpdateThread(QThread):
     update_log_signal = pyqtSignal()
@@ -90,6 +84,7 @@ class Controller():
         self.lastOutputDir = ""
         self.lastQDict = {}
         self.lastLog = []
+        self.logfile_size = 0
 
 
     def write_log(self, txt:str, max_lines=30, clear_log=False):
@@ -98,7 +93,7 @@ class Controller():
         else:
             self.lastLog += txt.splitlines()
         debug(txt)
-                                
+
         #Write at most 30 lines to screen
         if (len(self.lastLog) > max_lines):
             self.lastLog = self.lastLog[-max_lines:]
@@ -110,8 +105,14 @@ class Controller():
         #MainBrowserWindow._default_form_handler(qDict)
         #self.write_log("updating...")
         logfile = os.path.join(self.lastOutputDir,"volcano.log")
-        if os.path.isfile(logfile) :
-            self.write_log(tail(logfile, 30), clear_log=True)
+        if os.path.isfile(logfile):
+            logfile_size = os.path.getsize(logfile)
+            if (logfile_size <= self.logfile_size):
+                with open(logfile) as lf:
+                    lf.seek(self.logfile_size)
+                    for line in lf:
+                        self.write_log(line)
+                self.logfile_size = logfile_size
         else:
             self.write_log("Queue busy {:%Y-%m-%d %H:%M:%S}".format(datetime.datetime.now()))
             if (self.res.getModelRunnerLogs()):
