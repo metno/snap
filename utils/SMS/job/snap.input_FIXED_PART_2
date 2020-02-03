@@ -77,11 +77,5 @@ LOG.FILE=     snap.log
 DEBUG.OFF
 * DEBUG.ON
 *
-ENSEMBLE.PROJECT.OUTPUT.OFF
-* ENSEMBLE.PROJECT.OUTPUT.ON
-* ENSEMBLE.PROJECT.OUTPUT.FILE= ensemble.list
-* ENSEMBLE.PROJECT.PARTICIPANT= 09
-* ENSEMBLE.PROJECT.EXPERIMENT=  01
-*
 END
 **----------------------------------------------------------------------
