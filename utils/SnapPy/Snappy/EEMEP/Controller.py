@@ -219,7 +219,7 @@ class Controller():
         except Exception as ex:
             errors += str(ex) + "\n"
             errors +=  'Please select Height and Type (Advanced) manually.\n'
-        
+
         if (len(errors) > 0):
             debug('updateLog("{0}");'.format(json.dumps("ERRORS:\n\n"+errors)))
             self.write_log("ERRORS:\n\n{0}".format(errors))
@@ -236,7 +236,7 @@ class Controller():
                 rate = 2500.* ((.5*cheight/1000)**(1/0.241))
         except:
             errors += "cannot interpret cloudheight (m): {0}\n".format(qDict['cloudheight'])
-
+        
         # eEMEP runs up-to 23 km, so remove all ash above 23 km,
         # See Varsling av vulkanaske i norsk luftrom - driftsfase, 
         # February 2020 for details
@@ -292,8 +292,23 @@ class Controller():
         if (os.path.exists(logfile)):
             logdate = datetime.datetime.fromtimestamp(os.path.getmtime(logfile))
             os.rename(logfile, "{}_{}".format(logfile, logdate.strftime("%Y%m%dT%H%M%S")))
-        with open(os.path.join(self.lastOutputDir, ModelRunner.VOLCANO_FILENAME),'w') as fh:
-            fh.write(self.lastSourceTerm)
+        volcano_file = os.path.join(self.lastOutputDir, ModelRunner.VOLCANO_FILENAME)
+        try:
+            # Mode x - open for exclusive creation, failing if the file already exists
+            with open(volcano_file,'x') as fh:
+                fh.write(self.lastSourceTerm)
+        except FileExistsError as e:
+            owner = "unknown"
+            if (os.path.exists(volcano_file)):
+                from os import stat
+                from pwd import getpwuid
+                owner = getpwuid(stat(volcano_file).st_uid).pw_name
+            errmsg = "ERROR: Run ({:s}) already exists!\nCreated by user {:s}.\nPlease try again later.".format(volcano_file, owner)
+            debug('updateLog("{0}");'.format(json.dumps(errmsg)))
+            self.write_log(errmsg)
+            return
+            
+            
         self.eemepRunning = "running"
         self.update_log_query({})
 
