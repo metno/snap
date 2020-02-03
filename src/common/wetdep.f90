@@ -19,51 +19,9 @@ module wetdep
   implicit none
   private
 
-  public wetdep1, wetdep2, wetdep2_init
+  public wetdep2, wetdep2_init
 
   contains
-
-!> Purpose:  Compute wet deposition for each particle and each component
-!>           and store depositions in nearest gridpoint in a field
-!>
-!> Method:   J.Saltbones 1994
-subroutine wetdep1(part, pextra)
-  USE particleML, only: Particle, extraParticle
-  USE snapfldML, only: depwet
-  USE snapparML, only: def_comp
-  USE snaptabML, only: mpretab, premult, pretab
-
-!> particle
-  type(Particle), intent(inout) :: part
-!> reading and possibly resetting prc
-  type(extraParticle), intent(inout) :: pextra
-
-  integer :: m,itab,i,j,mm
-  real :: precint,probab,prand,dep
-
-  m = part%icomp
-  if(def_comp(m)%kwetdep == 1 .AND. pextra%prc > 0.0) then
-  !..find particles with wet deposition and
-  !..reset precipitation to zero if not wet deposition
-    precint = pextra%prc
-    itab = nint(precint*premult)
-    itab = min(itab, mpretab)
-    probab = pretab(itab)
-  !..the rand function returns random real numbers between 0.0 and 1.0
-    call random_number(prand)
-    if(prand > probab) then
-      pextra%prc = 0.0
-    else
-      dep = def_comp(m)%wetdeprat*part%rad
-      part%rad = part%rad - dep
-      i = nint(part%x)
-      j = nint(part%y)
-      mm = def_comp(m)%to_running
-    !$OMP atomic
-      depwet(i,j,mm) = depwet(i,j,mm) + dble(dep)
-    end if
-  end if
-end subroutine wetdep1
 
 
 !> Purpose:  Compute wet deposition for each particle and each component

@@ -21,8 +21,6 @@ module snaptabML
     implicit none
     private
 
-!> max. no. of steps in input precipitation probability table
-    integer, parameter :: mprepro = 40
 !> max. no. of steps in precipitation probability table
     integer, parameter, public :: mpretab = 500
 
@@ -33,20 +31,6 @@ module snaptabML
 
     real, parameter, public :: g=9.81, r=287.0, cp=1004.0
 
-!> multiply precipitation intensity (mm/hour) by this value
-!>    to get index in pretab
-    real, save, public :: premult
-!>  precipitation parobability table (for wet depositions)
-    real, save, public :: pretab(0:mpretab)
-!>  no. of steps in input precipitation probability table
-    integer, save, public :: nprepro
-
-!> prepro(1,n): precipitation intensity (mm/hour)
-!>
-!> prepro(2,n): probability for precipitation (0. - 1.)
-    real, save, public :: prepro(2,mprepro+1)
-
-
     public tabcon
 
     contains
@@ -55,11 +39,10 @@ module snaptabML
 !> Purpose:  Define fixed tables and constans
 !>           (independent of input data)
       subroutine tabcon
-        USE snapdebug, only: iulog
         implicit none
 
-        integer :: i, n
-        real :: p, prestep, precint, probab
+        integer :: i
+        real :: p
         real, parameter :: rcp = r/cp
 
 !..Exner function, pitab(0:130) for p=0,10,20,...1300 hPa
@@ -70,39 +53,6 @@ module snaptabML
         end do
 
 !..precipitation probability for wet depositions
-        if(nprepro > 0) then
-          prestep = prepro(1,nprepro)/float(mpretab)
-          premult = 1./prestep
-          i = 2
-          pretab(0) = 0.0
-          do n=1,mpretab
-            precint = prestep*n
-            do while (precint > prepro(1,i) .AND. i < nprepro)
-              i=i+1
-            end do
-            probab = ( prepro(2,i-1)*(prepro(1,i)-precint) &
-                   + prepro(2,i)  *(precint-prepro(1,i-1))) &
-                   / (prepro(1,i)-prepro(1,i-1))
-            pretab(n) = probab
-          end do
-        pretab(mpretab) = prepro(2,nprepro)
-  !######################################################################
-        do n=1,nprepro
-          write(iulog,*) '...n,prepro: ',n,prepro(1,n),prepro(2,n)
-        end do
-        write(iulog,*) '...premult: ',premult
-        do n=0,mpretab,20
-          precint=prestep*n
-          write(iulog,*) '...n,pretab: ',n,precint,pretab(n)
-        end do
-  !######################################################################
-      else
-        premult = 0.
-        do n=1,mpretab
-          pretab(n) = 0.
-        end do
-      end if
-    return
-  end subroutine tabcon
+      end subroutine tabcon
 
 end module snaptabML
