@@ -106,13 +106,20 @@ class Controller():
         #self.write_log("updating...")
         logfile = os.path.join(self.lastOutputDir,"volcano.log")
         if os.path.isfile(logfile):
-            logfile_size = os.path.getsize(logfile)
-            if (logfile_size <= self.logfile_size):
+            current_size = os.path.getsize(logfile)
+
+            # Log overwritten - new file (this should not happen)
+            if (current_size < self.logfile_size):
+                self.write_log("WARNING: Logfile overwritten - someone else is running this volcano also")
+                self.logfile_size = 0
+
+            # If new content in logfile
+            if (current_size > self.logfile_size):
                 with open(logfile) as lf:
                     lf.seek(self.logfile_size)
                     for line in lf:
                         self.write_log(line)
-                self.logfile_size = logfile_size
+                self.logfile_size = current_size
         else:
             self.write_log("Queue busy {:%Y-%m-%d %H:%M:%S}".format(datetime.datetime.now()))
             if (self.res.getModelRunnerLogs()):
