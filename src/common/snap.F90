@@ -224,7 +224,7 @@ PROGRAM bsnap
   USE snapgrdML, only: modleveldump, ivcoor, ixbase, iybase, ixystp, kadd, &
       klevel, imslp, inprecip, iprod, iprodr, itotcomp, gparam, igrid, igridr, &
       igtype, imodlevel
-  USE snaptabML, only: tabcon, nprepro, prepro
+  USE snaptabML, only: tabcon
   USE particleML, only: pdata, extraParticle
   USE allocateFieldsML, only: allocateFields, deallocateFields
   USE fldout_ncML, only: fldout_nc
@@ -243,7 +243,7 @@ PROGRAM bsnap
 #else
   USE forwrdML, only: forwrd, forwrd_init
 #endif
-  USE wetdep, only: wetdep1, wetdep2, wetdep2_init
+  USE wetdep, only: wetdep2, wetdep2_init
   USE drydep, only: drydep1, drydep2
   USE decayML, only: decay, decayDeps
   USE posintML, only: posint, posint_init
@@ -616,7 +616,6 @@ PROGRAM bsnap
       end do
     end do
     write(iulog,*) 'itotcomp:   ',itotcomp
-    write(iulog,*) 'nprepro:    ',nprepro
 #if defined(ENSEMBLE)
     write(iulog,*) 'iensemble:  ',iensemble
 #endif
@@ -975,7 +974,6 @@ PROGRAM bsnap
 #endif
 
         !..wet deposition (1=old, 2=new version)
-        if(iwetdep == 1) call wetdep1(pdata(np), pextra)
         if(iwetdep == 2) call wetdep2(tstep, pdata(np), pextra)
 
 #if defined(ENSEMBLE)
@@ -1316,7 +1314,6 @@ subroutine set_defaults()
   ncomp = 0
   itotcomp = 0
   rmlimit = -1.0
-  nprepro = 0
   itprof = 0
 
   nrelpos=0
@@ -1595,13 +1592,27 @@ end subroutine
           if(idrydep /= 0 .AND. idrydep /= 2) goto 12
           idrydep=2
         elseif(cinput(k1:k2) == 'wet.deposition.old') then
-        !..wet.deposition.old
-          if(iwetdep /= 0 .AND. iwetdep /= 1) goto 12
-          iwetdep=1
+          write(error_unit,*) "This option is deprecated and removed"
+          goto 12
         elseif(cinput(k1:k2) == 'wet.deposition.new') then
         !..wet.deposition.new
-          if(iwetdep /= 0 .AND. iwetdep /= 2) goto 12
+          write(error_unit,*) "Deprecated, please use wet.deposition.version = 2"
+          warning = .true.
+          if (iwetdep /= 0) then
+            write(error_unit, *) "already set"
+            goto 12
+          endif
           iwetdep=2
+        elseif(cinput(k1:k2) == 'wet.deposition.version') then
+          if (iwetdep /= 0) then
+            write(error_unit, *) "already set"
+            goto 12
+          endif
+          if (kv1 < 1) then
+            write(error_unit, *) "expected a keyword"
+            goto 12
+          endif
+          read(cipart, *, err=12) iwetdep
         elseif(cinput(k1:k2) == 'time.step') then
         !..time.step=<seconds>
           if(kv1 < 1) goto 12
@@ -1907,19 +1918,8 @@ end subroutine
           read(cipart,*,err=12) met_params%use_model_wind_for_10m
         elseif(cinput(k1:k2) == 'precip(mm/h).probab') then
         !..precip(mm/h).probab=<precip_intensity,probability, ...>
-          if(kv1 < 1) goto 12
-          i1=nprepro+1
-          i2=nprepro
-          ios=0
-          do while (ios == 0)
-            if(i2 > size(prepro,2)) goto 12
-            i2=i2+1
-            read(cipart,*,iostat=ios) &
-                ((prepro(k,i),k=1,2),i=i1,i2)
-          end do
-          i2=i2-1
-          if(i2 < i1) goto 12
-          nprepro=i2
+          write(error_unit,*) "precip(mm/h).probab is no longer used"
+          warning = .true.
         elseif(cinput(k1:k2) == 'remove.relative.mass.limit') then
         !..remove.relative.mass.limit=
           if(kv1 < 1) goto 12
@@ -2449,7 +2449,11 @@ subroutine conform_input(ierror)
   end do
 
   if(idrydep == 0) idrydep=1
-  if(iwetdep == 0) iwetdep=1
+  if (iwetdep /= 0 .or. iwetdep /= 2) then
+    write(error_unit, *) "Unknown wet deposition version, defaulting to version 2"
+    warning = .true.
+    iwetdep = 2
+  endif
   i1=0
   i2=0
   idecay=0
@@ -2477,15 +2481,7 @@ subroutine conform_input(ierror)
       end if
     end if
 
-    if (iwetdep == 1 .AND. def_comp(m)%kwetdep == 1) then
-      if (def_comp(m)%wetdeprat > 0.) then
-        i2=i2+1
-      else
-        write(error_unit,*) 'Wet deposition error. rate: ', &
-            def_comp(m)%wetdeprat
-        ierror=1
-      end if
-    elseif(iwetdep == 2 .AND. def_comp(m)%kwetdep == 1) then
+    if(iwetdep == 2 .AND. def_comp(m)%kwetdep == 1) then
       if(def_comp(m)%radiusmym > 0.) then
         i2=i2+1
       else
