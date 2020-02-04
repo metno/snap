@@ -27,6 +27,7 @@ import datetime
 import getpass
 import json
 import os
+import pwd
 import re
 import sys
 from time import gmtime, strftime
@@ -37,6 +38,12 @@ from Snappy.BrowserWidget import BrowserWidget
 from Snappy.EEMEP.Resources import Resources
 from Snappy.EEMEP.ModelRunner import ModelRunner
 import Snappy.Utils
+
+def getFileOwner(filename):
+    pwuid = pwd.getpwuid(os.stat(filename).st_uid)
+    return "{:s} ({:s})".format(pwuid.pw_name, pwuid.pw_gecos)
+
+
 
 def debug(*objs):
     print("DEBUG: ", *objs, file=sys.stderr)
@@ -90,6 +97,8 @@ class Controller():
         self.lastOutputDir = ""
         self.lastQDict = {}
         self.lastLog = ""
+        self.volcano_file = ""
+        self.volcano_logfile = ""
 
     def write_log(self, txt:str):
         if (txt != self.lastLog):
@@ -100,15 +109,13 @@ class Controller():
     def update_log_query(self, qDict):
         #MainBrowserWindow._default_form_handler(qDict)
         #self.write_log("updating...")
-        volcano_file = os.path.join(self.lastOutputDir, ModelRunner.VOLCANO_FILENAME)
-        if (not os.path.isfile(volcano_file)):
-            self.write_log("ERROR: '{:s}' does not exist!\nSomeone has probably deleted the run.".format(volcano_file))
+        if (not os.path.isfile(self.volcano_file)):
+            self.write_log("ERROR: '{:s}' does not exist!\nSomeone has probably deleted the run.".format(self.volcano_file))
             self.eemepRunning = "inactive"
             return
 
-        logfile = os.path.join(self.lastOutputDir,"volcano.log")
-        if os.path.isfile(logfile) :
-            self.write_log(tail(logfile, 30))
+        if os.path.isfile(self.volcano_logfile) :
+            self.write_log(tail(self.volcano_logfile, 30))
         else:
             self.write_log("Waiting to work with {}\n".format(self.lastOutputDir)+ "Queue busy {:%Y-%m-%d %H:%M:%S}\n".format(datetime.datetime.now())+self.res.getModelRunnerLogs())
 
@@ -130,13 +137,21 @@ class Controller():
     
     def cancel_submitted(self, qDict):
         '''Cancel the last submitted volcano-file'''
-        try:
-            self.write_log("{} deleted".format(os.path.join(self.lastOutputDir, ModelRunner.VOLCANO_FILENAME)))
-            os.remove(os.path.join(self.lastOutputDir, ModelRunner.VOLCANO_FILENAME))
-            self.eemepRunning = "inactive"
-        except:
-            self.write_log("could not cancel the currently submitted volcano")
-            pass
+        if (os.path.isfile(self.volcano_file)):
+            owner = getFileOwner(self.volcano_file)
+            user = getpass.getuser()
+            debug("Deleting {:s} owned by {:s} with user {:s}".format(self.volcano_file, owner, user))
+            if (owner == user):
+                try:
+                    os.remove(os.path.join(self.volcano_file))
+                    self.write_log("{} deleted".format(self.volcano_file))
+                    self.eemepRunning = "inactive"
+                except:
+                    self.write_log("ERROR: could not cancel the currently submitted volcano")
+                    pass
+            else:
+                self.write_log("ERROR: {:s}\nis started by {:s} - cannot abort!".format(self.volcano_file, owner))
+                self.write_log("If needed, please delete {:s} manually.")
 
     @pyqtSlot()
     def update_log(self):
@@ -264,6 +279,7 @@ class Controller():
                                          m63=volctype['m63']))
 
         self.lastOutputDir = os.path.join(self.res.getOutputDir(), "{0}_ondemand".format(volcano))
+        self.volcano_file = os.path.join(self.lastOutputDir, ModelRunner.VOLCANO_FILENAME)
         self.lastQDict = qDict
         sourceTerm = """<?xml version="1.0" encoding="UTF-8"?>
 <volcanic_eruption_run run_time_hours="{runTime}" output_directory="{outdir}">
@@ -292,24 +308,21 @@ class Controller():
                                                 eruptions="\n".join(eruptions),
                                                 runTime=runTime)
         debug("output directory: {}".format(self.lastOutputDir))
-        os.makedirs(self.lastOutputDir,exist_ok=True)
+        os.makedirs(self.lastOutputDir, exist_ok=True)
 
-        logfile = os.path.join(self.lastOutputDir,"volcano.log")
-        if (os.path.exists(logfile)):
-            logdate = datetime.datetime.fromtimestamp(os.path.getmtime(logfile))
-            os.rename(logfile, "{}_{}".format(logfile, logdate.strftime("%Y%m%dT%H%M%S")))
-        volcano_file = os.path.join(self.lastOutputDir, ModelRunner.VOLCANO_FILENAME)
+        self.volcano_logfile = os.path.join(self.lastOutputDir,"volcano.log")
+        if (os.path.exists(self.volcano_logfile)):
+            logdate = datetime.datetime.fromtimestamp(os.path.getmtime(self.volcano_logfile))
+            os.rename(self.volcano_logfile, "{}_{}".format(self.volcano_logfile, logdate.strftime("%Y%m%dT%H%M%S")))
         try:
             # Mode x - open for exclusive creation, failing if the file already exists
-            with open(volcano_file,'x') as fh:
+            with open(self.volcano_file,'x') as fh:
                 fh.write(self.lastSourceTerm)
         except FileExistsError as e:
             owner = "unknown"
-            if (os.path.exists(volcano_file)):
-                from os import stat
-                from pwd import getpwuid
-                owner = getpwuid(stat(volcano_file).st_uid).pw_name
-            errmsg = "ERROR: Run ({:s}) already exists!\nCreated by user {:s}.\nPlease try again later.".format(volcano_file, owner)
+            if (os.path.exists(self.volcano_file)):
+                owner = getFileOwner(self.volcano_file)
+            errmsg = "ERROR: Run ({:s}) already exists!\nCreated by user {:s}.\nPlease try again later.".format(self.volcano_file, owner)
             debug('updateLog("{0}");'.format(json.dumps(errmsg)))
             self.write_log(errmsg)
             return
