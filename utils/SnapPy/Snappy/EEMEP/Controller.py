@@ -100,6 +100,12 @@ class Controller():
     def update_log_query(self, qDict):
         #MainBrowserWindow._default_form_handler(qDict)
         #self.write_log("updating...")
+        volcano_file = os.path.join(self.lastOutputDir, ModelRunner.VOLCANO_FILENAME)
+        if (not os.path.isfile(volcano_file)):
+            self.write_log("ERROR: '{:s}' does not exist!\nSomeone has probably deleted the run.".format(volcano_file))
+            self.eemepRunning = "inactive"
+            return
+
         logfile = os.path.join(self.lastOutputDir,"volcano.log")
         if os.path.isfile(logfile) :
             self.write_log(tail(logfile, 30))
