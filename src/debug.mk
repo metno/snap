@@ -3,7 +3,7 @@
 
 F77 = gfortran
 
-F77FLAGS=-DVERSION=\"$(VERSION)\" -Og -g -std=gnu -Wall -Wextra -fimplicit-none -fmodule-private -Wuse-without-only -fcheck=all
+F77FLAGS=-DVERSION=\"$(VERSION)\" -Og -g -std=gnu -Wall -Wextra -fimplicit-none -fmodule-private -Wuse-without-only -fcheck=all -Wno-conversion -Wno-compare-reals
 MILIB_FLAGS = -fno-implicit-none -fno-module-private -Wno-all -Wno-extra
 
 BINDIR=../../bin/

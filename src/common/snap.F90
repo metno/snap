@@ -137,12 +137,6 @@
 ! LOG.FILE=     snap.log
 ! DEBUG.OFF ..................................... (default)
 ! DEBUG.ON
-! ENSEMBLE.PROJECT.OUTPUT.OFF ................... (default)
-! ENSEMBLE.PROJECT.OUTPUT.ON
-! ENSEMBLE.PROJECT.OUTPUT.FILE= ensemble.list
-! ENSEMBLE.PROJECT.PARTICIPANT= 09
-! ENSEMBLE.PROJECT.RANDOM.KEY=  RL52S3U
-! ENSEMBLE.PROJECT.OUTPUT.STEP.HOUR= 3
 ! ARGOS.OUTPUT.OFF
 ! ARGOS.OUTPUT.ON
 ! ARGOS.OUTPUT.DEPOSITION.FILE=    runident_MLDP0_depo
@@ -224,17 +218,13 @@ PROGRAM bsnap
   USE snapgrdML, only: modleveldump, ivcoor, ixbase, iybase, ixystp, kadd, &
       klevel, imslp, inprecip, iprod, iprodr, itotcomp, gparam, igrid, igridr, &
       igtype, imodlevel
-  USE snaptabML, only: tabcon, nprepro, prepro
+  USE snaptabML, only: tabcon
   USE particleML, only: pdata, extraParticle
   USE allocateFieldsML, only: allocateFields, deallocateFields
   USE fldout_ncML, only: fldout_nc
   USE rmpartML, only: rmpart
   USE checkdomainML, only: checkdomain
   USE rwalkML, only: rwalk, rwalk_init
-#if defined(ENSEMBLE)
-  USE ensembleML, only: ensemblefile, ensembleparticipant, ensemblerandomkey, &
-      ensemblestephours, iensemble, nxep, nyep, ensemble
-#endif
   USE milibML, only: xyconvert, chcase, hrdiff, vtime
 #if defined(TRAJ)
   USE snapfldML, only: hlevel2
@@ -243,7 +233,7 @@ PROGRAM bsnap
 #else
   USE forwrdML, only: forwrd, forwrd_init
 #endif
-  USE wetdep, only: wetdep1, wetdep2, wetdep2_init
+  USE wetdep, only: wetdep2, wetdep2_init
   USE drydep, only: drydep1, drydep2
   USE decayML, only: decay, decayDeps
   USE posintML, only: posint, posint_init
@@ -282,7 +272,7 @@ PROGRAM bsnap
   integer :: isynoptic,m,np,nlevel,minhfc,maxhfc,ifltim
   integer :: k, ierror, i, n
   integer :: ih
-  integer :: idrydep,iwetdep,idecay
+  integer :: idrydep,wetdep_version,idecay
   integer :: ntimefo,iunitf,nh1,nh2
   integer :: ierr1,ierr2,nsteph,nstep,nstepr,iunito
   integer :: nxtinf,ihread,isteph,lstepr,iendrel,istep,ihr1,ihr2,nhleft
@@ -578,7 +568,7 @@ PROGRAM bsnap
     write(iulog,*) 'ifltim:  ',ifltim
     write(iulog,*) 'irwalk:  ', use_random_walk
     write(iulog,*) 'idrydep: ',idrydep
-    write(iulog,*) 'iwetdep: ',iwetdep
+    write(iulog,*) 'wetdep_version: ',wetdep_version
     write(iulog,*) 'idecay:  ',idecay
     write(iulog,*) 'rmlimit: ',rmlimit
     write(iulog,*) 'ndefcomp:', size(def_comp)
@@ -616,10 +606,6 @@ PROGRAM bsnap
       end do
     end do
     write(iulog,*) 'itotcomp:   ',itotcomp
-    write(iulog,*) 'nprepro:    ',nprepro
-#if defined(ENSEMBLE)
-    write(iulog,*) 'iensemble:  ',iensemble
-#endif
     write(iulog,*) 'iargos:     ',iargos
     write(iulog,*) 'blfulmix:   ',blfullmix
     write(*,*) 'Title:      ', trim(nctitle)
@@ -836,23 +822,11 @@ PROGRAM bsnap
           release_positions(irelpos)%grid_x = x(1)
           release_positions(irelpos)%grid_y = y(1)
 
-#if defined(ENSEMBLE)
-          if(iensemble.eq.1) then
-            call ensemble(0,itime1,tf1,tf2,tnow,istep,nstep,nsteph,0)
-          endif
-#endif
-
           nxtinf=1
           ifldout=0
         ! continue istep loop after initialization
           cycle time_loop
         end if
-
-#if defined(ENSEMBLE)
-        if(iensemble.eq.1) then
-          call ensemble(1,itime,tf1,tf2,tnow,istep,nstep,nsteph,0)
-        endif
-#endif
 
         call hrdiff(0,0,itimei,itimefi,ihdiff,ierr1,ierr2)
         tf1=0.
@@ -938,7 +912,7 @@ PROGRAM bsnap
       if (init) then
       ! setting particle-number to 0 means init
         call posint_init()
-        if(iwetdep == 2) call wetdep2_init(tstep)
+        if(wetdep_version == 2) call wetdep2_init(tstep)
         call forwrd_init()
         if(use_random_walk) call rwalk_init(tstep)
         init = .FALSE.
@@ -958,31 +932,12 @@ PROGRAM bsnap
         !..radioactive decay
         if(idecay == 1) call decay(pdata(np))
 
-#if defined(ENSEMBLE)
-        if(iensemble.eq.1) then
-          call ensemble(2,itime,tf1,tf2,tnow,istep,nstep,nsteph,np)
-        endif
-#endif
-
         !..dry deposition (1=old, 2=new version)
         if(idrydep == 1) call drydep1(pdata(np))
         if(idrydep == 2) call drydep2(tstep, pdata(np))
 
-#if defined(ENSEMBLE)
-        if(iensemble.eq.1) then
-          call ensemble(3,itime,tf1,tf2,tnow,istep,nstep,nsteph,np)
-        endif
-#endif
-
         !..wet deposition (1=old, 2=new version)
-        if(iwetdep == 1) call wetdep1(pdata(np), pextra)
-        if(iwetdep == 2) call wetdep2(tstep, pdata(np), pextra)
-
-#if defined(ENSEMBLE)
-        if(iensemble.eq.1) then
-          call ensemble(4,itime,tf1,tf2,tnow,istep,nstep,nsteph,np)
-        endif
-#endif
+        if(wetdep_version == 2) call wetdep2(tstep, pdata(np), pextra)
 
         !..move all particles forward, save u and v to pextra
         call forwrd(tf1, tf2, tnow, tstep, pdata(np), pextra)
@@ -997,12 +952,6 @@ PROGRAM bsnap
 
     !..remove inactive particles or without any mass left
       call rmpart(rmlimit)
-
-#if defined(ENSEMBLE)
-      if(iensemble.eq.1)
-        call ensemble(5,itime,tf1,tf2,tnext,istep,nstep,nsteph,0)
-      endif
-#endif
 
     !$OMP PARALLEL DO REDUCTION(max : mhmax) REDUCTION(min : mhmin)
       do n=1,npart
@@ -1130,12 +1079,6 @@ PROGRAM bsnap
         end if
       end if
 
-#if defined(ENSEMBLE)
-    if(iensemble.eq.1 .and. isteph.eq.0) then
-      call ensemble(6,itime,tf1,tf2,tnext,istep,nstep,nsteph,0)
-    endif
-#endif
-
     !..field output if ifldout=1, always accumulation for average fields
       if (idailyout == 1) then
       !       daily output, append +x for each day
@@ -1234,12 +1177,6 @@ PROGRAM bsnap
   end do
 #endif
 
-#if defined(ENSEMBLE)
-  if(iensemble.eq.1) then
-    call ensemble(7,itimefa,tf1,tf2,tnext,istep,nstep,nsteph,0)
-  endif
-#endif
-
   if(lstepr < nstep .AND. lstepr < nstepr) then
     write(iulog,*) 'ERROR: Due to space problems the release period was'
     write(iulog,*) '       shorter than requested.'
@@ -1316,7 +1253,6 @@ subroutine set_defaults()
   ncomp = 0
   itotcomp = 0
   rmlimit = -1.0
-  nprepro = 0
   itprof = 0
 
   nrelpos=0
@@ -1335,7 +1271,7 @@ subroutine set_defaults()
   ifltim =0
   blfullmix= .TRUE.
   idrydep=0
-  iwetdep=0
+  wetdep_version=0
 
   inprecip =1
   imslp    =0
@@ -1359,15 +1295,6 @@ subroutine set_defaults()
   9999 FORMAT(I4.4,'-',I2.2,'-',I2.2,'_',I2.2,':',I2.2,':',I2.2)
 ! input ensemble member, default to no ensembles
   enspos = -1
-
-#if defined(ENSEMBLE)
-! ensemble output
-  iensemble=0
-  ensemblefile='ensemble.list'
-  ensembleparticipant=09
-  ensembleRandomKey='*******'
-  ensembleStepHours=3
-#endif
 
   idailyout=0
 
@@ -1595,13 +1522,27 @@ end subroutine
           if(idrydep /= 0 .AND. idrydep /= 2) goto 12
           idrydep=2
         elseif(cinput(k1:k2) == 'wet.deposition.old') then
-        !..wet.deposition.old
-          if(iwetdep /= 0 .AND. iwetdep /= 1) goto 12
-          iwetdep=1
+          write(error_unit,*) "This option is deprecated and removed"
+          goto 12
         elseif(cinput(k1:k2) == 'wet.deposition.new') then
         !..wet.deposition.new
-          if(iwetdep /= 0 .AND. iwetdep /= 2) goto 12
-          iwetdep=2
+          write(error_unit,*) "Deprecated, please use wet.deposition.version = 2"
+          warning = .true.
+          if (wetdep_version /= 0) then
+            write(error_unit, *) "already set"
+            goto 12
+          endif
+          wetdep_version=2
+        elseif(cinput(k1:k2) == 'wet.deposition.version') then
+          if (wetdep_version /= 0) then
+            write(error_unit, *) "already set"
+            goto 12
+          endif
+          if (kv1 < 1) then
+            write(error_unit, *) "expected a keyword"
+            goto 12
+          endif
+          read(cipart, *, err=12) wetdep_version
         elseif(cinput(k1:k2) == 'time.step') then
         !..time.step=<seconds>
           if(kv1 < 1) goto 12
@@ -1907,19 +1848,8 @@ end subroutine
           read(cipart,*,err=12) met_params%use_model_wind_for_10m
         elseif(cinput(k1:k2) == 'precip(mm/h).probab') then
         !..precip(mm/h).probab=<precip_intensity,probability, ...>
-          if(kv1 < 1) goto 12
-          i1=nprepro+1
-          i2=nprepro
-          ios=0
-          do while (ios == 0)
-            if(i2 > size(prepro,2)) goto 12
-            i2=i2+1
-            read(cipart,*,iostat=ios) &
-                ((prepro(k,i),k=1,2),i=i1,i2)
-          end do
-          i2=i2-1
-          if(i2 < i1) goto 12
-          nprepro=i2
+          write(error_unit,*) "precip(mm/h).probab is no longer used"
+          warning = .true.
         elseif(cinput(k1:k2) == 'remove.relative.mass.limit') then
         !..remove.relative.mass.limit=
           if(kv1 < 1) goto 12
@@ -2112,32 +2042,9 @@ end subroutine
         elseif(cinput(k1:k2) == 'debug.on') then
         !..debug.on
           idebug=1
-#if defined(ENSEMBLE)
-        elseif(cinput(k1:k2) == 'ensemble.project.output.off') then
-        !..ensemble.project.output.off
-          iensemble=0
-        elseif(cinput(k1:k2) == 'ensemble.project.output.on') then
-        !..ensemble.project.output.on
-          iensemble=1
-        elseif(cinput(k1:k2) == 'ensemble.project.output.file') then
-        !..ensemble.project.output.file= <ensemble.list>
-          if(kv1 < 1) goto 12
-          ensemblefile=ciname(1:nkv)
-        elseif(cinput(k1:k2) == 'ensemble.project.participant') then
-        !..ensemble.project.participant= 09
-          if(kv1 < 1) goto 12
-          read(cipart,*,err=12) ensembleparticipant
-          if(ensembleparticipant < 0 .OR. &
-              ensembleparticipant > 99) goto 12
-        elseif(cinput(k1:k2) == 'ensemble.project.random.key') then
-        !..ensemble.project.random.key= <rl52s3u>
-          if(kv1 < 1) goto 12
-          ensembleRandomKey=ciname(1:nkv)
-        elseif(cinput(k1:k2) == 'ensemble.project.output.step.hour') then
-        !..ensemble.project.output.step.hour= 3
-          if(kv1 < 1) goto 12
-          read(cipart,*,err=12) ensembleStepHours
-#endif
+        elseif (cinput(k1:k2) == 'ensemble.project.output.off') then
+          write(error_unit, *) "ensemble.project is deprecated, key is not used"
+          warning = .true.
         elseif(cinput(k1:k2) == 'argos.output.off') then
         !..argos.output.off
           iargos=0
@@ -2338,10 +2245,6 @@ subroutine conform_input(ierror)
   end if
   if(nhrel == 0 .AND. ntprof > 0) nhrel = releases(ntprof)%frelhour
 
-#if defined(ENSEMBLE)
-!..check if compiled without ENSEMBLE PROJECT arrays
-  if(nxep < 2 .OR. nyep < 2) iensemble=0
-#endif
   if(itprof < 1) then
     write(error_unit,*) 'No time profile type specified'
     ierror=1
@@ -2449,7 +2352,13 @@ subroutine conform_input(ierror)
   end do
 
   if(idrydep == 0) idrydep=1
-  if(iwetdep == 0) iwetdep=1
+  if (wetdep_version == 0) then ! Set default wetdep version
+    wetdep_version = 2
+  endif
+  if (wetdep_version /= 2) then
+    write(error_unit, *) "Unknown wet deposition version"
+    ierror = 1
+  endif
   i1=0
   i2=0
   idecay=0
@@ -2477,15 +2386,7 @@ subroutine conform_input(ierror)
       end if
     end if
 
-    if (iwetdep == 1 .AND. def_comp(m)%kwetdep == 1) then
-      if (def_comp(m)%wetdeprat > 0.) then
-        i2=i2+1
-      else
-        write(error_unit,*) 'Wet deposition error. rate: ', &
-            def_comp(m)%wetdeprat
-        ierror=1
-      end if
-    elseif(iwetdep == 2 .AND. def_comp(m)%kwetdep == 1) then
+    if(wetdep_version == 2 .AND. def_comp(m)%kwetdep == 1) then
       if(def_comp(m)%radiusmym > 0.) then
         i2=i2+1
       else
@@ -2504,7 +2405,6 @@ subroutine conform_input(ierror)
   end do
 
   if (i1 == 0) idrydep=0
-  if (i2 == 0) iwetdep=0
 
 ! initialize all arrays after reading input
   if (imodlevel == 1) then

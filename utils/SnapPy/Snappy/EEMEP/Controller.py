@@ -41,19 +41,13 @@ import Snappy.Utils
 
 def getFileOwner(filename):
     pwuid = pwd.getpwuid(os.stat(filename).st_uid)
-    return "{:s} ({:s})".format(pwuid.pw_name, pwuid.pw_gecos)
+    return pwuid.pw_name, pwuid.pw_gecos
 
 
 
 def debug(*objs):
     print("DEBUG: ", *objs, file=sys.stderr)
 
-def tail(f, n):
-    lines = deque(maxlen=n)
-    with open(f) as fh:
-        for line in fh:
-            lines.append(line)
-    return "".join(lines)
 
 class _UpdateThread(QThread):
     update_log_signal = pyqtSignal()
@@ -86,7 +80,7 @@ class Controller():
 
     def __init__(self):
         '''
-        Initialize Widget annd handlers
+        Initialize Widget and handlers
         '''
         self.res = Resources()
         self.main = BrowserWidget()
@@ -96,15 +90,25 @@ class Controller():
         self.eemepRunning = "inactive"
         self.lastOutputDir = ""
         self.lastQDict = {}
-        self.lastLog = ""
         self.volcano_file = ""
         self.volcano_logfile = ""
+        self.lastLog = []
+        self.logfile_size = 0
 
-    def write_log(self, txt:str):
-        if (txt != self.lastLog):
-            self.lastLog = txt
-            debug(txt)
-            self.main.evaluate_javaScript('updateEemepLog({0});'.format(json.dumps(txt)))
+
+    def write_log(self, txt:str, max_lines=30, clear_log=False):
+        if (clear_log):
+            self.lastLog = [txt]
+        else:
+            self.lastLog += txt.splitlines()
+        debug(txt)
+
+        #Write at most 30 lines to screen
+        if (len(self.lastLog) > max_lines):
+            self.lastLog = self.lastLog[-max_lines:]
+        lines = None
+                                                                                                
+        self.main.evaluate_javaScript('updateEemepLog({0});'.format(json.dumps("\n".join(self.lastLog))))
 
     def update_log_query(self, qDict):
         #MainBrowserWindow._default_form_handler(qDict)
@@ -115,9 +119,24 @@ class Controller():
             return
 
         if os.path.isfile(self.volcano_logfile) :
-            self.write_log(tail(self.volcano_logfile, 30))
+            current_size = os.path.getsize(self.volcano_logfile)
+
+            # Log overwritten - new file (this should not happen)
+            if (current_size < self.logfile_size):
+                self.write_log("WARNING: Logfile overwritten - someone else is running this volcano also")
+                self.logfile_size = 0
+
+            # If new content in logfile
+            if (current_size > self.logfile_size):
+                with open(self.volcano_logfile) as lf:
+                    lf.seek(self.logfile_size)
+                    for line in lf:
+                        self.write_log(line)
+                self.logfile_size = current_size
         else:
-            self.write_log("Waiting to work with {}\n".format(self.lastOutputDir)+ "Queue busy {:%Y-%m-%d %H:%M:%S}\n".format(datetime.datetime.now())+self.res.getModelRunnerLogs())
+            self.write_log("Queue busy {:%Y-%m-%d %H:%M:%S}".format(datetime.datetime.now()))
+            if (self.res.getModelRunnerLogs()):
+                self.write_log(self.res.getModelRunnerLogs())
 
     def cancel_first_in_queue(self, qDict):
         '''Mark all currently active model-runs for abort'''
@@ -132,15 +151,15 @@ class Controller():
                         os.remove(os.path.join(dirpath, file))
                     except:
                         traceback.print_exc()
-                        self.write_log("abort not succeeded".format(dirpath))
+                        self.write_log("aborting {} failed!".format(dirpath))
         pass
     
     def cancel_submitted(self, qDict):
         '''Cancel the last submitted volcano-file'''
         if (os.path.isfile(self.volcano_file)):
-            owner = getFileOwner(self.volcano_file)
+            owner, gecos = getFileOwner(self.volcano_file)
             user = getpass.getuser()
-            debug("Deleting {:s} owned by {:s} with user {:s}".format(self.volcano_file, owner, user))
+            debug("Deleting {:s} owned by {:s} ({:s}) with user {:s}".format(self.volcano_file, owner, gecos, user))
             if (owner == user):
                 try:
                     os.remove(os.path.join(self.volcano_file))
@@ -151,7 +170,9 @@ class Controller():
                     pass
             else:
                 self.write_log("ERROR: {:s}\nis started by {:s} - cannot abort!".format(self.volcano_file, owner))
-                self.write_log("If needed, please delete {:s} manually.")
+                self.write_log("If needed, please delete {:s} manually.".format(self.volcano_file))
+        else:
+            self.write_log("Volcano file ('{:s}') does not exist".format(self.volcano_file))
 
     @pyqtSlot()
     def update_log(self):
@@ -184,6 +205,7 @@ class Controller():
     def run_eemep_query(self, qDict):
         # make sure all files are rw for everybody (for later deletion)
         os.umask(0)
+        self.write_log("Running EEMEP query", clear_log=True)
         debug("run_eemep_query")
         for key, value in qDict.items():
             print(str.format("{0} => {1}", key, value))
@@ -239,33 +261,59 @@ class Controller():
             volctype = self.res.readVolcanoType(type)
         except Exception as ex:
             errors += str(ex) + "\n"
-            errors +=  'Please select Height and Type (Advanced) manually.\n'
-
-        if (len(errors) > 0):
-            debug('updateLog("{0}");'.format(json.dumps("ERRORS:\n\n"+errors)))
-            self.write_log("ERRORS:\n\n{0}".format(errors))
-            return
-        self.write_log("working with lat/lon=({0}/{1}) starting at {2}".format(latf, lonf, startTime))
-
-        cheight = float(volctype['H']) * 1000 # km -> m
-        rate = float(volctype['dM/dt'])
-        try:
-            if qDict['cloudheight']:
-                cheight = float(qDict['cloudheight'])
-                # rate in kg/s from Mastin et al. 2009, formular (1) and a volume (DRE) (m3) to
-                # mass (kg) density of 2500kg/m3
-                rate = 2500.* ((.5*cheight/1000)**(1/0.241))
-        except:
-            errors += "cannot interpret cloudheight (m): {0}\n".format(qDict['cloudheight'])
+            errors += 'Please select Height and Type (Advanced) manually.\n'
         
+        self.write_log("working with {:s} (lat={:.2f}N lon={:.2f}E) starting at {:s}".format(volcano, latf, lonf, startTime))
+
+        
+        # Get cloud height if supplied and calculate eruption rate
+        if qDict['cloudheight']:
+            try:
+                cheight = float(qDict['cloudheight'])
+            except:
+                errors += "cannot interpret cloudheight (m): {0}\n".format(qDict['cloudheight'])
+                
+            if (cheight % 1 != 0):
+                self.write_log("WARNING: Ash cloud height supplied with fraction. Please check that you supplied meters, not km!")
+                
+            if qDict['cloudheight_datum'] == 'mean_sea_level':
+                # Interpret cloud height as above sea level 
+                # - remove volcano vent altitude to get plume height
+                self.write_log("Ash cloud height measured from mean sea level: {:.2f} km".format(cheight/1000.0))
+                cheight = cheight - altf
+                
+            elif qDict['cloudheight_datum'] == 'vent':
+                # Interpret cloud height as above vent
+                pass
+            
+            else:
+                errors += "cannot interpret cloud height datum: {:s}".format(qDict['cloudheight_datum'])
+
+            # rate in kg/s from Mastin et al. 2009, formular (1) and a volume (DRE) (m3) to
+            # mass (kg) density of 2500kg/m3
+            rate = 2500.0 * ((0.5*max(0, cheight)/1000.0)**(1.0/0.241))
+        else:
+            cheight = float(volctype['H']) * 1000 # km -> m
+            rate = float(volctype['dM/dt'])
+            
+        #Check negative ash cloud height
+        if (cheight <= 0):
+            errors += "Negative cloud height {:.2f}! Please check ash cloud.".format(cheight/1000.0)
+        self.write_log("Ash cloud height measured from volcano: {:.2f} km, rate: {:.0f} kg/s, volcano height: {:.2f} km.".format(cheight/1000.0, rate, altf/1000.0))
+
+        # Abort if errors
+        if (len(errors) > 0):
+            debug('updateLog("{0}");'.format(json.dumps("ERRORS:\n"+errors)))
+            self.write_log("ERRORS:\n{0}".format(errors))
+            return
+
         # eEMEP runs up-to 23 km, so remove all ash above 23 km,
         # See Varsling av vulkanaske i norsk luftrom - driftsfase, 
         # February 2020 for details
         eemep_cheight_max = 23000.0-altf
         if (cheight > eemep_cheight_max):
-            debug("Cropping ash cloud to {:.0f} km ASL from {:.0f} km".format(eemep_cheight_max/1000.0, cheight/1000.0))
             rate_fraction = eemep_cheight_max / cheight
-            debug("Ash reduction factor {:f}".format(rate_fraction))
+            self.write_log("Cropping ash cloud to {:.2f} km from {:.2f} km using factor {:.3f}".format(eemep_cheight_max/1000.0, cheight/1000.0, rate_fraction))
             rate = rate * rate_fraction
             cheight = eemep_cheight_max
 
@@ -321,15 +369,13 @@ class Controller():
         except FileExistsError as e:
             owner = "unknown"
             if (os.path.exists(self.volcano_file)):
-                owner = getFileOwner(self.volcano_file)
-            errmsg = "ERROR: Run ({:s}) already exists!\nCreated by user {:s}.\nPlease try again later.".format(self.volcano_file, owner)
+                owner, gecos = getFileOwner(self.volcano_file)
+            errmsg = "ERROR: Run ({:s}) already exists!\nCreated by user {:s} ({:s}).\nPlease try again later.".format(self.volcano_file, owner, gecos)
             debug('updateLog("{0}");'.format(json.dumps(errmsg)))
             self.write_log(errmsg)
             return
             
-            
         self.eemepRunning = "running"
-        self.update_log_query({})
 
         self.model_update = _UpdateThread(self)
         self.model_update.update_log_signal.connect(self.update_log)

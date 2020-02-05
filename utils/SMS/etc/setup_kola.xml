@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<snapRun type="accident">
-<releasePosition latitude="67.47" longitude="32.47" tag="Kola" />
-<!-- omitted start will give 00 06 12 18 depending on model -->
-<time start="" lengthHours="48" />
-</snapRun>
