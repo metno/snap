@@ -91,30 +91,53 @@ function toggle_advanced_sourceterm() {
        <!--  -->
        <label>Eruption Start UTC (YYYY-MM-DD HH:MM):<br><input name="startTime" type="text" value="%CURRENTTIME%" size="20" maxlength="20" ></label>
        <br><label>Run-Length (in hours)<br><input name="runTime" type="number" step="3" max="120" min="12" value="48"></label>
-       <br><label>Ash-Cloud (m above volcano vent) if available<br><input name="cloudheight" type="number" step="500" max="50000" min="0"></label>
        <br>
-         <fieldset>
+         <label>Ash cloud height (leave blank if unknown)</label>
+         <br>
+         <input name="cloudheight" type="number" step="500" max="50000" min="0">
+         <select name="cloudheight_datum">
+           <option selected="selected" value="mean_sea_level">meters above sea level</option>
+           <option value="vent">meters above volcano</option>
+         </select>
+       <br>
+       <fieldset style="line-height: 1.3;">
          <legend><a href="javascript: toggle_advanced_sourceterm()">Advanced</a></legend>
          <div id="advanced_sourceterm" style="display: none">
-         <label><input type="checkbox" name="restart_file" value="true">Continue previous run</label>
-         <br /><label>Volcano-Type<br />
-           <select name="volcanotype" size="6">
-             <option selected="selected" value="default">Mastin/default</option>
+         <label>Continue previous run</label>
+         <div style="float:right;">
+           <input type="checkbox" name="restart_file" value="true">
+         </div>
+         
+         <br clear="both" style="clear:both;"/>
+         <label>Volcano-Type: </label>
+         <div style="float:right;">
+         <select name="volcanotype">
+           <option selected="selected" value="default">Mastin/default</option>
            %VOLCANOTYPE_OPTIONS%
-           </select>
-         </label>
-         <br />MET-MODEL
-         <select name="metmodel">
-             <option selected="selected" value="nrpa_ec_0p1">EC 0.1, NRPA-domain</option>
          </select>
-         <br/>EC-Model Runtime
-         <select name="ecmodelrun">
+         </div>
+         
+         <br clear="both" style="clear:both;"/>
+         <label>MET-MODEL:</label>
+           <div style="float:right;">
+             <select name="metmodel">
+               <option selected="selected" value="nrpa_ec_0p1">EC 0.1, NRPA-domain</option>
+             </select>
+           </div>
+         
+           
+         <br clear="both" style="clear:both;"/>
+         <label>EC-Model Runtime:</label>
+         <div style="float:right;">
+           <select name="ecmodelrun">
              <option selected="selected" value="best">Best mixed</option>
              %ECMODELRUN%
-         </select>
+           </select>
+         </div>
 
          </div>
          </fieldset>
+         
          <p>Volcanoes<br>
          <select name="volcano" size="20">
              <option selected="selected" value="">Use Lat-Lon</option>
@@ -125,7 +148,7 @@ function toggle_advanced_sourceterm() {
        If <b>Use Lat-Lon</b>:<br>
        <span title="e.g. 60.15, 60:2:3N, 60°2'3 N"><label>Latitude: &nbsp;&nbsp;<input name="latitude" type="text" size="8" maxlength="10"></label></span><br>
        <span title="e.g. 10.15, 10:2:3E, 10°2'03 E"><label>Longitude: <input name="longitude" type="text" size="8" maxlength="10"></label></span><br>
-       <label>Vent altitude (m ASL) (e.g. 3300): <input name="altitude" type="number" step="1" max="9000" min="0"></label>
+       <label>Volcano altitude (meters above sea level): <input name="altitude" type="number" step="1" max="9000" min="0"></label>
        </fieldset>
      </fieldset>
      </div>
