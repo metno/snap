@@ -1,17 +1,17 @@
 # SNAP: Servere Nuclear Accident Programme
 # Copyright (C) 1992-2017   Norwegian Meteorological Institute
-# 
-# This file is part of SNAP. SNAP is free software: you can 
-# redistribute it and/or modify it under the terms of the 
-# GNU General Public License as published by the 
+#
+# This file is part of SNAP. SNAP is free software: you can
+# redistribute it and/or modify it under the terms of the
+# GNU General Public License as published by the
 # Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
@@ -107,7 +107,7 @@ class Controller():
         if (len(self.lastLog) > max_lines):
             self.lastLog = self.lastLog[-max_lines:]
         lines = None
-                                                                                                
+
         self.main.evaluate_javaScript('updateEemepLog({0});'.format(json.dumps("\n".join(self.lastLog))))
 
     def update_log_query(self, qDict):
@@ -153,24 +153,22 @@ class Controller():
                         traceback.print_exc()
                         self.write_log("aborting {} failed!".format(dirpath))
         pass
-    
+
     def cancel_submitted(self, qDict):
         '''Cancel the last submitted volcano-file'''
         if (os.path.isfile(self.volcano_file)):
             owner, gecos = getFileOwner(self.volcano_file)
             user = getpass.getuser()
             debug("Deleting {:s} owned by {:s} ({:s}) with user {:s}".format(self.volcano_file, owner, gecos, user))
-            if (owner == user):
-                try:
-                    os.remove(os.path.join(self.volcano_file))
-                    self.write_log("{} deleted".format(self.volcano_file))
-                    self.eemepRunning = "inactive"
-                except:
-                    self.write_log("ERROR: could not cancel the currently submitted volcano")
-                    pass
-            else:
-                self.write_log("ERROR: {:s}\nis started by {:s} - cannot abort!".format(self.volcano_file, owner))
-                self.write_log("If needed, please delete {:s} manually.".format(self.volcano_file))
+            if (owner != user):
+                self.write_log("WARNING: {:s}\nwas started by {:s} ({:s}). Please notify this user that you canceled the run!".format(self.volcano_file, owner, gecos))
+            try:
+                os.remove(os.path.join(self.volcano_file))
+                self.write_log("{} deleted".format(self.volcano_file))
+                self.eemepRunning = "inactive"
+            except Exception as e:
+                self.write_log("ERROR: could not cancel the currently submitted volcano!\n Error was {:s}".format(e.msg))
+                pass
         else:
             self.write_log("Volcano file ('{:s}') does not exist".format(self.volcano_file))
 
@@ -262,30 +260,30 @@ class Controller():
         except Exception as ex:
             errors += str(ex) + "\n"
             errors += 'Please select Height and Type (Advanced) manually.\n'
-        
+
         self.write_log("working with {:s} (lat={:.2f}N lon={:.2f}E) starting at {:s}".format(volcano, latf, lonf, startTime))
 
-        
+
         # Get cloud height if supplied and calculate eruption rate
         if qDict['cloudheight']:
             try:
                 cheight = float(qDict['cloudheight'])
             except:
                 errors += "cannot interpret cloudheight (m): {0}\n".format(qDict['cloudheight'])
-                
+
             if (cheight % 1 != 0):
                 self.write_log("WARNING: Ash cloud height supplied with fraction. Please check that you supplied meters, not km!")
-                
+
             if qDict['cloudheight_datum'] == 'mean_sea_level':
-                # Interpret cloud height as above sea level 
+                # Interpret cloud height as above sea level
                 # - remove volcano vent altitude to get plume height
                 self.write_log("Ash cloud height measured from mean sea level: {:.2f} km".format(cheight/1000.0))
                 cheight = cheight - altf
-                
+
             elif qDict['cloudheight_datum'] == 'vent':
                 # Interpret cloud height as above vent
                 pass
-            
+
             else:
                 errors += "cannot interpret cloud height datum: {:s}".format(qDict['cloudheight_datum'])
 
@@ -295,7 +293,7 @@ class Controller():
         else:
             cheight = float(volctype['H']) * 1000 # km -> m
             rate = float(volctype['dM/dt'])
-            
+
         #Check negative ash cloud height
         if (cheight <= 0):
             errors += "Negative cloud height {:.2f}! Please check ash cloud.".format(cheight/1000.0)
@@ -308,7 +306,7 @@ class Controller():
             return
 
         # eEMEP runs up-to 23 km, so remove all ash above 23 km,
-        # See Varsling av vulkanaske i norsk luftrom - driftsfase, 
+        # See Varsling av vulkanaske i norsk luftrom - driftsfase,
         # February 2020 for details
         eemep_cheight_max = 23000.0-altf
         if (cheight > eemep_cheight_max):
@@ -374,7 +372,7 @@ class Controller():
             debug('updateLog("{0}");'.format(json.dumps(errmsg)))
             self.write_log(errmsg)
             return
-            
+
         self.eemepRunning = "running"
 
         self.model_update = _UpdateThread(self)
