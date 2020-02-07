@@ -17,14 +17,6 @@ module milibML
       integer, intent(out) :: ierror
     end subroutine xyconvert
 
-    subroutine keywrd(ntext, text, cend, csep, mkey, kwhere, nkey, ierror)
-      integer, intent(in) :: ntext, mkey
-      integer, intent(out) :: nkey, ierror
-      character*(*), intent(in) :: text(ntext)
-      character(len=1) :: cend, csep
-      integer, intent(out) :: kwhere(5, mkey)
-    end subroutine keywrd
-
     subroutine chcase(mode, ntext, text)
       integer, intent(in) :: mode
       integer, intent(in) :: ntext
@@ -50,17 +42,6 @@ module milibML
     subroutine rlunit(lrunit)
       integer, intent(out) :: lrunit
     end subroutine rlunit
-
-    subroutine termchar(chr)
-      character(len=1), intent(out) :: chr
-    end subroutine termchar
-
-    subroutine getvar(nvar, var, nilarg, ilarg, iprint, ierror)
-      integer, intent(in) :: nvar, nilarg, iprint
-      integer, intent(out) :: ierror
-      integer, intent(in) :: ilarg(nilarg)
-      character*(*), intent(inout) :: var(nvar)
-    end subroutine getvar
 
     subroutine hrdiff(iup1, iup2, itime1, itime2, ihours, ierr1, ierr2)
       integer, intent(in) :: iup1, iup2
