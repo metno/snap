@@ -150,9 +150,6 @@
 ! DNMI library subroutines : rfelt
 !                            rlunit
 !                            chcase
-!                            termchar
-!                            getvar
-!                            keywrd
 !                            hrdiff
 !                            vtime
 !                            gridpar
@@ -264,9 +261,6 @@ PROGRAM bsnap
 !..used in xyconvert (longitude,latitude -> x,y)
   real, save :: geoparam(6) = [1.0, 1.0, 1.0, 1.0, 0.0, 0.0]
 
-  integer, parameter :: maxkey = 10
-  integer ::   kwhere(5,maxkey)
-
   integer :: narg,iuinp,ios,nhrun,nhrel,nhfout
   logical :: use_random_walk
   integer :: isynoptic,m,np,nlevel,minhfc,maxhfc,ifltim
@@ -341,7 +335,7 @@ PROGRAM bsnap
   if(narg < 1) then
     write(error_unit,*)
     write(error_unit,*) '  usage: snap <snap.input>'
-    write(error_unit,*) '     or: snap <snap.input> <arguments>'
+    write(error_unit,*) '     or: snap --version'
     write(error_unit,*)
     stop 1
   endif
@@ -1307,9 +1301,21 @@ subroutine set_defaults()
   warning = .false.
 end subroutine
 
+
+  subroutine first_nonblank(str, n)
+    character(len=*), intent(in) :: str
+    integer, intent(out) :: n
+
+    do n=1,len(str)
+      if (str(n:n) /= " ") then
+        return
+      end if
+    end do
+
+  end subroutine
+
   !> reads information from an inputfile and loads into the program
   subroutine read_inputfile(iuinp)
-    use milibML, only: termchar, getvar, keywrd
     use snapparML, only: push_down_dcomp, defined_component
     use find_parameter, only: detect_gridparams, get_klevel
 
@@ -1318,34 +1324,34 @@ end subroutine
 
     integer :: nlines
     logical :: end_loop
-    integer :: ipostyp,lcinp,ks,nkey,k,ierror,mkey
-    integer :: ikey,k1,k2,kv1,kv2,nkv,i,kh,kd,ig,igd,igm,i1,i2
+    integer :: ipostyp,k1,k2,ierror
+    integer :: i,kh,kd,ig,igd,igm,i1,i2
+    integer :: comment_start
     real :: glat, glong
-    character(len=1) :: tchar
     character(len=8) :: cpos1, cpos2
     type(defined_component), pointer :: d_comp
+    integer :: kname_start, kname_end ! keyword
+    integer :: pname_start, pname_end ! value
+    integer :: equal_sign_position
+    logical :: has_value
 
-    character(len=:), allocatable :: cinput, ciname, cipart
+    character(len=:), allocatable :: cinput
     character(len=:), allocatable :: char_tmp
+    character(len=256) :: keyword
 
     !..ipostyp=1 : latitude,longitude as decimal numbers (real)
     !..ipostyp=2 : latitude,longitude as degree*100+minute (integer)
     ipostyp = 1
 
-    !..termination character (machine dependant)
-    call termchar(tchar)
-
     end_loop = .false.
     nlines = 0
     allocate(character(len=256)::cinput)
-    allocate(character(len=256)::ciname)
-    allocate(character(len=256)::cipart)
 
     do while (.not.end_loop)
       nlines = nlines+1
       cinput(:) = ""
       i = 0
-      read_line: do
+      read_line: do ! Read a line into cinput
         i = i + 1
         if (len(cinput) < i) then
           call move_alloc(from=cinput, to=char_tmp)
@@ -1366,108 +1372,93 @@ end subroutine
         endif
       enddo read_line
 
-      lcinp=len(cinput)
-      ks=index(cinput,'*')
-      if(ks < 1) ks=lcinp+1
-
-      if(ks == 1) then
-        nkey=0
+      comment_start = index(cinput, '*')
+      if (comment_start /= 0) then
+        if (len_trim(cinput(:comment_start-1)) == 0) then
+          ! Empty line
+          cycle
+        end if
+        kname_end = comment_start
       else
-        do k=ks,lcinp
-          cinput(k:k)=' '
-        end do
-      !..check if input as environment variables or command line arguments
-        call getvar(1,cinput,1,[1],1,ierror)
-        if(ierror /= 0) goto 12
-      !..find keywords and values
-        mkey=maxkey
-        call keywrd(1,cinput,'=',';',mkey,kwhere,nkey,ierror)
-        if(ierror /= 0) goto 12
+        if (len_trim(cinput) == 0) cycle
+        kname_end = len_trim(cinput)
+      end if
+      call first_nonblank(cinput(:kname_end), kname_start)
+
+      equal_sign_position = index(cinput(:kname_end), "=")
+      if (equal_sign_position /= 0) then
+        has_value = .true.
+        pname_end = kname_end ! Only extending up to comment
+        kname_end = equal_sign_position - 1
+        pname_start = equal_sign_position + 1
+        ! Can safely skip to the first nonblank
+        call first_nonblank(cinput(pname_start:pname_end), k1)
+        pname_start = pname_start + k1 - 1
+      else
+        has_value = .false.
+        pname_start = 1
+        pname_end = 1
       end if
 
-      nkv = 0
-      do ikey=1,nkey
+      if ((kname_end - kname_start) > len(keyword)) then
+        write(error_unit, *) "Keyword is too long"
+        goto 12
+      end if
 
-      ! c         l=kwhere(1,ikey)
-        k1=kwhere(2,ikey)
-        k2=kwhere(3,ikey)
-        kv1=kwhere(4,ikey)
-        kv2=kwhere(5,ikey)
+      keyword(:) = trim(cinput(kname_start:kname_end))
+      call chcase(1, 1, keyword) ! Lowercase
 
-        if(kv1 > 0) then
-          nkv = kv2 - kv1 + 1
+      ! write(*,*) "keyword: ", trim(keyword)
+      ! if (has_value) write(*,*) "value: ", trim(cinput(pname_start:pname_end))
 
-          if (len(ciname) < nkv) then
-            call move_alloc(from=ciname, to=char_tmp)
-            allocate(character(len=len(char_tmp) + max(nkv, 256))::ciname)
-            ciname(:) = ""
-            ciname(1:len(char_tmp)) = char_tmp
-            deallocate(char_tmp)
-          endif
-          ciname(:) = cinput(kv1:kv2)
-
-          if (len(cipart) < nkv + len(tchar)) then
-            call move_alloc(from=cipart, to=char_tmp)
-            allocate(character(len=len(char_tmp) + max(nkv + len(tchar), 256))::cipart)
-            cipart(:) = ""
-            cipart(1:len(char_tmp)) = char_tmp
-            deallocate(char_tmp)
-          endif
-          cipart(:) = cinput(kv1:kv2)//tchar
-        end if
-
-      !=======================================================================
-
-        if(cinput(k1:k2) == 'positions.decimal') then
+      select case(trim(keyword))
+      case('positions.decimal')
         !..positions.decimal
           ipostyp=1
-        elseif(cinput(k1:k2) == 'positions.degree_minute') then
+      case('positions.degree_minute')
         !..positions.degree_minute
           ipostyp=2
-        elseif(cinput(k1:k2) == 'time.start') then
+      case('time.start')
         !..time.start=<year,month,day,hour>
-          if(kv1 < 1) goto 12
-          read(cipart,*,err=12) (itime1(i),i=1,4)
+          if(.not.has_value) goto 12
+          read(cinput(pname_start:pname_end),*,err=12) (itime1(i),i=1,4)
           itime1(5)=0
-        elseif(cinput(k1:k2) == 'time.run') then
+      case('time.run')
         !..time.run=<hours'h'> or <days'd'>
-          if(kv1 < 1) goto 12
-          kh=index(cipart,'h')
-          kd=index(cipart,'d')
+          if(.not.has_value) goto 12
+          kh=index(cinput(pname_start:pname_end),'h')
+          kd=index(cinput(pname_start:pname_end),'d')
           if(kh > 0 .AND. kd == 0) then
-            cipart(kh:kh)=' '
-            read(cipart,*,err=12) rnhrun
+            read(cinput(pname_start:pname_start+kh-2),*,err=12) rnhrun
             nhrun=nint(rnhrun)
           elseif(kd > 0 .AND. kh == 0) then
-            cipart(kd:kd)=' '
-            read(cipart,*,err=12) rnhrun
+            read(cinput(pname_start:pname_start+kd-2),*,err=12) rnhrun
             nhrun=nint(rnhrun*24.)
           else
             goto 12
           end if
-        elseif(cinput(k1:k2) == 'time.release') then
+      case('time.release')
         !..time.release=<hours'h'> or <days'd'>
-          if(kv1 < 1) goto 12
-          kh=index(cipart,'h')
-          kd=index(cipart,'d')
+          if(.not.has_value) goto 12
+          kh=index(cinput(pname_start:pname_end),'h')
+          kd=index(cinput(pname_start:pname_end),'d')
           if(kh > 0 .AND. kd == 0) then
-            cipart(kh:kh)=' '
-            read(cipart,*,err=12) rnhrel
+            read(cinput(pname_start:pname_start+kh),*,err=12) rnhrel
             nhrel=nint(rnhrel)
           elseif(kd > 0 .AND. kh == 0) then
-            cipart(kd:kd)=' '
-            read(cipart,*,err=12) rnhrel
+            read(cinput(pname_start:pname_start+kd),*,err=12) rnhrel
             nhrel=nint(rnhrel*24.)
           else
             goto 12
           end if
-        elseif(cinput(k1:k2) == 'set_release.pos') then
+      case('set_release.pos')
         !..set_release.pos=<name>   or <p=lat,long>
-          if(kv1 < 1) goto 12
-          srelnam=ciname
+          if(.not.has_value) goto 12
+
+          srelnam = trim(cinput(pname_start:pname_end))
           if(srelnam(1:2) == 'p=' .OR. srelnam(1:2) == 'P=') then
-            cipart(1:2)='  '
-            read(cipart,*,err=12) glat,glong
+            pname_start = pname_start + 2
+            read(cinput(pname_start:pname_end),*,err=12) glat,glong
             if(ipostyp == 2) then
               ig=nint(glat)
               igd=ig/100
@@ -1501,30 +1492,30 @@ end subroutine
             release_positions(nrelpos)%geo_latitude = glat
             release_positions(nrelpos)%geo_longitude = glong
           end if
-        elseif(cinput(k1:k2) == 'random.walk.on') then
+      case('random.walk.on')
         !..random.walk.on
           use_random_walk = .true.
-        elseif(cinput(k1:k2) == 'random.walk.off') then
+      case('random.walk.off')
         !..random.walk.off
           use_random_walk = .false.
-        elseif(cinput(k1:k2) == 'boundary.layer.full.mix.off') then
+      case('boundary.layer.full.mix.off')
         !..boundary.layer.full.mix.off
           blfullmix= .FALSE.
-        elseif(cinput(k1:k2) == 'boundary.layer.full.mix.on') then
+      case('boundary.layer.full.mix.on')
         !..boundary.layer.full.mix.on
           blfullmix= .TRUE.
-        elseif(cinput(k1:k2) == 'dry.deposition.old') then
+      case('dry.deposition.old')
         !..dry.deposition.old
           if(idrydep /= 0 .AND. idrydep /= 1) goto 12
           idrydep=1
-        elseif(cinput(k1:k2) == 'dry.deposition.new') then
+      case('dry.deposition.new')
         !..dry.deposition.new
           if(idrydep /= 0 .AND. idrydep /= 2) goto 12
           idrydep=2
-        elseif(cinput(k1:k2) == 'wet.deposition.old') then
+      case('wet.deposition.old')
           write(error_unit,*) "This option is deprecated and removed"
           goto 12
-        elseif(cinput(k1:k2) == 'wet.deposition.new') then
+      case('wet.deposition.new')
         !..wet.deposition.new
           write(error_unit,*) "Deprecated, please use wet.deposition.version = 2"
           warning = .true.
@@ -1533,53 +1524,50 @@ end subroutine
             goto 12
           endif
           wetdep_version=2
-        elseif(cinput(k1:k2) == 'wet.deposition.version') then
+      case('wet.deposition.version')
           if (wetdep_version /= 0) then
             write(error_unit, *) "already set"
             goto 12
           endif
-          if (kv1 < 1) then
+          if (.not.has_value) then
             write(error_unit, *) "expected a keyword"
             goto 12
           endif
-          read(cipart, *, err=12) wetdep_version
-        elseif(cinput(k1:k2) == 'time.step') then
+          read(cinput(pname_start:pname_end), *, err=12) wetdep_version
+      case('time.step')
         !..time.step=<seconds>
-          if(kv1 < 1) goto 12
-          read(cipart,*,err=12) tstep
+          if(.not.has_value) goto 12
+          read(cinput(pname_start:pname_end),*,err=12) tstep
           if(tstep < 0.9999) goto 12
-        elseif(cinput(k1:k2) == 'time.release.profile.constant') then
+      case('time.release.profile.constant')
         !..time.release.profile.constant
           if(itprof /= 0 .AND. itprof /= 1) goto 12
           itprof=1
-        elseif(cinput(k1:k2) == 'time.release.profile.bomb') then
+      case('time.release.profile.bomb')
         !..time.release.profile.bomb
           if(itprof /= 0 .AND. itprof /= 2) goto 12
           itprof=2
-        elseif(cinput(k1:k2) == 'time.release.profile.linear') then
+      case('time.release.profile.linear')
         !..time.release.profile.linear
           if(itprof /= 0 .AND. itprof /= 3) goto 12
           itprof=3
-        elseif(cinput(k1:k2) == 'time.release.profile.steps') then
+      case('time.release.profile.steps')
         !..time.release.profile.steps
           if(itprof /= 0 .AND. itprof /= 4) goto 12
           itprof=4
-        elseif(cinput(k1:k2) == 'release.day'    .OR. &
-            cinput(k1:k2) == 'release.hour'   .OR. &
-            cinput(k1:k2) == 'release.minute' .OR. &
-            cinput(k1:k2) == 'release.second') then
+      case('release.day','release.hour','release.minute','release.second')
           rscale=1.
-          if(cinput(k1:k2) == 'release.day')    rscale=24.
-          if(cinput(k1:k2) == 'release.minute') rscale=1./60.
-          if(cinput(k1:k2) == 'release.second') rscale=1./3600.
+          if(keyword == 'release.day')    rscale=24.
+          if(keyword == 'release.minute') rscale=1./60.
+          if(keyword == 'release.second') rscale=1./3600.
         !..release.day
         !..release.hour
         !..release.minute
         !..release.second
-          if (kv1 < 1) goto 12
-          if (.not.allocated(releases)) call allocate_releases(cipart, ntprof)
+          if (.not.has_value) goto 12
+          if (.not.allocated(releases)) call allocate_releases(cinput(pname_start:pname_end), ntprof)
 
-          read(cipart,*,err=12) releases%frelhour
+          read(cinput(pname_start:pname_end),*,err=12) releases%frelhour
 
           releases%frelhour = releases%frelhour*rscale
 
@@ -1590,57 +1578,54 @@ end subroutine
                 goto 12
             endif
           end do
-        elseif(cinput(k1:k2) == 'release.radius.m') then
+      case('release.radius.m')
         !..release.radius.m
-          if(kv1 < 1) goto 12
-          if (.not.allocated(releases)) call allocate_releases(cipart, ntprof)
-          read(cipart,*,err=12) releases%relradius(1)
+          if(.not.has_value) goto 12
+          if (.not.allocated(releases)) call allocate_releases(cinput(pname_start:pname_end), ntprof)
+          read(cinput(pname_start:pname_end),*,err=12) releases%relradius(1)
           if (any(releases%relradius(1) < 0.0)) goto 12
-        elseif(cinput(k1:k2) == 'release.upper.m') then
+      case('release.upper.m')
         !..release.upper.m
-          if(kv1 < 1) goto 12
-          if (.not.allocated(releases)) call allocate_releases(cipart, ntprof)
-          read(cipart,*,err=12) releases%relupper(1)
+          if(.not.has_value) goto 12
+          if (.not.allocated(releases)) call allocate_releases(cinput(pname_start:pname_end), ntprof)
+          read(cinput(pname_start:pname_end),*,err=12) releases%relupper(1)
           if (any(releases%relupper(1) < 0.0)) goto 12
-        elseif(cinput(k1:k2) == 'release.lower.m') then
+      case('release.lower.m')
         !..release.lower.m
-          if(kv1 < 1) goto 12
-          if (.not.allocated(releases)) call allocate_releases(cipart, ntprof)
-          read(cipart,*,err=12) releases%rellower(1)
+          if(.not.has_value) goto 12
+          if (.not.allocated(releases)) call allocate_releases(cinput(pname_start:pname_end), ntprof)
+          read(cinput(pname_start:pname_end),*,err=12) releases%rellower(1)
           if (any(releases%rellower(1) < 0.0)) goto 12
-        elseif(cinput(k1:k2) == 'release.mushroom.stem.radius.m') then
+      case('release.mushroom.stem.radius.m')
         !..release.mushroom.stem.radius.m
-          if(kv1 < 1) goto 12
-          if (.not.allocated(releases)) call allocate_releases(cipart, ntprof)
-          read(cipart,*,err=12) releases%relstemradius
-        elseif(cinput(k1:k2) == 'release.bq/hour.comp' .OR. &
-            cinput(k1:k2) == 'release.bq/sec.comp'  .OR. &
-            cinput(k1:k2) == 'release.bq/day.comp' .OR. &
-            cinput(k1:k2) == 'release.bq/step.comp') then
+          if(.not.has_value) goto 12
+          if (.not.allocated(releases)) call allocate_releases(cinput(pname_start:pname_end), ntprof)
+          read(cinput(pname_start:pname_end),*,err=12) releases%relstemradius
+      case('release.bq/hour.comp', 'release.bq/sec.comp', 'release.bq/day.comp', 'release.bq/step.comp')
         !..release.bq/hour.comp
         !..release.bq/sec.comp
         !..release.bq/day.comp
         !..release.bq/step.comp
-          if(cinput(k1:k2) == 'release.bq/hour.comp') then
+          if(keyword == 'release.bq/hour.comp') then
             rscale=1./3600.
-          elseif(cinput(k1:k2) == 'release.bq/day.comp') then
+          elseif(keyword == 'release.bq/day.comp') then
             rscale=1./(3600.*24.)
-          elseif(cinput(k1:k2) == 'release.bq/step.comp') then
+          elseif(keyword == 'release.bq/step.comp') then
             rscale=-1.
           else
             rscale=1.
           end if
-          if(kv1 < 1) goto 12
-          if (.not.allocated(releases)) call allocate_releases(cipart, ntprof)
+          if(.not.has_value) goto 12
+          if (.not.allocated(releases)) call allocate_releases(cinput(pname_start:pname_end), ntprof)
           ncomp= ncomp+1
           if(ncomp > mcomp) goto 13
-          read(cipart,*,err=12) releases%relbqsec(ncomp,1), &
+          read(cinput(pname_start:pname_end),*,err=12) releases%relbqsec(ncomp,1), &
               component(ncomp)
           if (any(releases%relbqsec(ncomp,1) < 0.0)) goto 12
           if(rscale > 0.) then
             releases%relbqsec(ncomp,1) = releases%relbqsec(ncomp,1)*rscale
           elseif(ntprof > 1) then
-            if(cinput(k1:k2) == 'release.bq/step.comp') then
+            if(keyword == 'release.bq/step.comp') then
               do i=1,ntprof-1
                 rscale=1./(3600.*(releases(i+1)%frelhour-releases(i)%frelhour))
                 releases(i)%relbqsec(ncomp,1) = releases(i)%relbqsec(ncomp,1)*rscale
@@ -1651,265 +1636,266 @@ end subroutine
         !..releases with different height classes
         !..  height-classes defined here, time-profile defined outside
         !..release.heightlower.m
-        elseif(cinput(k1:k2) == 'release.heightlower.m') then
+      case('release.heightlower.m')
           nrelheight=0
-          if(kv1 < 1 .OR. nrelheight > 0) goto 12
+          if(.not.has_value .OR. nrelheight > 0) goto 12
           i1=nrelheight+1
           i2=nrelheight
           ios=0
           do while (ios == 0)
             if(i2 > size(release1%rellower)) goto 13
             i2=i2+1
-            read(cipart,*,iostat=ios) (release1%rellower(ih),ih=i1,i2)
+            read(cinput(pname_start:pname_end),*,iostat=ios) (release1%rellower(ih),ih=i1,i2)
           end do
           i2=i2-1
           if(i2 < i1) goto 12
           nrelheight=i2
-        elseif(cinput(k1:k2) == 'release.heightradius.m') then
+      case('release.heightradius.m')
         !..release.heightradius.m
-          if(kv1 < 1 .OR. nrelheight < 1) goto 12
-          read(cipart,*,err=12) (release1%relradius(ih),ih=1,nrelheight)
+          if(.not.has_value .OR. nrelheight < 1) goto 12
+          read(cinput(pname_start:pname_end),*,err=12) (release1%relradius(ih),ih=1,nrelheight)
           do ih=1,nrelheight
             if(release1%relradius(ih) < 0.) goto 12
           end do
-        elseif(cinput(k1:k2) == 'release.heightupper.m') then
+      case('release.heightupper.m')
         !..release.heightupper.m
-          if(kv1 < 1 .OR. nrelheight < 1) goto 12
-          read(cipart,*,err=12) (release1%relupper(ih),ih=1,nrelheight)
+          if(.not.has_value .OR. nrelheight < 1) goto 12
+          read(cinput(pname_start:pname_end),*,err=12) (release1%relupper(ih),ih=1,nrelheight)
           do ih=1,nrelheight
             if(release1%relupper(ih) < release1%rellower(ih)) goto 12
           end do
-        elseif(cinput(k1:k2) == 'release.file') then
+      case('release.file')
+          if (.not.has_value) goto 12
         !..release.file
-          relfile=ciname(1:nkv)
+          relfile = trim(cinput(pname_start:pname_end))
         !..release.component
-        elseif(cinput(k1:k2) == 'release.components') then
+      case('release.components')
           ncomp=0
-          if(kv1 < 1 .OR. ncomp > 0) goto 12
+          if(.not.has_value .OR. ncomp > 0) goto 12
           i1=ncomp+1
           i2=ncomp
           ios=0
           do while (ios == 0)
             if(i2 > mcomp) goto 13
             i2=i2+1
-            read(cipart,*,iostat=ios) (component(i),i=i1,i2)
+            read(cinput(pname_start:pname_end),*,iostat=ios) (component(i),i=i1,i2)
           end do
           i2=i2-1
           if(i2 < i1) goto 12
           ncomp=i2
 
-        elseif(cinput(k1:k2) == 'max.totalparticles') then
+      case('max.totalparticles')
         !..max.totalparticles
-          if(kv1 < 1) goto 12
-          read(cipart,*,err=12) mpart
+          if(.not.has_value) goto 12
+          read(cinput(pname_start:pname_end),*,err=12) mpart
           if(mpart < 1) goto 12
-        elseif(cinput(k1:k2) == 'max.totalplumes') then
+      case('max.totalplumes')
         !..max.totalplumes
-          if(kv1 < 1) goto 12
-          read(cipart,*,err=12) mplume
+          if(.not.has_value) goto 12
+          read(cinput(pname_start:pname_end),*,err=12) mplume
           if(mplume < 1) goto 12
-        elseif(cinput(k1:k2) == 'max.particles.per.release') then
+      case('max.particles.per.release')
         !..max.particles.per.release
-          if(kv1 < 1) goto 12
-          read(cipart,*,err=12) mprel
+          if(.not.has_value) goto 12
+          read(cinput(pname_start:pname_end),*,err=12) mprel
           if(mprel < 1) goto 12
-        elseif(cinput(k1:k2) == 'component') then
+      case('component')
         !..component= name
-          if(kv1 < 1) goto 12
+          if(.not.has_value) goto 12
           call push_down_dcomp(def_comp, top=d_comp)
 
-          d_comp%compname = ciname(1:nkv)
-          d_comp%compnamemc = ciname(1:nkv)
+          d_comp%compname = cinput(pname_start:pname_end)
+          d_comp%compnamemc = cinput(pname_start:pname_end)
           call chcase(2, 1, d_comp%compname)
-        elseif(cinput(k1:k2) == 'dry.dep.on') then
+      case('dry.dep.on')
         !..dry.dep.on
           if (.not.associated(d_comp)) goto 12
           if (d_comp%kdrydep /= -1) goto 12
           d_comp%kdrydep = 1
-        elseif(cinput(k1:k2) == 'dry.dep.off') then
+      case('dry.dep.off')
         !..dry.dep.off
           if (.not.associated(d_comp)) goto 12
           if (d_comp%kdrydep /= -1) goto 12
           d_comp%kdrydep = 0
-        elseif(cinput(k1:k2) == 'wet.dep.on') then
+      case('wet.dep.on')
         !..wet.dep.on
           if (.not.associated(d_comp)) goto 12
           if (d_comp%kwetdep /= -1) goto 12
           d_comp%kwetdep = 1
-        elseif(cinput(k1:k2) == 'wet.dep.off') then
+      case('wet.dep.off')
         !..wet.dep.off
           if (.not.associated(d_comp)) goto 12
           if (d_comp%kwetdep /= -1) goto 12
           d_comp%kwetdep = 0
-        elseif(cinput(k1:k2) == 'dry.dep.height') then
+      case('dry.dep.height')
         !..dry.dep.height=
-          if(kv1 < 1) goto 12
+          if(.not.has_value) goto 12
           if (.not.associated(d_comp)) goto 12
           if (d_comp%drydephgt >= 0.) goto 12
-          read(cipart,*,err=12) d_comp%drydephgt
-        elseif(cinput(k1:k2) == 'dry.dep.ratio') then
+          read(cinput(pname_start:pname_end),*,err=12) d_comp%drydephgt
+      case('dry.dep.ratio')
         !..dry.dep.ratio=
-          if(kv1 < 1) goto 12
+          if(.not.has_value) goto 12
           if (.not.associated(d_comp)) goto 12
           if (d_comp%drydeprat >= 0.) goto 12
-          read(cipart,*,err=12) d_comp%drydeprat
-        elseif(cinput(k1:k2) == 'wet.dep.ratio') then
+          read(cinput(pname_start:pname_end),*,err=12) d_comp%drydeprat
+      case('wet.dep.ratio')
         !..wet.dep.ratio=
-          if(kv1 < 1) goto 12
+          if(.not.has_value) goto 12
           if (.not.associated(d_comp)) goto 12
           if (d_comp%wetdeprat >= 0.) goto 12
-          read(cipart,*,err=12) d_comp%wetdeprat
-        elseif(cinput(k1:k2) == 'radioactive.decay.on') then
+          read(cinput(pname_start:pname_end),*,err=12) d_comp%wetdeprat
+      case('radioactive.decay.on')
         !..radioactive.decay.on
           if (.not.associated(d_comp)) goto 12
           if (d_comp%kdecay /= -1) goto 12
           d_comp%kdecay = 1
-        elseif(cinput(k1:k2) == 'radioactive.decay.off') then
+      case('radioactive.decay.off')
         !..radioactive.decay.off
           if (.not.associated(d_comp)) goto 12
           if (d_comp%kdecay /= -1) goto 12
           d_comp%kdecay = 0
-        elseif(cinput(k1:k2) == 'half.lifetime.minutes') then
+      case('half.lifetime.minutes')
         !..half.lifetime.minutes=
-          if(kv1 < 1) goto 12
+          if(.not.has_value) goto 12
           if (.not.associated(d_comp)) goto 12
           if (d_comp%halftime >= 0.) goto 12
-          read(cipart,*,err=12) d_comp%halftime
+          read(cinput(pname_start:pname_end),*,err=12) d_comp%halftime
           d_comp%halftime = d_comp%halftime/60.
-        elseif(cinput(k1:k2) == 'half.lifetime.hours') then
+      case('half.lifetime.hours')
         !..half.lifetime.hours=
-          if(kv1 < 1) goto 12
+          if(.not.has_value) goto 12
           if (.not.associated(d_comp)) goto 12
           if (d_comp%halftime >= 0.) goto 12
-          read(cipart,*,err=12) d_comp%halftime
-        elseif(cinput(k1:k2) == 'half.lifetime.days') then
+          read(cinput(pname_start:pname_end),*,err=12) d_comp%halftime
+      case('half.lifetime.days')
         !..half.lifetime.days=
-          if(kv1 < 1) goto 12
+          if(.not.has_value) goto 12
           if (.not.associated(d_comp)) goto 12
           if (d_comp%halftime >= 0.) goto 12
-          read(cipart,*,err=12) d_comp%halftime
+          read(cinput(pname_start:pname_end),*,err=12) d_comp%halftime
           d_comp%halftime = d_comp%halftime*24.
-        elseif(cinput(k1:k2) == 'half.lifetime.years') then
+      case('half.lifetime.years')
         !..half.lifetime.years=
-          if(kv1 < 1) goto 12
+          if(.not.has_value) goto 12
           if (.not.associated(d_comp)) goto 12
           if (d_comp%halftime >= 0.) goto 12
-          read(cipart,*,err=12) d_comp%halftime
+          read(cinput(pname_start:pname_end),*,err=12) d_comp%halftime
           d_comp%halftime = d_comp%halftime*24.*365.25
-        elseif(cinput(k1:k2) == 'gravity.off') then
+      case('gravity.off')
         !..gravity.off
           if (.not.associated(d_comp)) goto 12
           if (d_comp%grav_type /= -1) goto 12
           d_comp%grav_type = 0
-        elseif(cinput(k1:k2) == 'gravity.fixed.m/s') then
+      case('gravity.fixed.m/s')
         !..gravity.fixed.m/s
           if (.not.associated(d_comp)) goto 12
           if (d_comp%grav_type /= -1) goto 12
           d_comp%grav_type = 1
-          if(kv1 < 1) goto 12
-          read(cipart,*,err=12) d_comp%gravityms
+          if(.not.has_value) goto 12
+          read(cinput(pname_start:pname_end),*,err=12) d_comp%gravityms
           if (d_comp%gravityms <= 0.) goto 12
-        elseif(cinput(k1:k2) == 'gravity.fixed.cm/s') then
+      case('gravity.fixed.cm/s')
         !..gravity.fixed.cm/s
           if (.not.associated(d_comp)) goto 12
           if (d_comp%grav_type /= -1) goto 12
           d_comp%grav_type = 1
-          if(kv1 < 1) goto 12
-          read(cipart,*,err=12) d_comp%gravityms
+          if(.not.has_value) goto 12
+          read(cinput(pname_start:pname_end),*,err=12) d_comp%gravityms
           if (d_comp%gravityms <= 0.) goto 12
           d_comp%gravityms = d_comp%gravityms*0.01
-        elseif(cinput(k1:k2) == 'radius.micrometer') then
+      case('radius.micrometer')
         !..radius.micrometer  (for gravity computation)
-          if(kv1 < 1) goto 12
+          if(.not.has_value) goto 12
           if (.not.associated(d_comp)) goto 12
           if (d_comp%radiusmym > 0.) goto 12
-          read(cipart,*,err=12) d_comp%radiusmym
+          read(cinput(pname_start:pname_end),*,err=12) d_comp%radiusmym
           if (d_comp%radiusmym <= 0.) goto 12
-        elseif(cinput(k1:k2) == 'density.g/cm3') then
+      case('density.g/cm3')
         !..density.g/cm3  (for gravity computation)
-          if(kv1 < 1) goto 12
+          if(.not.has_value) goto 12
           if (.not.associated(d_comp)) goto 12
           if (d_comp%densitygcm3 > 0.) goto 12
-          read(cipart,*,err=12) d_comp%densitygcm3
+          read(cinput(pname_start:pname_end),*,err=12) d_comp%densitygcm3
           if(d_comp%densitygcm3 <= 0.) goto 12
-        elseif(cinput(k1:k2) == 'field.identification') then
+      case('field.identification')
         !..field.identification=
-          if(kv1 < 1) goto 12
+          if(.not.has_value) goto 12
           if (.not.associated(d_comp)) goto 12
           if (d_comp%idcomp >= 0) goto 12
-          read(cipart,*,err=12) d_comp%idcomp
+          read(cinput(pname_start:pname_end),*,err=12) d_comp%idcomp
           if(d_comp%idcomp < 1) goto 12
           do i=1,size(def_comp)-1
             if(def_comp(i)%idcomp == d_comp%idcomp) goto 12
           end do
-        elseif (cinput(k1:k2) == 'field.use_model_wind_instead_of_10m') then
+      case('field.use_model_wind_instead_of_10m')
         ! FIELD.USE_MODEL_WIND_INSTEAD_OF_10M= [.false.]/.true
-          if (kv1 < 1) goto 12
-          read(cipart,*,err=12) met_params%use_model_wind_for_10m
-        elseif(cinput(k1:k2) == 'precip(mm/h).probab') then
+          if(.not.has_value) goto 12
+          read(cinput(pname_start:pname_end),*,err=12) met_params%use_model_wind_for_10m
+      case('precip(mm/h).probab')
         !..precip(mm/h).probab=<precip_intensity,probability, ...>
           write(error_unit,*) "precip(mm/h).probab is no longer used"
           warning = .true.
-        elseif(cinput(k1:k2) == 'remove.relative.mass.limit') then
+      case('remove.relative.mass.limit')
         !..remove.relative.mass.limit=
-          if(kv1 < 1) goto 12
+          if(.not.has_value) goto 12
           if(rmlimit >= 0.00) goto 12
-          read(cipart,*,err=12) rmlimit
+          read(cinput(pname_start:pname_end),*,err=12) rmlimit
           if(rmlimit < 0.0 .OR. rmlimit > 0.5) goto 12
-        elseif(cinput(k1:k2) == 'step.hour.input.min') then
+      case('step.hour.input.min')
         !..step.hour.input.min=<hours>
-          if(kv1 < 1) goto 12
-          read(cipart,*,err=12) nhfmin
-        elseif(cinput(k1:k2) == 'step.hour.input.max') then
+          if(.not.has_value) goto 12
+          read(cinput(pname_start:pname_end),*,err=12) nhfmin
+      case('step.hour.input.max')
         !..step.hour.input.max=<hours>
-          if(kv1 < 1) goto 12
-          read(cipart,*,err=12) nhfmax
-        elseif(cinput(k1:k2) == 'step.hour.output.fields') then
+          if(.not.has_value) goto 12
+          read(cinput(pname_start:pname_end),*,err=12) nhfmax
+      case('step.hour.output.fields')
         !..step.hour.output.fields=<hours>
-          if(kv1 < 1) goto 12
-          read(cipart,*,err=12) nhfout
-        elseif(cinput(k1:k2) == 'synoptic.output') then
+          if(.not.has_value) goto 12
+          read(cinput(pname_start:pname_end),*,err=12) nhfout
+      case('synoptic.output')
         !..synoptic.output ... output at synoptic hours
           isynoptic=1
-        elseif(cinput(k1:k2) == 'asynoptic.output') then
+      case('asynoptic.output')
         !..asynoptic.output ... output at fixed intervals after start
           isynoptic=0
-        elseif(cinput(k1:k2) == 'total.components.off') then
+      case('total.components.off')
         !..total.components.off
           itotcomp=0
-        elseif(cinput(k1:k2) == 'total.components.on') then
+      case('total.components.on')
         !..total.components.on
           itotcomp=1
-        elseif(cinput(k1:k2) == 'mslp.on') then
+      case('mslp.on')
         !..mslp.on
           imslp=1
-        elseif(cinput(k1:k2) == 'mslp.off') then
+      case('mslp.off')
         !..mslp.off
           imslp=0
-        elseif(cinput(k1:k2) == 'precipitation.on') then
+      case('precipitation.on')
         !..precipitation.on
           inprecip=1
           met_params%need_precipitation = .true.
-        elseif(cinput(k1:k2) == 'precipitation.off') then
+      case('precipitation.off')
         !..precipitation.off
           inprecip=0
           met_params%need_precipitation = .false.
-        elseif(cinput(k1:k2) == 'model.level.fields.on') then
+      case('model.level.fields.on')
         !..model.level.fields.on
           imodlevel=1
-        elseif(cinput(k1:k2) == 'model.level.fields.off') then
+      case('model.level.fields.off')
         !..model.level.fields.off
           imodlevel=0
-        elseif(cinput(k1:k2) == 'model.level.fields.dumptime') then
+      case('model.level.fields.dumptime')
         !..levelfields are dump-data
-          if(kv1 < 1) goto 12
-          read(cipart,*,err=12) modleveldump
-        elseif(cinput(k1:k2) == 'release.pos') then
+          if(.not.has_value) goto 12
+          read(cinput(pname_start:pname_end),*,err=12) modleveldump
+      case('release.pos')
         !..release.pos=<'name',latitude,longitude>
-          if(kv1 < 1) goto 12
+          if(.not.has_value) goto 12
           if(nrelpos < size(release_positions)) then
             nrelpos=nrelpos+1
-            read(cipart,*,err=12) release_positions(nrelpos)%name, &
+            read(cinput(pname_start:pname_end),*,err=12) release_positions(nrelpos)%name, &
                 release_positions(nrelpos)%geo_latitude, &
                 release_positions(nrelpos)%geo_longitude
             if(ipostyp == 2) then
@@ -1927,45 +1913,45 @@ end subroutine
           else
             warning = .true.
             write(error_unit,*) 'WARNING. Too many RELEASE POSITIONS'
-            write(error_unit,*) '  ==> ',cinput(kv1:kv2)
+            write(error_unit,*) '  ==> ',cinput(pname_start:pname_end)
           end if
-        elseif(cinput(k1:k2) == 'grid.input') then
+      case('grid.input')
         !..grid.input=<producer,grid>
-          if(kv1 < 1) goto 12
-          read(cipart,*,err=12) iprod,igrid
-        elseif(cinput(k1:k2) == 'grid.nctype') then
+          if(.not.has_value) goto 12
+          read(cinput(pname_start:pname_end),*,err=12) iprod,igrid
+      case('grid.nctype')
         !..grid.nctype=<emep/hirlam12>
-          if(kv1 < 1) goto 12
-          read(cipart,*,err=12) nctype
+          if(.not.has_value) goto 12
+          read(cinput(pname_start:pname_end),*,err=12) nctype
 
           call init_meteo_params(nctype, ierror)
           if (ierror /= 0) goto 12
-        elseif(cinput(k1:k2) == 'grid.size') then
+      case('grid.size')
         !..grid.size=<nx,ny>
-          if(kv1 < 1) goto 12
-          read(cipart,*,err=12) nx,ny
-        elseif(cinput(k1:k2) == 'grid.gparam') then
+          if(.not.has_value) goto 12
+          read(cinput(pname_start:pname_end),*,err=12) nx,ny
+      case('grid.gparam')
         !..grid.gparam=<igtype,gparam(6)>
-          if(kv1 < 1) goto 12
-          read(cipart,*,err=12) igtype,(gparam(i),i=1,6)
-        elseif(cinput(k1:k2) == 'grid.run') then
+          if(.not.has_value) goto 12
+          read(cinput(pname_start:pname_end),*,err=12) igtype,(gparam(i),i=1,6)
+      case('grid.run')
         !..grid.run=<producer,grid,ixbase,iybase,ixystp>
-          if(kv1 < 1) goto 12
-          read(cipart,*,err=12) iprodr,igridr,ixbase,iybase,ixystp
-        elseif(cinput(k1:k2) == 'ensemble_member.input') then
-          read(cipart,*,err=12) enspos
-        elseif(cinput(k1:k2) == 'data.sigma.levels') then
+          if(.not.has_value) goto 12
+          read(cinput(pname_start:pname_end),*,err=12) iprodr,igridr,ixbase,iybase,ixystp
+      case('ensemble_member.input')
+          read(cinput(pname_start:pname_end),*,err=12) enspos
+      case('data.sigma.levels')
         !..data.sigma.levels
           ivcoor=2
-        elseif(cinput(k1:k2) == 'data.eta.levels') then
+      case('data.eta.levels')
         !..data.eta.levels
           ivcoor=10
-        elseif(cinput(k1:k2) == 'levels.input') then
+      case('levels.input')
         !..levels.input=<num_levels, 0,kk,k,k,k,....,1>
         !..levels.input=<num_levels, 0,kk,k,k,k,....,18,0,0,...>
           if(nlevel /= 0) goto 12
-          if(kv1 < 1) goto 12
-          read(cipart,*,err=12) nlevel
+          if(.not.has_value) goto 12
+          read(cinput(pname_start:pname_end),*,err=12) nlevel
           nk = nlevel
           ALLOCATE ( klevel(nk), STAT = AllocateStatus)
           IF (AllocateStatus /= 0) ERROR STOP AllocateErrorMessage
@@ -1974,101 +1960,103 @@ end subroutine
 !         ALLOCATE ( npcount(nk), STAT = AllocateStatus)
 !         IF (AllocateStatus /= 0) ERROR STOP AllocateErrorMessage
 
-          read(cipart,*,err=12) nlevel,(klevel(i),i=1,nlevel)
+          read(cinput(pname_start:pname_end),*,err=12) nlevel,(klevel(i),i=1,nlevel)
           if(klevel(1) /= 0 .OR. klevel(2) == 0) goto 12
           kadd = count(klevel(2:nk) == 0)
           do i=nk-kadd-1,2,-1
             if(klevel(i) <= klevel(i+1)) goto 12
           end do
-        elseif(cinput(k1:k2) == 'forecast.hour.min') then
+      case('forecast.hour.min')
         !..forecast.hour.min= +6
-          if(kv1 < 1) goto 12
-          read(cipart,*,err=12) minhfc
-        elseif(cinput(k1:k2) == 'forecast.hour.max') then
+          if(.not.has_value) goto 12
+          read(cinput(pname_start:pname_end),*,err=12) minhfc
+      case('forecast.hour.max')
         !..forecast.hour.max= +32767
-          if(kv1 < 1) goto 12
-          read(cipart,*,err=12) maxhfc
-        elseif(cinput(k1:k2) == 'field.type') then
+          if(.not.has_value) goto 12
+          read(cinput(pname_start:pname_end),*,err=12) maxhfc
+      case('field.type')
         !..field.type felt or netcdf
-          if(kv1 < 1) goto 12
-          read(cipart,*,err=12) ftype
-        elseif(cinput(k1:k2) == 'field.input') then
+          if(.not.has_value) goto 12
+          read(cinput(pname_start:pname_end),*,err=12) ftype
+      case('field.input')
         !..field.input=  felt_file_name
-          if(kv1 < 1) goto 12
+          if(.not.has_value) goto 12
           if(nfilef < size(limfcf,2)) then
             nfilef=nfilef+1
             limfcf(1,nfilef)=minhfc
             limfcf(2,nfilef)=maxhfc
-            if(ciname(1:1) == '''' .OR. ciname(1:1) == '"') then
-              read(cipart,*,err=12) filef(nfilef)
+            if(cinput(pname_start:pname_start) == '''' .OR. &
+               cinput(pname_start:pname_start) == '"') then
+              read(cinput(pname_start:pname_end),*,err=12) filef(nfilef)
             else
-              filef(nfilef) = ciname(1:nkv)
+              filef(nfilef) = cinput(pname_start:pname_end)
             endif
           else
             warning = .true.
             write(error_unit,*) 'WARNING. Too many FIELD INPUT files'
-            write(error_unit,*) '  ==> ',cinput(kv1:kv2)
+            write(error_unit,*) '  ==> ',cinput(pname_start:pname_end)
           end if
-        elseif(cinput(k1:k2) == 'field_time.forecast') then
+      case('field_time.forecast')
         !..field_time.forecast ... use forecast length in output field ident.
           ifltim=0
-        elseif(cinput(k1:k2) == 'field_time.valid') then
+      case('field_time.valid')
         !..field_time.valid ...... use valid time in output field identification
           ifltim=1
-        elseif(cinput(k1:k2) == 'field.output') then
+      case('field.output')
         !..field.output= <'file_name'>
-          if(kv1 < 1) goto 12
-          fldfil=ciname(1:nkv)
-        elseif(cinput(k1:k2) == 'field.outtype') then
+          if(.not.has_value) goto 12
+          fldfil = cinput(pname_start:pname_end)
+      case('field.outtype')
         !..field.outtype= <'felt|netcdf'>
-          if(kv1 < 1) goto 12
-          fldtype=ciname(1:nkv)
-        elseif(cinput(k1:k2) == 'title') then
-          allocate(character(len=nkv) :: nctitle)
-          nctitle(:) = ciname(1:nkv)
-        elseif(cinput(k1:k2) == 'field.daily.output.on') then
+          if(.not.has_value) goto 12
+          fldtype=cinput(pname_start:pname_end)
+      case('title')
+          allocate(character(len=len_trim(cinput(pname_start:pname_end))) :: nctitle)
+          nctitle(:) = trim(cinput(pname_start:pname_end))
+      case('field.daily.output.on')
           idailyout = 1
-        elseif(cinput(k1:k2) == 'field.daily.output.off') then
+      case('field.daily.output.off')
           idailyout = 0
-        elseif(cinput(k1:k2) == 'simulation.start.date') then
-          simulation_start = ciname(1:nkv)
-        elseif(cinput(k1:k2) == 'log.file') then
+      case('simulation.start.date')
+          if (.not.has_value) goto 12
+          simulation_start = cinput(pname_start:pname_end)
+      case('log.file')
         !..log.file= <'log_file_name'>
-          if(kv1 < 1) goto 12
-          logfile=ciname(1:nkv)
-        elseif(cinput(k1:k2) == 'debug.off') then
+          if(.not.has_value) goto 12
+          logfile=cinput(pname_start:pname_end)
+      case('debug.off')
         !..debug.off
           idebug=0
-        elseif(cinput(k1:k2) == 'debug.on') then
+      case('debug.on')
         !..debug.on
           idebug=1
-        elseif (cinput(k1:k2) == 'ensemble.project.output.off') then
+      case('ensemble.project.output.off')
           write(error_unit, *) "ensemble.project is deprecated, key is not used"
           warning = .true.
-        elseif(cinput(k1:k2) == 'argos.output.off') then
+      case('argos.output.off')
         !..argos.output.off
           iargos=0
-        elseif(cinput(k1:k2) == 'argos.output.on') then
+      case('argos.output.on')
         !..argos.output.on
           iargos=1
-        elseif(cinput(k1:k2) == 'argos.output.deposition.file') then
+      case('argos.output.deposition.file')
         !..argos.output.deposition.file= runident_MLDP0_depo
-          if(kv1 < 1) goto 12
-          argosdepofile=ciname(1:nkv)
-        elseif(cinput(k1:k2) == 'argos.output.concentration.file') then
+          if(.not.has_value) goto 12
+          argosdepofile = cinput(pname_start:pname_end)
+      case('argos.output.concentration.file')
         !..argos.output.concentration.file= runident_MLDP0_conc
-          if(kv1 < 1) goto 12
-          argosconcfile=ciname(1:nkv)
-        elseif(cinput(k1:k2) == 'argos.output.totaldose.file') then
+          if(.not.has_value) goto 12
+          argosconcfile = cinput(pname_start:pname_end)
+      case('argos.output.totaldose.file')
         !..argos.output.totaldose.file= runident_MLDP0_dose
-          if(kv1 < 1) goto 12
-          argosdosefile=ciname(1:nkv)
-        elseif(cinput(k1:k2) == 'argos.output.timestep.hour') then
+          if(.not.has_value) goto 12
+          argosdosefile = cinput(pname_start:pname_end)
+      case('argos.output.timestep.hour')
         !..argos.output.timestep.hour= <3>
-          if(kv1 < 1) goto 12
-          read(cipart,*,err=12) argoshourstep
+          if(.not.has_value) goto 12
+          read(cinput(pname_start:pname_end),*,err=12) argoshourstep
           if(argoshourstep <= 0 .OR. argoshourstep > 240) goto 12
-        elseif(cinput(k1:k2) == 'grid.autodetect.from_input') then
+      case('grid.autodetect.from_input')
           if (nfilef < 1) then
             write(error_unit,*) "grid.autodetect requires at least one field.input to be set"
             goto 12
@@ -2085,7 +2073,7 @@ end subroutine
           endif
           nlevel = size(klevel)
           nk = nlevel
-        elseif(cinput(k1:k2) == 'end') then
+      case('end')
         !..end
 #if defined(TRAJ)
           allocate(character(len=1024)::char_tmp)
@@ -2108,15 +2096,13 @@ end subroutine
           enddo
 #endif
           end_loop = .true.
-        else
+      case default
           write(error_unit,*) 'ERROR.  Unknown input:'
           write(error_unit,*) cinput
           goto 12
-        end if
-
-      end do
-
+      end select
     end do
+
 
     return
 

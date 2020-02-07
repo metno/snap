@@ -15,8 +15,8 @@ ifdef MILIB
   F77FLAGS += -DMILIB
   MODELOBJ += fldout.o filesort.o readfd.o readfield.o
 else
-  MODELOBJ += feltio_dummy.o chcase.o  gridpar.o  keywrd.o  mapfield.o  rlunit.o  termchar.o  xyconvert.o \
-     getvar.o  hrdiff.o   lenstr.o  rmfile.o  vtime.o \
+  MODELOBJ += feltio_dummy.o chcase.o  gridpar.o  mapfield.o  rlunit.o  xyconvert.o \
+     hrdiff.o   lenstr.o  rmfile.o  vtime.o \
      earthr.o pol2sph.o sph2rot.o lam2sph.o mer2sph.o milibML.o
 endif
 
@@ -121,11 +121,7 @@ chcase.o: ../common/milib/chcase.f
 	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 gridpar.o: ../common/milib/gridpar.f
 	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
-getvar.o: ../common/milib/getvar.f
-	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 hrdiff.o: ../common/milib/hrdiff.f
-	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
-keywrd.o: ../common/milib/keywrd.f
 	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 lenstr.o: ../common/milib/lenstr.f
 	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
@@ -138,8 +134,6 @@ rmfile.o: ../common/milib/rmfile.f
 vtime.o: ../common/milib/vtime.f
 	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 xyconvert.o: ../common/milib/xyconvert.f
-	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
-termchar.o: ../common/milib/termchar.f
 	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 earthr.o: ../common/milib/earthr.f
 	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
