@@ -1,3 +1,15 @@
+snap-py (1.6.11-1) bionic; urgency=medium
+
+  * Fix race condition volcano.xml vs volcano.log
+
+ -- André Brodtkorb <andreb@pc5179.pc.met.no>  Wed, 12 Feb 2020 10:15:00 +0100
+
+snap-py (1.6.10-1) bionic; urgency=medium
+
+  * Better handling of multiple users and emission altitude
+
+ -- André Brodtkorb <andreb@pc5179.pc.met.no>  Tue, 11 Feb 2020 13:17:42 +0100
+
 snap-py (1.6.7-1) xenial; urgency=medium
 
   * initial upload
