@@ -27,6 +27,7 @@ import datetime
 import getpass
 import json
 import os
+import time
 import pwd
 import re
 import sys
@@ -113,12 +114,8 @@ class Controller():
     def update_log_query(self, qDict):
         #MainBrowserWindow._default_form_handler(qDict)
         #self.write_log("updating...")
-        if (not os.path.isfile(self.volcano_file)):
-            self.write_log("ERROR: '{:s}' does not exist!\nSomeone has probably deleted the run.".format(self.volcano_file))
-            self.eemepRunning = "inactive"
-            return
 
-        if os.path.isfile(self.volcano_logfile) :
+        if os.path.isfile(self.volcano_logfile):
             current_size = os.path.getsize(self.volcano_logfile)
 
             # Log overwritten - new file (this should not happen)
@@ -134,9 +131,17 @@ class Controller():
                         self.write_log(line)
                 self.logfile_size = current_size
         else:
-            self.write_log("Queue busy {:%Y-%m-%d %H:%M:%S}".format(datetime.datetime.now()))
-            if (self.res.getModelRunnerLogs()):
-                self.write_log(self.res.getModelRunnerLogs())
+            if (os.path.isfile(self.volcano_file)):
+                self.write_log("Queue busy {:%Y-%m-%d %H:%M:%S}".format(datetime.datetime.now()))
+                if (self.res.getModelRunnerLogs()):
+                    self.write_log(self.res.getModelRunnerLogs())
+            else:
+                #Check if volcano logfile exists after waiting slightly
+                # (to avoid race conditions in which volcano.xml is deleted before logfile is created)
+                time.sleep(1.0)
+                if (os.path.isfile(self.volcano_logfile)):
+                    self.write_log("ERROR: Neither '{:s}' \nnor '{:s}' Exists!\nSomeone may have deleted the run.".format(self.volcano_file, self.volcano_logfile))
+                    self.eemepRunning = "inactive"
 
     def cancel_first_in_queue(self, qDict):
         '''Mark all currently active model-runs for abort'''
