@@ -1020,13 +1020,6 @@ subroutine write_ml_fields(iunit, varid, average, ipos, isize, rt1, rt2)
   integer :: ivlvl
   integer :: i, j, k, ko, loop, m, maxage, n
 
-
-! write k, ap, b - will be overwritten several times, but not data/timecritical
-  call check(nf90_put_var(iunit, varid%k, vlevel(2)), "set_k")
-  call check(nf90_put_var(iunit, varid%ap, alevel(2)), "set_ap")
-  call check(nf90_put_var(iunit, varid%b, blevel(2)), "set_b")
-
-
 !..concentration in each layer
 !..(height only computed at time of output)
 
@@ -1187,6 +1180,7 @@ subroutine nc_declare_4d(iunit, dimids, varid, &
 end subroutine nc_declare_4d
 
 subroutine nc_set_vtrans(iunit, kdimid,k_varid,ap_varid,b_varid)
+  use snapgrdML, only: vlevel, alevel, blevel
   INTEGER, INTENT(IN) :: iunit, kdimid
   INTEGER, INTENT(OUT) :: k_varid, ap_varid, b_varid
   INTEGER ::p0_varid
@@ -1200,16 +1194,16 @@ subroutine nc_set_vtrans(iunit, kdimid,k_varid,ap_varid,b_varid)
   call check(nf90_put_att(iunit,k_varid, "formula_terms", &
       TRIM("ap: ap b: b ps: surface_air_pressure p0: p0")))
   call check(nf90_put_att(iunit,k_varid, "positive", TRIM("down")))
-!       call check(nf_put_var_real(iunit, k_varid, vlevel))
+  call check(nf90_put_var(iunit, k_varid, vlevel(2:)))
 
   call check(nf90_def_var(iunit, "ap", &
       NF90_FLOAT, kdimid, ap_varid), "def_ap")
   call check(nf90_put_att(iunit,ap_varid, "units", TRIM("hPa")))
-!       call check(nf_put_var_real(iunit, ap_varid, alevel))
+  call check(nf90_put_var(iunit, ap_varid, alevel(2:)))
 
   call check(nf90_def_var(iunit, "b", &
       NF90_FLOAT, kdimid, b_varid), "def_b")
-!       call check(nf_put_var_real(iunit, ap_varid, blevel))
+  call check(nf90_put_var(iunit, b_varid, blevel(2:)))
 
   call check(nf90_def_var(iunit, "p0", &
       NF90_FLOAT, varid=p0_varid))
