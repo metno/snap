@@ -265,12 +265,12 @@ module find_parameter
     integer :: latlon_varid
     real :: latlons(1,1)
 
-    integer :: dimids(NF90_MAX_NAME)
-    character(len=NF90_MAX_DIMS) :: dimname
+    integer :: dimids(NF90_MAX_DIMS)
+    character(len=NF90_MAX_NAME) :: dimname
     integer :: i
     integer :: xy_varid
     real :: xy_vals(2)
-    character(len=NF90_MAX_DIMS) :: units
+    character(len=NF90_MAX_NAME) :: units
 
     integer :: standard_varid
 
