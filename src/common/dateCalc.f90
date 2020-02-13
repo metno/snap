@@ -16,7 +16,7 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !
 module DateCalc
-    USE iso_fortran_env, only: real64, int32
+    USE iso_fortran_env, only: int32, int64
     implicit none
     private
 
@@ -34,7 +34,7 @@ contains
 ! scale of timeUnit in seconds
   function timeUnitScale(unit)
     character(len=*), intent(in) :: unit
-    integer(real64) timeUnitScale
+    integer(int64) timeUnitScale
     integer :: ind=0
     character(len=25) :: tmp
     ind=index(unit," since ")
@@ -58,7 +58,7 @@ contains
 ! offset in seconds to 1.1.1970
   function timeUnitOffset(unit)
     character(len=*), intent(in) :: unit
-    integer(real64) timeUnitOffset
+    integer(int64) timeUnitOffset
     integer :: ind=0
     character(len=25) :: date
     ind=index(unit," since ")
@@ -71,7 +71,7 @@ contains
   end function timeUnitOffset
 
   function epochToDate(epochSeconds) result(values)
-    integer(real64), intent(in) :: epochSeconds
+    integer(int64), intent(in) :: epochSeconds
     integer :: values(6)
     integer :: gmvalues(9)
     integer(int32) :: gmtimeIn
@@ -87,12 +87,12 @@ contains
 ! calculate from values(6)=(/secs,min,hours,mday(1-31),month(1-12),year(since 0)
   function timeGM(values)
     integer, intent(in) :: values(6)
-    integer(real64) :: timeGM
+    integer(int64) :: timeGM
     timeGM = values(1) + 60 * (values(2) + 60 * values(3)) + daygm(values)
   end function timeGM
 
   function daygm(values)
-    integer(real64) :: daygm
+    integer(int64) :: daygm
     integer, intent(in) :: values(6)
     integer i, ydays
     daygm = 0
