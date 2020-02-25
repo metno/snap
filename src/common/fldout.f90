@@ -159,7 +159,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     n=ncomp
     if(ncomp > 1 .AND. itotcomp == 1) n=n+1
     numfields= 2+n*9
-    if(itprof == 2) numfields= numfields + ncomp*4
+    if(time_profile == TIME_PROFILE_BOMB) numfields= numfields + ncomp*4
     if(inprecip > 0) numfields=numfields+2
     if(imslp    > 0) numfields=numfields+1
     if(imodlevel) numfields=numfields+n*nk*2+nk+1
@@ -1123,7 +1123,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
 !..BOMB fields..........................................................
 
-  if (itprof == 2) then
+  if (time_profile == TIME_PROFILE_BOMB) then
   
   !..bomb parameters for each component.........
   

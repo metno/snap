@@ -91,7 +91,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       avgbq1, avgbq2, hlayer1, hlayer2, garea, pmsl1, pmsl2, hbl1, hbl2, &
       xm, ym, accdry, accwet, avgprec, concen, ps1, ps2, avghbl, dgarea, &
       avgbq, concacc, accprec, iprecip, precip
-  USE snapparML, only: itprof, ncomp, run_comp, def_comp
+  USE snapparML, only: time_profile, ncomp, run_comp, def_comp, &
+    TIME_PROFILE_BOMB
   USE snapdebug, only: iulog, idebug
   USE ftestML, only: ftest
   USE snapdimML, only: nx, ny, nk
@@ -162,7 +163,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     n=ncomp
     if(ncomp > 1 .AND. itotcomp == 1) n=n+1
     numfields= 2+n*9
-    if(itprof == 2) numfields= numfields + ncomp*4
+    if(time_profile == TIME_PROFILE_BOMB) numfields= numfields + ncomp*4
     if(inprecip > 0) numfields=numfields+2
     if(imslp    > 0) numfields=numfields+1
     if(imodlevel) numfields=numfields+n*nk*2+nk+1
@@ -751,7 +752,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
 !..BOMB fields..........................................................
 
-  if (itprof == 2) then
+  if (time_profile == TIME_PROFILE_BOMB) then
 
   !..bomb parameters for each component.........
 

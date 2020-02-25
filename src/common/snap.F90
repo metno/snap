@@ -208,8 +208,9 @@ PROGRAM bsnap
       nctype, nfilef, simulation_start
   USE snapfldML, only: enspos, iprecip, nprecip
   USE snapmetML, only: init_meteo_params, met_params
-  USE snapparML, only: component, run_comp, itprof, &
-      ncomp, def_comp, nparnum
+  USE snapparML, only: component, run_comp, &
+      ncomp, def_comp, nparnum, &
+      time_profile, TIME_PROFILE_BOMB
   USE snapposML, only: irelpos, nrelpos, release_positions
   USE snapgrdML, only: modleveldump, ivcoor, ixbase, iybase, ixystp, kadd, &
       klevel, imslp, inprecip, iprod, iprodr, itotcomp, gparam, igrid, igridr, &
@@ -517,7 +518,7 @@ PROGRAM bsnap
     nstepr=nsteph*nhrel
 
   !..nuclear bomb case
-    if(itprof == 2) nstepr=1
+    if(time_profile == TIME_PROFILE_BOMB) nstepr=1
 
   !..field output file unit
     iunito=30
@@ -1244,7 +1245,6 @@ subroutine set_defaults()
   ncomp = 0
   itotcomp = 0
   rmlimit = -1.0
-  itprof = 0
 
   nrelpos=0
   iprod  =0
@@ -1313,7 +1313,9 @@ end subroutine
 
   !> reads information from an inputfile and loads into the program
   subroutine read_inputfile(iuinp)
-    use snapparML, only: push_down_dcomp, defined_component
+    use snapparML, only: push_down_dcomp, defined_component, &
+      TIME_PROFILE_CONSTANT, TIME_PROFILE_LINEAR, TIME_PROFILE_LINEAR, TIME_PROFILE_STEPS, &
+      TIME_PROFILE_UNDEFINED
     use find_parameter, only: detect_gridparams, get_klevel
 
     !> Open file unit
@@ -1536,22 +1538,20 @@ end subroutine
           if(.not.has_value) goto 12
           read(cinput(pname_start:pname_end),*,err=12) tstep
           if(tstep < 0.9999) goto 12
+
       case('time.release.profile.constant')
-        !..time.release.profile.constant
-          if(itprof /= 0 .AND. itprof /= 1) goto 12
-          itprof=1
+          if(time_profile /= TIME_PROFILE_UNDEFINED) goto 12
+          time_profile = TIME_PROFILE_CONSTANT
       case('time.release.profile.bomb')
-        !..time.release.profile.bomb
-          if(itprof /= 0 .AND. itprof /= 2) goto 12
-          itprof=2
+          if(time_profile /= TIME_PROFILE_UNDEFINED) goto 12
+          time_profile = TIME_PROFILE_BOMB
       case('time.release.profile.linear')
-        !..time.release.profile.linear
-          if(itprof /= 0 .AND. itprof /= 3) goto 12
-          itprof=3
+          if(time_profile /= TIME_PROFILE_UNDEFINED) goto 12
+          time_profile = TIME_PROFILE_LINEAR
       case('time.release.profile.steps')
-        !..time.release.profile.steps
-          if(itprof /= 0 .AND. itprof /= 4) goto 12
-          itprof=4
+          if(time_profile /= TIME_PROFILE_UNDEFINED) goto 12
+          time_profile = TIME_PROFILE_STEPS
+
       case('release.day','release.hour','release.minute','release.second')
           rscale=1.
           if(keyword == 'release.day')    rscale=24.
@@ -2184,6 +2184,7 @@ end subroutine
 !> checks the data from the input for errors or missing information,
 !> and copies information to structures used when running the program.
 subroutine conform_input(ierror)
+  use snapparML, only: TIME_PROFILE_UNDEFINED
   integer, intent(out) :: ierror
 
   integer :: i1, i2
@@ -2228,7 +2229,7 @@ subroutine conform_input(ierror)
   end if
   if(nhrel == 0 .AND. ntprof > 0) nhrel = releases(ntprof)%frelhour
 
-  if(itprof < 1) then
+  if(time_profile == TIME_PROFILE_UNDEFINED) then
     write(error_unit,*) 'No time profile type specified'
     ierror=1
   end if
