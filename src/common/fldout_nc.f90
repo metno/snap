@@ -81,85 +81,6 @@ module fldout_ncML
 !> Make and write output fields (iwrite=1).
 !>
 !> Initialization of output accumulation arrays (iwrite=-1).
-!>
-!> Fields written to a sequential 'model output' file,
-!> not opened here.
-!---------------------------------------------------------------------
-!  Field parameter numbers used here:
-!     *   8 - surface pressure (if model level output) (hPa)
-!     *  17 - precipitation accummulated from start of run (mm)
-!     *  58 - mean sea level pressure, mslp (if switched on) (hPa)
-!     * 500 - instant height of boundary layer (m)
-!     * 501 - average height of boundary layer (m)
-!     * 502 - precipitation accummulated between field output (mm)
-!	      (better scaling than param. 17 for long runs)
-!     * 510 - instant concentration in boundary layer (Bq/m3)
-!     * 511 - average concentration in boundary layer (Bq/m3)
-!     * 512 - dry deposition (for one time interval)  (Bq/m2)
-!     * 513 - wet deposition (for one time interval)  (Bq/m2)
-!     * 514 - dry deposition (accumulated from start) (Bq/m2)
-!     * 515 - wet deposition (accumulated from start) (Bq/m2)
-!     * 516 - instant part of Bq in the boundary layer  (%)
-!     * 517 - average part of Bq in the boundary layer  (%)
-!     * 518 - accumulated concentration in the lower layer (Bq*hr/m3)
-!     * 519 - instant     concentration in the lower layer (Bq/m3)
-!     * 521 - BOMB dry deposition (for one time interval),  % of release
-!     * 522 - BOMB wet deposition (for one time interval),  % of release
-!     * 523 - BOMB dry deposition (accumulated from start), % of release
-!     * 524 - BOMB wet deposition (accumulated from start), % of release
-!       540-569 - instant concentration in each layer (Bq/m3)
-!       570-599 - average concentration in each layer (Bq/m3)
-!     * 901 - geographic latitude  (degrees)
-!     * 902 - geographic longitude (degrees)
-!     * 903 - grid square area (m2)
-!     ^------- current output
-!---------------------------------------------------------------------
-!  Notes:
-!    -  data type (field ident. no. 3) is set to:
-!              3 if forecast length (itime(5)) is 0 (valid time, +0)
-!              2 if forecast length (itime(5)) is greater than 0
-!              4 if geographic latitude, longitude, grid square area
-!    -  for parameter 510-517 and 521-524 the component is identified
-!	in field ident. no. 7 (usually 'level').
-!    -  for parameter 540-569 : 540=total, 540+idcomp for each type
-!       for parameter 570-599 : 570=total, 570+idcomp for each type
-!	(the idcomp maximum is then 29, i.e. max 29 components)
-!    -  parameters 500 - 509 for fields not dependant on component
-!	parameters 510 - 539 for fields dependant on component
-!	(level = idcomp to identify components,  0 = total)
-!    -  possible use of grid square area, garea  (param. 903):
-!	    Bq in boundary layer
-!		= concentration/(garea*hbl)
-!	    Bq above boundary layer
-!		= (1.0-part_of_bq_in_bl)*concentration/(garea*hbl)
-!---------------------------------------------------------------------
-!     *   ps 8 - surface pressure (if model level output) (hPa)
-!     *  accum_prc 17 - precipitation accummulated from start of run (mm)
-!     *  mslp 58 - mean sea level pressure, mslp (if switched on) (hPa)
-!     * ihbl 500 - instant height of boundary layer (m)
-!     * ahbl 501 - average height of boundary layer (m)
-!     * 502 - precipitation accummulated between field output (mm)
-!       (better scaling than param. 17 for long runs)
-!     * icbl 510 - instant concentration in boundary layer (Bq/m3)
-!     * acbl 511 - average concentration in boundary layer (Bq/m3)
-!     * idd 512 - dry deposition (for one time interval)  (Bq/m2)
-!     * iwd 513 - wet deposition (for one time interval)  (Bq/m2)
-!     * accdd 514 - dry deposition (accumulated from start) (Bq/m2)
-!     * accwd 515 - wet deposition (accumulated from start) (Bq/m2)
-!     * 516 - instant part of Bq in the boundary layer  (%)
-!     * 517 - average part of Bq in the boundary layer  (%)
-!     * ac 518 - accumulated concentration in the surface layer (Bq*hr/m3)
-!     * ic 519 - instant     concentration in the surface layer (Bq/m3)
-!     * 521 bdd - BOMB dry deposition (for one time interval),  % of release
-!     * 522 bwd - BOMB wet deposition (for one time interval),  % of release
-!     * 523 accbdd - BOMB dry deposition (accumulated from start), % of release
-!     * 524 accbwd - BOMB wet deposition (accumulated from start), % of release
-!       icml 540-569 - instant concentration in each layer (Bq/m3)
-!       acml 570-599 - average concentration in each layer (Bq/m3)
-!     * 901 - geographic latitude  (degrees)
-!     * 902 - geographic longitude (degrees)
-!     * 903 - grid square area (m2)
-!     ^------- current output
 subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     istep,nsteph,ierror)
   USE iso_fortran_env, only: int16
@@ -204,16 +125,14 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   real(real64) :: bqtot1,bqtot2
   real(real64) :: dblscale
 
-  integer :: i,j,k,m,mm,n,ivlvl,idextr
+  integer :: i,j,k,m,mm,n,ivlvl
   logical :: compute_total_dry_deposition
   logical :: compute_total_wet_deposition
   integer, save :: numfields = 0
-  real :: rt1,rt2,scale,average,averinv,hbl
+  real :: rt1,rt2,scale,average
 
   real, parameter :: undef = NF90_FILL_FLOAT
-  real :: hrstep, dh
-
-  integer, save :: itimeargos(5) = [0, 0, 0, 0, 0]
+  real :: hrstep
 
   character(len=256) :: string
   type(Particle) :: part
@@ -249,7 +168,6 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     if(imodlevel) numfields=numfields+n*nk*2+nk+1
     numfields= numfields*istep + 4
     if(numfields > 32767) numfields=32767
-    itimeargos = itime
 
     return
   end if
@@ -276,19 +194,11 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   hrstep=1./float(nsteph)
 
 !..height of boundary layer
-  do j=1,ny
-    do i=1,nx
-      avghbl(i,j)=avghbl(i,j)+(rt1*hbl1(i,j)+rt2*hbl2(i,j))
-    end do
-  end do
+  avghbl(:,:) = avghbl + (rt1*hbl1 + rt2*hbl2)
 
 !..precipitation (no time interpolation, but hourly time intervals)
   scale=tstep/3600.
-  do j=1,ny
-    do i=1,nx
-      avgprec(i,j)=avgprec(i,j)+scale*precip(i,j,iprecip)
-    end do
-  end do
+  avgprec(:,:) = avgprec + scale*precip(:,:,iprecip)
 
   do n=1,npart
     part = pdata(n)
@@ -323,15 +233,13 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   end do
 
   do m=1,ncomp
-    do j=1,ny
-      do i=1,nx
-        if(concen(i,j,m) > 0.0d0) then
-          dh= rt1*hlayer1(i,j,1)+rt2*hlayer2(i,j,1)
-          concen(i,j,m)= concen(i,j,m)/(dh*dgarea(i,j))
-          concacc(i,j,m)= concacc(i,j,m) + concen(i,j,m)*hrstep
-        end if
-      end do
-    end do
+    associate(concen => concen(:,:,m), concacc => concacc(:,:,m), &
+              dh => rt1*hlayer1(:,:,1) + rt2*hlayer2(:,:,1))
+      where (concen > 0.0)
+        concen = concen / (dh*dgarea)
+        concacc = concacc + concen*hrstep
+      endwhere
+    end associate
   end do
 
   if(imodlevel) then
@@ -530,7 +438,6 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   isize = [nx, ny, 1, 1]
 
   average=float(naverage)
-  averinv=1./float(naverage)
   naverage=0
 
 !..for linear interpolation in time
@@ -547,13 +454,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
 !..total accumulated precipitation from start of run
   if(inprecip == 1) then
-    do j=1,ny
-      do i=1,nx
-        accprec(i,j)=accprec(i,j)+avgprec(i,j)
-        field1(i,j)=accprec(i,j)
-      end do
-    end do
-    idextr=nint(float(istep)/float(nsteph))
+    accprec(:,:) = accprec + avgprec
+    field1(:,:) = accprec
     if(idebug == 1) call ftest('accprec', field1)
 
     call check(nf90_put_var(iunit, varid%accum_prc, start=[ipos], count=[isize], &
@@ -562,11 +464,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
 !..mslp (if switched on)
   if(imslp == 1) then
-    do j=1,ny
-      do i=1,nx
-        field1(i,j)=rt1*pmsl1(i,j)+rt2*pmsl2(i,j)
-      end do
-    end do
+    field1(:,:) = rt1*pmsl1 + rt2*pmsl2
     if(idebug == 1) call ftest('mslp', field1)
 
     call check(nf90_put_var(iunit, varid%mslp, start=[ipos], count=[isize], &
@@ -574,22 +472,14 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   end if
 
 !..instant height of boundary layer
-  do j=1,ny
-    do i=1,nx
-      field4(i,j)=rt1*hbl1(i,j)+rt2*hbl2(i,j)
-    end do
-  end do
+  field4(:,:) = rt1*hbl1 + rt2*hbl2
   if(idebug == 1) call ftest('hbl', field4)
 
   call check(nf90_put_var(iunit, varid%ihbl, start=[ipos], count=[isize], &
       values=field4), "set_ihbl")
 
 !..average height of boundary layer
-  do j=1,ny
-    do i=1,nx
-      field1(i,j)=avghbl(i,j)*averinv
-    end do
-  end do
+  field1(:,:) = avghbl / average
   if(idebug == 1) call ftest('avghbl', field1)
 
   call check(nf90_put_var(iunit, varid%ahbl, start=[ipos], count=[isize], &
@@ -597,12 +487,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
 !..precipitation accummulated between field output // currently disable use 1 to write
   if(inprecip == -1) then
-    do j=1,ny
-      do i=1,nx
-        field1(i,j)=avgprec(i,j)
-      end do
-    end do
-    idextr=nint(average*tstep/3600.)
+    field1(:,:) = avgprec
     if(idebug == 1) call ftest('prec', field1)
 
     call check(nf90_put_var(iunit, varid%prc, start=[ipos], count=[isize], &
@@ -648,24 +533,16 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
   !..instant part of Bq in boundary layer
     scale = 100.
-    do j=1,ny
-      do i=1,nx
-        if(field1(i,j)+field2(i,j) > 0.) then
-          field3(i,j)=scale*field1(i,j)/(field1(i,j)+field2(i,j))
-        else
-          field3(i,j)=undef
-        end if
-      end do
-    end do
+    where (field1 + field2 > 0.0)
+      field3 = scale*field1 / (field1 + field2)
+    elsewhere
+      field3 = undef
+    endwhere
 
   !..instant concentration in boundary layer
-    do j=1,ny
-      do i=1,nx
-      ! c         hbl=rt1*hbl1(i,j)+rt2*hbl2(i,j)
-        hbl=field4(i,j)
-        field2(i,j)=cscale*field1(i,j)/(hbl*garea(i,j))
-      end do
-    end do
+    associate(hbl => field4)
+      field2(:,:) = cscale*field1 / (hbl*garea)
+    end associate
     if(idebug == 1) call ftest('conc', field2)
 
     call check(nf90_put_var(iunit, varid%comp(m)%icbl, start=[ipos], count=[isize], &
@@ -680,12 +557,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
   !..dry deposition
     if (def_comp(mm)%kdrydep == 1) then
-      do j=1,ny
-        do i=1,nx
-          field1(i,j)=dscale*sngl(depdry(i,j,m))/garea(i,j)
-          accdry(i,j,m)=accdry(i,j,m)+depdry(i,j,m)
-        end do
-      end do
+      field1(:,:) = dscale*sngl(depdry(:,:,m)) / garea
+      accdry(:,:,m) = accdry(:,:,m) + depdry(:,:,m)
       if(idebug == 1) call ftest('dry', field1)
 
       call check(nf90_put_var(iunit, varid%comp(m)%idd, start=[ipos], count=[isize], &
@@ -725,16 +598,13 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
   !..average part of Bq in boundary layer
     scale=100.
-    do j=1,ny
-      do i=1,nx
-        if(avgbq1(i,j,m)+avgbq2(i,j,m) > 0.) then
-          field3(i,j)=scale*avgbq1(i,j,m) &
-              /(avgbq1(i,j,m)+avgbq2(i,j,m))
-        else
-          field3(i,j)=undef
-        end if
-      end do
-    end do
+    associate(avgbq1 => avgbq1(:,:,m), avgbq2 => avgbq2(:,:,m))
+      where (avgbq1 + avgbq2 > 0.0)
+        field3 = scale*avgbq1 / (avgbq1 + avgbq2)
+      elsewhere
+        field3 = undef
+      endwhere
+    end associate
     if(idebug == 1) call ftest('apbq', field3, contains_undef=.true.)
 
   !..instant concentration on surface (not in felt-format)
@@ -773,15 +643,11 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
   !..total instant part of Bq in boundary layer
     scale=100.
-    do j=1,ny
-      do i=1,nx
-        if(field1(i,j)+field2(i,j) > 0.) then
-          field3(i,j)=scale*field1(i,j)/(field1(i,j)+field2(i,j))
-        else
-          field3(i,j)=undef
-        end if
-      end do
-    end do
+    where (field1 + field2 > 0.0)
+      field3 = scale*field1 / (field1 + field2)
+    elsewhere
+      field3 = undef
+    endwhere
 
   !..total instant concentration in boundary layer
   ! field4 : hbl
@@ -865,16 +731,11 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     scale=100.
     field1(:,:) = sum(avgbq1, dim=3)
     field2(:,:) = sum(avgbq2, dim=3)
-    do j=1,ny
-      do i=1,nx
-        if(field1(i,j)+field2(i,j) > 0.) then
-          field3(i,j)=scale*field1(i,j) &
-              /(field1(i,j)+field2(i,j))
-        else
-          field3(i,j)=undef
-        end if
-      end do
-    end do
+    where (field1 + field2 > 0.0)
+      field3 = scale*field1 / (field1 + field2)
+    elsewhere
+      field3 = undef
+    endwhere
     if(idebug == 1) call ftest('tapbq', field3, contains_undef=.true.)
 
   !..total accumulated/integrated concentration
@@ -961,9 +822,8 @@ subroutine write_ml_fields(iunit, varid, average, ipos, isize, rt1, rt2)
       hlayer1, hlayer2, garea, avgbq
   USE ftestML, only: ftest
   USE snapdebug, only: idebug
-  USE snapgrdML, only: itotcomp, ivcoor, modleveldump, ivlayer, &
-      alevel, blevel, klevel
-  USE snapdimML, only: nx, ny, nk
+  USE snapgrdML, only: itotcomp, modleveldump, ivlayer
+  USE snapdimML, only: nk
 
   integer, intent(in) :: iunit
   type(common_var), intent(in) :: varid
@@ -973,10 +833,9 @@ subroutine write_ml_fields(iunit, varid, average, ipos, isize, rt1, rt2)
   real, intent(in) :: rt1, rt2
 
   type(Particle) :: part
-  real :: avg, dh, total
-  real :: lvla, lvlb
+  real :: avg, total
   integer :: ivlvl
-  integer :: i, j, k, ko, loop, m, maxage, n
+  integer :: i, j, k, loop, m, maxage, n
 
 !..concentration in each layer
 !..(height only computed at time of output)
@@ -1022,20 +881,10 @@ subroutine write_ml_fields(iunit, varid, average, ipos, isize, rt1, rt2)
     end if
 
     do k=1,nk-1
-      do j=1,ny
-        do i=1,nx
-          dh=rt1*hlayer1(i,j,k)+rt2*hlayer2(i,j,k)
-          field1(i,j)=dh
-          field4(i,j)=dh*garea(i,j)*avg
-        end do
-      end do
-    !.. write out layer-height
-      if (loop == 1) then
-        ko=klevel(k+1)
-        lvla=nint(alevel(k+1)*10.)
-        lvlb=nint(blevel(k+1)*10000.)
-        if(ivcoor == 2) lvla=0
-      end if
+      associate(dh => rt1*hlayer1(:,:,k) + rt2*hlayer2(:,:,k))
+        field1(:,:) = dh
+        field4(:,:) = dh*garea*avg
+      end associate
 
       do m=1,ncomp
         avgbq(:,:,k,m) = avgbq(:,:,k,m)/field4
@@ -1047,10 +896,6 @@ subroutine write_ml_fields(iunit, varid, average, ipos, isize, rt1, rt2)
       do k=1,nk-1
         field1(:,:) = cscale*avgbq(:,:,k,m)
         if(idebug == 1) call ftest('avconcl', field1)
-        ko=klevel(k+1)
-        lvla=nint(alevel(k+1)*10.)
-        lvlb=nint(blevel(k+1)*10000.)
-        if(ivcoor == 2) lvla=0
 
         if (loop == 2) then
           ipos(3) = k
@@ -1072,10 +917,6 @@ subroutine write_ml_fields(iunit, varid, average, ipos, isize, rt1, rt2)
       do k=1,nk-1
         field1(:,:) = cscale*avgbq(:,:,k,1)
         if(idebug == 1) call ftest('tavconcl', field1)
-        ko=klevel(k+1)
-        lvla=nint(alevel(k+1)*10.)
-        lvlb=nint(blevel(k+1)*10000.)
-        if(ivcoor == 2) lvla=0
       end do
     end if
   end do
@@ -1204,8 +1045,8 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
   call check(nf90_put_att(iunit, NF90_GLOBAL, &
       "SIMULATION_START_DATE", trim(simulation_start)))
 
-  if (igtype == 2) then
-  !..geographic
+  select case(igtype)
+  case(2) !..geographic
     call check(nf90_put_att(iunit,x_varid, "units", &
         TRIM("degrees_east")))
     call check(nf90_put_att(iunit,y_varid, "units", &
@@ -1218,9 +1059,7 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
     do i=1,ny
       yvals(i) = gparam(2) + (i-1)*gparam(4)
     end do
-
-  elseif (igtype == 3) then
-  !..rot_geographic
+  case(3) !..rot_geographic
     call check(nf90_put_att(iunit,x_varid, "units", &
         TRIM("degrees")))
     call check(nf90_put_att(iunit,y_varid, "units", &
@@ -1245,10 +1084,7 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
     do i=1,ny
       yvals(i) = gparam(2) + (i-1)*gparam(4)
     end do
-
-
-  elseif (igtype == 1 .OR. igtype == 4) then
-  !..polar_stereographic
+  case(1,4) !..polar_stereographic
     call check(nf90_put_att(iunit,x_varid, "units", TRIM("m")))
     call check(nf90_put_att(iunit,y_varid, "units", TRIM("m")))
     call check(nf90_put_att(iunit,x_varid, "standard_name", &
@@ -1272,9 +1108,7 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
     do i=1,ny
       yvals(i) = (i-gparam(2))*gparam(8)
     end do
-
-  else if (igtype == 6) then
-  !..lcc
+  case(6) !..lcc
     call check(nf90_put_att(iunit,x_varid, "units", TRIM("m")))
     call check(nf90_put_att(iunit,y_varid, "units", TRIM("m")))
     call check(nf90_put_att(iunit,x_varid, "standard_name", &
@@ -1314,10 +1148,10 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
     do i=2,ny
       yvals(i) = yvals(1) + (i-1)*gparam(8)
     end do
-  else
+  case default
     write(*,*) "unkown grid-type:", igtype
     error stop 1
-  end if
+  end select
 
   call check(nf90_put_var(iunit, x_varid, xvals))
   call check(nf90_put_var(iunit, y_varid, yvals))
