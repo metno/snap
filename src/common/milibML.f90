@@ -33,10 +33,6 @@ module milibML
       real, intent(out) :: hx, hy
     end subroutine mapfield
 
-    subroutine rlunit(lrunit)
-      integer, intent(out) :: lrunit
-    end subroutine rlunit
-
     subroutine hrdiff(iup1, iup2, itime1, itime2, ihours, ierr1, ierr2)
       integer, intent(in) :: iup1, iup2
       integer, intent(inout) :: itime1(5), itime2(5), ierr1, ierr2
