@@ -3,12 +3,6 @@ module milibML
   public
 
   interface
-    function lenstr(text, minlen)
-      character*(*), intent(in) :: text
-      integer, intent(in) :: minlen
-      integer :: lenstr
-    end function lenstr
-
     subroutine xyconvert(npos, x, y, igtypa, ga, igtypr, gr, ierror)
       integer, intent(in) :: npos
       real, intent(inout) :: x(npos), y(npos)
