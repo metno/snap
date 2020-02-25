@@ -68,10 +68,10 @@ c..local:
       character*262 cmd
 c
       if(iprint.eq.1) then
-        write(6,*) 'Remove file: ',filnam(1:lenstr(filnam,1))
+        write(6,*) 'Remove file: ', trim(filnam)
       end if
 c
-      cmd = 'rm -f '//filnam(1:lenstr(filnam,1))
+      cmd = 'rm -f '//trim(filnam)
       call system(cmd)
 c
       ierror=0
