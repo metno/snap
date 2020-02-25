@@ -33,7 +33,7 @@ module readfield_ncML
   contains
 
 !> Read fields from NetCDF files. (see readfield.f90 for felt-files)
-subroutine readfield_nc(iunit, istep, nhleft, itimei, ihr1, ihr2, &
+subroutine readfield_nc(istep, nhleft, itimei, ihr1, ihr2, &
     itimefi,ierror)
   USE iso_fortran_env, only: error_unit
   USE snapfilML, only: nctype, itimer, kavail, iavail, filef
@@ -47,8 +47,6 @@ subroutine readfield_nc(iunit, istep, nhleft, itimei, ihr1, ihr2, &
   USE snaptabML, only: cp, r
   USE snapdebug, only: iulog, idebug
   USE snapdimML, only: nx, ny, nk
-!> filehandle-unit (dummy)
-  integer, intent(in) :: iunit
 !> current timestep (always positive), negative istep means reset
   integer, intent(in) :: istep
 !> remaining run-hours (negative for backward-calculations)

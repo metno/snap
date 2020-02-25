@@ -700,7 +700,7 @@ PROGRAM bsnap
 
   ! reset readfield_nc (eventually, traj will rerun this loop)
     if (ftype == "netcdf") &
-        call readfield_nc(iunitf,-1,nhleft,itimei,ihr1,ihr2, &
+        call readfield_nc(-1,nhleft,itimei,ihr1,ihr2, &
             itimefi,ierror)
   ! start time loop
     time_loop: do istep=0,nstep
@@ -743,7 +743,7 @@ PROGRAM bsnap
       !          write (*,*) "readfield(", iunitf, istep, nhleft, itimei, ihr1
       !     +          ,ihr2, itimefi, ierror, ")"
         if (ftype == "netcdf") then
-          call readfield_nc(iunitf,istep,nhleft,itimei,ihr1,ihr2, &
+          call readfield_nc(istep,nhleft,itimei,ihr1,ihr2, &
               itimefi,ierror)
         else
           call readfield(iunitf,istep,nhleft,itimei,ihr1,ihr2, &
