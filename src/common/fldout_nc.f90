@@ -173,7 +173,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   USE snapparML, only: itprof, ncomp, run_comp, def_comp
   USE snapdebug, only: iulog, idebug
   USE ftestML, only: ftest
-  USE snapdimML, only: nx, ny, nk, nxmc, nymc
+  USE snapdimML, only: nx, ny, nk
   USE releaseML, only: npart
   USE particleML, only: pdata, Particle
 
@@ -225,8 +225,6 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
 !..initialization
 
-  if(imodlevel == 1 .AND. (nxmc /= nx .OR. nymc /= ny)) imodlevel=0
-
   if(.not.acc_initialized) then
     depdry = 0.0
     depwet = 0.0
@@ -248,7 +246,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     if(itprof == 2) numfields= numfields + ncomp*4
     if(inprecip > 0) numfields=numfields+2
     if(imslp    > 0) numfields=numfields+1
-    if(imodlevel > 0) numfields=numfields+n*nk*2+nk+1
+    if(imodlevel) numfields=numfields+n*nk*2+nk+1
     numfields= numfields*istep + 4
     if(numfields > 32767) numfields=32767
     itimeargos = itime
@@ -265,8 +263,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     avgbq1 = 0.0
     avgbq2 = 0.0
 
-  !..note: model level output on if nxmc=nx, nymc=ny and imodlevel=1
-    if(imodlevel == 1) then
+    if(imodlevel) then
       avgbq = 0.0
     end if
   end if
@@ -337,7 +334,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     end do
   end do
 
-  if(imodlevel == 1) then
+  if(imodlevel) then
     do n=1,npart
       part = pdata(n)
       i = nint(part%x)
@@ -384,7 +381,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     call nc_set_projection(iunit, dimid%x, dimid%y, &
         igtype,nx,ny,gparam, garea, xm, ym, &
         simulation_start)
-    if (imodlevel == 1) then
+    if (imodlevel) then
       call nc_set_vtrans(iunit, dimid%k, varid%k, varid%ap, varid%b)
     endif
 
@@ -406,7 +403,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     chksz3d = [nx, ny, 1]
     chksz4d = [nx, ny, 1, 1]
 
-    if (imodlevel == 1) then
+    if (imodlevel) then
       call nc_declare_3d(iunit, dimids3d, varid%ps, &
           chksz3d, "surface_air_pressure", &
           "hPa", "surface_air_pressure", "")
@@ -470,7 +467,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
             "Bq/m2","", &
             TRIM(def_comp(mm)%compnamemc)//"_accumulated_wet_deposition")
       end if
-      if (imodlevel == 1) then
+      if (imodlevel) then
         if (modleveldump > 0.) then
           string = TRIM(def_comp(mm)%compnamemc)//"_concentration_dump_ml"
         else
@@ -541,12 +538,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   rt2=(tnow-tf1)/(tf2-tf1)
 
 !..surface pressure (if model level output, for vertical crossections)
-  if(imodlevel == 1) then
-    do j=1,ny
-      do i=1,nx
-        field1(i,j)=rt1*ps1(i,j)+rt2*ps2(i,j)
-      end do
-    end do
+  if(imodlevel) then
+    field1(:,:) = rt1*ps1 + rt2*ps2
     if(idebug == 1) call ftest('ps', field1)
     call check(nf90_put_var(iunit, varid%ps, start=[ipos], count=[isize], &
         values=field1), "set_ps")
@@ -941,7 +934,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
 
 !..model level fields...................................................
-  if (imodlevel == 1) then
+  if (imodlevel) then
     call write_ml_fields(iunit, varid, average, ipos, isize, rt1, rt2)
   endif
 

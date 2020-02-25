@@ -118,6 +118,6 @@ module snapfldML
   real(kind=real64), allocatable, save, public :: concen(:,:,:)
 !> average Bq (per square area) in each layer (accum.)
 !>
-!> only used if (nxmc=nx, nymc=ny and imodlevel=1)
+!> only used if imodlevel
   real(kind=real64), allocatable, save, public :: avgbq(:,:,:,:)
 end module snapfldML

@@ -61,13 +61,4 @@ module snapdimML
 !> max. no. of available timesteps with data
     integer, parameter, public :: mavail = 8192
 
-!> Set to ::nx to save large arrays for concentration of
-!> each component in each layer, or 1 to remove large
-!> arrays for concentration
-    integer, save, public :: nxmc
-!> Set to ::ny to save large arrays for concentration of
-!> each component in each layer, or 1 to remove large
-!> arrays for concentration
-    integer, save, public :: nymc
-
 end module snapdimML

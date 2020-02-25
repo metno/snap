@@ -204,7 +204,7 @@ PROGRAM bsnap
   USE snapargosML, only: argosdepofile, argosdosefile, argoshoursrelease, &
       argoshourstep, argoshoursrun, iargos, margos, argosconcfile, nargos, &
       argostime
-  USE snapdimML, only: nx, ny, nk, nxmc, nymc, ldata, maxsiz, mcomp
+  USE snapdimML, only: nx, ny, nk, ldata, maxsiz, mcomp
   USE snapfilML, only: filef, itimer, limfcf, ncsummary, nctitle, nhfmax, nhfmin, &
       nctype, nfilef, simulation_start
   USE snapfldML, only: enspos, iprecip, nprecip
@@ -525,8 +525,6 @@ PROGRAM bsnap
 
   !..information to log file
     write(iulog,*) 'nx,ny,nk:  ',nx,ny,nk
-  !      write(iulog,*) 'nxad,nyad: ',nxad,nyad
-    write(iulog,*) 'nxmc,nymc: ',nxmc,nymc
     write(iulog,*) 'kadd:      ',kadd
     write(iulog,*) 'klevel:'
     write(iulog,*) (klevel(i),i=1,nk)
@@ -1269,7 +1267,7 @@ subroutine set_defaults()
 
   inprecip =1
   imslp    =0
-  imodlevel=0
+  imodlevel = .false.
   modleveldump=0.0
 
   idebug=0
@@ -1882,10 +1880,10 @@ end subroutine
           met_params%need_precipitation = .false.
       case('model.level.fields.on')
         !..model.level.fields.on
-          imodlevel=1
+          imodlevel = .true.
       case('model.level.fields.off')
         !..model.level.fields.off
-          imodlevel=0
+          imodlevel = .false.
       case('model.level.fields.dumptime')
         !..levelfields are dump-data
           if(.not.has_value) goto 12
@@ -2391,15 +2389,6 @@ subroutine conform_input(ierror)
   end do
 
   if (i1 == 0) idrydep=0
-
-! initialize all arrays after reading input
-  if (imodlevel == 1) then
-    nxmc = nx
-    nymc = ny
-  else
-    nxmc = 1
-    nymc = 1
-  end if
 
   if(itotcomp == 1 .AND. ncomp == 1) itotcomp=0
 

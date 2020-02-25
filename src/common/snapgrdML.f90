@@ -62,9 +62,8 @@ module snapgrdML
 !> * -1=read mslp
 !> * 1=read and write mslp (mslp not used in computations)
     integer, save, public :: imslp
-!> * 0=not output of concentrations in model levels
-!> * 1=output (possible if nxmc=nx and nymc=ny)
-    integer, save, public :: imodlevel
+!> * output of concentrations in model levels
+    logical, save, public :: imodlevel
 !> remove particles from model after at least that many steps
     real, save, public :: modleveldump
 !> * 0=not output of total of all components (e.g. when each component is released with a mass unit)
