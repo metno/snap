@@ -18,7 +18,7 @@
 module fldout_ncML
   USE iso_fortran_env, only: real32, real64
   USE readfield_ncML, only: check
-  USE milibML, only: xyconvert, gridpar, hrdiff
+  USE milibML, only: xyconvert, hrdiff
   USE snapdimML, only: mcomp
   USE netcdf
   implicit none
@@ -163,9 +163,9 @@ module fldout_ncML
 subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     istep,nsteph,ierror)
   USE iso_fortran_env, only: int16
-  USE snapfilML, only: idata, ncsummary, nctitle, simulation_start
-  USE snapgrdML, only: gparam, igridr, igtype, imodlevel, imslp, inprecip, &
-      iprodr, itotcomp, modleveldump, ivlayer
+  USE snapfilML, only: ncsummary, nctitle, simulation_start
+  USE snapgrdML, only: gparam, igtype, imodlevel, imslp, inprecip, &
+      itotcomp, modleveldump, ivlayer
   USE snapfldML, only: field1, field2, field3, field4, depwet, depdry, &
       avgbq1, avgbq2, hlayer1, hlayer2, garea, pmsl1, pmsl2, hbl1, hbl2, &
       xm, ym, accdry, accwet, avgprec, concen, ps1, ps2, avghbl, dgarea, &
@@ -173,7 +173,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   USE snapparML, only: itprof, ncomp, run_comp, def_comp
   USE snapdebug, only: iulog, idebug
   USE ftestML, only: ftest
-  USE snapdimML, only: ldata, nx, ny, nk, nxmc, nymc
+  USE snapdimML, only: nx, ny, nk, nxmc, nymc
   USE releaseML, only: npart
   USE particleML, only: pdata, Particle
 
@@ -531,41 +531,6 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
   ipos = [1, 1, ihrs_pos, ihrs_pos]
   isize = [nx, ny, 1, 1]
-
-!..common field identification.............
-
-  idata(1:20) = 0
-  idata( 1)=iprodr
-  idata( 2)=igridr
-  idata( 3)=2
-  if(itime(5) == 0) idata(3)=3
-  idata( 4)=itime(5)
-!.... idata( 5)= .......... vertical coordinate
-!.... idata( 6)= .......... parameter no.
-!.... idata( 7)= .......... level or level no. or component id
-  idata( 8)=0
-!.... idata( 9)= .......... set by gridpar
-!.... idata(10)= .......... set by gridpar
-!.... idata(11)= .......... set by gridpar
-  idata(12)=itime(1)
-  idata(13)=itime(2)*100+itime(3)
-  idata(14)=itime(4)*100
-!.... idata(15)= .......... set by gridpar
-!.... idata(16)= .......... set by gridpar
-!.... idata(17)= .......... set by gridpar
-!.... idata(18)= .......... set by gridpar
-!.... idata(19)= .......... 0 or sigma*10000 value
-!.... idata(20)= .......... field scaling (automatic the best possible)
-
-!..put grid parameters into field identification
-!..(into the first 20 words and possibly also after space for data)
-  call gridpar(-1,ldata,idata,igtype,nx,ny,gparam,ierror)
-  if(ierror /= 0) then
-    ierror = 1
-    write(iulog,*) '*FLDOUT_NC*  Terminates due to write error.'
-    return
-  endif
-
 
   average=float(naverage)
   averinv=1./float(naverage)
@@ -1004,7 +969,7 @@ subroutine write_ml_fields(iunit, varid, average, ipos, isize, rt1, rt2)
   USE ftestML, only: ftest
   USE snapdebug, only: idebug
   USE snapgrdML, only: itotcomp, ivcoor, modleveldump, ivlayer, &
-      alevel, blevel, vlevel, klevel
+      alevel, blevel, klevel
   USE snapdimML, only: nx, ny, nk
 
   integer, intent(in) :: iunit
