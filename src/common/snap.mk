@@ -32,11 +32,11 @@ snap_batch_copy.o: ../common/snap.F90 $(MODELOBJ)
 
 #--------------------------------
 
-allocateFields.o: ../common/allocateFields.f90 particleML.o snapparML.o snapfldML.o snapfilML.o snapgrdML.o release.o
+allocateFields.o: ../common/allocateFields.f90 particleML.o snapparML.o snapfldML.o snapfilML.o snapgrdML.o release.o snapdimML.o
 	${F77} -c $(F77FLAGS) $(INCLUDES) $<
 snapdimML.o: ../common/snapdimML.f90
 	${F77} -c $(F77FLAGS) $(INCLUDES) $<
-snaptabML.o: ../common/snaptabML.f90 snapdimML.o snapdebugML.o
+snaptabML.o: ../common/snaptabML.f90
 	${F77} -c $(F77FLAGS) $(INCLUDES) $<
 snapfldML.o: ../common/snapfldML.f90
 	${F77} -c $(F77FLAGS) $(INCLUDES) $<
@@ -46,13 +46,13 @@ snapdebugML.o: ../common/snapdebugML.f90
 	${F77} -c $(F77FLAGS) $(INCLUDES) $<
 snapgrdML.o: ../common/snapgrdML.f90
 	${F77} -c $(F77FLAGS) $(INCLUDES) $<
-bldp.o: ../common/bldp.f90 snapdimML.o snaptabML.o snapfldML.o ftest.o snapdebugML.o snapgrdML.o
+bldp.o: ../common/bldp.f90 snapdimML.o snaptabML.o snapgrdML.o snapfldML.o ftest.o snapdebugML.o snapgrdML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 particleML.o: ../common/particleML.f90
 	${F77} -c ${F77FLAGS} $<
-decay.o: ../common/decay.f90 snapdimML.o particleML.o snapfldML.o snapparML.o
+decay.o: ../common/decay.f90 particleML.o snapfldML.o snapparML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-compheight.o: ../common/compheight.f90 snapgrdML.o snapfldML.o snaptabML.o
+compheight.o: ../common/compheight.f90 snapgrdML.o snapfldML.o snaptabML.o snapdimML.o ftest.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 snapparML.o: ../common/snapparML.f90 snapdimML.o
 	${F77} -c ${F77FLAGS} $<
@@ -60,7 +60,7 @@ checkDomain.o: ../common/checkDomain.f90 snapgrdML.o snapdimML.o particleML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 dateCalc.o: ../common/dateCalc.f90
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-drydep.o: ../common/drydep.f90 particleML.o snapfldML.o snapparML.o snapgrdML.o vgravtables.o
+drydep.o: ../common/drydep.f90 particleML.o snapfldML.o snapparML.o snapgrdML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 epinterp.o: ../common/epinterp.f90
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
@@ -68,17 +68,17 @@ argoswrite.o: ../common/argoswrite.f90 snapdebugML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 snapfilML.o: ../common/snapfilML.f90 snapdimML.o
 	${F77} -c ${F77FLAGS} $<
-filesort.o: ../common/filesort.f90 snapfldML.o snapfilML.o snapdebugML.o snapgrdML.o snapdimML.o
+filesort.o: ../common/filesort.f90 snapfldML.o snapfilML.o snapdebugML.o snapgrdML.o snapdimML.o milib.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-om2edot.o: ../common/om2edot.f90 snapgrdML.o snapfldML.o snapdimML.o
+om2edot.o: ../common/om2edot.f90 snapgrdML.o snapfldML.o snapdimML.o snapdebugML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-readfield_nc.o: ../common/readfield_nc.f90 particleML.o snapfilML.o snapgrdML.o snapmetML.o snaptabML.o snapdebugML.o snapdimML.o om2edot.o ftest.o milibML.o
+readfield_nc.o: ../common/readfield_nc.f90 particleML.o snapfilML.o snapgrdML.o snapmetML.o snaptabML.o snapdebugML.o snapdimML.o om2edot.o ftest.o milibML.o snapfldML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-filesort_nc.o: ../common/filesort_nc.f90 dateCalc.o snapfilML.o snapdimML.o snapgrdML.o snapfldML.o snapmetML.o snapdebugML.o readfield_nc.o
+filesort_nc.o: ../common/filesort_nc.f90 dateCalc.o snapfilML.o snapdimML.o snapgrdML.o snapfldML.o snapmetML.o snapdebugML.o readfield_nc.o milibML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-fldout.o: ../common/fldout.f90 particleML.o snapfilML.o snapgrdML.o snapfldML.o snapparML.o snapargosML.o snapdebugML.o snapdimML.o ftest.o argoswrite.o snaptabML.o
+fldout.o: ../common/fldout.f90 particleML.o snapfilML.o snapgrdML.o snapfldML.o snapparML.o snapargosML.o snapdebugML.o snapdimML.o ftest.o argoswrite.o snaptabML.o milibML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-fldout_nc.o: ../common/fldout_nc.f90 snapfilML.o snapgrdML.o snapfldML.o snapparML.o snaptabML.o snapargosML.o snapdebugML.o snapdimML.o readfield_nc.o ftest.o release.o
+fldout_nc.o: ../common/fldout_nc.f90 snapfilML.o snapgrdML.o snapfldML.o snapparML.o snaptabML.o snapargosML.o snapdebugML.o snapdimML.o readfield_nc.o ftest.o release.o milibML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 feltio_dummy.o: ../common/feltio_dummy.f90
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
@@ -110,7 +110,7 @@ vgravtables.o: ../common/vgravtables.f90 snapparML.o snapdimML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 wetdep.o: ../common/wetdep.f90 particleML.o snapgrdML.o snapfldML.o snapparML.o snaptabML.o snapdimML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-find_parameters.o: ../common/find_parameters.f90
+find_parameters.o: ../common/find_parameters.f90 snapmetML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 
 milibML.o: ../common/milibML.f90
