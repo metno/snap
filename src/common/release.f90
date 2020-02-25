@@ -90,8 +90,9 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
   USE particleML, only: pdata
   USE snapgrdML, only: gparam, vlevel, alevel, ahalf, blevel, bhalf
   USE snapfldML, only: xm, ym, t1, t2, ps1, ps2
-  USE snapparML, only: itprof, ncomp, nparnum, run_comp, &
-      iparnum
+  USE snapparML, only: time_profile, ncomp, nparnum, run_comp, &
+      iparnum, &
+      TIME_PROFILE_BOMB, TIME_PROFILE_STEPS
   USE snapposML, only: irelpos, release_positions
   USE snaptabML, only: g, pmult, pitab
   USE snapdimML, only: nx, ny, nk, mcomp
@@ -132,7 +133,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
 
   ierror = 0
 
-  if(itprof == 2) then
+  if(time_profile == TIME_PROFILE_BOMB) then
   !..single bomb release
     tstep=1.
   else
@@ -155,7 +156,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
 ! loop over all heights
   do ih=1,nrelheight
 
-    if(itprof /= 4 .AND. nt < size(releases)) then
+    if(time_profile /= TIME_PROFILE_STEPS .AND. nt < size(releases)) then
       c1 = releases(nt)%frelhour*nsteph
       c2 = releases(nt+1)%frelhour*nsteph
       c3=istep

@@ -92,12 +92,17 @@ module snapparML
 !>   no. of components used in the run
   integer, save, public :: ncomp
 
-!>  time profile type:
-!> * 1= constant
-!> * 2= bomb (only one initial release)
-!> * 3= linear (between specified timesteps)
-!> * 4= steps  (constant between the specified timesteps)
-  integer, save, public :: itprof
+  integer, parameter, public :: TIME_PROFILE_CONSTANT = 1, &
+                                !> bomb (only one initial release)
+                                TIME_PROFILE_BOMB = 2, &
+                                !> linear (between specified timesteps)
+                                TIME_PROFILE_LINEAR = 3, &
+                                !> constant between the specified timesteps
+                                TIME_PROFILE_STEPS = 4, &
+                                TIME_PROFILE_UNDEFINED = -1
+!>  time profile of release
+  integer, save, public :: time_profile = TIME_PROFILE_UNDEFINED
+
 !>  component name
   character(len=32), save, public :: component(mcomp)
 
