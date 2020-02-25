@@ -25,7 +25,7 @@ module allocateFieldsML
       pmsl1, pmsl2, field1, field2, field3, field4, xm, ym, &
       garea, dgarea
   USE snapfilML, only: idata, fdata
-  USE snapgrdML, only: ahalf, bhalf, vhalf, alevel, blevel, vlevel
+  USE snapgrdML, only: ahalf, bhalf, vhalf, alevel, blevel, vlevel, imodlevel
   USE releaseML, only: mplume, iplume, mpart
   implicit none
   private
@@ -36,7 +36,7 @@ module allocateFieldsML
 
 subroutine allocateFields
   USE particleML, only: pdata
-  USE snapdimML, only: nx, ny, nk, ldata, maxsiz, mprecip, nxmc, nymc
+  USE snapdimML, only: nx, ny, nk, ldata, maxsiz, mprecip
   USE snapparML, only: ncomp, iparnum
   USE releaseML, only: mplume, iplume, mpart
 
@@ -152,8 +152,10 @@ subroutine allocateFields
   ALLOCATE ( avgbq2(nx,ny,ncomp), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) STOP errmsg
 
-  ALLOCATE ( avgbq(nxmc,nymc,nk-1,ncomp), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  if (imodlevel) then
+    ALLOCATE ( avgbq(nx,ny,nk-1,ncomp), STAT = AllocateStatus)
+    IF (AllocateStatus /= 0) STOP errmsg
+  endif
 
 ! the part particles fields
   ALLOCATE ( pdata(mpart), STAT = AllocateStatus)
@@ -228,7 +230,10 @@ subroutine deAllocateFields
   DEALLOCATE ( avgbq1 )
   DEALLOCATE ( avgbq2 )
 
-  DEALLOCATE ( avgbq )
+  if (allocated(avgbq)) then
+    deallocate(avgbq)
+  endif
+
 
   DEALLOCATE ( pdata )
   DEALLOCATE ( iparnum )

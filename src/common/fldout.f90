@@ -92,7 +92,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   USE snapdebug, only: iulog, idebug
   USE argoswriteML, only: argoswrite
   USE ftestML, only: ftest
-  USE snapdimML, only: nx, ny, nk, nxmc, nymc, ldata
+  USE snapdimML, only: nx, ny, nk, ldata
   USE milibML, only: xyconvert, gridpar, rmfile, vtime
   USE releaseML, only: npart
 
@@ -133,8 +133,6 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
 !..initialization
 
-  if(imodlevel == 1 .AND. (nxmc /= nx .OR. nymc /= ny)) imodlevel=0
-
   if(initacc == 0) then
     do m=1,ncomp
       do j=1,ny
@@ -164,7 +162,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     if(itprof == 2) numfields= numfields + ncomp*4
     if(inprecip > 0) numfields=numfields+2
     if(imslp    > 0) numfields=numfields+1
-    if(imodlevel > 0) numfields=numfields+n*nk*2+nk+1
+    if(imodlevel) numfields=numfields+n*nk*2+nk+1
     numfields= numfields*istep + 4
     if(numfields > 32767) numfields=32767
     do i=1,5
@@ -291,17 +289,8 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       end do
     end do
   
-  !..note: model level output on if nxmc=nx, nymc=ny and imodlevel=1
-    if(imodlevel == 1) then
-      do m=1,ncomp
-        do k=1,nk-1
-          do j=1,nymc
-            do i=1,nxmc
-              avgbq(i,j,k,m)=0.0d0
-            end do
-          end do
-        end do
-      end do
+    if(imodlevel) then
+      avgbq(:,:,:,:) = 0
     end if
   
   end if
@@ -376,7 +365,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     end do
   end do
 
-  if(imodlevel == 1) then
+  if(imodlevel) then
   
     do n=1,npart
       i=nint(pdata(n)%x)
@@ -545,7 +534,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   rt2=(tnow-tf1)/(tf2-tf1)
 
 !..surface pressure (if model level output, for vertical crossections)
-  if(imodlevel == 1) then
+  if(imodlevel) then
     do j=1,ny
       do i=1,nx
         field1(i,j)=rt1*ps1(i,j)+rt2*ps2(i,j)
@@ -1223,7 +1212,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
 !..model level fields...................................................
 
-  if(imodlevel /= 1) goto 800
+  if(.not.imodlevel) goto 800
 
 !..concentration in each layer
 !..(height only computed at time of output)
@@ -1247,11 +1236,7 @@ subroutine fldout(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     
       do m=1,ncomp
         do k=1,nk-1
-          do j=1,nymc
-            do i=1,nxmc
-              avgbq(i,j,k,m)=0.0d0
-            end do
-          end do
+          avgbq(:,:,k,m) = 0.0
         end do
       end do
     
