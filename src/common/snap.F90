@@ -148,7 +148,6 @@
 
 !-----------------------------------------------------------------------
 ! DNMI library subroutines : rfelt
-!                            rlunit
 !                            chcase
 !                            hrdiff
 !                            vtime
