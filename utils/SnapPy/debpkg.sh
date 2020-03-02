@@ -56,8 +56,8 @@ fi
 #INSTRUCTIONS_END
 
 
-VERSION=1.6.11
-CHANGELOG="Fix race condition volcano.xml vs volcano.log"
+VERSION=1.6.12
+CHANGELOG="Fix problems with MEPS"
 dch -v ${VERSION}-1 -U "${CHANGELOG}"
 dch -r ''
 VERSION=$VERSION python3 setup.py sdist
