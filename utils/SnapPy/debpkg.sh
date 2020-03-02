@@ -32,6 +32,8 @@ fi
 #     $ dupload --no --to xenial dist/snap-py_<version>_amd64.changes
 #     then remove --no option
 #
+#     Wait for confirmation email that package has been accepted
+#
 # 3 - Check that it works on one machine
 #     $ ssh -X vglserver2
 #     $ sudo apt-get update
@@ -51,6 +53,8 @@ fi
 #     $ ansible-playbook -i hosts -t misc -l vglserver2 install.yml
 #     #Roll out to all hosts
 #     $ ansible-playbook -i hosts -t misc install.yml
+#
+#     It may take a bit of time before the package is available for ansible (10 minutes)
 #
 # 5 - Inform meteorologists that a new version is available
 #INSTRUCTIONS_END
