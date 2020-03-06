@@ -22,7 +22,7 @@ module snapdebug
 !> * 0 = debug off
 !> * 1 = debug on, note that mrfturbo/mrfelt only
 !>       prints to standard out (not the log file)
-    integer, public, save :: idebug
+    integer, public, save :: idebug = 0
 !> output unit for log file
     integer, public :: iulog
 end module snapdebug
