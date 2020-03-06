@@ -22,9 +22,9 @@ module snapposML
 !> max. no. of release positions available (in list)
   integer, parameter :: mrelpos = 30
 !> the chosen release position
-  integer, save, public :: irelpos
+  integer, save, public :: irelpos = 0
 !> no. of release positions (in list)
-  integer, save, public :: nrelpos
+  integer, save, public :: nrelpos = 0
 
   type, public :: release_position
 !> geographic latitude for release position

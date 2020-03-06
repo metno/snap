@@ -255,25 +255,27 @@ PROGRAM bsnap
   integer :: allocatestatus
   character(len=*), parameter :: allocateErrorMessage = "*** Not enough memory ***"
 
-  integer ::   itime1(5),itime2(5),itime(5),itimei(5),itimeo(5)
+  integer :: itime1(5) = -huge(itime1)
+  integer :: itime2(5),itime(5),itimei(5),itimeo(5)
   integer ::   itimefi(5),itimefa(5),itimefo(5,2)
 
 !..used in xyconvert (longitude,latitude -> x,y)
   real, save :: geoparam(6) = [1.0, 1.0, 1.0, 1.0, 0.0, 0.0]
 
-  integer :: narg,iuinp,ios,nhrun,nhrel,nhfout
-  logical :: use_random_walk
-  integer :: isynoptic,m,np,nlevel,minhfc,maxhfc,ifltim
+  integer :: narg,iuinp,ios,nhfout = 3
+  integer :: nhrun = 0, nhrel = 0
+  logical :: use_random_walk = .true.
+  integer :: isynoptic = 0, m,np,nlevel=0,minhfc=+6,maxhfc=+huge(maxhfc),ifltim = 0
   integer :: k, ierror, i, n
   integer :: ih
-  integer :: idrydep,wetdep_version,idecay
+  integer :: idrydep = 0,wetdep_version = 0,idecay
   integer :: ntimefo,iunitf,nh1,nh2
   integer :: ierr1,ierr2,nsteph,nstep,nstepr,iunito
   integer :: nxtinf,ihread,isteph,lstepr,iendrel,istep,ihr1,ihr2,nhleft
-  integer :: ierr,ihdiff,ihr,ifldout,idailyout,ihour
+  integer :: ierr,ihdiff,ihr,ifldout,idailyout=0,ihour
   integer :: date_time(8)
-  logical :: warning
-  real ::    tstep,rmlimit,rnhrun,rnhrel,tf1,tf2,tnow,tnext
+  logical :: warning = .false.
+  real :: tstep = 900, rmlimit = -1.0, rnhrun,rnhrel,tf1,tf2,tnow,tnext
   real ::    x(1),y(1)
   type(extraParticle) :: pextra
   real ::    rscale
@@ -287,15 +289,15 @@ PROGRAM bsnap
 ! b_end
   type(release_t) :: release1
 
-  logical :: blfullmix
+  logical :: blfullmix = .true.
   logical :: init = .TRUE.
 
-  character(len=1024) ::  finput,fldfil,fldfilX,fldfilN,logfile,ftype, &
-      fldtype, relfile
+  character(len=1024) ::  finput,fldfil="snap.dat",fldfilX,fldfilN,logfile="snap.log",ftype="felt", &
+      fldtype="felt", relfile="*"
   character(len=1024) :: tempstr
 
 !> name of selected release position
-  character(len=40), save :: srelnam
+  character(len=40), save :: srelnam = "*"
 
 #if defined(TRAJ)
   integer :: timeStart(6), timeCurrent(6)
@@ -354,7 +356,10 @@ PROGRAM bsnap
     call snap_error_exit()
   endif
 
-  call set_defaults()
+  call DATE_AND_TIME(VALUES=date_time)
+  write (simulation_start, 9999) (date_time(i),i=1,3), &
+      (date_time(i),i=5,7)
+  9999 FORMAT(I4.4,'-',I2.2,'-',I2.2,'_',I2.2,':',I2.2,':',I2.2)
   write(output_unit,*) 'Reading input file:'
   write(output_unit,*)  TRIM(finput)
 
@@ -1221,83 +1226,6 @@ PROGRAM bsnap
 
     error stop ERROR_MSG
   end subroutine
-
-!> Sets default values for all parameters
-subroutine set_defaults()
-!..set release position as not chosen
-  irelpos=0
-
-  itime1 = -huge(itime1)
-  nhrun  =0
-  nhrel  =0
-  srelnam='*'
-
-!..default values
-  use_random_walk = .true.
-  tstep  =900.
-  mprel  =200
-  nhfmin =6
-  nhfmax =12
-  nhfout =3
-  isynoptic=0
-  nrelheight=1
-
-  ncomp = 0
-  itotcomp = 0
-  rmlimit = -1.0
-
-  nrelpos=0
-  iprod  =0
-  igrid  =0
-  iprodr =0
-  igridr =0
-  ixbase =0
-  iybase =0
-  ixystp =0
-  ivcoor =0
-  nlevel =0
-  minhfc =+6
-  maxhfc =+huge(maxhfc)
-  nfilef =0
-  ifltim =0
-  blfullmix= .TRUE.
-  idrydep=0
-  wetdep_version=0
-
-  inprecip =1
-  imslp    =0
-  imodlevel = .false.
-  modleveldump=0.0
-
-  idebug=0
-! input type
-  ftype='felt'
-! output type
-  fldtype='felt'
-  fldfil= 'snap.dat'
-  logfile='snap.log'
-  nctype = "*"
-  ncsummary=''
-  relfile='*'
-! timestamp of the form 0000-00-00_00:00:00
-  call DATE_AND_TIME(VALUES=date_time)
-  write (simulation_start, 9999) (date_time(i),i=1,3), &
-      (date_time(i),i=5,7)
-  9999 FORMAT(I4.4,'-',I2.2,'-',I2.2,'_',I2.2,':',I2.2,':',I2.2)
-! input ensemble member, default to no ensembles
-  enspos = -1
-
-  idailyout=0
-
-  iargos=0
-  argoshourstep= 6
-  argosdepofile= 'xxx_MLDP0_depo'
-  argosconcfile= 'xxx_MLDP0_conc'
-  argosdosefile= 'xxx_MLDP0_dose'
-
-  warning = .false.
-end subroutine
-
 
   subroutine first_nonblank(str, n)
     character(len=*), intent(in) :: str
