@@ -257,7 +257,7 @@ PROGRAM bsnap
 
   integer :: itime1(5) = -huge(itime1)
   integer :: itime2(5),itime(5),itimei(5),itimeo(5)
-  integer ::   itimefi(5),itimefa(5),itimefo(5,2)
+  integer :: time_file(5)
 
 !..used in xyconvert (longitude,latitude -> x,y)
   real, save :: geoparam(6) = [1.0, 1.0, 1.0, 1.0, 0.0, 0.0]
@@ -657,9 +657,7 @@ PROGRAM bsnap
     if(ierror /= 0) call snap_error_exit(iulog)
 
     itime = itime1
-    itimefi = 0
-    itimefa = 0
-    itimefo = 0
+    time_file = 0
 
     nxtinf=0
     ihread=0
@@ -704,7 +702,8 @@ PROGRAM bsnap
   ! reset readfield_nc (eventually, traj will rerun this loop)
     if (ftype == "netcdf") &
         call readfield_nc(-1,nhleft,itimei,ihr1,ihr2, &
-            itimefi,ierror)
+            time_file,ierror)
+
   ! start time loop
     time_loop: do istep=0,nstep
 
@@ -737,40 +736,32 @@ PROGRAM bsnap
           ihr2=-nhfmax
           nhleft=nhrun
         else
-          itimei = itimefi
+          itimei = time_file
           ihr1=+nhfmin
           ihr2=+nhfmax
           nhleft=(nstep-istep+1)/nsteph
           if (nhrun < 0) nhleft=-nhleft
         end if
       !          write (*,*) "readfield(", iunitf, istep, nhleft, itimei, ihr1
-      !     +          ,ihr2, itimefi, ierror, ")"
+      !     +          ,ihr2, time_file, ierror, ")"
         if (ftype == "netcdf") then
           call readfield_nc(istep,nhleft,itimei,ihr1,ihr2, &
-              itimefi,ierror)
+              time_file,ierror)
         else
           call readfield(iunitf,istep,nhleft,itimei,ihr1,ihr2, &
-              itimefi,ierror)
+              time_file,ierror)
         end if
         if (idebug >= 1) then
           write(iulog,*) "igtype, gparam(8): ", igtype, gparam
         end if
       !          write (*,*) "readfield(", iunitf, istep, nhleft, itimei, ihr1
-      !     +          ,ihr2, itimefi, ierror, ")"
+      !     +          ,ihr2, time_file, ierror, ")"
         if(ierror /= 0) call snap_error_exit(iulog)
 
-      !..analysis time of input model
-        if(itimefi(5) <= +6) then
-          do i=1,4
-            itimefa(i)=itimefi(i)
-          end do
-          itimefa(5)=0
-        end if
-
-        n=itimefi(5)
-        call vtime(itimefi,ierr)
+        n=time_file(5)
+        call vtime(time_file,ierr)
         write(error_unit,fmt='(''input data: '',i4,3i3.2,''  prog='',i4)') &
-            (itimefi(i),i=1,4),n
+            (time_file(i),i=1,4),n
 
       !..compute model level heights
         call compheight
@@ -825,7 +816,7 @@ PROGRAM bsnap
           cycle time_loop
         end if
 
-        call hrdiff(0,0,itimei,itimefi,ihdiff,ierr1,ierr2)
+        call hrdiff(0,0,itimei,time_file,ihdiff,ierr1,ierr2)
         tf1=0.
         tf2=3600.*ihdiff
         if (nhrun < 0) tf2=-tf2
@@ -1068,10 +1059,6 @@ PROGRAM bsnap
           end if
         !..save first and last output time
           ntimefo=ntimefo+1
-          if(ntimefo == 1) then
-            itimefo(:,1) = itimeo
-          end if
-          itimefo(:,2) = itimeo
           write(iulog,*) 'fldout. ',itimeo
         end if
       end if
