@@ -22,9 +22,9 @@ module snapgrdML
 
 
 !> input producer no.
-    integer, save, public :: iprod
+    integer, save, public :: iprod = 0
 !> input grid no.
-    integer, save, public :: igrid
+    integer, save, public :: igrid = 0
 !> model level no.
 !>
 !> sequence: bottom to top (kk,kk-1,....1)
@@ -38,37 +38,37 @@ module snapgrdML
 !> klevel needs to get allocated in main program while reading parameters
     integer, dimension(:), allocatable, save, public ::  klevel
 !> output producer no. (usually as input)
-    integer, save, public :: iprodr
+    integer, save, public :: iprodr = 0
 !> output grid no. (may be different from input)
-    integer, save, public :: igridr
+    integer, save, public :: igridr = 0
 
 !> lower left corner in input fields (combined with ::iybase)
 !> (size is set by nx,ny at compilation time)
-    integer, save, public :: ixbase
+    integer, save, public :: ixbase = 0
 !> lower left corner in input fields (combined with ::ixbase)
 !> (size is set by nx,ny at compilation time)
-    integer, save, public :: iybase
+    integer, save, public :: iybase = 0
 
 !> step in x and y direction
 !>
 !> (ixystp>1 means lower resolution fields than input,
 !> decrease memory size)
-    integer, save, public :: ixystp
+    integer, save, public :: ixystp = 0
 !> * 0=not read precipitation
 !> * 1=read precipitation
 !> * -1=read precipitation (but there is no wet deposition)
-    integer, save, public :: inprecip
+    integer, save, public :: inprecip = 1
 !> * 0=not read mslp
 !> * -1=read mslp
 !> * 1=read and write mslp (mslp not used in computations)
-    integer, save, public :: imslp
+    integer, save, public :: imslp = 0
 !> * output of concentrations in model levels
-    logical, save, public :: imodlevel
+    logical, save, public :: imodlevel = .false.
 !> remove particles from model after at least that many steps
-    real, save, public :: modleveldump
+    real, save, public :: modleveldump = 0.0
 !> * 0=not output of total of all components (e.g. when each component is released with a mass unit)
 !> 1=output of total of all components
-    integer, save, public :: itotcomp
+    integer, save, public :: itotcomp = 0
 
 !> grid parameters (depending on the grid type)
 !>
@@ -112,7 +112,7 @@ module snapgrdML
 ! vertical coordinate
 !> * 2=sigma (Norlam)
 !> * 10=eta   (Hirlam,...))
-    integer, save, public :: ivcoor
+    integer, save, public :: ivcoor = 0
 !> levels added at the top (when missing upper model levels)
 !>
 !> (u,v copied up, w reduced, pot.temp. const.)

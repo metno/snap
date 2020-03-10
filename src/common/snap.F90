@@ -255,25 +255,37 @@ PROGRAM bsnap
   integer :: allocatestatus
   character(len=*), parameter :: allocateErrorMessage = "*** Not enough memory ***"
 
-  integer ::   itime1(5),itime2(5),itime(5),itimei(5),itimeo(5)
-  integer ::   itimefi(5),itimefa(5),itimefo(5,2)
+! Format of time
+!..itime: itime(1) - year
+!         itime(2) - month
+!         itime(3) - day
+!         itime(4) - hour
+!         itime(5) - forecast time in hours (added to date/time above)
+
+!> start time
+  integer :: itime1(5) = -huge(itime1)
+!> stop  time
+  integer :: itime2(5)
+  integer :: itime(5),itimei(5),itimeo(5)
+  integer :: time_file(5)
 
 !..used in xyconvert (longitude,latitude -> x,y)
   real, save :: geoparam(6) = [1.0, 1.0, 1.0, 1.0, 0.0, 0.0]
 
-  integer :: narg,iuinp,ios,nhrun,nhrel,nhfout
-  logical :: use_random_walk
-  integer :: isynoptic,m,np,nlevel,minhfc,maxhfc,ifltim
+  integer :: snapinput_unit,ios
+  integer :: nhrun = 0, nhrel = 0, nhfout = 3
+  logical :: use_random_walk = .true.
+  integer :: isynoptic = 0, m,np,nlevel=0,minhfc=+6,maxhfc=+huge(maxhfc),ifltim = 0
   integer :: k, ierror, i, n
   integer :: ih
-  integer :: idrydep,wetdep_version,idecay
+  integer :: idrydep = 0,wetdep_version = 0,idecay
   integer :: ntimefo,iunitf,nh1,nh2
   integer :: ierr1,ierr2,nsteph,nstep,nstepr,iunito
   integer :: nxtinf,ihread,isteph,lstepr,iendrel,istep,ihr1,ihr2,nhleft
-  integer :: ierr,ihdiff,ihr,ifldout,idailyout,ihour
+  integer :: ierr,ihdiff,ihr,ifldout,idailyout=0,ihour
   integer :: date_time(8)
-  logical :: warning
-  real ::    tstep,rmlimit,rnhrun,rnhrel,tf1,tf2,tnow,tnext
+  logical :: warning = .false.
+  real :: tstep = 900, rmlimit = -1.0, rnhrun,rnhrel,tf1,tf2,tnow,tnext
   real ::    x(1),y(1)
   type(extraParticle) :: pextra
   real ::    rscale
@@ -287,15 +299,15 @@ PROGRAM bsnap
 ! b_end
   type(release_t) :: release1
 
-  logical :: blfullmix
+  logical :: blfullmix = .true.
   logical :: init = .TRUE.
 
-  character(len=1024) ::  finput,fldfil,fldfilX,fldfilN,logfile,ftype, &
-      fldtype, relfile
+  character(len=1024) ::  finput,fldfil="snap.dat",fldfilX,fldfilN,logfile="snap.log",ftype="felt", &
+      fldtype="felt", relfile="*"
   character(len=1024) :: tempstr
 
 !> name of selected release position
-  character(len=40), save :: srelnam
+  character(len=40), save :: srelnam = "*"
 
 #if defined(TRAJ)
   integer :: timeStart(6), timeCurrent(6)
@@ -331,8 +343,7 @@ PROGRAM bsnap
 
 
 
-  narg = command_argument_count()
-  if(narg < 1) then
+  if(command_argument_count() < 1) then
     write(error_unit,*)
     write(error_unit,*) '  usage: snap <snap.input>'
     write(error_unit,*) '     or: snap --version'
@@ -345,7 +356,7 @@ PROGRAM bsnap
     stop
   endif
 
-  open(newunit=iuinp,file=finput, &
+  open(newunit=snapinput_unit,file=finput, &
       access='stream',form='unformatted', &
       status='old',iostat=ios,action='read', &
       position='rewind')
@@ -354,13 +365,16 @@ PROGRAM bsnap
     call snap_error_exit()
   endif
 
-  call set_defaults()
+  call DATE_AND_TIME(VALUES=date_time)
+  write (simulation_start, 9999) (date_time(i),i=1,3), &
+      (date_time(i),i=5,7)
+  9999 FORMAT(I4.4,'-',I2.2,'-',I2.2,'_',I2.2,':',I2.2,':',I2.2)
   write(output_unit,*) 'Reading input file:'
   write(output_unit,*)  TRIM(finput)
 
-  call read_inputfile(iuinp)
+  call read_inputfile(snapinput_unit)
 
-  close(iuinp)
+  close(snapinput_unit)
 
   write(*,*) "SIMULATION_START_DATE: ", simulation_start
 
@@ -423,14 +437,6 @@ PROGRAM bsnap
   end if
   if(ierror /= 0) call snap_error_exit(iulog)
 
-!..itime: itime(1) - year
-!         itime(2) - month
-!         itime(3) - day
-!         itime(4) - hour
-!         itime(5) - forecast time in hours (added to date/time above)
-
-!..itime1: start time
-!..itime2: stop  time
 
   call vtime(itime1,ierror)
   if(ierror /= 0) then
@@ -652,9 +658,7 @@ PROGRAM bsnap
     if(ierror /= 0) call snap_error_exit(iulog)
 
     itime = itime1
-    itimefi = 0
-    itimefa = 0
-    itimefo = 0
+    time_file = 0
 
     nxtinf=0
     ihread=0
@@ -699,7 +703,8 @@ PROGRAM bsnap
   ! reset readfield_nc (eventually, traj will rerun this loop)
     if (ftype == "netcdf") &
         call readfield_nc(-1,nhleft,itimei,ihr1,ihr2, &
-            itimefi,ierror)
+            time_file,ierror)
+
   ! start time loop
     time_loop: do istep=0,nstep
 
@@ -732,40 +737,32 @@ PROGRAM bsnap
           ihr2=-nhfmax
           nhleft=nhrun
         else
-          itimei = itimefi
+          itimei = time_file
           ihr1=+nhfmin
           ihr2=+nhfmax
           nhleft=(nstep-istep+1)/nsteph
           if (nhrun < 0) nhleft=-nhleft
         end if
       !          write (*,*) "readfield(", iunitf, istep, nhleft, itimei, ihr1
-      !     +          ,ihr2, itimefi, ierror, ")"
+      !     +          ,ihr2, time_file, ierror, ")"
         if (ftype == "netcdf") then
           call readfield_nc(istep,nhleft,itimei,ihr1,ihr2, &
-              itimefi,ierror)
+              time_file,ierror)
         else
           call readfield(iunitf,istep,nhleft,itimei,ihr1,ihr2, &
-              itimefi,ierror)
+              time_file,ierror)
         end if
         if (idebug >= 1) then
           write(iulog,*) "igtype, gparam(8): ", igtype, gparam
         end if
       !          write (*,*) "readfield(", iunitf, istep, nhleft, itimei, ihr1
-      !     +          ,ihr2, itimefi, ierror, ")"
+      !     +          ,ihr2, time_file, ierror, ")"
         if(ierror /= 0) call snap_error_exit(iulog)
 
-      !..analysis time of input model
-        if(itimefi(5) <= +6) then
-          do i=1,4
-            itimefa(i)=itimefi(i)
-          end do
-          itimefa(5)=0
-        end if
-
-        n=itimefi(5)
-        call vtime(itimefi,ierr)
+        n=time_file(5)
+        call vtime(time_file,ierr)
         write(error_unit,fmt='(''input data: '',i4,3i3.2,''  prog='',i4)') &
-            (itimefi(i),i=1,4),n
+            (time_file(i),i=1,4),n
 
       !..compute model level heights
         call compheight
@@ -820,7 +817,7 @@ PROGRAM bsnap
           cycle time_loop
         end if
 
-        call hrdiff(0,0,itimei,itimefi,ihdiff,ierr1,ierr2)
+        call hrdiff(0,0,itimei,time_file,ihdiff,ierr1,ierr2)
         tf1=0.
         tf2=3600.*ihdiff
         if (nhrun < 0) tf2=-tf2
@@ -1063,10 +1060,6 @@ PROGRAM bsnap
           end if
         !..save first and last output time
           ntimefo=ntimefo+1
-          if(ntimefo == 1) then
-            itimefo(:,1) = itimeo
-          end if
-          itimefo(:,2) = itimeo
           write(iulog,*) 'fldout. ',itimeo
         end if
       end if
@@ -1222,83 +1215,6 @@ PROGRAM bsnap
     error stop ERROR_MSG
   end subroutine
 
-!> Sets default values for all parameters
-subroutine set_defaults()
-!..set release position as not chosen
-  irelpos=0
-
-  itime1 = -huge(itime1)
-  nhrun  =0
-  nhrel  =0
-  srelnam='*'
-
-!..default values
-  use_random_walk = .true.
-  tstep  =900.
-  mprel  =200
-  nhfmin =6
-  nhfmax =12
-  nhfout =3
-  isynoptic=0
-  nrelheight=1
-
-  ncomp = 0
-  itotcomp = 0
-  rmlimit = -1.0
-
-  nrelpos=0
-  iprod  =0
-  igrid  =0
-  iprodr =0
-  igridr =0
-  ixbase =0
-  iybase =0
-  ixystp =0
-  ivcoor =0
-  nlevel =0
-  minhfc =+6
-  maxhfc =+huge(maxhfc)
-  nfilef =0
-  ifltim =0
-  blfullmix= .TRUE.
-  idrydep=0
-  wetdep_version=0
-
-  inprecip =1
-  imslp    =0
-  imodlevel = .false.
-  modleveldump=0.0
-
-  idebug=0
-! input type
-  ftype='felt'
-! output type
-  fldtype='felt'
-  fldfil= 'snap.dat'
-  logfile='snap.log'
-  nctype = "*"
-  ncsummary=''
-  relfile='*'
-! timestamp of the form 0000-00-00_00:00:00
-  call DATE_AND_TIME(VALUES=date_time)
-  write (simulation_start, 9999) (date_time(i),i=1,3), &
-      (date_time(i),i=5,7)
-  9999 FORMAT(I4.4,'-',I2.2,'-',I2.2,'_',I2.2,':',I2.2,':',I2.2)
-! input ensemble member, default to no ensembles
-  enspos = -1
-
-  idailyout=0
-
-  iargos=0
-  argoshourstep= 6
-  argosdepofile= 'xxx_MLDP0_depo'
-  argosconcfile= 'xxx_MLDP0_conc'
-  argosdosefile= 'xxx_MLDP0_dose'
-
-  warning = .false.
-end subroutine
-
-
   subroutine first_nonblank(str, n)
     character(len=*), intent(in) :: str
     integer, intent(out) :: n
@@ -1312,14 +1228,14 @@ end subroutine
   end subroutine
 
   !> reads information from an inputfile and loads into the program
-  subroutine read_inputfile(iuinp)
+  subroutine read_inputfile(snapinput_unit)
     use snapparML, only: push_down_dcomp, defined_component, &
       TIME_PROFILE_CONSTANT, TIME_PROFILE_LINEAR, TIME_PROFILE_LINEAR, TIME_PROFILE_STEPS, &
       TIME_PROFILE_UNDEFINED
     use find_parameter, only: detect_gridparams, get_klevel
 
     !> Open file unit
-    integer, intent(in) :: iuinp
+    integer, intent(in) :: snapinput_unit
 
     integer :: nlines
     logical :: end_loop
@@ -1359,7 +1275,7 @@ end subroutine
           cinput(:len(char_tmp)) = char_tmp(:)
           deallocate(char_tmp)
         endif
-        read(iuinp, iostat=ierror) cinput(i:i)
+        read(snapinput_unit, iostat=ierror) cinput(i:i)
         if (ierror == IOSTAT_END) then
           end_loop = .true.
           exit read_line
@@ -2074,19 +1990,19 @@ end subroutine
         !..end
 #if defined(TRAJ)
           allocate(character(len=1024)::char_tmp)
-          call read_line_no_realloc(iuinp, char_tmp, ierror)
+          call read_line_no_realloc(snapinput_unit, char_tmp, ierror)
           if (ierror /= 0) goto 12
 
           read(char_tmp,*) ntraj
           write(*,*) 'ntraj=', ntraj
           do i=1,ntraj
-            call read_line_no_realloc(iuinp, char_tmp, ierror)
+            call read_line_no_realloc(snapinput_unit, char_tmp, ierror)
             if (ierror /= 0) goto 12
             read(char_tmp,*) tlevel(i)
             write(*,*) tlevel(i)
           enddo
           do i=1,ntraj
-            call read_line_no_realloc(iuinp, char_tmp, ierror)
+            call read_line_no_realloc(snapinput_unit, char_tmp, ierror)
             if (ierror /= 0) goto 12
             read(char_tmp,'(a80)') tname(i)
             write(*,'(i4,1x,a80)') i,tname(i)
@@ -2148,9 +2064,9 @@ end subroutine
 #ifdef TRAJ
   !> Reads into a string from a file, returning if
   !> reaching newline/end of file/len(str)
-  subroutine read_line_no_realloc(iuinp, str, ierror)
+  subroutine read_line_no_realloc(snapinput_unit, str, ierror)
     !> Open file unit
-    integer, intent(in) :: iuinp
+    integer, intent(in) :: snapinput_unit
     !> String read into
     character(len=*), intent(out) :: str
     !> 0 if no error
@@ -2167,7 +2083,7 @@ end subroutine
         ierror = 1
         return
       endif
-      read(iuinp, iostat=ierror) str(i:i)
+      read(snapinput_unit, iostat=ierror) str(i:i)
       if (ierror == IOSTAT_END) then
         ierror = 0
         return

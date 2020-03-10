@@ -27,11 +27,11 @@ module snapfilML
     integer, parameter :: mfilef = 1024
 
 !> min. step in hours between field input
-    integer, save, public :: nhfmin
+    integer, save, public :: nhfmin = 6
 !> max. step in hours between field input
-    integer, save, public :: nhfmax
+    integer, save, public :: nhfmax = 12
 !> no. of input FELT files
-    integer, save, public :: nfilef
+    integer, save, public :: nfilef = 0
 !> no. of available timesteps with data, plus 'other' files
     integer, save, public :: navail
 
@@ -90,12 +90,12 @@ module snapfilML
 !> * dmi_eps
 !> * ecemep
 !> \see snapmetML::init_meteo_params()
-    character(len=72), save, public :: nctype
+    character(len=72), save, public :: nctype = "*"
 
     real, allocatable, save, public ::  fdata(:)
     integer(int16), allocatable, save, public :: idata(:)
     character(len=:), save, public, allocatable :: nctitle
-    character(len=1024), save, public :: ncsummary
+    character(len=1024), save, public :: ncsummary = ""
     character(len=19), save, public :: simulation_start
 
 end module snapfilML

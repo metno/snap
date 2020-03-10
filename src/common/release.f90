@@ -52,13 +52,13 @@ module releaseML
   type(release_t), public, allocatable, save :: releases(:)
 
 !> no. of height classes in the run
-  integer, save, public :: nrelheight
+  integer, save, public :: nrelheight = 1
 
 !> max no. of particles released in each plume
 !>
 !>             (scaled according to max mass released
 !>              and divided between components according to mass)
-  integer, save, public :: mprel
+  integer, save, public :: mprel = 200
 
 !> preset for ::mplume
   integer, parameter :: mplumepre = 50000

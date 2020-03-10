@@ -23,9 +23,10 @@ module snapargosML
 !
     integer, parameter, public :: margos=500
 !
-    integer, save, public :: iargos,nargos
-    integer, save, public :: argoshourstep,argoshoursrelease,argoshoursrun
+    integer, save, public :: iargos = 0,nargos
+    integer, save, public :: argoshourstep = 6,argoshoursrelease,argoshoursrun
     integer, save, public :: argostime(5,margos)
-    character(len=100), save, public :: argosdepofile,argosconcfile,argosdosefile
+    character(len=100), save, public :: argosdepofile="xxx_MLDP0_depo", &
+        argosconcfile="xxx_MLDP0_conc",argosdosefile="xxx_MLDP0_dose"
 !
 end module snapargosML
