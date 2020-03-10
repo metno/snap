@@ -255,15 +255,25 @@ PROGRAM bsnap
   integer :: allocatestatus
   character(len=*), parameter :: allocateErrorMessage = "*** Not enough memory ***"
 
+! Format of time
+!..itime: itime(1) - year
+!         itime(2) - month
+!         itime(3) - day
+!         itime(4) - hour
+!         itime(5) - forecast time in hours (added to date/time above)
+
+!> start time
   integer :: itime1(5) = -huge(itime1)
-  integer :: itime2(5),itime(5),itimei(5),itimeo(5)
+!> stop  time
+  integer :: itime2(5)
+  integer :: itime(5),itimei(5),itimeo(5)
   integer :: time_file(5)
 
 !..used in xyconvert (longitude,latitude -> x,y)
   real, save :: geoparam(6) = [1.0, 1.0, 1.0, 1.0, 0.0, 0.0]
 
-  integer :: narg,iuinp,ios,nhfout = 3
-  integer :: nhrun = 0, nhrel = 0
+  integer :: snapinput_unit,ios
+  integer :: nhrun = 0, nhrel = 0, nhfout = 3
   logical :: use_random_walk = .true.
   integer :: isynoptic = 0, m,np,nlevel=0,minhfc=+6,maxhfc=+huge(maxhfc),ifltim = 0
   integer :: k, ierror, i, n
@@ -333,8 +343,7 @@ PROGRAM bsnap
 
 
 
-  narg = command_argument_count()
-  if(narg < 1) then
+  if(command_argument_count() < 1) then
     write(error_unit,*)
     write(error_unit,*) '  usage: snap <snap.input>'
     write(error_unit,*) '     or: snap --version'
@@ -347,7 +356,7 @@ PROGRAM bsnap
     stop
   endif
 
-  open(newunit=iuinp,file=finput, &
+  open(newunit=snapinput_unit,file=finput, &
       access='stream',form='unformatted', &
       status='old',iostat=ios,action='read', &
       position='rewind')
@@ -363,9 +372,9 @@ PROGRAM bsnap
   write(output_unit,*) 'Reading input file:'
   write(output_unit,*)  TRIM(finput)
 
-  call read_inputfile(iuinp)
+  call read_inputfile(snapinput_unit)
 
-  close(iuinp)
+  close(snapinput_unit)
 
   write(*,*) "SIMULATION_START_DATE: ", simulation_start
 
@@ -428,14 +437,6 @@ PROGRAM bsnap
   end if
   if(ierror /= 0) call snap_error_exit(iulog)
 
-!..itime: itime(1) - year
-!         itime(2) - month
-!         itime(3) - day
-!         itime(4) - hour
-!         itime(5) - forecast time in hours (added to date/time above)
-
-!..itime1: start time
-!..itime2: stop  time
 
   call vtime(itime1,ierror)
   if(ierror /= 0) then
@@ -1227,14 +1228,14 @@ PROGRAM bsnap
   end subroutine
 
   !> reads information from an inputfile and loads into the program
-  subroutine read_inputfile(iuinp)
+  subroutine read_inputfile(snapinput_unit)
     use snapparML, only: push_down_dcomp, defined_component, &
       TIME_PROFILE_CONSTANT, TIME_PROFILE_LINEAR, TIME_PROFILE_LINEAR, TIME_PROFILE_STEPS, &
       TIME_PROFILE_UNDEFINED
     use find_parameter, only: detect_gridparams, get_klevel
 
     !> Open file unit
-    integer, intent(in) :: iuinp
+    integer, intent(in) :: snapinput_unit
 
     integer :: nlines
     logical :: end_loop
@@ -1274,7 +1275,7 @@ PROGRAM bsnap
           cinput(:len(char_tmp)) = char_tmp(:)
           deallocate(char_tmp)
         endif
-        read(iuinp, iostat=ierror) cinput(i:i)
+        read(snapinput_unit, iostat=ierror) cinput(i:i)
         if (ierror == IOSTAT_END) then
           end_loop = .true.
           exit read_line
@@ -1989,19 +1990,19 @@ PROGRAM bsnap
         !..end
 #if defined(TRAJ)
           allocate(character(len=1024)::char_tmp)
-          call read_line_no_realloc(iuinp, char_tmp, ierror)
+          call read_line_no_realloc(snapinput_unit, char_tmp, ierror)
           if (ierror /= 0) goto 12
 
           read(char_tmp,*) ntraj
           write(*,*) 'ntraj=', ntraj
           do i=1,ntraj
-            call read_line_no_realloc(iuinp, char_tmp, ierror)
+            call read_line_no_realloc(snapinput_unit, char_tmp, ierror)
             if (ierror /= 0) goto 12
             read(char_tmp,*) tlevel(i)
             write(*,*) tlevel(i)
           enddo
           do i=1,ntraj
-            call read_line_no_realloc(iuinp, char_tmp, ierror)
+            call read_line_no_realloc(snapinput_unit, char_tmp, ierror)
             if (ierror /= 0) goto 12
             read(char_tmp,'(a80)') tname(i)
             write(*,'(i4,1x,a80)') i,tname(i)
@@ -2063,9 +2064,9 @@ PROGRAM bsnap
 #ifdef TRAJ
   !> Reads into a string from a file, returning if
   !> reaching newline/end of file/len(str)
-  subroutine read_line_no_realloc(iuinp, str, ierror)
+  subroutine read_line_no_realloc(snapinput_unit, str, ierror)
     !> Open file unit
-    integer, intent(in) :: iuinp
+    integer, intent(in) :: snapinput_unit
     !> String read into
     character(len=*), intent(out) :: str
     !> 0 if no error
@@ -2082,7 +2083,7 @@ PROGRAM bsnap
         ierror = 1
         return
       endif
-      read(iuinp, iostat=ierror) str(i:i)
+      read(snapinput_unit, iostat=ierror) str(i:i)
       if (ierror == IOSTAT_END) then
         ierror = 0
         return
