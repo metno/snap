@@ -90,7 +90,7 @@ module snapparML
 
 
 !>   no. of components used in the run
-  integer, save, public :: ncomp
+  integer, save, public :: ncomp = 0
 
   integer, parameter, public :: TIME_PROFILE_CONSTANT = 1, &
                                 !> bomb (only one initial release)

@@ -90,7 +90,8 @@ module snapfldML
   real(kind=real32), allocatable, save, public :: field4(:,:)
 
 !> the ensemble-member to read met-data from
-  integer, save, public :: enspos
+!> default (-1) : no ensemble member
+  integer, save, public :: enspos = -1
 
 !> average height of boundary layer (accumulation)
   real(kind=real64), allocatable, save, public :: avghbl(:,:)
