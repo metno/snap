@@ -8,7 +8,6 @@ and `traj` directory.
 * The code should generally use an indent of 2
 * Use ! for comments
 * Prefer spaces to tabs
-* Prefer linters (see Tools)
 
 ## Fortran Guidelines
 
