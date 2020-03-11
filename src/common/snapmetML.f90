@@ -45,6 +45,16 @@ module snapmetML
     character(len=80) :: precconvrt = ''
     character(len=80) :: total_column_rain = ''
 
+    ! units as used in SNAP for the different variables
+    ! these should not be changed! Needed when reading fimex.
+    character(len=*), parameter :: xy_wind_units = 'm/s'
+    character(len=*), parameter :: pressure_units= 'hPa'
+    character(len=*), parameter :: omega_units = 'Pa/s'
+    character(len=*), parameter :: precip_rate_units = 'mm/hr' ! kg/m2/s
+    character(len=*), parameter :: precip_units = 'kg/m2'
+    character(len=*), parameter :: temp_units = 'K'
+
+    ! flags when reading the data
     logical :: temp_is_abs = .false.
     logical :: has_dummy_dim = .false.
     logical :: manual_level_selection = .false.
