@@ -5,11 +5,18 @@ and traj directory.
 
 ## Code formatting
 
-The code should generally use an indent of 2. Use ! for comments.
+* The code should generally use an indent of 2. Use ! for comments.
+* Prefer spaces to tabs
+
+## Fortran Guidelines
+
+* Use as few non-standard functions as possible
+* Prefer modules to interfaces or implicit imports
+* Use `implicit none` and `private` in all modules
 
 ### Code Documentation
 
-Document code-modules, functions and subroutines using !> and doxygen syntax: 
+Document code-modules, functions and subroutines using !> and doxygen syntax:
 https://github.com/Mohid-Water-Modelling-System/Mohid/wiki/Documenting-Fortran-with-Doxygen
 
 ### Tools
@@ -28,4 +35,8 @@ Ctrl-Shift-P  configureLanguageBasedSettings
         "editor.tabSize": 2
     }
 
+#### Black
 
+Linter for python, https://github.com/psf/black
+
+Use with ```black file.py```
