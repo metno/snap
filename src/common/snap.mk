@@ -1,7 +1,7 @@
 # this file contains the common parts to compile bsnap
 # should be included after all: target
 
-MODELOBJ = dateCalc.o particleML.o snapdimML.o snapfilML.o snapfldML.o snapgrdML.o snapmetML.o snapparML.o \
+MODELOBJ = dateCalc.o utils.o particleML.o snapdimML.o snapfilML.o snapfldML.o snapgrdML.o snapmetML.o snapparML.o \
 snapposML.o snaptabML.o snapargosML.o snapdebugML.o posint.o decay.o \
 om2edot.o ftest.o readfield_nc.o rwalk.o epinterp.o \
 vgravtables.o forwrd.o wetdep.o drydep.o \
@@ -19,6 +19,11 @@ else
      hrdiff.o  rmfile.o  vtime.o \
      earthr.o pol2sph.o sph2rot.o lam2sph.o mer2sph.o milibML.o
 endif
+ifdef FIMEXLIB
+  F77FLAGS += -DFIMEX
+  MODELOBJ += readfield_fi.o
+endif
+
 
 BOBJ = snap_batch_copy.o
 
@@ -74,7 +79,9 @@ om2edot.o: ../common/om2edot.f90 snapgrdML.o snapfldML.o snapdimML.o snapdebugML
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 readfield_nc.o: ../common/readfield_nc.f90 particleML.o snapfilML.o snapgrdML.o snapmetML.o snaptabML.o snapdebugML.o snapdimML.o om2edot.o ftest.o milibML.o snapfldML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-filesort_nc.o: ../common/filesort_nc.f90 dateCalc.o snapfilML.o snapdimML.o snapgrdML.o snapfldML.o snapmetML.o snapdebugML.o readfield_nc.o milibML.o
+readfield_fi.o: ../common/readfield_fi.f90 particleML.o snapfilML.o snapgrdML.o snapmetML.o snaptabML.o snapdebugML.o snapdimML.o om2edot.o ftest.o milibML.o
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+filesort_nc.o: ../common/filesort_nc.f90 dateCalc.o snapfilML.o snapdimML.o snapgrdML.o snapfldML.o snapmetML.o snapdebugML.o readfield_nc.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 fldout.o: ../common/fldout.f90 particleML.o snapfilML.o snapgrdML.o snapfldML.o snapparML.o snapargosML.o snapdebugML.o snapdimML.o ftest.o argoswrite.o snaptabML.o milibML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
@@ -106,6 +113,8 @@ snapmetML.o: ../common/snapmetML.f90 snapfilML.o
 	${F77} -c ${F77FLAGS} $<
 snapposML.o: ../common/snapposML.f90 snapdimML.o
 	${F77} -c ${F77FLAGS} $<
+utils.o: ../common/utils.f90
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 vgravtables.o: ../common/vgravtables.f90 snapparML.o snapdimML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 wetdep.o: ../common/wetdep.f90 particleML.o snapgrdML.o snapfldML.o snapparML.o snaptabML.o snapdimML.o
