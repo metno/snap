@@ -20,11 +20,12 @@ module readfield_fiML
   !! @warning The class FimexIO stores internally two refernces to file and data-handles.
   !!    It should therefore not be accessed from two parallel threads
 
-  USE Fimex, ONLY: FimexIO, AXIS_GeoX, AXIS_GeoY, AXIS_Lon, AXIS_Lat, AXIS_GeoZ, AXIS_Realization, AXIS_Time
+  USE Fimex, ONLY: FimexIO
   use iso_fortran_env, only: real32, real64
   USE ftestML, only: ftest
   USE om2edotML, only: om2edot
   USE milibML, only: mapfield, hrdiff
+  USE snapdebug, only: iulog, idebug
   
   implicit none
   ! fimex filetype, e.g. netcdf, grib, ncml for all files. All files have same type
@@ -68,7 +69,6 @@ contains
     USE snapmetML, only: met_params, xy_wind_units, pressure_units, omega_units, &
       precip_rate_units, precip_units, temp_units
     USE snaptabML, only: cp, r
-    USE snapdebug, only: iulog, idebug
     USE snapdimML, only: nx, ny, nk
 !> current timestep (always positive), negative istep means reset
     integer, intent(in) :: istep
@@ -101,7 +101,7 @@ contains
     real :: ptoptmp(1)
     real, parameter :: mean_surface_air_pressure = 1013.26
 
-    integer :: timepos, timeposm1
+    integer :: timepos, timeposm1, nr
 
     if (istep < 0) then
       ! set all 'save' variables to default values,
@@ -109,6 +109,10 @@ contains
       ntav2 = 0
       return
     end if
+
+!.. get the correct ensemble/realization position, nr starting with 1, enspos starting with 0
+    nr = enspos + 1
+    if (enspos <= 0) nr = 1
 
 !..get time offset in hours (as iavail(n)%oHour)
     if (nhleft < 0) then
@@ -236,17 +240,17 @@ contains
 
       !..u
       !     Get the varid of the data variable, based on its name.
-      call fi_checkload(fio, met_params%xwindv, xy_wind_units, u2(:, :, k), nt=timepos, nz=ilevel, nr=enspos)
+      call fi_checkload(fio, met_params%xwindv, xy_wind_units, u2(:, :, k), nt=timepos, nz=ilevel, nr=nr)
 
       !..v
-      call fi_checkload(fio, met_params%ywindv,  xy_wind_units, v2(:, :, k), nt=timepos, nz=ilevel, nr=enspos)
+      call fi_checkload(fio, met_params%ywindv,  xy_wind_units, v2(:, :, k), nt=timepos, nz=ilevel, nr=nr)
       ! bug in chernobyl borders from destaggering
       where (v2 >= 1e+30)
       v2 = 0.0
       end where
 
       !..pot.temp. or abs.temp.
-      call fi_checkload(fio, met_params%pottempv, temp_units, t2(:, :, k), nt=timepos, nz=ilevel, nr=enspos)
+      call fi_checkload(fio, met_params%pottempv, temp_units, t2(:, :, k), nt=timepos, nz=ilevel, nr=nr)
 
       !   TODO read ptop from file (only needed for sigma), but not in emep data
       ptop = 100. ! hPa
@@ -264,8 +268,6 @@ contains
           !..p0 for hybrid loaded to ptop, ap is a * p0
           alev(k) = alev(k)*ptop
         end if
-        ! TODO: check unit (here Pa -> hPa
-        alev(k) = alev(k)/100
       end if
       if (.NOT. met_params%sigmav == '') then
         ! reusing blev(k) for sigma(k) later
@@ -277,7 +279,7 @@ contains
       if (met_params%sigmadotv == '') then
         w2 = 0
       else
-        call fi_checkload(fio, met_params%sigmadotv, omega_units, w2(:, :, k), nt=timepos, nz=ilevel, nr=enspos)
+        call fi_checkload(fio, met_params%sigmadotv, omega_units, w2(:, :, k), nt=timepos, nz=ilevel, nr=nr)
       end if
 
     end do ! k=nk-kadd,2,-1
@@ -286,16 +288,16 @@ contains
 !..precipitation
 
 ! ps
-    call fi_checkload(fio, met_params%psv, pressure_units, ps2(:, :), nt=timepos, nr=enspos)
+    call fi_checkload(fio, met_params%psv, pressure_units, ps2(:, :), nt=timepos, nr=nr)
 
 ! u10m
 ! v10m
     if (.not. met_params%use_model_wind_for_10m) then
-      call fi_checkload(fio, met_params%xwind10mv, xy_wind_units, u2(:, :, 1), nt=timepos, nr=enspos, nz=0)
-      call fi_checkload(fio, met_params%ywind10mv, xy_wind_units, v2(:, :, 1), nt=timepos, nr=enspos, nz=0)
+      call fi_checkload(fio, met_params%xwind10mv, xy_wind_units, u2(:, :, 1), nt=timepos, nr=nr, nz=1)
+      call fi_checkload(fio, met_params%ywind10mv, xy_wind_units, v2(:, :, 1), nt=timepos, nr=nr, nz=1)
     else
-      call fi_checkload(fio, met_params%xwindv, xy_wind_units, u2(:, :, 1), nt=timepos, nr=enspos, nz=0)
-      call fi_checkload(fio, met_params%ywindv, xy_wind_units, v2(:, :, 1), nt=timepos, nr=enspos, nz=0)
+      call fi_checkload(fio, met_params%xwindv, xy_wind_units, u2(:, :, 1), nt=timepos, nr=nr, nz=1)
+      call fi_checkload(fio, met_params%ywindv, xy_wind_units, v2(:, :, 1), nt=timepos, nr=nr, nz=1)
     endif
 
 !..mean sea level pressure, not used in computations,
@@ -305,7 +307,7 @@ contains
         write (iulog, *) 'Mslp not found. Not important.'
         imslp = 0
       else
-        call fi_checkload(fio, met_params%mslpv, pressure_units, pmsl2(:, :), nt=timepos, nr=enspos, nz=0)
+        call fi_checkload(fio, met_params%mslpv, pressure_units, pmsl2(:, :), nt=timepos, nr=nr, nz=1)
       end if
     end if
 
@@ -567,16 +569,21 @@ contains
     integer, intent(in) :: timeposm1
 
     integer :: start3d(7), count3d(7)
-    integer :: i, j
+    integer :: i, j, nr
     real :: precip1
     real :: unitScale
     real :: totalprec
 
+!.. get the correct ensemble/realization position, nr starting with 1, enspos starting with 0
+    nr = enspos + 1
+    if (enspos <= 0) nr = 1
+
+
     if (met_params%precaccumv /= '') then
       !..precipitation between input time 't1' and 't2'
       if (timepos /= 1) then
-        call fi_checkload2d(fio, met_params%precaccumv, precip_units, field1(:, :), nt=timeposm1, nr=enspos, nz=1)
-        call fi_checkload(fio, met_params%precaccumv, precip_units, field2(:, :), nt=timepos, nr=enspos, nz=1)
+        call fi_checkload(fio, met_params%precaccumv, precip_units, field1(:, :), nt=timeposm1, nr=nr, nz=1)
+        call fi_checkload(fio, met_params%precaccumv, precip_units, field2(:, :), nt=timepos, nr=nr, nz=1)
 
         !..the difference below may get negative due to different scaling
         do j = 1, ny
@@ -590,10 +597,10 @@ contains
       ! accumulated stratiform and convective precipitation
       !..precipitation between input time 't1' and 't2'
       if (timepos /= 1) then
-        call fi_checkload(fio, met_params%precstratiaccumv, precip_units, field1(:, :), nt=timeposm1, nr=enspos, nz=1)
-        call fi_checkload(fio, met_params%precconaccumv, precip_units, field2(:, :), nt=timeposm1, nr=enspos, nz=1)
-        call fi_checkload(fio, met_params%precstratiaccumv, precip_units, field3(:, :), nt=timepos, nr=enspos, nz=1)
-        call fi_checkload(fio, met_params%precconaccumv, precip_units, field4(:, :), nt=timepos, nr=enspos, nz=1)
+        call fi_checkload(fio, met_params%precstratiaccumv, precip_units, field1(:, :), nt=timeposm1, nr=nr, nz=1)
+        call fi_checkload(fio, met_params%precconaccumv, precip_units, field2(:, :), nt=timeposm1, nr=nr, nz=1)
+        call fi_checkload(fio, met_params%precstratiaccumv, precip_units, field3(:, :), nt=timepos, nr=nr, nz=1)
+        call fi_checkload(fio, met_params%precconaccumv, precip_units, field4(:, :), nt=timepos, nr=nr, nz=1)
 
         do j = 1, ny
           do i = 1, nx
@@ -604,8 +611,8 @@ contains
         end do
       else
         ! timepos eq 1, check if precipitation already present / assume dummy step 0
-        call fi_checkload(fio, met_params%precstratiaccumv, precip_units, field3(:, :), nt=timepos, nr=enspos, nz=1)
-        call fi_checkload(fio, met_params%precconaccumv, precip_units, field4(:, :), nt=timepos, nr=enspos, nz=1)
+        call fi_checkload(fio, met_params%precstratiaccumv, precip_units, field3(:, :), nt=timepos, nr=nr, nz=1)
+        call fi_checkload(fio, met_params%precconaccumv, precip_units, field4(:, :), nt=timepos, nr=nr, nz=1)
 
         field1 = 0.0
         field2 = 0.0
@@ -626,7 +633,7 @@ contains
         endif
       end if
     else if (met_params%total_column_rain /= '') then
-      call fi_checkload(fio, met_params%total_column_rain, precip_units, field3(:, :), nt=timepos, nr=enspos, nz=1)
+      call fi_checkload(fio, met_params%total_column_rain, precip_units, field3(:, :), nt=timepos, nr=nr, nz=1)
       do j = 1, ny
         do i = 1, nx
           precip(i, j, 1:nprecip) = field3(i, j)
@@ -635,9 +642,9 @@ contains
       write (error_unit, *) "Check precipation correctness"
     else
       !..non-accumulated emissions in stratiform an convective
-      call fi_checkload(fio, met_params%precstrativrt, precip_rate_units, field1(:, :), nt=timepos, nr=enspos, nz=1)
+      call fi_checkload(fio, met_params%precstrativrt, precip_rate_units, field1(:, :), nt=timepos, nr=nr, nz=1)
       if (met_params%precconvrt /= '') then
-        call fi_checkload(fio, met_params%precstrativrt, precip_rate_units, field2(:, :), nt=timepos, nr=enspos, nz=1)
+        call fi_checkload(fio, met_params%precstrativrt, precip_rate_units, field2(:, :), nt=timepos, nr=nr, nz=1)
       else
         field2 = 0.
       endif
@@ -671,9 +678,9 @@ contains
   !> @param[in] fio the fimex io-object
   !> @param[in] varname variable name in file
   !> @param[in] units the requested units, see snapdimML.f90
-  !> @param[in] nz optional position on t-axis, default all
-  !> @param[in] nz optional position on z-axis, default all
-  !> @param[in] nr optional position on realization/ensemble axis, default 0
+  !> @param[in] nz optional position on t-axis, default all (1 is first element)
+  !> @param[in] nz optional position on z-axis, default all (1 is first element)
+  !> @param[in] nr optional position on realization/ensemble axis, default 1
   !> @param[out] field to read
   subroutine fi_checkload1d(fio, varname, units, field, nt, nz, nr)
     TYPE(FimexIO), intent(inout) :: fio
@@ -733,11 +740,12 @@ contains
     real(kind=real64),dimension(:),allocatable,target,intent(out) :: zfield
 
     integer(kind=4), dimension(:), allocatable :: start, length, atypes
-    integer(kind=4) :: tlength, i, ndims, xpos, ypos
+    integer(kind=4) :: tlength, i, ndims
 
 ! Get dimensions
     ndims = fio%get_dimensions(varname)
-    call check(ndims, "can't make slicebuilder for "//TRIM(varname))
+    if (ndims <= 0) &
+      call check(ndims, "can't make slicebuilder for "//TRIM(varname))
     !WRITE(0,*) "get_dimensions: ", ndims
 
     ALLOCATE(start(ndims))
@@ -753,20 +761,18 @@ contains
       !WRITE (*,*) AXIS_GeoX, AXIS_GeoY, AXIS_Lon, AXIS_Lat
       SELECT CASE (atypes(i))
         CASE(AXIS_GeoX, AXIS_Lon) ! full x-range
-          xpos = i
         CASE(AXIS_GeoY, AXIS_Lat) ! full y-range
-          ypos = i
         CASE(AXIS_Time)
           if (present(nt)) &
-            call check(fio%reduce_dimension(fio%get_dimname(i), nt, 1),&
+            call check(fio%reduce_dimension(fio%get_dimname(i), nt-1, 1),&
               "reducing "//TRIM(fio%get_dimname(i))//" to "//itoa(nt)//" for "//TRIM(varname))
         CASE(AXIS_GeoZ,AXIS_Pressure,AXIS_Height)
           if (present(nz)) &
-            call check(fio%reduce_dimension(fio%get_dimname(i), nz, 1),&
+            call check(fio%reduce_dimension(fio%get_dimname(i), nz-1, 1),&
               "reducing "//TRIM(fio%get_dimname(i))//" to "//itoa(nz)//" for "//TRIM(varname))
         CASE(AXIS_Realization)
           if (present(nt)) then
-            call check(fio%reduce_dimension(fio%get_dimname(i), nr, 1),&
+            call check(fio%reduce_dimension(fio%get_dimname(i), nr-1, 1),&
               "reducing "//TRIM(fio%get_dimname(i))//" to "//itoa(nr)//" for "//TRIM(varname))
           else
             call check(fio%reduce_dimension(fio%get_dimname(i), 0, 1),&
@@ -776,14 +782,17 @@ contains
           call check(fio%reduce_dimension(fio%get_dimname(i), 0, 1),&
             "reducing "//TRIM(fio%get_dimname(i))//" to 0 for "//TRIM(varname))
       END SELECT
-      tlength = tlength * length(i)
     END DO
+    call check(fio%get_dimension_start_size(start, length), "reading dim-sizes for "//TRIM(varname))
+    tlength = PRODUCT(length)
     if ( .not.allocated(zfield)) allocate(zfield(tlength))
+    write (iulog,*) "reading "//trim(varname)//", dims: ", "start(0):",start, " size:",length, " total-size:", tlength
     if (units /= "") then
       call check(fio%read(varName,zfield,units), "reading '"//varname//"' in unit '"//units//"'")
     else
       call check(fio%read(varName,zfield), "reading '"//varname//"'")
     end if
+    write (iulog,*) "reading "//trim(varname)//", min, max: ", minval(zfield), maxval(zfield)
   end subroutine fi_checkload_intern
 
 end module readfield_fiML

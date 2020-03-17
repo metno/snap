@@ -191,6 +191,9 @@ PROGRAM bsnap
   USE init_random_seedML, only: init_random_seed
   USE compheightML, only: compheight
   USE readfield_ncML, only: readfield_nc
+#if defined(FIMEX)
+  USE readfield_fiML, only: fi_init, readfield_fi
+#endif
   USE releasefileML, only: releasefile
   USE filesort_ncML, only: filesort_nc
 #if defined(MILIB)
@@ -254,7 +257,7 @@ PROGRAM bsnap
   logical :: init = .TRUE.
 
   character(len=1024) ::  finput,fldfil="snap.dat",fldfilX,fldfilN,logfile="snap.log",ftype="felt", &
-      fldtype="felt", relfile="*"
+      fldtype="felt", relfile="*", fimex_config, fimex_type
   character(len=1024) :: tempstr
 
 !> name of selected release position
@@ -381,7 +384,7 @@ PROGRAM bsnap
 
 !..check input FELT files and make sorted lists of available data
 !..make main list based on x wind comp. (u) in upper used level
-  if (ftype == "netcdf") then
+  if (ftype == "netcdf" .or. ftype == "fimex") then
     call filesort_nc ! (iunitf, ierror)
   else
     call filesort(iunitf,ierror)
@@ -655,7 +658,13 @@ PROGRAM bsnap
     if (ftype == "netcdf") &
         call readfield_nc(-1,nhleft,itimei,ihr1,ihr2, &
             time_file,ierror)
-
+#if defined(FIMEX)
+    if (ftype == "fimex") then
+      call fi_init(fimex_type, fimex_config)
+      call readfield_fi(-1,nhleft,itimei,ihr1,ihr2, &
+        time_file,ierror)
+    end if
+#endif
   ! start time loop
     time_loop: do istep=0,nstep
 
@@ -699,6 +708,11 @@ PROGRAM bsnap
         if (ftype == "netcdf") then
           call readfield_nc(istep,nhleft,itimei,ihr1,ihr2, &
               time_file,ierror)
+#if defined(FIMEX)
+        elseif (ftype == "fimex") then
+          call readfield_fi(istep,nhleft,itimei,ihr1,ihr2, &
+              time_file,ierror)
+#endif
         else
           call readfield(iunitf,istep,nhleft,itimei,ihr1,ihr2, &
               time_file,ierror)
@@ -1842,6 +1856,17 @@ PROGRAM bsnap
         !..field.type felt or netcdf
           if(.not.has_value) goto 12
           read(cinput(pname_start:pname_end),*,err=12) ftype
+      case('fimex.config')
+        !..fimex.config config filename, only used when ftype=fimex
+          if(.not.has_value) then
+            fimex_config = ""
+          else
+            read(cinput(pname_start:pname_end),*,err=12) fimex_config
+          endif
+      case('fimex.file.type')
+        !..fimex.file_type grib,netcdf,felt,ncml (known fimex filetypes), only used when ftype=fimex
+          if(.not.has_value) goto 12
+          read(cinput(pname_start:pname_end),*,err=12) fimex_type
       case('field.input')
         !..field.input=  felt_file_name
           if(.not.has_value) goto 12
@@ -2076,12 +2101,12 @@ subroutine conform_input(ierror)
     write(error_unit,*) 'Input model levels not specified'
     ierror=1
   end if
-  if(ftype /= "felt" .AND. ftype /= "netcdf") then
-    write(error_unit,*) 'Input type not felt or netcdf:', trim(ftype)
+  if(ftype /= "felt" .AND. ftype /= "netcdf" .AND. ftype /= "fimex") then
+    write(error_unit,*) 'Input type not felt, netcdf or fimex:', trim(ftype)
     ierror=1
   end if
-  if(ftype /= "felt" .AND. ftype /= "netcdf") then
-    write(error_unit,*) 'Output type not felt or netcdf:', trim(ftype)
+  if(fldtype /= "felt" .AND. fldtype /= "netcdf") then
+    write(error_unit,*) 'Output type not felt or netcdf:', trim(fldtype)
     ierror=1
   end if
   if(nfilef == 0) then
@@ -2142,8 +2167,8 @@ subroutine conform_input(ierror)
       ierror = 1
     end if
     if (maxval(def_comp%idcomp) > ncomp) then
-      write(error_unit,*) "Field identification is higher than total number of fields"
-      ierror = 1
+      write(error_unit,*) "Warn: Field identification is higher than total number of fields: ", &
+        maxval(def_comp%idcomp) , " > ", ncomp
     end if
 
     do m=1,size(def_comp)-1
