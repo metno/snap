@@ -1,5 +1,5 @@
 ! SNAP: Servere Nuclear Accident Programme
-! Copyright (C) 1992-2017   Norwegian Meteorological Institute
+! Copyright (C) 1992-2020   Norwegian Meteorological Institute
 
 ! This file is part of SNAP. SNAP is free software: you can
 ! redistribute it and/or modify it under the terms of the
@@ -145,55 +145,6 @@
 ! ARGOS.OUTPUT.TIMESTEP.HOUR= 3
 ! END
 !=======================================================================
-
-!-----------------------------------------------------------------------
-! DNMI library subroutines : rfelt
-!                            chcase
-!                            hrdiff
-!                            vtime
-!                            gridpar
-!                            mapfield
-!                            xyconvert
-!                            daytim
-!                            mwfelt
-
-!-----------------------------------------------------------------------
-!  DNMI/FoU  18.09.1992  Anstein Foss
-!  DNMI/FoU  19.02.1993  Anstein Foss
-!  DNMI/FoU  18.11.1993  Anstein Foss
-!  DNMI/FoU  08.04.1994  Anstein Foss
-!  DNMI/FoU  24.10.1994  Anstein Foss ... GL graphics
-!  DNMI/FoU  26.10.1994  Anstein Foss ... rmpart(...)
-!  DNMI/FoU  05.12.1994  Anstein Foss ... status file for normem etc.
-!  DNMI/FoU  06.01.1995  Anstein Foss
-!  DNMI/FoU  21.03.1995  Anstein Foss
-!  DNMI/FoU  21.04.1995  Anstein Foss
-!  DNMI/FoU  05.06.1995  Anstein Foss ... Norlam+Hirlam
-!  DNMI/FoU  16.08.1995  Anstein Foss
-!  DNMI/FoU  06.10.1995  Anstein Foss ... no receive positions
-!  DNMI/FoU  24.10.1995  Anstein Foss ... aerosol+gas+noble.gas+...
-!  DNMI/FoU  23.11.1995  Anstein Foss
-!  DNMI/FoU  11.03.1996  Anstein Foss ... video.save
-!  DNMI/FoU  13.09.1996  Anstein Foss ... ECMWF model level data
-!  DNMI/FoU  22.11.1996  Anstein Foss ... mass in graphics +++
-!  DNMI/FoU  06.02.2001  Anstein Foss ... Ensemble project output
-!  DNMI/FoU  17.02.2001  Anstein Foss ... Qt/OpenGL graphics
-!  DNMI/FoU  24.08.2001  Anstein Foss ... Radioactive decay
-!  DNMI/FoU  29.10.2001  Anstein Foss ... Nuclear bomb, gravity +++
-!  DNMI/FoU  10.12.2001  Anstein Foss ... NKS, 'singlecomponent' +++++
-!  DNMI/FoU  01.12.2002  Anstein Foss ... Argos output for SSV
-!  DNMI/FoU  04.12.2002  Anstein Foss ... (Argos) no mass, only Bq
-!  DNMI/FoU  09.04.2003  Anstein Foss ... remove 10m level option (k10m)
-!  DNMI/FoU  15.08.2003  Anstein Foss ... ARGOS output in the model grid
-!  DNMI/FoU  23.11.2003  Anstein Foss ... BOMB version drydep2,wetdep2
-!  DNMI/FoU  16.01.2004  Anstein Foss ... mushroom shape release
-!  DNMI/FoU  04.11.2004  Anstein Foss ... bugfix (pselect called too late)
-!  DNMI/FoU  08.02.2005  Anstein Foss ... gravity(m/s) in pdata(n)%grv
-! met.no/FoU 20.06.2006  Anstein Foss ... Ensemble update
-! met.no/FoU 22.03.2013  Heiko Klein  ... Fix output-format for argos/nrpa
-!-----------------------------------------------------------------------
-
-
 
 !> SNAP - Severe Nuclear Accident Program
 PROGRAM bsnap
