@@ -20,6 +20,7 @@ module readfield_ncML
   USE om2edotML, only: om2edot
   USE milibML, only: mapfield, hrdiff
   USE netcdf
+  USE snapdebug, only: iulog, idebug
 
   implicit none
   private
@@ -45,7 +46,6 @@ subroutine readfield_nc(istep, nhleft, itimei, ihr1, ihr2, &
       gparam, kadd, klevel, ivlevel, imslp, igtype, ivlayer, ivcoor
   USE snapmetML, only: met_params
   USE snaptabML, only: cp, r
-  USE snapdebug, only: iulog, idebug
   USE snapdimML, only: nx, ny, nk
 !> current timestep (always positive), negative istep means reset
   integer, intent(in) :: istep
@@ -219,8 +219,9 @@ subroutine readfield_nc(istep, nhleft, itimei, ihr1, ihr2, &
   !..input model level no.
     ilevel=klevel(k)
 
+    ! dummy-dim only on 2d
     call calc_2d_start_length(start4d, count4d, nx, ny, ilevel, &
-        enspos, timepos, met_params%has_dummy_dim)
+        enspos, timepos, has_2d_dummy_height=.false.) 
 
   !..u
   !     Get the varid of the data variable, based on its name.
@@ -806,6 +807,7 @@ subroutine nfcheckload1d(ncid, varname, start, length, field)
   integer :: varid, status
 
   call check(nf90_inq_varid(ncid, varname, varid), varname)
+  write (iulog,*) "reading "//trim(varname)//", dims: ", "start(1):",start, " size:",length
   call check(nf90_get_var(ncid, varid, field, start=start, count=length), varname)
 
   call fillscaleoffset(ncid, varid, fillvalue, factor, offset, status)
@@ -832,6 +834,7 @@ subroutine nfcheckload2d(ncid, varname, start, length, field)
   integer :: varid, status
 
   call check(nf90_inq_varid(ncid, varname, varid), varname)
+  write (iulog,*) "reading "//trim(varname)//", dims: ", "start(1):",start, " size:",length
   call check(nf90_get_var(ncid, varid, field, start=start, count=length), varname)
 
   call fillscaleoffset(ncid, varid, fillvalue, factor, offset, status)
@@ -858,6 +861,7 @@ subroutine nfcheckload3d(ncid, varname, start, length, field)
   integer :: varid, status
 
   call check(nf90_inq_varid(ncid, varname, varid), varname)
+  write (iulog,*) "reading "//trim(varname)//", dims: ", "start(1):",start, " size:",length
   call check(nf90_get_var(ncid, varid, field, start=start, count=length), varname)
 
   call fillscaleoffset(ncid, varid, fillvalue, factor, offset, status)
