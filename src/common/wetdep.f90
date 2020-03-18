@@ -138,6 +138,7 @@ pure real function wet_deposition_rate(radius, q, depconst, tstep) result(deprat
 
   real :: rkw
 
+  rkw = 0
   if(radius > 0.05 .AND. radius <= 1.4) then
     rkw = a0*q**0.79
   endif

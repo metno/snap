@@ -170,6 +170,10 @@ subroutine bldp
 
       ktop=0
       k=1
+      ric = 0.0
+      ricu =0.0
+      ri = 0.0
+      riu = 0.0
 
       do while ((ktop == 0 .OR. k < kblbot) .AND. k < kbltop)
 
