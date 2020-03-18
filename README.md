@@ -38,6 +38,7 @@ compilation
  * NetCDF-fortran
  * Python3 (optional)
  * git (optional)
+ * fimex (optional)
 
 
 ## Installation

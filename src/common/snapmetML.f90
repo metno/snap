@@ -45,6 +45,7 @@ module snapmetML
     character(len=80) :: precconvrt = ''
     character(len=80) :: total_column_rain = ''
 
+    ! flags when reading the data
     logical :: temp_is_abs = .false.
     logical :: has_dummy_dim = .false.
     logical :: manual_level_selection = .false.
@@ -56,6 +57,15 @@ module snapmetML
   end type
 
   type(met_params_t), save, public :: met_params = met_params_t()
+  ! units as used in SNAP for the different variables
+ ! these should not be changed! Needed when reading fimex.
+  character(len=*), parameter, public :: xy_wind_units = 'm/s'
+  character(len=*), parameter, public :: pressure_units= 'hPa'
+  character(len=*), parameter, public :: omega_units = 'Pa/s'
+  character(len=*), parameter, public :: precip_rate_units = 'mm/hr' ! kg/m2/s
+  character(len=*), parameter, public :: precip_units = 'kg/m2'
+  character(len=*), parameter, public :: temp_units = 'K'
+
 
   public init_meteo_params
 

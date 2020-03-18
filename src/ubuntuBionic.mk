@@ -22,6 +22,11 @@ LDFLAGS=-fopenmp $(PROFILE)
 # NCDIR required even if /usr or /usr/local
 NCDIR = /usr
 
+# optional fimex
+# pkg-config --cflags fimex
+# pkg-config --libs fimex
+FIMEXINC = -I/usr/include/fimex-1.4
+FIMEXLIB =  -lfimexf-1.4 -lfimex-1.4
 
 MIINC = -I/usr/include
 MILIB_FLAGS = -fno-implicit-none -fno-module-private -Wno-all -Wno-extra
@@ -33,7 +38,7 @@ EXLIBS = -lpthread -ldl
 
 BINDIR=../../bin/
 
-INCLUDES = -I. $(MIINC)
+INCLUDES = -I. $(MIINC) $(FIMEXINC)
 
 
 ifdef NCDIR
@@ -42,7 +47,7 @@ INCLUDES += -I$(NCDIR)/include
 endif
 
 LIBS= $(MILIB) $(EXLIBS)
-BLIBS += $(MILIB) -lnetcdff
+BLIBS += $(MILIB) -lnetcdff $(FIMEXLIB)
 
 
 # clear out all suffixes
