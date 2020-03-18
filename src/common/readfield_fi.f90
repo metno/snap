@@ -1,5 +1,5 @@
 ! SNAP: Servere Nuclear Accident Programme
-! Copyright (C) 1992-2017   Norwegian Meteorological Institute
+! Copyright (C) 1992-2020   Norwegian Meteorological Institute
 
 ! This file is part of SNAP. SNAP is free software: you can
 ! redistribute it and/or modify it under the terms of the
@@ -15,10 +15,10 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+!> Module with utilities to read files with fimex
+!! @warning The class FimexIO stores internally two references to file and data-handles.
+!!    It should therefore not be accessed from two parallel threads
 module readfield_fiML
-  !> Class to read files with fimex
-  !! @warning The class FimexIO stores internally two refernces to file and data-handles.
-  !!    It should therefore not be accessed from two parallel threads
 
   USE Fimex, ONLY: FimexIO
   use iso_fortran_env, only: real32, real64
@@ -26,15 +26,18 @@ module readfield_fiML
   USE om2edotML, only: om2edot
   USE milibML, only: mapfield, hrdiff
   USE snapdebug, only: iulog, idebug
-  
+
   implicit none
-  ! fimex filetype, e.g. netcdf, grib, ncml for all files. All files have same type
+  private
+
+  !> fimex filetype, e.g. netcdf, grib, ncml for all files. All files have same type
   character(len=1024), private, save :: file_type = ""
-  ! config file, applied to all files
+  !> config file, applied to all files
   character(len=1024), private, save :: conf_file = ""
 
   public fi_init, readfield_fi, check
 
+  !> @brief load and check an array from a source
   interface fi_checkload
     module procedure fi_checkload1d, fi_checkload2d, fi_checkload3d
   end interface
@@ -42,10 +45,10 @@ module readfield_fiML
 contains
 
 !> Initialize readfield module
-!> @param[in] filetype filetype of all input-files, e.g. ncml, netcdf, grib
-!> @param[in] configfile optional config-file
   subroutine fi_init(filetype, configfile)
+!> filetype of all input-files, e.g. ncml, netcdf, grib
     character(len=1024), intent(in) :: filetype
+!> optional config-file
     character(len=1024), optional, intent(in) :: configfile
     file_type = filetype
     if(.not. PRESENT(configfile)) then
@@ -674,18 +677,20 @@ contains
     endif
   end subroutine check
 
-  !> @brief load and check an array from a source
-  !> @param[in] fio the fimex io-object
-  !> @param[in] varname variable name in file
-  !> @param[in] units the requested units, see snapdimML.f90
-  !> @param[in] nz optional position on t-axis, default all (1 is first element)
-  !> @param[in] nz optional position on z-axis, default all (1 is first element)
-  !> @param[in] nr optional position on realization/ensemble axis, default 1
-  !> @param[out] field to read
   subroutine fi_checkload1d(fio, varname, units, field, nt, nz, nr)
+  !> the fimex io-object
     TYPE(FimexIO), intent(inout) :: fio
-    character(len=*), intent(in) :: varname, units
-    integer, intent(in), optional :: nt, nz, nr
+  !> variable name in file
+    character(len=*), intent(in) :: varname
+  !> the requested units, see snapdimML.f90
+    character(len=*), intent(in) :: units
+  !> optional position on t-axis, default all (1 is first element)
+    integer, intent(in), optional :: nz
+  !> optional position on z-axis, default all (1 is first element)
+    integer, intent(in), optional :: nt
+  !> optional position on realization/ensemble axis, default 1
+    integer, intent(in), optional :: nr
+  !> field to read
     real(real32), intent(out) :: field(:)
 
     real(kind=real64),dimension(:),allocatable,target :: zfield
@@ -693,8 +698,6 @@ contains
     call fi_checkload_intern(fio, varname, units, zfield, nt, nz, nr)
 
     field = reshape(zfield, shape(field))
-    DEALLOCATE(zfield)
-    return
   end subroutine fi_checkload1d
 
   subroutine fi_checkload2d(fio, varname, units, field, nt, nz, nr)
@@ -708,8 +711,6 @@ contains
     call fi_checkload_intern(fio, varname, units, zfield, nt, nz, nr)
 
     field = reshape(zfield, shape(field))
-    DEALLOCATE(zfield)
-    return
   end subroutine fi_checkload2d
 
   subroutine fi_checkload3d(fio, varname, units, field, nt, nz, nr)
@@ -723,24 +724,22 @@ contains
     call fi_checkload_intern(fio, varname, units, zfield, nt, nz, nr)
 
     field = reshape(zfield, shape(field))
-    DEALLOCATE(zfield)
-    return
   end subroutine fi_checkload3d
 
-  !> @brief
   !> internal implementation, allocating the zfield
   subroutine fi_checkload_intern(fio, varname, units, zfield, nt, nz, nr)
     USE Fimex, ONLY: FimexIO, AXIS_GeoX, AXIS_GeoY, AXIS_Lon, AXIS_Lat, AXIS_GeoZ, &
       AXIS_Pressure, AXIS_Height, AXIS_Realization, AXIS_Time
     USE utils, ONLY: itoa
-    
+    USE iso_fortran_env, only: int32
+
     TYPE(FimexIO), intent(inout) :: fio
     character(len=*), intent(in) :: varname, units
     integer, intent(in), optional :: nt,nz, nr
     real(kind=real64),dimension(:),allocatable,target,intent(out) :: zfield
 
-    integer(kind=4), dimension(:), allocatable :: start, length, atypes
-    integer(kind=4) :: tlength, i, ndims
+    integer(int32), dimension(:), allocatable :: start, length, atypes
+    integer(int32) :: tlength, i, ndims
 
 ! Get dimensions
     ndims = fio%get_dimensions(varname)
@@ -777,7 +776,7 @@ contains
           else
             call check(fio%reduce_dimension(fio%get_dimname(i), 0, 1),&
               "reducing "//TRIM(fio%get_dimname(i))//" to 0 for "//TRIM(varname))
-          end if  
+          end if
         CASE DEFAULT
           call check(fio%reduce_dimension(fio%get_dimname(i), 0, 1),&
             "reducing "//TRIM(fio%get_dimname(i))//" to 0 for "//TRIM(varname))
