@@ -695,7 +695,8 @@ contains
 
     call fi_checkload_intern(fio, varname, units, zfield, nt, nz, nr)
 
-    field = reshape(zfield, shape(field))
+    field(:) = reshape(zfield, shape(field))
+    deallocate(zfield)
   end subroutine fi_checkload1d
 
   subroutine fi_checkload2d(fio, varname, units, field, nt, nz, nr)
@@ -708,7 +709,8 @@ contains
 
     call fi_checkload_intern(fio, varname, units, zfield, nt, nz, nr)
 
-    field = reshape(zfield, shape(field))
+    field(:,:) = reshape(zfield, shape(field))
+    deallocate(zfield)
   end subroutine fi_checkload2d
 
   subroutine fi_checkload3d(fio, varname, units, field, nt, nz, nr)
@@ -721,7 +723,8 @@ contains
 
     call fi_checkload_intern(fio, varname, units, zfield, nt, nz, nr)
 
-    field = reshape(zfield, shape(field))
+    field(:,:,:) = reshape(zfield, shape(field))
+    deallocate(zfield)
   end subroutine fi_checkload3d
 
   !> internal implementation, allocating the zfield
@@ -782,7 +785,7 @@ contains
     END DO
     call check(fio%get_dimension_start_size(start, length), "reading dim-sizes for "//TRIM(varname))
     tlength = PRODUCT(length)
-    if (.not. allocated(zfield)) allocate (zfield(tlength))
+    allocate (zfield(tlength))
     write (iulog, *) "reading "//trim(varname)//", dims: ", "start(0):", start, " size:", length, " total-size:", tlength
     if (units /= "") then
       call check(fio%read (varName, zfield, units), "reading '"//varname//"' in unit '"//units//"'")
