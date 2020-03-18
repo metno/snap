@@ -660,7 +660,6 @@ PROGRAM bsnap
             time_file,ierror)
     else if (ftype == "fimex") then
 #if defined(FIMEX)
-    if (ftype == "fimex") then
       call fi_init(fimex_type, fimex_config)
       call readfield_fi(-1,nhleft,itimei,ihr1,ihr2, &
         time_file,ierror)
