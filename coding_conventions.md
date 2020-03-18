@@ -1,7 +1,31 @@
-# The SNAP source-code
+# How to contribute to SNAP
 
-The snap code is stored in the `src/common` directory. It will be preprocessed under make and copied to the `naccident`, `volcano`
-and `traj` directory.
+You are welcome to contribute to the SNAP model and it's utilities.
+
+The snap code is stored in the `src/common` directory. It will be preprocessed 
+under make and copied to the `naccident`, `volcano` and `traj` directory.
+Utilities, like operational implementations or visualizations scripts for results, 
+can be found in the `utils` directory.
+
+Here are some important resources:
+
+  * Bugs? [Issue tracker](https://github.com/metno/snap/issues)
+  * License of all commits: [GPL](https://github.com/metno/snap/blob/master/COPYING)
+
+## Testing
+
+TBD
+
+## Submitting changes
+
+Please send a [GitHub Pull Request to SNAP](https://github.com/metno/snap/pull/new/master) with a clear list of what you've done (read more about [pull requests](http://help.github.com/pull-requests/)). When you send a pull request, you may add yourself to the [AUTHORS](https://github.com/metno/snap/blob/master/AUTHORS). We can always use more test coverage. Please follow our coding conventions (below) and make sure all of your commits are atomic (one feature per commit) if possible.
+
+Always write a clear log message for your commits. One-line messages are fine for small changes, but bigger changes should look like this:
+
+    $ git commit -m "A brief summary of the commit
+    > 
+    > A paragraph describing what changed and its impact."
+
 
 ## Code formatting
 
