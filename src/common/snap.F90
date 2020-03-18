@@ -655,16 +655,20 @@ PROGRAM bsnap
 
 
   ! reset readfield_nc (eventually, traj will rerun this loop)
-    if (ftype == "netcdf") &
+    if (ftype == "netcdf") then
         call readfield_nc(-1,nhleft,itimei,ihr1,ihr2, &
             time_file,ierror)
+    else if (ftype == "fimex") then
 #if defined(FIMEX)
     if (ftype == "fimex") then
       call fi_init(fimex_type, fimex_config)
       call readfield_fi(-1,nhleft,itimei,ihr1,ihr2, &
         time_file,ierror)
-    end if
+#else
+    error stop "A fimex read was requested, but fimex support is not included"// &
+      " in this build"
 #endif
+    end if
   ! start time loop
     time_loop: do istep=0,nstep
 
