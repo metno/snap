@@ -51,13 +51,12 @@ contains
 !> optional config-file
     character(len=1024), optional, intent(in) :: configfile
     file_type = filetype
-    if(.not. PRESENT(configfile)) then
+    if (.not. PRESENT(configfile)) then
       conf_file = ""
     else
       conf_file = configfile
     end if
   end subroutine fi_init
-
 
 !> Read fields from fimex files. (see fimex.F90)
   subroutine readfield_fi(istep, nhleft, itimei, ihr1, ihr2, itimefi, ierror)
@@ -70,7 +69,7 @@ contains
     USE snapgrdML, only: alevel, blevel, vlevel, ahalf, bhalf, vhalf, &
                          gparam, kadd, klevel, ivlevel, imslp, igtype, ivlayer, ivcoor
     USE snapmetML, only: met_params, xy_wind_units, pressure_units, omega_units, &
-      precip_rate_units, precip_units, temp_units
+                         precip_rate_units, precip_units, temp_units
     USE snaptabML, only: cp, r
     USE snapdimML, only: nx, ny, nk
 !> current timestep (always positive), negative istep means reset
@@ -184,11 +183,11 @@ contains
 ! time between two inputs
 ! open the correct file, if required
     if (file_name /= filef(iavail(ntav2)%fileNo)) then
-      call check(fio%close(), "close fio")
+      call check(fio%close (), "close fio")
     end if
     file_name = filef(iavail(ntav2)%fileNo)
-    call check(fio%open(file_name,conf_file,file_type), &
-      "Can't make io-object with file:"//trim(file_name)//" config: "//conf_file)
+    call check(fio%open (file_name, conf_file, file_type), &
+               "Can't make io-object with file:"//trim(file_name)//" config: "//conf_file)
 
 !     set timepos and nhdiff
     nhdiff = 3
@@ -246,7 +245,7 @@ contains
       call fi_checkload(fio, met_params%xwindv, xy_wind_units, u2(:, :, k), nt=timepos, nz=ilevel, nr=nr)
 
       !..v
-      call fi_checkload(fio, met_params%ywindv,  xy_wind_units, v2(:, :, k), nt=timepos, nz=ilevel, nr=nr)
+      call fi_checkload(fio, met_params%ywindv, xy_wind_units, v2(:, :, k), nt=timepos, nz=ilevel, nr=nr)
       ! bug in chernobyl borders from destaggering
       where (v2 >= 1e+30)
       v2 = 0.0
@@ -556,7 +555,7 @@ contains
     use iso_fortran_env, only: error_unit
     use snapdebug, only: iulog
     use snapmetML, only: met_params, xy_wind_units, pressure_units, omega_units, &
-      precip_rate_units, precip_units, temp_units
+                         precip_rate_units, precip_units, temp_units
     use snapfldML, only: field1, field2, field3, field4, precip, &
                          enspos, precip, nprecip
     use snapdimML, only: nx, ny
@@ -580,7 +579,6 @@ contains
 !.. get the correct ensemble/realization position, nr starting with 1, enspos starting with 0
     nr = enspos + 1
     if (enspos <= 0) nr = 1
-
 
     if (met_params%precaccumv /= '') then
       !..precipitation between input time 't1' and 't2'
@@ -678,22 +676,22 @@ contains
   end subroutine check
 
   subroutine fi_checkload1d(fio, varname, units, field, nt, nz, nr)
-  !> the fimex io-object
+    !> the fimex io-object
     TYPE(FimexIO), intent(inout) :: fio
-  !> variable name in file
+    !> variable name in file
     character(len=*), intent(in) :: varname
-  !> the requested units, see snapdimML.f90
+    !> the requested units, see snapdimML.f90
     character(len=*), intent(in) :: units
-  !> optional position on t-axis, default all (1 is first element)
+    !> optional position on t-axis, default all (1 is first element)
     integer, intent(in), optional :: nz
-  !> optional position on z-axis, default all (1 is first element)
+    !> optional position on z-axis, default all (1 is first element)
     integer, intent(in), optional :: nt
-  !> optional position on realization/ensemble axis, default 1
+    !> optional position on realization/ensemble axis, default 1
     integer, intent(in), optional :: nr
-  !> field to read
+    !> field to read
     real(real32), intent(out) :: field(:)
 
-    real(kind=real64),dimension(:),allocatable,target :: zfield
+    real(kind=real64), dimension(:), allocatable, target :: zfield
 
     call fi_checkload_intern(fio, varname, units, zfield, nt, nz, nr)
 
@@ -704,9 +702,9 @@ contains
     TYPE(FimexIO), intent(inout) :: fio
     character(len=*), intent(in) :: varname, units
     integer, intent(in), optional :: nt, nz, nr
-    real(real32), intent(out) :: field(:,:)
+    real(real32), intent(out) :: field(:, :)
 
-    real(kind=real64),dimension(:),allocatable,target :: zfield
+    real(kind=real64), dimension(:), allocatable, target :: zfield
 
     call fi_checkload_intern(fio, varname, units, zfield, nt, nz, nr)
 
@@ -717,9 +715,9 @@ contains
     TYPE(FimexIO), intent(inout) :: fio
     character(len=*), intent(in) :: varname, units
     integer, intent(in), optional :: nt, nz, nr
-    real(real32), intent(out) :: field(:,:,:)
+    real(real32), intent(out) :: field(:, :, :)
 
-    real(kind=real64),dimension(:),allocatable,target :: zfield
+    real(kind=real64), dimension(:), allocatable, target :: zfield
 
     call fi_checkload_intern(fio, varname, units, zfield, nt, nz, nr)
 
@@ -729,14 +727,14 @@ contains
   !> internal implementation, allocating the zfield
   subroutine fi_checkload_intern(fio, varname, units, zfield, nt, nz, nr)
     USE Fimex, ONLY: FimexIO, AXIS_GeoX, AXIS_GeoY, AXIS_Lon, AXIS_Lat, AXIS_GeoZ, &
-      AXIS_Pressure, AXIS_Height, AXIS_Realization, AXIS_Time
+                     AXIS_Pressure, AXIS_Height, AXIS_Realization, AXIS_Time
     USE utils, ONLY: itoa
     USE iso_fortran_env, only: int32
 
     TYPE(FimexIO), intent(inout) :: fio
     character(len=*), intent(in) :: varname, units
-    integer, intent(in), optional :: nt,nz, nr
-    real(kind=real64),dimension(:),allocatable,target,intent(out) :: zfield
+    integer, intent(in), optional :: nt, nz, nr
+    real(kind=real64), dimension(:), allocatable, target, intent(out) :: zfield
 
     integer(int32), dimension(:), allocatable :: start, length, atypes
     integer(int32) :: tlength, i, ndims
@@ -747,9 +745,9 @@ contains
       call check(ndims, "can't make slicebuilder for "//TRIM(varname))
     !WRITE(0,*) "get_dimensions: ", ndims
 
-    ALLOCATE(start(ndims))
-    ALLOCATE(length(ndims))
-    ALLOCATE(atypes(ndims))
+    ALLOCATE (start(ndims))
+    ALLOCATE (length(ndims))
+    ALLOCATE (atypes(ndims))
 
     call check(fio%get_dimension_start_size(start, length), "reading dim-sizes for "//TRIM(varname))
     call check(fio%get_axistypes(atypes), "reading dim-types for "//TRIM(varname))
@@ -759,39 +757,39 @@ contains
       !WRITE (*,*) i, " axistype: ", atypes(i)
       !WRITE (*,*) AXIS_GeoX, AXIS_GeoY, AXIS_Lon, AXIS_Lat
       SELECT CASE (atypes(i))
-        CASE(AXIS_GeoX, AXIS_Lon) ! full x-range
-        CASE(AXIS_GeoY, AXIS_Lat) ! full y-range
-        CASE(AXIS_Time)
-          if (present(nt)) &
-            call check(fio%reduce_dimension(fio%get_dimname(i), nt-1, 1),&
-              "reducing "//TRIM(fio%get_dimname(i))//" to "//itoa(nt)//" for "//TRIM(varname))
-        CASE(AXIS_GeoZ,AXIS_Pressure,AXIS_Height)
-          if (present(nz)) &
-            call check(fio%reduce_dimension(fio%get_dimname(i), nz-1, 1),&
-              "reducing "//TRIM(fio%get_dimname(i))//" to "//itoa(nz)//" for "//TRIM(varname))
-        CASE(AXIS_Realization)
-          if (present(nt)) then
-            call check(fio%reduce_dimension(fio%get_dimname(i), nr-1, 1),&
-              "reducing "//TRIM(fio%get_dimname(i))//" to "//itoa(nr)//" for "//TRIM(varname))
-          else
-            call check(fio%reduce_dimension(fio%get_dimname(i), 0, 1),&
-              "reducing "//TRIM(fio%get_dimname(i))//" to 0 for "//TRIM(varname))
-          end if
-        CASE DEFAULT
-          call check(fio%reduce_dimension(fio%get_dimname(i), 0, 1),&
-            "reducing "//TRIM(fio%get_dimname(i))//" to 0 for "//TRIM(varname))
+      CASE (AXIS_GeoX, AXIS_Lon) ! full x-range
+      CASE (AXIS_GeoY, AXIS_Lat) ! full y-range
+      CASE (AXIS_Time)
+        if (present(nt)) &
+          call check(fio%reduce_dimension(fio%get_dimname(i), nt - 1, 1), &
+                     "reducing "//TRIM(fio%get_dimname(i))//" to "//itoa(nt)//" for "//TRIM(varname))
+      CASE (AXIS_GeoZ, AXIS_Pressure, AXIS_Height)
+        if (present(nz)) &
+          call check(fio%reduce_dimension(fio%get_dimname(i), nz - 1, 1), &
+                     "reducing "//TRIM(fio%get_dimname(i))//" to "//itoa(nz)//" for "//TRIM(varname))
+      CASE (AXIS_Realization)
+        if (present(nt)) then
+          call check(fio%reduce_dimension(fio%get_dimname(i), nr - 1, 1), &
+                     "reducing "//TRIM(fio%get_dimname(i))//" to "//itoa(nr)//" for "//TRIM(varname))
+        else
+          call check(fio%reduce_dimension(fio%get_dimname(i), 0, 1), &
+                     "reducing "//TRIM(fio%get_dimname(i))//" to 0 for "//TRIM(varname))
+        end if
+      CASE DEFAULT
+        call check(fio%reduce_dimension(fio%get_dimname(i), 0, 1), &
+                   "reducing "//TRIM(fio%get_dimname(i))//" to 0 for "//TRIM(varname))
       END SELECT
     END DO
     call check(fio%get_dimension_start_size(start, length), "reading dim-sizes for "//TRIM(varname))
     tlength = PRODUCT(length)
-    if ( .not.allocated(zfield)) allocate(zfield(tlength))
-    write (iulog,*) "reading "//trim(varname)//", dims: ", "start(0):",start, " size:",length, " total-size:", tlength
+    if (.not. allocated(zfield)) allocate (zfield(tlength))
+    write (iulog, *) "reading "//trim(varname)//", dims: ", "start(0):", start, " size:", length, " total-size:", tlength
     if (units /= "") then
-      call check(fio%read(varName,zfield,units), "reading '"//varname//"' in unit '"//units//"'")
+      call check(fio%read (varName, zfield, units), "reading '"//varname//"' in unit '"//units//"'")
     else
-      call check(fio%read(varName,zfield), "reading '"//varname//"'")
+      call check(fio%read (varName, zfield), "reading '"//varname//"'")
     end if
-    write (iulog,*) "reading "//trim(varname)//", min, max: ", minval(zfield), maxval(zfield)
+    write (iulog, *) "reading "//trim(varname)//", min, max: ", minval(zfield), maxval(zfield)
   end subroutine fi_checkload_intern
 
 end module readfield_fiML
