@@ -25,6 +25,7 @@ module readfield_fiML
   USE ftestML, only: ftest
   USE om2edotML, only: om2edot
   USE milibML, only: mapfield, hrdiff
+  USE snaptabML, only: t2thetafac
   USE snapdebug, only: iulog, idebug
 
   implicit none
@@ -70,7 +71,6 @@ contains
                          gparam, kadd, klevel, ivlevel, imslp, igtype, ivlayer, ivcoor
     USE snapmetML, only: met_params, xy_wind_units, pressure_units, omega_units, &
                          precip_rate_units, precip_units, temp_units
-    USE snaptabML, only: cp, r
     USE snapdimML, only: nx, ny, nk
 !> current timestep (always positive), negative istep means reset
     integer, intent(in) :: istep
@@ -90,7 +90,6 @@ contains
 ! local variables
     TYPE(FimexIO) :: fio
     integer, save :: ntav1, ntav2 = 0
-    real, save :: t2thetafac(15000)
     character(len=1024), save :: file_name = ""
 
     integer :: i, j, k, n, ilevel, ierr1, ierr2, i1, i2
@@ -99,7 +98,6 @@ contains
     real :: alev(nk), blev(nk), db, dxgrid, dygrid
     integer :: kk, ifb, kfb
     real :: dred, red, p, px, dp, p1, p2, ptop
-    real, parameter :: rcp = r/cp
     real :: ptoptmp(1)
     real, parameter :: mean_surface_air_pressure = 1013.26
 
@@ -417,30 +415,15 @@ contains
       garea(:, :) = abs((dxgrid/xm)*(dygrid/ym))
       dgarea(:, :) = garea
 
-      if (met_params%temp_is_abs) then
-        ! create precomputed table for pressures between 0.1 and 1500hPa
-        do i = 1, size(t2thetafac)
-          t2thetafac(i) = 1./((real(i)/10.*0.001)**rcp)
-        end do
-      end if
-
       ! end initialization
     end if
 
     if (met_params%temp_is_abs) then
       !..abs.temp. -> pot.temp.
       do k = 2, nk - kadd
-        do j = 1, ny
-          do i = 1, nx
-            p = alevel(k) + blevel(k)*ps2(i, j)
-            ! t2thetafac is 50% faster, and less then 0.5% difference in theta
-            !  if (i == 100 .AND. j==100) then
-            !    write(*,*) k, alevel(k), blevel(k), p, ps2(i,j), nint(p*10.+.5)
-            !  endif
-            t2(i, j, k) = t2(i, j, k)*t2thetafac(nint(p*10.+.5))
-            ! 2(i,j,k)=t2(i,j,k)/((p*0.001)**rcp)
-          end do
-        end do
+        associate(p => alevel(k) + blevel(k)*ps2(:,:))
+          t2(:,:,k) = t2(:,:,k)*t2thetafac(p)
+        end associate
       end do
     end if
 
