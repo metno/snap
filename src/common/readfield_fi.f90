@@ -62,7 +62,7 @@ contains
 !> Read fields from fimex files. (see fimex.F90)
   subroutine readfield_fi(istep, nhleft, itimei, ihr1, ihr2, itimefi, ierror)
     USE iso_fortran_env, only: error_unit
-    USE snapfilML, only: nctype, itimer, kavail, iavail, filef
+    USE snapfilML, only: itimer, kavail, iavail, filef
     USE snapfldML, only: &
       xm, ym, u1, u2, v1, v2, w1, w2, t1, t2, ps1, ps2, pmsl1, pmsl2, &
       hbl1, hbl2, hlayer1, hlayer2, garea, dgarea, hlevel1, hlevel2, &
@@ -70,7 +70,7 @@ contains
     USE snapgrdML, only: alevel, blevel, vlevel, ahalf, bhalf, vhalf, &
                          gparam, kadd, klevel, ivlevel, imslp, igtype, ivlayer, ivcoor
     USE snapmetML, only: met_params, xy_wind_units, pressure_units, omega_units, &
-                         precip_rate_units, precip_units, temp_units
+                         temp_units
     USE snapdimML, only: nx, ny, nk
 !> current timestep (always positive), negative istep means reset
     integer, intent(in) :: istep
@@ -92,7 +92,7 @@ contains
     integer, save :: ntav1, ntav2 = 0
     character(len=1024), save :: file_name = ""
 
-    integer :: i, j, k, n, ilevel, ierr1, ierr2, i1, i2
+    integer :: i, k, n, ilevel, ierr1, ierr2, i1, i2
     integer :: itime(5, 4), ihours(4)
     integer :: ihdif1, ihdif2, nhdiff
     real :: alev(nk), blev(nk), db, dxgrid, dygrid
@@ -233,6 +233,7 @@ contains
 
     end if
 
+    ptop = 100.0
     do k = nk - kadd, 2, -1
 
       !..input model level no.
@@ -537,12 +538,11 @@ contains
   subroutine read_precipitation(fio, nhdiff, timepos, timeposm1)
     use iso_fortran_env, only: error_unit
     use snapdebug, only: iulog
-    use snapmetML, only: met_params, xy_wind_units, pressure_units, omega_units, &
-                         precip_rate_units, precip_units, temp_units
+    use snapmetML, only: met_params, &
+                         precip_rate_units, precip_units
     use snapfldML, only: field1, field2, field3, field4, precip, &
                          enspos, precip, nprecip
     use snapdimML, only: nx, ny
-    USE snapfilML, only: nctype
 
 !> open netcdf file
     TYPE(FimexIO), intent(inout) :: fio
@@ -553,7 +553,6 @@ contains
 !> previous timestep
     integer, intent(in) :: timeposm1
 
-    integer :: start3d(7), count3d(7)
     integer :: i, j, nr
     real :: precip1
     real :: unitScale

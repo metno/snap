@@ -67,7 +67,7 @@ subroutine readfield_nc(istep, nhleft, itimei, ihr1, ihr2, &
   integer, save :: ntav1, ntav2 = 0
   character(len=1024), save :: file_name = ""
 
-  integer :: i, j, k, n, ilevel, ierr1, ierr2, i1, i2
+  integer :: i, k, n, ilevel, ierr1, ierr2, i1, i2
   integer :: itime(5,4), ihours(4)
   integer :: ihdif1, ihdif2, nhdiff
   real :: alev(nk), blev(nk), db, dxgrid, dygrid
@@ -212,6 +212,7 @@ subroutine readfield_nc(istep, nhleft, itimei, ihr1, ihr2, &
 
   end if
 
+  ptop = 100.0
   do k=nk-kadd,2,-1
 
   !..input model level no.
@@ -362,9 +363,7 @@ subroutine readfield_nc(istep, nhleft, itimei, ihr1, ihr2, &
 
     if(ivcoor == 2) then
     !..sigma levels (norlam)
-      do k=2,nk
-        alevel(k)=ptop*(1.-blevel(k))
-      end do
+      alevel(2:nk) = ptop*(1.0 - blevel(2:nk))
     end if
 
   !..surface
