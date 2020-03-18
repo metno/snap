@@ -1,19 +1,19 @@
 #! /usr/bin/env python3
 #
 # SNAP: Servere Nuclear Accident Programme
-# Copyright (C) 1992-2017   Norwegian Meteorological Institute
-# 
-# This file is part of SNAP. SNAP is free software: you can 
-# redistribute it and/or modify it under the terms of the 
-# GNU General Public License as published by the 
+# Copyright (C) 1992-2020   Norwegian Meteorological Institute
+#
+# This file is part of SNAP. SNAP is free software: you can
+# redistribute it and/or modify it under the terms of the
+# GNU General Public License as published by the
 # Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
@@ -27,9 +27,9 @@ def insert_header(oh, ct):
     header = '''SNAP: Servere Nuclear Accident Programme
 Copyright (C) 1992-2017   Norwegian Meteorological Institute
 
-This file is part of SNAP. SNAP is free software: you can 
-redistribute it and/or modify it under the terms of the 
-GNU General Public License as published by the 
+This file is part of SNAP. SNAP is free software: you can
+redistribute it and/or modify it under the terms of the
+GNU General Public License as published by the
 Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
@@ -71,7 +71,7 @@ with open(args.file, 'rt') as ih:
         else:
             insert_header(oh, types[args.type])
             oh.write(line)
-        
+
         other = ih.read()
         oh.write(other)
 os.rename(args.file + ".header", args.file)
