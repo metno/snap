@@ -1857,6 +1857,10 @@ PROGRAM bsnap
           if(.not.has_value) goto 12
           read(cinput(pname_start:pname_end),*,err=12) ftype
       case('fimex.config')
+#if !defined(FIMEX)
+          write(error_unit, *) "fimex.config is only used when compiled with fimex support"
+          warning = .true.
+#endif
         !..fimex.config config filename, only used when ftype=fimex
           if(.not.has_value) then
             fimex_config = ""
