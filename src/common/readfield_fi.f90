@@ -555,7 +555,6 @@ contains
 
     integer :: i, j, nr
     real :: precip1
-    real :: unitScale
     real :: totalprec
 
 !.. get the correct ensemble/realization position, nr starting with 1, enspos starting with 0
@@ -580,22 +579,18 @@ contains
       ! accumulated stratiform and convective precipitation
       !..precipitation between input time 't1' and 't2'
       if (timepos /= 1) then
-        call fi_checkload(fio, met_params%precstratiaccumv, precip_units, field1(:, :), nt=timeposm1, nr=nr, nz=1)
-        call fi_checkload(fio, met_params%precconaccumv, precip_units, field2(:, :), nt=timeposm1, nr=nr, nz=1)
-        call fi_checkload(fio, met_params%precstratiaccumv, precip_units, field3(:, :), nt=timepos, nr=nr, nz=1)
-        call fi_checkload(fio, met_params%precconaccumv, precip_units, field4(:, :), nt=timepos, nr=nr, nz=1)
+        call fi_checkload(fio, met_params%precstratiaccumv, "mm", field1(:, :), nt=timeposm1, nr=nr, nz=1)
+        call fi_checkload(fio, met_params%precconaccumv, "mm", field2(:, :), nt=timeposm1, nr=nr, nz=1)
+        call fi_checkload(fio, met_params%precstratiaccumv, "mm", field3(:, :), nt=timepos, nr=nr, nz=1)
+        call fi_checkload(fio, met_params%precconaccumv, "mm", field4(:, :), nt=timepos, nr=nr, nz=1)
 
-        do j = 1, ny
-          do i = 1, nx
-            precip1 = max(field3(i, j) + field4(i, j) - &
-                          (field1(i, j) + field2(i, j)), 0.)/nhdiff
-            precip(i, j, :) = precip1
-          end do
-        end do
+        do i = 1, nprecip
+          precip(:, :, i) = max(field3 + field4 - (field1 + field2), 0.0)/nhdiff
+        enddo
       else
         ! timepos eq 1, check if precipitation already present / assume dummy step 0
-        call fi_checkload(fio, met_params%precstratiaccumv, precip_units, field3(:, :), nt=timepos, nr=nr, nz=1)
-        call fi_checkload(fio, met_params%precconaccumv, precip_units, field4(:, :), nt=timepos, nr=nr, nz=1)
+        call fi_checkload(fio, met_params%precstratiaccumv, "mm", field3(:, :), nt=timepos, nr=nr, nz=1)
+        call fi_checkload(fio, met_params%precconaccumv, "mm", field4(:, :), nt=timepos, nr=nr, nz=1)
 
         field1 = 0.0
         field2 = 0.0
@@ -605,14 +600,9 @@ contains
           !..the difference below may get negative due to different scaling
           write (iulog, *) "found precip in first timestep, assuming ", &
             "empty 0 timestep to deaccumulate precip"
-          unitScale = 1.
-          do j = 1, ny
-            do i = 1, nx
-              precip1 = max(field3(i, j) + field4(i, j) - &
-                            (field1(i, j) + field2(i, j)), 0.)/nhdiff
-              precip(i, j, :) = precip1*unitScale
-            end do
-          end do
+          do i = 1, nprecip
+            precip(:,:, i) = max(field3 + field4 - (field1 + field2), 0.0)/nhdiff
+          enddo
         endif
       end if
     else if (met_params%total_column_rain /= '') then
