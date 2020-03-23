@@ -30,11 +30,13 @@ module wetdep
 !> NOTE: ::wetdep2_init must be run first
 !>
 !> Method:   J.Bartnicki 2003
-subroutine wetdep2(tstep, part, pextra)
+pure subroutine wetdep2(depwet, tstep, part, pextra)
+  USE iso_fortran_env, only: real64
   USE particleML, only: Particle, extraParticle
-  USE snapfldML, only: depwet
   USE snapparML, only: def_comp, run_comp
 
+!> Field which ret deposition gets added to
+  real(real64), intent(inout) :: depwet(:,:,:)
 !> Timestep of the simulation, affects the deposition rate
   real, intent(in) :: tstep
 !> particle
