@@ -256,7 +256,7 @@ PROGRAM bsnap
   logical :: init = .TRUE.
 
   character(len=1024) ::  finput, fldfil = "snap.dat", fldfilX, fldfilN, logfile = "snap.log", ftype = "felt", &
-                         fldtype = "felt", relfile = "*", fimex_config, fimex_type
+                         fldtype = "felt", relfile = "*", fimex_config = "", fimex_type = ""
   character(len=1024) :: tempstr
 
 !> name of selected release position
