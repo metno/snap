@@ -297,8 +297,8 @@ contains
       call fi_checkload(fio, met_params%xwind10mv, xy_wind_units, u2(:, :, 1), nt=timepos, nr=nr, nz=1)
       call fi_checkload(fio, met_params%ywind10mv, xy_wind_units, v2(:, :, 1), nt=timepos, nr=nr, nz=1)
     else
-      call fi_checkload(fio, met_params%xwindv, xy_wind_units, u2(:, :, 1), nt=timepos, nr=nr, nz=1)
-      call fi_checkload(fio, met_params%ywindv, xy_wind_units, v2(:, :, 1), nt=timepos, nr=nr, nz=1)
+      call fi_checkload(fio, met_params%xwindv, xy_wind_units, u2(:, :, 1), nt=timepos, nr=nr, nz=nk)
+      call fi_checkload(fio, met_params%ywindv, xy_wind_units, v2(:, :, 1), nt=timepos, nr=nr, nz=nk)
     endif
 
 !..mean sea level pressure, not used in computations,
@@ -539,7 +539,7 @@ contains
     use iso_fortran_env, only: error_unit
     use snapdebug, only: iulog
     use snapmetML, only: met_params, &
-                         precip_rate_units, precip_units
+                         precip_rate_units, precip_units_ => precip_units, precip_units_fallback
     use snapfldML, only: field1, field2, field3, field4, precip, &
                          enspos, precip, nprecip
     use snapdimML, only: nx, ny
@@ -555,8 +555,9 @@ contains
 
     integer :: i, j, nr
     real :: precip1
-    real :: unitScale
     real :: totalprec
+    character(len=10), save :: precip_units = precip_units_
+    integer :: ierror
 
 !.. get the correct ensemble/realization position, nr starting with 1, enspos starting with 0
     nr = enspos + 1
@@ -579,42 +580,32 @@ contains
     else if (met_params%precstratiaccumv /= '') then
       ! accumulated stratiform and convective precipitation
       !..precipitation between input time 't1' and 't2'
+      call fi_checkload(fio, met_params%precstratiaccumv, precip_units, field3(:, :), nt=timepos, nr=nr, ierror=ierror)
+      if (ierror /= 0) then
+        !> There was an error, try reading using a fallback precip unit
+        precip_units = precip_units_fallback
+        call fi_checkload(fio, met_params%precstratiaccumv, precip_units, field3(:, :), nt=timepos, nr=nr)
+      endif
+      call fi_checkload(fio, met_params%precconaccumv, precip_units, field4(:, :), nt=timepos, nr=nr)
+
       if (timepos /= 1) then
-        call fi_checkload(fio, met_params%precstratiaccumv, precip_units, field1(:, :), nt=timeposm1, nr=nr, nz=1)
-        call fi_checkload(fio, met_params%precconaccumv, precip_units, field2(:, :), nt=timeposm1, nr=nr, nz=1)
-        call fi_checkload(fio, met_params%precstratiaccumv, precip_units, field3(:, :), nt=timepos, nr=nr, nz=1)
-        call fi_checkload(fio, met_params%precconaccumv, precip_units, field4(:, :), nt=timepos, nr=nr, nz=1)
-
-        do j = 1, ny
-          do i = 1, nx
-            precip1 = max(field3(i, j) + field4(i, j) - &
-                          (field1(i, j) + field2(i, j)), 0.)/nhdiff
-            precip(i, j, :) = precip1
-          end do
-        end do
+        call fi_checkload(fio, met_params%precstratiaccumv, precip_units, field1(:, :), nt=timeposm1, nr=nr)
+        call fi_checkload(fio, met_params%precconaccumv, precip_units, field2(:, :), nt=timeposm1, nr=nr)
       else
-        ! timepos eq 1, check if precipitation already present / assume dummy step 0
-        call fi_checkload(fio, met_params%precstratiaccumv, precip_units, field3(:, :), nt=timepos, nr=nr, nz=1)
-        call fi_checkload(fio, met_params%precconaccumv, precip_units, field4(:, :), nt=timepos, nr=nr, nz=1)
-
         field1 = 0.0
         field2 = 0.0
-        totalprec = sum(field3) + sum(field4)
 
+        totalprec = sum(field3) + sum(field4)
         if (totalprec > 1e-5) then
-          !..the difference below may get negative due to different scaling
           write (iulog, *) "found precip in first timestep, assuming ", &
             "empty 0 timestep to deaccumulate precip"
-          unitScale = 1.
-          do j = 1, ny
-            do i = 1, nx
-              precip1 = max(field3(i, j) + field4(i, j) - &
-                            (field1(i, j) + field2(i, j)), 0.)/nhdiff
-              precip(i, j, :) = precip1*unitScale
-            end do
-          end do
         endif
-      end if
+      endif
+
+      do i = 1, nprecip
+        precip(:, :, i) = max(field3 + field4 - (field1 + field2), 0.0)/nhdiff
+      enddo
+
     else if (met_params%total_column_rain /= '') then
       call fi_checkload(fio, met_params%total_column_rain, precip_units, field3(:, :), nt=timepos, nr=nr, nz=1)
       do j = 1, ny
@@ -657,7 +648,7 @@ contains
     endif
   end subroutine check
 
-  subroutine fi_checkload1d(fio, varname, units, field, nt, nz, nr)
+  subroutine fi_checkload1d(fio, varname, units, field, nt, nz, nr, ierror)
     !> the fimex io-object
     TYPE(FimexIO), intent(inout) :: fio
     !> variable name in file
@@ -670,6 +661,8 @@ contains
     integer, intent(in), optional :: nt
     !> optional position on realization/ensemble axis, default 1
     integer, intent(in), optional :: nr
+    !> error code, 0 on success
+    integer, intent(out), optional :: ierror
     !> field to read
     real(real32), intent(out) :: field(:)
 
@@ -681,36 +674,38 @@ contains
     deallocate(zfield)
   end subroutine fi_checkload1d
 
-  subroutine fi_checkload2d(fio, varname, units, field, nt, nz, nr)
+  subroutine fi_checkload2d(fio, varname, units, field, nt, nz, nr, ierror)
     TYPE(FimexIO), intent(inout) :: fio
     character(len=*), intent(in) :: varname, units
     integer, intent(in), optional :: nt, nz, nr
     real(real32), intent(out) :: field(:, :)
+    integer, intent(out), optional :: ierror
 
     real(kind=real64), dimension(:), allocatable, target :: zfield
 
-    call fi_checkload_intern(fio, varname, units, zfield, nt, nz, nr)
+    call fi_checkload_intern(fio, varname, units, zfield, nt, nz, nr, ierror)
 
     field(:,:) = reshape(zfield, shape(field))
     deallocate(zfield)
   end subroutine fi_checkload2d
 
-  subroutine fi_checkload3d(fio, varname, units, field, nt, nz, nr)
+  subroutine fi_checkload3d(fio, varname, units, field, nt, nz, nr, ierror)
     TYPE(FimexIO), intent(inout) :: fio
     character(len=*), intent(in) :: varname, units
     integer, intent(in), optional :: nt, nz, nr
     real(real32), intent(out) :: field(:, :, :)
+    integer, intent(out), optional :: ierror
 
     real(kind=real64), dimension(:), allocatable, target :: zfield
 
-    call fi_checkload_intern(fio, varname, units, zfield, nt, nz, nr)
+    call fi_checkload_intern(fio, varname, units, zfield, nt, nz, nr, ierror)
 
     field(:,:,:) = reshape(zfield, shape(field))
     deallocate(zfield)
   end subroutine fi_checkload3d
 
   !> internal implementation, allocating the zfield
-  subroutine fi_checkload_intern(fio, varname, units, zfield, nt, nz, nr)
+  subroutine fi_checkload_intern(fio, varname, units, zfield, nt, nz, nr, ierror)
     USE Fimex, ONLY: FimexIO, AXIS_GeoX, AXIS_GeoY, AXIS_Lon, AXIS_Lat, AXIS_GeoZ, &
                      AXIS_Pressure, AXIS_Height, AXIS_Realization, AXIS_Time
     USE utils, ONLY: itoa
@@ -720,9 +715,16 @@ contains
     character(len=*), intent(in) :: varname, units
     integer, intent(in), optional :: nt, nz, nr
     real(kind=real64), dimension(:), allocatable, target, intent(out) :: zfield
+    !> Error code, 0 for no error
+    integer, intent(out), optional :: ierror
 
     integer(int32), dimension(:), allocatable :: start, length, atypes
     integer(int32) :: tlength, i, ndims
+    integer :: ierr
+
+    if (present(ierror)) then
+      ierror = 0
+    endif
 
 ! Get dimensions
     ndims = fio%get_dimensions(varname)
@@ -770,7 +772,13 @@ contains
     allocate (zfield(tlength))
     write (iulog, *) "reading "//trim(varname)//", dims: ", "start(0):", start, " size:", length, " total-size:", tlength
     if (units /= "") then
-      call check(fio%read (varName, zfield, units), "reading '"//varname//"' in unit '"//units//"'")
+      ierr = fio%read(varName, zfield, units)
+      if (.not.present(ierror)) then
+        call check(ierr, "reading '"//varname//"' in unit '"//units//"'")
+      else
+        ierror = ierr
+        return
+      endif
     else
       call check(fio%read (varName, zfield), "reading '"//varname//"'")
     end if
