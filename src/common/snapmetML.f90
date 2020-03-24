@@ -64,6 +64,9 @@ module snapmetML
   character(len=*), parameter, public :: omega_units = 'Pa/s'
   character(len=*), parameter, public :: precip_rate_units = 'mm/hr' ! kg/m2/s
   character(len=*), parameter, public :: precip_units = 'kg/m2'
+  !> Equivalency to `precip_units`, and scaling between the two =>
+  !> precip_units / density of water = (kg / m^2) / (1000 kg/m^3) = 1 / 1000 m = mm
+  character(len=*), parameter, public :: precip_units_fallback = 'mm'
   character(len=*), parameter, public :: temp_units = 'K'
 
 
