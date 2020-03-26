@@ -25,8 +25,8 @@ NCDIR = /usr
 # optional fimex
 # pkg-config --cflags fimex
 # pkg-config --libs fimex
-FIMEXINC = -I/usr/include/fimex-1.4
-FIMEXLIB =  -lfimexf-1.4 -lfimex-1.4
+#FIMEXINC = -I/usr/include/fimex-1.4 # included fimex.f90
+FIMEXLIB = -lfimex-1.4 # -lfimexf-1.4 -lfimex-1.4
 
 MIINC = -I/usr/include
 MILIB_FLAGS = -fno-implicit-none -fno-module-private -Wno-all -Wno-extra

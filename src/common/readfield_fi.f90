@@ -36,7 +36,7 @@ module readfield_fiML
   !> config file, applied to all files
   character(len=1024), private, save :: conf_file = ""
 
-  public fi_init, readfield_fi, check
+  public fi_init, readfield_fi, fi_checkload, check
 
   !> @brief load and check an array from a source
   interface fi_checkload
@@ -670,7 +670,7 @@ contains
 
     call fi_checkload_intern(fio, varname, units, zfield, nt, nz, nr)
 
-    field(:) = reshape(zfield, shape(field))
+    field(:) = REAL(reshape(zfield, shape(field)), KIND=real32)
     deallocate(zfield)
   end subroutine fi_checkload1d
 
@@ -685,7 +685,7 @@ contains
 
     call fi_checkload_intern(fio, varname, units, zfield, nt, nz, nr, ierror)
 
-    field(:,:) = reshape(zfield, shape(field))
+    field(:,:) = REAL(reshape(zfield, shape(field)), KIND=real32)
     deallocate(zfield)
   end subroutine fi_checkload2d
 
@@ -700,7 +700,7 @@ contains
 
     call fi_checkload_intern(fio, varname, units, zfield, nt, nz, nr, ierror)
 
-    field(:,:,:) = reshape(zfield, shape(field))
+    field(:,:,:) = REAL(reshape(zfield, shape(field)), KIND=real32)
     deallocate(zfield)
   end subroutine fi_checkload3d
 
