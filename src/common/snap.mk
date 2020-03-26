@@ -21,7 +21,7 @@ else
 endif
 ifdef FIMEXLIB
   F77FLAGS += -DFIMEX
-  MODELOBJ += readfield_fi.o
+  MODELOBJ += readfield_fi.o fimex.o
 endif
 
 
@@ -37,6 +37,8 @@ snap_batch_copy.o: ../common/snap.F90 $(MODELOBJ)
 
 #--------------------------------
 
+fimex.o: ../common/fimex.f90
+	${F77} -c $(INCLUDES) $<
 allocateFields.o: ../common/allocateFields.f90 particleML.o snapparML.o snapfldML.o snapfilML.o snapgrdML.o release.o snapdimML.o
 	${F77} -c $(F77FLAGS) $(INCLUDES) $<
 snapdimML.o: ../common/snapdimML.f90
@@ -79,7 +81,7 @@ om2edot.o: ../common/om2edot.f90 snapgrdML.o snapfldML.o snapdimML.o snapdebugML
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 readfield_nc.o: ../common/readfield_nc.f90 particleML.o snapfilML.o snapgrdML.o snapmetML.o snaptabML.o snapdebugML.o snapdimML.o om2edot.o ftest.o milibML.o snapfldML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-readfield_fi.o: ../common/readfield_fi.f90 particleML.o snapfilML.o snapgrdML.o snapmetML.o snaptabML.o snapdebugML.o snapdimML.o om2edot.o ftest.o milibML.o
+readfield_fi.o: ../common/readfield_fi.f90 particleML.o snapfilML.o snapgrdML.o snapmetML.o snaptabML.o snapdebugML.o snapdimML.o om2edot.o ftest.o milibML.o fimex.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 filesort_nc.o: ../common/filesort_nc.f90 dateCalc.o snapfilML.o snapdimML.o snapgrdML.o snapfldML.o snapmetML.o snapdebugML.o readfield_nc.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
