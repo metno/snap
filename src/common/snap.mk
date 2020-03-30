@@ -21,7 +21,7 @@ else
 endif
 ifdef FIMEXLIB
   F77FLAGS += -DFIMEX
-  MODELOBJ += readfield_fi.o fimex.o
+  MODELOBJ += readfield_fi.o find_parameters_fi.o fimex.o
 endif
 
 
@@ -85,6 +85,10 @@ readfield_fi.o: ../common/readfield_fi.f90 particleML.o snapfilML.o snapgrdML.o 
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 filesort_nc.o: ../common/filesort_nc.f90 dateCalc.o snapfilML.o snapdimML.o snapgrdML.o snapfldML.o snapmetML.o snapdebugML.o readfield_nc.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+find_parameters.o: ../common/find_parameters.f90 snapmetML.o
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+find_parameters_fi.o: ../common/find_parameters_fi.f90 snapmetML.o fimex.o
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 fldout.o: ../common/fldout.f90 particleML.o snapfilML.o snapgrdML.o snapfldML.o snapparML.o snapargosML.o snapdebugML.o snapdimML.o ftest.o argoswrite.o snaptabML.o milibML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 fldout_nc.o: ../common/fldout_nc.f90 snapfilML.o snapgrdML.o snapfldML.o snapparML.o snaptabML.o snapargosML.o snapdebugML.o snapdimML.o readfield_nc.o ftest.o release.o milibML.o
@@ -120,8 +124,6 @@ utils.o: ../common/utils.f90
 vgravtables.o: ../common/vgravtables.f90 snapparML.o snapdimML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 wetdep.o: ../common/wetdep.f90 particleML.o snapgrdML.o snapfldML.o snapparML.o snaptabML.o snapdimML.o
-	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-find_parameters.o: ../common/find_parameters.f90 snapmetML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 
 milibML.o: ../common/milibML.f90
