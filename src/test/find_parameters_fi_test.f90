@@ -42,12 +42,13 @@ program find_parameters_fi_test
   end if
 
 
-  call detect_gridparams_fi(ncfile, config, type, varname, nx, ny, igtype, gparam, stat)
+  call detect_gridparams_fi(ncfile, config, type, varname, nx, ny, igtype, gparam, klevel, stat)
   if (stat /= 0) error stop "Could not detect gridparams"
 
   write(*,*) "GRID.SIZE= ", nx, ny
   write(*,*) "IGTYPE= ", igtype
   write(*,*) "GRID PARAMS :", gparam
+  write(*,*) "KLEVEL :", klevel
 
   ! call get_klevel_fi(ncfile, klevel, stat)
   ! if (stat /= 0) error stop "Could not determine klevel"
