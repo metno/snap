@@ -87,6 +87,8 @@
 /src/nbomb/snap_batch_copy.F90
 
 /src/test/testDateCalc
+/src/test/find_parameters_fi_test
+/src/test/snap_batch_copy.F90
 
 /src/traj/*.inc
 /src/traj/*.mod

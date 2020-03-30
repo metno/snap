@@ -16,7 +16,7 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 module utils
-  public itoa
+  public itoa, atof
 contains
   function itoa(i) result(res)
     character(:),allocatable :: res
@@ -24,6 +24,12 @@ contains
     character(range(i)+2) :: tmp
     write(tmp,'(i0)') i
     res = trim(tmp)
-  end function  
+  end function itoa
+    
+  function atof(str) result(res)
+    real :: res
+    character(len=*), intent(in) :: str
+    read(str,*) res
+  end function atof
 
 end module utils
