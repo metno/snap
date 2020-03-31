@@ -1,0 +1,12 @@
+Source: bsnap
+Maintainer: Heiko Klein <heiko.klein@met.no>
+Section: science
+Priority: optional
+Standards-Version: 3.9.5
+Build-Depends: debhelper (>= 9), libnetcdff-dev, gfortran, libmi-dev
+
+Package: bsnap
+Architecture: amd64
+Depends: ${shlibs:Depends}, ${misc:Depends}, python-netcdf4
+Description: Severe Nuclear Accident Programme
+ Dispersion model specialized for nuclear accidents.

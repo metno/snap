@@ -1,6 +1,6 @@
-VERSION=1.3.6
+VERSION=1.3.7
 VERSION_=`echo -n $VERSION | tr '.' '_'`
-PLATFORM=xenial
+PLATFORM=bionic
 #svn copy https://svn.met.no/snap/trunk \
 #     https://svn.met.no/snap/tags/$VERSION -m "Release $VERSION" || exit 1
 git checkout -b "version${VERSION_}"
