@@ -59,15 +59,19 @@ fi
 # 5 - Inform meteorologists that a new version is available
 #INSTRUCTIONS_END
 
-
-VERSION=1.6.12
-CHANGELOG="Fix problems with MEPS"
+HOST=bionic
+VERSION=1.6.13
+CHANGELOG="Fix dependencies on bionic qtwebengine"
+rm -f debian
+ln -s debian.$HOST debian
 dch -v ${VERSION}-1 -U "${CHANGELOG}"
 dch -r ''
 VERSION=$VERSION python3 setup.py sdist
 cd dist
 tar xvfz Snappy-${VERSION}.tar.gz
 cd Snappy-${VERSION}
-cp -r ../../debian .
+cp -Hr ../../debian .
+rm ../../debian
 mv ../Snappy-${VERSION}.tar.gz ../snap-py_${VERSION}.orig.tar.gz
 debuild -us -uc -sa
+
