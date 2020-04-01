@@ -1,0 +1,209 @@
+snap-py (1.6.13-1) bionic; urgency=medium
+
+  * Fix dependencies on bionic qtwebengine
+
+ -- Heiko Klein <heikok@met.no>  Wed, 01 Apr 2020 10:52:37 +0200
+
+snap-py (1.6.13-1) bionic; urgency=medium
+
+  * Fix dependencies on bionic qtwebengine
+
+ -- Heiko Klein <heikok@met.no>  Wed, 01 Apr 2020 10:51:52 +0200
+
+snap-py (1.6.13-1) bionic; urgency=medium
+
+  * Fix dependencies on bionic qtwebengine
+
+ -- Heiko Klein <heikok@met.no>  Wed, 01 Apr 2020 10:43:44 +0200
+
+snap-py (1.6.12-1) bionic; urgency=medium
+
+  * Fix problems with MEPS
+
+ -- Heiko Klein <heikok@met.no>  Tue, 31 Mar 2020 18:08:44 +0200
+
+snap-py (1.6.12-1) bionic; urgency=medium
+
+  * Fix problems with MEPS
+
+ -- Andre Brodtkorb <andreb@pc5179.pc.met.no>  Mon, 02 Mar 2020 08:55:30 +0100
+
+snap-py (1.6.11-1) bionic; urgency=medium
+
+  * Fix race condition volcano.xml vs volcano.log
+
+ -- André Brodtkorb <andreb@pc5179.pc.met.no>  Wed, 12 Feb 2020 10:15:00 +0100
+
+snap-py (1.6.10-1) bionic; urgency=medium
+
+  * Better handling of multiple users and emission altitude
+
+ -- André Brodtkorb <andreb@pc5179.pc.met.no>  Tue, 11 Feb 2020 13:17:42 +0100
+
+snap-py (1.6.7-1) xenial; urgency=medium
+
+  * initial upload
+
+ -- Heiko Klein <heikok@met.no>  Thu, 26 Apr 2018 15:08:54 +0200
+
+snap-py (1.6.5-1) xenial; urgency=medium
+
+  * initial upload
+
+ -- Heiko Klein <heikok@pc4631.pc.met.no>  Mon, 18 Dec 2017 13:27:55 +0100
+
+snap-py (1.6.4-1) xenial; urgency=medium
+
+  * initial upload
+
+ -- Heiko Klein <heikok@pc4631.pc.met.no>  Mon, 18 Dec 2017 11:52:26 +0100
+
+snap-py (1.6.3-1) xenial; urgency=medium
+
+  * initial upload
+
+ -- Heiko Klein <heikok@pc4631.pc.met.no>  Tue, 28 Nov 2017 15:11:22 +0100
+
+snap-py (1.6.2-1) xenial; urgency=medium
+
+  * initial upload
+
+ -- Heiko Klein <heikok@pc4631.pc.met.no>  Wed, 23 Aug 2017 13:58:51 +0200
+
+snap-py (1.6.1-1) xenial; urgency=medium
+
+  * initial upload
+
+ -- Heiko Klein <heikok@pc4631.pc.met.no>  Tue, 15 Aug 2017 19:35:54 +0200
+
+snap-py (1.6-1) xenial; urgency=medium
+
+  * initial upload
+
+ -- Heiko Klein <heikok@pc4631.pc.met.no>  Fri, 11 Aug 2017 16:27:13 +0200
+
+snap-py (1.5.1-1) xenial; urgency=medium
+
+  * initial upload
+
+ -- Heiko Klein <heikok@pc4631.pc.met.no>  Tue, 30 May 2017 13:17:42 +0200
+
+snap-py (1.5.0-1) xenial; urgency=medium
+
+  * initial upload
+
+ -- Heiko Klein <heikok@pc4631.pc.met.no>  Mon, 29 May 2017 09:24:41 +0200
+
+snap-py (1.4.1-1) xenial; urgency=medium
+
+  * initial upload
+
+ -- Heiko Klein <heikok@pc4631.pc.met.no>  Tue, 14 Mar 2017 11:44:41 +0100
+
+snap-py (1.4-1) xenial; urgency=medium
+
+  * initial upload
+
+ -- Heiko Klein <heikok@pc4631.pc.met.no>  Mon, 13 Mar 2017 15:53:15 +0100
+
+snap-py (1.3-1) xenial; urgency=medium
+
+  * initial upload
+
+ -- Heiko Klein <heikok@pc4631.pc.met.no>  Wed, 01 Feb 2017 13:08:12 +0100
+
+snap-py (1.1-1) xenial; urgency=medium
+
+  * initial upload
+
+ -- Heiko Klein <heikok@pc4631.pc.met.no>  Mon, 22 Aug 2016 16:49:47 +0200
+
+snap-py (1.0-2) xenial; urgency=medium
+
+  * fixing setup-directories
+
+ -- Heiko Klein <heikok@pc4631.pc.met.no>  Mon, 22 Aug 2016 15:34:58 +0200
+
+snap-py (1.0-1) trusty; urgency=medium
+
+  * initial upload
+
+ -- Heiko Klein <heikok@pc4631.pc.met.no>  Mon, 04 Jul 2016 12:42:14 +0200
+
+snap-py (0.9-1) trusty; urgency=medium
+
+  * initial upload
+
+ -- Heiko Klein <heikok@pc4631.pc.met.no>  Tue, 21 Jun 2016 17:59:32 +0200
+
+snap-py (0.8.1-1) trusty; urgency=medium
+
+  * initial upload
+
+ -- Heiko Klein <heikok@pc4631.pc.met.no>  Fri, 17 Jun 2016 20:05:42 +0200
+
+snap-py (0.8-1) trusty; urgency=medium
+
+  * initial upload
+
+ -- Heiko Klein <heikok@pc4631.pc.met.no>  Thu, 16 Jun 2016 14:15:55 +0200
+
+snap-py (0.7-1) trusty; urgency=medium
+
+  * initial upload
+
+ -- Heiko Klein <heikok@pc4631.pc.met.no>  Thu, 16 Jun 2016 11:50:30 +0200
+
+snap-py (0.6-1) trusty; urgency=medium
+
+  * initial upload
+
+ -- Heiko Klein <heikok@pc4631.pc.met.no>  Tue, 14 Jun 2016 15:28:35 +0200
+
+snap-py (0.5-1) trusty; urgency=medium
+
+  * initial upload
+
+ -- Heiko Klein <heikok@pc4631.pc.met.no>  Tue, 14 Jun 2016 14:49:39 +0200
+
+snap-py (0.5-1) trusty; urgency=medium
+
+  * initial upload
+
+ -- Heiko Klein <heikok@pc4631.pc.met.no>  Tue, 14 Jun 2016 14:47:55 +0200
+
+snap-py (0.5-1) trusty; urgency=medium
+
+  * initial upload
+
+ -- Heiko Klein <heikok@pc4631.pc.met.no>  Tue, 14 Jun 2016 14:47:04 +0200
+
+snap-py (0.5-1) trusty; urgency=medium
+
+  * initial upload
+
+ -- Heiko Klein <heikok@pc4631.pc.met.no>  Tue, 14 Jun 2016 14:45:35 +0200
+
+snap-py (0.4-1) trusty; urgency=medium
+
+  * initial upload
+
+ -- Heiko Klein <heikok@pc4631.pc.met.no>  Fri, 27 May 2016 14:58:18 +0200
+
+snap-py (0.3-1) trusty; urgency=medium
+
+  * initial upload
+
+ -- Heiko Klein <heikok@pc4631.pc.met.no>  Tue, 24 May 2016 15:10:38 +0200
+
+snap-py (0.2-1) trusty; urgency=medium
+
+  * initial upload
+
+ -- Heiko Klein <heikok@pc4631.pc.met.no>  Tue, 24 May 2016 10:13:01 +0200
+
+snap-py (0.1-1) unstable; urgency=low
+
+  * initial version
+
+ -- Heiko Klein <Heiko.Klein@met.no>  Tue, 03 May 2016 09:11:42 +0200
