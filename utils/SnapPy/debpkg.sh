@@ -60,8 +60,8 @@ fi
 #INSTRUCTIONS_END
 
 HOST=bionic
-VERSION=1.6.13
-CHANGELOG="Fix dependencies on bionic qtwebengine"
+VERSION=1.6.14
+CHANGELOG="qt.webengine broken in bionic, roling back to qt.webkit"
 rm -f debian
 ln -s debian.$HOST debian
 dch -v ${VERSION}-1 -U "${CHANGELOG}"
