@@ -30,7 +30,10 @@ from PyQt5 import Qt
 qt_version = [ int(v) for v in Qt.QT_VERSION_STR.split('.') ]
 
 #Import correct parts of Qt
-if (qt_version[0] >= 5 and qt_version[1] >= 6):
+#if (qt_version[0] >= 5 and qt_version[1] >= 6):
+# QtWebEngineWidgets broken under bionic:
+# https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=882805 (fixed Dec. 2019)
+if (False):
     #Qt5.6 and later - QtWebKitWidgets is deprecated
     from PyQt5 import QtCore, QtWidgets
     from PyQt5.QtWebEngineWidgets import QWebEnginePage as QWebPage

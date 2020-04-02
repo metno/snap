@@ -3,11 +3,11 @@ VERSION_=`echo -n $VERSION | tr '.' '_'`
 PLATFORM=bionic
 #svn copy https://svn.met.no/snap/trunk \
 #     https://svn.met.no/snap/tags/$VERSION -m "Release $VERSION" || exit 1
-git checkout -b "version${VERSION_}"
-git commit -a -m "Version $VERSION"
-git push origin "version${VERSION_}"
-git checkout master
-git merge version${VERSION_}
+#git checkout -b "version${VERSION_}"
+#git commit -a -m "Version $VERSION"
+#git push origin "version${VERSION_}"
+#git checkout master
+#git merge version${VERSION_}
 cd src
 VERSION=$VERSION make dist
 cd ..
