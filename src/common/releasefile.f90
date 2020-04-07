@@ -1,4 +1,4 @@
-H! SNAP: Servere Nuclear Accident Programme
+! SNAP: Servere Nuclear Accident Programme
 ! Copyright (C) 1992-2017   Norwegian Meteorological Institute
 
 ! This file is part of SNAP. SNAP is free software: you can
