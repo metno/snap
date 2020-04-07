@@ -1,3 +1,9 @@
+snap-py (1.6.15-1) bionic; urgency=medium
+
+  * fixing new stderr in bsnap
+
+ -- Heiko Klein <heikok@met.no>  Tue, 07 Apr 2020 09:11:10 +0200
+
 snap-py (1.6.14-1) bionic; urgency=medium
 
   * qt.webengine broken in bionic, roling back to qt.webkit
