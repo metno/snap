@@ -16,7 +16,7 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !
 module DateCalc
-    USE iso_fortran_env, only: int32, int64
+    USE iso_fortran_env, only: int32, int64, error_unit
     implicit none
     private
 
@@ -39,7 +39,7 @@ contains
     character(len=25) :: tmp
     ind=index(unit," since ")
     if (ind .eq. 0) then
-      write(*,*) "' since ' not found in time-units: ", unit
+      write (error_unit,*) "' since ' not found in time-units: ", unit
       stop 1
     end if
     tmp = trim(unit(:ind-1))
@@ -49,7 +49,7 @@ contains
     if (tmp .eq. "hours") timeUnitScale = 60*60
     if (tmp .eq. "days") timeUnitScale = 60*60*24
     if (timeUnitScale .eq. 0) then
-      write(*,*) "' since ' not found in time-units: ", unit
+      write (error_unit,*) "' since ' not found in time-units: ", unit
       stop 1
     end if
     return
@@ -63,7 +63,7 @@ contains
     character(len=25) :: date
     ind=index(unit," since ")
     if (ind .eq. 0) then
-      write(*,*) "' since ' not found in time-units: ", unit
+      write (error_unit,*) "' since ' not found in time-units: ", unit
       stop 1
     end if
     date = trim(unit(ind+7:))
@@ -164,7 +164,7 @@ contains
     if (ind == 0) ind = len(substr)
     if (ind2 == 0) ind2 = len(substr)
     ind = min(ind, ind2)
-    ! write(*,*) ind, ind2, substr
+    ! write (error_unit,*) ind, ind2, substr
     if (ind > 0) read(substr(:ind-1),*) values(4)
     substr = substr(ind+1:)
 
@@ -190,7 +190,7 @@ contains
     ind2 = index(substr, C_NULL_CHAR)
     if (ind2 == 0) ind2 = len(substr)
     ind = min(ind, ind2)
-    ! write(*,*) ind, ind2, substr
+    ! write (error_unit,*) ind, ind2, substr
     if (ind > 0) read(substr(:ind-1),*) values(1)
     substr = substr(ind+1:)
 

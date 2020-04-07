@@ -86,7 +86,7 @@ subroutine filesort_nc
         if (ieee_is_nan(field1(j, j))) count_nan = count_nan + 1
       end do
       if (count_nan == 4) then
-        write(*,*) met_params%xwindv, " at time ", i , " undefined, skipping"
+        write (error_unit,*) met_params%xwindv, " at time ", i , " undefined, skipping"
         CYCLE
       end if
       navail = navail + 1
@@ -103,7 +103,7 @@ subroutine filesort_nc
       end if
       eTimes(i) = times(i)*scalef + add_offset
       dateTime = epochToDate(eTimes(i))
-    !          write(*,*) dateTime
+    !          write (error_unit,*) dateTime
       iavail(navail)%aYear = dateTime(6)
       iavail(navail)%aMonth = dateTime(5)
       iavail(navail)%aDay = dateTime(4)

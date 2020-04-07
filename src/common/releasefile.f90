@@ -1,4 +1,4 @@
-! SNAP: Servere Nuclear Accident Programme
+H! SNAP: Servere Nuclear Accident Programme
 ! Copyright (C) 1992-2017   Norwegian Meteorological Institute
 
 ! This file is part of SNAP. SNAP is free software: you can
@@ -56,9 +56,9 @@ subroutine  releasefile(filename, release1)
   debugrelfile = .FALSE.
   iexit = 0
 
-  write(*,*) 'reading release from: ', filename
+  write (error_unit,*) 'reading release from: ', filename
   if (debugrelfile) then
-    write(*,*) 'ncomp, nrelheight', ncomp, nrelheight
+    write (error_unit,*) 'ncomp, nrelheight', ncomp, nrelheight
   end if
 
   ifd=8
@@ -66,7 +66,7 @@ subroutine  releasefile(filename, release1)
       access='sequential',form='formatted', &
       status='old',iostat=ios)
   if(ios /= 0) then
-    write(error_unit,*) 'Open Error: ', trim(filename)
+    write (error_unit,*) 'Open Error: ', trim(filename)
     stop 1
   endif
 
@@ -78,16 +78,16 @@ subroutine  releasefile(filename, release1)
   do while (iend == 0)
     nlines=nlines+1
     read(ifd,fmt='(a)',err=11) cinput
-    if (debugrelfile) write(*,*) 'cinput (',nlines,'):',cinput
+    if (debugrelfile) write (error_unit,*) 'cinput (',nlines,'):',cinput
     if (cinput == "end") goto 18
     if (cinput(1:1) /= '*') then
       read(cinput, *, err=12) hour, height, comp, rel_s
       if (lasthour == -1 .AND. hour /= 0) then
-        write(*,*) 'first hour must be 0'
+        write (error_unit,*) 'first hour must be 0'
         goto 12
       end if
       if (hour < lasthour) then
-        write(*,*) 'hour must increase monotonic: ', &
+        write (error_unit,*) 'hour must increase monotonic: ', &
         hour, ' < ', lasthour
         goto 12
       end if
@@ -117,7 +117,7 @@ subroutine  releasefile(filename, release1)
         if(comp == component(i)) icmp=i
       end do
       if (icmp == 0) then
-        write(*,*) 'unknown component: ',comp
+        write (error_unit,*) 'unknown component: ',comp
         goto 12
       endif
     ! find the height
@@ -126,7 +126,7 @@ subroutine  releasefile(filename, release1)
         if(height == release1%rellower(i)) iheight = i
       end do
       if (iheight == 0) then
-        write(*,*) 'unkown lower height: ', height
+        write (error_unit,*) 'unkown lower height: ', height
         goto 12
       end if
     ! save the release
@@ -136,8 +136,8 @@ subroutine  releasefile(filename, release1)
   end do
   goto 18
 
-  11 write(error_unit,*) 'ERROR reading file: ',filename(1:len(filename,1))
-  write(error_unit,*) 'At line no. ',nlines
+  11 write (error_unit,*) 'ERROR reading file: ',filename(1:len(filename,1))
+  write (error_unit,*) 'At line no. ',nlines
   iexit=2
   goto 18
 
@@ -149,7 +149,7 @@ subroutine  releasefile(filename, release1)
 
   18 close(ifd)
   ntprof = ihour
-  write (*,*) 'finished reading: ', ntprof, ' timesteps'
+  write (error_unit,*) 'finished reading: ', ntprof, ' timesteps'
 ! theoretically possible to add time-varying heights/radiuses
 ! but not supported by input file format yet
   do ihour=1,ntprof
@@ -166,7 +166,7 @@ subroutine  releasefile(filename, release1)
       do iheight=1,nrelheight
         if (releases(ihour)%relbqsec(icmp,iheight) < 0) then
           releases(ihour)%relbqsec(icmp,iheight) = 0
-          write(*,*) 'no release for (',component(icmp),',', &
+          write (error_unit,*) 'no release for (',component(icmp),',', &
           releases(ihour)%rellower(iheight),'m,',releases(ihour)%frelhour,'h)'
         end if
       end do

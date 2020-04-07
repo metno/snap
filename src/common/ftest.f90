@@ -152,7 +152,7 @@ subroutine ftest_3d(name, field, contains_undef, reverse_third_dim)
 end subroutine ftest_3d
 
 subroutine ftest_2d_orig(name,k1,k2,nx,ny,nk,field,iundef)
-  use iso_fortran_env, only: real64
+  use iso_fortran_env, only: real64, error_unit
   USE snapdebug, only: iulog
 
   integer, value :: k1, k2
@@ -167,7 +167,7 @@ subroutine ftest_2d_orig(name,k1,k2,nx,ny,nk,field,iundef)
 
   real(real64) :: fsum
 
-  if (.false.) write(*,*) nk ! Silence compiler warning
+  if (.false.) write (error_unit,*) nk ! Silence compiler warning
 
   fmin = huge(fmin)
   fmax = -huge(fmax)
