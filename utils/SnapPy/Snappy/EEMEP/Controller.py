@@ -34,7 +34,7 @@ import sys
 from time import gmtime, strftime
 import traceback
 
-from PyQt5.QtCore import QProcess, QProcessEnvironment, QThread, QIODevice, QThreadPool, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import QProcess, QProcessEnvironment, QThread, QIODevice, QThreadPool, pyqtSignal
 from Snappy.BrowserWidget import BrowserWidget
 from Snappy.EEMEP.Resources import Resources
 from Snappy.EEMEP.ModelRunner import ModelRunner
@@ -177,7 +177,6 @@ class Controller():
         else:
             self.write_log("Volcano file ('{:s}') does not exist".format(self.volcano_file))
 
-    @pyqtSlot()
     def update_log(self):
         self.update_log_query({})
 

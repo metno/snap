@@ -24,7 +24,7 @@ import sys
 from time import gmtime, strftime
 
 from PyQt5 import QtWidgets, QtGui
-from PyQt5.QtCore import QProcess, QProcessEnvironment, QThread, QIODevice, QThreadPool, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import QProcess, QProcessEnvironment, QThread, QIODevice, QThreadPool, pyqtSignal
 from Snappy.BrowserWidget import BrowserWidget
 from Snappy.Resources import Resources
 from Snappy.SnapController import SnapRun, SnapUpdateThread
@@ -70,12 +70,11 @@ class SnapControllerInverse:
         debug(txt)
         self.main.evaluate_javaScript('updateSnapLog({0});'.format(json.dumps(txt)))
 
-    @pyqtSlot()
     def _snap_finished(self):
         debug("finished")
         self.snapRunning = "finished"
         #self.plot_results()
-        with open(os.path.join(self.lastOutputDir,"snap.log.stdout"), "a") as logFile:
+        with open(os.path.join(self.lastOutputDir,"snap.log.out"), "a") as logFile:
             logFile.write("All work finished. Please open 'vgl-launch diana -s {dir}/diana.setup' to see results.\n".format(dir=self.lastOutputDir))
         self.update_log()
 
@@ -263,13 +262,12 @@ m=combined t=fimex format=netcdf f={dir}/snapCombined.nc
     def update_log_query(self, qDict):
         #MainBrowserWindow._default_form_handler(qDict)
         self.write_log("updating...")
-        if os.path.isfile(os.path.join(self.lastOutputDir,"snap.log.stdout")) :
-            lfh = open(os.path.join(self.lastOutputDir,"snap.log.stdout"))
-            debug(tail(os.path.join(self.lastOutputDir,"snap.log.stdout"),30))
-            self.write_log(tail(os.path.join(self.lastOutputDir,"snap.log.stdout"), 30))
+        if os.path.isfile(os.path.join(self.lastOutputDir,"snap.log.out")) :
+            lfh = open(os.path.join(self.lastOutputDir,"snap.log.out"))
+            debug(tail(os.path.join(self.lastOutputDir,"snap.log.out"),30))
+            self.write_log(tail(os.path.join(self.lastOutputDir,"snap.log.out"), 30))
             lfh.close()
 
-    @pyqtSlot()
     def update_log(self):
         self.update_log_query({})
 
