@@ -24,7 +24,7 @@ from time import gmtime, strftime
 import traceback
 
 from PyQt5 import QtWidgets, QtGui
-from PyQt5.QtCore import QProcess, QProcessEnvironment, QThread, QIODevice, QThreadPool, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import QProcess, QProcessEnvironment, QThread, QIODevice, QThreadPool, pyqtSignal
 from Snappy.BrowserWidget import BrowserWidget
 from Snappy.EcMeteorologyCalculator import EcMeteorologyCalculator, ECDataNotAvailableException
 from Snappy.MailImages import sendPngsFromDir
@@ -50,7 +50,7 @@ class SnapUpdateThread(QThread):
         try:
             while self.snap_controller.snapRunning == "running":
                 debug("running")
-                debug(tail(os.path.join(self.snap_controller.lastOutputDir,"snap.log.stdout"),10))
+                debug(tail(os.path.join(self.snap_controller.lastOutputDir,"snap.log.out"),10))
                 self.update_log_signal.emit()
                 self.sleep(3)
         except:
@@ -64,8 +64,8 @@ class SnapRun():
         '''initialize a QProcess with the correct environment and output-files'''
         proc = QProcess()
         proc.setWorkingDirectory(snap_controller.lastOutputDir)
-        proc.setStandardOutputFile(os.path.join(snap_controller.lastOutputDir,"snap.log.stdout"), QIODevice.Append)
-        proc.setStandardErrorFile(os.path.join(snap_controller.lastOutputDir,"snap.log.stderr"), QIODevice.Append)
+        proc.setStandardOutputFile(os.path.join(snap_controller.lastOutputDir,"snap.log.out"), QIODevice.Append)
+        proc.setStandardErrorFile(os.path.join(snap_controller.lastOutputDir,"snap.log.out"), QIODevice.Append)
         env = QProcessEnvironment.systemEnvironment()
         env.insert("OMP_NUM_THREADS", "1")
         proc.setProcessEnvironment(env)
@@ -86,7 +86,7 @@ class SnapRun():
         else:
             self.snap_controller.write_log("starting /usr/bin/bsnap_naccident snap.input failed")
 
-class SnapController:
+class SnapController():
     def __init__(self):
         self.res = Resources()
         self.main = BrowserWidget()
@@ -101,22 +101,20 @@ class SnapController:
         debug(txt)
         self.main.evaluate_javaScript('updateSnapLog({0});'.format(json.dumps(txt)))
 
-    @pyqtSlot()
     def _snap_finished(self):
         debug("finished")
         self.snapRunning = "finished"
         self.results_add_toa()
         self.plot_results()
-        with open(os.path.join(self.lastOutputDir,"snap.log.stdout"), "a") as logFile:
+        with open(os.path.join(self.lastOutputDir,"snap.log.out"), "a") as logFile:
             logFile.write("All work finished. Please open diana to see results.\nResults in {}\n".format(self.lastOutputDir))
         self.update_log()
 
-    @pyqtSlot()
     def _ec_finished_run_snap(self):
         debug("ec_finished")
         self.snapRunning = "finished" # quit update-thread
         if (self.ecmet.must_calc()):
-            with open(os.path.join(self.lastOutputDir,"snap.log.stdout"), "a") as logFile:
+            with open(os.path.join(self.lastOutputDir,"snap.log.out"), "a") as logFile:
                 logFile.write("Meteorology not generated.\nErrors in {}\n".format(self.lastOutputDir))
             self.update_log()
             return
@@ -167,11 +165,11 @@ m=SNAP.current t=fimex format=netcdf f={}
             # plots
             proc = QProcess()
             proc.setWorkingDirectory(os.path.join(prod_dir))
-            proc.setStandardOutputFile(os.path.join(self.lastOutputDir,"snap.log.stdout"), QIODevice.Append)
-            proc.setStandardErrorFile(os.path.join(self.lastOutputDir,"snap.log.stderr"), QIODevice.Append)
+            proc.setStandardOutputFile(os.path.join(self.lastOutputDir,"snap.log.out"), QIODevice.Append)
+            proc.setStandardErrorFile(os.path.join(self.lastOutputDir,"snap.log.out"), QIODevice.Append)
             proc.start("bdiana{}".format(diVersion), ['-i', dianaIn, '-s', 'diana.setup', 'p={}'.format(self.lastQDict['region'])])
             proc.waitForFinished(-1)
-            with open(os.path.join(self.lastOutputDir,"snap.log.stdout"), 'a') as lfh:
+            with open(os.path.join(self.lastOutputDir,"snap.log.out"), 'a') as lfh:
                 lfh.write("plotting finished\n")
 
             sendPngsFromDir("SNAP calculation: {}".format(self.lastTag),
@@ -484,7 +482,7 @@ STEP.HOUR.OUTPUT.FIELDS= 3
                 self.ecmet = EcMeteorologyCalculator(self.res, startDT, lonf, latf)
                 if self.ecmet.must_calc():
                     proc = SnapRun.getQProcess(self)
-                    proc.finished.connect(self._ec_finished_run_snap)
+                    #proc.finished.connect(self._ec_finished_run_snap)
                     self.ecmet.calc(proc)
                     if (proc.waitForStarted(3000)) :
                         self.snapRunning = "running"
@@ -527,13 +525,12 @@ STEP.HOUR.OUTPUT.FIELDS= 3
     def update_log_query(self, qDict):
         #MainBrowserWindow._default_form_handler(qDict)
         self.write_log("updating...")
-        if os.path.isfile(os.path.join(self.lastOutputDir,"snap.log.stdout")) :
-            lfh = open(os.path.join(self.lastOutputDir,"snap.log.stdout"))
-            debug(tail(os.path.join(self.lastOutputDir,"snap.log.stdout"),30))
-            self.write_log(tail(os.path.join(self.lastOutputDir,"snap.log.stdout"), 30))
+        if os.path.isfile(os.path.join(self.lastOutputDir,"snap.log.out")) :
+            lfh = open(os.path.join(self.lastOutputDir,"snap.log.out"))
+            debug(tail(os.path.join(self.lastOutputDir,"snap.log.out"),30))
+            self.write_log(tail(os.path.join(self.lastOutputDir,"snap.log.out"), 30))
             lfh.close()
 
-    @pyqtSlot()
     def update_log(self):
         self.update_log_query({})
 
