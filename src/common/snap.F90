@@ -320,14 +320,14 @@ PROGRAM bsnap
   write (simulation_start, 9999) (date_time(i), i=1, 3), &
     (date_time(i), i=5, 7)
 9999 FORMAT(I4.4, '-', I2.2, '-', I2.2, '_', I2.2, ':', I2.2, ':', I2.2)
-  write (output_unit, *) 'Reading input file:'
-  write (output_unit, *) TRIM(finput)
+  write (error_unit, *) 'Reading input file:'
+  write (error_unit, *) TRIM(finput)
 
   call read_inputfile(snapinput_unit)
 
   close (snapinput_unit)
 
-  write (*, *) "SIMULATION_START_DATE: ", simulation_start
+  write (error_unit, *) "SIMULATION_START_DATE: ", simulation_start
 
   if (relfile /= '*') then
     call releasefile(relfile, release1)
@@ -356,9 +356,9 @@ PROGRAM bsnap
   CALL allocateFields()
 
   if (warning) then
-    write (output_unit, *) 'Input o.k. (with warnings)'
+    write (error_unit, *) 'Input o.k. (with warnings)'
   else
-    write (output_unit, *) 'Input o.k.'
+    write (error_unit, *) 'Input o.k.'
   endif
 !-------------------------------------------------------------------
 
@@ -446,8 +446,8 @@ PROGRAM bsnap
     tday = itime1(3)
     thour = itime1(4)
     tmin = 0.0
-    write (*, *) 'lower, upper', releases(1)%rellower(1), releases(1)%relupper(1)
-    write (*, *) 'tyear, tmon, tday, thour, tmin', &
+    write (error_unit, *) 'lower, upper', releases(1)%rellower(1), releases(1)%relupper(1)
+    write (error_unit, *) 'tyear, tmon, tday, thour, tmin', &
       tyear, tmon, tday, thour, tmin
     distance = 0.0
     speed = 0.0
@@ -555,8 +555,8 @@ PROGRAM bsnap
     write (iulog, *) 'itotcomp:   ', itotcomp
     write (iulog, *) 'iargos:     ', iargos
     write (iulog, *) 'blfulmix:   ', blfullmix
-    write (*, *) 'Title:      ', trim(nctitle)
-    write (*, *) 'Summary:    ', trim(ncsummary)
+    write (error_unit, *) 'Title:      ', trim(nctitle)
+    write (error_unit, *) 'Summary:    ', trim(ncsummary)
 
     !..initialize files, deposition fields etc.
     m = 0
@@ -617,19 +617,19 @@ PROGRAM bsnap
     istep = -1
 
 #if defined(TRAJ)
-    !        write(*,*) (itime(i),i=1,5)
+    !        write (error_unit,*) (itime(i),i=1,5)
     itimev = itime
-    !        write(*,*) (itimev(i),i=1,5)
+    !        write (error_unit,*) (itimev(i),i=1,5)
     ! 1110 continue
-    !        write(tr_file,'(''Trajectory_'',i3.3,
+    !        write (tr_file,'(''Trajectory_'',i3.3,
     !     &  ''_'',i4,3i2.2,''0000.DAT'')') itraj,(itime(i),i=1,4)
     !        open(13,file=tr_file)
     open (13, file=tname(itraj))
     rewind 13
-    !        write(*,*) tr_file
-    write (*, *) tname(itraj)
+    !        write (error_unit,*) tr_file
+    write (error_unit, *) tname(itraj)
 
-    !        write(13,'(i6,3f12.3)') nstep
+    !        write (13,'(i6,3f12.3)') nstep
 
 #endif
 
@@ -673,11 +673,11 @@ PROGRAM bsnap
 
       !#######################################################################
       !..test print: printing all particles in plume 'jpl'
-      !       write(88,*) 'step,plume,part: ',istep,nplume,npart
+      !       write (88,*) 'step,plume,part: ',istep,nplume,npart
       !       jpl=1
       !       if(jpl.le.nplume .and. iplume(1,jpl).gt.0) then
       !         do n=iplume(1,jpl),iplume(2,jpl)
-      !           write(88,fmt='(1x,i6,2f7.2,2f7.4,f6.0,f7.3,i4,f8.3)')
+      !           write (88,fmt='(1x,i6,2f7.2,2f7.4,f6.0,f7.3,i4,f8.3)')
       !    +                  iparnum(n),(pdata(i,n),i=1,5),pdata(n)%prc,
       !    +                  icomp(n),pdata(n)%rad
       !         end do
@@ -699,7 +699,7 @@ PROGRAM bsnap
           nhleft = (nstep - istep + 1)/nsteph
           if (nhrun < 0) nhleft = -nhleft
         end if
-        !          write (*,*) "readfield(", iunitf, istep, nhleft, itimei, ihr1
+        !          write (error_unit,*) "readfield(", iunitf, istep, nhleft, itimei, ihr1
         !     +          ,ihr2, time_file, ierror, ")"
         if (ftype == "netcdf") then
           call readfield_nc(istep, nhleft, itimei, ihr1, ihr2, &
@@ -716,7 +716,7 @@ PROGRAM bsnap
         if (idebug >= 1) then
           write (iulog, *) "igtype, gparam(8): ", igtype, gparam
         end if
-        !          write (*,*) "readfield(", iunitf, istep, nhleft, itimei, ihr1
+        !          write (error_unit,*) "readfield(", iunitf, istep, nhleft, itimei, ihr1
         !     +          ,ihr2, time_file, ierror, ")"
         if (ierror /= 0) call snap_error_exit(iulog)
 
@@ -738,8 +738,8 @@ PROGRAM bsnap
           x = release_positions(irelpos)%geo_longitude
           write (iulog, *) 'release lat,long: ', y, x
 #if defined(TRAJ)
-          !        write(*,*) istep,x,y,rellower(1)
-          !        write(13,'(i6,3f12.3)') istep,x,y,rellower(1)
+          !        write (error_unit,*) istep,x,y,rellower(1)
+          !        write (13,'(i6,3f12.3)') istep,x,y,rellower(1)
 
           write (13, '(''RIMPUFF'')')
           write (13, '(i2)') ntraj
@@ -747,7 +747,7 @@ PROGRAM bsnap
               &   2f9.3,f12.3,f15.2,f10.2)') &
               (itime(i), i=1, 4), 0, y, x, releases(1)%rellower(1), &
               distance, speed
-          write (*, '(i4,1x,i4,i2,i2,2i2.2,''00'', &
+          write (error_unit, '(i4,1x,i4,i2,i2,2i2.2,''00'', &
               &   2f9.3,f12.3,f15.2,f10.2)') istep, &
               (itime(i), i=1, 4), 0, y, x, releases(1)%rellower(1), &
               distance, speed
@@ -822,15 +822,15 @@ PROGRAM bsnap
       end if
 
       !#############################################################
-      !     write(error_unit,*) 'tf1,tf2,tnow,tnext,tstep,ipr: ',
+      !     write (error_unit,*) 'tf1,tf2,tnow,tnext,tstep,ipr: ',
       !    +                  tf1,tf2,tnow,tnext,tstep,iprecip
-      !     write(iulog,*) 'tf1,tf2,tnow,tnext,tstep,ipr: ',
+      !     write (iulog,*) 'tf1,tf2,tnow,tnext,tstep,ipr: ',
       !    +                  tf1,tf2,tnow,tnext,tstep,iprecip
       !#############################################################
 
       !#######################################################################
       !        if(npart.gt.0) then
-      !          write(88,*) 'istep,nplume,npart,nk: ',istep,nplume,npart,nk
+      !          write (88,*) 'istep,nplume,npart,nk: ',istep,nplume,npart,nk
       !          do k=1,nk
       !            npcount(k)=0
       !            do i=1,mdefcomp
@@ -847,11 +847,11 @@ PROGRAM bsnap
       !          end do
       !          do k=nk,1,-1
       !            if(npcount(k).gt.0) then
-      !              write(88,8800) k,npcount(k),(ipcount(i,k),i=1,ndefcomp)
+      !              write (88,8800) k,npcount(k),(ipcount(i,k),i=1,ndefcomp)
       ! 8800              format(1x,i2,':',i7,2x,12(1x,i5))
       !            end if
       !          end do
-      !          write(88,*) '----------------------------------------------'
+      !          write (88,*) '----------------------------------------------'
       !        end if
       !#######################################################################
 
@@ -914,10 +914,10 @@ PROGRAM bsnap
       !$OMP END PARALLEL DO
 
       !###################################################################
-      !        write(error_unit,
+      !        write (error_unit,
       !    +  fmt='(''istep,nstep,isteph,nsteph,iprecip,nprecip: '',6i4)')
       !    +          istep,nstep,isteph,nsteph,iprecip,nprecip
-      !        write(iulog,
+      !        write (iulog,
       !    +  fmt='(''istep,nstep,isteph,nsteph,iprecip,nprecip: '',6i4)')
       !    +          istep,nstep,isteph,nsteph,iprecip,nprecip
       !###################################################################
@@ -938,18 +938,18 @@ PROGRAM bsnap
       enddo
       ! cc
       !        if(mod(istep,nsteph).eq.0) then
-      !     +    write(error_unit,*) 'istep,nplume,npart: ',istep,nplume,npart
+      !     +    write (error_unit,*) 'istep,nplume,npart: ',istep,nplume,npart
       ! b... START
       ! b... output with concentrations after 6 hours
       if (istep > 1 .AND. mod(istep, 72) == 0) then
-        write (*, *) (itime(i), i=1, 5)
+        write (error_unit, *) (itime(i), i=1, 5)
         itimev = itime
         itimev(5) = itime(5) + 1
         call vtime(itimev, ierror)
-        write (*, *) (itimev(i), i=1, 5)
-        !     +    write(error_unit,*) 'istep,nplume,npart: ',istep,nplume,npart
-        !        write(error_unit,*)
-        !        write(error_unit,*) 'istep,hour,npart=',istep,istep/72,npart
+        write (error_unit, *) (itimev(i), i=1, 5)
+        !     +    write (error_unit,*) 'istep,nplume,npart: ',istep,nplume,npart
+        !        write (error_unit,*)
+        !        write (error_unit,*) 'istep,hour,npart=',istep,istep/72,npart
 
         !... calculate number of non zero model grids
 
@@ -963,9 +963,9 @@ PROGRAM bsnap
         rewind 12
         write (12, '(i4,3i2.2)') (itimev(i), i=1, 4)
         write (12, '(i6,'' - non zero grids'')') m
-        write (*, *)
-        write (*, *) 'Output no.:', istep/72
-        write (*, *) 'Time (hrs): ', istep/12
+        write (error_unit, *)
+        write (error_unit, *) 'Output no.:', istep/72
+        write (error_unit, *) 'Time (hrs): ', istep/12
 
         m = 0
         do i = 1, nx
@@ -978,7 +978,7 @@ PROGRAM bsnap
                 call xyconvert(1, x, y, igtype, gparam, 2, geoparam, ierror)
                 write (12, '(i6,2x,3i5,2x,2f10.3,2x,e12.3)') &
                   m, i, j, k, x, y, vcon(i, j, k)/72.0
-                !              write(*,'(i6,2x,3i5,2x,2f10.3,2x,e12.3)')
+                !              write (error_unit,'(i6,2x,3i5,2x,2f10.3,2x,e12.3)')
                 !     &        m,i,j,k,x,y,vcon(i,j,k)/72.0
               endif
             enddo
@@ -1080,12 +1080,12 @@ PROGRAM bsnap
 
         !        if(istep .gt. -1) then
         call vtime(itimev, ierror)
-        !        write(*,*) (itime(i),i=1,5), ierror
-        !        write(*,*) (itimev(i),i=1,5)
-        !        write(*,*) 'istep=',istep, 'npart=',npart
+        !        write (error_unit,*) (itime(i),i=1,5), ierror
+        !        write (error_unit,*) (itimev(i),i=1,5)
+        !        write (error_unit,*) 'istep=',istep, 'npart=',npart
         !        do k=1,npart
         do k = 1, 1
-          !        write(*,*) istep,pdata(k)%x,pdata(k)%y,pdata(k)%z
+          !        write (error_unit,*) istep,pdata(k)%x,pdata(k)%y,pdata(k)%z
           x = pdata(k)%x
           y = pdata(k)%y
           i = int(x(1))
@@ -1097,18 +1097,18 @@ PROGRAM bsnap
           k2 = k1 + 1
           zzz = hlevel2(i, j, k2) + (hlevel2(i, j, k1) - hlevel2(i, j, k2))* &
                 (pdata(k)%z - vlevel(k2))/(vlevel(k1) - vlevel(k2))
-          !        write(*,*) istep,x,y,pdata(k)%z,k1,k2,
+          !        write (error_unit,*) istep,x,y,pdata(k)%z,k1,k2,
           !     &  vlevel(k1),vlevel(k2),hlevel2(i,j,k1),hlevel2(i,j,k2),zzz
-          !        write(*,*)
-          !        write(*,*) istep,k,x,y,zzz
-          !        write(*,'(1x,i4,i2,i2,2i2.2,''00'')')
+          !        write (error_unit,*)
+          !        write (error_unit,*) istep,k,x,y,zzz
+          !        write (error_unit,'(1x,i4,i2,i2,2i2.2,''00'')')
           !     &(itime(i),i=1,4),mod(istep,12)*5
           write (13, '(1x,i4,4i2.2,''00'', &
               &                  2f9.3,f12.3,f15.2,f10.2)') &
               timeCurrent(6), timeCurrent(5), timeCurrent(4), &
               timeCurrent(3), timeCurrent(2), &
               y, x, zzz, distance, speed
-          write (*, '(i4,1x,i4,i2,i2,2i2.2,''00'', &
+          write (error_unit, '(i4,1x,i4,i2,i2,2i2.2,''00'', &
               &                 2f9.3,f12.3,f15.2,f10.2)') istep, &
               timeCurrent(6), timeCurrent(5), timeCurrent(4), &
               timeCurrent(3), timeCurrent(2), &
@@ -1139,13 +1139,13 @@ PROGRAM bsnap
   end if
 
   ! b_240311
-  write (*, *)
-  write (*, '(''mhmax='',f10.2)') mhmax
-  write (*, '(''mhmin='',f10.2)') mhmin
-  write (*, *)
+  write (error_unit, *)
+  write (error_unit, '(''mhmax='',f10.2)') mhmax
+  write (error_unit, '(''mhmin='',f10.2)') mhmin
+  write (error_unit, *)
   ! b_end
   write (iulog, *) ' SNAP run finished'
-  write (output_unit, *) ' SNAP run finished'
+  write (error_unit, *) ' SNAP run finished'
 
   if (iargos == 1) then
     close (91)
@@ -1286,8 +1286,8 @@ contains
       keyword(:) = trim(cinput(kname_start:kname_end))
       call chcase(1, 1, keyword) ! Lowercase
 
-      ! write(*,*) "keyword: ", trim(keyword)
-      ! if (has_value) write(*,*) "value: ", trim(cinput(pname_start:pname_end))
+      ! write (error_unit,*) "keyword: ", trim(keyword)
+      ! if (has_value) write (error_unit,*) "value: ", trim(cinput(pname_start:pname_end))
 
       select case (trim(keyword))
       case ('positions.decimal')
@@ -1972,18 +1972,18 @@ contains
         if (ierror /= 0) goto 12
 
         read (char_tmp, *) ntraj
-        write (*, *) 'ntraj=', ntraj
+        write (error_unit, *) 'ntraj=', ntraj
         do i = 1, ntraj
           call read_line_no_realloc(snapinput_unit, char_tmp, ierror)
           if (ierror /= 0) goto 12
           read (char_tmp, *) tlevel(i)
-          write (*, *) tlevel(i)
+          write (error_unit, *) tlevel(i)
         enddo
         do i = 1, ntraj
           call read_line_no_realloc(snapinput_unit, char_tmp, ierror)
           if (ierror /= 0) goto 12
           read (char_tmp, '(a80)') tname(i)
-          write (*, '(i4,1x,a80)') i, tname(i)
+          write (error_unit, '(i4,1x,a80)') i, tname(i)
         enddo
 #endif
         end_loop = .true.

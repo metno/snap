@@ -16,7 +16,7 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 module fldout_ncML
-  USE iso_fortran_env, only: real32, real64
+  USE iso_fortran_env, only: real32, real64, error_unit
   USE readfield_ncML, only: check
   USE milibML, only: xyconvert, hrdiff
   USE snapdimML, only: mcomp
@@ -877,7 +877,7 @@ subroutine write_ml_fields(iunit, varid, average, ipos, isize, rt1, rt2)
         endif
       end do
       if (modleveldump > 0) then
-        write(*,*) "dumped; maxage, total", maxage, total
+        write (error_unit,*) "dumped; maxage, total", maxage, total
       endif
     end if
 
@@ -931,7 +931,7 @@ subroutine nc_declare_3d(iunit, dimids, varid, &
   INTEGER, INTENT(IN)    :: iunit, dimids(3), chksz(3)
   CHARACTER(LEN=*), INTENT(IN) :: varnm, stdnm, metnm, units
 
-  if (.false.) write(*,*) chksz ! Silence compiler
+  if (.false.) write (error_unit,*) chksz ! Silence compiler
 
   write(iulog,*) "declaring ", iunit, TRIM(varnm), TRIM(units), &
       TRIM(stdnm),TRIM(metnm)
@@ -1136,7 +1136,7 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
     call xyconvert(1, xvals(1), yvals(1), 2, llparam, &
     &                                          6, gparam2, ierror)
     if (ierror /= 0) then
-      write(*,*) "error converting lcc to ll"
+      write (error_unit,*) "error converting lcc to ll"
       error stop 1
     end if
     xvals(1) = (xvals(1)-1)*gparam(7)
@@ -1150,7 +1150,7 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
       yvals(i) = yvals(1) + (i-1)*gparam(8)
     end do
   case default
-    write(*,*) "unkown grid-type:", igtype
+    write (error_unit,*) "unkown grid-type:", igtype
     error stop 1
   end select
 
@@ -1182,7 +1182,7 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
   call xyconvert(nx*ny, lon, lat,igtype, gparam, &
       2, llparam, ierror)
   if (ierror /= 0) then
-    write(*,*) "error converting pos to latlon-projection"
+    write (error_unit,*) "error converting pos to latlon-projection"
     error stop 1
   end if
   call check(nf90_put_var(iunit, lon_varid, lon))
