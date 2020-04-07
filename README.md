@@ -66,6 +66,9 @@ Examples of `snap.input` can be found in the directory [src/naccident/examples/]
 
 ### Versioning
 
+The master branch in git is used for development. Stable versions are tagged as 'vX.YY.ZZ'. Releases should also have a DOI for citation, see https://doi.org/10.5281/zenodo.1155159 . For the user-interface snappy, we use tags like 'snappy-vX.YY.ZZ' with independent version numbers. Other tags are used internally. 
+
+
 The build system uses automatic versioning based on git tags and revision numbers and embeds this into the resulting program. If git or python3 is unavailable, this logic should be bypassed by setting the environment variable VERSION to some value, e.g.
 ```sh
 env VERSION="some_version_number" make install
