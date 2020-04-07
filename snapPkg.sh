@@ -1,4 +1,4 @@
-VERSION=1.7.0
+VERSION=1.5.0
 VERSION_=`echo -n $VERSION | tr '.' '_'`
 PLATFORM=bionic
 #svn copy https://svn.met.no/snap/trunk \
