@@ -71,18 +71,16 @@ subroutine rwalk(blfullmix,part,pextra)
 !> extra information regarding the particle (u, v, rmx, rmy)
   type(extraParticle), intent(in) :: pextra
 
-  real(real64) :: rnd(3), xrand, yrand, zrand, rl, vabs
+  real(real64) :: rnd(3), rl, vabs
   real(real64) :: hfactor, rv, rvmax
 
   real(real64) :: a
   real(real64), parameter :: b = 0.875
 
 
-! the rand function returns random real numbers between 0.0 and 1.0
+! the random_number function returns 3 (x,y,z) random real numbers between 0.0 and 1.0
   call random_number(rnd)
-  xrand = rnd(1) - 0.5
-  yrand = rnd(2) - 0.5
-  zrand = rnd(3) - 0.5
+  rnd = rnd - 0.5
 
 ! horizontal diffusion
   if (part%z > part%tbl) then ! in boundary layer
@@ -93,23 +91,23 @@ subroutine rwalk(blfullmix,part,pextra)
 
   vabs = hypot(pextra%u, pextra%v)
   rl = 2*a*((vabs*tstep)**b)
-  part%x = part%x + rl*xrand*pextra%rmx
-  part%y = part%y + rl*yrand*pextra%rmy
+  part%x = part%x + rl*rnd(1)*pextra%rmx
+  part%y = part%y + rl*rnd(2)*pextra%rmy
 
 
 ! vertical diffusion
   if (part%z <= part%tbl) then ! Above boundary layer
-      part%z = part%z + vrdbla*zrand
+      part%z = part%z + vrdbla*rnd(3)
   else ! In boundary layer
     if (blfullmix) then
-      part%z = 1.0 - (1.0 - part%tbl)*1.1*(zrand+0.5)
+      part%z = 1.0 - (1.0 - part%tbl)*1.1*(rnd(3)+0.5)
     else ! not full mixing
       hfactor = part%hbl/hmax
       rv = lmax*hfactor*tfactor
       rvmax = 1.0 - part%tbl
 
       rv = min(rv, rvmax)
-      part%z = part%z + rv*zrand
+      part%z = part%z + rv*rnd(3)
 
     !... reflection from the ABL top
       if(part%z < part%tbl) then
