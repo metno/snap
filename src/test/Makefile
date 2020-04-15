@@ -17,7 +17,7 @@ find_parameters_fi_test: find_parameters_fi_test.o $(MODELOBJ)
 
 
 clean: clean_links
-	rm -f *.o *~ find_parameters_fi_test
+	rm -f *.o *~ snap_batch_copy.F90 find_parameters_fi_test
 
 distclean: clean
     
