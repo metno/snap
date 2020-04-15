@@ -1865,7 +1865,7 @@ contains
         else
           read (cinput(pname_start:pname_end), *, err=12) fimex_config
         endif
-      case ('fimex.file.type')
+      case ('fimex.file_type')
         !..fimex.file_type grib,netcdf,felt,ncml (known fimex filetypes), only used when ftype=fimex
         if (.not. has_value) goto 12
         read (cinput(pname_start:pname_end), *, err=12) fimex_type
