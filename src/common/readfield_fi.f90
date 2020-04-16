@@ -21,7 +21,7 @@
 module readfield_fiML
 
   USE Fimex, ONLY: FimexIO
-  use iso_fortran_env, only: real32, real64
+  use iso_fortran_env, only: real32, real64, error_unit
   USE ftestML, only: ftest
   USE om2edotML, only: om2edot
   USE milibML, only: mapfield, hrdiff
@@ -91,6 +91,7 @@ contains
     TYPE(FimexIO) :: fio
     integer, save :: ntav1, ntav2 = 0
     character(len=1024), save :: file_name = ""
+    character(len=1024), save :: ap_units = pressure_units
 
     integer :: i, k, n, ilevel, ierr1, ierr2, i1, i2
     integer :: itime(5, 4), ihours(4)
@@ -260,10 +261,11 @@ contains
       if (ivcoor /= 2 .AND. .NOT. met_params%ptopv == '') then
         call fi_checkload(fio, met_params%ptopv, pressure_units, ptoptmp)
         ptop = ptoptmp(1)
+        ap_units = ""
       end if
       !..alevel (here) only for eta levels
       if (.NOT. met_params%apv == '') then
-        call fi_checkload(fio, met_params%apv, pressure_units, alev(k:k), nz=ilevel)
+        call fi_checkload(fio, met_params%apv, ap_units, alev(k:k), nz=ilevel)
         call fi_checkload(fio, met_params%bv, "", blev(k:k), nz=ilevel)
         if (ivcoor /= 2 .AND. .NOT. met_params%ptopv == '') then
           !..p0 for hybrid loaded to ptop, ap is a * p0
@@ -737,7 +739,9 @@ contains
     ALLOCATE (atypes(ndims))
 
     call check(fio%get_dimension_start_size(start, length), "reading dim-sizes for "//TRIM(varname))
-    call check(fio%get_axistypes(atypes), "reading dim-types for "//TRIM(varname))
+    ierr = fio%get_axistypes(atypes)
+    ! no axistypes for scalars, so ierr okay
+    if (ierr /= 0 .and. ndims > 1) write (error_unit, *) "no dim-types for "//TRIM(varname)
 
     tlength = 1
     do i = 1, ndims
