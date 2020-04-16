@@ -76,7 +76,7 @@ MODEL.LEVEL.FIELDS.OFF
 *
 ** INPUT FIELD FILES
 FIELD.TYPE=fimex
-FIELD.INPUT= ./meps_det_2_5km_20200316T00Z_ringhals.nc
+FIELD.INPUT= https://thredds.met.no/thredds/dodsC/metusers/heikok/snap_testdata/meps_det_2_5km_20200316T00Z_ringhals.nc
 *FIELD.INPUT= /disk1/heiko/Meteo/meps_det_2_5km_20200317T00Z.nc
 ** USE FIMEX
 FIMEX.FILE_TYPE= netcdf

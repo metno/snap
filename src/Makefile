@@ -9,6 +9,10 @@ all:
 		$(MAKE) -C $$i; \
 	done
 
+test:
+	$(MAKE) -C test test;
+	
+
 clean:
 	for i in $(SUBDIRS); do \
 		$(MAKE) -C $$i clean; \
@@ -30,4 +34,4 @@ naccident_install:
 		$(MAKE) -C $$i install; \
 	done
 
-.PHONY: all clean dist install naccident_install
+.PHONY: all test clean dist install naccident_install
