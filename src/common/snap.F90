@@ -1825,7 +1825,10 @@ contains
       case ('levels.input')
         !..levels.input=<num_levels, 0,kk,k,k,k,....,1>
         !..levels.input=<num_levels, 0,kk,k,k,k,....,18,0,0,...>
-        if (nlevel /= 0) goto 12
+        if (nlevel /= 0) then
+          write (error_unit, *) "re-assigning levels to ", nk, " levels"
+          DEALLOCATE(klevel, STAT=AllocateStatus)
+        end if
         if (.not. has_value) goto 12
         read (cinput(pname_start:pname_end), *, err=12) nlevel
         nk = nlevel
