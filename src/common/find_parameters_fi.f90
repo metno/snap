@@ -122,7 +122,7 @@ contains
     proj4 = fio%get_proj4()
     select case (proj_arg(proj4, 'proj'))
 
-    case ("latlon", "lonlat")
+    case ("latlon", "lonlat", "latlong", "longlat")
       call geographic_grid(fio, proj4, nx, ny, xdim, ydim, igtype, gparam, rotated=.false., stat=stat)
 
     case ("lcc")
@@ -199,8 +199,11 @@ contains
     !> error code (0 for success)
     integer, intent(out) :: stat
 
-    real(real32), allocatable :: dims(:), latlons(:, :)
+    real(real64), allocatable, target :: dims(:)
     character(1024) :: pval
+    integer :: n
+
+    write (error_unit, *) "geographic ", TRIM(xdim), nx, TRIM(ydim), ny
 
     stat = 0
     if (.not. rotated) then
@@ -215,14 +218,19 @@ contains
     endif
 
     ! Getting the longitude oriented gparams
+    n = fio%get_dimensions(xdim)
     allocate (dims(nx))
-    call fi_checkload(fio, xdim, "degree", dims)
+    stat = fio%read (xdim, dims, "degree")
+    if (stat /= 0) return
     gparam(1) = dims(1)
     gparam(3) = dims(2) - dims(1)
+    deallocate(dims)
 
     ! Getting the latitude oriented gparams
+    n = fio%get_dimensions(ydim)
     allocate (dims(ny))
-    call fi_checkload(fio, ydim, "degree", dims)
+    stat = fio%read (ydim, dims, "degree")
+    if (stat /= 0) return
     gparam(2) = dims(1)
     gparam(4) = dims(2) - dims(1)
 

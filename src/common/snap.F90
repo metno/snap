@@ -1196,7 +1196,10 @@ contains
                          TIME_PROFILE_CONSTANT, TIME_PROFILE_LINEAR, TIME_PROFILE_LINEAR, TIME_PROFILE_STEPS, &
                          TIME_PROFILE_UNDEFINED
     use find_parameter, only: detect_gridparams, get_klevel
-
+#if defined(FIMEX)
+    use find_parameters_fi, only: detect_gridparams_fi
+#endif
+  
     !> Open file unit
     integer, intent(in) :: snapinput_unit
 
@@ -1825,11 +1828,11 @@ contains
       case ('levels.input')
         !..levels.input=<num_levels, 0,kk,k,k,k,....,1>
         !..levels.input=<num_levels, 0,kk,k,k,k,....,18,0,0,...>
+        if (.not. has_value) goto 12
         if (nlevel /= 0) then
-          write (error_unit, *) "re-assigning levels to ", nk, " levels"
+          write (error_unit, *) "re-assigning levels"
           DEALLOCATE(klevel, STAT=AllocateStatus)
         end if
-        if (.not. has_value) goto 12
         read (cinput(pname_start:pname_end), *, err=12) nlevel
         nk = nlevel
         ALLOCATE (klevel(nk), STAT=AllocateStatus)
@@ -1955,16 +1958,29 @@ contains
           write (error_unit, *) "grid.autodetect requires at least one field.input to be set"
           goto 12
         endif
-        call detect_gridparams(filef(1), nx, ny, igtype, gparam, ierror)
-        if (ierror /= 0) then
-          write (error_unit, *) "Autodetection did not work"
+        if (ftype .eq. "fimex") then
+#ifdef FIMEX
+          call detect_gridparams_fi(filef(1), fimex_config, fimex_type, met_params%xwindv, nx, ny, igtype, gparam, klevel, ierror)
+          if (ierror /= 0) then
+            write (error_unit, *) "Could not detect gridparams"
+            goto 12
+          endif
+#else
+          write (error_unit, *) "fimex required, but not compiled"
           goto 12
-        endif
-        call get_klevel(filef(1), klevel, ierror)
-        if (ierror /= 0) then
-          write (error_unit, *) "Autodetection did not work"
-          goto 12
-        endif
+#endif
+        else
+          call detect_gridparams(filef(1), nx, ny, igtype, gparam, ierror)
+          if (ierror /= 0) then
+            write (error_unit, *) "Autodetection did not work"
+            goto 12
+          endif
+          call get_klevel(filef(1), klevel, ierror)
+          if (ierror /= 0) then
+            write (error_unit, *) "Autodetection did not work"
+            goto 12
+          endif
+        end if
         nlevel = size(klevel)
         nk = nlevel
       case ('end')
