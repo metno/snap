@@ -5,11 +5,14 @@ F77FLAGS += -DACCIDENT
 
 include ../common/snap.mk
 
+# export FIMEXLIB
+.EXPORT_ALL_VARIABLES:
 
 all: 
 
 test: find_parameters_fi_test bsnap_naccident
-	#./find_parameters_fi_test
+	./find_parameters_fi_test https://thredds.met.no/thredds/dodsC/metusers/heikok/snap_testdata/meteo20200415_00_ringhals.nc u_wind && \
+	./find_parameters_fi_test https://thredds.met.no/thredds/dodsC/metusers/heikok/snap_testdata/meps_det_2_5km_20200316T00Z_ringhals.nc x_wind_ml && \
 	python3 -m unittest snap_forward_test.py
 
 
