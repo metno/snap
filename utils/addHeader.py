@@ -25,7 +25,7 @@ import sys
 
 def insert_header(oh, ct):
     header = '''SNAP: Servere Nuclear Accident Programme
-Copyright (C) 1992-2017   Norwegian Meteorological Institute
+Copyright (C) 1992-2020  Norwegian Meteorological Institute
 
 This file is part of SNAP. SNAP is free software: you can
 redistribute it and/or modify it under the terms of the

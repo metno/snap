@@ -21,7 +21,7 @@ else
 endif
 ifdef FIMEXLIB
   F77FLAGS += -DFIMEX
-  MODELOBJ += readfield_fi.o
+  MODELOBJ += readfield_fi.o find_parameters_fi.o fimex.o
 endif
 
 
@@ -37,6 +37,8 @@ snap_batch_copy.o: ../common/snap.F90 $(MODELOBJ)
 
 #--------------------------------
 
+fimex.o: ../common/fimex.f90
+	${F77} -c $(INCLUDES) $<
 allocateFields.o: ../common/allocateFields.f90 particleML.o snapparML.o snapfldML.o snapfilML.o snapgrdML.o release.o snapdimML.o
 	${F77} -c $(F77FLAGS) $(INCLUDES) $<
 snapdimML.o: ../common/snapdimML.f90
@@ -79,9 +81,13 @@ om2edot.o: ../common/om2edot.f90 snapgrdML.o snapfldML.o snapdimML.o snapdebugML
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 readfield_nc.o: ../common/readfield_nc.f90 particleML.o snapfilML.o snapgrdML.o snapmetML.o snaptabML.o snapdebugML.o snapdimML.o om2edot.o ftest.o milibML.o snapfldML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-readfield_fi.o: ../common/readfield_fi.f90 particleML.o snapfilML.o snapgrdML.o snapmetML.o snaptabML.o snapdebugML.o snapdimML.o om2edot.o ftest.o milibML.o
+readfield_fi.o: ../common/readfield_fi.f90 particleML.o snapfilML.o snapgrdML.o snapmetML.o snaptabML.o snapdebugML.o snapdimML.o om2edot.o ftest.o milibML.o fimex.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 filesort_nc.o: ../common/filesort_nc.f90 dateCalc.o snapfilML.o snapdimML.o snapgrdML.o snapfldML.o snapmetML.o snapdebugML.o readfield_nc.o
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+find_parameters.o: ../common/find_parameters.f90 snapmetML.o
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+find_parameters_fi.o: ../common/find_parameters_fi.f90 snapmetML.o fimex.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 fldout.o: ../common/fldout.f90 particleML.o snapfilML.o snapgrdML.o snapfldML.o snapparML.o snapargosML.o snapdebugML.o snapdimML.o ftest.o argoswrite.o snaptabML.o milibML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
@@ -118,8 +124,6 @@ utils.o: ../common/utils.f90
 vgravtables.o: ../common/vgravtables.f90 snapparML.o snapdimML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 wetdep.o: ../common/wetdep.f90 particleML.o snapgrdML.o snapfldML.o snapparML.o snaptabML.o snapdimML.o
-	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-find_parameters.o: ../common/find_parameters.f90 snapmetML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 
 milibML.o: ../common/milibML.f90

@@ -13,31 +13,30 @@ program autodetect
 
   integer, allocatable :: klevel(:)
 
-
   n = command_argument_count()
   if (n /= 1) then
-    write(error_unit,*) "Expected one command argument"
-    write(error_unit,*) "got ", n
+    write (error_unit, *) "Expected one command argument"
+    write (error_unit, *) "got ", n
     error stop 1
   endif
 
   call get_command_argument(1, length=n, status=stat)
   if (stat /= 0) error stop "Could not get command argument"
-  allocate(character(n) :: ncfile)
+  allocate (character(n) :: ncfile)
   call get_command_argument(1, value=ncfile, status=stat)
   if (stat /= 0) error stop "Could not get command argument"
 
   call detect_gridparams(ncfile, nx, ny, igtype, gparam, stat)
   if (stat /= 0) error stop "Could not detect gridparams"
 
-  write(*,*) "GRID.SIZE= ", nx, ny
-  write(*,*) "IGTYPE= ", igtype
-  write(*,*) "GRID PARAMS :", gparam
+  write (*, *) "GRID.SIZE= ", nx, ny
+  write (*, *) "IGTYPE= ", igtype
+  write (*, *) "GRID PARAMS :", gparam
 
   call get_klevel(ncfile, klevel, stat)
   if (stat /= 0) error stop "Could not determine klevel"
 
-  write(*,*) "KLEVEL: ", size(klevel)
-  write(*,'(I3)') klevel
+  write (*, *) "KLEVEL: ", size(klevel)
+  write (*, '(I3)') klevel
 
 end program autodetect

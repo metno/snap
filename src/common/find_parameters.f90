@@ -20,7 +20,7 @@ module find_parameter
   public detect_gridparams
   public get_klevel
 
-  contains
+contains
 
   !> Tries to detect grid parameters given by the
   !> netcdf file, taking the projection from
@@ -52,16 +52,15 @@ module find_parameter
     stat = 0
     stat = nf90_open(ncfile, NF90_NOWRITE, ncid)
     if (stat /= 0) then
-        write(error_unit,*) trim(nf90_strerror(stat))
+      write (error_unit, *) trim(nf90_strerror(stat))
       return
     endif
 
-
     call get_nx_ny(ncid, nx, ny, stat)
     if (stat /= 0) then
-      write(error_unit,*) "Could not determine the size of the grids"
+      write (error_unit, *) "Could not determine the size of the grids"
       if (stat /= ERROR_THIS_MODULE) then
-        write(error_unit,*) trim(nf90_strerror(stat))
+        write (error_unit, *) trim(nf90_strerror(stat))
       endif
       int_dummy = nf90_close(ncid)
       return
@@ -70,11 +69,11 @@ module find_parameter
     call detect_type(ncid, projection_varid, igtype, stat)
     if (stat /= 0) then
       if (stat == NF90_ENOTATT) then
-        write(error_unit,*) "Could not detect grid mapping type from attribute'grid_mapping', assuming lat/lon grid"
+        write (error_unit, *) "Could not detect grid mapping type from attribute'grid_mapping', assuming lat/lon grid"
         igtype = GEOGRAPHIC
       else
         if (stat /= ERROR_THIS_MODULE) then
-          write(error_unit,*) trim(nf90_strerror(stat))
+          write (error_unit, *) trim(nf90_strerror(stat))
         endif
         int_dummy = nf90_close(ncid)
         return
@@ -83,23 +82,23 @@ module find_parameter
 
     select case (igtype)
 
-      case(GEOGRAPHIC)
-        call geographic_grid(ncid, projection_varid, gparam, rotated=.false., stat=stat)
+    case (GEOGRAPHIC)
+      call geographic_grid(ncid, projection_varid, gparam, rotated=.false., stat=stat)
 
-      case(SPHERICAL_ROTATED)
-        call geographic_grid(ncid, projection_varid, gparam, rotated=.true., stat=stat)
+    case (SPHERICAL_ROTATED)
+      call geographic_grid(ncid, projection_varid, gparam, rotated=.true., stat=stat)
 
-      case(LAMBERT)
-        call lambert_grid(ncid, projection_varid, gparam, stat)
+    case (LAMBERT)
+      call lambert_grid(ncid, projection_varid, gparam, stat)
 
-      case default
-        write(error_unit, *) "This projection type is lacking a grid mapping"
-        stat = ERROR_THIS_MODULE
+    case default
+      write (error_unit, *) "This projection type is lacking a grid mapping"
+      stat = ERROR_THIS_MODULE
     end select
 
     if (stat /= 0) then
       if (stat /= ERROR_THIS_MODULE) then
-        write(error_unit,*) trim(nf90_strerror(stat))
+        write (error_unit, *) trim(nf90_strerror(stat))
       endif
       int_dummy = nf90_close(ncid)
       return
@@ -107,8 +106,8 @@ module find_parameter
 
     stat = nf90_close(ncid)
     if (stat /= 0) then
-        write(error_unit,*) trim(nf90_strerror(stat))
-        return
+      write (error_unit, *) trim(nf90_strerror(stat))
+      return
     endif
 
   end subroutine
@@ -140,7 +139,6 @@ module find_parameter
     if (stat /= 0) return
   end subroutine
 
-
   !> Take varid of #met_params%xwindv, lookup grid_mapping, check this variables
   !> name and set igtype
   subroutine detect_type(ncid, projection_varid, igtype, stat)
@@ -165,18 +163,18 @@ module find_parameter
       igtype = GEOGRAPHIC
       return
     endif
-    allocate(character(len=len_str) :: grid_mapping_name)
+    allocate (character(len=len_str) :: grid_mapping_name)
     stat = nf90_get_att(ncid, varid, "grid_mapping", grid_mapping_name)
     if (stat /= 0) return
 
     stat = nf90_inq_varid(ncid, grid_mapping_name, projection_varid)
-    deallocate(grid_mapping_name)
+    deallocate (grid_mapping_name)
     if (stat /= 0) return
 
     stat = nf90_inquire_attribute(ncid, projection_varid, "grid_mapping_name", &
-        len=len_str)
+                                  len=len_str)
     if (stat /= 0) return
-    allocate(character(len=len_str) :: grid_mapping_name)
+    allocate (character(len=len_str) :: grid_mapping_name)
     stat = nf90_get_att(ncid, projection_varid, "grid_mapping_name", grid_mapping_name)
     if (stat /= 0) return
 
@@ -219,7 +217,7 @@ module find_parameter
     integer :: i
 
     stat = 0
-    if (.not.rotated) then
+    if (.not. rotated) then
       gparam(5:6) = 0
     else
       stat = nf90_get_att(ncid, projection_varid, "grid_north_pole_longitude", gparam(5))
@@ -237,7 +235,7 @@ module find_parameter
     if (stat /= 0) return
 
     ! Getting the longitude oriented gparams
-    do i=1,2
+    do i = 1, 2
       stat = nf90_inquire_dimension(ncid, dimids(i), name=dimname)
       if (stat /= 0) return
       stat = nf90_inq_varid(ncid, dimname, latlon_varid)
@@ -246,7 +244,7 @@ module find_parameter
       stat = nf90_get_var(ncid, latlon_varid, start=[1], count=[2], values=latlon_itudes)
       if (stat /= 0) return
       gparam(i) = latlon_itudes(1)
-      gparam(2+i) = latlon_itudes(2) - latlon_itudes(1)
+      gparam(2 + i) = latlon_itudes(2) - latlon_itudes(1)
     enddo
 
   end subroutine
@@ -263,7 +261,7 @@ module find_parameter
     integer, intent(out) :: stat
 
     integer :: latlon_varid
-    real :: latlons(1,1)
+    real :: latlons(1, 1)
 
     integer :: dimids(NF90_MAX_DIMS)
     character(len=NF90_MAX_NAME) :: dimname
@@ -280,16 +278,16 @@ module find_parameter
     stat = nf90_inq_varid(ncid, "longitude", latlon_varid)
     if (stat /= 0) return
     stat = nf90_get_var(ncid, latlon_varid, &
-        start=[1, 1], count=[1, 1], values=latlons)
+                        start=[1, 1], count=[1, 1], values=latlons)
     if (stat /= 0) return
-    gparam(1) = latlons(1,1)
+    gparam(1) = latlons(1, 1)
 
     stat = nf90_inq_varid(ncid, "latitude", latlon_varid)
     if (stat /= 0) return
     stat = nf90_get_var(ncid, latlon_varid, &
-        start=[1, 1], count=[1, 1], values=latlons)
+                        start=[1, 1], count=[1, 1], values=latlons)
     if (stat /= 0) return
-    gparam(2) = latlons(1,1)
+    gparam(2) = latlons(1, 1)
 
     ! get increment in km, requires the two first dimension of
     ! a standard variable
@@ -298,7 +296,7 @@ module find_parameter
     stat = nf90_inquire_variable(ncid, standard_varid, dimids=dimids)
     if (stat /= 0) return
 
-    do i=1,2
+    do i = 1, 2
       ! The variable got the same name as the dimension
       stat = nf90_inquire_dimension(ncid, dimids(i), name=dimname)
       if (stat /= 0) return
@@ -306,17 +304,17 @@ module find_parameter
       if (stat /= 0) return
       ! Get two consecutive values
       stat = nf90_get_var(ncid, xy_varid, start=[1], count=[2], &
-          values=xy_vals)
+                          values=xy_vals)
       if (stat /= 0) return
-      gparam(2+i) = xy_vals(2) - xy_vals(1)
+      gparam(2 + i) = xy_vals(2) - xy_vals(1)
       ! Checking units, converting to km
       stat = nf90_get_att(ncid, xy_varid, "units", units)
       if (stat /= 0) return
       if (units == "m") then
-        gparam(2+i) = gparam(2+i)/1000.0
+        gparam(2 + i) = gparam(2 + i)/1000.0
       else
-        write(error_unit,*) "Do not know how to convert ", units, " to km"
-        write(error_unit,*) "please change the conversion here"
+        write (error_unit, *) "Do not know how to convert ", units, " to km"
+        write (error_unit, *) "please change the conversion here"
         stat = 1
         return
       endif
@@ -364,9 +362,9 @@ module find_parameter
       dummy_int = nf90_close(ncid)
       return
     endif
-    allocate(klevel(hybrid_len))
-      klevel(1) = 0
-    do i=2,hybrid_len
+    allocate (klevel(hybrid_len))
+    klevel(1) = 0
+    do i = 2, hybrid_len
       klevel(i) = hybrid_len - i + 1
     enddo
   end subroutine
