@@ -668,11 +668,10 @@ MODULE Fimex
     RETURN
   END FUNCTION get_dimname
 
-    !> Get the dimension-name at a position
-  !! Get the dimension at a position between 1 and get_dimensions() The position is directly related
-  !! to the position in the return arrays of get_dimension_start_size()
-  !! @param pos Position in the dimensions-array, 1 <= pos <= get_dimensions()
-  !! @return string, or "" on error
+  !> Get the projection of the current variable
+  !! Get the projection as proj4 string fo the last variable checked
+  !! with get_dimensions.
+  !! @return proj4 string, or "" on error
   FUNCTION get_proj4(this)
     USE iso_c_binding,    ONLY: C_NULL_CHAR,C_CHAR,C_INT,C_PTR,C_ASSOCIATED,C_F_POINTER
     IMPLICIT NONE
