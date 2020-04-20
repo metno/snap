@@ -21,7 +21,9 @@ class SnapEcEMEPForwardTestCase(SnapTestCase):
     @unittest.skipIf(os.getenv('FIMEXLIB') is None,
                      "fimex not supported in this build")
     def test_runfimex(self):
-        proc = subprocess.run([os.path.join(self.datadir, self.snap), self.input], cwd=self.datadir)
+        env = os.environ.copy()
+        env["OMP_NUM_THREADS"] = "1"
+        proc = subprocess.run([os.path.join(self.datadir, self.snap), self.input], cwd=self.datadir, env=env)
         self.assertEqual(proc.returncode, 0)
 
         outfile = self.get_nc_filename(os.path.join(self.datadir, self.input))
@@ -38,7 +40,9 @@ class SnapEcEMEPForwardTestCase(SnapTestCase):
     @unittest.skip("test not implemented properly yet")
     def test_runnclib(self):
         #TBD create input-file with FILE.TYPE=netcdf instead of fimex
-        proc = subprocess.run([os.path.join(self.datadir, self.snap), self.input], cwd=self.datadir)
+        env = os.environ.copy()
+        env["OMP_NUM_THREADS"] = "1"
+        proc = subprocess.run([os.path.join(self.datadir, self.snap), self.input], cwd=self.datadir, env=env)
         self.assertEqual(proc.returncode, 0)
 
         outfile = self.get_nc_filename(os.path.join(self.datadir, self.input))
@@ -69,7 +73,9 @@ class SnapMEPSForwardTestCase(SnapTestCase):
     @unittest.skipIf(os.getenv('FIMEXLIB') is None,
                      "fimex not supported in this build")
     def test_runfimex(self):
-        proc = subprocess.run([os.path.join(self.datadir, self.snap), self.input], cwd=self.datadir)
+        env = os.environ.copy()
+        env["OMP_NUM_THREADS"] = "1"
+        proc = subprocess.run([os.path.join(self.datadir, self.snap), self.input], cwd=self.datadir, env=env)
         self.assertEqual(proc.returncode, 0)
 
         outfile = self.get_nc_filename(os.path.join(self.datadir, self.input))
@@ -86,7 +92,9 @@ class SnapMEPSForwardTestCase(SnapTestCase):
     @unittest.skip("test not implemented properly yet")
     def test_runnclib(self):
         #TBD create input-file with FILE.TYPE=netcdf instead of fimex
-        proc = subprocess.run([os.path.join(self.datadir, self.snap), self.input], cwd=self.datadir)
+        env = os.environ.copy()
+        env["OMP_NUM_THREADS"] = "1"
+        proc = subprocess.run([os.path.join(self.datadir, self.snap), self.input], cwd=self.datadir, env=env)
         self.assertEqual(proc.returncode, 0)
 
         outfile = self.get_nc_filename(os.path.join(self.datadir, self.input))
