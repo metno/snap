@@ -281,27 +281,6 @@ module snapmetML
       met_params%precconaccumv = 'lwe_thickness_of_convective_precipitation_amount_acc'
       met_params%precstrativrt = ''
       met_params%precconvrt = ''
-    case('icon')
-      met_params%manual_level_selection = .true.
-      met_params%has_dummy_dim = .true.
-      met_params%xwindv = 'x_wind_ml'
-      met_params%ywindv = 'y_wind_ml'
-      met_params%xwind10mv = 'x_wind_10m'
-      met_params%ywind10mv = 'y_wind_10m'
-!       !! real temperature, convert to pot-temp later
-      met_params%pottempv = 'air_temperature_ml'
-      met_params%temp_is_abs = .true.
-      met_params%sigmav = 'sigma'
-      met_params%ptopv = 'ptop'
-      met_params%apv = ''
-      met_params%bv = ''
-! upward_air_velocity_ml, not used yet?
-      met_params%sigmadotv = ''
-      met_params%psv = 'surface_air_pressure'
-      met_params%mslpv = 'air_pressure_at_sea_level'
-      met_params%precaccumv = 'precipitation_amount_acc'
-      met_params%precstrativrt = ''
-      met_params%precconvrt = ''
 !..get grid parameters from field identification
     case('SLIM')
       met_params%manual_level_selection = .true.

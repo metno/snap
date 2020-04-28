@@ -135,7 +135,6 @@ subroutine filesort_fi(fimex_type, fimex_config)
         navail=mavail
       end if
       dateTime = epochToDate(int(times(t), kind=int64))
-      write (error_unit,*) t, dateTime
       iavail(navail)%aYear = dateTime(6)
       iavail(navail)%aMonth = dateTime(5)
       iavail(navail)%aDay = dateTime(4)

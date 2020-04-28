@@ -1988,6 +1988,7 @@ contains
         end if
         nlevel = size(klevel)
         nk = nlevel
+        write (error_unit, *) "autodetection of grid-param: ", gparam
       case ('end')
         !..end
 #if defined(TRAJ)
