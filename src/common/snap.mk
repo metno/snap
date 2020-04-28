@@ -21,7 +21,7 @@ else
 endif
 ifdef FIMEXLIB
   F77FLAGS += -DFIMEX
-  MODELOBJ += readfield_fi.o find_parameters_fi.o fimex.o
+  MODELOBJ += readfield_fi.o filesort_fi.o find_parameters_fi.o fimex.o
 endif
 
 
@@ -84,6 +84,8 @@ readfield_nc.o: ../common/readfield_nc.f90 particleML.o snapfilML.o snapgrdML.o 
 readfield_fi.o: ../common/readfield_fi.f90 particleML.o snapfilML.o snapgrdML.o snapmetML.o snaptabML.o snapdebugML.o snapdimML.o om2edot.o ftest.o milibML.o fimex.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 filesort_nc.o: ../common/filesort_nc.f90 dateCalc.o snapfilML.o snapdimML.o snapgrdML.o snapfldML.o snapmetML.o snapdebugML.o readfield_nc.o
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+filesort_fi.o: ../common/filesort_fi.f90 dateCalc.o snapfilML.o snapdimML.o snapgrdML.o snapfldML.o snapmetML.o snapdebugML.o readfield_fi.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 find_parameters.o: ../common/find_parameters.f90 snapmetML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
