@@ -69,9 +69,12 @@ contains
       if (ndims <= 0) &
         call check(ndims, "can't make slicebuilder for "//TRIM(varname))
 
-      ALLOCATE (start(ndims))
-      ALLOCATE (length(ndims))
-      ALLOCATE (atypes(ndims))
+      if (allocated(start)) deallocate (start)
+      allocate (start(ndims))
+      if (allocated(length)) deallocate (length)
+      allocate (length(ndims))
+      if (allocated(atypes)) deallocate (atypes)
+      allocate (atypes(ndims))
       call check(fio%get_dimension_start_size(start, length), "reading dim-sizes for "//TRIM(varname))
       call check(fio%get_axistypes(atypes), "reading dim-types for "//TRIM(varname))
 
@@ -90,6 +93,7 @@ contains
       end if
 
       ndims = fio%get_dimensions(time_var)
+      if (allocated(times)) deallocate (times)
       allocate (times(tsize))
       call check(fio%read (time_var, times, "seconds since 1970-01-01 00:00:00 +00:00"), "reading time variable")
 
@@ -108,7 +112,7 @@ contains
                        "reducing "//TRIM(fio%get_dimname(i))//" to 0 for "//TRIM(varname))
           END SELECT
         END DO
-        if (.not. allocated(field)) ALLOCATE (field(nx*ny))
+        if (.not. allocated(field)) allocate (field(nx*ny))
         status = fio%read (varname, field)
 
         ! test 4 arbitrary values in field
