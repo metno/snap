@@ -82,13 +82,13 @@ class EcMeteorologyCalculator(Snappy.MeteorologyCalculator.MeteorologyCalculator
         self.optFiles = []
         for i in (0,1,2):
             self.files.append(os.path.join(self.outputdir,
-                                           res.output_filename_pattern.format(year=date.year,
+                                           self.res.output_filename_pattern.format(year=date.year,
                                                                               month=date.month,
                                                                               day=date.day,
                                                                               dayoffset=i)))
         for i in (3,4,5):
             self.optFiles.append(os.path.join(self.outputdir,
-                                           res.output_filename_pattern.format(year=date.year,
+                                              self.res.output_filename_pattern.format(year=date.year,
                                                                               month=date.month,
                                                                               day=date.day,
                                                                               dayoffset=i)))
