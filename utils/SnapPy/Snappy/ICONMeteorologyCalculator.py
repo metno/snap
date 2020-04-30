@@ -1,5 +1,5 @@
 # SNAP: Servere Nuclear Accident Programme
-# Copyright (C) 1992-2017   Norwegian Meteorological Institute
+# Copyright (C) 1992-2020   Norwegian Meteorological Institute
 # 
 # This file is part of SNAP. SNAP is free software: you can 
 # redistribute it and/or modify it under the terms of the 
@@ -31,47 +31,24 @@ import time
 from Snappy.Resources import Resources, MetModel
 import Snappy.MeteorologyCalculator
 
-
-class ECDataNotAvailableException(Exception):
-    def __init__(self, value):
-        '''exception having some kind of documention in args[0]'''
-        self.parameter = value
-    def __str__(self):
-        return repr(self.parameter)
-
-
-class EcMeteorologyCalculator(Snappy.MeteorologyCalculator.MeteorologyCalculator):
-    '''Calculate ec-meteorology'''
-    @staticmethod
-    def findECGlobalData(dtime: datetime):
-        '''Static method to find the closest global ec dataset earlier than dtime.
-
-        Args:
-            dtime: datetime object with a start-time, which should be included in the dataset
-
-
-        Returns:
-            A tuple with referencetime and filename
-
-        Raises:
-            ECDataNotAvailableException: no data for the dtime can be found
-        '''
-        return Snappy.MeteorologyCalculator.MeteorologyCalculator.findGlobalData(EcMeteorologyCalculator.getGlobalMeteoResources(), dtime)
+class ICONMeteorologyCalculator(Snappy.MeteorologyCalculator.MeteorologyCalculator):
+    '''Calculate dwd icon-meteorology'''
 
     @staticmethod
     def getGlobalMeteoResources():
         '''retrieve the GlobalMeteoResources from internal resources'''
-        ecres = Resources()
+        gres = Resources()
         res = Snappy.MeteorologyCalculator.GlobalMeteoResource()
-        res.indirs = ecres.MET_GLOBAL_INPUTDIRS[MetModel.NrpaEC0p1Global]
-        res.pathglob = "ec_atmo_0_1deg_????????T??????Z_3h.nc"
-        res.pathptime = "ec_atmo_0_1deg_%Y%m%dT%H%M%SZ_3h.nc"
-        res.outputdir = ecres.getSnapOutputDir()
-        res.output_filename_pattern = ecres.EC_FILENAME_PATTERN
-        res.domainHeight = ecres.ecDomainHeight
-        res.domainWidth = ecres.ecDomainWidth
-        res.domainDeltaX = ecres.ecDomainRes
-        res.domainDeltaY = ecres.ecDomainRes
+        res.indirs = gres.MET_GLOBAL_INPUTDIRS[MetModel.Icon0p25Global]
+        # icon_20200427T00Z.nc
+        res.pathglob = "icon_????????T??Z.nc"
+        res.pathptime = "icon_%Y%m%dT%HZ.nc"
+        res.outputdir = gres.getSnapOutputDir()
+        res.output_filename_pattern = gres.MET_FILENAME_PATTERN[MetModel.Icon0p25Global] # keeping filename for extracted data
+        res.domainHeight = gres.ecDomainHeight # reuse domainHeight/Width
+        res.domainWidth = gres.ecDomainWidth
+        res.domainDeltaX = 0.25
+        res.domainDeltaY = 0.25
         return res
 
 #    def __init__(self, res: Snappy.MeteorologyCalculator.GlobalMeteoResource, dtime: datetime, domainCenterX, domainCenterY):
@@ -80,18 +57,12 @@ class EcMeteorologyCalculator(Snappy.MeteorologyCalculator.MeteorologyCalculator
     def add_expected_files(self, date):
         self.files = []
         self.optFiles = []
-        for i in (0,1,2):
-            self.files.append(os.path.join(self.outputdir,
-                                           self.res.output_filename_pattern.format(year=date.year,
-                                                                              month=date.month,
-                                                                              day=date.day,
-                                                                              dayoffset=i)))
-        for i in (3,4,5):
-            self.optFiles.append(os.path.join(self.outputdir,
-                                              self.res.output_filename_pattern.format(year=date.year,
-                                                                              month=date.month,
-                                                                              day=date.day,
-                                                                              dayoffset=i)))
+        # only one file expected
+        self.files.append(os.path.join(self.outputdir,
+                                       self.res.output_filename_pattern.format(year=date.year,
+                                                                               month=date.month,
+                                                                               day=date.day,
+                                                                               UTC=date.hour)))
         return
 
 
@@ -106,8 +77,6 @@ class EcMeteorologyCalculator(Snappy.MeteorologyCalculator.MeteorologyCalculator
 '''
         if (not self.must_calc()):
             return
-#        if 'MODULESHOME' not in os.environ:
-#            raise ECDataNotAvailableException("unable to load module")
 
         precommand = '''#! /bin/bash
 . /usr/share/modules/init/bash
@@ -150,11 +119,11 @@ rm {outdir}/running
         return
 
 if __name__ == "__main__":
-    print(EcMeteorologyCalculator.findECGlobalData(datetime.strptime("2020-04-29T00", "%Y-%m-%dT%H")))
+    print(ICONMeteorologyCalculator.findGlobalData(ICONMeteorologyCalculator.getGlobalMeteoResources(), datetime.strptime("2020-04-27T00", "%Y-%m-%dT%H")))
     try:
-        EcMeteorologyCalculator.findECGlobalData(datetime.strptime("2010-10-24T00", "%Y-%m-%dT%H"))
+        ICONMeteorologyCalculator.findGlobalData(ICONMeteorologyCalculator.getGlobalMeteoResources(), datetime.strptime("2010-10-24T00", "%Y-%m-%dT%H"))
     except Exception as e:
         print(e.args[0])
 #    print(EcMeteorologyCalculator(Resources(), datetime.strptime("2016-10-24T00", "%Y-%m-%dT%H"), 63, 42, None))
-    ecmet = EcMeteorologyCalculator(EcMeteorologyCalculator.getGlobalMeteoResources(), datetime.strptime("2020-04-29T00", "%Y-%m-%dT%H"), -159, 20) # hawaii
-    print("recalc: ", ecmet.must_calc())
+    met = ICONMeteorologyCalculator(ICONMeteorologyCalculator.getGlobalMeteoResources(), datetime.strptime("2020-04-29T00", "%Y-%m-%dT%H"), -159, 20) # hawaii
+    print("recalc: ", met.must_calc())

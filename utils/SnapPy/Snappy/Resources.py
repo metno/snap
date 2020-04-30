@@ -61,13 +61,17 @@ class Resources:
     # ECINPUTDIRS = ["/lustre/storeB/users/heikok/Meteorology/ecdis2cwf/"]
     EC_FILENAME_PATTERN = "meteo{year:04d}{month:02d}{day:02d}_{dayoffset:02d}.nc"
     EC_FILE_PATTERN = os.path.join("NRPA_EUROPE_0_1_{UTC:02d}", EC_FILENAME_PATTERN)
-    ECGLOBALINPUTDIRS = [
-        "/lustre/storeA/project/metproduction/products/ecmwf/nc/",
-        "/lustre/storeB/project/metproduction/products/ecmwf/nc/",
-    ]
     EC_GLOBAL_PATTERN = (
         "ec_atmo_0_1deg_{year:04d}{month:02d}{day:02d}T{dayoffset:02d}0000Z_3h.nc"
     )
+
+    MET_GLOBAL_INPUTDIRS = {
+        MetModel.NrpaEC0p1Global: [
+            "/lustre/storeA/project/metproduction/products/ecmwf/nc/",
+            "/lustre/storeB/project/metproduction/products/ecmwf/nc/",
+        ],
+        MetModel.Icon0p25Global: ["/disk1/heiko/Meteo/"],
+    }
 
     MET_INPUTDIRS = {
         MetModel.Meps2p5: [
