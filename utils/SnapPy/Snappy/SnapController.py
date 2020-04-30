@@ -110,20 +110,20 @@ class SnapController():
             logFile.write("All work finished. Please open diana to see results.\nResults in {}\n".format(self.lastOutputDir))
         self.update_log()
 
-    def _ec_finished_run_snap(self):
+    def _met_finished_run_snap(self):
         debug("ec_finished")
         self.snapRunning = "finished" # quit update-thread
-        if (self.ecmet.must_calc()):
+        if (self.metcalc.must_calc()):
             with open(os.path.join(self.lastOutputDir,"snap.log.out"), "a") as logFile:
                 logFile.write("Meteorology not generated.\nErrors in {}\n".format(self.lastOutputDir))
             self.update_log()
             return
 
         metdefs = self.res.getDefaultMetDefinitions(self.lastQDict['metmodel'])
-        (metdefs["startX"], metdefs["startY"]) = self.ecmet.get_grid_startX_Y()
+        (metdefs["startX"], metdefs["startY"]) = self.metcalc.get_grid_startX_Y()
         with open(os.path.join(self.lastOutputDir, "snap.input"),'a') as fh:
             fh.write(self.res.getSnapInputMetDefinitions(self.lastQDict['metmodel'],
-                                self.ecmet.get_meteorology_files(), **metdefs))
+                                self.metcalc.get_meteorology_files(), **metdefs))
         self._snap_model_run()
 
     def results_add_toa(self):
@@ -479,11 +479,12 @@ STEP.HOUR.OUTPUT.FIELDS= 3
             self._snap_model_run()
         elif qDict['metmodel'] == 'nrpa_ec_0p1_global':
             try:
-                self.ecmet = EcMeteorologyCalculator(self.res, startDT, lonf, latf)
-                if self.ecmet.must_calc():
+                self.write_log("extracting meteorology from EC for domain")
+                self.metcalc = EcMeteorologyCalculator(self.res, startDT, lonf, latf)
+                if self.metcalc.must_calc():
                     proc = SnapRun.getQProcess(self)
-                    #proc.finished.connect(self._ec_finished_run_snap)
-                    self.ecmet.calc(proc)
+                    proc.finished.connect(self._met_finished_run_snap)
+                    self.metcalc.calc(proc)
                     if (proc.waitForStarted(3000)) :
                         self.snapRunning = "running"
                     # start background logging thread
@@ -491,7 +492,25 @@ STEP.HOUR.OUTPUT.FIELDS= 3
                     self.snap_update.update_log_signal.connect(self.update_log)
                     self.snap_update.start(QThread.LowPriority)
                 else:
-                    self._ec_finished_run_snap()
+                    self._met_finished_run_snap()
+            except ECDataNotAvailableException as e:
+                self.write_log("problems creating EC-met: {}".format(e.args[0]))
+        elif qDict['metmodel'] == 'icon_0p25_global':
+            try:
+                self.write_log("extracting meteorology from ICON for domain")
+                self.metcalc = EcMeteorologyCalculator(self.res, startDT, lonf, latf)
+                if self.metcalc.must_calc():
+                    proc = SnapRun.getQProcess(self)
+                    proc.finished.connect(self._met_finished_run_snap)
+                    self.metcalc.calc(proc)
+                    if (proc.waitForStarted(3000)) :
+                        self.snapRunning = "running"
+                    # start background logging thread
+                    self.snap_update = SnapUpdateThread(self)
+                    self.snap_update.update_log_signal.connect(self.update_log)
+                    self.snap_update.start(QThread.LowPriority)
+                else:
+                    self._met_finished_run_snap()
             except ECDataNotAvailableException as e:
                 self.write_log("problems creating EC-met: {}".format(e.args[0]))
         elif qDict['metmodel'] == 'meps_2_5km':
