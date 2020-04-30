@@ -480,7 +480,7 @@ STEP.HOUR.OUTPUT.FIELDS= 3
         elif qDict['metmodel'] == 'nrpa_ec_0p1_global':
             try:
                 self.write_log("extracting meteorology from EC for domain")
-                self.metcalc = EcMeteorologyCalculator(self.res, startDT, lonf, latf)
+                self.metcalc = EcMeteorologyCalculator(EcMeteorologyCalculator.getGlobalMeteoResources(), startDT, lonf, latf)
                 if self.metcalc.must_calc():
                     proc = SnapRun.getQProcess(self)
                     proc.finished.connect(self._met_finished_run_snap)
