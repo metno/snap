@@ -1,5 +1,5 @@
 # SNAP: Servere Nuclear Accident Programme
-# Copyright (C) 1992-2017   Norwegian Meteorological Institute
+# Copyright (C) 1992-2020   Norwegian Meteorological Institute
 #
 # This file is part of SNAP. SNAP is free software: you can
 # redistribute it and/or modify it under the terms of the
@@ -34,8 +34,7 @@ from time import gmtime, strftime
 
 @enum.unique
 class MetModel(enum.Enum):
-    H12 = "h12"
-    Hirlam12 = "hirlam12"
+    Icon0p25Global = "icon_0p25_global"
     Meps2p5 = "meps_2_5km"
     NrpaEC0p1 = "nrpa_ec_0p1"
     NrpaEC0p1Global = "nrpa_ec_0p1_global"
@@ -77,10 +76,12 @@ class Resources:
             )
             for location in ["A", "B"]
         ],
+        MetModel.Icon0p25Global: ["/disk1/heiko/Meteo/"],
         MetModel.GfsGribFilter: ["/disk1/tmp/"],
     }
     MET_FILENAME_PATTERN = {
         MetModel.Meps2p5: "{year:04d}/{month:02d}/{day:02d}/meps_det_2_5km_{year:04d}{month:02d}{day:02d}T{UTC:02d}Z.nc",
+        MetModel.Icon0p25Global: "icon_{year:04d}{month:02d}{day:02d}T{UTC:02d}Z.nc",
         MetModel.GfsGribFilter: "gfs_0p25deg_{year:04d}{month:02d}{day:02d}T{UTC:02d}Z.nc",
     }
 
@@ -124,9 +125,7 @@ class Resources:
 
     def getDefaultMetDefinitions(self, metmodel):
         """get the default meteo-definitions as dict to be used as *dict for getSnapInputMetDefinitions"""
-        if metmodel == MetModel.H12 or metmodel == MetModel.Hirlam12:
-            return {}
-        elif (metmodel == MetModel.NrpaEC0p1) or (metmodel == MetModel.NrpaEC0p1Global):
+        if (metmodel == MetModel.NrpaEC0p1) or (metmodel == MetModel.NrpaEC0p1Global):
             return {
                 "nx": 1 + round(self.ecDomainWidth / self.ecDomainRes),
                 "ny": 1 + round(self.ecDomainHeight / self.ecDomainRes),
@@ -136,6 +135,8 @@ class Resources:
                 "dy": self.ecDomainRes,
             }
         elif metmodel == MetModel.Meps2p5:
+            return {}
+        elif metmodel == MetModel.Icon0p25Global:
             return {}
         elif metmodel == MetModel.GfsGribFilter:
             return {}
@@ -325,19 +326,19 @@ GRAVITY.FIXED.M/S=0.0002
         """Read a snap input file without source-term parameters, isotopes (isotopes2snapinput) and eventually without meteorology files.
 
         Keyword arguments:
-        metmodel -- h12, hirlam12 including files (default), or nrpa_ec_0p1 without met-definitions (see getSnapInputMetDefinitions)
+        metmodel
         """
-        if (metmodel is None) or (metmodel == MetModel.H12):
-            filename = os.path.join(
-                os.path.dirname(__file__), "resources/snap.input.tmpl"
-            )
-        elif (metmodel == MetModel.NrpaEC0p1) or (metmodel == MetModel.NrpaEC0p1Global):
+        if (metmodel == MetModel.NrpaEC0p1) or (metmodel == MetModel.NrpaEC0p1Global):
             filename = os.path.join(
                 os.path.dirname(__file__), "resources/snap.input_nrpa_ec_0p1.tmpl"
             )
         elif metmodel == MetModel.Meps2p5:
             filename = os.path.join(
                 os.path.dirname(__file__), "resources/snap.input_meps_2_5km.tmpl"
+            )
+        elif metmodel == MetModel.Icon0p25Global:
+            filename = os.path.join(
+                os.path.dirname(__file__), "resources/snap.input_icon_0p25.tmpl"
             )
         elif metmodel == MetModel.GfsGribFilter:
             filename = os.path.join(
@@ -355,13 +356,10 @@ GRAVITY.FIXED.M/S=0.0002
         self, metmodel, files, nx=0, ny=0, startX=0, startY=0, dx=0, dy=0
     ):
         """Get the definitions for the metmodel, including met-files and domain (unless default).
-        This should be written to the snap.input file, in addition to the source-term. files may be empty for e.g. h12
+        This should be written to the snap.input file, in addition to the source-term. files may be empty
         """
         lines = []
-        if (metmodel is None) or (metmodel == MetModel.H12):
-            # no setup needed, decoded in snap-template
-            pass
-        elif (metmodel == MetModel.NrpaEC0p1) or (metmodel == MetModel.NrpaEC0p1Global):
+        if (metmodel == MetModel.NrpaEC0p1) or (metmodel == MetModel.NrpaEC0p1Global):
             # GRID.GPARAM = 2, -50., 25,.1,.1, 0., 0.
             # GRID.SIZE = 1251,601
             if nx == 0:
@@ -379,6 +377,9 @@ GRAVITY.FIXED.M/S=0.0002
             )
         elif metmodel == MetModel.Meps2p5:
             # no setup needed, decoded in snap-template
+            pass
+        elif metmodel == MetModel.Icon0p25Global:
+            # no setup needed, autdetection in snap
             pass
         elif metmodel == MetModel.GfsGribFilter:
             # no setup needed, autdetection in snap
