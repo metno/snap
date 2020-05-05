@@ -122,6 +122,7 @@ cd {outdir}
 touch {outdir}/running
 WORKDIR={outdir}/work
 mkdir $WORKDIR
+echo "Calculating EC meteorology, please wait"
 ECDIS_PARALLEL=0 NREC_DAY_MIN=2 NDAYS_MAX=3 DOMAIN=VARIABLE LON_DEF={lon0}.,{dlon},{nx} LAT_DEF={lat0}.,{dlat},{ny} ECDIS={globalfile} OUTDIR={outdir} ECDIS_TMPDIR=$WORKDIR $ECDIS_MODULE_PATH/ecdis4cwf.sh
 rm {outdir}/running
 '''

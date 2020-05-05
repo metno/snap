@@ -92,6 +92,7 @@ touch running
 cp {resdir}/icon_fimex.cfg .
 cp {resdir}/icon_sigma_hybrid.ncml .
 tmpfile=out$$.nc4
+echo "Calculating icon meteorology, please wait"
 fimex -c icon_fimex.cfg \
       --input.file={globalfile} \
       --interpolate.xAxisValues={xAxisValues} \

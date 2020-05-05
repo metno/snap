@@ -83,7 +83,6 @@ class Resources:
             )
             for location in ["A", "B"]
         ],
-        MetModel.Icon0p25Global: ["/tmp/"],# ["/disk1/heiko/Meteo/"],
         MetModel.GfsGribFilter: ["/disk1/tmp/"],
     }
     MET_FILENAME_PATTERN = {
