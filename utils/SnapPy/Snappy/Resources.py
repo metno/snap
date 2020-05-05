@@ -70,7 +70,10 @@ class Resources:
             "/lustre/storeA/project/metproduction/products/ecmwf/nc/",
             "/lustre/storeB/project/metproduction/products/ecmwf/nc/",
         ],
-        MetModel.Icon0p25Global: ["/disk1/heiko/Meteo/"],
+        MetModel.Icon0p25Global: [
+            "/lustre/storeB/project/metproduction/products/icon/",
+            "/lustre/storeA/project/metproduction/products/icon/"
+        ],
     }
 
     MET_INPUTDIRS = {
@@ -80,7 +83,7 @@ class Resources:
             )
             for location in ["A", "B"]
         ],
-        MetModel.Icon0p25Global: ["/disk1/heiko/Meteo/"],
+        MetModel.Icon0p25Global: ["/tmp/"],# ["/disk1/heiko/Meteo/"],
         MetModel.GfsGribFilter: ["/disk1/tmp/"],
     }
     MET_FILENAME_PATTERN = {
@@ -93,6 +96,7 @@ class Resources:
         """
         initialize
         """
+        self.directory = os.path.join(os.path.dirname(__file__), "resources")
         self.ecDomainWidth = 125.0
         self.ecDomainHeight = 60.0
         self.ecDomainRes = 0.1
@@ -100,7 +104,7 @@ class Resources:
         self.ecDefaultDomainStartY = 25.0
 
         startScreenFH = open(
-            os.path.join(os.path.dirname(__file__), "resources/startScreen.html"),
+            os.path.join(self.directory, "startScreen.html"),
             mode="r",
             encoding="UTF-8",
         )
@@ -152,9 +156,7 @@ class Resources:
 
     def getStartScreenInverse(self):
         with open(
-            os.path.join(
-                os.path.dirname(__file__), "resources/startScreenInverse.html"
-            ),
+            os.path.join(self.directory, "startScreenInverse.html"),
             mode="r",
             encoding="UTF-8",
         ) as sfh:
@@ -162,13 +164,13 @@ class Resources:
         return startScreenInverse
 
     def getIconPath(self):
-        return os.path.join(os.path.dirname(__file__), "resources/radioMapIcon.png")
+        return os.path.join(self.directory, "radioMapIcon.png")
 
     def getIsotopes(self):
         """ return a dictionary of isotope-ids mapping to a dictionary with isotope,type and decay"""
         isotopes = dict()
         with open(
-            os.path.join(os.path.dirname(__file__), "resources/isotope_list.txt"),
+            os.path.join(self.directory, "isotope_list.txt"),
             mode="r",
             encoding="UTF-8",
         ) as isoFH:
@@ -255,7 +257,7 @@ GRAVITY.FIXED.M/S=0.0002
         }
 
         with open(
-            os.path.join(os.path.dirname(__file__), "resources/isotopes_template.xml")
+            os.path.join(self.directory, "isotopes_template.xml")
         ) as isoTemplate:
             isoTemp = isoTemplate.read()
 
@@ -271,7 +273,7 @@ GRAVITY.FIXED.M/S=0.0002
 
         with open(
             os.path.join(
-                os.path.dirname(__file__), "resources/cdmGribWriterIsotopesTemplate.xml"
+                self.directory, "cdmGribWriterIsotopesTemplate.xml"
             )
         ) as xmlTemplate:
             xmlTemp = xmlTemplate.read()
@@ -279,7 +281,7 @@ GRAVITY.FIXED.M/S=0.0002
         xmlOut = xmlTemp.format(
             ISOTOPES=isoStr,
             GRIB_TEMPLATE_PATH=os.path.join(
-                os.path.dirname(__file__), "resources/template_conc_Am-241.ID_328.grib"
+                self.directory, "template_conc_Am-241.ID_328.grib"
             ),
         )
 
@@ -287,7 +289,7 @@ GRAVITY.FIXED.M/S=0.0002
             "extracts": extracts,
             "xml": xmlOut,
             "ncml": os.path.join(
-                os.path.dirname(__file__), "resources/removeSnapReferenceTime.ncml"
+                self.directory, "removeSnapReferenceTime.ncml"
             ),
         }
 
@@ -295,7 +297,7 @@ GRAVITY.FIXED.M/S=0.0002
         self, bb={"west": -180.0, "east": 180.0, "north": 90.0, "south": -90.0}
     ):
         nppsFile = open(
-            os.path.join(os.path.dirname(__file__), "resources/npps.csv"),
+            os.path.join(self.directory, "npps.csv"),
             mode="r",
             encoding="UTF-8",
         )
@@ -334,19 +336,19 @@ GRAVITY.FIXED.M/S=0.0002
         """
         if (metmodel == MetModel.NrpaEC0p1) or (metmodel == MetModel.NrpaEC0p1Global):
             filename = os.path.join(
-                os.path.dirname(__file__), "resources/snap.input_nrpa_ec_0p1.tmpl"
+                self.directory, "snap.input_nrpa_ec_0p1.tmpl"
             )
         elif metmodel == MetModel.Meps2p5:
             filename = os.path.join(
-                os.path.dirname(__file__), "resources/snap.input_meps_2_5km.tmpl"
+                self.directory, "snap.input_meps_2_5km.tmpl"
             )
         elif metmodel == MetModel.Icon0p25Global:
             filename = os.path.join(
-                os.path.dirname(__file__), "resources/snap.input_icon_0p25.tmpl"
+                self.directory, "snap.input_icon_0p25.tmpl"
             )
         elif metmodel == MetModel.GfsGribFilter:
             filename = os.path.join(
-                os.path.dirname(__file__), "resources/snap.input_gfs_grib_filter.tmpl"
+                self.directory, "snap.input_gfs_grib_filter.tmpl"
             )
         else:
             raise (
@@ -401,11 +403,11 @@ GRAVITY.FIXED.M/S=0.0002
         return "\n".join(lines)
 
     def getSendmailScript(self):
-        filename = os.path.join(os.path.dirname(__file__), "resources/sendmail.sh")
+        filename = os.path.join(self.directory, "sendmail.sh")
         return filename
 
     def getBSnapInputFile(self):
-        filename = os.path.join(os.path.dirname(__file__), "resources/snap.in")
+        filename = os.path.join(self.directory, "snap.in")
         return filename
 
     def getSnapOutputDir(self):

@@ -72,6 +72,7 @@ class EcMeteorologyCalculator(Snappy.MeteorologyCalculator.MeteorologyCalculator
         res.domainWidth = ecres.ecDomainWidth
         res.domainDeltaX = ecres.ecDomainRes
         res.domainDeltaY = ecres.ecDomainRes
+        res.timeoffset = 3 # required offset between reference-time and first useful startup-time
         return res
 
 #    def __init__(self, res: Snappy.MeteorologyCalculator.GlobalMeteoResource, dtime: datetime, domainCenterX, domainCenterY):

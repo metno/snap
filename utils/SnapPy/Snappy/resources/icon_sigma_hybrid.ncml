@@ -8,9 +8,11 @@
 <variable name="to_hybrid" shape="longitude latitude hybrid time" type="int">
 </variable>
 
-<variable name="surface_air_pressure">
-  <attribute name="units" type="String" value="Pa" />
-</variable>
+<variable name="lagrangian_tendency_air_pressure_ml" orgName="lagrangian_tendency_air_pressure_pl" />
+<variable name="air_temperature_ml" orgName="air_temperature_pl" />
+<variable name="x_wind_ml" orgName="x_wind_pl" />
+<variable name="y_wind_ml" orgName="y_wind_pl" />
+
 
 
 <variable name="hybrid" type="double"  shape="hybrid" >
