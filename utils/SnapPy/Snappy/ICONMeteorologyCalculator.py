@@ -49,6 +49,7 @@ class ICONMeteorologyCalculator(Snappy.MeteorologyCalculator.MeteorologyCalculat
         res.domainWidth = gres.ecDomainWidth
         res.domainDeltaX = 0.25
         res.domainDeltaY = 0.25
+        res.timeoffset = 0 # required offset between reference-time and first useful startup-time
         return res
 
 #    def __init__(self, res: Snappy.MeteorologyCalculator.GlobalMeteoResource, dtime: datetime, domainCenterX, domainCenterY):
@@ -57,12 +58,14 @@ class ICONMeteorologyCalculator(Snappy.MeteorologyCalculator.MeteorologyCalculat
     def add_expected_files(self, date):
         self.files = []
         self.optFiles = []
+
         # only one file expected
         self.files.append(os.path.join(self.outputdir,
                                        self.res.output_filename_pattern.format(year=date.year,
                                                                                month=date.month,
                                                                                day=date.day,
-                                                                               UTC=date.hour)))
+                                                                               UTC=date.hour,
+                                                                               resdir=Resources().directory)))
         return
 
 
@@ -80,31 +83,34 @@ class ICONMeteorologyCalculator(Snappy.MeteorologyCalculator.MeteorologyCalculat
 
         precommand = '''#! /bin/bash
 . /usr/share/modules/init/bash
-module load ecdis4cwf/1.2.0
+module load fimex/1.4.2
 export OMP_NUM_THREADS=1
-export DATE='{year:04d}{month:02d}{day:02d}'
-export UTC='{utc}'
 
+cd {outputdir} || exit 1
 umask 000
-cd {outdir}
-touch {outdir}/running
-WORKDIR={outdir}/work
-mkdir $WORKDIR
-ECDIS_PARALLEL=0 NREC_DAY_MIN=2 NDAYS_MAX=3 DOMAIN=VARIABLE LON_DEF={lon0}.,{dlon},{nx} LAT_DEF={lat0}.,{dlat},{ny} ECDIS={globalfile} OUTDIR={outdir} ECDIS_TMPDIR=$WORKDIR $ECDIS_MODULE_PATH/ecdis4cwf.sh
-rm {outdir}/running
+touch running
+cp {resdir}/icon_fimex.cfg .
+cp {resdir}/icon_sigma_hybrid.ncml .
+tmpfile=out$$.nc4
+fimex -c icon_fimex.cfg \
+      --input.file={globalfile} \
+      --interpolate.xAxisValues={xAxisValues} \
+      --interpolate.yAxisValues={yAxisValues} \
+      --output.file=$tmpfile \
+      --output.type=nc4 \
+      && mv $tmpfile {outputfile}
+rm {outputdir}/running
 '''
-        command = precommand.format(year=self.date.year,
-                                    month=self.date.month,
-                                    day=self.date.day,
-                                    utc=self.date.hour,
-                                    outdir=self.outputdir,
-                                    lon0=self.lon0,
-                                    lat0=self.lat0,
-                                    dlon=self.res.domainDeltaX,
-                                    dlat=self.res.domainDeltaY,
-                                    nx=round(self.res.domainWidth/self.res.domainDeltaX)+1,
-                                    ny=round(self.res.domainHeight/self.res.domainDeltaY)+1,
+        command = precommand.format(resdir=Resources().directory,
+                                    xAxisValues="{},{},...,{}".format(self.lon0,
+                                                                      self.lon0+self.res.domainDeltaX,
+                                                                      self.lon0+self.res.domainWidth),
+                                    yAxisValues="{},{},...,{}".format(self.lat0,
+                                                                      self.lat0+self.res.domainDeltaY,
+                                                                      self.lat0+self.res.domainHeight),
                                     globalfile=self.globalfile,
+                                    outputfile=self.files[0],
+                                    outputdir=self.outputdir
                                     )
         scriptFile = os.path.join(self.outputdir, "command.sh")
         with open(scriptFile, 'w') as script:
@@ -119,11 +125,17 @@ rm {outdir}/running
         return
 
 if __name__ == "__main__":
-    print(ICONMeteorologyCalculator.findGlobalData(ICONMeteorologyCalculator.getGlobalMeteoResources(), datetime.strptime("2020-04-27T00", "%Y-%m-%dT%H")))
+    mydate = datetime.strptime("2020-05-05T00", "%Y-%m-%dT%H")
+    print(ICONMeteorologyCalculator.findGlobalData(ICONMeteorologyCalculator.getGlobalMeteoResources(), mydate))
     try:
         ICONMeteorologyCalculator.findGlobalData(ICONMeteorologyCalculator.getGlobalMeteoResources(), datetime.strptime("2010-10-24T00", "%Y-%m-%dT%H"))
     except Exception as e:
         print(e.args[0])
 #    print(EcMeteorologyCalculator(Resources(), datetime.strptime("2016-10-24T00", "%Y-%m-%dT%H"), 63, 42, None))
-    met = ICONMeteorologyCalculator(ICONMeteorologyCalculator.getGlobalMeteoResources(), datetime.strptime("2020-04-29T00", "%Y-%m-%dT%H"), -159, 20) # hawaii
+    met = ICONMeteorologyCalculator(ICONMeteorologyCalculator.getGlobalMeteoResources(), mydate, -159, 20) # hawaii
     print("recalc: ", met.must_calc())
+    met.calc()
+    if met.must_calc() is True:
+        print("ERROR: recalc after calc required")
+    else:
+        print("calc output-file: ", met.get_meteorology_files())

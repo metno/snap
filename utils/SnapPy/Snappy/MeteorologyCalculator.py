@@ -38,10 +38,10 @@ class GlobalMeteoResource:
             outputdir: output directory
             pathglob: glob for files in inputdirectories, e.g. ec_atmo_0_1deg_????????T??????Z_3h.nc
             pathptime: strptime for files, e.g. ec_atmo_0_1deg_%Y%m%dT%H%M%SZ_3h.nc
-            domainHeight
-            domainWidth
-            domainDeltaX
-            domainDeltaY
+            domainHeight: total y-Axis length of domain
+            domainWidth: total x-Axis lenght of domain
+            domainDeltaX: x-resolution of domain
+            domainDeltaY: y-resolution of domain
     '''
     indirs = []
     pathglob = ""
@@ -52,6 +52,7 @@ class GlobalMeteoResource:
     domainWidth = 10
     domainDeltaX = 0.1
     domainDeltaY = 0.1
+    timeoffset = 0 # required offset between reference-time and first useful startup-time
 
 
 class MeteoDataNotAvailableException(Exception):
@@ -118,7 +119,7 @@ class MeteorologyCalculator(abc.ABC):
         self.proc = None # storage for background-process
         self.res = res
 
-        lastDateFile = self.findGlobalData(res, dtime-timedelta(hours=3))
+        lastDateFile = self.findGlobalData(res, dtime-timedelta(hours=res.timeoffset))
         self.date = lastDateFile[0]
         self.globalfile = lastDateFile[1]
         utc = lastDateFile[0].hour
