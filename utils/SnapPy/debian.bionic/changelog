@@ -1,3 +1,9 @@
+snap-py (1.6.17-1) bionic; urgency=medium
+
+  * added icon meteorology, h12 removed
+
+ -- Heiko Klein <heikok@met.no>  Wed, 06 May 2020 15:41:40 +0200
+
 snap-py (1.6.16-1) bionic; urgency=medium
 
   * fixing stderr/stdout and pyqtSlot for eemep and inverse
