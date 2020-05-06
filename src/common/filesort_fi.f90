@@ -26,7 +26,7 @@ contains
 !> check and sort netcdf file contents
   subroutine filesort_fi(fimex_type, fimex_config)
     USE iso_fortran_env, only: error_unit, real64, int64, int32
-    use Fimex, only: FimexIO, AXIS_GeoX, AXIS_GeoY, AXIS_Lon, AXIS_Lat, AXIS_GeoZ, &
+    use Fimex, only: FimexIO, AXIS_GeoZ, &
                      AXIS_Pressure, AXIS_Height, AXIS_Realization, AXIS_Time
     USE readfield_fiML, only: check
     USE DateCalc, only: epochToDate
@@ -46,7 +46,7 @@ contains
     TYPE(FimexIO) :: fio
     integer(int32), dimension(:), allocatable :: start, length, atypes
     character(len=1024) :: time_var, varname
-    integer :: i, j, t, ndims, nf, varid, dimid, tsize, ierror
+    integer :: i, j, t, ndims, nf, tsize, ierror
     real(real64), allocatable, target :: times(:)
     real(real64), allocatable, target :: field(:)
     integer :: zeroHour, status, count_nan
@@ -78,7 +78,7 @@ contains
       call check(fio%get_dimension_start_size(start, length), "reading dim-sizes for "//TRIM(varname))
       call check(fio%get_axistypes(atypes), "reading dim-types for "//TRIM(varname))
 
-      tsize = 999999999
+      tsize = huge(tsize)
       DO i = 1, ndims
         SELECT CASE (atypes(i))
         CASE (AXIS_Time) ! full x-range
@@ -125,7 +125,7 @@ contains
           CYCLE
         end if
         navail = navail + 1
-        if (navail > mavail) then
+        if (navail >= mavail) then
           if (navail == mavail) then
             write (iulog, *) 'WARNING : TOO MANY AVAILABLE TIME STEPS'
             write (iulog, *) '          no.,max(MAVAIL): ', navail, mavail
