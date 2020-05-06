@@ -281,6 +281,7 @@ module snapmetML
       met_params%precconaccumv = 'lwe_thickness_of_convective_precipitation_amount_acc'
       met_params%precstrativrt = ''
       met_params%precconvrt = ''
+!..get grid parameters from field identification
     case('SLIM')
       met_params%manual_level_selection = .true.
       met_params%has_dummy_dim = .true.
