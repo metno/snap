@@ -192,6 +192,7 @@ PROGRAM bsnap
   USE readfield_ncML, only: readfield_nc
 #if defined(FIMEX)
   USE readfield_fiML, only: fi_init, readfield_fi
+  USE filesort_fiML, only: filesort_fi
 #endif
   USE releasefileML, only: releasefile
   USE filesort_ncML, only: filesort_nc
@@ -380,8 +381,12 @@ PROGRAM bsnap
 
 !..check input FELT files and make sorted lists of available data
 !..make main list based on x wind comp. (u) in upper used level
-  if (ftype == "netcdf" .or. ftype == "fimex") then
+  if (ftype == "netcdf") then
     call filesort_nc ! (iunitf, ierror)
+  else if (ftype == "fimex") then
+#if defined(FIMEX)
+    call filesort_fi(fimex_type, fimex_config)
+#endif
   else
     call filesort(iunitf, ierror)
   end if
@@ -647,7 +652,7 @@ PROGRAM bsnap
     ! b END
 #endif
 
-    ! reset readfield_nc (eventually, traj will rerun this loop)
+! reset readfield_nc (eventually, traj will rerun this loop)
     if (ftype == "netcdf") then
       call readfield_nc(-1, nhleft, itimei, ihr1, ihr2, &
                         time_file, ierror)
@@ -1857,7 +1862,7 @@ contains
         if (.not. has_value) goto 12
         read (cinput(pname_start:pname_end), *, err=12) maxhfc
       case ('field.type')
-        !..field.type felt or netcdf
+        !..field.type felt, netcdf or fimex
         if (.not. has_value) goto 12
         read (cinput(pname_start:pname_end), *, err=12) ftype
       case ('fimex.config')
@@ -1869,7 +1874,7 @@ contains
         if (.not. has_value) then
           fimex_config = ""
         else
-          read (cinput(pname_start:pname_end), *, err=12) fimex_config
+          fimex_config = cinput(pname_start:pname_end)
         endif
       case ('fimex.file_type')
         !..fimex.file_type grib,netcdf,felt,ncml (known fimex filetypes), only used when ftype=fimex
@@ -1983,6 +1988,7 @@ contains
         end if
         nlevel = size(klevel)
         nk = nlevel
+        write (error_unit, *) "autodetection of grid-param: ", gparam
       case ('end')
         !..end
 #if defined(TRAJ)

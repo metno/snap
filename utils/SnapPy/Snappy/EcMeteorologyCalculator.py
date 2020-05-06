@@ -28,7 +28,8 @@ import os
 import subprocess
 import time
 
-from Snappy.Resources import Resources
+from Snappy.Resources import Resources, MetModel
+import Snappy.MeteorologyCalculator
 
 
 class ECDataNotAvailableException(Exception):
@@ -39,7 +40,7 @@ class ECDataNotAvailableException(Exception):
         return repr(self.parameter)
 
 
-class EcMeteorologyCalculator():
+class EcMeteorologyCalculator(Snappy.MeteorologyCalculator.MeteorologyCalculator):
     '''Calculate ec-meteorology'''
     @staticmethod
     def findECGlobalData(dtime: datetime):
@@ -55,106 +56,45 @@ class EcMeteorologyCalculator():
         Raises:
             ECDataNotAvailableException: no data for the dtime can be found
         '''
-        #should eventually use productstatus.met.no?
+        return Snappy.MeteorologyCalculator.MeteorologyCalculator.findGlobalData(EcMeteorologyCalculator.getGlobalMeteoResources(), dtime)
 
-        timesFiles = [] # tuples with datetime, file
-        for inDir in Resources.ECGLOBALINPUTDIRS:
-            for iFile in iglob(os.path.join(inDir, "ec_atmo_0_1deg_????????T??????Z_3h.nc")):
-                statinfo = os.stat(iFile)
-                if statinfo.st_mtime < (time.time() - 15*60): # file hasn't been changed in 15 minutes
-                    date_string = iFile[-22:-7]
-                    dateFile = datetime.strptime(date_string, "%Y%m%dT%H%M%S")
-                    timesFiles.append((dateFile, iFile))
-        lastTimeFile = (None, None)
-        for timeFile in sorted(timesFiles, key=lambda t: t[0]):
-            if (timeFile[0] <= dtime):
-                lastTimeFile = timeFile
-            else:
-                break
-        if (lastTimeFile[0] is None):
-            raise ECDataNotAvailableException("no input data in {dirs} for {time}: ".format(dirs=Resources.ECGLOBALINPUTDIRS, time=dtime))
-        return lastTimeFile
+    @staticmethod
+    def getGlobalMeteoResources():
+        '''retrieve the GlobalMeteoResources from internal resources'''
+        ecres = Resources()
+        res = Snappy.MeteorologyCalculator.GlobalMeteoResource()
+        res.indirs = ecres.MET_GLOBAL_INPUTDIRS[MetModel.NrpaEC0p1Global]
+        res.pathglob = "ec_atmo_0_1deg_????????T??????Z_3h.nc"
+        res.pathptime = "ec_atmo_0_1deg_%Y%m%dT%H%M%SZ_3h.nc"
+        res.outputdir = ecres.getSnapOutputDir()
+        res.output_filename_pattern = ecres.EC_FILENAME_PATTERN
+        res.domainHeight = ecres.ecDomainHeight
+        res.domainWidth = ecres.ecDomainWidth
+        res.domainDeltaX = ecres.ecDomainRes
+        res.domainDeltaY = ecres.ecDomainRes
+        res.timeoffset = 3 # required offset between reference-time and first useful startup-time
+        return res
 
+#    def __init__(self, res: Snappy.MeteorologyCalculator.GlobalMeteoResource, dtime: datetime, domainCenterX, domainCenterY):
+#        super(res, dtime, domainCenterX, domainCenterY)
 
-    def __init__(self, res: Resources, dtime: datetime, domainCenterX, domainCenterY):
-        '''Calculate the ec-meteorology unless it exists
-
-        Args:
-            res: resources object
-            dtime: datetime object containing the earliest time expected
-            domainCenterX: number where the domain should start (longitude), will be rounded
-            domainCenterY: number where the domain should start (latitude), will be rounded
-
-        Raises:
-            ECDataNotAvailableException: no data for the dtime can be found
-        '''
-        self.proc = None # storage for background-process
-        self.res = res
-
-        lastDateFile = EcMeteorologyCalculator.findECGlobalData(dtime-timedelta(hours=3)) # no useful data in EC the first 3 hours
-        self.date = lastDateFile[0]
-        self.globalfile = lastDateFile[1]
-        utc = lastDateFile[0].hour
-        # domain every 10th degree
-        lat0 = math.floor((domainCenterY-(res.ecDomainHeight/2.))/10.)*10
-        if (lat0 < -80): lat0 = -89
-        if (lat0+res.ecDomainHeight > 89): lat0 = 89 - res.ecDomainHeight
-        # snap can only cross date-line when both start and position are negative or positive
-        lon0 = math.floor((domainCenterX-(res.ecDomainWidth/2.))/10.)*10
-        self.lat0 = int(lat0)
-        self.lon0 = int(lon0)
-        self.outputdir = os.path.join(res.getSnapOutputDir(), "NRPA_LON{x}_LAT{y}_{utc:02d}".format(x=self.lon0, y=self.lat0, utc=utc))
-
-        # try to avoid conflicting processes (not 100% save)
-        i = 1
-        while (os.path.isfile(os.path.join(self.outputdir, "running"))):
-            self.outputdir =  os.path.join(res.getSnapOutputDir(), "NRPA_TEMP_{utc:02d}_{i}".format(utc=utc, i=i))
-            i+=1
-
-        if (not os.path.exists(self.outputdir)):
-            os.makedirs(self.outputdir)
-
+    def add_expected_files(self, date):
         self.files = []
         self.optFiles = []
         for i in (0,1,2):
             self.files.append(os.path.join(self.outputdir,
-                                           res.EC_FILENAME_PATTERN.format(year=lastDateFile[0].year,
-                                                                          month=lastDateFile[0].month,
-                                                                          day=lastDateFile[0].day,
-                                                                          dayoffset=i)))
+                                           self.res.output_filename_pattern.format(year=date.year,
+                                                                              month=date.month,
+                                                                              day=date.day,
+                                                                              dayoffset=i)))
         for i in (3,4,5):
             self.optFiles.append(os.path.join(self.outputdir,
-                                           res.EC_FILENAME_PATTERN.format(year=lastDateFile[0].year,
-                                                                          month=lastDateFile[0].month,
-                                                                          day=lastDateFile[0].day,
-                                                                          dayoffset=i)))
+                                              self.res.output_filename_pattern.format(year=date.year,
+                                                                              month=date.month,
+                                                                              day=date.day,
+                                                                              dayoffset=i)))
         return
 
-    def get_meteorology_files(self):
-        '''return the meteorology files'''
-        if self.must_calc():
-            raise ECDataNotAvailableException("unable to create ec-data for {year}-{month}-{day} in {dir}".
-                                              format(year=self.date.year,
-                                                     month=self.date.month,
-                                                     day=self.date.day,
-                                                     dir=self.outputdir))
-        files = self.files
-        for f in self.optFiles:
-            if (os.path.isfile(f)):
-                files.append(f)
-        return files
-
-    def get_grid_startX_Y(self):
-        '''return a tuple with x0 and y0'''
-        return (self.lon0, self.lat0)
-
-    def must_calc(self):
-        '''check if calculation is required or has been done earlier'''
-        recalc = False
-        for f in self.files:
-            if (not os.path.isfile(f)):
-                recalc = True
-        return recalc
 
     def calc(self, proc=None):
         '''run the calculation of ec-data if required.
@@ -182,6 +122,7 @@ cd {outdir}
 touch {outdir}/running
 WORKDIR={outdir}/work
 mkdir $WORKDIR
+echo "Calculating EC meteorology, please wait"
 ECDIS_PARALLEL=0 NREC_DAY_MIN=2 NDAYS_MAX=3 DOMAIN=VARIABLE LON_DEF={lon0}.,{dlon},{nx} LAT_DEF={lat0}.,{dlat},{ny} ECDIS={globalfile} OUTDIR={outdir} ECDIS_TMPDIR=$WORKDIR $ECDIS_MODULE_PATH/ecdis4cwf.sh
 rm {outdir}/running
 '''
@@ -192,10 +133,10 @@ rm {outdir}/running
                                     outdir=self.outputdir,
                                     lon0=self.lon0,
                                     lat0=self.lat0,
-                                    dlon=self.res.ecDomainRes,
-                                    dlat=self.res.ecDomainRes,
-                                    nx=round(self.res.ecDomainWidth/self.res.ecDomainRes)+1,
-                                    ny=round(self.res.ecDomainHeight/self.res.ecDomainRes)+1,
+                                    dlon=self.res.domainDeltaX,
+                                    dlat=self.res.domainDeltaY,
+                                    nx=round(self.res.domainWidth/self.res.domainDeltaX)+1,
+                                    ny=round(self.res.domainHeight/self.res.domainDeltaY)+1,
                                     globalfile=self.globalfile,
                                     )
         scriptFile = os.path.join(self.outputdir, "command.sh")
@@ -211,11 +152,11 @@ rm {outdir}/running
         return
 
 if __name__ == "__main__":
-    print(EcMeteorologyCalculator.findECGlobalData(datetime.strptime("2016-10-24T00", "%Y-%m-%dT%H")))
+    print(EcMeteorologyCalculator.findECGlobalData(datetime.strptime("2020-04-29T00", "%Y-%m-%dT%H")))
     try:
         EcMeteorologyCalculator.findECGlobalData(datetime.strptime("2010-10-24T00", "%Y-%m-%dT%H"))
-    except ECDataNotAvailableException as e:
+    except Exception as e:
         print(e.args[0])
 #    print(EcMeteorologyCalculator(Resources(), datetime.strptime("2016-10-24T00", "%Y-%m-%dT%H"), 63, 42, None))
-    ecmet = EcMeteorologyCalculator(Resources(), datetime.strptime("2016-10-27T00", "%Y-%m-%dT%H"), -159, 20) # hawaii
+    ecmet = EcMeteorologyCalculator(EcMeteorologyCalculator.getGlobalMeteoResources(), datetime.strptime("2020-04-29T00", "%Y-%m-%dT%H"), -159, 20) # hawaii
     print("recalc: ", ecmet.must_calc())
