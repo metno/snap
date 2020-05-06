@@ -60,8 +60,8 @@ fi
 #INSTRUCTIONS_END
 
 HOST=bionic
-VERSION=1.6.16
-CHANGELOG="fixing stderr/stdout and pyqtSlot for eemep and inverse"
+VERSION=1.6.17
+CHANGELOG="added icon meteorology, h12 removed"
 rm -f debian
 ln -s debian.$HOST debian
 dch -v ${VERSION}-1 -U "${CHANGELOG}"
