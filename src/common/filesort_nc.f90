@@ -90,7 +90,7 @@ subroutine filesort_nc
         CYCLE
       end if
       navail = navail + 1
-      if(navail > mavail) then
+      if(navail >= mavail) then
         if (navail == mavail) then
           write(iulog,*) 'WARNING : TOO MANY AVAILABLE TIME STEPS'
           write(iulog,*) '          no.,max(MAVAIL): ',navail,mavail
