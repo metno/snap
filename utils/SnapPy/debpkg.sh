@@ -60,7 +60,7 @@ fi
 #INSTRUCTIONS_END
 
 HOST=bionic
-VERSION=1.6.17
+VERSION=1.6.18
 CHANGELOG="added icon meteorology, h12 removed"
 rm -f debian
 ln -s debian.$HOST debian
