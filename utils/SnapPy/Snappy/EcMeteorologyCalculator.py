@@ -112,7 +112,7 @@ class EcMeteorologyCalculator(Snappy.MeteorologyCalculator.MeteorologyCalculator
 
         precommand = '''#! /bin/bash
 . /usr/share/modules/init/bash
-module load ecdis4cwf/1.2.0
+module load ecdis4cwf/1.2.6
 export OMP_NUM_THREADS=1
 export DATE='{year:04d}{month:02d}{day:02d}'
 export UTC='{utc}'
@@ -122,7 +122,7 @@ cd {outdir}
 touch {outdir}/running
 WORKDIR={outdir}/work
 mkdir $WORKDIR
-echo "Calculating EC meteorology, please wait"
+echo "Preprocessing 3days EC meteorology, please wait ca. 15min"
 ECDIS_PARALLEL=0 NREC_DAY_MIN=2 NDAYS_MAX=3 DOMAIN=VARIABLE LON_DEF={lon0}.,{dlon},{nx} LAT_DEF={lat0}.,{dlat},{ny} ECDIS={globalfile} OUTDIR={outdir} ECDIS_TMPDIR=$WORKDIR $ECDIS_MODULE_PATH/ecdis4cwf.sh
 rm {outdir}/running
 '''
