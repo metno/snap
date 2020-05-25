@@ -117,7 +117,7 @@ scp {scpoptions} {statusfile} {scpdestination}
 #$ -V
 #$ -j n
 #$ -r y
-#$ -l h_rt=0:50:00
+#$ -l h_rt=2:00:00
 #$ -l h_vmem=8G
 #$ -M heikok@met.no,andreb@met.no
 #$ -m a
