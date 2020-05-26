@@ -75,7 +75,7 @@ argoswrite.o: ../common/argoswrite.f90 snapdebugML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 snapfilML.o: ../common/snapfilML.f90 snapdimML.o
 	${F77} -c ${F77FLAGS} $<
-filesort.o: ../common/filesort.f90 snapfldML.o snapfilML.o snapdebugML.o snapgrdML.o snapdimML.o milib.o
+filesort.o: ../common/filesort.f90 snapfldML.o snapfilML.o snapdebugML.o snapgrdML.o snapdimML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 om2edot.o: ../common/om2edot.f90 snapgrdML.o snapfldML.o snapdimML.o snapdebugML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
