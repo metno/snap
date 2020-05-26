@@ -65,7 +65,7 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   integer :: mhprecip,lprog2,ihdiff,ihrpr1,ihrpr2,iprog1,ix,iy
   integer :: ierr,i1,i2
   real ::    whelp,ptop,prec1,prec2,db,p1,p2,dp,dxgrid,dygrid
-  real ::    rcp,p,dred,red,px
+  real ::    p,dred,red,px
 
   integer, save :: itryprecip=1
 
@@ -841,7 +841,7 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
   if(it == 4) then
   
   !..abs.temp. -> pot.temp.
-    rcp=r/cp
+    !rcp=r/cp
     do k=2,nk-kadd
       do j=1,ny
         do i=1,nx
