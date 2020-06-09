@@ -75,6 +75,8 @@ class ModelRunner():
 
     VOLCANO_FILENAME = "volcano.xml"
     ABORT_FILENAME = "deleteToRequestAbort"
+    OUTPUT_INSTANT_FILENAME = "eemep_hourInst.nc"
+    OUTPUT_AVERAGE_FILENAME = "eemep_hour.nc"
 
     def __init__(self, path, hpcMachine):
         self.upload_files = set()
@@ -249,8 +251,10 @@ class ModelRunner():
         """Delete files fromprevious runs"""
         self._write_log("cleaning files in {}:{}".format(self.hpcMachine, self.hpc_outdir))
 
-        run_output_files = ["eemep_hour.nc", "eemep_hourInst.nc", "eemep_day.nc"]
-        hpc_files_to_delete = self.upload_files + [self.statusfile] + run_output_files
+        hpc_files_to_delete = self.upload_files \
+                + [self.statusfile] \
+                + [ModelRunner.OUTPUT_AVERAGE_FILENAME] \
+                + [ModelRunner.OUTPUT_INSTANT_FILENAME]
 
         hpc_files_to_delete = [os.path.basename(f) for f in self.hpc_files_to_delete]
         hpc_files_to_delete = [os.path.join(self.hpc_outdir, f) for f in self.hpc_files_to_delete]
@@ -350,28 +354,19 @@ class ModelRunner():
             self._write_log("Could not get file ages - something is wrong!")
             return
 
-        #Download hourinst
-        fileI = 'eemep_hourInst.nc'
-        age = file_age.pop(fileI, None)
-        if (age > 10):
-            self._write_log("File {} too old on {}".format(fileI, self.hpcMachine))
-            return
-        self._write_log("downloading {}:{} to {}".format(fileI, self.hpcMachine, self.path))
-        self.hpc.get_files([os.path.join(self.hpc_outdir, fileI)], self.path, 1200)
-
-        #Download hour
-        fileA = 'eemep_hour.nc'
-        age = file_age.pop(fileA, None)
-        if (age > 10):
-            self._write_log("File {} too old on {}".format(fileA, self.hpcMachine))
-            return
-        self._write_log("downloading {}:{} to {}".format(fileA, self.hpcMachine, self.path))
-        self.hpc.get_files([os.path.join(self.hpc_outdir, fileA)], self.path, 1200)
+        #Download output files
+        for filename in [ModelRunner.OUTPUT_AVERAGE_FILENAME, ModelRunner.OUTPUT_INSTANT_FILENAME]:
+            age = file_age.pop(filename, None)
+            if (age > 10):
+                self._write_log("File {} too old on {}".format(filename, self.hpcMachine))
+                return
+            self._write_log("downloading {}:{} to {}".format(filename, self.hpcMachine, self.path))
+            self.hpc.get_files([os.path.join(self.hpc_outdir, filename)], self.path, 1200)
 
         #Postprocess
         pp = PostProcess(self.path, self.timestamp, logger=self)
-        pp.convert_files(os.path.join(self.path, fileI),
-                         os.path.join(self.path, fileA))
+        pp.convert_files(os.path.join(self.path, ModelRunner.OUTPUT_INSTANT_FILENAME),
+                         os.path.join(self.path, ModelRunner.OUTPUT_AVERAGE_FILENAME))
 
         #Download initial conditions for continued run
         file = 'EMEP_OUT_{}.nc'.format(tomorrow)
