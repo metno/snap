@@ -46,13 +46,6 @@ if [ "x$RUNDIR" == "x" ]; then
     exit 1
 fi
 
-# move old runs to backup
-# These will be cleaned up after two days
-for old_run_output in $RUNDIR/eemep_{day,hour,hourInst}.nc; do
-    epoch=$(stat -c %Y $old_run_output)
-    mv $old_run_output ${old_run_output}.${epoch}
-done
-
 # cleanup older runs
 cd $RUNDIR && find . -mtime +2 -type f -delete
 
