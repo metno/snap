@@ -1,17 +1,17 @@
 # SNAP: Servere Nuclear Accident Programme
 # Copyright (C) 1992-2017   Norwegian Meteorological Institute
-# 
-# This file is part of SNAP. SNAP is free software: you can 
-# redistribute it and/or modify it under the terms of the 
-# GNU General Public License as published by the 
+#
+# This file is part of SNAP. SNAP is free software: you can
+# redistribute it and/or modify it under the terms of the
+# GNU General Public License as published by the
 # Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
@@ -39,7 +39,7 @@ import Snappy.Resources
 
 class AbortFile():
     """Abort control with a filename. Abort as soon as the file disappears.
-    
+
     The file must be read and writable, or abort is not supported."""
     def __init__(self, filename):
         self.filename = None
@@ -54,7 +54,7 @@ class AbortFile():
             except OSError:
                 print("cannot write filename: '{}', modelrunner abort disabled".format(filename),
                       sys.stderr)
-    
+
     def abortRequested(self):
         """return TRUE if abort requested, FALSE if we should continue"""
         if self.filename:
@@ -63,14 +63,14 @@ class AbortFile():
             else:
                 return True
         return False
-        
+
     def __del__(self):
         if self.filename and os.path.exists(self.filename):
             try:
                 os.remove(self.filename)
             except:
                 pass
-        
+
 class ModelRunner():
 
     VOLCANO_FILENAME = "volcano.xml"
@@ -192,12 +192,12 @@ class ModelRunner():
         Returns: list of meteorology files
         '''
         (ref_date, model_start_time) = self.volcano.get_meteo_dates()
-        
+
         sres = Snappy.Resources.Resources()
         border = 7
-        if (self.volcano.latitude > (sres.ecDefaultDomainStartY + border) and 
-            self.volcano.latitude < (sres.ecDefaultDomainStartY + sres.ecDomainHeight - border) and 
-            self.volcano.longitude > (sres.ecDefaultDomainStartX + border) and 
+        if (self.volcano.latitude > (sres.ecDefaultDomainStartY + border) and
+            self.volcano.latitude < (sres.ecDefaultDomainStartY + sres.ecDomainHeight - border) and
+            self.volcano.longitude > (sres.ecDefaultDomainStartX + border) and
             self.volcano.longitude < (sres.ecDefaultDomainStartX + sres.ecDomainWidth - border)):
             files = self.res.getECMeteorologyFiles(model_start_time, 72, ref_date)
         else:
@@ -208,7 +208,7 @@ class ModelRunner():
             ecMetCalc.calc()
             files = [[ (x, 8) ] for x in ecMetCalc.get_meteorology_files()]
             self._write_log("meteorology calculated")
-            
+
         for i, date_files in enumerate(files):
             file_date = model_start_time + datetime.timedelta(days=i)
             outfile = os.path.join(self.path, "meteo{date}.nc".format(date=file_date.strftime("%Y%m%d")))
@@ -240,9 +240,21 @@ class ModelRunner():
         defs["hour"] = "{:02d}".format(start_time.hour)
 
         filename = os.path.join(self.path, self.jobscript)
+
         with open(filename, 'wt') as jh:
             jh.write(job.format(**defs))
         self.upload_files.add(filename)
+
+    def clean_old_files(self):
+        """Delete files fromprevious runs"""
+        self._write_log("cleaning files in {}:{}".format(self.hpcMachine, self.hpc_outdir))
+
+        run_output_files = ["eemep_hour.nc", "eemep_hourInst.nc", "eemep_day.nc"]
+        hpc_files_to_delete = self.upload_files + [self.statusfile] + run_output_files
+
+        hpc_files_to_delete = [os.path.basename(f) for f in self.hpc_files_to_delete]
+        hpc_files_to_delete = [os.path.join(self.hpc_outdir, f) for f in self.hpc_files_to_delete]
+        self.hpc.syscall("rm", ["-f"] + hpc_files_to_delete)
 
     def do_upload_files(self):
         self._write_log("uploading to {}:{}".format(self.hpcMachine, self.hpc_outdir))
@@ -251,14 +263,63 @@ class ModelRunner():
             self._write_log("uploading '{}'".format(f))
             self.hpc.put_files([f], self.hpc_outdir, 600)
 
+    def get_run_file_ages(self):
+        """Return age of files on HPC"""
+        try:
+            #Get current date and date of files on HPC
+            hpc_date, _, _ = self.hpc.syscall("date", ["+%s"], timeout=30)
+            files = self.hpc.syscall("ls", ["-1"])
+            stat_out = self.hpc.syscall("stat", ["-c", "%Y %n"] + files.splitlines())
+        except Exception as ex:
+            self._write_log("Could not stat files on HPC machine: {ex}".format(ex=ex.args))
+            return None
+
+        #Process dates to compute age of all files
+        hpc_date = datetime.datetime.fromtimestamp(int(hpc_date))
+        self._write_log("HPC date: '{}'".format(str(hpc_date)))
+        file_age = {}
+        for line in stat_out.splitlines():
+            date, file = line.split(' ')
+            file_age[file] = hpc_date - datetime.datetime.fromtimestamp(int(date))
+        self._write_log("HPC file ages: '{}'".format(str(file_age)))
+
+        return file_age
+
+    def check_run_directory(self):
+        """Check that the run directory is sane"""
+        file_age = self.get_run_file_ages()
+        if file_age is None:
+            self._write_log("Could not get file ages!")
+            return -1
+
+        #Check date of all files that we should have uploaded
+        errors = 0
+        for f in self.upload_files:
+            f = os.path.basename(f)
+            age = file_age.pop(f, None)
+            if age is None:
+                self._write_log("File {:s} does not exists!".format(f))
+                errors += 1
+            elif (age / datetime.timedelta(minutes=1)) > 30:
+                self._write_log("File {:s} is outdated (age={:s})!".format(f, str(file_age[f])))
+                errors += 1
+        self._write_log("HPC unknown files in run directory: '{}'".format(str(file_age.keys())))
+
+        return errors
+
+
+
     def run_and_wait(self):
         '''Start the model and wait for it to finish
 
         Returns QJobStatus code
         '''
-        self._write_log("removing old status on {}: {}".format(self.hpcMachine, self.hpc_outdir))
-        self.hpc.syscall("rm", ["-f", os.path.join(self.hpc_outdir, self.statusfile)])
         self._write_log("starting run on hpc {}: {}".format(self.hpcMachine, self.hpc_outdir))
+
+        #Check that run directory is sane
+        if (self.check_run_directory() != 0):
+            return QJobStatus.failed
+
         remote_jobscript = os.path.join(self.hpc_outdir, self.jobscript)
         qjob = self.hpc.submit_job(remote_jobscript, [])
         qjob.status_file = StatusFile(os.path.join(self.hpc_outdir, self.statusfile), "finished")
@@ -283,33 +344,53 @@ class ModelRunner():
         start_time = self.volcano.get_meteo_dates()[1]
         tomorrow = (start_time + datetime.timedelta(days=1)).strftime("%Y%m%d")
 
+        #Get age of files on HPC
+        file_age = self.get_run_file_ages()
+        if file_age is None:
+            self._write_log("Could not get file ages - something is wrong!")
+            return
+
+        #Download hourinst
         fileI = 'eemep_hourInst.nc'
+        age = file_age.pop(fileI, None)
+        if (age > 10):
+            self._write_log("File {} too old on {}".format(fileI, self.hpcMachine))
+            return
         self._write_log("downloading {}:{} to {}".format(fileI, self.hpcMachine, self.path))
         self.hpc.get_files([os.path.join(self.hpc_outdir, fileI)], self.path, 1200)
 
+        #Download hour
         fileA = 'eemep_hour.nc'
+        age = file_age.pop(fileA, None)
+        if (age > 10):
+            self._write_log("File {} too old on {}".format(fileA, self.hpcMachine))
+            return
         self._write_log("downloading {}:{} to {}".format(fileA, self.hpcMachine, self.path))
         self.hpc.get_files([os.path.join(self.hpc_outdir, fileA)], self.path, 1200)
 
+        #Postprocess
         pp = PostProcess(self.path, self.timestamp, logger=self)
         pp.convert_files(os.path.join(self.path, fileI),
                          os.path.join(self.path, fileA))
-        
 
-
+        #Download initial conditions for continued run
         file = 'EMEP_OUT_{}.nc'.format(tomorrow)
+        age = file_age.pop(file, None)
+        if (age > 10):
+            self._write_log("File {} too old on {}".format(file, self.hpcMachine))
+            return
         self._write_log("downloading {}:{} to {}".format(file, self.hpcMachine, self.path))
         try :
             self.hpc.get_files([os.path.join(self.hpc_outdir, file)], self.path, 1200)
         except Exception as ex:
             # not dangerous if it fail, but remove file
             self._write_log("couldn't download '{}', ignoring: {}".format(file, ex.args))
-            filename = os.path.join(self.hpc_outdir, file)
+            filename = os.path.join(self.path, file)
             if os.path.lexists(filename): os.unlink(filename)
         else:
             os.rename(os.path.join(self.path, file),
                       os.path.join(self.path, 'EMEP_IN_{}.nc'.format(tomorrow)))
-            
+
         # cleanup softlinks in output-dir
         findArgs = [self.hpc_outdir, '-type', 'l', '-delete']
         try:
@@ -320,6 +401,7 @@ class ModelRunner():
 
     def work(self):
         '''do the complete work, e.g. upload, run, wait and download'''
+        self.clean_old_files()
         self.do_upload_files()
         status = self.run_and_wait()
         if (status == QJobStatus.failed):
