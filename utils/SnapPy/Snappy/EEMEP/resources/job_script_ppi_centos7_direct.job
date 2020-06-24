@@ -6,7 +6,7 @@
 #$ -pe opa-fn 108
 #$ -l h_vmem=4G
 #$ -q opath.q
-#$ -M andreb@met.no
+#$ -M heiko.klein@met.no,andreb@met.no
 #$ -P eemep
 #$ -S /bin/bash
 #$ -m a
