@@ -1,17 +1,17 @@
 # SNAP: Servere Nuclear Accident Programme
 # Copyright (C) 1992-2017   Norwegian Meteorological Institute
-# 
-# This file is part of SNAP. SNAP is free software: you can 
-# redistribute it and/or modify it under the terms of the 
-# GNU General Public License as published by the 
+#
+# This file is part of SNAP. SNAP is free software: you can
+# redistribute it and/or modify it under the terms of the
+# GNU General Public License as published by the
 # Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
@@ -46,12 +46,12 @@ class SSHConnection(Connection):
     '''port to connect on the remote machine, None possible'''
     ssh_command = typed_property("ssh_command", str)
     '''command to use for ssh-connections, usually just 'ssh' for the ssh command in the PATH'''
-    scp_command = typed_property("scp_command", str)
-    '''command to use for scp-connections, usually just 'scp' for the scp command in the PATH'''
+    rsync_command = typed_property("rsync_command", str)
+    '''command to use for rsync-connections, usually just 'rsync' for the rsync command in the PATH'''
     ssh_options = typed_property("ssh_options", list)
     '''additional options to add to ssh'''
-    scp_options = typed_property("scp_options", list)
-    '''additional options to add to scp'''
+    rsync_options = typed_property("rsync_options", list)
+    '''additional options to add to rsync'''
 
 
     def __init__(self, username=None, machine="localhost", port=None):
@@ -61,19 +61,18 @@ class SSHConnection(Connection):
         self.remote_charset = "utf-8"
         self.port = port
         self.ssh_command = "ssh"
-        self.scp_command = "scp"
-        self.scp_options = ["-o", "ConnectTimeout=20", "-o", "Batchmode=yes",
-                            "-o", "StrictHostKeyChecking=no",
-                            "-q", "-p"]
+        self.rsync_command = "rsync"
+        self.rsync_options = ["--rsh" "'ssh -o ConnectTimeout=20 -o Batchmode=yes -o StrictHostKeyChecking=no'",
+                                     "--quiet", "--perms"]
         self.ssh_options = ["-o", "ConnectTimeout=20", "-o", "Batchmode=yes",
                             "-o", "StrictHostKeyChecking=no"]
         return
 
-    def _build_scp_args(self):
-        args = [self.scp_command]
-        args.extend(self.scp_options)
+    def _build_rsync_args(self):
+        args = [self.rsync_command]
+        args.extend(self.rsync_options)
         if self.port is not None:
-            args.extend(["-P", "{}".format(self.port)])
+            args.extend(["--port", "{}".format(self.port)])
         return args
 
     def _build_ssh_args(self):
@@ -88,7 +87,7 @@ class SSHConnection(Connection):
 
 
     def put_files(self, files, remote_path, timeout=None):
-        args = self._build_scp_args()
+        args = self._build_rsync_args()
         args.extend(files)
         user = ""
         if self.username is not None:
@@ -105,7 +104,7 @@ class SSHConnection(Connection):
         return True
 
     def get_files(self, files, local_path=None, timeout=None):
-        args = self._build_scp_args()
+        args = self._build_rsync_args()
         user = ""
         if self.username is not None:
             user = self.username + '@'
