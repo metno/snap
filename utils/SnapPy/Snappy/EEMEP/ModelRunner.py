@@ -309,46 +309,6 @@ class ModelRunner():
 
         return file_age
 
-    def check_run_directory(self):
-        """Check that the run directory is sane"""
-        self.logger.debug("Checking run directory")
-
-        #Compte sha256sum of local files
-        try:
-            cout = subprocess.check_output(args=['sha256sum'] + list(self.upload_files)).decode('utf-8')
-        except subprocess.CalledProcessError:
-            self.logger.error("Could not compute sha256sum of {:s}".format(str(self.upload_files)))
-            return -1
-
-        sha256sums = {}
-        for line in cout.splitlines():
-            shasum, filename = line.split()
-            sha256sums[filename] = shasum
-
-        self.logger.debug("Local shasums: \n{:s}".format(str(sha256sums)))
-
-        #Check sha256sum of remote files
-        remote_upload_files = [re.sub(self.path, self.hpc_outdir, filename) for filename in list(self.upload_files)]
-        cout, cerr, retval = self.hpc.syscall("sha256sum", remote_upload_files)
-        if (retval != 0):
-            self.logger.error("Unable to compute remote sha256sum ofr {:s}".format(str(remote_upload_files)))
-        for line in cout.splitlines():
-            shasum, filename = line.split()
-            local_filename = re.sub(self.hpc_outdir, self.path, filename)
-            self.logger.debug("File {:s}: local sha={:s}, remote sha={:s}".format(local_filename, sha256sums[local_filename], shasum))
-            if (sha256sums[local_filename] != shasum):
-                self.logger.error("File {:s} does not have the correct sha256sum!".format(filename))
-                return -1
-
-        #Log file ages
-        file_age = self.get_run_file_ages()
-        if file_age is None:
-            self.logger.error("Could not get file ages!")
-            return -1
-        for filename, age in file_age.items():
-            self.logger.debug("HPC file in run directory: '{:s}' (age={:s}".format(filename, str(age)))
-
-        return 0
 
 
 
@@ -358,10 +318,6 @@ class ModelRunner():
         Returns QJobStatus code
         '''
         self.logger.debug("starting run on hpc {}: {}".format(self.hpcMachine, self.hpc_outdir))
-
-        #Check that run directory is sane
-        if (self.check_run_directory() != 0):
-            return QJobStatus.failed
 
         remote_jobscript = os.path.join(self.hpc_outdir, self.jobscript)
         qjob = self.hpc.submit_job(remote_jobscript, [])
@@ -500,7 +456,6 @@ class TestModelRunner(unittest.TestCase):
 
         #Test uploading of files
         mr.do_upload_files()
-        self.assertTrue(mr.check_run_directory() == 0)
         self.logger.debug("Files uploaded")
 
         file_ages = mr.get_run_file_ages()
