@@ -6,7 +6,7 @@
 #$ -pe opa-fn 108
 #$ -l h_vmem=4G
 #$ -q opath.q
-#$ -M heiko.klein@met.no,andreb@met.no
+#$ -M andreb@met.no
 #$ -P eemep
 #$ -S /bin/bash
 #$ -m a
@@ -87,5 +87,3 @@ if [ $? -ne 0 ]; then
 else
     echo "finished" > status
 fi
-
-

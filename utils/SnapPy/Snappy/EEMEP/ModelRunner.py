@@ -23,13 +23,16 @@ Created on Sep 2, 2016
 '''
 from METNO.HPC import HPC, StatusFile, QJobStatus
 import datetime
-from netCDF4 import Dataset
+from netCDF4 import Dataset, num2date
 import os
+import glob
 import re
 import subprocess
 import sys
-from time import sleep
+from time import sleep, gmtime
 import unittest
+import logging
+import tempfile
 
 from Snappy.EEMEP.Resources import Resources
 from Snappy.EEMEP.PostProcess import PostProcess
@@ -88,6 +91,15 @@ class ModelRunner():
         self.hpcMachine = hpcMachine
         self.inpath = path
 
+        #Set up logging
+        self.logger = logging.getLogger("ModelRunner")
+        fmt = logging.Formatter('%(asctime)s: %(message)s', datefmt="%Y%m%dT%H%M%SZ")
+        fmt.converter = gmtime #Make sure we are using UTC time
+        fh = logging.FileHandler(os.path.join(self.inpath, 'volcano.log'))
+        fh.setLevel(logging.DEBUG)
+        fh.setFormatter(fmt)
+        self.logger.addHandler(fh)
+
         self.rundir = self.res.getHPCRunDir(self.hpcMachine)
         volcano_path = os.path.join(path, ModelRunner.VOLCANO_FILENAME)
         if not os.path.exists(volcano_path):
@@ -103,10 +115,6 @@ class ModelRunner():
         self._get_meteo_files()
         self._get_restart_file()
         self._create_job_script()
-
-    def _write_log(self, msg):
-        with open(os.path.join(self.inpath, 'volcano.log'), 'a') as fh:
-            print("{}: {}".format(datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ"), msg), file=fh)
 
     def _volcano_to_column_source(self):
         '''write columnsource_location.csv and columnsource_emissions.csv from volcano.xml'''
@@ -188,9 +196,6 @@ class ModelRunner():
         This involves linking and copying of needed meteorology. and eventually
         addition of a few timesteps at the beginning of the run
 
-        Args:
-            overwrite_model_start_time: don't used the volcano meteo, but the provided, used only for testing
-
         Returns: list of meteorology files
         '''
         (ref_date, model_start_time) = self.volcano.get_meteo_dates()
@@ -203,13 +208,13 @@ class ModelRunner():
             self.volcano.longitude < (sres.ecDefaultDomainStartX + sres.ecDomainWidth - border)):
             files = self.res.getECMeteorologyFiles(model_start_time, 72, ref_date)
         else:
-            self._write_log("Calculating Meteorology, takes about 15min")
+            self.logger.debug("Calculating Meteorology, takes about 15min")
             # make sure to use the 00UTC meteorology, eemep needs start-time at midnight
             start_time = model_start_time.replace(hour=3)
             ecMetCalc = EcMeteorologyCalculator(sres, start_time, self.volcano.longitude, self.volcano.latitude)
             ecMetCalc.calc()
             files = [[ (x, 8) ] for x in ecMetCalc.get_meteorology_files()]
-            self._write_log("meteorology calculated")
+            self.logger.debug("Meteorology calculated")
 
         for i, date_files in enumerate(files):
             file_date = model_start_time + datetime.timedelta(days=i)
@@ -241,75 +246,109 @@ class ModelRunner():
         defs["day"] = "{:02d}".format(start_time.day)
         defs["hour"] = "{:02d}".format(start_time.hour)
 
+        self.logger.debug("Creating job script with the following definitions: {:s}".format(str(defs)))
+
         filename = os.path.join(self.path, self.jobscript)
 
         with open(filename, 'wt') as jh:
             jh.write(job.format(**defs))
         self.upload_files.add(filename)
 
+    def _write_log(self, msg):
+        """Used by PostProcess to log"""
+        self.logger.debug(msg)
+
     def clean_old_files(self):
         """Delete files fromprevious runs"""
-        self._write_log("cleaning files in {}:{}".format(self.hpcMachine, self.hpc_outdir))
+        self.logger.debug("cleaning files in {}:{}".format(self.hpcMachine, self.hpc_outdir))
 
-        hpc_files_to_delete = self.upload_files \
+        hpc_files_to_delete = list(self.upload_files) \
                 + [self.statusfile] \
                 + [ModelRunner.OUTPUT_AVERAGE_FILENAME] \
                 + [ModelRunner.OUTPUT_INSTANT_FILENAME]
 
-        hpc_files_to_delete = [os.path.basename(f) for f in self.hpc_files_to_delete]
-        hpc_files_to_delete = [os.path.join(self.hpc_outdir, f) for f in self.hpc_files_to_delete]
+        hpc_files_to_delete = [os.path.basename(f) for f in hpc_files_to_delete]
+        hpc_files_to_delete = [os.path.join(self.hpc_outdir, f) for f in hpc_files_to_delete]
         self.hpc.syscall("rm", ["-f"] + hpc_files_to_delete)
 
     def do_upload_files(self):
-        self._write_log("uploading to {}:{}".format(self.hpcMachine, self.hpc_outdir))
+        self.logger.debug("uploading to {}:{}".format(self.hpcMachine, self.hpc_outdir))
         self.hpc.syscall("mkdir", ["-p", self.hpc_outdir])
         for f in self.upload_files:
-            self._write_log("uploading '{}'".format(f))
+            self.logger.debug("uploading '{}'".format(f))
             self.hpc.put_files([f], self.hpc_outdir, 600)
 
     def get_run_file_ages(self):
         """Return age of files on HPC"""
         try:
             #Get current date and date of files on HPC
-            hpc_date, _, _ = self.hpc.syscall("date", ["+%s"], timeout=30)
-            files = self.hpc.syscall("ls", ["-1"])
-            stat_out = self.hpc.syscall("stat", ["-c", "%Y %n"] + files.splitlines())
+            hpc_date, cerr, retval = self.hpc.syscall("date", ["+%s"], timeout=30)
+            if retval != 0:
+                self.logger.error("Tried to get date, got cerr {:s}".format(cerr))
+                return None
+            files, cerr, retval = self.hpc.syscall("find", [self.hpc_outdir])
+            if retval != 0:
+                self.logger.error("Tried to call find, got cerr {:s}".format(cerr))
+                return None
+            stat_out, cerr, retval = self.hpc.syscall("stat", ["-c", "%Y %n"] + files.splitlines())
+            if retval != 0:
+                self.logger.error("Tried to call stat, got cerr {:s}".format(cerr))
+                return None
         except Exception as ex:
-            self._write_log("Could not stat files on HPC machine: {ex}".format(ex=ex.args))
+            self.logger.debug("Could not stat files on HPC machine: {ex}".format(ex=ex.args))
             return None
 
         #Process dates to compute age of all files
         hpc_date = datetime.datetime.fromtimestamp(int(hpc_date))
-        self._write_log("HPC date: '{}'".format(str(hpc_date)))
+        self.logger.debug("HPC date: '{}'".format(str(hpc_date)))
         file_age = {}
         for line in stat_out.splitlines():
-            date, file = line.split(' ')
-            file_age[file] = hpc_date - datetime.datetime.fromtimestamp(int(date))
-        self._write_log("HPC file ages: '{}'".format(str(file_age)))
+            date, filename = line.split(' ')
+            file_age[filename] = hpc_date - datetime.datetime.fromtimestamp(int(date))
+            self.logger.debug("Age of '{:s}' is {:s}".format(filename, str(file_age[filename])))
 
         return file_age
 
     def check_run_directory(self):
         """Check that the run directory is sane"""
-        file_age = self.get_run_file_ages()
-        if file_age is None:
-            self._write_log("Could not get file ages!")
+        self.logger.debug("Checking run directory")
+
+        #Compte sha256sum of local files
+        try:
+            cout = subprocess.check_output(args=['sha256sum'] + list(self.upload_files)).decode('utf-8')
+        except subprocess.CalledProcessError:
+            self.logger.error("Could not compute sha256sum of {:s}".format(str(self.upload_files)))
             return -1
 
-        #Check date of all files that we should have uploaded
-        errors = 0
-        for f in self.upload_files:
-            f = os.path.basename(f)
-            age = file_age.pop(f, None)
-            if age is None:
-                self._write_log("File {:s} does not exists!".format(f))
-                errors += 1
-            elif (age / datetime.timedelta(minutes=1)) > 30:
-                self._write_log("File {:s} is outdated (age={:s})!".format(f, str(file_age[f])))
-                errors += 1
-        self._write_log("HPC unknown files in run directory: '{}'".format(str(file_age.keys())))
+        sha256sums = {}
+        for line in cout.splitlines():
+            shasum, filename = line.split()
+            sha256sums[filename] = shasum
 
-        return errors
+        self.logger.debug("Local shasums: \n{:s}".format(str(sha256sums)))
+
+        #Check sha256sum of remote files
+        remote_upload_files = [re.sub(self.path, self.hpc_outdir, filename) for filename in list(self.upload_files)]
+        cout, cerr, retval = self.hpc.syscall("sha256sum", remote_upload_files)
+        if (retval != 0):
+            self.logger.error("Unable to compute remote sha256sum ofr {:s}".format(str(remote_upload_files)))
+        for line in cout.splitlines():
+            shasum, filename = line.split()
+            local_filename = re.sub(self.hpc_outdir, self.path, filename)
+            self.logger.debug("File {:s}: local sha={:s}, remote sha={:s}".format(local_filename, sha256sums[local_filename], shasum))
+            if (sha256sums[local_filename] != shasum):
+                self.logger.error("File {:s} does not have the correct sha256sum!".format(filename))
+                return -1
+
+        #Log file ages
+        file_age = self.get_run_file_ages()
+        if file_age is None:
+            self.logger.error("Could not get file ages!")
+            return -1
+        for filename, age in file_age.items():
+            self.logger.debug("HPC file in run directory: '{:s}' (age={:s}".format(filename, str(age)))
+
+        return 0
 
 
 
@@ -318,7 +357,7 @@ class ModelRunner():
 
         Returns QJobStatus code
         '''
-        self._write_log("starting run on hpc {}: {}".format(self.hpcMachine, self.hpc_outdir))
+        self.logger.debug("starting run on hpc {}: {}".format(self.hpcMachine, self.hpc_outdir))
 
         #Check that run directory is sane
         if (self.check_run_directory() != 0):
@@ -339,7 +378,7 @@ class ModelRunner():
                 self.hpc.delete_job(qjob)
                 break
             status = self.hpc.get_status(qjob)
-            self._write_log("jobstatus on hpc {} jobid={}: {}".format(self.hpcMachine, qjob.jobid, status))
+            self.logger.debug("jobstatus on hpc {} jobid={}: {}".format(self.hpcMachine, qjob.jobid, status))
 
         return status
 
@@ -351,47 +390,64 @@ class ModelRunner():
         #Get age of files on HPC
         file_age = self.get_run_file_ages()
         if file_age is None:
-            self._write_log("Could not get file ages - something is wrong!")
+            self.logger.debug("Could not get file ages - something is wrong!")
             return
 
         #Download output files
         for filename in [ModelRunner.OUTPUT_AVERAGE_FILENAME, ModelRunner.OUTPUT_INSTANT_FILENAME]:
-            age = file_age.pop(filename, None)
-            if (age > 10):
-                self._write_log("File {} too old on {}".format(filename, self.hpcMachine))
+            filename = os.path.join(self.hpc_outdir, filename)
+            age = file_age.pop(filename, None) / datetime.timedelta(minutes=1)
+            if (age > 120):
+                self.logger.debug("File {} too old on {}".format(filename, self.hpcMachine))
                 return
-            self._write_log("downloading {}:{} to {}".format(filename, self.hpcMachine, self.path))
-            self.hpc.get_files([os.path.join(self.hpc_outdir, filename)], self.path, 1200)
+            self.logger.debug("downloading {}:{} to {}".format(filename, self.hpcMachine, self.path))
+            self.hpc.get_files([filename], self.path, 1200)
 
-        #Postprocess
-        pp = PostProcess(self.path, self.timestamp, logger=self)
-        pp.convert_files(os.path.join(self.path, ModelRunner.OUTPUT_INSTANT_FILENAME),
-                         os.path.join(self.path, ModelRunner.OUTPUT_AVERAGE_FILENAME))
+            #Check sanity of output results
+            try:
+                with Dataset(os.path.join(self.path, filename)) as nc_file:
+                    time_var = nc_file['time']
+                    times = num2date(time_var[:], units = time_var.units).astype('datetime64[ns]')
+            except Exception as e:
+                self.logger.error("Unable to open NetCDF file {:s}: {:s}".format(filename, str(e)))
+                return
+            self.logger.debug("File {:s} contains the following timesteps: {:s}".format(filename, str(times)))
+            if (len(times) < self.volcano.runTimeHours):
+                self.logger.error("File {:s} appears not to have the correct timesteps!".format(filename))
+                return
 
         #Download initial conditions for continued run
         file = 'EMEP_OUT_{}.nc'.format(tomorrow)
-        age = file_age.pop(file, None)
-        if (age > 10):
-            self._write_log("File {} too old on {}".format(file, self.hpcMachine))
+        age = file_age.pop(os.path.join(self.hpc_outdir, file), None)
+        if (age is None):
+            self.logger.debug("File {} does not exist on {}".format(file, self.hpcMachine))
             return
-        self._write_log("downloading {}:{} to {}".format(file, self.hpcMachine, self.path))
+        if (age/datetime.timedelta(minutes=1) > 120):
+            self.logger.debug("File {} too old on {}".format(file, self.hpcMachine))
+            return
+        self.logger.debug("downloading {}:{} to {}".format(file, self.hpcMachine, self.path))
         try :
             self.hpc.get_files([os.path.join(self.hpc_outdir, file)], self.path, 1200)
         except Exception as ex:
             # not dangerous if it fail, but remove file
-            self._write_log("couldn't download '{}', ignoring: {}".format(file, ex.args))
+            self.logger.debug("couldn't download '{}', ignoring: {}".format(file, ex.args))
             filename = os.path.join(self.path, file)
             if os.path.lexists(filename): os.unlink(filename)
         else:
             os.rename(os.path.join(self.path, file),
                       os.path.join(self.path, 'EMEP_IN_{}.nc'.format(tomorrow)))
 
+        #Postprocess
+        pp = PostProcess(self.path, self.timestamp, logger=self)
+        pp.convert_files(os.path.join(self.path, ModelRunner.OUTPUT_INSTANT_FILENAME),
+                         os.path.join(self.path, ModelRunner.OUTPUT_AVERAGE_FILENAME))
+
         # cleanup softlinks in output-dir
         findArgs = [self.hpc_outdir, '-type', 'l', '-delete']
         try:
             self.hpc.syscall('find', findArgs, timeout=30)
         except Exception as ex:
-            self._write_log("cannot excecute command 'find {args}': {ex}".format(args=" ".join(findArgs),
+            self.logger.debug("cannot excecute command 'find {args}': {ex}".format(args=" ".join(findArgs),
                                                                                  ex=ex.args))
 
     def work(self):
@@ -400,70 +456,139 @@ class ModelRunner():
         self.do_upload_files()
         status = self.run_and_wait()
         if (status == QJobStatus.failed):
-            self._write_log("HPC-job failed: Not downloading any results.")
+            self.logger.debug("HPC-job failed: Not downloading any results.")
         elif (status == QJobStatus.queued):
-            self._write_log("HPC-resource not available on {}, giving up.".format(self.hpcMachine))
+            self.logger.debug("HPC-resource not available on {}, giving up.".format(self.hpcMachine))
         elif (status == QJobStatus.running):
-            self._write_log("HPC-job on {} not finished in time, downloading partial".format(self.hpcMachine))
+            self.logger.debug("HPC-job on {} not finished in time, downloading partial".format(self.hpcMachine))
         else:
             self.download_results()
 
 class TestModelRunner(unittest.TestCase):
-    hpcMachine = "frost"
-    doRun = False
+    hpcMachine = "ppi_centos7_direct"
+    doRun = True
 
     def setUp(self):
+        self.logger = logging.getLogger("TestModelRunner")
         unittest.TestCase.setUp(self)
+
         self.indir = os.path.join(os.path.dirname(__file__),"test")
+        self.logger.debug("Input dir: {:s}".format(self.indir))
+
         volcanoFile = os.path.join(self.indir, "volcano.xml")
+        self.logger.debug("Input volcano file: {:s}".format(volcanoFile))
         volc = VolcanoRun(volcanoFile)
-        self.dir = volc.outputDir
-        os.makedirs(name=self.dir, exist_ok=True)
+
+        self.dir = tempfile.TemporaryDirectory(prefix="volcano_download_")
+        self.logger.debug("Download directory: {:s}".format(self.dir.name))
+
         yesterday = datetime.datetime.now() - datetime.timedelta(days=1)
-        with open(os.path.join(self.dir, "volcano.xml"), "wt") as oh:
+        with open(os.path.join(self.dir.name, "volcano.xml"), "wt") as oh:
             with open(volcanoFile, "rt") as ih:
                 for line in ih:
-                    oh.write(re.sub('2016-11-03',yesterday.strftime('%Y-%m-%d'), line))
+                    line = re.sub('2016-11-03', yesterday.strftime('%Y-%m-%d'), line)
+                    oh.write(line)
         self.files = ('columnsource_location.csv', 'columnsource_emission.csv', 'eemep_script.job')
-        for file in self.files:
-            if (os.path.lexists(file)):
-                os.unlink(file)
-        for f in os.scandir(self.dir):
-            if f.is_symlink():
-                os.unlink(f.path)
+        self.output_files = ("eemep_hourInst.nc", "eemep_hour.nc")
 
 
     def testModelRunner(self):
-        mr = ModelRunner(self.dir, TestModelRunner.hpcMachine)
-        self.assertTrue(len(self.files) == 3)
-        #self.assertTrue(os.path.exists(self.files[0]))
-        for x in self.files:
-            self.assertTrue(os.path.exists(os.path.join(mr.path, x)), "file created: {}".format(x))
+        #Create model runner
+        mr = ModelRunner(self.dir.name, TestModelRunner.hpcMachine)
+        self.logger.debug("Modelrunner setup complete, local outdir is {:s}".format(mr.hpc_outdir))
+        self.logger.debug("Modelrunner setup complete, HPC outdir is {:s}".format(mr.hpc_outdir))
+
+        #Test uploading of files
+        mr.do_upload_files()
+        self.assertTrue(mr.check_run_directory() == 0)
+        self.logger.debug("Files uploaded")
+
+        file_ages = mr.get_run_file_ages()
+        self.assertTrue(file_ages is not None, "Could not get file ages!")
+
+        #Check that we find meteo files
         meteo_count = 0
-        for x in os.scandir(self.dir):
-            if re.search(r'meteo\d{8}.nc', x.path):
+        for x in file_ages.keys():
+            self.logger.debug("Found file {:s}".format(x))
+            if re.search(r'meteo\d{8}.nc', x):
+                self.logger.debug("Found meteo file {:s}".format(x))
                 meteo_count += 1
-        self.assertEqual(meteo_count, 4, "meteo files created")
+        #FIXME: This changes. 09:38 it gives 3 files. +36 hours related, i.e., should give 4 when after 12, and 3 between 00 and 12?
+        self.assertTrue(meteo_count >= 3, msg="Meteo files not created!")
 
+        #Check that we find the expected config files
+        for filename in self.files:
+            filename = os.path.join(mr.hpc_outdir, filename)
+            self.assertTrue(filename in file_ages.keys(), "Could not find {:s}".format(filename))
+            self.logger.debug("Input file '{:s}' is {:s} old".format(filename, str(file_ages[filename])))
+            self.assertTrue(file_ages[filename] / datetime.timedelta(minutes=1) < 15)
 
-    @unittest.skipIf(doRun, "testet in upload and run")
-    def test_upload_files(self):
-        mr = ModelRunner(self.dir, TestModelRunner.hpcMachine)
-        mr.do_upload_files()
+        if (self.doRun == False):
+            self.logger.debug("Skipping remainder of test - not doRun is false")
+        else:
+            #Test running.
+            status = mr.run_and_wait()
+            self.assertTrue(status == QJobStatus.finished, "Run and wait returned unexpected status {:s}".format(str(status)))
+            file_ages = mr.get_run_file_ages()
+            self.assertTrue(len(file_ages.keys()) > len(self.files))
+            for filename in [ModelRunner.OUTPUT_INSTANT_FILENAME, ModelRunner.OUTPUT_AVERAGE_FILENAME]:
+                filename = os.path.join(mr.hpc_outdir, filename)
+                self.assertTrue(filename in file_ages.keys(), " ")
+                self.logger.debug("Output file '{:s}' is {:s} minutes old".format(filename, str(file_ages[filename])))
+                self.assertTrue(file_ages[filename] / datetime.timedelta(minutes=1) < 15)
 
-    @unittest.skipIf(doRun == False, "no run")
-    def test_upload_files_and_run(self):
-        mr = ModelRunner(self.dir, TestModelRunner.hpcMachine)
-        mr.do_upload_files()
-        status = mr.run_and_wait()
-        print(status)
+            #Test downloading / postprocessing
+            mr.download_results()
+            for pattern in ['eemep_hourInst_*.nc', 'eemep_hour_*.nc', 'EMEP_IN_*.nc']:
+                self.logger.debug("Checking for pattern '{:s}'".format(pattern))
+                files = glob.glob(os.path.join(mr.path, pattern))
+                timestamp_ok = False
+                for f in files:
+                    age = (datetime.datetime.now() - datetime.datetime.fromtimestamp(os.path.getmtime(f)))
+                    self.logger.debug("Found {:s} with age {:s}".format(f, str(age)))
+                    if (age / datetime.timedelta(minutes=1) < 120):
+                        self.logger.debug("Age OK, skipping remaining files")
+                        timestamp_ok = True
+                self.assertTrue(timestamp_ok, msg="Could not find file matching {:s}".format(pattern))
 
-    @unittest.skipIf(doRun == False, "no run")
-    def test_download(self):
-        mr = ModelRunner(self.dir, TestModelRunner.hpcMachine)
-        mr.download_results()
+            #Test cleanup
+            mr.clean_old_files()
+            file_ages = mr.get_run_file_ages()
+            self.assertTrue(file_ages is not None, msg="")
+            self.assertTrue(len(file_ages.keys()) >= len(self.files), msg="Too few files in output directory!")
+            for filename in [ModelRunner.OUTPUT_INSTANT_FILENAME, ModelRunner.OUTPUT_AVERAGE_FILENAME, mr.statusfile]:
+                filename = os.path.join(mr.hpc_outdir, filename)
+                self.assertFalse(filename in file_ages.keys(), " ")
+
+    @unittest.skipIf(doRun==False, "Do run is false")
+    def testWork(self):
+        #Create model runner and test
+        mr = ModelRunner(self.dir.name, TestModelRunner.hpcMachine)
+        mr.work()
+
+        for pattern in ['eemep_hourInst_*.nc', 'eemep_hour_*.nc', 'EMEP_IN_*.nc']:
+            self.logger.debug("Checking for pattern '{:s}'".format(pattern))
+            files = glob.glob(os.path.join(mr.path, pattern))
+            timestamp_ok = False
+            for f in files:
+                age = (datetime.datetime.now() - datetime.datetime.fromtimestamp(os.path.getmtime(f)))
+                self.logger.debug("Found {:s} with age {:s}".format(f, str(age)))
+                if (age / datetime.timedelta(minutes=1) < 120):
+                    self.logger.debug("Age OK, skipping remaining files")
+                    timestamp_ok = True
+            self.assertTrue(timestamp_ok, msg="Could not find file matching {:s}".format(pattern))
+
 
 
 if __name__ == "__main__":
-    #import sys;sys.argv = ['', 'Test.testName']
-    unittest.main()
+    logging.basicConfig(format='%(asctime)s: %(message)s', datefmt="%Y%m%dT%H%M%SZ", stream=sys.stderr)
+    logging.root.setLevel(logging.NOTSET)
+    #logging.getLogger("TestModelRunner").setLevel(logging.DEBUG)
+    #logging.getLogger("ModelRunner").
+
+    #Do not sort tests
+
+    self.logger.warning("This test takes 1-2 hours to complete")
+
+    unittest.TestLoader.sortTestMethodsUsing = None
+    unittest.main(verbosity=2, failfast=True)
