@@ -21,6 +21,7 @@ module fldout_ncML
   USE milibML, only: xyconvert, hrdiff
   USE snapdimML, only: mcomp
   USE netcdf
+  USE Utils, only: ftoa
   implicit none
   private
 
@@ -326,6 +327,9 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       call nc_declare_3d(iunit, dimids3d, varid%accum_prc, &
           chksz3d, "precipitation_amount_acc", &
           "kg/m2", "precipitation_amount", "")
+          call nc_declare_3d(iunit, dimids3d, varid%prc, &
+          chksz3d, "lwe_precipitation_rate", &
+          "mm/("//ftoa(tstep)//"hr)", "lwe_precipitation_rate", "")
     endif
 
     call nc_declare_3d(iunit, dimids3d, varid%ihbl, &
@@ -486,8 +490,8 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   call check(nf90_put_var(iunit, varid%ahbl, start=[ipos], count=[isize], &
       values=field1), "set_ahbl")
 
-!..precipitation accummulated between field output // currently disable use 1 to write
-  if(inprecip == -1) then
+!..precipitation accummulated between field output
+  if(inprecip == 1) then
     field1(:,:) = avgprec
     if(idebug == 1) call ftest('prec', field1)
 

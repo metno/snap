@@ -73,8 +73,8 @@ unsigned[2] isotopeIdentificationNumber : dump ;
 
 
 <!-- wet deposition (wdep), should be in files ending with _prec -->
-<parameter name="precipitation_amount_acc">
-    <grib1 parameterNumber="203" codeTable="133" units="kg/m2"/> <!-- must be hourly-files, or rate!!! -->
+<parameter name="lwe_precipitation_rate">
+    <grib1 parameterNumber="203" codeTable="133" units="mm/hr"/> <!-- must be rate!!! -->
 </parameter>
 
 <!-- isotopes filled in from isotopes_template.xml -->
