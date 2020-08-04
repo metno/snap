@@ -244,11 +244,11 @@ GRAVITY.FIXED.M/S=0.0002
         return "\n".join(snapinputs)
 
     def getGribWriterConfig(self, isotopes):
-        """Return a dictionary with a xml: xmlconfiguration string and a exracts: output-type and variable-names"""
+        """Return a dictionary with a xml: xml-configuration string and a exracts: output-type and variable-names"""
         allIsos = self.getIsotopes()
         extracts = {
             "tofa": ["time_of_arrival"],
-            "prec": ["precipitation_amount_acc"],
+            "prec": ["lwe_precipitation_rate"],
             "wetd": [],
             "depo": [],
             "dose": [],

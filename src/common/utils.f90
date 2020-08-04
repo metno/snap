@@ -16,16 +16,25 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 module utils
-  public itoa, atof
+  public itoa, ftoa, atof
 contains
   function itoa(i) result(res)
     character(:),allocatable :: res
     integer,intent(in) :: i
     character(range(i)+2) :: tmp
     write(tmp,'(i0)') i
-    res = trim(tmp)
+    res = trim(adjustl(tmp))
   end function itoa
-    
+
+  function ftoa(f) result(res)
+    character(:),allocatable :: res
+    real,intent(in) :: f
+    character(8) :: tmp
+    write(tmp,'(f8.2)') f
+    res = trim(adjustl(tmp))
+  end function ftoa
+
+
   function atof(str) result(res)
     real :: res
     character(len=*), intent(in) :: str
