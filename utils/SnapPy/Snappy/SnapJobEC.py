@@ -54,57 +54,16 @@ class SnapJobEC():
                     
     def job_script(self):
         ''' return a sge job-script for the different models '''
-        if self.task.model == 'TRAJ':
-            script = '''#!/bin/bash
-#$ -N nrpa_bsnap_traj
-#$ -S /bin/bash
-#$ -V
-#$ -j n
-#$ -r y
-#$ -l h_rt=0:10:00
-#$ -l h_vmem=8G
-#$ -M heikok@met.no,andreb@met.no
-#$ -m a
-#$ -P dsa
-#$ -pe mpi 1
-#$ -q operationalx.q
-#$ -sync no
-#$ -o {rundir}/$JOB_NAME.$JOB_ID.logout
-#$ -e {rundir}/$JOB_NAME.$JOB_ID.logerr
-
-chmod g+rw {rundir}/$JOB_NAME.$JOB_ID.logout
-chmod g+rw {rundir}/$JOB_NAME.$JOB_ID.logerr
-
-module load SnapPy/1.3.0
-
-ulimit -c 0
-export OMP_NUM_THREADS=1
-
-cd {rundir}
-snap4rimsterm --trajInput {traj_in} --dir . --ident {ident}
-
-# create and deliver the file
-zip -l {zipreturnfile} Trajectory*.DAT
-scp {scpoptions} {zipreturnfile} {scpdestination}
-TS=`date +%Y%m%d%H%M`
-echo "202:"$TS":Finished extracting {model} data for ARGOS" >> {statusfile}
-scp {scpoptions} {statusfile} {scpdestination}
-
-'''.format(rundir=self.task.rundir,
-           ident=self.task.id,
-           traj_in=self.get_input_files()[0],
-           zipreturnfile=self.get_return_filename(),
-           model=self.task.model,
-           statusfile=self.task.status_filename(),
-           scpoptions=self.task.scpoptions,
-           scpdestination=self.task.scpdestination
-           )
-        
-        elif re.match(r'^SNAP.*', self.task.model):
-            worldwide = ""
-            if re.search(r'GLOBAL', self.task.model):
-                worldwide = "--worldwide"
-
+        if re.match(r'^SNAP.*', self.task.model):
+            # that is SNAP SNAPNORDIC or SNAPGLOBAL
+            if self.task.model == 'SNAP':
+                metmodel = "nrpa_ec_0p1"
+            elif self.task.model == 'SNAPGLOBAL':
+                metmodel = 'nrpa_ec_0p1_global'
+            elif self.task.model == 'SNAPNORDIC':
+                metmodel = 'meps_2_5km'
+            elif self.task.model == 'SNAPICONGLOBAL':
+                metmodel = 'icon_0p25_global'
             (xmlfile, requestfile) = self.get_input_files()
             argosrequest = ""
             if os.path.exists(os.path.join(self.task.rundir, requestfile)):
@@ -131,28 +90,50 @@ scp {scpoptions} {statusfile} {scpdestination}
 chmod g+rw {rundir}/$JOB_NAME.$JOB_ID.logout
 chmod g+rw {rundir}/$JOB_NAME.$JOB_ID.logerr
 
+function send_status()
+{
+    scp {scpoptions} {zipreturnfile} {scpdestination}
+}
+
+function send_msg(code, msg)
+{
+    TS=`date +%Y%m%d%H%M`
+    echo $code":"$TS":"$msg >> {statusfile} && send_status()
+}
+
+
 module load SnapPy/1.3.0
 
 ulimit -c 0
 export OMP_NUM_THREADS=1
 
 cd {rundir}
-snap4rimsterm --rimsterm {xmlfile} {argosrequest} --dir . --ident {ident}_SNAP {worldwide}
+send_msg(200, "Starting run for {model} (timeout: 2h)")
+snap4rimsterm --rimsterm {xmlfile} {argosrequest} --dir . --ident {ident}_SNAP -metmodel {metmodel}
+if [ $@ -ne 0 ]; then
+    send_msg(409, "{model} output data does not exist, snap4rimsterm failed")
+    exit 1;
+fi
 ncatted -a title,global,o,c,"{ident}" snap.nc
+if [ $@ -ne 0 ]; then
+    send_msg(410, "{model} internal error, ncatted failed")
+    exit 1;
+fi
 
 
 # create and deliver the file
 zip {zipreturnfile} {ident}_SNAP_conc {ident}_SNAP_dose {ident}_SNAP_depo {ident}_SNAP_prec {ident}_SNAP_wetd {ident}_SNAP_tofa {ident}_SNAP_all.nc
-scp {scpoptions} {zipreturnfile} {scpdestination}
-TS=`date +%Y%m%d%H%M`
-echo "202:"$TS":Finished extracting {model} data for ARGOS" >> {statusfile}
-scp {scpoptions} {statusfile} {scpdestination}
-
+if [ $@ -ne 0 ]; then
+    send_msg(410, "{model} internal error, zip failed")
+    exit 1;
+fi
+send_msg(202,"Finished extracting {model} data for ARGOS")
+exit 0;
 '''.format(rundir=self.task.rundir,
            ident=self.task.id,
            xmlfile=xmlfile,
            argosrequest=argosrequest,
-           worldwide=worldwide,
+           metmodel=metmodel,
            zipreturnfile=self.get_return_filename(),
            model=self.task.model,
            statusfile=self.task.status_filename(),
