@@ -91,43 +91,45 @@ chmod g+rw {rundir}/$JOB_NAME.$JOB_ID.logout
 chmod g+rw {rundir}/$JOB_NAME.$JOB_ID.logerr
 
 function send_status()
-{
-    scp {scpoptions} {zipreturnfile} {scpdestination}
-}
+{{
+    scp {scpoptions} {statusfile} {scpdestination}
+}}
 
-function send_msg(code, msg)
-{
+function send_msg()
+{{
+    code=$1
+    msg="$2"
     TS=`date +%Y%m%d%H%M`
-    echo $code":"$TS":"$msg >> {statusfile} && send_status()
-}
+    echo $code":"$TS":"$msg >> {statusfile} && send_status
+}}
 
 
-module load SnapPy/1.3.0
+module load SnapPy/2.0.1
 
 ulimit -c 0
 export OMP_NUM_THREADS=1
 
 cd {rundir}
-send_msg(200, "Starting run for {model} (timeout: 2h)")
-snap4rimsterm --rimsterm {xmlfile} {argosrequest} --dir . --ident {ident}_SNAP -metmodel {metmodel}
-if [ $@ -ne 0 ]; then
-    send_msg(409, "{model} output data does not exist, snap4rimsterm failed")
+send_msg 101 "Starting run for {model} (timeout: 2h)"
+snap4rimsterm --rimsterm {xmlfile} {argosrequest} --dir . --ident {ident}_SNAP --metmodel {metmodel}
+if [ $? -ne 0 ]; then
+    send_msg 409 "{model} output data does not exist, snap4rimsterm failed"
     exit 1;
 fi
 ncatted -a title,global,o,c,"{ident}" snap.nc
-if [ $@ -ne 0 ]; then
-    send_msg(410, "{model} internal error, ncatted failed")
+if [ $? -ne 0 ]; then
+    send_msg 410 "{model} internal error, ncatted failed"
     exit 1;
 fi
 
 
 # create and deliver the file
 zip {zipreturnfile} {ident}_SNAP_conc {ident}_SNAP_dose {ident}_SNAP_depo {ident}_SNAP_prec {ident}_SNAP_wetd {ident}_SNAP_tofa {ident}_SNAP_all.nc
-if [ $@ -ne 0 ]; then
-    send_msg(410, "{model} internal error, zip failed")
+if [ $? -ne 0 ]; then
+    send_msg 410 "{model} internal error, zip failed"
     exit 1;
 fi
-send_msg(202,"Finished extracting {model} data for ARGOS")
+send_msg 202 "Finished extracting {model} data for ARGOS"
 exit 0;
 '''.format(rundir=self.task.rundir,
            ident=self.task.id,

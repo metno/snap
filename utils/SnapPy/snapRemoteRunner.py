@@ -242,7 +242,7 @@ class SnapRemoteRunner():
             elif (tag == 'error'):
                 fh.write("{x}:{ts}::{model} output data do not exist\n".format(x=409,ts=timestamp,model=task.model))
             elif (tag == 'running'):
-                fh.write("{ts} running\n".format(ts=timestamp))
+                fh.write("101:{ts}::running {model}\n".format(ts=timestamp, model=task.model))
             elif (tag == 'internal'):
                 fh.write("{x}:{ts}::internal error, cannot start job in queue in dir '{rundir}'\n".format(x=500, ts=timestamp, rundir=task.rundir))
             else:
