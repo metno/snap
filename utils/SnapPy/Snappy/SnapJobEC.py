@@ -125,7 +125,7 @@ fi
 
 
 # create and deliver the file
-zip {zipreturnfile} {ident}_SNAP_conc {ident}_SNAP_dose {ident}_SNAP_depo {ident}_SNAP_prec {ident}_SNAP_wetd {ident}_SNAP_tofa {ident}_SNAP_all.nc
+zip {zipreturnfile} {ident}_SNAP_conc {ident}_SNAP_dose {ident}_SNAP_depo {ident}_SNAP_prec {ident}_SNAP_wetd {ident}_SNAP_tofa {ident}_SNAP_all.nc {ident}_SNAP_IncidentFile.zip
 if [ $? -ne 0 ]; then
     send_msg 410 "{model} internal error, zip failed"
     exit 1;
