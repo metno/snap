@@ -9,7 +9,7 @@ CC  = gcc
 #      -ftree-vectorizer-verbose=2
 #-ffpe-trap=invalid,zero,overflow
 #F77FLAGS=-O2 -g -ftree-vectorize -fno-math-errno -ffpe-trap=invalid,zero,overflow -g -mavx -fopt-info-optimized-vec #-fopenmp
-F77FLAGS=-DVERSION=\"$(VERSION)\" -O2 -g -msse2 -Wall -Wextra -fimplicit-none -fmodule-private
+F77FLAGS=-DVERSION=\"$(VERSION)\" -O2 -g -mavx -ftree-vectorize -fno-math-errno -Wall -Wextra -fimplicit-none -fmodule-private
 CXXFLAGS=-O2 -mavx -ftree-vectorize -fno-math-errno -Wall -Wextra
 CCFLAGS=-O2 -mavx -ftree-vectorize -fno-math-errno -Wall -Wextra
 
@@ -21,7 +21,17 @@ NCDIR=$(shell nf-config --prefix)
 NCINC=$(shell nf-config --fflags)
 NCLIBS=$(shell nf-config --flibs)
 
-MILIB = -L/home/heikok/local/lib -lmi
+# optional fimex
+# pkg-config --cflags fimex
+# pkg-config --libs fimex
+#FIMEXINC = -I/usr/include/fimex-1.4 # included fimex.f90, currently not needed
+FIMEXLD = $(shell pkg-config --libs-only-L fimex  | cut -c 3-)
+FIMEXLIB = $(shell pkg-config --libs fimex)
+
+MIINC = -I/usr/include
+MILIB_FLAGS = -fno-implicit-none -fno-module-private -Wno-all -Wno-extra
+# uncomment MILIB if felt-support not required
+#MILIB = -L/usr/lib -lmi
 EXLIBS = -lpthread -ldl
 
 ##########################################################
@@ -37,7 +47,9 @@ INCLUDES += $(NCINC)
 endif
 
 LIBS= $(MILIB) $(EXLIBS)
-BLIBS += $(MILIB) $(NCLIBS)
+ifdef FIMEXLIB
+BLIBS += $(MILIB) $(FIMEXLIB) -Wl,-rpath,$(FIMEXLD)
+endif
 
 
 # clear out all suffixes
