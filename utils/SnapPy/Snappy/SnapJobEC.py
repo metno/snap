@@ -105,6 +105,7 @@ function send_msg()
 
 
 module load SnapPy/2.0.1
+module load fimex/1.5.0
 
 ulimit -c 0
 export OMP_NUM_THREADS=1
