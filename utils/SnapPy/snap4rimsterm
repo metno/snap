@@ -156,7 +156,7 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
         if metcalc.must_calc():
             raise Exception("no ICON met-files calculated for {}".format(startDTime))
         files = metcalc.get_meteorology_files()
-        (metdefs["startX"], metdefs["startY"]) = metcalc.get_grid_startX_Y()
+        (metdef["startX"], metdef["startY"]) = metcalc.get_grid_startX_Y()
     elif met_model == MetModel.GfsGribFilter:
         files = res.getMeteorologyFiles(met_model, startDTime, runTime, "best")
         if (len(files) == 0):
