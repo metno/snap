@@ -100,7 +100,7 @@ function send_msg()
     code=$1
     msg="$2"
     TS=`date +%Y%m%d%H%M`
-    echo $code":"$TS":"$msg >> {statusfile} && send_status
+    echo $code":"$TS":"$msg > {statusfile} && send_status
 }}
 
 
@@ -127,6 +127,11 @@ fi
 zip {zipreturnfile} {ident}_SNAP_conc {ident}_SNAP_dose {ident}_SNAP_depo {ident}_SNAP_prec {ident}_SNAP_wetd {ident}_SNAP_tofa {ident}_SNAP_all.nc
 if [ $? -ne 0 ]; then
     send_msg 410 "{model} internal error, zip failed"
+    exit 1;
+fi
+scp {scpoptions} {zipreturnfile} {scpdestination}
+if [ $? -ne 0 ]; then
+    send_msg 410 "{model} internal error copying data to destination"
     exit 1;
 fi
 send_msg 202 "Finished extracting {model} data for ARGOS"
