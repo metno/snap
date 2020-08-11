@@ -78,10 +78,8 @@ class Resources:
 
     MET_INPUTDIRS = {
         MetModel.Meps2p5: [
-            "/lustre/store{}/immutable/archive/projects/metproduction/MEPS/".format(
-                location
-            )
-            for location in ["A", "B"]
+            "/lustre/storeB/immutable/archive/projects/metproduction/MEPS/",
+            "/lustre/storeA/immutable/archive/projects/metproduction/MEPS/",
         ],
         MetModel.GfsGribFilter: ["/disk1/tmp/"],
     }

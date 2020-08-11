@@ -1,8 +1,10 @@
 # Installed from snap sources at git@gitlab.met.no:emep/snap.git
 
 module load netcdf-fortran/4.4.4
+module load fimex
 
-export VERSION=1.3.0
+# check version in SnapJobEC.py, too!!!
+export VERSION=2.0.1
 
 cd utils/SnapPy
 python3 setup.py install --prefix=/modules/xenial/user-apps/SnapPy/$VERSION/
