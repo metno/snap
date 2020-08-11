@@ -25,6 +25,7 @@ import subprocess
 import sys
 
 from Snappy.EcMeteorologyCalculator import EcMeteorologyCalculator
+from Snappy.ICONMeteorologyCalculator import ICONMeteorologyCalculator
 from Snappy.Resources import MetModel, Resources
 import xml.etree.ElementTree as ET
 
