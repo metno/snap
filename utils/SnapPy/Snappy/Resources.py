@@ -485,11 +485,13 @@ GRAVITY.FIXED.M/S=0.0002
                 start = dtime
 
             start -= timedelta(hours=66)  # go 66 hours (forecast-length) back
-
+            last = start + timedelta(days=24) # offer max 21days (24days - 66hours) in archive
             today = datetime.combine(date.today(), time(0, 0, 0))
             tomorrow = today + timedelta(days=1)
+            if tomorrow < last:
+                last = tomorrow
             days = []
-            while start < tomorrow:
+            while start < last:
                 days.append(start)
                 start += timedelta(days=1)
             # loop needs to have latest model runs/hindcast runs last
