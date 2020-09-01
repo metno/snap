@@ -156,7 +156,7 @@ PROGRAM bsnap
   USE snapdimML, only: nx, ny, nk, ldata, maxsiz, mcomp
   USE snapfilML, only: filef, itimer, limfcf, ncsummary, nctitle, nhfmax, nhfmin, &
                        nctype, nfilef, simulation_start
-  USE snapfldML, only: enspos, iprecip, nprecip
+  USE snapfldML, only: nhfout, enspos, iprecip, nprecip
   USE snapmetML, only: init_meteo_params, met_params
   USE snapparML, only: component, run_comp, &
                        ncomp, def_comp, nparnum, &
@@ -227,7 +227,7 @@ PROGRAM bsnap
   real, save :: geoparam(6) = [1.0, 1.0, 1.0, 1.0, 0.0, 0.0]
 
   integer :: snapinput_unit, ios
-  integer :: nhrun = 0, nhrel = 0, nhfout = 3
+  integer :: nhrun = 0, nhrel = 0
   logical :: use_random_walk = .true.
   integer :: isynoptic = 0, m, np, nlevel = 0, minhfc = +6, maxhfc = +huge(maxhfc), ifltim = 0
   integer :: k, ierror, i, n
