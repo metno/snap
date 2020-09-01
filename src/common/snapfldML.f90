@@ -20,6 +20,9 @@ module snapfldML
   implicit none
   private
 
+!> number of hourly steps between output of fields
+  integer, save, public :: nhfout = 3
+
 !>  horizontal wind component (time step 1)
   real(kind=real32), allocatable, save, public :: u1(:,:,:)
 !>  horizontal wind component (time step 2)

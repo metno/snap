@@ -21,7 +21,7 @@ module fldout_ncML
   USE milibML, only: xyconvert, hrdiff
   USE snapdimML, only: mcomp
   USE netcdf
-  USE Utils, only: ftoa
+  USE Utils, only: itoa
   implicit none
   private
 
@@ -91,7 +91,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   USE snapfldML, only: field1, field2, field3, field4, depwet, depdry, &
       avgbq1, avgbq2, hlayer1, hlayer2, garea, pmsl1, pmsl2, hbl1, hbl2, &
       xm, ym, accdry, accwet, avgprec, concen, ps1, ps2, avghbl, dgarea, &
-      avgbq, concacc, accprec, iprecip, precip
+      avgbq, concacc, accprec, iprecip, precip, nhfout
   USE snapparML, only: time_profile, ncomp, run_comp, def_comp, &
     TIME_PROFILE_BOMB
   USE snapdebug, only: iulog, idebug
@@ -329,7 +329,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
           "kg/m2", "precipitation_amount", "")
           call nc_declare_3d(iunit, dimids3d, varid%prc, &
           chksz3d, "lwe_precipitation_rate", &
-          "mm/("//ftoa(tstep)//"hr)", "lwe_precipitation_rate", "")
+          "mm/("//itoa(nhfout)//"hr)", "lwe_precipitation_rate", "")
     endif
 
     call nc_declare_3d(iunit, dimids3d, varid%ihbl, &
