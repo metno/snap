@@ -4,7 +4,7 @@ module load netcdf-fortran/4.4.4
 module load fimex
 
 # check version in SnapJobEC.py, too!!!
-export VERSION=2.0.1
+export VERSION=2.0.2
 
 cd utils/SnapPy
 python3 setup.py install --prefix=/modules/xenial/user-apps/SnapPy/$VERSION/
