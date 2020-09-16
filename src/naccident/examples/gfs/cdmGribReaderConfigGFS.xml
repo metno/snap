@@ -355,19 +355,19 @@
     <!-- Geopotential (6) -->
   <parameter name="geopotential_pl" type="float">
     <grib1 indicatorOfParameter="6" typeOfLevel="100"/>
-    <attribute name="_FillValue" value="9.9692099683868690e+36f" type="float" />
+    <attribute name="_FillValue" value="9.9692099683868690e+36" type="float" />
     <attribute name="standard_name" value="geopotential_height" type="string" />
     <attribute name="units" value="m" type="string" />
   </parameter>
   <parameter name="geopotential_pl" type="float">
     <grib1 indicatorOfParameter="129" typeOfLevel="100"/>
-    <attribute name="_FillValue" value="9.9692099683868690e+36f" type="float" />
+    <attribute name="_FillValue" value="9.9692099683868690e+36" type="float" />
     <attribute name="standard_name" value="geopotential_height" type="string" />
     <attribute name="units" value="m" type="string" />
   </parameter>
   <parameter name="geopotential_pl" type="float">
     <grib1 indicatorOfParameter="156" typeOfLevel="100"/>
-    <attribute name="_FillValue" value="9.9692099683868690e+36f" type="float" />
+    <attribute name="_FillValue" value="9.9692099683868690e+36" type="float" />
     <attribute name="standard_name" value="geopotential_height" type="string" />
     <attribute name="units" value="m" type="string" />
   </parameter>
@@ -380,7 +380,7 @@
 
   <parameter name="geopotential" type="float">
     <grib1 indicatorOfParameter="6" typeOfLevel="105"/>
-    <attribute name="_FillValue" value="9.9692099683868690e+36f" type="float" />
+    <attribute name="_FillValue" value="9.9692099683868690e+36" type="float" />
     <attribute name="standard_name" value="geopotential_height" type="string" />
     <attribute name="units" value="m" type="string" />
   </parameter>
@@ -398,7 +398,7 @@
     <grib1 indicatorOfParameter="7" gribTablesVersionNo="2"/>
     <grib1 indicatorOfParameter="7" gribTablesVersionNo="3"/>
     <grib2 discipline="0" parameterCategory="3" parameterNumber="5" typeOfLevel="6"/>
-    <attribute name="_FillValue" value="9.9692099683868690e+36f" type="float" />
+    <attribute name="_FillValue" value="9.9692099683868690e+36" type="float" />
     <attribute name="long_name" value="geopotential_height" type="string" />
     <attribute name="standard_name" value="geopotential_height" type="string" />
     <attribute name="units" value="m" type="string" />
@@ -406,7 +406,7 @@
   <parameter name="geopotential_height_pl" type="float">
     <!-- multi-id for grib1 and grib2 -->
     <grib2 discipline="0" parameterCategory="3" parameterNumber="5" typeOfLevel="100"/>
-    <attribute name="_FillValue" value="9.9692099683868690e+36f" type="float" />
+    <attribute name="_FillValue" value="9.9692099683868690e+36" type="float" />
     <attribute name="long_name" value="geopotential_height" type="string" />
     <attribute name="standard_name" value="geopotential_height" type="string" />
     <attribute name="units" value="m" type="string" />
@@ -601,7 +601,7 @@
   <parameter name="x_wind" type="float">
     <grib1 indicatorOfParameter="33" typeOfLevel="105"/>
     <attribute name="long_name" value="Zonal x metre wind (UxM)" type="string" />
-    <attribute name="_FillValue" value="9.9692099683868690e+36f" type="float" />
+    <attribute name="_FillValue" value="9.9692099683868690e+36" type="float" />
     <attribute name="standard_name" value="x_wind" type="string" />
     <attribute name="units" value="m s^-1" type="string" />
     <spatial_vector direction="x,longitude" counterpart="y_wind" />
@@ -645,7 +645,7 @@
   </parameter>
   <parameter name="y_wind" type="float">
     <grib1 indicatorOfParameter="34" typeOfLevel="105"/>
-    <attribute name="_FillValue" value="9.9692099683868690e+36f" type="float" />
+    <attribute name="_FillValue" value="9.9692099683868690e+36" type="float" />
     <attribute name="standard_name" value="y_wind" type="string" />
     <attribute name="units" value="m s^-1" type="string" />
     <spatial_vector direction="y,latitude" counterpart="x_wind" />
@@ -717,13 +717,13 @@
   </parameter>
   <parameter name="specific_humidity_pl" type="float">
     <grib1 indicatorOfParameter="51" typeOfLevel="100"/>
-    <attribute name="_FillValue" value="9.9692099683868690e+36f" type="float" />
+    <attribute name="_FillValue" value="9.9692099683868690e+36" type="float" />
     <attribute name="standard_name" value="specific_humidity" type="string" />
     <attribute name="units" value="1" type="string" />
   </parameter>
   <parameter name="specific_humidity_pl" type="float">
     <grib1 indicatorOfParameter="133" typeOfLevel="100"/>
-    <attribute name="_FillValue" value="9.9692099683868690e+36f" type="float" />
+    <attribute name="_FillValue" value="9.9692099683868690e+36" type="float" />
     <attribute name="standard_name" value="specific_humidity" type="string" />
     <attribute name="units" value="1" type="string" />
   </parameter>
@@ -751,14 +751,14 @@
   <parameter name="relative_humidity" type="float">
     <grib1 indicatorOfParameter="52"  typeOfLevel="105"/>
     <grib1 indicatorOfParameter="52" typeOfLevel="100"/>
-    <attribute name="_FillValue" value="9.9692099683868690e+36f" type="float" />
+    <attribute name="_FillValue" value="9.9692099683868690e+36" type="float" />
     <attribute name="standard_name" value="relative_humidity" type="string" />
     <attribute name="units" value="1" type="string" />
   </parameter>
   <parameter name="relative_humidity_pl" type="float">
     <grib1 indicatorOfParameter="157" typeOfLevel="100"/>
     <grib2 discipline="0" parameterCategory="1" parameterNumber="1" typeOfLevel="100"/>
-    <attribute name="_FillValue" value="9.9692099683868690e+36f" type="float" />
+    <attribute name="_FillValue" value="9.9692099683868690e+36" type="float" />
     <attribute name="standard_name" value="relative_humidity" type="string" />
     <attribute name="units" value="%" type="string" />
   </parameter>
@@ -955,7 +955,7 @@
     <!-- fog -->
   <!--grib1 indicatorOfParameter="248" /-->
     <!--  <grib2 discipline="" parameterCategory="" parameterNumber=""/> -->
-  <!--attribute name="_FillValue" value="9.9692099683868690e+36f" type="float" /-->
+  <!--attribute name="_FillValue" value="9.9692099683868690e+36" type="float" /-->
   <!--attribute name="long_name" value="cloud coverage" type="string" /-->
   <!--attribute name="units" value="%" type="string" /-->
   <!--/parameter-->
@@ -968,7 +968,7 @@
     </parameter>
 	<parameter name="fog_area_fraction" type="float">
         <grib1 indicatorOfParameter="71" gribTablesVersionNo="253" typeOfLevel="109" levelNo="65"/>
-        <attribute name="_FillValue" value="9.9692099683868690e+36f" type="float" />
+        <attribute name="_FillValue" value="9.9692099683868690e+36" type="float" />
         <!-- standard-name not ensured yet -->
         <attribute name="long_name" value="Fog" type="string" />
         <attribute name="standard_name" value="fog_area_fraction" type="string" />
