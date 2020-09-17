@@ -89,7 +89,7 @@ filesort_fi.o: ../common/filesort_fi.f90 dateCalc.o snapfilML.o snapdimML.o snap
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 find_parameters.o: ../common/find_parameters.f90 snapmetML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-find_parameters_fi.o: ../common/find_parameters_fi.f90 snapmetML.o fimex.o
+find_parameters_fi.o: ../common/find_parameters_fi.f90 snapmetML.o fimex.o readfield_fi.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 fldout.o: ../common/fldout.f90 particleML.o snapfilML.o snapgrdML.o snapfldML.o snapparML.o snapargosML.o snapdebugML.o snapdimML.o ftest.o argoswrite.o snaptabML.o milibML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
