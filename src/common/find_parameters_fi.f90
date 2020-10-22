@@ -128,6 +128,9 @@ contains
     case ("lcc")
       call lambert_grid(fio, varname, proj4, nx, ny, xdim, ydim, igtype, gparam, stat)
 
+    case ("ob_tran")
+      call geographic_grid(fio, proj4, nx, ny, xdim, ydim, igtype, gparam, rotated=.true., stat=stat)
+
     case default
       write (error_unit, *) "This projection type is lacking a grid mapping: ", TRIM(proj_arg(proj4, 'proj'))
       stat = ERROR_THIS_MODULE
@@ -210,9 +213,27 @@ contains
       igtype = GEOGRAPHIC
       gparam(5:6) = 0
     else
+      pval = proj_arg(proj4, "o_proj")
+      if (pval /= "longlat") then
+        stat = ERROR_THIS_MODULE
+        return
+      endif
+
+      pval = proj_arg(proj4, "lon_0")
+      if (pval == "") then
+        stat = ERROR_THIS_MODULE
+        return
+      endif
+      gparam(5) = atof(pval)
+
+      pval = proj_arg(proj4, "o_lat_p")
+      if (pval == "") then
+        stat = ERROR_THIS_MODULE
+        return
+      endif
+      gparam(6) = atof(pval)
+
       igtype = SPHERICAL_ROTATED
-      stat = ERROR_THIS_MODULE
-      if (stat /= 0) return
       gparam(5) = 180 + gparam(5) ! need equator projection
       gparam(6) = 0 + 90 - gparam(6) ! need equator projection
     endif
