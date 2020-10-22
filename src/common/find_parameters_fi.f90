@@ -79,7 +79,7 @@ contains
     stat = 0
     stat = fio%open (file, config, type)
     if (stat /= 0) then
-      write (error_unit, *) "Can't make io-object with file:"//trim(file)//" config: "//config
+      write (error_unit, *) "Can't make io-object with file: "//trim(file)//" config: "//trim(config)
       return
     endif
 
