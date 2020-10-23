@@ -224,6 +224,7 @@ contains
         stat = ERROR_THIS_MODULE
         return
       endif
+      ! No projection of longitude is required
       gparam(5) = atof(pval)
 
       pval = proj_arg(proj4, "o_lat_p")
@@ -234,8 +235,8 @@ contains
       gparam(6) = atof(pval)
 
       igtype = SPHERICAL_ROTATED
-      gparam(5) = 180 + gparam(5) ! need equator projection
-      gparam(6) = 0 + 90 - gparam(6) ! need equator projection
+      ! Projection from pole to equator
+      gparam(6) = 0 + 90 - gparam(6)
     endif
 
     ! Getting the longitude oriented gparams
