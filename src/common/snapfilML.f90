@@ -34,6 +34,8 @@ module snapfilML
     integer, save, public :: nfilef = 0
 !> no. of available timesteps with data, plus 'other' files
     integer, save, public :: navail
+!> no. of steps to skip in from the meteorology
+    integer, save, public :: spinup_steps = 1
 
 !> analysis/forecast reference time
 !> \see iavail
@@ -57,6 +59,8 @@ module snapfilML
         integer(kind=int16) :: NAVAIL
         !> pointer to next backward (=previous) time data
         integer(kind=int16) :: PAVAIL
+        !> pointer to  previous time data in same file (needed for deaccumulation)
+        integer(kind=int16) :: pavail_same_file
     end type fileInfo
 !> unsorted list of timesteps with data as defined in fileInfo
 !>       plus files with 'other' data

@@ -123,6 +123,8 @@
 ! FORECAST.HOUR.MIN= +6 ......................... (default is +6)
 ! FORECAST.HOUR.MAX= +32767 ..................... (default is +32767)
 ! FIELD.TYPE=felt|netcdf
+! * number of steps to skip in the beginning of a file
+! FIELD.SPINUPSTEPS= 1
 ! FIELD.INPUT= arklam.dat
 ! FIELD.INPUT= feltlam.dat
 ! FIELD_TIME.FORECAST
@@ -155,7 +157,7 @@ PROGRAM bsnap
                          argostime
   USE snapdimML, only: nx, ny, nk, ldata, maxsiz, mcomp
   USE snapfilML, only: filef, itimer, limfcf, ncsummary, nctitle, nhfmax, nhfmin, &
-                       nctype, nfilef, simulation_start
+                       nctype, nfilef, simulation_start, spinup_steps
   USE snapfldML, only: nhfout, enspos, iprecip, nprecip
   USE snapmetML, only: init_meteo_params, met_params
   USE snapparML, only: component, run_comp, &
@@ -1898,6 +1900,11 @@ contains
           write (error_unit, *) 'WARNING. Too many FIELD INPUT files'
           write (error_unit, *) '  ==> ', cinput(pname_start:pname_end)
         end if
+      case ('file.spinupsteps')
+        !..file.spinupsteps= 1
+        if (.not. has_value) goto 12
+        read (cinput(pname_start:pname_end), *, err=12) spinup_steps
+        if (spinup_steps < 0) goto 12
       case ('field_time.forecast')
         !..field_time.forecast ... use forecast length in output field ident.
         ifltim = 0
