@@ -251,7 +251,7 @@ subroutine forwrd_dx(tf1, tf2, tnow, tstep, part, &
       pi1 = pitab(itab)+(pitab(itab+1)-pitab(itab))*(rtab-itab)
       p = alevel(k2) + blevel(k2)*ps
       rtab = p*pmult
-      itab = rtab
+      itab = int(rtab)
       pi2 = pitab(itab)+(pitab(itab+1)-pitab(itab))*(rtab-itab)
       pi = pi1*dz1+pi2*dz2
       t = th*pi*cpinv
@@ -294,11 +294,11 @@ subroutine forwrd_dx(tf1, tf2, tnow, tstep, part, &
     k2 = k1 + 1
     p = ahalf(k1) + bhalf(k1)*ps
     rtab = p*pmult
-    itab = rtab
+    itab = int(rtab)
     pi1 = pitab(itab)+(pitab(itab+1)-pitab(itab))*(rtab-itab)
     p = ahalf(k2) + bhalf(k2)*ps
     rtab = p*pmult
-    itab = rtab
+    itab = int(rtab)
     pi2 = pitab(itab)+(pitab(itab+1)-pitab(itab))*(rtab-itab)
     dz = th*(pi1-pi2)*ginv
     deta = vhalf(k1)-vhalf(k2)
