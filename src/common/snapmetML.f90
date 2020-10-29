@@ -62,6 +62,7 @@ module snapmetML
   character(len=*), parameter, public :: xy_wind_units = 'm/s'
   character(len=*), parameter, public :: pressure_units= 'hPa'
   character(len=*), parameter, public :: omega_units = 'Pa/s'
+  character(len=*), parameter, public :: sigmadot_units = '1/s'
   character(len=*), parameter, public :: precip_rate_units = 'mm/hr' ! kg/m2/s
   character(len=*), parameter, public :: precip_units = 'kg/m2'
   !> Equivalency to `precip_units`, and scaling between the two =>
@@ -153,6 +154,30 @@ module snapmetML
       met_params%precconvrt = ''
       met_params%precstratiaccumv = 'lwe_thickness_of_stratiform_precipitation_amount'
       met_params%precconaccumv = 'lwe_thickness_of_convective_precipitation_amount'
+!..get grid parameters from field identification
+    case('era5')
+      met_params%manual_level_selection = .true.
+      met_params%has_dummy_dim = .false.
+      met_params%xwindv = 'x_wind_ml'
+      met_params%ywindv = 'y_wind_ml'
+      met_params%xwind10mv = 'x_wind_10m'
+      met_params%ywind10mv = 'y_wind_10m'
+!       !! real temperature, convert to pot-temp later
+      met_params%pottempv = 'air_temperature_ml'
+      met_params%temp_is_abs = .true.
+      met_params%sigmav = ''
+      met_params%ptopv = ''
+      met_params%apv = 'ap'
+      met_params%bv = 'b'
+      met_params%sigmadotv = 'lagrangian_tendency_of_atmosphere_sigma_coordinate_ml'
+      met_params%sigmadot_is_omega = .false.
+      met_params%psv = 'surface_air_pressure'
+      met_params%mslpv = 'air_pressure_at_sea_level'
+      met_params%precaccumv = ''
+      met_params%precstrativrt = 'precipitation_rate'
+      met_params%precconvrt = ''
+      met_params%precstratiaccumv = ''
+      met_params%precconaccumv = ''
 !..get grid parameters from field identification
     case('arome')
       met_params%manual_level_selection = .true.

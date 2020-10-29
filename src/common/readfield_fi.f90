@@ -70,7 +70,7 @@ contains
     USE snapgrdML, only: alevel, blevel, vlevel, ahalf, bhalf, vhalf, &
                          gparam, kadd, klevel, ivlevel, imslp, igtype, ivlayer, ivcoor
     USE snapmetML, only: met_params, xy_wind_units, pressure_units, omega_units, &
-                         temp_units
+                         sigmadot_units, temp_units
     USE snapdimML, only: nx, ny, nk
 !> current timestep (always positive), negative istep means reset
     integer, intent(in) :: istep
@@ -282,7 +282,11 @@ contains
       if (met_params%sigmadotv == '') then
         w2 = 0
       else
-        call fi_checkload(fio, met_params%sigmadotv, omega_units, w2(:, :, k), nt=timepos, nz=ilevel, nr=nr)
+        if (met_params%sigmadot_is_omega) then
+          call fi_checkload(fio, met_params%sigmadotv, omega_units, w2(:, :, k), nt=timepos, nz=ilevel, nr=nr)
+        else
+          call fi_checkload(fio, met_params%sigmadotv, sigmadot_units, w2(:, :, k), nt=timepos, nz=ilevel, nr=nr)
+        end if
       end if
 
     end do ! k=nk-kadd,2,-1
