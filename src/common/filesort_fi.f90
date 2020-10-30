@@ -186,8 +186,8 @@ contains
       else
         if (iavail(i)%oHour == iavail(j)%oHour) then
           !           replace position j with i (newer)
-          if (iavail(i)%timePos == 1 .AND. iavail(j)%timePos > 1) then
-            !  exception,  i is analysis time, j isn't so: keep j
+          if (iavail(i)%timePos <= spinup_steps .AND. iavail(j)%timePos > spinup_steps) then
+            !  exception,  i is analysis/spinup time, j isn't so: keep j
             !  ignore this timestep if possible, but give next and previous
             iavail(i)%nAvail = iavail(j)%nAvail
             iavail(i)%pAvail = j
