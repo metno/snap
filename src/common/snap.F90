@@ -1900,8 +1900,8 @@ contains
           write (error_unit, *) 'WARNING. Too many FIELD INPUT files'
           write (error_unit, *) '  ==> ', cinput(pname_start:pname_end)
         end if
-      case ('file.spinupsteps')
-        !..file.spinupsteps= 1
+      case ('field.spinupsteps')
+        !..field.spinupsteps= 1
         if (.not. has_value) goto 12
         read (cinput(pname_start:pname_end), *, err=12) spinup_steps
         if (spinup_steps < 0) goto 12
