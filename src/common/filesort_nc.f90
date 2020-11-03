@@ -28,7 +28,7 @@ subroutine filesort_nc
   USE iso_fortran_env, only: error_unit, real64, int64
   USE ieee_arithmetic, only: ieee_is_nan
   USE DateCalc, only: timeUnitOffset, timeUnitScale, epochToDate
-  USE snapfilML, only: iavail, kavail, itimer, navail, nfilef, filef
+  USE snapfilML, only: iavail, kavail, itimer, navail, nfilef, filef, spinup_steps
   USE snapfldML, only: enspos, field1
   USE snapmetML, ONLY: met_params
   USE snapdebug, only: iulog, idebug
@@ -37,7 +37,7 @@ subroutine filesort_nc
   USE snapdimML, only: nx, ny, mavail
   USE milibML, only: vtime
 
-  integer :: i, j, ncid, nf, varid, dimid, tsize, ierror
+  integer :: i, j, ncid, nf, varid, dimid, tsize, ierror, prev_avail_same_file
   real(real64) :: times(mavail)
   integer :: zeroHour, tunitLen, status, count_nan
   integer(int64) :: eTimes(mavail)
@@ -76,6 +76,8 @@ subroutine filesort_nc
     tunits = tunits(:tunitLen)
     add_offset = timeUnitOffset(tunits)
     scalef = timeUnitScale(tunits)
+    prev_avail_same_file = 0 ! unset
+
     do i = 1, tsize
       call calc_2d_start_length(start4d, count4d, nx, ny, 1, &
           enspos, i, met_params%has_dummy_dim)
@@ -124,6 +126,8 @@ subroutine filesort_nc
     ! still to be set
       iavail(navail)%nAvail = 0
       iavail(navail)%pAvail = 0
+      iavail(navail)%pAvail_same_file = prev_avail_same_file
+      prev_avail_same_file = navail
     end do
   end do
 
@@ -150,8 +154,8 @@ subroutine filesort_nc
     else
       if (iavail(i)%oHour == iavail(j)%oHour) then
       !           replace position j with i (newer)
-        if (iavail(i)%timePos==1 .AND. iavail(j)%timePos>1) then
-        !  exception,  i is analysis time, j isn't so: keep j
+        if (iavail(i)%timePos <= spinup_steps .AND. iavail(j)%timePos > spinup_steps) then
+        !  exception,  i is analysis/spinup time, j isn't so: keep j
         !  ignore this timestep if possible, but give next and previous
           iavail(i)%nAvail = iavail(j)%nAvail
           iavail(i)%pAvail = j
