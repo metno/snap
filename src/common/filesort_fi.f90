@@ -32,7 +32,7 @@ contains
     USE DateCalc, only: epochToDate
     USE Utils, only: itoa
     USE ieee_arithmetic, only: ieee_is_nan
-    USE snapfilML, only: iavail, kavail, itimer, navail, nfilef, filef
+    USE snapfilML, only: iavail, kavail, itimer, navail, nfilef, filef, spinup_steps
     USE snapfldML, only: enspos
     USE snapmetML, ONLY: met_params
     USE snapdebug, only: iulog, idebug
@@ -46,7 +46,7 @@ contains
     TYPE(FimexIO) :: fio
     integer(int32), dimension(:), allocatable :: start, length, atypes
     character(len=1024) :: time_var, varname
-    integer :: i, j, t, ndims, nf, tsize, ierror
+    integer :: i, j, t, ndims, nf, tsize, ierror, prev_avail_same_file
     real(real64), allocatable, target :: times(:)
     real(real64), allocatable, target :: field(:)
     integer :: zeroHour, status, count_nan
@@ -97,6 +97,7 @@ contains
       allocate (times(tsize))
       call check(fio%read (time_var, times, "seconds since 1970-01-01 00:00:00 +00:00"), "reading time variable")
 
+      prev_avail_same_file = 0 ! unset
       do t = 1, tsize
         ndims = fio%get_dimensions(varname)
         DO i = 1, ndims
@@ -157,6 +158,8 @@ contains
         ! still to be set
         iavail(navail)%nAvail = 0
         iavail(navail)%pAvail = 0
+        iavail(navail)%pAvail_same_file = prev_avail_same_file
+        prev_avail_same_file = navail
       end do
     end do
 
@@ -183,8 +186,8 @@ contains
       else
         if (iavail(i)%oHour == iavail(j)%oHour) then
           !           replace position j with i (newer)
-          if (iavail(i)%timePos == 1 .AND. iavail(j)%timePos > 1) then
-            !  exception,  i is analysis time, j isn't so: keep j
+          if (iavail(i)%timePos <= spinup_steps .AND. iavail(j)%timePos > spinup_steps) then
+            !  exception,  i is analysis/spinup time, j isn't so: keep j
             !  ignore this timestep if possible, but give next and previous
             iavail(i)%nAvail = iavail(j)%nAvail
             iavail(i)%pAvail = j
