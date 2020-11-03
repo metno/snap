@@ -196,11 +196,8 @@ contains
 
     timepos = iavail(ntav2)%timePos
     timeposm1 = timepos ! Default: No deaccumulation possible
-    if ((ntav1 /= 0) .and. ((iavail(ntav2)%fileNo .eq. iavail(ntav1)%fileNo))) then
-      ! previous timestep in same file for deaccumulation
-      timeposm1 = iavail(ntav1)%timePos
-    elseif (iavail(ntav2)%pavail_same_file /= 0) then
-      ! previous timestep in same file, even if not in list
+    if (iavail(ntav2)%pavail_same_file /= 0) then
+      ! previous timestep in same file for deaccumulation, even if not in list
       timeposm1 = iavail(iavail(ntav2)%pavail_same_file)%timePos
     endif
 
