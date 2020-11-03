@@ -128,6 +128,10 @@ contains
     case ("lcc")
       call lambert_grid(fio, varname, proj4, nx, ny, xdim, ydim, igtype, gparam, stat)
 
+    case ("stere")
+      call polar_stereographic_grid(fio, varname, proj4, nx, ny, xdim, ydim, igtype, gparam, stat)
+
+
     case ("ob_tran")
       call geographic_grid(fio, proj4, nx, ny, xdim, ydim, igtype, gparam, rotated=.true., stat=stat)
 
@@ -258,7 +262,7 @@ contains
 
   end subroutine
 
-  !> determine gparam for lamber grids
+  !> determine gparam for lambert conformal conic grids
   subroutine lambert_grid(fio, varname, proj4, nx, ny, xdim, ydim, igtype, gparam, stat)
     !> open fimex file
     TYPE(FimexIO), intent(inout) :: fio
@@ -331,5 +335,99 @@ contains
     end if
 
   end subroutine lambert_grid
+
+  !> determine gparam for polar_stereographic grids
+  subroutine polar_stereographic_grid(fio, varname, proj4, nx, ny, xdim, ydim, igtype, gparam, stat)
+    !> open fimex file
+    TYPE(FimexIO), intent(inout) :: fio
+    !> proj4 string
+    character(len=*), intent(in) :: varname
+    !> proj4 string
+    character(len=*), intent(in) :: proj4
+    !> xaxis-size
+    integer, intent(in) :: nx
+    !> yaxis-name
+    integer, intent(in) :: ny
+    !> xaxis-name
+    character(len=*), intent(in) :: xdim
+    !> yaxis-name
+    character(len=*), intent(in) :: ydim
+    !> grid type
+    integer, intent(out) :: igtype
+    !> grid parameters
+    real, intent(out) :: gparam(6)
+    !> error code (0 for success)
+    integer, intent(out) :: stat
+
+    real(kind=real64) :: pi
+    real(kind=real64) :: lat0, incr, startX, startY
+    real(kind=real64), allocatable, target :: dims(:), latlons(:)
+    character(1024) :: pval, longname, latname
+    integer :: ndims
+
+    PI = 4.D0*DATAN(1.D0)
+
+    igtype = POLARSTEREOGRAPHIC
+
+    ! Check polar stereographic
+    pval = proj_arg(proj4, "lat_0")
+    if (pval == "") then
+      lat0 = 0
+    else
+      lat0 = atof(pval)
+    end if
+    if (lat0 /= 90.) then
+      stat = 1
+      write (error_unit, *) "SNAP requires polar_stereographic: got lat_0= ", lat0
+      return
+    endif
+
+    stat = 0
+    ! get increment in m
+    allocate (dims(nx))
+    ndims = fio%get_dimensions(xdim)
+    stat = fio%read (xdim, dims, "m")
+    if (stat /= 0) return
+    startX = dims(1)
+    incr = dims(2) - dims(1)
+    deallocate (dims)
+
+    allocate (dims(ny))
+    ndims = fio%get_dimensions(ydim)
+    stat = fio%read (ydim, dims, "m")
+    if (stat /= 0) return
+    startY = dims(1)
+
+    if ((dims(2) - dims(1)) /= incr) then
+      write (error_unit, *) "SNAP requires equal distance polar_stereographic: xdelta ", &
+        incr, " != ydelta ", (dims(2)-dims(1))
+      stat = 1
+      return
+    end if
+
+    ! Get reference longitude
+    pval = proj_arg(proj4, "lon_0")
+    if (pval == "") then
+      gparam(4) = 0
+    else
+      gparam(4) = atof(pval)
+    end if
+
+    ! Get true scale latitude
+    pval = proj_arg(proj4, "lat_ts")
+    if (pval == "") then
+      gparam(5) = 60
+    else
+      gparam(5) = atof(pval)
+    end if
+
+    ! gparam1/2 is distance in cells of start to northpole in fortran counting (northpole = 1)
+    gparam(1) = 1 - startX/incr
+    gparam(2) = 1 - startY/incr
+
+    ! gparam(3) is number of grid-cells between equator and northpole
+    gparam(3) = 6371000 * (1 + sin(PI/180.*gparam(5)))/incr
+
+  end subroutine polar_stereographic_grid
 
 end module find_parameters_fi
