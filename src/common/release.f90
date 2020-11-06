@@ -111,7 +111,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
   real, parameter :: pi = 4*atan(1.0)
   real, parameter :: ginv =  1.0/g
   real ::    e,a,b,c,ecos,esin,s,gcos,gsin,rcos,smax,b2,en,en2
-  real ::    rbqmax,rbq,pscale,radius,hlower,hupper,stemradius
+  real ::    radius,hlower,hupper,stemradius
   real :: volume1,volume2
   real ::    relbq(mcomp),pbq(mcomp)
   real ::    hlevel(nk)
@@ -140,13 +140,6 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
     tstep=3600./float(nsteph)
   end if
 
-!..particle number scaled according to max Bq released
-  rbqmax=0.
-  do n=1,size(releases)
-    rbq = sum(releases(n)%relbqsec(:, :))
-    rbqmax = max(rbqmax, rbq)
-  end do
-  pscale= float(mprel)/(rbqmax*tstep)
 
   nt=1
   do n=2,size(releases)
