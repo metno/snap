@@ -1332,10 +1332,10 @@ contains
         kd = index(cinput(pname_start:pname_end), 'd')
         if (kh > 0 .AND. kd == 0) then
           read (cinput(pname_start:pname_start + kh), *, err=12) rnhrel
-          nhrel = nint(rnhrel)
+          nhrel = ceiling(rnhrel)
         elseif (kd > 0 .AND. kh == 0) then
           read (cinput(pname_start:pname_start + kd), *, err=12) rnhrel
-          nhrel = nint(rnhrel*24.)
+          nhrel = ceiling(rnhrel*24.)
         else
           goto 12
         end if
@@ -2151,7 +2151,10 @@ contains
       ierror = 1
       ntprof = 0
     end if
-    if (nhrel == 0 .AND. ntprof > 0) nhrel = releases(ntprof)%frelhour
+    if (nhrel == 0 .AND. ntprof > 0) then
+      rnhrel = releases(ntprof)%frelhour
+      nhrel = ceiling(rnhrel)
+    endif
 
     if (time_profile == TIME_PROFILE_UNDEFINED) then
       write (error_unit, *) 'No time profile type specified'
