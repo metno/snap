@@ -135,8 +135,14 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
 
   if(time_profile == TIME_PROFILE_BOMB) then
   !..single bomb release
+    if (istep /= 0) then
+      return
+    endif
     tstep=1.
   else
+    if (istep > releases(size(releases))%frelhour*nsteph) then
+      return
+    endif
     tstep=3600./float(nsteph)
   end if
 
@@ -145,6 +151,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
   do n=2,size(releases)
     if(releases(n)%frelhour*nsteph <= istep) nt=n
   end do
+
 
 ! loop over all heights
   do ih=1,nrelheight
