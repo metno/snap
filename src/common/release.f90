@@ -178,7 +178,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
     do m=1,ncomp
     ! Number of particles equal for each component, but not Bq
       nrel(m)=nint(float(mprel)/float(ncomp))
-      if(nrel(m) > 0) then
+      if(nrel(m) > 0 .and. relbq(m) > 0) then
         pbq(m)= relbq(m)*tstep/float(nrel(m))
         nprel= nprel + nrel(m)
       else
