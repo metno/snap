@@ -1455,7 +1455,10 @@ contains
 
         releases%frelhour = releases%frelhour*rscale
 
-        if (releases(1)%frelhour /= 0) goto 12
+        if (releases(1)%frelhour /= 0.0) then
+          write(error_unit, *) 'ERROR: Release hours must start at 0'
+          goto 12
+        endif
         do i = 2, ntprof
           if (releases(i - 1)%frelhour >= releases(i)%frelhour) then
             write (error_unit, *) 'ERROR: Release hours must be monotonically increasing'
