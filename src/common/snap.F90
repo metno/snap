@@ -175,6 +175,7 @@ PROGRAM bsnap
   USE checkdomainML, only: checkdomain
   USE rwalkML, only: rwalk, rwalk_init
   USE milibML, only: xyconvert, chcase, hrdiff, vtime
+  use snapfldML, only: depwet
 #if defined(TRAJ)
   USE snapfldML, only: hlevel2
   USE forwrdML, only: forwrd, forwrd_init, speed
@@ -894,10 +895,7 @@ PROGRAM bsnap
         if (idrydep == 2) call drydep2(tstep, pdata(np))
 
         !..wet deposition (1=old, 2=new version)
-        block
-        use snapfldML, only: depwet
         if (wetdep_version == 2) call wetdep2(depwet, tstep, pdata(np), pextra)
-        end block
 
         !..move all particles forward, save u and v to pextra
         call forwrd(tf1, tf2, tnow, tstep, pdata(np), pextra)
