@@ -140,7 +140,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
     endif
     tstep=1.
   else
-    if (istep > releases(size(releases))%frelhour*nsteph) then
+    if (istep >= releases(size(releases))%frelhour*nsteph) then
       return
     endif
     tstep=3600./float(nsteph)
