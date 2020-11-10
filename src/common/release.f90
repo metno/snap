@@ -133,6 +133,11 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
 
   ierror = 0
 
+  ! Release may occur first after simulation start
+  if (istep < releases(1)%frelhour*nsteph) then
+    return
+  endif
+
   if(time_profile == TIME_PROFILE_BOMB) then
   !..single bomb release
     if (istep /= 0) then

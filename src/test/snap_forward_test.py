@@ -117,7 +117,6 @@ class ReleaseTests(unittest.TestCase):
     snap = datadir.joinpath('../bsnap_naccident')
     input = datadir.joinpath('snap.input_releasetests')
 
-    @unittest.skip("snap does not support release hours not zero")
     def test_start_half_hour(self):
         d = tempfile.mkdtemp()
         tmp = pathlib.Path(d)
@@ -131,13 +130,31 @@ class ReleaseTests(unittest.TestCase):
         with open(tmp.joinpath("snap.input"), "w") as f:
             f.write(snapinput)
 
-        failed = False
-        try:
-            subprocess.check_call([self.snap.resolve().as_posix(), "snap.input"], cwd=tmp)
-        except CalledProcessError:
-            failed = True
+        subprocess.check_call([self.snap.resolve().as_posix(), "snap.input"], cwd=tmp)
 
-        assert failed
+        dt = 60
+        releases = 0
+        istep = -1
+        logfile = tmp.joinpath("snap.log")
+        with open(logfile, "r") as logfile:
+            for line in logfile:
+                if line.startswith(" istep,nplume"):
+                    tline = line.strip()
+                    tline = [e for e in tline.split() if len(e) > 0]
+                    istep = int(tline[1])
+                if not line.startswith(" comp,totalbq,numtotal:"):
+                    continue
+                line = line.strip()
+                elems = [e for e in line.split(" ") if len(e) > 0]
+                numtotal = int(elems[3])
+                print(istep)
+                if istep < 30:
+                    self.assertEqual(numtotal, 0)
+                elif istep < 60:
+                    self.assertEqual(numtotal, (istep - 30) * 100)
+                else:
+                    self.assertEqual(numtotal, 30 * 100)
+
         shutil.rmtree(tmp)
 
     def test_end_non_integer_hour(self):
@@ -198,7 +215,6 @@ class ReleaseTests(unittest.TestCase):
         releases = 0
         istep = -1
         logfile = tmp.joinpath("snap.log")
-        mode = 1
         with open(logfile, "r") as logfile:
             for line in logfile:
                 if line.startswith(" istep,nplume"):
