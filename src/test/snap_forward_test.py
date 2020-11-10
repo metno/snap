@@ -122,12 +122,12 @@ class ReleaseTests(unittest.TestCase):
         tmp = pathlib.Path(d)
         print(tmp)
 
-        with open(self.input, "r") as f:
+        with self.input.open("r") as f:
             snapinput = f.read()
 
         snapinput = snapinput.replace("RELEASE.HOUR= XX", "RELEASE.HOUR= 0.5, 1.0")
 
-        with open(tmp.joinpath("snap.input"), "w") as f:
+        with tmp.joinpath("snap.input").open("w") as f:
             f.write(snapinput)
 
         subprocess.check_call([self.snap.resolve().as_posix(), "snap.input"], cwd=tmp)
@@ -136,7 +136,7 @@ class ReleaseTests(unittest.TestCase):
         releases = 0
         istep = -1
         logfile = tmp.joinpath("snap.log")
-        with open(logfile, "r") as logfile:
+        with logfile.open("r") as logfile:
             for line in logfile:
                 if line.startswith(" istep,nplume"):
                     tline = line.strip()
@@ -162,12 +162,12 @@ class ReleaseTests(unittest.TestCase):
         tmp = pathlib.Path(d)
         print(tmp)
 
-        with open(self.input, "r") as f:
+        with self.input.open("r") as f:
             snapinput = f.read()
 
         snapinput = snapinput.replace("RELEASE.HOUR= XX", "RELEASE.HOUR= 0.0, 1.45")
 
-        with open(tmp.joinpath("snap.input"), "w") as f:
+        with tmp.joinpath("snap.input").open("w") as f:
             f.write(snapinput)
 
         subprocess.check_call([self.snap.resolve().as_posix(), "snap.input"], cwd=tmp)
@@ -175,7 +175,7 @@ class ReleaseTests(unittest.TestCase):
         dt = 60
         releases = 0
         logfile = tmp.joinpath("snap.log")
-        with open(logfile, "r") as logfile:
+        with logfile.open("r") as logfile:
             for line in logfile:
                 if not line.startswith(" comp,totalbq,numtotal:"):
                     continue
@@ -197,7 +197,7 @@ class ReleaseTests(unittest.TestCase):
         tmp = pathlib.Path(d)
         print(tmp)
 
-        with open(self.input, "r") as f:
+        with self.input.open("r") as f:
             snapinput = f.read()
 
         snapinput = snapinput.replace("RELEASE.HOUR= XX", "RELEASE.HOUR= 0.0, 0.5, 1.25, 3.0")
@@ -206,7 +206,7 @@ class ReleaseTests(unittest.TestCase):
         snapinput = snapinput.replace("RELEASE.UPPER.M= 1.0, 1.0", "RELEASE.UPPER.M= 1.0, 1.0, 1.0, 1.0")
         snapinput = snapinput.replace("RELEASE.BQ/SEC.COMP= 1.0, 1.0", "RELEASE.BQ/SEC.COMP= 1.0, 0.0, 1.0, 0.0")
 
-        with open(tmp.joinpath("snap.input"), "w") as f:
+        with tmp.joinpath("snap.input").open("w") as f:
             f.write(snapinput)
 
         subprocess.check_call([self.snap.resolve().as_posix(), "snap.input"], cwd=tmp)
@@ -215,7 +215,7 @@ class ReleaseTests(unittest.TestCase):
         releases = 0
         istep = -1
         logfile = tmp.joinpath("snap.log")
-        with open(logfile, "r") as logfile:
+        with logfile.open("r") as logfile:
             for line in logfile:
                 if line.startswith(" istep,nplume"):
                     tline = line.strip()
