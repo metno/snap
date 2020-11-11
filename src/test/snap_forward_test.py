@@ -130,7 +130,7 @@ class ReleaseTests(unittest.TestCase):
         with tmp.joinpath("snap.input").open("w") as f:
             f.write(snapinput)
 
-        subprocess.check_call([self.snap.resolve().as_posix(), "snap.input"], cwd=tmp)
+        subprocess.check_call([self.snap.resolve().as_posix(), "snap.input"], cwd=tmp.resolve().as_posix())
 
         dt = 60
         releases = 0
@@ -170,7 +170,7 @@ class ReleaseTests(unittest.TestCase):
         with tmp.joinpath("snap.input").open("w") as f:
             f.write(snapinput)
 
-        subprocess.check_call([self.snap.resolve().as_posix(), "snap.input"], cwd=tmp)
+        subprocess.check_call([self.snap.resolve().as_posix(), "snap.input"], cwd=tmp.resolve().as_posix())
 
         dt = 60
         releases = 0
@@ -209,7 +209,7 @@ class ReleaseTests(unittest.TestCase):
         with tmp.joinpath("snap.input").open("w") as f:
             f.write(snapinput)
 
-        subprocess.check_call([self.snap.resolve().as_posix(), "snap.input"], cwd=tmp)
+        subprocess.check_call([self.snap.resolve().as_posix(), "snap.input"], cwd=tmp.resolve().as_posix())
 
         dt = 60
         releases = 0
