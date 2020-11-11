@@ -175,6 +175,7 @@ PROGRAM bsnap
   USE checkdomainML, only: checkdomain
   USE rwalkML, only: rwalk, rwalk_init
   USE milibML, only: xyconvert, chcase, hrdiff, vtime
+  use snapfldML, only: depwet
 #if defined(TRAJ)
   USE snapfldML, only: hlevel2
   USE forwrdML, only: forwrd, forwrd_init, speed
@@ -894,10 +895,7 @@ PROGRAM bsnap
         if (idrydep == 2) call drydep2(tstep, pdata(np))
 
         !..wet deposition (1=old, 2=new version)
-        block
-        use snapfldML, only: depwet
         if (wetdep_version == 2) call wetdep2(depwet, tstep, pdata(np), pextra)
-        end block
 
         !..move all particles forward, save u and v to pextra
         call forwrd(tf1, tf2, tnow, tstep, pdata(np), pextra)
@@ -1332,10 +1330,10 @@ contains
         kd = index(cinput(pname_start:pname_end), 'd')
         if (kh > 0 .AND. kd == 0) then
           read (cinput(pname_start:pname_start + kh), *, err=12) rnhrel
-          nhrel = nint(rnhrel)
+          nhrel = ceiling(rnhrel)
         elseif (kd > 0 .AND. kh == 0) then
           read (cinput(pname_start:pname_start + kd), *, err=12) rnhrel
-          nhrel = nint(rnhrel*24.)
+          nhrel = ceiling(rnhrel*24.)
         else
           goto 12
         end if
@@ -1457,7 +1455,6 @@ contains
 
         releases%frelhour = releases%frelhour*rscale
 
-        if (releases(1)%frelhour /= 0) goto 12
         do i = 2, ntprof
           if (releases(i - 1)%frelhour >= releases(i)%frelhour) then
             write (error_unit, *) 'ERROR: Release hours must be monotonically increasing'
@@ -2151,7 +2148,10 @@ contains
       ierror = 1
       ntprof = 0
     end if
-    if (nhrel == 0 .AND. ntprof > 0) nhrel = releases(ntprof)%frelhour
+    if (nhrel == 0 .AND. ntprof > 0) then
+      rnhrel = releases(ntprof)%frelhour
+      nhrel = ceiling(rnhrel)
+    endif
 
     if (time_profile == TIME_PROFILE_UNDEFINED) then
       write (error_unit, *) 'No time profile type specified'
