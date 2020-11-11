@@ -111,7 +111,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
   real, parameter :: pi = 4*atan(1.0)
   real, parameter :: ginv =  1.0/g
   real ::    e,a,b,c,ecos,esin,s,gcos,gsin,rcos,smax,b2,en,en2
-  real ::    rbqmax,rbq,pscale,radius,hlower,hupper,stemradius
+  real ::    radius,hlower,hupper,stemradius
   real :: volume1,volume2
   real ::    relbq(mcomp),pbq(mcomp)
   real ::    hlevel(nk)
@@ -133,25 +133,30 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
 
   ierror = 0
 
+  ! Release may occur first after simulation start
+  if (istep < releases(1)%frelhour*nsteph) then
+    return
+  endif
+
   if(time_profile == TIME_PROFILE_BOMB) then
   !..single bomb release
+    if (istep /= 0) then
+      return
+    endif
     tstep=1.
   else
+    if (istep >= releases(size(releases))%frelhour*nsteph) then
+      return
+    endif
     tstep=3600./float(nsteph)
   end if
 
-!..particle number scaled according to max Bq released
-  rbqmax=0.
-  do n=1,size(releases)
-    rbq = sum(releases(n)%relbqsec(:, :))
-    rbqmax = max(rbqmax, rbq)
-  end do
-  pscale= float(mprel)/(rbqmax*tstep)
 
   nt=1
   do n=2,size(releases)
     if(releases(n)%frelhour*nsteph <= istep) nt=n
   end do
+
 
 ! loop over all heights
   do ih=1,nrelheight
@@ -185,7 +190,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
     do m=1,ncomp
     ! Number of particles equal for each component, but not Bq
       nrel(m)=nint(float(mprel)/float(ncomp))
-      if(nrel(m) > 0) then
+      if(nrel(m) > 0 .and. relbq(m) > 0) then
         pbq(m)= relbq(m)*tstep/float(nrel(m))
         nprel= nprel + nrel(m)
       else
