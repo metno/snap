@@ -155,7 +155,7 @@ class ReleaseTests(unittest.TestCase):
                 else:
                     self.assertEqual(numtotal, 30 * 100)
 
-        shutil.rmtree(tmp)
+        shutil.rmtree(tmp.as_posix())
 
     def test_end_non_integer_hour(self):
         d = tempfile.mkdtemp()
@@ -190,7 +190,7 @@ class ReleaseTests(unittest.TestCase):
                 print(elems)
                 assert numtotal <= 8700  # 100 * 1.45 * (3600 / dt)
 
-        shutil.rmtree(tmp)
+        shutil.rmtree(tmp.as_posix())
 
     def test_gap_non_integer_hour(self):
         d = tempfile.mkdtemp()
@@ -236,7 +236,7 @@ class ReleaseTests(unittest.TestCase):
                     # 13500 => 2.25 hours * 60 releases/hour * 100 parts/release
                     self.assertEqual(numtotal, 13500)
 
-        shutil.rmtree(tmp)
+        shutil.rmtree(tmp.as_posix())
 
 
 if __name__ == '__main__':
