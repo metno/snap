@@ -19,13 +19,13 @@ class SnapTestCase(unittest.TestCase):
     def compare_fields(self, ex, new, msg):
         '''compare two numpy fields to be almost equal'''
         self.assertSequenceEqual(ex.shape, new.shape)
-        # allow 1% numerical difference
+        # allow 4% numerical difference
         rel = 4
         exS = numpy.sum(ex)
         neS = numpy.sum(new)
         if exS < 1: rel = 20
         elif exS < 10: rel = 10
-        self.assertTrue(math.isclose(exS, neS, rel_tol=rel/100),
+        self.assertTrue(math.isclose(exS, neS, rel_tol=rel/100, abs_tol=0.1),
                         msg="{}: {} !~ {} within {}%".format(msg,exS,neS,rel))
 
 
