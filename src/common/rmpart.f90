@@ -66,8 +66,8 @@ subroutine rmpart(rmlimit)
 
   do npl=1,nplume
 
-    i1=iplume(1,npl)
-    i2=iplume(2,npl)
+    i1 = iplume(npl)%start
+    i2 = iplume(npl)%end
 
   !..redistribution of lost mass (within one plume)
     if(idep == 1 .AND. i1 > 0) then
@@ -108,7 +108,7 @@ subroutine rmpart(rmlimit)
 
   ! removal of particles outside of the domain
   ! by reordering of plumes
-    iplume(1,npl)=n+1
+    iplume(npl)%start = n + 1
     do i=i1,i2
     ! reorder all particles, only keep active
       if(pdata(i)%active) then
@@ -123,10 +123,10 @@ subroutine rmpart(rmlimit)
 
   ! updating plume-particle relation, or making plume empty
   ! (plumes are never removed!)
-    iplume(2,npl)=n
-    if(iplume(1,npl) > iplume(2,npl)) then
-      iplume(1,npl)=0
-      iplume(2,npl)=-1
+    iplume(npl)%end = n
+    if(iplume(npl)%start > iplume(npl)%end) then
+      iplume(npl)%start = 0
+      iplume(npl)%end = -1
     end if
 
   end do

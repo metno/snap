@@ -164,7 +164,7 @@ subroutine allocateFields
   IF (AllocateStatus /= 0) STOP errmsg
 
 ! the plumes
-  ALLOCATE ( iplume(2,mplume), STAT = AllocateStatus)
+  ALLOCATE ( iplume(mplume), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) STOP errmsg
 
 end subroutine allocateFields

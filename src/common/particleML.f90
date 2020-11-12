@@ -39,8 +39,6 @@ module particleML
         real           :: grv = 0.
         !> inside/outside domain
         logical        :: active = .false.
-        !> age of particle since construction
-        integer(int16) :: ageInSteps = 0
         !> index to the defined component
         integer(int16) :: icomp
     end type particle

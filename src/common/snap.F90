@@ -189,7 +189,7 @@ PROGRAM bsnap
   USE posintML, only: posint, posint_init
   USE bldpML, only: bldp
   USE releaseML, only: release, releases, nrelheight, mprel, &
-                       mplume, nplume, npart, mpart, release_t
+                       mplume, nplume, iplume, npart, mpart, release_t
   USE init_random_seedML, only: init_random_seed
   USE compheightML, only: compheight
   USE readfield_ncML, only: readfield_nc
@@ -232,7 +232,7 @@ PROGRAM bsnap
   integer :: snapinput_unit, ios
   integer :: nhrun = 0, nhrel = 0
   logical :: use_random_walk = .true.
-  integer :: isynoptic = 0, m, np, nlevel = 0, minhfc = +6, maxhfc = +huge(maxhfc), ifltim = 0
+  integer :: isynoptic = 0, m, np, npl, nlevel = 0, minhfc = +6, maxhfc = +huge(maxhfc), ifltim = 0
   integer :: k, ierror, i, n
   integer :: ih
   integer :: idrydep = 0, wetdep_version = 0, idecay
@@ -683,8 +683,8 @@ PROGRAM bsnap
       !..test print: printing all particles in plume 'jpl'
       !       write (88,*) 'step,plume,part: ',istep,nplume,npart
       !       jpl=1
-      !       if(jpl.le.nplume .and. iplume(1,jpl).gt.0) then
-      !         do n=iplume(1,jpl),iplume(2,jpl)
+      !       if(jpl.le.nplume .and. iplume(jpl)%start.gt.0) then
+      !         do n=iplume(jpl)%start,iplume(jpl)%end
       !           write (88,fmt='(1x,i6,2f7.2,2f7.4,f6.0,f7.3,i4,f8.3)')
       !    +                  iparnum(n),(pdata(i,n),i=1,5),pdata(n)%prc,
       !    +                  icomp(n),pdata(n)%rad
@@ -876,12 +876,15 @@ PROGRAM bsnap
         init = .FALSE.
       end if
 
+      ! plume loop, increase age of all plumes/particles
+      !$OMP PARALLEL DO SCHEDULE(guided) !npl is private by default
+      do npl = 1, nplume
+        iplume(npl)%ageInSteps = iplume(npl)%ageInSteps + 1
+      end do
       ! particle loop
       !$OMP PARALLEL DO PRIVATE(pextra) SCHEDULE(guided) !np is private by default
       part_do: do np = 1, npart
         if (.not. pdata(np)%active) cycle part_do
-
-        pdata(np)%ageInSteps = pdata(np)%ageInSteps + 1
 
         !..interpolation of boundary layer top, height, precipitation etc.
         !  creates and save temporary data to pextra%prc, pextra%
@@ -910,6 +913,10 @@ PROGRAM bsnap
 
       !..remove inactive particles or without any mass left
       call rmpart(rmlimit)
+
+      !..split particles after some time of transport
+      !if (split_particle_after_step > 0):
+      !  call split_particles(split_particle_after_step)
 
       !$OMP PARALLEL DO REDUCTION(max : mhmax) REDUCTION(min : mhmin)
       do n = 1, npart
