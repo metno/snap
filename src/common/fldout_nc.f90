@@ -820,7 +820,7 @@ end subroutine fldout_nc
 
 
 subroutine write_ml_fields(iunit, varid, average, ipos, isize, rt1, rt2)
-  USE releaseML, only: npart
+  USE releaseML, only: nplume, iplume
   USE particleML, only: pdata, Particle
   USE snapparML, only: def_comp, ncomp
   USE snapfldML, only: field1, field4, &
@@ -840,7 +840,7 @@ subroutine write_ml_fields(iunit, varid, average, ipos, isize, rt1, rt2)
   type(Particle) :: part
   real :: avg, total
   integer :: ivlvl
-  integer :: i, j, k, loop, m, maxage, n
+  integer :: i, j, k, loop, m, maxage, n, npl
 
 !..concentration in each layer
 !..(height only computed at time of output)
@@ -858,28 +858,30 @@ subroutine write_ml_fields(iunit, varid, average, ipos, isize, rt1, rt2)
 
       avgbq = 0.0
 
-      do n=1,npart
-        part = pdata(n)
-        i = nint(part%x)
-        j = nint(part%y)
-        ivlvl = part%z*10000.
-        k = ivlayer(ivlvl)
-        m = def_comp(part%icomp)%to_running
-      !..in each sigma/eta (input model) layer
-        if (modleveldump > 0) then
-        !.. dump and remove old particles, don't touch  new ones
-          if (part%ageInSteps >= nint(modleveldump)) then
-            maxage = max(maxage, int(part%ageInSteps, kind(maxage)))
-            avgbq(i,j,k,m) = avgbq(i,j,k,m) + part%rad
-            total = total + part%rad
-            part%active = .FALSE.
-            part%rad = 0.
-            pdata(n) = part
-          end if
-        else
-          avgbq(i,j,k,m)=avgbq(i,j,k,m)+pdata(n)%rad
-        endif
-      end do
+      do npl = 1, nplume
+        do n = iplume(npl)%start, iplume(npl)%end
+          part = pdata(n)
+          i = nint(part%x)
+          j = nint(part%y)
+          ivlvl = part%z*10000.
+          k = ivlayer(ivlvl)
+          m = def_comp(part%icomp)%to_running
+        !..in each sigma/eta (input model) layer
+          if (modleveldump > 0) then
+          !.. dump and remove old particles, don't touch  new ones
+            if (iplume(npl)%ageInSteps >= nint(modleveldump)) then
+              maxage = max(maxage, int(iplume(npl)%ageInSteps, kind(maxage)))
+              avgbq(i,j,k,m) = avgbq(i,j,k,m) + part%rad
+              total = total + part%rad
+              part%active = .FALSE.
+              part%rad = 0.
+              pdata(n) = part
+            end if
+          else
+            avgbq(i,j,k,m)=avgbq(i,j,k,m)+pdata(n)%rad
+          endif
+        end do
+        end do
       if (modleveldump > 0) then
         write (error_unit,*) "dumped; maxage, total", maxage, total
       endif
