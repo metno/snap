@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 #
 # SNAP: Servere Nuclear Accident Programme
-# Copyright (C) 1992-2017   Norwegian Meteorological Institute
+# Copyright (C) 1992-2020   Norwegian Meteorological Institute
 # 
 # This file is part of SNAP. SNAP is free software: you can 
 # redistribute it and/or modify it under the terms of the 
@@ -69,13 +69,27 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
         runTime = int(argosxml.find("RunLength").text)
         outputTimestep = int(argosxml.find("OutputTimestep").text)
     
-    startDTime = datetime.datetime.strptime(startTime, '%Y-%m-%dT%H:%M:%SZ')
-
+    releaseStartTime = datetime.datetime.strptime(startTime, '%Y-%m-%dT%H:%M:%SZ')
+    startDTime = releaseStartTime.replace(minute=0, second=0, microsecond=0) # snap requires hourly start
+    
     isoItems = rimstermGetIsotopes(rimxml)
     isos = res.getIsotopes()
     releases = []
+    offsetTime = 0
+    if releaseStartTime > startDTime:
+        # add a 0 release from model start to release start
+        # this handling does not cover non-hourly backward runs yet
+        offsetTime = releaseStartTime-startDTime
+        zeroIsoBqs = {}
+        for isoName in isoItems.keys():
+            zeroIsoBqs[isoName] = 0
+        releaseDef =  {'endtime': offsetTime, 'lower': '0', 'upper': '1', 'isoBqs': zeroIsoBqs}
+        releases.append(releaseDef)
+
     for relXML in rimxml.findall("Source/TimeDependent/ReleaseInterval"):
-        endtime = parseIsoTimeDelta(relXML.find("SourceTime/[@EndTime]").attrib['EndTime'])
+        # add real releases
+        endtime = parseIsoTimeDelta(relXML.find("SourceTime/[@EndTime]").attrib['EndTime']) + offsetTime
+        # offset endtime
         if runTime < 0: # backward run
             # StartTime is earliest measuremnt, Endtime end of measurement after starttime
             # snap needs to start at the end of the measurements, i.e. the last time 
