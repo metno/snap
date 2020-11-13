@@ -239,10 +239,10 @@ PROGRAM bsnap
   integer :: ntimefo, iunitf, nh1, nh2
   integer :: ierr1, ierr2, nsteph, nstep, nstepr, iunito
   integer :: nxtinf, ihread, isteph, lstepr, iendrel, istep, ihr1, ihr2, nhleft
-  integer :: ierr, ihdiff, ihr, ifldout, idailyout = 0, ihour, split_particle_after_step
+  integer :: ierr, ihdiff, ihr, ifldout, idailyout = 0, ihour, split_particle_after_step, split_particle_hours
   integer :: date_time(8)
   logical :: warning = .false.
-  real :: tstep = 900, rmlimit = -1.0, rnhrun, rnhrel, tf1, tf2, tnow, tnext, split_particle_hours = 0.0
+  real :: tstep = 900, rmlimit = -1.0, rnhrun, rnhrel, tf1, tf2, tnow, tnext
   real ::    x(1), y(1)
   type(extraParticle) :: pextra
   real ::    rscale
@@ -470,7 +470,7 @@ PROGRAM bsnap
     !..no. of timesteps per hour (adjust the timestep)
     nsteph = nint(3600./tstep)
     tstep = 3600./float(nsteph)
-    split_particle_after_step = nint(split_particle_hours * nsteph)
+    split_particle_after_step = split_particle_hours * nsteph
 
     !..convert modleveldump from hours to steps
     modleveldump = modleveldump*nsteph
