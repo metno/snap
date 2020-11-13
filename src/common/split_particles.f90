@@ -33,12 +33,13 @@ module split_particlesML
 subroutine split_particles(split_particle_after_step)
   USE iso_fortran_env, only: error_unit
   USE snapdebug, only: iulog, idebug
+  USE snapparML, only: ncomp
   USE particleML, only: pdata
-  USE releaseML, only: iplume, nplume, mplume, npart, mpart
+  USE releaseML, only: iplume, plume_release, nplume, mplume, npart, mpart
 
   !> number of timesteps before a particle will be split
   integer, intent(IN) :: split_particle_after_step
-  integer :: np, npl, nplume_old
+  integer :: n, np, npl, nplume_old
 
   nplume_old = nplume
 
@@ -49,6 +50,9 @@ subroutine split_particles(split_particle_after_step)
         iplume(nplume)%start = 0
         iplume(nplume)%end = 0
         iplume(nplume)%ageInSteps = iplume(npl)%ageInSteps
+        do n = 1, ncomp
+          plume_release(nplume, n) = plume_release(npl, n)
+        end do
         do np = iplume(npl)%start, iplume(npl)%end
           if (npart >= mpart) then
             if (idebug >= 1) write(iulog,*) 'too many particles, stop splitting'
