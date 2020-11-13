@@ -48,9 +48,10 @@ subroutine split_particles(split_particle_after_step)
       if (nplume .le. mplume) then
         nplume = nplume + 1
         iplume(nplume)%start = 0
-        iplume(nplume)%end = 0
+        iplume(nplume)%end = -1
         iplume(nplume)%ageInSteps = iplume(npl)%ageInSteps
         do n = 1, ncomp
+          plume_release(npl, n) = plume_release(npl, n) / 2. ! plume split 
           plume_release(nplume, n) = plume_release(npl, n)
         end do
         do np = iplume(npl)%start, iplume(npl)%end
