@@ -1738,7 +1738,6 @@ contains
       case ('particles.split.hours')
         !..split particles after hours
         if (.not. has_value) goto 12
-        if (rmlimit >= 0.00) goto 12
         read (cinput(pname_start:pname_end), *, err=12) split_particle_hours
       case ('step.hour.input.min')
         !..step.hour.input.min=<hours>

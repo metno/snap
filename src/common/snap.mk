@@ -121,7 +121,7 @@ snapmetML.o: ../common/snapmetML.f90 snapfilML.o
 	${F77} -c ${F77FLAGS} $<
 snapposML.o: ../common/snapposML.f90 snapdimML.o
 	${F77} -c ${F77FLAGS} $<
-split_particles.o: ../common/split_particles.f90 snapparML.o release.o snapdebugML.o
+split_particles.o: ../common/split_particles.f90 snapparML.o release.o snapdebugML.o snapparML.o
 	${F77} -c ${F77FLAGS} $<
 utils.o: ../common/utils.f90
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<

@@ -84,6 +84,8 @@ module releaseML
 !>
 !>            (0,-1 means no particles left in the grid domain)
   type(plume_t), allocatable, save, public :: iplume(:)
+!> initial release of radioactivity per component per particle during a plume (plume, running_component)
+  real, allocatable, save, public :: plume_release(:,:)
 
 !> no. of released plumes
   integer, save, public :: nplume
@@ -496,6 +498,9 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
     nplume=nplume+1
     iplume(nplume)%start = npar1
     iplume(nplume)%end = npart
+    do n=1,ncomp
+      plume_release(nplume, n) = pbq(n)
+    end do
   !.....end do ih=1,nrelheight
   end do
 
