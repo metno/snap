@@ -1967,6 +1967,10 @@ contains
           write (error_unit, *) "grid.autodetect requires at least one field.input to be set"
           goto 12
         endif
+        if (nctype == "*") then
+          write (error_unit, *) "grid.autodetect requires an nctype to be set"
+          goto 12
+        endif
         if (ftype .eq. "fimex") then
 #ifdef FIMEX
           call detect_gridparams_fi(filef(1), fimex_config, fimex_type, met_params%xwindv, nx, ny, igtype, gparam, klevel, ierror)
