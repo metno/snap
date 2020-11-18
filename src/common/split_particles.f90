@@ -44,36 +44,36 @@ subroutine split_particles(split_particle_after_step)
   nplume_old = nplume
 
   do npl = 1, nplume_old
-    if (modulo(iplume(npl)%ageInSteps, split_particle_after_step) .eq. 0) then
-      if (nplume .le. mplume) then
-        nplume = nplume + 1
-        iplume(nplume)%start = 0
-        iplume(nplume)%end = -1
-        iplume(nplume)%ageInSteps = iplume(npl)%ageInSteps
-        do n = 1, ncomp
-          plume_release(npl, n) = plume_release(npl, n) / 2. ! plume split 
-          plume_release(nplume, n) = plume_release(npl, n)
-        end do
-        do np = iplume(npl)%start, iplume(npl)%end
-          if (npart >= mpart) then
-            if (idebug >= 1) write(iulog,*) 'too many particles, stop splitting'
-            return
-          end if
-          ! split particles, add one to the new plume at the end
-          npart = npart + 1
-          iplume(nplume)%end = npart
-          if (iplume(nplume)%start .eq. 0) then
-            iplume(nplume)%start = npart
-          end if
-
-          pdata(np)%rad = pdata(np)%rad / 2.
-          pdata(npart) = pdata(np)
-        end do
-      else
-        if (idebug >= 1) write(iulog,*) 'too many plumes, stop splitting'
+    if (modulo(iplume(npl)%ageInSteps, split_particle_after_step) /= 0) then
+      cycle ! no split needed yet
+    end if
+    if (nplume >= mplume) then
+      if (idebug >= 1) write(iulog,*) 'too many plumes, stop splitting'
+      return
+    end if
+    nplume = nplume + 1
+    iplume(nplume)%start = 0
+    iplume(nplume)%end = -1
+    iplume(nplume)%ageInSteps = iplume(npl)%ageInSteps
+    do n = 1, ncomp
+      plume_release(npl, n) = plume_release(npl, n) / 2. ! plume split 
+      plume_release(nplume, n) = plume_release(npl, n)
+    end do
+    do np = iplume(npl)%start, iplume(npl)%end
+      if (npart >= mpart) then
+        if (idebug >= 1) write(iulog,*) 'too many particles, stop splitting'
         return
       end if
-    end if
+      ! split particles, add one to the new plume at the end
+      npart = npart + 1
+      iplume(nplume)%end = npart
+      if (iplume(nplume)%start .eq. 0) then
+        iplume(nplume)%start = npart
+      end if
+
+      pdata(np)%rad = pdata(np)%rad / 2.
+      pdata(npart) = pdata(np)
+    end do
   end do
 
 end subroutine split_particles
