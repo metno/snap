@@ -161,6 +161,7 @@ contains
         iavail(navail)%pAvail_same_file = prev_avail_same_file
         prev_avail_same_file = navail
       end do
+      status = fio%close()
     end do
 
 ! sorting time-steps, setting iavail 9, 10, kavail(1) and kavail(2)
