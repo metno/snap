@@ -151,6 +151,7 @@ contains
       klevel(i) = nk - i + 1
     enddo
 
+    stat = fio%close()
   end subroutine detect_gridparams_fi
 
   !> Get the value of a key in the proj4 string
