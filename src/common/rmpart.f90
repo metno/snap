@@ -18,7 +18,7 @@
 module rmpartML
   implicit none
   private
-
+    integer, save :: has_reduction = -1
   public rmpart
 
   contains
@@ -30,11 +30,13 @@ module rmpartML
 subroutine rmpart(rmlimit)
   USE particleML, only: pdata
   USE snapparML, only: ncomp, run_comp, iparnum, def_comp
-  USE releaseML, only: iplume, nplume, npart
+  USE releaseML, only: iplume, plume_release, nplume, npart
 
+  !> if particles content drop to rmlimit*initial-content
+  !> the particle will be removed and it's content redistributed
   real, intent(in) :: rmlimit
 
-  integer :: idep,m,n,npl,i,i1,i2,iredist, mm
+  integer :: m,n,npl,i,i1,i2,iredist, mm
 
   integer, allocatable, save :: npkeep(:)
   real, allocatable, save :: pbqmin(:), pbqtotal(:), pbqlost(:)
@@ -46,19 +48,17 @@ subroutine rmpart(rmlimit)
   if (.not.allocated(pbqlost)) allocate(pbqlost(ncomp))
   if (.not.allocated(pbqdist)) allocate(pbqdist(ncomp))
 
-!..rmlimit is now input, used to be 0.02 (2%)
-  idep=0
-  do n=1,ncomp
-    m = run_comp(n)%to_defined
-    pbqmin(n)=0.
-    if(def_comp(m)%kdrydep == 1 .or. def_comp(m)%kwetdep == 1 &
-        .or. def_comp(m)%kdecay == 1) then
-      if(run_comp(n)%numtotal > 0) then
-        pbqmin(n)=(run_comp(n)%totalbq/run_comp(n)%numtotal)*rmlimit
-      endif
-      idep=1
-    end if
-  end do
+  !..initialize
+  if (has_reduction .eq. -1) then 
+    has_reduction = 0
+    do n=1,ncomp
+      m = run_comp(n)%to_defined
+      if(def_comp(m)%kdrydep == 1 .or. def_comp(m)%kwetdep == 1 &
+          .or. def_comp(m)%kdecay == 1) then
+      has_reduction = 1
+     end if
+    end do
+  end if
 
   pbqlost = 0.
 
@@ -66,17 +66,17 @@ subroutine rmpart(rmlimit)
 
   do npl=1,nplume
 
-    i1=iplume(1,npl)
-    i2=iplume(2,npl)
+    i1 = iplume(npl)%start
+    i2 = iplume(npl)%end
 
   !..redistribution of lost mass (within one plume)
-    if(idep == 1 .AND. i1 > 0) then
+    if(has_reduction == 1 .AND. i1 > 0) then
       pbqtotal = 0.0
       npkeep = 0
       do i=i1,i2
         m=pdata(i)%icomp
         mm = def_comp(m)%to_running
-        if(pdata(i)%rad > pbqmin(mm)) then
+        if(pdata(i)%rad > (plume_release(npl, mm)*rmlimit)) then
           pbqtotal(mm)=pbqtotal(mm)+pdata(i)%rad
           npkeep(mm) = npkeep(mm) + 1
         else
@@ -108,7 +108,7 @@ subroutine rmpart(rmlimit)
 
   ! removal of particles outside of the domain
   ! by reordering of plumes
-    iplume(1,npl)=n+1
+    iplume(npl)%start = n + 1
     do i=i1,i2
     ! reorder all particles, only keep active
       if(pdata(i)%active) then
@@ -123,10 +123,10 @@ subroutine rmpart(rmlimit)
 
   ! updating plume-particle relation, or making plume empty
   ! (plumes are never removed!)
-    iplume(2,npl)=n
-    if(iplume(1,npl) > iplume(2,npl)) then
-      iplume(1,npl)=0
-      iplume(2,npl)=-1
+    iplume(npl)%end = n
+    if(iplume(npl)%start > iplume(npl)%end) then
+      iplume(npl)%start = 0
+      iplume(npl)%end = -1
     end if
 
   end do

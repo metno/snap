@@ -57,6 +57,8 @@
 ! * RELEASE.BQ/STEP.COMP=
 ! MAX.PARTICLES.PER.RELEASE= 2000
 ! MAX.TOTALPARTICLES=2000000
+! REMOVE.RELATIVE.MASS.LIMIT= 0.02
+! PARTICLES.SPLIT.HOURS= 24
 ! * Input for multi-timesteps, multi-height releases
 ! RELEASE.FILE=release.txt
 ! RELEASE.COMPONENTS= 'CS137', 'XE133', ...
@@ -85,9 +87,6 @@
 ! FIELD.IDENTIFICATION= 1
 ! TOTAL.COMPONENTS.OFF
 ! TOTAL.COMPONENTS.ON
-! PRECIP(MM/H).PROBAB= 0.0,0.00, 0.5,0.31, 1.0,0.48, 1.5,0.60, 2.0,0.66
-! PRECIP(MM/H).PROBAB= 3.3,0.72, 8.3,0.80, 15.,0.85, 25.,0.91
-! REMOVE.RELATIVE.MASS.LIMIT= 0.02
 ! STEP.HOUR.INPUT.MIN=  6
 ! STEP.HOUR.INPUT.MAX= 12
 ! STEP.HOUR.OUTPUT.FIELDS=  3
@@ -172,6 +171,7 @@ PROGRAM bsnap
   USE allocateFieldsML, only: allocateFields, deallocateFields
   USE fldout_ncML, only: fldout_nc
   USE rmpartML, only: rmpart
+  USE split_particlesML, only: split_particles
   USE checkdomainML, only: checkdomain
   USE rwalkML, only: rwalk, rwalk_init
   USE milibML, only: xyconvert, chcase, hrdiff, vtime
@@ -189,7 +189,7 @@ PROGRAM bsnap
   USE posintML, only: posint, posint_init
   USE bldpML, only: bldp
   USE releaseML, only: release, releases, nrelheight, mprel, &
-                       mplume, nplume, npart, mpart, release_t
+                       mplume, nplume, iplume, npart, mpart, release_t
   USE init_random_seedML, only: init_random_seed
   USE compheightML, only: compheight
   USE readfield_ncML, only: readfield_nc
@@ -232,14 +232,14 @@ PROGRAM bsnap
   integer :: snapinput_unit, ios
   integer :: nhrun = 0, nhrel = 0
   logical :: use_random_walk = .true.
-  integer :: isynoptic = 0, m, np, nlevel = 0, minhfc = +6, maxhfc = +huge(maxhfc), ifltim = 0
+  integer :: isynoptic = 0, m, np, npl, nlevel = 0, minhfc = +6, maxhfc = +huge(maxhfc), ifltim = 0
   integer :: k, ierror, i, n
   integer :: ih
   integer :: idrydep = 0, wetdep_version = 0, idecay
   integer :: ntimefo, iunitf, nh1, nh2
   integer :: ierr1, ierr2, nsteph, nstep, nstepr, iunito
   integer :: nxtinf, ihread, isteph, lstepr, iendrel, istep, ihr1, ihr2, nhleft
-  integer :: ierr, ihdiff, ihr, ifldout, idailyout = 0, ihour
+  integer :: ierr, ihdiff, ihr, ifldout, idailyout = 0, ihour, split_particle_after_step, split_particle_hours
   integer :: date_time(8)
   logical :: warning = .false.
   real :: tstep = 900, rmlimit = -1.0, rnhrun, rnhrel, tf1, tf2, tnow, tnext
@@ -470,6 +470,8 @@ PROGRAM bsnap
     !..no. of timesteps per hour (adjust the timestep)
     nsteph = nint(3600./tstep)
     tstep = 3600./float(nsteph)
+    split_particle_after_step = split_particle_hours * nsteph
+
     !..convert modleveldump from hours to steps
     modleveldump = modleveldump*nsteph
 
@@ -683,8 +685,8 @@ PROGRAM bsnap
       !..test print: printing all particles in plume 'jpl'
       !       write (88,*) 'step,plume,part: ',istep,nplume,npart
       !       jpl=1
-      !       if(jpl.le.nplume .and. iplume(1,jpl).gt.0) then
-      !         do n=iplume(1,jpl),iplume(2,jpl)
+      !       if(jpl.le.nplume .and. iplume(jpl)%start.gt.0) then
+      !         do n=iplume(jpl)%start,iplume(jpl)%end
       !           write (88,fmt='(1x,i6,2f7.2,2f7.4,f6.0,f7.3,i4,f8.3)')
       !    +                  iparnum(n),(pdata(i,n),i=1,5),pdata(n)%prc,
       !    +                  icomp(n),pdata(n)%rad
@@ -876,12 +878,15 @@ PROGRAM bsnap
         init = .FALSE.
       end if
 
+      ! plume loop, increase age of all plumes/particles
+      !$OMP PARALLEL DO SCHEDULE(guided) !npl is private by default
+      do npl = 1, nplume
+        iplume(npl)%ageInSteps = iplume(npl)%ageInSteps + 1
+      end do
       ! particle loop
       !$OMP PARALLEL DO PRIVATE(pextra) SCHEDULE(guided) !np is private by default
       part_do: do np = 1, npart
         if (.not. pdata(np)%active) cycle part_do
-
-        pdata(np)%ageInSteps = pdata(np)%ageInSteps + 1
 
         !..interpolation of boundary layer top, height, precipitation etc.
         !  creates and save temporary data to pextra%prc, pextra%
@@ -910,6 +915,11 @@ PROGRAM bsnap
 
       !..remove inactive particles or without any mass left
       call rmpart(rmlimit)
+
+      !..split particles after some time of transport
+      if (split_particle_after_step > 0) then
+        call split_particles(split_particle_after_step)
+      end if
 
       !$OMP PARALLEL DO REDUCTION(max : mhmax) REDUCTION(min : mhmin)
       do n = 1, npart
@@ -1725,6 +1735,10 @@ contains
         if (rmlimit >= 0.00) goto 12
         read (cinput(pname_start:pname_end), *, err=12) rmlimit
         if (rmlimit < 0.0 .OR. rmlimit > 0.5) goto 12
+      case ('particles.split.hours')
+        !..split particles after hours
+        if (.not. has_value) goto 12
+        read (cinput(pname_start:pname_end), *, err=12) split_particle_hours
       case ('step.hour.input.min')
         !..step.hour.input.min=<hours>
         if (.not. has_value) goto 12
