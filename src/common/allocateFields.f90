@@ -38,7 +38,7 @@ subroutine allocateFields
   USE particleML, only: pdata
   USE snapdimML, only: nx, ny, nk, ldata, maxsiz, mprecip
   USE snapparML, only: ncomp, iparnum
-  USE releaseML, only: mplume, iplume, mpart
+  USE releaseML, only: mplume, iplume, plume_release, mpart
 
   logical, save :: FirstCall = .TRUE.
   integer :: AllocateStatus
@@ -164,14 +164,17 @@ subroutine allocateFields
   IF (AllocateStatus /= 0) STOP errmsg
 
 ! the plumes
-  ALLOCATE ( iplume(2,mplume), STAT = AllocateStatus)
+  ALLOCATE ( iplume(mplume), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) STOP errmsg
+  ALLOCATE ( plume_release(mplume, ncomp), STAT = AllocateStatus)
+  IF (AllocateStatus /= 0) STOP errmsg
+
 
 end subroutine allocateFields
 
 
 subroutine deAllocateFields
-  USE releaseML, only: iplume
+  USE releaseML, only: iplume, plume_release
 
   DEALLOCATE ( alevel )
   DEALLOCATE ( blevel )
@@ -239,6 +242,7 @@ subroutine deAllocateFields
   DEALLOCATE ( iparnum )
 
   DEALLOCATE ( iplume )
+  DEALLOCATE ( plume_release )
 
 end subroutine deAllocateFields
 end module allocateFieldsML

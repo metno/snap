@@ -67,10 +67,25 @@ module releaseML
 !> should be timesteps (model) * release-heights
   integer, save, public :: mplume = mplumepre
 
+!> type containing plume information
+!> i.e. start and end of particles in pdata
+!> and age of particles (all particles have same age in plume)
+  type, public :: plume_t
+    sequence
+    !> start number of particles belonging to this plume
+    integer :: start
+    !> end number of particles belonging to this plume
+    integer :: end
+    !> age of particle since construction
+    integer :: ageInSteps = 0
+  end type
+
 !> pointers to first and last particle in each plume
 !>
 !>            (0,-1 means no particles left in the grid domain)
-  integer, allocatable, save, public :: iplume(:,:)
+  type(plume_t), allocatable, save, public :: iplume(:)
+!> initial release of radioactivity per component per particle during a plume (plume, running_component)
+  real, allocatable, save, public :: plume_release(:,:)
 
 !> no. of released plumes
   integer, save, public :: nplume
@@ -243,7 +258,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
     +c3*ps2(i,j+1)+c4*ps2(i+1,j+1))
 
     rtab=ps*pmult
-    itab=rtab
+    itab=int(rtab)
     pihu=  pitab(itab)+(pitab(itab+1)-pitab(itab))*(rtab-itab)
 
     hlevel(1)= 0.
@@ -258,12 +273,12 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
 
       p=ahalf(k)+bhalf(k)*ps
       rtab=p*pmult
-      itab=rtab
+      itab=int(rtab)
       pih= pitab(itab)+(pitab(itab+1)-pitab(itab))*(rtab-itab)
 
       p=alevel(k)+blevel(k)*ps
       rtab=p*pmult
-      itab=rtab
+      itab=int(rtab)
       pif= pitab(itab)+(pitab(itab+1)-pitab(itab))*(rtab-itab)
 
       h1=hhu
@@ -481,8 +496,11 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
   !################################################################
 
     nplume=nplume+1
-    iplume(1,nplume)=npar1
-    iplume(2,nplume)=npart
+    iplume(nplume)%start = npar1
+    iplume(nplume)%end = npart
+    do n=1,ncomp
+      plume_release(nplume, n) = pbq(n)
+    end do
   !.....end do ih=1,nrelheight
   end do
 

@@ -8,8 +8,8 @@ vgravtables.o forwrd.o wetdep.o drydep.o \
 argoswrite.o bldp.o compheight.o checkDomain.o \
 filesort_nc.o fldout_nc.o \
 init_random_seed.o\
-release.o releasefile.o rmpart.o allocateFields.o \
-find_parameters.o
+release.o releasefile.o rmpart.o split_particles.o allocateFields.o \
+find_parameters.o 
 
 ifdef MILIB
   F77FLAGS += -DMILIB
@@ -120,6 +120,8 @@ snapargosML.o: ../common/snapargosML.f90
 snapmetML.o: ../common/snapmetML.f90 snapfilML.o
 	${F77} -c ${F77FLAGS} $<
 snapposML.o: ../common/snapposML.f90 snapdimML.o
+	${F77} -c ${F77FLAGS} $<
+split_particles.o: ../common/split_particles.f90 snapparML.o release.o snapdebugML.o snapparML.o
 	${F77} -c ${F77FLAGS} $<
 utils.o: ../common/utils.f90
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
