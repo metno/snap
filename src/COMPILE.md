@@ -1,6 +1,7 @@
 # Compilation guide to SNAP
 
-This codebase uses makefiles for compilation. To use the correct template for your platform, link or copy the `*.mk` most appropriate to your platform to `current.mk`.
+This codebase uses makefiles for compilation. To use the correct template for your platform, link or copy the `*.mk` most appropriate to your platform to `current.mk`. It is reccommended to start by modifying `gcc_pkgconfig.mk` for autodetection of necessary libraries.
+
 
 ## Features
 
