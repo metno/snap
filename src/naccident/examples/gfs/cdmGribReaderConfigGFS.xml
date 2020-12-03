@@ -4,7 +4,7 @@
 <!--                     xsi:schemaLocation="http://www.met.no/schema/fimex/cdmGribReaderConfig cdmGribReaderConfig.xsd" -->
 <processOptions>
     <!-- parameters to select: all, definedOnly -->
-    <option name="selectParameters" value="all" />
+    <option name="selectParameters" value="definedOnly" />
 </processOptions>
 <overrule>
      <!-- use these values instead of the values in the grib-messages -->
@@ -1366,8 +1366,14 @@
 
     <!-- Net short-wave radiation (surface) (111) -->
     <parameter name="surface_net_upward_shortwave_flux_acc" type="float">
-        <grib2 parameterCategory="4" parameterNumber="193" discipline="0" />
+        <grib2 parameterCategory="4" parameterNumber="193" discipline="0" typeOfLevel="1"/>
         <grib1 indicatorOfParameter="111" typeOfLevel="105" levelNo="0"/>
+        <attribute name="long_name" value="Acumulated net surface short wave radiation" type="string" />
+        <attribute name="standard_name" value="surface_net_upward_shortwave_flux" type="string" />
+        <attribute name="units" value="W/m^2" type="string" />
+    </parameter>
+    <parameter name="surface_net_upward_shortwave_flux_acc_nominal_top" type="float">
+        <grib2 parameterCategory="4" parameterNumber="193" discipline="0" typeOfLevel="8"/>
         <attribute name="long_name" value="Acumulated net surface short wave radiation" type="string" />
         <attribute name="standard_name" value="surface_net_upward_shortwave_flux" type="string" />
         <attribute name="units" value="W/m^2" type="string" />
@@ -1376,7 +1382,13 @@
     <!-- Net long wave radiation (surface) (112) -->
     <parameter name="surface_net_upward_longwave_flux_acc" type="float">
         <grib1 indicatorOfParameter="112" typeOfLevel="105" levelNo="0"/>
-        <grib2 parameterCategory="5" parameterNumber="193" discipline="0" />
+        <grib2 parameterCategory="5" parameterNumber="193" discipline="0" typeOfLevel="1"/>
+        <attribute name="long_name" value="Acumulated net surface long wave radiation" type="string" />
+        <attribute name="standard_name" value="surface_net_upward_longwave_flux" type="string" />
+        <attribute name="units" value="W/m^2" type="string" />
+    </parameter>
+    <parameter name="surface_net_upward_longwave_flux_acc_nominal_top" type="float">
+        <grib1 indicatorOfParameter="112" typeOfLevel="105" levelNo="8"/>
         <attribute name="long_name" value="Acumulated net surface long wave radiation" type="string" />
         <attribute name="standard_name" value="surface_net_upward_longwave_flux" type="string" />
         <attribute name="units" value="W/m^2" type="string" />
@@ -1431,7 +1443,13 @@
     </parameter>
 
     <parameter name="atmosphere_convective_inhibition" type="float">
-        <grib2 parameterCategory="7" parameterNumber="7" discipline="0" />
+        <grib2 parameterCategory="7" parameterNumber="7" discipline="0" typeOfLevel="1"/>
+        <attribute name="long_name" value="Convective inhibitation" type="string" />
+        <attribute name="standard_name" value="atmosphere_convective_inhibition" type="string" />
+        <attribute name="units" value="J/kg" type="string" />
+    </parameter>
+    <parameter name="atmosphere_convective_inhibition_pgl" type="float">
+        <grib2 parameterCategory="7" parameterNumber="7" discipline="0" typeOfLevel="108"/>
         <attribute name="long_name" value="Convective inhibitation" type="string" />
         <attribute name="standard_name" value="atmosphere_convective_inhibition" type="string" />
         <attribute name="units" value="J/kg" type="string" />
@@ -1440,11 +1458,25 @@
 
     <!-- "Convective Available Potential Energy (CAPE) (160) -->
     <parameter name="specific_convective_available_potential_energy" type="float">
-        <grib2 parameterCategory="7" parameterNumber="6" discipline="0" />
+        <grib2 parameterCategory="7" parameterNumber="6" discipline="0" typeOfLevel="1" />
         <attribute name="long_name" value="Convective Available Potential Energy (CAPE)" type="string" />
         <attribute name="standard_name" value="specific_convective_available_potential_energy" type="string" />
         <attribute name="units" value="J/kg" type="string" />
     </parameter>
+    <parameter name="cape.0" type="float">
+        <grib1 indicatorOfParameter="160" typeOfLevel="105" levelNo="0"/>
+        <attribute name="long_name" value="Convective Available Potential Energy (CAPE)" type="string" />
+        <attribute name="standard_name" value="specific_convective_available_potential_energy" type="string" />
+        <attribute name="units" value="J/kg" type="string" />
+    </parameter>
+    <!-- "Convective Available Potential Energy (CAPE) (160) -->
+    <parameter name="specific_convective_available_potential_energy_pgl" type="float">
+        <grib2 parameterCategory="7" parameterNumber="6" discipline="0" typeOfLevel="108" />
+        <attribute name="long_name" value="Convective Available Potential Energy (CAPE)" type="string" />
+        <attribute name="standard_name" value="specific_convective_available_potential_energy" type="string" />
+        <attribute name="units" value="J/kg" type="string" />
+    </parameter>
+
     <parameter name="cape.0" type="float">
         <grib1 indicatorOfParameter="160" typeOfLevel="105" levelNo="0"/>
         <attribute name="long_name" value="Convective Available Potential Energy (CAPE)" type="string" />
