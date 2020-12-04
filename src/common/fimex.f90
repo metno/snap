@@ -85,6 +85,7 @@ MODULE Fimex
     procedure :: reduce_dimension => reduce_dimension
     procedure :: read => read_data
     procedure :: write => write_data
+    final     :: destructor
   END TYPE
   INTERFACE
     !> F90-wrapper for mifi_new_io_reader()
@@ -362,7 +363,9 @@ MODULE Fimex
     INTEGER                              :: ierr
     TYPE(C_PTR)                          :: io
 
-    IF ( C_ASSOCIATED(this%io) ) CALL c_mifi_free_cdm_reader(this%io)
+    ! clear if object is reused
+    ierr = this%close()
+    ! open new reader
     io=c_mifi_new_io_reader(TRIM(filetype)//C_NULL_CHAR, TRIM(infile)//C_NULL_CHAR,TRIM(config)//C_NULL_CHAR)
     IF ( C_ASSOCIATED(io) ) THEN
       open_file=0
@@ -491,7 +494,6 @@ MODULE Fimex
 
     CHARACTER(KIND=C_CHAR), POINTER, DIMENSION(:) :: var_array
     INTEGER                          :: i
-    INTEGER(KIND=C_LONG_LONG)           :: posT
 
     IF ( .not. C_ASSOCIATED(this%io) ) THEN
       RETURN
@@ -623,7 +625,6 @@ MODULE Fimex
     USE iso_c_binding,    ONLY: C_NULL_CHAR,C_INT,C_ASSOCIATED,C_LOC
     IMPLICIT NONE
     INTEGER                  :: get_dimensions
-    INTEGER :: i, ierr
 
     CLASS(FimexIO), INTENT(INOUT)       :: this
     CHARACTER(LEN=*), INTENT(IN)     :: varName
@@ -814,7 +815,6 @@ MODULE Fimex
     CHARACTER(LEN=*),    INTENT(IN)                         :: dimName
     INTEGER(KIND=C_INT), INTENT(IN)                         :: start
     INTEGER(KIND=C_INT), INTENT(IN)                         :: dsize
-    INTEGER :: i
     IF ( C_ASSOCIATED(this%sb) ) THEN
       reduce_dimension = c_mifi_slicebuilder_set_dim_start_size(this%sb, &
               TRIM(dimName)//C_NULL_CHAR,start, dsize)
@@ -852,7 +852,7 @@ MODULE Fimex
     INTEGER(KIND=C_INT), DIMENSION(:), ALLOCATABLE, TARGET  :: vsize
     CHARACTER(LEN=1024)                                     :: myUnit
     INTEGER(KIND=C_LONG_LONG)                               :: expSize, outSize
-    INTEGER :: i,ierr, ndims
+    INTEGER :: ierr, ndims
 
     myUnit = ""
     IF (PRESENT(cunit)) myUnit = cunit
@@ -903,10 +903,9 @@ MODULE Fimex
 
     INTEGER(KIND=C_INT), DIMENSION(:), ALLOCATABLE, TARGET  :: start
     INTEGER(KIND=C_INT), DIMENSION(:), ALLOCATABLE, TARGET  :: vsize
-    CHARACTER(LEN=1024)                                     :: dimName
     CHARACTER(LEN=1024)                                     :: myUnit
-    INTEGER(KIND=C_LONG_LONG)                               :: expSize, outSize
-    INTEGER :: i,ierr, ndims
+    INTEGER(KIND=C_LONG_LONG)                               :: expSize
+    INTEGER :: ierr, ndims
 
 
     myUnit = ""
@@ -953,4 +952,9 @@ MODULE Fimex
     close_file=0
   END FUNCTION close_file
 
+  SUBROUTINE destructor(this)
+    TYPE(FimexIO)    :: this
+    INTEGER           :: x
+    x = this%close ()
+  END SUBROUTINE destructor
 END MODULE Fimex
