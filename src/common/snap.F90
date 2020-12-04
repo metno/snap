@@ -674,7 +674,7 @@ PROGRAM bsnap
     time_loop: do istep = 0, nstep
 
       write (iulog, *) 'istep,nplume,npart: ', istep, nplume, npart
-      call timer%log("time_loop: ")
+      call timer%log("timer: time_loop: ")
       flush (iulog)
       if (mod(istep, nsteph) == 0) then
         write (error_unit, *) 'istep,nplume,npart: ', istep, nplume, npart
@@ -723,7 +723,7 @@ PROGRAM bsnap
           write (iulog, *) "igtype, gparam(8): ", igtype, gparam
         end if
         if (ierror /= 0) call snap_error_exit(iulog)
-        call task_timer%log("Reading MET input: ")
+        call task_timer%log("timer: Reading MET input: ")
 
         n = time_file(5)
         call vtime(time_file, ierr)
@@ -910,7 +910,7 @@ PROGRAM bsnap
         call checkDomain(pdata(np))
       end do part_do
       !$OMP END PARALLEL DO
-      call task_timer%log("Particle loop: ")
+      call task_timer%log("timer: Particle loop: ")
 
       !..remove inactive particles or without any mass left
       call rmpart(rmlimit)
@@ -1067,7 +1067,7 @@ PROGRAM bsnap
         endif
         if (ierror /= 0) call snap_error_exit(iulog)
       end if
-      call task_timer%log("output/accumulation: ")
+      call task_timer%log("timer: output/accumulation: ")
 
       if (isteph == 0 .AND. iprecip < nprecip) iprecip = iprecip + 1
 
