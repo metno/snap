@@ -150,7 +150,7 @@
 PROGRAM bsnap
   USE iso_fortran_env, only: real64, output_unit, error_unit, IOSTAT_END
   USE DateCalc, only: epochToDate, timeGM
-  USE snapdebug, only: iulog, idebug
+  USE snapdebug, only: iulog, idebug, timer_t
   USE snapargosML, only: argosdepofile, argosdosefile, argoshoursrelease, &
                          argoshourstep, argoshoursrun, iargos, margos, argosconcfile, nargos, &
                          argostime
@@ -258,6 +258,11 @@ PROGRAM bsnap
 
 !> name of selected release position
   character(len=40), save :: srelnam = "*"
+
+  !> Running timer since start of timeloop
+  type(timer_t) :: timer
+  !> Timer for checking short-lasting tasks
+  type(timer_t) :: task_timer
 
 #if defined(TRAJ)
   integer :: timeStart(6), timeCurrent(6)
@@ -665,9 +670,11 @@ PROGRAM bsnap
 #endif
     end if
     ! start time loop
+    timer = timer_t()
     time_loop: do istep = 0, nstep
 
       write (iulog, *) 'istep,nplume,npart: ', istep, nplume, npart
+      call timer%log("time_loop: ")
       flush (iulog)
       if (mod(istep, nsteph) == 0) then
         write (error_unit, *) 'istep,nplume,npart: ', istep, nplume, npart
@@ -702,6 +709,7 @@ PROGRAM bsnap
           nhleft = (nstep - istep + 1)/nsteph
           if (nhrun < 0) nhleft = -nhleft
         end if
+        call task_timer%reset()
         if (ftype == "netcdf") then
           call readfield_nc(istep, nhleft, itimei, ihr1, ihr2, &
                             time_file, ierror)
@@ -715,6 +723,7 @@ PROGRAM bsnap
           write (iulog, *) "igtype, gparam(8): ", igtype, gparam
         end if
         if (ierror /= 0) call snap_error_exit(iulog)
+        call task_timer%log("Reading MET input: ")
 
         n = time_file(5)
         call vtime(time_file, ierr)
@@ -869,6 +878,9 @@ PROGRAM bsnap
       do npl = 1, nplume
         iplume(npl)%ageInSteps = iplume(npl)%ageInSteps + 1
       end do
+      !$OMP END PARALLEL DO
+
+      call task_timer%reset()
       ! particle loop
       !$OMP PARALLEL DO PRIVATE(pextra) SCHEDULE(guided) !np is private by default
       part_do: do np = 1, npart
@@ -898,6 +910,7 @@ PROGRAM bsnap
         call checkDomain(pdata(np))
       end do part_do
       !$OMP END PARALLEL DO
+      call task_timer%log("Particle loop: ")
 
       !..remove inactive particles or without any mass left
       call rmpart(rmlimit)
@@ -1029,6 +1042,7 @@ PROGRAM bsnap
       end if
 
       !..field output if ifldout=1, always accumulation for average fields
+      call task_timer%reset()
       if (idailyout == 1) then
         !       daily output, append +x for each day
         ! istep/nsteph = hour  -> /24 =day
@@ -1053,6 +1067,7 @@ PROGRAM bsnap
         endif
         if (ierror /= 0) call snap_error_exit(iulog)
       end if
+      call task_timer%log("output/accumulation: ")
 
       if (isteph == 0 .AND. iprecip < nprecip) iprecip = iprecip + 1
 

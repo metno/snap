@@ -25,4 +25,69 @@ module snapdebug
     integer, public, save :: idebug = 0
 !> output unit for log file
     integer, public :: iulog
+
+    type, public :: timer_t
+      real :: innertime
+      contains
+      procedure :: reset => timer_reset
+      procedure :: now => timer_now
+      procedure :: log => timer_log
+    end type
+
+    interface timer_t
+      procedure :: timer_new
+    end interface
+
+    contains
+
+    subroutine timer_reset(this)
+      use iso_fortran_env, only: error_unit
+      class(timer_t), intent(out) :: this
+
+      call cpu_time(this%innertime)
+      if (this%innertime == -1.0) then
+        write(error_unit,*) "No clock available, reported times are not reliable"
+      endif
+    end subroutine
+
+    function timer_new()
+      type(timer_t) :: timer_new
+      call timer_reset(timer_new)
+    end function
+
+    !> Returns the time in seconds since initializing this clock
+    function timer_now(this)
+      class(timer_t), intent(in) :: this
+      real :: timer_now
+      call cpu_time(timer_now)
+
+      timer_now = timer_now - this%innertime
+    end function
+
+    !> Gets current time since start and
+    !> outputs elapsed time into the log
+    subroutine timer_log(this, prefix)
+      class(timer_t), intent(in) :: this
+      character(len=*), intent(in), optional :: prefix
+      real :: now
+      integer :: hours, minutes, seconds, milliseconds
+
+      now = this%now()
+
+      hours = floor(now / 3600)
+      now = now - hours * 3600
+
+      minutes = floor(now / 60)
+      now = now - minutes * 60
+
+      seconds = floor(now)
+      now = now - seconds
+
+      milliseconds = floor(now*1000)
+      if (present(prefix)) then
+        write(iulog,"(a,I3,a,I2,a,I2,a,I4)") prefix, hours, ":", minutes, ":", seconds, ".", milliseconds
+      else
+        write(iulog,"(a,I3,a,I2,a,I2,a,I3)") "ctime: ", hours, ":", minutes, ":", seconds, ".", milliseconds
+      endif
+    end subroutine
 end module snapdebug
