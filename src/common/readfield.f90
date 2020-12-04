@@ -62,7 +62,7 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
 
   integer :: n,i,j,k,ierr1,ierr2,ihdif1,ihdif2,kfb,ifb,kk
   integer :: mtav,ntav,nav,levelw,ivc,iu,iv,iw,it,ilevel,nhdiff,navps
-  integer :: mhprecip,lprog2,ihdiff,ihrpr1,ihrpr2,iprog1,ix,iy
+  integer :: lprog2,ihdiff,ihrpr1,ihrpr2,iprog1,ix,iy
   integer :: ierr,i1,i2
   real ::    whelp,ptop,prec1,prec2,db,p1,p2,dp,dxgrid,dygrid
   real ::    p,dred,red,px
@@ -371,10 +371,10 @@ subroutine readfield(iunit,istep,nhleft,itimei,ihr1,ihr2, &
 
   if(nhdiff > mprecip) then
     write(error_unit,*) '*READFIELD* PRECIPITATION PROBLEM'
-    write(error_unit,*) '     nhdiff,mprecip: ',nhdiff,mhprecip
+    write(error_unit,*) '     nhdiff,mprecip: ',nhdiff,mprecip
     write(error_unit,*) '   Recompile with mprecip=',nhdiff
     write(iulog,*) '*READFIELD* PRECIPITATION PROBLEM'
-    write(iulog,*) '     nhdiff,mprecip: ',nhdiff,mhprecip
+    write(iulog,*) '     nhdiff,mprecip: ',nhdiff,mprecip
     write(iulog,*) '   Recompile with mprecip=',nhdiff
     ierror=1
     return
