@@ -180,13 +180,10 @@ contains
     end if
 
 ! time between two inputs
-! open the correct file, if required
-    if (file_name /= filef(iavail(ntav2)%fileNo)) then
-      call check(fio%close (), "close fio")
-      file_name = filef(iavail(ntav2)%fileNo)
-      call check(fio%open (file_name, conf_file, file_type), &
-                 "Can't make io-object with file:"//trim(file_name)//" config: "//conf_file)
-    end if
+! open the correct file, currently opened each time
+    file_name = filef(iavail(ntav2)%fileNo)
+    call check(fio%open (file_name, conf_file, file_type), &
+               "Can't make io-object with file:"//trim(file_name)//" config: "//conf_file)
 
 !     set timepos and nhdiff
     nhdiff = 3
@@ -332,6 +329,8 @@ contains
     else
       precip = 0.0
     endif
+
+    call check(fio%close(), "close fio")
 
 ! first time initialized data
     if (istep == 0) then
