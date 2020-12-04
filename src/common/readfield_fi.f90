@@ -192,6 +192,16 @@ contains
     nhdiff = 3
     if (ntav1 /= 0) &
       nhdiff = abs(iavail(ntav2)%oHour - iavail(ntav1)%oHour)
+    if(nhdiff > mprecip) then
+      write(error_unit,*) '*READFIELD* PRECIPITATION PROBLEM'
+      write(error_unit,*) '     nhdiff,mprecip: ',nhdiff,mhprecip
+      write(error_unit,*) '   Recompile with mprecip=',nhdiff
+      write(iulog,*) '*READFIELD* PRECIPITATION PROBLEM'
+      write(iulog,*) '     nhdiff,mprecip: ',nhdiff,mhprecip
+      write(iulog,*) '   Recompile with mprecip=',nhdiff
+      ierror=1
+      return
+    end if
     nprecip = nhdiff
 
     timepos = iavail(ntav2)%timePos
