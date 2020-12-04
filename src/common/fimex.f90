@@ -363,7 +363,9 @@ MODULE Fimex
     INTEGER                              :: ierr
     TYPE(C_PTR)                          :: io
 
-    IF ( C_ASSOCIATED(this%io) ) CALL c_mifi_free_cdm_reader(this%io)
+    ! clear if object is reused
+    ierr = this%close()
+    ! open new reader
     io=c_mifi_new_io_reader(TRIM(filetype)//C_NULL_CHAR, TRIM(infile)//C_NULL_CHAR,TRIM(config)//C_NULL_CHAR)
     IF ( C_ASSOCIATED(io) ) THEN
       open_file=0
