@@ -674,7 +674,6 @@ PROGRAM bsnap
     time_loop: do istep = 0, nstep
 
       write (iulog, *) 'istep,nplume,npart: ', istep, nplume, npart
-      call timer%log("timer: time_loop: ")
       flush (iulog)
       if (mod(istep, nsteph) == 0) then
         write (error_unit, *) 'istep,nplume,npart: ', istep, nplume, npart
@@ -1125,6 +1124,7 @@ PROGRAM bsnap
         enddo
       endif
 #endif
+      call timer%log("timer: time_loop: ")
     end do time_loop
 #if defined(TRAJ)
     close (13)
