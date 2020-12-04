@@ -494,7 +494,6 @@ MODULE Fimex
 
     CHARACTER(KIND=C_CHAR), POINTER, DIMENSION(:) :: var_array
     INTEGER                          :: i
-    INTEGER(KIND=C_LONG_LONG)           :: posT
 
     IF ( .not. C_ASSOCIATED(this%io) ) THEN
       RETURN
@@ -626,7 +625,6 @@ MODULE Fimex
     USE iso_c_binding,    ONLY: C_NULL_CHAR,C_INT,C_ASSOCIATED,C_LOC
     IMPLICIT NONE
     INTEGER                  :: get_dimensions
-    INTEGER :: i, ierr
 
     CLASS(FimexIO), INTENT(INOUT)       :: this
     CHARACTER(LEN=*), INTENT(IN)     :: varName
@@ -817,7 +815,6 @@ MODULE Fimex
     CHARACTER(LEN=*),    INTENT(IN)                         :: dimName
     INTEGER(KIND=C_INT), INTENT(IN)                         :: start
     INTEGER(KIND=C_INT), INTENT(IN)                         :: dsize
-    INTEGER :: i
     IF ( C_ASSOCIATED(this%sb) ) THEN
       reduce_dimension = c_mifi_slicebuilder_set_dim_start_size(this%sb, &
               TRIM(dimName)//C_NULL_CHAR,start, dsize)
@@ -855,7 +852,7 @@ MODULE Fimex
     INTEGER(KIND=C_INT), DIMENSION(:), ALLOCATABLE, TARGET  :: vsize
     CHARACTER(LEN=1024)                                     :: myUnit
     INTEGER(KIND=C_LONG_LONG)                               :: expSize, outSize
-    INTEGER :: i,ierr, ndims
+    INTEGER :: ierr, ndims
 
     myUnit = ""
     IF (PRESENT(cunit)) myUnit = cunit
@@ -906,10 +903,9 @@ MODULE Fimex
 
     INTEGER(KIND=C_INT), DIMENSION(:), ALLOCATABLE, TARGET  :: start
     INTEGER(KIND=C_INT), DIMENSION(:), ALLOCATABLE, TARGET  :: vsize
-    CHARACTER(LEN=1024)                                     :: dimName
     CHARACTER(LEN=1024)                                     :: myUnit
-    INTEGER(KIND=C_LONG_LONG)                               :: expSize, outSize
-    INTEGER :: i,ierr, ndims
+    INTEGER(KIND=C_LONG_LONG)                               :: expSize
+    INTEGER :: ierr, ndims
 
 
     myUnit = ""
