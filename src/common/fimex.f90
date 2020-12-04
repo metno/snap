@@ -85,6 +85,7 @@ MODULE Fimex
     procedure :: reduce_dimension => reduce_dimension
     procedure :: read => read_data
     procedure :: write => write_data
+    final     :: destructor
   END TYPE
   INTERFACE
     !> F90-wrapper for mifi_new_io_reader()
@@ -953,4 +954,9 @@ MODULE Fimex
     close_file=0
   END FUNCTION close_file
 
+  SUBROUTINE destructor(this)
+    TYPE(FimexIO)    :: this
+    INTEGER           :: x
+    x = this%close ()
+  END SUBROUTINE destructor
 END MODULE Fimex
