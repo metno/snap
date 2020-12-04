@@ -66,7 +66,7 @@ contains
       j = nint(part%y)
       mm = def_comp(m)%to_running
 
-      ! omp atomic
+      !$OMP atomic
       depwet(i, j, mm) = depwet(i, j, mm) + dble(dep)
     end if
   end subroutine wetdep2
