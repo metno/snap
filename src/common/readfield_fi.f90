@@ -183,10 +183,10 @@ contains
 ! open the correct file, if required
     if (file_name /= filef(iavail(ntav2)%fileNo)) then
       call check(fio%close (), "close fio")
+      file_name = filef(iavail(ntav2)%fileNo)
+      call check(fio%open (file_name, conf_file, file_type), &
+                 "Can't make io-object with file:"//trim(file_name)//" config: "//conf_file)
     end if
-    file_name = filef(iavail(ntav2)%fileNo)
-    call check(fio%open (file_name, conf_file, file_type), &
-               "Can't make io-object with file:"//trim(file_name)//" config: "//conf_file)
 
 !     set timepos and nhdiff
     nhdiff = 3
