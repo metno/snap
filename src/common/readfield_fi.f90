@@ -71,7 +71,7 @@ contains
                          gparam, kadd, klevel, ivlevel, imslp, igtype, ivlayer, ivcoor
     USE snapmetML, only: met_params, xy_wind_units, pressure_units, omega_units, &
                          sigmadot_units, temp_units
-    USE snapdimML, only: nx, ny, nk
+    USE snapdimML, only: nx, ny, nk, mprecip
 !> current timestep (always positive), negative istep means reset
     integer, intent(in) :: istep
 !> remaining run-hours (negative for backward-calculations)
@@ -180,10 +180,7 @@ contains
     end if
 
 ! time between two inputs
-! open the correct file, if required
-    if (file_name /= filef(iavail(ntav2)%fileNo)) then
-      call check(fio%close (), "close fio")
-    end if
+! open the correct file, currently opened each time
     file_name = filef(iavail(ntav2)%fileNo)
     call check(fio%open (file_name, conf_file, file_type), &
                "Can't make io-object with file:"//trim(file_name)//" config: "//conf_file)
@@ -192,6 +189,16 @@ contains
     nhdiff = 3
     if (ntav1 /= 0) &
       nhdiff = abs(iavail(ntav2)%oHour - iavail(ntav1)%oHour)
+    if(nhdiff > mprecip) then
+      write(error_unit,*) '*READFIELD* PRECIPITATION PROBLEM'
+      write(error_unit,*) '     nhdiff,mprecip: ',nhdiff,mprecip
+      write(error_unit,*) '   Recompile with mprecip=',nhdiff
+      write(iulog,*) '*READFIELD* PRECIPITATION PROBLEM'
+      write(iulog,*) '     nhdiff,mprecip: ',nhdiff,mprecip
+      write(iulog,*) '   Recompile with mprecip=',nhdiff
+      ierror=1
+      return
+    end if
     nprecip = nhdiff
 
     timepos = iavail(ntav2)%timePos
@@ -322,6 +329,8 @@ contains
     else
       precip = 0.0
     endif
+
+    call check(fio%close(), "close fio")
 
 ! first time initialized data
     if (istep == 0) then

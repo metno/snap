@@ -46,7 +46,7 @@ subroutine readfield_nc(istep, nhleft, itimei, ihr1, ihr2, &
   USE snapgrdML, only: alevel, blevel, vlevel, ahalf, bhalf, vhalf, &
       gparam, kadd, klevel, ivlevel, imslp, igtype, ivlayer, ivcoor
   USE snapmetML, only: met_params
-  USE snapdimML, only: nx, ny, nk
+  USE snapdimML, only: nx, ny, nk, mprecip
 !> current timestep (always positive), negative istep means reset
   integer, intent(in) :: istep
 !> remaining run-hours (negative for backward-calculations)
@@ -167,6 +167,16 @@ subroutine readfield_nc(istep, nhleft, itimei, ihr1, ihr2, &
   nhdiff = 3
   if (ntav1 /= 0) &
     nhdiff = abs(iavail(ntav2)%oHour - iavail(ntav1)%oHour)
+  if(nhdiff > mprecip) then
+    write(error_unit,*) '*READFIELD* PRECIPITATION PROBLEM'
+    write(error_unit,*) '     nhdiff,mprecip: ',nhdiff,mprecip
+    write(error_unit,*) '   Recompile with mprecip=',nhdiff
+    write(iulog,*) '*READFIELD* PRECIPITATION PROBLEM'
+    write(iulog,*) '     nhdiff,mprecip: ',nhdiff,mprecip
+    write(iulog,*) '   Recompile with mprecip=',nhdiff
+    ierror=1
+    return
+  end if
   nprecip = nhdiff
 
   timepos = iavail(ntav2)%timePos
