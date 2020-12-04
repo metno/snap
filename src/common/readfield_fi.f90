@@ -71,7 +71,7 @@ contains
                          gparam, kadd, klevel, ivlevel, imslp, igtype, ivlayer, ivcoor
     USE snapmetML, only: met_params, xy_wind_units, pressure_units, omega_units, &
                          sigmadot_units, temp_units
-    USE snapdimML, only: nx, ny, nk
+    USE snapdimML, only: nx, ny, nk, mprecip
 !> current timestep (always positive), negative istep means reset
     integer, intent(in) :: istep
 !> remaining run-hours (negative for backward-calculations)
@@ -194,10 +194,10 @@ contains
       nhdiff = abs(iavail(ntav2)%oHour - iavail(ntav1)%oHour)
     if(nhdiff > mprecip) then
       write(error_unit,*) '*READFIELD* PRECIPITATION PROBLEM'
-      write(error_unit,*) '     nhdiff,mprecip: ',nhdiff,mhprecip
+      write(error_unit,*) '     nhdiff,mprecip: ',nhdiff,mprecip
       write(error_unit,*) '   Recompile with mprecip=',nhdiff
       write(iulog,*) '*READFIELD* PRECIPITATION PROBLEM'
-      write(iulog,*) '     nhdiff,mprecip: ',nhdiff,mhprecip
+      write(iulog,*) '     nhdiff,mprecip: ',nhdiff,mprecip
       write(iulog,*) '   Recompile with mprecip=',nhdiff
       ierror=1
       return
