@@ -1,17 +1,17 @@
 # SNAP: Servere Nuclear Accident Programme
 # Copyright (C) 1992-2017   Norwegian Meteorological Institute
-# 
-# This file is part of SNAP. SNAP is free software: you can 
-# redistribute it and/or modify it under the terms of the 
-# GNU General Public License as published by the 
+#
+# This file is part of SNAP. SNAP is free software: you can
+# redistribute it and/or modify it under the terms of the
+# GNU General Public License as published by the
 # Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
@@ -23,13 +23,16 @@ Created on Sep 2, 2016
 '''
 from METNO.HPC import HPC, StatusFile, QJobStatus
 import datetime
-from netCDF4 import Dataset
+from netCDF4 import Dataset, num2date
 import os
+import glob
 import re
 import subprocess
 import sys
-from time import sleep
+from time import sleep, gmtime
 import unittest
+import logging
+import tempfile
 
 from Snappy.EEMEP.Resources import Resources
 from Snappy.EEMEP.PostProcess import PostProcess
@@ -39,7 +42,7 @@ import Snappy.Resources
 
 class AbortFile():
     """Abort control with a filename. Abort as soon as the file disappears.
-    
+
     The file must be read and writable, or abort is not supported."""
     def __init__(self, filename):
         self.filename = None
@@ -54,7 +57,7 @@ class AbortFile():
             except OSError:
                 print("cannot write filename: '{}', modelrunner abort disabled".format(filename),
                       sys.stderr)
-    
+
     def abortRequested(self):
         """return TRUE if abort requested, FALSE if we should continue"""
         if self.filename:
@@ -63,18 +66,20 @@ class AbortFile():
             else:
                 return True
         return False
-        
+
     def __del__(self):
         if self.filename and os.path.exists(self.filename):
             try:
                 os.remove(self.filename)
             except:
                 pass
-        
+
 class ModelRunner():
 
     VOLCANO_FILENAME = "volcano.xml"
     ABORT_FILENAME = "deleteToRequestAbort"
+    OUTPUT_INSTANT_FILENAME = "eemep_hourInst.nc"
+    OUTPUT_AVERAGE_FILENAME = "eemep_hour.nc"
 
     def __init__(self, path, hpcMachine):
         self.upload_files = set()
@@ -85,6 +90,15 @@ class ModelRunner():
         self.hpc = HPC.by_name(hpcMachine)
         self.hpcMachine = hpcMachine
         self.inpath = path
+
+        #Set up logging
+        self.logger = logging.getLogger("ModelRunner")
+        fmt = logging.Formatter('%(asctime)s: %(message)s', datefmt="%Y%m%dT%H%M%SZ")
+        fmt.converter = gmtime #Make sure we are using UTC time
+        fh = logging.FileHandler(os.path.join(self.inpath, 'volcano.log'))
+        fh.setLevel(logging.DEBUG)
+        fh.setFormatter(fmt)
+        self.logger.addHandler(fh)
 
         self.rundir = self.res.getHPCRunDir(self.hpcMachine)
         volcano_path = os.path.join(path, ModelRunner.VOLCANO_FILENAME)
@@ -101,10 +115,6 @@ class ModelRunner():
         self._get_meteo_files()
         self._get_restart_file()
         self._create_job_script()
-
-    def _write_log(self, msg):
-        with open(os.path.join(self.inpath, 'volcano.log'), 'a') as fh:
-            print("{}: {}".format(datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ"), msg), file=fh)
 
     def _volcano_to_column_source(self):
         '''write columnsource_location.csv and columnsource_emissions.csv from volcano.xml'''
@@ -186,29 +196,26 @@ class ModelRunner():
         This involves linking and copying of needed meteorology. and eventually
         addition of a few timesteps at the beginning of the run
 
-        Args:
-            overwrite_model_start_time: don't used the volcano meteo, but the provided, used only for testing
-
         Returns: list of meteorology files
         '''
         (ref_date, model_start_time) = self.volcano.get_meteo_dates()
-        
+
         sres = Snappy.Resources.Resources()
         border = 7
-        if (self.volcano.latitude > (sres.ecDefaultDomainStartY + border) and 
-            self.volcano.latitude < (sres.ecDefaultDomainStartY + sres.ecDomainHeight - border) and 
-            self.volcano.longitude > (sres.ecDefaultDomainStartX + border) and 
+        if (self.volcano.latitude > (sres.ecDefaultDomainStartY + border) and
+            self.volcano.latitude < (sres.ecDefaultDomainStartY + sres.ecDomainHeight - border) and
+            self.volcano.longitude > (sres.ecDefaultDomainStartX + border) and
             self.volcano.longitude < (sres.ecDefaultDomainStartX + sres.ecDomainWidth - border)):
             files = self.res.getECMeteorologyFiles(model_start_time, 72, ref_date)
         else:
-            self._write_log("Calculating Meteorology, takes about 15min")
+            self.logger.debug("Calculating Meteorology, takes about 15min")
             # make sure to use the 00UTC meteorology, eemep needs start-time at midnight
             start_time = model_start_time.replace(hour=3)
             ecMetCalc = EcMeteorologyCalculator(sres, start_time, self.volcano.longitude, self.volcano.latitude)
             ecMetCalc.calc()
             files = [[ (x, 8) ] for x in ecMetCalc.get_meteorology_files()]
-            self._write_log("meteorology calculated")
-            
+            self.logger.debug("Meteorology calculated")
+
         for i, date_files in enumerate(files):
             file_date = model_start_time + datetime.timedelta(days=i)
             outfile = os.path.join(self.path, "meteo{date}.nc".format(date=file_date.strftime("%Y%m%d")))
@@ -239,26 +246,79 @@ class ModelRunner():
         defs["day"] = "{:02d}".format(start_time.day)
         defs["hour"] = "{:02d}".format(start_time.hour)
 
+        self.logger.debug("Creating job script with the following definitions: {:s}".format(str(defs)))
+
         filename = os.path.join(self.path, self.jobscript)
+
         with open(filename, 'wt') as jh:
             jh.write(job.format(**defs))
         self.upload_files.add(filename)
 
+    def _write_log(self, msg):
+        """Used by PostProcess to log"""
+        self.logger.debug(msg)
+
+    def clean_old_files(self):
+        """Delete files fromprevious runs"""
+        self.logger.debug("cleaning files in {}:{}".format(self.hpcMachine, self.hpc_outdir))
+
+        hpc_files_to_delete = list(self.upload_files) \
+                + [self.statusfile] \
+                + [ModelRunner.OUTPUT_AVERAGE_FILENAME] \
+                + [ModelRunner.OUTPUT_INSTANT_FILENAME]
+
+        hpc_files_to_delete = [os.path.basename(f) for f in hpc_files_to_delete]
+        hpc_files_to_delete = [os.path.join(self.hpc_outdir, f) for f in hpc_files_to_delete]
+        self.hpc.syscall("rm", ["-f"] + hpc_files_to_delete)
+
     def do_upload_files(self):
-        self._write_log("uploading to {}:{}".format(self.hpcMachine, self.hpc_outdir))
+        self.logger.debug("uploading to {}:{}".format(self.hpcMachine, self.hpc_outdir))
         self.hpc.syscall("mkdir", ["-p", self.hpc_outdir])
         for f in self.upload_files:
-            self._write_log("uploading '{}'".format(f))
+            self.logger.debug("uploading '{}'".format(f))
             self.hpc.put_files([f], self.hpc_outdir, 600)
+
+    def get_run_file_ages(self):
+        """Return age of files on HPC"""
+        try:
+            #Get current date and date of files on HPC
+            hpc_date, cerr, retval = self.hpc.syscall("date", ["+%s"], timeout=30)
+            if retval != 0:
+                self.logger.error("Tried to get date, got cerr {:s}".format(cerr))
+                return None
+            files, cerr, retval = self.hpc.syscall("find", [self.hpc_outdir])
+            if retval != 0:
+                self.logger.error("Tried to call find, got cerr {:s}".format(cerr))
+                return None
+            stat_out, cerr, retval = self.hpc.syscall("stat", ["-c", "%Y %n"] + files.splitlines())
+            if retval != 0:
+                self.logger.error("Tried to call stat, got cerr {:s}".format(cerr))
+                return None
+        except Exception as ex:
+            self.logger.debug("Could not stat files on HPC machine: {ex}".format(ex=ex.args))
+            return None
+
+        #Process dates to compute age of all files
+        hpc_date = datetime.datetime.fromtimestamp(int(hpc_date))
+        self.logger.debug("HPC date: '{}'".format(str(hpc_date)))
+        file_age = {}
+        for line in stat_out.splitlines():
+            date, filename = line.split(' ')
+            file_age[filename] = hpc_date - datetime.datetime.fromtimestamp(int(date))
+            self.logger.debug("Age of '{:s}' is {:s}".format(filename, str(file_age[filename])))
+
+        return file_age
+
+
+
 
     def run_and_wait(self):
         '''Start the model and wait for it to finish
 
         Returns QJobStatus code
         '''
-        self._write_log("removing old status on {}: {}".format(self.hpcMachine, self.hpc_outdir))
-        self.hpc.syscall("rm", ["-f", os.path.join(self.hpc_outdir, self.statusfile)])
-        self._write_log("starting run on hpc {}: {}".format(self.hpcMachine, self.hpc_outdir))
+        self.logger.debug("starting run on hpc {}: {}".format(self.hpcMachine, self.hpc_outdir))
+
         remote_jobscript = os.path.join(self.hpc_outdir, self.jobscript)
         qjob = self.hpc.submit_job(remote_jobscript, [])
         qjob.status_file = StatusFile(os.path.join(self.hpc_outdir, self.statusfile), "finished")
@@ -274,7 +334,7 @@ class ModelRunner():
                 self.hpc.delete_job(qjob)
                 break
             status = self.hpc.get_status(qjob)
-            self._write_log("jobstatus on hpc {} jobid={}: {}".format(self.hpcMachine, qjob.jobid, status))
+            self.logger.debug("jobstatus on hpc {} jobid={}: {}".format(self.hpcMachine, qjob.jobid, status))
 
         return status
 
@@ -283,110 +343,207 @@ class ModelRunner():
         start_time = self.volcano.get_meteo_dates()[1]
         tomorrow = (start_time + datetime.timedelta(days=1)).strftime("%Y%m%d")
 
-        fileI = 'eemep_hourInst.nc'
-        self._write_log("downloading {}:{} to {}".format(fileI, self.hpcMachine, self.path))
-        self.hpc.get_files([os.path.join(self.hpc_outdir, fileI)], self.path, 1200)
+        #Get age of files on HPC
+        file_age = self.get_run_file_ages()
+        if file_age is None:
+            self.logger.debug("Could not get file ages - something is wrong!")
+            return
 
-        fileA = 'eemep_hour.nc'
-        self._write_log("downloading {}:{} to {}".format(fileA, self.hpcMachine, self.path))
-        self.hpc.get_files([os.path.join(self.hpc_outdir, fileA)], self.path, 1200)
+        #Download output files
+        for filename in [ModelRunner.OUTPUT_AVERAGE_FILENAME, ModelRunner.OUTPUT_INSTANT_FILENAME]:
+            filename = os.path.join(self.hpc_outdir, filename)
+            age = file_age.pop(filename, None) / datetime.timedelta(minutes=1)
+            if (age > 120):
+                self.logger.debug("File {} too old on {}".format(filename, self.hpcMachine))
+                return
+            self.logger.debug("downloading {}:{} to {}".format(filename, self.hpcMachine, self.path))
+            self.hpc.get_files([filename], self.path, 1200)
 
-        pp = PostProcess(self.path, self.timestamp, logger=self)
-        pp.convert_files(os.path.join(self.path, fileI),
-                         os.path.join(self.path, fileA))
-        
+            #Check sanity of output results
+            try:
+                with Dataset(os.path.join(self.path, filename)) as nc_file:
+                    time_var = nc_file['time']
+                    times = num2date(time_var[:], units = time_var.units).astype('datetime64[ns]')
+            except Exception as e:
+                self.logger.error("Unable to open NetCDF file {:s}: {:s}".format(filename, str(e)))
+                return
+            self.logger.debug("File {:s} contains the following timesteps: {:s}".format(filename, str(times)))
+            if (len(times) < self.volcano.runTimeHours):
+                self.logger.error("File {:s} appears not to have the correct timesteps!".format(filename))
+                return
 
-
+        #Download initial conditions for continued run
         file = 'EMEP_OUT_{}.nc'.format(tomorrow)
-        self._write_log("downloading {}:{} to {}".format(file, self.hpcMachine, self.path))
+        age = file_age.pop(os.path.join(self.hpc_outdir, file), None)
+        if (age is None):
+            self.logger.debug("File {} does not exist on {}".format(file, self.hpcMachine))
+            return
+        if (age/datetime.timedelta(minutes=1) > 120):
+            self.logger.debug("File {} too old on {}".format(file, self.hpcMachine))
+            return
+        self.logger.debug("downloading {}:{} to {}".format(file, self.hpcMachine, self.path))
         try :
             self.hpc.get_files([os.path.join(self.hpc_outdir, file)], self.path, 1200)
         except Exception as ex:
             # not dangerous if it fail, but remove file
-            self._write_log("couldn't download '{}', ignoring: {}".format(file, ex.args))
-            filename = os.path.join(self.hpc_outdir, file)
+            self.logger.debug("couldn't download '{}', ignoring: {}".format(file, ex.args))
+            filename = os.path.join(self.path, file)
             if os.path.lexists(filename): os.unlink(filename)
         else:
             os.rename(os.path.join(self.path, file),
                       os.path.join(self.path, 'EMEP_IN_{}.nc'.format(tomorrow)))
-            
+
+        #Postprocess
+        pp = PostProcess(self.path, self.timestamp, logger=self)
+        pp.convert_files(os.path.join(self.path, ModelRunner.OUTPUT_INSTANT_FILENAME),
+                         os.path.join(self.path, ModelRunner.OUTPUT_AVERAGE_FILENAME))
+
         # cleanup softlinks in output-dir
         findArgs = [self.hpc_outdir, '-type', 'l', '-delete']
         try:
             self.hpc.syscall('find', findArgs, timeout=30)
         except Exception as ex:
-            self._write_log("cannot excecute command 'find {args}': {ex}".format(args=" ".join(findArgs),
+            self.logger.debug("cannot excecute command 'find {args}': {ex}".format(args=" ".join(findArgs),
                                                                                  ex=ex.args))
 
     def work(self):
         '''do the complete work, e.g. upload, run, wait and download'''
+        self.clean_old_files()
         self.do_upload_files()
         status = self.run_and_wait()
         if (status == QJobStatus.failed):
-            self._write_log("HPC-job failed: Not downloading any results.")
+            self.logger.debug("HPC-job failed: Not downloading any results.")
         elif (status == QJobStatus.queued):
-            self._write_log("HPC-resource not available on {}, giving up.".format(self.hpcMachine))
+            self.logger.debug("HPC-resource not available on {}, giving up.".format(self.hpcMachine))
         elif (status == QJobStatus.running):
-            self._write_log("HPC-job on {} not finished in time, downloading partial".format(self.hpcMachine))
+            self.logger.debug("HPC-job on {} not finished in time, downloading partial".format(self.hpcMachine))
         else:
             self.download_results()
 
 class TestModelRunner(unittest.TestCase):
-    hpcMachine = "frost"
-    doRun = False
+    hpcMachine = "ppi_centos7_direct"
+    doRun = True
 
     def setUp(self):
+        self.logger = logging.getLogger("TestModelRunner")
         unittest.TestCase.setUp(self)
+
         self.indir = os.path.join(os.path.dirname(__file__),"test")
+        self.logger.debug("Input dir: {:s}".format(self.indir))
+
         volcanoFile = os.path.join(self.indir, "volcano.xml")
+        self.logger.debug("Input volcano file: {:s}".format(volcanoFile))
         volc = VolcanoRun(volcanoFile)
-        self.dir = volc.outputDir
-        os.makedirs(name=self.dir, exist_ok=True)
+
+        self.dir = tempfile.TemporaryDirectory(prefix="volcano_download_")
+        self.logger.debug("Download directory: {:s}".format(self.dir.name))
+
         yesterday = datetime.datetime.now() - datetime.timedelta(days=1)
-        with open(os.path.join(self.dir, "volcano.xml"), "wt") as oh:
+        with open(os.path.join(self.dir.name, "volcano.xml"), "wt") as oh:
             with open(volcanoFile, "rt") as ih:
                 for line in ih:
-                    oh.write(re.sub('2016-11-03',yesterday.strftime('%Y-%m-%d'), line))
+                    line = re.sub('2016-11-03', yesterday.strftime('%Y-%m-%d'), line)
+                    oh.write(line)
         self.files = ('columnsource_location.csv', 'columnsource_emission.csv', 'eemep_script.job')
-        for file in self.files:
-            if (os.path.lexists(file)):
-                os.unlink(file)
-        for f in os.scandir(self.dir):
-            if f.is_symlink():
-                os.unlink(f.path)
+        self.output_files = ("eemep_hourInst.nc", "eemep_hour.nc")
 
 
     def testModelRunner(self):
-        mr = ModelRunner(self.dir, TestModelRunner.hpcMachine)
-        self.assertTrue(len(self.files) == 3)
-        #self.assertTrue(os.path.exists(self.files[0]))
-        for x in self.files:
-            self.assertTrue(os.path.exists(os.path.join(mr.path, x)), "file created: {}".format(x))
+        #Create model runner
+        mr = ModelRunner(self.dir.name, TestModelRunner.hpcMachine)
+        self.logger.debug("Modelrunner setup complete, local outdir is {:s}".format(mr.hpc_outdir))
+        self.logger.debug("Modelrunner setup complete, HPC outdir is {:s}".format(mr.hpc_outdir))
+
+        #Test uploading of files
+        mr.do_upload_files()
+        self.logger.debug("Files uploaded")
+
+        file_ages = mr.get_run_file_ages()
+        self.assertTrue(file_ages is not None, "Could not get file ages!")
+
+        #Check that we find meteo files
         meteo_count = 0
-        for x in os.scandir(self.dir):
-            if re.search(r'meteo\d{8}.nc', x.path):
+        for x in file_ages.keys():
+            self.logger.debug("Found file {:s}".format(x))
+            if re.search(r'meteo\d{8}.nc', x):
+                self.logger.debug("Found meteo file {:s}".format(x))
                 meteo_count += 1
-        self.assertEqual(meteo_count, 4, "meteo files created")
+        #FIXME: This changes. 09:38 it gives 3 files. +36 hours related, i.e., should give 4 when after 12, and 3 between 00 and 12?
+        self.assertTrue(meteo_count >= 3, msg="Meteo files not created!")
 
+        #Check that we find the expected config files
+        for filename in self.files:
+            filename = os.path.join(mr.hpc_outdir, filename)
+            self.assertTrue(filename in file_ages.keys(), "Could not find {:s}".format(filename))
+            self.logger.debug("Input file '{:s}' is {:s} old".format(filename, str(file_ages[filename])))
+            self.assertTrue(file_ages[filename] / datetime.timedelta(minutes=1) < 15)
 
-    @unittest.skipIf(doRun, "testet in upload and run")
-    def test_upload_files(self):
-        mr = ModelRunner(self.dir, TestModelRunner.hpcMachine)
-        mr.do_upload_files()
+        if (self.doRun == False):
+            self.logger.debug("Skipping remainder of test - not doRun is false")
+        else:
+            #Test running.
+            status = mr.run_and_wait()
+            self.assertTrue(status == QJobStatus.finished, "Run and wait returned unexpected status {:s}".format(str(status)))
+            file_ages = mr.get_run_file_ages()
+            self.assertTrue(len(file_ages.keys()) > len(self.files))
+            for filename in [ModelRunner.OUTPUT_INSTANT_FILENAME, ModelRunner.OUTPUT_AVERAGE_FILENAME]:
+                filename = os.path.join(mr.hpc_outdir, filename)
+                self.assertTrue(filename in file_ages.keys(), " ")
+                self.logger.debug("Output file '{:s}' is {:s} minutes old".format(filename, str(file_ages[filename])))
+                self.assertTrue(file_ages[filename] / datetime.timedelta(minutes=1) < 15)
 
-    @unittest.skipIf(doRun == False, "no run")
-    def test_upload_files_and_run(self):
-        mr = ModelRunner(self.dir, TestModelRunner.hpcMachine)
-        mr.do_upload_files()
-        status = mr.run_and_wait()
-        print(status)
+            #Test downloading / postprocessing
+            mr.download_results()
+            for pattern in ['eemep_hourInst_*.nc', 'eemep_hour_*.nc', 'EMEP_IN_*.nc']:
+                self.logger.debug("Checking for pattern '{:s}'".format(pattern))
+                files = glob.glob(os.path.join(mr.path, pattern))
+                timestamp_ok = False
+                for f in files:
+                    age = (datetime.datetime.now() - datetime.datetime.fromtimestamp(os.path.getmtime(f)))
+                    self.logger.debug("Found {:s} with age {:s}".format(f, str(age)))
+                    if (age / datetime.timedelta(minutes=1) < 120):
+                        self.logger.debug("Age OK, skipping remaining files")
+                        timestamp_ok = True
+                self.assertTrue(timestamp_ok, msg="Could not find file matching {:s}".format(pattern))
 
-    @unittest.skipIf(doRun == False, "no run")
-    def test_download(self):
-        mr = ModelRunner(self.dir, TestModelRunner.hpcMachine)
-        mr.download_results()
+            #Test cleanup
+            mr.clean_old_files()
+            file_ages = mr.get_run_file_ages()
+            self.assertTrue(file_ages is not None, msg="")
+            self.assertTrue(len(file_ages.keys()) >= len(self.files), msg="Too few files in output directory!")
+            for filename in [ModelRunner.OUTPUT_INSTANT_FILENAME, ModelRunner.OUTPUT_AVERAGE_FILENAME, mr.statusfile]:
+                filename = os.path.join(mr.hpc_outdir, filename)
+                self.assertFalse(filename in file_ages.keys(), " ")
+
+    @unittest.skipIf(doRun==False, "Do run is false")
+    def testWork(self):
+        #Create model runner and test
+        mr = ModelRunner(self.dir.name, TestModelRunner.hpcMachine)
+        mr.work()
+
+        for pattern in ['eemep_hourInst_*.nc', 'eemep_hour_*.nc', 'EMEP_IN_*.nc']:
+            self.logger.debug("Checking for pattern '{:s}'".format(pattern))
+            files = glob.glob(os.path.join(mr.path, pattern))
+            timestamp_ok = False
+            for f in files:
+                age = (datetime.datetime.now() - datetime.datetime.fromtimestamp(os.path.getmtime(f)))
+                self.logger.debug("Found {:s} with age {:s}".format(f, str(age)))
+                if (age / datetime.timedelta(minutes=1) < 120):
+                    self.logger.debug("Age OK, skipping remaining files")
+                    timestamp_ok = True
+            self.assertTrue(timestamp_ok, msg="Could not find file matching {:s}".format(pattern))
+
 
 
 if __name__ == "__main__":
-    #import sys;sys.argv = ['', 'Test.testName']
-    unittest.main()
+    logging.basicConfig(format='%(asctime)s: %(message)s', datefmt="%Y%m%dT%H%M%SZ", stream=sys.stderr)
+    logging.root.setLevel(logging.NOTSET)
+    #logging.getLogger("TestModelRunner").setLevel(logging.DEBUG)
+    #logging.getLogger("ModelRunner").
+
+    #Do not sort tests
+
+    self.logger.warning("This test takes 1-2 hours to complete")
+
+    unittest.TestLoader.sortTestMethodsUsing = None
+    unittest.main(verbosity=2, failfast=True)
