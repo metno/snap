@@ -87,5 +87,3 @@ if [ $? -ne 0 ]; then
 else
     echo "finished" > status
 fi
-
-
