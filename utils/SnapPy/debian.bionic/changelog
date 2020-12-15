@@ -1,3 +1,9 @@
+snap-py (1.6.19-1) bionic; urgency=medium
+
+  * fix meps-det setup
+
+ -- Heiko Klein <heikok@met.no>  Tue, 15 Dec 2020 13:46:30 +0100
+
 snap-py (1.6.18-1) bionic; urgency=medium
 
   * added icon meteorology, h12 removed

@@ -60,8 +60,8 @@ fi
 #INSTRUCTIONS_END
 
 HOST=bionic
-VERSION=1.6.18
-CHANGELOG="added icon meteorology, h12 removed"
+VERSION=1.6.19
+CHANGELOG="fix meps-det setup"
 rm -f debian
 ln -s debian.$HOST debian
 dch -v ${VERSION}-1 -U "${CHANGELOG}"
