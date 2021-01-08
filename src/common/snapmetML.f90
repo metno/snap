@@ -61,7 +61,7 @@ module snapmetML
  ! these should not be changed! Needed when reading fimex.
   character(len=*), parameter, public :: xy_wind_units = 'm/s'
   character(len=*), parameter, public :: pressure_units= 'hPa'
-  character(len=*), parameter, public :: omega_units = 'Pa/s'
+  character(len=*), parameter, public :: omega_units = 'hPa/s'
   character(len=*), parameter, public :: sigmadot_units = '1/s'
   character(len=*), parameter, public :: precip_rate_units = 'mm/hr' ! kg/m2/s
   character(len=*), parameter, public :: precip_units = 'kg/m2'
@@ -166,11 +166,11 @@ module snapmetML
       met_params%pottempv = 'air_temperature_ml'
       met_params%temp_is_abs = .true.
       met_params%sigmav = ''
-      met_params%ptopv = ''
-      met_params%apv = 'ap'
+      met_params%ptopv = 'p0'
+      met_params%apv = 'a' ! need ptopv to multiply ap=a*ptopv
       met_params%bv = 'b'
-      met_params%sigmadotv = 'lagrangian_tendency_of_atmosphere_sigma_coordinate_ml'
-      met_params%sigmadot_is_omega = .false.
+      met_params%sigmadotv = 'omega_ml' !'lagrangian_tendency_of_atmosphere_sigma_coordinate_ml'
+      met_params%sigmadot_is_omega = .true.
       met_params%psv = 'surface_air_pressure'
       met_params%mslpv = 'air_pressure_at_sea_level'
       met_params%precaccumv = ''
