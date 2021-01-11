@@ -259,7 +259,7 @@ PROGRAM bsnap
 !> name of selected release position
   character(len=40), save :: srelnam = "*"
 
-  !> Running timer since start of timeloop
+  !> Running time since start of timeloop
   type(timer_t) :: timer
   !> Timer for checking short-lasting tasks
   type(timer_t) :: task_timer
@@ -1206,7 +1206,7 @@ contains
 #if defined(FIMEX)
     use find_parameters_fi, only: detect_gridparams_fi
 #endif
-  
+
     !> Open file unit
     integer, intent(in) :: snapinput_unit
 
