@@ -66,11 +66,20 @@ module snapdebug
 
     !> Gets current time since start and
     !> outputs elapsed time into the log
-    subroutine timer_log(this, prefix)
+    subroutine timer_log(this, prefix, unit)
       class(timer_t), intent(in) :: this
       character(len=*), intent(in), optional :: prefix
+      integer, intent(in), optional :: unit
+
       real :: now
       integer :: hours, minutes, seconds, milliseconds
+      integer current_unit
+
+      if (present(unit)) then
+        current_unit = unit
+      else
+        current_unit = iulog
+      endif
 
       now = this%now()
 
@@ -85,9 +94,9 @@ module snapdebug
 
       milliseconds = floor(now*1000)
       if (present(prefix)) then
-        write(iulog,"(a,I3,a,I2,a,I2,a,I4)") prefix, hours, ":", minutes, ":", seconds, ".", milliseconds
+        write(current_unit,"(a,I3,a,I2,a,I2,a,I4)") prefix, hours, ":", minutes, ":", seconds, ".", milliseconds
       else
-        write(iulog,"(a,I3,a,I2,a,I2,a,I3)") "ctime: ", hours, ":", minutes, ":", seconds, ".", milliseconds
+        write(current_unit,"(a,I3,a,I2,a,I2,a,I3)") "ctime: ", hours, ":", minutes, ":", seconds, ".", milliseconds
       endif
     end subroutine
 end module snapdebug
