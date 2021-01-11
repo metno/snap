@@ -234,7 +234,8 @@ module snapdebug
         current_unit = iulog
       endif
 
-      write(current_unit,*) GLOBAL_TIMER_PREFIX, GLOBAL_TIMER_TOTAL_PREFIX, trim(this%prefix), &
-        " sys: ", trim(to_str(this%total_sys)), " cpu: ", trim(to_str(this%total_cpu))
+      write(current_unit,*) GLOBAL_TIMER_PREFIX, GLOBAL_TIMER_TOTAL_PREFIX, trim(this%prefix), " ", &
+        trim(to_str(this%total_sys)), " (sys) " , &
+        trim(to_str(this%total_cpu)), " (cpu)"
     end subroutine
 end module snapdebug

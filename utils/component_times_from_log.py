@@ -4,6 +4,7 @@ import pathlib
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import numpy as np
+import re
 
 
 if __name__ == "__main__":
@@ -15,8 +16,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
     logfile = args.logfile
 
+    treg = re.compile("\(\w+\)")
     def timesplit(s: str):
-        hour, minute, rest = s.split(":")
+        sys, cpu, _ = re.split(reg, s)
+
+        hour, minute, rest = sys.split(":")
         second, ms = rest.split(".")
 
         return int(hour) * 3600 + int(minute) * 60 + int(second) + int(ms) / 1000
