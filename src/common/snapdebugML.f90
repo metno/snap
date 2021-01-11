@@ -26,6 +26,9 @@ module snapdebug
 !> output unit for log file
     integer, public :: iulog
 
+    character(len=*), parameter :: global_timer_prefix = "timer: "
+    character(len=*), parameter :: global_timer_total_prefix = "Total: "
+
     type, public :: timer_t
       real :: innertime
       contains
@@ -36,6 +39,22 @@ module snapdebug
 
     interface timer_t
       procedure :: timer_new
+    end interface
+
+    type, public :: prefixed_accumulating_timer
+      type(timer_t) :: timer
+      logical :: running = .false.
+      real :: total = 0.0
+      character(len=1024) :: prefix
+      contains
+        procedure :: start => prefixed_timer_start
+        procedure :: stop => prefixed_timer_stop
+        procedure :: stop_and_log => prefixed_timer_stop_and_log
+        procedure :: print_accumulated => prefixed_timer_print_accumulated
+    end type
+
+    interface prefixed_accumulating_timer
+      procedure :: prefixed_accumulating_timer_new
     end interface
 
     contains
@@ -72,8 +91,18 @@ module snapdebug
       integer, intent(in), optional :: unit
 
       real :: now
+
+      now = this%now()
+      call print_time(now, prefix, unit)
+    end subroutine
+
+    subroutine print_time(t, prefix, unit)
+      real, intent(in) :: t
+      character(len=*), intent(in), optional :: prefix
+      integer, intent(in), optional :: unit
+
+      integer :: current_unit
       integer :: hours, minutes, seconds, milliseconds
-      integer current_unit
 
       if (present(unit)) then
         current_unit = unit
@@ -81,22 +110,72 @@ module snapdebug
         current_unit = iulog
       endif
 
-      now = this%now()
+      call real_to_hms_ms(t, hours, minutes, seconds, milliseconds)
 
-      hours = floor(now / 3600)
-      now = now - hours * 3600
-
-      minutes = floor(now / 60)
-      now = now - minutes * 60
-
-      seconds = floor(now)
-      now = now - seconds
-
-      milliseconds = floor(now*1000)
       if (present(prefix)) then
         write(current_unit,"(a,I3,a,I2,a,I2,a,I4)") prefix, hours, ":", minutes, ":", seconds, ".", milliseconds
       else
         write(current_unit,"(a,I3,a,I2,a,I2,a,I3)") "ctime: ", hours, ":", minutes, ":", seconds, ".", milliseconds
       endif
+    end subroutine
+
+    pure subroutine real_to_hms_ms(t, hours, minutes, seconds, milliseconds)
+      real, value :: t
+      integer, intent(out) :: hours, minutes, seconds, milliseconds
+
+      hours = floor(t / 3600)
+      t = t - hours * 3600
+
+      minutes = floor(t / 60)
+      t = t - minutes * 60
+
+      seconds = floor(t)
+      t = t - seconds
+
+      milliseconds = floor(t*1000)
+    end subroutine
+
+    function prefixed_accumulating_timer_new(prefix) result(timer)
+      type(prefixed_accumulating_timer) :: timer
+      character(len=*), intent(in) :: prefix
+
+      timer%prefix(:) = trim(prefix)
+    end function
+
+    subroutine prefixed_timer_start(this)
+      class(prefixed_accumulating_timer), intent(inout) :: this
+      this%timer = timer_t()
+    end subroutine
+
+    subroutine prefixed_timer_stop(this)
+      class(prefixed_accumulating_timer), intent(inout) :: this
+      real :: duration
+
+      duration = this%timer%now()
+      this%total = this%total + duration
+    end subroutine
+
+    subroutine prefixed_timer_stop_and_log(this, unit)
+      class(prefixed_accumulating_timer), intent(inout) :: this
+      integer, intent(in), optional :: unit
+
+      character(len=1024) :: prefix
+      real :: duration
+
+      duration = this%timer%now()
+      this%total = this%total + duration
+
+      write(prefix,*) GLOBAL_TIMER_PREFIX, trim(this%prefix), " "
+      call print_time(duration, trim(prefix), unit)
+    end subroutine
+
+    subroutine prefixed_timer_print_accumulated(this, unit)
+      class(prefixed_accumulating_timer), intent(in) :: this
+      integer, intent(in), optional :: unit
+
+      character(len=1024) :: prefix
+
+      write(prefix,*) GLOBAL_TIMER_PREFIX, GLOBAL_TIMER_TOTAL_PREFIX, trim(this%prefix), " "
+      call print_time(this%total, trim(prefix), unit)
     end subroutine
 end module snapdebug
