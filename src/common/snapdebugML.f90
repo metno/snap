@@ -17,6 +17,7 @@
 
 !> Common for debugging
 module snapdebug
+    use iso_fortran_env, only: error_unit
     implicit none
     private
 !> * 0 = debug off
@@ -29,20 +30,27 @@ module snapdebug
     character(len=*), parameter :: global_timer_prefix = "timer: "
     character(len=*), parameter :: global_timer_total_prefix = "Total: "
 
-    type, public :: timer_t
+    type, public :: timer_cpu_t
       real :: innertime
       contains
-      procedure :: reset => timer_reset
-      procedure :: now => timer_now
-      procedure :: log => timer_log
+        procedure :: now => timer_cpu_now
+        procedure :: log => timer_cpu_log
     end type
 
-    interface timer_t
-      procedure :: timer_new
+    interface timer_cpu_t
+      procedure :: timer_cpu_new
     end interface
 
+    type, public :: timer_sys_t
+      integer :: count
+      integer :: countrate
+      contains
+        procedure :: now => timer_sys_now
+        procedure :: log => timer_sys_log
+    end type
+
     type, public :: prefixed_accumulating_timer
-      type(timer_t) :: timer
+      type(timer_cpu_t) :: timer
       logical :: running = .false.
       real :: total = 0.0
       character(len=1024) :: prefix
@@ -59,42 +67,72 @@ module snapdebug
 
     contains
 
-    subroutine timer_reset(this)
-      use iso_fortran_env, only: error_unit
-      class(timer_t), intent(out) :: this
+    function timer_cpu_new()
+      type(timer_cpu_t) :: timer_cpu_new
 
-      call cpu_time(this%innertime)
-      if (this%innertime == -1.0) then
-        write(error_unit,*) "No clock available, reported times are not reliable"
+      call cpu_time(timer_cpu_new%innertime)
+      if (timer_cpu_new%innertime == -1.0) then
+        write(error_unit,*) "No cpu time available, reported times are not reliable"
       endif
-    end subroutine
-
-    function timer_new()
-      type(timer_t) :: timer_new
-      call timer_reset(timer_new)
     end function
 
     !> Returns the time in seconds since initializing this clock
-    function timer_now(this)
-      class(timer_t), intent(in) :: this
-      real :: timer_now
-      call cpu_time(timer_now)
+    function timer_cpu_now(this)
+      class(timer_cpu_t), intent(in) :: this
+      real :: timer_cpu_now
+      call cpu_time(timer_cpu_now)
 
-      timer_now = timer_now - this%innertime
+      timer_cpu_now = timer_cpu_now - this%innertime
     end function
 
     !> Gets current time since start and
     !> outputs elapsed time into the log
-    subroutine timer_log(this, prefix, unit)
-      class(timer_t), intent(in) :: this
+    subroutine timer_cpu_log(this, prefix, unit)
+      class(timer_cpu_t), intent(in) :: this
       character(len=*), intent(in), optional :: prefix
       integer, intent(in), optional :: unit
-
       real :: now
 
       now = this%now()
       call print_time(now, prefix, unit)
     end subroutine
+
+    function timer_sys_new()
+      type(timer_sys_t) :: timer_sys_new
+
+      call system_clock(count=timer_sys_new%count, count_rate=timer_sys_new%countrate)
+    end function
+
+    function timer_sys_now(this)
+      class(timer_sys_t), intent(in) :: this
+      real :: timer_sys_now
+      integer :: now_count
+      call system_clock(count=now_count)
+      now_count = now_count - this%count
+
+      timer_sys_now = real(now_count) / real(this%countrate)
+    end function
+
+    subroutine timer_sys_log(this, prefix, unit)
+      class(timer_sys_t), intent(in) :: this
+      character(len=*), intent(in), optional :: prefix
+      integer, intent(in), optional :: unit
+      real :: now
+
+      now = this%now()
+      call print_time(now, prefix, unit)
+    end subroutine
+
+    function to_str(t) result(str)
+      real, intent(in) :: t
+      character(len=64) :: str
+
+      integer :: h, m, s, ms
+      call real_to_hms_ms(t, h, m, s, ms)
+
+      write(str, *) "(I3, a, I2, a, I2, a, I4)", h, ":", m, ":", s, ".", ms
+
+    end function
 
     subroutine print_time(t, prefix, unit)
       real, intent(in) :: t
@@ -102,7 +140,6 @@ module snapdebug
       integer, intent(in), optional :: unit
 
       integer :: current_unit
-      integer :: hours, minutes, seconds, milliseconds
 
       if (present(unit)) then
         current_unit = unit
@@ -110,12 +147,10 @@ module snapdebug
         current_unit = iulog
       endif
 
-      call real_to_hms_ms(t, hours, minutes, seconds, milliseconds)
-
       if (present(prefix)) then
-        write(current_unit,"(a,I3,a,I2,a,I2,a,I4)") prefix, hours, ":", minutes, ":", seconds, ".", milliseconds
+        write(current_unit,*) prefix, trim(to_str(t))
       else
-        write(current_unit,"(a,I3,a,I2,a,I2,a,I3)") "ctime: ", hours, ":", minutes, ":", seconds, ".", milliseconds
+        write(current_unit,*) "ctime: ", trim(to_str(t))
       endif
     end subroutine
 
@@ -144,7 +179,7 @@ module snapdebug
 
     subroutine prefixed_timer_start(this)
       class(prefixed_accumulating_timer), intent(inout) :: this
-      this%timer = timer_t()
+      this%timer = timer_cpu_t()
     end subroutine
 
     subroutine prefixed_timer_stop(this)
