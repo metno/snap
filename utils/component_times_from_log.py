@@ -70,9 +70,6 @@ if __name__ == "__main__":
     isteps = np.array(isteps)
     nparts = np.array(nparts)
 
-    dtime = np.diff(timeloop)
-    dtime = np.hstack((timeloop[0], dtime))
-
     fig = plt.figure()
     gs = mpl.gridspec.GridSpec(2, 2)
 
@@ -84,7 +81,7 @@ if __name__ == "__main__":
         met_input,
         labels=["Particle loop", "accumulation/output", "MET input"],
     )
-    ax2.plot(isteps, dtime, label="total time")
+    ax2.plot(isteps, timeloop, label="total time")
     ax2.set_ylabel("Time per iteration [s]")
     ax2.legend()
     ax2.set_xlim((isteps[0], isteps[-1]))
@@ -98,8 +95,7 @@ if __name__ == "__main__":
         met_input * factor,
         labels=["Particle loop", "accumulation/output", "MET input"],
     )
-    dtimefac = dtime * factor
-    ax3.plot(isteps, dtime * factor, label="total time")
+    ax3.plot(isteps, timeloop * factor, label="total time")
     ax3.set_ylabel("Time per iteration per particle [µs]")
     ax3.set_ylim([0, 2])
     ax3.set_xlim((isteps[0], isteps[-1]))
