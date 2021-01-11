@@ -49,10 +49,15 @@ module snapdebug
         procedure :: log => timer_sys_log
     end type
 
+    interface timer_sys_t
+      procedure :: timer_sys_new
+    end interface
+
     type, public :: prefixed_accumulating_timer
-      type(timer_cpu_t) :: timer
-      logical :: running = .false.
-      real :: total = 0.0
+      type(timer_cpu_t) :: timer_cpu
+      type(timer_sys_t) :: timer_sys
+      real :: total_cpu = 0.0
+      real :: total_sys = 0.0
       character(len=1024) :: prefix
       contains
         procedure :: start => prefixed_timer_start
@@ -107,9 +112,9 @@ module snapdebug
       class(timer_sys_t), intent(in) :: this
       real :: timer_sys_now
       integer :: now_count
+
       call system_clock(count=now_count)
       now_count = now_count - this%count
-
       timer_sys_now = real(now_count) / real(this%countrate)
     end function
 
@@ -179,38 +184,57 @@ module snapdebug
 
     subroutine prefixed_timer_start(this)
       class(prefixed_accumulating_timer), intent(inout) :: this
-      this%timer = timer_cpu_t()
+      this%timer_cpu = timer_cpu_t()
+      this%timer_sys = timer_sys_t()
     end subroutine
 
     subroutine prefixed_timer_stop(this)
       class(prefixed_accumulating_timer), intent(inout) :: this
       real :: duration
 
-      duration = this%timer%now()
-      this%total = this%total + duration
+      duration = this%timer_cpu%now()
+      this%total_cpu = this%total_cpu + duration
+
+      duration = this%timer_sys%now()
+      this%total_sys = this%total_sys + duration
     end subroutine
 
     subroutine prefixed_timer_stop_and_log(this, unit)
       class(prefixed_accumulating_timer), intent(inout) :: this
       integer, intent(in), optional :: unit
 
-      character(len=1024) :: prefix
-      real :: duration
+      real :: duration_sys, duration_cpu
+      integer :: current_unit
 
-      duration = this%timer%now()
-      this%total = this%total + duration
+      duration_sys = this%timer_sys%now()
+      this%total_sys = this%total_sys + duration_sys
 
-      write(prefix,*) GLOBAL_TIMER_PREFIX, trim(this%prefix), " "
-      call print_time(duration, trim(prefix), unit)
+      duration_cpu = this%timer_cpu%now()
+      this%total_cpu = this%total_cpu + duration_cpu
+
+      if (present(unit)) then
+        current_unit = unit
+      else
+        current_unit = iulog
+      endif
+
+      write(current_unit,*) GLOBAL_TIMER_PREFIX, trim(this%prefix), " sys: ", &
+        trim(to_str(duration_sys)), " cpu: ", trim(to_str(duration_cpu))
     end subroutine
 
     subroutine prefixed_timer_print_accumulated(this, unit)
       class(prefixed_accumulating_timer), intent(in) :: this
       integer, intent(in), optional :: unit
 
-      character(len=1024) :: prefix
+      integer :: current_unit
 
-      write(prefix,*) GLOBAL_TIMER_PREFIX, GLOBAL_TIMER_TOTAL_PREFIX, trim(this%prefix), " "
-      call print_time(this%total, trim(prefix), unit)
+      if (present(unit)) then
+        current_unit = unit
+      else
+        current_unit = iulog
+      endif
+
+      write(current_unit,*) GLOBAL_TIMER_PREFIX, GLOBAL_TIMER_TOTAL_PREFIX, trim(this%prefix), &
+        " sys: ", trim(to_str(this%total_sys)), " cpu: ", trim(to_str(this%total_cpu))
     end subroutine
 end module snapdebug
