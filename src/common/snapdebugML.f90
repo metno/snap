@@ -135,7 +135,7 @@ module snapdebug
       integer :: h, m, s, ms
       call real_to_hms_ms(t, h, m, s, ms)
 
-      write(str, *) "(I3, a, I2, a, I2, a, I4)", h, ":", m, ":", s, ".", ms
+      write(str,"(I3, a, I2, a, I2, a, I4)") h, ":", m, ":", s, ".", ms
 
     end function
 
