@@ -32,8 +32,6 @@ FIMEXLIB = -L/modules/xenial/user-apps/fimex/1.5.2/lib -Wl,-rpath,/modules/xenia
 
 MIINC = -I/usr/include
 MILIB_FLAGS = -fno-implicit-none -fno-module-private -Wno-all -Wno-extra
-# uncomment MILIB if felt-support not required
-#MILIB = -L/usr/lib -lmi
 EXLIBS = -lpthread -ldl
 
 ##########################################################

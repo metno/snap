@@ -31,8 +31,6 @@ FIMEXLIB = $(shell pkg-config --libs fimex)
 
 MIINC = -I/usr/include
 MILIB_FLAGS = -fno-implicit-none -fno-module-private -Wno-all -Wno-extra
-# uncomment MILIB if felt-support not required
-#MILIB = -L/usr/lib -lmi
 EXLIBS = -lpthread -ldl
 
 ##########################################################
