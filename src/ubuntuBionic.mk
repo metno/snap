@@ -30,8 +30,7 @@ FIMEXLIB = -lfimex-1.5 # -lfimexf-1.4 -lfimex-1.4
 
 MIINC = -I/usr/include
 MILIB_FLAGS = -fno-implicit-none -fno-module-private -Wno-all -Wno-extra
-# uncomment MILIB if felt-support not required
-#MILIB = -L/usr/lib -lmi
+
 EXLIBS = -lpthread -ldl
 
 ##########################################################

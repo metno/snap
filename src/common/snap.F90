@@ -129,7 +129,7 @@
 ! FIELD_TIME.FORECAST
 ! FIELD_TIME.VALID
 ! FIELD.OUTPUT= snap.felt
-! FIELD.OUTTYPE=netcdf/felt
+! FIELD.OUTTYPE=netcdf
 ! FIELD.DAILY.OUTPUT.ON
 ! FIELD.USE_MODEL_WIND_INSTEAD_OF_10M= [.false.]/.true
 ! * timestamp which will also be written to netcdf-files, default: now
@@ -199,13 +199,6 @@ PROGRAM bsnap
 #endif
   USE releasefileML, only: releasefile
   USE filesort_ncML, only: filesort_nc
-#if defined(MILIB)
-  use filesortML, only: filesort
-  use fldoutML, only: fldout
-  use readfieldML, only: readfield
-#else
-  USE feltio_dummy, only: readfd, readfield, filesort, fldout
-#endif
 
   implicit none
 
@@ -259,8 +252,8 @@ PROGRAM bsnap
   logical :: blfullmix = .true.
   logical :: init = .TRUE.
 
-  character(len=1024) ::  finput, fldfil = "snap.dat", fldfilX, fldfilN, logfile = "snap.log", ftype = "felt", &
-                         fldtype = "felt", relfile = "*", fimex_config = "", fimex_type = ""
+  character(len=1024) ::  finput, fldfil = "snap.dat", fldfilX, fldfilN, logfile = "snap.log", ftype = "netcdf", &
+                         fldtype = "netcdf", relfile = "*", fimex_config = "", fimex_type = ""
   character(len=1024) :: tempstr
 
 !> name of selected release position
@@ -391,7 +384,7 @@ PROGRAM bsnap
     call filesort_fi(fimex_type, fimex_config)
 #endif
   else
-    call filesort(iunitf, ierror)
+    ierror = 1
   end if
   if (ierror /= 0) call snap_error_exit(iulog)
 
@@ -610,8 +603,8 @@ PROGRAM bsnap
       call fldout_nc(-1, iunito, fldfil, itime1, 0., 0., 0., tstep, &
                      m, nsteph, ierror)
     else
-      call fldout(-1, iunito, fldfil, itime1, 0., 0., 0., tstep, &
-                  m, nsteph, ierror)
+      write (iulog, *) "only FIELD.OUTTYPE=netcdf supported, got: ", fldtype
+      ierror = 1
     endif
     if (ierror /= 0) call snap_error_exit(iulog)
 
@@ -709,8 +702,6 @@ PROGRAM bsnap
           nhleft = (nstep - istep + 1)/nsteph
           if (nhrun < 0) nhleft = -nhleft
         end if
-        !          write (error_unit,*) "readfield(", iunitf, istep, nhleft, itimei, ihr1
-        !     +          ,ihr2, time_file, ierror, ")"
         if (ftype == "netcdf") then
           call readfield_nc(istep, nhleft, itimei, ihr1, ihr2, &
                             time_file, ierror)
@@ -719,15 +710,10 @@ PROGRAM bsnap
           call readfield_fi(istep, nhleft, itimei, ihr1, ihr2, &
                             time_file, ierror)
 #endif
-        else
-          call readfield(iunitf, istep, nhleft, itimei, ihr1, ihr2, &
-                         time_file, ierror)
         end if
         if (idebug >= 1) then
           write (iulog, *) "igtype, gparam(8): ", igtype, gparam
         end if
-        !          write (error_unit,*) "readfield(", iunitf, istep, nhleft, itimei, ihr1
-        !     +          ,ihr2, time_file, ierror, ")"
         if (ierror /= 0) call snap_error_exit(iulog)
 
         n = time_file(5)
@@ -1052,27 +1038,18 @@ PROGRAM bsnap
           if (fldtype == "netcdf") then
             call fldout_nc(-1, iunito, fldfilX, itime1, 0., 0., 0., tstep, &
                            (24/nhfout) + 1, nsteph, ierror)
-          else
-            call fldout(-1, iunito, fldfilX, itime1, 0., 0., 0., tstep, &
-                        (24/nhfout) + 1, nsteph, ierror)
           endif
           if (ierror /= 0) call snap_error_exit(iulog)
         end if
         if (fldtype == "netcdf") then
           call fldout_nc(ifldout, iunito, fldfilX, itimeo, tf1, tf2, tnext, &
                          tstep, istep, nsteph, ierror)
-        else
-          call fldout(ifldout, iunito, fldfilX, itimeo, tf1, tf2, tnext, tstep, &
-                      istep, nsteph, ierror)
         endif
         if (ierror /= 0) call snap_error_exit(iulog)
       else
         if (fldtype == "netcdf") then
           call fldout_nc(ifldout, iunito, fldfil, itimeo, tf1, tf2, tnext, &
                          tstep, istep, nsteph, ierror)
-        else
-          call fldout(ifldout, iunito, fldfil, itimeo, tf1, tf2, tnext, tstep, &
-                      istep, nsteph, ierror)
         endif
         if (ierror /= 0) call snap_error_exit(iulog)
       end if
@@ -2148,12 +2125,12 @@ contains
       write (error_unit, *) 'Input model levels not specified'
       ierror = 1
     end if
-    if (ftype /= "felt" .AND. ftype /= "netcdf" .AND. ftype /= "fimex") then
-      write (error_unit, *) 'Input type not felt, netcdf or fimex:', trim(ftype)
+    if (ftype /= "netcdf" .AND. ftype /= "fimex") then
+      write (error_unit, *) 'Input type not netcdf or fimex:', trim(ftype)
       ierror = 1
     end if
-    if (fldtype /= "felt" .AND. fldtype /= "netcdf") then
-      write (error_unit, *) 'Output type not felt or netcdf:', trim(fldtype)
+    if (fldtype /= "netcdf") then
+      write (error_unit, *) 'Output type not netcdf:', trim(fldtype)
       ierror = 1
     end if
     if (nfilef == 0) then
