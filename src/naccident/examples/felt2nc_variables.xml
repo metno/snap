@@ -1,0 +1,342 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE cdm_felt_config SYSTEM "felt2nc_variables.dtd">
+<cdm_felt_config>
+<!-- optional processing options for felt-files -->
+<processOptions>
+    <!-- allowed deviation of gridParameter (6 values, see felt.doc) to still assumed to be the same grid, default: no deviation allowed -->
+    <!--  <option name="gridParameterDelta" value="0 0 0 0 0 0"/> -->
+    <!--  <option name="globalParameterRestrictions" value="level=1000" />  -->
+</processOptions>
+<!-- allow overruling the build-in earth figure -->
+<!-- <overrule>
+<earthFigure proj4="+ellps=sphere +R=6371000 +towgs84=0,0,0"/>
+</overrule> -->
+
+<global_attributes>
+    <attribute name="Conventions" value="CF-1.0" type="string" />
+    <attribute name="institution" value="Norwegian Meteorological Institute, met.no" type="string" />
+    <attribute name="source" value="HIRLAM" type="string" />
+    <attribute name="title" value="NoraEraInterim" type="string" />
+    <attribute name="min_time" value="%MIN_DATETIME(%Y-%m-%d %H:%M:%SZ)%" type="string" />
+    <attribute name="max_time" value="%MAX_DATETIME(%Y-%m-%d)%" type="string" />
+    <attribute name="Expires" value="%MAX_DATETIME(%Y-%m-%d,2419200)%" type="string" />
+    <attribute name="references" value="unknown" type="string" />
+    <!-- <attribute name="history" value="unknown" type="string" /> -->
+    <attribute name="comment" value="none" type="string" />
+</global_attributes>
+<axes>
+<time id="time" name="time" type="double">
+    <attribute name="long_name" value="time" type="string" />
+    <attribute name="standard_name" value="time" type="string" />
+    <attribute name="units" value="seconds since 1970-01-01 00:00:00 +00:00" type="string" />
+</time>
+<!-- polar-stereographic at 60deg -->
+<spatial_axis projection_felt_id="1" id="x" name="x" type="int">
+    <attribute name="long_name" value="x-coordinate in Cartesian system" type="string" />
+    <attribute name="standard_name" value="projection_x_coordinate" type="string" />
+    <attribute name="units" value="m" type="string" />
+</spatial_axis>
+<spatial_axis projection_felt_id="1" id="y" name="y" type="int">
+    <attribute name="long_name" value="y-coordinate in Cartesian system" type="string" />
+    <attribute name="standard_name" value="projection_y_coordinate" type="string" />
+    <attribute name="units" value="m" type="string" />
+</spatial_axis>
+<!-- geographic -->
+<spatial_axis projection_felt_id="2" id="x" name="lon" type="float">
+    <attribute name="long_name" value="longitude" type="string" />
+    <attribute name="units" value="degrees_east" type="string" />
+</spatial_axis>
+<spatial_axis projection_felt_id="2" id="y" name="lat" type="float">
+    <attribute name="long_name" value="latitude" type="string" />
+    <attribute name="units" value="degrees_north" type="string" />
+</spatial_axis>
+<!-- spherical rotated -->
+<spatial_axis projection_felt_id="3" id="x" name="rlon" type="float">
+    <attribute name="long_name" value="rotated longitude" type="string" />
+    <attribute name="standard_name" value="grid_longitude" type="string" />
+    <attribute name="units" value="degrees" type="string" />
+</spatial_axis>
+<spatial_axis projection_felt_id="3" id="y" name="rlat" type="float">
+    <attribute name="long_name" value="rotated latitude" type="string" />
+    <attribute name="standard_name" value="grid_latitude" type="string" />
+    <attribute name="units" value="degrees" type="string" />
+</spatial_axis>
+<!-- polar-stereographic -->
+<spatial_axis projection_felt_id="4" id="x" name="x" type="int">
+    <attribute name="long_name" value="x-coordinate in Cartesian system" type="string" />
+    <attribute name="standard_name" value="projection_x_coordinate" type="string" />
+    <attribute name="units" value="m" type="string" />
+</spatial_axis>
+<spatial_axis projection_felt_id="4" id="y" name="y" type="int">
+    <attribute name="long_name" value="y-coordinate in Cartesian system" type="string" />
+    <attribute name="standard_name" value="projection_y_coordinate" type="string" />
+    <attribute name="units" value="m" type="string" />
+</spatial_axis>
+<!-- mercator -->
+<spatial_axis projection_felt_id="5" id="x" name="x" type="int">
+    <attribute name="long_name" value="x-coordinate in Cartesian system" type="string" />
+    <attribute name="standard_name" value="projection_x_coordinate" type="string" />
+    <attribute name="units" value="m" type="string" />
+</spatial_axis>
+<spatial_axis projection_felt_id="5" id="y" name="y" type="int">
+    <attribute name="long_name" value="y-coordinate in Cartesian system" type="string" />
+    <attribute name="standard_name" value="projection_y_coordinate" type="string" />
+    <attribute name="units" value="m" type="string" />
+</spatial_axis>
+<!-- lambert -->
+<spatial_axis projection_felt_id="6" id="x" name="x" type="int">
+    <attribute name="long_name" value="x-coordinate in Cartesian system" type="string" />
+    <attribute name="standard_name" value="projection_x_coordinate" type="string" />
+    <attribute name="units" value="m" type="string" />
+</spatial_axis>
+<spatial_axis projection_felt_id="6" id="y" name="y" type="int">
+    <attribute name="long_name" value="y-coordinate in Cartesian system" type="string" />
+    <attribute name="standard_name" value="projection_y_coordinate" type="string" />
+    <attribute name="units" value="m" type="string" />
+</spatial_axis>
+<spatial_axis id="longitude" name="longitude">
+    <attribute name="valid_max" value="180." type="float" />
+    <attribute name="valid_min" value="-180." type="float" />
+    <attribute name="long_name" value="longitude" type="string" />
+    <attribute name="standard_name" value="longitude" type="string" />
+    <attribute name="units" value="degree_east" type="string" />
+</spatial_axis>
+<spatial_axis id="latitude" name="latitude">
+    <attribute name="valid_max" value="90." type="float" />
+    <attribute name="valid_min" value="-90." type="float" />
+    <attribute name="long_name" value="latitude" type="string" />
+    <attribute name="standard_name" value="latitude" type="string" />
+    <attribute name="units" value="degree_north" type="string" />
+</spatial_axis>
+<vertical_axis id="pressure" name="pressure" felt_id="1" type="short">
+    <attribute name="description" value="pressure" type="string" />
+    <attribute name="long_name" value="pressure" type="string" />
+    <attribute name="standard_name" value="air_pressure" type="string" />
+    <attribute name="positive" value="down" type="string" />
+    <attribute name="units" value="hPa" type="string" />
+</vertical_axis>
+<vertical_axis id="sigma" name="sigma" felt_id="2" type="short">
+    <attribute name="description" value="atmosphere sigma coordinate" type="string" />
+    <attribute name="long_name" value="atmosphere_sigma_coordinate" type="string" />
+    <attribute name="standard_name" value="atmosphere_sigma_coordinate" type="string" />
+    <attribute name="positive" value="down" type="string" />
+    <attribute name="scale_factor" value="0.001" type="float" />
+</vertical_axis>
+<vertical_axis id="h" name="h" felt_id="3" type="short">
+    <attribute name="description" value="vertical coordinate used for wave variables, value: 0" type="string" />
+    <attribute name="long_name" value="vertical_wave_coordinate" type="string" />
+</vertical_axis>
+<vertical_axis id="theta" name="theta" felt_id="4" type="short">
+    <attribute name="description" value="isentrop layer?" type="string" />
+</vertical_axis>
+<vertical_axis id="depth" name="depth" felt_id="5" type="short">
+    <attribute name="description" value="geopotential level relative to equilibrium surface" type="string" />
+    <attribute name="long_name" value="depth" type="string" />
+    <attribute name="positive" value="down" type="string" />
+    <attribute name="standard_name" value="depth" type="string" />
+    <attribute name="units" value="m" type="string" />
+</vertical_axis>
+<vertical_axis id="layer" name="layer" felt_id="6" type="short">
+    <attribute name="description" value="ocean model layer no., isopycnic or hybrid" type="string" />
+    <attribute name="long_name" value="ocean_layer_coordinate" type="string" />
+    <attribute name="positive" value="down" type="string" />
+</vertical_axis>
+<vertical_axis id="sigma" name="sigma" felt_id="7" type="short">
+    <attribute name="description" value="ocean sigma coordinate, surface is 0, bottom is 1" type="string" />
+    <attribute name="long_name" value="ocean_sigma_coordinate" type="string" />
+    <attribute name="positive" value="down" type="string" />
+    <attribute name="standard_name" value="ocean_sigma_coordinate" type="string" />
+    <attribute name="scale_factor" value="0.001" type="float" />
+</vertical_axis>
+<vertical_axis id="surface" name="surface" felt_id="8" type="short">
+    <attribute name="_FillValue" value="-32767" type="short" />
+    <attribute name="description" value="ocean surface, or vertically integrated" type="string" />
+    <attribute name="long_name" value="model_surface" type="string" />
+    <attribute name="positive" value="up" type="string" />
+</vertical_axis>
+<vertical_axis id="k" name="k" felt_id="10" type="double">
+    <attribute name="standard_name" value="atmosphere_hybrid_sigma_pressure_coordinate" type="string" />
+    <attribute name="formula" value="p(n,k,j,i) = ap(k) + b(k)*ps(n,j,i)" type="string" />
+    <attribute name="formula_terms" value="ap: ap b: b ps: ps" type="string" />
+    <attribute name="long_name" value="atmosphere_hybrid_sigma_pressure_coordinate" type="string" />
+    <attribute name="positive" value="down" type="string" />
+    <values mode="hybridSigmaCalc(ap,b)" />
+    <!--  optional values, will otherwise be calculated -->
+    <!-- <values mode="inline">...</values> -->
+    <additional_axis_variable name="ap" type="double" axis="k">
+        <attribute name="units" value="Pa" type="string" />
+        <values mode="level2" scale_factor="10" />
+        <!--  optional values, will otherwise be retrieved from level2 -->
+        <!--  <values>1000.025677 3016.7302165 5053.90618 7087.0199935 9093.765188 11053.98013 12949.566675 14764.408585 16484.295025 18096.84587 19591.43773 20959.130445 22192.59551 23286.04683 24235.168455 25037.05066 25690.118305 26194.061695 26549.769185 26759.2609 26825.62347 26752.93383 26546.1954 26211.27253 25754.81752 25184.199145 24507.43255 23733.106445 22870.320355 21928.60293 20917.83697 19848.187335 18730.02765 17573.856255 16390.225985 15189.661425 13982.572535 12779.18721 11589.468885 10423.01579 9288.991377 8196.045649 7152.209594 6164.8270535 5240.4653145 4384.825709 3602.6483895 2897.6316215 2272.348645 1728.1508885 1265.082265 881.7835746 575.42419265 341.59793425 174.23244055 65.519475235 12.368657385 0 0 0</values> -->
+    </additional_axis_variable>
+    <additional_axis_variable name="b" type="double" axis="k">
+        <attribute name="units" value="1" type="string" />
+        <values mode="hybridLevels" scale_factor="0.0001" />
+        <!--  optional values, will otherwise be retrieved from ident19 -->
+        <!--  <values>0 0 0.00011835 0.00057981 0.00158568 0.003314615 0.00592347 0.00954814 0.01430438 0.020288635 0.027578885 0.03623547 0.04630191 0.05780577 0.07075946 0.08516109 0.10099527 0.118233985 0.136837405 0.156754715 0.17792495 0.200277825 0.223734585 0.248208815 0.27360728 0.29983076 0.32677488 0.35433095 0.38238677 0.410827505 0.43953649 0.46839609 0.497288455 0.526096385 0.554704285 0.5829989 0.610870045 0.638211525 0.66492209 0.690906155 0.71607453 0.740345365 0.763645065 0.78590901 0.80708235 0.827120885 0.845992015 0.86367537 0.88016373 0.895463935 0.90959763 0.922602075 0.93453102 0.94545557 0.95546498 0.96466746 0.97319103 0.981184395 0.98881774 0.996283525</values> -->
+    </additional_axis_variable>
+<!-- currently not possible to read axis independent variable
+    <additional_axis_variable name="p0" type="int" axis="1">
+        <attribute name="long_name" value="reference pressure for hybrid sigma coordinate" type="string" />
+        <attribute name="units" value="Pa" type="string" />
+        <values>100000</values>
+    </additional_axis_variable>
+-->
+</vertical_axis>
+</axes>
+<variables>
+<!--
+<parameter id="1" name="geopotential_height">
+    <attribute name="_FillValue" value="-32767" type="short" />
+    <attribute name="long_name" value="geopotential_height" type="string" />
+    <attribute name="standard_name" value="geopotential_height" type="string" />
+    <attribute name="units" value="m" type="string" />
+</parameter>
+-->
+<parameter id="2" name="x_wind_ml" type="float">
+    <attribute name="_FillValue" value="9.9692099683868690e+36" type="float" />
+    <attribute name="long_name" value="x_wind" type="string" />
+    <attribute name="standard_name" value="x_wind" type="string" />
+    <attribute name="units" value="m/s" type="string" />
+    <spatial_vector direction="x,longitude" counterpart="y_wind" />
+</parameter>
+<parameter id="3" name="y_wind_ml" type="float">
+    <attribute name="_FillValue" value="9.9692099683868690e+36" type="float" />
+    <attribute name="long_name" value="y_wind" type="string" />
+    <attribute name="standard_name" value="y_wind" type="string" />
+    <attribute name="units" value="m/s" type="string" />
+    <spatial_vector direction="y,latitude" counterpart="x_wind" />
+</parameter>
+<parameter id="8,2,1000" name="surface_air_pressure" type="float">
+    <attribute name="_FillValue" value="9.9692099683868690e+36" type="float" />
+    <attribute name="cell_methods" value="time: point" type="string" />
+    <attribute name="standard_name" value="surface_air_pressure" type="string" />
+    <!--<attribute name="scale_factor" value="10" type="float" />-->
+    <attribute name="units" value="hPa" type="string" />
+</parameter>
+<!--
+<parameter id="10" name="relative_humidity">
+    <attribute name="scale_factor" value="0.01" type="float" />
+    <attribute name="_FillValue" value="-32767" type="short" />
+    <attribute name="long_name" value="relative_humidity" type="string" />
+    <attribute name="standard_name" value="relative_humidity" type="string" />
+    <attribute name="units" value="1" type="string" />
+</parameter>
+-->
+<parameter id="13" name="omega_ml" type="float">
+    <attribute name="_FillValue" value="9.9692099683868690e+36" type="float" />
+    <attribute name="long_name" value="relative_humidity" type="string" />
+    <attribute name="standard_name_alias" value="vertical_air_velocity_expressed_as_tendency_of_pressure" type="string" />
+    <attribute name="standard_name" value="lagrangian_tendency_of_air_pressure" type="string" />
+    <attribute name="units" value="hPa/s" type="string" />
+</parameter>
+<parameter id="17,2,1000" name="precipitation_amount_acc" type="float">
+    <attribute name="_FillValue" value="9.9692099683868690e+36" type="float" />
+    <attribute name="long_name" value="precipitation_amount" type="string" />
+    <attribute name="standard_name" value="precipitation_amount" type="string" />
+    <attribute name="units" value="kg/m2" type="string" />
+</parameter>
+<parameter id="18" name="air_potential_temperature_ml" type="float">
+    <attribute name="_FillValue" value="9.9692099683868690e+36" type="float" />
+    <attribute name="long_name" value="air_potential_temperature" type="string" />
+    <attribute name="standard_name" value="air_potential_temperature" type="string" />
+    <attribute name="units" value="K" type="string" />
+</parameter>
+<parameter id="25,2,1000" name="cloud_area_fraction">
+    <attribute name="scale_factor" value="0.01" type="float" />
+    <attribute name="_FillValue" value="-32767" type="short" />
+    <attribute name="cell_methods" value="time: point" type="string" />
+    <attribute name="long_name" value="cloud_area_fraction" type="string" />
+    <attribute name="standard_name" value="cloud_area_fraction" type="string" />
+    <attribute name="units" value="1" type="string" />
+</parameter>
+<parameter id="31,2,1000" name="air_temperature" type="float">
+    <attribute name="_FillValue" value="9.9692099683868690e+36" type="float" />
+    <attribute name="cell_methods" value="time: point height: p" type="string" />
+    <attribute name="long_name" value="air_temperature" type="string" />
+    <attribute name="standard_name" value="air_temperature" type="string" />
+    <attribute name="units" value="K" type="string" />
+</parameter>
+<parameter id="32,2,1000" name="relative_humidity" type="float">
+    <attribute name="_FillValue" value="9.9692099683868690e+36" type="float" />
+    <attribute name="scale_factor" value="0.01" type="float" />
+    <attribute name="cell_methods" value="time: point height: 2m" type="string" />
+    <attribute name="long_name" value="relative_humidity" type="string" />
+    <attribute name="standard_name" value="relative_humidity" type="string" />
+    <attribute name="units" value="1" type="string" />
+</parameter>
+<parameter id="33,2,1000" name="x_wind_10m" type="float">
+    <attribute name="_FillValue" value="9.9692099683868690e+36" type="float" />
+    <attribute name="cell_methods" value="time: point height: 10m" type="string" />
+    <attribute name="long_name" value="x_wind_10m" type="string" />
+    <attribute name="metno_name" value="x_wind_10m" type="string" />
+    <attribute name="standard_name" value="x_wind" type="string" />
+    <attribute name="units" value="m s-1" type="string" />
+    <spatial_vector direction="x,longitude" counterpart="y_wind_10m" />
+</parameter>
+<parameter id="34,2,1000" name="y_wind_10m" type="float">
+    <attribute name="_FillValue" value="9.9692099683868690e+36" type="float" />
+    <attribute name="cell_methods" value="time: point height: 10m" type="string" />
+    <attribute name="long_name" value="y_wind_10m" type="string" />
+    <attribute name="metno_name" value="y_wind_10m" type="string" />
+    <attribute name="standard_name" value="y_wind" type="string" />
+    <attribute name="units" value="m s-1" type="string" />
+    <spatial_vector direction="y,latitude" counterpart="x_wind_10m" />
+</parameter>
+<!-- change in scale_factor
+<parameter id="36,2,1000" name="accumulated_surface_upward_sensible_heat_flux">
+    <attribute name="long_name" value="accumulated_surface_upward_sensible_heat_flux" type="string" />
+    <attribute name="metno_name" value="accumulated_surface_upward_sensible_heat_flux" type="string" />
+    <attribute name="units" value="kJ/m2" type="string" />
+</parameter>
+<parameter id="37,2,1000" name="accumulated_surface_upward_latent_heat_flux">
+    <attribute name="long_name" value="accumulated_surface_upward_latent_heat_flux" type="string" />
+    <attribute name="metno_name" value="accumulated_surface_upward_latent_heat_flux" type="string" />
+    <attribute name="units" value="kJ/m2" type="string" />
+</parameter>
+-->
+<parameter id="39" name="cloud_area_fraction_in_atmosphere_layer">
+    <attribute name="_FillValue" value="-32767" type="short" />
+    <attribute name="long_name" value="cloud_area_fraction_in_atmosphere_layer" type="string" />
+    <attribute name="standard_name" value="cloud_area_fraction_in_atmosphere_layer" type="string" />
+    <attribute name="scale_factor" value="0.01" type="float" />
+    <attribute name="units" value="1" type="string" />
+</parameter>
+<parameter id="58,2,1000" name="air_pressure_at_sea_level" type="float">
+    <attribute name="_FillValue" value="9.9692099683868690e+36" type="float" />
+    <attribute name="cell_methods" value="time: point" type="string" />
+    <attribute name="long_name" value="air_pressure_at_sea_level" type="string" />
+    <attribute name="standard_name" value="air_pressure_at_sea_level" type="string" />
+    <attribute name="units" value="hPa" type="string" />
+</parameter>
+<parameter id="66,2,1000" name="surface_snow_thickness">
+    <attribute name="long_name" value="surface_snow_thickness" type="string" />
+    <attribute name="standard_name" value="surface_snow_thickness" type="string" />
+    <attribute name="units" value="m" type="string" />
+</parameter>
+<parameter id="101,2,1000" name="altitude" type="short">
+    <attribute name="_FillValue" value="-32767" type="short" />
+    <attribute name="long_name" value="altitude" type="string" />
+    <attribute name="standard_name" value="altitude" type="string" />
+    <attribute name="units" value="m" type="string" />
+</parameter>
+<parameter id="103,2,1000" name="sea_surface_temperature" type="float">
+    <attribute name="_FillValue" value="9.9692099683868690e+36" type="float" />
+    <attribute name="long_name" value="sea_surface_temperature" type="string" />
+    <attribute name="standard_name" value="sea_surface_temperature" type="string" />
+    <attribute name="units" value="K" type="string" />
+</parameter>
+<parameter id="181,2,1000" name="mask" type="short">
+    <attribute name="_FillValue" value="-32767" type="short" />
+    <attribute name="long_name" value="land-mask" type="string" />
+    <attribute name="units" value="1" type="string" />
+</parameter>
+<parameter id="191,2,1000" name="land_ice_area_fraction">
+    <attribute name="long_name" value="land_ice_area_fraction" type="string" />
+    <attribute name="metno_name" value="land_ice_area_fraction" type="string" />
+    <attribute name="scale_factor" value="0.01" type="float" />
+    <attribute name="units" value="1" type="string" />
+</parameter>
+
+</variables>
+</cdm_felt_config>
