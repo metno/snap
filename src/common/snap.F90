@@ -253,7 +253,7 @@ PROGRAM bsnap
   logical :: init = .TRUE.
 
   character(len=1024) ::  finput, fldfil = "snap.dat", fldfilX, fldfilN, logfile = "snap.log", ftype = "netcdf", &
-                         fldtype = "netcdf", relfile = "*", fimex_config = "", fimex_type = ""
+                         relfile = "*", fimex_config = "", fimex_type = ""
   character(len=1024) :: tempstr
 
 !> name of selected release position
@@ -599,13 +599,8 @@ PROGRAM bsnap
       write (fldfilX, '(a9,a1,I3.3)') fldfil, '+', -1
     end if
     ! standard output needs to be initialized, even for daily
-    if (fldtype == "netcdf") then
-      call fldout_nc(-1, iunito, fldfil, itime1, 0., 0., 0., tstep, &
+    call fldout_nc(-1, iunito, fldfil, itime1, 0., 0., 0., tstep, &
                      m, nsteph, ierror)
-    else
-      write (iulog, *) "only FIELD.OUTTYPE=netcdf supported, got: ", fldtype
-      ierror = 1
-    endif
     if (ierror /= 0) call snap_error_exit(iulog)
 
     itime = itime1
@@ -1035,22 +1030,15 @@ PROGRAM bsnap
         write (fldfilN, '(a9,a1,I3.3)') fldfil, '+', istep/nsteph/24
         if (fldfilX /= fldfilN) then
           fldfilX = fldfilN
-          if (fldtype == "netcdf") then
-            call fldout_nc(-1, iunito, fldfilX, itime1, 0., 0., 0., tstep, &
+          call fldout_nc(-1, iunito, fldfilX, itime1, 0., 0., 0., tstep, &
                            (24/nhfout) + 1, nsteph, ierror)
-          endif
-          if (ierror /= 0) call snap_error_exit(iulog)
         end if
-        if (fldtype == "netcdf") then
-          call fldout_nc(ifldout, iunito, fldfilX, itimeo, tf1, tf2, tnext, &
+        call fldout_nc(ifldout, iunito, fldfilX, itimeo, tf1, tf2, tnext, &
                          tstep, istep, nsteph, ierror)
-        endif
         if (ierror /= 0) call snap_error_exit(iulog)
       else
-        if (fldtype == "netcdf") then
-          call fldout_nc(ifldout, iunito, fldfil, itimeo, tf1, tf2, tnext, &
+        call fldout_nc(ifldout, iunito, fldfil, itimeo, tf1, tf2, tnext, &
                          tstep, istep, nsteph, ierror)
-        endif
         if (ierror /= 0) call snap_error_exit(iulog)
       end if
 
@@ -1905,8 +1893,7 @@ contains
         fldfil = cinput(pname_start:pname_end)
       case ('field.outtype')
         !..field.outtype= <'felt|netcdf'>
-        if (.not. has_value) goto 12
-        fldtype = cinput(pname_start:pname_end)
+        write(error_unit, *) "The field.outtype field has been deprecated"
       case ('title')
         allocate (character(len=len_trim(cinput(pname_start:pname_end))) :: nctitle)
         nctitle(:) = trim(cinput(pname_start:pname_end))
@@ -2127,10 +2114,6 @@ contains
     end if
     if (ftype /= "netcdf" .AND. ftype /= "fimex") then
       write (error_unit, *) 'Input type not netcdf or fimex:', trim(ftype)
-      ierror = 1
-    end if
-    if (fldtype /= "netcdf") then
-      write (error_unit, *) 'Output type not netcdf:', trim(fldtype)
       ierror = 1
     end if
     if (nfilef == 0) then
