@@ -154,7 +154,6 @@ FIELD.INPUT= /opdata/hirlam12/h12sf18.dat
 FIELD_TIME.FORECAST
 *
 ** OUTPUT FILES
-FIELD.OUTTYPE= netcdf
 FIELD.OUTPUT= snap.nc
 LOG.FILE=     snap.log
 *

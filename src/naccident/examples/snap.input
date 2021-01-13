@@ -133,7 +133,6 @@ FIELD_TIME.FORECAST
 *
 ** OUTPUT FILES
 *
-FIELD.OUTTYPE= netcdf
 FIELD.OUTPUT= snap.nc
 LOG.FILE=     snap.log
 

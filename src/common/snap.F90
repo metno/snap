@@ -129,7 +129,6 @@
 ! FIELD_TIME.FORECAST
 ! FIELD_TIME.VALID
 ! FIELD.OUTPUT= snap.felt
-! FIELD.OUTTYPE=netcdf
 ! FIELD.DAILY.OUTPUT.ON
 ! FIELD.USE_MODEL_WIND_INSTEAD_OF_10M= [.false.]/.true
 ! * timestamp which will also be written to netcdf-files, default: now

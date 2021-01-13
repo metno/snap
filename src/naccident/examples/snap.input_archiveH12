@@ -1,5 +1,4 @@
 SET_RELEASE.POS= P=  55.7911, 38.4532
-FIELD.OUTTYPE= netcdf
 FIELD.OUTPUT= snap.nc
 LOG.FILE= snap.log
 ***********************************************************************
