@@ -12,15 +12,26 @@ if __name__ == "__main__":
         description="Outputs plots over time spent on the various computations for SNAP"
     )
     parser.add_argument("logfile", type=pathlib.Path)
+    parser.add_argument("--mode", choices=["sys", "cpu", "wtime"], default="cpu")
 
     args = parser.parse_args()
     logfile = args.logfile
 
     treg = re.compile("\(\w+\)")
-    def timesplit(s: str):
-        sys, cpu, _ = re.split(reg, s)
 
-        hour, minute, rest = sys.split(":")
+    def timesplit(s: str):
+        sys, cpu, *rest = re.split(treg, s)
+        wtime = None
+        if len(rest) > 1:
+            wtime = rest.pop(0)
+        if args.mode == "sys":
+            t = sys
+        elif args.mode == "cpu":
+            t = cpu
+        else:
+            t = wtime
+
+        hour, minute, rest = t.split(":")
         second, ms = rest.split(".")
 
         return int(hour) * 3600 + int(minute) * 60 + int(second) + int(ms) / 1000

@@ -265,10 +265,6 @@ PROGRAM bsnap
   type(acc_timer) :: input_timer
   type(acc_timer) :: particleloop_timer
 
-
-  character(len=8) :: date
-  character(len=10) :: time
-
 #if defined(TRAJ)
   integer :: timeStart(6), timeCurrent(6)
   integer :: ilvl, k1, k2
@@ -684,8 +680,6 @@ PROGRAM bsnap
     time_loop: do istep = 0, nstep
       call timeloop_timer%start()
       write (iulog, *) 'istep,nplume,npart: ', istep, nplume, npart
-      call date_and_time(date=date, time=time)
-      write (iulog, *) "current time: ", date, ", ", time
       flush (iulog)
       if (mod(istep, nsteph) == 0) then
         write (error_unit, *) 'istep,nplume,npart: ', istep, nplume, npart
