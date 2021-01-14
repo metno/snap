@@ -1,5 +1,5 @@
 ! SNAP: Servere Nuclear Accident Programme
-! Copyright (C) 1992-2020   Norwegian Meteorological Institute
+! Copyright (C) 1992-2021   Norwegian Meteorological Institute
 
 ! This file is part of SNAP. SNAP is free software: you can
 ! redistribute it and/or modify it under the terms of the
@@ -21,6 +21,7 @@
 module readfield_fiML
 
   USE Fimex, ONLY: FimexIO
+  USE snapfimexML, ONLY: file_type, conf_file
   use iso_fortran_env, only: real32, real64, error_unit
   USE ftestML, only: ftest
   USE om2edotML, only: om2edot
@@ -31,12 +32,7 @@ module readfield_fiML
   implicit none
   private
 
-  !> fimex filetype, e.g. netcdf, grib, ncml for all files. All files have same type
-  character(len=1024), private, save :: file_type = ""
-  !> config file, applied to all files
-  character(len=1024), private, save :: conf_file = ""
-
-  public fi_init, readfield_fi, fi_checkload, check
+  public readfield_fi, fi_checkload, check
 
   !> @brief load and check an array from a source
   interface fi_checkload
@@ -44,20 +40,6 @@ module readfield_fiML
   end interface
 
 contains
-
-!> Initialize readfield module
-  subroutine fi_init(filetype, configfile)
-!> filetype of all input-files, e.g. ncml, netcdf, grib
-    character(len=1024), intent(in) :: filetype
-!> optional config-file
-    character(len=1024), optional, intent(in) :: configfile
-    file_type = filetype
-    if (.not. PRESENT(configfile)) then
-      conf_file = ""
-    else
-      conf_file = configfile
-    end if
-  end subroutine fi_init
 
 !> Read fields from fimex files. (see fimex.F90)
   subroutine readfield_fi(istep, nhleft, itimei, ihr1, ihr2, itimefi, ierror)
