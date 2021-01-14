@@ -1,7 +1,8 @@
 # this file contains the common parts to compile bsnap
 # should be included after all: target
 
-MODELOBJ = dateCalc.o utils.o particleML.o snapdimML.o snapfilML.o snapfldML.o snapgrdML.o snapmetML.o snapparML.o \
+MODELOBJ = dateCalc.o utils.o particleML.o snapdimML.o snapfilML.o snapfimexML.o \
+snapfldML.o snapgrdML.o snapmetML.o snapparML.o \
 snapposML.o snaptabML.o snapargosML.o snapdebugML.o posint.o decay.o \
 om2edot.o ftest.o readfield_nc.o rwalk.o epinterp.o \
 vgravtables.o forwrd.o wetdep.o drydep.o \
@@ -48,6 +49,10 @@ ftest.o: ../common/ftest.f90 snapdebugML.o
 	${F77} -c $(F77FLAGS) $(INCLUDES) $<
 snapdebugML.o: ../common/snapdebugML.f90
 	${F77} -c $(F77FLAGS) $(INCLUDES) $<
+snapfilML.o: ../common/snapfilML.f90 snapdimML.o
+	${F77} -c ${F77FLAGS} $<
+snapfimexML.o: ../common/snapfimexML.f90
+	${F77} -c ${F77FLAGS} $<
 snapgrdML.o: ../common/snapgrdML.f90
 	${F77} -c $(F77FLAGS) $(INCLUDES) $<
 bldp.o: ../common/bldp.f90 snapdimML.o snaptabML.o snapgrdML.o snapfldML.o ftest.o snapdebugML.o snapgrdML.o
@@ -70,21 +75,19 @@ epinterp.o: ../common/epinterp.f90
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 argoswrite.o: ../common/argoswrite.f90 snapdebugML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-snapfilML.o: ../common/snapfilML.f90 snapdimML.o
-	${F77} -c ${F77FLAGS} $<
 om2edot.o: ../common/om2edot.f90 snapgrdML.o snapfldML.o snapdimML.o snapdebugML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 readfield_nc.o: ../common/readfield_nc.f90 particleML.o snapfilML.o snapgrdML.o snapmetML.o snaptabML.o snapdebugML.o snapdimML.o om2edot.o ftest.o milibML.o snapfldML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-readfield_fi.o: ../common/readfield_fi.f90 particleML.o snapfilML.o snapgrdML.o snapmetML.o snaptabML.o snapdebugML.o snapdimML.o om2edot.o ftest.o milibML.o fimex.o
+readfield_fi.o: ../common/readfield_fi.f90 snapfimexML.o particleML.o snapfilML.o snapgrdML.o snapmetML.o snaptabML.o snapdebugML.o snapdimML.o om2edot.o ftest.o milibML.o fimex.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 filesort_nc.o: ../common/filesort_nc.f90 dateCalc.o snapfilML.o snapdimML.o snapgrdML.o snapfldML.o snapmetML.o snapdebugML.o readfield_nc.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-filesort_fi.o: ../common/filesort_fi.f90 dateCalc.o snapfilML.o snapdimML.o snapgrdML.o snapfldML.o snapmetML.o snapdebugML.o readfield_fi.o
+filesort_fi.o: ../common/filesort_fi.f90 snapfimexML.o dateCalc.o snapfilML.o snapdimML.o snapgrdML.o snapfldML.o snapmetML.o snapdebugML.o readfield_fi.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 find_parameters.o: ../common/find_parameters.f90 snapmetML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-find_parameters_fi.o: ../common/find_parameters_fi.f90 snapmetML.o fimex.o readfield_fi.o
+find_parameters_fi.o: ../common/find_parameters_fi.f90 snapfimexML.o snapmetML.o fimex.o readfield_fi.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 fldout_nc.o: ../common/fldout_nc.f90 snapfilML.o snapgrdML.o snapfldML.o snapparML.o snaptabML.o snapargosML.o snapdebugML.o snapdimML.o readfield_nc.o ftest.o release.o milibML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<

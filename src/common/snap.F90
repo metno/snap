@@ -1,5 +1,5 @@
 ! SNAP: Servere Nuclear Accident Programme
-! Copyright (C) 1992-2020   Norwegian Meteorological Institute
+! Copyright (C) 1992-2021   Norwegian Meteorological Institute
 
 ! This file is part of SNAP. SNAP is free software: you can
 ! redistribute it and/or modify it under the terms of the
@@ -193,8 +193,9 @@ PROGRAM bsnap
   USE init_random_seedML, only: init_random_seed
   USE compheightML, only: compheight
   USE readfield_ncML, only: readfield_nc
+  USE snapfimexML, only: fimex_type => file_type, fimex_config => conf_file
 #if defined(FIMEX)
-  USE readfield_fiML, only: fi_init, readfield_fi
+  USE readfield_fiML, only: readfield_fi
   USE filesort_fiML, only: filesort_fi
 #endif
   USE releasefileML, only: releasefile
@@ -253,7 +254,7 @@ PROGRAM bsnap
   logical :: init = .TRUE.
 
   character(len=1024) ::  finput, fldfil = "snap.dat", fldfilX, fldfilN, logfile = "snap.log", ftype = "netcdf", &
-                         fldtype = "netcdf", relfile = "*", fimex_config = "", fimex_type = ""
+                         fldtype = "netcdf", relfile = "*"
   character(len=1024) :: tempstr
 
 !> name of selected release position
@@ -656,7 +657,6 @@ PROGRAM bsnap
                         time_file, ierror)
     else if (ftype == "fimex") then
 #if defined(FIMEX)
-      call fi_init(fimex_type, fimex_config)
       call readfield_fi(-1, nhleft, itimei, ihr1, ihr2, &
                         time_file, ierror)
 #else
