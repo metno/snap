@@ -18,6 +18,9 @@
 !> Common for debugging
 module snapdebug
     use iso_fortran_env, only: error_unit
+#if defined(_OPENMP)
+    use omp_lib, only: omp_get_wtime
+#endif
     implicit none
     private
 !> * 0 = debug off
@@ -53,11 +56,27 @@ module snapdebug
       procedure :: timer_sys_new
     end interface
 
+#if defined(_OPENMP)
+    type, public :: timer_womp_t
+      double precision :: inner
+      contains
+        procedure :: now => timer_womp_now
+    end type
+
+    interface timer_womp_t
+      procedure :: timer_womp_new
+    end interface
+#endif
+
     type, public :: prefixed_accumulating_timer
       type(timer_cpu_t) :: timer_cpu
       type(timer_sys_t) :: timer_sys
       real :: total_cpu = 0.0
       real :: total_sys = 0.0
+#if defined(_OPENMP)
+      type(timer_womp_t) :: timer_womp
+      real :: total_womp = 0.0
+#endif
       character(len=1024) :: prefix
       contains
         procedure :: start => prefixed_timer_start
@@ -128,6 +147,24 @@ module snapdebug
       call print_time(now, prefix, unit)
     end subroutine
 
+#if defined(_OPENMP)
+    function timer_womp_new()
+      type(timer_womp_t) :: timer_womp_new
+
+      timer_womp_new%inner = omp_get_wtime()
+    end function
+
+    function timer_womp_now(this)
+      class(timer_womp_t), intent(in) :: this
+      real :: timer_womp_now
+      double precision :: t
+
+      t = omp_get_wtime()
+
+      timer_womp_now = t - this%inner
+    end function
+#endif
+
     function to_str(t) result(str)
       real, intent(in) :: t
       character(len=64) :: str
@@ -186,6 +223,9 @@ module snapdebug
       class(prefixed_accumulating_timer), intent(inout) :: this
       this%timer_cpu = timer_cpu_t()
       this%timer_sys = timer_sys_t()
+#if defined(_OPENMP)
+      this%timer_womp = timer_womp_t()
+#endif
     end subroutine
 
     subroutine prefixed_timer_stop(this)
@@ -197,6 +237,11 @@ module snapdebug
 
       duration = this%timer_sys%now()
       this%total_sys = this%total_sys + duration
+
+#if defined(_OPENMP)
+      duration = this%timer_womp%now()
+      this%total_womp = this%total_womp + duration
+#endif
     end subroutine
 
     subroutine prefixed_timer_stop_and_log(this, unit)
@@ -205,6 +250,12 @@ module snapdebug
 
       real :: duration_sys, duration_cpu
       integer :: current_unit
+#if defined(_OPENMP)
+      real :: duration_womp
+
+      duration_womp = this%timer_womp%now()
+      this%total_womp = this%total_womp + duration_womp
+#endif
 
       duration_sys = this%timer_sys%now()
       this%total_sys = this%total_sys + duration_sys
@@ -218,8 +269,16 @@ module snapdebug
         current_unit = iulog
       endif
 
-      write(current_unit,*) GLOBAL_TIMER_PREFIX, trim(this%prefix), " sys: ", &
-        trim(to_str(duration_sys)), " cpu: ", trim(to_str(duration_cpu))
+#if defined(_OPENMP)
+      write(current_unit,*) GLOBAL_TIMER_PREFIX, trim(this%prefix), " ", &
+        trim(to_str(duration_sys)), " (sys) ", &
+        trim(to_str(duration_cpu)), " (cpu) ", &
+        trim(to_str(duration_womp)), " (wtime)"
+#else
+      write(current_unit,*) GLOBAL_TIMER_PREFIX, trim(this%prefix), " ", &
+        trim(to_str(duration_sys)), " (sys) ", &
+        trim(to_str(duration_cpu)), " (cpu)"
+#endif
     end subroutine
 
     subroutine prefixed_timer_print_accumulated(this, unit)
@@ -234,8 +293,15 @@ module snapdebug
         current_unit = iulog
       endif
 
+#if defined(_OPENMP)
+      write(current_unit,*) GLOBAL_TIMER_PREFIX, GLOBAL_TIMER_TOTAL_PREFIX, trim(this%prefix), " ", &
+        trim(to_str(this%total_sys)), " (sys) " , &
+        trim(to_str(this%total_cpu)), " (cpu) ", &
+        trim(to_str(this%total_womp)), " (wtime)"
+#else
       write(current_unit,*) GLOBAL_TIMER_PREFIX, GLOBAL_TIMER_TOTAL_PREFIX, trim(this%prefix), " ", &
         trim(to_str(this%total_sys)), " (sys) " , &
         trim(to_str(this%total_cpu)), " (cpu)"
+#endif
     end subroutine
 end module snapdebug
