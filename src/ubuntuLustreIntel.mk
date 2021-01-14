@@ -16,7 +16,6 @@ NCDIR=$(shell nf-config --prefix)
 NCINC=$(shell nf-config --fflags)
 NCLIBS=$(shell nf-config --flibs)
 
-MILIB = #-L/home/heikok/local/lib -lmi
 EXLIBS = -lpthread -ldl
 
 ##########################################################
