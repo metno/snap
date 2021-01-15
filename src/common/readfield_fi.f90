@@ -57,7 +57,7 @@ contains
     else
       ! copying a fio doesn't seem to work, so I open fio directly
       call check(fio%open (filename, conf_file, file_type), &
-        "Can't make io-object with file:"//trim(filename)//" config: "//conf_file)
+        "Can't make io-object with file:"//trim(filename)//" config: "//trim(conf_file))
     end if
 
   end subroutine fimex_open

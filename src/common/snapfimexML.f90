@@ -61,7 +61,7 @@ contains
     USE iso_fortran_env, only: error_unit
     character(len=256), dimension(5) :: parts
     integer :: i = 1, prev_pos = 1, pos = 1
-    integer method
+    integer :: method
 
     parse_interpolator = 0
 
