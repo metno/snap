@@ -25,7 +25,6 @@ module snapfimexML
   implicit none
   private
 
-  !> parse the interpolation string, return 0 on success, 1 for  parse-errors
   public parse_interpolator
 
   !> fimex filetype, e.g. netcdf, grib, ncml for all files. All files have same type
@@ -57,6 +56,7 @@ module snapfimexML
   type(fimex_interpolation), save, public :: fint
 
 contains
+  !> parse the interpolation string, return 0 on success, 1 for  parse-errors
   integer function parse_interpolator()
     USE iso_fortran_env, only: error_unit
     character(len=256), dimension(5) :: parts
