@@ -3,12 +3,12 @@ include ../current.mk
 
 F77FLAGS += -DACCIDENT
 
+all:
+
 include ../common/snap.mk
 
 # export FIMEXLIB
 .EXPORT_ALL_VARIABLES:
-
-all: 
 
 install:
 

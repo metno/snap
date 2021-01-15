@@ -21,7 +21,7 @@
 module readfield_fiML
 
   USE Fimex, ONLY: FimexIO
-  USE snapfimexML, ONLY: file_type, conf_file
+  USE snapfimexML, ONLY: file_type, conf_file, interpolation, fint, parse_interpolator
   use iso_fortran_env, only: real32, real64, error_unit
   USE ftestML, only: ftest
   USE om2edotML, only: om2edot
@@ -32,7 +32,7 @@ module readfield_fiML
   implicit none
   private
 
-  public readfield_fi, fi_checkload, check
+  public readfield_fi, fi_checkload, check, fimex_open
 
   !> @brief load and check an array from a source
   interface fi_checkload
@@ -40,6 +40,27 @@ module readfield_fiML
   end interface
 
 contains
+
+!> open a fimex io object, eventuall with an interpolator
+!> dies on error
+  subroutine fimex_open(filename, fio)
+    character(*), intent(in) :: filename
+    TYPE(FimexIO), intent(out) :: fio
+
+    TYPE(FimexIO) :: fio_intern
+
+    if (fint%method >= 0) then
+      call check(fio_intern%open (filename, conf_file, file_type), &
+        "Can't make io-object with file:"//trim(filename)//" config: "//conf_file)
+      call check(fio%interpolate(fio_intern, fint%method, fint%proj, fint%x_axis, fint%y_axis, fint%unit_is_degree), &
+        "Can't interpolate file:"//trim(filename))
+    else
+      ! copying a fio doesn't seem to work, so I open fio directly
+      call check(fio%open (filename, conf_file, file_type), &
+        "Can't make io-object with file:"//trim(filename)//" config: "//conf_file)
+    end if
+
+  end subroutine fimex_open
 
 !> Read fields from fimex files. (see fimex.F90)
   subroutine readfield_fi(istep, nhleft, itimei, ihr1, ihr2, itimefi, ierror)
@@ -164,8 +185,7 @@ contains
 ! time between two inputs
 ! open the correct file, currently opened each time
     file_name = filef(iavail(ntav2)%fileNo)
-    call check(fio%open (file_name, conf_file, file_type), &
-               "Can't make io-object with file:"//trim(file_name)//" config: "//conf_file)
+    call fimex_open(file_name, fio)
 
 !     set timepos and nhdiff
     nhdiff = 3

@@ -193,7 +193,7 @@ PROGRAM bsnap
   USE init_random_seedML, only: init_random_seed
   USE compheightML, only: compheight
   USE readfield_ncML, only: readfield_nc
-  USE snapfimexML, only: fimex_type => file_type, fimex_config => conf_file
+  USE snapfimexML, only: fimex_type => file_type, fimex_config => conf_file, fimex_interpolation => interpolation, fint
 #if defined(FIMEX)
   USE readfield_fiML, only: readfield_fi
   USE filesort_fiML, only: filesort_fi
@@ -382,7 +382,7 @@ PROGRAM bsnap
     call filesort_nc ! (iunitf, ierror)
   else if (ftype == "fimex") then
 #if defined(FIMEX)
-    call filesort_fi(fimex_type, fimex_config)
+    call filesort_fi()
 #endif
   else
     ierror = 1
@@ -1188,6 +1188,7 @@ contains
                          TIME_PROFILE_CONSTANT, TIME_PROFILE_LINEAR, TIME_PROFILE_LINEAR, TIME_PROFILE_STEPS, &
                          TIME_PROFILE_UNDEFINED
     use find_parameter, only: detect_gridparams, get_klevel
+    use snapfimexML, only: parse_interpolator
 #if defined(FIMEX)
     use find_parameters_fi, only: detect_gridparams_fi
 #endif
@@ -1870,7 +1871,20 @@ contains
         !..fimex.file_type grib,netcdf,felt,ncml (known fimex filetypes), only used when ftype=fimex
         if (.not. has_value) goto 12
         read (cinput(pname_start:pname_end), *, err=12) fimex_type
-      case ('field.input')
+      case ('fimex.interpolation')
+        !..fimex.interpolation e.g. bilinear|+proj=stere +R=6371000 +lat_ts=60 +lat_0=0 +no_defs|0,1000,...,50000|0,1000,...,50000|m
+        if (.not. has_value) goto 12
+        fimex_interpolation = cinput(pname_start:pname_end)
+        if (ftype == "fimex") then
+          if (parse_interpolator() == 1) then
+            write (error_unit, *) 'interpolation input wrong:', trim(fimex_interpolation)
+            ierror = 1
+          else
+            write(error_unit,*) "interpolation enabled:", fint%method, trim(fint%proj), trim(fint%x_axis), &
+              trim(fint%y_axis), fint%unit_is_degree
+          end if
+        end if
+          case ('field.input')
         !..field.input=  felt_file_name
         if (.not. has_value) goto 12
         if (nfilef < size(limfcf, 2)) then
@@ -1964,7 +1978,7 @@ contains
         endif
         if (ftype .eq. "fimex") then
 #ifdef FIMEX
-          call detect_gridparams_fi(filef(1), fimex_config, fimex_type, met_params%xwindv, nx, ny, igtype, gparam, klevel, ierror)
+          call detect_gridparams_fi(filef(1), met_params%xwindv, nx, ny, igtype, gparam, klevel, ierror)
           if (ierror /= 0) then
             write (error_unit, *) "Could not detect gridparams"
             goto 12
@@ -2101,6 +2115,7 @@ contains
 !> and copies information to structures used when running the program.
   subroutine conform_input(ierror)
     use snapparML, only: TIME_PROFILE_UNDEFINED
+    use snapfimexML, only: parse_interpolator
     integer, intent(out) :: ierror
 
     integer :: i1, i2
