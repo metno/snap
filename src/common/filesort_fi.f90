@@ -26,7 +26,7 @@ contains
 !> check and sort netcdf file contents
   subroutine filesort_fi()
     USE iso_fortran_env, only: error_unit, real64, int64, int32
-    use Fimex, only: FimexIO, AXIS_GeoZ, &
+    use Fimex, only: FimexIO, AXIS_Lon, AXIS_Lat, AXIS_GeoX, AXIS_GeoY, AXIS_GeoZ, &
                      AXIS_Pressure, AXIS_Height, AXIS_Realization, AXIS_Time
     USE readfield_fiML, only: check
     USE snapfimexML, only: file_type, conf_file
@@ -110,9 +110,15 @@ contains
           CASE (AXIS_Realization)
             call check(fio%reduce_dimension(fio%get_dimname(i), enspos - 1, 1), &
                        "reducing "//TRIM(fio%get_dimname(i))//" to 0 for "//TRIM(varname))
+          CASE (AXIS_GeoX, AXIS_Lon)
+            call check(fio%reduce_dimension(fio%get_dimname(i), 0, 4), &
+                        "reducing "//TRIM(fio%get_dimname(i))//" to 4 for "//TRIM(varname))
+          CASE (AXIS_GeoY, AXIS_Lat)
+            call check(fio%reduce_dimension(fio%get_dimname(i), 0, 4), &
+                        "reducing "//TRIM(fio%get_dimname(i))//" to 4 for "//TRIM(varname))
           END SELECT
         END DO
-        if (.not. allocated(field)) allocate (field(nx*ny))
+        if (.not. allocated(field)) allocate (field(4*4))
         status = fio%read (varname, field)
 
         ! test 4 arbitrary values in field
