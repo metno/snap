@@ -1,12 +1,14 @@
 #! /usr/bin/env python3
+import math
+import netCDF4
 import os
-import subprocess
-from snapunittest import SnapTestCase
-import unittest
 import pathlib
-import tempfile
 import shutil
+import subprocess
+import tempfile
+import unittest
 
+from snapunittest import SnapTestCase
 
 class SnapEcEMEPForwardTestCase(SnapTestCase):
     input = 'snap.input_ecemep_fimex'
@@ -65,7 +67,7 @@ class SnapMEPSForwardTestCase(SnapTestCase):
     snap = '../bsnap_naccident'
     datadir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data')
 
-    snapExpected = 'https://thredds.met.no/thredds/dodsC/metusers/heikok/snap_testdata/snap_meps_expected.nc'
+    snapExpected = 'https://thredds.met.no/thredds/dodsC/metusers/heikok/snap_testdata/snap_meps_interpolated_expected.nc'
 
     def setUp(self):
         pass

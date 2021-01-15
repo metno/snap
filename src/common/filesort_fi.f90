@@ -1,5 +1,5 @@
 ! SNAP: Servere Nuclear Accident Programme
-! Copyright (C) 1992-2020   Norwegian Meteorological Institute
+! Copyright (C) 1992-2021   Norwegian Meteorological Institute
 
 ! This file is part of SNAP. SNAP is free software: you can
 ! redistribute it and/or modify it under the terms of the
@@ -24,11 +24,12 @@ module filesort_fiML
 contains
 
 !> check and sort netcdf file contents
-  subroutine filesort_fi(fimex_type, fimex_config)
+  subroutine filesort_fi()
     USE iso_fortran_env, only: error_unit, real64, int64, int32
-    use Fimex, only: FimexIO, AXIS_GeoZ, &
+    use Fimex, only: FimexIO, AXIS_Lon, AXIS_Lat, AXIS_GeoX, AXIS_GeoY, AXIS_GeoZ, &
                      AXIS_Pressure, AXIS_Height, AXIS_Realization, AXIS_Time
     USE readfield_fiML, only: check
+    USE snapfimexML, only: file_type, conf_file
     USE DateCalc, only: epochToDate
     USE Utils, only: itoa
     USE ieee_arithmetic, only: ieee_is_nan
@@ -38,10 +39,6 @@ contains
     USE snapdebug, only: iulog, idebug
     USE snapdimML, only: nx, ny, mavail
     USE milibML, only: vtime
-    !> filetype of all input-files, e.g. ncml, netcdf, grib
-    character(len=1024), intent(in) :: fimex_type
-    !> optional config-file
-    character(len=1024), intent(in) :: fimex_config
 
     TYPE(FimexIO) :: fio
     integer(int32), dimension(:), allocatable :: start, length, atypes
@@ -57,7 +54,9 @@ contains
 ! loop over all file-names
     do nf = 1, nfilef
       ! get the time steps from the files "time" variable
-      status = fio%open (filef(nf), fimex_config, fimex_type)
+      ! using fio%open rather than fimex_open since projection does not matter here
+      !  and might be expensive to set up
+      status = fio%open (filef(nf), conf_file, file_type)
       if (status /= 0) then
         write (error_unit, *) "cannot open ", trim(filef(nf))
         write (iulog, *) "cannot open ", trim(filef(nf))
@@ -111,9 +110,15 @@ contains
           CASE (AXIS_Realization)
             call check(fio%reduce_dimension(fio%get_dimname(i), enspos - 1, 1), &
                        "reducing "//TRIM(fio%get_dimname(i))//" to 0 for "//TRIM(varname))
+          CASE (AXIS_GeoX, AXIS_Lon)
+            call check(fio%reduce_dimension(fio%get_dimname(i), 0, 4), &
+                        "reducing "//TRIM(fio%get_dimname(i))//" to 4 for "//TRIM(varname))
+          CASE (AXIS_GeoY, AXIS_Lat)
+            call check(fio%reduce_dimension(fio%get_dimname(i), 0, 4), &
+                        "reducing "//TRIM(fio%get_dimname(i))//" to 4 for "//TRIM(varname))
           END SELECT
         END DO
-        if (.not. allocated(field)) allocate (field(nx*ny))
+        if (.not. allocated(field)) allocate (field(4*4))
         status = fio%read (varname, field)
 
         ! test 4 arbitrary values in field
