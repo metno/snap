@@ -1883,8 +1883,10 @@ contains
             write(error_unit,*) "interpolation enabled:", fint%method, trim(fint%proj), trim(fint%x_axis), &
               trim(fint%y_axis), fint%unit_is_degree
           end if
+        else
+          write(error_unit,*) "fimex.interpolation ignored when field.type not fimex: ", trim(ftype)
         end if
-          case ('field.input')
+      case ('field.input')
         !..field.input=  felt_file_name
         if (.not. has_value) goto 12
         if (nfilef < size(limfcf, 2)) then
