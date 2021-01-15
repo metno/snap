@@ -60,8 +60,7 @@ contains
   integer function parse_interpolator()
     USE iso_fortran_env, only: error_unit
     character(len=256), dimension(5) :: parts
-    integer :: i = 1, prev_pos = 1, pos = 1
-    integer :: method
+    integer :: i, prev_pos, pos, method
 
     parse_interpolator = 0
 
@@ -70,6 +69,9 @@ contains
       return
     end if
 
+    i = 1
+    prev_pos = 1
+    pos = 1
     !write(error_unit,*) "interpolation: ", trim(interpolation)
     do while (pos /= 0 .and. pos < (1+len_trim(interpolation)) .and. i < 5)
       pos = index(interpolation(prev_pos:), '|')
