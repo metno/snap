@@ -19,10 +19,9 @@
 !> fimex input-source
 module find_parameters_fi
   use iso_fortran_env, only: error_unit, int32, real32, real64
-  use netcdf ! should be removed
   use snapmetML
   use Fimex, only: FimexIO, AXIS_GeoX, AXIS_GeoY, AXIS_Lon, AXIS_Lat, AXIS_GeoZ
-  use readfield_fiML, only: check, fi_checkload
+  use readfield_fiML, only: check, fi_checkload, fimex_open
   use utils, only: atof
   implicit none
   private
@@ -44,11 +43,10 @@ contains
   !> Tries to detect grid parameters given by the
   !> netcdf file, taking the projection from
   !> the varname
-  subroutine detect_gridparams_fi(file, config, type, varname, nx, ny, igtype, gparam, klevel, stat)
+  subroutine detect_gridparams_fi(file, varname, nx, ny, igtype, gparam, klevel, stat)
+    use snapfimexML, only: file_type, conf_file
     !> Path to the netcdf file
     character(len=*), intent(in) :: file
-    character(len=*), intent(in) :: config
-    character(len=*), intent(in) :: type
     character(len=*), intent(in) :: varname
     !> Number of longitudes
     integer, intent(out) :: nx
@@ -76,13 +74,9 @@ contains
     integer :: i, xpos, ypos, kpos, ndims, nk
     character(LEN=1024) :: proj4, xdim, ydim, kdim
 
-    stat = 0
-    stat = fio%open (file, config, type)
-    if (stat /= 0) then
-      write (error_unit, *) "Can't make io-object with file: "//trim(file)//" config: "//trim(config)
-      return
-    endif
+    call fimex_open(file, fio)
 
+    stat = 0
     ! Initialize the slicebuilder and get dimensions
     ndims = fio%get_dimensions(varname)
     if (ndims <= 0) &
