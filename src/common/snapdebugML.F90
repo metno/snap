@@ -172,7 +172,7 @@ module snapdebug
       integer :: h, m, s, ms
       call real_to_hms_ms(t, h, m, s, ms)
 
-      write(str,"(I3, a, I2, a, I2, a, I4)") h, ":", m, ":", s, ".", ms
+      write(str,"(I3, ':', I0.2, ':', I0.2, '.', I0.4)") h, m, s, ms
 
     end function
 
@@ -271,12 +271,12 @@ module snapdebug
 
 #if defined(_OPENMP)
       write(current_unit,*) GLOBAL_TIMER_PREFIX, trim(this%prefix), " ", &
-        trim(to_str(duration_sys)), " (sys) ", &
+        trim(to_str(duration_sys)), " (system clock) ", &
         trim(to_str(duration_cpu)), " (cpu) ", &
-        trim(to_str(duration_womp)), " (wtime)"
+        trim(to_str(duration_womp)), " (walltime)"
 #else
       write(current_unit,*) GLOBAL_TIMER_PREFIX, trim(this%prefix), " ", &
-        trim(to_str(duration_sys)), " (sys) ", &
+        trim(to_str(duration_sys)), " (system clock) ", &
         trim(to_str(duration_cpu)), " (cpu)"
 #endif
     end subroutine
@@ -293,15 +293,11 @@ module snapdebug
         current_unit = iulog
       endif
 
+      write(current_unit,*) GLOBAL_TIMER_PREFIX, GLOBAL_TIMER_TOTAL_PREFIX, trim(this%prefix)
+      write(current_unit,*) "    system clock: ", trim(to_str(this%total_sys))
+      write(current_unit,*) "    cpu:          ", trim(to_str(this%total_cpu))
 #if defined(_OPENMP)
-      write(current_unit,*) GLOBAL_TIMER_PREFIX, GLOBAL_TIMER_TOTAL_PREFIX, trim(this%prefix), " ", &
-        trim(to_str(this%total_sys)), " (sys) " , &
-        trim(to_str(this%total_cpu)), " (cpu) ", &
-        trim(to_str(this%total_womp)), " (wtime)"
-#else
-      write(current_unit,*) GLOBAL_TIMER_PREFIX, GLOBAL_TIMER_TOTAL_PREFIX, trim(this%prefix), " ", &
-        trim(to_str(this%total_sys)), " (sys) " , &
-        trim(to_str(this%total_cpu)), " (cpu)"
+      write(current_unit,*) "    walltime:     ", trim(to_str(this%total_womp))
 #endif
     end subroutine
 end module snapdebug
