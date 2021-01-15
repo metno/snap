@@ -150,7 +150,7 @@
 PROGRAM bsnap
   USE iso_fortran_env, only: real64, output_unit, error_unit, IOSTAT_END
   USE DateCalc, only: epochToDate, timeGM
-  USE snapdebug, only: iulog, idebug
+  USE snapdebug, only: iulog, idebug, acc_timer => prefixed_accumulating_timer
   USE snapargosML, only: argosdepofile, argosdosefile, argoshoursrelease, &
                          argoshourstep, argoshoursrun, iargos, margos, argosconcfile, nargos, &
                          argostime
@@ -259,6 +259,12 @@ PROGRAM bsnap
 
 !> name of selected release position
   character(len=40), save :: srelnam = "*"
+
+  !> Time spent in various components of SNAP
+  type(acc_timer) :: timeloop_timer
+  type(acc_timer) :: output_timer
+  type(acc_timer) :: input_timer
+  type(acc_timer) :: particleloop_timer
 
 #if defined(TRAJ)
   integer :: timeStart(6), timeCurrent(6)
@@ -664,9 +670,15 @@ PROGRAM bsnap
         " in this build"
 #endif
     end if
+
+    timeloop_timer = acc_timer("time_loop:")
+    output_timer = acc_timer("output/accumulation:")
+    input_timer = acc_timer("Reading MET input:")
+    particleloop_timer = acc_timer("Particle loop:")
+
     ! start time loop
     time_loop: do istep = 0, nstep
-
+      call timeloop_timer%start()
       write (iulog, *) 'istep,nplume,npart: ', istep, nplume, npart
       flush (iulog)
       if (mod(istep, nsteph) == 0) then
@@ -702,6 +714,7 @@ PROGRAM bsnap
           nhleft = (nstep - istep + 1)/nsteph
           if (nhrun < 0) nhleft = -nhleft
         end if
+        call input_timer%start()
         if (ftype == "netcdf") then
           call readfield_nc(istep, nhleft, itimei, ihr1, ihr2, &
                             time_file, ierror)
@@ -715,6 +728,7 @@ PROGRAM bsnap
           write (iulog, *) "igtype, gparam(8): ", igtype, gparam
         end if
         if (ierror /= 0) call snap_error_exit(iulog)
+        call input_timer%stop_and_log()
 
         n = time_file(5)
         call vtime(time_file, ierr)
@@ -771,6 +785,7 @@ PROGRAM bsnap
           nxtinf = 1
           ifldout = 0
           ! continue istep loop after initialization
+          call timeloop_timer%stop()
           cycle time_loop
         end if
 
@@ -869,6 +884,9 @@ PROGRAM bsnap
       do npl = 1, nplume
         iplume(npl)%ageInSteps = iplume(npl)%ageInSteps + 1
       end do
+      !$OMP END PARALLEL DO
+
+      call particleloop_timer%start()
       ! particle loop
       !$OMP PARALLEL DO PRIVATE(pextra) SCHEDULE(guided) !np is private by default
       part_do: do np = 1, npart
@@ -898,6 +916,7 @@ PROGRAM bsnap
         call checkDomain(pdata(np))
       end do part_do
       !$OMP END PARALLEL DO
+      call particleloop_timer%stop_and_log()
 
       !..remove inactive particles or without any mass left
       call rmpart(rmlimit)
@@ -1029,6 +1048,7 @@ PROGRAM bsnap
       end if
 
       !..field output if ifldout=1, always accumulation for average fields
+      call output_timer%start()
       if (idailyout == 1) then
         !       daily output, append +x for each day
         ! istep/nsteph = hour  -> /24 =day
@@ -1053,6 +1073,7 @@ PROGRAM bsnap
         endif
         if (ierror /= 0) call snap_error_exit(iulog)
       end if
+      call output_timer%stop_and_log()
 
       if (isteph == 0 .AND. iprecip < nprecip) iprecip = iprecip + 1
 
@@ -1110,6 +1131,7 @@ PROGRAM bsnap
         enddo
       endif
 #endif
+      call timeloop_timer%stop_and_log()
     end do time_loop
 #if defined(TRAJ)
     close (13)
@@ -1135,6 +1157,11 @@ PROGRAM bsnap
   write (error_unit, '(''mhmax='',f10.2)') mhmax
   write (error_unit, '(''mhmin='',f10.2)') mhmin
   write (error_unit, *)
+
+  call timeloop_timer%print_accumulated()
+  call output_timer%print_accumulated()
+  call input_timer%print_accumulated()
+  call particleloop_timer%print_accumulated()
   ! b_end
   write (iulog, *) ' SNAP run finished'
   write (error_unit, *) ' SNAP run finished'
@@ -1192,7 +1219,7 @@ contains
 #if defined(FIMEX)
     use find_parameters_fi, only: detect_gridparams_fi
 #endif
-  
+
     !> Open file unit
     integer, intent(in) :: snapinput_unit
 

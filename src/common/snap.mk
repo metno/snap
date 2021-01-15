@@ -47,7 +47,7 @@ snapfldML.o: ../common/snapfldML.f90
 	${F77} -c $(F77FLAGS) $(INCLUDES) $<
 ftest.o: ../common/ftest.f90 snapdebugML.o
 	${F77} -c $(F77FLAGS) $(INCLUDES) $<
-snapdebugML.o: ../common/snapdebugML.f90
+snapdebugML.o: ../common/snapdebugML.F90
 	${F77} -c $(F77FLAGS) $(INCLUDES) $<
 snapfilML.o: ../common/snapfilML.f90 snapdimML.o
 	${F77} -c ${F77FLAGS} $<
