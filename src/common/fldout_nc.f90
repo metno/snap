@@ -939,7 +939,7 @@ subroutine nc_declare_3d(iunit, dimids, varid, &
 
   if (.false.) write (error_unit,*) chksz ! Silence compiler
 
-  write(iulog,*) "declaring ", iunit, TRIM(varnm), TRIM(units), &
+  write(iulog,*) "declaring ", TRIM(varnm), TRIM(units), &
       TRIM(stdnm),TRIM(metnm)
   call check(nf90_def_var(iunit, TRIM(varnm), &
       NF90_FLOAT, dimids, varid), "def_"//varnm)
@@ -966,7 +966,7 @@ subroutine nc_declare_4d(iunit, dimids, varid, &
   INTEGER, INTENT(IN)    :: iunit, dimids(4), chksz(4)
   CHARACTER(LEN=*), INTENT(IN) :: varnm, stdnm, metnm, units
 
-  write(iulog,*) "declaring ", iunit, TRIM(varnm), TRIM(units), &
+  write(iulog,*) "declaring ", TRIM(varnm), TRIM(units), &
       TRIM(stdnm),TRIM(metnm)
   call check(nf90_def_var(iunit, TRIM(varnm), &
       NF90_FLOAT, dimids, varid), "def_"//varnm)

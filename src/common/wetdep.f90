@@ -29,7 +29,7 @@ contains
 !> NOTE: ::wetdep2_init must be run first
 !>
 !> Method:   J.Bartnicki 2003
-  pure subroutine wetdep2(depwet, tstep, part, pextra)
+  subroutine wetdep2(depwet, tstep, part, pextra)
     USE iso_fortran_env, only: real64
     USE particleML, only: Particle, extraParticle
     USE snapparML, only: def_comp, run_comp
