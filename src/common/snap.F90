@@ -785,6 +785,7 @@ PROGRAM bsnap
           nxtinf = 1
           ifldout = 0
           ! continue istep loop after initialization
+          call timeloop_timer%stop()
           cycle time_loop
         end if
 
