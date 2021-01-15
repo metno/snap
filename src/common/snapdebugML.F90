@@ -32,7 +32,7 @@ module snapdebug
 
     character(len=*), parameter :: global_timer_prefix = "timer: "
     character(len=*), parameter :: global_timer_total_prefix = "Total: "
-    integer, parameter :: prefix_len = 40
+    integer, parameter :: prefix_len = 35
 
     type, public :: timer_cpu_t
       real :: innertime
@@ -261,11 +261,9 @@ module snapdebug
         current_unit = iulog
       endif
 
-      write(tmp_str,*) GLOBAL_TIMER_PREFIX, trim(this%prefix), " "
-
-      write(current_unit,*) tmp_str, &
-        trim(to_str(duration_wtime)), " (wall) ", &
-        trim(to_str(duration_cpu)), " (cpu)"
+      write(tmp_str,'(a,a)') GLOBAL_TIMER_PREFIX, trim(this%prefix)
+      write(current_unit,'(a,a," (wall) ",a," (cpu)")') tmp_str, &
+        trim(to_str(duration_wtime)), trim(to_str(duration_cpu))
     end subroutine
 
     subroutine prefixed_timer_print_accumulated(this, unit)
@@ -282,9 +280,9 @@ module snapdebug
       endif
 
       tmp_str = ""
-      write(tmp_str, *) GLOBAL_TIMER_PREFIX, GLOBAL_TIMER_TOTAL_PREFIX, trim(this%prefix), " "
+      write(tmp_str, '(a,a,a)') GLOBAL_TIMER_PREFIX, GLOBAL_TIMER_TOTAL_PREFIX, trim(this%prefix)
       ! Not trimming tmp-str gives lined-up times
-      write(current_unit,*) tmp_str, trim(to_str(this%total_wtime)), " (wall) ", &
-        trim(to_str(this%total_cpu)), " (cpu)"
+      write(current_unit,'(a,a," (wall) ",a," (cpu)")') tmp_str, &
+           trim(to_str(this%total_wtime)), trim(to_str(this%total_cpu))
     end subroutine
 end module snapdebug
