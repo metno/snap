@@ -1,12 +1,13 @@
 program find_parameters_fi_test
   use iso_fortran_env, only: error_unit
   use find_parameters_fi, only: detect_gridparams_fi
+  use snapfimexML, only: conf_file, file_type
   implicit none
 
   integer :: n, len
   integer :: stat
   character(len=:), allocatable :: ncfile
-  character(len=1024) :: config, type, varname
+  character(len=1024) :: varname
 
   integer :: nx, ny
   integer :: igtype
@@ -14,8 +15,8 @@ program find_parameters_fi_test
 
   integer, allocatable :: klevel(:)
 
-  config = ""
-  type = "netcdf"
+  conf_file = ""
+  file_type = "netcdf"
 
   n = command_argument_count()
   if (n < 2) then
@@ -33,16 +34,16 @@ program find_parameters_fi_test
   call get_command_argument(2, value=varname, status=stat)
   if (stat /= 0) error stop "Could not get varname argument"
   if (n > 2) then
-    call get_command_argument(3, value=config, status=stat)
+    call get_command_argument(3, value=conf_file, status=stat)
     if (stat /= 0) error stop "Could not get config argument"
   end if
   if (n > 3) then
-    call get_command_argument(4, value=type, status=stat)
+    call get_command_argument(4, value=file_type, status=stat)
     if (stat /= 0) error stop "Could not get type argument"
   end if
 
 
-  call detect_gridparams_fi(ncfile, config, type, varname, nx, ny, igtype, gparam, klevel, stat)
+  call detect_gridparams_fi(ncfile, varname, nx, ny, igtype, gparam, klevel, stat)
   if (stat /= 0) error stop "Could not detect gridparams"
 
   write(*,*) "GRID.SIZE= ", nx, ny
