@@ -1,5 +1,5 @@
 ! SNAP: Servere Nuclear Accident Programme
-! Copyright (C) 1992-2017   Norwegian Meteorological Institute
+! Copyright (C) 1992-2021   Norwegian Meteorological Institute
 !
 ! This file is part of SNAP. SNAP is free software: you can
 ! redistribute it and/or modify it under the terms of the
@@ -24,8 +24,7 @@ module snapdebug
     implicit none
     private
 !> * 0 = debug off
-!> * 1 = debug on, note that mrfturbo/mrfelt only
-!>       prints to standard out (not the log file)
+!> * 1 = debug on
     integer, public, save :: idebug = 0
 !> output unit for log file
     integer, public :: iulog
