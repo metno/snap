@@ -78,11 +78,11 @@ class SnapJobEC():
 #$ -r y
 #$ -l h_rt=2:00:00
 #$ -l h_vmem=8G
-#$ -M heikok@met.no,andreb@met.no
+#$ -M heikok@met.no,magnusu@met.no
 #$ -m a
 #$ -P dsa
-#$ -pe mpi 1
-#$ -q operationalx.q
+#$ -pe shmem-1 1
+#$ -q operational-bionic.q
 #$ -sync no
 #$ -o {rundir}/$JOB_NAME.$JOB_ID.logout
 #$ -e {rundir}/$JOB_NAME.$JOB_ID.logerr
@@ -104,8 +104,8 @@ function send_msg()
 }}
 
 
-module load SnapPy/2.0.2
-module load fimex/1.5.0
+module load SnapPy/2.0.3
+#module load fimex/1.5.0
 
 ulimit -c 0
 export OMP_NUM_THREADS=1
