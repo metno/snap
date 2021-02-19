@@ -154,7 +154,7 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
         if (len(files) == 0):
             raise Exception("no EC met-files found for {}, runtime {}".format(startDTime, runTime))
     elif met_model == MetModel.NrpaEC0p1Global:
-        ecmet = EcMeteorologyCalculator(res, startDTime, float(lon), float(lat))
+        ecmet = EcMeteorologyCalculator(EcMeteorologyCalculator.getGlobalMeteoResources(), startDTime, float(lon), float(lat))
         ecmet.calc()
         if ecmet.must_calc():
             raise Exception("no EC met-files calculated for {}".format(startDTime))
