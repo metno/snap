@@ -71,7 +71,7 @@ class SnapJobEC():
         
             # Create qsub script
             script = '''#!/bin/bash
-#$ -N nrpa_bsnap
+#$ -N dsa_bsnap
 #$ -S /bin/bash
 #$ -V
 #$ -j n
