@@ -75,7 +75,7 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
     isoItems = rimstermGetIsotopes(rimxml)
     isos = res.getIsotopes()
     releases = []
-    offsetTime = 0
+    offsetTime = datetime.timedelta(hours=0)
     if releaseStartTime > startDTime:
         # add a 0 release from model start to release start
         # this handling does not cover non-hourly backward runs yet
