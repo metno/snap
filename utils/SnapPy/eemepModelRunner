@@ -52,12 +52,13 @@ class EemepModelRunner():
     statusfile = typed_property("statusfile", str)
     dryrun = typed_property("dryrun", bool)
 
-    def _log(self, dirname, msg):
-        with open(os.path.join(dirname, 'volcano.log'), 'a') as fh:
-            print("{date}: {msg}".format(date=datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ"),
-                                         msg=msg),
-                  file=fh)
+    def _getLogger(dirname):
+        if not hasattr(self, '_logger'):
+            self._logger = ModelRunner.getLogger(path=dirname)
+        return self._logger
 
+    def _log(self, dirname, msg):
+        self._getLogger(dirname).debug(msg)
 
     def _findVolcanoFiles(self):
         '''find volcano.xml files in directory and directory2'''
