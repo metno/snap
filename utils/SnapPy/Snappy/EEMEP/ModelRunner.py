@@ -81,19 +81,22 @@ class ModelRunner():
     OUTPUT_INSTANT_FILENAME = "eemep_hourInst.nc"
     OUTPUT_AVERAGE_FILENAME = "eemep_hour.nc"
 
+    logger = None
+
+
     @staticmethod
     def getLogger(path=None):
-        logger = logging.getLogger("ModelRunner")
         if path is None:
-            return logger
+            return self.logger
 
+        self.logger = logging.getLogger("ModelRunner")
         fmt = logging.Formatter('%(asctime)s: %(message)s', datefmt="%Y%m%dT%H%M%SZ")
         fmt.converter = gmtime #Make sure we are using UTC time
         fh = logging.FileHandler(os.path.join(path, 'volcano.log'))
         fh.setLevel(logging.DEBUG)
         fh.setFormatter(fmt)
-        logger.addHandler(fh)
-        return logger
+        self.logger.addHandler(fh)
+        return self.logger
 
     def __init__(self, path, hpcMachine):
         '''

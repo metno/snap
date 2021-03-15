@@ -54,7 +54,6 @@ class EemepModelRunner():
 
     def _getLogger(self, dirname):
         if not hasattr(self, '_logger'):
-            print(f'getting logger for {dirname}', file=sys.stderr)
             self._logger = ModelRunner.getLogger(path=dirname)
         return self._logger
 
