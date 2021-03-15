@@ -84,7 +84,7 @@ class ModelRunner():
     @staticmethod
     def getLogger(path=None):
         logger = logging.getLogger("ModelRunner")
-        if path=None:
+        if path is None:
             return logger
 
         fmt = logging.Formatter('%(asctime)s: %(message)s', datefmt="%Y%m%dT%H%M%SZ")
