@@ -89,7 +89,7 @@ class ModelRunner():
 
         fmt = logging.Formatter('%(asctime)s: %(message)s', datefmt="%Y%m%dT%H%M%SZ")
         fmt.converter = gmtime #Make sure we are using UTC time
-        fh = logging.FileHandler(os.path.join(self.inpath, 'volcano.log'))
+        fh = logging.FileHandler(os.path.join(path, 'volcano.log'))
         fh.setLevel(logging.DEBUG)
         fh.setFormatter(fmt)
         logger.addHandler(fh)
