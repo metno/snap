@@ -87,16 +87,16 @@ class ModelRunner():
     @staticmethod
     def getLogger(path=None):
         if path is None:
-            return self.logger
+            return ModelRunner.logger
 
-        self.logger = logging.getLogger("ModelRunner")
+        ModelRunner.logger = logging.getLogger("ModelRunner")
         fmt = logging.Formatter('%(asctime)s: %(message)s', datefmt="%Y%m%dT%H%M%SZ")
         fmt.converter = gmtime #Make sure we are using UTC time
         fh = logging.FileHandler(os.path.join(path, 'volcano.log'))
         fh.setLevel(logging.DEBUG)
         fh.setFormatter(fmt)
-        self.logger.addHandler(fh)
-        return self.logger
+        ModelRunner.logger.addHandler(fh)
+        return ModelRunner.logger
 
     def __init__(self, path, hpcMachine):
         '''
