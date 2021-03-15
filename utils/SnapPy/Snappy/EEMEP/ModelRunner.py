@@ -87,6 +87,8 @@ class ModelRunner():
     @staticmethod
     def getLogger(path=None):
         if path is None:
+            if ModelRunner.logger is None:
+                raise Exception('getLogger() called without being initialized with path')
             return ModelRunner.logger
 
         ModelRunner.logger = logging.getLogger("ModelRunner")
