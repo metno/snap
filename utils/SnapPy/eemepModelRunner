@@ -52,7 +52,7 @@ class EemepModelRunner():
     statusfile = typed_property("statusfile", str)
     dryrun = typed_property("dryrun", bool)
 
-    def _getLogger(dirname):
+    def _getLogger(self, dirname):
         if not hasattr(self, '_logger'):
             self._logger = ModelRunner.getLogger(path=dirname)
         return self._logger
