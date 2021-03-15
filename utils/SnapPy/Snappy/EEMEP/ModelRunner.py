@@ -96,6 +96,7 @@ class ModelRunner():
         fh.setLevel(logging.DEBUG)
         fh.setFormatter(fmt)
         ModelRunner.logger.addHandler(fh)
+        ModelRunner.logger.setLevel(logging.DEBUG)
         return ModelRunner.logger
 
     def __init__(self, path, hpcMachine):
