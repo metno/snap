@@ -81,7 +81,24 @@ class ModelRunner():
     OUTPUT_INSTANT_FILENAME = "eemep_hourInst.nc"
     OUTPUT_AVERAGE_FILENAME = "eemep_hour.nc"
 
+    @staticmethod
+    def getLogger(path=None):
+        logger = logging.getLogger("ModelRunner")
+        if path=None:
+            return logger
+
+        fmt = logging.Formatter('%(asctime)s: %(message)s', datefmt="%Y%m%dT%H%M%SZ")
+        fmt.converter = gmtime #Make sure we are using UTC time
+        fh = logging.FileHandler(os.path.join(self.inpath, 'volcano.log'))
+        fh.setLevel(logging.DEBUG)
+        fh.setFormatter(fmt)
+        logger.addHandler(fh)
+        return logger
+
     def __init__(self, path, hpcMachine):
+        '''
+        for correct working logs, make sure to have ModelRunner.getLogger(path=...) called before initialization
+        '''
         self.upload_files = set()
         self.timestamp = datetime.datetime.now()
         self.jobscript = "eemep_script.job"
@@ -92,13 +109,7 @@ class ModelRunner():
         self.inpath = path
 
         #Set up logging
-        self.logger = logging.getLogger("ModelRunner")
-        fmt = logging.Formatter('%(asctime)s: %(message)s', datefmt="%Y%m%dT%H%M%SZ")
-        fmt.converter = gmtime #Make sure we are using UTC time
-        fh = logging.FileHandler(os.path.join(self.inpath, 'volcano.log'))
-        fh.setLevel(logging.DEBUG)
-        fh.setFormatter(fmt)
-        self.logger.addHandler(fh)
+        self.logger = self.getLogger()
 
         self.rundir = self.res.getHPCRunDir(self.hpcMachine)
         volcano_path = os.path.join(path, ModelRunner.VOLCANO_FILENAME)
