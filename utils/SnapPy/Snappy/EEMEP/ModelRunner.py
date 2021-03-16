@@ -386,8 +386,7 @@ class ModelRunner():
                 return
             self.logger.debug("File {:s} contains the following timesteps: {:s}".format(filename, str(times)))
             if (len(times) < self.volcano.runTimeHours):
-                self.logger.error("File {:s} appears not to have the correct timesteps!".format(filename))
-                return
+                self.logger.warning("WARNING: File {:s} appears not to have the correct timesteps!".format(filename))
 
         #Download initial conditions for continued run
         file = 'EMEP_OUT_{}.nc'.format(tomorrow)
