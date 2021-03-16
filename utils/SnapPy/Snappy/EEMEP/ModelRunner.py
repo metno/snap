@@ -384,7 +384,7 @@ class ModelRunner():
             except Exception as e:
                 self.logger.error("Unable to open NetCDF file {:s}: {:s}".format(filename, str(e)))
                 return
-            self.logger.debug("File {:s} contains the following timesteps: {:s}".format(filename, str(times)))
+            self.logger.debug("File {:s} contains the following timesteps: {:s}..{:s}".format(filename, str(times[0]), str(times[-1])))
             if (len(times) < self.volcano.runTimeHours):
                 self.logger.warning("WARNING: File {:s} appears not to have the correct timesteps!".format(filename))
 
