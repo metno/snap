@@ -26,7 +26,7 @@ RUNTAG="{runtag}"
 # /prod/forecast/run/eemep2/
 RUNDIR={rundir}
 SRCDIR=/home/metno_op/emep/eemep2/src/
-DATA_DIR=/home/metno_op/emep/eemep2/input/eEMEP_OpenSource
+#DATA_DIR=/home/metno_op/emep/eemep2/input/eEMEP_OpenSource
 VERSION=active
 
 
@@ -68,7 +68,7 @@ trap 'Runstatus "FAILED ..." "$jobname" $maxnodes; echo "$jobname FAILED" > stat
 echo "running" > status
 
 # Link the input data
-ln -s $DATA_DIR/* .   # input files except meteorology
+#ln -s $DATA_DIR/* .   # input files except meteorology
 sed -e " s/startdate\s*=.*/startdate = $STARTDATE/;s/enddate.*/enddate = $ENDDATE/;s/outdate\s*=.*/outdate = $RESTARTDATE/" $SRCDIR/Unimod.$VERSION/config_emep.nml > config_emep.nml
 
 
