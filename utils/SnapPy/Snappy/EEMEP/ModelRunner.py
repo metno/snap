@@ -369,7 +369,10 @@ class ModelRunner():
         #Download output files
         for filename in [ModelRunner.OUTPUT_AVERAGE_FILENAME, ModelRunner.OUTPUT_INSTANT_FILENAME]:
             filename = os.path.join(self.hpc_outdir, filename)
-            age = file_age.pop(filename, None) / datetime.timedelta(minutes=1)
+            if filename in file_age:
+                age = file_age[filename] / datetime.timedelta(minutes=1)
+            else:
+                age = 999
             if (age > 120):
                 self.logger.debug("File {} too old on {}".format(filename, self.hpcMachine))
                 return
