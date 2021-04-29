@@ -380,16 +380,17 @@ class ModelRunner():
             self.hpc.get_files([filename], self.path, 1200)
 
             #Check sanity of output results
+            filename_local = os.path.join(self.path, filename)
             try:
-                with Dataset(os.path.join(self.path, filename)) as nc_file:
+                with Dataset(filename_local) as nc_file:
                     time_var = nc_file['time']
                     times = num2date(time_var[:], units = time_var.units).astype('datetime64[ns]')
             except Exception as e:
-                self.logger.error("Unable to open NetCDF file {:s}: {:s}".format(filename, str(e)))
+                self.logger.error("Unable to open NetCDF file {:s}: {:s}".format(filename_local, str(e)))
                 return
-            self.logger.debug("File {:s} contains the following timesteps: {:s}..{:s}".format(filename, str(times[0]), str(times[-1])))
+            self.logger.debug("File {:s} contains the following timesteps: {:s}..{:s}".format(filename_local, str(times[0]), str(times[-1])))
             if (len(times) < self.volcano.runTimeHours):
-                self.logger.warning("WARNING: File {:s} appears not to have the correct timesteps!".format(filename))
+                self.logger.warning("WARNING: File {:s} appears not to have the correct timesteps!".format(filename_local))
 
         #Download initial conditions for continued run
         file = 'EMEP_OUT_{}.nc'.format(tomorrow)
