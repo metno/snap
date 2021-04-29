@@ -368,6 +368,7 @@ class ModelRunner():
 
         #Download output files
         for filename in [ModelRunner.OUTPUT_AVERAGE_FILENAME, ModelRunner.OUTPUT_INSTANT_FILENAME]:
+            filename_local = os.path.join(self.path, filename)
             filename = os.path.join(self.hpc_outdir, filename)
             if filename in file_age:
                 age = file_age[filename] / datetime.timedelta(minutes=1)
@@ -380,7 +381,6 @@ class ModelRunner():
             self.hpc.get_files([filename], self.path, 1200)
 
             #Check sanity of output results
-            filename_local = os.path.join(self.path, filename)
             try:
                 with Dataset(filename_local) as nc_file:
                     time_var = nc_file['time']
