@@ -78,7 +78,7 @@ class SnapJobEC():
 #$ -r y
 #$ -l h_rt=2:00:00
 #$ -l h_vmem=8G
-#$ -M heikok@met.no,magnusu@met.no
+#$ -M beredskap-fou-kl@met.no
 #$ -m a
 #$ -P dsa
 #$ -pe shmem-1 1
