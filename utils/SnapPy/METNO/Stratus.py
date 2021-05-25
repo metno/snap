@@ -87,7 +87,7 @@ class TestStratus(unittest.TestCase):
 #SBATCH -A met
 #SBATCH --nodes=1 --ntasks-per-node=1 --time=01:00:00
 #SBATCH -D {rdir}/
-#SBATCH --mail-type=FAIL --mail-user=heiko.klein@met.no
+#SBATCH --mail-type=FAIL --mail-user=beredskap-fou-kl@met.no
 #SBATCH -n1
 
 sleep 8
