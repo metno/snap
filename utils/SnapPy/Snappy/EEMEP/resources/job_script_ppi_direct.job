@@ -6,7 +6,7 @@
 #$ -pe ib-fn 96
 #$ -l h_vmem=4G
 #$ -q ibx.q
-#$ -M heiko.klein@met.no
+#$ -M beredskap-fou-kl@met.no
 #$ -S /bin/bash
 #$ -m a
 #$ -o /lustre/storeB/project/fou/kl/eva/eemep/HPC/work/emep/eemep/tmp/eemep_single.log
