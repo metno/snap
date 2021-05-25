@@ -29,7 +29,7 @@ fi
 #      };
 #
 #     Check first that it looks plausible:
-#     $ dupload --no --to xenial dist/snap-py_<version>_amd64.changes
+#     $ dupload --no --to bionic dist/snap-py_<version>-1_amd64.changes
 #     then remove --no option
 #
 #     Wait for confirmation email that package has been accepted
@@ -60,8 +60,8 @@ fi
 #INSTRUCTIONS_END
 
 HOST=bionic
-VERSION=1.6.19
-CHANGELOG="fix meps-det setup"
+VERSION=1.6.20
+CHANGELOG="add stations Grotsund and Haakonsvern"
 rm -f debian
 ln -s debian.$HOST debian
 dch -v ${VERSION}-1 -U "${CHANGELOG}"

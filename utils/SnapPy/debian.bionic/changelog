@@ -1,3 +1,9 @@
+snap-py (1.6.20-1) bionic; urgency=medium
+
+  * add stations Grotsund and Haakonsvern
+
+ -- Magnus Ulimoen <magnusu@pc5054.pc.met.no>  Tue, 25 May 2021 11:56:47 +0200
+
 snap-py (1.6.19-1) bionic; urgency=medium
 
   * fix meps-det setup
