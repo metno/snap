@@ -1,3 +1,9 @@
+snap-py (1.6.21-1) bionic; urgency=medium
+
+  * replace private email addresses with beredskap-fou-kl
+
+ -- Magnus Ulimoen <magnusu@pc5054.pc.met.no>  Wed, 26 May 2021 09:40:35 +0200
+
 snap-py (1.6.20-1) bionic; urgency=medium
 
   * add stations Grotsund and Haakonsvern

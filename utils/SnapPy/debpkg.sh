@@ -60,8 +60,8 @@ fi
 #INSTRUCTIONS_END
 
 HOST=bionic
-VERSION=1.6.20
-CHANGELOG="add stations Grotsund and Haakonsvern"
+VERSION=1.6.21
+CHANGELOG="replace private email addresses with beredskap-fou-kl"
 rm -f debian
 ln -s debian.$HOST debian
 dch -v ${VERSION}-1 -U "${CHANGELOG}"
