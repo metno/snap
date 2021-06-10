@@ -1481,25 +1481,34 @@ contains
         !..release.radius.m
         if (.not. has_value) goto 12
         if (.not. allocated(releases)) call allocate_releases(cinput(pname_start:pname_end), ntprof)
-        read (cinput(pname_start:pname_end), *, err=12) releases%relradius(1)
+
+        call read_array_or_scalar(cinput(pname_start:pname_end), releases%relradius(1), ierror)
+        if (ierror /= 0) goto 12
         if (any(releases%relradius(1) < 0.0)) goto 12
+
       case ('release.upper.m')
         !..release.upper.m
         if (.not. has_value) goto 12
         if (.not. allocated(releases)) call allocate_releases(cinput(pname_start:pname_end), ntprof)
-        read (cinput(pname_start:pname_end), *, err=12) releases%relupper(1)
+        call read_array_or_scalar(cinput(pname_start:pname_end), releases%relupper(1), ierror)
+        if (ierror /= 0) goto 12
         if (any(releases%relupper(1) < 0.0)) goto 12
+
       case ('release.lower.m')
         !..release.lower.m
         if (.not. has_value) goto 12
         if (.not. allocated(releases)) call allocate_releases(cinput(pname_start:pname_end), ntprof)
-        read (cinput(pname_start:pname_end), *, err=12) releases%rellower(1)
+        call read_array_or_scalar(cinput(pname_start:pname_end), releases%rellower(1), ierror)
+        if (ierror /= 0) goto 12
         if (any(releases%rellower(1) < 0.0)) goto 12
+
       case ('release.mushroom.stem.radius.m')
         !..release.mushroom.stem.radius.m
         if (.not. has_value) goto 12
         if (.not. allocated(releases)) call allocate_releases(cinput(pname_start:pname_end), ntprof)
-        read (cinput(pname_start:pname_end), *, err=12) releases%relstemradius
+        call read_array_or_scalar(cinput(pname_start:pname_end), releases%relstemradius, ierror)
+        if (ierror /= 0) goto 12
+
       case ('release.bq/hour.comp', 'release.bq/sec.comp', 'release.bq/day.comp', 'release.bq/step.comp')
         !..release.bq/hour.comp
         !..release.bq/sec.comp
@@ -2361,5 +2370,22 @@ contains
     if (iprodr == 0) iprodr = iprod
     if (igridr == 0) igridr = igrid
 
+  end subroutine
+
+  ! Reads an array from str to arr, or broadcast a scalar
+  ! from str to arr
+  pure subroutine read_array_or_scalar(str, arr, stat)
+    character(len=*), intent(in) :: str
+    real, intent(out) :: arr(:)
+    integer, intent(out) :: stat
+
+    read (str, *, iostat=stat) arr
+    if (stat == 0) return
+    ! The IO error might be due to size mismatch, try reading a scalar
+    read (str, *, iostat=stat) arr(1)
+    if (stat /= 0) return
+
+    ! Broadcast the scalar to arr
+    arr(2:) = arr(1)
   end subroutine
 END PROGRAM
