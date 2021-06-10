@@ -17,7 +17,7 @@
 
 !> Common for input felt files
 module snapfilML
-    use iso_fortran_env, only: int16
+    use iso_fortran_env, only: int16, int32
     use snapdimML, only: mavail
     implicit none
 
@@ -53,8 +53,8 @@ module snapfilML
         integer(kind=int16) :: FILETYPE
         !> timePos position of #fchour in current time
         integer(kind=int16) :: TIMEPOS
-        !> offset in hours from first sorted timestep
-        integer(kind=int16) :: OHOUR
+        !> offset in hours since 1970-01-01 00:00
+        integer(kind=int32) :: OHOUR
         !> pointer to next forward time data
         integer(kind=int16) :: NAVAIL
         !> pointer to next backward (=previous) time data
