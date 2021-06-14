@@ -78,10 +78,6 @@ subroutine  releasefile(filename, release1)
     if (cinput == "end") goto 18
     if (cinput(1:1) /= '*') then
       read(cinput, *, err=12) hour, height, comp, rel_s
-      if (lasthour == -1 .AND. hour /= 0) then
-        write (error_unit,*) 'first hour must be 0'
-        goto 12
-      end if
       if (hour < lasthour) then
         write (error_unit,*) 'hour must increase monotonic: ', &
         hour, ' < ', lasthour
