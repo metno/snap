@@ -30,7 +30,7 @@ module releasefileML
 !> data is read from the filename and modifies the fields of
 !> - releases
 subroutine  releasefile(filename, release1)
-  USE iso_fortran_env, only: error_unit
+  USE iso_fortran_env, only: error_unit, IOSTAT_END
   USE snapparML, only: ncomp, component
   USE snapdimML, only: mcomp
   USE releaseML, only: mrelheight, releases, nrelheight, release_t
@@ -40,7 +40,7 @@ subroutine  releasefile(filename, release1)
   type(release_t), intent(in) :: release1
 
   character(256) :: cinput
-  integer :: ifd, ios, iend, iexit, nlines
+  integer :: ifd, ios, iexit, nlines
   integer :: i,j
   real :: hour, lasthour
   integer :: height
@@ -68,12 +68,16 @@ subroutine  releasefile(filename, release1)
 
 ! header row
   nlines=0
-  iend=0
   lasthour = -1
   ihour = 0
-  inputlines: do while (iend == 0)
+  inputlines: do
     nlines=nlines+1
-    read(ifd,fmt='(a)',err=11) cinput
+    read(ifd, fmt='(a)', iostat=ios) cinput
+    if (ios == IOSTAT_END) then
+      exit inputlines
+    else if (ios /= 0) then
+      goto 11
+    endif
     if (debugrelfile) write (error_unit,*) 'cinput (',nlines,'):',cinput
     if (cinput == "end") exit inputlines
     if (cinput(1:1) == '*') cycle inputlines
