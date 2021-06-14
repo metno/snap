@@ -248,6 +248,7 @@ PROGRAM bsnap
 ! b_start
   real :: mhmin, mhmax  ! minimum and maximum of mixing height
 ! b_end
+!> Information for reading from a releasefile
   type(release_t) :: release1
 
   logical :: blfullmix = .true.

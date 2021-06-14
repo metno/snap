@@ -27,11 +27,8 @@ module releasefileML
 !> comment-rows start with #
 !> hour height[upper_in_m] component release[kg/s]
 !>
-!> data is read to
-!> - frelhour
-!> - relbqsec(time, comp, height)
-!>
-!> for each release-step, rellower/relupper/relradius are copied from (1,x)
+!> data is read from the filename and modifies the fields of
+!> - releases
 subroutine  releasefile(filename, release1)
   USE iso_fortran_env, only: error_unit
   USE snapparML, only: ncomp, component
@@ -39,10 +36,10 @@ subroutine  releasefile(filename, release1)
   USE releaseML, only: mrelheight, releases, nrelheight, release_t
 
   character(72), intent(in) :: filename
+!> Structure to copy rellower, relupper, and relradius from
   type(release_t), intent(in) :: release1
 
   character(256) :: cinput
-  logical :: debugrelfile
   integer :: ifd, ios, iend, iexit, nlines
   integer :: i,j
   real :: hour, lasthour
@@ -53,7 +50,7 @@ subroutine  releasefile(filename, release1)
   integer :: ntprof
   type(release_t), allocatable :: tmp_release(:)
 
-  debugrelfile = .FALSE.
+  logical, parameter :: debugrelfile = .FALSE.
   iexit = 0
 
   write (error_unit,*) 'reading release from: ', filename
@@ -61,13 +58,12 @@ subroutine  releasefile(filename, release1)
     write (error_unit,*) 'ncomp, nrelheight', ncomp, nrelheight
   end if
 
-  ifd=8
-  open(ifd,file=filename, &
+  open(newunit=ifd,file=filename, &
       access='sequential',form='formatted', &
       status='old',iostat=ios)
   if(ios /= 0) then
     write (error_unit,*) 'Open Error: ', trim(filename)
-    stop 1
+    error stop 1
   endif
 
 ! header row
