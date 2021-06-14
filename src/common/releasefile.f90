@@ -97,11 +97,7 @@ subroutine  releasefile(filename, release1)
         endif
         releases(ihour)%frelhour = hour
       ! make sure all initial release are undefined
-        do i=1,mcomp
-          do j=1,mrelheight
-            releases(ihour)%relbqsec(i,j)= -1.
-          end do
-        end do
+        releases(ihour)%relbqsec(:,:) = -1
       end if
     ! find the component
       icmp = 0
