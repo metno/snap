@@ -71,12 +71,12 @@ subroutine  releasefile(filename, release1)
   iend=0
   lasthour = -1
   ihour = 0
-  do while (iend == 0)
+  inputlines: do while (iend == 0)
     nlines=nlines+1
     read(ifd,fmt='(a)',err=11) cinput
     if (debugrelfile) write (error_unit,*) 'cinput (',nlines,'):',cinput
-    if (cinput == "end") goto 18
-    if (cinput(1:1) == '*') cycle
+    if (cinput == "end") exit inputlines
+    if (cinput(1:1) == '*') cycle inputlines
 
     read(cinput, *, err=12) hour, height, comp, rel_s
     if (hour < lasthour) then
@@ -123,7 +123,7 @@ subroutine  releasefile(filename, release1)
     ! save the release
     releases(ihour)%relbqsec(icmp, iheight) = rel_s
     ! end ifnot comment '*'
-  end do
+  end do inputlines
   goto 18
 
   11 write (error_unit,*) 'ERROR reading file: ',filename(1:len(filename,1))
@@ -143,11 +143,9 @@ subroutine  releasefile(filename, release1)
 ! theoretically possible to add time-varying heights/radiuses
 ! but not supported by input file format yet
   do ihour=1,ntprof
-    do iheight=1,nrelheight
-      releases(ihour)%rellower(iheight) = release1%rellower(iheight)
-      releases(ihour)%relupper(iheight) = release1%relupper(iheight)
-      releases(ihour)%relradius(iheight) = release1%relradius(iheight)
-    end do
+    releases(ihour)%rellower(1:nrelheight) = release1%rellower(1:nrelheight)
+    releases(ihour)%relupper(1:nrelheight) = release1%relupper(1:nrelheight)
+    releases(ihour)%relradius(1:nrelheight) = release1%relradius(1:nrelheight)
   end do
 
 ! sanity check of relbqsec
