@@ -76,51 +76,53 @@ subroutine  releasefile(filename, release1)
     read(ifd,fmt='(a)',err=11) cinput
     if (debugrelfile) write (error_unit,*) 'cinput (',nlines,'):',cinput
     if (cinput == "end") goto 18
-    if (cinput(1:1) /= '*') then
-      read(cinput, *, err=12) hour, height, comp, rel_s
-      if (hour < lasthour) then
-        write (error_unit,*) 'hour must increase monotonic: ', &
-        hour, ' < ', lasthour
-        goto 12
-      end if
-      if (hour > lasthour) then
-      ! add new release timestep
-        lasthour = hour
-        ihour = ihour + 1
-        if (.not.allocated(releases)) then
-          allocate(releases(1))
-        else
-          call move_alloc(from=releases, to=tmp_release)
-          allocate(releases(size(tmp_release)+1))
-          releases(1:size(tmp_release)) = tmp_release
-          deallocate(tmp_release)
-        endif
-        releases(ihour)%frelhour = hour
-      ! make sure all initial release are undefined
-        releases(ihour)%relbqsec(:,:) = -1
-      end if
-    ! find the component
-      icmp = 0
-      do i=1,ncomp
-        if(comp == component(i)) icmp=i
-      end do
-      if (icmp == 0) then
-        write (error_unit,*) 'unknown component: ',comp
-        goto 12
-      endif
-    ! find the height
-      iheight = 0
-      do i=1,nrelheight
-        if(height == release1%rellower(i)) iheight = i
-      end do
-      if (iheight == 0) then
-        write (error_unit,*) 'unkown lower height: ', height
-        goto 12
-      end if
-    ! save the release
-      releases(ihour)%relbqsec(icmp, iheight) = rel_s
-    ! end ifnot comment '*'
+    if (cinput(1:1) == '*') cycle
+
+    read(cinput, *, err=12) hour, height, comp, rel_s
+    if (hour < lasthour) then
+      write (error_unit,*) 'hour must increase monotonic: ', &
+      hour, ' < ', lasthour
+      goto 12
     end if
+
+    if (hour > lasthour) then
+      ! add new release timestep
+      lasthour = hour
+      ihour = ihour + 1
+      if (.not.allocated(releases)) then
+        allocate(releases(1))
+      else
+        call move_alloc(from=releases, to=tmp_release)
+        allocate(releases(size(tmp_release)+1))
+        releases(1:size(tmp_release)) = tmp_release
+        deallocate(tmp_release)
+      endif
+      releases(ihour)%frelhour = hour
+      ! make sure all initial release are undefined
+      releases(ihour)%relbqsec(:,:) = -1
+    end if
+
+    ! find the component
+    icmp = 0
+    do i=1,ncomp
+      if(comp == component(i)) icmp=i
+    end do
+    if (icmp == 0) then
+      write (error_unit,*) 'unknown component: ',comp
+      goto 12
+    endif
+    ! find the height
+    iheight = 0
+    do i=1,nrelheight
+      if(height == release1%rellower(i)) iheight = i
+    end do
+    if (iheight == 0) then
+      write (error_unit,*) 'unkown lower height: ', height
+      goto 12
+    end if
+    ! save the release
+    releases(ihour)%relbqsec(icmp, iheight) = rel_s
+    ! end ifnot comment '*'
   end do
   goto 18
 
