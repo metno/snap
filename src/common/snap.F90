@@ -1345,10 +1345,10 @@ contains
         kh = index(cinput(pname_start:pname_end), 'h')
         kd = index(cinput(pname_start:pname_end), 'd')
         if (kh > 0 .AND. kd == 0) then
-          read (cinput(pname_start:pname_start + kh), *, err=12) rnhrel
+          read (cinput(pname_start:pname_start + kh - 2), *, err=12) rnhrel
           nhrel = ceiling(rnhrel)
         elseif (kd > 0 .AND. kh == 0) then
-          read (cinput(pname_start:pname_start + kd), *, err=12) rnhrel
+          read (cinput(pname_start:pname_start + kd - 2), *, err=12) rnhrel
           nhrel = ceiling(rnhrel*24.)
         else
           goto 12
