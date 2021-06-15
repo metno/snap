@@ -336,6 +336,7 @@ PROGRAM bsnap
 
   if (relfile /= '*') then
     call releasefile(relfile, release1)
+    ntprof = size(releases)
   end if
 
 !..convert names to uppercase letters
@@ -2104,7 +2105,7 @@ contains
     nelems = nelems + 1 ! Fencepost
 
     allocate (releases(nelems))
-    do i = 1, ntprof
+    do i = 1, nelems
       releases(i)%frelhour = -1.0
       releases(i)%relradius = -1.0
       releases(i)%relupper = -1.0
