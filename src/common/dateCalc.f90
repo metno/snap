@@ -140,7 +140,7 @@ contains
     return
   end function leapyear
 
-! convert a string to a list of values(6) = secs,min,hours, days,month,year
+! convert an ISO8601 date string to a list of values(6) = secs,min,hours, days,month,year
   function parseIsoDate(str) result(values)
     USE iso_c_binding, ONLY: C_NULL_CHAR
     character(len=*), intent(in)       :: str
@@ -178,19 +178,22 @@ contains
     if (ind > 0) read(substr(:ind-1),*) values(2)
     substr = substr(ind+1:)
 
-    ! seconds, end at end, ., space, C_NULL_CHAR or Z
-    ind = index(substr, ".")
+    ! seconds, end at end, ., space, C_NULL_CHAR, Z, or +
+    ind = len(substr)
+
+    ind2 = index(substr, ".")
+    if (ind2 /= 0) ind = min(ind, ind2)
     ind2 = index(substr, " ")
-    if (ind == 0) ind = len(substr)
-    if (ind2 == 0) ind2 = len(substr)
-    ind = min(ind, ind2)
+    if (ind2 /= 0) ind = min(ind, ind2)
     ind2 = index(substr, "Z")
-    if (ind2 == 0) ind2 = len(substr)
-    ind = min(ind, ind2)
+    if (ind2 /= 0) ind = min(ind, ind2)
+    ind2 = index(substr, "z")
+    if (ind2 /= 0) ind = min(ind, ind2)
+    ind2 = index(substr, "+")
+    if (ind2 /= 0) ind = min(ind, ind2)
     ind2 = index(substr, C_NULL_CHAR)
-    if (ind2 == 0) ind2 = len(substr)
-    ind = min(ind, ind2)
-    ! write (error_unit,*) ind, ind2, substr
+    if (ind2 /= 0) ind = min(ind, ind2)
+
     if (ind > 0) read(substr(:ind-1),*) values(1)
     substr = substr(ind+1:)
 
