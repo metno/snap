@@ -27,23 +27,20 @@ module releasefileML
 !> comment-rows start with #
 !> hour height[upper_in_m] component release[kg/s]
 !>
-!> data is read to
-!> - frelhour
-!> - relbqsec(time, comp, height)
-!>
-!> for each release-step, rellower/relupper/relradius are copied from (1,x)
+!> data is read from the filename and modifies the fields of
+!> - releases
 subroutine  releasefile(filename, release1)
-  USE iso_fortran_env, only: error_unit
+  USE iso_fortran_env, only: error_unit, IOSTAT_END
   USE snapparML, only: ncomp, component
   USE snapdimML, only: mcomp
   USE releaseML, only: mrelheight, releases, nrelheight, release_t
 
   character(72), intent(in) :: filename
+!> Structure to copy rellower, relupper, and relradius from
   type(release_t), intent(in) :: release1
 
   character(256) :: cinput
-  logical :: debugrelfile
-  integer :: ifd, ios, iend, iexit, nlines
+  integer :: ifd, ios, iexit, nlines
   integer :: i,j
   real :: hour, lasthour
   integer :: height
@@ -53,7 +50,7 @@ subroutine  releasefile(filename, release1)
   integer :: ntprof
   type(release_t), allocatable :: tmp_release(:)
 
-  debugrelfile = .FALSE.
+  logical, parameter :: debugrelfile = .FALSE.
   iexit = 0
 
   write (error_unit,*) 'reading release from: ', filename
@@ -61,79 +58,76 @@ subroutine  releasefile(filename, release1)
     write (error_unit,*) 'ncomp, nrelheight', ncomp, nrelheight
   end if
 
-  ifd=8
-  open(ifd,file=filename, &
+  open(newunit=ifd,file=filename, &
       access='sequential',form='formatted', &
       status='old',iostat=ios)
   if(ios /= 0) then
     write (error_unit,*) 'Open Error: ', trim(filename)
-    stop 1
+    error stop 1
   endif
 
 ! header row
   nlines=0
-  iend=0
   lasthour = -1
   ihour = 0
-  do while (iend == 0)
+  inputlines: do
     nlines=nlines+1
-    read(ifd,fmt='(a)',err=11) cinput
+    read(ifd, fmt='(a)', iostat=ios) cinput
+    if (ios == IOSTAT_END) then
+      exit inputlines
+    else if (ios /= 0) then
+      goto 11
+    endif
     if (debugrelfile) write (error_unit,*) 'cinput (',nlines,'):',cinput
-    if (cinput == "end") goto 18
-    if (cinput(1:1) /= '*') then
-      read(cinput, *, err=12) hour, height, comp, rel_s
-      if (lasthour == -1 .AND. hour /= 0) then
-        write (error_unit,*) 'first hour must be 0'
-        goto 12
-      end if
-      if (hour < lasthour) then
-        write (error_unit,*) 'hour must increase monotonic: ', &
-        hour, ' < ', lasthour
-        goto 12
-      end if
-      if (hour > lasthour) then
-      ! add new release timestep
-        lasthour = hour
-        ihour = ihour + 1
-        if (.not.allocated(releases)) then
-          allocate(releases(1))
-        else
-          call move_alloc(from=releases, to=tmp_release)
-          allocate(releases(size(tmp_release)+1))
-          releases(1:size(tmp_release)) = tmp_release
-          deallocate(tmp_release)
-        endif
-        releases(ihour)%frelhour = hour
-      ! make sure all initial release are undefined
-        do i=1,mcomp
-          do j=1,mrelheight
-            releases(ihour)%relbqsec(i,j)= -1.
-          end do
-        end do
-      end if
-    ! find the component
-      icmp = 0
-      do i=1,ncomp
-        if(comp == component(i)) icmp=i
-      end do
-      if (icmp == 0) then
-        write (error_unit,*) 'unknown component: ',comp
-        goto 12
-      endif
-    ! find the height
-      iheight = 0
-      do i=1,nrelheight
-        if(height == release1%rellower(i)) iheight = i
-      end do
-      if (iheight == 0) then
-        write (error_unit,*) 'unkown lower height: ', height
-        goto 12
-      end if
-    ! save the release
-      releases(ihour)%relbqsec(icmp, iheight) = rel_s
-    ! end ifnot comment '*'
+    if (cinput == "end") exit inputlines
+    if (cinput(1:1) == '*') cycle inputlines
+
+    read(cinput, *, err=12) hour, height, comp, rel_s
+    if (hour < lasthour) then
+      write (error_unit,*) 'hour must increase monotonic: ', &
+      hour, ' < ', lasthour
+      goto 12
     end if
-  end do
+
+    if (hour > lasthour) then
+      ! add new release timestep
+      lasthour = hour
+      ihour = ihour + 1
+      if (.not.allocated(releases)) then
+        allocate(releases(1))
+      else
+        call move_alloc(from=releases, to=tmp_release)
+        allocate(releases(size(tmp_release)+1))
+        releases(1:size(tmp_release)) = tmp_release
+        deallocate(tmp_release)
+      endif
+      releases(ihour)%frelhour = hour
+      ! make sure all initial release are undefined
+      releases(ihour)%relbqsec(:,:) = -1
+    end if
+
+    ! find the component
+    icmp = 0
+    do i=1,ncomp
+      if(comp == component(i)) icmp=i
+    end do
+    if (icmp == 0) then
+      write (error_unit,*) 'unknown component: ',comp
+      goto 12
+    endif
+    ! find the height
+    iheight = 0
+    do i=1,nrelheight
+      if(height == release1%rellower(i)) iheight = i
+    end do
+    if (iheight == 0) then
+      write (error_unit,*) 'unkown lower height: ', height
+      goto 12
+    end if
+    ! save the release
+    releases(ihour)%relbqsec(icmp, iheight) = rel_s
+    ! end ifnot comment '*'
+  end do inputlines
   goto 18
 
   11 write (error_unit,*) 'ERROR reading file: ',filename(1:len(filename,1))
@@ -153,11 +147,9 @@ subroutine  releasefile(filename, release1)
 ! theoretically possible to add time-varying heights/radiuses
 ! but not supported by input file format yet
   do ihour=1,ntprof
-    do iheight=1,nrelheight
-      releases(ihour)%rellower(iheight) = release1%rellower(iheight)
-      releases(ihour)%relupper(iheight) = release1%relupper(iheight)
-      releases(ihour)%relradius(iheight) = release1%relradius(iheight)
-    end do
+    releases(ihour)%rellower(1:nrelheight) = release1%rellower(1:nrelheight)
+    releases(ihour)%relupper(1:nrelheight) = release1%relupper(1:nrelheight)
+    releases(ihour)%relradius(1:nrelheight) = release1%relradius(1:nrelheight)
   end do
 
 ! sanity check of relbqsec
