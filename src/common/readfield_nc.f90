@@ -742,14 +742,20 @@ end subroutine calc_2d_start_length
 
 
 subroutine check(status, errmsg)
+  use ISO_FORTRAN_ENV, only: OUTPUT_UNIT, ERROR_UNIT
+  use snapdebug, only: iulog, idebug
   integer, intent ( in) :: status
   character(len=*), intent(in), optional :: errmsg
 
   if(status /= NF90_NOERR) then
     if (present(errmsg)) then
-      print *, trim(nf90_strerror(status)), ": ", trim(errmsg)
+      write(OUTPUT_UNIT,*) trim(nf90_strerror(status)), ": ", trim(errmsg)
+      write(ERROR_UNIT,*) trim(nf90_strerror(status)), ": ", trim(errmsg)
+      if (idebug == 1) write(iulog,*) trim(nf90_strerror(status)), ": ", trim(errmsg)
     else
-      print *, trim(nf90_strerror(status))
+      write(OUTPUT_UNIT, *) trim(nf90_strerror(status))
+      write(ERROR_UNIT, *) trim(nf90_strerror(status))
+      if (idebug == 1) write(iulog, *) trim(nf90_strerror(status))
     endif
     error stop 1
   endif
