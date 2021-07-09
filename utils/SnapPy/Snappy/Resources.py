@@ -53,10 +53,9 @@ class Resources:
     """
 
     # OUTPUTDIR = "/disk1/tmp"
-    OUTPUTDIR = "{LUSTREDIR}/project/fou/kl/snap/runs"
-    ECINPUTDIRS = [
-        "/lustre/storeA/project/metproduction/products/ecmwf/cwf_input/",
-        "/lustre/storeB/project/metproduction/products/ecmwf/cwf_input/",
+    _OUTPUTDIR = "{LUSTREDIR}/project/fou/kl/snap/runs"
+    _ECINPUTDIRS = [
+        "{LUSTREDIR}/project/metproduction/products/ecmwf/cwf_input/"
     ]
     # ECINPUTDIRS = ["/lustre/storeB/users/heikok/Meteorology/ecdis2cwf/"]
     EC_FILENAME_PATTERN = "meteo{year:04d}{month:02d}{day:02d}_{dayoffset:02d}.nc"
@@ -65,21 +64,18 @@ class Resources:
         "ec_atmo_0_1deg_{year:04d}{month:02d}{day:02d}T{dayoffset:02d}0000Z_3h.nc"
     )
 
-    MET_GLOBAL_INPUTDIRS = {
+    _MET_GLOBAL_INPUTDIRS = {
         MetModel.NrpaEC0p1Global: [
-            "/lustre/storeA/project/metproduction/products/ecmwf/nc/",
-            "/lustre/storeB/project/metproduction/products/ecmwf/nc/",
+            "{LUSTREDIR}}/project/metproduction/products/ecmwf/nc/"
         ],
         MetModel.Icon0p25Global: [
-            "/lustre/storeB/project/metproduction/products/icon/",
-            "/lustre/storeA/project/metproduction/products/icon/"
+            "{LUSTREDIR}/project/metproduction/products/icon/"
         ],
     }
 
-    MET_INPUTDIRS = {
+    _MET_INPUTDIRS = {
         MetModel.Meps2p5: [
-            "/lustre/storeB/immutable/archive/projects/metproduction/MEPS/",
-            "/lustre/storeA/immutable/archive/projects/metproduction/MEPS/",
+            "{LUSTREDIR}/immutable/archive/projects/metproduction/MEPS/"
         ],
         MetModel.GfsGribFilter: ["/disk1/tmp/"],
     }
@@ -407,15 +403,18 @@ GRAVITY.FIXED.M/S=0.0002
         filename = os.path.join(self.directory, "snap.in")
         return filename
 
+    def getLustreDir(self):
+        if not hasattr(self, '_lustredir'):
+            lustredir = os.path.join(os.sep, 'lustre', os.getenv('STORE','storeB'))
+            lustredirfile = os.path.join(os.environ["HOME"], ".lustredir")
+            if os.path.isfile(lustredirfile):
+                with open(lustredirfile, "r") as lh:
+                    lustredir = lh.read().rstrip()
+            self._lustredir = lustredir
+        return self._lustredir
+
     def getSnapOutputDir(self):
-        outputdir = self.OUTPUTDIR
-        lustredirfile = os.path.join(os.environ["HOME"], ".lustredir")
-        lustredir = "/lustre/storeB"
-        if os.path.isfile(lustredirfile):
-            with open(lustredirfile, "r") as lh:
-                lustredir = lh.read().rstrip()
-        outputdir = outputdir.format(LUSTREDIR=lustredir)
-        return outputdir
+        return self._OUTPUTDIR.format(LUSTREDIR=self.getLustreDir())
 
     def _findFileInPathes(self, file, pathes):
         for path in pathes:
@@ -423,6 +422,18 @@ GRAVITY.FIXED.M/S=0.0002
             if os.path.isfile(filename):
                 return filename
         return None
+
+    def _lustreTemplateDirs(self, dirs):
+        return [ x.format(LUSTREDIR=self.getLustreDir()) for x in dirs ]
+
+    def getMetGlobalInputDirs(self, metmodel):
+        return self._lustreTemplateDirs(self._MET_GLOBAL_INPUTDIRS[metmodel])
+
+    def getMetInputDirs(self, metmodel):
+        return self._lustreTemplateDirs(self._MET_INPUTDIRS[metmodel])
+
+    def getECInputDirs(self):
+        return self._lustreTemplateDirs(self._ECINPUTDIRS)
 
     def getECRuns(self):
         """Find ec-runs with at least 2 days of forecast"""
@@ -439,7 +450,7 @@ GRAVITY.FIXED.M/S=0.0002
                     month=start.month,
                     day=start.day,
                 )
-                filename = self._findFileInPathes(file, self.ECINPUTDIRS)
+                filename = self._findFileInPathes(file, self.getECInputDirs())
                 if filename is not None:
                     relevant.append(
                         "{year:04d}-{month:02d}-{day:02d}_{UTC:02d}".format(
@@ -472,7 +483,7 @@ GRAVITY.FIXED.M/S=0.0002
             raise NotImplementedError(
                 "metmodel='{}' not implememented for meteorology".format(metmodel)
             )
-        if metmodel not in self.MET_INPUTDIRS:
+        if metmodel not in self._MET_INPUTDIRS:
             raise NotImplementedError(
                 "metmodel='{}' not implememented for meteorology".format(metmodel)
             )
@@ -501,7 +512,7 @@ GRAVITY.FIXED.M/S=0.0002
                         UTC=utc, year=day.year, month=day.month, day=day.day
                     )
                     filename = self._findFileInPathes(
-                        file, self.MET_INPUTDIRS[metmodel]
+                        file, self.getMetInputDirs(metmodel)
                     )
                     if filename is not None:
                         fmtime = os.stat(filename).st_mtime
@@ -555,7 +566,7 @@ GRAVITY.FIXED.M/S=0.0002
                             month=day.month,
                             day=day.day,
                         )
-                        filename = self._findFileInPathes(file, self.ECINPUTDIRS)
+                        filename = self._findFileInPathes(file, self.getECInputDirs())
                         if filename is not None:
                             relevant_dates.append(filename)
         else:
@@ -566,7 +577,7 @@ GRAVITY.FIXED.M/S=0.0002
                     file = self.EC_FILE_PATTERN.format(
                         dayoffset=offset, UTC=utc, year=year, month=month, day=day
                     )
-                    filename = self._findFileInPathes(file, self.ECINPUTDIRS)
+                    filename = self._findFileInPathes(file, self.getECInputDirs())
                     if filename is not None:
                         relevant_dates.append(filename)
 

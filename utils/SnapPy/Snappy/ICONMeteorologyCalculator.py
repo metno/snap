@@ -39,7 +39,7 @@ class ICONMeteorologyCalculator(Snappy.MeteorologyCalculator.MeteorologyCalculat
         '''retrieve the GlobalMeteoResources from internal resources'''
         gres = Resources()
         res = Snappy.MeteorologyCalculator.GlobalMeteoResource()
-        res.indirs = gres.MET_GLOBAL_INPUTDIRS[MetModel.Icon0p25Global]
+        res.indirs = gres.getMetGlobalInputDirs(MetModel.Icon0p25Global)
         # icon_20200427T00Z.nc
         res.pathglob = "icon_????????T??Z.nc"
         res.pathptime = "icon_%Y%m%dT%HZ.nc"
