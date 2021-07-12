@@ -255,7 +255,7 @@ class Resources():
                         utc_hours =  [(18, 3), (12, 5), (6, 7), (0, 8)]
                     for (utc, hours) in utc_hours:
                         file = self.EC_FILE_PATTERN.format(dayoffset=offset, UTC=utc, year=curday.year, month=curday.month, day=curday.day)
-                        filename = self._findFileInPathes(file, self.getEcInputDirs())
+                        filename = self._findFileInPathes(file, self.getECInputDirs())
                         if filename is not None: day_files.append((filename, hours))
                     if offset == 0:
                         # check previous days 1 day offset forecast, in case complete data not available for today (i.e. 00 run missing)
@@ -263,7 +263,7 @@ class Resources():
                         utc_hours = [(18,8), (12,8), (6,8), (0,8)]
                         for (utc, hours) in utc_hours:
                             file = self.EC_FILE_PATTERN.format(dayoffset=1, UTC=utc, year=last_day.year, month=last_day.month, day=last_day.day)
-                            filename = self._findFileInPathes(file, self.getEcInputDirs())
+                            filename = self._findFileInPathes(file, self.getECInputDirs())
                             if filename is not None: day_files.append((filename, hours))
                     if len(day_files) > 0: relevant_dates.append(day_files)
                 if (len(relevant_dates) == 0):
@@ -275,7 +275,7 @@ class Resources():
             assert isinstance(startday, datetime), "getECMeteorology: fixed_run must be 'best' or YYYY-MM-DD_HH"
             for offset in range(0,math.ceil(run_hours/24.)):
                 file = self.EC_FILE_PATTERN.format(dayoffset=offset, UTC=startday.hour, year=startday.year, month=startday.month, day=startday.day)
-                filename = self._findFileInPathes(file, self.getEcInputDirs())
+                filename = self._findFileInPathes(file, self.getECInputDirs())
                 if filename is None:
                     return dates # longest continuous series
                 else:
