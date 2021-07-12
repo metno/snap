@@ -60,8 +60,8 @@ fi
 #INSTRUCTIONS_END
 
 HOST=bionic
-VERSION=1.6.21
-CHANGELOG="replace private email addresses with beredskap-fou-kl"
+VERSION=1.6.22
+CHANGELOG="ensure jobs only read from a single store"
 rm -f debian
 ln -s debian.$HOST debian
 dch -v ${VERSION}-1 -U "${CHANGELOG}"
