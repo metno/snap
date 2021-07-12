@@ -1,3 +1,9 @@
+snap-py (1.6.22-1) bionic; urgency=medium
+
+  * ensure jobs only read from a single store
+
+ -- Magnus Ulimoen <magnusu@pc5054.pc.met.no>  Mon, 12 Jul 2021 12:11:16 +0200
+
 snap-py (1.6.21-1) bionic; urgency=medium
 
   * replace private email addresses with beredskap-fou-kl
