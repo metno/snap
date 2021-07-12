@@ -40,12 +40,10 @@ class Resources():
            "ppi_direct": {'RUNDIR': '/lustre/storeB/project/fou/kl/eva/eemep/HPC/run/eemep/single_run/'},
            "ppi_centos7_direct": {'RUNDIR': '/lustre/storeB/project/fou/kl/eva/eemep/HPC/run/eemep/single_run/'}}
 
-    ECINPUTDIRS = ["/lustre/storeA/project/metproduction/products/ecmwf/cwf_input/", "/lustre/storeB/project/metproduction/products/ecmwf/cwf_input/"]
+    _ECINPUTDIRS = ["{LUSTREDIR}/project/metproduction/products/ecmwf/cwf_input/"]
     ECVLEVELS = "Vertical_levels48.txt"
-    #ECINPUTDIRS = ["/lustre/storeB/users/heikok/Meteorology/ecdis2cwf/"]
     EC_FILE_PATTERN = "NRPA_EUROPE_0_1_{UTC:02d}/meteo{year:04d}{month:02d}{day:02d}_{dayoffset:02d}.nc"
-    OUTPUTDIR = "{LUSTREDIR}/project/fou/kl/eva/eemep/runs/"
-    #OUTPUTDIR = "/tmp/test"
+    _OUTPUTDIR = "{LUSTREDIR}/project/fou/kl/eva/eemep/runs/"
 
     def __init__(self):
         '''
@@ -78,15 +76,26 @@ class Resources():
     def getHPCRunDir(self, hpcname):
         return self.HPC[hpcname]["RUNDIR"]
 
+    def getLustreDir(self):
+        if not hasattr(self, '_lustredir'):
+            lustredir = os.path.join(os.sep, 'lustre', os.getenv('STORE','storeB'))
+            lustredirfile = os.path.join(os.environ["HOME"], ".lustredir")
+            if os.path.isfile(lustredirfile):
+                with open(lustredirfile, "r") as lh:
+                    lustredir = lh.read().rstrip()
+            self._lustredir = lustredir
+        return self._lustredir
+
+
     def getOutputDir(self):
-        outputdir = self.OUTPUTDIR
-        lustredirfile = os.path.join(os.environ['HOME'],'.lustredir')
-        lustredir = "/lustre/storeB"
-        if (os.path.isfile(lustredirfile)):
-            with open(lustredirfile, 'r') as lh:
-                lustredir = lh.read().rstrip()
-        outputdir = outputdir.format(LUSTREDIR=lustredir)
-        return outputdir
+        return self._OUTPUTDIR.format(LUSTREDIR=self.getLustreDir())
+
+    def _lustreTemplateDirs(self, dirs):
+        return [ x.format(LUSTREDIR=self.getLustreDir()) for x in dirs ]
+
+    def getECInputDirs(self):
+        return self._lustreTemplateDirs(self._ECINPUTDIRS)
+
 
     def getModelRunnerLogs(self):
         logfile = os.path.join(self.getOutputDir(), 'eemepModelRunner_working')
@@ -193,7 +202,7 @@ class Resources():
         while (start < tomorrow):
             for utc in [0, 6, 12, 18]:
                 file = self.EC_FILE_PATTERN.format(dayoffset=2, UTC=utc, year=start.year, month=start.month, day=start.day)
-                filename = self._findFileInPathes(file, self.ECINPUTDIRS)
+                filename = self._findFileInPathes(file, self.getECInputDirs())
                 if filename is not None:
                     relevant.append("{year:04d}-{month:02d}-{day:02d}_{UTC:02d}".format(UTC=utc, year=start.year, month=start.month, day=start.day))
             start += timedelta(days=1)
@@ -246,7 +255,7 @@ class Resources():
                         utc_hours =  [(18, 3), (12, 5), (6, 7), (0, 8)]
                     for (utc, hours) in utc_hours:
                         file = self.EC_FILE_PATTERN.format(dayoffset=offset, UTC=utc, year=curday.year, month=curday.month, day=curday.day)
-                        filename = self._findFileInPathes(file, self.ECINPUTDIRS)
+                        filename = self._findFileInPathes(file, self.getEcInputDirs())
                         if filename is not None: day_files.append((filename, hours))
                     if offset == 0:
                         # check previous days 1 day offset forecast, in case complete data not available for today (i.e. 00 run missing)
@@ -254,7 +263,7 @@ class Resources():
                         utc_hours = [(18,8), (12,8), (6,8), (0,8)]
                         for (utc, hours) in utc_hours:
                             file = self.EC_FILE_PATTERN.format(dayoffset=1, UTC=utc, year=last_day.year, month=last_day.month, day=last_day.day)
-                            filename = self._findFileInPathes(file, self.ECINPUTDIRS)
+                            filename = self._findFileInPathes(file, self.getEcInputDirs())
                             if filename is not None: day_files.append((filename, hours))
                     if len(day_files) > 0: relevant_dates.append(day_files)
                 if (len(relevant_dates) == 0):
@@ -266,7 +275,7 @@ class Resources():
             assert isinstance(startday, datetime), "getECMeteorology: fixed_run must be 'best' or YYYY-MM-DD_HH"
             for offset in range(0,math.ceil(run_hours/24.)):
                 file = self.EC_FILE_PATTERN.format(dayoffset=offset, UTC=startday.hour, year=startday.year, month=startday.month, day=startday.day)
-                filename = self._findFileInPathes(file, self.ECINPUTDIRS)
+                filename = self._findFileInPathes(file, self.getEcInputDirs())
                 if filename is None:
                     return dates # longest continuous series
                 else:
