@@ -60,7 +60,7 @@ fi
 #INSTRUCTIONS_END
 
 HOST=bionic
-VERSION=1.6.22
+VERSION=1.6.23
 CHANGELOG="ensure jobs only read from a single store"
 rm -f debian
 ln -s debian.$HOST debian
