@@ -55,7 +55,7 @@ class Resources:
     # OUTPUTDIR = "/disk1/tmp"
     _OUTPUTDIR = "{LUSTREDIR}/project/fou/kl/snap/runs"
     _ECINPUTDIRS = [
-        "{LUSTREDIR}/project/metproduction/products/ecmwf/cwf_input/"
+        "{LUSTREDIR}/project/metproduction/products/cwf-input/"
     ]
     # ECINPUTDIRS = ["/lustre/storeB/users/heikok/Meteorology/ecdis2cwf/"]
     EC_FILENAME_PATTERN = "meteo{year:04d}{month:02d}{day:02d}_{dayoffset:02d}.nc"

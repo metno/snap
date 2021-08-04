@@ -47,7 +47,7 @@ class Resources:
         },
     }
 
-    _ECINPUTDIRS = ["{LUSTREDIR}/project/metproduction/products/ecmwf/cwf_input/"]
+    _ECINPUTDIRS = ["{LUSTREDIR}/project/metproduction/products/cwf-input/"]
     ECVLEVELS = "Vertical_levels48.txt"
     EC_FILE_PATTERN = "NRPA_EUROPE_0_1_{UTC:02d}/meteo{year:04d}{month:02d}{day:02d}_{dayoffset:02d}.nc"
     _OUTPUTDIR = "{LUSTREDIR}/project/fou/kl/eva/eemep/runs/"
