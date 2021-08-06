@@ -1,76 +1,75 @@
 # SNAP: Severe Nuclear Accident Programme
 # Copyright (C) 1992-2018   Norwegian Meteorological Institute
-# 
-# This file is part of SNAP. SNAP is free software: you can 
-# redistribute it and/or modify it under the terms of the 
-# GNU General Public License as published by the 
+#
+# This file is part of SNAP. SNAP is free software: you can
+# redistribute it and/or modify it under the terms of the
+# GNU General Public License as published by the
 # Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-'''
+"""
 Created on Mar 8, 2018
 
 @author: Heiko Klein
-'''
+"""
 
 import os
 import re
 
 
-class SnapJobEC():
-    '''tasks to work with the model SNAP, SNAPGLOBAL and TRAJ with EC-data'''
-
+class SnapJobEC:
+    """tasks to work with the model SNAP, SNAPGLOBAL and TRAJ with EC-data"""
 
     def __init__(self, task, hpc):
-        ''' construct a snap-job with a task (see snapRemoteRunner)  and a hpc'''
+        """ construct a snap-job with a task (see snapRemoteRunner)  and a hpc"""
         self.task = task
         self.hpc = hpc
-        
+
     def get_return_filename(self):
-        '''return the filename expected by argos when return a file'''
-        if self.task.model == 'TRAJ':
-            return self.task.id + '_TRAJ2ARGOS.zip'
-        elif re.match(r'^SNAP.*', self.task.model):
-            return self.task.id + '_' + self.task.model + '2ARGOS.zip'
+        """return the filename expected by argos when return a file"""
+        if self.task.model == "TRAJ":
+            return self.task.id + "_TRAJ2ARGOS.zip"
+        elif re.match(r"^SNAP.*", self.task.model):
+            return self.task.id + "_" + self.task.model + "2ARGOS.zip"
         else:
-            raise Exception('unknown model:' + self.task.model)
+            raise Exception("unknown model:" + self.task.model)
 
     def get_input_files(self):
-        '''return a list of input-files for each model'''
-        if self.task.model == 'TRAJ':
-            return [self.task.id + '_TRAJ_input']
-        elif re.match(r'^SNAP.*', self.task.model):
-            return [self.task.id +'_Rimsterm.xml', self.task.id + '_SNAP_request.xml']
+        """return a list of input-files for each model"""
+        if self.task.model == "TRAJ":
+            return [self.task.id + "_TRAJ_input"]
+        elif re.match(r"^SNAP.*", self.task.model):
+            return [self.task.id + "_Rimsterm.xml", self.task.id + "_SNAP_request.xml"]
         else:
-            raise Exception('unknown model:' + self.task.model)
-                    
+            raise Exception("unknown model:" + self.task.model)
+
     def job_script(self):
-        ''' return a sge job-script for the different models '''
-        if re.match(r'^SNAP.*', self.task.model):
+        """ return a sge job-script for the different models """
+        if re.match(r"^SNAP.*", self.task.model):
             # that is SNAP SNAPNORDIC or SNAPGLOBAL
-            if self.task.model == 'SNAP':
+            if self.task.model == "SNAP":
                 metmodel = "nrpa_ec_0p1"
-            elif self.task.model == 'SNAPGLOBAL':
-                metmodel = 'nrpa_ec_0p1_global'
-            elif self.task.model == 'SNAPNORDIC':
-                metmodel = 'meps_2_5km'
-            elif self.task.model == 'SNAPICONGLOBAL':
-                metmodel = 'icon_0p25_global'
+            elif self.task.model == "SNAPGLOBAL":
+                metmodel = "nrpa_ec_0p1_global"
+            elif self.task.model == "SNAPNORDIC":
+                metmodel = "meps_2_5km"
+            elif self.task.model == "SNAPICONGLOBAL":
+                metmodel = "icon_0p25_global"
             (xmlfile, requestfile) = self.get_input_files()
             argosrequest = ""
             if os.path.exists(os.path.join(self.task.rundir, requestfile)):
-                argosrequest = '--argosrequest ' + requestfile
-        
+                argosrequest = "--argosrequest " + requestfile
+
             # Create qsub script
-            script = '''#!/bin/bash
+            script = """#!/bin/bash
 #$ -N dsa_bsnap
 #$ -S /bin/bash
 #$ -V
@@ -137,19 +136,20 @@ if [ $? -ne 0 ]; then
 fi
 send_msg 202 "Finished extracting {model} data for ARGOS"
 exit 0;
-'''.format(rundir=self.task.rundir,
-           ident=self.task.id,
-           xmlfile=xmlfile,
-           argosrequest=argosrequest,
-           metmodel=metmodel,
-           zipreturnfile=self.get_return_filename(),
-           model=self.task.model,
-           statusfile=self.task.status_filename(),
-           scpoptions=self.task.scpoptions,
-           scpdestination=self.task.scpdestination
-           )
-        
+""".format(
+                rundir=self.task.rundir,
+                ident=self.task.id,
+                xmlfile=xmlfile,
+                argosrequest=argosrequest,
+                metmodel=metmodel,
+                zipreturnfile=self.get_return_filename(),
+                model=self.task.model,
+                statusfile=self.task.status_filename(),
+                scpoptions=self.task.scpoptions,
+                scpdestination=self.task.scpdestination,
+            )
+
         else:
-            raise Exception('unknown model:' + self.task.model)
+            raise Exception("unknown model:" + self.task.model)
 
         return script
