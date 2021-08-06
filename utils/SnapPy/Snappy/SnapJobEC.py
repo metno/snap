@@ -103,7 +103,7 @@ function send_msg()
 }}
 
 
-module load SnapPy/2.0.3
+module load SnapPy/2.0.4
 #module load fimex/1.5.0
 
 ulimit -c 0
