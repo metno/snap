@@ -66,7 +66,7 @@ class Resources:
 
     _MET_GLOBAL_INPUTDIRS = {
         MetModel.NrpaEC0p1Global: [
-            "{LUSTREDIR}}/project/metproduction/products/ecmwf/nc/"
+            "{LUSTREDIR}/project/metproduction/products/ecmwf/nc/"
         ],
         MetModel.Icon0p25Global: [
             "{LUSTREDIR}/project/metproduction/products/icon/"
