@@ -60,8 +60,8 @@ fi
 #INSTRUCTIONS_END
 
 HOST=bionic
-VERSION=1.6.23
-CHANGELOG="ensure jobs only read from a single store"
+VERSION=1.6.24
+CHANGELOG="Bug with EC Global removed"
 rm -f debian
 ln -s debian.$HOST debian
 dch -v ${VERSION}-1 -U "${CHANGELOG}"

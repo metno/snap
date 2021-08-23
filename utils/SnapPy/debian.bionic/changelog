@@ -1,3 +1,33 @@
+snap-py (1.6.24-1) bionic; urgency=medium
+
+  * Bug with EC Global removed
+
+ -- Daniel Heinesen <danielh@pc5354.pc.met.no>  Mon, 23 Aug 2021 10:53:14 +0200
+
+snap-py (1.6.24-1) bionic; urgency=medium
+
+  * Bug with EC Global removed
+
+ -- Daniel Heinesen <danielh@pc5354.pc.met.no>  Mon, 23 Aug 2021 10:52:21 +0200
+
+snap-py (1.6.24-1) bionic; urgency=medium
+
+  * Bug with EC Global removed
+
+ -- Daniel Heinesen <danielh@pc5354.pc.met.no>  Mon, 23 Aug 2021 10:51:12 +0200
+
+snap-py (1.6.24-1) bionic; urgency=medium
+
+  * Bug with EC Global removed
+
+ -- Daniel Heinesen <danielh@pc5354.pc.met.no>  Mon, 23 Aug 2021 10:50:15 +0200
+
+snap-py (1.6.24-1) bionic; urgency=medium
+
+  * Bug with EC Global removed
+
+ -- Daniel Heinesen <danielh@pc5354.pc.met.no>  Mon, 23 Aug 2021 10:49:55 +0200
+
 snap-py (1.6.23-1) bionic; urgency=medium
 
   * ensure jobs only read from a single store
