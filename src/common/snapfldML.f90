@@ -47,11 +47,7 @@ module snapfldML
   real(kind=real32), allocatable, save, public :: hlayer2(:,:,:)
 
 !> hourly precipitation intensity (mm/hour)
-  real(kind=real32), allocatable, save, public :: precip(:,:,:)
-!> no. of steps stored in ::precip
-  integer, save, public :: nprecip
-!> the current precipitation field
-  integer, save, public :: iprecip
+  real(kind=real32), allocatable, save, public :: precip(:,:)
 
 !> surface pressure (time step 1)
   real(kind=real32), allocatable, save, public :: ps1(:,:)

@@ -36,7 +36,7 @@ module allocateFieldsML
 
 subroutine allocateFields
   USE particleML, only: pdata
-  USE snapdimML, only: nx, ny, nk, ldata, maxsiz, mprecip
+  USE snapdimML, only: nx, ny, nk, ldata, maxsiz
   USE snapparML, only: ncomp, iparnum
   USE releaseML, only: mplume, iplume, plume_release, mpart
 
@@ -122,7 +122,7 @@ subroutine allocateFields
   ALLOCATE ( pmsl2(nx,ny), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) STOP errmsg
 
-  ALLOCATE ( precip(nx,ny,mprecip), STAT = AllocateStatus)
+  ALLOCATE ( precip(nx,ny), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) STOP errmsg
 
 ! the calculation-fields

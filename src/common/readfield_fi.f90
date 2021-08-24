@@ -69,12 +69,12 @@ contains
     USE snapfldML, only: &
       xm, ym, u1, u2, v1, v2, w1, w2, t1, t2, ps1, ps2, pmsl1, pmsl2, &
       hbl1, hbl2, hlayer1, hlayer2, garea, dgarea, hlevel1, hlevel2, &
-      hlayer1, hlayer2, bl1, bl2, enspos, nprecip, precip
+      hlayer1, hlayer2, bl1, bl2, enspos, precip
     USE snapgrdML, only: alevel, blevel, vlevel, ahalf, bhalf, vhalf, &
                          gparam, kadd, klevel, ivlevel, imslp, igtype, ivlayer, ivcoor
     USE snapmetML, only: met_params, xy_wind_units, pressure_units, omega_units, &
                          sigmadot_units, temp_units
-    USE snapdimML, only: nx, ny, nk, mprecip
+    USE snapdimML, only: nx, ny, nk
 !> current timestep (always positive), negative istep means reset
     integer, intent(in) :: istep
 !> remaining run-hours (negative for backward-calculations)
@@ -191,17 +191,6 @@ contains
     nhdiff = 3
     if (ntav1 /= 0) &
       nhdiff = abs(iavail(ntav2)%oHour - iavail(ntav1)%oHour)
-    if(nhdiff > mprecip) then
-      write(error_unit,*) '*READFIELD* PRECIPITATION PROBLEM'
-      write(error_unit,*) '     nhdiff,mprecip: ',nhdiff,mprecip
-      write(error_unit,*) '   Recompile with mprecip=',nhdiff
-      write(iulog,*) '*READFIELD* PRECIPITATION PROBLEM'
-      write(iulog,*) '     nhdiff,mprecip: ',nhdiff,mprecip
-      write(iulog,*) '   Recompile with mprecip=',nhdiff
-      ierror=1
-      return
-    end if
-    nprecip = nhdiff
 
     timepos = iavail(ntav2)%timePos
     timeposm1 = timepos ! Default: No deaccumulation possible
@@ -499,7 +488,7 @@ contains
       call ftest('t  ', t2, reverse_third_dim=.true.)
       call ftest('ps ', ps2)
       if (istep > 0) &
-        call ftest('pre', precip(:, :, 1:nprecip))
+        call ftest('pre', precip(:, :))
     end if
 
     if (istep == 0) then
@@ -557,7 +546,7 @@ contains
     use snapmetML, only: met_params, &
                          precip_rate_units, precip_units_ => precip_units, precip_units_fallback
     use snapfldML, only: field1, field2, field3, field4, precip, &
-                         enspos, precip, nprecip
+                         enspos, precip
     use snapdimML, only: nx, ny
 
 !> open netcdf file
@@ -586,12 +575,10 @@ contains
         call fi_checkload(fio, met_params%precaccumv, precip_units, field2(:, :), nt=timepos, nr=nr, nz=1)
 
         !..the difference below may get negative due to different scaling
-        do j = 1, ny
-          do i = 1, nx
-            precip1 = max(field2(i, j) - field1(i, j), 0.)/nhdiff
-            precip(i, j, 1:nprecip) = precip1
-          end do
-        end do
+        precip(:,:) = (field2 - field1)/nhdiff
+        where (precip < 0.0)
+          precip = 0.0
+        end where
       end if
     else if (met_params%precstratiaccumv /= '') then
       ! accumulated stratiform and convective precipitation
@@ -618,17 +605,14 @@ contains
         endif
       endif
 
-      do i = 1, nprecip
-        precip(:, :, i) = max(field3 + field4 - (field1 + field2), 0.0)/nhdiff
-      enddo
+      precip(:,:) = ((field3 + field4) - (field1 + field2))/nhdiff
+      where (precip < 0.0)
+        precip = 0.0
+      end where
 
     else if (met_params%total_column_rain /= '') then
       call fi_checkload(fio, met_params%total_column_rain, precip_units, field3(:, :), nt=timepos, nr=nr, nz=1)
-      do j = 1, ny
-        do i = 1, nx
-          precip(i, j, 1:nprecip) = field3(i, j)
-        enddo
-      enddo
+      precip(:,:) = field3
       write (error_unit, *) "Check precipation correctness"
     else
       !..non-accumulated emissions in stratiform an convective
@@ -639,13 +623,10 @@ contains
         field2 = 0.
       endif
 
-      do j = 1, ny
-        do i = 1, nx
-          !..precipitation must be larger 0
-          precip1 = max(field1(i, j) + field2(i, j), 0.)
-          precip(i, j, :) = precip1
-        end do
-      end do
+      precip(:,:) = (field1 + field2)
+      where (precip < 0.0)
+        precip = 0.0
+      end where
 
     end if
   end subroutine read_precipitation

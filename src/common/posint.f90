@@ -61,7 +61,7 @@ end subroutine
 subroutine posint(part,tf1,tf2,tnow,pextra)
   USE particleML, only: Particle, extraParticle
   USE snapgrdML, only: gparam
-  USE snapfldML, only: xm, ym, bl1, bl2, hbl1, hbl2, precip, iprecip
+  USE snapfldML, only: xm, ym, bl1, bl2, hbl1, hbl2, precip
 
 !> particle
 !> (with all particles at the same horizontal position)
@@ -122,8 +122,8 @@ subroutine posint(part,tf1,tf2,tnow,pextra)
       +c3*ym(i,j+1)+c4*ym(i+1,j+1)
 
   !..precipitation intensity (mm/hour)
-  pr= c1*precip(i,j,  iprecip)+c2*precip(i+1,j,  iprecip) &
-      +c3*precip(i,j+1,iprecip)+c4*precip(i+1,j+1,iprecip)
+  pr= c1*precip(i,j)+c2*precip(i+1,j) &
+      +c3*precip(i,j+1)+c4*precip(i+1,j+1)
 
   !..update boundary layer top and height, map ratio and precipitation
   part%tbl=bl
