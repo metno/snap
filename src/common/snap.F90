@@ -157,7 +157,7 @@ PROGRAM bsnap
   USE snapdimML, only: nx, ny, nk, ldata, maxsiz, mcomp
   USE snapfilML, only: filef, itimer, limfcf, ncsummary, nctitle, nhfmax, nhfmin, &
                        nctype, nfilef, simulation_start, spinup_steps
-  USE snapfldML, only: nhfout, enspos, iprecip, nprecip
+  USE snapfldML, only: nhfout, enspos
   USE snapmetML, only: init_meteo_params, met_params
   USE snapparML, only: component, run_comp, &
                        ncomp, def_comp, nparnum, &
@@ -461,7 +461,6 @@ PROGRAM bsnap
       tyear, tmon, tday, thour, tmin
     distance = 0.0
     speed = 0.0
-    iprecip = 1
 #endif
 
     !..initial no. of plumes and particles
@@ -799,13 +798,9 @@ PROGRAM bsnap
           call hrdiff(0, 0, itimei, itime1, ihr, ierr1, ierr2)
           tnow = 3600.*ihr
           nxtinf = istep + nsteph*abs(ihdiff - ihr)
-          iprecip = 1 + ihr
-          !              backward calculations difficult, but precip does not matter there
-          if (ihr < 0) iprecip = 1
         else
           tnow = 0.
           nxtinf = istep + nsteph*abs(ihdiff)
-          iprecip = 1
         end if
 
       else
@@ -1076,8 +1071,6 @@ PROGRAM bsnap
         if (ierror /= 0) call snap_error_exit(iulog)
       end if
       call output_timer%stop_and_log()
-
-      if (isteph == 0 .AND. iprecip < nprecip) iprecip = iprecip + 1
 
 #if defined(TRAJ)
       ! b

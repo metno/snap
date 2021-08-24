@@ -91,7 +91,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   USE snapfldML, only: field1, field2, field3, field4, depwet, depdry, &
       avgbq1, avgbq2, hlayer1, hlayer2, garea, pmsl1, pmsl2, hbl1, hbl2, &
       xm, ym, accdry, accwet, avgprec, concen, ps1, ps2, avghbl, dgarea, &
-      avgbq, concacc, accprec, iprecip, precip, nhfout
+      avgbq, concacc, accprec, precip, nhfout
   USE snapparML, only: time_profile, ncomp, run_comp, def_comp, &
     TIME_PROFILE_BOMB
   USE snapdebug, only: iulog, idebug
@@ -200,7 +200,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
 !..precipitation (no time interpolation, but hourly time intervals)
   scale=tstep/3600.
-  avgprec(:,:) = avgprec + scale*precip(:,:,iprecip)
+  avgprec(:,:) = avgprec + scale*precip(:,:)
 
   do n=1,npart
     part = pdata(n)
