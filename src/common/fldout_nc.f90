@@ -86,7 +86,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     istep,nsteph,ierror)
   USE iso_fortran_env, only: int16
   USE snapfilML, only: ncsummary, nctitle, simulation_start
-  USE snapgrdML, only: gparam, igtype, imodlevel, imslp, inprecip, &
+  USE snapgrdML, only: gparam, igtype, imodlevel, imslp, precipitation_necessary, &
       itotcomp, modleveldump, ivlayer
   USE snapfldML, only: field1, field2, field3, field4, depwet, depdry, &
       avgbq1, avgbq2, hlayer1, hlayer2, garea, pmsl1, pmsl2, hbl1, hbl2, &
@@ -165,7 +165,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
     if(ncomp > 1 .AND. itotcomp == 1) n=n+1
     numfields= 2+n*9
     if(time_profile == TIME_PROFILE_BOMB) numfields= numfields + ncomp*4
-    if(inprecip > 0) numfields=numfields+2
+    if(precipitation_necessary) numfields=numfields+2
     if(imslp    > 0) numfields=numfields+1
     if(imodlevel) numfields=numfields+n*nk*2+nk+1
     numfields= numfields*istep + 4
@@ -323,7 +323,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
           chksz3d, "air_pressure_at_sea_level", &
           "hPa", "air_pressure_at_sea_level", "")
     endif
-    if (inprecip == 1) then
+    if (precipitation_necessary) then
       call nc_declare_3d(iunit, dimids3d, varid%accum_prc, &
           chksz3d, "precipitation_amount_acc", &
           "kg/m2", "precipitation_amount", "")
@@ -458,7 +458,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   end if
 
 !..total accumulated precipitation from start of run
-  if(inprecip == 1) then
+  if(precipitation_necessary) then
     accprec(:,:) = accprec + avgprec
     field1(:,:) = accprec
     if(idebug == 1) call ftest('accprec', field1)
@@ -491,7 +491,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       values=field1), "set_ahbl")
 
 !..precipitation accummulated between field output
-  if(inprecip == 1) then
+  if(precipitation_necessary) then
     field1(:,:) = avgprec
     if(idebug == 1) call ftest('prec', field1)
 
