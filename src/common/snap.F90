@@ -230,7 +230,7 @@ PROGRAM bsnap
   integer :: k, ierror, i, n
   integer :: ih
   integer :: idrydep = 0, wetdep_version = 0, idecay
-  integer :: ntimefo, iunitf, nh1, nh2
+  integer :: ntimefo, nh1, nh2
   integer :: ierr1, ierr2, nsteph, nstep, nstepr, iunito
   integer :: nxtinf, ihread, isteph, lstepr, iendrel, istep, ihr1, ihr2, nhleft
   integer :: ierr, ihdiff, ihr, ifldout, idailyout = 0, ihour, split_particle_after_step, split_particle_hours
@@ -381,13 +381,11 @@ PROGRAM bsnap
 ! initialize random number generator for rwalk and release
   CALL init_random_seed()
 
-!..file unit for all input field files
-  iunitf = 20
 
 !..check input FELT files and make sorted lists of available data
 !..make main list based on x wind comp. (u) in upper used level
   if (ftype == "netcdf") then
-    call filesort_nc ! (iunitf, ierror)
+    call filesort_nc
   else if (ftype == "fimex") then
 #if defined(FIMEX)
     call filesort_fi()
