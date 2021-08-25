@@ -54,10 +54,8 @@ module snapgrdML
 !> (ixystp>1 means lower resolution fields than input,
 !> decrease memory size)
     integer, save, public :: ixystp = 0
-!> * 0=not read precipitation
-!> * 1=read precipitation
-!> * -1=read precipitation (but there is no wet deposition)
-    integer, save, public :: inprecip = 1
+
+    logical, save, public :: precipitation_necessary = .true.
 !> * 0=not read mslp
 !> * -1=read mslp
 !> * 1=read and write mslp (mslp not used in computations)

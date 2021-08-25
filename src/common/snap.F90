@@ -164,8 +164,8 @@ PROGRAM bsnap
                        time_profile, TIME_PROFILE_BOMB
   USE snapposML, only: irelpos, nrelpos, release_positions
   USE snapgrdML, only: modleveldump, ivcoor, ixbase, iybase, ixystp, kadd, &
-                       klevel, imslp, inprecip, iprod, iprodr, itotcomp, gparam, igrid, igridr, &
-                       igtype, imodlevel
+                       klevel, imslp, iprod, iprodr, itotcomp, gparam, igrid, igridr, &
+                       igtype, imodlevel, precipitation_necessary
   USE snaptabML, only: tabcon
   USE particleML, only: pdata, extraParticle
   USE allocateFieldsML, only: allocateFields, deallocateFields
@@ -495,7 +495,7 @@ PROGRAM bsnap
     write (iulog, *) 'klevel:'
     write (iulog, *) (klevel(i), i=1, nk)
     write (iulog, *) 'imslp:     ', imslp
-    write (iulog, *) 'inprecip:  ', inprecip
+    write (iulog, *) 'inprecip:  ', precipitation_necessary
     write (iulog, *) 'imodlevel: ', imodlevel
     write (iulog, *) 'modleveldump (h), steps:', modleveldump/nsteph, &
       modleveldump
@@ -1780,11 +1780,11 @@ contains
         imslp = 0
       case ('precipitation.on')
         !..precipitation.on
-        inprecip = 1
+        precipitation_necessary = .true.
         met_params%need_precipitation = .true.
       case ('precipitation.off')
         !..precipitation.off
-        inprecip = 0
+        precipitation_necessary = .false.
         met_params%need_precipitation = .false.
       case ('model.level.fields.on')
         !..model.level.fields.on
