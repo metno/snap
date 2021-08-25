@@ -169,7 +169,7 @@ PROGRAM bsnap
   USE snaptabML, only: tabcon
   USE particleML, only: pdata, extraParticle
   USE allocateFieldsML, only: allocateFields, deallocateFields
-  USE fldout_ncML, only: fldout_nc
+  USE fldout_ncML, only: fldout_nc, initialize_output, accumulate_fields
   USE rmpartML, only: rmpart
   USE split_particlesML, only: split_particles
   USE checkdomainML, only: checkdomain
@@ -231,7 +231,8 @@ PROGRAM bsnap
   integer :: ih
   integer :: idrydep = 0, wetdep_version = 0, idecay
   integer :: ntimefo, nh1, nh2
-  integer :: ierr1, ierr2, nsteph, nstep, nstepr, iunito
+  integer :: ierr1, ierr2, nsteph, nstep, nstepr
+  integer, allocatable :: iunito
   integer :: nxtinf, ihread, isteph, lstepr, iendrel, istep, ihr1, ihr2, nhleft
   integer :: ierr, ihdiff, ihr, ifldout, idailyout = 0, ihour, split_particle_after_step, split_particle_hours
   integer :: date_time(8)
@@ -484,9 +485,6 @@ PROGRAM bsnap
     !..nuclear bomb case
     if (time_profile == TIME_PROFILE_BOMB) nstepr = 1
 
-    !..field output file unit
-    iunito = 30
-
     !..information to log file
     write (iulog, *) 'nx,ny,nk:  ', nx, ny, nk
     write (iulog, *) 'kadd:      ', kadd
@@ -606,8 +604,7 @@ PROGRAM bsnap
     end if
     ! standard output needs to be initialized, even for daily
     if (fldtype == "netcdf") then
-      call fldout_nc(-1, iunito, fldfil, itime1, 0., 0., 0., tstep, &
-                     m, nsteph, ierror)
+      call initialize_output(iunito, fldfilX, itime1, ierror)
     else
       write (iulog, *) "only FIELD.OUTTYPE=netcdf supported, got: ", fldtype
       ierror = 1
@@ -1044,6 +1041,8 @@ PROGRAM bsnap
 
       !..field output if ifldout=1, always accumulation for average fields
       call output_timer%start()
+      call accumulate_fields(tf1, tf2, tnext, tstep, nsteph)
+
       if (idailyout == 1) then
         !       daily output, append +x for each day
         ! istep/nsteph = hour  -> /24 =day
@@ -1051,20 +1050,19 @@ PROGRAM bsnap
         if (fldfilX /= fldfilN) then
           fldfilX = fldfilN
           if (fldtype == "netcdf") then
-            call fldout_nc(-1, iunito, fldfilX, itime1, 0., 0., 0., tstep, &
-                           (24/nhfout) + 1, nsteph, ierror)
+            call initialize_output(iunito, fldfilX, itime, ierror)
+            if (ierror /= 0) call snap_error_exit(iulog)
           endif
-          if (ierror /= 0) call snap_error_exit(iulog)
         end if
-        if (fldtype == "netcdf") then
-          call fldout_nc(ifldout, iunito, fldfilX, itimeo, tf1, tf2, tnext, &
-                         tstep, istep, nsteph, ierror)
+        if (fldtype == "netcdf" .and. ifldout == 1) then
+          call fldout_nc(iunito, itimeo, tf1, tf2, tnext, &
+                         ierror)
         endif
         if (ierror /= 0) call snap_error_exit(iulog)
       else
-        if (fldtype == "netcdf") then
-          call fldout_nc(ifldout, iunito, fldfil, itimeo, tf1, tf2, tnext, &
-                         tstep, istep, nsteph, ierror)
+        if (fldtype == "netcdf" .and. ifldout == 1) then
+          call fldout_nc(iunito, itimeo, tf1, tf2, tnext, &
+                         ierror)
         endif
         if (ierror /= 0) call snap_error_exit(iulog)
       end if
