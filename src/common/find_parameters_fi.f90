@@ -44,7 +44,6 @@ contains
   !> netcdf file, taking the projection from
   !> the varname
   subroutine detect_gridparams_fi(file, varname, nx, ny, igtype, gparam, klevel, stat)
-    use snapfimexML, only: file_type, conf_file
     !> Path to the netcdf file
     character(len=*), intent(in) :: file
     character(len=*), intent(in) :: varname
@@ -123,7 +122,7 @@ contains
       call lambert_grid(fio, varname, proj4, nx, ny, xdim, ydim, igtype, gparam, stat)
 
     case ("stere")
-      call polar_stereographic_grid(fio, varname, proj4, nx, ny, xdim, ydim, igtype, gparam, stat)
+      call polar_stereographic_grid(fio, proj4, nx, ny, xdim, ydim, igtype, gparam, stat)
 
 
     case ("ob_tran")
@@ -332,11 +331,9 @@ contains
   end subroutine lambert_grid
 
   !> determine gparam for polar_stereographic grids
-  subroutine polar_stereographic_grid(fio, varname, proj4, nx, ny, xdim, ydim, igtype, gparam, stat)
+  subroutine polar_stereographic_grid(fio, proj4, nx, ny, xdim, ydim, igtype, gparam, stat)
     !> open fimex file
     TYPE(FimexIO), intent(inout) :: fio
-    !> proj4 string
-    character(len=*), intent(in) :: varname
     !> proj4 string
     character(len=*), intent(in) :: proj4
     !> xaxis-size
@@ -356,8 +353,8 @@ contains
 
     real(kind=real64) :: pi
     real(kind=real64) :: lat0, incr, startX, startY
-    real(kind=real64), allocatable, target :: dims(:), latlons(:)
-    character(1024) :: pval, longname, latname
+    real(kind=real64), allocatable, target :: dims(:)
+    character(1024) :: pval
     integer :: ndims
 
     PI = 4.D0*DATAN(1.D0)

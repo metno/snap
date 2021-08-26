@@ -560,8 +560,6 @@ subroutine read_precipitation(ncid, nhdiff, timepos, timeposm1)
 
 
   integer :: start3d(7), count3d(7)
-  integer :: i, j
-  real :: precip1
   real :: unitScale
   real :: totalprec
 

@@ -547,7 +547,6 @@ contains
                          precip_rate_units, precip_units_ => precip_units, precip_units_fallback
     use snapfldML, only: field1, field2, field3, field4, precip, &
                          enspos, precip
-    use snapdimML, only: nx, ny
 
 !> open netcdf file
     TYPE(FimexIO), intent(inout) :: fio
@@ -558,8 +557,7 @@ contains
 !> previous timestep
     integer, intent(in) :: timeposm1
 
-    integer :: i, j, nr
-    real :: precip1
+    integer :: nr
     real :: totalprec
     character(len=10), save :: precip_units = precip_units_
     integer :: ierror
