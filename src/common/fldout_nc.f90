@@ -89,7 +89,7 @@ module fldout_ncML
 subroutine fldout_nc(iunit,itime,tf1,tf2,tnow, &
     ierror)
   USE iso_fortran_env, only: int16
-  USE snapgrdML, only: imodlevel, imslp, precipitation_necessary, &
+  USE snapgrdML, only: imodlevel, imslp, precipitation_in_output, &
       itotcomp
   USE snapfldML, only: field1, field2, field3, field4, &
       depdry, depwet, &
@@ -159,7 +159,7 @@ subroutine fldout_nc(iunit,itime,tf1,tf2,tnow, &
   end if
 
 !..total accumulated precipitation from start of run
-  if(precipitation_necessary) then
+  if(precipitation_in_output) then
     accprec(:,:) = accprec + avgprec
     field1(:,:) = accprec
     if(idebug == 1) call ftest('accprec', field1)
@@ -192,7 +192,7 @@ subroutine fldout_nc(iunit,itime,tf1,tf2,tnow, &
       values=field1), "set_ahbl")
 
 !..precipitation accummulated between field output
-  if(precipitation_necessary) then
+  if(precipitation_in_output) then
     field1(:,:) = avgprec
     if(idebug == 1) call ftest('prec', field1)
 
@@ -933,7 +933,7 @@ end subroutine nc_set_projection
 
 subroutine initialize_output(iunit, filename, itime, ierror)
   USE snapfilML, only: ncsummary, nctitle, simulation_start
-  USE snapgrdML, only: gparam, igtype, imodlevel, imslp, precipitation_necessary, &
+  USE snapgrdML, only: gparam, igtype, imodlevel, imslp, precipitation_in_output, &
       itotcomp, modleveldump
   USE snapfldML, only:  &
       garea, &
@@ -1019,7 +1019,7 @@ subroutine initialize_output(iunit, filename, itime, ierror)
           chksz3d, "air_pressure_at_sea_level", &
           "hPa", "air_pressure_at_sea_level", "")
     endif
-    if (precipitation_necessary) then
+    if (precipitation_in_output) then
       call nc_declare_3d(iunit, dimids3d, varid%accum_prc, &
           chksz3d, "precipitation_amount_acc", &
           "kg/m2", "precipitation_amount", "")

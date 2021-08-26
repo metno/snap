@@ -165,7 +165,7 @@ PROGRAM bsnap
   USE snapposML, only: irelpos, nrelpos, release_positions
   USE snapgrdML, only: modleveldump, ivcoor, ixbase, iybase, ixystp, kadd, &
                        klevel, imslp, iprod, iprodr, itotcomp, gparam, igrid, igridr, &
-                       igtype, imodlevel, precipitation_necessary
+                       igtype, imodlevel, precipitation_in_output
   USE snaptabML, only: tabcon
   USE particleML, only: pdata, extraParticle
   USE allocateFieldsML, only: allocateFields, deallocateFields
@@ -491,7 +491,7 @@ PROGRAM bsnap
     write (iulog, *) 'klevel:'
     write (iulog, *) (klevel(i), i=1, nk)
     write (iulog, *) 'imslp:     ', imslp
-    write (iulog, *) 'inprecip:  ', precipitation_necessary
+    write (iulog, *) 'inprecip:  ', precipitation_in_output
     write (iulog, *) 'imodlevel: ', imodlevel
     write (iulog, *) 'modleveldump (h), steps:', modleveldump/nsteph, &
       modleveldump
@@ -1776,11 +1776,11 @@ contains
         imslp = 0
       case ('precipitation.on')
         !..precipitation.on
-        precipitation_necessary = .true.
+        precipitation_in_output = .true.
         met_params%need_precipitation = .true.
       case ('precipitation.off')
         !..precipitation.off
-        precipitation_necessary = .false.
+        precipitation_in_output = .false.
         met_params%need_precipitation = .false.
       case ('model.level.fields.on')
         !..model.level.fields.on
