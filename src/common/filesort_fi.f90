@@ -37,7 +37,7 @@ contains
     USE snapfldML, only: enspos
     USE snapmetML, ONLY: met_params
     USE snapdebug, only: iulog, idebug
-    USE snapdimML, only: nx, ny, mavail
+    USE snapdimML, only: mavail
     USE milibML, only: vtime
 
     TYPE(FimexIO) :: fio

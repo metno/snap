@@ -32,8 +32,7 @@ module releasefileML
 subroutine  releasefile(filename, release1)
   USE iso_fortran_env, only: error_unit, IOSTAT_END
   USE snapparML, only: ncomp, component
-  USE snapdimML, only: mcomp
-  USE releaseML, only: mrelheight, releases, nrelheight, release_t
+  USE releaseML, only: releases, nrelheight, release_t
 
   character(72), intent(in) :: filename
 !> Structure to copy rellower, relupper, and relradius from
@@ -41,7 +40,7 @@ subroutine  releasefile(filename, release1)
 
   character(256) :: cinput
   integer :: ifd, ios, iexit, nlines
-  integer :: i,j
+  integer :: i
   real :: hour, lasthour
   integer :: height
   integer :: ihour, iheight, icmp
