@@ -55,7 +55,7 @@ module snapgrdML
 !> decrease memory size)
     integer, save, public :: ixystp = 0
 
-    logical, save, public :: precipitation_necessary = .true.
+    logical, save, public :: precipitation_in_output = .true.
 !> * 0=not read mslp
 !> * -1=read mslp
 !> * 1=read and write mslp (mslp not used in computations)
