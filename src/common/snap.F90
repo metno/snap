@@ -601,13 +601,14 @@ PROGRAM bsnap
     if (idailyout == 1) then
       !       daily output, append +x for each day, but initialize later
       write (fldfilX, '(a9,a1,I3.3)') fldfil, '+', -1
-    end if
-    ! standard output needs to be initialized, even for daily
-    if (fldtype == "netcdf") then
-      call initialize_output(iunito, fldfilX, itime1, ierror)
     else
-      write (iulog, *) "only FIELD.OUTTYPE=netcdf supported, got: ", fldtype
-      ierror = 1
+      ! standard output needs to be initialized
+      if (fldtype == "netcdf") then
+        call initialize_output(iunito, fldfil, itime1, ierror)
+      else
+        write (iulog, *) "only FIELD.OUTTYPE=netcdf supported, got: ", fldtype
+        ierror = 1
+      endif
     endif
     if (ierror /= 0) call snap_error_exit(iulog)
 
