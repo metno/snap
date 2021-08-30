@@ -60,8 +60,8 @@ fi
 #INSTRUCTIONS_END
 
 HOST=bionic
-VERSION=1.6.24
-CHANGELOG="Bug with EC Global removed"
+VERSION=1.6.25
+CHANGELOG="Update archive path"
 rm -f debian
 ln -s debian.$HOST debian
 dch -v ${VERSION}-1 -U "${CHANGELOG}"
