@@ -64,7 +64,7 @@ VERSION=1.6.25
 CHANGELOG="Update archive path"
 rm -f debian
 ln -s debian.$HOST debian
-dch -v ${VERSION}-1 -U "${CHANGELOG}"
+dch -v ${VERSION}-2 -U "${CHANGELOG}"
 dch -r ''
 VERSION=$VERSION python3 setup.py sdist
 cd dist

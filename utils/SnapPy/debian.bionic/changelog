@@ -1,3 +1,9 @@
+snap-py (1.6.25-2) bionic; urgency=medium
+
+  * Update archive path
+
+ -- Magnus Ulimoen <magnusu@pc5054.pc.met.no>  Mon, 30 Aug 2021 13:00:56 +0200
+
 snap-py (1.6.25-1) bionic; urgency=medium
 
   * Update archive path
