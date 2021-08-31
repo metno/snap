@@ -42,11 +42,11 @@ subroutine readfield_nc(istep, nhleft, itimei, ihr1, ihr2, &
   USE snapfldML, only: &
       xm, ym, u1, u2, v1, v2, w1, w2, t1, t2, ps1, ps2, pmsl1, pmsl2, &
       hbl1, hbl2, hlayer1, hlayer2, garea, dgarea, hlevel1, hlevel2, &
-      hlayer1, hlayer2, bl1, bl2, enspos, nprecip, precip
+      hlayer1, hlayer2, bl1, bl2, enspos, precip
   USE snapgrdML, only: alevel, blevel, vlevel, ahalf, bhalf, vhalf, &
       gparam, kadd, klevel, ivlevel, imslp, igtype, ivlayer, ivcoor
   USE snapmetML, only: met_params
-  USE snapdimML, only: nx, ny, nk, mprecip
+  USE snapdimML, only: nx, ny, nk
 !> current timestep (always positive), negative istep means reset
   integer, intent(in) :: istep
 !> remaining run-hours (negative for backward-calculations)
@@ -167,17 +167,6 @@ subroutine readfield_nc(istep, nhleft, itimei, ihr1, ihr2, &
   nhdiff = 3
   if (ntav1 /= 0) &
     nhdiff = abs(iavail(ntav2)%oHour - iavail(ntav1)%oHour)
-  if(nhdiff > mprecip) then
-    write(error_unit,*) '*READFIELD* PRECIPITATION PROBLEM'
-    write(error_unit,*) '     nhdiff,mprecip: ',nhdiff,mprecip
-    write(error_unit,*) '   Recompile with mprecip=',nhdiff
-    write(iulog,*) '*READFIELD* PRECIPITATION PROBLEM'
-    write(iulog,*) '     nhdiff,mprecip: ',nhdiff,mprecip
-    write(iulog,*) '   Recompile with mprecip=',nhdiff
-    ierror=1
-    return
-  end if
-  nprecip = nhdiff
 
   timepos = iavail(ntav2)%timePos
   timeposm1 = timepos ! Default: No deaccumulation possible
@@ -498,7 +487,7 @@ subroutine readfield_nc(istep, nhleft, itimei, ihr1, ihr2, &
     call ftest('t  ', t2, reverse_third_dim=.true.)
     call ftest('ps ', ps2)
     if (istep > 0) &
-      call ftest('pre', precip(:,:,1:nprecip))
+      call ftest('pre', precip(:,:))
   end if
 
 
@@ -556,7 +545,7 @@ subroutine read_precipitation(ncid, nhdiff, timepos, timeposm1)
   use snapdebug, only: iulog
   use snapmetML, only: met_params
   use snapfldML, only: field1, field2, field3, field4, precip, &
-      enspos, precip, nprecip
+      enspos
   use snapdimML, only: nx, ny
   USE snapfilML, only: nctype
 
@@ -571,8 +560,6 @@ subroutine read_precipitation(ncid, nhdiff, timepos, timeposm1)
 
 
   integer :: start3d(7), count3d(7)
-  integer :: i, j
-  real :: precip1
   real :: unitScale
   real :: totalprec
 
@@ -590,12 +577,10 @@ subroutine read_precipitation(ncid, nhdiff, timepos, timeposm1)
           start3d, count3d, field2(:,:))
 
     !..the difference below may get negative due to different scaling
-      do j=1,ny
-        do i=1,nx
-          precip1=max(field2(i,j)-field1(i,j),0.)/nhdiff
-          precip(i,j,1:nprecip) = precip1
-        end do
-      end do
+      precip(:, :) = (field2 - field1)/nhdiff
+      where (precip < 0.0)
+        precip = 0.0
+      end where
     end if
   else if (met_params%precstratiaccumv /= '') then
   ! accumulated stratiform and convective precipitation
@@ -616,13 +601,11 @@ subroutine read_precipitation(ncid, nhdiff, timepos, timeposm1)
     !..the difference below may get negative due to different scaling
       unitScale = 1.
       if (nctype == 'ec_det' .or. nctype == "ec_n1s") unitScale = 1000.
-      do j=1,ny
-        do i=1,nx
-          precip1=max(field3(i,j)+field4(i,j)- &
-              (field1(i,j)+field2(i,j)),0.)/nhdiff
-          precip(i,j,:) = precip1 * unitScale
-        end do
-      end do
+      precip(:,:) = (field3 + field4) - (field1 + field2)
+      precip(:,:) = precip/nhdiff*unitScale
+      where (precip < 0.0)
+        precip = 0.0
+      end where
     else
     ! timepos eq 1, check if precipitation already present / assume dummy step 0
       call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
@@ -642,13 +625,11 @@ subroutine read_precipitation(ncid, nhdiff, timepos, timeposm1)
             "empty 0 timestep to deaccumulate precip"
         unitScale = 1.
         if (nctype == 'ec_det' .or. nctype == "ec_n1s") unitScale = 1000.
-        do j=1,ny
-          do i=1,nx
-            precip1=max(field3(i,j)+field4(i,j)- &
-                (field1(i,j)+field2(i,j)),0.)/nhdiff
-            precip(i,j,:) = precip1 * unitScale
-          end do
-        end do
+        precip(:,:) = (field3 + field4) - (field1 + field2)
+        precip(:,:) = precip/nhdiff*unitScale
+        where (precip < 0.0)
+          precip = 0.0
+        end where
       endif
     end if
   else if (met_params%total_column_rain /= '') then
@@ -656,11 +637,7 @@ subroutine read_precipitation(ncid, nhdiff, timepos, timeposm1)
           enspos, timepos, met_params%has_dummy_dim)
       call nfcheckload(ncid, met_params%total_column_rain, &
           start3d, count3d, field3)
-      do j=1,ny
-        do i=1,nx
-          precip(i,j,1:nprecip) = field3(i,j)
-        enddo
-      enddo
+      precip(:,:) = field3
       write(error_unit, *) "Check precipation correctness"
   else
   !..non-accumulated emissions in stratiform an convective
@@ -677,13 +654,10 @@ subroutine read_precipitation(ncid, nhdiff, timepos, timeposm1)
 
     unitScale = 3600.*1000.0 ! m/s -> mm/h
     if (nctype == 'gfs_grib_filter_fimex') unitScale = 3600. !kg/m3/s -> mm/h
-    do j=1,ny
-      do i=1,nx
-      !..precipitation must be larger 0, m/s -> mm/h
-        precip1=max(field1(i,j)+field2(i,j),0.)*unitScale
-        precip(i,j,:) = precip1
-      end do
-    end do
+    precip(:,:) = (field1 + field2)*unitScale
+    where (precip < 0.0)
+      precip = 0.0
+    end where
 
   end if
 end subroutine
