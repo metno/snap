@@ -63,6 +63,7 @@ contains
     integer :: i, prev_pos, pos, method
 
     parse_interpolator = 0
+    method = -2
 
     if (interpolation == "") then
       fint%method = -1

@@ -34,11 +34,6 @@ module snapdimML
 !> number of levels
     integer, save, public :: nk = nkpre
 
-!> max no. of hourly precipitation fields
-!>
-!> (and then the maximum hours between field input...)
-    integer, parameter, public :: mprecip = 12
-
 !> max. input field size (possibly larger than nx*ny)
     integer, save, public :: maxsiz
 !> length of buffer for field input/output

@@ -36,7 +36,7 @@ module allocateFieldsML
 
 subroutine allocateFields
   USE particleML, only: pdata
-  USE snapdimML, only: nx, ny, nk, ldata, maxsiz, mprecip
+  USE snapdimML, only: nx, ny, nk, ldata, maxsiz
   USE snapparML, only: ncomp, iparnum
   USE releaseML, only: mplume, iplume, plume_release, mpart
 
@@ -122,7 +122,7 @@ subroutine allocateFields
   ALLOCATE ( pmsl2(nx,ny), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) STOP errmsg
 
-  ALLOCATE ( precip(nx,ny,mprecip), STAT = AllocateStatus)
+  ALLOCATE ( precip(nx,ny), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) STOP errmsg
 
 ! the calculation-fields
@@ -134,19 +134,26 @@ subroutine allocateFields
   IF (AllocateStatus /= 0) STOP errmsg
   ALLOCATE ( accprec(nx,ny), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) STOP errmsg
+  accprec = 0.0
 
   ALLOCATE ( depdry(nx,ny,ncomp), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) STOP errmsg
+  depdry = 0.0
   ALLOCATE ( depwet(nx,ny,ncomp), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) STOP errmsg
+  depwet = 0.0
   ALLOCATE ( accdry(nx,ny,ncomp), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) STOP errmsg
+  accdry = 0.0
   ALLOCATE ( accwet(nx,ny,ncomp), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) STOP errmsg
+  accwet = 0.0
   ALLOCATE ( concen(nx,ny,ncomp), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) STOP errmsg
+  concen = 0.0
   ALLOCATE ( concacc(nx,ny,ncomp), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) STOP errmsg
+  concacc = 0.0
   ALLOCATE ( avgbq1(nx,ny,ncomp), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) STOP errmsg
   ALLOCATE ( avgbq2(nx,ny,ncomp), STAT = AllocateStatus)

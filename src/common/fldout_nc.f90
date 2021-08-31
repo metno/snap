@@ -25,7 +25,7 @@ module fldout_ncML
   implicit none
   private
 
-  public fldout_nc
+  public fldout_nc, initialize_output, accumulate_fields
 
 !> fixed base scaling for concentrations (unit 10**-12 g/m3 = 1 picog/m3)
   real, parameter :: cscale = 1.0
@@ -75,68 +75,56 @@ module fldout_ncML
     integer :: t
   end type
 
+  type(common_var), save :: varid
+  type(common_dim), save :: dimid
+  !> file base time
+  integer, save :: iftime(5)
+
+  !> Number of times fields has been accumulated before
+  !> being flushed to file
+  integer, save :: naverage = 0
+
   contains
 
-!> Accumulation for average fields (iwrite=0,1).
-!>
-!> Make and write output fields (iwrite=1).
-!>
-!> Initialization of output accumulation arrays (iwrite=-1).
-subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
-    istep,nsteph,ierror)
+subroutine fldout_nc(iunit,itime,tf1,tf2,tnow, &
+    ierror)
   USE iso_fortran_env, only: int16
-  USE snapfilML, only: ncsummary, nctitle, simulation_start
-  USE snapgrdML, only: gparam, igtype, imodlevel, imslp, inprecip, &
-      itotcomp, modleveldump, ivlayer
-  USE snapfldML, only: field1, field2, field3, field4, depwet, depdry, &
-      avgbq1, avgbq2, hlayer1, hlayer2, garea, pmsl1, pmsl2, hbl1, hbl2, &
-      xm, ym, accdry, accwet, avgprec, concen, ps1, ps2, avghbl, dgarea, &
-      avgbq, concacc, accprec, iprecip, precip, nhfout
+  USE snapgrdML, only: imodlevel, imslp, precipitation_in_output, &
+      itotcomp
+  USE snapfldML, only: field1, field2, field3, field4, &
+      depdry, depwet, &
+      avgbq1, avgbq2, garea, pmsl1, pmsl2, hbl1, hbl2, &
+      accdry, accwet, avgprec, concen, ps1, ps2, avghbl, &
+      concacc, accprec
   USE snapparML, only: time_profile, ncomp, run_comp, def_comp, &
     TIME_PROFILE_BOMB
   USE snapdebug, only: iulog, idebug
   USE ftestML, only: ftest
-  USE snapdimML, only: nx, ny, nk
+  USE snapdimML, only: nx, ny
   USE releaseML, only: npart
   USE particleML, only: pdata, Particle
 
-  integer, intent(in) :: iwrite
-  integer, intent(inout) :: iunit
-  character(len=*), intent(in) :: filnam
+  integer, intent(in) :: iunit
   integer, intent(inout) :: itime(5)
   real, intent(in) :: tf1
   real, intent(in) :: tf2
   real, intent(in) :: tnow
-  real, intent(in) :: tstep
-  integer, intent(in) :: istep
-  integer, intent(in) :: nsteph
   integer, intent(out) :: ierror
 
-  type(common_var), save :: varid
-  type(common_dim), save :: dimid
-
-  integer, save :: naverage = 0
-  logical, save :: acc_initialized = .false.
-
-  integer :: dimids2d(2),dimids3d(3),dimids4d(4), ipos(4), isize(4), &
-             chksz3d(3), chksz4d(4)
-  integer, save :: iftime(5), ihrs, ihrs_pos
-
+  integer :: ipos(4), isize(4)
+  integer, save :: ihrs, ihrs_pos
 
   integer :: nptot1,nptot2
   real(real64) :: bqtot1,bqtot2
   real(real64) :: dblscale
 
-  integer :: i,j,k,m,mm,n,ivlvl
+  integer :: i,j,m,mm,n
   logical :: compute_total_dry_deposition
   logical :: compute_total_wet_deposition
-  integer, save :: numfields = 0
   real :: rt1,rt2,scale,average
 
   real, parameter :: undef = NF90_FILL_FLOAT
-  real :: hrstep
 
-  character(len=256) :: string
   type(Particle) :: part
 
   compute_total_dry_deposition = any(def_comp%kdrydep == 1) .and. ncomp > 1
@@ -144,294 +132,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
 
   ierror=0
 
-!..initialization
-
-  if(.not.acc_initialized) then
-    depdry = 0.0
-    depwet = 0.0
-    accdry = 0.0
-    accwet = 0.0
-    concen = 0.0
-    concacc = 0.0
-    accprec = 0.0
-
-    acc_initialized = .true.
-  end if
-
-  if(iwrite == -1) then
-  !..initialization of routine (not of file)
-  !..iwrite=-1: istep is no. of field outputs
-    n=ncomp
-    if(ncomp > 1 .AND. itotcomp == 1) n=n+1
-    numfields= 2+n*9
-    if(time_profile == TIME_PROFILE_BOMB) numfields= numfields + ncomp*4
-    if(inprecip > 0) numfields=numfields+2
-    if(imslp    > 0) numfields=numfields+1
-    if(imodlevel) numfields=numfields+n*nk*2+nk+1
-    numfields= numfields*istep + 4
-    if(numfields > 32767) numfields=32767
-
-    return
-  end if
-
-!..accumulation for average fields......................................
-
-  if(naverage == 0) then
-    avghbl = 0.0
-    avgprec = 0.0
-
-    avgbq1 = 0.0
-    avgbq2 = 0.0
-
-    if(imodlevel) then
-      avgbq = 0.0
-    end if
-  end if
-
-  naverage=naverage+1
-
-!..for time interpolation
-  rt1=(tf2-tnow)/(tf2-tf1)
-  rt2=(tnow-tf1)/(tf2-tf1)
-  hrstep=1./float(nsteph)
-
-!..height of boundary layer
-  avghbl(:,:) = avghbl + (rt1*hbl1 + rt2*hbl2)
-
-!..precipitation (no time interpolation, but hourly time intervals)
-  scale=tstep/3600.
-  avgprec(:,:) = avgprec + scale*precip(:,:,iprecip)
-
-  do n=1,npart
-    part = pdata(n)
-    i = nint(part%x)
-    j = nint(part%y)
-  ! c     ivlvl=pdata(n)%z*10000.
-  ! c     k=ivlevel(ivlvl)
-    m = def_comp(part%icomp)%to_running
-    if(part%z >= part%tbl) then
-    !..in boundary layer
-      avgbq1(i,j,m) = avgbq1(i,j,m) + part%rad
-    else
-    !..above boundary layer
-      avgbq2(i,j,m) = avgbq2(i,j,m) + part%rad
-    end if
-  end do
-
-!..accumulated/integrated concentration
-
-  concen = 0.0
-
-  do n=1,npart
-    part = pdata(n)
-    ivlvl=part%z*10000.
-    k=ivlayer(ivlvl)
-    if(k == 1) then
-      i = nint(part%x)
-      j = nint(part%y)
-      m = def_comp(part%icomp)%to_running
-      concen(i,j,m) = concen(i,j,m) + dble(part%rad)
-    end if
-  end do
-
-  do m=1,ncomp
-    associate(concen => concen(:,:,m), concacc => concacc(:,:,m), &
-              dh => rt1*hlayer1(:,:,1) + rt2*hlayer2(:,:,1))
-      where (concen > 0.0)
-        concen = concen / (dh*dgarea)
-        concacc = concacc + concen*hrstep
-      endwhere
-    end associate
-  end do
-
-  if(imodlevel) then
-    do n=1,npart
-      part = pdata(n)
-      i = nint(part%x)
-      j = nint(part%y)
-      ivlvl = part%z*10000.
-      k = ivlayer(ivlvl)
-      m = def_comp(part%icomp)%to_running
-    !..in each sigma/eta (input model) layer
-      avgbq(i,j,k,m) = avgbq(i,j,k,m) + part%rad
-    end do
-  end if
-
-  if(iwrite == 0) then
-    return
-  end if
-
-
 !..output...............................................................
-
-  write(iulog,*) '*FLDOUT_NC*', numfields
-
-  if(numfields > 0) then
-  !..initialization of file
-  !..remove an existing file and create a completely new one
-    if (iunit /= 30) &
-    call check(nf90_close(iunit))
-    numfields=0
-    write(iulog,*) 'creating fldout_nc: ',filnam
-    ihrs_pos = 0
-    call check(nf90_create(filnam, ior(NF90_NETCDF4, NF90_CLOBBER), iunit), filnam)
-    call check(nf90_def_dim(iunit, "time", NF90_UNLIMITED, dimid%t), &
-        "t-dim")
-    call check(nf90_def_dim(iunit, "x", nx, dimid%x), "x-dim")
-    call check(nf90_def_dim(iunit, "y", ny, dimid%y), "y-dim")
-    call check(nf90_def_dim(iunit, "k", nk-1, dimid%k), "k-dim")
-
-    if (allocated(nctitle)) then
-      call check(nf90_put_att(iunit, NF90_GLOBAL, &
-          "title", trim(nctitle)))
-    endif
-    call check(nf90_put_att(iunit, NF90_GLOBAL, &
-        "summary", trim(ncsummary)))
-
-    call nc_set_projection(iunit, dimid%x, dimid%y, &
-        igtype,nx,ny,gparam, garea, xm, ym, &
-        simulation_start)
-    if (imodlevel) then
-      call nc_set_vtrans(iunit, dimid%k, varid%k, varid%ap, varid%b)
-    endif
-
-    call check(nf90_def_var(iunit, "time", NF90_FLOAT, dimid%t, varid%t))
-    write(string,'(A12,I4,A1,I0.2,A1,I0.2,A1,I0.2,A12)') &
-        "hours since ",itime(1),"-",itime(2),"-",itime(3)," ", &
-        itime(4),":00:00 +0000"
-    call check(nf90_put_att(iunit, varid%t, "units", &
-        trim(string)))
-
-  !..store the files base-time
-    iftime = itime
-    iftime(5) = 0
-
-    dimids2d = [dimid%x, dimid%y]
-    dimids3d = [dimid%x, dimid%y, dimid%t]
-    dimids4d = [dimid%x, dimid%y, dimid%k, dimid%t]
-
-    chksz3d = [nx, ny, 1]
-    chksz4d = [nx, ny, 1, 1]
-
-    if (imodlevel) then
-      call nc_declare_3d(iunit, dimids3d, varid%ps, &
-          chksz3d, "surface_air_pressure", &
-          "hPa", "surface_air_pressure", "")
-    endif
-    if (imslp == 1) then
-      call nc_declare_3d(iunit, dimids3d, varid%mslp, &
-          chksz3d, "air_pressure_at_sea_level", &
-          "hPa", "air_pressure_at_sea_level", "")
-    endif
-    if (inprecip == 1) then
-      call nc_declare_3d(iunit, dimids3d, varid%accum_prc, &
-          chksz3d, "precipitation_amount_acc", &
-          "kg/m2", "precipitation_amount", "")
-          call nc_declare_3d(iunit, dimids3d, varid%prc, &
-          chksz3d, "lwe_precipitation_rate", &
-          "mm/("//itoa(nhfout)//"hr)", "lwe_precipitation_rate", "")
-    endif
-
-    call nc_declare_3d(iunit, dimids3d, varid%ihbl, &
-        chksz3d, "instant_height_boundary_layer", &
-        "m", "height", &
-        "instant_height_boundary_layer")
-    call nc_declare_3d(iunit, dimids3d, varid%ahbl, &
-        chksz3d, "average_height_boundary_layer", &
-        "m", "height", &
-        "average_height_boundary_layer")
-
-
-    do m=1,ncomp
-      mm= run_comp(m)%to_defined
-      call nc_declare_3d(iunit, dimids3d, varid%comp(m)%ic, &
-          chksz3d, TRIM(def_comp(mm)%compnamemc)//"_concentration", &
-          "Bq/m3","", &
-          TRIM(def_comp(mm)%compnamemc)//"_concentration")
-      call nc_declare_3d(iunit, dimids3d, varid%comp(m)%icbl, &
-          chksz3d, TRIM(def_comp(mm)%compnamemc)//"_concentration_bl", &
-          "Bq/m3","", &
-          TRIM(def_comp(mm)%compnamemc)//"_concentration_boundary_layer")
-      call nc_declare_3d(iunit, dimids3d, varid%comp(m)%ac, &
-          chksz3d, TRIM(def_comp(mm)%compnamemc)//"_acc_concentration", &
-          "Bq*hr/m3","", &
-          TRIM(def_comp(mm)%compnamemc)//"_accumulated_concentration")
-      call nc_declare_3d(iunit, dimids3d, varid%comp(m)%acbl, &
-          chksz3d, TRIM(def_comp(mm)%compnamemc)//"_avg_concentration_bl", &
-          "Bq/m3","", &
-          TRIM(def_comp(mm)%compnamemc)//"_average_concentration_bl")
-      if (def_comp(mm)%kdrydep > 0) then
-        call nc_declare_3d(iunit, dimids3d, varid%comp(m)%idd, &
-            chksz3d, TRIM(def_comp(mm)%compnamemc)//"_dry_deposition", &
-            "Bq/m2","", &
-            TRIM(def_comp(mm)%compnamemc)//"_dry_deposition")
-        call nc_declare_3d(iunit, dimids3d, varid%comp(m)%accdd, &
-            chksz3d, TRIM(def_comp(mm)%compnamemc)//"_acc_dry_deposition", &
-            "Bq/m2","", &
-            TRIM(def_comp(mm)%compnamemc)//"_accumulated_dry_deposition")
-      end if
-      if (def_comp(mm)%kwetdep > 0) then
-        call nc_declare_3d(iunit, dimids3d, varid%comp(m)%iwd, &
-            chksz3d, TRIM(def_comp(mm)%compnamemc)//"_wet_deposition", &
-            "Bq/m2","", &
-            TRIM(def_comp(mm)%compnamemc)//"_wet_deposition")
-        call nc_declare_3d(iunit, dimids3d, varid%comp(m)%accwd, &
-            chksz3d, TRIM(def_comp(mm)%compnamemc)//"_acc_wet_deposition", &
-            "Bq/m2","", &
-            TRIM(def_comp(mm)%compnamemc)//"_accumulated_wet_deposition")
-      end if
-      if (imodlevel) then
-        if (modleveldump > 0.) then
-          string = TRIM(def_comp(mm)%compnamemc)//"_concentration_dump_ml"
-        else
-          string = TRIM(def_comp(mm)%compnamemc)//"_concentration_ml"
-        endif
-        call nc_declare_4d(iunit, dimids4d, varid%comp(m)%icml, &
-            chksz4d, TRIM(string), &
-            "Bq/m3","", &
-            TRIM(string))
-      !           call nc_declare_4d(iunit, dimids4d, acml_varid(m),
-      !     +          chksz4d, TRIM(def_comp(mm)%compnamemc)//"_avg_concentration_ml",
-      !     +          "Bq*hour/m3","",
-      !     +          TRIM(def_comp(mm)%compnamemc)//"_accumulated_concentration_ml")
-      end if
-    end do
-    if (itotcomp == 1) then
-      call nc_declare_3d(iunit, dimids3d, varid%icblt, &
-          chksz3d, "total_concentration_bl", &
-          "Bq/m3","", &
-          "total_concentration_bl")
-      call nc_declare_3d(iunit, dimids3d, varid%acblt, &
-          chksz3d, "total_avg_concentration_bl", &
-          "Bq/m3","", &
-          "total_average_concentration_bl")
-      call nc_declare_3d(iunit, dimids3d, varid%act, &
-          chksz3d, "total_acc_concentration", &
-          "Bq/m3","", &
-          "total_accumulated_concentration")
-      if (compute_total_dry_deposition) then
-        call nc_declare_3d(iunit, dimids3d, varid%iddt, &
-            chksz3d, "total_dry_deposition", &
-            "Bq/m2","", &
-            "total_dry_deposition")
-        call nc_declare_3d(iunit, dimids3d, varid%accddt, &
-            chksz3d, "total_acc_dry_deposition", &
-            "Bq/m2","", &
-            "total_accumulated_dry_deposition")
-      end if
-      if (compute_total_wet_deposition) then
-        call nc_declare_3d(iunit, dimids3d, varid%iwdt, &
-            chksz3d, "total_wet_deposition", &
-            "Bq/m2","", &
-            "total_wet_deposition")
-        call nc_declare_3d(iunit, dimids3d, varid%accwdt, &
-            chksz3d, "total_acc_wet_deposition", &
-            "Bq/m2","", &
-            "total_accumulated_wet_deposition")
-      end if
-    end if
-    call check(nf90_enddef(iunit))
-  end if
 
 ! set the runtime
   ihrs_pos = ihrs_pos + 1
@@ -458,7 +159,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
   end if
 
 !..total accumulated precipitation from start of run
-  if(inprecip == 1) then
+  if(precipitation_in_output) then
     accprec(:,:) = accprec + avgprec
     field1(:,:) = accprec
     if(idebug == 1) call ftest('accprec', field1)
@@ -491,7 +192,7 @@ subroutine fldout_nc(iwrite,iunit,filnam,itime,tf1,tf2,tnow,tstep, &
       values=field1), "set_ahbl")
 
 !..precipitation accummulated between field output
-  if(inprecip == 1) then
+  if(precipitation_in_output) then
     field1(:,:) = avgprec
     if(idebug == 1) call ftest('prec', field1)
 
@@ -1229,4 +930,309 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
 
   call check(nf90_sync(iunit))
 end subroutine nc_set_projection
+
+subroutine initialize_output(iunit, filename, itime, ierror)
+  USE snapfilML, only: ncsummary, nctitle, simulation_start
+  USE snapgrdML, only: gparam, igtype, imodlevel, imslp, precipitation_in_output, &
+      itotcomp, modleveldump
+  USE snapfldML, only:  &
+      garea, &
+      xm, ym, &
+      nhfout
+  USE snapparML, only: ncomp, run_comp, def_comp
+  USE ftestML, only: ftest
+  USE snapdimML, only: nx, ny, nk
+  USE particleML, only: Particle
+
+  integer, allocatable, intent(inout) :: iunit
+  character(len=*), intent(in) :: filename
+  integer, intent(in) :: itime(5)
+  integer, intent(out) :: ierror
+
+  integer :: m, mm
+  character(len=256) :: string
+  integer :: dimids2d(2), dimids3d(3), dimids4d(4)
+  integer :: chksz3d(3), chksz4d(4)
+  logical :: compute_total_dry_deposition
+  logical :: compute_total_wet_deposition
+
+
+  ierror = 0
+
+  compute_total_dry_deposition = any(def_comp%kdrydep == 1) .and. ncomp > 1
+  compute_total_wet_deposition = any(def_comp%kwetdep == 1) .and. ncomp > 1
+
+  if (allocated(iunit)) then
+    call check(nf90_close(iunit))
+    deallocate(iunit)
+  end if
+
+  allocate(iunit)
+
+
+    call check(nf90_create(filename, ior(NF90_NETCDF4, NF90_CLOBBER), iunit), filename)
+    call check(nf90_def_dim(iunit, "time", NF90_UNLIMITED, dimid%t), &
+        "t-dim")
+    call check(nf90_def_dim(iunit, "x", nx, dimid%x), "x-dim")
+    call check(nf90_def_dim(iunit, "y", ny, dimid%y), "y-dim")
+    call check(nf90_def_dim(iunit, "k", nk-1, dimid%k), "k-dim")
+
+    if (allocated(nctitle)) then
+      call check(nf90_put_att(iunit, NF90_GLOBAL, &
+          "title", trim(nctitle)))
+    endif
+    call check(nf90_put_att(iunit, NF90_GLOBAL, &
+        "summary", trim(ncsummary)))
+
+    call nc_set_projection(iunit, dimid%x, dimid%y, &
+        igtype,nx,ny,gparam, garea, xm, ym, &
+        simulation_start)
+    if (imodlevel) then
+      call nc_set_vtrans(iunit, dimid%k, varid%k, varid%ap, varid%b)
+    endif
+
+    call check(nf90_def_var(iunit, "time", NF90_FLOAT, dimid%t, varid%t))
+    write(string,'(A12,I4,A1,I0.2,A1,I0.2,A1,I0.2,A12)') &
+        "hours since ",itime(1),"-",itime(2),"-",itime(3)," ", &
+        itime(4),":00:00 +0000"
+    call check(nf90_put_att(iunit, varid%t, "units", &
+        trim(string)))
+
+  !..store the files base-time
+    iftime = itime
+    iftime(5) = 0
+
+    dimids2d = [dimid%x, dimid%y]
+    dimids3d = [dimid%x, dimid%y, dimid%t]
+    dimids4d = [dimid%x, dimid%y, dimid%k, dimid%t]
+
+    chksz3d = [nx, ny, 1]
+    chksz4d = [nx, ny, 1, 1]
+
+    if (imodlevel) then
+      call nc_declare_3d(iunit, dimids3d, varid%ps, &
+          chksz3d, "surface_air_pressure", &
+          "hPa", "surface_air_pressure", "")
+    endif
+    if (imslp == 1) then
+      call nc_declare_3d(iunit, dimids3d, varid%mslp, &
+          chksz3d, "air_pressure_at_sea_level", &
+          "hPa", "air_pressure_at_sea_level", "")
+    endif
+    if (precipitation_in_output) then
+      call nc_declare_3d(iunit, dimids3d, varid%accum_prc, &
+          chksz3d, "precipitation_amount_acc", &
+          "kg/m2", "precipitation_amount", "")
+          call nc_declare_3d(iunit, dimids3d, varid%prc, &
+          chksz3d, "lwe_precipitation_rate", &
+          "mm/("//itoa(nhfout)//"hr)", "lwe_precipitation_rate", "")
+    endif
+
+    call nc_declare_3d(iunit, dimids3d, varid%ihbl, &
+        chksz3d, "instant_height_boundary_layer", &
+        "m", "height", &
+        "instant_height_boundary_layer")
+    call nc_declare_3d(iunit, dimids3d, varid%ahbl, &
+        chksz3d, "average_height_boundary_layer", &
+        "m", "height", &
+        "average_height_boundary_layer")
+
+
+    do m=1,ncomp
+      mm= run_comp(m)%to_defined
+      call nc_declare_3d(iunit, dimids3d, varid%comp(m)%ic, &
+          chksz3d, TRIM(def_comp(mm)%compnamemc)//"_concentration", &
+          "Bq/m3","", &
+          TRIM(def_comp(mm)%compnamemc)//"_concentration")
+      call nc_declare_3d(iunit, dimids3d, varid%comp(m)%icbl, &
+          chksz3d, TRIM(def_comp(mm)%compnamemc)//"_concentration_bl", &
+          "Bq/m3","", &
+          TRIM(def_comp(mm)%compnamemc)//"_concentration_boundary_layer")
+      call nc_declare_3d(iunit, dimids3d, varid%comp(m)%ac, &
+          chksz3d, TRIM(def_comp(mm)%compnamemc)//"_acc_concentration", &
+          "Bq*hr/m3","", &
+          TRIM(def_comp(mm)%compnamemc)//"_accumulated_concentration")
+      call nc_declare_3d(iunit, dimids3d, varid%comp(m)%acbl, &
+          chksz3d, TRIM(def_comp(mm)%compnamemc)//"_avg_concentration_bl", &
+          "Bq/m3","", &
+          TRIM(def_comp(mm)%compnamemc)//"_average_concentration_bl")
+      if (def_comp(mm)%kdrydep > 0) then
+        call nc_declare_3d(iunit, dimids3d, varid%comp(m)%idd, &
+            chksz3d, TRIM(def_comp(mm)%compnamemc)//"_dry_deposition", &
+            "Bq/m2","", &
+            TRIM(def_comp(mm)%compnamemc)//"_dry_deposition")
+        call nc_declare_3d(iunit, dimids3d, varid%comp(m)%accdd, &
+            chksz3d, TRIM(def_comp(mm)%compnamemc)//"_acc_dry_deposition", &
+            "Bq/m2","", &
+            TRIM(def_comp(mm)%compnamemc)//"_accumulated_dry_deposition")
+      end if
+      if (def_comp(mm)%kwetdep > 0) then
+        call nc_declare_3d(iunit, dimids3d, varid%comp(m)%iwd, &
+            chksz3d, TRIM(def_comp(mm)%compnamemc)//"_wet_deposition", &
+            "Bq/m2","", &
+            TRIM(def_comp(mm)%compnamemc)//"_wet_deposition")
+        call nc_declare_3d(iunit, dimids3d, varid%comp(m)%accwd, &
+            chksz3d, TRIM(def_comp(mm)%compnamemc)//"_acc_wet_deposition", &
+            "Bq/m2","", &
+            TRIM(def_comp(mm)%compnamemc)//"_accumulated_wet_deposition")
+      end if
+      if (imodlevel) then
+        if (modleveldump > 0.) then
+          string = TRIM(def_comp(mm)%compnamemc)//"_concentration_dump_ml"
+        else
+          string = TRIM(def_comp(mm)%compnamemc)//"_concentration_ml"
+        endif
+        call nc_declare_4d(iunit, dimids4d, varid%comp(m)%icml, &
+            chksz4d, TRIM(string), &
+            "Bq/m3","", &
+            TRIM(string))
+      !           call nc_declare_4d(iunit, dimids4d, acml_varid(m),
+      !     +          chksz4d, TRIM(def_comp(mm)%compnamemc)//"_avg_concentration_ml",
+      !     +          "Bq*hour/m3","",
+      !     +          TRIM(def_comp(mm)%compnamemc)//"_accumulated_concentration_ml")
+      end if
+    end do
+    if (itotcomp == 1) then
+      call nc_declare_3d(iunit, dimids3d, varid%icblt, &
+          chksz3d, "total_concentration_bl", &
+          "Bq/m3","", &
+          "total_concentration_bl")
+      call nc_declare_3d(iunit, dimids3d, varid%acblt, &
+          chksz3d, "total_avg_concentration_bl", &
+          "Bq/m3","", &
+          "total_average_concentration_bl")
+      call nc_declare_3d(iunit, dimids3d, varid%act, &
+          chksz3d, "total_acc_concentration", &
+          "Bq/m3","", &
+          "total_accumulated_concentration")
+      if (compute_total_dry_deposition) then
+        call nc_declare_3d(iunit, dimids3d, varid%iddt, &
+            chksz3d, "total_dry_deposition", &
+            "Bq/m2","", &
+            "total_dry_deposition")
+        call nc_declare_3d(iunit, dimids3d, varid%accddt, &
+            chksz3d, "total_acc_dry_deposition", &
+            "Bq/m2","", &
+            "total_accumulated_dry_deposition")
+      end if
+      if (compute_total_wet_deposition) then
+        call nc_declare_3d(iunit, dimids3d, varid%iwdt, &
+            chksz3d, "total_wet_deposition", &
+            "Bq/m2","", &
+            "total_wet_deposition")
+        call nc_declare_3d(iunit, dimids3d, varid%accwdt, &
+            chksz3d, "total_acc_wet_deposition", &
+            "Bq/m2","", &
+            "total_accumulated_wet_deposition")
+      end if
+    end if
+    call check(nf90_enddef(iunit))
+end subroutine
+
+!> accumulation for average fields
+subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
+  USE snapgrdML, only: imodlevel, &
+      ivlayer
+  USE snapfldML, only:  &
+      avgbq1, avgbq2, hlayer1, hlayer2, hbl1, hbl2, &
+      avgprec, concen, avghbl, dgarea, &
+      avgbq, concacc, precip
+  USE snapparML, only: ncomp, def_comp
+  USE ftestML, only: ftest
+  USE releaseML, only: npart
+  USE particleML, only: pdata, Particle
+
+  real, intent(in) :: tf1, tf2, tnow, tstep
+  integer, intent(in) :: nsteph
+
+  real :: rt1, rt2
+  real :: scale
+  integer :: i, j, m, n, k
+  integer :: ivlvl
+  type(Particle) :: part
+  real :: hrstep
+
+  if(naverage == 0) then
+    avghbl = 0.0
+    avgprec = 0.0
+
+    avgbq1 = 0.0
+    avgbq2 = 0.0
+
+    if(imodlevel) then
+      avgbq = 0.0
+    end if
+  end if
+
+  naverage=naverage+1
+
+!..for time interpolation
+  rt1=(tf2-tnow)/(tf2-tf1)
+  rt2=(tnow-tf1)/(tf2-tf1)
+  hrstep=1./float(nsteph)
+
+!..height of boundary layer
+  avghbl(:,:) = avghbl + (rt1*hbl1 + rt2*hbl2)
+
+!..precipitation (no time interpolation, but hourly time intervals)
+  scale=tstep/3600.
+  avgprec(:,:) = avgprec + scale*precip(:,:)
+
+  do n=1,npart
+    part = pdata(n)
+    i = nint(part%x)
+    j = nint(part%y)
+  ! c     ivlvl=pdata(n)%z*10000.
+  ! c     k=ivlevel(ivlvl)
+    m = def_comp(part%icomp)%to_running
+    if(part%z >= part%tbl) then
+    !..in boundary layer
+      avgbq1(i,j,m) = avgbq1(i,j,m) + part%rad
+    else
+    !..above boundary layer
+      avgbq2(i,j,m) = avgbq2(i,j,m) + part%rad
+    end if
+  end do
+
+!..accumulated/integrated concentration
+
+  concen = 0.0
+
+  do n=1,npart
+    part = pdata(n)
+    ivlvl=part%z*10000.
+    k=ivlayer(ivlvl)
+    if(k == 1) then
+      i = nint(part%x)
+      j = nint(part%y)
+      m = def_comp(part%icomp)%to_running
+      concen(i,j,m) = concen(i,j,m) + dble(part%rad)
+    end if
+  end do
+
+  do m=1,ncomp
+    associate(concen => concen(:,:,m), concacc => concacc(:,:,m), &
+              dh => rt1*hlayer1(:,:,1) + rt2*hlayer2(:,:,1))
+      where (concen > 0.0)
+        concen = concen / (dh*dgarea)
+        concacc = concacc + concen*hrstep
+      endwhere
+    end associate
+  end do
+
+  if(imodlevel) then
+    do n=1,npart
+      part = pdata(n)
+      i = nint(part%x)
+      j = nint(part%y)
+      ivlvl = part%z*10000.
+      k = ivlayer(ivlvl)
+      m = def_comp(part%icomp)%to_running
+    !..in each sigma/eta (input model) layer
+      avgbq(i,j,k,m) = avgbq(i,j,k,m) + part%rad
+    end do
+  end if
+
+end subroutine
+
 end module fldout_ncML

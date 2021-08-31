@@ -157,19 +157,19 @@ PROGRAM bsnap
   USE snapdimML, only: nx, ny, nk, ldata, maxsiz, mcomp
   USE snapfilML, only: filef, itimer, limfcf, ncsummary, nctitle, nhfmax, nhfmin, &
                        nctype, nfilef, simulation_start, spinup_steps
-  USE snapfldML, only: nhfout, enspos, iprecip, nprecip
+  USE snapfldML, only: nhfout, enspos
   USE snapmetML, only: init_meteo_params, met_params
   USE snapparML, only: component, run_comp, &
                        ncomp, def_comp, nparnum, &
                        time_profile, TIME_PROFILE_BOMB
   USE snapposML, only: irelpos, nrelpos, release_positions
   USE snapgrdML, only: modleveldump, ivcoor, ixbase, iybase, ixystp, kadd, &
-                       klevel, imslp, inprecip, iprod, iprodr, itotcomp, gparam, igrid, igridr, &
-                       igtype, imodlevel
+                       klevel, imslp, iprod, iprodr, itotcomp, gparam, igrid, igridr, &
+                       igtype, imodlevel, precipitation_in_output
   USE snaptabML, only: tabcon
   USE particleML, only: pdata, extraParticle
   USE allocateFieldsML, only: allocateFields, deallocateFields
-  USE fldout_ncML, only: fldout_nc
+  USE fldout_ncML, only: fldout_nc, initialize_output, accumulate_fields
   USE rmpartML, only: rmpart
   USE split_particlesML, only: split_particles
   USE checkdomainML, only: checkdomain
@@ -230,8 +230,9 @@ PROGRAM bsnap
   integer :: k, ierror, i, n
   integer :: ih
   integer :: idrydep = 0, wetdep_version = 0, idecay
-  integer :: ntimefo, iunitf, nh1, nh2
-  integer :: ierr1, ierr2, nsteph, nstep, nstepr, iunito
+  integer :: ntimefo, nh1, nh2
+  integer :: ierr1, ierr2, nsteph, nstep, nstepr
+  integer, allocatable :: iunito
   integer :: nxtinf, ihread, isteph, lstepr, iendrel, istep, ihr1, ihr2, nhleft
   integer :: ierr, ihdiff, ihr, ifldout, idailyout = 0, ihour, split_particle_after_step, split_particle_hours
   integer :: date_time(8)
@@ -381,13 +382,11 @@ PROGRAM bsnap
 ! initialize random number generator for rwalk and release
   CALL init_random_seed()
 
-!..file unit for all input field files
-  iunitf = 20
 
 !..check input FELT files and make sorted lists of available data
 !..make main list based on x wind comp. (u) in upper used level
   if (ftype == "netcdf") then
-    call filesort_nc ! (iunitf, ierror)
+    call filesort_nc
   else if (ftype == "fimex") then
 #if defined(FIMEX)
     call filesort_fi()
@@ -461,7 +460,6 @@ PROGRAM bsnap
       tyear, tmon, tday, thour, tmin
     distance = 0.0
     speed = 0.0
-    iprecip = 1
 #endif
 
     !..initial no. of plumes and particles
@@ -487,16 +485,13 @@ PROGRAM bsnap
     !..nuclear bomb case
     if (time_profile == TIME_PROFILE_BOMB) nstepr = 1
 
-    !..field output file unit
-    iunito = 30
-
     !..information to log file
     write (iulog, *) 'nx,ny,nk:  ', nx, ny, nk
     write (iulog, *) 'kadd:      ', kadd
     write (iulog, *) 'klevel:'
     write (iulog, *) (klevel(i), i=1, nk)
     write (iulog, *) 'imslp:     ', imslp
-    write (iulog, *) 'inprecip:  ', inprecip
+    write (iulog, *) 'inprecip:  ', precipitation_in_output
     write (iulog, *) 'imodlevel: ', imodlevel
     write (iulog, *) 'modleveldump (h), steps:', modleveldump/nsteph, &
       modleveldump
@@ -606,14 +601,14 @@ PROGRAM bsnap
     if (idailyout == 1) then
       !       daily output, append +x for each day, but initialize later
       write (fldfilX, '(a9,a1,I3.3)') fldfil, '+', -1
-    end if
-    ! standard output needs to be initialized, even for daily
-    if (fldtype == "netcdf") then
-      call fldout_nc(-1, iunito, fldfil, itime1, 0., 0., 0., tstep, &
-                     m, nsteph, ierror)
     else
-      write (iulog, *) "only FIELD.OUTTYPE=netcdf supported, got: ", fldtype
-      ierror = 1
+      ! standard output needs to be initialized
+      if (fldtype == "netcdf") then
+        call initialize_output(iunito, fldfil, itime1, ierror)
+      else
+        write (iulog, *) "only FIELD.OUTTYPE=netcdf supported, got: ", fldtype
+        ierror = 1
+      endif
     endif
     if (ierror /= 0) call snap_error_exit(iulog)
 
@@ -799,13 +794,9 @@ PROGRAM bsnap
           call hrdiff(0, 0, itimei, itime1, ihr, ierr1, ierr2)
           tnow = 3600.*ihr
           nxtinf = istep + nsteph*abs(ihdiff - ihr)
-          iprecip = 1 + ihr
-          !              backward calculations difficult, but precip does not matter there
-          if (ihr < 0) iprecip = 1
         else
           tnow = 0.
           nxtinf = istep + nsteph*abs(ihdiff)
-          iprecip = 1
         end if
 
       else
@@ -1051,6 +1042,8 @@ PROGRAM bsnap
 
       !..field output if ifldout=1, always accumulation for average fields
       call output_timer%start()
+      call accumulate_fields(tf1, tf2, tnext, tstep, nsteph)
+
       if (idailyout == 1) then
         !       daily output, append +x for each day
         ! istep/nsteph = hour  -> /24 =day
@@ -1058,26 +1051,23 @@ PROGRAM bsnap
         if (fldfilX /= fldfilN) then
           fldfilX = fldfilN
           if (fldtype == "netcdf") then
-            call fldout_nc(-1, iunito, fldfilX, itime1, 0., 0., 0., tstep, &
-                           (24/nhfout) + 1, nsteph, ierror)
+            call initialize_output(iunito, fldfilX, itime, ierror)
+            if (ierror /= 0) call snap_error_exit(iulog)
           endif
-          if (ierror /= 0) call snap_error_exit(iulog)
         end if
-        if (fldtype == "netcdf") then
-          call fldout_nc(ifldout, iunito, fldfilX, itimeo, tf1, tf2, tnext, &
-                         tstep, istep, nsteph, ierror)
+        if (fldtype == "netcdf" .and. ifldout == 1) then
+          call fldout_nc(iunito, itimeo, tf1, tf2, tnext, &
+                         ierror)
         endif
         if (ierror /= 0) call snap_error_exit(iulog)
       else
-        if (fldtype == "netcdf") then
-          call fldout_nc(ifldout, iunito, fldfil, itimeo, tf1, tf2, tnext, &
-                         tstep, istep, nsteph, ierror)
+        if (fldtype == "netcdf" .and. ifldout == 1) then
+          call fldout_nc(iunito, itimeo, tf1, tf2, tnext, &
+                         ierror)
         endif
         if (ierror /= 0) call snap_error_exit(iulog)
       end if
       call output_timer%stop_and_log()
-
-      if (isteph == 0 .AND. iprecip < nprecip) iprecip = iprecip + 1
 
 #if defined(TRAJ)
       ! b
@@ -1787,11 +1777,11 @@ contains
         imslp = 0
       case ('precipitation.on')
         !..precipitation.on
-        inprecip = 1
+        precipitation_in_output = .true.
         met_params%need_precipitation = .true.
       case ('precipitation.off')
         !..precipitation.off
-        inprecip = 0
+        precipitation_in_output = .false.
         met_params%need_precipitation = .false.
       case ('model.level.fields.on')
         !..model.level.fields.on
