@@ -3,7 +3,7 @@
 
 F77 = gfortran
 
-F77FLAGS=-DVERSION=\"$(VERSION)\" -O2 -ftree-vectorize -fno-math-errno -g -mavx2 -mfma -fopt-info-optimized-vec -Wall -Wextra -fimplicit-none -fmodule-private
+F77FLAGS=-DVERSION=\"$(VERSION)\" -O2 -ftree-vectorize -fno-math-errno -g -mavx2 -mfma -Wall -Wextra -fimplicit-none -fmodule-private -Wno-conversion
 
 FIMEXLIB = $(shell pkg-config --libs fimex)
 FIMEXINC =
