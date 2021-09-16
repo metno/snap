@@ -37,13 +37,15 @@ subroutine filesort_nc
   USE snapdimML, only: nx, ny, mavail
   USE milibML, only: vtime
 
-  integer :: i, j, ncid, nf, varid, dimid, tsize, ierror, prev_avail_same_file
+  integer :: i, j, nf, tsize, ierror, prev_avail_same_file
+  integer :: ncid, varid, dimid
   real(real64) :: times(mavail)
   integer :: zeroHour, tunitLen, status, count_nan
   integer(int64) :: eTimes(mavail)
   integer(int64) :: add_offset, scalef
   integer :: dateTime(6)
   character(len=80) :: tunits
+  character(len=256) :: errmsg
   integer :: start4d(7), count4d(7)
 
 
@@ -52,26 +54,21 @@ subroutine filesort_nc
 ! loop over all file-names
   do nf = 1,nfilef
   ! get the time steps from the files "time" variable
-    status = nf90_open(filef(nf), NF90_NOWRITE, ncid)
+    call open_file(trim(filef(nf)), ncid, met_params%xwindv, varid, dimid, errmsg, status)
     if(status /= NF90_NOERR) then
-      write(error_unit,*) "cannot open ", trim(filef(nf)), ":", &
-          trim(nf90_strerror(status))
-      write(iulog,*) "cannot open ", trim(filef(nf)), ":", &
-          trim(nf90_strerror(status))
+      write(error_unit, *) trim(errmsg)
+      write(iulog, *) trim(errmsg)
       cycle
     endif
-    call check(nf90_inq_varid(ncid, "time", varid), "time")
-    call check(nf90_inq_dimid(ncid, "time", dimid), "tdim-id")
     call check(nf90_inquire_dimension(ncid, dimid, len=tsize), "tdim-len")
     if (tsize > size(times)) then
       write(error_unit,*) "to many time-steps in ", filef(nf), ": ", tsize
       error stop 1
     end if
-    call check(nf90_get_var(ncid, varid, times, [1], [tsize]), &
-        "time")
+    call check(nf90_get_var(ncid, varid, times, [1], [tsize]), "time")
     call check(nf90_inquire_attribute(ncid, varid, "units", len=tunitLen))
-    call check(nf90_get_att(ncid, varid, "units", tunits), &
-        "time units")
+    call check(nf90_get_att(ncid, varid, "units", tunits), "time units")
+
   ! shrink units-string to actual size
     tunits = tunits(:tunitLen)
     add_offset = timeUnitOffset(tunits)
@@ -81,7 +78,10 @@ subroutine filesort_nc
     do i = 1, tsize
       call calc_2d_start_length(start4d, count4d, nx, ny, 1, &
           enspos, i, met_params%has_dummy_dim)
-      call nfcheckload(ncid, met_params%xwindv, start4d, count4d, field1)
+      call nfcheckload(ncid, met_params%xwindv, start4d, count4d, field1, status)
+      if (status /= NF90_NOERR) then
+        cycle
+      endif
     ! test 4 arbitrary values in field
       count_nan = 0
       do j = 1, 4
@@ -129,6 +129,8 @@ subroutine filesort_nc
       iavail(navail)%pAvail_same_file = prev_avail_same_file
       prev_avail_same_file = navail
     end do
+
+    status = nf90_close(ncid)
   end do
 
 ! sorting time-steps, setting iavail 9, 10, kavail(1) and kavail(2)
@@ -234,7 +236,49 @@ subroutine filesort_nc
     end do
   end if
 
-
-  RETURN
 end subroutine filesort_nc
+
+!> Open a file and provides variable and dimension ids for time
+subroutine open_file(filename, ncid, windvar, varid, dimid, errmsg, status)
+    USE netcdf
+
+    character(len=*), intent(in) :: filename
+    integer, intent(out) :: ncid
+    character(len=*), intent(in) :: windvar
+    integer, intent(out) :: varid, dimid
+    character(len=256), intent(out) :: errmsg
+    integer, intent(out) :: status
+
+    integer :: wind_varid, ignore_status
+
+    status = NF90_NOERR
+
+    status = nf90_open(filename, NF90_NOWRITE, ncid)
+    if(status /= NF90_NOERR) then
+      write(errmsg, *) "cannot open ", filename, ":", trim(nf90_strerror(status))
+      return
+    endif
+
+    status = nf90_inq_varid(ncid, "time", varid)
+    if(status /= NF90_NOERR) then
+      write(errmsg, *) "cannot inq time var in ", filename, ":", trim(nf90_strerror(status))
+      ignore_status = nf90_close(ncid)
+      return
+    endif
+
+    status = nf90_inq_dimid(ncid, "time", dimid)
+    if(status /= NF90_NOERR) then
+      write(errmsg, *) "cannot inq time dim in ", filename, ":", trim(nf90_strerror(status))
+      ignore_status = nf90_close(ncid)
+      return
+    endif
+
+    status = nf90_inq_varid(ncid, windvar, wind_varid)
+    if(status /= NF90_NOERR) then
+      write(errmsg, *) "cannot inq wind var ", windvar, " in ", filename, ":", trim(nf90_strerror(status))
+      ignore_status = nf90_close(ncid)
+      return
+    endif
+end subroutine
+
 end module filesort_ncML

@@ -765,22 +765,41 @@ subroutine fillscaleoffset(ncid, varid, fillvalue, scalefactor, offset, status)
   endif
 end subroutine fillscaleoffset
 
-subroutine nfcheckload1d(ncid, varname, start, length, field)
+subroutine nfcheckload1d(ncid, varname, start, length, field, return_status)
   use ieee_arithmetic, only: ieee_value, IEEE_QUIET_NAN
   use iso_fortran_env, only: real32
 
   integer, intent(in) :: ncid, start(:), length(:)
   character(len=*), intent(in) :: varname
   real(real32), intent(out) :: field(:)
+  !> Return status instead of panic
+  integer, intent(out), optional :: return_status
 
   real(real32) :: factor, offset, fillvalue
   integer :: varid, status
 
-  call check(nf90_inq_varid(ncid, varname, varid), varname)
+  if (present(return_status)) return_status = NF90_NOERR
+
+  status = nf90_inq_varid(ncid, varname, varid)
+  if (status /= NF90_NOERR .and. present(return_status)) then
+    return_status = status
+    return
+  endif
+  call check(status, varname)
+
   write (iulog,*) "reading "//trim(varname)//", dims: ", "start(1):",start, " size:",length
-  call check(nf90_get_var(ncid, varid, field, start=start, count=length), varname)
+  status = nf90_get_var(ncid, varid, field, start=start, count=length)
+  if (status /= NF90_NOERR .and. present(return_status)) then
+    return_status = status
+    return
+  endif
+  call check(status, varname)
 
   call fillscaleoffset(ncid, varid, fillvalue, factor, offset, status)
+  if (status /= NF90_NOERR .and. present(return_status)) then
+    return_status = status
+    return
+  endif
   call check(status)
 
   where (field == fillvalue)
@@ -792,22 +811,41 @@ subroutine nfcheckload1d(ncid, varname, start, length, field)
   end if
 end subroutine nfcheckload1d
 
-subroutine nfcheckload2d(ncid, varname, start, length, field)
+subroutine nfcheckload2d(ncid, varname, start, length, field, return_status)
   use ieee_arithmetic, only: ieee_value, IEEE_QUIET_NAN
   use iso_fortran_env, only: real32
 
   integer, intent(in) :: ncid, start(:), length(:)
   character(len=*), intent(in) :: varname
   real(real32), intent(out) :: field(:,:)
+  !> Return status instead of panic
+  integer, intent(out), optional :: return_status
 
   real(real32) :: factor, offset, fillvalue
   integer :: varid, status
 
-  call check(nf90_inq_varid(ncid, varname, varid), varname)
+  if (present(return_status)) return_status = NF90_NOERR
+
+  status = nf90_inq_varid(ncid, varname, varid)
+  if (status /= NF90_NOERR .and. present(return_status)) then
+    return_status = status
+    return
+  endif
+  call check(status, varname)
+
   write (iulog,*) "reading "//trim(varname)//", dims: ", "start(1):",start, " size:",length
-  call check(nf90_get_var(ncid, varid, field, start=start, count=length), varname)
+  status = nf90_get_var(ncid, varid, field, start=start, count=length)
+  if (status /= NF90_NOERR .and. present(return_status)) then
+    return_status = status
+    return
+  endif
+  call check(status, varname)
 
   call fillscaleoffset(ncid, varid, fillvalue, factor, offset, status)
+  if (status /= NF90_NOERR .and. present(return_status)) then
+    return_status = status
+    return
+  endif
   call check(status)
 
   where (field == fillvalue)
@@ -819,22 +857,41 @@ subroutine nfcheckload2d(ncid, varname, start, length, field)
   end if
 end subroutine nfcheckload2d
 
-subroutine nfcheckload3d(ncid, varname, start, length, field)
+subroutine nfcheckload3d(ncid, varname, start, length, field, return_status)
   use ieee_arithmetic, only: ieee_value, IEEE_QUIET_NAN
   use iso_fortran_env, only: real32
 
   integer, intent(in) :: ncid, start(:), length(:)
   character(len=*), intent(in) :: varname
   real(real32), intent(out) :: field(:,:,:)
+  !> Return status instead of panic
+  integer, intent(out), optional :: return_status
 
   real(real32) :: factor, offset, fillvalue
   integer :: varid, status
 
-  call check(nf90_inq_varid(ncid, varname, varid), varname)
+  if (present(return_status)) return_status = NF90_NOERR
+
+  status = nf90_inq_varid(ncid, varname, varid)
+  if (status /= NF90_NOERR .and. present(return_status)) then
+    return_status = status
+    return
+  endif
+  call check(status, varname)
+
   write (iulog,*) "reading "//trim(varname)//", dims: ", "start(1):",start, " size:",length
-  call check(nf90_get_var(ncid, varid, field, start=start, count=length), varname)
+  status = nf90_get_var(ncid, varid, field, start=start, count=length)
+  if (status /= NF90_NOERR .and. present(return_status)) then
+    return_status = status
+    return
+  endif
+  call check(status, varname)
 
   call fillscaleoffset(ncid, varid, fillvalue, factor, offset, status)
+  if (status /= NF90_NOERR .and. present(return_status)) then
+    return_status = status
+    return
+  endif
   call check(status)
 
   where (field == fillvalue)
