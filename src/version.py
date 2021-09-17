@@ -2,6 +2,7 @@
 import argparse
 from subprocess import call, check_output, DEVNULL, run, PIPE
 import sys
+import os
 
 TIMEOUT = 30  # [seconds]
 
@@ -96,6 +97,10 @@ if __name__ == "__main__":
                                 + "the local repo")
 
     args = argparser.parse_args()
+
+    if os.environ.get("VERSION") is not None:
+        print(os.environ["VERSION"])
+        exit(0)
 
     if no_git_available():
         print("git is not available", file=sys.stderr)
