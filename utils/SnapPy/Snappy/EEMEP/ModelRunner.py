@@ -228,7 +228,8 @@ class ModelRunner():
             self.logger.debug("Calculating Meteorology, takes about 15min")
             # make sure to use the 00UTC meteorology, eemep needs start-time at midnight
             start_time = model_start_time.replace(hour=3)
-            ecMetCalc = EcMeteorologyCalculator(dtime=start_time,
+            ecMetCalc = EcMeteorologyCalculator(EcMeteorologyCalculator.getGlobalMeteoResources(),
+                                                dtime=start_time,
                                                 domainCenterX=self.volcano.longitude,
                                                 domainCenterY=self.volcano.latitude)
             ecMetCalc.calc()
