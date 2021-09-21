@@ -42,11 +42,15 @@ jobs:
             tar -xf mi-programoptions.tar.gz --one-top-level=mi-programoptions --strip-components=1 &&
             wget https://github.com/metno/mi-cpptest/archive/refs/tags/v0.1.1.tar.gz -O mi-cpptest.tar.gz &&
             tar -xf mi-cpptest.tar.gz --one-top-level=mi-cpptest --strip-components=1 &&
-            wget https://github.com/https://github.com/HowardHinnant/date/archive/refs/tags/v2.4.1.tar.gz -O date.tar.gz &&
+            wget https://github.com/HowardHinnant/date/archive/refs/tags/v2.4.1.tar.gz -O date.tar.gz &&
             tar -xf date.tar.gz --one-top-level=date --strip-components=1
 
+      - name: Install fimex
+        run: |
+            cd fimex && mkdir build && cd build && cmake .. && sudo make -j2 install
 
-
+      - name: Create binaries (with fimex)
+        run: cd src && make -j2
 
       - name: Test binaries
         run: cd src && make test
