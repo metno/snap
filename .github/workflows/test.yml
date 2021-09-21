@@ -17,7 +17,7 @@ jobs:
         run: sudo apt-get install libnetcdff-dev gfortran
 
       - name: Link appropriate make configuration
-        run: cd src && ln -s ubuntuBionic.mk current.mk
+        run: cd src && ln -s gcc_pkgconfig.mk current.mk
 
       - name: Create binaries
         run: cd src && make -j2
