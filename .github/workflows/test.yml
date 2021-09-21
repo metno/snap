@@ -1,0 +1,26 @@
+name: Test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-18.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: sudo apt-get install libnetcdff-dev gfortran
+
+      - name: Link appropriate make configuration
+        run: cd src && ln -s ubuntuBionic.mk current.mk
+
+      - name: Create binaries
+        run: cd src && make -j2
+
+      - name: Test binaries
+        run: cd src && make test
