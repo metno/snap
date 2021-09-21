@@ -26,7 +26,7 @@ jobs:
         run: cd src && make clean
 
       - name: Install fimex requirements
-        run: sudo apt-get install libxml2 libproj-dev libudunits2-dev
+        run: sudo apt-get install libxml2 libproj-dev libudunits2-dev pybind11-dev
 
       - name: Download and unpack fimex
         run: |
@@ -47,7 +47,8 @@ jobs:
 
       - name: Install fimex
         run: |
-            cd fimex && mkdir build && cd build && cmake .. && sudo make -j2 install
+            cd fimex && mkdir build && cd build &&
+            cmake .. -DENABLE_FORTRAN=true && sudo make -j2 install
 
       - name: Create binaries (with fimex)
         run: cd src && make -j2
