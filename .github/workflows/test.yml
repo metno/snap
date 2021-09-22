@@ -55,4 +55,4 @@ jobs:
         run: cd src && make -j2
 
       - name: Test binaries
-        run: cd src && make test
+        run: cd src && env LD_LIBRARY_PATH=/usr/local/lib make test
