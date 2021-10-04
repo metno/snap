@@ -225,7 +225,15 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
   !      end if
   !################################################################
 
-    if(nplume+1 > mplume .OR. npart+nprel > mpart) then
+    if (nplume+1 > mplume) then
+      write(error_unit,*) "Out of space for plumes"
+      write(iulog,*) "Out of space for plumes"
+      ierror=1
+      return
+    end if
+    if (npart+nprel > mpart) then
+      write(error_unit,*) "Out of space for particles"
+      write(iulog,*) "Out of space for particles"
       ierror=1
       return
     end if
@@ -348,6 +356,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
       if (x-dx < 1.01 .OR. x+dx > nx-0.01 .OR. &
       y-dy < 1.01 .OR. y+dy > ny-0.01) then
         write(error_unit,*) 'RELEASE ERROR: Bad position'
+        write(iulog,*) 'RELEASE ERROR: Bad position'
         ierror=1
         return
       end if
