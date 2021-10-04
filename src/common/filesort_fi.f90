@@ -120,6 +120,11 @@ contains
         END DO
         if (.not. allocated(field)) allocate (field(4*4))
         status = fio%read (varname, field)
+        if (status /= 0) then
+          write (error_unit, *) "cannot read ", trim(varname), " in file ", trim(filef(nf))
+          write (iulog, *) "cannot read ", trim(varname), " in file ", trim(filef(nf))
+          cycle
+        endif
 
         ! test 4 arbitrary values in field
         count_nan = 0
@@ -166,8 +171,13 @@ contains
         iavail(navail)%pAvail_same_file = prev_avail_same_file
         prev_avail_same_file = navail
       end do
+      status = fio%close()
+      if (status /= 0) then
+        write (error_unit, *) "cannot close ", trim(filef(nf))
+        write (iulog, *) "cannot close ", trim(filef(nf))
+        cycle
+      endif
     end do
-    status = fio%close()
 
 ! sorting time-steps, setting iavail 9, 10, kavail(1) and kavail(2)
 ! drop double occurances of time, using latest in input-list
