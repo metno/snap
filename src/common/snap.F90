@@ -2095,14 +2095,6 @@ contains
     nelems = nelems + 1 ! Fencepost
 
     allocate (releases(nelems))
-    do i = 1, nelems
-      releases(i)%frelhour = -1.0
-      releases(i)%relradius = -1.0
-      releases(i)%relupper = -1.0
-      releases(i)%rellower = -1.0
-      releases(i)%relstemradius = -1.0
-      releases(i)%relbqsec = -1.0
-    enddo
   end subroutine
 
 #ifdef TRAJ

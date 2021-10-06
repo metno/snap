@@ -34,19 +34,19 @@ module releaseML
 !> amount, release volume etc..
   type, public :: release_t
     !> specified release hours in time profile
-    real :: frelhour
+    real :: frelhour = -1
     !> release radius in unit meter
-    real :: relradius(mrelheight)
+    real :: relradius(mrelheight) = -1
     !> release upper height in unit meter
-    real :: relupper(mrelheight)
+    real :: relupper(mrelheight) = -1
     !> release lower height in unit meter
-    real :: rellower(mrelheight)
+    real :: rellower(mrelheight) = -1
     !> release radius in unit meter for a mushroom stem
-    real :: relstemradius
+    real :: relstemradius = -1
     !>  radioactive release in unit Bq/sec
     !>
     !>      dimension(1:ncomp,1:nrelheight)
-    real :: relbqsec(mcomp,mrelheight)
+    real :: relbqsec(mcomp,mrelheight) = -1
   end type
 
   type(release_t), public, allocatable, save :: releases(:)
