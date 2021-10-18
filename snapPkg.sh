@@ -1,5 +1,5 @@
-VERSION=2.0.4
-VERSION_=`echo -n $VERSION | tr '.' '_'`
+VERSION=2.0.5
+#VERSION_=`echo -n $VERSION | tr '.' '_'`
 export VERSION
 PLATFORM=bionic
 #svn copy https://svn.met.no/snap/trunk \
@@ -9,16 +9,15 @@ PLATFORM=bionic
 #git push origin "version${VERSION_}"
 #git checkout master
 #git merge version${VERSION_}
-cd src
+cd src || exit 1
 make dist
-cd ..
+cd .. || exit 1
 tar xvfz snap-${VERSION}.tgz
 mv snap-${VERSION}.tgz bsnap_${VERSION}.orig.tar.gz
-cd snap-${VERSION}
+cd snap-${VERSION} || exit 1
 cp -r ../debian.${PLATFORM} .
 mv debian.${PLATFORM} debian
 dch -v ${VERSION}-1 "new release"
 dch -r ""
+export DEB_BUILD_OPTIONS='nostrip'
 debuild --preserve-envvar VERSION -us -uc -sa
-
-
