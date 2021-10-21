@@ -79,6 +79,10 @@ def git_tag_remote_consistent(tag, commithash):
         tagcommit, taghash = line.split()
         if taghash == "refs/tags/" + tag and tagcommit == commithash:
             return True
+        # Annotateed tags will be a separate object (the above), but the
+        # pointed to commit will also be available with an extra suffix
+        if taghash == "refs/tags/" + tag + "^{}" and tagcommit == commithash:
+            return True
     return False
 
 
