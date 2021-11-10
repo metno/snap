@@ -431,6 +431,7 @@ RELEASE.UPPER.M= {upperHeight}, {upperHeight}
         lon = qDict['longitude']
         tag = "latlon"
         nPPs = self.res.readNPPs()
+        nPPs.update(self.res.readRadnett())
         if (qDict['npp'] and nPPs[qDict['npp']]):
             tag = qDict['npp']
             npp = nPPs[qDict['npp']]['site']
