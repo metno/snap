@@ -24,14 +24,18 @@ import os
 from subprocess import Popen, PIPE
 
 
-def sendPngsFromDir(subject, body, wdir):
+def sendPngsFromDir(subject, body, wdir, receivers=None):
     """send all *.png images from the wdir to myself"""
     # Create the container (outer) email message.
     mailuser = "{}@met.no".format(getpass.getuser())
     msg = MIMEMultipart()
     msg["From"] = mailuser
     msg["Reply-To"] = mailuser
+
+    if receivers is not None:
+        mailuser = mailuser + ", " + ", ".join(receivers)
     msg["To"] = mailuser
+
     msg["Subject"] = subject
     msg.preamble = subject.encode("ascii", "ignore").decode("ascii")
     msg.attach(MIMEText(body, _charset="utf-8"))

@@ -22,6 +22,7 @@ import re
 import sys
 from time import gmtime, strftime
 import traceback
+import base64
 
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtCore import QProcess, QProcessEnvironment, QThread, QIODevice, QThreadPool, pyqtSignal
@@ -189,9 +190,18 @@ m=SNAP.current t=fimex format=netcdf f={}
             with open(os.path.join(self.lastOutputDir,"snap.log.out"), 'a') as lfh:
                 lfh.write("plotting finished\n")
 
+            extra_emails = None
+            for key, value in self.lastQDict.items():
+                if not key.startswith("email_"):
+                    continue
+                if extra_emails is None:
+                    extra_emails = []
+                value = base64.b64decode(value).decode("utf-8")
+                extra_emails.append(value)
+
             sendPngsFromDir("SNAP calculation: {}".format(self.lastTag),
                             "Finished in {wdir}. See attached file(s).\n SourceTerm: \n{sourceTerm}".format(wdir=self.lastOutputDir, sourceTerm=self.lastSourceTerm),
-                            prod_dir)
+                            prod_dir, extra_emails)
 
 
     def _defaultDomainCheck(self, lonf, latf):
