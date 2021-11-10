@@ -99,16 +99,9 @@ class Resources:
         startScreenFH.close()
         plantBB = {"west": -60, "east": 70, "north": 85, "south": 30}
         npps = self.readNPPs(plantBB)
+        npps.update(self.readRadnett())
         nppStrings = []
         for tag, site in npps.items():
-            print(tag, site["site"])
-            nppStrings.append(
-                '<option value="{tag}">{site}</option>\n'.format(
-                    tag=tag, site=site["site"]
-                )
-            )
-        radnett = self.readRadnett()
-        for tag, site in radnett.items():
             nppStrings.append(
                 '<option value="{tag}">{site}</option>\n'.format(
                     tag=tag, site=site["site"]
@@ -331,6 +324,7 @@ GRAVITY.FIXED.M/S=0.0002
                 longitude = int(m[1]) + int(m[2]) / 60
 
                 tag = "RADNETT:" + station.replace(" ", "_")
+                tag = tag.encode("ascii", "ignore").decode("ascii")
 
                 stations[tag] = {"site": f"RADNETT: {station}", "lon": longitude, "lat": latitude}
 
