@@ -54,9 +54,7 @@ class Resources:
 
     # OUTPUTDIR = "/disk1/tmp"
     _OUTPUTDIR = "{LUSTREDIR}/project/fou/kl/snap/runs"
-    _ECINPUTDIRS = [
-        "{LUSTREDIR}/project/metproduction/products/cwf-input/"
-    ]
+    _ECINPUTDIRS = ["{LUSTREDIR}/project/metproduction/products/cwf-input/"]
     # ECINPUTDIRS = ["/lustre/storeB/users/heikok/Meteorology/ecdis2cwf/"]
     EC_FILENAME_PATTERN = "meteo{year:04d}{month:02d}{day:02d}_{dayoffset:02d}.nc"
     EC_FILE_PATTERN = os.path.join("NRPA_EUROPE_0_1_{UTC:02d}", EC_FILENAME_PATTERN)
@@ -68,9 +66,7 @@ class Resources:
         MetModel.NrpaEC0p1Global: [
             "{LUSTREDIR}/project/metproduction/products/ecmwf/nc/"
         ],
-        MetModel.Icon0p25Global: [
-            "{LUSTREDIR}/project/metproduction/products/icon/"
-        ],
+        MetModel.Icon0p25Global: ["{LUSTREDIR}/project/metproduction/products/icon/"],
     }
 
     _MET_INPUTDIRS = {
@@ -97,14 +93,13 @@ class Resources:
         self.ecDefaultDomainStartY = 25.0
 
         startScreenFH = open(
-            os.path.join(self.directory, "startScreen.html"),
-            mode="r",
-            encoding="UTF-8",
+            os.path.join(self.directory, "startScreen.html"), mode="r", encoding="UTF-8"
         )
         self.startScreen = startScreenFH.read()
         startScreenFH.close()
         plantBB = {"west": -60, "east": 70, "north": 85, "south": 30}
         npps = self.readNPPs(plantBB)
+        npps.update(self.readRadnett())
         nppStrings = []
         for tag, site in npps.items():
             nppStrings.append(
@@ -163,9 +158,7 @@ class Resources:
         """ return a dictionary of isotope-ids mapping to a dictionary with isotope,type and decay"""
         isotopes = dict()
         with open(
-            os.path.join(self.directory, "isotope_list.txt"),
-            mode="r",
-            encoding="UTF-8",
+            os.path.join(self.directory, "isotope_list.txt"), mode="r", encoding="UTF-8"
         ) as isoFH:
             for line in isoFH:
                 if not line.strip() is "":
@@ -249,9 +242,7 @@ GRAVITY.FIXED.M/S=0.0002
             "conc": [],
         }
 
-        with open(
-            os.path.join(self.directory, "isotopes_template.xml")
-        ) as isoTemplate:
+        with open(os.path.join(self.directory, "isotopes_template.xml")) as isoTemplate:
             isoTemp = isoTemplate.read()
 
         isoStr = ""
@@ -265,9 +256,7 @@ GRAVITY.FIXED.M/S=0.0002
                 extracts["wetd"].append("{}_acc_wet_deposition".format(isoName))
 
         with open(
-            os.path.join(
-                self.directory, "cdmGribWriterIsotopesTemplate.xml"
-            )
+            os.path.join(self.directory, "cdmGribWriterIsotopesTemplate.xml")
         ) as xmlTemplate:
             xmlTemp = xmlTemplate.read()
 
@@ -281,18 +270,14 @@ GRAVITY.FIXED.M/S=0.0002
         return {
             "extracts": extracts,
             "xml": xmlOut,
-            "ncml": os.path.join(
-                self.directory, "removeSnapReferenceTime.ncml"
-            ),
+            "ncml": os.path.join(self.directory, "removeSnapReferenceTime.ncml"),
         }
 
     def readNPPs(
         self, bb={"west": -180.0, "east": 180.0, "north": 90.0, "south": -90.0}
     ):
         nppsFile = open(
-            os.path.join(self.directory, "npps.csv"),
-            mode="r",
-            encoding="UTF-8",
+            os.path.join(self.directory, "npps.csv"), mode="r", encoding="UTF-8"
         )
         # skip header
         nppsFile.readline()
@@ -321,6 +306,30 @@ GRAVITY.FIXED.M/S=0.0002
         nppsFile.close()
         return OrderedDict(sorted(npps.items(), key=lambda t: t[0].lower()))
 
+    def readRadnett(self,):
+        stations = OrderedDict()
+        with open(
+            os.path.join(self.directory, "radnett.csv"), mode="r", encoding="UTF-8"
+        ) as f:
+            degree_minute_regex = re.compile("([0-9]+)°\s([0-9]+)’\s[NØ]")
+            for line in f:
+                if line.startswith("#"):
+                    continue
+                station, position = (x.strip() for x in line.split("|"))
+
+                latitude, longitude = (x.strip() for x in position.split(","))
+                m = degree_minute_regex.match(latitude)
+                latitude = int(m[1]) + int(m[2]) / 60
+                m = degree_minute_regex.match(longitude)
+                longitude = int(m[1]) + int(m[2]) / 60
+
+                tag = "RADNETT:" + station.replace(" ", "_")
+                tag = tag.encode("ascii", "ignore").decode("ascii")
+
+                stations[tag] = {"site": f"RADNETT: {station}", "lon": longitude, "lat": latitude}
+
+        return stations
+
     def _getSnapInputTemplate(self, metmodel=None):
         """Read a snap input file without source-term parameters, isotopes (isotopes2snapinput) and eventually without meteorology files.
 
@@ -328,21 +337,13 @@ GRAVITY.FIXED.M/S=0.0002
         metmodel
         """
         if (metmodel == MetModel.NrpaEC0p1) or (metmodel == MetModel.NrpaEC0p1Global):
-            filename = os.path.join(
-                self.directory, "snap.input_nrpa_ec_0p1.tmpl"
-            )
+            filename = os.path.join(self.directory, "snap.input_nrpa_ec_0p1.tmpl")
         elif metmodel == MetModel.Meps2p5:
-            filename = os.path.join(
-                self.directory, "snap.input_meps_2_5km.tmpl"
-            )
+            filename = os.path.join(self.directory, "snap.input_meps_2_5km.tmpl")
         elif metmodel == MetModel.Icon0p25Global:
-            filename = os.path.join(
-                self.directory, "snap.input_icon_0p25.tmpl"
-            )
+            filename = os.path.join(self.directory, "snap.input_icon_0p25.tmpl")
         elif metmodel == MetModel.GfsGribFilter:
-            filename = os.path.join(
-                self.directory, "snap.input_gfs_grib_filter.tmpl"
-            )
+            filename = os.path.join(self.directory, "snap.input_gfs_grib_filter.tmpl")
         else:
             raise (
                 NotImplementedError("metmodel='{}' not implememented".format(metmodel))
@@ -404,8 +405,8 @@ GRAVITY.FIXED.M/S=0.0002
         return filename
 
     def getLustreDir(self):
-        if not hasattr(self, '_lustredir'):
-            lustredir = os.path.join(os.sep, 'lustre', os.getenv('STORE','storeB'))
+        if not hasattr(self, "_lustredir"):
+            lustredir = os.path.join(os.sep, "lustre", os.getenv("STORE", "storeB"))
             lustredirfile = os.path.join(os.environ["HOME"], ".lustredir")
             if os.path.isfile(lustredirfile):
                 with open(lustredirfile, "r") as lh:
@@ -424,7 +425,7 @@ GRAVITY.FIXED.M/S=0.0002
         return None
 
     def _lustreTemplateDirs(self, dirs):
-        return [ x.format(LUSTREDIR=self.getLustreDir()) for x in dirs ]
+        return [x.format(LUSTREDIR=self.getLustreDir()) for x in dirs]
 
     def getMetGlobalInputDirs(self, metmodel):
         return self._lustreTemplateDirs(self._MET_GLOBAL_INPUTDIRS[metmodel])
@@ -496,7 +497,9 @@ GRAVITY.FIXED.M/S=0.0002
                 start = dtime
 
             start -= timedelta(hours=66)  # go 66 hours (forecast-length) back
-            last = start + timedelta(days=24) # offer max 21days (24days - 66hours) in archive
+            last = start + timedelta(
+                days=24
+            )  # offer max 21days (24days - 66hours) in archive
             today = datetime.combine(date.today(), time(0, 0, 0))
             tomorrow = today + timedelta(days=1)
             if tomorrow < last:
