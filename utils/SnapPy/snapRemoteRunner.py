@@ -373,7 +373,7 @@ class SnapRemoteRunner:
                     delete_in_upload.append(f)
 
         delete_upload_files = [
-            os.path.join(self.UPLOAD_DIR, f) for f in delete_in_upload
+            os.path.join(self.remote_dir, self.UPLOAD_DIR, f) for f in delete_in_upload
         ]
         if DEBUG:
             print("deleting remotely: " + ", ".join(delete_upload_files))
@@ -422,15 +422,31 @@ if __name__ == "__main__":
         dir2 = args.dir2
     else:
         dir2 = ""
-    SnapRemoteRunner(
-        directory=args.dir,
-        hpc=args.hpc,
-        directory2=dir2,
-        remoteDir=args.remoteDir,
-        remoteUser=args.remoteUser,
-        remote=args.remote,
-        dryrun=args.dryrun,
-    )
+    for user in [None, "autotestruns"]:
+        if DEBUG:
+            print(f"Handling jobs from {'DSA' if user is None else user}")
+        if user is None:
+            # Default DSA runs
+            directory = args.dir
+            remoteDir = args.remoteDir
+            directory2 = args.dir2
+        else:
+            directory = os.path.join(args.dir, user)
+            remoteDir = os.path.join(args.remoteDir, user)
+            if args.dir2 is None:
+                directory2 = None
+            else:
+                directory2 = os.path.join(args.dir2, user)
+
+        SnapRemoteRunner(
+            directory=directory,
+            hpc=args.hpc,
+            directory2=directory2,
+            remoteDir=remoteDir,
+            remoteUser=args.remoteUser,
+            remote=args.remote,
+            dryrun=args.dryrun,
+        )
 
     if (args.cleanup > 0) and not args.dryrun:
         if dirIsWritable(args.dir):
