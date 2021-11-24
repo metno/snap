@@ -11,9 +11,9 @@
 
 
 logfile=$HOME/work/emep/eemep2/eemep_single.log
-rm -f $logfile
+rm -f "$logfile"
 
-exec 1>$logfile 2>&1
+exec 1>"$logfile" 2>&1
 
 source $HOME/status/Status_Funcs.sh
 maxnodes=6
@@ -36,12 +36,12 @@ DAY={day}
 HOUR={hour}
 RUNTIME={runhour}
 # always start at midnight (eemep requirement, and for restart)
-STARTDATE=`date -d "$YEAR-$MONTH-$DAY $HOUR" +%Y,%m,%d,000000`
-ENDDATE=`date -d "$YEAR-$MONTH-$DAY $HOUR +{runhour}hours" +%Y,%m,%d,%H0000`
+STARTDATE=$(date -d "$YEAR-$MONTH-$DAY $HOUR" +%Y,%m,%d,000000)
+ENDDATE=$(date -d "$YEAR-$MONTH-$DAY $HOUR +{runhour}hours" +%Y,%m,%d,%H0000)
 # restart at midnight the next day
-RESTARTDATE=`date -d "$YEAR-$MONTH-$DAY $HOUR +1days" +%Y,%m,%d,000000`
+RESTARTDATE=$(date -d "$YEAR-$MONTH-$DAY $HOUR +1days" +%Y,%m,%d,000000)
 
-if [ "x$RUNDIR" == "x" ]; then
+if [ "$RUNDIR" == "" ]; then
     echo "no rundir"
     exit 1
 fi
@@ -49,14 +49,11 @@ fi
 # cleanup older runs
 cd $RUNDIR && find . -mtime +2 -type f -delete
 
-cd $RUNTAG
-if [ $? -ne 0 ]; then
-    exit 1
-fi
+cd $RUNTAG || exit 1
 
 # switch global to local logfile
 locallog=eemep_$YEAR-$MONTH-$DAY--$HOUR.log
-cp $logfile $locallog
+cp "$logfile" $locallog
 exec 1>$locallog 2>&1
 ls -l
 head -n 3 eemep_script.job
@@ -76,11 +73,10 @@ sed -e " s/startdate\s*=.*/startdate = $STARTDATE/;s/enddate.*/enddate = $ENDDAT
 # source the modules for unimod
 # Load necessary modules
 source $SRCDIR/Unimod.$VERSION/Unimod_modules.sh
-mpprun $SRCDIR/Unimod.$VERSION/Unimod
-if [ $? -ne 0 ]; then
-    echo "failed" > status
-else
+if mpprun $SRCDIR/Unimod.$VERSION/Unimod; then
     echo "finished" > status
+else
+    echo "failed" > status
 fi
 
 
