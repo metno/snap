@@ -81,13 +81,14 @@ sed -e " s/startdate\s*=.*/startdate = $STARTDATE/;s/enddate.*/enddate = $ENDDAT
 source $SRCDIR/Unimod.$VERSION/Unimod_modules.sh
 date
 /modules/xenial/OPENMPI/3.0.0/bin/mpirun  --mca btl openib,self -bind-to core $SRCDIR/Unimod.$VERSION/Unimod.intel
-date
-
 if [ $? -ne 0 ]; then
     echo "failed" > status
+    exit 1
 else
     echo "finished" > status
 fi
+date
+
 
 
 # Clean the links to the input data
