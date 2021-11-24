@@ -43,12 +43,12 @@ DAY={day}
 HOUR={hour}
 RUNTIME={runhour}
 # always start at midnight (eemep requirement, and for restart)
-STARTDATE=`date -d "$YEAR-$MONTH-$DAY $HOUR" +%Y,%m,%d,000000`
-ENDDATE=`date -d "$YEAR-$MONTH-$DAY $HOUR +{runhour}hours" +%Y,%m,%d,%H0000`
+STARTDATE=$(date -d "$YEAR-$MONTH-$DAY $HOUR" +%Y,%m,%d,000000)
+ENDDATE=$(date -d "$YEAR-$MONTH-$DAY $HOUR +{runhour}hours" +%Y,%m,%d,%H0000)
 # restart at midnight the next day
-RESTARTDATE=`date -d "$YEAR-$MONTH-$DAY $HOUR +1days" +%Y,%m,%d,000000`
+RESTARTDATE=$(date -d "$YEAR-$MONTH-$DAY $HOUR +1days" +%Y,%m,%d,000000)
 
-if [ "x$RUNDIR" == "x" ]; then
+if [ "$RUNDIR" == "" ]; then
     echo "no rundir"
     exit 1
 fi
@@ -56,10 +56,7 @@ fi
 # cleanup older runs
 cd $RUNDIR && find . -mtime +2 -type f -delete
 
-cd $RUNTAG
-if [ $? -ne 0 ]; then
-    exit 1
-fi
+cd $RUNTAG || exit 1
 
 # switch global to local logfile
 locallog=eemep_$YEAR-$MONTH-$DAY--$HOUR.log
@@ -79,11 +76,11 @@ sed -e " s/startdate\s*=.*/startdate = $STARTDATE/;s/enddate.*/enddate = $ENDDAT
 # Load necessary modules
 source $SRCDIR/Unimod.$VERSION/Unimod_modules.sh
 date
-mpirun  --mca mtl psm2 -npernode 36 $SRCDIR/Unimod.$VERSION/Unimod.intel
-if [ $? -ne 0 ]; then
+if mpirun  --mca mtl psm2 -npernode 36 $SRCDIR/Unimod.$VERSION/Unimod.intel ;
+then
+    echo "finished" > status
+else
     echo "failed" > status
     exit 1
-else
-    echo "finished" > status
 fi
 date
