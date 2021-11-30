@@ -77,6 +77,7 @@ if mpprun $SRCDIR/Unimod.$VERSION/Unimod; then
     echo "finished" > status
 else
     echo "failed" > status
+    exit 1
 fi
 
 
