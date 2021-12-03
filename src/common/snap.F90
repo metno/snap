@@ -233,7 +233,8 @@ PROGRAM bsnap
   integer :: ntimefo, nh1, nh2
   integer :: ierr1, ierr2, nsteph, nstep, nstepr
   integer, allocatable :: iunito
-  integer :: nxtinf, ihread, isteph, lstepr, iendrel, istep, ihr1, ihr2, nhleft
+  integer :: ihread, isteph, lstepr, iendrel, istep, nhleft
+  integer :: next_input_step
   integer :: ierr, ihdiff, ihr, ifldout, idailyout = 0, ihour, split_particle_after_step, split_particle_hours
   integer :: date_time(8)
   logical :: warning = .false.
@@ -598,24 +599,10 @@ PROGRAM bsnap
         end if
       end if
     end do
-    if (idailyout == 1) then
-      !       daily output, append +x for each day, but initialize later
-      write (fldfilX, '(a9,a1,I3.3)') fldfil, '+', -1
-    else
-      ! standard output needs to be initialized
-      if (fldtype == "netcdf") then
-        call initialize_output(iunito, fldfil, itime1, ierror)
-      else
-        write (iulog, *) "only FIELD.OUTTYPE=netcdf supported, got: ", fldtype
-        ierror = 1
-      endif
-    endif
-    if (ierror /= 0) call snap_error_exit(iulog)
-
     itime = itime1
     time_file = 0
 
-    nxtinf = 0
+    next_input_step = 0
     ihread = 0
     isteph = 0
     lstepr = 0
@@ -656,17 +643,90 @@ PROGRAM bsnap
 
 ! reset readfield_nc (eventually, traj will rerun this loop)
     if (ftype == "netcdf") then
-      call readfield_nc(-1, nhleft, itimei, ihr1, ihr2, &
+      call readfield_nc(-1, nhleft, itimei, 0, 0, &
                         time_file, ierror)
     else if (ftype == "fimex") then
 #if defined(FIMEX)
-      call readfield_fi(-1, nhleft, itimei, ihr1, ihr2, &
+      call readfield_fi(-1, nhleft, itimei, 0, 0, &
                         time_file, ierror)
 #else
       error stop "A fimex read was requested, but fimex support is not included"// &
         " in this build"
 #endif
     end if
+    if (ierror /= 0) call snap_error_exit(iulog)
+
+    if (imodlevel) then
+      block
+        integer :: junk(5)
+
+        if (ftype == "netcdf") then
+          call readfield_nc(0, 0, itime1, 0, 0, junk, ierror)
+        else if (ftype == "fimex") then
+#if defined(FIMEX)
+          call readfield_fi(0, 0, itime1, 0, 0, junk, ierror)
+#endif
+        endif
+        if (ierror /= 0) call snap_error_exit(iulog)
+      end block
+    endif
+
+    ! Initialise output
+    if (idailyout == 1) then
+      !       daily output, append +x for each day, but initialize later
+      write (fldfilX, '(a9,a1,I3.3)') fldfil, '+', -1
+    else
+      ! standard output needs to be initialized
+      if (fldtype == "netcdf") then
+        call initialize_output(iunito, fldfil, itime, ierror)
+      else
+        write (iulog, *) "only FIELD.OUTTYPE=netcdf supported, got: ", fldtype
+        ierror = 1
+      endif
+    endif
+    if (ierror /= 0) call snap_error_exit(iulog)
+
+
+    block
+      !..release position from geographic to active coordinates
+      y = release_positions(irelpos)%geo_latitude
+      x = release_positions(irelpos)%geo_longitude
+      write (iulog, *) 'release lat,long: ', y, x
+#if defined(TRAJ)
+      !        write (error_unit,*) istep,x,y,rellower(1)
+      !        write (13,'(i6,3f12.3)') istep,x,y,rellower(1)
+
+      write (13, '(''RIMPUFF'')')
+      write (13, '(i2)') ntraj
+      write (13, '(1x,i4,4i2.2,''00'', &
+          &   2f9.3,f12.3,f15.2,f10.2)') &
+          (itime(i), i=1, 4), 0, y, x, releases(1)%rellower(1), &
+          distance, speed
+      write (error_unit, '(i4,1x,i4,i2,i2,2i2.2,''00'', &
+          &   2f9.3,f12.3,f15.2,f10.2)') istep, &
+          (itime(i), i=1, 4), 0, y, x, releases(1)%rellower(1), &
+          distance, speed
+#endif
+      call xyconvert(1, x, y, 2, geoparam, igtype, gparam, ierror)
+      if (ierror /= 0) then
+        write (iulog, *) 'ERROR: xyconvert'
+        write (iulog, *) '   igtype: ', igtype
+        write (iulog, *) '   gparam: ', gparam
+        write (error_unit, *) 'ERROR: xyconvert'
+        write (error_unit, *) '   igtype: ', igtype
+        write (error_unit, *) '   gparam: ', gparam
+        call snap_error_exit(iulog)
+      end if
+      write (iulog, *) 'release   x,y:    ', x, y
+      if (x(1) < 1.01 .OR. x(1) > nx - 0.01 .OR. &
+          y(1) < 1.01 .OR. y(1) > ny - 0.01) then
+        write (iulog, *) 'ERROR: Release position outside field area'
+        write (error_unit, *) 'ERROR: Release position outside field area'
+        call snap_error_exit(iulog)
+      end if
+      release_positions(irelpos)%grid_x = x(1)
+      release_positions(irelpos)%grid_y = y(1)
+    end block
 
     timeloop_timer = acc_timer("time_loop:")
     output_timer = acc_timer("output/accumulation:")
@@ -674,6 +734,8 @@ PROGRAM bsnap
     particleloop_timer = acc_timer("Particle loop:")
 
     ! start time loop
+    itimei = itime1
+    nhleft = nhrun
     time_loop: do istep = 0, nstep
       call timeloop_timer%start()
       write (iulog, *) 'istep,nplume,npart: ', istep, nplume, npart
@@ -683,41 +745,20 @@ PROGRAM bsnap
         flush (error_unit)
       end if
 
-      !#######################################################################
-      !..test print: printing all particles in plume 'jpl'
-      !       write (88,*) 'step,plume,part: ',istep,nplume,npart
-      !       jpl=1
-      !       if(jpl.le.nplume .and. iplume(jpl)%start.gt.0) then
-      !         do n=iplume(jpl)%start,iplume(jpl)%end
-      !           write (88,fmt='(1x,i6,2f7.2,2f7.4,f6.0,f7.3,i4,f8.3)')
-      !    +                  iparnum(n),(pdata(i,n),i=1,5),pdata(n)%prc,
-      !    +                  icomp(n),pdata(n)%rad
-      !         end do
-      !       end if
-      !#######################################################################
-
-      if (istep == nxtinf) then
-
+      if (next_input_step == istep) then
         !..read fields
-        if (istep == 0) then
-          itimei = itime1
-          ihr1 = -0
-          ihr2 = -nhfmax
-          nhleft = nhrun
-        else
+        if (istep /= 0) then
           itimei = time_file
-          ihr1 = +nhfmin
-          ihr2 = +nhfmax
           nhleft = (nstep - istep + 1)/nsteph
           if (nhrun < 0) nhleft = -nhleft
         end if
         call input_timer%start()
         if (ftype == "netcdf") then
-          call readfield_nc(istep, nhleft, itimei, ihr1, ihr2, &
+          call readfield_nc(istep, nhleft, itimei, nhfmin, nhfmax, &
                             time_file, ierror)
 #if defined(FIMEX)
         elseif (ftype == "fimex") then
-          call readfield_fi(istep, nhleft, itimei, ihr1, ihr2, &
+          call readfield_fi(istep, nhleft, itimei, nhfmin, nhfmax, &
                             time_file, ierror)
 #endif
         end if
@@ -739,47 +780,7 @@ PROGRAM bsnap
         call bldp
 
         if (istep == 0) then
-
-          !..release position from geographic to polarstereographic coordinates
-          y = release_positions(irelpos)%geo_latitude
-          x = release_positions(irelpos)%geo_longitude
-          write (iulog, *) 'release lat,long: ', y, x
-#if defined(TRAJ)
-          !        write (error_unit,*) istep,x,y,rellower(1)
-          !        write (13,'(i6,3f12.3)') istep,x,y,rellower(1)
-
-          write (13, '(''RIMPUFF'')')
-          write (13, '(i2)') ntraj
-          write (13, '(1x,i4,4i2.2,''00'', &
-              &   2f9.3,f12.3,f15.2,f10.2)') &
-              (itime(i), i=1, 4), 0, y, x, releases(1)%rellower(1), &
-              distance, speed
-          write (error_unit, '(i4,1x,i4,i2,i2,2i2.2,''00'', &
-              &   2f9.3,f12.3,f15.2,f10.2)') istep, &
-              (itime(i), i=1, 4), 0, y, x, releases(1)%rellower(1), &
-              distance, speed
-#endif
-          call xyconvert(1, x, y, 2, geoparam, igtype, gparam, ierror)
-          if (ierror /= 0) then
-            write (iulog, *) 'ERROR: xyconvert'
-            write (iulog, *) '   igtype: ', igtype
-            write (iulog, *) '   gparam: ', gparam
-            write (error_unit, *) 'ERROR: xyconvert'
-            write (error_unit, *) '   igtype: ', igtype
-            write (error_unit, *) '   gparam: ', gparam
-            call snap_error_exit(iulog)
-          end if
-          write (iulog, *) 'release   x,y:    ', x, y
-          if (x(1) < 1.01 .OR. x(1) > nx - 0.01 .OR. &
-              y(1) < 1.01 .OR. y(1) > ny - 0.01) then
-            write (iulog, *) 'ERROR: Release position outside field area'
-            write (error_unit, *) 'ERROR: Release position outside field area'
-            call snap_error_exit(iulog)
-          end if
-          release_positions(irelpos)%grid_x = x(1)
-          release_positions(irelpos)%grid_y = y(1)
-
-          nxtinf = 1
+          next_input_step = 1
           ifldout = 0
           ! continue istep loop after initialization
           call timeloop_timer%stop()
@@ -793,10 +794,10 @@ PROGRAM bsnap
         if (istep == 1) then
           call hrdiff(0, 0, itimei, itime1, ihr, ierr1, ierr2)
           tnow = 3600.*ihr
-          nxtinf = istep + nsteph*abs(ihdiff - ihr)
+          next_input_step = istep + nsteph*abs(ihdiff - ihr)
         else
           tnow = 0.
-          nxtinf = istep + nsteph*abs(ihdiff)
+          next_input_step = istep + nsteph*abs(ihdiff)
         end if
 
       else
@@ -824,40 +825,6 @@ PROGRAM bsnap
         end if
 
       end if
-
-      !#############################################################
-      !     write (error_unit,*) 'tf1,tf2,tnow,tnext,tstep,ipr: ',
-      !    +                  tf1,tf2,tnow,tnext,tstep,iprecip
-      !     write (iulog,*) 'tf1,tf2,tnow,tnext,tstep,ipr: ',
-      !    +                  tf1,tf2,tnow,tnext,tstep,iprecip
-      !#############################################################
-
-      !#######################################################################
-      !        if(npart.gt.0) then
-      !          write (88,*) 'istep,nplume,npart,nk: ',istep,nplume,npart,nk
-      !          do k=1,nk
-      !            npcount(k)=0
-      !            do i=1,mdefcomp
-      !              ipcount(i,k)=0
-      !            end do
-      !          end do
-      !          do n=1,npart
-      !            vlvl=pdata(n)%z
-      !            ilvl=vlvl*10000.
-      !            k=ivlevel(ilvl)
-      !            npcount(k)  =npcount(k)+1
-      !            m=icomp(n)
-      !            ipcount(m,k)=ipcount(m,k)+1
-      !          end do
-      !          do k=nk,1,-1
-      !            if(npcount(k).gt.0) then
-      !              write (88,8800) k,npcount(k),(ipcount(i,k),i=1,ndefcomp)
-      ! 8800              format(1x,i2,':',i7,2x,12(1x,i5))
-      !            end if
-      !          end do
-      !          write (88,*) '----------------------------------------------'
-      !        end if
-      !#######################################################################
 
       !..radioactive decay for depositions
       !.. and initialization of decay-parameters
@@ -926,15 +893,6 @@ PROGRAM bsnap
       enddo
       !$OMP END PARALLEL DO
 
-      !###################################################################
-      !        write (error_unit,
-      !    +  fmt='(''istep,nstep,isteph,nsteph,iprecip,nprecip: '',6i4)')
-      !    +          istep,nstep,isteph,nsteph,iprecip,nprecip
-      !        write (iulog,
-      !    +  fmt='(''istep,nstep,isteph,nsteph,iprecip,nprecip: '',6i4)')
-      !    +          istep,nstep,isteph,nsteph,iprecip,nprecip
-      !###################################################################
-
       !..output...................................................
 #if defined(VOLCANO)
       do k = 1, npart
@@ -949,9 +907,7 @@ PROGRAM bsnap
         if (pdata(k)%z > 0.03 .AND. pdata(k)%z <= 0.216) &
           vcon(i, j, 3) = vcon(i, j, 3) + pdata(k)%rad/120.0        ! level 3
       enddo
-      ! cc
-      !        if(mod(istep,nsteph).eq.0) then
-      !     +    write (error_unit,*) 'istep,nplume,npart: ',istep,nplume,npart
+
       ! b... START
       ! b... output with concentrations after 6 hours
       if (istep > 1 .AND. mod(istep, 72) == 0) then
@@ -960,9 +916,6 @@ PROGRAM bsnap
         itimev(5) = itime(5) + 1
         call vtime(itimev, ierror)
         write (error_unit, *) (itimev(i), i=1, 5)
-        !     +    write (error_unit,*) 'istep,nplume,npart: ',istep,nplume,npart
-        !        write (error_unit,*)
-        !        write (error_unit,*) 'istep,hour,npart=',istep,istep/72,npart
 
         !... calculate number of non zero model grids
 
