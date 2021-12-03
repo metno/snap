@@ -79,6 +79,8 @@ subroutine readfield_nc(istep, nhleft, itimei, ihr1, ihr2, &
   integer :: timepos, timeposm1
   integer :: start3d(7), start4d(7), count3d(7), count4d(7)
 
+  ierror = 0
+
   if (istep < 0) then
   ! set all 'save' variables to default values,
   ! ncid not needed, will close automaticall

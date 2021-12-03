@@ -598,20 +598,6 @@ PROGRAM bsnap
         end if
       end if
     end do
-    if (idailyout == 1) then
-      !       daily output, append +x for each day, but initialize later
-      write (fldfilX, '(a9,a1,I3.3)') fldfil, '+', -1
-    else
-      ! standard output needs to be initialized
-      if (fldtype == "netcdf") then
-        call initialize_output(iunito, fldfil, itime1, ierror)
-      else
-        write (iulog, *) "only FIELD.OUTTYPE=netcdf supported, got: ", fldtype
-        ierror = 1
-      endif
-    endif
-    if (ierror /= 0) call snap_error_exit(iulog)
-
     itime = itime1
     time_file = 0
 
@@ -667,6 +653,38 @@ PROGRAM bsnap
         " in this build"
 #endif
     end if
+    if (ierror /= 0) call snap_error_exit(iulog)
+
+    if (imodlevel) then
+      block
+        integer :: junk(5)
+
+        if (ftype == "netcdf") then
+          call readfield_nc(0, 0, itime1, 0, 0, junk, ierror)
+        else if (ftype == "fimex") then
+#if defined(FIMEX)
+          call readfield_fi(0, 0, itime1, 0, 0, junk, ierror)
+#endif
+        endif
+        if (ierror /= 0) call snap_error_exit(iulog)
+      end block
+    endif
+
+    ! Initialise output
+    if (idailyout == 1) then
+      !       daily output, append +x for each day, but initialize later
+      write (fldfilX, '(a9,a1,I3.3)') fldfil, '+', -1
+    else
+      ! standard output needs to be initialized
+      if (fldtype == "netcdf") then
+        call initialize_output(iunito, fldfil, itime, ierror)
+      else
+        write (iulog, *) "only FIELD.OUTTYPE=netcdf supported, got: ", fldtype
+        ierror = 1
+      endif
+    endif
+    if (ierror /= 0) call snap_error_exit(iulog)
+
 
     block
       !..release position from geographic to active coordinates
