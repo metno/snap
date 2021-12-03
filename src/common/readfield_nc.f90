@@ -50,13 +50,13 @@ subroutine readfield_nc(istep, nhleft, itimei, ihr1, ihr2, &
 !> current timestep (always positive), negative istep means reset
   integer, intent(in) :: istep
 !> remaining run-hours (negative for backward-calculations)
-  integer, intent(inout) :: nhleft
+  integer, intent(in) :: nhleft
 !> minimal time-offset?
-  integer, intent(inout) :: ihr1
+  integer, value :: ihr1
 !> maximal time-offset?
-  integer, intent(inout) :: ihr2
+  integer, value :: ihr2
 !> initial time
-  integer, intent(inout) :: itimei(5)
+  integer, intent(in) :: itimei(5)
 !> final time (output)
   integer, intent(out) :: itimefi(5)
 !> error (output)
