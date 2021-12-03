@@ -668,6 +668,47 @@ PROGRAM bsnap
 #endif
     end if
 
+    block
+      !..release position from geographic to active coordinates
+      y = release_positions(irelpos)%geo_latitude
+      x = release_positions(irelpos)%geo_longitude
+      write (iulog, *) 'release lat,long: ', y, x
+#if defined(TRAJ)
+      !        write (error_unit,*) istep,x,y,rellower(1)
+      !        write (13,'(i6,3f12.3)') istep,x,y,rellower(1)
+
+      write (13, '(''RIMPUFF'')')
+      write (13, '(i2)') ntraj
+      write (13, '(1x,i4,4i2.2,''00'', &
+          &   2f9.3,f12.3,f15.2,f10.2)') &
+          (itime(i), i=1, 4), 0, y, x, releases(1)%rellower(1), &
+          distance, speed
+      write (error_unit, '(i4,1x,i4,i2,i2,2i2.2,''00'', &
+          &   2f9.3,f12.3,f15.2,f10.2)') istep, &
+          (itime(i), i=1, 4), 0, y, x, releases(1)%rellower(1), &
+          distance, speed
+#endif
+      call xyconvert(1, x, y, 2, geoparam, igtype, gparam, ierror)
+      if (ierror /= 0) then
+        write (iulog, *) 'ERROR: xyconvert'
+        write (iulog, *) '   igtype: ', igtype
+        write (iulog, *) '   gparam: ', gparam
+        write (error_unit, *) 'ERROR: xyconvert'
+        write (error_unit, *) '   igtype: ', igtype
+        write (error_unit, *) '   gparam: ', gparam
+        call snap_error_exit(iulog)
+      end if
+      write (iulog, *) 'release   x,y:    ', x, y
+      if (x(1) < 1.01 .OR. x(1) > nx - 0.01 .OR. &
+          y(1) < 1.01 .OR. y(1) > ny - 0.01) then
+        write (iulog, *) 'ERROR: Release position outside field area'
+        write (error_unit, *) 'ERROR: Release position outside field area'
+        call snap_error_exit(iulog)
+      end if
+      release_positions(irelpos)%grid_x = x(1)
+      release_positions(irelpos)%grid_y = y(1)
+    end block
+
     timeloop_timer = acc_timer("time_loop:")
     output_timer = acc_timer("output/accumulation:")
     input_timer = acc_timer("Reading MET input:")
@@ -697,7 +738,6 @@ PROGRAM bsnap
       !#######################################################################
 
       if (istep == nxtinf) then
-
         !..read fields
         if (istep == 0) then
           itimei = itime1
@@ -740,44 +780,6 @@ PROGRAM bsnap
 
         if (istep == 0) then
 
-          !..release position from geographic to polarstereographic coordinates
-          y = release_positions(irelpos)%geo_latitude
-          x = release_positions(irelpos)%geo_longitude
-          write (iulog, *) 'release lat,long: ', y, x
-#if defined(TRAJ)
-          !        write (error_unit,*) istep,x,y,rellower(1)
-          !        write (13,'(i6,3f12.3)') istep,x,y,rellower(1)
-
-          write (13, '(''RIMPUFF'')')
-          write (13, '(i2)') ntraj
-          write (13, '(1x,i4,4i2.2,''00'', &
-              &   2f9.3,f12.3,f15.2,f10.2)') &
-              (itime(i), i=1, 4), 0, y, x, releases(1)%rellower(1), &
-              distance, speed
-          write (error_unit, '(i4,1x,i4,i2,i2,2i2.2,''00'', &
-              &   2f9.3,f12.3,f15.2,f10.2)') istep, &
-              (itime(i), i=1, 4), 0, y, x, releases(1)%rellower(1), &
-              distance, speed
-#endif
-          call xyconvert(1, x, y, 2, geoparam, igtype, gparam, ierror)
-          if (ierror /= 0) then
-            write (iulog, *) 'ERROR: xyconvert'
-            write (iulog, *) '   igtype: ', igtype
-            write (iulog, *) '   gparam: ', gparam
-            write (error_unit, *) 'ERROR: xyconvert'
-            write (error_unit, *) '   igtype: ', igtype
-            write (error_unit, *) '   gparam: ', gparam
-            call snap_error_exit(iulog)
-          end if
-          write (iulog, *) 'release   x,y:    ', x, y
-          if (x(1) < 1.01 .OR. x(1) > nx - 0.01 .OR. &
-              y(1) < 1.01 .OR. y(1) > ny - 0.01) then
-            write (iulog, *) 'ERROR: Release position outside field area'
-            write (error_unit, *) 'ERROR: Release position outside field area'
-            call snap_error_exit(iulog)
-          end if
-          release_positions(irelpos)%grid_x = x(1)
-          release_positions(irelpos)%grid_y = y(1)
 
           nxtinf = 1
           ifldout = 0
