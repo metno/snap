@@ -233,7 +233,7 @@ PROGRAM bsnap
   integer :: ntimefo, nh1, nh2
   integer :: ierr1, ierr2, nsteph, nstep, nstepr
   integer, allocatable :: iunito
-  integer :: ihread, isteph, lstepr, iendrel, istep, ihr1, ihr2, nhleft
+  integer :: ihread, isteph, lstepr, iendrel, istep, nhleft
   integer :: next_input_step
   integer :: ierr, ihdiff, ihr, ifldout, idailyout = 0, ihour, split_particle_after_step, split_particle_hours
   integer :: date_time(8)
@@ -643,11 +643,11 @@ PROGRAM bsnap
 
 ! reset readfield_nc (eventually, traj will rerun this loop)
     if (ftype == "netcdf") then
-      call readfield_nc(-1, nhleft, itimei, ihr1, ihr2, &
+      call readfield_nc(-1, nhleft, itimei, 0, 0, &
                         time_file, ierror)
     else if (ftype == "fimex") then
 #if defined(FIMEX)
-      call readfield_fi(-1, nhleft, itimei, ihr1, ihr2, &
+      call readfield_fi(-1, nhleft, itimei, 0, 0, &
                         time_file, ierror)
 #else
       error stop "A fimex read was requested, but fimex support is not included"// &
@@ -734,6 +734,8 @@ PROGRAM bsnap
     particleloop_timer = acc_timer("Particle loop:")
 
     ! start time loop
+    itimei = itime1
+    nhleft = nhrun
     time_loop: do istep = 0, nstep
       call timeloop_timer%start()
       write (iulog, *) 'istep,nplume,npart: ', istep, nplume, npart
@@ -745,25 +747,18 @@ PROGRAM bsnap
 
       if (next_input_step == istep) then
         !..read fields
-        if (istep == 0) then
-          itimei = itime1
-          ihr1 = -0
-          ihr2 = -nhfmax
-          nhleft = nhrun
-        else
+        if (istep /= 0) then
           itimei = time_file
-          ihr1 = +nhfmin
-          ihr2 = +nhfmax
           nhleft = (nstep - istep + 1)/nsteph
           if (nhrun < 0) nhleft = -nhleft
         end if
         call input_timer%start()
         if (ftype == "netcdf") then
-          call readfield_nc(istep, nhleft, itimei, ihr1, ihr2, &
+          call readfield_nc(istep, nhleft, itimei, nhfmin, nhfmax, &
                             time_file, ierror)
 #if defined(FIMEX)
         elseif (ftype == "fimex") then
-          call readfield_fi(istep, nhleft, itimei, ihr1, ihr2, &
+          call readfield_fi(istep, nhleft, itimei, nhfmin, nhfmax, &
                             time_file, ierror)
 #endif
         end if

@@ -121,6 +121,10 @@ contains
     if (enspos <= 0) nr = 1
 
 !..get time offset in hours (as iavail(n)%oHour)
+    if (istep == 0) then
+      ihr1 = 0
+      ihr2 = -ihr2
+    endif
     if (nhleft < 0) then
       ihr1 = -ihr1
       ihr2 = -ihr2

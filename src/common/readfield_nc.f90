@@ -90,6 +90,10 @@ subroutine readfield_nc(istep, nhleft, itimei, ihr1, ihr2, &
   end if
 
 !..get time offset in hours (as iavail(n)%oHour)
+  if (istep == 0) then
+    ihr1 = 0
+    ihr2 = -ihr2
+  endif
   if (nhleft < 0) then
     ihr1 = -ihr1
     ihr2 = -ihr2
