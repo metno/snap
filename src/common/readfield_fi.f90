@@ -107,6 +107,8 @@ contains
 
     integer :: timepos, timeposm1, nr
 
+    ierror = 0
+
     if (istep < 0) then
       ! set all 'save' variables to default values,
       ntav1 = 0
