@@ -233,7 +233,8 @@ PROGRAM bsnap
   integer :: ntimefo, nh1, nh2
   integer :: ierr1, ierr2, nsteph, nstep, nstepr
   integer, allocatable :: iunito
-  integer :: nxtinf, ihread, isteph, lstepr, iendrel, istep, ihr1, ihr2, nhleft
+  integer :: ihread, isteph, lstepr, iendrel, istep, ihr1, ihr2, nhleft
+  integer :: next_input_step
   integer :: ierr, ihdiff, ihr, ifldout, idailyout = 0, ihour, split_particle_after_step, split_particle_hours
   integer :: date_time(8)
   logical :: warning = .false.
@@ -601,7 +602,7 @@ PROGRAM bsnap
     itime = itime1
     time_file = 0
 
-    nxtinf = 0
+    next_input_step = 0
     ihread = 0
     isteph = 0
     lstepr = 0
@@ -742,7 +743,7 @@ PROGRAM bsnap
         flush (error_unit)
       end if
 
-      if (istep == nxtinf) then
+      if (next_input_step == istep) then
         !..read fields
         if (istep == 0) then
           itimei = itime1
@@ -784,9 +785,7 @@ PROGRAM bsnap
         call bldp
 
         if (istep == 0) then
-
-
-          nxtinf = 1
+          next_input_step = 1
           ifldout = 0
           ! continue istep loop after initialization
           call timeloop_timer%stop()
@@ -800,10 +799,10 @@ PROGRAM bsnap
         if (istep == 1) then
           call hrdiff(0, 0, itimei, itime1, ihr, ierr1, ierr2)
           tnow = 3600.*ihr
-          nxtinf = istep + nsteph*abs(ihdiff - ihr)
+          next_input_step = istep + nsteph*abs(ihdiff - ihr)
         else
           tnow = 0.
-          nxtinf = istep + nsteph*abs(ihdiff)
+          next_input_step = istep + nsteph*abs(ihdiff)
         end if
 
       else
