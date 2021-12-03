@@ -78,13 +78,13 @@ contains
 !> current timestep (always positive), negative istep means reset
     integer, intent(in) :: istep
 !> remaining run-hours (negative for backward-calculations)
-    integer, intent(inout) :: nhleft
+    integer, intent(in) :: nhleft
 !> minimal time-offset?
-    integer, intent(inout) :: ihr1
+    integer, value :: ihr1
 !> maximal time-offset?
-    integer, intent(inout) :: ihr2
+    integer, value :: ihr2
 !> initial time
-    integer, intent(inout) :: itimei(5)
+    integer, intent(in) :: itimei(5)
 !> final time (output)
     integer, intent(out) :: itimefi(5)
 !> error (output)
@@ -107,6 +107,8 @@ contains
 
     integer :: timepos, timeposm1, nr
 
+    ierror = 0
+
     if (istep < 0) then
       ! set all 'save' variables to default values,
       ntav1 = 0
@@ -119,6 +121,10 @@ contains
     if (enspos <= 0) nr = 1
 
 !..get time offset in hours (as iavail(n)%oHour)
+    if (istep == 0) then
+      ihr1 = 0
+      ihr2 = -ihr2
+    endif
     if (nhleft < 0) then
       ihr1 = -ihr1
       ihr2 = -ihr2

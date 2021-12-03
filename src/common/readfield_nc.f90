@@ -50,13 +50,13 @@ subroutine readfield_nc(istep, nhleft, itimei, ihr1, ihr2, &
 !> current timestep (always positive), negative istep means reset
   integer, intent(in) :: istep
 !> remaining run-hours (negative for backward-calculations)
-  integer, intent(inout) :: nhleft
+  integer, intent(in) :: nhleft
 !> minimal time-offset?
-  integer, intent(inout) :: ihr1
+  integer, value :: ihr1
 !> maximal time-offset?
-  integer, intent(inout) :: ihr2
+  integer, value :: ihr2
 !> initial time
-  integer, intent(inout) :: itimei(5)
+  integer, intent(in) :: itimei(5)
 !> final time (output)
   integer, intent(out) :: itimefi(5)
 !> error (output)
@@ -79,6 +79,8 @@ subroutine readfield_nc(istep, nhleft, itimei, ihr1, ihr2, &
   integer :: timepos, timeposm1
   integer :: start3d(7), start4d(7), count3d(7), count4d(7)
 
+  ierror = 0
+
   if (istep < 0) then
   ! set all 'save' variables to default values,
   ! ncid not needed, will close automaticall
@@ -88,6 +90,10 @@ subroutine readfield_nc(istep, nhleft, itimei, ihr1, ihr2, &
   end if
 
 !..get time offset in hours (as iavail(n)%oHour)
+  if (istep == 0) then
+    ihr1 = 0
+    ihr2 = -ihr2
+  endif
   if (nhleft < 0) then
     ihr1 = -ihr1
     ihr2 = -ihr2
