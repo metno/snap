@@ -742,19 +742,6 @@ PROGRAM bsnap
         flush (error_unit)
       end if
 
-      !#######################################################################
-      !..test print: printing all particles in plume 'jpl'
-      !       write (88,*) 'step,plume,part: ',istep,nplume,npart
-      !       jpl=1
-      !       if(jpl.le.nplume .and. iplume(jpl)%start.gt.0) then
-      !         do n=iplume(jpl)%start,iplume(jpl)%end
-      !           write (88,fmt='(1x,i6,2f7.2,2f7.4,f6.0,f7.3,i4,f8.3)')
-      !    +                  iparnum(n),(pdata(i,n),i=1,5),pdata(n)%prc,
-      !    +                  icomp(n),pdata(n)%rad
-      !         end do
-      !       end if
-      !#######################################################################
-
       if (istep == nxtinf) then
         !..read fields
         if (istep == 0) then
@@ -845,40 +832,6 @@ PROGRAM bsnap
 
       end if
 
-      !#############################################################
-      !     write (error_unit,*) 'tf1,tf2,tnow,tnext,tstep,ipr: ',
-      !    +                  tf1,tf2,tnow,tnext,tstep,iprecip
-      !     write (iulog,*) 'tf1,tf2,tnow,tnext,tstep,ipr: ',
-      !    +                  tf1,tf2,tnow,tnext,tstep,iprecip
-      !#############################################################
-
-      !#######################################################################
-      !        if(npart.gt.0) then
-      !          write (88,*) 'istep,nplume,npart,nk: ',istep,nplume,npart,nk
-      !          do k=1,nk
-      !            npcount(k)=0
-      !            do i=1,mdefcomp
-      !              ipcount(i,k)=0
-      !            end do
-      !          end do
-      !          do n=1,npart
-      !            vlvl=pdata(n)%z
-      !            ilvl=vlvl*10000.
-      !            k=ivlevel(ilvl)
-      !            npcount(k)  =npcount(k)+1
-      !            m=icomp(n)
-      !            ipcount(m,k)=ipcount(m,k)+1
-      !          end do
-      !          do k=nk,1,-1
-      !            if(npcount(k).gt.0) then
-      !              write (88,8800) k,npcount(k),(ipcount(i,k),i=1,ndefcomp)
-      ! 8800              format(1x,i2,':',i7,2x,12(1x,i5))
-      !            end if
-      !          end do
-      !          write (88,*) '----------------------------------------------'
-      !        end if
-      !#######################################################################
-
       !..radioactive decay for depositions
       !.. and initialization of decay-parameters
       if (idecay == 1) call decayDeps(tstep)
@@ -946,15 +899,6 @@ PROGRAM bsnap
       enddo
       !$OMP END PARALLEL DO
 
-      !###################################################################
-      !        write (error_unit,
-      !    +  fmt='(''istep,nstep,isteph,nsteph,iprecip,nprecip: '',6i4)')
-      !    +          istep,nstep,isteph,nsteph,iprecip,nprecip
-      !        write (iulog,
-      !    +  fmt='(''istep,nstep,isteph,nsteph,iprecip,nprecip: '',6i4)')
-      !    +          istep,nstep,isteph,nsteph,iprecip,nprecip
-      !###################################################################
-
       !..output...................................................
 #if defined(VOLCANO)
       do k = 1, npart
@@ -969,9 +913,7 @@ PROGRAM bsnap
         if (pdata(k)%z > 0.03 .AND. pdata(k)%z <= 0.216) &
           vcon(i, j, 3) = vcon(i, j, 3) + pdata(k)%rad/120.0        ! level 3
       enddo
-      ! cc
-      !        if(mod(istep,nsteph).eq.0) then
-      !     +    write (error_unit,*) 'istep,nplume,npart: ',istep,nplume,npart
+
       ! b... START
       ! b... output with concentrations after 6 hours
       if (istep > 1 .AND. mod(istep, 72) == 0) then
@@ -980,9 +922,6 @@ PROGRAM bsnap
         itimev(5) = itime(5) + 1
         call vtime(itimev, ierror)
         write (error_unit, *) (itimev(i), i=1, 5)
-        !     +    write (error_unit,*) 'istep,nplume,npart: ',istep,nplume,npart
-        !        write (error_unit,*)
-        !        write (error_unit,*) 'istep,hour,npart=',istep,istep/72,npart
 
         !... calculate number of non zero model grids
 
