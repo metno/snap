@@ -22,6 +22,7 @@ module fldout_ncML
   USE snapdimML, only: mcomp
   USE netcdf
   USE Utils, only: itoa
+  USE datetime
   implicit none
   private
 
@@ -78,7 +79,7 @@ module fldout_ncML
   type(common_var), save :: varid
   type(common_dim), save :: dimid
   !> file base time
-  integer, save :: iftime(5)
+  type(datetime_t), save :: iftime
 
   !> Number of times fields has been accumulated before
   !> being flushed to file
@@ -105,7 +106,7 @@ subroutine fldout_nc(iunit,itime,tf1,tf2,tnow, &
   USE particleML, only: pdata, Particle
 
   integer, intent(in) :: iunit
-  integer, intent(inout) :: itime(5)
+  type(datetime_t), intent(in) :: itime
   real, intent(in) :: tf1
   real, intent(in) :: tf2
   real, intent(in) :: tnow
@@ -126,6 +127,7 @@ subroutine fldout_nc(iunit,itime,tf1,tf2,tnow, &
   real, parameter :: undef = NF90_FILL_FLOAT
 
   type(Particle) :: part
+  type(duration_t) :: dur
 
   compute_total_dry_deposition = any(def_comp%kdrydep == 1) .and. ncomp > 1
   compute_total_wet_deposition = any(def_comp%kwetdep == 1) .and. ncomp > 1
@@ -136,7 +138,8 @@ subroutine fldout_nc(iunit,itime,tf1,tf2,tnow, &
 
 ! set the runtime
   ihrs_pos = ihrs_pos + 1
-  call hrdiff(0,0,iftime,itime,ihrs,ierror,ierror)
+  dur = iftime - itime
+  ihrs = dur%hours
   call check(nf90_put_var(iunit, varid%t, start=[ihrs_pos], values=FLOAT(ihrs)), &
       "set time")
 
@@ -946,7 +949,7 @@ subroutine initialize_output(iunit, filename, itime, ierror)
 
   integer, allocatable, intent(inout) :: iunit
   character(len=*), intent(in) :: filename
-  integer, intent(in) :: itime(5)
+  type(datetime_t), intent(in) :: itime
   integer, intent(out) :: ierror
 
   integer :: m, mm
@@ -993,14 +996,13 @@ subroutine initialize_output(iunit, filename, itime, ierror)
 
     call check(nf90_def_var(iunit, "time", NF90_FLOAT, dimid%t, varid%t))
     write(string,'(A12,I4,A1,I0.2,A1,I0.2,A1,I0.2,A12)') &
-        "hours since ",itime(1),"-",itime(2),"-",itime(3)," ", &
-        itime(4),":00:00 +0000"
+        "hours since ",itime%year,"-",itime%month,"-",itime%day," ", &
+        itime%hour,":00:00 +0000"
     call check(nf90_put_att(iunit, varid%t, "units", &
         trim(string)))
 
   !..store the files base-time
     iftime = itime
-    iftime(5) = 0
 
     dimids2d = [dimid%x, dimid%y]
     dimids3d = [dimid%x, dimid%y, dimid%t]

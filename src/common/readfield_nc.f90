@@ -47,6 +47,7 @@ subroutine readfield_nc(istep, nhleft, itimei, ihr1, ihr2, &
       gparam, kadd, klevel, ivlevel, imslp, igtype, ivlayer, ivcoor
   USE snapmetML, only: met_params
   USE snapdimML, only: nx, ny, nk
+  USE datetime, only: datetime_t, duration_t
 !> current timestep (always positive), negative istep means reset
   integer, intent(in) :: istep
 !> remaining run-hours (negative for backward-calculations)
@@ -56,9 +57,9 @@ subroutine readfield_nc(istep, nhleft, itimei, ihr1, ihr2, &
 !> maximal time-offset?
   integer, value :: ihr2
 !> initial time
-  integer, intent(in) :: itimei(5)
+  type(datetime_t), intent(in) :: itimei
 !> final time (output)
-  integer, intent(out) :: itimefi(5)
+  type(datetime_t), intent(out) :: itimefi
 !> error (output)
   integer, intent(out) :: ierror
 
@@ -68,7 +69,8 @@ subroutine readfield_nc(istep, nhleft, itimei, ihr1, ihr2, &
   character(len=1024), save :: file_name = ""
 
   integer :: i, k, n, ilevel, ierr1, ierr2, i1, i2
-  integer :: itime(5,4), ihours(4)
+  type(datetime_t) :: itime(2)
+  integer :: ihours(2)
   integer :: ihdif1, ihdif2, nhdiff
   real :: alev(nk), blev(nk), db, dxgrid, dygrid
   integer :: kk, ifb, kfb
@@ -98,26 +100,18 @@ subroutine readfield_nc(istep, nhleft, itimei, ihr1, ihr2, &
     ihr1 = -ihr1
     ihr2 = -ihr2
   end if
-  ihours = [ihr1, ihr2, 0, nhleft]
-  do n=1,4
-    itime(:,n) = itimei
-    itime(5,n) = itime(5,n) + ihours(n)
-    call hrdiff(0,1,itimer(1,1),itime(1,n),ihours(n),ierr1,ierr2)
-  end do
-  ihdif1 = ihours(1)
-  ihdif2 = ihours(2)
+  itime(1) = itimei + duration_t(ihr1)
+  itime(2) = itimei + duration_t(ihr2)
+  ihours = [ihr1, ihr2]
 
-  write(iulog,*) '*READFIELD* Requested time: ',(itime(i,1),i=1,4)
-  write(iulog,*) '                Time limit: ',(itime(i,2),i=1,4)
+  write(iulog,*) '*READFIELD* Requested time: ',itime(1)
+  write(iulog,*) '                Time limit: ',itime(2)
   write(iulog,*) '                 ihr1,ihr2: ', ihr1, ihr2
 
 
 !..search in list of available timesteps with model level data
-  if(ihdif1 > ihdif2) then
+  if(itime(2) > itime(1)) then
   !..using the backward list
-    i = ihdif1
-    ihdif1 = ihdif2
-    ihdif2 = i
     kfb = 2
     ifb = 10
   else
@@ -153,7 +147,7 @@ subroutine readfield_nc(istep, nhleft, itimei, ihr1, ihr2, &
     write(iulog,*) 'MODEL LEVEL SEARCH LIST.   ntav2=',ntav2
     write(iulog,*) 'nx,ny,nk: ',nx,ny,nk
     write(iulog,*) 'istep,nhleft: ',istep,nhleft
-    write(iulog,*) 'itimei(5), ihr1, ihr2:',(itimei(i),i=1,5),ihr1,ihr2
+    write(iulog,*) 'itimei(5), ihr1, ihr2:',itimei,ihr1,ihr2
     write(iulog,*) 'kfb,ifb,ihdif1,ihdif2:',kfb,ifb,ihdif1,ihdif2
     write(iulog,fmt='(7(1x,i4),1x,i6,2i5)') (iavail(ntav2))
     flush(iulog)
@@ -180,11 +174,11 @@ subroutine readfield_nc(istep, nhleft, itimei, ihr1, ihr2, &
     ! previous timestep in same file for deaccumulation, even if not in list
     timeposm1 = iavail(iavail(ntav2)%pavail_same_file)%timePos
   endif
-  itimefi(1) = iavail(ntav2)%aYear
-  itimefi(2) = iavail(ntav2)%aMonth
-  itimefi(3) = iavail(ntav2)%aDay
-  itimefi(4) = iavail(ntav2)%aHour
-  itimefi(5) = iavail(ntav2)%fcHour
+  itimefi = datetime_t(iavail(ntav2)%aYear, &
+                       iavail(ntav2)%aMonth, &
+                       iavail(ntav2)%aDay, &
+                       iavail(ntav2)%aHour)
+  itimefi = itimefi + duration_t(iavail(ntav2)%fcHour)
 
   if(idebug == 1) then
     write(iulog,*) 'READING DATA FROM file=',trim(file_name)
