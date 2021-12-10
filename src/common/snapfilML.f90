@@ -19,6 +19,7 @@
 module snapfilML
     use iso_fortran_env, only: int16, int32
     use snapdimML, only: mavail
+    use datetime, only: datetime_t
     implicit none
 
     private
@@ -76,7 +77,7 @@ module snapfilML
 !> data used for model level fieldset 2 (u2,v2,t2,...)
     integer, save, public :: navailt2
 !> time range, first and last possible input time
-    integer, save, public :: itimer(5,2)
+    type(datetime_t), save, public :: itimer(2)
 !> limitation of used forecast lengths in each file
 !>
 !>            limfcf(1,n): min forecast length in hours

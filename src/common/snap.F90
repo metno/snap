@@ -144,6 +144,7 @@
 PROGRAM bsnap
   USE iso_fortran_env, only: real64, output_unit, error_unit, IOSTAT_END
   USE DateCalc, only: epochToDate, timeGM
+  USE datetime, only: datetime_t, duration_t
   USE snapdebug, only: iulog, idebug, acc_timer => prefixed_accumulating_timer
   USE snapdimML, only: nx, ny, nk, ldata, maxsiz, mcomp
   USE snapfilML, only: filef, itimer, limfcf, ncsummary, nctitle, nhfmax, nhfmin, &
@@ -205,11 +206,11 @@ PROGRAM bsnap
 !         itime(5) - forecast time in hours (added to date/time above)
 
 !> start time
-  integer :: itime1(5) = -huge(itime1)
+  type(datetime_t) :: itime1 = datetime_t(-huge(itime1%year), 0, 0, 0)
 !> stop  time
-  integer :: itime2(5)
-  integer :: itime(5), itimei(5), itimeo(5)
-  integer :: time_file(5)
+  type(datetime_t) :: itime2
+  type(datetime_t) :: itime, itimei, itimeo
+  type(datetime_t) :: time_file
 
 !..used in xyconvert (longitude,latitude -> x,y)
   real, save :: geoparam(6) = [1.0, 1.0, 1.0, 1.0, 0.0, 0.0]
@@ -234,6 +235,7 @@ PROGRAM bsnap
   type(extraParticle) :: pextra
   real ::    rscale
   integer :: ntprof
+  type(duration_t) :: dur
 ! ipcount(mdefcomp, nk)
 ! integer, dimension(:,:), allocatable:: ipcount
 ! npcount(nk)
@@ -283,7 +285,8 @@ PROGRAM bsnap
 #endif
 
 #if defined(VOLCANO) || defined(TRAJ)
-  integer :: itimev(5), j
+  type(datetime_t) :: itimev
+  integer :: j
 #endif
 
 #if defined(VERSION)
@@ -388,32 +391,31 @@ PROGRAM bsnap
   end if
   if (ierror /= 0) call snap_error_exit(iulog)
 
-  call vtime(itime1, ierror)
   if (ierror /= 0) then
     write (iulog, *) 'Requested start time is wrong:'
-    write (iulog, *) (itime1(i), i=1, 4)
+    write (iulog, *) itime1
     write (error_unit, *) 'Requested start time is wrong:'
-    write (error_unit, *) (itime1(i), i=1, 4)
+    write (error_unit, *) itime1
     call snap_error_exit(iulog)
   end if
 
-  itime2 = itime1
-  itime2(5) = itime2(5) + nhrun
-  call vtime(itime2, ierror)
+  itime2 = itime1 + duration_t(nhrun)
 
-  call hrdiff(0, 0, itimer(1, 1), itime1, nh1, ierr1, ierr2)
-  call hrdiff(0, 0, itime2, itimer(1, 2), nh2, ierr1, ierr2)
+  dur = itime1 - itimer(1)
+  nh1 = dur%hours
+  dur = itime2 - itimer(2)
+  nh2 = dur%hours
   if (nh1 < 0 .OR. nh2 < 0) then
     write (iulog, *) 'Not able to run requested time periode.'
-    write (iulog, *) 'Start:        ', (itime1(i), i=1, 4)
-    write (iulog, *) 'End:          ', (itime2(i), i=1, 4)
-    write (iulog, *) 'First fields: ', (itimer(i, 1), i=1, 4)
-    write (iulog, *) 'Last  fields: ', (itimer(i, 2), i=1, 4)
+    write (iulog, *) 'Start:        ', itime1
+    write (iulog, *) 'End:          ', itime2
+    write (iulog, *) 'First fields: ', itimer(1)
+    write (iulog, *) 'Last  fields: ', itimer(2)
     write (error_unit, *) 'Not able to run requested time periode.'
-    write (error_unit, *) 'Start:        ', (itime1(i), i=1, 4)
-    write (error_unit, *) 'End:          ', (itime2(i), i=1, 4)
-    write (error_unit, *) 'First fields: ', (itimer(i, 1), i=1, 4)
-    write (error_unit, *) 'Last  fields: ', (itimer(i, 2), i=1, 4)
+    write (error_unit, *) 'Start:        ', itime1
+    write (error_unit, *) 'End:          ', itime2
+    write (error_unit, *) 'First fields: ', itimer(1)
+    write (error_unit, *) 'Last  fields: ', itimer(2)
     if (nh1 < 0) then
       write (iulog, *) 'NO DATA AT START OF RUN'
       write (error_unit, *) 'NO DATA AT START OF RUN'
@@ -421,10 +423,9 @@ PROGRAM bsnap
     end if
     write (iulog, *) 'Running until end of data'
     write (error_unit, *) 'Running until end of data'
-    do i = 1, 5
-      itime2(i) = itimer(i, 2)
-    end do
-    call hrdiff(0, 0, itime1, itime2, nhrun, ierr1, ierr2)
+    itime2 = itimer(2)
+    dur = itime2 - itime1
+    nhrun = dur%hours
   end if
 
   if (nhrel > abs(nhrun)) nhrel = abs(nhrun)
@@ -434,10 +435,10 @@ PROGRAM bsnap
     releases(1)%rellower(1) = tlevel(itraj)
     !        relupper(1)=rellower(1)+1
     releases(1)%relupper(1) = releases(1)%rellower(1)
-    tyear = itime1(1)
-    tmon = itime1(2)
-    tday = itime1(3)
-    thour = itime1(4)
+    tyear = itime1%year
+    tmon = itime1%month
+    tday = itime1%day
+    thour = itime1%hour
     tmin = 0.0
     write (error_unit, *) 'lower, upper', releases(1)%rellower(1), releases(1)%relupper(1)
     write (error_unit, *) 'tyear, tmon, tday, thour, tmin', &
@@ -479,9 +480,9 @@ PROGRAM bsnap
     write (iulog, *) 'imodlevel: ', imodlevel
     write (iulog, *) 'modleveldump (h), steps:', modleveldump/nsteph, &
       modleveldump
-    write (iulog, *) 'itime1:  ', (itime1(i), i=1, 5)
+    write (iulog, *) 'itime1:  ', itime1
     write (tempstr, '("Starttime: ",I4,"-",I2.2,"-",I2.2,"T",I2.2 &
-        &,":",I2.2)') (itime1(i), i=1, 5)
+        &,":",I2.2)') itime1
     ncsummary = trim(ncsummary)//" "//trim(tempstr)
     do n = 1, nrelpos
       write (tempstr, '("Release Pos (lat, lon): (", F5.1, ",", F6.1 &
@@ -491,9 +492,9 @@ PROGRAM bsnap
       ncsummary = trim(ncsummary)//". "//trim(tempstr)
     end do
 
-    write (iulog, *) 'itime2:  ', (itime2(i), i=1, 5)
-    write (iulog, *) 'itimer1: ', (itimer(i, 1), i=1, 5)
-    write (iulog, *) 'itimer2: ', (itimer(i, 2), i=1, 5)
+    write (iulog, *) 'itime2:  ', itime2
+    write (iulog, *) 'itimer1: ', itimer(1)
+    write (iulog, *) 'itimer2: ', itimer(2)
     write (iulog, *) 'nhfmin:  ', nhfmin
     write (iulog, *) 'nhfmax:  ', nhfmax
     write (iulog, *) 'nhrun:   ', nhrun
@@ -551,26 +552,24 @@ PROGRAM bsnap
     !..initialize files, deposition fields etc.
     m = 0
     do n = 1, abs(nhrun)
-      do i = 1, 4
-        itime(i) = itime1(i)
-      end do
+      itime = itime1
       if (nhrun > 0) then
-        itime(5) = n
+        itime = itime + duration_t(n)
       else
-        itime(5) = -n
+        itime = itime - duration_t(n)
       endif
       if (isynoptic == 0) then
         !..asynoptic output (use forecast length in hours to test if output)
-        ihour = itime(5)
+        error stop "Must handle this"
       else
         !..synoptic output  (use valid hour to test if output)
-        call vtime(itime, ierror)
-        ihour = itime(4)
+        error stop "Must handle this"
       end if
+      ihour = itime%hour
       if (mod(ihour, nhfout) == 0) m = m + 1
     end do
     itime = itime1
-    time_file = 0
+    time_file = datetime_t(-1, -1, -1, -1)
 
     next_input_step = 0
     ihread = 0
@@ -628,7 +627,7 @@ PROGRAM bsnap
 
     if (imodlevel) then
       block
-        integer :: junk(5)
+        type(datetime_t) :: junk
 
         if (ftype == "netcdf") then
           call readfield_nc(0, 0, itime1, 0, 0, junk, ierror)
@@ -670,11 +669,11 @@ PROGRAM bsnap
       write (13, '(i2)') ntraj
       write (13, '(1x,i4,4i2.2,''00'', &
           &   2f9.3,f12.3,f15.2,f10.2)') &
-          (itime(i), i=1, 4), 0, y, x, releases(1)%rellower(1), &
+          itime, 0, y, x, releases(1)%rellower(1), &
           distance, speed
       write (error_unit, '(i4,1x,i4,i2,i2,2i2.2,''00'', &
           &   2f9.3,f12.3,f15.2,f10.2)') istep, &
-          (itime(i), i=1, 4), 0, y, x, releases(1)%rellower(1), &
+          itime, 0, y, x, releases(1)%rellower(1), &
           distance, speed
 #endif
       call xyconvert(1, x, y, 2, geoparam, igtype, gparam, ierror)
@@ -738,10 +737,8 @@ PROGRAM bsnap
         if (ierror /= 0) call snap_error_exit(iulog)
         call input_timer%stop_and_log()
 
-        n = time_file(5)
-        call vtime(time_file, ierr)
         write (error_unit, fmt='(''input data: '',i4,3i3.2,''  prog='',i4)') &
-          (time_file(i), i=1, 4), n
+          time_file, n
 
         !..compute model level heights
         call compheight
@@ -757,12 +754,14 @@ PROGRAM bsnap
           cycle time_loop
         end if
 
-        call hrdiff(0, 0, itimei, time_file, ihdiff, ierr1, ierr2)
+        dur = time_file - itimei
+        ihdiff = dur%hours
         tf1 = 0.
         tf2 = 3600.*ihdiff
         if (nhrun < 0) tf2 = -tf2
         if (istep == 1) then
-          call hrdiff(0, 0, itimei, itime1, ihr, ierr1, ierr2)
+          dur = itime1 - itimei
+          ihr = dur%hours
           tnow = 3600.*ihr
           next_input_step = istep + nsteph*abs(ihdiff - ihr)
         else
@@ -881,11 +880,9 @@ PROGRAM bsnap
       ! b... START
       ! b... output with concentrations after 6 hours
       if (istep > 1 .AND. mod(istep, 72) == 0) then
-        write (error_unit, *) (itime(i), i=1, 5)
-        itimev = itime
-        itimev(5) = itime(5) + 1
-        call vtime(itimev, ierror)
-        write (error_unit, *) (itimev(i), i=1, 5)
+        write (error_unit, *) itime
+        itimev = itime + duration_t(1)
+        write (error_unit, *) itimev
 
         !... calculate number of non zero model grids
 
@@ -897,7 +894,7 @@ PROGRAM bsnap
         write (cfile, '(''concentrations-'',i2.2)') istep/72
         open (12, file=cfile)
         rewind 12
-        write (12, '(i4,3i2.2)') (itimev(i), i=1, 4)
+        write (12, '(i4,3i2.2)') itimev
         write (12, '(i6,'' - non zero grids'')') m
         write (error_unit, *)
         write (error_unit, *) 'Output no.:', istep/72
@@ -936,20 +933,17 @@ PROGRAM bsnap
       if (isteph == nsteph) then
         isteph = 0
         if (nhrun > 0) then
-          itime(5) = itime(5) + 1
+          itime = itime + duration_t(1)
         else
-          itime(5) = itime(5) - 1
+          itime = itime - duration_t(1)
         end if
-        do i = 1, 5
-          itimeo(i) = itime(i)
-        end do
-        call vtime(itimeo, ierror)
+        itimeo = itime
         if (isynoptic == 0) then
           !..asynoptic output (use forecast length in hours to test if output)
-          ihour = itime(5)
+          error stop "TODO"
         else
           !..synoptic output  (use valid hour to test if output)
-          ihour = itimeo(4)
+          error stop "TODO"
         end if
         if (mod(ihour, nhfout) == 0) then
           ifldout = 1
@@ -997,7 +991,7 @@ PROGRAM bsnap
 
       distance = distance + speed*tstep
       if (istep > 0 .AND. mod(istep, nsteph) == 0) then
-        timeStart = [0, 0, itime1(4), itime1(3), itime1(2), itime1(1)]
+        timeStart = [0, 0, itime1%hour, itime1%day, itime1%month, itime1%year]
         epochSecs = timeGm(timeStart)
         if (nhrun >= 0) then
           epochSecs = epochSecs + nint(istep*tstep)
@@ -1006,12 +1000,6 @@ PROGRAM bsnap
         endif
         timeCurrent = epochToDate(epochSecs)
 
-        !        if(istep .gt. -1) then
-        call vtime(itimev, ierror)
-        !        write (error_unit,*) (itime(i),i=1,5), ierror
-        !        write (error_unit,*) (itimev(i),i=1,5)
-        !        write (error_unit,*) 'istep=',istep, 'npart=',npart
-        !        do k=1,npart
         do k = 1, 1
           !        write (error_unit,*) istep,pdata(k)%x,pdata(k)%y,pdata(k)%z
           x = pdata(k)%x
@@ -1231,8 +1219,7 @@ contains
       case ('time.start')
         !..time.start=<year,month,day,hour>
         if (.not. has_value) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) (itime1(i), i=1, 4)
-        itime1(5) = 0
+        read (cinput(pname_start:pname_end), *, err=12) itime1%year, itime1%month, itime1%day, itime1%hour
       case ('time.run')
         !..time.run=<hours'h'> or <days'd'>
         if (.not. has_value) goto 12

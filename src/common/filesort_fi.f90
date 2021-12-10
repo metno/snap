@@ -39,6 +39,7 @@ contains
     USE snapdebug, only: iulog, idebug
     USE snapdimML, only: mavail
     USE milibML, only: vtime
+    USE datetime, only: datetime_t, duration_t
 
     TYPE(FimexIO) :: fio
     integer(int32), dimension(:), allocatable :: start, length, atypes
@@ -242,16 +243,12 @@ contains
 !..time range
 
     do i = 1, 2
-      itimer(1, i) = iavail(kavail(i))%aYear
-      itimer(2, i) = iavail(kavail(i))%aMonth
-      itimer(3, i) = iavail(kavail(i))%aDay
-      itimer(4, i) = iavail(kavail(i))%aHour
-      itimer(5, i) = iavail(kavail(i))%fcHour
+      itimer(i) = datetime_t(iavail(kavail(i))%aYear, &
+                             iavail(kavail(i))%aMonth, &
+                             iavail(kavail(i))%aDay, &
+                             iavail(kavail(i))%aHour)
+      itimer(i) = itimer(i) + duration_t(iavail(kavail(i))%fcHour)
     end do
-
-!..get valid time (with forecast=0)
-    call vtime(itimer(1, 1), ierror)
-    call vtime(itimer(1, 2), ierror)
 
 !..adjust hours to hours since first available time
     zeroHour = iavail(kavail(1))%oHour
