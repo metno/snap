@@ -63,7 +63,7 @@ contains
   end subroutine fimex_open
 
 !> Read fields from fimex files. (see fimex.F90)
-  subroutine readfield_fi(istep, nhleft, itimei, ihr1, ihr2, itimefi, ierror)
+  subroutine readfield_fi(istep, backward, itimei, ihr1, ihr2, itimefi, ierror)
     USE iso_fortran_env, only: error_unit
     USE snapfilML, only: kavail, iavail, filef
     USE snapfldML, only: &
@@ -76,15 +76,16 @@ contains
                          sigmadot_units, temp_units
     USE snapdimML, only: nx, ny, nk
     USE datetime, only: datetime_t, duration_t
+    USE readfield_ncML, only: find_index
 !> current timestep (always positive), negative istep means reset
     integer, intent(in) :: istep
-!> remaining run-hours (negative for backward-calculations)
-    integer, intent(in) :: nhleft
-!> minimal time-offset?
+!> whether meteorology should be read backwards
+    logical, intent(in) :: backward
+!> minimal time-offset after itimei
     integer, value :: ihr1
-!> maximal time-offset?
+!> maximal time-offset after itimei
     integer, value :: ihr2
-!> initial time
+!> time since last file input
     type(datetime_t), intent(in) :: itimei
 !> final time (output)
     type(datetime_t), intent(out) :: itimefi
@@ -123,47 +124,8 @@ contains
     if (enspos <= 0) nr = 1
 
 !..get time offset in hours (as iavail(n)%oHour)
-    if (istep == 0) then
-      ihr1 = 0
-      ihr2 = -ihr2
-    endif
-    if (nhleft < 0) then
-      ihr1 = -ihr1
-      ihr2 = -ihr2
-    end if
-    itime(1) = itimei + duration_t(ihr1)
-    itime(2) = itimei + duration_t(ihr2)
-    ihours = [ihr1, ihr2]
-
-    write (iulog, *) '*READFIELD* Requested time: ', itime(1)
-    write (iulog, *) '                Time limit: ', itime(2)
-    write (iulog, *) '                 ihr1,ihr2: ', ihr1, ihr2
-
-!..search in list of available timesteps with model level data
-    if (ihr1 > ihr2) then
-      !..using the backward list
-      kfb = 2
-      ifb = 10
-    else
-      kfb = 1
-      ifb = 9
-    end if
-
     ntav1 = ntav2
-    ntav2 = 0
-    n = kavail(kfb)
-    do while ((ntav2 == 0) .AND. (n > 0))
-      if (iavail(n)%oHour >= ihr1 .AND. &
-          iavail(n)%oHour <= ihr2) then
-        ntav2 = n
-      end if
-      !..pointer to next timestep (possibly same time)
-      if (ifb == 9) then
-        n = iavail(n)%nAvail
-      else
-        n = iavail(n)%pAvail
-      end if
-    end do
+    ntav2 = find_index(istep == 0, backward, itimei, ihr1, ihr2)
 
     if (ntav2 < 1) then
       write (iulog, *) '*READFIELD* No model level data available'
@@ -175,7 +137,7 @@ contains
     if (idebug == 1) then
       write (iulog, *) 'MODEL LEVEL SEARCH LIST.   ntav2=', ntav2
       write (iulog, *) 'nx,ny,nk: ', nx, ny, nk
-      write (iulog, *) 'istep,nhleft: ', istep, nhleft
+      write (iulog, *) 'istep: ', istep
       write (iulog, *) 'itimei, ihr1, ihr2:', itimei, ihr1, ihr2
       write (iulog, *) 'kfb,ifb:', kfb, ifb
       write (iulog, fmt='(7(1x,i4),1x,i6,2i5)') (iavail(ntav2))
@@ -462,7 +424,7 @@ contains
       end do
     end if
 
-    if (nhleft < 0) then
+    if (backward) then
       ! backward-calculation, switch sign of winds
       u2 = -u2
       v2 = -v2
