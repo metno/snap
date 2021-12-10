@@ -65,7 +65,7 @@ contains
 !> Read fields from fimex files. (see fimex.F90)
   subroutine readfield_fi(istep, backward, itimei, ihr1, ihr2, itimefi, ierror)
     USE iso_fortran_env, only: error_unit
-    USE snapfilML, only: kavail, iavail, filef
+    USE snapfilML, only: iavail, filef
     USE snapfldML, only: &
       xm, ym, u1, u2, v1, v2, w1, w2, t1, t2, ps1, ps2, pmsl1, pmsl2, &
       hbl1, hbl2, hlayer1, hlayer2, garea, dgarea, hlevel1, hlevel2, &
@@ -98,9 +98,7 @@ contains
     character(len=1024), save :: file_name = ""
     character(len=1024), save :: ap_units = pressure_units
 
-    integer :: i, k, n, ilevel, i1, i2
-    type(datetime_t) :: itime(2)
-    integer :: ihours(2)
+    integer :: i, k, ilevel, i1, i2
     integer :: nhdiff
     real :: alev(nk), blev(nk), db, dxgrid, dygrid
     integer :: kk, ifb, kfb
