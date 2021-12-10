@@ -14,7 +14,7 @@ find_parameters.o datetime.o
 
 # old milib files
 MODELOBJ += chcase.o  gridpar.o  mapfield.o  xyconvert.o \
-     hrdiff.o  rmfile.o  vtime.o \
+     rmfile.o \
      earthr.o pol2sph.o sph2rot.o lam2sph.o mer2sph.o milibML.o
 
 ifdef FIMEXLIB
@@ -126,13 +126,9 @@ chcase.o: ../common/milib/chcase.f
 	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 gridpar.o: ../common/milib/gridpar.f
 	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
-hrdiff.o: ../common/milib/hrdiff.f
-	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 mapfield.o: ../common/milib/mapfield.f
 	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 rmfile.o: ../common/milib/rmfile.f
-	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
-vtime.o: ../common/milib/vtime.f
 	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 xyconvert.o: ../common/milib/xyconvert.f
 	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<

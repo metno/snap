@@ -18,7 +18,7 @@
 module fldout_ncML
   USE iso_fortran_env, only: real32, real64, error_unit
   USE readfield_ncML, only: check
-  USE milibML, only: xyconvert, hrdiff
+  USE milibML, only: xyconvert
   USE snapdimML, only: mcomp
   USE netcdf
   USE Utils, only: itoa
