@@ -53,6 +53,7 @@ integer function find_index(first, backward, itimei, ihr1, ihr2) result(ntav)
   type(datetime_t) :: test_date, itime(2)
 
   if (first) ihr1 = 0
+  ntav = 0
 
 !..search in list of available timesteps with model level data
   if(.not.backward) then
@@ -102,7 +103,7 @@ end function
 subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
     itimefi,ierror)
   USE iso_fortran_env, only: error_unit
-  USE snapfilML, only: nctype, kavail, iavail, filef
+  USE snapfilML, only: nctype, iavail, filef
   USE snapfldML, only: &
       xm, ym, u1, u2, v1, v2, w1, w2, t1, t2, ps1, ps2, pmsl1, pmsl2, &
       hbl1, hbl2, hlayer1, hlayer2, garea, dgarea, hlevel1, hlevel2, &
@@ -132,16 +133,13 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
   integer, save :: ntav1, ntav2 = 0
   character(len=1024), save :: file_name = ""
 
-  integer :: i, k, n, ilevel, i1, i2
-  type(datetime_t) :: itime(2), test_date
+  integer :: i, k, ilevel, i1, i2
   integer :: nhdiff
   real :: alev(nk), blev(nk), db, dxgrid, dygrid
   integer :: kk
   real :: dred, red, p, px, dp, p1, p2,ptop
   real :: ptoptmp(1)
   real, parameter :: mean_surface_air_pressure = 1013.26
-  integer :: current_index
-  logical :: iteration_forwards
 
   integer :: timepos, timeposm1
   integer :: start3d(7), start4d(7), count3d(7), count4d(7)
@@ -173,7 +171,6 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
     write(iulog,*) 'nx,ny,nk: ',nx,ny,nk
     write(iulog,*) 'istep: ',istep
     write(iulog,*) 'itimei(5), ihr1, ihr2:',itimei,ihr1,ihr2
-    write(iulog,*) 'ifb:',iteration_forwards
     write(iulog,fmt='(7(1x,i4),1x,i6,2i5)') (iavail(ntav2))
     flush(iulog)
   end if
