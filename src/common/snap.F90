@@ -595,11 +595,11 @@ PROGRAM bsnap
 
 ! reset readfield_nc (eventually, traj will rerun this loop)
     if (ftype == "netcdf") then
-      call readfield_nc(-1, nhleft, itimei, 0, 0, &
+      call readfield_nc(-1, nhrun > 0, itimei, 0, 0, &
                         time_file, ierror)
     else if (ftype == "fimex") then
 #if defined(FIMEX)
-      call readfield_fi(-1, nhleft, itimei, 0, 0, &
+      call readfield_fi(-1, nhrun > 0, itimei, 0, 0, &
                         time_file, ierror)
 #else
       error stop "A fimex read was requested, but fimex support is not included"// &
@@ -613,10 +613,10 @@ PROGRAM bsnap
         type(datetime_t) :: junk
 
         if (ftype == "netcdf") then
-          call readfield_nc(0, 0, itime1, 0, 0, junk, ierror)
+          call readfield_nc(0, nhrun > 0, itime1, nhfmin, nhfmax, junk, ierror)
         else if (ftype == "fimex") then
 #if defined(FIMEX)
-          call readfield_fi(0, 0, itime1, 0, 0, junk, ierror)
+          call readfield_fi(0, nhrun > 0, itime1, nhfmin, nhfmax, junk, ierror)
 #endif
         endif
         if (ierror /= 0) call snap_error_exit(iulog)
@@ -706,11 +706,11 @@ PROGRAM bsnap
         end if
         call input_timer%start()
         if (ftype == "netcdf") then
-          call readfield_nc(istep, nhleft, itimei, nhfmin, nhfmax, &
+          call readfield_nc(istep, nhrun > 0, itimei, nhfmin, nhfmax, &
                             time_file, ierror)
 #if defined(FIMEX)
         elseif (ftype == "fimex") then
-          call readfield_fi(istep, nhleft, itimei, nhfmin, nhfmax, &
+          call readfield_fi(istep, nhrun > 0, itimei, nhfmin, nhfmax, &
                             time_file, ierror)
 #endif
         end if

@@ -32,8 +32,14 @@ module datetime
       procedure :: greater
       generic, public :: operator(>) => greater
 
+      procedure :: greater_equal
+      generic, public :: operator(>=) => greater_equal
+
       procedure :: lesser
       generic, public :: operator(<) => lesser
+
+      procedure :: lesser_equal
+      generic, public :: operator(<=) => lesser_equal
   end type
 
   !> Duration between two datetimes
@@ -51,11 +57,9 @@ module datetime
   contains
 
   !> Add a duration to the current time
-  pure function add_duration(this, duration) result(newtime)
+  pure type(datetime_t) function add_duration(this, duration) result(newtime)
     class(datetime_t), intent(in) :: this
     type(duration_t), intent(in) :: duration
-    type(datetime_t) :: newtime
-
 
     integer :: hours, days
     integer :: current_month, current_year
@@ -115,19 +119,17 @@ module datetime
   end function
 
   !> Subtract a duration from a datetime
-  pure function sub_duration(this, duration) result(newtime)
+  pure type(datetime_t) function sub_duration(this, duration) result(newtime)
     class(datetime_t), intent(in) :: this
     type(duration_t), intent(in) :: duration
-    type(datetime_t) :: newtime
 
     newtime = this + duration_t(-duration%hours)
   end function
 
   !> Compare two datetimes for equality
-  pure function equality(this, other)
+  pure logical function equality(this, other)
     class(datetime_t), intent(in) :: this
     type(datetime_t), intent(in) :: other
-    logical :: equality
 
     equality = (this%year == other%year) .and. &
                (this%month == other%month) .and. &
@@ -136,10 +138,9 @@ module datetime
   end function
 
   !> Compares this > other
-  pure function greater(this, other)
+  pure logical function greater(this, other)
     class(datetime_t), intent(in) :: this
     type(datetime_t), intent(in) :: other
-    logical :: greater
 
     if (this == other) then
       greater = .false.
@@ -162,13 +163,28 @@ module datetime
     endif
   end function
 
-  !> Compares this < other
-  pure function lesser(this, other)
+  !> Compares this >= other
+  pure logical function greater_equal(this, other)
     class(datetime_t), intent(in) :: this
     type(datetime_t), intent(in) :: other
-    logical :: lesser
+
+    greater_equal = (this > other).or.(this == other)
+  end function
+
+  !> Compares this < other
+  pure logical function lesser(this, other)
+    class(datetime_t), intent(in) :: this
+    type(datetime_t), intent(in) :: other
 
     lesser = (.not.this == other) .and. (.not.this > other)
+  end function
+
+  !> Compares this <= other
+  pure logical function lesser_equal(this, other)
+    class(datetime_t), intent(in) :: this
+    type(datetime_t), intent(in) :: other
+
+    lesser_equal = (this < other) .or. (this == other)
   end function
 
   !> Gives the number of days in a month, accounting for leap years

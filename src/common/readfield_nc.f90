@@ -26,7 +26,7 @@ module readfield_ncML
   implicit none
   private
 
-  public readfield_nc, check, nfcheckload, calc_2d_start_length
+  public readfield_nc, check, nfcheckload, calc_2d_start_length, find_index
 
   interface nfcheckload
     module procedure nfcheckload1d, nfcheckload2d, nfcheckload3d
@@ -34,8 +34,72 @@ module readfield_ncML
 
   contains
 
-!> Read fields from NetCDF files. (see readfield.f90 for felt-files)
-subroutine readfield_nc(istep, nhleft, itimei, ihr1, ihr2, &
+!..search in list of available timesteps with model level data
+!> Next index to read from, ntav == 0 if no available meteo
+integer function find_index(first, backward, itimei, ihr1, ihr2) result(ntav)
+  USE snapfilML, only: kavail, iavail
+  USE datetime, only: datetime_t, duration_t
+
+  !> Whether this is the first input (which ignores ihr1)
+  logical, intent(in) :: first
+  !> Calculate time backwards
+  logical, intent(in) :: backward
+  !> Last time of reading
+  type(datetime_t), intent(in) :: itimei
+  !> bounds in the age of the next time
+  integer, value :: ihr1, ihr2
+
+  integer :: current_index
+  type(datetime_t) :: test_date, itime(2)
+
+  if (first) ihr1 = 0
+
+!..search in list of available timesteps with model level data
+  if(.not.backward) then
+    current_index = kavail(1)
+    itime(1) = itimei + duration_t(ihr1)
+    itime(2) = itimei + duration_t(ihr2)
+  else
+  !..using the backward list
+    current_index = kavail(2)
+    itime(1) = itimei - duration_t(ihr1)
+    itime(2) = itimei - duration_t(ihr2)
+  end if
+
+  if (.not.backward) then
+    write(iulog,*) '*READFIELD* Requested time: ', itimei
+    write(iulog,*) '                Time limit: ', itime(1), itime(2)
+  else
+    write(iulog,*) '*READFIELD* Requested time: ', itimei
+    write(iulog,*) '                Time limit: ', itime(2), itime(1)
+  endif
+
+  do while (current_index > 0)
+    test_date = datetime_t(iavail(current_index)%aYear, &
+                           iavail(current_index)%aMonth, &
+                           iavail(current_index)%aDay, &
+                           iavail(current_index)%aHour) + &
+                duration_t(iavail(current_index)%fcHour)
+
+    !..pointer to next timestep (possibly same time)
+    if (.not.backward) then
+      if (test_date >= itime(1) .and. test_date < itime(2)) then
+        ntav = current_index
+        exit
+      endif
+      current_index = iavail(current_index)%nAvail
+    else
+      if (test_date <= itime(1) .and. test_date > itime(2)) then
+        ntav = current_index
+        exit
+      endif
+      current_index = iavail(current_index)%pAvail
+    end if
+  end do
+end function
+
+!> Read fields from NetCDF files
+subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
     itimefi,ierror)
   USE iso_fortran_env, only: error_unit
   USE snapfilML, only: nctype, kavail, iavail, filef
@@ -50,13 +114,13 @@ subroutine readfield_nc(istep, nhleft, itimei, ihr1, ihr2, &
   USE datetime, only: datetime_t, duration_t
 !> current timestep (always positive), negative istep means reset
   integer, intent(in) :: istep
-!> remaining run-hours (negative for backward-calculations)
-  integer, intent(in) :: nhleft
-!> minimal time-offset?
-  integer, value :: ihr1
-!> maximal time-offset?
-  integer, value :: ihr2
-!> initial time
+!> whether meteorology should be read backwards
+  logical, intent(in) :: backward
+!> minimal time-offset after itimei
+  integer, intent(in) :: ihr1
+!> maximal time-offset after itimei
+  integer, intent(in) :: ihr2
+!> time since last file input
   type(datetime_t), intent(in) :: itimei
 !> final time (output)
   type(datetime_t), intent(out) :: itimefi
@@ -69,14 +133,15 @@ subroutine readfield_nc(istep, nhleft, itimei, ihr1, ihr2, &
   character(len=1024), save :: file_name = ""
 
   integer :: i, k, n, ilevel, i1, i2
-  type(datetime_t) :: itime(2)
-  integer :: ihours(2)
+  type(datetime_t) :: itime(2), test_date
   integer :: nhdiff
   real :: alev(nk), blev(nk), db, dxgrid, dygrid
-  integer :: kk, ifb, kfb
+  integer :: kk
   real :: dred, red, p, px, dp, p1, p2,ptop
   real :: ptoptmp(1)
   real, parameter :: mean_surface_air_pressure = 1013.26
+  integer :: current_index
+  logical :: iteration_forwards
 
   integer :: timepos, timeposm1
   integer :: start3d(7), start4d(7), count3d(7), count4d(7)
@@ -92,50 +157,10 @@ subroutine readfield_nc(istep, nhleft, itimei, ihr1, ihr2, &
   end if
 
 !..get time offset in hours (as iavail(n)%oHour)
-  if (istep == 0) then
-    ihr1 = 0
-    ihr2 = -ihr2
-  endif
-  if (nhleft < 0) then
-    ihr1 = -ihr1
-    ihr2 = -ihr2
-  end if
-  itime(1) = itimei + duration_t(ihr1)
-  itime(2) = itimei + duration_t(ihr2)
-  ihours = [ihr1, ihr2]
-
-  write(iulog,*) '*READFIELD* Requested time: ',itime(1)
-  write(iulog,*) '                Time limit: ',itime(2)
-  write(iulog,*) '                 ihr1,ihr2: ', ihr1, ihr2
-
-
-!..search in list of available timesteps with model level data
-  if(itime(2) > itime(1)) then
-  !..using the backward list
-    kfb = 2
-    ifb = 10
-  else
-    kfb = 1
-    ifb = 9
-  end if
-
   ntav1 = ntav2
-  ntav2 = 0
-  n = kavail(kfb)
-  do while ((ntav2 == 0) .AND. (n > 0))
-    if(iavail(n)%oHour >= ihr1 .AND. &
-    iavail(n)%oHour <= ihr2) then
-      ntav2 = n
-    end if
-  !..pointer to next timestep (possibly same time)
-    if (ifb == 9) then
-      n=iavail(n)%nAvail
-    else
-      n=iavail(n)%pAvail
-    end if
-  end do
+  ntav2 = find_index(istep == 0, backward, itimei, ihr1, ihr2)
 
-  if(ntav2 < 1) then
+  if(ntav2 == 0) then
     write(iulog,*) '*READFIELD* No model level data available'
     write(error_unit,*) '*READFIELD* No model level data available'
     ierror=1
@@ -146,9 +171,9 @@ subroutine readfield_nc(istep, nhleft, itimei, ihr1, ihr2, &
   if(idebug == 1) then
     write(iulog,*) 'MODEL LEVEL SEARCH LIST.   ntav2=',ntav2
     write(iulog,*) 'nx,ny,nk: ',nx,ny,nk
-    write(iulog,*) 'istep,nhleft: ',istep,nhleft
+    write(iulog,*) 'istep: ',istep
     write(iulog,*) 'itimei(5), ihr1, ihr2:',itimei,ihr1,ihr2
-    write(iulog,*) 'kfb,ifb:',kfb,ifb
+    write(iulog,*) 'ifb:',iteration_forwards
     write(iulog,fmt='(7(1x,i4),1x,i6,2i5)') (iavail(ntav2))
     flush(iulog)
   end if
@@ -460,7 +485,7 @@ subroutine readfield_nc(istep, nhleft, itimei, ihr1, ihr2, &
     end do
   end if
 
-  if(nhleft < 0) then
+  if(backward) then
   ! backward-calculation, switch sign of winds
     u2 = -u2
     v2 = -v2
