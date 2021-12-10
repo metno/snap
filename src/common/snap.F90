@@ -137,12 +137,6 @@
 ! LOG.FILE=     snap.log
 ! DEBUG.OFF ..................................... (default)
 ! DEBUG.ON
-! ARGOS.OUTPUT.OFF
-! ARGOS.OUTPUT.ON
-! ARGOS.OUTPUT.DEPOSITION.FILE=    runident_MLDP0_depo
-! ARGOS.OUTPUT.CONCENTRATION.FILE= runident_MLDP0_conc
-! ARGOS.OUTPUT.TOTALDOSE.FILE=     runident_MLDP0_dose
-! ARGOS.OUTPUT.TIMESTEP.HOUR= 3
 ! END
 !=======================================================================
 
@@ -151,9 +145,6 @@ PROGRAM bsnap
   USE iso_fortran_env, only: real64, output_unit, error_unit, IOSTAT_END
   USE DateCalc, only: epochToDate, timeGM
   USE snapdebug, only: iulog, idebug, acc_timer => prefixed_accumulating_timer
-  USE snapargosML, only: argosdepofile, argosdosefile, argoshoursrelease, &
-                         argoshourstep, argoshoursrun, iargos, margos, argosconcfile, nargos, &
-                         argostime
   USE snapdimML, only: nx, ny, nk, ldata, maxsiz, mcomp
   USE snapfilML, only: filef, itimer, limfcf, ncsummary, nctitle, nhfmax, nhfmin, &
                        nctype, nfilef, simulation_start, spinup_steps
@@ -438,14 +429,6 @@ PROGRAM bsnap
 
   if (nhrel > abs(nhrun)) nhrel = abs(nhrun)
 
-  if (iargos == 1) then
-    argoshoursrelease = nhrel
-    argoshoursrun = nhrun
-    !..the following done to avoid updateing subr. fldout............
-    nhfout = argoshourstep
-    isynoptic = 0
-    !................................................................
-  end if
 #if defined(TRAJ)
   do itraj = 1, ntraj
     releases(1)%rellower(1) = tlevel(itraj)
@@ -561,14 +544,12 @@ PROGRAM bsnap
       end do
     end do
     write (iulog, *) 'itotcomp:   ', itotcomp
-    write (iulog, *) 'iargos:     ', iargos
     write (iulog, *) 'blfulmix:   ', blfullmix
     write (error_unit, *) 'Title:      ', trim(nctitle)
     write (error_unit, *) 'Summary:    ', trim(ncsummary)
 
     !..initialize files, deposition fields etc.
     m = 0
-    nargos = 0
     do n = 1, abs(nhrun)
       do i = 1, 4
         itime(i) = itime1(i)
@@ -587,17 +568,6 @@ PROGRAM bsnap
         ihour = itime(4)
       end if
       if (mod(ihour, nhfout) == 0) m = m + 1
-      if (iargos == 1) then
-        if (mod(n, argoshourstep) == 0) then
-          if (nargos < margos) then
-            nargos = nargos + 1
-            do i = 1, 4
-              argostime(i, nargos) = itime1(i)
-            end do
-            argostime(5, nargos) = n
-          end if
-        end if
-      end if
     end do
     itime = itime1
     time_file = 0
@@ -1110,12 +1080,6 @@ PROGRAM bsnap
   ! b_end
   write (iulog, *) ' SNAP run finished'
   write (error_unit, *) ' SNAP run finished'
-
-  if (iargos == 1) then
-    close (91)
-    close (92)
-    close (93)
-  end if
 
 ! deallocate all fields
   CALL deAllocateFields()
@@ -1927,29 +1891,27 @@ contains
       case ('ensemble.project.output.off')
         write (error_unit, *) "ensemble.project is deprecated, key is not used"
         warning = .true.
+
+      ! Old argos options
       case ('argos.output.off')
-        !..argos.output.off
-        iargos = 0
+        write (error_unit, *) "option argos.output.off is removed"
+        warning = .true.
       case ('argos.output.on')
-        !..argos.output.on
-        iargos = 1
+        write (error_unit, *) "option argos.output.on is removed"
+        warning = .true.
       case ('argos.output.deposition.file')
-        !..argos.output.deposition.file= runident_MLDP0_depo
-        if (.not. has_value) goto 12
-        argosdepofile = cinput(pname_start:pname_end)
+        write (error_unit, *) "option argos.output.deposition.file is removed"
+        warning = .true.
       case ('argos.output.concentration.file')
-        !..argos.output.concentration.file= runident_MLDP0_conc
-        if (.not. has_value) goto 12
-        argosconcfile = cinput(pname_start:pname_end)
+        write (error_unit, *) "option argos.output.concentration.file is removed"
+        warning = .true.
       case ('argos.output.totaldose.file')
-        !..argos.output.totaldose.file= runident_MLDP0_dose
-        if (.not. has_value) goto 12
-        argosdosefile = cinput(pname_start:pname_end)
+        write (error_unit, *) "option argos.output.totaldose.file is removed"
+        warning = .true.
       case ('argos.output.timestep.hour')
-        !..argos.output.timestep.hour= <3>
-        if (.not. has_value) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) argoshourstep
-        if (argoshourstep <= 0 .OR. argoshourstep > 240) goto 12
+        write (error_unit, *) "option argos.output.timestep.hour is removed"
+        warning = .true.
+
       case ('grid.autodetect.from_input')
         if (nfilef < 1) then
           write (error_unit, *) "grid.autodetect requires at least one field.input to be set"

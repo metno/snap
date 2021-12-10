@@ -3,10 +3,10 @@
 
 MODELOBJ = dateCalc.o utils.o particleML.o snapdimML.o snapfilML.o snapfimexML.o \
 snapfldML.o snapgrdML.o snapmetML.o snapparML.o \
-snapposML.o snaptabML.o snapargosML.o snapdebugML.o posint.o decay.o \
+snapposML.o snaptabML.o snapdebugML.o posint.o decay.o \
 om2edot.o ftest.o readfield_nc.o rwalk.o epinterp.o \
 vgravtables.o forwrd.o wetdep.o drydep.o \
-argoswrite.o bldp.o compheight.o checkDomain.o \
+bldp.o compheight.o checkDomain.o \
 filesort_nc.o fldout_nc.o \
 init_random_seed.o\
 release.o releasefile.o rmpart.o split_particles.o allocateFields.o \
@@ -73,8 +73,6 @@ drydep.o: ../common/drydep.f90 particleML.o snapfldML.o snapparML.o snapgrdML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 epinterp.o: ../common/epinterp.f90
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-argoswrite.o: ../common/argoswrite.f90 snapdebugML.o
-	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 om2edot.o: ../common/om2edot.f90 snapgrdML.o snapfldML.o snapdimML.o snapdebugML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 readfield_nc.o: ../common/readfield_nc.f90 particleML.o snapfilML.o snapgrdML.o snapmetML.o snaptabML.o snapdebugML.o snapdimML.o om2edot.o ftest.o milibML.o snapfldML.o
@@ -89,7 +87,7 @@ find_parameters.o: ../common/find_parameters.f90 snapmetML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 find_parameters_fi.o: ../common/find_parameters_fi.f90 snapfimexML.o snapmetML.o fimex.o readfield_fi.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-fldout_nc.o: ../common/fldout_nc.f90 snapfilML.o snapgrdML.o snapfldML.o snapparML.o snaptabML.o snapargosML.o snapdebugML.o snapdimML.o readfield_nc.o ftest.o release.o milibML.o
+fldout_nc.o: ../common/fldout_nc.f90 snapfilML.o snapgrdML.o snapfldML.o snapparML.o snaptabML.o snapdebugML.o snapdimML.o readfield_nc.o ftest.o release.o milibML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 forwrd.o: ../common/forwrd.F90 particleML.o snapgrdML.o snapfldML.o snapparML.o snaptabML.o snapdimML.o snapdebugML.o vgravtables.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
@@ -105,8 +103,6 @@ rmpart.o: ../common/rmpart.f90 particleML.o snapgrdML.o snapparML.o snapdimML.o 
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 rwalk.o: ../common/rwalk.f90 particleML.o snapgrdML.o snapparML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-snapargosML.o: ../common/snapargosML.f90
-	${F77} -c ${F77FLAGS} $<
 snapmetML.o: ../common/snapmetML.f90 snapfilML.o
 	${F77} -c ${F77FLAGS} $<
 snapposML.o: ../common/snapposML.f90 snapdimML.o

@@ -182,13 +182,3 @@ FIELD_TIME.FORECAST
 *
 * DEBUG.OFF
 DEBUG.ON
-*
-ARGOS.OUTPUT.OFF
-* argos on disables earlier timestep-settings
-* ARGOS.OUTPUT.ON
-ARGOS.OUTPUT.DEPOSITION.FILE=    argos_dep
-ARGOS.OUTPUT.CONCENTRATION.FILE= argos_conc_inst
-ARGOS.OUTPUT.TOTALDOSE.FILE=     argos_conc
-ARGOS.OUTPUT.TIMESTEP.HOUR=48
-END
-**----------------------------------------------------------------------
