@@ -35,10 +35,9 @@ subroutine filesort_nc
   USE readfield_ncML, only: check, calc_2d_start_length, nfcheckload
   USE netcdf
   USE snapdimML, only: nx, ny, mavail
-  USE milibML, only: vtime
   USE datetime, only: datetime_t, duration_t
 
-  integer :: i, j, nf, tsize, ierror, prev_avail_same_file
+  integer :: i, j, nf, tsize, prev_avail_same_file
   integer :: ncid, varid, dimid
   real(real64) :: times(mavail)
   integer :: zeroHour, tunitLen, status, count_nan

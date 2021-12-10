@@ -18,7 +18,7 @@
 module readfield_ncML
   USE ftestML, only: ftest
   USE om2edotML, only: om2edot
-  USE milibML, only: mapfield, hrdiff
+  USE milibML, only: mapfield
   USE snaptabML, only: t2thetafac
   USE netcdf
   USE snapdebug, only: iulog, idebug
@@ -38,7 +38,7 @@ module readfield_ncML
 subroutine readfield_nc(istep, nhleft, itimei, ihr1, ihr2, &
     itimefi,ierror)
   USE iso_fortran_env, only: error_unit
-  USE snapfilML, only: nctype, itimer, kavail, iavail, filef
+  USE snapfilML, only: nctype, kavail, iavail, filef
   USE snapfldML, only: &
       xm, ym, u1, u2, v1, v2, w1, w2, t1, t2, ps1, ps2, pmsl1, pmsl2, &
       hbl1, hbl2, hlayer1, hlayer2, garea, dgarea, hlevel1, hlevel2, &
@@ -68,10 +68,10 @@ subroutine readfield_nc(istep, nhleft, itimei, ihr1, ihr2, &
   integer, save :: ntav1, ntav2 = 0
   character(len=1024), save :: file_name = ""
 
-  integer :: i, k, n, ilevel, ierr1, ierr2, i1, i2
+  integer :: i, k, n, ilevel, i1, i2
   type(datetime_t) :: itime(2)
   integer :: ihours(2)
-  integer :: ihdif1, ihdif2, nhdiff
+  integer :: nhdiff
   real :: alev(nk), blev(nk), db, dxgrid, dygrid
   integer :: kk, ifb, kfb
   real :: dred, red, p, px, dp, p1, p2,ptop
@@ -123,8 +123,8 @@ subroutine readfield_nc(istep, nhleft, itimei, ihr1, ihr2, &
   ntav2 = 0
   n = kavail(kfb)
   do while ((ntav2 == 0) .AND. (n > 0))
-    if(iavail(n)%oHour >= ihdif1 .AND. &
-    iavail(n)%oHour <= ihdif2) then
+    if(iavail(n)%oHour >= ihr1 .AND. &
+    iavail(n)%oHour <= ihr2) then
       ntav2 = n
     end if
   !..pointer to next timestep (possibly same time)
@@ -148,7 +148,7 @@ subroutine readfield_nc(istep, nhleft, itimei, ihr1, ihr2, &
     write(iulog,*) 'nx,ny,nk: ',nx,ny,nk
     write(iulog,*) 'istep,nhleft: ',istep,nhleft
     write(iulog,*) 'itimei(5), ihr1, ihr2:',itimei,ihr1,ihr2
-    write(iulog,*) 'kfb,ifb,ihdif1,ihdif2:',kfb,ifb,ihdif1,ihdif2
+    write(iulog,*) 'kfb,ifb:',kfb,ifb
     write(iulog,fmt='(7(1x,i4),1x,i6,2i5)') (iavail(ntav2))
     flush(iulog)
   end if

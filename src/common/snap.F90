@@ -166,7 +166,7 @@ PROGRAM bsnap
   USE split_particlesML, only: split_particles
   USE checkdomainML, only: checkdomain
   USE rwalkML, only: rwalk, rwalk_init
-  USE milibML, only: xyconvert, chcase, hrdiff, vtime
+  USE milibML, only: xyconvert, chcase
   use snapfldML, only: depwet
 #if defined(TRAJ)
   USE snapfldML, only: hlevel2
@@ -223,11 +223,11 @@ PROGRAM bsnap
   integer :: ih
   integer :: idrydep = 0, wetdep_version = 0, idecay
   integer :: ntimefo, nh1, nh2
-  integer :: ierr1, ierr2, nsteph, nstep, nstepr
+  integer :: nsteph, nstep, nstepr
   integer, allocatable :: iunito
   integer :: ihread, isteph, lstepr, iendrel, istep, nhleft
   integer :: next_input_step
-  integer :: ierr, ihdiff, ihr, ifldout, idailyout = 0, ihour, split_particle_after_step, split_particle_hours
+  integer :: ihdiff, ihr, ifldout, idailyout = 0, ihour, split_particle_after_step, split_particle_hours
   integer :: date_time(8)
   logical :: warning = .false.
   real :: tstep = 900, rmlimit = -1.0, rnhrun, rnhrel, tf1, tf2, tnow, tnext

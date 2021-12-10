@@ -25,7 +25,7 @@ module readfield_fiML
   use iso_fortran_env, only: real32, real64, error_unit
   USE ftestML, only: ftest
   USE om2edotML, only: om2edot
-  USE milibML, only: mapfield, hrdiff
+  USE milibML, only: mapfield
   USE snaptabML, only: t2thetafac
   USE snapdebug, only: iulog, idebug
 
@@ -65,7 +65,7 @@ contains
 !> Read fields from fimex files. (see fimex.F90)
   subroutine readfield_fi(istep, nhleft, itimei, ihr1, ihr2, itimefi, ierror)
     USE iso_fortran_env, only: error_unit
-    USE snapfilML, only: itimer, kavail, iavail, filef
+    USE snapfilML, only: kavail, iavail, filef
     USE snapfldML, only: &
       xm, ym, u1, u2, v1, v2, w1, w2, t1, t2, ps1, ps2, pmsl1, pmsl2, &
       hbl1, hbl2, hlayer1, hlayer2, garea, dgarea, hlevel1, hlevel2, &
@@ -97,10 +97,10 @@ contains
     character(len=1024), save :: file_name = ""
     character(len=1024), save :: ap_units = pressure_units
 
-    integer :: i, k, n, ilevel, ierr1, ierr2, i1, i2
+    integer :: i, k, n, ilevel, i1, i2
     type(datetime_t) :: itime(2)
     integer :: ihours(2)
-    integer :: ihdif1, ihdif2, nhdiff
+    integer :: nhdiff
     real :: alev(nk), blev(nk), db, dxgrid, dygrid
     integer :: kk, ifb, kfb
     real :: dred, red, p, px, dp, p1, p2, ptop
@@ -140,11 +140,8 @@ contains
     write (iulog, *) '                 ihr1,ihr2: ', ihr1, ihr2
 
 !..search in list of available timesteps with model level data
-    if (ihdif1 > ihdif2) then
+    if (ihr1 > ihr2) then
       !..using the backward list
-      i = ihdif1
-      ihdif1 = ihdif2
-      ihdif2 = i
       kfb = 2
       ifb = 10
     else
@@ -156,8 +153,8 @@ contains
     ntav2 = 0
     n = kavail(kfb)
     do while ((ntav2 == 0) .AND. (n > 0))
-      if (iavail(n)%oHour >= ihdif1 .AND. &
-          iavail(n)%oHour <= ihdif2) then
+      if (iavail(n)%oHour >= ihr1 .AND. &
+          iavail(n)%oHour <= ihr2) then
         ntav2 = n
       end if
       !..pointer to next timestep (possibly same time)
@@ -180,7 +177,7 @@ contains
       write (iulog, *) 'nx,ny,nk: ', nx, ny, nk
       write (iulog, *) 'istep,nhleft: ', istep, nhleft
       write (iulog, *) 'itimei, ihr1, ihr2:', itimei, ihr1, ihr2
-      write (iulog, *) 'kfb,ifb,ihdif1,ihdif2:', kfb, ifb, ihdif1, ihdif2
+      write (iulog, *) 'kfb,ifb:', kfb, ifb
       write (iulog, fmt='(7(1x,i4),1x,i6,2i5)') (iavail(ntav2))
       flush (iulog)
     end if

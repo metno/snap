@@ -38,13 +38,12 @@ contains
     USE snapmetML, ONLY: met_params
     USE snapdebug, only: iulog, idebug
     USE snapdimML, only: mavail
-    USE milibML, only: vtime
     USE datetime, only: datetime_t, duration_t
 
     TYPE(FimexIO) :: fio
     integer(int32), dimension(:), allocatable :: start, length, atypes
     character(len=1024) :: time_var, varname
-    integer :: i, j, t, ndims, nf, tsize, ierror, prev_avail_same_file
+    integer :: i, j, t, ndims, nf, tsize, prev_avail_same_file
     real(real64), allocatable, target :: times(:)
     real(real64), allocatable, target :: field(:)
     integer :: zeroHour, status, count_nan
