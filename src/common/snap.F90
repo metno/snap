@@ -218,7 +218,8 @@ PROGRAM bsnap
   integer :: snapinput_unit, ios
   integer :: nhrun = 0, nhrel = 0
   logical :: use_random_walk = .true.
-  integer :: isynoptic = 0, m, np, npl, nlevel = 0, minhfc = +6, maxhfc = +huge(maxhfc), ifltim = 0
+  integer :: m, np, npl, nlevel = 0, minhfc = +6, maxhfc = +huge(maxhfc), ifltim = 0
+  logical :: synoptic_output = .false.
   integer :: k, ierror, i, n
   integer :: ih
   integer :: idrydep = 0, wetdep_version = 0, idecay
@@ -550,24 +551,6 @@ PROGRAM bsnap
     write (error_unit, *) 'Summary:    ', trim(ncsummary)
 
     !..initialize files, deposition fields etc.
-    m = 0
-    do n = 1, abs(nhrun)
-      itime = itime1
-      if (nhrun > 0) then
-        itime = itime + duration_t(n)
-      else
-        itime = itime - duration_t(n)
-      endif
-      if (isynoptic == 0) then
-        !..asynoptic output (use forecast length in hours to test if output)
-        error stop "Must handle this"
-      else
-        !..synoptic output  (use valid hour to test if output)
-        error stop "Must handle this"
-      end if
-      ihour = itime%hour
-      if (mod(ihour, nhfout) == 0) m = m + 1
-    end do
     itime = itime1
     time_file = datetime_t(-1, -1, -1, -1)
 
@@ -938,12 +921,12 @@ PROGRAM bsnap
           itime = itime - duration_t(1)
         end if
         itimeo = itime
-        if (isynoptic == 0) then
-          !..asynoptic output (use forecast length in hours to test if output)
-          error stop "TODO"
-        else
+        if (synoptic_output) then
           !..synoptic output  (use valid hour to test if output)
-          error stop "TODO"
+          ihour = itime%hour
+        else
+          !..asynoptic output (use forecast length in hours to test if output)
+          ihour = time_file%hour
         end if
         if (mod(ihour, nhfout) == 0) then
           ifldout = 1
@@ -1663,10 +1646,10 @@ contains
         read (cinput(pname_start:pname_end), *, err=12) nhfout
       case ('synoptic.output')
         !..synoptic.output ... output at synoptic hours
-        isynoptic = 1
+        synoptic_output = .true.
       case ('asynoptic.output')
         !..asynoptic.output ... output at fixed intervals after start
-        isynoptic = 0
+        synoptic_output = .false.
       case ('total.components.off')
         !..total.components.off
         itotcomp = 0
