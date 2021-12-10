@@ -49,4 +49,3 @@ FIELD.OUTPUT= snap.nc
 LOG.FILE=     snap.log
 
 DEBUG.ON
-ARGOS.OUTPUT.OFF
