@@ -24,15 +24,17 @@ import sys
 Common Resource-definitions for EEmep and Snap, parent abstract interface
 """
 
+
 class ResourcesCommon:
     """
     common resources for snap and eemep, setting/using the following variables:
 
     self._lustredir
     """
+
     def getLustreDir(self):
         if not hasattr(self, "_lustredir"):
-            lustredir = '/lustre/storeB'
+            lustredir = "/lustre/storeB"
             store = os.getenv("STORE", None)
             if store:
                 lustredir = os.path.join(os.sep, "lustre", store)
@@ -45,21 +47,30 @@ class ResourcesCommon:
 
     @staticmethod
     def _getLustreMappEnv():
-        sh_script = os.path.join(os.path.dirname(__file__), "resources/lustredir_serviceenv.sh")
-        lustredir="/no_such_file"
+        sh_script = os.path.join(
+            os.path.dirname(__file__), "resources/lustredir_serviceenv.sh"
+        )
+        lustredir = "/no_such_file"
         try:
-            proc = subprocess.run([sh_script], check=True, stdout=subprocess.PIPE, timeout=10)
-            for line in proc.stdout.decode('utf-8').split('\n'):
+            proc = subprocess.run(
+                [sh_script],
+                check=True,
+                stdout=subprocess.PIPE,
+                timeout=10,
+                encoding="utf-8",
+            )
+            for line in proc.stdout:
                 if line.rstrip():
-                    lustredir = line.rstrip() # lustredir in last line
+                    lustredir = line.rstrip()  # lustredir in last line
         except subprocess.SubprocessError as se:
             print(se, file=sys.stderr)
-        
+
         return lustredir
+
 
 if __name__ == "__main__":
     # test code
     rc = ResourcesCommon()
     print(rc.getLustreDir())
-    assert(rc.getLustreDir().startswith('/lustre/store'))
-    assert(len(rc.getLustreDir()) < 15)
+    assert rc.getLustreDir().startswith("/lustre/store")
+    assert len(rc.getLustreDir()) < 15
