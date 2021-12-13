@@ -228,7 +228,7 @@ PROGRAM bsnap
   integer, allocatable :: iunito
   integer :: ihread, isteph, lstepr, iendrel, istep, nhleft
   integer :: next_input_step
-  integer :: ihdiff, ihr, ifldout, idailyout = 0, ihour, split_particle_after_step, split_particle_hours
+  integer :: ihdiff, ifldout, idailyout = 0, ihour, split_particle_after_step, split_particle_hours
   integer :: date_time(8)
   logical :: warning = .false.
   real :: tstep = 900, rmlimit = -1.0, rnhrel, tf1, tf2, tnow, tnext
@@ -683,7 +683,6 @@ PROGRAM bsnap
 
     ! start time loop
     itimei = time_start
-    nhleft = nhrun
     time_loop: do istep = 0, nstep
       call timeloop_timer%start()
       write (iulog, *) 'istep,nplume,npart: ', istep, nplume, npart
@@ -694,10 +693,10 @@ PROGRAM bsnap
       end if
 
       !..read fields
-      if (next_input_step == istep) then
+      nhleft = abs((nstep - istep + 1)/nsteph)
+
+      if (next_input_step == istep .and. nhleft > 0) then
         itimei = time_file
-        nhleft = (nstep - istep + 1)/nsteph
-        if (nhrun < 0) nhleft = -nhleft
         call input_timer%start()
         if (ftype == "netcdf") then
           call readfield_nc(istep, nhrun < 0, itimei, nhfmin, nhfmax, &
