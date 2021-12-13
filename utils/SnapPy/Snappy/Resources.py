@@ -31,6 +31,8 @@ import sys
 import time as mtime
 from time import gmtime, strftime
 
+from Snappy.ResourcesCommon import ResourcesCommon
+
 
 @enum.unique
 class MetModel(enum.Enum):
@@ -47,7 +49,7 @@ class MetModel(enum.Enum):
         return self.value.__hash__()
 
 
-class Resources:
+class Resources(ResourcesCommon):
     """
     Read the resources and combine them
     """
@@ -403,16 +405,6 @@ GRAVITY.FIXED.M/S=0.0002
     def getBSnapInputFile(self):
         filename = os.path.join(self.directory, "snap.in")
         return filename
-
-    def getLustreDir(self):
-        if not hasattr(self, "_lustredir"):
-            lustredir = os.path.join(os.sep, "lustre", os.getenv("STORE", "storeB"))
-            lustredirfile = os.path.join(os.environ["HOME"], ".lustredir")
-            if os.path.isfile(lustredirfile):
-                with open(lustredirfile, "r") as lh:
-                    lustredir = lh.read().rstrip()
-            self._lustredir = lustredir
-        return self._lustredir
 
     def getSnapOutputDir(self):
         return self._OUTPUTDIR.format(LUSTREDIR=self.getLustreDir())
