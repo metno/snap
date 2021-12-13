@@ -138,7 +138,7 @@ subroutine fldout_nc(iunit,itime,tf1,tf2,tnow, &
 
 ! set the runtime
   ihrs_pos = ihrs_pos + 1
-  dur = iftime - itime
+  dur = itime - iftime
   ihrs = dur%hours
   call check(nf90_put_var(iunit, varid%t, start=[ihrs_pos], values=FLOAT(ihrs)), &
       "set time")
