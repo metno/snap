@@ -223,7 +223,7 @@ PROGRAM bsnap
   integer :: k, ierror, i, n
   integer :: ih
   integer :: idrydep = 0, wetdep_version = 0, idecay
-  integer :: ntimefo, nh1, nh2
+  integer :: ntimefo
   integer :: nsteph, nstep, nstepr
   integer, allocatable :: iunito
   integer :: ihread, isteph, lstepr, iendrel, istep, nhleft
@@ -400,13 +400,19 @@ PROGRAM bsnap
     call snap_error_exit(iulog)
   end if
 
+  block
+  logical :: is_time_before_run, is_time_after_run
+
   itime2 = time_start + duration_t(nhrun)
 
-  dur = time_start - itimer(1)
-  nh1 = dur%hours
-  dur = itime2 - itimer(2)
-  nh2 = dur%hours
-  if (nh1 < 0 .OR. nh2 < 0) then
+  if (nhrun > 0) then
+    is_time_before_run = itimer(1) <= time_start
+    is_time_after_run = itimer(2) >= itime2
+  else
+    is_time_before_run = itimer(2) >= time_start
+    is_time_after_run = itimer(1) <= itime2
+  endif
+  if ((.not.is_time_before_run) .OR. (.not.is_time_after_run)) then
     write (iulog, *) 'Not able to run requested time periode.'
     write (iulog, *) 'Start:        ', time_start
     write (iulog, *) 'End:          ', itime2
@@ -417,19 +423,22 @@ PROGRAM bsnap
     write (error_unit, *) 'End:          ', itime2
     write (error_unit, *) 'First fields: ', itimer(1)
     write (error_unit, *) 'Last  fields: ', itimer(2)
-    if (nh1 < 0) then
+    if (.not.is_time_before_run) then
       write (iulog, *) 'NO DATA AT START OF RUN'
       write (error_unit, *) 'NO DATA AT START OF RUN'
       call snap_error_exit(iulog)
     end if
     write (iulog, *) 'Running until end of data'
     write (error_unit, *) 'Running until end of data'
-    itime2 = itimer(2)
-    dur = itime2 - time_start
+    if (nhrun > 0) then
+      dur = itimer(2) - time_start
+    else
+      dur = itimer(1) - time_start
+    endif
     nhrun = dur%hours
   end if
-
   if (nhrel > abs(nhrun)) nhrel = abs(nhrun)
+  end block
 
 #if defined(TRAJ)
   do itraj = 1, ntraj
