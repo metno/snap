@@ -172,12 +172,3 @@ LOG.FILE=     snap.log
 *
 * DEBUG.OFF
 DEBUG.ON
-*
-ARGOS.OUTPUT.OFF
-* ARGOS.OUTPUT.ON
-ARGOS.OUTPUT.DEPOSITION.FILE=    argos_dep.txt
-ARGOS.OUTPUT.CONCENTRATION.FILE= argos_conc.txt
-ARGOS.OUTPUT.TOTALDOSE.FILE=     argos_dose.txt
-ARGOS.OUTPUT.TIMESTEP.HOUR=48
-END
-**----------------------------------------------------------------------

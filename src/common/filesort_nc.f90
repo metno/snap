@@ -35,9 +35,9 @@ subroutine filesort_nc
   USE readfield_ncML, only: check, calc_2d_start_length, nfcheckload
   USE netcdf
   USE snapdimML, only: nx, ny, mavail
-  USE milibML, only: vtime
+  USE datetime, only: datetime_t, duration_t
 
-  integer :: i, j, nf, tsize, ierror, prev_avail_same_file
+  integer :: i, j, nf, tsize, prev_avail_same_file
   integer :: ncid, varid, dimid
   real(real64) :: times(mavail)
   integer :: zeroHour, tunitLen, status, count_nan
@@ -194,18 +194,13 @@ subroutine filesort_nc
   end do
 
 !..time range
-
   do i=1,2
-    itimer(1,i)=iavail(kavail(i))%aYear
-    itimer(2,i)=iavail(kavail(i))%aMonth
-    itimer(3,i)=iavail(kavail(i))%aDay
-    itimer(4,i)=iavail(kavail(i))%aHour
-    itimer(5,i)=iavail(kavail(i))%fcHour
+    itimer(i) = datetime_t(iavail(kavail(i))%aYear, &
+                           iavail(kavail(i))%aMonth, &
+                           iavail(kavail(i))%aDay, &
+                           iavail(kavail(i))%aHour)
+    itimer(i) = itimer(i) + duration_t(iavail(kavail(i))%fcHour)
   end do
-
-!..get valid time (with forecast=0)
-  call vtime(itimer(1,1),ierror)
-  call vtime(itimer(1,2),ierror)
 
 !..adjust hours to hours since first available time
   zeroHour = iavail(kavail(1))%oHour

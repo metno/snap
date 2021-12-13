@@ -25,7 +25,7 @@ module readfield_fiML
   use iso_fortran_env, only: real32, real64, error_unit
   USE ftestML, only: ftest
   USE om2edotML, only: om2edot
-  USE milibML, only: mapfield, hrdiff
+  USE milibML, only: mapfield
   USE snaptabML, only: t2thetafac
   USE snapdebug, only: iulog, idebug
 
@@ -63,9 +63,9 @@ contains
   end subroutine fimex_open
 
 !> Read fields from fimex files. (see fimex.F90)
-  subroutine readfield_fi(istep, nhleft, itimei, ihr1, ihr2, itimefi, ierror)
+  subroutine readfield_fi(istep, backward, itimei, ihr1, ihr2, itimefi, ierror)
     USE iso_fortran_env, only: error_unit
-    USE snapfilML, only: itimer, kavail, iavail, filef
+    USE snapfilML, only: iavail, filef
     USE snapfldML, only: &
       xm, ym, u1, u2, v1, v2, w1, w2, t1, t2, ps1, ps2, pmsl1, pmsl2, &
       hbl1, hbl2, hlayer1, hlayer2, garea, dgarea, hlevel1, hlevel2, &
@@ -75,18 +75,20 @@ contains
     USE snapmetML, only: met_params, xy_wind_units, pressure_units, omega_units, &
                          sigmadot_units, temp_units
     USE snapdimML, only: nx, ny, nk
+    USE datetime, only: datetime_t, duration_t
+    USE readfield_ncML, only: find_index
 !> current timestep (always positive), negative istep means reset
     integer, intent(in) :: istep
-!> remaining run-hours (negative for backward-calculations)
-    integer, intent(in) :: nhleft
-!> minimal time-offset?
+!> whether meteorology should be read backwards
+    logical, intent(in) :: backward
+!> minimal time-offset after itimei
     integer, value :: ihr1
-!> maximal time-offset?
+!> maximal time-offset after itimei
     integer, value :: ihr2
-!> initial time
-    integer, intent(in) :: itimei(5)
+!> time since last file input
+    type(datetime_t), intent(in) :: itimei
 !> final time (output)
-    integer, intent(out) :: itimefi(5)
+    type(datetime_t), intent(out) :: itimefi
 !> error (output)
     integer, intent(out) :: ierror
 
@@ -95,10 +97,10 @@ contains
     integer, save :: ntav1, ntav2 = 0
     character(len=1024), save :: file_name = ""
     character(len=1024), save :: ap_units = pressure_units
+    logical, save :: first_time_read = .true.
 
-    integer :: i, k, n, ilevel, ierr1, ierr2, i1, i2
-    integer :: itime(5, 4), ihours(4)
-    integer :: ihdif1, ihdif2, nhdiff
+    integer :: i, k, ilevel, i1, i2
+    integer :: nhdiff
     real :: alev(nk), blev(nk), db, dxgrid, dygrid
     integer :: kk, ifb, kfb
     real :: dred, red, p, px, dp, p1, p2, ptop
@@ -110,10 +112,9 @@ contains
     ierror = 0
 
     if (istep < 0) then
-      ! set all 'save' variables to default values,
+      ! set 'save' variables to default values,
       ntav1 = 0
       ntav2 = 0
-      return
     end if
 
 !.. get the correct ensemble/realization position, nr starting with 1, enspos starting with 0
@@ -121,55 +122,8 @@ contains
     if (enspos <= 0) nr = 1
 
 !..get time offset in hours (as iavail(n)%oHour)
-    if (istep == 0) then
-      ihr1 = 0
-      ihr2 = -ihr2
-    endif
-    if (nhleft < 0) then
-      ihr1 = -ihr1
-      ihr2 = -ihr2
-    end if
-    ihours = [ihr1, ihr2, 0, nhleft]
-    do n = 1, 4
-      itime(:, n) = itimei
-      itime(5, n) = itime(5, n) + ihours(n)
-      call hrdiff(0, 1, itimer(1, 1), itime(1, n), ihours(n), ierr1, ierr2)
-    end do
-    ihdif1 = ihours(1)
-    ihdif2 = ihours(2)
-
-    write (iulog, *) '*READFIELD* Requested time: ', (itime(i, 1), i=1, 4)
-    write (iulog, *) '                Time limit: ', (itime(i, 2), i=1, 4)
-    write (iulog, *) '                 ihr1,ihr2: ', ihr1, ihr2
-
-!..search in list of available timesteps with model level data
-    if (ihdif1 > ihdif2) then
-      !..using the backward list
-      i = ihdif1
-      ihdif1 = ihdif2
-      ihdif2 = i
-      kfb = 2
-      ifb = 10
-    else
-      kfb = 1
-      ifb = 9
-    end if
-
     ntav1 = ntav2
-    ntav2 = 0
-    n = kavail(kfb)
-    do while ((ntav2 == 0) .AND. (n > 0))
-      if (iavail(n)%oHour >= ihdif1 .AND. &
-          iavail(n)%oHour <= ihdif2) then
-        ntav2 = n
-      end if
-      !..pointer to next timestep (possibly same time)
-      if (ifb == 9) then
-        n = iavail(n)%nAvail
-      else
-        n = iavail(n)%pAvail
-      end if
-    end do
+    ntav2 = find_index(istep < 0, backward, itimei, ihr1, ihr2)
 
     if (ntav2 < 1) then
       write (iulog, *) '*READFIELD* No model level data available'
@@ -181,9 +135,9 @@ contains
     if (idebug == 1) then
       write (iulog, *) 'MODEL LEVEL SEARCH LIST.   ntav2=', ntav2
       write (iulog, *) 'nx,ny,nk: ', nx, ny, nk
-      write (iulog, *) 'istep,nhleft: ', istep, nhleft
-      write (iulog, *) 'itimei(5), ihr1, ihr2:', (itimei(i), i=1, 5), ihr1, ihr2
-      write (iulog, *) 'kfb,ifb,ihdif1,ihdif2:', kfb, ifb, ihdif1, ihdif2
+      write (iulog, *) 'istep: ', istep
+      write (iulog, *) 'itimei, ihr1, ihr2:', itimei, ihr1, ihr2
+      write (iulog, *) 'kfb,ifb:', kfb, ifb
       write (iulog, fmt='(7(1x,i4),1x,i6,2i5)') (iavail(ntav2))
       flush (iulog)
     end if
@@ -205,11 +159,11 @@ contains
       timeposm1 = iavail(iavail(ntav2)%pavail_same_file)%timePos
     endif
 
-    itimefi(1) = iavail(ntav2)%aYear
-    itimefi(2) = iavail(ntav2)%aMonth
-    itimefi(3) = iavail(ntav2)%aDay
-    itimefi(4) = iavail(ntav2)%aHour
-    itimefi(5) = iavail(ntav2)%fcHour
+    itimefi = datetime_t(iavail(ntav2)%aYear, &
+                         iavail(ntav2)%aMonth, &
+                         iavail(ntav2)%aDay, &
+                         iavail(ntav2)%aHour)
+    itimefi = itimefi + duration_t(iavail(ntav2)%fcHour)
 
     if (idebug == 1) then
       write (iulog, *) 'READING DATA FROM file=', trim(file_name)
@@ -330,7 +284,8 @@ contains
     call check(fio%close(), "close fio")
 
 ! first time initialized data
-    if (istep == 0) then
+    if (first_time_read) then
+      first_time_read = .false.
 
       do k = 2, nk - kadd
         alevel(k) = alev(k)
@@ -468,7 +423,7 @@ contains
       end do
     end if
 
-    if (nhleft < 0) then
+    if (backward) then
       ! backward-calculation, switch sign of winds
       u2 = -u2
       v2 = -v2

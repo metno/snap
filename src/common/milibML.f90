@@ -33,21 +33,10 @@ module milibML
       real, intent(out) :: hx, hy
     end subroutine mapfield
 
-    subroutine hrdiff(iup1, iup2, itime1, itime2, ihours, ierr1, ierr2)
-      integer, intent(in) :: iup1, iup2
-      integer, intent(inout) :: itime1(5), itime2(5), ierr1, ierr2
-      integer, intent(out) :: ihours
-    end subroutine hrdiff
-
     subroutine rmfile(filnam, iprint, ierror)
       character*(*) :: filnam
       integer, intent(in) :: iprint
       integer, intent(out) :: ierror
     end subroutine rmfile
-
-    subroutine vtime(itime, ierror)
-      integer, intent(inout) :: itime(5)
-      integer, intent(out) :: ierror
-    end subroutine vtime
   end interface
 end module milibML
