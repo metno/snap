@@ -616,6 +616,8 @@ PROGRAM bsnap
 #endif
     end if
     if (ierror /= 0) call snap_error_exit(iulog)
+    call compheight
+    call bldp
 
     ! Initialise output
     if (idailyout == 1) then
@@ -691,13 +693,11 @@ PROGRAM bsnap
         flush (error_unit)
       end if
 
+      !..read fields
       if (next_input_step == istep) then
-        !..read fields
-        if (istep /= 0) then
-          itimei = time_file
-          nhleft = (nstep - istep + 1)/nsteph
-          if (nhrun < 0) nhleft = -nhleft
-        end if
+        itimei = time_file
+        nhleft = (nstep - istep + 1)/nsteph
+        if (nhrun < 0) nhleft = -nhleft
         call input_timer%start()
         if (ftype == "netcdf") then
           call readfield_nc(istep, nhrun < 0, itimei, nhfmin, nhfmax, &
@@ -719,37 +719,19 @@ PROGRAM bsnap
 
         !..compute model level heights
         call compheight
-
         !..calculate boundary layer (top and height)
         call bldp
-
-        if (istep == 0) then
-          next_input_step = 1
-          ifldout = 0
-          ! continue istep loop after initialization
-          call timeloop_timer%stop()
-          cycle time_loop
-        end if
 
         dur = time_file - itimei
         ihdiff = dur%hours
         tf1 = 0.
         tf2 = 3600.*ihdiff
         if (nhrun < 0) tf2 = -tf2
-        if (istep == 1) then
-          dur = time_start - itimei
-          ihr = dur%hours
-          tnow = 3600.*ihr
-          next_input_step = istep + nsteph*abs(ihdiff - ihr)
-        else
-          tnow = 0.
-          next_input_step = istep + nsteph*abs(ihdiff)
-        end if
+        next_input_step = istep + nsteph*abs(ihdiff)
 
+        tnow = 0.
       else
-
         tnow = tnow + tstep
-
       end if
 
       tnext = tnow + tstep
@@ -758,7 +740,7 @@ PROGRAM bsnap
 
         !..release one plume of particles
 
-        call release(istep - 1, nsteph, tf1, tf2, tnow, ierror)
+        call release(istep, nsteph, tf1, tf2, tnow, ierror)
 
         if (ierror == 0) then
           lstepr = istep
