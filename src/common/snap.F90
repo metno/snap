@@ -231,7 +231,7 @@ PROGRAM bsnap
   integer :: ihdiff, ihr, ifldout, idailyout = 0, ihour, split_particle_after_step, split_particle_hours
   integer :: date_time(8)
   logical :: warning = .false.
-  real :: tstep = 900, rmlimit = -1.0, rnhrun, rnhrel, tf1, tf2, tnow, tnext
+  real :: tstep = 900, rmlimit = -1.0, rnhrel, tf1, tf2, tnow, tnext
   real ::    x(1), y(1)
   type(extraParticle) :: pextra
   real ::    rscale
@@ -1094,6 +1094,7 @@ contains
     integer :: i, kh, kd, ig, igd, igm, i1, i2
     integer :: comment_start
     real :: glat, glong
+    real :: rnhrun
     character(len=8) :: cpos1, cpos2
     type(defined_component), pointer :: d_comp
     integer :: kname_start, kname_end ! keyword
