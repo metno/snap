@@ -28,8 +28,10 @@ import re
 import sys
 from time import gmtime, strftime
 
+from Snappy.ResourcesCommon import ResourcesCommon
 
-class Resources:
+
+class Resources(ResourcesCommon):
     """
     Read the resources and combine them
     """
@@ -102,16 +104,6 @@ class Resources:
 
     def getHPCRunDir(self, hpcname):
         return self.HPC[hpcname]["RUNDIR"]
-
-    def getLustreDir(self):
-        if not hasattr(self, "_lustredir"):
-            lustredir = os.path.join(os.sep, "lustre", os.getenv("STORE", "storeB"))
-            lustredirfile = os.path.join(os.environ["HOME"], ".lustredir")
-            if os.path.isfile(lustredirfile):
-                with open(lustredirfile, "r") as lh:
-                    lustredir = lh.read().rstrip()
-            self._lustredir = lustredir
-        return self._lustredir
 
     def getOutputDir(self):
         return self._OUTPUTDIR.format(LUSTREDIR=self.getLustreDir())
