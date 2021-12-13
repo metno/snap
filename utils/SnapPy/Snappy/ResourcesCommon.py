@@ -32,11 +32,14 @@ class ResourcesCommon:
     """
     def getLustreDir(self):
         if not hasattr(self, "_lustredir"):
-            lustredir = os.path.join(os.sep, "lustre", os.getenv("STORE", "storeB"))
-            lustredirenv = self._getLustreMappEnv()
-            if os.path.isdir(lustredirenv):
-                lustredir = lustredirenv
-
+            lustredir = '/lustre/storeB'
+            store = os.getenv("STORE", None)
+            if store:
+                lustredir = os.path.join(os.sep, "lustre", store)
+            else:
+                lustredirenv = self._getLustreMappEnv()
+                if os.path.isdir(lustredirenv):
+                    lustredir = lustredirenv
             self._lustredir = lustredir
         return self._lustredir
 
