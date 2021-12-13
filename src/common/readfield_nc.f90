@@ -136,6 +136,7 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
   integer, save :: ncid = 0
   integer, save :: ntav1, ntav2 = 0
   character(len=1024), save :: file_name = ""
+  logical, save :: first_time_read = .true.
 
   integer :: i, k, ilevel, i1, i2
   integer :: nhdiff
@@ -349,7 +350,8 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
   endif
 
 ! first time initialized data
-  if(istep == 0) then
+  if (first_time_read) then
+    first_time_read = .false.
 
     do k=2,nk-kadd
       alevel(k)=alev(k)

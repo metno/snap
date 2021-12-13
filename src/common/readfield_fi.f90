@@ -97,6 +97,7 @@ contains
     integer, save :: ntav1, ntav2 = 0
     character(len=1024), save :: file_name = ""
     character(len=1024), save :: ap_units = pressure_units
+    logical, save :: first_time_read = .true.
 
     integer :: i, k, ilevel, i1, i2
     integer :: nhdiff
@@ -283,7 +284,8 @@ contains
     call check(fio%close(), "close fio")
 
 ! first time initialized data
-    if (istep == 0) then
+    if (first_time_read) then
+      first_time_read = .false.
 
       do k = 2, nk - kadd
         alevel(k) = alev(k)
