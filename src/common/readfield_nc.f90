@@ -43,7 +43,7 @@ integer function find_index(first, backward, itimei, ihr1, ihr2) result(ntav)
   !> Whether this is the first input (which ignores ihr1)
   logical, intent(in) :: first
   !> Calculate time backwards
-  logical, intent(in) :: backward
+  logical, value :: backward
   !> Last time of reading
   type(datetime_t), intent(in) :: itimei
   !> bounds in the age of the next time
@@ -52,7 +52,11 @@ integer function find_index(first, backward, itimei, ihr1, ihr2) result(ntav)
   integer :: current_index
   type(datetime_t) :: test_date, itime(2)
 
-  if (first) ihr1 = 0
+  if (first) then
+    ihr1 = 0
+    ! Search opposite direction to find suitable initial fields
+    backward = .not.backward
+  endif
   ntav = 0
 
 !..search in list of available timesteps with model level data
@@ -147,16 +151,15 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
   ierror = 0
 
   if (istep < 0) then
-  ! set all 'save' variables to default values,
-  ! ncid not needed, will close automaticall
+  ! set 'save' variables to default values,
+  ! ncid not needed, will close automatically
     ntav1 = 0
     ntav2 = 0
-    return
   end if
 
 !..get time offset in hours (as iavail(n)%oHour)
   ntav1 = ntav2
-  ntav2 = find_index(istep == 0, backward, itimei, ihr1, ihr2)
+  ntav2 = find_index(istep < 0, backward, itimei, ihr1, ihr2)
 
   if(ntav2 == 0) then
     write(iulog,*) '*READFIELD* No model level data available'

@@ -111,10 +111,9 @@ contains
     ierror = 0
 
     if (istep < 0) then
-      ! set all 'save' variables to default values,
+      ! set 'save' variables to default values,
       ntav1 = 0
       ntav2 = 0
-      return
     end if
 
 !.. get the correct ensemble/realization position, nr starting with 1, enspos starting with 0
@@ -123,7 +122,7 @@ contains
 
 !..get time offset in hours (as iavail(n)%oHour)
     ntav1 = ntav2
-    ntav2 = find_index(istep == 0, backward, itimei, ihr1, ihr2)
+    ntav2 = find_index(istep < 0, backward, itimei, ihr1, ihr2)
 
     if (ntav2 < 1) then
       write (iulog, *) '*READFIELD* No model level data available'
