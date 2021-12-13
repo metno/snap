@@ -206,7 +206,7 @@ PROGRAM bsnap
 !         itime(5) - forecast time in hours (added to date/time above)
 
 !> start time
-  type(datetime_t) :: itime1 = datetime_t(-huge(itime1%year), 0, 0, 0)
+  type(datetime_t) :: time_start = datetime_t(-huge(time_start%year), 0, 0, 0)
 !> stop  time
   type(datetime_t) :: itime2
   type(datetime_t) :: itime, itimei, itimeo
@@ -394,26 +394,26 @@ PROGRAM bsnap
 
   if (ierror /= 0) then
     write (iulog, *) 'Requested start time is wrong:'
-    write (iulog, *) itime1
+    write (iulog, *) time_start
     write (error_unit, *) 'Requested start time is wrong:'
-    write (error_unit, *) itime1
+    write (error_unit, *) time_start
     call snap_error_exit(iulog)
   end if
 
-  itime2 = itime1 + duration_t(nhrun)
+  itime2 = time_start + duration_t(nhrun)
 
-  dur = itime1 - itimer(1)
+  dur = time_start - itimer(1)
   nh1 = dur%hours
   dur = itime2 - itimer(2)
   nh2 = dur%hours
   if (nh1 < 0 .OR. nh2 < 0) then
     write (iulog, *) 'Not able to run requested time periode.'
-    write (iulog, *) 'Start:        ', itime1
+    write (iulog, *) 'Start:        ', time_start
     write (iulog, *) 'End:          ', itime2
     write (iulog, *) 'First fields: ', itimer(1)
     write (iulog, *) 'Last  fields: ', itimer(2)
     write (error_unit, *) 'Not able to run requested time periode.'
-    write (error_unit, *) 'Start:        ', itime1
+    write (error_unit, *) 'Start:        ', time_start
     write (error_unit, *) 'End:          ', itime2
     write (error_unit, *) 'First fields: ', itimer(1)
     write (error_unit, *) 'Last  fields: ', itimer(2)
@@ -425,7 +425,7 @@ PROGRAM bsnap
     write (iulog, *) 'Running until end of data'
     write (error_unit, *) 'Running until end of data'
     itime2 = itimer(2)
-    dur = itime2 - itime1
+    dur = itime2 - time_start
     nhrun = dur%hours
   end if
 
@@ -436,10 +436,10 @@ PROGRAM bsnap
     releases(1)%rellower(1) = tlevel(itraj)
     !        relupper(1)=rellower(1)+1
     releases(1)%relupper(1) = releases(1)%rellower(1)
-    tyear = itime1%year
-    tmon = itime1%month
-    tday = itime1%day
-    thour = itime1%hour
+    tyear = time_start%year
+    tmon = time_start%month
+    tday = time_start%day
+    thour = time_start%hour
     tmin = 0.0
     write (error_unit, *) 'lower, upper', releases(1)%rellower(1), releases(1)%relupper(1)
     write (error_unit, *) 'tyear, tmon, tday, thour, tmin', &
@@ -481,9 +481,9 @@ PROGRAM bsnap
     write (iulog, *) 'imodlevel: ', imodlevel
     write (iulog, *) 'modleveldump (h), steps:', modleveldump/nsteph, &
       modleveldump
-    write (iulog, *) 'itime1:  ', itime1
+    write (iulog, *) 'time_start:  ', time_start
     write (tempstr, '("Starttime: ",I4,"-",I2.2,"-",I2.2,"T",I2.2 &
-        &,":",I2.2)') itime1
+        &,":",I2.2)') time_start
     ncsummary = trim(ncsummary)//" "//trim(tempstr)
     do n = 1, nrelpos
       write (tempstr, '("Release Pos (lat, lon): (", F5.1, ",", F6.1 &
@@ -551,7 +551,7 @@ PROGRAM bsnap
     write (error_unit, *) 'Summary:    ', trim(ncsummary)
 
     !..initialize files, deposition fields etc.
-    itime = itime1
+    itime = time_start
     time_file = datetime_t(-1, -1, -1, -1)
 
     next_input_step = 0
@@ -595,11 +595,11 @@ PROGRAM bsnap
 
 ! reset readfield_nc (eventually, traj will rerun this loop)
     if (ftype == "netcdf") then
-      call readfield_nc(-1, nhrun < 0, itimei, 0, 0, &
+      call readfield_nc(-1, nhrun < 0, time_start, nhfmin, nhfmax, &
                         time_file, ierror)
     else if (ftype == "fimex") then
 #if defined(FIMEX)
-      call readfield_fi(-1, nhrun < 0, itimei, 0, 0, &
+      call readfield_fi(-1, nhrun < 0, time_start, nhfmin, nhfmax, &
                         time_file, ierror)
 #else
       error stop "A fimex read was requested, but fimex support is not included"// &
@@ -607,21 +607,6 @@ PROGRAM bsnap
 #endif
     end if
     if (ierror /= 0) call snap_error_exit(iulog)
-
-    if (imodlevel) then
-      block
-        type(datetime_t) :: junk
-
-        if (ftype == "netcdf") then
-          call readfield_nc(0, nhrun < 0, itime1, nhfmin, nhfmax, junk, ierror)
-        else if (ftype == "fimex") then
-#if defined(FIMEX)
-          call readfield_fi(0, nhrun < 0, itime1, nhfmin, nhfmax, junk, ierror)
-#endif
-        endif
-        if (ierror /= 0) call snap_error_exit(iulog)
-      end block
-    endif
 
     ! Initialise output
     if (idailyout == 1) then
@@ -686,7 +671,7 @@ PROGRAM bsnap
     particleloop_timer = acc_timer("Particle loop:")
 
     ! start time loop
-    itimei = itime1
+    itimei = time_start
     nhleft = nhrun
     time_loop: do istep = 0, nstep
       call timeloop_timer%start()
@@ -743,7 +728,7 @@ PROGRAM bsnap
         tf2 = 3600.*ihdiff
         if (nhrun < 0) tf2 = -tf2
         if (istep == 1) then
-          dur = itime1 - itimei
+          dur = time_start - itimei
           ihr = dur%hours
           tnow = 3600.*ihr
           next_input_step = istep + nsteph*abs(ihdiff - ihr)
@@ -974,7 +959,7 @@ PROGRAM bsnap
 
       distance = distance + speed*tstep
       if (istep > 0 .AND. mod(istep, nsteph) == 0) then
-        timeStart = [0, 0, itime1%hour, itime1%day, itime1%month, itime1%year]
+        timeStart = [0, 0, time_start%hour, time_start%day, time_start%month, time_start%year]
         epochSecs = timeGm(timeStart)
         if (nhrun >= 0) then
           epochSecs = epochSecs + nint(istep*tstep)
@@ -1202,7 +1187,7 @@ contains
       case ('time.start')
         !..time.start=<year,month,day,hour>
         if (.not. has_value) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) itime1%year, itime1%month, itime1%day, itime1%hour
+        read (cinput(pname_start:pname_end), *, err=12) time_start%year, time_start%month, time_start%day, time_start%hour
       case ('time.run')
         !..time.run=<hours'h'> or <days'd'>
         if (.not. has_value) goto 12
