@@ -899,10 +899,12 @@ PROGRAM bsnap
         itimeo = itime
         if (synoptic_output) then
           !..synoptic output  (use valid hour to test if output)
-          ihour = itime%hour
+          dur = itime - time_start
+          ihour = dur%hours
         else
           !..asynoptic output (use forecast length in hours to test if output)
-          ihour = time_file%hour
+          dur = itime - time_file
+          ihour = dur%hours
         end if
         if (mod(ihour, nhfout) == 0) then
           ifldout = 1
