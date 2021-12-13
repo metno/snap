@@ -39,15 +39,6 @@ module snapdimML
 !> length of buffer for field input/output
     integer, save, public :: ldata
 
-
-!> SSV ARGOS
-!>
-!> disable SSV ARGOS output (set to 1)
-!>
-!> enable SSV ARGOS output, set maximum grid sizes (set to nx*ny)
-    integer, parameter, public :: mxyargos = 1
-
-
 !> max no. of components used in one run
 !>
 !> (keep as small as "possible", it dimensions 2d/3d output fields)

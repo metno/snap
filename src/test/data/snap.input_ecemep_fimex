@@ -113,7 +113,3 @@ LOG.FILE=     snap.log
 *
 * DEBUG.OFF
 DEBUG.ON
-*
-ARGOS.OUTPUT.OFF
-END
-
