@@ -2,7 +2,7 @@
 if [[ "$1" == "-y" ]]; then
     echo "Creating debian package"
 elif [[ "$1" == "-h" ]]; then
-    cat $0 | sed -n '/INSTRUCTIONS$/,/INSTRUCTIONS_END$/p'
+    cat -- "$0" | sed -n '/INSTRUCTIONS$/,/INSTRUCTIONS_END$/p'
     exit 0
 else
     echo "Usage: $0 [-h|-y]"
@@ -14,19 +14,7 @@ fi
 #     Then run this script with -y option
 #
 # 2 - Upload to internal package repository using dupload
-#     (you need a properly configured .dupload.conf in your home directory, something like)
-#
-#     package config;
-#     $default_host = "xenial";
-#     $cfg{'xenial'} = {
-#        fqdn => "xenialrepo.met.no",
-#        method => "scpb",
-#        incoming => "/incoming/xenial/main",
-#        dinstall_runs => 1,
-#        preupload=> {
-#                changes=>'sed -i "s/^Distribution:.*$/Distribution: xenial/g" %1',
-#        },
-#      };
+#     (you need a properly configured .dupload.conf in your home directory, copy this from https://gitlab.met.no/it/sd/klient/linux/internrepo/-/raw/master/.dupload.conf)
 #
 #     Check first that it looks plausible:
 #     $ dupload --no --to bionic dist/snap-py_<version>-1_amd64.changes
@@ -60,18 +48,17 @@ fi
 #INSTRUCTIONS_END
 
 HOST=bionic
-VERSION=1.6.25
-CHANGELOG="Update archive path"
+VERSION=1.6.26
+CHANGELOG="Use mapp-service failover toggle"
 rm -f debian
 ln -s debian.$HOST debian
-dch -v ${VERSION}-2 -U "${CHANGELOG}"
+dch -v ${VERSION}-1 -U "${CHANGELOG}"
 dch -r ''
 VERSION=$VERSION python3 setup.py sdist
-cd dist
+cd dist || exit 1
 tar xvfz Snappy-${VERSION}.tar.gz
-cd Snappy-${VERSION}
+cd Snappy-${VERSION} || exit 1
 cp -Hr ../../debian .
 rm ../../debian
 mv ../Snappy-${VERSION}.tar.gz ../snap-py_${VERSION}.orig.tar.gz
 debuild -us -uc -sa
-
