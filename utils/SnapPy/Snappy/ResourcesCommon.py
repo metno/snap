@@ -59,7 +59,7 @@ class ResourcesCommon:
                 timeout=10,
                 encoding="utf-8",
             )
-            for line in proc.stdout:
+            for line in proc.stdout.splitlines():
                 if line.rstrip():
                     lustredir = line.rstrip()  # lustredir in last line
         except subprocess.SubprocessError as se:
