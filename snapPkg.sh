@@ -1,4 +1,4 @@
-VERSION=2.0.5
+VERSION=2.0.6
 #VERSION_=`echo -n $VERSION | tr '.' '_'`
 export VERSION
 PLATFORM=bionic

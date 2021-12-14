@@ -1,4 +1,4 @@
-SUBDIRS = naccident traj volcano test
+SUBDIRS = naccident traj volcano
 # Version from environment, fall back on git versions
 VERSION ?= $(shell ./version.py)
 export VERSION
