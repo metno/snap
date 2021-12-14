@@ -53,7 +53,7 @@ class ResourcesCommon:
         lustredir = "/no_such_file"
         try:
             proc = subprocess.run(
-                [sh_script],
+                ["/bin/sh", sh_script],
                 check=True,
                 stdout=subprocess.PIPE,
                 timeout=10,
