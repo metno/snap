@@ -11,3 +11,5 @@ override_dh_auto_clean:
 	dh_auto_clean
 	rm -f current.mk
 
+override_dh_auto_test:
+
