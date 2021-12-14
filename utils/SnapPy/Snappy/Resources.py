@@ -311,7 +311,7 @@ GRAVITY.FIXED.M/S=0.0002
     def readRadnett(self,):
         stations = OrderedDict()
         with open(
-            os.path.join(self.directory, "radnett.csv"), mode="r", encoding="UTF-8"
+            os.path.join(os.path.dirname(__file__), "resources/radnett.csv"), mode="r", encoding="UTF-8"
         ) as f:
             degree_minute_regex = re.compile("([0-9]+)°\s([0-9]+)’\s[NØ]")
             for line in f:
