@@ -48,7 +48,6 @@ module fldout_ncML
 
 !> Variables in a file
   type :: common_var
-    integer :: ps
     integer :: accum_prc
     integer :: prc
     integer :: mslp
@@ -61,6 +60,7 @@ module fldout_ncML
     integer :: accwdt
     integer :: ihbl
     integer :: ahbl
+    integer :: ps
     integer :: t
     integer :: k
     integer :: ap
@@ -1145,8 +1145,15 @@ subroutine get_varids(iunit, varid, ierror)
 
   ierror = 0
 
-  ierror = nf90_inq_varid(iunit, "p0", varid%ps)
+  ! Required
+  ierror = nf90_inq_varid(iunit, "instant_height_boundary_layer", varid%ihbl)
   if (ierror /= NF90_NOERR) return
+  ierror = nf90_inq_varid(iunit, "average_height_boundary_layer", varid%ahbl)
+  if (ierror /= NF90_NOERR) return
+  ierror = nf90_inq_varid(iunit, "time", varid%t)
+  if (ierror /= NF90_NOERR) return
+
+  ! Optional
   ierror = nf90_inq_varid(iunit, "precipitation_amount_acc", varid%accum_prc)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
   ierror = nf90_inq_varid(iunit, "lwe_precipitation_rate", varid%prc)
@@ -1167,18 +1174,14 @@ subroutine get_varids(iunit, varid, ierror)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
   ierror = nf90_inq_varid(iunit, "total_wet_dry_deposition", varid%accwdt)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
-  ierror = nf90_inq_varid(iunit, "instant_height_boundary_layer", varid%ihbl)
-  if (ierror /= NF90_NOERR) return
-  ierror = nf90_inq_varid(iunit, "average_height_boundary_layer", varid%ahbl)
-  if (ierror /= NF90_NOERR) return
-  ierror = nf90_inq_varid(iunit, "time", varid%t)
-  if (ierror /= NF90_NOERR) return
+  ierror = nf90_inq_varid(iunit, "p0", varid%ps)
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
   ierror = nf90_inq_varid(iunit, "k", varid%k)
-  if (ierror /= NF90_NOERR) return
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
   ierror = nf90_inq_varid(iunit, "ap", varid%ap)
-  if (ierror /= NF90_NOERR) return
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
   ierror = nf90_inq_varid(iunit, "b", varid%b)
-  if (ierror /= NF90_NOERR) return
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
 
   do m=1,ncomp
     mm = run_comp(m)%to_defined
@@ -1216,7 +1219,7 @@ subroutine get_varids(iunit, varid, ierror)
 
     varname = trim(def_comp(mm)%compnamemc) // "_concentration_dump_ml"
     ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%icml)
-    if (ierror /= NF90_NOERR) cycle
+    if (ierror /= NF90_NOERR) cycle  ! Skip checking for alternative variable
     if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
     varname = trim(def_comp(mm)%compnamemc) // "_concentration_ml"
     ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%icml)
