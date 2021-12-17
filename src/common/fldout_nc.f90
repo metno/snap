@@ -76,8 +76,6 @@ module fldout_ncML
     integer :: t
   end type
 
-  type(common_var), save :: varid
-  type(common_dim), save :: dimid
   !> file base time
   type(datetime_t), save :: iftime
 
@@ -127,6 +125,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
   logical :: compute_total_dry_deposition
   logical :: compute_total_wet_deposition
   real :: rt1,rt2,scale,average
+  type(common_var) :: varid
 
   real, parameter :: undef = NF90_FILL_FLOAT
 
@@ -140,6 +139,9 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
 
 !..output...............................................................
   call check(nf90_open(filename, NF90_WRITE, iunit), filename)
+
+  call get_varids(iunit, varid, ierror)
+  call check(ierror, "Obtaining variable ids")
 
 ! set the runtime
   ihrs_pos = ihrs_pos + 1
@@ -964,7 +966,8 @@ subroutine initialize_output(filename, itime, ierror)
   integer :: chksz3d(3), chksz4d(4)
   logical :: compute_total_dry_deposition
   logical :: compute_total_wet_deposition
-
+  type(common_dim) :: dimid
+  type(common_var) :: varid
 
   ierror = 0
 
@@ -1129,6 +1132,97 @@ subroutine initialize_output(filename, itime, ierror)
     end if
     call check(nf90_enddef(iunit))
     call check(nf90_close(iunit))
+end subroutine
+
+subroutine get_varids(iunit, varid, ierror)
+  USE snapparML, only: ncomp, run_comp, def_comp
+  integer, intent(in) :: iunit
+  type(common_var), intent(out) :: varid
+  integer, intent(out) :: ierror
+
+  integer :: m, mm
+  character(len=64) :: varname
+
+  ierror = 0
+
+  ierror = nf90_inq_varid(iunit, "p0", varid%ps)
+  if (ierror /= NF90_NOERR) return
+  ierror = nf90_inq_varid(iunit, "precipitation_amount_acc", varid%accum_prc)
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+  ierror = nf90_inq_varid(iunit, "lwe_precipitation_rate", varid%prc)
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+  ierror = nf90_inq_varid(iunit, "air_pressure_at_sea_level", varid%mslp)
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+  ierror = nf90_inq_varid(iunit, "total_concentration_bl", varid%icblt)
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+  ierror = nf90_inq_varid(iunit, "total_avg_concentration_bl", varid%acblt)
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+  ierror = nf90_inq_varid(iunit, "total_acc_concentration", varid%act)
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+  ierror = nf90_inq_varid(iunit, "total_dry_deposition", varid%iddt)
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+  ierror = nf90_inq_varid(iunit, "total_acc_dry_deposition", varid%accddt)
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+  ierror = nf90_inq_varid(iunit, "total_wet_deposition", varid%iwdt)
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+  ierror = nf90_inq_varid(iunit, "total_wet_dry_deposition", varid%accwdt)
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+  ierror = nf90_inq_varid(iunit, "instant_height_boundary_layer", varid%ihbl)
+  if (ierror /= NF90_NOERR) return
+  ierror = nf90_inq_varid(iunit, "average_height_boundary_layer", varid%ahbl)
+  if (ierror /= NF90_NOERR) return
+  ierror = nf90_inq_varid(iunit, "time", varid%t)
+  if (ierror /= NF90_NOERR) return
+  ierror = nf90_inq_varid(iunit, "k", varid%k)
+  if (ierror /= NF90_NOERR) return
+  ierror = nf90_inq_varid(iunit, "ap", varid%ap)
+  if (ierror /= NF90_NOERR) return
+  ierror = nf90_inq_varid(iunit, "b", varid%b)
+  if (ierror /= NF90_NOERR) return
+
+  do m=1,ncomp
+    mm = run_comp(m)%to_defined
+    varname = trim(def_comp(mm)%compnamemc) // "_concentration"
+    ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%ic)
+    if (ierror /= NF90_NOERR) return
+
+    varname = trim(def_comp(mm)%compnamemc) // "_concentration_bl"
+    ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%icbl)
+    if (ierror /= NF90_NOERR) return
+
+    varname = trim(def_comp(mm)%compnamemc) // "_acc_concentration"
+    ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%ac)
+    if (ierror /= NF90_NOERR) return
+
+    varname = trim(def_comp(mm)%compnamemc) // "_avg_concentration_bl"
+    ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%acbl)
+    if (ierror /= NF90_NOERR) return
+
+    varname = trim(def_comp(mm)%compnamemc) // "_dry_deposition"
+    ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%idd)
+    if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+
+    varname = trim(def_comp(mm)%compnamemc) // "_acc_dry_deposition"
+    ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%accdd)
+    if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+
+    varname = trim(def_comp(mm)%compnamemc) // "_wet_deposition"
+    ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%iwd)
+    if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+
+    varname = trim(def_comp(mm)%compnamemc) // "_acc_wet_deposition"
+    ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%accwd)
+    if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+
+    varname = trim(def_comp(mm)%compnamemc) // "_concentration_dump_ml"
+    ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%icml)
+    if (ierror /= NF90_NOERR) cycle
+    if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+    varname = trim(def_comp(mm)%compnamemc) // "_concentration_ml"
+    ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%icml)
+    if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+
+  enddo
 end subroutine
 
 !> accumulation for average fields
