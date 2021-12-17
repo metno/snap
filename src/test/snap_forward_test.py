@@ -149,11 +149,10 @@ class ReleaseTests(unittest.TestCase):
                 line = line.strip()
                 elems = [e for e in line.split(" ") if len(e) > 0]
                 numtotal = int(elems[3])
-                print(istep)
                 if istep < 30:
                     self.assertEqual(numtotal, 0)
-                elif istep < 60:
-                    self.assertEqual(numtotal, (istep - 30) * 100)
+                elif istep <= 60:
+                    self.assertEqual(numtotal, (istep - 30 + 1) * 100)
                 else:
                     self.assertEqual(numtotal, 30 * 100)
 
@@ -229,11 +228,11 @@ class ReleaseTests(unittest.TestCase):
                 elems = [e for e in line.split(" ") if len(e) > 0]
                 numtotal = int(elems[3])
                 if istep < 30:
-                    self.assertEqual(numtotal, istep * 100)
+                    self.assertEqual(numtotal, (istep+1) * 100)
                 elif istep < 75:
                     self.assertEqual(numtotal, 30 * 100)
-                elif istep < 180:
-                    self.assertEqual(numtotal, 30 * 100 + (istep - 75) * 100)
+                elif istep <= 180:
+                    self.assertEqual(numtotal, 30 * 100 + (istep - 75 + 1) * 100)
                 else:
                     # 13500 => 2.25 hours * 60 releases/hour * 100 parts/release
                     self.assertEqual(numtotal, 13500)
