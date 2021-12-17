@@ -87,7 +87,7 @@ module fldout_ncML
 
   contains
 
-subroutine fldout_nc(iunit,itime,tf1,tf2,tnow, &
+subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     ierror)
   USE iso_fortran_env, only: int16
   USE snapgrdML, only: imodlevel, imslp, precipitation_in_output, &
@@ -105,13 +105,17 @@ subroutine fldout_nc(iunit,itime,tf1,tf2,tnow, &
   USE releaseML, only: npart
   USE particleML, only: pdata, Particle
 
-  integer, intent(in) :: iunit
+  !> File which have been prefilled by initialize_output
+  !> This file will be opened and closed on each iteration to
+  !> allow e.g. diana to extract information while running snap
+  character(len=*), intent(in) :: filename
   type(datetime_t), intent(in) :: itime
   real, intent(in) :: tf1
   real, intent(in) :: tf2
   real, intent(in) :: tnow
   integer, intent(out) :: ierror
 
+  integer :: iunit
   integer :: ipos(4), isize(4)
   integer, save :: ihrs, ihrs_pos
 
@@ -135,6 +139,7 @@ subroutine fldout_nc(iunit,itime,tf1,tf2,tnow, &
   ierror=0
 
 !..output...............................................................
+  call check(nf90_open(filename, NF90_WRITE, iunit), filename)
 
 ! set the runtime
   ihrs_pos = ihrs_pos + 1
@@ -520,6 +525,7 @@ subroutine fldout_nc(iunit,itime,tf1,tf2,tnow, &
   end do
 
   call check(nf90_sync(iunit))
+  call check(nf90_close(iunit))
 end subroutine fldout_nc
 
 
@@ -934,7 +940,7 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
   call check(nf90_sync(iunit))
 end subroutine nc_set_projection
 
-subroutine initialize_output(iunit, filename, itime, ierror)
+subroutine initialize_output(filename, itime, ierror)
   USE snapfilML, only: ncsummary, nctitle, simulation_start
   USE snapgrdML, only: gparam, igtype, imodlevel, imslp, precipitation_in_output, &
       itotcomp, modleveldump
@@ -947,11 +953,11 @@ subroutine initialize_output(iunit, filename, itime, ierror)
   USE snapdimML, only: nx, ny, nk
   USE particleML, only: Particle
 
-  integer, allocatable, intent(inout) :: iunit
   character(len=*), intent(in) :: filename
   type(datetime_t), intent(in) :: itime
   integer, intent(out) :: ierror
 
+  integer :: iunit
   integer :: m, mm
   character(len=256) :: string
   integer :: dimids2d(2), dimids3d(3), dimids4d(4)
@@ -964,13 +970,6 @@ subroutine initialize_output(iunit, filename, itime, ierror)
 
   compute_total_dry_deposition = any(def_comp%kdrydep == 1) .and. ncomp > 1
   compute_total_wet_deposition = any(def_comp%kwetdep == 1) .and. ncomp > 1
-
-  if (allocated(iunit)) then
-    call check(nf90_close(iunit))
-    deallocate(iunit)
-  end if
-
-  allocate(iunit)
 
 
     call check(nf90_create(filename, ior(NF90_NETCDF4, NF90_CLOBBER), iunit), filename)
@@ -1129,6 +1128,7 @@ subroutine initialize_output(iunit, filename, itime, ierror)
       end if
     end if
     call check(nf90_enddef(iunit))
+    call check(nf90_close(iunit))
 end subroutine
 
 !> accumulation for average fields

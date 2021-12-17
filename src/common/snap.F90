@@ -222,7 +222,6 @@ PROGRAM bsnap
   integer :: idrydep = 0, wetdep_version = 0, idecay
   integer :: ntimefo
   integer :: nsteph, nstep, nstepr
-  integer, allocatable :: iunito
   integer :: ihread, isteph, lstepr, iendrel, istep, nhleft
   integer :: next_input_step
   integer :: ihdiff, ifldout, idailyout = 0, ihour, split_particle_after_step, split_particle_hours
@@ -623,7 +622,8 @@ PROGRAM bsnap
     else
       ! standard output needs to be initialized
       if (fldtype == "netcdf") then
-        call initialize_output(iunito, fldfil, itime, ierror)
+        fldfilX = fldfil
+        call initialize_output(fldfilX, itime, ierror)
       else
         write (iulog, *) "only FIELD.OUTTYPE=netcdf supported, got: ", fldtype
         ierror = 1
@@ -924,18 +924,18 @@ PROGRAM bsnap
         if (fldfilX /= fldfilN) then
           fldfilX = fldfilN
           if (fldtype == "netcdf") then
-            call initialize_output(iunito, fldfilX, itime, ierror)
+            call initialize_output(fldfilX, itime, ierror)
             if (ierror /= 0) call snap_error_exit(iulog)
           endif
         end if
         if (fldtype == "netcdf" .and. ifldout == 1) then
-          call fldout_nc(iunito, itimeo, tf1, tf2, tnext, &
+          call fldout_nc(fldfilX, itimeo, tf1, tf2, tnext, &
                          ierror)
         endif
         if (ierror /= 0) call snap_error_exit(iulog)
       else
         if (fldtype == "netcdf" .and. ifldout == 1) then
-          call fldout_nc(iunito, itimeo, tf1, tf2, tnext, &
+          call fldout_nc(fldfilX, itimeo, tf1, tf2, tnext, &
                          ierror)
         endif
         if (ierror /= 0) call snap_error_exit(iulog)
