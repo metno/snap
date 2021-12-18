@@ -1226,6 +1226,8 @@ subroutine get_varids(iunit, varid, ierror)
     if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
 
   enddo
+
+  ierror = NF90_NOERR
 end subroutine
 
 !> accumulation for average fields
