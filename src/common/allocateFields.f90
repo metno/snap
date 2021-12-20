@@ -48,133 +48,133 @@ subroutine allocateFields
   FirstCall = .FALSE.
 
   ALLOCATE ( alevel(nk), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( blevel(nk), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( vlevel(nk), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( ahalf(nk), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( bhalf(nk), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( vhalf(nk), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
 
 
   ALLOCATE ( u1(nx,ny,nk), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( v1(nx,ny,nk), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( w1(nx,ny,nk), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( t1(nx,ny,nk), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( ps1(nx,ny), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( bl1(nx,ny), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( hbl1(nx,ny), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( hlevel1(nx,ny,nk), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( hlayer1(nx,ny,nk), STAT = AllocateStatus)
 
   ALLOCATE ( u2(nx,ny,nk), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( v2(nx,ny,nk), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( w2(nx,ny,nk), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( t2(nx,ny,nk), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( ps2(nx,ny), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( bl2(nx,ny), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( hbl2(nx,ny), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( hlevel2(nx,ny,nk), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( hlayer2(nx,ny,nk), STAT = AllocateStatus)
 
   ALLOCATE ( idata(ldata), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( fdata(maxsiz), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
 
   ALLOCATE ( xm(nx,ny), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( ym(nx,ny), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( garea(nx,ny), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( field1(nx,ny), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( field2(nx,ny), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( field3(nx,ny), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( field4(nx,ny), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
 
   ALLOCATE ( pmsl1(nx,ny), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( pmsl2(nx,ny), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
 
   ALLOCATE ( precip(nx,ny), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
 
 ! the calculation-fields
   ALLOCATE ( dgarea(nx,ny), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( avghbl(nx,ny), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( avgprec(nx,ny), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( accprec(nx,ny), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   accprec = 0.0
 
   ALLOCATE ( depdry(nx,ny,ncomp), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   depdry = 0.0
   ALLOCATE ( depwet(nx,ny,ncomp), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   depwet = 0.0
   ALLOCATE ( accdry(nx,ny,ncomp), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   accdry = 0.0
   ALLOCATE ( accwet(nx,ny,ncomp), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   accwet = 0.0
   ALLOCATE ( concen(nx,ny,ncomp), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   concen = 0.0
   ALLOCATE ( concacc(nx,ny,ncomp), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   concacc = 0.0
   ALLOCATE ( avgbq1(nx,ny,ncomp), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( avgbq2(nx,ny,ncomp), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
 
   if (imodlevel) then
     ALLOCATE ( avgbq(nx,ny,nk-1,ncomp), STAT = AllocateStatus)
-    IF (AllocateStatus /= 0) STOP errmsg
+    IF (AllocateStatus /= 0) ERROR STOP errmsg
   endif
 
 ! the part particles fields
   ALLOCATE ( pdata(mpart), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( iparnum(mpart), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
 
 ! the plumes
   ALLOCATE ( iplume(mplume), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( plume_release(mplume, ncomp), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) STOP errmsg
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
 
 
 end subroutine allocateFields
