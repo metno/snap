@@ -44,7 +44,7 @@ contains
 !> open a fimex io object, eventuall with an interpolator
 !> dies on error
   subroutine fimex_open(filename, fio)
-    character(*), intent(in) :: filename
+    character(len=*), intent(in) :: filename
     TYPE(FimexIO), intent(out) :: fio
 
     TYPE(FimexIO) :: fio_intern
