@@ -24,6 +24,7 @@
 MODULE Fimex
   USE iso_c_binding, ONLY : C_PTR, C_NULL_PTR
   IMPLICIT NONE
+  PUBLIC
 
   !> Axis-definitions
   !! These are the same definitions as in CoordinateAxis::AxisType
