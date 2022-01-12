@@ -118,9 +118,6 @@
 ! ENSEMBLE_MEMBER.INPUT = 0
 ! * wind.surface = wind.10m (one 0 level first in list)
 ! LEVELS.INPUT= 14, 0,31,30,29,28,27,26,25,23,21,17,13,7,1
-! * forecast.hour.min/max for following files (may change between files)
-! FORECAST.HOUR.MIN= +6 ......................... (default is +6)
-! FORECAST.HOUR.MAX= +32767 ..................... (default is +32767)
 ! FIELD.TYPE=felt|netcdf
 ! * number of steps to skip in the beginning of a file
 ! FIELD.SPINUPSTEPS= 1
@@ -147,7 +144,7 @@ PROGRAM bsnap
   USE datetime, only: datetime_t, duration_t
   USE snapdebug, only: iulog, idebug, acc_timer => prefixed_accumulating_timer
   USE snapdimML, only: nx, ny, nk, ldata, maxsiz, mcomp
-  USE snapfilML, only: filef, itimer, limfcf, ncsummary, nctitle, nhfmax, nhfmin, &
+  USE snapfilML, only: filef, itimer, ncsummary, nctitle, nhfmax, nhfmin, &
                        nctype, nfilef, simulation_start, spinup_steps
   USE snapfldML, only: nhfout, enspos
   USE snapmetML, only: init_meteo_params, met_params
@@ -1738,13 +1735,11 @@ contains
           if (klevel(i) <= klevel(i + 1)) goto 12
         end do
       case ('forecast.hour.min')
-        !..forecast.hour.min= +6
-        if (.not. has_value) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) minhfc
+        warning = .true.
+        write(error_unit, *) "FORECAST.HOUR.MIN (forecast reference time testing) is currently not implemented"
       case ('forecast.hour.max')
-        !..forecast.hour.max= +32767
-        if (.not. has_value) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) maxhfc
+        warning = .true.
+        write(error_unit, *) "FORECAST.HOUR.MAX (forecast reference time testing) is currently not implemented"
       case ('field.type')
         !..field.type felt, netcdf or fimex
         if (.not. has_value) goto 12
@@ -1782,10 +1777,8 @@ contains
       case ('field.input')
         !..field.input=  felt_file_name
         if (.not. has_value) goto 12
-        if (nfilef < size(limfcf, 2)) then
+        if (nfilef < size(filef)) then
           nfilef = nfilef + 1
-          limfcf(1, nfilef) = minhfc
-          limfcf(2, nfilef) = maxhfc
           if (cinput(pname_start:pname_start) == '''' .OR. &
               cinput(pname_start:pname_start) == '"') then
             read (cinput(pname_start:pname_end), *, err=12) filef(nfilef)
