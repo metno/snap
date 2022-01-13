@@ -88,13 +88,13 @@ integer function find_index(first, backward, itimei, ihr1, ihr2) result(ntav)
 
     !..pointer to next timestep (possibly same time)
     if (.not.backward) then
-      if (test_date >= itime(1) .and. test_date < itime(2)) then
+      if (test_date >= itime(1) .and. test_date <= itime(2)) then
         ntav = current_index
         exit
       endif
       current_index = iavail(current_index)%nAvail
     else
-      if (test_date <= itime(1) .and. test_date > itime(2)) then
+      if (test_date <= itime(1) .and. test_date >= itime(2)) then
         ntav = current_index
         exit
       endif
