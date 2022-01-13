@@ -78,12 +78,6 @@ module snapfilML
     integer, save, public :: navailt2
 !> time range, first and last possible input time
     type(datetime_t), save, public :: itimer(2)
-!> limitation of used forecast lengths in each file
-!>
-!>            limfcf(1,n): min forecast length in hours
-!>
-!>            limfcf(2,n): max forecast length in hours
-    integer, save, public :: limfcf(2,mfilef)
 !>  file names
     character(len=1024), save, public :: filef(mfilef)
 !> type of meteorology, used for different nc-inputs
