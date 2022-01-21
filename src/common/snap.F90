@@ -215,7 +215,7 @@ PROGRAM bsnap
   integer :: snapinput_unit, ios
   integer :: nhrun = 0, nhrel = 0
   logical :: use_random_walk = .true.
-  integer :: m, np, npl, nlevel = 0, minhfc = +6, maxhfc = +huge(maxhfc), ifltim = 0
+  integer :: m, np, npl, nlevel = 0, ifltim = 0
   logical :: synoptic_output = .false.
   integer :: k, ierror, i, n
   integer :: ih
