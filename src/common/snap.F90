@@ -710,8 +710,7 @@ PROGRAM bsnap
         if (ierror /= 0) call snap_error_exit(iulog)
         call input_timer%stop_and_log()
 
-        write (error_unit, fmt='(''input data: '',i4,3i3.2,''  prog='',i4)') &
-          time_file, n
+        write (error_unit, fmt="('input data: ',i4,3i3.2)") time_file
 
         !..compute model level heights
         call compheight
