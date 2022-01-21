@@ -77,7 +77,7 @@ om2edot.o: ../common/om2edot.f90 snapgrdML.o snapfldML.o snapdimML.o snapdebugML
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 readfield_nc.o: ../common/readfield_nc.f90 particleML.o snapfilML.o snapgrdML.o snapmetML.o snaptabML.o snapdebugML.o snapdimML.o om2edot.o ftest.o milibML.o snapfldML.o datetime.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-readfield_fi.o: ../common/readfield_fi.f90 snapfimexML.o particleML.o snapfilML.o snapgrdML.o snapmetML.o snaptabML.o snapdebugML.o snapdimML.o om2edot.o ftest.o milibML.o fimex.o datetime.o
+readfield_fi.o: ../common/readfield_fi.f90 snapfimexML.o particleML.o snapfilML.o snapgrdML.o snapmetML.o snaptabML.o snapdebugML.o snapdimML.o om2edot.o ftest.o milibML.o fimex.o datetime.o readfield_nc.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 filesort_nc.o: ../common/filesort_nc.f90 dateCalc.o snapfilML.o snapdimML.o snapgrdML.o snapfldML.o snapmetML.o snapdebugML.o readfield_nc.o datetime.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
