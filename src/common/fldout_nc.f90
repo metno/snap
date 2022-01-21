@@ -684,7 +684,7 @@ subroutine nc_declare_4d(iunit, dimids, varid, &
 !     +    call check(nf_put_att_text(iunit,varid,"metno_name",
 !     +    LEN_TRIM(metnm), TRIM(metnm)))
 
-  call check(nf90_put_att(iunit,varid,"coordinates", "x y"))
+  call check(nf90_put_att(iunit,varid,"coordinates", "longitude latitude"))
   call check(nf90_put_att(iunit,varid,"grid_mapping", "projection"))
 
 end subroutine nc_declare_4d
