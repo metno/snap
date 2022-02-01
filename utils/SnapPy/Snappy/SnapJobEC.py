@@ -52,24 +52,25 @@ class SnapJobEC:
             raise Exception("unknown model:" + self.task.model)
 
     def job_script(self):
-        """ return a sge job-script for the different models """
-        if re.match(r"^SNAP.*", self.task.model):
-            # that is SNAP SNAPNORDIC or SNAPGLOBAL
-            if self.task.model == "SNAP":
-                metmodel = "nrpa_ec_0p1"
-            elif self.task.model == "SNAPGLOBAL":
-                metmodel = "nrpa_ec_0p1_global"
-            elif self.task.model == "SNAPNORDIC":
-                metmodel = "meps_2_5km"
-            elif self.task.model == "SNAPICONGLOBAL":
-                metmodel = "icon_0p25_global"
-            (xmlfile, requestfile) = self.get_input_files()
-            argosrequest = ""
-            if os.path.exists(os.path.join(self.task.rundir, requestfile)):
-                argosrequest = "--argosrequest " + requestfile
+        """return a sge job-script for the different models """
+        if self.task.model == "SNAP":
+            metmodel = "nrpa_ec_0p1"
+        elif self.task.model == "SNAPGLOBAL":
+            metmodel = "nrpa_ec_0p1_global"
+        elif self.task.model == "SNAPNORDIC":
+            metmodel = "meps_2_5km"
+        elif self.task.model == "SNAPICONGLOBAL":
+            metmodel = "icon_0p25_global"
+        else:
+            raise Exception("unknown model:" + self.task.model)
 
-            # Create qsub script
-            script = """#!/bin/bash
+        (xmlfile, requestfile) = self.get_input_files()
+        argosrequest = ""
+        if os.path.exists(os.path.join(self.task.rundir, requestfile)):
+            argosrequest = "--argosrequest " + requestfile
+
+        # Create qsub script
+        script = """#!/bin/bash
 #$ -N dsa_bsnap
 #$ -S /bin/bash
 #$ -V
@@ -137,19 +138,16 @@ fi
 send_msg 202 "Finished extracting {model} data for ARGOS"
 exit 0;
 """.format(
-                rundir=self.task.rundir,
-                ident=self.task.id,
-                xmlfile=xmlfile,
-                argosrequest=argosrequest,
-                metmodel=metmodel,
-                zipreturnfile=self.get_return_filename(),
-                model=self.task.model,
-                statusfile=self.task.status_filename(),
-                scpoptions=self.task.scpoptions,
-                scpdestination=self.task.scpdestination,
-            )
-
-        else:
-            raise Exception("unknown model:" + self.task.model)
+            rundir=self.task.rundir,
+            ident=self.task.id,
+            xmlfile=xmlfile,
+            argosrequest=argosrequest,
+            metmodel=metmodel,
+            zipreturnfile=self.get_return_filename(),
+            model=self.task.model,
+            statusfile=self.task.status_filename(),
+            scpoptions=self.task.scpoptions,
+            scpdestination=self.task.scpdestination,
+        )
 
         return script
