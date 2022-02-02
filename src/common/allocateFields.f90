@@ -26,7 +26,9 @@ module allocateFieldsML
       garea, field_hr1, field_hr2, field_hr3, hbl_hr, &
       max_column_scratch, max_column_concentration, &
       aircraft_doserate, aircraft_doserate_scratch, t1_abs, t2_abs, &
-      aircraft_doserate_threshold_height, &
+      aircraft_doserate_threshold_height, vd_dep, &
+      xflux, yflux, hflux, t2m, z0, leaf_area_index, &
+      roa, ustar, monin_l, raero, vs, rs, &
       total_activity_released, total_activity_lost_domain, total_activity_lost_other
   USE snapfilML, only: idata, fdata
   USE snapgrdML, only: ahalf, bhalf, vhalf, alevel, blevel, vlevel, imodlevel, &
@@ -44,6 +46,8 @@ subroutine allocateFields
   USE snapdimML, only: nx, ny, nk, output_resolution_factor, ldata, maxsiz
   USE snapparML, only: ncomp, iparnum
   USE releaseML, only: mplume, iplume, plume_release, mpart
+  USE drydep, only: drydep_scheme, DRYDEP_SCHEME_EMEP, DRYDEP_SCHEME_EMERSON, &
+    DRYDEP_SCHEME_ZHANG
 
   logical, save :: FirstCall = .TRUE.
   integer :: AllocateStatus
@@ -222,6 +226,15 @@ subroutine allocateFields
   total_activity_released(:) = 0.0
   total_activity_lost_domain(:) = 0.0
   total_activity_lost_other(:) = 0.0
+  if (drydep_scheme == DRYDEP_SCHEME_EMEP .or. &
+      drydep_scheme == DRYDEP_SCHEME_ZHANG .or. &
+      drydep_scheme == DRYDEP_SCHEME_EMERSON) then
+    allocate(vd_dep(nx,ny,ncomp), STAT=AllocateStatus)
+    if (AllocateStatus /= 0) ERROR STOP errmsg
+    allocate(xflux, yflux, hflux, t2m, z0, leaf_area_index, mold=ps2)
+    allocate(roa(nx, ny))
+    allocate(ustar, monin_l, raero, vs, rs, mold=roa)
+  endif
 
 end subroutine allocateFields
 
@@ -316,6 +329,11 @@ subroutine deAllocateFields
   DEALLOCATE ( plume_release )
 
   DEALLOCATE( total_activity_released, total_activity_lost_domain, total_activity_lost_other )
+  if (allocated(vd_dep)) then
+    deallocate(vd_dep)
+    deallocate(xflux, yflux, hflux, t2m, z0, leaf_area_index)
+    deallocate(roa, ustar, monin_l, raero, vs, rs)
+  endif
 
 end subroutine deAllocateFields
 end module allocateFieldsML

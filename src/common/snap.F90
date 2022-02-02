@@ -34,6 +34,9 @@
 ! BOUNDARY.LAYER.FULL.MIX.ON
 ! DRY.DEPOSITION.OLD .......................... (default)
 ! DRY.DEPOSITION.NEW
+! DRY.DEPOSITION.SCHEME = "emep"/"old"/"..."
+! DRY.DEPOSITION.SAVE
+! DRY.DEPOSITION.LARGEST_LANDFRACTION_FILE = "landclasses.nc"
 ! WET.DEPOSITION.OLD .......................... (default)
 ! WET.DEPOSITION.NEW
 ! TIME.STEP= 900.
@@ -127,7 +130,7 @@
 ! * wind.surface = wind.10m (one 0 level first in list)
 ! LEVELS.INPUT= 14, 0,31,30,29,28,27,26,25,23,21,17,13,7,1
 ! FIELD.TYPE=felt|netcdf
-! * number of steps to skip in the beginning of a file
+! * number of steps to skip in the beginning of a file (obs: step 0 is not special in case of prognosis)
 ! FIELD.SPINUPSTEPS= 1
 ! FIELD.INPUT= arklam.dat
 ! FIELD.INPUT= feltlam.dat
@@ -184,10 +187,13 @@ PROGRAM bsnap
   USE checkdomainML, only: check_in_domain
   USE rwalkML, only: rwalk, rwalk_init
   USE milibML, only: xyconvert
-  use snapfldML, only: depwet, total_activity_lost_domain
+  use snapfldML, only: depwet, total_activity_lost_domain, vd_dep
   USE forwrdML, only: forwrd, forwrd_init
   USE wetdep, only: wetdep2, wetdep2_init
-  USE drydep, only: drydep1, drydep2
+  USE drydep, only: drydep1, drydep2, drydep_nonconstant_vd, drydep_scheme, &
+          DRYDEP_SCHEME_OLD, DRYDEP_SCHEME_NEW, DRYDEP_SCHEME_EMEP, &
+          DRYDEP_SCHEME_ZHANG, DRYDEP_SCHEME_EMERSON, DRYDEP_SCHEME_UNDEFINED, &
+          largest_landfraction_file,  drydep_unload => unload
   USE decayML, only: decay, decayDeps
   USE posintML, only: posint, posint_init
   USE bldpML, only: bldp
@@ -236,7 +242,7 @@ PROGRAM bsnap
   logical :: synoptic_output = .false.
   integer :: k, ierror, i, n
   integer :: ih
-  integer :: idrydep = 0, wetdep_version = 0, idecay
+  integer :: wetdep_version = 0, idecay
   integer :: ntimefo
   integer :: nsteph, nstep, nstepr
   integer :: ihread, isteph, lstepr, iendrel, istep, nhleft
@@ -494,7 +500,7 @@ PROGRAM bsnap
     write (iulog, *) 'mprel:   ', mprel
     write (iulog, *) 'ifltim:  ', ifltim
     write (iulog, *) 'irwalk:  ', use_random_walk
-    write (iulog, *) 'idrydep: ', idrydep
+    write (iulog, *) 'drydep_scheme: ', drydep_scheme
     write (iulog, *) 'wetdep_version: ', wetdep_version
     write (iulog, *) 'idecay:  ', idecay
     write (iulog, *) 'rmlimit: ', rmlimit
@@ -725,9 +731,12 @@ PROGRAM bsnap
         !..radioactive decay
         if (idecay == 1) call decay(pdata(np))
 
-        !..dry deposition (1=old, 2=new version)
-        if (idrydep == 1) call drydep1(pdata(np))
-        if (idrydep == 2) call drydep2(tstep, pdata(np))
+        !..dry deposition
+        if (drydep_scheme == DRYDEP_SCHEME_OLD) call drydep1(pdata(np))
+        if (drydep_scheme == DRYDEP_SCHEME_NEW) call drydep2(tstep, pdata(np))
+        if (drydep_scheme == DRYDEP_SCHEME_EMEP .or. &
+            drydep_scheme == DRYDEP_SCHEME_ZHANG .or. &
+            drydep_scheme == DRYDEP_SCHEME_EMERSON) call drydep_nonconstant_vd(tstep, vd_dep, pdata(np))
 
         !..wet deposition (1=old, 2=new version)
         if (wetdep_version == 2) call wetdep2(depwet, tstep, pdata(np), pextra)
@@ -864,6 +873,7 @@ PROGRAM bsnap
   call fldout_unload()
 
 ! deallocate all fields
+  call drydep_unload()
   CALL deAllocateFields()
 
   close (iulog)
@@ -907,7 +917,7 @@ contains
                          TIME_PROFILE_UNDEFINED
     use snapfimexML, only: parse_interpolator
     use snapgrdml, only: compute_column_max_conc, compute_aircraft_doserate, aircraft_doserate_threshold, &
-    output_column
+    output_column, output_vd, output_vd_debug
     use init_random_seedML, only: extra_seed
     use fldout_ncML, only: surface_layer_is_lowest_level, surface_height_m
 
@@ -1107,12 +1117,54 @@ contains
         endif
       case ('dry.deposition.old')
         !..dry.deposition.old
-        if (idrydep /= 0 .AND. idrydep /= 1) goto 12
-        idrydep = 1
+        if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_OLD) goto 12
+        drydep_scheme = DRYDEP_SCHEME_OLD
       case ('dry.deposition.new')
         !..dry.deposition.new
-        if (idrydep /= 0 .AND. idrydep /= 2) goto 12
-        idrydep = 2
+        if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_NEW) goto 12
+        drydep_scheme = DRYDEP_SCHEME_NEW
+      case ('dry.deposition.scheme')
+        if (.not. has_value) goto 12
+        select case (cinput(pname_start:pname_end))
+        case ('old')
+          if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_OLD) goto 12
+          drydep_scheme = DRYDEP_SCHEME_OLD
+        case ('new')
+          if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_NEW) goto 12
+          drydep_scheme = DRYDEP_SCHEME_NEW
+        case ('emep')
+          if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_EMEP) goto 12
+          drydep_scheme = DRYDEP_SCHEME_EMEP
+        case ('zhang')
+          if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_ZHANG) goto 12
+          drydep_scheme = DRYDEP_SCHEME_ZHANG
+        case ('emerson')
+          if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_EMERSON) goto 12
+          drydep_scheme = DRYDEP_SCHEME_EMERSON
+        case default
+          write(error_unit, *) "Scheme ", cinput(pname_start:pname_end), " is unknown"
+          goto 12
+        end select
+      case ('dry.deposition.save')
+        if (drydep_scheme /= DRYDEP_SCHEME_EMEP .and. &
+            drydep_scheme /= DRYDEP_SCHEME_ZHANG .and. &
+            drydep_scheme /= DRYDEP_SCHEME_EMERSON) then
+          write(error_unit, *) "The scheme is not set to a compatible value, ignoring"
+        else
+          output_vd = .true.
+        endif
+        if (has_value) goto 12
+      case ('dry.deposition.save.debug')
+        if (.not.output_vd) then
+          write(error_unit, *) "dry.deposition.save must be set"
+          goto 12
+        endif
+        warning = .true.
+        write(error_unit, *) "This option is a hack, only use for a single component"
+        output_vd_debug = .true.
+      case ('dry.deposition.largest_landfraction_file')
+        if (.not.has_value) goto 12
+        largest_landfraction_file = cinput(pname_start:pname_end)
       case ('wet.deposition.old')
         write (error_unit, *) "This option is deprecated and removed"
         goto 12
@@ -1796,6 +1848,7 @@ contains
     use find_parameter, only: detect_gridparams, get_klevel
 #if defined(FIMEX)
     use find_parameters_fi, only: detect_gridparams_fi
+    use readfield_fiML, only: read_landfractions
 #endif
     integer, intent(out) :: ierror
 
@@ -1986,7 +2039,7 @@ contains
       end if
     end do
 
-    if (idrydep == 0) idrydep = 1
+    if (drydep_scheme == DRYDEP_SCHEME_UNDEFINED) drydep_scheme = DRYDEP_SCHEME_OLD
     if (wetdep_version == 0) then ! Set default wetdep version
       wetdep_version = 2
     endif
@@ -2001,7 +2054,7 @@ contains
     do n = 1, ncomp
       m = run_comp(n)%to_defined
       if (m == 0) cycle
-      if (idrydep == 1 .AND. def_comp(m)%kdrydep == 1) then
+      if (drydep_scheme == DRYDEP_SCHEME_OLD .AND. def_comp(m)%kdrydep == 1) then
         if (def_comp(m)%drydeprat > 0. .AND. def_comp(m)%drydephgt > 0.) then
           i1 = i1 + 1
         else
@@ -2009,7 +2062,7 @@ contains
             def_comp(m)%drydeprat, def_comp(m)%drydephgt
           ierror = 1
         end if
-      elseif (idrydep == 2 .AND. def_comp(m)%kdrydep == 1) then
+      elseif (drydep_scheme == DRYDEP_SCHEME_NEW .AND. def_comp(m)%kdrydep == 1) then
         if (def_comp(m)%grav_type == 1 .AND. def_comp(m)%gravityms > 0.) then
           i1 = i1 + 1
         elseif (def_comp(m)%grav_type == 2) then
@@ -2018,6 +2071,17 @@ contains
           write (error_unit, *) 'Dry deposition error. gravity: ', &
             def_comp(m)%gravityms
           ierror = 1
+        end if
+      elseif (((drydep_scheme == DRYDEP_SCHEME_EMEP) .or. &
+               (drydep_scheme == DRYDEP_SCHEME_EMERSON) .or. &
+               (drydep_scheme == DRYDEP_SCHEME_ZHANG)) .and. &
+              def_comp(m)%kdrydep == 1) then
+        ! Check if component has the necessary definitions to compute
+        ! the dry deposition
+        if (.true.) then
+          i1 = i1 + 1
+        else
+          write (error_unit, *) 'Dry deposition error'
         end if
       end if
 
@@ -2041,7 +2105,10 @@ contains
       end if
     end do
 
-    if (i1 == 0) idrydep = 0
+    if (i1 == 0) drydep_scheme = DRYDEP_SCHEME_UNDEFINED
+    if (drydep_scheme /= DRYDEP_SCHEME_UNDEFINED .and. largest_landfraction_file /= "not set") then
+      call read_landfractions(largest_landfraction_file)
+    endif
 
     if (itotcomp == 1 .AND. ncomp == 1) itotcomp = 0
 

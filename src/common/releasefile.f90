@@ -23,6 +23,19 @@ module releasefileML
 
   contains
 
+function should_skip_line(line)
+  character(len=*), intent(in) :: line
+  logical :: should_skip_line
+
+  if (line == "") then
+    should_skip_line = .true.
+  else if (line(1:1) == "*") then
+    should_skip_line = .true.
+  else
+    should_skip_line = .false.
+  endif
+end function
+
 !> reading of input-files with hourly data (hours since run-start)
 !> comment-rows start with #
 !> hour height[upper_in_m] component release[kg/s]
@@ -65,8 +78,7 @@ subroutine  releasefile(filename, release1)
     error stop 1
   endif
 
-! header row
-  nlines=0
+  nlines = 0
   lasthour = -1
   ihour = 0
   inputlines: do
@@ -78,20 +90,14 @@ subroutine  releasefile(filename, release1)
       goto 11
     endif
     if (debugrelfile) write (error_unit,*) 'cinput (',nlines,'):',cinput
+    if (should_skip_line(cinput)) cycle inputlines
     if (cinput == "end") exit inputlines
-    if (cinput(1:1) == '*') cycle inputlines
 
     read(cinput, *, err=12) hour, height, comp, rel_s
-    if (hour < lasthour) then
-      write (error_unit,*) 'hour must increase monotonic: ', &
-      hour, ' < ', lasthour
-      goto 12
-    end if
 
     if (hour > lasthour) then
       ! add new release timestep
       lasthour = hour
-      ihour = ihour + 1
       if (.not.allocated(releases)) then
         allocate(releases(1))
       else
@@ -101,10 +107,24 @@ subroutine  releasefile(filename, release1)
         releases(1:size(tmp_release)) = tmp_release
         deallocate(tmp_release)
       endif
+      ihour = size(releases)
       releases(ihour)%frelhour = hour
       ! make sure all initial release are undefined
       releases(ihour)%relbqsec(:,:) = -1
-    end if
+    else
+      ihour = 0
+      do i=1,size(releases)
+        if (releases(i)%frelhour == hour) then
+          ihour = i
+          exit
+        endif
+      enddo
+      if (ihour == 0) then
+        write(error_unit,*) "Unknown release hour: ", hour
+        goto 12
+      endif
+    endif
+
 
     ! find the component
     icmp = 0
