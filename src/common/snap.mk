@@ -75,9 +75,9 @@ epinterp.o: ../common/epinterp.f90
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 om2edot.o: ../common/om2edot.f90 snapgrdML.o snapfldML.o snapdimML.o snapdebugML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-readfield_nc.o: ../common/readfield_nc.f90 particleML.o snapfilML.o snapgrdML.o snapmetML.o snaptabML.o snapdebugML.o snapdimML.o om2edot.o ftest.o milibML.o snapfldML.o datetime.o
+readfield_nc.o: ../common/readfield_nc.f90 particleML.o snapfilML.o snapgrdML.o snapmetML.o snaptabML.o snapdebugML.o snapdimML.o om2edot.o ftest.o milibML.o snapfldML.o datetime.o drydep.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-readfield_fi.o: ../common/readfield_fi.f90 snapfimexML.o particleML.o snapfilML.o snapgrdML.o snapmetML.o snaptabML.o snapdebugML.o snapdimML.o om2edot.o ftest.o milibML.o fimex.o datetime.o readfield_nc.o utils.o
+readfield_fi.o: ../common/readfield_fi.f90 snapfimexML.o particleML.o snapfilML.o snapgrdML.o snapmetML.o snaptabML.o snapdebugML.o snapdimML.o om2edot.o ftest.o milibML.o fimex.o datetime.o readfield_nc.o utils.o drydep.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 filesort_nc.o: ../common/filesort_nc.f90 dateCalc.o snapfilML.o snapdimML.o snapgrdML.o snapfldML.o snapmetML.o snapdebugML.o readfield_nc.o datetime.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
@@ -111,7 +111,7 @@ split_particles.o: ../common/split_particles.f90 snapparML.o release.o snapdebug
 	${F77} -c ${F77FLAGS} $<
 utils.o: ../common/utils.f90
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-vgravtables.o: ../common/vgravtables.f90 snapparML.o snapdimML.o
+vgravtables.o: ../common/vgravtables.f90 snapparML.o snapdimML.o drydep.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 wetdep.o: ../common/wetdep.f90 particleML.o snapgrdML.o snapfldML.o snapparML.o snaptabML.o snapdimML.o snapdebugML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<

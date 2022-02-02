@@ -290,12 +290,14 @@ contains
 !..mean sea level pressure, not used in computations,
 !..(only for output to results file)
     if (imslp /= 0) then
-      if (.NOT. met_params%mslpv == '') then
+      if (met_params%mslpv /= '') then
+        call fi_checkload(fio, met_params%mslpv, pressure_units, pmsl2(:, :), nt=timepos, nr=nr, nz=1)
+      else if (met_params%psv /= '') then
+        call fi_checkload(fio, met_params%psv, pressure_units, pmsl2(:, :), nt=timepos, nr=nr, nz=1)
+      else
         write (iulog, *) 'Mslp not found. Not important.'
         imslp = 0
-      else
-        call fi_checkload(fio, met_params%mslpv, pressure_units, pmsl2(:, :), nt=timepos, nr=nr, nz=1)
-      end if
+      endif
     end if
 
     if (met_params%need_precipitation) then
@@ -303,6 +305,8 @@ contains
     else
       precip = 0.0
     endif
+
+    call read_drydep(fio, timepos, timeposm1, nr)
 
     call check(fio%close(), "close fio")
 
@@ -457,8 +461,6 @@ contains
         write (iulog, *) k, i1, i2, vhalf(k + 1), vhalf(k)
       end do
     end if
-
-    return
   end subroutine readfield_fi
 
 !> read precipitation
@@ -699,4 +701,106 @@ contains
     write (iulog, *) "reading "//trim(varname)//", min, max: ", minval(zfield), maxval(zfield)
   end subroutine fi_checkload_intern
 
+  subroutine read_drydep(fio, timepos, timeposm1, nr)
+    USE ieee_arithmetic, only: ieee_is_nan
+    USE iso_fortran_env, only: real64
+    USE snapmetML, only: met_params, &
+      temp_units, downward_momentum_flux_units, surface_roughness_length_units, &
+      surface_heat_flux_units, leaf_area_index_units
+    use drydep, only: drydep_scheme, DRYDEP_SCHEME_EMEP, drydep_emep_vd, &
+      DRYDEP_SCHEME_EMERSON, DRYDEP_SCHEME_ZHANG, drydep_zhang_emerson_vd
+    use snapparML, only: ncomp, run_comp, def_comp
+    use snapfldML, only: ps2, vd_dep, xflux, yflux, hflux, z0, leaf_area_index, t2m, &
+      roa, ustar, monin_l, raero, vs
+    type(FimexIO), intent(inout) :: fio
+    integer, intent(in) :: timepos, timeposm1
+    integer, intent(in) :: nr
+
+    real, allocatable :: tmp1(:, :), tmp2(:, :)
+    integer :: i, mm
+    real(real64) :: diam, dens
+
+    if (.not.(drydep_scheme == DRYDEP_SCHEME_EMEP .or. &
+              drydep_scheme == DRYDEP_SCHEME_EMERSON .or. &
+              drydep_scheme == DRYDEP_SCHEME_ZHANG)) then
+      return
+    endif
+
+    allocate(tmp1, tmp2, MOLD=ps2)
+
+
+    ! Fluxes are integrated: Deaccumulate
+    if (timepos == 1) then
+      call fi_checkload(fio, met_params%xflux, downward_momentum_flux_units, xflux(:, :), nt=timepos, nr=nr)
+      call fi_checkload(fio, met_params%yflux, downward_momentum_flux_units, yflux(:, :), nt=timepos, nr=nr)
+    else
+      call fi_checkload(fio, met_params%xflux, downward_momentum_flux_units, tmp1(:, :), nt=timeposm1, nr=nr)
+      call fi_checkload(fio, met_params%xflux, downward_momentum_flux_units, tmp2(:, :), nt=timepos, nr=nr)
+      xflux(:,:) = tmp2 - tmp1
+
+      call fi_checkload(fio, met_params%yflux, downward_momentum_flux_units, tmp1(:, :), nt=timeposm1, nr=nr)
+      call fi_checkload(fio, met_params%yflux, downward_momentum_flux_units, tmp2(:, :), nt=timepos, nr=nr)
+      yflux(:,:) = tmp2 - tmp1
+    endif
+    ! TODO: Normalise by difference between intervals
+    xflux(:,:) =  xflux / 3600
+    yflux(:,:) =  yflux / 3600
+
+    if (timepos == 1) then
+      call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, hflux(:, :), nt=timepos, nr=nr)
+    else if (timepos == 13) then
+      ! Weird AROME data is invalid at t=12
+      call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, tmp1(:, :), nt=timeposm1, nr=nr)
+      call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, tmp2(:, :), nt=timepos+1, nr=nr)
+      hflux(:,:) = (tmp2 - tmp1)/2
+    else if (timepos == 14) then
+      ! Weird AROME data is invalid at t=13
+      call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, tmp1(:, :), nt=timeposm1-1, nr=nr)
+      call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, tmp2(:, :), nt=timepos, nr=nr)
+      hflux(:,:) = (tmp2 - tmp1)/2
+    else
+      call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, tmp1(:, :), nt=timeposm1, nr=nr)
+      call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, tmp2(:, :), nt=timepos, nr=nr)
+      hflux(:,:) = tmp2 - tmp1
+    endif
+    ! TODO: Normalise by difference between intervals
+    hflux(:,:) = -hflux / 3600 ! Follow conventions for up/down
+
+
+    call fi_checkload(fio, met_params%z0, surface_roughness_length_units, z0(:, :), nt=timepos, nr=nr)
+    call fi_checkload(fio, met_params%leaf_area_index, leaf_area_index_units, leaf_area_index(:, :), nt=timepos, nr=nr)
+    where (ieee_is_nan(leaf_area_index))
+      leaf_area_index = 0.0
+    endwhere
+    call fi_checkload(fio, met_params%t2m, temp_units, t2m(:, :), nt=timepos, nr=nr)
+
+    if (drydep_scheme == DRYDEP_SCHEME_EMEP .or. &
+        drydep_scheme == DRYDEP_SCHEME_EMERSON .or. &
+        drydep_scheme == DRYDEP_SCHEME_ZHANG) then
+      do i=1,ncomp
+        mm = run_comp(i)%to_defined
+
+        if (def_comp(mm)%kdrydep == 1) then
+          diam = 2*def_comp(mm)%radiusmym*1e-6
+          dens = def_comp(mm)%densitygcm3*1e3
+          select case(drydep_scheme)
+          case (DRYDEP_SCHEME_EMEP)
+            call drydep_emep_vd(ps2*100, t2m, yflux, xflux, z0, &
+              hflux, leaf_area_index, real(diam), real(dens), vd_dep(:, :, ncomp), &
+              roa, ustar, monin_l, raero, vs)
+          case (DRYDEP_SCHEME_ZHANG)
+            call drydep_zhang_emerson_vd(ps2*100, t2m, yflux, xflux, z0, &
+              hflux, leaf_area_index, diam, dens, vd_dep(:, :, ncomp), .false., &
+              roa, ustar, monin_l, raero, vs)
+          case (DRYDEP_SCHEME_EMERSON)
+            call drydep_zhang_emerson_vd(ps2*100, t2m, yflux, xflux, z0, &
+              hflux, leaf_area_index, diam, dens, vd_dep(:, :, ncomp), .true., &
+              roa, ustar, monin_l, raero, vs)
+          case default
+            error stop "Unreachable"
+          end select
+        endif
+      end do
+    endif
+  end subroutine
 end module readfield_fiML
