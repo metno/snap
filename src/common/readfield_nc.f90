@@ -604,7 +604,7 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
     end do
   end if
 
-  return
+  call read_drydep()
 end subroutine readfield_nc
 
 !> Reads `units` attribute of the precipitation variable
@@ -988,4 +988,12 @@ subroutine nfcheckload3d(ncid, varname, start, length, field, return_status)
     field = field*factor + offset
   end if
 end subroutine nfcheckload3d
+
+subroutine read_drydep()
+  use drydep, only: drydep_scheme, DRYDEP_SCHEME_EMEP
+
+  if (drydep_scheme == DRYDEP_SCHEME_EMEP) then
+    error stop "Reading of dry deposition is not implemented for netCDF"
+  endif
+end subroutine
 end module readfield_ncML

@@ -141,4 +141,7 @@ module snapfldML
   real, allocatable, public :: aircraft_doserate(:,:)
   !> Height of doserates exceeding the given threshold
   real, allocatable, public :: aircraft_doserate_threshold_height(:,:)
+
+  !> Deposition velocity on the grid per species
+  real, allocatable, save, public :: vd_dep(:, :, :)
 end module snapfldML

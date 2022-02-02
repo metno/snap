@@ -19,7 +19,16 @@ module drydep
   implicit none
   private
 
-  public drydep1, drydep2
+  public drydep1, drydep2, drydep_emep, drydep_emep_for_field
+
+  integer, parameter, public :: DRYDEP_SCHEME_UNDEFINED = 0
+  integer, parameter, public :: DRYDEP_SCHEME_OLD = 1
+  integer, parameter, public :: DRYDEP_SCHEME_NEW = 2
+  integer, parameter, public :: DRYDEP_SCHEME_EMEP = 3
+
+  !> The active dry deposition scheme
+  integer, save, public :: drydep_scheme = DRYDEP_SCHEME_UNDEFINED
+
 
   contains
 
@@ -102,4 +111,137 @@ subroutine drydep2(tstep, part)
     depdry(i,j,mm) = depdry(i,j,mm) + dble(dep)
   end if
 end subroutine drydep2
+
+pure subroutine aerodynres(L, ustar, z0, raero)
+  real, intent(in) :: L, ustar, z0
+  real, intent(out) :: raero
+
+  real, parameter :: ka = 0.4
+  real, parameter :: z = 30 ! Assumed height of surface/constant flux layer
+
+  real :: fac, fi
+
+  if (L < 0) then
+    fac = 0.598 + 0.390 * log(-z / L) - 0.09 * (log(-z / L)) ** 2
+    fi = exp(fac)
+  else if (L > 0) then
+    fi = -5 * (z/L)
+  else
+    fi = 0
+  endif
+
+  raero = (1 / (ka * ustar)) * (log(z/z0) - fi)
+
+
+end subroutine
+
+pure elemental real function gravitational_settling(roa, diam) result(vs)
+    real, intent(in) :: roa
+    !> TODO: Check unit!!!
+    real, intent(in) :: diam
+
+    real, parameter :: ro_part = 2300 ! kg m-3, corresponds to Cs 2.3 g/cm3
+    real, parameter :: grav = 9.8
+    real, parameter :: ny = 1.5e-5 ! Kinematic viscosity of air, m2 s-1 at +15 C
+    real, parameter :: lambda = 0.065e-6 ! Mean free path of air molecules [m]
+    real :: my ! Dynamic visocity of air, kg m-1 s-1
+
+    real :: fac1, cslip
+
+    my = ny * roa
+    fac1 = -0.55 * diam / lambda
+    cslip = 1 + 2 * lambda / diam * ( 1.257 + 0.4 * exp(fac1) )
+
+    vs = ro_part * diam * grav * cslip / (18*my)
+end function
+
+pure elemental subroutine drydep_emep_for_field(surface_pressure, t2m, yflux, xflux, z0, hflux, leaf_area_index, diam, vd_dep)
+  !> In hPa
+  real, intent(in) :: surface_pressure
+  real, intent(in) :: t2m
+  real, intent(in) :: yflux, xflux
+  real, intent(in) :: z0, hflux
+  real, intent(in) :: leaf_area_index
+  real, intent(in) :: diam
+  real, intent(out) :: vd_dep
+
+  real :: roa
+  real :: ustar
+  real :: monin_obukhov_length
+  real :: SAI
+
+  real, parameter :: R = 287.05
+  real, parameter :: CP = 1005.0
+  real, parameter :: k = 0.4
+  real, parameter :: g = 9.8
+  ! real, parameter :: a1 = 0.002
+  real :: a1
+  real, parameter :: a2 = 300
+  real :: a1sai
+  real :: vs
+  real :: rsemep
+  real :: raero
+  real :: fac
+
+
+  roa = (surface_pressure / 100) / (t2m * R)
+  vs = gravitational_settling(roa, diam)
+
+  ustar = hypot(yflux, xflux) / sqrt(roa)
+  monin_obukhov_length = - roa * CP * t2m * (ustar**3) / (k * g * hflux)
+
+  SAI = leaf_area_index + 1
+  a1sai = 0.008 * SAI / 10
+
+  call aerodynres(monin_obukhov_length, ustar, z0, raero)
+
+  if (leaf_area_index > 0.75 .and. a1sai > 0.002) then
+    a1 = a1sai
+  else
+    a1 = 0.002
+  endif
+
+  monin_obukhov_length = max(-25.0, monin_obukhov_length)
+  if (monin_obukhov_length > 0) then
+    rsemep = 1.0 / (ustar * a1)
+  else
+    fac = (-a2 / monin_obukhov_length) ** ( 2.0 / 3.0 )
+    rsemep = 1.0 / (ustar * a1 * (1 + fac))
+  endif
+
+  vd_dep = 1.0 / (rsemep + raero) + vs
+
+end subroutine
+
+subroutine drydep_emep(tstep, vd, part)
+  use particleML, only: Particle
+  use snapfldML, only: depdry
+  use snapparML, only: def_comp
+
+  !> Timestep of the simulation in seconds
+  real, intent(in) :: tstep
+  !> Particle which observes deposition
+  type(Particle), intent(inout) :: part
+  !> Deposition velocity
+  real, intent(in) :: vd(:,:, :)
+
+  integer :: m, mm, i, j
+  real :: dep
+
+
+  m = part%icomp
+  if (def_comp(m)%kdrydep == 1) then
+
+    mm = def_comp(m)%to_running
+
+    i = nint(part%x)
+    j = nint(part%y)
+    dep = part%rad*vd(i,j,mm)*tstep
+
+    part%rad = part%rad - dep
+    !$OMP atomic
+    depdry(i,j,mm) = depdry(i,j,mm) + dble(dep)
+  end if
+end subroutine
+
 end module drydep

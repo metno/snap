@@ -45,6 +45,13 @@ module snapmetML
     character(len=80) :: precconvrt = ''
     character(len=80) :: total_column_rain = ''
 
+    character(len=80) :: t2m = ''
+    character(len=80) :: yflux = ''
+    character(len=80) :: xflux = ''
+    character(len=80) :: hflux = ''
+    character(len=80) :: z0 = ''
+    character(len=80) :: leaf_area_index = ''
+
     ! flags when reading the data
     logical :: temp_is_abs = .false.
     logical :: has_dummy_dim = .false.
@@ -70,6 +77,10 @@ module snapmetML
   character(len=*), parameter, public :: precip_units_fallback = 'mm'
   character(len=*), parameter, public :: temp_units = 'K'
 
+  character(len=*), parameter, public :: downward_momentum_flux_units = 'N/m^2'
+  character(len=*), parameter, public :: surface_roughness_length_units = 'm'
+  character(len=*), parameter, public :: surface_heat_flux_units = 'W s/m^2'
+  character(len=*), parameter, public :: leaf_area_index_units = '1'
 
   public init_meteo_params, requires_precip_deaccumulation
 
@@ -200,6 +211,13 @@ module snapmetML
       met_params%precaccumv = 'precipitation_amount_acc'
       met_params%precstrativrt = ''
       met_params%precconvrt = ''
+
+      met_params%t2m = 'air_temperature_2m'
+      met_params%xflux = 'downward_northward_momentum_flux_in_air'
+      met_params%yflux = 'downward_eastward_momentum_flux_in_air'
+      met_params%z0 = 'surface_roughness_length'
+      met_params%hflux = 'integral_of_surface_downward_sensible_heat_flux_wrt_time'
+      met_params%leaf_area_index = 'leaf_area_index'
 !..get grid parameters from field identification
     case('dmi_eps')
       met_params%has_dummy_dim = .true.

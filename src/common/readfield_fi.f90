@@ -304,6 +304,8 @@ contains
       precip = 0.0
     endif
 
+    call read_drydep(fio, timepos, nr)
+
     call check(fio%close(), "close fio")
 
 ! first time initialized data
@@ -535,8 +537,6 @@ contains
         write (iulog, *) k, i1, i2, vhalf(k + 1), vhalf(k)
       end do
     end if
-
-    return
   end subroutine readfield_fi
 
 !> read precipitation
@@ -776,5 +776,46 @@ contains
     end if
     write (iulog, *) "reading "//trim(varname)//", min, max: ", minval(zfield), maxval(zfield)
   end subroutine fi_checkload_intern
+
+  subroutine read_drydep(fio, timepos, nr)
+    USE snapmetML, only: met_params, &
+      temp_units, downward_momentum_flux_units, surface_roughness_length_units, &
+      surface_heat_flux_units, leaf_area_index_units
+    use drydep, only: drydep_scheme, DRYDEP_SCHEME_EMEP, drydep_emep_for_field
+    use snapparML, only: ncomp, run_comp, def_comp
+    use snapfldML, only: ps1, vd_dep
+    type(FimexIO), intent(inout) :: fio
+    integer, intent(in) :: timepos
+    integer, intent(in) :: nr
+
+    real, allocatable :: xflux(:, :), yflux(:, :), hflux(:, :), z0(:, :), leaf_area_index(:, :), t2m(:, :)
+    integer :: i, mm
+    real :: diam
+
+    allocate(xflux, yflux, hflux, z0, leaf_area_index, t2m, MOLD=ps1)
+
+    if (drydep_scheme /= DRYDEP_SCHEME_EMEP) then
+      return
+    endif
+
+    call fi_checkload(fio, met_params%xflux, downward_momentum_flux_units, xflux(:, :), nt=timepos, nr=nr)
+    call fi_checkload(fio, met_params%yflux, downward_momentum_flux_units, yflux(:, :), nt=timepos, nr=nr)
+    call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, hflux(:, :), nt=timepos, nr=nr)
+    call fi_checkload(fio, met_params%z0, surface_roughness_length_units, z0(:, :), nt=timepos, nr=nr)
+    call fi_checkload(fio, met_params%leaf_area_index, leaf_area_index_units, leaf_area_index(:, :), nt=timepos, nr=nr)
+    call fi_checkload(fio, met_params%t2m, temp_units, t2m(:, :), nt=timepos, nr=nr)
+
+    if (drydep_scheme == DRYDEP_SCHEME_EMEP) then
+      do i=1,ncomp
+        mm = run_comp(i)%to_defined
+
+        if (def_comp(mm)%kdrydep == 1) then
+          diam = 2*def_comp(mm)%radiusmym
+          call drydep_emep_for_field(ps1, t2m, yflux, xflux, z0, &
+            hflux, leaf_area_index, diam, vd_dep(:, :, ncomp))
+        endif
+      end do
+    endif
+  end subroutine
 
 end module readfield_fiML

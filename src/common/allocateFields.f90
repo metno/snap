@@ -26,7 +26,7 @@ module allocateFieldsML
       garea, dgarea, &
       max_column_scratch, max_column_concentration, &
       aircraft_doserate, aircraft_doserate_scratch, t1_abs, t2_abs, &
-      aircraft_doserate_threshold_height
+      aircraft_doserate_threshold_height, vd_dep
   USE snapfilML, only: idata, fdata
   USE snapgrdML, only: ahalf, bhalf, vhalf, alevel, blevel, vlevel, imodlevel, &
       compute_column_max_conc, compute_aircraft_doserate, aircraft_doserate_threshold
@@ -43,6 +43,8 @@ subroutine allocateFields
   USE snapdimML, only: nx, ny, nk, ldata, maxsiz
   USE snapparML, only: ncomp, iparnum
   USE releaseML, only: mplume, iplume, plume_release, mpart
+  USE drydep, only: drydep_scheme, DRYDEP_SCHEME_EMEP
+  USE drydep, only: drydep_scheme, DRYDEP_SCHEME_EMEP
 
   logical, save :: FirstCall = .TRUE.
   integer :: AllocateStatus
@@ -199,6 +201,11 @@ subroutine allocateFields
     endif
   endif
 
+  if (drydep_scheme == DRYDEP_SCHEME_EMEP) then
+    allocate(vd_dep(nx,ny,ncomp), STAT=AllocateStatus)
+    if (AllocateStatus /= 0) ERROR STOP errmsg
+  endif
+
 end subroutine allocateFields
 
 
@@ -286,6 +293,10 @@ subroutine deAllocateFields
 
   DEALLOCATE ( iplume )
   DEALLOCATE ( plume_release )
+
+  if (allocated(vd_dep)) then
+    deallocate(vd_dep)
+  endif
 
 end subroutine deAllocateFields
 end module allocateFieldsML
