@@ -16,6 +16,7 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 module vgravtablesML
+  use drydep, only: drydep_scheme, DRYDEP_SCHEME_EMEP, DRYDEP_SCHEME_ZHANG, DRYDEP_SCHEME_EMERSON
   implicit none
   private
 
@@ -26,7 +27,7 @@ module vgravtablesML
 
 !> table of gravity in m/s
 !>
-!>	(temperature as first index, pressure second)
+!> vgtable(temperature,pressure,component)
   real, save, allocatable, public :: vgtable(:,:,:)
 
   real, parameter, public :: tincrvg = 200.0/float(numtempvg - 1)
@@ -34,21 +35,31 @@ module vgravtablesML
   real, parameter, public :: pincrvg = 1200./float(numpresvg-1)
   real, parameter, public :: pbasevg = 0. - pincrvg
 
-  public vgravtables
+  public :: vgravtables
 
   contains
 
 !>  program for calculating the gravitational settling velocities
-!>  for small and large particles (outside the Stokes low)
+!>  for small and large particles (outside the Stokes law)
 subroutine vgravtables
+  USE ISO_FORTRAN_ENV, only: real64
   USE snapparML, only: ncomp, run_comp, def_comp
+  USE drydep, only: gravitational_settling
 
-  real :: t        ! absolute temperature (K)
-  real :: dp        ! particle size um
-  real :: rp        ! particle density in g/m3
-  real :: vg        ! gravitational setling in cm/s (Stokes low)
-  real :: vgmod    ! gravitational setling in cm/s after iteration
-  real :: p        ! atmospheric pressure
+  real, parameter :: R = 287.05
+  !> absolute temperature (K)
+  real :: t
+  !> particle size
+  real :: diam_part
+  !> particle density
+  real :: rho_part
+  !> gravitational setling
+  real :: vg
+  !> gravitational setling after iteration
+  real :: vgmod
+  !> atmospheric pressure
+  real :: p
+  real(real64) :: roa
 
   integer :: n,m,ip,it
 !---------------------------------------
@@ -62,27 +73,46 @@ do_comp: do n=1,ncomp
     if (def_comp(m)%grav_type /= 2) then ! Not using gravity table
       cycle do_comp
     endif
-  ! radius to diameter
-    dp= 2. * def_comp(m)%radiusmym
-    rp= def_comp(m)%densitygcm3
 
-    do ip=1,numpresvg
+    select case(drydep_scheme)
+    case (DRYDEP_SCHEME_EMEP,DRYDEP_SCHEME_ZHANG,DRYDEP_SCHEME_EMERSON)
+      ! expected kg/m3
+      rho_part = def_comp(m)%densitygcm3 / 1000.0
+      ! expected m
+      diam_part = 2 * def_comp(m)%radiusmym / 1e6
 
-      p= pbasevg + ip*pincrvg
-      if(p < 1.) p=1.
-
-      do it=1,numtempvg
-
-        t= tbasevg + it*tincrvg
-
-        vg=vgrav(dp,rp,p,t)
-        call iter(vgmod,vg,dp,rp,p,t)
-
-      !..table in unit m/s (cm/s computed)
-        vgtable(it,ip,n)= vgmod*0.01
-
+      do ip=1,numpresvg
+        ! Expecting pascal
+        p = max(1.0, pbasevg + ip*pincrvg) / 100.0
+        do it=1,numtempvg
+          t = tbasevg + it*tincrvg
+          roa = p / (real(t, kind=real64) * R)
+          vgtable(it, ip, n) = gravitational_settling(roa, real(diam_part, kind=real64), real(rho_part, kind=real64))
+        end do
       end do
-    end do
+    case default
+      ! radius to diameter
+      diam_part = 2 * def_comp(m)%radiusmym
+      rho_part = def_comp(m)%densitygcm3
+
+      do ip=1,numpresvg
+
+        p= pbasevg + ip*pincrvg
+        if(p < 1.) p=1.
+
+        do it=1,numtempvg
+
+          t= tbasevg + it*tincrvg
+
+          vg=vgrav(diam_part,rho_part,p,t)
+          call iter(vgmod,vg,diam_part,rho_part,p,t)
+
+        !..table in unit m/s (cm/s computed)
+          vgtable(it,ip,n)= vgmod*0.01
+
+        end do
+      end do
+    end select
   end do do_comp
 end subroutine vgravtables
 

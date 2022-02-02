@@ -51,6 +51,8 @@ module fldout_ncML
     integer :: ic
     integer :: icml
     integer :: conc_column = -1
+    !> Dry deposition velocity
+    integer :: vd
   end type
 
 !> Variables in a file
@@ -77,6 +79,20 @@ module fldout_ncML
     integer :: aircraft_doserate_threshold_height
     integer :: components
     type(component_var) :: comp(mcomp)
+    integer :: xflux = -1
+    integer :: yflux = -1
+    integer :: hflux = -1
+    integer :: z0 = -1
+    integer :: t2m = -1
+    integer :: lai = -1
+    integer :: roa = -1
+    integer :: ustar = -1
+    integer :: monin_l = -1
+    integer :: raero = -1
+    integer :: vs = -1
+    integer :: rs = -1
+    integer :: ps_vd = -1
+    integer :: landfraction = -1
   end type
 
 !> dimensions used in a file
@@ -108,17 +124,18 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
   USE array_utils, only: is_in_array
   USE snapgrdML, only: imodlevel, modlevel_is_average, imslp, precipitation_in_output, &
       itotcomp, compute_column_max_conc, compute_aircraft_doserate, &
-      aircraft_doserate_threshold, output_column
-  USE snapfldML, only: field_hr1, field_hr2, field_hr3, hbl_hr, &
-      field1, &
+      aircraft_doserate_threshold, output_column, &
+      output_column, output_vd, output_vd_debug
+  USE snapfldML, only: field_hr1, field_hr2, field_hr3, hbl_hr
+  USE snapfldML, only: field1, field2, field3, field4, &
       depdry, depwet, &
       avgbq1, avgbq2, garea, pmsl1, pmsl2, hbl1, hbl2, &
       accdry, accwet, avgprec, concen, ps1, ps2, avghbl, &
       concacc, accprec, max_column_concentration, aircraft_doserate, &
       aircraft_doserate_threshold_height, &
-      total_activity_released, total_activity_lost_domain, total_activity_lost_other
-  USE snapparML, only: time_profile, nocomp, output_component, def_comp, &
-    TIME_PROFILE_BOMB
+      total_activity_released, total_activity_lost_domain, total_activity_lost_other, &
+      vd_dep
+  USE snapparML, only: output_component, def_comp, nocomp
   USE snapdebug, only: iulog, idebug
   USE ftestML, only: ftest
   USE snapdimML, only: nx, ny, output_resolution_factor, hres_field, hres_pos
@@ -321,6 +338,11 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
 
       call check(nf90_put_var(iunit, varid%comp(m)%idd, start=ipos, count=isize, &
           values=field_hr1), "set_idd(m)")
+
+      if (output_vd) then
+        call check(nf90_put_var(iunit, varid%comp(m)%vd, start=ipos, count=isize, &
+            values=vd_dep(:, :, m)), "dry_deposition_velocity(m)")
+      endif
     end if
 
   !..accumulated dry deposition
@@ -540,6 +562,45 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
         [nx*output_resolution_factor, ny*output_resolution_factor, 1, 1], rt1, rt2)
   endif
 
+  if (output_vd_debug) then
+    block
+      use snapfldml, only: t2m, xflux, yflux, z0, hflux, leaf_area_index, &
+        roa, ustar, monin_l, raero, vs, rs, ps2
+    call check(nf90_put_var(iunit, varid%ps_vd, start=ipos, count=isize, values=ps2))
+    call check(nf90_put_var(iunit, varid%t2m, start=ipos, count=isize, values=t2m))
+    call check(nf90_put_var(iunit, varid%xflux, start=ipos, count=isize, values=xflux))
+    call check(nf90_put_var(iunit, varid%yflux, start=ipos, count=isize, values=yflux))
+    call check(nf90_put_var(iunit, varid%z0, start=ipos, count=isize, values=z0))
+    call check(nf90_put_var(iunit, varid%hflux, start=ipos, count=isize, values=hflux))
+    call check(nf90_put_var(iunit, varid%lai, start=ipos, count=isize, values=leaf_area_index))
+    call check(nf90_put_var(iunit, varid%roa, start=ipos, count=isize, values=roa))
+    call check(nf90_put_var(iunit, varid%ustar, start=ipos, count=isize, values=ustar))
+    call check(nf90_put_var(iunit, varid%monin_l, start=ipos, count=isize, values=monin_l))
+    call check(nf90_put_var(iunit, varid%raero, start=ipos, count=isize, values=raero))
+    call check(nf90_put_var(iunit, varid%vs, start=ipos, count=isize, values=vs))
+    call check(nf90_put_var(iunit, varid%rs, start=ipos, count=isize, values=rs))
+    end block
+  endif
+
+  if (output_vd_debug) then
+    block
+      use snapfldml, only: t2m, xflux, yflux, z0, hflux, leaf_area_index, &
+        roa, ustar, monin_l, raero, vs, ps2
+    call check(nf90_put_var(iunit, varid%ps_vd, start=ipos, count=isize, values=ps2))
+    call check(nf90_put_var(iunit, varid%t2m, start=ipos, count=isize, values=t2m))
+    call check(nf90_put_var(iunit, varid%xflux, start=ipos, count=isize, values=xflux))
+    call check(nf90_put_var(iunit, varid%yflux, start=ipos, count=isize, values=yflux))
+    call check(nf90_put_var(iunit, varid%z0, start=ipos, count=isize, values=z0))
+    call check(nf90_put_var(iunit, varid%hflux, start=ipos, count=isize, values=hflux))
+    call check(nf90_put_var(iunit, varid%lai, start=ipos, count=isize, values=leaf_area_index))
+    call check(nf90_put_var(iunit, varid%roa, start=ipos, count=isize, values=roa))
+    call check(nf90_put_var(iunit, varid%ustar, start=ipos, count=isize, values=ustar))
+    call check(nf90_put_var(iunit, varid%monin_l, start=ipos, count=isize, values=monin_l))
+    call check(nf90_put_var(iunit, varid%raero, start=ipos, count=isize, values=raero))
+    call check(nf90_put_var(iunit, varid%vs, start=ipos, count=isize, values=vs))
+    end block
+  endif
+
 ! reset fields
   do m=1,nocomp
     if (output_component(m)%has_drydep) then
@@ -671,7 +732,7 @@ subroutine write_ml_fields(iunit, varid, average, ipos_in, isize, rt1, rt2)
 end subroutine
 
 
-subroutine nc_declare(iunit, dimids, varid, varname, units, stdname, chunksize)
+subroutine nc_declare(iunit, dimids, varid, varname, units, stdname, chunksize, datatype)
   USE snapdebug, only: iulog
   integer, intent(in) :: iunit
   integer, intent(out)   :: varid
@@ -681,13 +742,21 @@ subroutine nc_declare(iunit, dimids, varid, varname, units, stdname, chunksize)
   character(len=*), intent(in) :: varname
   character(len=*), intent(in), optional :: stdname
   integer, intent(in), optional :: chunksize(:)
+  integer, intent(in), optional :: datatype
+
+  integer :: datatype_internal
 
   write(iulog,"('declaring ' (a) ' ' (a) )",advance="NO") varname, units
   if (present(stdname)) write(iulog, "(' ' (a))",advance="NO") trim(stdname)
   write(iulog,'()',advance="YES")
 
+  if (present(datatype)) then
+    datatype_internal = datatype
+  else
+    datatype_internal = NF90_FLOAT
+  endif
   call check(nf90_def_var(iunit, TRIM(varname), &
-      NF90_FLOAT, dimids, varid), "def_"//varname)
+      datatype_internal, dimids, varid), "def_"//varname)
   if (present(chunksize)) then
     call check(nf90_def_var_chunking(iunit, varid, NF90_CHUNKED, chunksize))
     call check(nf90_def_var_deflate(iunit, varid, &
@@ -987,7 +1056,8 @@ subroutine initialize_output(filename, itime, ierror)
   USE snapfilML, only: ncsummary, nctitle, simulation_start
   USE snapgrdML, only: gparam, igtype, imodlevel, modlevel_is_average, imslp, precipitation_in_output, &
       itotcomp, modleveldump, compute_column_max_conc, compute_aircraft_doserate, &
-      aircraft_doserate_threshold, output_column
+      aircraft_doserate_threshold, &
+      output_vd, output_column, output_vd_debug
   USE snapfldML, only:  &
       garea, &
       xm, ym, &
@@ -1153,6 +1223,74 @@ subroutine initialize_output(filename, itime, ierror)
           trim(output_component(m)%name)//"_column_concentration", &
           units="Bq/m2", chunksize=chksz3d)
       endif
+
+      if (def_comp(mm)%kdrydep > 0 .and. output_vd) then
+        call nc_declare(iunit, dimids3d, varid%comp(m)%vd, &
+          trim(def_comp(mm)%output_name)//"_dry_deposition_velocity", &
+          units="m/s", chunksize=chksz3d)
+      endif
+
+      if (output_vd_debug) then
+        block
+          use snapmetml, only: downward_momentum_flux_units, surface_heat_flux_units, &
+            leaf_area_index_units, surface_roughness_length_units, temp_units
+        call nc_declare(iunit, dimids3d, varid%xflux, &
+          "xflux", units=downward_momentum_flux_units, &
+          chunksize=chksz3d)
+        call nc_declare(iunit, dimids3d, varid%yflux, &
+          "yflux", units=downward_momentum_flux_units, &
+          chunksize=chksz3d)
+        call nc_declare(iunit, dimids3d, varid%hflux, &
+          "hflux", units=surface_heat_flux_units, &
+          chunksize=chksz3d)
+        call nc_declare(iunit, dimids3d, varid%z0, &
+          "z0", units=surface_roughness_length_units, &
+          chunksize=chksz3d)
+        call nc_declare(iunit, dimids3d, varid%lai, &
+          "lai", units=leaf_area_index_units, &
+          chunksize=chksz3d)
+        call nc_declare(iunit, dimids3d, varid%t2m, &
+          "t2m", units=temp_units, &
+          chunksize=chksz3d)
+        call nc_declare(iunit, dimids3d, varid%roa, &
+          "roa", units="??", chunksize=chksz3d)
+        call nc_declare(iunit, dimids3d, varid%ustar, &
+          "ustar", units="??", chunksize=chksz3d)
+        call nc_declare(iunit, dimids3d, varid%monin_l, &
+          "monin_l", units="??", chunksize=chksz3d)
+        call nc_declare(iunit, dimids3d, varid%raero, &
+          "raero", units="??", chunksize=chksz3d)
+        call nc_declare(iunit, dimids3d, varid%vs, &
+          "vs", units="??", chunksize=chksz3d)
+        call nc_declare(iunit, dimids3d, varid%rs, &
+          "rs", units="??", chunksize=chksz3d)
+        call nc_declare(iunit, dimids3d, varid%ps_vd, &
+          "ps_vd", units="hPa", chunksize=chksz3d)
+        end block
+      endif
+
+      block
+        use drydep, only: largest_landfraction_file, classnr
+        if (largest_landfraction_file /= "not set") then
+            call nc_declare(iunit, dimids2d, varid%landfraction, &
+              "land_fraction", units="1", datatype=NF90_BYTE)
+            call check(nf90_put_var(iunit, varid%landfraction, start=[1, 1], count=[nx, ny], &
+              values=classnr), "Put landfraction")
+            call check(nf90_put_att(iunit, varid%landfraction, "11", "Sea"))
+            call check(nf90_put_att(iunit, varid%landfraction, "12", "Inland water"))
+            call check(nf90_put_att(iunit, varid%landfraction, "13", "Tundra/desert"))
+            call check(nf90_put_att(iunit, varid%landfraction, "14", "Ice and ice sheets"))
+            call check(nf90_put_att(iunit, varid%landfraction, "15", "Urban"))
+            call check(nf90_put_att(iunit, varid%landfraction, "16", "Crops"))
+            call check(nf90_put_att(iunit, varid%landfraction, "17", "Grass"))
+            call check(nf90_put_att(iunit, varid%landfraction, "18", "Wetlands"))
+            call check(nf90_put_att(iunit, varid%landfraction, "19", "Evergreen needleleaf"))
+            call check(nf90_put_att(iunit, varid%landfraction, "20", "Deciduous broadleaf"))
+            call check(nf90_put_att(iunit, varid%landfraction, "21", "Mixed forest"))
+            call check(nf90_put_att(iunit, varid%landfraction, "22", "Shrubs and interrupted woodlands"))
+        endif
+    end block
+
     end do
     if (itotcomp == 1) then
       call nc_declare(iunit, dimids3d, varid%icblt, &
@@ -1205,7 +1343,7 @@ subroutine unload()
 end subroutine
 
 subroutine get_varids(iunit, varid, ierror)
-  USE snapparML, only: nocomp, output_component, def_comp
+  USE snapparML, only: nocomp, output_component, def_comp, nocomp
   USE snapgrdML, only: imodlevel, modleveldump
   integer, intent(in) :: iunit
   type(common_var), intent(out) :: varid
@@ -1260,6 +1398,33 @@ subroutine get_varids(iunit, varid, ierror)
   ierror = nf90_inq_varid(iunit, "aircraft_doserate_threshold_height", varid%aircraft_doserate_threshold_height)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
 
+  ierror = nf90_inq_varid(iunit, "xflux", varid%xflux)
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+  ierror = nf90_inq_varid(iunit, "yflux", varid%yflux)
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+  ierror = nf90_inq_varid(iunit, "hflux", varid%hflux)
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+  ierror = nf90_inq_varid(iunit, "lai", varid%lai)
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+  ierror = nf90_inq_varid(iunit, "z0", varid%z0)
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+  ierror = nf90_inq_varid(iunit, "t2m", varid%t2m)
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+  ierror = nf90_inq_varid(iunit, "roa", varid%roa)
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+  ierror = nf90_inq_varid(iunit, "ustar", varid%ustar)
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+  ierror = nf90_inq_varid(iunit, "monin_l", varid%monin_l)
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+  ierror = nf90_inq_varid(iunit, "raero", varid%raero)
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+  ierror = nf90_inq_varid(iunit, "vs", varid%vs)
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+  ierror = nf90_inq_varid(iunit, "rs", varid%rs)
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+  ierror = nf90_inq_varid(iunit, "ps_vd", varid%ps_vd)
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+
   do m=1,nocomp
     varname = trim(output_component(m)%name) // "_concentration"
     ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%ic)
@@ -1283,6 +1448,26 @@ subroutine get_varids(iunit, varid, ierror)
 
     varname = trim(output_component(m)%name) // "_acc_dry_deposition"
     ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%accdd)
+    if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+
+    varname = trim(output_component(m)%name) // "_wet_deposition"
+    ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%iwd)
+    if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+
+    varname = trim(output_component(m)%name) // "_acc_wet_deposition"
+    ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%accwd)
+    if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+
+    varname = trim(output_component(m)%name) // "_dry_deposition"
+    ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%idd)
+    if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+
+    varname = trim(output_component(m)%name) // "_acc_dry_deposition"
+    ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%accdd)
+    if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+
+    varname = trim(output_component(m)%name) // "_dry_deposition_velocity"
+    ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%vd)
     if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
 
     varname = trim(output_component(m)%name) // "_wet_deposition"
