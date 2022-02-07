@@ -108,7 +108,7 @@ contains
             call check(fio%reduce_dimension(fio%get_dimname(i), 0, 1), &
                        "reducing "//TRIM(fio%get_dimname(i))//" to 0 for "//TRIM(varname))
           CASE (AXIS_Realization)
-            call check(fio%reduce_dimension(fio%get_dimname(i), enspos - 1, 1), &
+            call check(fio%reduce_dimension(fio%get_dimname(i), enspos, 1), &
                        "reducing "//TRIM(fio%get_dimname(i))//" to 0 for "//TRIM(varname))
           CASE (AXIS_GeoX, AXIS_Lon)
             call check(fio%reduce_dimension(fio%get_dimname(i), 0, 4), &
