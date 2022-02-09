@@ -810,7 +810,7 @@ contains
         mm = run_comp(i)%to_defined
 
         if (def_comp(mm)%kdrydep == 1) then
-          diam = 2*def_comp(mm)%radiusmym
+          diam = 2*def_comp(mm)%radiusmym*1e-6
           call drydep_emep_for_field(ps2, t2m, yflux, xflux, z0, &
             hflux, leaf_area_index, diam, vd_dep(:, :, ncomp))
         endif
