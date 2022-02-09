@@ -783,7 +783,7 @@ contains
       surface_heat_flux_units, leaf_area_index_units
     use drydep, only: drydep_scheme, DRYDEP_SCHEME_EMEP, drydep_emep_for_field
     use snapparML, only: ncomp, run_comp, def_comp
-    use snapfldML, only: ps1, vd_dep
+    use snapfldML, only: ps2, vd_dep
     type(FimexIO), intent(inout) :: fio
     integer, intent(in) :: timepos
     integer, intent(in) :: nr
@@ -792,7 +792,7 @@ contains
     integer :: i, mm
     real :: diam
 
-    allocate(xflux, yflux, hflux, z0, leaf_area_index, t2m, MOLD=ps1)
+    allocate(xflux, yflux, hflux, z0, leaf_area_index, t2m, MOLD=ps2)
 
     if (drydep_scheme /= DRYDEP_SCHEME_EMEP) then
       return
@@ -811,7 +811,7 @@ contains
 
         if (def_comp(mm)%kdrydep == 1) then
           diam = 2*def_comp(mm)%radiusmym
-          call drydep_emep_for_field(ps1, t2m, yflux, xflux, z0, &
+          call drydep_emep_for_field(ps2, t2m, yflux, xflux, z0, &
             hflux, leaf_area_index, diam, vd_dep(:, :, ncomp))
         endif
       end do
