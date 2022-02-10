@@ -304,7 +304,7 @@ contains
       precip = 0.0
     endif
 
-    call read_drydep(fio, timepos, nr)
+    call read_drydep(fio, timepos, timeposm1, nr)
 
     call check(fio%close(), "close fio")
 
@@ -777,7 +777,7 @@ contains
     write (iulog, *) "reading "//trim(varname)//", min, max: ", minval(zfield), maxval(zfield)
   end subroutine fi_checkload_intern
 
-  subroutine read_drydep(fio, timepos, nr)
+  subroutine read_drydep(fio, timepos, timeposm1, nr)
     USE snapmetML, only: met_params, &
       temp_units, downward_momentum_flux_units, surface_roughness_length_units, &
       surface_heat_flux_units, leaf_area_index_units
@@ -785,22 +785,57 @@ contains
     use snapparML, only: ncomp, run_comp, def_comp
     use snapfldML, only: ps2, vd_dep
     type(FimexIO), intent(inout) :: fio
-    integer, intent(in) :: timepos
+    integer, intent(in) :: timepos, timeposm1
     integer, intent(in) :: nr
 
-    real, allocatable :: xflux(:, :), yflux(:, :), hflux(:, :), z0(:, :), leaf_area_index(:, :), t2m(:, :)
+    real, allocatable :: xflux(:, :), yflux(:, :), hflux(:, :), z0(:, :), leaf_area_index(:, :), t2m(:, :), tmp1(:, :), tmp2(:, :)
     integer :: i, mm
     real :: diam
 
-    allocate(xflux, yflux, hflux, z0, leaf_area_index, t2m, MOLD=ps2)
+    allocate(xflux, yflux, hflux, z0, leaf_area_index, t2m, tmp1, tmp2, MOLD=ps2)
 
     if (drydep_scheme /= DRYDEP_SCHEME_EMEP) then
       return
     endif
 
-    call fi_checkload(fio, met_params%xflux, downward_momentum_flux_units, xflux(:, :), nt=timepos, nr=nr)
-    call fi_checkload(fio, met_params%yflux, downward_momentum_flux_units, yflux(:, :), nt=timepos, nr=nr)
-    call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, hflux(:, :), nt=timepos, nr=nr)
+    ! Fluxes are integrated: Deaccumulate
+    if (timepos == 1) then
+      call fi_checkload(fio, met_params%xflux, downward_momentum_flux_units, xflux(:, :), nt=timepos, nr=nr)
+      call fi_checkload(fio, met_params%yflux, downward_momentum_flux_units, yflux(:, :), nt=timepos, nr=nr)
+    else
+      call fi_checkload(fio, met_params%xflux, downward_momentum_flux_units, tmp1(:, :), nt=timeposm1, nr=nr)
+      call fi_checkload(fio, met_params%xflux, downward_momentum_flux_units, tmp2(:, :), nt=timepos, nr=nr)
+      xflux(:,:) = tmp2 - tmp1
+
+      call fi_checkload(fio, met_params%yflux, downward_momentum_flux_units, tmp1(:, :), nt=timeposm1, nr=nr)
+      call fi_checkload(fio, met_params%yflux, downward_momentum_flux_units, tmp2(:, :), nt=timepos, nr=nr)
+      yflux(:,:) = tmp2 - tmp1
+    endif
+    ! TODO: Normalise by difference between intervals
+    xflux(:,:) =  xflux / 3600
+    yflux(:,:) =  yflux / 3600
+
+    if (timepos == 1) then
+      call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, hflux(:, :), nt=timepos, nr=nr)
+    else if (timepos == 12) then
+      ! Weird AROME data is invalid at t=12
+      call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, tmp1(:, :), nt=timeposm1, nr=nr)
+      call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, tmp2(:, :), nt=timepos+1, nr=nr)
+      hflux(:,:) = (tmp2 - tmp1)/2
+    else if (timepos == 13) then
+      ! Weird AROME data is invalid at t=13
+      call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, tmp1(:, :), nt=timeposm1-1, nr=nr)
+      call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, tmp2(:, :), nt=timepos, nr=nr)
+      hflux(:,:) = (tmp2 - tmp1)/2
+    else
+      call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, tmp1(:, :), nt=timeposm1, nr=nr)
+      call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, tmp2(:, :), nt=timepos, nr=nr)
+      hflux(:,:) = tmp2 - tmp1
+    endif
+    ! TODO: Normalise by difference between intervals
+    hflux(:,:) = -hflux / 3600 ! Follow conventions for up/down
+
+
     call fi_checkload(fio, met_params%z0, surface_roughness_length_units, z0(:, :), nt=timepos, nr=nr)
     call fi_checkload(fio, met_params%leaf_area_index, leaf_area_index_units, leaf_area_index(:, :), nt=timepos, nr=nr)
     call fi_checkload(fio, met_params%t2m, temp_units, t2m(:, :), nt=timepos, nr=nr)
