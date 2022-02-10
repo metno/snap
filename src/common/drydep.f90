@@ -19,7 +19,7 @@ module drydep
   implicit none
   private
 
-  public drydep1, drydep2, drydep_emep, drydep_emep_for_field
+  public drydep1, drydep2, drydep_emep, drydep_emep_vd
 
   integer, parameter, public :: DRYDEP_SCHEME_UNDEFINED = 0
   integer, parameter, public :: DRYDEP_SCHEME_OLD = 1
@@ -155,7 +155,7 @@ pure elemental real function gravitational_settling(roa, diam) result(vs)
     vs = ro_part * diam * grav * cslip / (18*my)
 end function
 
-pure elemental subroutine drydep_emep_for_field(surface_pressure, t2m, yflux, xflux, z0, hflux, leaf_area_index, diam, vd_dep)
+pure elemental subroutine drydep_emep_vd(surface_pressure, t2m, yflux, xflux, z0, hflux, leaf_area_index, diam, vd_dep)
   !> In hPa
   real, intent(in) :: surface_pressure
   real, intent(in) :: t2m

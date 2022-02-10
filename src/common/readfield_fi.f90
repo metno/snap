@@ -781,7 +781,7 @@ contains
     USE snapmetML, only: met_params, &
       temp_units, downward_momentum_flux_units, surface_roughness_length_units, &
       surface_heat_flux_units, leaf_area_index_units
-    use drydep, only: drydep_scheme, DRYDEP_SCHEME_EMEP, drydep_emep_for_field
+    use drydep, only: drydep_scheme, DRYDEP_SCHEME_EMEP, drydep_emep_vd
     use snapparML, only: ncomp, run_comp, def_comp
     use snapfldML, only: ps2, vd_dep
     type(FimexIO), intent(inout) :: fio
@@ -811,7 +811,7 @@ contains
 
         if (def_comp(mm)%kdrydep == 1) then
           diam = 2*def_comp(mm)%radiusmym*1e-6
-          call drydep_emep_for_field(ps2*100, t2m, yflux, xflux, z0, &
+          call drydep_emep_vd(ps2*100, t2m, yflux, xflux, z0, &
             hflux, leaf_area_index, diam, vd_dep(:, :, ncomp))
         endif
       end do
