@@ -155,7 +155,7 @@ pure elemental real function gravitational_settling(roa, diam) result(vs)
     vs = ro_part * diam * grav * cslip / (18*my)
 end function
 
-pure elemental subroutine drydep_emep_vd(surface_pressure, t2m, yflux, xflux, z0, hflux, leaf_area_index, diam, vd_dep)
+impure elemental subroutine drydep_emep_vd(surface_pressure, t2m, yflux, xflux, z0, hflux, leaf_area_index, diam, vd_dep)
   !> In hPa
   real, intent(in) :: surface_pressure
   real, intent(in) :: t2m
@@ -184,7 +184,7 @@ pure elemental subroutine drydep_emep_vd(surface_pressure, t2m, yflux, xflux, z0
   real :: fac
 
 
-  roa = (surface_pressure / 100) / (t2m * R)
+  roa = surface_pressure / (t2m * R)
   vs = gravitational_settling(roa, diam)
 
   ustar = hypot(yflux, xflux) / sqrt(roa)
@@ -210,6 +210,25 @@ pure elemental subroutine drydep_emep_vd(surface_pressure, t2m, yflux, xflux, z0
   endif
 
   vd_dep = 1.0 / (rsemep + raero) + vs
+
+  write(*,*) "ps:     ", surface_pressure
+  write(*,*) "t2m:    ", t2m
+  write(*,*) "xflux:  ", xflux
+  write(*,*) "yflux:  ", yflux
+  write(*,*) "hflux:  ", hflux
+  write(*,*) "z0:     ", z0
+  write(*,*) "LAI:    ", leaf_area_index
+  write(*,*) "diam:   ", diam
+  write(*,*) "vs:     ", vs
+  write(*,*) "ustar:  ", ustar
+  write(*,*) "SAI:    ", SAI
+  write(*,*) "L:      ", monin_obukhov_length
+  write(*,*) "a1sai:  ", a1sai
+  write(*,*) "raero:  ", raero
+  write(*,*) "rsemep: ", rsemep
+  write(*,*) "vd:     ", vd_dep
+
+  error stop "ONLY CHECK ONE ITERATION"
 
 end subroutine
 
