@@ -790,7 +790,7 @@ contains
 
     real, allocatable :: xflux(:, :), yflux(:, :), hflux(:, :), z0(:, :), leaf_area_index(:, :), t2m(:, :), tmp1(:, :), tmp2(:, :)
     integer :: i, mm
-    real :: diam
+    real :: diam, dens
 
     allocate(xflux, yflux, hflux, z0, leaf_area_index, t2m, tmp1, tmp2, MOLD=ps2)
 
@@ -846,8 +846,9 @@ contains
 
         if (def_comp(mm)%kdrydep == 1) then
           diam = 2*def_comp(mm)%radiusmym*1e-6
+          dens = def_comp(mm)%densitygcm3*1e3
           call drydep_emep_vd(ps2*100, t2m, yflux, xflux, z0, &
-            hflux, leaf_area_index, diam, vd_dep(:, :, ncomp))
+            hflux, leaf_area_index, diam, dens, vd_dep(:, :, ncomp))
         endif
       end do
     endif

@@ -135,12 +135,13 @@ pure subroutine aerodynres(L, ustar, z0, raero)
 
 end subroutine
 
-pure elemental real function gravitational_settling(roa, diam) result(vs)
+pure elemental real function gravitational_settling(roa, diam, ro_part) result(vs)
     real, intent(in) :: roa
-    !> TODO: Check unit!!!
+    !> Diameter in m
     real, intent(in) :: diam
+    !> Density in km b-3
+    real, intent(in) :: ro_part
 
-    real, parameter :: ro_part = 2300 ! kg m-3, corresponds to Cs 2.3 g/cm3
     real, parameter :: grav = 9.8
     real, parameter :: ny = 1.5e-5 ! Kinematic viscosity of air, m2 s-1 at +15 C
     real, parameter :: lambda = 0.065e-6 ! Mean free path of air molecules [m]
@@ -156,7 +157,7 @@ pure elemental real function gravitational_settling(roa, diam) result(vs)
     vs = ro_part * diam * diam * grav * cslip / (18*my)
 end function
 
-pure elemental subroutine drydep_emep_vd(surface_pressure, t2m, yflux, xflux, z0, hflux, leaf_area_index, diam, vd_dep)
+pure elemental subroutine drydep_emep_vd(surface_pressure, t2m, yflux, xflux, z0, hflux, leaf_area_index, diam, density, vd_dep)
   !> In hPa
   real, intent(in) :: surface_pressure
   real, intent(in) :: t2m
@@ -164,6 +165,7 @@ pure elemental subroutine drydep_emep_vd(surface_pressure, t2m, yflux, xflux, z0
   real, intent(in) :: z0, hflux
   real, intent(in) :: leaf_area_index
   real, intent(in) :: diam
+  real, intent(in) :: density
   real, intent(out) :: vd_dep
 
   real :: roa
@@ -186,7 +188,7 @@ pure elemental subroutine drydep_emep_vd(surface_pressure, t2m, yflux, xflux, z0
 
 
   roa = surface_pressure / (t2m * R)
-  vs = gravitational_settling(roa, diam)
+  vs = gravitational_settling(roa, diam, density)
 
   ustar = hypot(yflux, xflux) / sqrt(roa)
   monin_obukhov_length = - roa * CP * t2m * (ustar**3) / (k * g * hflux)
@@ -225,8 +227,10 @@ subroutine drydep_emep(tstep, vd, part)
   !> Deposition velocity
   real, intent(in) :: vd(:,:, :)
 
+  real, parameter :: h = 30.0
+
   integer :: m, mm, i, j
-  real :: dep
+  real :: dep, deprate
 
 
   m = part%icomp
@@ -236,7 +240,9 @@ subroutine drydep_emep(tstep, vd, part)
 
     i = nint(part%x)
     j = nint(part%y)
-    dep = part%rad*vd(i,j,mm)*tstep
+
+    deprate = 1.0 - exp(-tstep*vd(i,j,mm)/h)
+    dep = part%rad*deprate
 
     part%rad = part%rad - dep
     !$OMP atomic
