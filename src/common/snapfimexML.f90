@@ -1,17 +1,17 @@
 ! SNAP: Servere Nuclear Accident Programme
 ! Copyright (C) 1992-2021   Norwegian Meteorological Institute
-! 
-! This file is part of SNAP. SNAP is free software: you can 
-! redistribute it and/or modify it under the terms of the 
-! GNU General Public License as published by the 
+!
+! This file is part of SNAP. SNAP is free software: you can
+! redistribute it and/or modify it under the terms of the
+! GNU General Public License as published by the
 ! Free Software Foundation, either version 3 of the License, or
 ! (at your option) any later version.
-! 
+!
 ! This program is distributed in the hope that it will be useful,
 ! but WITHOUT ANY WARRANTY; without even the implied warranty of
 ! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ! GNU General Public License for more details.
-! 
+!
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !
@@ -60,7 +60,8 @@ contains
   integer function parse_interpolator()
     USE iso_fortran_env, only: error_unit
     character(len=256), dimension(5) :: parts
-    integer :: i, prev_pos, pos, method
+    integer :: i, j, prev_pos, pos, method
+    character :: unitname
 
     parse_interpolator = 0
     method = -2
@@ -87,6 +88,11 @@ contains
         i = i+1
       endif
     end do
+
+    do j=1,5
+      parts(j) = trim(parts(j))
+    end do
+
     parts(i) = interpolation(prev_pos:)
     select case (trim(parts(1)))
     case ('none')
@@ -108,7 +114,8 @@ contains
       endif
     end do
 
-    if (parts(5)(1:1) == 'm') then
+    unitname = parts(5)(1:1)
+    if (unitname == 'm') then
       fint%unit_is_degree = .false.
     else
       fint%unit_is_degree = .true.
