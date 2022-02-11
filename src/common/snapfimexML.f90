@@ -60,8 +60,22 @@ contains
   integer function parse_interpolator()
     USE iso_fortran_env, only: error_unit
     character(len=256), dimension(5) :: parts
-    integer :: i, j, prev_pos, pos, method
+    integer :: i, j, prev_pos, pos, method, num_pipes
     character :: unitname
+
+    num_pipes = 0
+    do i=1,len_trim(interpolation)
+        if (interpolation(i:i) == '|') num_pipes = num_pipes + 1
+    end do
+    if (num_pipes /= 4) then
+        write(error_unit, *) "Expected 5 parts, got ", num_pipes
+        parse_interpolator = 1
+        return
+    endif
+
+    do j=1,5
+      parts(j) = ""
+    end do
 
     parse_interpolator = 0
     method = -2
@@ -84,16 +98,15 @@ contains
           parts(i) = interpolation(prev_pos:pos-2)
           prev_pos = pos
         end if
-        ! write(error_unit,*) "parts(i)=", parts(i)
         i = i+1
       endif
     end do
+    parts(5) = interpolation(prev_pos:)
 
     do j=1,5
       parts(j) = trim(adjustl(parts(j)))
     end do
 
-    parts(i) = interpolation(prev_pos:)
     select case (trim(parts(1)))
     case ('none')
       fint%method = -1
