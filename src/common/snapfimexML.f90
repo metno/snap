@@ -90,7 +90,7 @@ contains
     end do
 
     do j=1,5
-      parts(j) = trim(parts(j))
+      parts(j) = trim(adjustl(parts(j)))
     end do
 
     parts(i) = interpolation(prev_pos:)
