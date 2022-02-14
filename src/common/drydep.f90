@@ -234,7 +234,7 @@ subroutine drydep_emep(tstep, vd, part)
 
 
   m = part%icomp
-  if (def_comp(m)%kdrydep == 1) then
+  if (def_comp(m)%kdrydep == 1 .and. part%z > 0.996) then
 
     mm = def_comp(m)%to_running
 
