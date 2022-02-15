@@ -45,6 +45,8 @@ module fldout_ncML
     integer :: ic
     integer :: icml
     integer :: conc_column = -1
+    !> Dry deposition velocity
+    integer :: vd
   end type
 
 !> Variables in a file
@@ -98,13 +100,15 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
   USE iso_fortran_env, only: int16
   USE snapgrdML, only: imodlevel, imslp, precipitation_in_output, &
       itotcomp, compute_column_max_conc, compute_aircraft_doserate, &
-      aircraft_doserate_threshold, output_column
+      aircraft_doserate_threshold, &
+      output_column, output_vd
   USE snapfldML, only: field1, field2, field3, field4, &
       depdry, depwet, &
       avgbq1, avgbq2, garea, pmsl1, pmsl2, hbl1, hbl2, &
       accdry, accwet, avgprec, concen, ps1, ps2, avghbl, &
       concacc, accprec, max_column_concentration, aircraft_doserate, &
-      aircraft_doserate_threshold_height
+      aircraft_doserate_threshold_height, &
+      vd_dep
   USE snapparML, only: time_profile, ncomp, run_comp, def_comp, &
     TIME_PROFILE_BOMB
   USE snapdebug, only: iulog, idebug
@@ -311,6 +315,11 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
 
       call check(nf90_put_var(iunit, varid%comp(m)%idd, start=ipos, count=isize, &
           values=field1), "set_idd(m)")
+
+      if (output_vd) then
+        call check(nf90_put_var(iunit, varid%comp(m)%vd, start=[ipos], count=[isize], &
+            values=vd_dep(:, :, m)), "dry_deposition_velocity(m)")
+      endif
     end if
 
   !..wet deposition
@@ -979,7 +988,8 @@ subroutine initialize_output(filename, itime, ierror)
   USE snapfilML, only: ncsummary, nctitle, simulation_start
   USE snapgrdML, only: gparam, igtype, imodlevel, imslp, precipitation_in_output, &
       itotcomp, modleveldump, compute_column_max_conc, compute_aircraft_doserate, &
-      aircraft_doserate_threshold, output_column
+      aircraft_doserate_threshold, &
+      output_vd, output_column
   USE snapfldML, only:  &
       garea, &
       xm, ym, &
@@ -1148,6 +1158,13 @@ subroutine initialize_output(filename, itime, ierror)
           trim(def_comp(mm)%compnamemc)//"_column_concentration", &
           units="Bq/m2", chunksize=chksz3d)
       endif
+
+      if (def_comp(mm)%kdrydep > 0 .and. output_vd) then
+        call nc_declare(iunit, dimids3d, varid%comp(m)%vd, &
+          trim(def_comp(mm)%compnamemc)//"_dry_deposition_velocity", &
+          units="m/s", chunksize=chksz3d)
+      endif
+
     end do
     if (itotcomp == 1) then
       call nc_declare(iunit, dimids3d, varid%icblt, &
@@ -1182,7 +1199,7 @@ end subroutine
 
 subroutine get_varids(iunit, varid, ierror)
   USE snapparML, only: ncomp, run_comp, def_comp
-  USE snapgrdML, only: imodlevel, modleveldump
+  USE snapgrdML, only: imodlevel, modleveldump, output_vd
   integer, intent(in) :: iunit
   type(common_var), intent(out) :: varid
   integer, intent(out) :: ierror
@@ -1254,21 +1271,31 @@ subroutine get_varids(iunit, varid, ierror)
     ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%acbl)
     if (ierror /= NF90_NOERR) return
 
-    varname = trim(def_comp(mm)%compnamemc) // "_dry_deposition"
-    ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%idd)
-    if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+    if (def_comp(mm)%kdrydep == 1) then
+      varname = trim(def_comp(mm)%compnamemc) // "_dry_deposition"
+      ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%idd)
+      if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
 
-    varname = trim(def_comp(mm)%compnamemc) // "_acc_dry_deposition"
-    ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%accdd)
-    if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+      varname = trim(def_comp(mm)%compnamemc) // "_acc_dry_deposition"
+      ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%accdd)
+      if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
 
-    varname = trim(def_comp(mm)%compnamemc) // "_wet_deposition"
-    ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%iwd)
-    if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+      if (output_vd) then
+        varname = trim(def_comp(mm)%compnamemc) // "_dry_deposition_velocity"
+        ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%vd)
+        if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+      endif
+    endif
 
-    varname = trim(def_comp(mm)%compnamemc) // "_acc_wet_deposition"
-    ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%accwd)
-    if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+    if (def_comp(mm)%kwetdep == 1) then
+      varname = trim(def_comp(mm)%compnamemc) // "_wet_deposition"
+      ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%iwd)
+      if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+
+      varname = trim(def_comp(mm)%compnamemc) // "_acc_wet_deposition"
+      ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%accwd)
+      if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+    endif
 
     if (imodlevel) then
       if (modleveldump > 0.) then

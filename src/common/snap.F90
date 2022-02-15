@@ -35,6 +35,7 @@
 ! DRY.DEPOSITION.OLD .......................... (default)
 ! DRY.DEPOSITION.NEW
 ! DRY.DEPOSITION.SCHEME = "emep"/"old"/"..."
+! DRY.DEPOSITION.SAVE
 ! WET.DEPOSITION.OLD .......................... (default)
 ! WET.DEPOSITION.NEW
 ! TIME.STEP= 900.
@@ -876,7 +877,7 @@ contains
                          TIME_PROFILE_UNDEFINED
     use snapfimexML, only: parse_interpolator
     use snapgrdml, only: compute_column_max_conc, compute_aircraft_doserate, aircraft_doserate_threshold, &
-    output_column
+    output_column, output_vd
 
     !> Open file unit
     integer, intent(in) :: snapinput_unit
@@ -1087,6 +1088,13 @@ contains
           write(error_unit, *) "Scheme ", cinput(pname_start:pname_end), " is unknown"
           goto 12
         end select
+      case ('dry.deposition.save')
+        if (drydep_scheme /= DRYDEP_SCHEME_EMEP) then
+          write(error_unit, *) "The scheme is not set to a compatible value"
+          goto 12
+        endif
+        if (has_value) goto 12
+        output_vd = .true.
       case ('wet.deposition.old')
         write (error_unit, *) "This option is deprecated and removed"
         goto 12

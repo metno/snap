@@ -136,4 +136,8 @@ module snapgrdML
 
 !> Output concentration in each column
     logical, save, public :: output_column = .false.
+
+!> Save dry deposition velocity in output file
+    logical, save, public :: output_vd = .false.
+
 end module snapgrdML
