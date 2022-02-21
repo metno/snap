@@ -778,6 +778,7 @@ contains
   end subroutine fi_checkload_intern
 
   subroutine read_drydep(fio, timepos, timeposm1, nr)
+    USE ieee_arithmetic, only: ieee_is_nan
     USE snapmetML, only: met_params, &
       temp_units, downward_momentum_flux_units, surface_roughness_length_units, &
       surface_heat_flux_units, leaf_area_index_units
@@ -838,6 +839,9 @@ contains
 
     call fi_checkload(fio, met_params%z0, surface_roughness_length_units, z0(:, :), nt=timepos, nr=nr)
     call fi_checkload(fio, met_params%leaf_area_index, leaf_area_index_units, leaf_area_index(:, :), nt=timepos, nr=nr)
+    where (ieee_is_nan(leaf_area_index))
+      leaf_area_index = 0.0
+    endwhere
     call fi_checkload(fio, met_params%t2m, temp_units, t2m(:, :), nt=timepos, nr=nr)
 
     if (drydep_scheme == DRYDEP_SCHEME_EMEP) then
