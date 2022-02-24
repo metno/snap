@@ -48,8 +48,8 @@ fi
 #INSTRUCTIONS_END
 
 HOST=bionic
-VERSION=1.6.26
-CHANGELOG="Use mapp-service failover toggle"
+VERSION=1.6.27
+CHANGELOG="Add ukrainian reaktors"
 rm -f debian
 ln -s debian.$HOST debian
 dch -v ${VERSION}-2 -U "${CHANGELOG}"
