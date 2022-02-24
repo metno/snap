@@ -1,3 +1,15 @@
+snap-py (1.6.27-2) bionic; urgency=medium
+
+  * Add ukrainian reaktors
+
+ -- Heiko Klein <heikok@pc5558.pc.met.no>  Thu, 24 Feb 2022 15:28:12 +0100
+
+snap-py (1.6.27-2) bionic; urgency=medium
+
+  * Add ukrainian reaktors
+
+ -- Heiko Klein <heikok@pc5558.pc.met.no>  Thu, 24 Feb 2022 15:27:39 +0100
+
 snap-py (1.6.25-2) bionic; urgency=medium
 
   * Update archive path
