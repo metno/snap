@@ -109,6 +109,11 @@ m=SNAP.current t=fimex format=netcdf f={nppdir[tag]}/snap.nc
             dianaInTmpl = fh.read()
         with open(dianaIn, 'wt') as fh:
             fh.write(dianaInTmpl.format(hours=hours, component=component))
+        # env-vars for bdiana without display
+        os.environ['QT_QPA_PLATFORMTHEME']=''
+        os.environ['QT_QPA_FONTDIR']='/usr/share/fonts/truetype'
+        os.environ['QT_QPA_PLATFORM']='offscreen'
+
         subprocess.run(['bdiana', '-i', 'diana.in', '-s', 'diana.setup', '-p', 'Model'],
                         cwd=prod_dir
                         )
