@@ -105,8 +105,14 @@ m=SNAP.current t=fimex format=netcdf f={nppdir[tag]}/snap.nc
         hours = ",".join(["{x} | {y}".format(x=x, y=x+3) for x in range(0,48,3)])
         component = 'Cs137'
         dianaIn = os.path.join(prod_dir, "diana.in")
+        dianaInTmpl = ""
         with open(res.getBSnapInputFile(), 'rt') as fh:
-            dianaInTmpl = fh.read()
+            for line in fh:
+                if line.startswith('AREA'):
+                    # zoom into area (lon_min:lon_max:lat_min:lat_max in radians)
+                    dianaInTmpl += "AREA proj4string=\"+proj=latlon +R=6371000 +no_defs\" rectangle=-0.38:1.0:0.55:1.35\n"
+                else:
+                    dianaInTmpl += line
         with open(dianaIn, 'wt') as fh:
             fh.write(dianaInTmpl.format(hours=hours, component=component))
         # env-vars for bdiana without display
@@ -114,7 +120,7 @@ m=SNAP.current t=fimex format=netcdf f={nppdir[tag]}/snap.nc
         os.environ['QT_QPA_FONTDIR']='/usr/share/fonts/truetype'
         os.environ['QT_QPA_PLATFORM']='offscreen'
 
-        subprocess.run(['bdiana', '-i', 'diana.in', '-s', 'diana.setup', '-p', 'Model'],
+        subprocess.run(['bdiana', '-i', 'diana.in', '-s', 'diana.setup'],
                         cwd=prod_dir
                         )
         
