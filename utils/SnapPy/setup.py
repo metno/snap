@@ -34,6 +34,6 @@ setup(name='Snappy',
                    'Snappy.EEMEP': 'Snappy/EEMEP'},
       package_data={'Snappy': ['resources/*'],
                     'Snappy.EEMEP': ['resources/*']},
-      scripts=['snapPy', 'snap4rimsterm', 'snapCombineInverse'],
+      scripts=['snapPy', 'snap4rimsterm', 'snapCombineInverse', 'snapRunnerNpps'],
 )
 

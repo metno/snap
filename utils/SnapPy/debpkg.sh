@@ -48,8 +48,8 @@ fi
 #INSTRUCTIONS_END
 
 HOST=bionic
-VERSION=1.6.28
-CHANGELOG="adding snapRunnerNpps and toa plots"
+VERSION=1.6.29
+CHANGELOG="adding snapRunnerNpps and toa plots, again"
 rm -f debian
 ln -s debian.$HOST debian
 dch -v ${VERSION}-2 -U "${CHANGELOG}"
