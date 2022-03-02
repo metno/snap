@@ -48,8 +48,8 @@ fi
 #INSTRUCTIONS_END
 
 HOST=bionic
-VERSION=1.6.27
-CHANGELOG="Add ukrainian reaktors"
+VERSION=1.6.28
+CHANGELOG="adding snapRunnerNpps and toa plots"
 rm -f debian
 ln -s debian.$HOST debian
 dch -v ${VERSION}-2 -U "${CHANGELOG}"
