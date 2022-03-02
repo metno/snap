@@ -177,14 +177,14 @@ m=SNAP.current t=fimex format=netcdf f={}
             with open(self.res.getBSnapInputFile(), 'rt') as fh:
                 dianaInTmpl = fh.read()
             with open(dianaIn, 'wt') as fh:
-                fh.write(dianaInTmpl.format(hours=hours, component=component))
+                fh.write(dianaInTmpl.format(hours=hours, component=component, areaname=self.lastQDict['region']))
 
             # plots
             proc = QProcess()
             proc.setWorkingDirectory(os.path.join(prod_dir))
             proc.setStandardOutputFile(os.path.join(self.lastOutputDir,"snap.log.out"), QIODevice.Append)
             proc.setStandardErrorFile(os.path.join(self.lastOutputDir,"snap.log.out"), QIODevice.Append)
-            proc.start("bdiana{}".format(diVersion), ['-i', dianaIn, '-s', 'diana.setup', 'p={}'.format(self.lastQDict['region'])])
+            proc.start("bdiana{}".format(diVersion), ['-i', dianaIn, '-s', 'diana.setup'])
             proc.waitForFinished(-1)
             with open(os.path.join(self.lastOutputDir,"snap.log.out"), 'a') as lfh:
                 lfh.write("plotting finished\n")

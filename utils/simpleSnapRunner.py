@@ -135,6 +135,15 @@ m=SNAP.current t=fimex format=netcdf f={nppdir[tag]}/snap.nc
     print('running montage with:\n'+" ".join(opts))
     subprocess.run(opts)
 
+    # montage toa
+    opts = ['montage', '-mode', 'concatenate', '-tile', f"1x{len(npps)}"]
+    for tag in npps:
+        opts += ['-label', tag]
+        opts += [f"{nppdir[tag]}/prod/snap_toa.png"]
+    opts.append(f'/home/VGLSHARE/SNAP4DSA/plots_{now:%Y-%m-%dT%H}0000Z_toa.png')
+    print('running montage for toa with:\n'+" ".join(opts))
+    subprocess.run(opts)
+
 
 
 
