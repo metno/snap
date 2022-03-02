@@ -34,6 +34,7 @@ LABEL anno=<arrow> halign=right valign=bottom fcolour=220:220:220:160 fontsize=1
     LOOP.END
 
 FILENAME=snap_toa.png
+ADDHOUR=0
 PLOT
 FIELD model=SNAP.current plot=TimeOfArrival colour=off plottype=contour linetype=solid linewidth=1 base=0 frame=1 line.interval=3 extreme.type=None extreme.size=1 extreme.radius=1 palettecolours=no_green_rec table=1 repeat=0 value.label=1 line.smooth=0 field.smooth=0 label.size=1 grid.lines=0 grid.lines.max=0 undef.masking=0 undef.colour=255:255:255:255 undef.linewidth=1 undef.linetype=solid grid.value=0 colour_2=off dim=1 patterns=off
 AREA name={areaname}
