@@ -89,6 +89,12 @@ STEP.HOUR.OUTPUT.FIELDS= 3
                                 stdout=stdout,
                                 stderr=stderr
                                 )
+                # add time of arrival
+                subprocess.run(['/usr/bin/snapAddToa', 'snap.nc'],
+                                cwd=nppdir[tag],
+                                stdout=stdout,
+                                stderr=stderr
+                                )
         # and plot
         prod_dir = os.path.join(nppdir[tag], 'prod')
         os.mkdir(prod_dir)
@@ -136,7 +142,7 @@ m=SNAP.current t=fimex format=netcdf f={nppdir[tag]}/snap.nc
     subprocess.run(opts)
 
     # montage toa
-    opts = ['montage', '-mode', 'concatenate', '-tile', f"1x{len(npps)}"]
+    opts = ['montage', '-mode', 'concatenate', '-tile', f"{len(npps)}x1"]
     for tag in npps:
         opts += ['-label', tag]
         opts += [f"{nppdir[tag]}/prod/snap_toa.png"]
