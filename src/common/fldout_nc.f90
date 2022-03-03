@@ -1255,7 +1255,7 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
       avgbq1, avgbq2, hlayer1, hlayer2, hbl1, hbl2, &
       avgprec, concen, avghbl, dgarea, &
       avgbq, concacc, precip, &
-      concentration_4d, max_column_concentration, garea
+      max_column_scratch, max_column_concentration, garea
   USE snapdimml, only: nk
   USE snapparML, only: ncomp, def_comp
   USE ftestML, only: ftest
@@ -1357,7 +1357,7 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
   end if
 
   if (compute_column_max_conc) then
-    concentration_4d = 0.0
+    max_column_scratch = 0.0
     do n=1,npart
       part = pdata(n)
       i = nint(part%x)
@@ -1366,18 +1366,18 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
       k = ivlayer(ivlvl)
       m = def_comp(part%icomp)%to_running
     !..in each sigma/eta (input model) layer
-      concentration_4d(i,j,k,m) = concentration_4d(i,j,k,m) + part%rad
+      max_column_scratch(i,j,k,m) = max_column_scratch(i,j,k,m) + part%rad
     end do
 
     do n=1,ncomp
       do k=1,nk-1
         associate(dh => rt1*hlayer1(:,:,k) + rt2*hlayer2(:,:,k))
-          concentration_4d(:,:,k,n) = concentration_4d(:,:,k,n)/(dh*garea)
+          max_column_scratch(:,:,k,n) = max_column_scratch(:,:,k,n)/(dh*garea)
         end associate
       enddo
       max_column_concentration(:,:,n) = max( &
               max_column_concentration(:,:,n), &
-              maxval(concentration_4d(:,:,:,n), dim=3))
+              maxval(max_column_scratch(:,:,:,n), dim=3))
     enddo
   endif
 end subroutine

@@ -69,7 +69,7 @@ module snapgrdML
     integer, save, public :: itotcomp = 0
 
 !> Compute max concentration in a column (accumulated per timestep)
-    logical, save, public :: compute_column_max_conc = .false.
+    logical, save, public :: compute_column_max_conc = .true.
 
 !> grid parameters (depending on the grid type)
 !>

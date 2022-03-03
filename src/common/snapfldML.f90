@@ -121,10 +121,10 @@ module snapfldML
 !> only used if imodlevel
   real(kind=real64), allocatable, save, public :: avgbq(:,:,:,:)
 
-!> Instant concentration for a timestep
+!> Scratch space for finding max column concentration
 !>
 !> only used if compute_column_max_conc
-  real, allocatable, save, public :: concentration_4d(:,:,:,:)
+  real, allocatable, save, public :: max_column_scratch(:,:,:,:)
 !> Max column concentration
 !>
 !> only used if compute_column_max_conc

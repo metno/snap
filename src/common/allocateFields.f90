@@ -24,7 +24,7 @@ module allocateFieldsML
       depdry, depwet, accprec, avgprec, avghbl, precip, &
       pmsl1, pmsl2, field1, field2, field3, field4, xm, ym, &
       garea, dgarea, &
-      concentration_4d, max_column_concentration
+      max_column_scratch, max_column_concentration
   USE snapfilML, only: idata, fdata
   USE snapgrdML, only: ahalf, bhalf, vhalf, alevel, blevel, vlevel, imodlevel, &
       compute_column_max_conc
@@ -179,7 +179,7 @@ subroutine allocateFields
   IF (AllocateStatus /= 0) ERROR STOP errmsg
 
   if (compute_column_max_conc) then
-    allocate(concentration_4d(nx,ny,nk-1,ncomp), &
+    allocate(max_column_scratch(nx,ny,nk-1,ncomp), &
       max_column_concentration(nx,ny,ncomp), &
       STAT=AllocateStatus)
     if (AllocateStatus /= 0) ERROR STOP errmsg
@@ -253,7 +253,7 @@ subroutine deAllocateFields
   endif
 
   if (allocated(max_column_concentration)) then
-    deallocate(concentration_4d)
+    deallocate(max_column_scratch)
     deallocate(max_column_concentration)
   endif
 
