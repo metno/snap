@@ -23,9 +23,11 @@ module allocateFieldsML
       concacc, avgbq1, avgbq2, avgbq, accwet, accdry, concen, &
       depdry, depwet, accprec, avgprec, avghbl, precip, &
       pmsl1, pmsl2, field1, field2, field3, field4, xm, ym, &
-      garea, dgarea
+      garea, dgarea, &
+      concentration_4d, max_column_concentration
   USE snapfilML, only: idata, fdata
-  USE snapgrdML, only: ahalf, bhalf, vhalf, alevel, blevel, vlevel, imodlevel
+  USE snapgrdML, only: ahalf, bhalf, vhalf, alevel, blevel, vlevel, imodlevel, &
+      compute_column_max_conc
   USE releaseML, only: mplume, iplume, mpart
   implicit none
   private
@@ -176,6 +178,12 @@ subroutine allocateFields
   ALLOCATE ( plume_release(mplume, ncomp), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
 
+  if (compute_column_max_conc) then
+    allocate(concentration_4d(nx,ny,nk-1,ncomp), &
+      max_column_concentration(nx,ny,ncomp), &
+      STAT=AllocateStatus)
+    if (AllocateStatus /= 0) ERROR STOP errmsg
+  endif
 
 end subroutine allocateFields
 
@@ -242,6 +250,11 @@ subroutine deAllocateFields
 
   if (allocated(avgbq)) then
     deallocate(avgbq)
+  endif
+
+  if (allocated(max_column_concentration)) then
+    deallocate(concentration_4d)
+    deallocate(max_column_concentration)
   endif
 
 

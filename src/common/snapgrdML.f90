@@ -68,6 +68,9 @@ module snapgrdML
 !> 1=output of total of all components
     integer, save, public :: itotcomp = 0
 
+!> Compute max concentration in a column (accumulated per timestep)
+    logical, save, public :: compute_column_max_conc = .false.
+
 !> grid parameters (depending on the grid type)
 !>
 !> polarstereographic (igtype=1,4):

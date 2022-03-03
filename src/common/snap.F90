@@ -129,6 +129,7 @@
 ! FIELD.OUTTYPE=netcdf
 ! FIELD.DAILY.OUTPUT.ON
 ! FIELD.USE_MODEL_WIND_INSTEAD_OF_10M= [.false.]/.true
+! OUTPUT.COLUMN_MAX_CONC
 ! * timestamp which will also be written to netcdf-files, default: now
 ! SIMULATION.START.DATE=2010-01-01_10:00:00
 ! LOG.FILE=     snap.log
@@ -1069,6 +1070,7 @@ contains
                          TIME_PROFILE_UNDEFINED
     use find_parameter, only: detect_gridparams, get_klevel
     use snapfimexML, only: parse_interpolator
+    use snapgrdml, only: compute_column_max_conc
 #if defined(FIMEX)
     use find_parameters_fi, only: detect_gridparams_fi
 #endif
@@ -1654,6 +1656,8 @@ contains
         !..levelfields are dump-data
         if (.not. has_value) goto 12
         read (cinput(pname_start:pname_end), *, err=12) modleveldump
+      case ('output.column_max_conc')
+        compute_column_max_conc = .true.
       case ('release.pos')
         !..release.pos=<'name',latitude,longitude>
         if (.not. has_value) goto 12

@@ -120,4 +120,13 @@ module snapfldML
 !>
 !> only used if imodlevel
   real(kind=real64), allocatable, save, public :: avgbq(:,:,:,:)
+
+!> Instant concentration for a timestep
+!>
+!> only used if compute_column_max_conc
+  real, allocatable, save, public :: concentration_4d(:,:,:,:)
+!> Max column concentration
+!>
+!> only used if compute_column_max_conc
+  real, allocatable, save, public :: max_column_concentration(:,:,:)
 end module snapfldML
