@@ -818,12 +818,12 @@ contains
 
     if (timepos == 1) then
       call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, hflux(:, :), nt=timepos, nr=nr)
-    else if (timepos == 12) then
+    else if (timepos == 13) then
       ! Weird AROME data is invalid at t=12
       call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, tmp1(:, :), nt=timeposm1, nr=nr)
       call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, tmp2(:, :), nt=timepos+1, nr=nr)
       hflux(:,:) = (tmp2 - tmp1)/2
-    else if (timepos == 13) then
+    else if (timepos == 14) then
       ! Weird AROME data is invalid at t=13
       call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, tmp1(:, :), nt=timeposm1-1, nr=nr)
       call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, tmp2(:, :), nt=timepos, nr=nr)
