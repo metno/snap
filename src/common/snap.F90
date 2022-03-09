@@ -179,7 +179,7 @@ PROGRAM bsnap
   USE wetdep, only: wetdep2, wetdep2_init
   USE drydep, only: drydep1, drydep2, drydep_nonconstant_vd, drydep_scheme, &
           DRYDEP_SCHEME_OLD, DRYDEP_SCHEME_NEW, DRYDEP_SCHEME_EMEP, &
-          DRYDEP_SCHEME_ZHANG, DRYDEP_SCHEME_EMERSON
+          DRYDEP_SCHEME_ZHANG, DRYDEP_SCHEME_EMERSON, DRYDEP_SCHEME_UNDEFINED
   USE decayML, only: decay, decayDeps
   USE posintML, only: posint, posint_init
   USE bldpML, only: bldp
@@ -1098,7 +1098,9 @@ contains
           goto 12
         end select
       case ('dry.deposition.save')
-        if (drydep_scheme /= DRYDEP_SCHEME_EMEP) then
+        if (drydep_scheme /= DRYDEP_SCHEME_EMEP .and. &
+            drydep_scheme /= DRYDEP_SCHEME_ZHANG .and. &
+            drydep_scheme /= DRYDEP_SCHEME_EMERSON) then
           write(error_unit, *) "The scheme is not set to a compatible value"
           goto 12
         endif
@@ -1953,7 +1955,7 @@ contains
       end if
     end do
 
-    if (drydep_scheme == 0) drydep_scheme = DRYDEP_SCHEME_OLD
+    if (drydep_scheme == DRYDEP_SCHEME_UNDEFINED) drydep_scheme = DRYDEP_SCHEME_OLD
     if (wetdep_version == 0) then ! Set default wetdep version
       wetdep_version = 2
     endif
@@ -1986,7 +1988,10 @@ contains
             def_comp(m)%gravityms
           ierror = 1
         end if
-      elseif (drydep_scheme == DRYDEP_SCHEME_EMEP .and. def_comp(m)%kdrydep == 1) then
+      elseif (((drydep_scheme == DRYDEP_SCHEME_EMEP) .or. &
+               (drydep_scheme == DRYDEP_SCHEME_EMERSON) .or. &
+               (drydep_scheme == DRYDEP_SCHEME_ZHANG)) .and. &
+              def_comp(m)%kdrydep == 1) then
         ! Check if component has the necessary definitions to compute
         ! the dry deposition
         if (.true.) then
@@ -2014,7 +2019,7 @@ contains
       end if
     end do
 
-    if (i1 == 0) drydep_scheme = 0
+    if (i1 == 0) drydep_scheme = DRYDEP_SCHEME_UNDEFINED
 
     if (itotcomp == 1 .AND. ncomp == 1) itotcomp = 0
 

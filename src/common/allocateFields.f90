@@ -43,8 +43,8 @@ subroutine allocateFields
   USE snapdimML, only: nx, ny, nk, ldata, maxsiz
   USE snapparML, only: ncomp, iparnum
   USE releaseML, only: mplume, iplume, plume_release, mpart
-  USE drydep, only: drydep_scheme, DRYDEP_SCHEME_EMEP
-  USE drydep, only: drydep_scheme, DRYDEP_SCHEME_EMEP
+  USE drydep, only: drydep_scheme, DRYDEP_SCHEME_EMEP, DRYDEP_SCHEME_EMERSON, &
+    DRYDEP_SCHEME_ZHANG
 
   logical, save :: FirstCall = .TRUE.
   integer :: AllocateStatus
@@ -201,7 +201,9 @@ subroutine allocateFields
     endif
   endif
 
-  if (drydep_scheme == DRYDEP_SCHEME_EMEP) then
+  if (drydep_scheme == DRYDEP_SCHEME_EMEP .or. &
+      drydep_scheme == DRYDEP_SCHEME_ZHANG .or. &
+      drydep_scheme == DRYDEP_SCHEME_EMERSON) then
     allocate(vd_dep(nx,ny,ncomp), STAT=AllocateStatus)
     if (AllocateStatus /= 0) ERROR STOP errmsg
   endif

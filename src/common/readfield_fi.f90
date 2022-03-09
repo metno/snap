@@ -794,11 +794,14 @@ contains
     integer :: i, mm
     real :: diam, dens
 
-    allocate(xflux, yflux, hflux, z0, leaf_area_index, t2m, tmp1, tmp2, MOLD=ps2)
-
-    if (drydep_scheme /= DRYDEP_SCHEME_EMEP) then
+    if (.not.(drydep_scheme == DRYDEP_SCHEME_EMEP .or. &
+              drydep_scheme == DRYDEP_SCHEME_EMERSON .or. &
+              drydep_scheme == DRYDEP_SCHEME_ZHANG)) then
       return
     endif
+
+    allocate(xflux, yflux, hflux, z0, leaf_area_index, t2m, tmp1, tmp2, MOLD=ps2)
+
 
     ! Fluxes are integrated: Deaccumulate
     if (timepos == 1) then
