@@ -782,7 +782,8 @@ contains
     USE snapmetML, only: met_params, &
       temp_units, downward_momentum_flux_units, surface_roughness_length_units, &
       surface_heat_flux_units, leaf_area_index_units
-    use drydep, only: drydep_scheme, DRYDEP_SCHEME_EMEP, drydep_emep_vd
+    use drydep, only: drydep_scheme, DRYDEP_SCHEME_EMEP, drydep_emep_vd, &
+      DRYDEP_SCHEME_EMERSON, DRYDEP_SCHEME_ZHANG, drydep_zhang_emerson_vd
     use snapparML, only: ncomp, run_comp, def_comp
     use snapfldML, only: ps2, vd_dep
     type(FimexIO), intent(inout) :: fio
@@ -844,15 +845,28 @@ contains
     endwhere
     call fi_checkload(fio, met_params%t2m, temp_units, t2m(:, :), nt=timepos, nr=nr)
 
-    if (drydep_scheme == DRYDEP_SCHEME_EMEP) then
+    if (drydep_scheme == DRYDEP_SCHEME_EMEP .or. &
+        drydep_scheme == DRYDEP_SCHEME_EMERSON .or. &
+        drydep_scheme == DRYDEP_SCHEME_ZHANG) then
       do i=1,ncomp
         mm = run_comp(i)%to_defined
 
         if (def_comp(mm)%kdrydep == 1) then
           diam = 2*def_comp(mm)%radiusmym*1e-6
           dens = def_comp(mm)%densitygcm3*1e3
-          call drydep_emep_vd(ps2*100, t2m, yflux, xflux, z0, &
-            hflux, leaf_area_index, diam, dens, vd_dep(:, :, ncomp))
+          select case(drydep_scheme)
+          case (DRYDEP_SCHEME_EMEP)
+            call drydep_emep_vd(ps2*100, t2m, yflux, xflux, z0, &
+              hflux, leaf_area_index, diam, dens, vd_dep(:, :, ncomp))
+          case (DRYDEP_SCHEME_ZHANG)
+            call drydep_zhang_emerson_vd(ps2*100, t2m, yflux, xflux, z0, &
+              hflux, leaf_area_index, diam, dens, vd_dep(:, :, ncomp), .false.)
+          case (DRYDEP_SCHEME_EMERSON)
+            call drydep_zhang_emerson_vd(ps2*100, t2m, yflux, xflux, z0, &
+              hflux, leaf_area_index, diam, dens, vd_dep(:, :, ncomp), .true.)
+          case default
+            error stop "Unreachable"
+          end select
         endif
       end do
     endif

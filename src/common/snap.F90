@@ -177,8 +177,9 @@ PROGRAM bsnap
   use snapfldML, only: depwet, vd_dep
   USE forwrdML, only: forwrd, forwrd_init
   USE wetdep, only: wetdep2, wetdep2_init
-  USE drydep, only: drydep1, drydep2, drydep_emep, drydep_scheme, &
-          DRYDEP_SCHEME_OLD, DRYDEP_SCHEME_NEW, DRYDEP_SCHEME_EMEP
+  USE drydep, only: drydep1, drydep2, drydep_nonconstant_vd, drydep_scheme, &
+          DRYDEP_SCHEME_OLD, DRYDEP_SCHEME_NEW, DRYDEP_SCHEME_EMEP, &
+          DRYDEP_SCHEME_ZHANG, DRYDEP_SCHEME_EMERSON
   USE decayML, only: decay, decayDeps
   USE posintML, only: posint, posint_init
   USE bldpML, only: bldp
@@ -710,7 +711,9 @@ PROGRAM bsnap
         !..dry deposition
         if (drydep_scheme == DRYDEP_SCHEME_OLD) call drydep1(pdata(np))
         if (drydep_scheme == DRYDEP_SCHEME_NEW) call drydep2(tstep, pdata(np))
-        if (drydep_scheme == DRYDEP_SCHEME_EMEP) call drydep_emep(tstep, vd_dep, pdata(np))
+        if (drydep_scheme == DRYDEP_SCHEME_EMEP .or. &
+            drydep_scheme == DRYDEP_SCHEME_ZHANG .or. &
+            drydep_scheme == DRYDEP_SCHEME_EMERSON) call drydep_nonconstant_vd(tstep, vd_dep, pdata(np))
 
         !..wet deposition (1=old, 2=new version)
         if (wetdep_version == 2) call wetdep2(depwet, tstep, pdata(np), pextra)
@@ -1084,6 +1087,12 @@ contains
         case ('emep')
           if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_EMEP) goto 12
           drydep_scheme = DRYDEP_SCHEME_EMEP
+        case ('zhang')
+          if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_ZHANG) goto 12
+          drydep_scheme = DRYDEP_SCHEME_ZHANG
+        case ('emerson')
+          if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_EMERSON) goto 12
+          drydep_scheme = DRYDEP_SCHEME_EMERSON
         case default
           write(error_unit, *) "Scheme ", cinput(pname_start:pname_end), " is unknown"
           goto 12
