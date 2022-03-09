@@ -44,6 +44,7 @@ module fldout_ncML
     integer :: ac
     integer :: ic
     integer :: icml
+    integer :: column_max_conc
   end type
 
 !> Variables in a file
@@ -89,12 +90,12 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     ierror)
   USE iso_fortran_env, only: int16
   USE snapgrdML, only: imodlevel, imslp, precipitation_in_output, &
-      itotcomp
+      itotcomp, compute_column_max_conc
   USE snapfldML, only: field1, field2, field3, field4, &
       depdry, depwet, &
       avgbq1, avgbq2, garea, pmsl1, pmsl2, hbl1, hbl2, &
       accdry, accwet, avgprec, concen, ps1, ps2, avghbl, &
-      concacc, accprec
+      concacc, accprec, max_column_concentration
   USE snapparML, only: time_profile, ncomp, run_comp, def_comp, &
     TIME_PROFILE_BOMB
   USE snapdebug, only: iulog, idebug
@@ -336,6 +337,12 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     call check(nf90_put_var(iunit, varid%comp(m)%ac, start=[ipos], count=[isize], &
         values=field3), "set_ac(m)")
   !.....end do m=1,ncomp
+
+    if (compute_column_max_conc) then
+      call check(nf90_put_var(iunit, varid%comp(m)%column_max_conc, &
+        start=[ipos], count=[isize], &
+        values=max_column_concentration(:,:,m)), "column_max_concentration")
+    endif
   end do
 
 
@@ -462,6 +469,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
         values=field3), "set_act")
 
   !.....end if(ncomp.gt.1 .and. itotcomp.eq.1) then
+
   end if
 
 
@@ -945,7 +953,7 @@ end subroutine nc_set_projection
 subroutine initialize_output(filename, itime, ierror)
   USE snapfilML, only: ncsummary, nctitle, simulation_start
   USE snapgrdML, only: gparam, igtype, imodlevel, imslp, precipitation_in_output, &
-      itotcomp, modleveldump
+      itotcomp, modleveldump, compute_column_max_conc
   USE snapfldML, only:  &
       garea, &
       xm, ym, &
@@ -1095,6 +1103,12 @@ subroutine initialize_output(filename, itime, ierror)
       !     +          "Bq*hour/m3","",
       !     +          TRIM(def_comp(mm)%compnamemc)//"_accumulated_concentration_ml")
       end if
+
+      if (compute_column_max_conc) then
+        string = trim(def_comp(mm)%compnamemc)//"_max_column_concentration"
+        call nc_declare_3d(iunit, dimids3d, varid%comp(m)%column_max_conc, &
+            chksz3d, string, "Bq/m3", "", string)
+      endif
     end do
     if (itotcomp == 1) then
       call nc_declare_3d(iunit, dimids3d, varid%icblt, &
@@ -1217,6 +1231,10 @@ subroutine get_varids(iunit, varid, ierror)
     ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%accwd)
     if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
 
+    varname = trim(def_comp(mm)%compnamemc)//"_max_column_concentration"
+    ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%column_max_conc)
+    if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+
     varname = trim(def_comp(mm)%compnamemc) // "_concentration_dump_ml"
     ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%icml)
     if (ierror /= NF90_NOERR) cycle  ! Skip checking for alternative variable
@@ -1224,7 +1242,6 @@ subroutine get_varids(iunit, varid, ierror)
     varname = trim(def_comp(mm)%compnamemc) // "_concentration_ml"
     ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%icml)
     if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
-
   enddo
 
   ierror = NF90_NOERR
@@ -1233,11 +1250,13 @@ end subroutine
 !> accumulation for average fields
 subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
   USE snapgrdML, only: imodlevel, &
-      ivlayer
+      ivlayer, compute_column_max_conc
   USE snapfldML, only:  &
       avgbq1, avgbq2, hlayer1, hlayer2, hbl1, hbl2, &
       avgprec, concen, avghbl, dgarea, &
-      avgbq, concacc, precip
+      avgbq, concacc, precip, &
+      max_column_scratch, max_column_concentration, garea
+  USE snapdimml, only: nk
   USE snapparML, only: ncomp, def_comp
   USE ftestML, only: ftest
   USE releaseML, only: npart
@@ -1260,9 +1279,12 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
     avgbq1 = 0.0
     avgbq2 = 0.0
 
-    if(imodlevel) then
+    if (imodlevel) then
       avgbq = 0.0
     end if
+    if (compute_column_max_conc) then
+      max_column_concentration = 0.0
+    endif
   end if
 
   naverage=naverage+1
@@ -1334,6 +1356,30 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
     end do
   end if
 
+  if (compute_column_max_conc) then
+    max_column_scratch = 0.0
+    do n=1,npart
+      part = pdata(n)
+      i = nint(part%x)
+      j = nint(part%y)
+      ivlvl = part%z*10000.
+      k = ivlayer(ivlvl)
+      m = def_comp(part%icomp)%to_running
+    !..in each sigma/eta (input model) layer
+      max_column_scratch(i,j,k,m) = max_column_scratch(i,j,k,m) + part%rad
+    end do
+
+    do n=1,ncomp
+      do k=1,nk-1
+        associate(dh => rt1*hlayer1(:,:,k) + rt2*hlayer2(:,:,k))
+          max_column_scratch(:,:,k,n) = max_column_scratch(:,:,k,n)/(dh*garea)
+        end associate
+      enddo
+      max_column_concentration(:,:,n) = max( &
+              max_column_concentration(:,:,n), &
+              maxval(max_column_scratch(:,:,:,n), dim=3))
+    enddo
+  endif
 end subroutine
 
 end module fldout_ncML
