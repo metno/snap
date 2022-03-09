@@ -1,10 +1,11 @@
 #! /usr/bin/env python3
 
+import argparse
 import datetime
+import multiprocessing
 import subprocess
 from Snappy.Resources import Resources
 import os
-import re
 import sys
 from time import gmtime, strftime
 
@@ -43,9 +44,7 @@ RELEASE.UPPER.M= {upperHeight}, {upperHeight}
 
     return (source_term, errors)
 
-def runsnap(npps):
-    now = datetime.datetime.now()
-    res = Resources()
+def runsnapsingle(npp, release_dt, tag_time, dirname, res):
     nPPs = res.readNPPs()
     reldict = {
         'releaseTime': 96,
@@ -59,77 +58,93 @@ def runsnap(npps):
     (term, errors) = get_isotope_release(res, reldict)
     if (len(errors) > 0):
         print(errors, file=sys.stderr)
-    nppdir = {}
-    for tag in npps:
-        assert tag in nPPs
-        lat = float(nPPs[tag]['lat'])
-        lon = float(nPPs[tag]['lon'])
-        curtime = gmtime()
-        nppdir[tag] = os.path.join(res.getSnapOutputDir(), "{0}_{1}".format(tag, strftime("%Y-%m-%dT%H%M%S", curtime)))
-        simStart = strftime("%Y-%m-%d_%H:%M:%S", curtime)
-        print(f'outputdir for {simStart}: {nppdir[tag]}')
-        os.mkdir(nppdir[tag])
-        sourceTerm = f"""
-TITLE={tag} {now:%Y %m %d %H}
+        return False
+    lat = float(nPPs[npp]['lat'])
+    lon = float(nPPs[npp]['lon'])
+    simStart = strftime("%Y-%m-%d_%H:%M:%S", tag_time)
+    print(f'outputdir for {simStart}: {dirname}')
+    os.mkdir(dirname)
+    sourceTerm = f"""
+TITLE={npp} {release_dt:%Y %m %d %H}
 SIMULATION.START.DATE={simStart}
 SET_RELEASE.POS= P=   {lat},   {lon}
-TIME.START= {now:%Y %m %d %H}
+TIME.START= {release_dt:%Y %m %d %H}
 TIME.RUN = 52h
 STEP.HOUR.OUTPUT.FIELDS= 3
 """
-        sourceTerm += term
-        with open(os.path.join(nppdir[tag], "snap.input"),'w') as fh:
-            fh.write(sourceTerm)
-            files = res.getECMeteorologyFiles(now, 52, 'best')
-            fh.write(res.getSnapInputMetDefinitions('nrpa_ec_0p1', files))
-        with open(f"{nppdir[tag]}/snap.stdout.log", 'wt') as stdout:
-            with open(f"{nppdir[tag]}/snap.stderr.log", 'wt') as stderr:
-                subprocess.run(['/usr/bin/bsnap_naccident', 'snap.input'],
-                                cwd=nppdir[tag],
-                                stdout=stdout,
-                                stderr=stderr
-                                )
-                # add time of arrival
-                subprocess.run(['/usr/bin/snapAddToa', 'snap.nc'],
-                                cwd=nppdir[tag],
-                                stdout=stdout,
-                                stderr=stderr
-                                )
-        # and plot
-        prod_dir = os.path.join(nppdir[tag], 'prod')
-        os.mkdir(prod_dir)
-        with open(os.path.join(prod_dir, "diana.setup"),'wt') as fh:
-            di_setup = f"""
+    sourceTerm += term
+    with open(os.path.join(dirname, "snap.input"),'w') as fh:
+        fh.write(sourceTerm)
+        files = res.getECMeteorologyFiles(release_dt, 52, 'best')
+        fh.write(res.getSnapInputMetDefinitions('nrpa_ec_0p1', files))
+    with open(f"{dirname}/snap.stdout.log", 'wt') as stdout:
+        with open(f"{dirname}/snap.stderr.log", 'wt') as stderr:
+            os.environ['OMP_NUM_THREADS']='2' # moderate thread usage
+            subprocess.run(['/usr/bin/bsnap_naccident', 'snap.input'],
+                            cwd=dirname,
+                            stdout=stdout,
+                            stderr=stderr
+                            )
+            # add time of arrival
+            subprocess.run(['/usr/bin/snapAddToa', 'snap.nc'],
+                            cwd=dirname,
+                            stdout=stdout,
+                            stderr=stderr
+                            )
+    # and plot
+    prod_dir = os.path.join(dirname, 'prod')
+    os.mkdir(prod_dir)
+    with open(os.path.join(prod_dir, "diana.setup"),'wt') as fh:
+        di_setup = f"""
 %include /etc/diana/setup/diana.setup-COMMON
 <FIELD_FILES>
 filegroup=SNAP
-m=SNAP.current t=fimex format=netcdf f={nppdir[tag]}/snap.nc
+m=SNAP.current t=fimex format=netcdf f={dirname}/snap.nc
 </FIELD_FILES>
 """
-            fh.write(di_setup)
+        fh.write(di_setup)
 
-        hours = ",".join(["{x} | {y}".format(x=x, y=x+3) for x in range(0,48,3)])
-        component = 'Cs137'
-        dianaIn = os.path.join(prod_dir, "diana.in")
-        dianaInTmpl = ""
-        with open(res.getBSnapInputFile(), 'rt') as fh:
-            for line in fh:
-                if line.startswith('AREA'):
-                    # zoom into area (lon_min:lon_max:lat_min:lat_max in radians)
-                    dianaInTmpl += "AREA proj4string=\"+proj=latlon +R=6371000 +no_defs\" rectangle=-0.38:1.0:0.55:1.35\n"
-                else:
-                    dianaInTmpl += line
-        with open(dianaIn, 'wt') as fh:
-            fh.write(dianaInTmpl.format(hours=hours, component=component))
-        # env-vars for bdiana without display
-        os.environ['QT_QPA_PLATFORMTHEME']=''
-        os.environ['QT_QPA_FONTDIR']='/usr/share/fonts/truetype'
-        os.environ['QT_QPA_PLATFORM']='offscreen'
-
-        subprocess.run(['bdiana', '-i', 'diana.in', '-s', 'diana.setup'],
-                        cwd=prod_dir
-                        )
+    hours = ",".join(["{x} | {y}".format(x=x, y=x+3) for x in range(0,48,3)])
+    component = 'Cs137'
+    dianaIn = os.path.join(prod_dir, "diana.in")
+    dianaInTmpl = ""
+    with open(res.getBSnapInputFile(), 'rt') as fh:
+        for line in fh:
+            if line.startswith('AREA'):
+                # zoom into area (lon_min:lon_max:lat_min:lat_max in radians)
+                dianaInTmpl += "AREA proj4string=\"+proj=latlon +R=6371000 +no_defs\" rectangle=-0.38:1.0:0.55:1.35\n"
+            else:
+                dianaInTmpl += line
+    with open(dianaIn, 'wt') as fh:
+        fh.write(dianaInTmpl.format(hours=hours, component=component))
+    # env-vars for bdiana without display
+    os.environ['QT_QPA_PLATFORMTHEME']=''
+    os.environ['QT_QPA_FONTDIR']='/usr/share/fonts/truetype'
+    os.environ['QT_QPA_PLATFORM']='offscreen'
+    subprocess.run(['bdiana', '-i', 'diana.in', '-s', 'diana.setup'],
+                    cwd=prod_dir
+                    )
+    return True
         
+
+def runsnap(npps, outdir):
+    release_dt = datetime.datetime.now()
+
+    nppdir = {}
+    runparams = []
+    res = Resources()
+    res.getLustreDir() # set lustredir within res before parallelization - mapp-services.sh not parallelizable yet
+    nPPs = res.readNPPs()
+    for i, tag in enumerate(npps):
+        if not tag in nPPs:
+            print(f"unknown NPP: {tag}", file=sys.stderr)
+            sys.exit(1)
+        tag_time = gmtime(release_dt.timestamp() + i) # ensure a few secs difference for tags
+        nppdir[tag] = os.path.join(res.getSnapOutputDir(), "{0}_{1}".format(tag, strftime("%Y-%m-%dT%H%M%S", tag_time)))
+        runparams.append([tag, release_dt, tag_time, nppdir[tag], res])
+
+    with multiprocessing.Pool(4) as p:
+        print(p.starmap(runsnapsingle, runparams))
 
     # montage
     opts = ['montage', '-mode', 'concatenate', '-tile', f"4x{len(npps)}"]
@@ -137,7 +152,7 @@ m=SNAP.current t=fimex format=netcdf f={nppdir[tag]}/snap.nc
         opts += ['-label', tag]
         for t in [12,24,36,48]:
             opts += [f"{nppdir[tag]}/prod/snap_{t}h.png"]
-    opts.append(f'/home/VGLSHARE/SNAP4DSA/plots_{now:%Y-%m-%dT%H}0000Z.png')
+    opts.append(f'{outdir}/plots_{release_dt:%Y-%m-%dT%H}0000Z.png')
     print('running montage with:\n'+" ".join(opts))
     subprocess.run(opts)
 
@@ -146,7 +161,7 @@ m=SNAP.current t=fimex format=netcdf f={nppdir[tag]}/snap.nc
     for tag in npps:
         opts += ['-label', tag]
         opts += [f"{nppdir[tag]}/prod/snap_toa.png"]
-    opts.append(f'/home/VGLSHARE/SNAP4DSA/plots_{now:%Y-%m-%dT%H}0000Z_toa.png')
+    opts.append(f'{outdir}/plots_{release_dt:%Y-%m-%dT%H}0000Z_toa.png')
     print('running montage for toa with:\n'+" ".join(opts))
     subprocess.run(opts)
 
@@ -154,9 +169,17 @@ m=SNAP.current t=fimex format=netcdf f={nppdir[tag]}/snap.nc
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print(f"usage: {sys.argv[0]} NPP1 [NPP2 NPP3 ...]", file=sys.stderr)
-        sys.exit(2)
-    
-    npps = sys.argv[1:]
-    runsnap(npps)
+    os.umask(0o002)
+
+    parser = argparse.ArgumentParser(
+        description="Run snap for several Nuclear Power Plants and receive figures of dispersion",
+        usage=f"{sys.argv[0]} NPP [NPP NPP ...]"
+    )
+    parser.add_argument("--dir", help="output directory", default="/home/VGLSHARE/SNAP4DSA/")
+    parser.add_argument("--store", help="storeA or storeB, meteo and runtime-datastore, default used from MAPP-system")
+    parser.add_argument('NPP', help="name of Nuclear Power Plant, e.g. CHERNOBYL (see list in SnapPy)", nargs='+')
+    args = parser.parse_args()
+
+    if (args.store):
+        os.environ["STORE"] = args.store
+    runsnap(args.NPP, args.dir)
