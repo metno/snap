@@ -179,8 +179,8 @@ subroutine allocateFields
   IF (AllocateStatus /= 0) ERROR STOP errmsg
 
   if (compute_column_max_conc) then
-    allocate(max_column_scratch(nx,ny,nk-1,ncomp), &
-      max_column_concentration(nx,ny,ncomp), &
+    allocate(max_column_scratch(nx,ny,nk-1), &
+      max_column_concentration(nx,ny), &
       STAT=AllocateStatus)
     if (AllocateStatus /= 0) ERROR STOP errmsg
   endif
