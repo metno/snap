@@ -17,7 +17,7 @@ fi
 #     (you need a properly configured .dupload.conf in your home directory, copy this from https://gitlab.met.no/it/sd/klient/linux/internrepo/-/raw/master/.dupload.conf)
 #
 #     Check first that it looks plausible:
-#     $ dupload --no --to bionic dist/snap-py_<version>-1_amd64.changes
+#     $ dupload --no --to bionic dist/snap-py_<version>-2_amd64.changes
 #     then remove --no option
 #
 #     Wait for confirmation email that package has been accepted
