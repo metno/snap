@@ -48,8 +48,8 @@ fi
 #INSTRUCTIONS_END
 
 HOST=bionic
-VERSION=1.6.31
-CHANGELOG="toa plots in row"
+VERSION=1.6.32
+CHANGELOG="parallelizing snap; adding options for input/output for manual runs"
 rm -f debian
 ln -s debian.$HOST debian
 dch -v ${VERSION}-2 -U "${CHANGELOG}"
