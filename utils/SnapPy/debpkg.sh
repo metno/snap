@@ -11,7 +11,7 @@ fi
 
 #INSTRUCTIONS
 # 1 - Update version, changelog, etc. in this script
-#     Then run this script with -y option
+#     Then run this script with -y option (you have to have devscripts installed)
 #
 # 2 - Upload to internal package repository using dupload
 #     (you need a properly configured .dupload.conf in your home directory, copy this from https://gitlab.met.no/it/sd/klient/linux/internrepo/-/raw/master/.dupload.conf)
