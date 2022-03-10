@@ -44,7 +44,6 @@ module fldout_ncML
     integer :: ac
     integer :: ic
     integer :: icml
-    integer :: column_max_conc
   end type
 
 !> Variables in a file
@@ -66,6 +65,7 @@ module fldout_ncML
     integer :: k
     integer :: ap
     integer :: b
+    integer :: column_max_conc
     type(component_var) :: comp(mcomp)
   end type
 
@@ -211,6 +211,12 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
         values=field1), "set_prc")
   end if
 
+  if (compute_column_max_conc) then
+    call check(nf90_put_var(iunit, varid%column_max_conc, &
+      start=[ipos], count=[isize], &
+      values=max_column_concentration(:,:)), "column_max_concentration")
+  endif
+
 !..parameters for each component......................................
 
   do m=1,ncomp
@@ -338,11 +344,6 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
         values=field3), "set_ac(m)")
   !.....end do m=1,ncomp
 
-    if (compute_column_max_conc) then
-      call check(nf90_put_var(iunit, varid%comp(m)%column_max_conc, &
-        start=[ipos], count=[isize], &
-        values=max_column_concentration(:,:,m)), "column_max_concentration")
-    endif
   end do
 
 
@@ -1049,6 +1050,12 @@ subroutine initialize_output(filename, itime, ierror)
         "m", "height", &
         "average_height_boundary_layer")
 
+    if (compute_column_max_conc) then
+      string = "max_column_concentration"
+      call nc_declare_3d(iunit, dimids3d, varid%column_max_conc, &
+          chksz3d, string, "Bq/m3", "", string)
+    endif
+
 
     do m=1,ncomp
       mm= run_comp(m)%to_defined
@@ -1103,12 +1110,6 @@ subroutine initialize_output(filename, itime, ierror)
       !     +          "Bq*hour/m3","",
       !     +          TRIM(def_comp(mm)%compnamemc)//"_accumulated_concentration_ml")
       end if
-
-      if (compute_column_max_conc) then
-        string = trim(def_comp(mm)%compnamemc)//"_max_column_concentration"
-        call nc_declare_3d(iunit, dimids3d, varid%comp(m)%column_max_conc, &
-            chksz3d, string, "Bq/m3", "", string)
-      endif
     end do
     if (itotcomp == 1) then
       call nc_declare_3d(iunit, dimids3d, varid%icblt, &
@@ -1196,6 +1197,9 @@ subroutine get_varids(iunit, varid, ierror)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
   ierror = nf90_inq_varid(iunit, "b", varid%b)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+  varname = "max_column_concentration"
+  ierror = nf90_inq_varid(iunit, varname, varid%column_max_conc)
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
 
   do m=1,ncomp
     mm = run_comp(m)%to_defined
@@ -1229,10 +1233,6 @@ subroutine get_varids(iunit, varid, ierror)
 
     varname = trim(def_comp(mm)%compnamemc) // "_acc_wet_deposition"
     ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%accwd)
-    if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
-
-    varname = trim(def_comp(mm)%compnamemc)//"_max_column_concentration"
-    ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%column_max_conc)
     if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
 
     varname = trim(def_comp(mm)%compnamemc) // "_concentration_dump_ml"
@@ -1364,21 +1364,19 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
       j = nint(part%y)
       ivlvl = part%z*10000.
       k = ivlayer(ivlvl)
-      m = def_comp(part%icomp)%to_running
     !..in each sigma/eta (input model) layer
-      max_column_scratch(i,j,k,m) = max_column_scratch(i,j,k,m) + part%rad
+      max_column_scratch(i,j,k) = max_column_scratch(i,j,k) + part%rad
     end do
 
-    do n=1,ncomp
-      do k=1,nk-1
-        associate(dh => rt1*hlayer1(:,:,k) + rt2*hlayer2(:,:,k))
-          max_column_scratch(:,:,k,n) = max_column_scratch(:,:,k,n)/(dh*garea)
-        end associate
-      enddo
-      max_column_concentration(:,:,n) = max( &
-              max_column_concentration(:,:,n), &
-              maxval(max_column_scratch(:,:,:,n), dim=3))
+    do k=1,nk-1
+      associate(dh => rt1*hlayer1(:,:,k) + rt2*hlayer2(:,:,k))
+        max_column_scratch(:,:,k) = max_column_scratch(:,:,k)/(dh*garea)
+      end associate
     enddo
+
+    max_column_concentration(:,:) = max( &
+              max_column_concentration(:,:), &
+              maxval(max_column_scratch(:,:,:), dim=2))
   endif
 end subroutine
 

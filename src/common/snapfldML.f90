@@ -124,9 +124,9 @@ module snapfldML
 !> Scratch space for finding max column concentration
 !>
 !> only used if compute_column_max_conc
-  real, allocatable, save, public :: max_column_scratch(:,:,:,:)
+  real, allocatable, save, public :: max_column_scratch(:,:,:)
 !> Max column concentration
 !>
 !> only used if compute_column_max_conc
-  real, allocatable, save, public :: max_column_concentration(:,:,:)
+  real, allocatable, save, public :: max_column_concentration(:,:)
 end module snapfldML
