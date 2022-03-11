@@ -217,6 +217,7 @@ PROGRAM bsnap
   integer :: snapinput_unit, ios
   integer :: nhrun = 0, nhrel = 0
   logical :: use_random_walk = .true.
+  logical :: autodetect_grid_params = .false.
   integer :: m, np, npl, nlevel = 0, ifltim = 0
   logical :: synoptic_output = .false.
   integer :: k, ierror, i, n
@@ -328,6 +329,7 @@ PROGRAM bsnap
   close (snapinput_unit)
 
   write (error_unit, *) "SIMULATION_START_DATE: ", simulation_start
+
 
   if (relfile /= '*') then
     call releasefile(relfile, release1)
@@ -1069,12 +1071,8 @@ contains
     use snapparML, only: push_down_dcomp, defined_component, &
                          TIME_PROFILE_CONSTANT, TIME_PROFILE_LINEAR, TIME_PROFILE_LINEAR, TIME_PROFILE_STEPS, &
                          TIME_PROFILE_UNDEFINED
-    use find_parameter, only: detect_gridparams, get_klevel
     use snapfimexML, only: parse_interpolator
     use snapgrdml, only: compute_column_max_conc
-#if defined(FIMEX)
-    use find_parameters_fi, only: detect_gridparams_fi
-#endif
 
     !> Open file unit
     integer, intent(in) :: snapinput_unit
@@ -1860,40 +1858,7 @@ contains
         warning = .true.
 
       case ('grid.autodetect.from_input')
-        if (nfilef < 1) then
-          write (error_unit, *) "grid.autodetect requires at least one field.input to be set"
-          goto 12
-        endif
-        if (nctype == "*") then
-          write (error_unit, *) "grid.autodetect requires an nctype to be set"
-          goto 12
-        endif
-        if (ftype .eq. "fimex") then
-#ifdef FIMEX
-          call detect_gridparams_fi(filef(1), met_params%xwindv, nx, ny, igtype, gparam, klevel, ierror)
-          if (ierror /= 0) then
-            write (error_unit, *) "Could not detect gridparams"
-            goto 12
-          endif
-#else
-          write (error_unit, *) "fimex required, but not compiled"
-          goto 12
-#endif
-        else
-          call detect_gridparams(filef(1), nx, ny, igtype, gparam, ierror)
-          if (ierror /= 0) then
-            write (error_unit, *) "Autodetection did not work"
-            goto 12
-          endif
-          call get_klevel(filef(1), klevel, ierror)
-          if (ierror /= 0) then
-            write (error_unit, *) "Autodetection did not work"
-            goto 12
-          endif
-        end if
-        nlevel = size(klevel)
-        nk = nlevel
-        write (error_unit, *) "autodetection of grid-param: ", gparam
+        autodetect_grid_params = .true.
       case ('end')
         !..end
 #if defined(TRAJ)
@@ -2000,11 +1965,46 @@ contains
   subroutine conform_input(ierror)
     use snapparML, only: TIME_PROFILE_UNDEFINED
     use snapfimexML, only: parse_interpolator
+    use find_parameter, only: detect_gridparams, get_klevel
+#if defined(FIMEX)
+    use find_parameters_fi, only: detect_gridparams_fi
+#endif
     integer, intent(out) :: ierror
 
     integer :: i1, i2
 
     logical :: error_release_profile
+
+    if (autodetect_grid_params) then
+      if (nfilef < 1) then
+        error stop "Autodetection requires at least one field.input to be set"
+      endif
+      if (nctype == "*") then
+        error stop "Autodetection requires an nctype to be set"
+      endif
+      if (ftype .eq. "fimex") then
+#ifdef FIMEX
+        call detect_gridparams_fi(filef(1), met_params%xwindv, nx, ny, igtype, gparam, klevel, ierror)
+        if (ierror /= 0) then
+          error stop "Could not detect gridparams"
+        endif
+#else
+        error stop "fimex required, but not compiled"
+#endif
+      else
+        call detect_gridparams(filef(1), nx, ny, igtype, gparam, ierror)
+        if (ierror /= 0) then
+          error stop "Autodetection did not work (detect_gridparams)"
+        endif
+        call get_klevel(filef(1), klevel, ierror)
+        if (ierror /= 0) then
+          error stop "Autodetection did not work (klevel)"
+        endif
+      end if
+      nlevel = size(klevel)
+      nk = nlevel
+      write (error_unit, *) "autodetection of grid-param: ", gparam
+    end if
 
     ierror = 0
     do n = 1, nrelpos
