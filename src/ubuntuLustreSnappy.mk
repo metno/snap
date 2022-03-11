@@ -35,7 +35,7 @@ EXLIBS = -lpthread -ldl
 
 ##########################################################
 
-BINDIR?=/modules/xenial/user-apps/SnapPy/$(VERSION)/bin/
+BINDIR ?= /modules/xenial/user-apps/SnapPy/$(VERSION)/bin/
 
 INCLUDES = -I. $(MIINC) $(FIMEXINC)
 

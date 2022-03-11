@@ -17,6 +17,6 @@ python3 setup.py install --prefix=$PREFIX
 cd ../.. || exit 2
 
 cd src || exit 2
-export BINDIR=$PREFIX/BIN
+export BINDIR=$PREFIX/bin/
 ln -sf ubuntuLustreSnappy.mk current.mk
 make install
