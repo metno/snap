@@ -36,11 +36,11 @@ fi
 #     $ sudo apt-get install ansible
 #     # Rollout
 #     $ cd workstation/vgl
-#     #IMPORTANT: snap-py is in group misc - only reinstall the misc packages
+#     #IMPORTANT: snap-py is in group snap - only reinstall the snap packages
 #     #Roll out to e.g. vglserver2
-#     $ ansible-playbook -i hosts -t misc -l vglserver2 install.yml
+#     $ ansible-playbook -i hosts -t snap -l vglserver2 install.yml
 #     #Roll out to all hosts
-#     $ ansible-playbook -i hosts -t misc install.yml
+#     $ ansible-playbook -i hosts -t snap install.yml
 #
 #     It may take a bit of time before the package is available for ansible (10 minutes)
 #
