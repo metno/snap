@@ -1,0 +1,61 @@
+name: Test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-18.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: sudo apt-get install libnetcdff-dev gfortran
+
+      - name: Link appropriate make configuration
+        run: cd src && ln -s gcc_pkgconfig.mk current.mk
+
+      - name: Create binaries (no fimex)
+        run: cd src && make -j2
+
+      - name: Clean up
+        run: cd src && make clean
+
+      - name: Install fimex requirements
+        run: sudo apt-get install libxml2 libproj-dev libudunits2-dev
+
+      - name: Download and unpack fimex
+        run: |
+            wget https://github.com/metno/fimex/archive/refs/tags/v1.6.7.tar.gz -O fimex.tar.gz &&
+            tar -xf fimex.tar.gz --one-top-level=fimex --strip-components=1
+
+      - name: Download and unpack third party libraries
+        run: |
+            cd fimex && mkdir -p third_party && cd third_party &&
+            wget https://github.com/metno/mi-cpptest/archive/refs/tags/v0.1.1.tar.gz -O mi-cpptest.tar.gz &&
+            tar -xf mi-cpptest.tar.gz --one-top-level=mi-cpptest --strip-components=1 &&
+            wget https://github.com/metno/mi-programoptions/archive/refs/tags/v1.0.0.tar.gz -O mi-programoptions.tar.gz &&
+            tar -xf mi-programoptions.tar.gz --one-top-level=mi-programoptions --strip-components=1 &&
+            wget https://github.com/metno/mi-cpptest/archive/refs/tags/v0.1.1.tar.gz -O mi-cpptest.tar.gz &&
+            tar -xf mi-cpptest.tar.gz --one-top-level=mi-cpptest --strip-components=1 &&
+            wget https://github.com/HowardHinnant/date/archive/refs/tags/v2.4.1.tar.gz -O date.tar.gz &&
+            tar -xf date.tar.gz --one-top-level=date --strip-components=1
+
+      - name: Install fimex
+        run: |
+            cd fimex && mkdir build && cd build &&
+            cmake .. -DENABLE_FORTRAN=true -DENABLE_PYTHON=false &&
+            sudo make -j2 install
+
+      - name: Create binaries (with fimex)
+        run: cd src && make -j2
+
+      - name: Install test requirements
+        run: sudo apt-get install python3-numpy python3-netcdf4
+
+      - name: Test binaries
+        run: cd src && env LD_LIBRARY_PATH=/usr/local/lib make test

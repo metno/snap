@@ -18,8 +18,10 @@ MODELOBJ += chcase.o  gridpar.o  mapfield.o  xyconvert.o \
      earthr.o pol2sph.o sph2rot.o lam2sph.o mer2sph.o milibML.o
 
 ifdef FIMEXLIB
-  F77FLAGS += -DFIMEX
-  MODELOBJ += readfield_fi.o filesort_fi.o find_parameters_fi.o fimex.o
+  ifneq "${FIMEXLIB}" ""
+    F77FLAGS += -DFIMEX
+    MODELOBJ += readfield_fi.o filesort_fi.o find_parameters_fi.o fimex.o
+  endif
 endif
 
 
