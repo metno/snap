@@ -48,8 +48,8 @@ fi
 #INSTRUCTIONS_END
 
 HOST=bionic
-VERSION=1.6.32
-CHANGELOG="parallelizing snap; adding options for input/output for manual runs"
+VERSION=1.6.33
+CHANGELOG="Using a newer version of bsnap"
 rm -f debian
 ln -s debian.$HOST debian
 dch -v ${VERSION}-1 -U "${CHANGELOG}"
