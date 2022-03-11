@@ -361,24 +361,14 @@ GRAVITY.FIXED.M/S=0.0002
         This should be written to the snap.input file, in addition to the source-term. files may be empty
         """
         lines = []
-        if (metmodel == MetModel.NrpaEC0p1) or (metmodel == MetModel.NrpaEC0p1Global):
-            # GRID.GPARAM = 2, -50., 25,.1,.1, 0., 0.
-            # GRID.SIZE = 1251,601
-            if nx == 0:
-                nx = 1 + round(self.ecDomainWidth / self.ecDomainRes)
-                ny = 1 + round(self.ecDomainHeight / self.ecDomainRes)
-                startX = self.ecDefaultDomainStartX
-                startY = self.ecDefaultDomainStartY
-                dx = self.ecDomainRes
-                dy = self.ecDomainRes
-            lines.append("GRID.SIZE = {nx},{ny}".format(nx=nx, ny=ny))
-            lines.append(
-                "GRID.GPARAM = {gtype}, {startX}, {startY}, {dx}, {dy}, 0., 0.".format(
-                    gtype=2, startX=startX, startY=startY, dx=dx, dy=dy
-                )
-            )
+        if metmodel == MetModel.NrpaEC0p1:
+            # no setup needed, autdetection in snap
+            pass
+        elif metmodel == MetModel.NrpaEC0p1Global:
+            # no setup needed, autdetection in snap
+            pass
         elif metmodel == MetModel.Meps2p5:
-            # no setup needed, decoded in snap-template
+            # no setup needed, autdetection in snap
             pass
         elif metmodel == MetModel.Icon0p25Global:
             # no setup needed, autdetection in snap
