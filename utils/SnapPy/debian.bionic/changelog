@@ -1,3 +1,9 @@
+snap-py (1.6.33-1) bionic; urgency=medium
+
+  * Using a newer version of bsnap
+
+ -- Magnus Ulimoen <magnusu@pc5054.pc.met.no>  Fri, 11 Mar 2022 12:55:53 +0100
+
 snap-py (1.6.31-2) bionic; urgency=medium
 
   * toa plots in row
