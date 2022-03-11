@@ -1376,7 +1376,7 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
 
     max_column_concentration(:,:) = max( &
               max_column_concentration(:,:), &
-              maxval(max_column_scratch(:,:,:), dim=2))
+              maxval(max_column_scratch(:,:,:), dim=3))
   endif
 end subroutine
 
