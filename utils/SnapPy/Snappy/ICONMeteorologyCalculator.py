@@ -87,21 +87,37 @@ module load fimex/1.4.2
 export OMP_NUM_THREADS=1
 
 cd {outputdir} || exit 1
+echo "Preprocessing 5-7days icon meteorology, please wait ca. 3min"
+echo "MET-Input: {globalfile}"
+echo "MET-Output: {outputdir}"
+
 umask 000
 touch running
 cp {resdir}/icon_fimex.cfg .
+chmod 666 icon_fimex.cfg
 cp {resdir}/icon_sigma_hybrid.ncml .
+chmod 666 icon_sigma_hybrid.ncml
 tmpfile=out$$.nc4
-echo "Preprocessing 7days icon meteorology, please wait ca. 3min"
 fimex -c icon_fimex.cfg \
       --input.file={globalfile} \
       --interpolate.xAxisValues={xAxisValues} \
       --interpolate.yAxisValues={yAxisValues} \
+      --extract.pickDimension.name=time \
+      --extract.pickDimension.list={timeStepList} \
       --output.file=$tmpfile \
       --output.type=nc4 \
       && mv $tmpfile {outputfile}
 rm {outputdir}/running
 '''
+        # pressurelevel only defined for certain timesteps, different for each forecast-reference-time
+        if self.globalfile.endswith('T00Z.nc') or self.globalfile.endswith('T12Z.nc'):
+           timeStepList = '0,2,...,16,20,24,26,28,30,32,33,34,35,36,37'
+        elif self.globalfile.endswith('T06Z.nc'):
+            timeStepList = '0,1,...,33'
+        elif self.globalfile.endswith('T18Z.nc'):
+            timeStepList = '0,2,...,16,17,21,22,...,25'
+        else:
+            print(f"ERROR: don't understand file {self.globalfile}, should end with TXXZ.nc")
         command = precommand.format(resdir=Resources().directory,
                                     xAxisValues="{},{},...,{}".format(self.lon0,
                                                                       self.lon0+self.res.domainDeltaX,
@@ -110,6 +126,7 @@ rm {outputdir}/running
                                                                       self.lat0+self.res.domainDeltaY,
                                                                       self.lat0+self.res.domainHeight),
                                     globalfile=self.globalfile,
+                                    timeStepList=timeStepList,
                                     outputfile=self.files[0],
                                     outputdir=self.outputdir
                                     )
