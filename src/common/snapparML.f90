@@ -81,6 +81,12 @@ module snapparML
 !> parameter no., 0 is used for the total if more than
 !> one component present)
     integer :: idcomp = -1
+
+!> Commited dose per unit intake
+!>
+!> Unit of Sv/Bq
+!> See e.g. ICRP Publication 119
+    real :: dpui = -1.0
   end type
   type(defined_component), save, allocatable, public, target :: def_comp(:)
 

@@ -111,7 +111,8 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
   USE snapfldML, only: &
       xm, ym, u1, u2, v1, v2, w1, w2, t1, t2, ps1, ps2, pmsl1, pmsl2, &
       hbl1, hbl2, hlayer1, hlayer2, garea, dgarea, hlevel1, hlevel2, &
-      hlayer1, hlayer2, bl1, bl2, enspos, precip
+      hlayer1, hlayer2, bl1, bl2, enspos, precip, &
+      t1_abs, t2_abs
   USE snapgrdML, only: alevel, blevel, vlevel, ahalf, bhalf, vhalf, &
       gparam, kadd, klevel, ivlevel, imslp, igtype, ivlayer, ivcoor
   USE snapmetML, only: met_params
@@ -222,6 +223,7 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
     v1(:,:,:) = v2
     w1(:,:,:) = w2
     t1(:,:,:) = t2
+    if (allocated(t2_abs)) t1_abs(:,:,:) = t2_abs
     hlevel1(:,:,:) = hlevel2
     hlayer1(:,:,:) = hlayer2
 
@@ -243,7 +245,7 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
 
     ! dummy-dim only on 2d
     call calc_2d_start_length(start4d, count4d, nx, ny, ilevel, &
-        enspos, timepos, has_2d_dummy_height=.false.) 
+        enspos, timepos, has_2d_dummy_height=.false.)
 
   !..u
   !     Get the varid of the data variable, based on its name.
@@ -450,12 +452,22 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
   end if
 
   if (met_params%temp_is_abs) then
+    if (allocated(t2_abs)) t2_abs(:,:,:) = t2
   !..abs.temp. -> pot.temp.
     do k=2,nk-kadd
       associate(p => alevel(k) + blevel(k)*ps2(:,:))
         t2(:,:,k) = t2(:,:,k)*t2thetafac(p)
       end associate
     end do
+  else
+    if (allocated(t2_abs)) then
+      ! pot.temp -> abs.temp
+      do k=2,nk-kadd
+        associate(p => alevel(k) + blevel(k)*ps2(:,:))
+          t2_abs(:,:,k) = t2(:,:,k)/t2thetafac(p)
+        end associate
+      end do
+    endif
   end if
 
   if (met_params%sigmadot_is_omega) then
