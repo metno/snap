@@ -48,8 +48,8 @@ fi
 #INSTRUCTIONS_END
 
 HOST=bionic
-VERSION=1.6.33
-CHANGELOG="Using a newer version of bsnap"
+VERSION=1.6.34
+CHANGELOG="fix icon permissions and timesteps"
 rm -f debian
 ln -s debian.$HOST debian
 dch -v ${VERSION}-1 -U "${CHANGELOG}"
