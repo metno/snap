@@ -139,4 +139,6 @@ module snapfldML
   real, allocatable, public :: max_aircraft_doserate_scratch(:,:,:,:)
 !> Doserate
   real, allocatable, public :: max_aircraft_doserate(:,:)
+  !> Height of doserates exceeding the given threshold
+  real, allocatable, public :: aircraft_doserate_threshold_height(:,:)
 end module snapfldML
