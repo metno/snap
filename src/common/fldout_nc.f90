@@ -67,6 +67,7 @@ module fldout_ncML
     integer :: b
     integer :: column_max_conc
     integer :: max_aircraft_doserate
+    integer :: aircraft_doserate_threshold_height
     type(component_var) :: comp(mcomp)
   end type
 
@@ -91,12 +92,14 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     ierror)
   USE iso_fortran_env, only: int16
   USE snapgrdML, only: imodlevel, imslp, precipitation_in_output, &
-      itotcomp, compute_column_max_conc, compute_max_aircraft_doserate
+      itotcomp, compute_column_max_conc, compute_max_aircraft_doserate, &
+      aircraft_doserate_threshold
   USE snapfldML, only: field1, field2, field3, field4, &
       depdry, depwet, &
       avgbq1, avgbq2, garea, pmsl1, pmsl2, hbl1, hbl2, &
       accdry, accwet, avgprec, concen, ps1, ps2, avghbl, &
-      concacc, accprec, max_column_concentration, max_aircraft_doserate
+      concacc, accprec, max_column_concentration, max_aircraft_doserate, &
+      aircraft_doserate_threshold_height
   USE snapparML, only: time_profile, ncomp, run_comp, def_comp, &
     TIME_PROFILE_BOMB
   USE snapdebug, only: iulog, idebug
@@ -221,6 +224,11 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     call check(nf90_put_var(iunit, varid%max_aircraft_doserate, &
       start=[ipos], count=[isize], &
       values=max_aircraft_doserate(:,:)), "max_aircraft_doserate")
+    if (aircraft_doserate_threshold > 0.0) then
+      call check(nf90_put_var(iunit, varid%aircraft_doserate_threshold_height, &
+        start=[ipos], count=[isize], &
+        values=aircraft_doserate_threshold_height(:,:)), "aircraft threshold height")
+    endif
   endif
 
 !..parameters for each component......................................
@@ -960,7 +968,8 @@ end subroutine nc_set_projection
 subroutine initialize_output(filename, itime, ierror)
   USE snapfilML, only: ncsummary, nctitle, simulation_start
   USE snapgrdML, only: gparam, igtype, imodlevel, imslp, precipitation_in_output, &
-      itotcomp, modleveldump, compute_column_max_conc, compute_max_aircraft_doserate
+      itotcomp, modleveldump, compute_column_max_conc, compute_max_aircraft_doserate, &
+      aircraft_doserate_threshold
   USE snapfldML, only:  &
       garea, &
       xm, ym, &
@@ -1065,6 +1074,11 @@ subroutine initialize_output(filename, itime, ierror)
       string = "max_aircraft_doserate"
       call nc_declare_3d(iunit, dimids3d, varid%max_aircraft_doserate, &
           chksz3d, string, "Sv/h", "", string)
+      if (aircraft_doserate_threshold > 0.0) then
+        string = "aircraft_doserate_threshold_height"
+        call nc_declare_3d(iunit, dimids3d, varid%aircraft_doserate_threshold_height, &
+            chksz3d, string, "m", "", string)
+      endif
     endif
 
 
@@ -1212,6 +1226,8 @@ subroutine get_varids(iunit, varid, ierror)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
   ierror = nf90_inq_varid(iunit, "max_aircraft_doserate", varid%max_aircraft_doserate)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+  ierror = nf90_inq_varid(iunit, "aircraft_doserate_threshold_height", varid%aircraft_doserate_threshold_height)
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
 
   do m=1,ncomp
     mm = run_comp(m)%to_defined
@@ -1263,13 +1279,14 @@ end subroutine
 subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
   USE snapgrdML, only: imodlevel, &
       ivlayer, compute_column_max_conc, compute_max_aircraft_doserate, &
-      alevel, blevel
+      alevel, blevel, aircraft_doserate_threshold
   USE snapfldML, only:  &
       avgbq1, avgbq2, hlayer1, hlayer2, hbl1, hbl2, &
       avgprec, concen, avghbl, dgarea, &
       avgbq, concacc, precip, &
       max_column_scratch, max_column_concentration, garea, &
-      ps1, ps2, t1_abs, t2_abs, max_aircraft_doserate_scratch, max_aircraft_doserate
+      ps1, ps2, t1_abs, t2_abs, max_aircraft_doserate_scratch, max_aircraft_doserate, &
+      aircraft_doserate_threshold_height
   USE snapdimml, only: nk
   USE snapparML, only: ncomp, def_comp, run_comp
   USE ftestML, only: ftest
@@ -1301,6 +1318,9 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
     endif
     if (compute_max_aircraft_doserate) then
       max_aircraft_doserate = 0.0
+      if (aircraft_doserate_threshold > 0.0) then
+        aircraft_doserate_threshold_height = 0
+      endif
     endif
   end if
 
@@ -1452,6 +1472,21 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
       max_aircraft_doserate_scratch(:,:,:,ncomp+1) = max_aircraft_doserate_scratch(:,:,:,ncomp+1) + &
         max_aircraft_doserate_scratch(:,:,:,n)
     enddo
+
+    if (aircraft_doserate_threshold > 0.0) then
+      associate(doserate => max_aircraft_doserate_scratch(:,:,:,ncomp+1), thresh => aircraft_doserate_threshold)
+      do k=2,nk-1
+        associate(pressure => rt1*(alevel(k) + blevel(k)*ps1) + rt2*(alevel(k)+blevel(k)*ps2))
+        ! NOAA conversion formula www.weather.gov/media/epz/wxcalc/pressureConversion.pdf
+        associate(pressure_altitude => 0.3048 * (1 - (pressure / 1013.25) ** 0.190284) * 145366.45 )
+        where (doserate(:,:,k) > thresh)
+          aircraft_doserate_threshold_height = max(aircraft_doserate_threshold_height, pressure_altitude)
+        endwhere
+        end associate
+        end associate
+      enddo
+      end associate
+    endif
 
     ! Take max over column, skip k=1 since this we do not have temp here
     max_aircraft_doserate_scratch(:,:,1,ncomp+1) = maxval(max_aircraft_doserate_scratch(:,:,2:,ncomp+1), dim=3)
