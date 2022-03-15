@@ -71,6 +71,9 @@ module snapgrdML
 !> Compute max concentration in a column (accumulated per timestep)
     logical, save, public :: compute_column_max_conc = .true.
 
+!> Compute max doserate in an aircraft equivalent
+    logical, save, public :: compute_max_aircraft_doserate = .false.
+
 !> grid parameters (depending on the grid type)
 !>
 !> polarstereographic (igtype=1,4):
@@ -105,6 +108,8 @@ module snapgrdML
 !..vlevel:    vertical level (sigma or eta)
     real, allocatable, save, public :: vlevel(:)
     real, allocatable, save, public :: vhalf(:)
+
+    real, allocatable, save, public :: surface_pressure
 !> grid type
 !> * 1=polarstereographic
 !> * 2=geographic
@@ -126,5 +131,4 @@ module snapgrdML
 !>
 !> (key is vlevel*10000)
     integer, save, public :: ivlayer(0:10000)
-
 end module snapgrdML

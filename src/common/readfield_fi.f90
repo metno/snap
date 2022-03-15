@@ -69,7 +69,7 @@ contains
     USE snapfldML, only: &
       xm, ym, u1, u2, v1, v2, w1, w2, t1, t2, ps1, ps2, pmsl1, pmsl2, &
       hbl1, hbl2, hlayer1, hlayer2, garea, dgarea, hlevel1, hlevel2, &
-      hlayer1, hlayer2, bl1, bl2, enspos, precip
+      hlayer1, hlayer2, bl1, bl2, enspos, precip, t1_abs, t2_abs
     USE snapgrdML, only: alevel, blevel, vlevel, ahalf, bhalf, vhalf, &
                          gparam, kadd, klevel, ivlevel, imslp, igtype, ivlayer, ivcoor
     USE snapmetML, only: met_params, xy_wind_units, pressure_units, omega_units, &
@@ -178,6 +178,7 @@ contains
       v1(:, :, :) = v2
       w1(:, :, :) = w2
       t1(:, :, :) = t2
+      if (allocated(t2_abs)) t1_abs(:,:,:) = t2_abs
       hlevel1(:, :, :) = hlevel2
       hlayer1(:, :, :) = hlayer2
 
@@ -386,12 +387,22 @@ contains
     end if
 
     if (met_params%temp_is_abs) then
+      if (allocated(t2_abs)) t2_abs(:,:,:) = t2
       !..abs.temp. -> pot.temp.
       do k = 2, nk - kadd
         associate(p => alevel(k) + blevel(k)*ps2(:,:))
           t2(:,:,k) = t2(:,:,k)*t2thetafac(p)
         end associate
       end do
+    else
+      if (allocated(t2_abs)) then
+        ! pot.temp -> abs.temp
+        do k=2,nk-kadd
+          associate(p => alevel(k) + blevel(k)*ps2(:,:))
+            t2_abs(:,:,k) = t2(:,:,k)/t2thetafac(p)
+          end associate
+        end do
+      endif
     end if
 
     if (met_params%sigmadot_is_omega) then
@@ -624,7 +635,7 @@ contains
 
     real(kind=real64), dimension(:), allocatable, target :: zfield
 
-    call fi_checkload_intern(fio, varname, units, zfield, nt, nz, nr)
+    call fi_checkload_intern(fio, varname, units, zfield, nt, nz, nr, ierror)
 
     field(:) = REAL(reshape(zfield, shape(field)), KIND=real32)
     deallocate(zfield)

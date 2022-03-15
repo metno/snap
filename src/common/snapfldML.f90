@@ -41,6 +41,11 @@ module snapfldML
 !> potential temperature (level 1, surface: abs. temp. 2m) (time step 2)
   real(kind=real32), allocatable, save, public :: t2(:,:,:)
 
+!> absolute temperature
+  real(kind=real32), allocatable, save, public :: t1_abs(:,:,:)
+!> absolute temperature
+  real(kind=real32), allocatable, save, public :: t2_abs(:,:,:)
+
   real(kind=real32), allocatable, save, public :: hlevel1(:,:,:)
   real(kind=real32), allocatable, save, public :: hlevel2(:,:,:)
   real(kind=real32), allocatable, save, public :: hlayer1(:,:,:)
@@ -129,4 +134,9 @@ module snapfldML
 !>
 !> only used if compute_column_max_conc
   real, allocatable, save, public :: max_column_concentration(:,:)
+
+!> Scratch space for dose calculation
+  real, allocatable, public :: max_aircraft_doserate_scratch(:,:,:,:)
+!> Doserate
+  real, allocatable, public :: max_aircraft_doserate(:,:)
 end module snapfldML

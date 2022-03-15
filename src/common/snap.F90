@@ -863,7 +863,7 @@ contains
                          TIME_PROFILE_CONSTANT, TIME_PROFILE_LINEAR, TIME_PROFILE_LINEAR, TIME_PROFILE_STEPS, &
                          TIME_PROFILE_UNDEFINED
     use snapfimexML, only: parse_interpolator
-    use snapgrdml, only: compute_column_max_conc
+    use snapgrdml, only: compute_column_max_conc, compute_max_aircraft_doserate
 
     !> Open file unit
     integer, intent(in) :: snapinput_unit
@@ -1370,6 +1370,12 @@ contains
         if (d_comp%densitygcm3 > 0.) goto 12
         read (cinput(pname_start:pname_end), *, err=12) d_comp%densitygcm3
         if (d_comp%densitygcm3 <= 0.) goto 12
+      case ('dpui')
+        if (.not. has_value) goto 12
+        if (.not. associated(d_comp)) goto 12
+        if (d_comp%dpui > 0.0) goto 12
+        read (cinput(pname_start:pname_end), *, err=12) d_comp%dpui
+        if (d_comp%dpui <= 0.0) goto 12
       case ('field.identification')
         !..field.identification=
         if (.not. has_value) goto 12
@@ -1450,6 +1456,14 @@ contains
         compute_column_max_conc = .true.
       case ('output.column_max_conc.disable')
         compute_column_max_conc = .false.
+      case ('output.max_aircraft_doserate.enable')
+        compute_max_aircraft_doserate = .true.
+      case ('output.max_aircraft_doserate.disable')
+        compute_max_aircraft_doserate = .false.
+      case ('output.aircraft_doserate.enable')
+        error stop "Not implemented"
+      case ('output.aircraft_doserate.disable')
+        error stop "Not implemented"
       case ('release.pos')
         !..release.pos=<'name',latitude,longitude>
         if (.not. has_value) goto 12
