@@ -176,7 +176,7 @@ class Resources(ResourcesCommon):
                     }
         return isotopes
 
-    def isotopes2snapinput(self, isotopeIds):
+    def isotopes2snapinput(self, isotopeIds, add_DPUI=False):
         """Read a list of isotopeIds and return a text-block to be used for a snap.input file, like
 COMPONENT= Cs137
 RADIOACTIVE.DECAY.ON
@@ -228,6 +228,29 @@ GRAVITY.FIXED.M/S=0.0002
                     )
                 )
             snapinput += "FIELD.IDENTIFICATION= {:02d}\n".format(fieldId)
+            # Commited Dose Per Unit Intake
+            # The following coefficients are from
+            # Annals of the ICRP, ICRP Publication 119,
+            # Compendium of Dose Coefficients based on ICRP Publication 60
+
+            # The dose coefficents are based on a "Worker"
+            # Coefficents are given in units of Sv/Bq
+            # Which are premultiplied by 1 m3/h based on breathing
+            # volume for an adult resting
+            if add_DPUI:
+                DPUI = None
+                if isoId == 169:  # Cs-137 in aerosol form
+                    # Annex A
+                    DPUI = 4.8e-9
+                elif isoId == 158:  # Xe-133 as noble gas
+                    # Annex C, units normalised from day to hour
+                    DPUI = 1.2e-10 / 24
+                elif isoId == 148:  # I-131 in gas/soluble phase
+                    # Annex B, I2 form as conservative
+                    DPUI = 2.0e-8
+
+                if DPUI is not None:
+                    snapinput += f"DPUI={DPUI}\n"
             snapinputs.append(snapinput)
 
         return "\n".join(snapinputs)
