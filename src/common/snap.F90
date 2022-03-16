@@ -1717,6 +1717,7 @@ contains
   subroutine conform_input(ierror)
     use snapparML, only: TIME_PROFILE_UNDEFINED
     use snapfimexML, only: parse_interpolator
+    use snapgrdml, only: compute_max_aircraft_doserate
     use find_parameter, only: detect_gridparams, get_klevel
 #if defined(FIMEX)
     use find_parameters_fi, only: detect_gridparams_fi
@@ -1966,6 +1967,14 @@ contains
 
     if (iprodr == 0) iprodr = iprod
     if (igridr == 0) igridr = igrid
+
+    if (compute_max_aircraft_doserate) then
+      ! Disable max_aircract_dose if no component has DPUI defined
+      compute_max_aircraft_doserate = .false.
+      do n=1,ncomp
+        if (run_comp(n)%defined%dpui > 0.0) compute_max_aircraft_doserate = .true.
+      enddo
+    endif
 
   end subroutine
 
