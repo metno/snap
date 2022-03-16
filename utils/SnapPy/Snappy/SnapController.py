@@ -485,7 +485,7 @@ RELEASE.UPPER.M= {upperHeight}, {upperHeight}
                 )
 
         # add Cs137, I131 and Xe133
-        source_term += self.res.isotopes2snapinput([169, 158, 148])
+        source_term += self.res.isotopes2snapinput([169, 158, 148], add_DPUI=True)
 
         return (source_term, errors)
 
