@@ -167,13 +167,7 @@ PROGRAM bsnap
   USE rwalkML, only: rwalk, rwalk_init
   USE milibML, only: xyconvert, chcase
   use snapfldML, only: depwet
-#if defined(TRAJ)
-  USE snapfldML, only: hlevel2
-  USE forwrdML, only: forwrd, forwrd_init, speed
-  USE snapgrdML, only: vlevel, ivlevel
-#else
   USE forwrdML, only: forwrd, forwrd_init
-#endif
   USE wetdep, only: wetdep2, wetdep2_init
   USE drydep, only: drydep1, drydep2
   USE decayML, only: decay, decayDeps
@@ -261,33 +255,6 @@ PROGRAM bsnap
   type(acc_timer) :: output_timer
   type(acc_timer) :: input_timer
   type(acc_timer) :: particleloop_timer
-
-#if defined(TRAJ)
-  integer :: timeStart(6), timeCurrent(6)
-  integer :: ilvl, k1, k2
-  real ::    vlvl
-
-  integer(kind=real64) :: epochSecs
-  real :: zzz
-! character(len=60) :: tr_file
-  integer :: ntraj, itraj
-  real :: tlevel(100)
-  character(len=80) :: tname(10) ! name for the trajectory
-  integer :: tyear, tmon, tday, thour, tmin
-  real :: distance
-#endif
-
-#if defined(VOLCANO)
-!... matrix for calculating volcanic ash concentrations + file name
-!   vcon(nx,ny,3)
-  real, allocatable :: vcon(:, :, :)
-  character(len=60) :: cfile
-#endif
-
-#if defined(VOLCANO) || defined(TRAJ)
-  type(datetime_t) :: itimev
-  integer :: j
-#endif
 
 #if defined(VERSION)
   character(len=*), parameter :: VERSION_ = VERSION
@@ -440,23 +407,6 @@ PROGRAM bsnap
   if (nhrel > abs(nhrun)) nhrel = abs(nhrun)
   end block
 
-#if defined(TRAJ)
-  do itraj = 1, ntraj
-    releases(1)%rellower(1) = tlevel(itraj)
-    !        relupper(1)=rellower(1)+1
-    releases(1)%relupper(1) = releases(1)%rellower(1)
-    tyear = time_start%year
-    tmon = time_start%month
-    tday = time_start%day
-    thour = time_start%hour
-    tmin = 0.0
-    write (error_unit, *) 'lower, upper', releases(1)%rellower(1), releases(1)%relupper(1)
-    write (error_unit, *) 'tyear, tmon, tday, thour, tmin', &
-      tyear, tmon, tday, thour, tmin
-    distance = 0.0
-    speed = 0.0
-#endif
-
     !..initial no. of plumes and particles
     nplume = 0
     npart = 0
@@ -571,36 +521,10 @@ PROGRAM bsnap
 
     istep = -1
 
-#if defined(TRAJ)
-    !        write (error_unit,*) (itime(i),i=1,5)
-    itimev = itime
-    !        write (error_unit,*) (itimev(i),i=1,5)
-    ! 1110 continue
-    !        write (tr_file,'(''Trajectory_'',i3.3,
-    !     &  ''_'',i4,3i2.2,''0000.DAT'')') itraj,(itime(i),i=1,4)
-    !        open(13,file=tr_file)
-    open (13, file=tname(itraj))
-    rewind 13
-    !        write (error_unit,*) tr_file
-    write (error_unit, *) tname(itraj)
-
-    !        write (13,'(i6,3f12.3)') nstep
-
-#endif
-
     ! b_start
     mhmin = 10000.0
     mhmax = -10.0
     ! b_end
-
-#if defined(VOLCANO)
-    ! b 01.05 initialize concentration (mass) matrix
-
-    ALLOCATE (vcon(nx, ny, 3), STAT=AllocateStatus)
-    IF (AllocateStatus /= 0) ERROR STOP AllocateErrorMessage
-    vcon = 0.0
-    ! b END
-#endif
 
 ! reset readfield_nc (eventually, traj will rerun this loop)
     if (ftype == "netcdf") then
@@ -641,21 +565,6 @@ PROGRAM bsnap
       y = release_positions(irelpos)%geo_latitude
       x = release_positions(irelpos)%geo_longitude
       write (iulog, *) 'release lat,long: ', y, x
-#if defined(TRAJ)
-      !        write (error_unit,*) istep,x,y,rellower(1)
-      !        write (13,'(i6,3f12.3)') istep,x,y,rellower(1)
-
-      write (13, '(''RIMPUFF'')')
-      write (13, '(i2)') ntraj
-      write (13, '(1x,i4,4i2.2,''00'', &
-          &   2f9.3,f12.3,f15.2,f10.2)') &
-          itime, 0, y, x, releases(1)%rellower(1), &
-          distance, speed
-      write (error_unit, '(i4,1x,i4,i2,i2,2i2.2,''00'', &
-          &   2f9.3,f12.3,f15.2,f10.2)') istep, &
-          itime, 0, y, x, releases(1)%rellower(1), &
-          distance, speed
-#endif
       call xyconvert(1, x, y, 2, geoparam, igtype, gparam, ierror)
       if (ierror /= 0) then
         write (iulog, *) 'ERROR: xyconvert'
@@ -820,71 +729,6 @@ PROGRAM bsnap
       enddo
       !$OMP END PARALLEL DO
 
-      !..output...................................................
-#if defined(VOLCANO)
-      do k = 1, npart
-        x = pdata(k)%x
-        y = pdata(k)%y
-        i = nint(pdata(k)%x)
-        j = nint(pdata(k)%y)
-        if (pdata(k)%z > 0.43) &
-          vcon(i, j, 1) = vcon(i, j, 1) + pdata(k)%rad/120.0        ! level 1
-        if (pdata(k)%z > 0.23 .AND. pdata(k)%z <= 0.43) &
-          vcon(i, j, 2) = vcon(i, j, 2) + pdata(k)%rad/120.0        ! level 2
-        if (pdata(k)%z > 0.03 .AND. pdata(k)%z <= 0.216) &
-          vcon(i, j, 3) = vcon(i, j, 3) + pdata(k)%rad/120.0        ! level 3
-      enddo
-
-      ! b... START
-      ! b... output with concentrations after 6 hours
-      if (istep > 1 .AND. mod(istep, 72) == 0) then
-        write (error_unit, *) itime
-        itimev = itime + duration_t(1)
-        write (error_unit, *) itimev
-
-        !... calculate number of non zero model grids
-
-        m = count(vcon > 0.0)
-
-        !... write non zero model grids, their gegraphical coordinates and mass to output file
-
-        ! b 19.05 start
-        write (cfile, '(''concentrations-'',i2.2)') istep/72
-        open (12, file=cfile)
-        rewind 12
-        write (12, '(i4,3i2.2)') itimev
-        write (12, '(i6,'' - non zero grids'')') m
-        write (error_unit, *)
-        write (error_unit, *) 'Output no.:', istep/72
-        write (error_unit, *) 'Time (hrs): ', istep/12
-
-        m = 0
-        do i = 1, nx
-          do j = 1, ny
-            do k = 1, 3
-              if (vcon(i, j, k) > 0.0) then
-                m = m + 1
-                x = real(i) + 0.5
-                y = real(j) + 0.5
-                call xyconvert(1, x, y, igtype, gparam, 2, geoparam, ierror)
-                write (12, '(i6,2x,3i5,2x,2f10.3,2x,e12.3)') &
-                  m, i, j, k, x, y, vcon(i, j, k)/72.0
-                !              write (error_unit,'(i6,2x,3i5,2x,2f10.3,2x,e12.3)')
-                !     &        m,i,j,k,x,y,vcon(i,j,k)/72.0
-              endif
-            enddo
-          enddo
-        enddo
-
-        vcon = 0.0
-
-        write (error_unit, *) 'npart all=', npart
-        write (error_unit, *) 'ngrid all=', m
-      endif
-      close (12)
-      ! b... END
-#endif
-
       !..fields
       ifldout = 0
       isteph = isteph + 1
@@ -946,61 +790,8 @@ PROGRAM bsnap
       end if
       call output_timer%stop_and_log()
 
-#if defined(TRAJ)
-      ! b
-
-      distance = distance + speed*tstep
-      if (istep > 0 .AND. mod(istep, nsteph) == 0) then
-        timeStart = [0, 0, time_start%hour, time_start%day, time_start%month, time_start%year]
-        epochSecs = timeGm(timeStart)
-        if (nhrun >= 0) then
-          epochSecs = epochSecs + nint(istep*tstep)
-        else
-          epochSecs = epochSecs - nint(istep*tstep)
-        endif
-        timeCurrent = epochToDate(epochSecs)
-
-        do k = 1, 1
-          !        write (error_unit,*) istep,pdata(k)%x,pdata(k)%y,pdata(k)%z
-          x = pdata(k)%x
-          y = pdata(k)%y
-          i = int(x(1))
-          j = int(y(1))
-          call xyconvert(1, x, y, igtype, gparam, 2, geoparam, ierror)
-          vlvl = pdata(k)%z
-          ilvl = vlvl*10000.
-          k1 = ivlevel(ilvl)
-          k2 = k1 + 1
-          zzz = hlevel2(i, j, k2) + (hlevel2(i, j, k1) - hlevel2(i, j, k2))* &
-                (pdata(k)%z - vlevel(k2))/(vlevel(k1) - vlevel(k2))
-          !        write (error_unit,*) istep,x,y,pdata(k)%z,k1,k2,
-          !     &  vlevel(k1),vlevel(k2),hlevel2(i,j,k1),hlevel2(i,j,k2),zzz
-          !        write (error_unit,*)
-          !        write (error_unit,*) istep,k,x,y,zzz
-          !        write (error_unit,'(1x,i4,i2,i2,2i2.2,''00'')')
-          !     &(itime(i),i=1,4),mod(istep,12)*5
-          write (13, '(1x,i4,4i2.2,''00'', &
-              &                  2f9.3,f12.3,f15.2,f10.2)') &
-              timeCurrent(6), timeCurrent(5), timeCurrent(4), &
-              timeCurrent(3), timeCurrent(2), &
-              y, x, zzz, distance, speed
-          write (error_unit, '(i4,1x,i4,i2,i2,2i2.2,''00'', &
-              &                 2f9.3,f12.3,f15.2,f10.2)') istep, &
-              timeCurrent(6), timeCurrent(5), timeCurrent(4), &
-              timeCurrent(3), timeCurrent(2), &
-              y, x, zzz, distance, speed
-          ! b-2701
-          flush (13)
-        enddo
-      endif
-#endif
       call timeloop_timer%stop_and_log()
     end do time_loop
-#if defined(TRAJ)
-    close (13)
-
-  end do
-#endif
 
   if (lstepr < nstep .AND. lstepr < nstepr) then
     write (iulog, *) 'ERROR: Due to space problems the release period was'
@@ -1861,26 +1652,6 @@ contains
         autodetect_grid_params = .true.
       case ('end')
         !..end
-#if defined(TRAJ)
-        allocate (character(len=1024)::char_tmp)
-        call read_line_no_realloc(snapinput_unit, char_tmp, ierror)
-        if (ierror /= 0) goto 12
-
-        read (char_tmp, *) ntraj
-        write (error_unit, *) 'ntraj=', ntraj
-        do i = 1, ntraj
-          call read_line_no_realloc(snapinput_unit, char_tmp, ierror)
-          if (ierror /= 0) goto 12
-          read (char_tmp, *) tlevel(i)
-          write (error_unit, *) tlevel(i)
-        enddo
-        do i = 1, ntraj
-          call read_line_no_realloc(snapinput_unit, char_tmp, ierror)
-          if (ierror /= 0) goto 12
-          read (char_tmp, '(a80)') tname(i)
-          write (error_unit, '(i4,1x,a80)') i, tname(i)
-        enddo
-#endif
         end_loop = .true.
       case default
         write (error_unit, *) 'ERROR.  Unknown input:'
@@ -1923,42 +1694,6 @@ contains
 
     allocate (releases(nelems))
   end subroutine
-
-#ifdef TRAJ
-  !> Reads into a string from a file, returning if
-  !> reaching newline/end of file/len(str)
-  subroutine read_line_no_realloc(snapinput_unit, str, ierror)
-    !> Open file unit
-    integer, intent(in) :: snapinput_unit
-    !> String read into
-    character(len=*), intent(out) :: str
-    !> 0 if no error
-    integer, intent(out) :: ierror
-
-    integer :: i
-
-    ierror = 0
-    str(:) = ""
-    i = 0
-    do
-      i = i + 1
-      if (i > len(str)) then
-        ierror = 1
-        return
-      endif
-      read (snapinput_unit, iostat=ierror) str(i:i)
-      if (ierror == IOSTAT_END) then
-        ierror = 0
-        return
-      endif
-      if (ierror /= 0) return
-      if (str(i:i) == new_line(str(i:i))) then
-        str(:) = str(1:i - 1)
-        return
-      endif
-    enddo
-  end subroutine
-#endif
 
 !> checks the data from the input for errors or missing information,
 !> and copies information to structures used when running the program.
