@@ -72,7 +72,7 @@ module snapgrdML
     logical, save, public :: compute_column_max_conc = .false.
 
 !> Compute max doserate in an aircraft equivalent
-    logical, save, public :: compute_max_aircraft_doserate = .false.
+    logical, save, public :: compute_aircraft_doserate = .false.
 !> Threshold limit in [Sv/h] used for determining minimum flight altitude
     real, save, public :: aircraft_doserate_threshold = -1.0
 

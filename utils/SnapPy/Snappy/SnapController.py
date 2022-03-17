@@ -574,6 +574,9 @@ STEP.HOUR.OUTPUT.FIELDS= 3
             return
         self.lastSourceTerm += term
 
+        if "isAircraft" in qDict:
+            self.lastSourceTerm += "OUTPUT.AIRCRAFT_DOSERATE.ENABLE\n"
+
         debug("output directory: {}".format(self.lastOutputDir))
         os.mkdir(self.lastOutputDir)
 

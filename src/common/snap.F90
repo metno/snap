@@ -863,7 +863,7 @@ contains
                          TIME_PROFILE_CONSTANT, TIME_PROFILE_LINEAR, TIME_PROFILE_LINEAR, TIME_PROFILE_STEPS, &
                          TIME_PROFILE_UNDEFINED
     use snapfimexML, only: parse_interpolator
-    use snapgrdml, only: compute_column_max_conc, compute_max_aircraft_doserate, aircraft_doserate_threshold
+    use snapgrdml, only: compute_column_max_conc, compute_aircraft_doserate, aircraft_doserate_threshold
 
     !> Open file unit
     integer, intent(in) :: snapinput_unit
@@ -1456,17 +1456,13 @@ contains
         compute_column_max_conc = .true.
       case ('output.column_max_conc.disable')
         compute_column_max_conc = .false.
-      case ('output.max_aircraft_doserate.enable')
-        compute_max_aircraft_doserate = .true.
-      case ('output.max_aircraft_doserate.disable')
-        compute_max_aircraft_doserate = .false.
-      case ('output.max_aircraft_doserate.threshold.sv_h')
+      case ('output.aircraft_doserate.enable')
+        compute_aircraft_doserate = .true.
+      case ('output.aircraft_doserate.disable')
+        compute_aircraft_doserate = .false.
+      case ('output.aircraft_doserate.threshold.sv_h')
         if (.not. has_value) goto 12
         read (cinput(pname_start:pname_end), *, err=12) aircraft_doserate_threshold
-      case ('output.aircraft_doserate.enable')
-        error stop "Not implemented"
-      case ('output.aircraft_doserate.disable')
-        error stop "Not implemented"
       case ('release.pos')
         !..release.pos=<'name',latitude,longitude>
         if (.not. has_value) goto 12
@@ -1717,7 +1713,7 @@ contains
   subroutine conform_input(ierror)
     use snapparML, only: TIME_PROFILE_UNDEFINED
     use snapfimexML, only: parse_interpolator
-    use snapgrdml, only: compute_max_aircraft_doserate
+    use snapgrdml, only: compute_aircraft_doserate
     use find_parameter, only: detect_gridparams, get_klevel
 #if defined(FIMEX)
     use find_parameters_fi, only: detect_gridparams_fi
@@ -1968,11 +1964,11 @@ contains
     if (iprodr == 0) iprodr = iprod
     if (igridr == 0) igridr = igrid
 
-    if (compute_max_aircraft_doserate) then
-      ! Disable max_aircract_dose if no component has DPUI defined
-      compute_max_aircraft_doserate = .false.
+    if (compute_aircraft_doserate) then
+      ! Disable aircract_dose if no component has DPUI defined
+      compute_aircraft_doserate = .false.
       do n=1,ncomp
-        if (run_comp(n)%defined%dpui > 0.0) compute_max_aircraft_doserate = .true.
+        if (run_comp(n)%defined%dpui > 0.0) compute_aircraft_doserate = .true.
       enddo
     endif
 

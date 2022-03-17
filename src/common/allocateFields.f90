@@ -25,11 +25,11 @@ module allocateFieldsML
       pmsl1, pmsl2, field1, field2, field3, field4, xm, ym, &
       garea, dgarea, &
       max_column_scratch, max_column_concentration, &
-      max_aircraft_doserate, max_aircraft_doserate_scratch, t1_abs, t2_abs, &
+      aircraft_doserate, aircraft_doserate_scratch, t1_abs, t2_abs, &
       aircraft_doserate_threshold_height
   USE snapfilML, only: idata, fdata
   USE snapgrdML, only: ahalf, bhalf, vhalf, alevel, blevel, vlevel, imodlevel, &
-      compute_column_max_conc, compute_max_aircraft_doserate, aircraft_doserate_threshold
+      compute_column_max_conc, compute_aircraft_doserate, aircraft_doserate_threshold
   USE releaseML, only: mplume, iplume, mpart
   implicit none
   private
@@ -187,9 +187,9 @@ subroutine allocateFields
     if (AllocateStatus /= 0) ERROR STOP errmsg
   endif
 
-  if (compute_max_aircraft_doserate) then
-    allocate(max_aircraft_doserate_scratch(nx,ny,nk,ncomp+1), &
-      max_aircraft_doserate(nx,ny), &
+  if (compute_aircraft_doserate) then
+    allocate(aircraft_doserate_scratch(nx,ny,nk,ncomp+1), &
+      aircraft_doserate(nx,ny), &
       t1_abs(nx,ny,nk), t2_abs(nx,ny,nk), &
       STAT=AllocateStatus)
     if (AllocateStatus /= 0) ERROR STOP errmsg
@@ -271,8 +271,8 @@ subroutine deAllocateFields
     deallocate(max_column_concentration)
   endif
 
-  if (allocated(max_aircraft_doserate)) then
-    deallocate(max_aircraft_doserate, max_aircraft_doserate_scratch)
+  if (allocated(aircraft_doserate)) then
+    deallocate(aircraft_doserate, aircraft_doserate_scratch)
   endif
 
   if (allocated(aircraft_doserate_threshold_height)) deallocate(aircraft_doserate_threshold_height)
