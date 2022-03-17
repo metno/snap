@@ -177,7 +177,7 @@ class Resources(ResourcesCommon):
                     }
         return isotopes
 
-    def isotopes2snapinput(self, isotopeIds, add_DPUI=False):
+    def isotopes2snapinput(self, isotopeIds, add_DPUI=True):
         """Read a list of isotopeIds and return a text-block to be used for a snap.input file, like
 COMPONENT= Cs137
 RADIOACTIVE.DECAY.ON
