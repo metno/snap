@@ -19,11 +19,6 @@ module forwrdML
   implicit none
   private
 
-#if defined(TRAJ)
-!> calculation of distance and speed
-  real, save, public :: speed
-#endif
-
   public forwrd, forwrd_init
 
   contains
@@ -68,9 +63,6 @@ subroutine forwrd(tf1, tf2, tnow, tstep, part, pextra)
 !..store u,v for rwalk
   pextra%u = u
   pextra%v = v
-#if defined(TRAJ)
-  speed = hypot(u, v)
-#endif
 #if defined(PETTERSEN)
   nparticle = part
   nparticle%x = nparticle%x + dx1*pextra%rmx
@@ -306,9 +298,6 @@ subroutine forwrd_dx(tf1, tf2, tnow, tstep, part, &
   !######################################################################
   !   if(np.lt.21) write(error_unit,*) 'np,k2,w,wg: ',np,k2,w,wg
   !######################################################################
-#if !defined(TRAJ)
-    w = w + wg
-#endif
   end if
 
 

@@ -1,22 +1,16 @@
-SUBDIRS = naccident traj volcano
 # Version from environment, fall back on git versions
 VERSION ?= $(shell ./version.py)
 export VERSION
 
 
 all:
-	for i in $(SUBDIRS); do \
-		$(MAKE) -C $$i; \
-	done
+	$(MAKE) -C naccident;
 
 test:
 	$(MAKE) -C test test;
-	
 
 clean:
-	for i in $(SUBDIRS); do \
-		$(MAKE) -C $$i clean; \
-	done
+	$(MAKE) -C naccident clean;
 
 dist: clean
 	cp -R . ../snap-$(VERSION); cd ..; \
@@ -25,13 +19,6 @@ dist: clean
 	rm -r snap-$(VERSION)
 
 install:
-	for i in $(SUBDIRS); do \
-		$(MAKE) -C $$i install; \
-	done
+	$(MAKE) -C naccident install;
 
-naccident_install:
-	for i in naccident; do \
-		$(MAKE) -C $$i install; \
-	done
-
-.PHONY: all test clean dist install naccident_install
+.PHONY: all test clean dist install
