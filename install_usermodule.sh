@@ -13,6 +13,11 @@ PREFIX=/modules/bionic/user-apps/SnapPy/"$VERSION"/
 export PREFIX
 
 cd utils/SnapPy || exit 2
+
+if [ ! -f "Snappy/resources/1-s2.0-S0146645313000110-mmc1.zip" ]; then
+    wget https://ars.els-cdn.com/content/image/1-s2.0-S0146645313000110-mmc1.zip --output-document Snappy/resources/1-s2.0-S0146645313000110-mmc1.zip
+fi
+
 python3 setup.py install --prefix=$PREFIX
 cd ../.. || exit 2
 
