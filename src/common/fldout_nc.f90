@@ -66,7 +66,7 @@ module fldout_ncML
     integer :: ap
     integer :: b
     integer :: column_max_conc
-    integer :: max_aircraft_doserate
+    integer :: aircraft_doserate
     integer :: aircraft_doserate_threshold_height
     type(component_var) :: comp(mcomp)
   end type
@@ -92,13 +92,13 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     ierror)
   USE iso_fortran_env, only: int16
   USE snapgrdML, only: imodlevel, imslp, precipitation_in_output, &
-      itotcomp, compute_column_max_conc, compute_max_aircraft_doserate, &
+      itotcomp, compute_column_max_conc, compute_aircraft_doserate, &
       aircraft_doserate_threshold
   USE snapfldML, only: field1, field2, field3, field4, &
       depdry, depwet, &
       avgbq1, avgbq2, garea, pmsl1, pmsl2, hbl1, hbl2, &
       accdry, accwet, avgprec, concen, ps1, ps2, avghbl, &
-      concacc, accprec, max_column_concentration, max_aircraft_doserate, &
+      concacc, accprec, max_column_concentration, aircraft_doserate, &
       aircraft_doserate_threshold_height
   USE snapparML, only: time_profile, ncomp, run_comp, def_comp, &
     TIME_PROFILE_BOMB
@@ -220,10 +220,10 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       start=[ipos], count=[isize], &
       values=max_column_concentration(:,:)), "column_max_concentration")
   endif
-  if (compute_max_aircraft_doserate) then
-    call check(nf90_put_var(iunit, varid%max_aircraft_doserate, &
+  if (compute_aircraft_doserate) then
+    call check(nf90_put_var(iunit, varid%aircraft_doserate, &
       start=[ipos], count=[isize], &
-      values=max_aircraft_doserate(:,:)), "max_aircraft_doserate")
+      values=aircraft_doserate(:,:)), "aircraft_doserate")
     if (aircraft_doserate_threshold > 0.0) then
       call check(nf90_put_var(iunit, varid%aircraft_doserate_threshold_height, &
         start=[ipos], count=[isize], &
@@ -968,7 +968,7 @@ end subroutine nc_set_projection
 subroutine initialize_output(filename, itime, ierror)
   USE snapfilML, only: ncsummary, nctitle, simulation_start
   USE snapgrdML, only: gparam, igtype, imodlevel, imslp, precipitation_in_output, &
-      itotcomp, modleveldump, compute_column_max_conc, compute_max_aircraft_doserate, &
+      itotcomp, modleveldump, compute_column_max_conc, compute_aircraft_doserate, &
       aircraft_doserate_threshold
   USE snapfldML, only:  &
       garea, &
@@ -1070,9 +1070,9 @@ subroutine initialize_output(filename, itime, ierror)
       call nc_declare_3d(iunit, dimids3d, varid%column_max_conc, &
           chksz3d, string, "Bq/m3", "", string)
     endif
-    if (compute_max_aircraft_doserate) then
-      string = "max_aircraft_doserate"
-      call nc_declare_3d(iunit, dimids3d, varid%max_aircraft_doserate, &
+    if (compute_aircraft_doserate) then
+      string = "aircraft_doserate"
+      call nc_declare_3d(iunit, dimids3d, varid%aircraft_doserate, &
           chksz3d, string, "Sv/h", "", string)
       if (aircraft_doserate_threshold > 0.0) then
         string = "aircraft_doserate_threshold_height"
@@ -1224,7 +1224,7 @@ subroutine get_varids(iunit, varid, ierror)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
   ierror = nf90_inq_varid(iunit, "max_column_concentration", varid%column_max_conc)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
-  ierror = nf90_inq_varid(iunit, "max_aircraft_doserate", varid%max_aircraft_doserate)
+  ierror = nf90_inq_varid(iunit, "aircraft_doserate", varid%aircraft_doserate)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
   ierror = nf90_inq_varid(iunit, "aircraft_doserate_threshold_height", varid%aircraft_doserate_threshold_height)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
@@ -1278,14 +1278,14 @@ end subroutine
 !> accumulation for average fields
 subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
   USE snapgrdML, only: imodlevel, &
-      ivlayer, compute_column_max_conc, compute_max_aircraft_doserate, &
+      ivlayer, compute_column_max_conc, compute_aircraft_doserate, &
       alevel, blevel, aircraft_doserate_threshold
   USE snapfldML, only:  &
       avgbq1, avgbq2, hlayer1, hlayer2, hbl1, hbl2, &
       avgprec, concen, avghbl, dgarea, &
       avgbq, concacc, precip, &
       max_column_scratch, max_column_concentration, garea, &
-      ps1, ps2, t1_abs, t2_abs, max_aircraft_doserate_scratch, max_aircraft_doserate, &
+      ps1, ps2, t1_abs, t2_abs, aircraft_doserate_scratch, aircraft_doserate, &
       aircraft_doserate_threshold_height
   USE snapdimml, only: nk
   USE snapparML, only: ncomp, def_comp, run_comp
@@ -1316,8 +1316,8 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
     if (compute_column_max_conc) then
       max_column_concentration = 0.0
     endif
-    if (compute_max_aircraft_doserate) then
-      max_aircraft_doserate = 0.0
+    if (compute_aircraft_doserate) then
+      aircraft_doserate = 0.0
       if (aircraft_doserate_threshold > 0.0) then
         aircraft_doserate_threshold_height = 0
       endif
@@ -1421,12 +1421,12 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
   !  plant accident - Preliminary study for aviation operations",
   ! Vargas et. al. 2019, JER
   ! Doses due to cloud immersion and deposition is neglected
-  if (compute_max_aircraft_doserate) then
+  if (compute_aircraft_doserate) then
     block
     real, parameter :: regulatory_minimum_pressure = 750 ! hPa
     real, parameter :: inside_temperature = 20 + 275.15
 
-    max_aircraft_doserate_scratch = 0.0
+    aircraft_doserate_scratch = 0.0
     ! Flatten particles to grid
     do n=1,npart
       part = pdata(n)
@@ -1436,14 +1436,14 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
       k = ivlayer(ivlvl)
       m = def_comp(part%icomp)%to_running
     !..in each sigma/eta (input model) layer
-      max_aircraft_doserate_scratch(i,j,k,m) = max_aircraft_doserate_scratch(i,j,k,m) + part%rad
+      aircraft_doserate_scratch(i,j,k,m) = aircraft_doserate_scratch(i,j,k,m) + part%rad
     enddo
 
     ! Normalise by volume to obtain concentration
     do n=1,ncomp
       do k=2,nk-1
         associate(dh => rt1*hlayer1(:,:,k) + rt2*hlayer2(:,:,k))
-          max_aircraft_doserate_scratch(:,:,k,n) = max_aircraft_doserate_scratch(:,:,k,n)/(dh*garea)
+          aircraft_doserate_scratch(:,:,k,n) = aircraft_doserate_scratch(:,:,k,n)/(dh*garea)
         end associate
       enddo
     enddo
@@ -1456,7 +1456,7 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
       associate(inside_pressure => max(outside_pressure, regulatory_minimum_pressure))
 
       do n=1,ncomp
-        max_aircraft_doserate_scratch(:,:,k,n) = max_aircraft_doserate_scratch(:,:,k,n) * &
+        aircraft_doserate_scratch(:,:,k,n) = aircraft_doserate_scratch(:,:,k,n) * &
           inside_pressure / outside_pressure * &
           outside_temperature / inside_temperature
       enddo
@@ -1467,14 +1467,14 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
     ! Weight the dose contributions from each isotope
     do n=1,ncomp
       if (run_comp(n)%defined%DPUI <= 0) cycle
-      max_aircraft_doserate_scratch(:,:,:,n) = max_aircraft_doserate_scratch(:,:,:,n) * run_comp(n)%defined%DPUI
+      aircraft_doserate_scratch(:,:,:,n) = aircraft_doserate_scratch(:,:,:,n) * run_comp(n)%defined%DPUI
       ! Sum dose contributions
-      max_aircraft_doserate_scratch(:,:,:,ncomp+1) = max_aircraft_doserate_scratch(:,:,:,ncomp+1) + &
-        max_aircraft_doserate_scratch(:,:,:,n)
+      aircraft_doserate_scratch(:,:,:,ncomp+1) = aircraft_doserate_scratch(:,:,:,ncomp+1) + &
+        aircraft_doserate_scratch(:,:,:,n)
     enddo
 
     if (aircraft_doserate_threshold > 0.0) then
-      associate(doserate => max_aircraft_doserate_scratch(:,:,:,ncomp+1), thresh => aircraft_doserate_threshold)
+      associate(doserate => aircraft_doserate_scratch(:,:,:,ncomp+1), thresh => aircraft_doserate_threshold)
       do k=2,nk-2
         associate(pressure => rt1*(alevel(k+1) + blevel(k+1)*ps1) + rt2*(alevel(k+1)+blevel(k+1)*ps2))
         ! NOAA conversion formula www.weather.gov/media/epz/wxcalc/pressureConversion.pdf
@@ -1489,10 +1489,10 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
     endif
 
     ! Take max over column, skip k=1 since this we do not have temp here
-    max_aircraft_doserate_scratch(:,:,1,ncomp+1) = maxval(max_aircraft_doserate_scratch(:,:,2:,ncomp+1), dim=3)
+    aircraft_doserate_scratch(:,:,1,ncomp+1) = maxval(aircraft_doserate_scratch(:,:,2:,ncomp+1), dim=3)
 
-    max_aircraft_doserate(:,:) = max(max_aircraft_doserate, &
-      max_aircraft_doserate_scratch(:,:,1,ncomp+1))
+    aircraft_doserate(:,:) = max(aircraft_doserate, &
+      aircraft_doserate_scratch(:,:,1,ncomp+1))
     end block
   endif
 end subroutine
