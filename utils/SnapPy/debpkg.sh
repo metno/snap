@@ -47,6 +47,10 @@ fi
 # 5 - Inform meteorologists that a new version is available
 #INSTRUCTIONS_END
 
+if [ ! -f "Snappy/resources/1-s2.0-S0146645313000110-mmc1.zip" ]; then
+    wget https://ars.els-cdn.com/content/image/1-s2.0-S0146645313000110-mmc1.zip --output-document Snappy/resources/1-s2.0-S0146645313000110-mmc1.zip
+fi
+
 HOST=bionic
 VERSION=1.6.34
 CHANGELOG="fix icon permissions and timesteps"
