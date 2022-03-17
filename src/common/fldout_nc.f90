@@ -1475,8 +1475,8 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
 
     if (aircraft_doserate_threshold > 0.0) then
       associate(doserate => max_aircraft_doserate_scratch(:,:,:,ncomp+1), thresh => aircraft_doserate_threshold)
-      do k=2,nk-1
-        associate(pressure => rt1*(alevel(k) + blevel(k)*ps1) + rt2*(alevel(k)+blevel(k)*ps2))
+      do k=2,nk-2
+        associate(pressure => rt1*(alevel(k+1) + blevel(k+1)*ps1) + rt2*(alevel(k+1)+blevel(k+1)*ps2))
         ! NOAA conversion formula www.weather.gov/media/epz/wxcalc/pressureConversion.pdf
         associate(pressure_altitude => 0.3048 * (1 - (pressure / 1013.25) ** 0.190284) * 145366.45 )
         where (doserate(:,:,k) > thresh)
