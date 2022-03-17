@@ -574,7 +574,7 @@ STEP.HOUR.OUTPUT.FIELDS= 3
             return
         self.lastSourceTerm += term
 
-        if "isAircraft" in qDict:
+        if qDict.get("isAircraft", False):
             self.lastSourceTerm += "OUTPUT.AIRCRAFT_DOSERATE.ENABLE\n"
 
         debug("output directory: {}".format(self.lastOutputDir))
@@ -582,6 +582,7 @@ STEP.HOUR.OUTPUT.FIELDS= 3
 
         with open(os.path.join(self.lastOutputDir, "snap.input"), "w") as fh:
             fh.write(self.lastSourceTerm)
+
         if qDict["metmodel"] == "nrpa_ec_0p1":
             files = self.res.getECMeteorologyFiles(
                 startDT, int(qDict["runTime"]), qDict["ecmodelrun"]
