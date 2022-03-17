@@ -242,7 +242,7 @@ GRAVITY.FIXED.M/S=0.0002
             print("Isotope: ", iso["isotope"])
             print("DPUI: ", DPUI)
             if DPUI is not None and DPUI >= 0.0:
-                snapinput += f"DPUI = {DPUI}\n"
+                snapinput += f"DPUI.Sv_per_Bq_M3 = {DPUI}\n"
             snapinput += "FIELD.IDENTIFICATION= {:02d}\n".format(fieldId)
             snapinputs.append(snapinput)
 

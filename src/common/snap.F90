@@ -1370,7 +1370,7 @@ contains
         if (d_comp%densitygcm3 > 0.) goto 12
         read (cinput(pname_start:pname_end), *, err=12) d_comp%densitygcm3
         if (d_comp%densitygcm3 <= 0.) goto 12
-      case ('dpui')
+      case ('dpui.sv_per_bq_m3')
         if (.not. has_value) goto 12
         if (.not. associated(d_comp)) goto 12
         if (d_comp%dpui > 0.0) goto 12
@@ -1460,7 +1460,7 @@ contains
         compute_max_aircraft_doserate = .true.
       case ('output.max_aircraft_doserate.disable')
         compute_max_aircraft_doserate = .false.
-      case ('output.max_aircraft_doserate.threshold')
+      case ('output.max_aircraft_doserate.threshold.sv_h')
         if (.not. has_value) goto 12
         read (cinput(pname_start:pname_end), *, err=12) aircraft_doserate_threshold
       case ('output.aircraft_doserate.enable')

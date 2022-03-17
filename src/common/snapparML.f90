@@ -84,7 +84,7 @@ module snapparML
 
 !> Commited dose per unit intake
 !>
-!> Unit of Sv/Bq
+!> Unit of Sv/(Bq/m3)
 !> See e.g. ICRP Publication 119
     real :: dpui = -1.0
   end type
