@@ -213,7 +213,7 @@ RELEASE.BQ/SEC.COMP= 1e12, 1e12, 'Cs137'
             fh.write("#! /bin/bash\n")
             fh.write("cd {}\n".format(self.lastOutputDir))
             ids = " ".join([str(x.id) for x in self.measurements])
-            fh.write(r'parallel -i -j 4 /usr/bin/bsnap_naccident snap.input{} -- ' +ids + "\n")
+            fh.write(r'parallel -i -j 4 bsnap_naccident snap.input{} -- ' +ids + "\n")
             joinIds = " ".join(["-i snap{}.nc".format(x.id) for x in self.measurements]) 
             fh.write("snapCombineInverse -I Cs137 -o snapCombined.nc {}\n".format(joinIds))
         
