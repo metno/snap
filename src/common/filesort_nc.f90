@@ -43,7 +43,7 @@ subroutine filesort_nc
   integer :: zeroHour, tunitLen, status, count_nan
   integer(int64) :: eTimes(mavail)
   integer(int64) :: add_offset, scalef
-  integer :: dateTime(6)
+  integer :: dateTimeL(6)
   character(len=80) :: tunits
   character(len=256) :: errmsg
   integer :: start4d(7), count4d(7)
@@ -104,12 +104,12 @@ subroutine filesort_nc
         navail=mavail
       end if
       eTimes(i) = times(i)*scalef + add_offset
-      dateTime = epochToDate(eTimes(i))
-    !          write (error_unit,*) dateTime
-      iavail(navail)%aYear = dateTime(6)
-      iavail(navail)%aMonth = dateTime(5)
-      iavail(navail)%aDay = dateTime(4)
-      iavail(navail)%aHour = dateTime(3)
+      dateTimeL = epochToDate(eTimes(i))
+    !          write (error_unit,*) dateTimeL
+      iavail(navail)%aYear = dateTimeL(6)
+      iavail(navail)%aMonth = dateTimeL(5)
+      iavail(navail)%aDay = dateTimeL(4)
+      iavail(navail)%aHour = dateTimeL(3)
     !         iavail(n)%fcHour: forecast hour
       iavail(navail)%fcHour = 0
       iavail(navail)%fileNo = nf
