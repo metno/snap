@@ -24,10 +24,12 @@ module allocateFieldsML
       depdry, depwet, accprec, avgprec, avghbl, precip, &
       pmsl1, pmsl2, field1, field2, field3, field4, xm, ym, &
       garea, dgarea, &
-      max_column_scratch, max_column_concentration
+      max_column_scratch, max_column_concentration, &
+      aircraft_doserate, aircraft_doserate_scratch, t1_abs, t2_abs, &
+      aircraft_doserate_threshold_height
   USE snapfilML, only: idata, fdata
   USE snapgrdML, only: ahalf, bhalf, vhalf, alevel, blevel, vlevel, imodlevel, &
-      compute_column_max_conc
+      compute_column_max_conc, compute_aircraft_doserate, aircraft_doserate_threshold
   USE releaseML, only: mplume, iplume, mpart
   implicit none
   private
@@ -179,10 +181,22 @@ subroutine allocateFields
   IF (AllocateStatus /= 0) ERROR STOP errmsg
 
   if (compute_column_max_conc) then
-    allocate(max_column_scratch(nx,ny,nk-1), &
+    allocate(max_column_scratch(nx,ny,nk), &
       max_column_concentration(nx,ny), &
       STAT=AllocateStatus)
     if (AllocateStatus /= 0) ERROR STOP errmsg
+  endif
+
+  if (compute_aircraft_doserate) then
+    allocate(aircraft_doserate_scratch(nx,ny,nk,ncomp+1), &
+      aircraft_doserate(nx,ny), &
+      t1_abs(nx,ny,nk), t2_abs(nx,ny,nk), &
+      STAT=AllocateStatus)
+    if (AllocateStatus /= 0) ERROR STOP errmsg
+    if (aircraft_doserate_threshold > 0.0) then
+      allocate(aircraft_doserate_threshold_height(nx,ny), STAT=allocatestatus)
+      if (AllocateStatus /= 0) ERROR STOP errmsg
+    endif
   endif
 
 end subroutine allocateFields
@@ -257,6 +271,15 @@ subroutine deAllocateFields
     deallocate(max_column_concentration)
   endif
 
+  if (allocated(aircraft_doserate)) then
+    deallocate(aircraft_doserate, aircraft_doserate_scratch)
+  endif
+
+  if (allocated(aircraft_doserate_threshold_height)) deallocate(aircraft_doserate_threshold_height)
+
+  if (allocated(t1_abs)) then
+    deallocate(t1_abs, t2_abs)
+  endif
 
   DEALLOCATE ( pdata )
   DEALLOCATE ( iparnum )

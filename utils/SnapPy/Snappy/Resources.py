@@ -32,6 +32,7 @@ import time as mtime
 from time import gmtime, strftime
 
 from Snappy.ResourcesCommon import ResourcesCommon
+from Snappy import read_dosecoefficients_icrp
 
 
 @enum.unique
@@ -163,7 +164,7 @@ class Resources(ResourcesCommon):
             os.path.join(self.directory, "isotope_list.txt"), mode="r", encoding="UTF-8"
         ) as isoFH:
             for line in isoFH:
-                if not line.strip() is "":
+                if line.strip() != "":
                     isoId = int(line[0:4])
                     el = line[4:7].strip()
                     iso = line[8:13].strip()
@@ -176,7 +177,7 @@ class Resources(ResourcesCommon):
                     }
         return isotopes
 
-    def isotopes2snapinput(self, isotopeIds):
+    def isotopes2snapinput(self, isotopeIds, add_DPUI=True):
         """Read a list of isotopeIds and return a text-block to be used for a snap.input file, like
 COMPONENT= Cs137
 RADIOACTIVE.DECAY.ON
@@ -188,11 +189,16 @@ DENSITY.G/CM3=2.3
 GRAVITY.FIXED.M/S=0.0002
 FIELD.IDENTIFICATION=01
 """
+        if add_DPUI:
+            dosecoeff = self.getDoseCoefficients()
+        else:
+            dosecoeff = None
         snapinputs = ["***List of components"]
         isotopes = self.getIsotopes()
         fieldId = 0
         for isoId in isotopeIds:
             fieldId += 1
+            DPUI = None
             iso = isotopes[isoId]
             snapinput = "COMPONENT= {}\n".format(iso["isotope"])
             snapinput += "RADIOACTIVE.DECAY.ON\n"
@@ -205,6 +211,8 @@ FIELD.IDENTIFICATION=01
 WET.DEP.OFF
 GRAVITY.OFF
 """
+                if dosecoeff is not None:
+                    DPUI = dosecoeff.DPUI(iso["isotope"], "noble")
             elif iso["type"] == 1:
                 # Gas
                 snapinput += """DRY.DEP.ON
@@ -213,6 +221,8 @@ RADIUS.MICROMETER=0.05
 DENSITY.G/CM3=0.001
 GRAVITY.FIXED.M/S=0.00001
 """
+                if dosecoeff is not None:
+                    DPUI = dosecoeff.DPUI(iso["isotope"], "gas")
             elif iso["type"] == 2:
                 # Aerosol
                 snapinput += """DRY.DEP.ON
@@ -221,12 +231,18 @@ RADIUS.MICROMETER=0.55
 DENSITY.G/CM3=2.3
 GRAVITY.FIXED.M/S=0.0002
 """
+                if dosecoeff is not None:
+                    DPUI = dosecoeff.DPUI(iso["isotope"], "particulate")
             else:
                 raise Exception(
                     "Error, unknown type '{1}' for isotope '{2}'".format(
                         iso["type"], iso["isotope"]
                     )
                 )
+            print("Isotope: ", iso["isotope"])
+            print("DPUI: ", DPUI)
+            if DPUI is not None and DPUI >= 0.0:
+                snapinput += f"DPUI.Sv_per_Bq_M3 = {DPUI}\n"
             snapinput += "FIELD.IDENTIFICATION= {:02d}\n".format(fieldId)
             snapinputs.append(snapinput)
 
@@ -311,7 +327,9 @@ GRAVITY.FIXED.M/S=0.0002
     def readRadnett(self,):
         stations = OrderedDict()
         with open(
-            os.path.join(os.path.dirname(__file__), "resources/radnett.csv"), mode="r", encoding="UTF-8"
+            os.path.join(os.path.dirname(__file__), "resources/radnett.csv"),
+            mode="r",
+            encoding="UTF-8",
         ) as f:
             degree_minute_regex = re.compile("([0-9]+)°\s([0-9]+)’\s[NØ]")
             for line in f:
@@ -328,7 +346,11 @@ GRAVITY.FIXED.M/S=0.0002
                 tag = "RADNETT:" + station.replace(" ", "_")
                 tag = tag.encode("ascii", "ignore").decode("ascii")
 
-                stations[tag] = {"site": f"RADNETT: {station}", "lon": longitude, "lat": latitude}
+                stations[tag] = {
+                    "site": f"RADNETT: {station}",
+                    "lon": longitude,
+                    "lat": latitude,
+                }
 
         return stations
 
@@ -568,6 +590,15 @@ GRAVITY.FIXED.M/S=0.0002
 
         return relevant_dates
 
+    def getDoseCoefficients(self):
+        try:
+            dosecoeffs = read_dosecoefficients_icrp.DoseCoefficientsICRP(
+                os.path.join(self.directory, "1-s2.0-S0146645313000110-mmc1.zip")
+            )
+        except Exception as e:
+            dosecoeffs = None
+        return dosecoeffs
+
 
 if __name__ == "__main__":
     print(Resources().getStartScreen())
@@ -595,3 +626,4 @@ if __name__ == "__main__":
             datetime.combine(date.today(), time(0)), -72
         )
     )
+    print(Resources().get_dosecoefficients())

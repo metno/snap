@@ -9,12 +9,12 @@ CC  = gcc
 #      -ftree-vectorizer-verbose=2
 #-ffpe-trap=invalid,zero,overflow
 #F77FLAGS=-O2 -g -msse2 -ffpe-trap=invalid,zero,overflow
-F77FLAGS=-DVERSION=\"$(VERSION)\" -O2 -g -mavx -ftree-vectorize -fno-math-errno -Wall -Wextra -fimplicit-none -fmodule-private
+F77FLAGS=-DVERSION=\"$(VERSION)\" -O2 -g -mavx -ftree-vectorize -fno-math-errno -Wall -Wextra -fimplicit-none -fmodule-private -Wno-conversion
 CXXFLAGS=-O2 -mavx -ftree-vectorize -fno-math-errno -Wall -Wextra
 CCFLAGS=-O2 -mavx -ftree-vectorize -fno-math-errno -Wall -Wextra
 
 # some additional flags for fimex
-LDFLAGS=-Wl,-rpath,/modules/xenial/user-apps/mi-programoptions/0.1.0/lib/ -Wl,-rpath,/modules/xenial/user-apps/eccodes/2.12.0/lib/ -Wl,-rpath,/modules/xenial/hdf5/1.8.17/lib 
+LDFLAGS=-Wl,-rpath,/modules/xenial/user-apps/mi-programoptions/0.1.0/lib/ -Wl,-rpath,/modules/xenial/user-apps/eccodes/2.12.0/lib/ -Wl,-rpath,/modules/xenial/hdf5/1.8.17/lib
 
 # NCDIR not required if /usr or /usr/local
 #NCDIR = /modules/trusty/NETCDF/4.3.2/C/
