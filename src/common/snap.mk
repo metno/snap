@@ -13,7 +13,7 @@ release.o releasefile.o rmpart.o split_particles.o allocateFields.o \
 find_parameters.o datetime.o
 
 # old milib files
-MODELOBJ += chcase.o  gridpar.o  mapfield.o  xyconvert.o \
+MODELOBJ += gridpar.o  mapfield.o  xyconvert.o \
      rmfile.o \
      earthr.o pol2sph.o sph2rot.o lam2sph.o mer2sph.o milibML.o
 
@@ -78,17 +78,17 @@ om2edot.o: ../common/om2edot.f90 snapgrdML.o snapfldML.o snapdimML.o snapdebugML
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 readfield_nc.o: ../common/readfield_nc.f90 particleML.o snapfilML.o snapgrdML.o snapmetML.o snaptabML.o snapdebugML.o snapdimML.o om2edot.o ftest.o milibML.o snapfldML.o datetime.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-readfield_fi.o: ../common/readfield_fi.f90 snapfimexML.o particleML.o snapfilML.o snapgrdML.o snapmetML.o snaptabML.o snapdebugML.o snapdimML.o om2edot.o ftest.o milibML.o fimex.o datetime.o readfield_nc.o
+readfield_fi.o: ../common/readfield_fi.f90 snapfimexML.o particleML.o snapfilML.o snapgrdML.o snapmetML.o snaptabML.o snapdebugML.o snapdimML.o om2edot.o ftest.o milibML.o fimex.o datetime.o readfield_nc.o utils.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 filesort_nc.o: ../common/filesort_nc.f90 dateCalc.o snapfilML.o snapdimML.o snapgrdML.o snapfldML.o snapmetML.o snapdebugML.o readfield_nc.o datetime.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-filesort_fi.o: ../common/filesort_fi.f90 snapfimexML.o dateCalc.o snapfilML.o snapdimML.o snapgrdML.o snapfldML.o snapmetML.o snapdebugML.o readfield_fi.o datetime.o
+filesort_fi.o: ../common/filesort_fi.f90 snapfimexML.o dateCalc.o snapfilML.o snapdimML.o snapgrdML.o snapfldML.o snapmetML.o snapdebugML.o readfield_fi.o datetime.o utils.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 find_parameters.o: ../common/find_parameters.f90 snapmetML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-find_parameters_fi.o: ../common/find_parameters_fi.f90 snapfimexML.o snapmetML.o fimex.o readfield_fi.o
+find_parameters_fi.o: ../common/find_parameters_fi.f90 snapfimexML.o snapmetML.o fimex.o readfield_fi.o utils.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-fldout_nc.o: ../common/fldout_nc.f90 snapfilML.o snapgrdML.o snapfldML.o snapparML.o snaptabML.o snapdebugML.o snapdimML.o readfield_nc.o ftest.o release.o milibML.o datetime.o
+fldout_nc.o: ../common/fldout_nc.f90 snapfilML.o snapgrdML.o snapfldML.o snapparML.o snaptabML.o snapdebugML.o snapdimML.o readfield_nc.o ftest.o release.o milibML.o datetime.o utils.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 forwrd.o: ../common/forwrd.F90 particleML.o snapgrdML.o snapfldML.o snapparML.o snaptabML.o snapdimML.o snapdebugML.o vgravtables.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
@@ -123,8 +123,6 @@ milibML.o: ../common/milibML.f90
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 
 # libmi
-chcase.o: ../common/milib/chcase.f
-	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 gridpar.o: ../common/milib/gridpar.f
 	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 mapfield.o: ../common/milib/mapfield.f

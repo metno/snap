@@ -165,7 +165,7 @@ PROGRAM bsnap
   USE split_particlesML, only: split_particles
   USE checkdomainML, only: checkdomain
   USE rwalkML, only: rwalk, rwalk_init
-  USE milibML, only: xyconvert, chcase
+  USE milibML, only: xyconvert
   use snapfldML, only: depwet
   USE forwrdML, only: forwrd, forwrd_init
   USE wetdep, only: wetdep2, wetdep2_init
@@ -185,6 +185,7 @@ PROGRAM bsnap
 #endif
   USE releasefileML, only: releasefile
   USE filesort_ncML, only: filesort_nc
+  USE utils, only: to_uppercase, to_lowercase
 
   implicit none
 
@@ -303,12 +304,14 @@ PROGRAM bsnap
     ntprof = size(releases)
   end if
 
-!..convert names to uppercase letters
-  call chcase(2, 1, srelnam)
+! canonicalise names
+  call to_uppercase(srelnam)
   do n = 1, nrelpos
-    call chcase(2, 1, release_positions(n)%name)
+    call to_uppercase(release_positions(n)%name)
   end do
-  if (ncomp > 0) call chcase(2, ncomp, component)
+  do n=1,ncomp
+    call to_uppercase(component(n))
+  enddo
 
   allocate (run_comp(ncomp))
   run_comp%totalbq = 0
@@ -953,7 +956,7 @@ contains
       end if
 
       keyword(:) = trim(cinput(kname_start:kname_end))
-      call chcase(1, 1, keyword) ! Lowercase
+      call to_lowercase(keyword)
 
       ! write (error_unit,*) "keyword: ", trim(keyword)
       ! if (has_value) write (error_unit,*) "value: ", trim(cinput(pname_start:pname_end))
@@ -1258,7 +1261,7 @@ contains
 
         d_comp%compname = cinput(pname_start:pname_end)
         d_comp%compnamemc = cinput(pname_start:pname_end)
-        call chcase(2, 1, d_comp%compname)
+        call to_uppercase(d_comp%compname)
       case ('dry.dep.on')
         !..dry.dep.on
         if (.not. associated(d_comp)) goto 12
