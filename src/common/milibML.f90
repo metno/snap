@@ -11,12 +11,6 @@ module milibML
       integer, intent(out) :: ierror
     end subroutine xyconvert
 
-    subroutine chcase(mode, ntext, text)
-      integer, intent(in) :: mode
-      integer, intent(in) :: ntext
-      character*(*), intent(inout) :: text(ntext)
-    end subroutine chcase
-
     subroutine gridpar(icall, ldata, idata, igtype, nx, ny, grid, ierror)
       USE iso_fortran_env, only: int16
       integer, intent(in) :: icall, ldata

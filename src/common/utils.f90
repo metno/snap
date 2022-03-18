@@ -16,7 +16,10 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 module utils
-  public itoa, ftoa, atof
+  public itoa, ftoa, atof, to_uppercase, to_lowercase
+
+  character(len=26), parameter :: alphabet_upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  character(len=26), parameter :: alphabet_lower = "abcdefghijklmnopqrstuvwxyz"
 contains
   function itoa(i) result(res)
     character(:),allocatable :: res
@@ -41,4 +44,40 @@ contains
     read(str,*) res
   end function atof
 
+  function find_in_str(needle, haystack) result(res)
+    character, intent(in) :: needle
+    character(len=*), intent(in) :: haystack
+    integer :: res, n
+
+    res = -1
+    do n=1,len(haystack)
+      if (needle == haystack(n:n)) then
+        res = n
+      endif
+    enddo
+  end function
+
+  subroutine to_uppercase(str)
+    character(len=*), intent(inout) :: str
+    integer :: i, n
+
+    do n=1,len_trim(str)
+      i = find_in_str(str(n:n), alphabet_lower)
+      if (i > 0) then
+        str(n:n) = alphabet_upper(i:i)
+      endif
+    enddo
+  end subroutine
+
+  subroutine to_lowercase(str)
+    character(len=*), intent(inout) :: str
+    integer :: i, n
+
+    do n=1,len_trim(str)
+      i = find_in_str(str(n:n), alphabet_upper)
+      if (i > 0) then
+        str(n:n) = alphabet_lower(i:i)
+      endif
+    enddo
+  end subroutine
 end module utils
