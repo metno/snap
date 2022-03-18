@@ -25,15 +25,14 @@ ifdef FIMEXLIB
 endif
 
 
-BOBJ = snap_batch_copy.o
+BOBJ = snap.o
 
 
 clean_links:
 	rm -f *.mod *.o *~
 
-snap_batch_copy.o: ../common/snap.F90 $(MODELOBJ)
-	cp -p ../common/snap.F90 snap_batch_copy.F90
-	${F77} -c $(F77FLAGS) $(INCLUDES) -DBATCH snap_batch_copy.F90
+snap.o: ../common/snap.F90 $(MODELOBJ)
+	${F77} -c $(F77FLAGS) $(INCLUDES) $<
 
 #--------------------------------
 
