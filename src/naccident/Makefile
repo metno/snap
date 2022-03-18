@@ -1,10 +1,7 @@
 # includefile contains Compiler definitions etc.
 include ../current.mk
 
-F77FLAGS += -DACCIDENT
-
 all: bsnap_naccident
-
 
 include ../common/snap.mk
 
@@ -13,7 +10,7 @@ bsnap_naccident: $(BOBJ) $(MODELOBJ)
 
 
 clean: clean_links
-	rm -f *.o *~ snap_batch_copy.F90 *__genmod.*
+	rm -f *.o *~ *__genmod.*
 
 distclean: clean
 	rm -f bsnap_naccident create_naccident_input create_naccident_output
