@@ -80,13 +80,13 @@ STEP.HOUR.OUTPUT.FIELDS= 3
     with open(f"{dirname}/snap.stdout.log", 'wt') as stdout:
         with open(f"{dirname}/snap.stderr.log", 'wt') as stderr:
             os.environ['OMP_NUM_THREADS']='2' # moderate thread usage
-            subprocess.run(['/usr/bin/bsnap_naccident', 'snap.input'],
+            subprocess.run(['bsnap_naccident', 'snap.input'],
                             cwd=dirname,
                             stdout=stdout,
                             stderr=stderr
                             )
             # add time of arrival
-            subprocess.run(['/usr/bin/snapAddToa', 'snap.nc'],
+            subprocess.run(['snapAddToa', 'snap.nc'],
                             cwd=dirname,
                             stdout=stdout,
                             stderr=stderr

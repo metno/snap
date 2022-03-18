@@ -100,13 +100,13 @@ class SnapRun:
     def start(self):
         debug("outputdir: " + self.snap_controller.lastOutputDir)
         #         self.proc.start('/home/heikok/sleepLong.sh', ['snap.input'])
-        self.proc.start("/usr/bin/bsnap_naccident", ["snap.input"])
+        self.proc.start("bsnap_naccident", ["snap.input"])
         if self.proc.waitForStarted(3000):
             self.snap_controller.snapRunning = "running"
             debug("started: " + self.snap_controller.snapRunning)
         else:
             self.snap_controller.write_log(
-                "starting /usr/bin/bsnap_naccident snap.input failed"
+                "starting bsnap_naccident snap.input failed"
             )
 
 
