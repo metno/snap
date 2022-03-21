@@ -195,6 +195,15 @@ class SnapController:
             with open(os.path.join(prod_dir, "diana.setup"), "wt") as fh:
                 di_setup = """
 %include /etc/diana/setup/diana.setup-COMMON
+<COLOURS>
+seablueOSM=174,207,224
+landOSM=242,239,233
+</COLOURS>
+
+<PALETTES>
+dsa_toa=255:0:255,255:128:255,128:0:128,128:0:255,128:128:255,128:128:192,192:192:192
+</PALETTES>
+
 <FIELD_FILES>
 filegroup=SNAP
 m=SNAP.current t=fimex format=netcdf f={}
