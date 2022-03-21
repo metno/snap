@@ -1,4 +1,4 @@
-VERSION=2.0.8
+VERSION=2.1.0
 #VERSION_=`echo -n $VERSION | tr '.' '_'`
 export VERSION
 PLATFORM=bionic
@@ -17,7 +17,7 @@ mv snap-${VERSION}.tgz bsnap_${VERSION}.orig.tar.gz
 cd snap-${VERSION} || exit 1
 cp -r ../debian.${PLATFORM} .
 mv debian.${PLATFORM} debian
-dch -v ${VERSION}-1 "new release"
+dch -v ${VERSION}-1 "Add aircraft doserate"
 dch -r ""
 export DEB_BUILD_OPTIONS='nostrip'
 debuild --preserve-envvar VERSION -us -uc -sa
