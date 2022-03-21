@@ -1,10 +1,9 @@
 #! /usr/bin/env python3
-import warnings
-warnings.filterwarnings('ignore', category=UserWarning, module='pandas')
-import pandas as pd
 import numpy as np
 import pathlib
 import zipfile
+import csv
+import io
 
 
 class DoseCoefficientsICRP:
@@ -19,26 +18,64 @@ class DoseCoefficientsICRP:
 
     @staticmethod
     def _parse_particulates(path):
-        particulates = pd.read_csv(path, skiprows=5)
-        particulates.columns = particulates.columns.str.strip()
-        particulates.drop(columns=["Unnamed: 6"], inplace=True)
+        for _ in range(8):
+            path.readline()
+        fieldnames = [
+            "Nuclide",
+            "T12",
+            "Type",
+            "f1 inhalation",
+            "e (1um)",
+            "e (5um)",
+            "blank",
+            "f1 ingestion",
+            "e ingestion",
+        ]
+        with io.TextIOWrapper(path, encoding="utf-8") as f:
+            reader = csv.DictReader(f, fieldnames=fieldnames)
 
-        # Forward fill to get nuclide for all species
-        particulates.fillna(method="ffill", inplace=True)
-        # Drop label "Hydrogen/Beryllium/..."
-        particulates = particulates[particulates["Nuclide"].str.contains("-")]
+            contents = []
+            prev = None
+            for row in reader:
+                if prev is not None:
+                    for fillforward in fieldnames:
+                        if row[fillforward] is "":
+                            row[fillforward] = prev[fillforward]
+                prev = row
+                if "-" not in row["Nuclide"]:
+                    continue
+                contents.append(row)
 
-        return particulates
+        nuclides = [row["Nuclide"] for row in contents]
+        types = [row["Type"] for row in contents]
+        e = [float(row["e (1um)"]) for row in contents]
+        return (nuclides, types, e)
 
     @staticmethod
     def _parse_gases(path):
-        gases = pd.read_csv(path, skiprows=3)
-        gases = gases[~np.isnan(gases["e (Sv Bq-1)"])]
+        for _ in range(4):
+            path.readline()
+        fieldnames = ["Nuclide/Chemical form", "T12", "e (Sv Bq-1)"]
+        with io.TextIOWrapper(path, encoding="utf-8") as f:
+            reader = csv.DictReader(f, fieldnames=fieldnames)
+
+            contents = []
+            prev = None
+            for row in reader:
+                if prev is not None:
+                    for fillforward in fieldnames:
+                        if row[fillforward] is "":
+                            row[fillforward] = prev[fillforward]
+                prev = row
+                if row["e (Sv Bq-1)"] is "":
+                    continue
+                contents.append(row)
+
         nuclides = []
         chemical_forms = []
         prev = None
-        for (irow, row) in gases.iterrows():
-            iso, *rest = row[0].split(" ")
+        for row in contents:
+            iso, *rest = row["Nuclide/Chemical form"].split(" ")
             chem_form = " ".join(rest).strip()
             chemical_forms.append(chem_form)
             if iso == "":
@@ -47,18 +84,35 @@ class DoseCoefficientsICRP:
                 prev = iso
                 nuclides.append(iso)
 
-        gases["Nuclide"] = nuclides
-        gases["Chemical form"] = nuclides
+        e = [float(row["e (Sv Bq-1)"]) for row in contents]
 
-        return gases
+        return (nuclides, chemical_forms, e)
 
     @staticmethod
     def _parse_noble_gases(path):
-        n_gases = pd.read_csv(path, skiprows=5)
-        n_gases = n_gases[~np.isnan(n_gases["(Sv d-1 per Bq m-3)"])]
-        n_gases["Sv h-1 per Bq m-3"] = n_gases["(Sv d-1 per Bq m-3)"] / 24
+        for _ in range(6):
+            path.readline()
+        fieldnames = ["Nuclide", "T12", "Sv d-1 per Bq m-3"]
+        with io.TextIOWrapper(path, encoding="utf-8") as f:
+            reader = csv.DictReader(f, fieldnames=fieldnames)
 
-        return n_gases
+            contents = []
+            prev = None
+            for row in reader:
+                if prev is not None:
+                    for fillforward in fieldnames:
+                        if row[fillforward] is "":
+                            row[fillforward] = prev[fillforward]
+                prev = row
+                if row["Sv d-1 per Bq m-3"] is "":
+                    continue
+                contents.append(row)
+
+        nuclides = [row["Nuclide"] for row in contents]
+        e = [row["Sv d-1 per Bq m-3"] for row in contents]
+        e = [float(e) / 24 for e in e]
+
+        return nuclides, e
 
     def DPUI(self, iso, typ):
         """Dose Per Unit Intake, [Sv / h per Bq/m3]
@@ -77,14 +131,22 @@ class DoseCoefficientsICRP:
 
         breathing_volume_per_hour = 1
         if typ == "particulate":
-            candidates = self.particulates[self.particulates["Nuclide"] == iso]
-            return np.max(candidates["e (1 ?m)"]) * breathing_volume_per_hour
+            candidates = [p for p in zip(*self.particulates) if p[0] == iso]
+            if len(candidates) == 0:
+                return None
+            e_max = np.max([c[2] for c in candidates])
+            return e_max * breathing_volume_per_hour
         elif typ == "gas":
-            candidates = self.gases[self.gases["Nuclide"] == iso]
-            return np.max(candidates["e (Sv Bq-1)"]) * breathing_volume_per_hour
+            candidates = [p for p in zip(*self.particulates) if p[0] == iso]
+            if len(candidates) == 0:
+                return None
+            e_max = np.max([c[2] for c in candidates])
+            return e_max * breathing_volume_per_hour
         elif typ == "noble":
-            candidates = self.noble_gases[self.noble_gases["Nuclide"] == iso]
-            return np.max(candidates["Sv h-1 per Bq m-3"])
+            candidates = [c for c in zip(*self.noble_gases) if c[0] == iso]
+            if len(candidates) == 0:
+                return None
+            return candidates[0][1]
         else:
             raise ValueError(f"Unknown type requested: {typ}")
 
@@ -96,6 +158,6 @@ if __name__ == "__main__":
     d = DoseCoefficientsICRP(path)
 
     print(d.DPUI("Cs-137", "particulate"))
-    print(d.DPUI("Cs-137", "particulate"))
     print(d.DPUI("I-131", "gas"))
     print(d.DPUI("Xe133", "noble"))
+    print(d.DPUI("Te-131", "particulate"))
