@@ -52,8 +52,8 @@ if [ ! -f "Snappy/resources/1-s2.0-S0146645313000110-mmc1.zip" ]; then
 fi
 
 HOST=bionic
-VERSION=1.6.34
-CHANGELOG="fix icon permissions and timesteps"
+VERSION=1.7.0
+CHANGELOG="add aircraft doserate"
 rm -f debian
 ln -s debian.$HOST debian
 dch -v ${VERSION}-1 -U "${CHANGELOG}"
