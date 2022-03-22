@@ -52,8 +52,8 @@ if [ ! -f "Snappy/resources/1-s2.0-S0146645313000110-mmc1.zip" ]; then
 fi
 
 HOST=bionic
-VERSION=1.7.1
-CHANGELOG="fix ocean colour"
+VERSION=1.7.2
+CHANGELOG="use OSM-colours for land and sea; dsa-palette for toa"
 rm -f debian
 ln -s debian.$HOST debian
 dch -v ${VERSION}-1 -U "${CHANGELOG}"
