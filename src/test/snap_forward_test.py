@@ -10,12 +10,13 @@ import unittest
 
 from snapunittest import SnapTestCase
 
-class SnapEcEMEPForwardTestCase(SnapTestCase):
-    input = 'snap.input_ecemep_fimex'
-    snap = '../bsnap_naccident'
-    datadir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data')
 
-    snapExpected = 'https://thredds.met.no/thredds/dodsC/metusers/heikok/snap_testdata/snap_ecemep_expected.nc'
+class SnapEcEMEPForwardTestCase(SnapTestCase):
+    input = "snap.input_ecemep_fimex"
+    snap = "../bsnap_naccident"
+    datadir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
+
+    snapExpected = "https://thredds.met.no/thredds/dodsC/metusers/heikok/snap_testdata/snap_ecemep_expected.nc"
 
     def setUp(self):
         pass
@@ -23,51 +24,70 @@ class SnapEcEMEPForwardTestCase(SnapTestCase):
     def tearDown(self):
         pass
 
-    @unittest.skipIf(os.getenv('FIMEXLIB') is None,
-                     "fimex not supported in this build")
+    @unittest.skipIf(os.getenv("FIMEXLIB") is None, "fimex not supported in this build")
     def test_runfimex(self):
         env = os.environ.copy()
         env["OMP_NUM_THREADS"] = "1"
-        proc = subprocess.run([os.path.join(self.datadir, self.snap), self.input], cwd=self.datadir, env=env)
-        self.assertEqual(proc.returncode, 0)
+        proc = subprocess.run(
+            [os.path.join(self.datadir, self.snap), self.input],
+            cwd=self.datadir,
+            env=env,
+            check=True,
+            stderr=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+        )
 
         outfile = self.get_nc_filename(os.path.join(self.datadir, self.input))
-        self.compare_nc(self.snapExpected,
-                        os.path.join(self.datadir, outfile),
-                        ['instant_height_boundary_layer',
-                         'precipitation_amount_acc',
-                         'Cs137_concentration',
-                         'Cs137_concentration_bl',
-                         'Cs137_acc_concentration',
-                         'Cs137_acc_dry_deposition',
-                         'Cs137_acc_wet_deposition'])
+        self.compare_nc(
+            self.snapExpected,
+            os.path.join(self.datadir, outfile),
+            [
+                "instant_height_boundary_layer",
+                "precipitation_amount_acc",
+                "Cs137_concentration",
+                "Cs137_concentration_bl",
+                "Cs137_acc_concentration",
+                "Cs137_acc_dry_deposition",
+                "Cs137_acc_wet_deposition",
+            ],
+        )
 
     @unittest.skip("test not implemented properly yet")
     def test_runnclib(self):
-        #TBD create input-file with FILE.TYPE=netcdf instead of fimex
+        # TBD create input-file with FILE.TYPE=netcdf instead of fimex
         env = os.environ.copy()
         env["OMP_NUM_THREADS"] = "1"
-        proc = subprocess.run([os.path.join(self.datadir, self.snap), self.input], cwd=self.datadir, env=env)
-        self.assertEqual(proc.returncode, 0)
+        proc = subprocess.run(
+            [os.path.join(self.datadir, self.snap), self.input],
+            cwd=self.datadir,
+            env=env,
+            check=True,
+            stderr=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+        )
 
         outfile = self.get_nc_filename(os.path.join(self.datadir, self.input))
-        self.compare_nc(self.snapExpected,
-                        os.path.join(self.datadir, outfile),
-                        ['instant_height_boundary_layer',
-                         'precipitation_amount_acc',
-                         'Cs137_concentration',
-                         'Cs137_concentration_bl',
-                         'Cs137_acc_concentration',
-                         'Cs137_acc_dry_deposition',
-                         'Cs137_acc_wet_deposition'])
+        self.compare_nc(
+            self.snapExpected,
+            os.path.join(self.datadir, outfile),
+            [
+                "instant_height_boundary_layer",
+                "precipitation_amount_acc",
+                "Cs137_concentration",
+                "Cs137_concentration_bl",
+                "Cs137_acc_concentration",
+                "Cs137_acc_dry_deposition",
+                "Cs137_acc_wet_deposition",
+            ],
+        )
 
 
 class SnapMEPSForwardTestCase(SnapTestCase):
-    input = 'snap.input_meps_fimex'
-    snap = '../bsnap_naccident'
-    datadir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data')
+    input = "snap.input_meps_fimex"
+    snap = "../bsnap_naccident"
+    datadir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 
-    snapExpected = 'https://thredds.met.no/thredds/dodsC/metusers/heikok/snap_testdata/snap_meps_interpolated_expected.nc'
+    snapExpected = "https://thredds.met.no/thredds/dodsC/metusers/heikok/snap_testdata/snap_meps_interpolated_expected.nc"
 
     def setUp(self):
         pass
@@ -75,54 +95,73 @@ class SnapMEPSForwardTestCase(SnapTestCase):
     def tearDown(self):
         pass
 
-    @unittest.skipIf(os.getenv('FIMEXLIB') is None,
-                     "fimex not supported in this build")
+    @unittest.skipIf(os.getenv("FIMEXLIB") is None, "fimex not supported in this build")
     def test_runfimex(self):
         env = os.environ.copy()
         env["OMP_NUM_THREADS"] = "1"
-        proc = subprocess.run([os.path.join(self.datadir, self.snap), self.input], cwd=self.datadir, env=env)
-        self.assertEqual(proc.returncode, 0)
+        proc = subprocess.run(
+            [os.path.join(self.datadir, self.snap), self.input],
+            cwd=self.datadir,
+            env=env,
+            check=True,
+            stderr=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+        )
 
         outfile = self.get_nc_filename(os.path.join(self.datadir, self.input))
-        self.compare_nc(self.snapExpected,
-                        os.path.join(self.datadir, outfile),
-                        ['instant_height_boundary_layer',
-                         'precipitation_amount_acc',
-                         'Cs137_concentration',
-                         'Cs137_concentration_bl',
-                         'Cs137_acc_concentration',
-                         'Cs137_dry_deposition',
-                         'Cs137_wet_deposition'])
+        self.compare_nc(
+            self.snapExpected,
+            os.path.join(self.datadir, outfile),
+            [
+                "instant_height_boundary_layer",
+                "precipitation_amount_acc",
+                "Cs137_concentration",
+                "Cs137_concentration_bl",
+                "Cs137_acc_concentration",
+                "Cs137_dry_deposition",
+                "Cs137_wet_deposition",
+            ],
+        )
 
     @unittest.skip("test not implemented properly yet")
     def test_runnclib(self):
-        #TBD create input-file with FILE.TYPE=netcdf instead of fimex
+        # TBD create input-file with FILE.TYPE=netcdf instead of fimex
         env = os.environ.copy()
         env["OMP_NUM_THREADS"] = "1"
-        proc = subprocess.run([os.path.join(self.datadir, self.snap), self.input], cwd=self.datadir, env=env)
+        proc = subprocess.run(
+            [os.path.join(self.datadir, self.snap), self.input],
+            cwd=self.datadir,
+            env=env,
+            check=True,
+            stderr=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+        )
         self.assertEqual(proc.returncode, 0)
 
         outfile = self.get_nc_filename(os.path.join(self.datadir, self.input))
-        self.compare_nc(self.snapExpected,
-                        os.path.join(self.datadir, outfile),
-                        ['instant_height_boundary_layer',
-                         'precipitation_amount_acc',
-                         'Cs137_concentration',
-                         'Cs137_concentration_bl',
-                         'Cs137_acc_concentration',
-                         'Cs137_dry_deposition',
-                         'Cs137_wet_deposition'])
+        self.compare_nc(
+            self.snapExpected,
+            os.path.join(self.datadir, outfile),
+            [
+                "instant_height_boundary_layer",
+                "precipitation_amount_acc",
+                "Cs137_concentration",
+                "Cs137_concentration_bl",
+                "Cs137_acc_concentration",
+                "Cs137_dry_deposition",
+                "Cs137_wet_deposition",
+            ],
+        )
 
 
 class ReleaseTests(unittest.TestCase):
-    datadir = pathlib.Path(os.path.dirname(os.path.realpath(__file__))).joinpath('data')
-    snap = datadir.joinpath('../bsnap_naccident')
-    input = datadir.joinpath('snap.input_releasetests')
+    datadir = pathlib.Path(os.path.dirname(os.path.realpath(__file__))).joinpath("data")
+    snap = datadir.joinpath("../bsnap_naccident")
+    input = datadir.joinpath("snap.input_releasetests")
 
     def test_start_half_hour(self):
         d = tempfile.mkdtemp()
         tmp = pathlib.Path(d)
-        print(tmp)
 
         with self.input.open("r") as f:
             snapinput = f.read()
@@ -132,7 +171,17 @@ class ReleaseTests(unittest.TestCase):
         with tmp.joinpath("snap.input").open("w") as f:
             f.write(snapinput)
 
-        subprocess.check_call([self.snap.resolve().as_posix(), "snap.input"], cwd=tmp.resolve().as_posix())
+        try:
+            subprocess.run(
+                [self.snap.resolve().as_posix(), "snap.input"],
+                cwd=tmp.resolve().as_posix(),
+                check=True,
+                stderr=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,
+            )
+        except Exception as e:
+            print(tmp)
+            raise e
 
         dt = 60
         releases = 0
@@ -161,7 +210,6 @@ class ReleaseTests(unittest.TestCase):
     def test_end_non_integer_hour(self):
         d = tempfile.mkdtemp()
         tmp = pathlib.Path(d)
-        print(tmp)
 
         with self.input.open("r") as f:
             snapinput = f.read()
@@ -171,7 +219,17 @@ class ReleaseTests(unittest.TestCase):
         with tmp.joinpath("snap.input").open("w") as f:
             f.write(snapinput)
 
-        subprocess.check_call([self.snap.resolve().as_posix(), "snap.input"], cwd=tmp.resolve().as_posix())
+        try:
+            subprocess.run(
+                [self.snap.resolve().as_posix(), "snap.input"],
+                cwd=tmp.resolve().as_posix(),
+                check=True,
+                stderr=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,
+            )
+        except Exception as e:
+            print(tmp)
+            raise e
 
         dt = 60
         releases = 0
@@ -188,29 +246,47 @@ class ReleaseTests(unittest.TestCase):
                 bqtotal = float(elems[2])
                 self.assertAlmostEqual(bqtotal, releases * 60, places=3)
 
-                print(elems)
-                assert numtotal <= 8700  # 100 * 1.45 * (3600 / dt)
+                self.assertTrue(numtotal <= 8700)  # 100 * 1.45 * (3600 / dt)
 
         shutil.rmtree(tmp.as_posix())
 
     def test_gap_non_integer_hour(self):
         d = tempfile.mkdtemp()
         tmp = pathlib.Path(d)
-        print(tmp)
 
         with self.input.open("r") as f:
             snapinput = f.read()
 
-        snapinput = snapinput.replace("RELEASE.HOUR= XX", "RELEASE.HOUR= 0.0, 0.5, 1.25, 3.0")
-        snapinput = snapinput.replace("RELEASE.RADIUS.M= 1.0, 1.0", "RELEASE.RADIUS.M= 1.0, 1.0, 1.0, 1.0")
-        snapinput = snapinput.replace("RELEASE.LOWER.M= 1.0, 1.0", "RELEASE.LOWER.M= 1.0, 1.0, 1.0, 1.0")
-        snapinput = snapinput.replace("RELEASE.UPPER.M= 1.0, 1.0", "RELEASE.UPPER.M= 1.0, 1.0, 1.0, 1.0")
-        snapinput = snapinput.replace("RELEASE.BQ/SEC.COMP= 1.0, 1.0", "RELEASE.BQ/SEC.COMP= 1.0, 0.0, 1.0, 0.0")
+        snapinput = snapinput.replace(
+            "RELEASE.HOUR= XX", "RELEASE.HOUR= 0.0, 0.5, 1.25, 3.0"
+        )
+        snapinput = snapinput.replace(
+            "RELEASE.RADIUS.M= 1.0, 1.0", "RELEASE.RADIUS.M= 1.0, 1.0, 1.0, 1.0"
+        )
+        snapinput = snapinput.replace(
+            "RELEASE.LOWER.M= 1.0, 1.0", "RELEASE.LOWER.M= 1.0, 1.0, 1.0, 1.0"
+        )
+        snapinput = snapinput.replace(
+            "RELEASE.UPPER.M= 1.0, 1.0", "RELEASE.UPPER.M= 1.0, 1.0, 1.0, 1.0"
+        )
+        snapinput = snapinput.replace(
+            "RELEASE.BQ/SEC.COMP= 1.0, 1.0", "RELEASE.BQ/SEC.COMP= 1.0, 0.0, 1.0, 0.0"
+        )
 
         with tmp.joinpath("snap.input").open("w") as f:
             f.write(snapinput)
 
-        subprocess.check_call([self.snap.resolve().as_posix(), "snap.input"], cwd=tmp.resolve().as_posix())
+        try:
+            subprocess.run(
+                [self.snap.resolve().as_posix(), "snap.input"],
+                cwd=tmp.resolve().as_posix(),
+                check=True,
+                stderr=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,
+            )
+        except Exception as e:
+            print(tmp)
+            raise e
 
         dt = 60
         releases = 0
@@ -228,7 +304,7 @@ class ReleaseTests(unittest.TestCase):
                 elems = [e for e in line.split(" ") if len(e) > 0]
                 numtotal = int(elems[3])
                 if istep < 30:
-                    self.assertEqual(numtotal, (istep+1) * 100)
+                    self.assertEqual(numtotal, (istep + 1) * 100)
                 elif istep < 75:
                     self.assertEqual(numtotal, 30 * 100)
                 elif istep <= 180:
@@ -240,5 +316,5 @@ class ReleaseTests(unittest.TestCase):
         shutil.rmtree(tmp.as_posix())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
