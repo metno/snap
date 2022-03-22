@@ -13,22 +13,22 @@ import sys
 import numpy as np
 
 def plotMap(data, x, y, ax, title="", title_loc="center", clevs=[10,100,300,1000,3000,10000,30000,100000, 300000, 10000000], colors=None, extend='max'):
-    ax.add_feature(cartopy.feature.GSHHSFeature(scale='low', facecolor='none', edgecolor='black'))
-    ax.add_feature(cartopy.feature.BORDERS, edgecolor="gray")
+    ax.add_feature(cartopy.feature.GSHHSFeature(scale='low', facecolor='none', edgecolor='whitesmoke', linewidth=.2), zorder=100)
+    ax.add_feature(cartopy.feature.BORDERS, edgecolor="lightgray", linewidth=.5, zorder=100) 
     #ax.gridlines(draw_labels=True)
-    ax.gridlines()
+    ax.gridlines(edgecolor="lightgray", linewidth=.3, zorder=100)
 
     ny = data.shape[0]
     nx = data.shape[1]
     # draw filled contours.
     if colors is None:
         colors = [ plt.cm.hsv(x) for x in np.linspace(0.5, 0, len(clevs)) ]
-    cs = ax.contourf(x,y,data,clevs,colors=colors, extend=extend)
+    cs = ax.contourf(x,y,data,clevs,colors=colors, extend=extend, zorder=50)
     # add title
     ax.set_title(title, loc=title_loc)
-    ax.add_feature(cartopy.feature.OCEAN,facecolor=("aliceblue"), edgecolor='none')
-    ax.add_feature(cartopy.feature.LAND, edgecolor='none')
-    #ax.add_feature(cartopy.feature.LAKES,facecolor=("azure"), edgecolor='none')
+    ax.add_feature(cartopy.feature.OCEAN,facecolor="#aecfe0", edgecolor='none', zorder=10) # #aecfe0 = osm-sea
+    ax.add_feature(cartopy.feature.LAND, facecolor="#f2efe9", edgecolor='none', zorder=10) # f2efe9 = osm-land
+    ax.add_feature(cartopy.feature.LAKES,facecolor="#aecfe0", edgecolor='whitesmoke', linewidth=.2, zorder=20)
     return cs
 
 
@@ -50,6 +50,11 @@ def plotMapGrid(data, x, y, ax, title="", title_loc="center", clevs=[10,100,300,
     return cs
 
 
+def rgbToColor(rgb):
+    color = [int(x)/255 for x in rgb.split(':')]
+    if len(color) != 4:
+        color.append(1.)
+    return color
 
 
 def snapens(ncfiles, hour, outfile):
@@ -132,7 +137,7 @@ def snapens(ncfiles, hour, outfile):
             width="3%",
             height="95%",
             loc='lower right',
-            bbox_to_anchor=(0., 0., 1.04, 1),
+            bbox_to_anchor=(0., 0., 1.05, 1),
             bbox_transform=ax.transAxes,
             borderpad=0,
         )
@@ -169,7 +174,7 @@ def snapens(ncfiles, hour, outfile):
             width="3%",
             height="95%",
             loc='lower right',
-            bbox_to_anchor=(0., 0., 1.04, 1),
+            bbox_to_anchor=(0., 0., 1.05, 1),
             bbox_transform=ax.transAxes,
             borderpad=0,
         )
@@ -182,6 +187,12 @@ def snapens(ncfiles, hour, outfile):
     ax.set_extent([x[50],x[-50],y[25],y[-25]], crs=proj)
     clevs=range(0,(steps+1)*stepH,2*stepH)
     colors = [ plt.cm.jet(x) for x in np.linspace(0.95,0.1,len(clevs)) ]
+    # dsa colors up to 48 hours
+    colors[0] = rgbToColor('128:0:255')
+    colors[1] = rgbToColor('128:128:255')
+    colors[2] = rgbToColor('128:128:192')
+    colors[3] = rgbToColor('192:192:192')
+    print(colors[1])
     cs = plotMap(toaPerc[2,:],
             title="Time of arrival: 90 perc.",
             title_loc="left",
@@ -212,7 +223,7 @@ def snapens(ncfiles, hour, outfile):
             width="3%",
             height="95%",
             loc='lower right',
-            bbox_to_anchor=(0., 0., 1.04, 1),
+            bbox_to_anchor=(0., 0., 1.05, 1),
             bbox_transform=ax.transAxes,
             borderpad=0,
         )
@@ -221,7 +232,7 @@ def snapens(ncfiles, hour, outfile):
 
 
 
-    fig.subplots_adjust(hspace=0.01, wspace=0.2)
+    fig.subplots_adjust(hspace=0.12, wspace=0.01)
     fig.savefig(outfile, bbox_inches='tight')
 
     
