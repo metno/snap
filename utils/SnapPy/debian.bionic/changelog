@@ -1,3 +1,9 @@
+snap-py (1.7.2-1) bionic; urgency=medium
+
+  * use OSM-colours for land and sea; dsa-palette for toa
+
+ -- Heiko Klein <heikok@pc5558.pc.met.no>  Mon, 21 Mar 2022 17:29:17 +0100
+
 snap-py (1.7.1-1) bionic; urgency=medium
 
   * fix ocean colour
