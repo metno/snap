@@ -192,7 +192,6 @@ def snapens(ncfiles, hour, outfile):
     colors[1] = rgbToColor('128:128:255')
     colors[2] = rgbToColor('128:128:192')
     colors[3] = rgbToColor('192:192:192')
-    print(colors[1])
     cs = plotMap(toaPerc[2,:],
             title="Time of arrival: 90 perc.",
             title_loc="left",
