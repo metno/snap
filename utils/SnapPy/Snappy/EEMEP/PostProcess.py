@@ -5,7 +5,6 @@ import shutil
 from pathlib import Path
 
 from netCDF4 import Dataset
-import xarray as xr
 import numpy as np
 
 from Snappy.EEMEP.SixHourMax import SixHourMax

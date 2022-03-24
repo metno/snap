@@ -175,7 +175,7 @@ if __name__ == '__main__':
     parser.add_argument("--dir", help="top-level dir to search for volcano.xml/npp.xml files", required=True)
     parser.add_argument("--dir2", help="second top-level dir, main-dir if --dir is not writable")
     parser.add_argument("--hpc", help="HPC-machine to run job on", required=True)
-    parser.add_argument("--npp", type=bool, default=False, help="simulates a nuclear accident instead of volcano")
+    parser.add_argument("--npp", action="store_true", help="simulates a nuclear accident instead of volcano")
     parser.add_argument("--cleanup", type=int, default=0, help="remove files in dir older than cleanup days")
     parser.add_argument("--dryrun", action='store_true', default=False, help="just test what would be done, don't do anything but write debug messages")
     args = parser.parse_args()
