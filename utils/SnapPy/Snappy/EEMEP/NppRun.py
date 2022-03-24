@@ -126,44 +126,5 @@ class NppRun():
         return False
 
 
-class TestNppRun(unittest.TestCase):
-
-    def setUp(self):
-        import os
-        unittest.TestCase.setUp(self)
-        self.volcFile = os.path.join(os.path.dirname(__file__),"test", "npp.xml")
-
-
-    def test_init(self):
-        NppRun(self.volcFile)
-
-    def test_meteo(self):
-        volc = NppRun(self.volcFile)
-        (refString, start) = volc.get_meteo_dates()
-        self.assertEqual(refString, "best", "meteo reference date")
-        self.assertIsInstance(start, datetime.datetime, "meteo start date is datetime")
-
-    def test_location(self):
-        volc = NppRun(self.volcFile)
-        expected = '''#NUMBER,NAME,LOCATION,LATITUDE,NS,LONGITUDE,EW,ELEV,TYPE,ERUPTION TYPE
-V1702A02B,Askja,XXX,65.03,N,16.75,W,1516,xxx,M0
-'''
-        self.assertEqual(volc.get_columnsource_location(), expected, "columnsource_location")
-
-    def test_emission(self):
-        volc = NppRun(self.volcFile)
-        expected = '''#TYPE/NPP,VARIABLE,BASE[km],H[km above vent],D[h],dM/dt[kBq/s],m63[-],START[code/date],END[code/date],DESCRIPTION
-M0,,VENT,  7.0,  1.0,  100000,  0.05,2016-11-03 08:00:00,2016-11-03 09:00:00, no description
-'''
-        self.assertEqual(volc.get_columnsource_emission(), expected, "columnsource_emission")
-
-    def test_run_restart(self):
-        volc = NppRun(self.volcFile)
-        self.assertTrue(volc.run_as_restart(), "restart run")
-
-
-if __name__ == "__main__":
-    unittest.main()
-
 
 
