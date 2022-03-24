@@ -1,9 +1,15 @@
 import datetime
 import os
 import sys
+import shutil
+from pathlib import Path
 
 from netCDF4 import Dataset
+import xarray as xr
+import numpy as np
+
 from Snappy.EEMEP.SixHourMax import SixHourMax
+
 
 class StderrLogger():
     def _write_log(self, msg):
@@ -49,6 +55,42 @@ pp.convert_files('eemep_hourInst.nc', 'eemep_hour.nc')
         self.logger._write_log("making files available as {} and {}".format(newInstFile, newAvgFile))
         os.rename(instantFilename, newInstFile)
         os.rename(averageFilename, newAvgFile)
+
+
+class Accumulate:
+    def __init__(self, path, logger) -> None:
+        self.path = path
+
+        if logger:
+            self.logger = logger
+        else:
+            self.logger = StderrLogger()
+
+    def accumulate_file(self) -> None:
+        self.logger._write_log(f"Accumulating outputs found in {self.path}")
+
+        dir = Path(self.path)
+
+        nc_path = dir / "eemep_hour.nc"
+        new_path = dir / "eemep_hour_acc.nc"
+
+        shutil.copy(nc_path, new_path)
+
+        with Dataset(new_path, 'a') as nc:
+            for var in list(nc.variables):
+                if var not in ['lon', 'lat', 'lev', 'P0', 'hyam', 'hybm', 'ilev', 'hyai', 'hybi', 'time']:
+
+                    self.logger._write_log(f"Accumulating {var}")
+                    acc = nc.createVariable(f'{var}_ACC','f4',('time','lat','lon'), zlib=True)
+                    
+                    acc_data = np.cumsum(nc[var][:], axis=0)
+                    unit = nc[var].units
+                    unit_new = unit.split("/")[0] + " h/" + unit.split("/")[1]
+
+                    acc[:] = acc_data
+
+            nc.sync()
+
 
 if __name__ == '__main__':
     pp = PostProcess('.', datetime.datetime.now())
