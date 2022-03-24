@@ -99,12 +99,14 @@ class NppRun():
         NUC,,VENT,  10.000,  96,  1987149.0,  0.05,2016-10-11 05:00:00,SE+D, no description
         '''
         desc = "#TYPE/NPP,VARIABLE,BASE[km],H[km above vent],D[h],dM/dt[kBq/s],m63[-],START[code/date],END[code/date],DESCRIPTION\n"
-        definition = "NUC,NPP_{component},VENT,  {height},  {duration},  {rate},  1.0,{startdate},{enddate}, no description\n"
+        definition = "NUC,NPP_{component},{bottom},  {top},  {duration},  {rate},  1.0,{startdate},{enddate}, no description\n"
 
         out = [desc]
         for emis in self.root.findall('emissions/emission'):
             defs = {}
-            defs["height"] = float(emis.attrib['top'])/1000.
+            defs["top"] = float(emis.attrib['top'])/1000.
+            defs["bottom"] = float(emis.attrib['bottom'])/1000.
+            
             defs["rate"] = int(emis.attrib['rate'])
             start = datetime.datetime.strptime(emis.attrib['start'], '%Y-%m-%dT%H:%M:%SZ')
             end = datetime.datetime.strptime(emis.attrib['end'], '%Y-%m-%dT%H:%M:%SZ')

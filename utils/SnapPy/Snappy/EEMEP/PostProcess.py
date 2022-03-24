@@ -65,13 +65,15 @@ class Accumulate:
         else:
             self.logger = StderrLogger()
 
-    def accumulate_file(self) -> None:
+    def accumulate_file(self, filename) -> None:
         self.logger._write_log(f"Accumulating outputs found in {self.path}")
 
         dir = Path(self.path)
 
-        nc_path = dir / "eemep_hour.nc"
-        new_path = dir / "eemep_hour_acc.nc"
+        new_filename = filename.split(".")[0] + "_acc.nc"
+
+        nc_path = dir / filename
+        new_path = dir / new_filename
 
         shutil.copy(nc_path, new_path)
 
