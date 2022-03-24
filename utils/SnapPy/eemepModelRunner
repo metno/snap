@@ -20,7 +20,7 @@
 '''
 Created on Nov 23, 2016
 
-The eemep model runner parses a input directory for model-setup files (volcano.xml)
+The eemep model runner parses a input directory for model-setup files (volcano.xml/npp.xml)
 and runs the model on a super-computer. eemepModelRunner should be started from an
 environment which starts the model-runner regularly, e.g. crontab
 
@@ -61,7 +61,7 @@ class EemepModelRunner():
         self._getLogger(dirname).debug(msg)
 
     def _findVolcanoFiles(self):
-        '''find volcano.xml files in directory and directory2'''
+        '''find volcano.xml/npp.xml files in directory and directory2'''
         volcanoes = []
         dirs = [self.directory]
         if self.directory2:
@@ -70,7 +70,7 @@ class EemepModelRunner():
             if directory:
                 for (dirpath, dirnames, filenames) in os.walk(directory):
                     for x in filenames:
-                        if x == 'volcano.xml':
+                        if x == self.xml_filename:
                             file = os.path.join(dirpath, x)
                             volcanoes.append((file, dirpath))
         return volcanoes
@@ -85,7 +85,9 @@ class EemepModelRunner():
             os.system("rsync -a -O --no-perms {indir} {outdir}".format(indir=indir, outdir=outdir))
 
 
-    def __init__(self, directory, hpc, directory2, dryrun=False):
+    def __init__(self, directory, hpc, directory2, dryrun=False, npp=False):
+        self.xml_filename = "npp.xml" if npp else "volcano.xml"
+
         self.dryrun = dryrun
         if dirIsWritable(directory):
             self.directory = directory
@@ -134,7 +136,7 @@ class EemepModelRunner():
         if (len(volcanoes) == 0):
             return
 
-        # work only on newest volcano.xml file and exit, avoiding timeouts
+        # work only on newest volcano.xml/npp.xml file and exit, avoiding timeouts
         (infile, dirpath) = max(volcanoes, key=lambda x: os.lstat(x[0]).st_mtime)
         with open(self.statusfile, 'at') as fh:
             fh.write("current volcano: '{}'\n".format(infile))
@@ -146,9 +148,9 @@ class EemepModelRunner():
 
         try:
             self._log(dirpath, 'Starting run for: {}'.format(infile))
-            mr = ModelRunner(dirpath, hpc)
+            mr = ModelRunner(dirpath, hpc, npp)
             os.rename(infile,
-                      os.path.join(dirpath,"volcano.xml.{}".format(datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ"))))
+                      os.path.join(dirpath,"{}.{}".format(self.xml_filename, datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ"))))
             mr.work()
             self._log(dirpath, 'Finished run')
         except Exception as ex:
@@ -157,7 +159,7 @@ class EemepModelRunner():
             self._log(dirpath, 'Run failed: {}'.format(ex.args))
             if (os.path.exists(infile)):
                 os.rename(infile,
-                          os.path.join(dirpath,"volcano.xml.{}".format(datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ"))))
+                          os.path.join(dirpath,"{}.{}".format(self.xml_filename, datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ"))))
         try:
             self._copyResults(dirpath)
         except:
@@ -169,10 +171,11 @@ class EemepModelRunner():
 if __name__ == '__main__':
     os.umask(0)
     import argparse
-    parser = argparse.ArgumentParser(description="Search for volcano.xml files in the top-level directory, take the newest one and run the model on a HPC machine")
-    parser.add_argument("--dir", help="top-level dir to search for volcano.xml files", required=True)
+    parser = argparse.ArgumentParser(description="Search for volcano.xml/npp.xml files in the top-level directory, take the newest one and run the model on a HPC machine")
+    parser.add_argument("--dir", help="top-level dir to search for volcano.xml/npp.xml files", required=True)
     parser.add_argument("--dir2", help="second top-level dir, main-dir if --dir is not writable")
     parser.add_argument("--hpc", help="HPC-machine to run job on", required=True)
+    parser.add_argument("--npp", type=bool, default=False, help="simulates a nuclear accident instead of volcano")
     parser.add_argument("--cleanup", type=int, default=0, help="remove files in dir older than cleanup days")
     parser.add_argument("--dryrun", action='store_true', default=False, help="just test what would be done, don't do anything but write debug messages")
     args = parser.parse_args()
@@ -180,7 +183,7 @@ if __name__ == '__main__':
         dir2 = args.dir2
     else:
         dir2 = ""
-    EemepModelRunner(directory=args.dir, hpc=args.hpc, directory2=dir2, dryrun=args.dryrun)
+    EemepModelRunner(directory=args.dir, hpc=args.hpc, directory2=dir2, dryrun=args.dryrun, npp=args.npp)
 
     if (args.cleanup > 0) and not args.dryrun:
         if dirIsWritable(args.dir):

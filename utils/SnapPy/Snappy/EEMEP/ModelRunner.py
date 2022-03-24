@@ -35,8 +35,9 @@ import logging
 import tempfile
 
 from Snappy.EEMEP.Resources import Resources
-from Snappy.EEMEP.PostProcess import PostProcess
+from Snappy.EEMEP.PostProcess import PostProcess, Accumulate
 from Snappy.EEMEP.VolcanoRun import VolcanoRun
+from Snappy.EEMEP.NppRun import NppRun
 import Snappy.Resources
 
 
@@ -77,6 +78,7 @@ class AbortFile():
 class ModelRunner():
 
     VOLCANO_FILENAME = "volcano.xml"
+    NPP_FILENAME = "npp.xml"
     ABORT_FILENAME = "deleteToRequestAbort"
     OUTPUT_INSTANT_FILENAME = "eemep_hourInst.nc"
     OUTPUT_AVERAGE_FILENAME = "eemep_hour.nc"
@@ -101,10 +103,11 @@ class ModelRunner():
         ModelRunner.logger.setLevel(logging.DEBUG)
         return ModelRunner.logger
 
-    def __init__(self, path, hpcMachine):
+    def __init__(self, path, hpcMachine, npp=False):
         '''
         for correct working logs, make sure to have ModelRunner.getLogger(path=...) called before initialization
         '''
+        self.npp = npp
         self.upload_files = set()
         self.timestamp = datetime.datetime.now()
         self.jobscript = "eemep_script.job"
@@ -118,10 +121,19 @@ class ModelRunner():
         self.logger = self.getLogger()
 
         self.rundir = self.res.getHPCRunDir(self.hpcMachine)
-        volcano_path = os.path.join(path, ModelRunner.VOLCANO_FILENAME)
+        if self.npp:
+            volcano_path = os.path.join(path, ModelRunner.NPP_FILENAME)
+        else:
+            volcano_path = os.path.join(path, ModelRunner.VOLCANO_FILENAME)
+
+        
         if not os.path.exists(volcano_path):
             raise Exception("no such file or directory: {}".format(volcano_path))
-        self.volcano = VolcanoRun(volcano_path)
+
+        if self.npp:
+            self.volcano = NppRun(volcano_path)
+        else:
+            self.volcano = VolcanoRun(volcano_path)
         self.runtag = "eemep_{}".format(os.path.basename(self.volcano.outputDir))
         self.hpc_outdir = os.path.join(self.rundir, self.runtag)
 
@@ -256,7 +268,8 @@ class ModelRunner():
                 self.upload_files.add(restart_file)
 
     def _create_job_script(self):
-        job = self.res.get_job_script(self.hpcMachine)
+        npp_extension = "_npp" if self.npp else ""
+        job = self.res.get_job_script(self.hpcMachine+npp_extension)
         defs = {"rundir": self.rundir,
                 "runtag": self.runtag} # year, month, day, hour, runhour
         defs["runhour"] = "{}".format(int(self.volcano.runTimeHours))
@@ -417,9 +430,14 @@ class ModelRunner():
                       os.path.join(self.path, 'EMEP_IN_{}.nc'.format(tomorrow)))
 
         #Postprocess
-        pp = PostProcess(self.path, self.timestamp, logger=self)
-        pp.convert_files(os.path.join(self.path, ModelRunner.OUTPUT_INSTANT_FILENAME),
-                         os.path.join(self.path, ModelRunner.OUTPUT_AVERAGE_FILENAME))
+
+        if self.npp:
+            pp = Accumulate(self.path, logger=self)
+            pp.accumulate_file()
+        else:
+            pp = PostProcess(self.path, self.timestamp, logger=self)
+            pp.convert_files(os.path.join(self.path, ModelRunner.OUTPUT_INSTANT_FILENAME),
+                             os.path.join(self.path, ModelRunner.OUTPUT_AVERAGE_FILENAME))
 
         # cleanup softlinks in output-dir
         findArgs = [self.hpc_outdir, '-type', 'l', '-delete']
