@@ -433,7 +433,8 @@ class ModelRunner():
 
         if self.npp:
             pp = Accumulate(self.path, logger=self)
-            pp.accumulate_file()
+            pp.accumulate_file("eemep_hour.nc")
+            pp.accumulate_file("eemep_hourInst.nc")
         else:
             pp = PostProcess(self.path, self.timestamp, logger=self)
             pp.convert_files(os.path.join(self.path, ModelRunner.OUTPUT_INSTANT_FILENAME),
