@@ -1,7 +1,7 @@
 #!/bin/bash
 ## {runtag} {rundir} {year}-{month}-{day}T{hour} {runhour}
 
-#$ -N eemep
+#$ -N eemep_nuc
 #$ -l h_rt=01:30:00
 #$ -pe opa-fn 108
 #$ -l h_vmem=4G
