@@ -86,7 +86,7 @@ class EemepModelRunner():
             os.system("rsync -a -O --no-perms {indir} {outdir}".format(indir=indir, outdir=outdir))
 
 
-    def __init__(self, directory, hpc, directory2, dryrun=False):#, npp=False):
+    def __init__(self, directory, hpc, directory2, dryrun=False):
         # self.xml_filename = "npp.xml" if npp else "volcano.xml"
         self.npp_xml_filename = "npp.xml"
         self.volcano_xml_filename = "volcano.xml"
@@ -138,7 +138,6 @@ class EemepModelRunner():
                 print(ifile, sys.stderr)
             return
         if (len(volcanoes) == 0):
-            print("Could not find any volcanoes or npps")
             return
 
         # work only on newest volcano.xml/npp.xml file and exit, avoiding timeouts
@@ -156,7 +155,7 @@ class EemepModelRunner():
 
         try:
             self._log(dirpath, 'Starting run for: {}'.format(infile))
-            run_npp = True if xml_filename == self.npp_xml_filename else False
+            run_npp = xml_filename == self.npp_xml_filename
             mr = ModelRunner(dirpath, hpc, npp=run_npp)
             os.rename(infile,
                       os.path.join(dirpath,"{}.{}".format(xml_filename, datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ"))))
@@ -184,7 +183,6 @@ if __name__ == '__main__':
     parser.add_argument("--dir", help="top-level dir to search for volcano.xml/npp.xml files", required=True)
     parser.add_argument("--dir2", help="second top-level dir, main-dir if --dir is not writable")
     parser.add_argument("--hpc", help="HPC-machine to run job on", required=True)
-    # parser.add_argument("--npp", action="store_true", help="simulates a nuclear accident instead of volcano")
     parser.add_argument("--cleanup", type=int, default=0, help="remove files in dir older than cleanup days")
     parser.add_argument("--dryrun", action='store_true', default=False, help="just test what would be done, don't do anything but write debug messages")
     args = parser.parse_args()
@@ -192,7 +190,7 @@ if __name__ == '__main__':
         dir2 = args.dir2
     else:
         dir2 = ""
-    EemepModelRunner(directory=args.dir, hpc=args.hpc, directory2=dir2, dryrun=args.dryrun)#, npp=args.npp)
+    EemepModelRunner(directory=args.dir, hpc=args.hpc, directory2=dir2, dryrun=args.dryrun)
 
     if (args.cleanup > 0) and not args.dryrun:
         if dirIsWritable(args.dir):
