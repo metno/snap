@@ -79,7 +79,7 @@ class Accumulate:
 
         with Dataset(new_path, 'a') as nc:
             for var in list(nc.variables):
-                if var not in ['lon', 'lat', 'lev', 'P0', 'hyam', 'hybm', 'ilev', 'hyai', 'hybi', 'time']:
+                if var not in ['lon', 'lat', 'lev', 'P0', 'hyam', 'hybm', 'ilev', 'hyai', 'hybi', 'time', 'PS']:
 
                     self.logger._write_log(f"Accumulating {var}")
                     acc = nc.createVariable(f'{var}_ACC','f4',('time','lat','lon'), zlib=True)
