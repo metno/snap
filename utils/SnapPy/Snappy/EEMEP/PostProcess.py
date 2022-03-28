@@ -83,10 +83,13 @@ class Accumulate:
 
                     self.logger._write_log(f"Accumulating {var}")
                     acc = nc.createVariable(f'{var}_ACC','f4',('time','lat','lon'), zlib=True)
-                    
+
                     acc_data = np.cumsum(nc[var][:], axis=0)
                     unit = nc[var].units
                     unit_new = unit.split("/")[0] + " h/" + unit.split("/")[1]
+
+                    acc.units = unit_new
+                    acc.coordinates = nc[var].coordinates
 
                     acc[:] = acc_data
 
