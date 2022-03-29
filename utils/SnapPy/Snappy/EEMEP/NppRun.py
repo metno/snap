@@ -107,7 +107,7 @@ class NppRun():
             defs["top"] = float(emis.attrib['top'])/1000.
             defs["bottom"] = float(emis.attrib['bottom'])/1000.
             
-            defs["rate"] = int(emis.attrib['rate'])
+            defs["rate"] = int(float(emis.attrib['rate']))
             start = datetime.datetime.strptime(emis.attrib['start'], '%Y-%m-%dT%H:%M:%SZ')
             end = datetime.datetime.strptime(emis.attrib['end'], '%Y-%m-%dT%H:%M:%SZ')
 
