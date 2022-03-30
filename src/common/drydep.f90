@@ -33,6 +33,20 @@ module drydep
   integer, save, public :: drydep_scheme = DRYDEP_SCHEME_UNDEFINED
 
 
+  real, parameter :: R = 287.05
+  real, parameter :: grav = 9.8
+  real, parameter :: CP = 1005.0
+  real, parameter :: pi = 2.0*asin(1.0)
+
+  !> Kinematic viscosity of air, m2 s-1 at +15 C
+  real, parameter :: ny = 1.5e-5
+  !> Mean free path of air molecules [m]
+  real, parameter :: lambda = 0.065e-6
+
+  !> Boltzmanns constant, J K-1
+  real, parameter :: bolzc = 1.380649e-23
+
+
   contains
 
 !> Purpose:  Compute dry deposition for each particle and each component
@@ -143,10 +157,6 @@ pure elemental real function gravitational_settling(roa, diam, ro_part) result(v
     !> Density in km b-3
     real, intent(in) :: ro_part
 
-    real, parameter :: grav = 9.8
-    real, parameter :: ny = 1.5e-5 ! Kinematic viscosity of air, m2 s-1 at +15 C
-    real, parameter :: lambda = 0.065e-6 ! Mean free path of air molecules [m]
-
     real :: my ! Dynamic visocity of air, kg m-1 s-1
 
     real :: fac1, cslip
@@ -174,10 +184,7 @@ pure elemental subroutine drydep_emep_vd(surface_pressure, t2m, yflux, xflux, z0
   real :: monin_obukhov_length
   real :: SAI
 
-  real, parameter :: R = 287.05
-  real, parameter :: CP = 1005.0
   real, parameter :: k = 0.4
-  real, parameter :: g = 9.8
   ! real, parameter :: a1 = 0.002
   real :: a1
   real, parameter :: a2 = 300
@@ -192,7 +199,7 @@ pure elemental subroutine drydep_emep_vd(surface_pressure, t2m, yflux, xflux, z0
   vs = gravitational_settling(roa, diam, density)
 
   ustar = hypot(yflux, xflux) / sqrt(roa)
-  monin_obukhov_length = - roa * CP * t2m * (ustar**3) / (k * g * hflux)
+  monin_obukhov_length = - roa * CP * t2m * (ustar**3) / (k * grav * hflux)
 
   SAI = leaf_area_index + 1
   a1sai = 0.008 * SAI / 10
@@ -229,20 +236,10 @@ pure elemental subroutine drydep_zhang_emerson_vd(surface_pressure, t2m, yflux, 
   real, intent(out) :: vd_dep
   logical, intent(in) :: emerson_mode
 
-  real, parameter :: R = 287.05
-  real, parameter :: pi = 2.0*asin(1.0)
-  !> Kinematic viscosity of air, m2 s-1 ca. +15 C
-  real, parameter :: ny = 1.5e-5
-  real, parameter :: grav = 9.8
-  !> Mean free path of air molecules (in m)
-  real, parameter :: lambda = 0.065e-6
-  !> Boltzmanns constant, J K-1
-  real, parameter :: bolzc = 1.380649e-23
   !> Aerial factor for interception (table 3 Zhang et al. (2001)), corresponding to evergreen
   !>  needleleaf trees (i.e. close to maximum deposition)
   real, parameter :: A = 3e-3
   real, parameter :: k = 0.4
-  real, parameter :: CP = 1005.0
 
   real :: fac1, cslip, bdiff, my, roa, sc, EB, EIM, EIN, rs, stokes
   real :: monin_obukhov_length, raero, vs, ustar
