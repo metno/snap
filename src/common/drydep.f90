@@ -268,7 +268,7 @@ pure elemental subroutine drydep_zhang_emerson_vd(surface_pressure, t2m, yflux, 
     EB = sc ** -0.54
   else
     ! Revised Emerson et al. (2020)
-    EB = 0.2 * sc ** (-2 / 3)
+    EB = 0.2 * sc ** (-2.0 / 3.0)
   endif
 
   ! Impaction
