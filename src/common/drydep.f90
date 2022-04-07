@@ -16,6 +16,7 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 module drydep
+  use ISO_FORTRAN_ENV, only: real64
   implicit none
   private
 
@@ -130,13 +131,13 @@ subroutine drydep2(tstep, part)
 end subroutine drydep2
 
 pure function aerodynres(L, ustar, z0) result(raero)
-  real, intent(in) :: L, ustar, z0
-  real :: raero
+  real(real64), intent(in) :: L, ustar, z0
+  real(real64) :: raero
 
-  real, parameter :: ka = 0.4
-  real, parameter :: z = 30 ! Assumed height of surface/constant flux layer
+  real(real64), parameter :: ka = 0.4
+  real(real64), parameter :: z = 30 ! Assumed height of surface/constant flux layer
 
-  real :: fac, fi
+  real(real64) :: fac, fi
 
   if (L < 0) then
     fac = 0.598 + 0.390 * log(-z / L) - 0.09 * (log(-z / L)) ** 2
@@ -151,15 +152,15 @@ pure function aerodynres(L, ustar, z0) result(raero)
 end function
 
 pure elemental real function gravitational_settling(roa, diam, ro_part) result(vs)
-    real, intent(in) :: roa
+    real(real64), intent(in) :: roa
     !> Diameter in m
-    real, intent(in) :: diam
+    real(real64), intent(in) :: diam
     !> Density in km b-3
-    real, intent(in) :: ro_part
+    real(real64), intent(in) :: ro_part
 
-    real :: my ! Dynamic visocity of air, kg m-1 s-1
+    real(real64) :: my ! Dynamic visocity of air, kg m-1 s-1
 
-    real :: fac1, cslip
+    real(real64) :: fac1, cslip
 
     my = ny * roa
     fac1 = -0.55 * diam / lambda
@@ -196,7 +197,7 @@ pure elemental subroutine drydep_emep_vd(surface_pressure, t2m, yflux, xflux, z0
 
 
   roa = surface_pressure / (t2m * R)
-  vs = gravitational_settling(roa, diam, density)
+  vs = real(gravitational_settling(real(roa, real64), real(diam, real64), real(density, real64)))
 
   ustar = hypot(yflux, xflux) / sqrt(roa)
   monin_obukhov_length = - roa * CP * t2m * (ustar**3) / (k * grav * hflux)
@@ -204,7 +205,7 @@ pure elemental subroutine drydep_emep_vd(surface_pressure, t2m, yflux, xflux, z0
   SAI = leaf_area_index + 1
   a1sai = 0.008 * SAI / 10
 
-  raero = aerodynres(monin_obukhov_length, ustar, z0)
+  raero = aerodynres(real(monin_obukhov_length, real64), real(ustar, real64), real(z0, real64))
 
   if (leaf_area_index > 0.75 .and. a1sai > 0.002) then
     a1 = a1sai
@@ -231,25 +232,25 @@ pure elemental subroutine drydep_zhang_emerson_vd(surface_pressure, t2m, yflux, 
   real, intent(in) :: yflux, xflux
   real, intent(in) :: z0, hflux
   real, intent(in) :: leaf_area_index
-  real, intent(in) :: diam
-  real, intent(in) :: density
+  real(real64), intent(in) :: diam
+  real(real64), intent(in) :: density
   real, intent(out) :: vd_dep
   logical, intent(in) :: emerson_mode
 
   !> Aerial factor for interception (table 3 Zhang et al. (2001)), corresponding to evergreen
   !>  needleleaf trees (i.e. close to maximum deposition)
-  real, parameter :: A = 3e-3
-  real, parameter :: k = 0.4
+  real(real64), parameter :: A = 3e-3
+  real(real64), parameter :: k = 0.4
 
-  real :: fac1, cslip, bdiff, my, roa, sc, EB, EIM, EIN, rs, stokes
-  real :: monin_obukhov_length, raero, vs, ustar
+  real(real64) :: fac1, cslip, bdiff, my, roa, sc, EB, EIM, EIN, rs, stokes
+  real(real64) :: monin_obukhov_length, raero, vs, ustar
 
   roa = surface_pressure / (t2m * R)
   vs = gravitational_settling(roa, diam, density)
 
   ustar = hypot(yflux, xflux) / sqrt(roa)
   monin_obukhov_length = - roa * CP * t2m * (ustar**3) / (k * grav * hflux)
-  raero = aerodynres(monin_obukhov_length, ustar, z0)
+  raero = aerodynres(monin_obukhov_length, ustar, real(z0, real64))
 
   my = ny * roa
 
@@ -265,7 +266,7 @@ pure elemental subroutine drydep_zhang_emerson_vd(surface_pressure, t2m, yflux, 
   sc = ny / bdiff
   if (.not.emerson_mode) then
     ! A range og 0.5-0.58 dependening on the surface is given, 0.54=grass
-    EB = sc ** -0.54
+    EB = sc ** (-0.54)
   else
     ! Revised Emerson et al. (2020)
     EB = 0.2 * sc ** (-2.0 / 3.0)

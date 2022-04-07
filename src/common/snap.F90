@@ -121,7 +121,7 @@
 ! * wind.surface = wind.10m (one 0 level first in list)
 ! LEVELS.INPUT= 14, 0,31,30,29,28,27,26,25,23,21,17,13,7,1
 ! FIELD.TYPE=felt|netcdf
-! * number of steps to skip in the beginning of a file
+! * number of steps to skip in the beginning of a file (obs: step 0 is not special in case of prognosis)
 ! FIELD.SPINUPSTEPS= 1
 ! FIELD.INPUT= arklam.dat
 ! FIELD.INPUT= feltlam.dat

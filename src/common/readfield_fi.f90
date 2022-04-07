@@ -779,6 +779,7 @@ contains
 
   subroutine read_drydep(fio, timepos, timeposm1, nr)
     USE ieee_arithmetic, only: ieee_is_nan
+    USE iso_fortran_env, only: real64
     USE snapmetML, only: met_params, &
       temp_units, downward_momentum_flux_units, surface_roughness_length_units, &
       surface_heat_flux_units, leaf_area_index_units
@@ -792,7 +793,7 @@ contains
 
     real, allocatable :: xflux(:, :), yflux(:, :), hflux(:, :), z0(:, :), leaf_area_index(:, :), t2m(:, :), tmp1(:, :), tmp2(:, :)
     integer :: i, mm
-    real :: diam, dens
+    real(real64) :: diam, dens
 
     if (.not.(drydep_scheme == DRYDEP_SCHEME_EMEP .or. &
               drydep_scheme == DRYDEP_SCHEME_EMERSON .or. &
@@ -860,7 +861,7 @@ contains
           select case(drydep_scheme)
           case (DRYDEP_SCHEME_EMEP)
             call drydep_emep_vd(ps2*100, t2m, yflux, xflux, z0, &
-              hflux, leaf_area_index, diam, dens, vd_dep(:, :, ncomp))
+              hflux, leaf_area_index, real(diam), real(dens), vd_dep(:, :, ncomp))
           case (DRYDEP_SCHEME_ZHANG)
             call drydep_zhang_emerson_vd(ps2*100, t2m, yflux, xflux, z0, &
               hflux, leaf_area_index, diam, dens, vd_dep(:, :, ncomp), .false.)
