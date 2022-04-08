@@ -1,3 +1,5 @@
+#! /usr/bin/env python3
+
 import argparse
 import cartopy
 import datetime
@@ -82,6 +84,9 @@ def snapens(ncfiles, hour, outfile):
                 else:
                     print(f"cannot devide {hour} forecast_hour by {stepH}h timesteps", sys.stderr)
                     sys.exit(1)
+            if not "time_of_arrival" in nc.variables:
+                print(f"time_of_arrival not in {ncf}, please run 'snapAddToa {ncf}", file=sys.stderr)
+                sys.exit(2)
             toa.append(nc["time_of_arrival"][0,:])
             fillvalue = nc["time_of_arrival"]._FillValue
             deps.append(nc["Cs137_acc_total_deposition"][pos,:])
@@ -107,6 +112,25 @@ def snapens(ncfiles, hour, outfile):
     fig.suptitle(f'{title}+{hour}hours ({endDT:%Y-%m-%d %H}:00Z). Uncertainty based upon {deps.shape[0]} members.',
         y=0.92)
     proj = cartopy.crs.PlateCarree()
+    with netCDF4.Dataset(ncfiles[0], 'r') as nc:
+        if "grid_mapping" in nc["Cs137_acc_total_deposition"].ncattrs():
+            grid_attrs = {}
+            for attr in nc[nc["Cs137_acc_total_deposition"].grid_mapping].ncattrs():
+                grid_attrs[attr] = nc[nc["Cs137_acc_total_deposition"].grid_mapping].getncattr(attr)
+            # print(grid_attrs)
+            if grid_attrs['grid_mapping_name'] == 'lambert_conformal_conic':
+                proj = cartopy.crs.LambertConformal(central_longitude=grid_attrs['longitude_of_central_meridian'],
+                    central_latitude=grid_attrs['latitude_of_projection_origin'],
+                    standard_parallels=[grid_attrs['standard_parallel']],
+                    globe=cartopy.crs.Globe(semiminor_axis=6371000,
+                                            semimajor_axis=6371000))
+            data_x = x
+            data_y = y
+        else:
+            print(f"unknown grid_mapping_name {grid_attrs}, trying latlon/PlateCaree", file=sys.stderr)
+            data_x = lons
+            data_y = lats
+
     colors=('g', 'y', 'tab:orange', 'r', 'tab:red')
     ax = fig.add_subplot(3,3, 1, projection=proj)
     ax.set_extent([x[50],x[-50],y[25],y[-25]], crs=proj)
@@ -116,7 +140,7 @@ def snapens(ncfiles, hour, outfile):
             ax=ax,
             colors=colors,
             clevs=[0.1,1, 10, 100, 1000],
-            x=lons, y=lats)
+            x=data_x, y=data_y)
     ax = fig.add_subplot(3,3, 2, projection=proj)
     ax.set_extent([x[50],x[-50],y[25],y[-25]], crs=proj)
     cs = plotMap(depsPerc[1,:]/1000,
@@ -124,7 +148,7 @@ def snapens(ncfiles, hour, outfile):
             ax=ax,
             colors=colors,
             clevs=[0.1,1, 10, 100, 1000],
-            x=lons, y=lats)
+            x=data_x, y=data_y)
     ax = fig.add_subplot(3,3, 3, projection=proj)
     ax.set_extent([x[50],x[-50],y[25],y[-25]], crs=proj)
     cs = plotMap(depsPerc[2,:]/1000,
@@ -132,7 +156,7 @@ def snapens(ncfiles, hour, outfile):
             ax=ax,
             colors=colors,
             clevs=[0.1,1, 10, 100, 1000],
-            x=lons, y=lats)
+            x=data_x, y=data_y)
     axins = inset_axes(ax,
             width="3%",
             height="95%",
@@ -153,7 +177,7 @@ def snapens(ncfiles, hour, outfile):
             ax=ax,
             colors=colors,
             clevs=[10,30,50,70,90],
-            x=lons, y=lats)
+            x=data_x, y=data_y)
     ax = fig.add_subplot(3,3, 5, projection=proj)
     ax.set_extent([x[50],x[-50],y[25],y[-25]], crs=proj)
     cs = plotMap(depTH[1],
@@ -161,7 +185,7 @@ def snapens(ncfiles, hour, outfile):
             ax=ax,
             colors=colors,
             clevs=[10,30,50,70,90],
-            x=lons, y=lats)
+            x=data_x, y=data_y)
     ax = fig.add_subplot(3,3, 6, projection=proj)
     ax.set_extent([x[50],x[-50],y[25],y[-25]], crs=proj)
     cs = plotMap(depTH[2],
@@ -169,7 +193,7 @@ def snapens(ncfiles, hour, outfile):
             ax=ax,
             colors=colors,
             clevs=[10,30,50,70,90],
-            x=lons, y=lats)
+            x=data_x, y=data_y)
     axins = inset_axes(ax,
             width="3%",
             height="95%",
@@ -199,7 +223,7 @@ def snapens(ncfiles, hour, outfile):
             colors=colors,
             clevs=clevs,
             extend=None,
-            x=lons, y=lats)
+            x=data_x, y=data_y)
     ax = fig.add_subplot(3,3, 8, projection=proj)
     ax.set_extent([x[50],x[-50],y[25],y[-25]], crs=proj)
     cs = plotMap(toaPerc[1,:],
@@ -208,7 +232,7 @@ def snapens(ncfiles, hour, outfile):
             colors=colors,
             clevs=clevs,
             extend=None,
-            x=lons, y=lats)
+            x=data_x, y=data_y)
     ax = fig.add_subplot(3,3, 9, projection=proj)
     ax.set_extent([x[50],x[-50],y[25],y[-25]], crs=proj)
     cs = plotMap(toaPerc[0,:],
@@ -217,7 +241,7 @@ def snapens(ncfiles, hour, outfile):
             colors=colors,
             clevs=clevs,
             extend=None,
-            x=lons, y=lats)
+            x=data_x, y=data_y)
     axins = inset_axes(ax,
             width="3%",
             height="95%",
