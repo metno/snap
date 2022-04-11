@@ -871,9 +871,67 @@ contains
           case default
             error stop "Unreachable"
           end select
+          block
+            character(len=20) :: filename
+            integer :: new_unit
+            integer, save :: global_t = 0
+            integer :: nx, ny
+
+            global_t = global_t + 1
+
+            ny = size(ps2, dim=1)
+            nx = size(ps2, dim=2)
+
+            write(filename, "(a,i0.3,a)") "step_", global_t, ".json"
+          ! filename = filename + str(tstep)
+            open(newunit=new_unit, action="WRITE", file=filename)
+            write(new_unit, *) "{"
+            write(new_unit, *) '"shape": [', ny, ", ", nx, "]"
+            write(new_unit, *) ', "scheme": ', drydep_scheme
+            write(new_unit, *) ', "ps":'
+            call json_print_array(new_unit, ps2*100)
+            write(new_unit, *) ', "t2m":'
+            call json_print_array(new_unit, t2m)
+            write(new_unit, *) ', "yflux":'
+            call json_print_array(new_unit, yflux)
+            write(new_unit, *) ', "xflux":'
+            call json_print_array(new_unit, xflux)
+            write(new_unit, *) ', "z0":'
+            call json_print_array(new_unit, z0)
+            write(new_unit, *) ', "hflux":'
+            call json_print_array(new_unit, hflux)
+            write(new_unit, *) ', "lai":'
+            call json_print_array(new_unit, leaf_area_index)
+            write(new_unit, *) ', "diam":', diam
+            write(new_unit, *) ', "density":', dens
+            write(new_unit, *) ', "vd_dep":'
+            call json_print_array(new_unit, vd_dep(:,:,1))
+            write(new_unit, *) "}"
+            close(new_unit)
+          end block
         endif
       end do
     endif
+  end subroutine
+
+  subroutine json_print_array(outunit, array)
+    integer, intent(in) :: outunit
+    real, intent(in) :: array(:,:)
+
+    integer :: x, y
+    integer :: nx, ny
+
+    nx = size(array, dim=1)
+    ny = size(array, dim=2)
+
+    write(outunit, *) "["
+    do y=1,ny
+      do x=1,nx
+        write(outunit, "(E15.6)", advance="no") array(x, y)
+        if (y /= ny .or. x /= nx) write(outunit, "(a)", advance="no") ","
+      enddo
+    enddo
+    write(outunit, *) "]"
   end subroutine
 
 end module readfield_fiML
