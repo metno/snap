@@ -68,6 +68,7 @@ module fldout_ncML
     integer :: column_max_conc
     integer :: aircraft_doserate
     integer :: aircraft_doserate_threshold_height
+    integer :: components
     type(component_var) :: comp(mcomp)
   end type
 
@@ -77,6 +78,8 @@ module fldout_ncML
     integer :: y
     integer :: k
     integer :: t
+    integer :: ncomp
+    integer :: maxcompname
   end type
 
   !> file base time
@@ -1005,6 +1008,8 @@ subroutine initialize_output(filename, itime, ierror)
     call check(nf90_def_dim(iunit, "x", nx, dimid%x), "x-dim")
     call check(nf90_def_dim(iunit, "y", ny, dimid%y), "y-dim")
     call check(nf90_def_dim(iunit, "k", nk-1, dimid%k), "k-dim")
+    call check(nf90_def_dim(iunit, "ncomp", ncomp, dimid%ncomp), "ncomp-dim")
+    call check(nf90_def_dim(iunit, "compnamelenmax", len(def_comp(1)%compname), dimid%maxcompname), "maxcompname-dim")
 
     if (allocated(nctitle)) then
       call check(nf90_put_att(iunit, NF90_GLOBAL, &
@@ -1081,9 +1086,13 @@ subroutine initialize_output(filename, itime, ierror)
       endif
     endif
 
+    call check(nf90_def_var(iunit, "components", NF90_CHAR, [dimid%maxcompname, dimid%ncomp], varid%components))
 
     do m=1,ncomp
       mm= run_comp(m)%to_defined
+      call check(nf90_put_var(iunit, varid%components, &
+        start=[1, m], count=[len_trim(def_comp(mm)%compnamemc), 1], &
+        values=trim(def_comp(mm)%compnamemc)))
       call nc_declare_3d(iunit, dimids3d, varid%comp(m)%ic, &
           chksz3d, TRIM(def_comp(mm)%compnamemc)//"_concentration", &
           "Bq/m3","", &
