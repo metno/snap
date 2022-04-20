@@ -26,7 +26,8 @@ module allocateFieldsML
       garea, dgarea, &
       max_column_scratch, max_column_concentration, &
       aircraft_doserate, aircraft_doserate_scratch, t1_abs, t2_abs, &
-      aircraft_doserate_threshold_height, vd_dep
+      aircraft_doserate_threshold_height, vd_dep, &
+      xflux, yflux, hflux, t2m, z0, leaf_area_index
   USE snapfilML, only: idata, fdata
   USE snapgrdML, only: ahalf, bhalf, vhalf, alevel, blevel, vlevel, imodlevel, &
       compute_column_max_conc, compute_aircraft_doserate, aircraft_doserate_threshold
@@ -206,6 +207,7 @@ subroutine allocateFields
       drydep_scheme == DRYDEP_SCHEME_EMERSON) then
     allocate(vd_dep(nx,ny,ncomp), STAT=AllocateStatus)
     if (AllocateStatus /= 0) ERROR STOP errmsg
+    allocate(xflux, yflux, hflux, t2m, z0, leaf_area_index, mold=ps2)
   endif
 
 end subroutine allocateFields
@@ -298,7 +300,9 @@ subroutine deAllocateFields
 
   if (allocated(vd_dep)) then
     deallocate(vd_dep)
+    deallocate(xflux, yflux, hflux, t2m, z0, leaf_area_index)
   endif
+
 
 end subroutine deAllocateFields
 end module allocateFieldsML

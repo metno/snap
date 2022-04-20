@@ -144,4 +144,6 @@ module snapfldML
 
   !> Deposition velocity on the grid per species
   real, allocatable, save, public :: vd_dep(:, :, :)
+
+  real, allocatable, save, public :: xflux(:, :), yflux(:, :), hflux(:, :), z0(:, :), leaf_area_index(:, :), t2m(:, :)
 end module snapfldML

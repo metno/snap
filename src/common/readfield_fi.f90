@@ -786,12 +786,12 @@ contains
     use drydep, only: drydep_scheme, DRYDEP_SCHEME_EMEP, drydep_emep_vd, &
       DRYDEP_SCHEME_EMERSON, DRYDEP_SCHEME_ZHANG, drydep_zhang_emerson_vd
     use snapparML, only: ncomp, run_comp, def_comp
-    use snapfldML, only: ps2, vd_dep
+    use snapfldML, only: ps2, vd_dep, xflux, yflux, hflux, z0, leaf_area_index, t2m
     type(FimexIO), intent(inout) :: fio
     integer, intent(in) :: timepos, timeposm1
     integer, intent(in) :: nr
 
-    real, allocatable :: xflux(:, :), yflux(:, :), hflux(:, :), z0(:, :), leaf_area_index(:, :), t2m(:, :), tmp1(:, :), tmp2(:, :)
+    real, allocatable :: tmp1(:, :), tmp2(:, :)
     integer :: i, mm
     real(real64) :: diam, dens
 
@@ -801,7 +801,7 @@ contains
       return
     endif
 
-    allocate(xflux, yflux, hflux, z0, leaf_area_index, t2m, tmp1, tmp2, MOLD=ps2)
+    allocate(tmp1, tmp2, MOLD=ps2)
 
 
     ! Fluxes are integrated: Deaccumulate
@@ -871,135 +871,8 @@ contains
           case default
             error stop "Unreachable"
           end select
-          block
-            use netcdf
-            character(len=*), parameter :: filename = "drydep.nc"
-            integer, save :: global_t = 0
-            integer :: nx, ny
-
-            type :: dimid_t
-              integer :: nx
-              integer :: ny
-              integer :: t
-            end type
-
-            type :: varid_t
-              integer :: scheme
-              integer :: ps
-              integer :: t2m
-              integer :: xflux
-              integer :: yflux
-              integer :: z0
-              integer :: hflux
-              integer :: lai
-              integer :: diam
-              integer :: density
-              integer :: vd_dep
-            end type
-
-
-            integer :: error
-            integer :: ncid
-            type(dimid_t) :: dimid
-            type(varid_t) :: varid
-            logical :: existed
-
-            global_t = global_t + 1
-
-            error = nf90_open(filename, NF90_WRITE, ncid)
-            if (error /= NF90_NOERR) then
-              call check(nf90_create(filename, ior(NF90_WRITE, NF90_NETCDF4), ncid))
-            endif
-
-            nx = size(ps2, dim=2)
-            call check(find_or_define_dim(ncid, "nx", nx, dimid%nx))
-            ny = size(ps2, dim=1)
-            call check(find_or_define_dim(ncid, "ny", ny, dimid%ny))
-            call check(find_or_define_dim(ncid, "t", NF90_UNLIMITED, dimid%t))
-
-            call check(find_or_define_var(ncid, "scheme", NF90_INT, varid%scheme, already_defined=existed))
-            if (.not.existed) then
-              call check(nf90_put_var(ncid, varid%scheme, drydep_scheme))
-            endif
-
-            call check(find_or_define_var(ncid, "ps", NF90_FLOAT, varid%ps, [dimid%t, dimid%ny, dimid%nx], deflate_level=3))
-            call check(nf90_put_var(ncid, varid%ps, start=[1, 1, global_t], count=[nx, ny, 1], values=ps2*100))
-
-            call check(find_or_define_var(ncid, "t2m", NF90_FLOAT, varid%t2m, [dimid%t, dimid%ny, dimid%nx], deflate_level=3))
-            call check(nf90_put_var(ncid, varid%t2m, start=[1, 1, global_t], count=[nx, ny, 1], values=t2m))
-
-            call check(find_or_define_var(ncid, "xflux", NF90_FLOAT, varid%xflux, [dimid%t, dimid%ny, dimid%nx], deflate_level=3))
-            call check(nf90_put_var(ncid, varid%xflux, start=[1, 1, global_t], count=[nx, ny, 1], values=xflux))
-
-            call check(find_or_define_var(ncid, "yflux", NF90_FLOAT, varid%yflux, [dimid%t, dimid%ny, dimid%nx], deflate_level=3))
-            call check(nf90_put_var(ncid, varid%yflux, start=[1, 1, global_t], count=[nx, ny, 1], values=yflux))
-
-            call check(find_or_define_var(ncid, "z0", NF90_FLOAT, varid%z0, [dimid%t, dimid%ny, dimid%nx], deflate_level=3))
-            call check(nf90_put_var(ncid, varid%z0, start=[1, 1, global_t], count=[nx, ny, 1], values=z0))
-
-            call check(find_or_define_var(ncid, "hflux", NF90_FLOAT, varid%hflux, [dimid%t, dimid%ny, dimid%nx], deflate_level=3))
-            call check(nf90_put_var(ncid, varid%hflux, start=[1, 1, global_t], count=[nx, ny, 1], values=hflux))
-
-            call check(find_or_define_var(ncid, "lai", NF90_FLOAT, varid%lai, [dimid%t, dimid%ny, dimid%nx], deflate_level=3))
-            call check(nf90_put_var(ncid, varid%lai, start=[1, 1, global_t], count=[nx, ny, 1], values=leaf_area_index))
-
-            call check(find_or_define_var(ncid, "diam", NF90_FLOAT, varid%diam, already_defined=existed))
-            if (.not.existed) then
-              call check(nf90_put_var(ncid, varid%diam, diam))
-            endif
-
-            call check(find_or_define_var(ncid, "density", NF90_FLOAT, varid%density, already_defined=existed))
-            if (.not.existed) then
-              call check(nf90_put_var(ncid, varid%density, dens))
-            endif
-
-            call check(find_or_define_var(ncid, "vd_dep", NF90_FLOAT, varid%vd_dep, [dimid%t, dimid%ny, dimid%nx], deflate_level=3))
-            call check(nf90_put_var(ncid, varid%vd_dep, start=[1, 1, global_t], count=[nx, ny, 1], values=vd_dep(:,:,1)))
-
-            call check(nf90_close(ncid))
-          end block
         endif
       end do
     endif
   end subroutine
-
-  function find_or_define_dim(ncid, name, len, id) result(error)
-    use netcdf
-    integer, intent(in) :: ncid
-    character(len=*), intent(in) :: name
-    integer, intent(in) :: len
-    integer, intent(out) :: id
-    integer :: error
-
-    error = nf90_inq_dimid(ncid, name, id)
-    if (error == NF90_NOERR) return
-    error =  nf90_def_dim(ncid, name, len, id)
-  end function
-
-  function find_or_define_var(ncid, name, typ, id, dims, deflate_level, already_defined) result(error)
-    use netcdf
-    integer, intent(in) :: ncid
-    integer, intent(in) :: typ
-    character(len=*), intent(in) :: name
-    integer, intent(out) :: id
-    integer, intent(in), optional :: dims(:)
-    integer, allocatable :: dims_actual(:)
-    integer, intent(in), optional :: deflate_level
-    logical, intent(out), optional :: already_defined
-
-    integer :: error
-
-    if (present(already_defined)) already_defined = .true.
-    error = nf90_inq_varid(ncid, name, id)
-    if (error == NF90_NOERR) return
-    if (present(already_defined)) already_defined = .false.
-    if (present(dims)) then
-      allocate(dims_actual(size(dims)))
-      dims_actual = dims
-    else
-      allocate(dims_actual(0))
-    endif
-    error = nf90_def_var(ncid, name, typ, dims_actual, id, deflate_level=deflate_level)
-  end function
-
 end module readfield_fiML

@@ -74,6 +74,12 @@ module fldout_ncML
     integer :: components
     integer :: garea
     type(component_var) :: comp(mcomp)
+    integer :: xflux = -1
+    integer :: yflux = -1
+    integer :: hflux = -1
+    integer :: z0 = -1
+    integer :: t2m = -1
+    integer :: lai = -1
   end type
 
 !> dimensions used in a file
@@ -193,7 +199,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
   end if
 
 !..mslp (if switched on)
-  if(imslp == 1) then
+  if(imslp == 1 .or. output_vd) then
     field1(:,:) = rt1*pmsl1 + rt2*pmsl2
     if(idebug == 1) call ftest('mslp', field1)
 
@@ -559,6 +565,18 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
 !..model level fields...................................................
   if (imodlevel) then
     call write_ml_fields(iunit, varid, average, [1, 1, -1, ihrs_pos], [nx, ny, 1, 1], rt1, rt2)
+  endif
+
+  if (output_vd) then
+    block
+      use snapfldml, only: t2m, xflux, yflux, z0, hflux, leaf_area_index
+    call check(nf90_put_var(iunit, varid%t2m, start=[ipos], count=[isize], values=t2m))
+    call check(nf90_put_var(iunit, varid%xflux, start=[ipos], count=[isize], values=xflux))
+    call check(nf90_put_var(iunit, varid%yflux, start=[ipos], count=[isize], values=yflux))
+    call check(nf90_put_var(iunit, varid%z0, start=[ipos], count=[isize], values=z0))
+    call check(nf90_put_var(iunit, varid%hflux, start=[ipos], count=[isize], values=hflux))
+    call check(nf90_put_var(iunit, varid%lai, start=[ipos], count=[isize], values=leaf_area_index))
+    end block
   endif
 
 ! reset fields
@@ -1165,6 +1183,31 @@ subroutine initialize_output(filename, itime, ierror)
           units="m/s", chunksize=chksz3d)
       endif
 
+      if (output_vd) then
+        block
+          use snapmetml, only: downward_momentum_flux_units, surface_heat_flux_units, &
+            leaf_area_index_units, surface_roughness_length_units, temp_units
+        call nc_declare(iunit, dimids3d, varid%xflux, &
+          "xflux", units=downward_momentum_flux_units, &
+          chunksize=chksz3d)
+        call nc_declare(iunit, dimids3d, varid%yflux, &
+          "yflux", units=downward_momentum_flux_units, &
+          chunksize=chksz3d)
+        call nc_declare(iunit, dimids3d, varid%hflux, &
+          "hflux", units=surface_heat_flux_units, &
+          chunksize=chksz3d)
+        call nc_declare(iunit, dimids3d, varid%z0, &
+          "z0", units=surface_roughness_length_units, &
+          chunksize=chksz3d)
+        call nc_declare(iunit, dimids3d, varid%lai, &
+          "lai", units=leaf_area_index_units, &
+          chunksize=chksz3d)
+        call nc_declare(iunit, dimids3d, varid%t2m, &
+          "t2m", units=temp_units, &
+          chunksize=chksz3d)
+        end block
+      endif
+
     end do
     if (itotcomp == 1) then
       call nc_declare(iunit, dimids3d, varid%icblt, &
@@ -1251,6 +1294,19 @@ subroutine get_varids(iunit, varid, ierror)
   ierror = nf90_inq_varid(iunit, "aircraft_doserate", varid%aircraft_doserate)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
   ierror = nf90_inq_varid(iunit, "aircraft_doserate_threshold_height", varid%aircraft_doserate_threshold_height)
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+
+  ierror = nf90_inq_varid(iunit, "xflux", varid%xflux)
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+  ierror = nf90_inq_varid(iunit, "yflux", varid%yflux)
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+  ierror = nf90_inq_varid(iunit, "hflux", varid%hflux)
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+  ierror = nf90_inq_varid(iunit, "lai", varid%lai)
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+  ierror = nf90_inq_varid(iunit, "z0", varid%z0)
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+  ierror = nf90_inq_varid(iunit, "t2m", varid%t2m)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
 
   do m=1,ncomp
