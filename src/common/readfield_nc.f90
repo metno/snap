@@ -360,11 +360,13 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
 !..mean sea level pressure, not used in computations,
 !..(only for output to results file)
   if(imslp /= 0) then
-    if ( .NOT. met_params%mslpv == '') then
+    if (met_params%mslpv /= '') then
+      call nfcheckload(ncid, met_params%mslpv, start3d, count3d, pmsl2(:,:))
+    else if (met_params%psv /= '') then
+      call nfcheckload(ncid, met_params%psv, start3d, count3d, pmsl2(:,:))
+    else
       write(iulog,*) 'Mslp not found. Not important.'
       imslp=0
-    else
-      call nfcheckload(ncid, met_params%mslpv, start3d, count3d, pmsl2(:,:))
     end if
   end if
 

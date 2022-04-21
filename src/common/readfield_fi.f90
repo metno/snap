@@ -290,12 +290,14 @@ contains
 !..mean sea level pressure, not used in computations,
 !..(only for output to results file)
     if (imslp /= 0) then
-      if (.NOT. met_params%mslpv == '') then
+      if (met_params%mslpv /= '') then
+        call fi_checkload(fio, met_params%mslpv, pressure_units, pmsl2(:, :), nt=timepos, nr=nr, nz=1)
+      else if (met_params%psv /= '') then
+        call fi_checkload(fio, met_params%psv, pressure_units, pmsl2(:, :), nt=timepos, nr=nr, nz=1)
+      else
         write (iulog, *) 'Mslp not found. Not important.'
         imslp = 0
-      else
-        call fi_checkload(fio, met_params%mslpv, pressure_units, pmsl2(:, :), nt=timepos, nr=nr, nz=1)
-      end if
+      endif
     end if
 
     if (met_params%need_precipitation) then
