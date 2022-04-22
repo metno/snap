@@ -1176,6 +1176,7 @@ end subroutine
 
 subroutine get_varids(iunit, varid, ierror)
   USE snapparML, only: ncomp, run_comp, def_comp
+  USE snapgrdML, only: imodlevel, modleveldump
   integer, intent(in) :: iunit
   type(common_var), intent(out) :: varid
   integer, intent(out) :: ierror
@@ -1263,13 +1264,17 @@ subroutine get_varids(iunit, varid, ierror)
     ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%accwd)
     if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
 
-    varname = trim(def_comp(mm)%compnamemc) // "_concentration_dump_ml"
-    ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%icml)
-    if (ierror /= NF90_NOERR) cycle  ! Skip checking for alternative variable
-    if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
-    varname = trim(def_comp(mm)%compnamemc) // "_concentration_ml"
-    ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%icml)
-    if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+    if (imodlevel) then
+      if (modleveldump > 0.) then
+        varname = trim(def_comp(mm)%compnamemc) // "_concentration_dump_ml"
+        ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%icml)
+        if (ierror /= NF90_NOERR) return
+      else
+        varname = trim(def_comp(mm)%compnamemc) // "_concentration_ml"
+        ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%icml)
+        if (ierror /= NF90_NOERR) return
+      endif
+    endif
   enddo
 
   ierror = NF90_NOERR
