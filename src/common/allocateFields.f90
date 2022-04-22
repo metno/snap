@@ -27,7 +27,8 @@ module allocateFieldsML
       max_column_scratch, max_column_concentration, &
       aircraft_doserate, aircraft_doserate_scratch, t1_abs, t2_abs, &
       aircraft_doserate_threshold_height, vd_dep, &
-      xflux, yflux, hflux, t2m, z0, leaf_area_index
+      xflux, yflux, hflux, t2m, z0, leaf_area_index, &
+      roa, ustar, monin_l, raero, vs
   USE snapfilML, only: idata, fdata
   USE snapgrdML, only: ahalf, bhalf, vhalf, alevel, blevel, vlevel, imodlevel, &
       compute_column_max_conc, compute_aircraft_doserate, aircraft_doserate_threshold
@@ -208,6 +209,8 @@ subroutine allocateFields
     allocate(vd_dep(nx,ny,ncomp), STAT=AllocateStatus)
     if (AllocateStatus /= 0) ERROR STOP errmsg
     allocate(xflux, yflux, hflux, t2m, z0, leaf_area_index, mold=ps2)
+    allocate(roa(nx, ny))
+    allocate(ustar, monin_l, raero, vs, mold=roa)
   endif
 
 end subroutine allocateFields
@@ -301,6 +304,7 @@ subroutine deAllocateFields
   if (allocated(vd_dep)) then
     deallocate(vd_dep)
     deallocate(xflux, yflux, hflux, t2m, z0, leaf_area_index)
+    deallocate(roa, ustar, monin_l, raero, vs)
   endif
 
 

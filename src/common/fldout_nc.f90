@@ -80,6 +80,11 @@ module fldout_ncML
     integer :: z0 = -1
     integer :: t2m = -1
     integer :: lai = -1
+    integer :: roa = -1
+    integer :: ustar = -1
+    integer :: monin_l = -1
+    integer :: raero = -1
+    integer :: vs = -1
   end type
 
 !> dimensions used in a file
@@ -323,7 +328,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
           values=field1), "set_idd(m)")
 
       if (output_vd) then
-        call check(nf90_put_var(iunit, varid%comp(m)%vd, start=[ipos], count=[isize], &
+        call check(nf90_put_var(iunit, varid%comp(m)%vd, start=ipos, count=isize, &
             values=vd_dep(:, :, m)), "dry_deposition_velocity(m)")
       endif
     end if
@@ -569,13 +574,19 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
 
   if (output_vd) then
     block
-      use snapfldml, only: t2m, xflux, yflux, z0, hflux, leaf_area_index
-    call check(nf90_put_var(iunit, varid%t2m, start=[ipos], count=[isize], values=t2m))
-    call check(nf90_put_var(iunit, varid%xflux, start=[ipos], count=[isize], values=xflux))
-    call check(nf90_put_var(iunit, varid%yflux, start=[ipos], count=[isize], values=yflux))
-    call check(nf90_put_var(iunit, varid%z0, start=[ipos], count=[isize], values=z0))
-    call check(nf90_put_var(iunit, varid%hflux, start=[ipos], count=[isize], values=hflux))
-    call check(nf90_put_var(iunit, varid%lai, start=[ipos], count=[isize], values=leaf_area_index))
+      use snapfldml, only: t2m, xflux, yflux, z0, hflux, leaf_area_index, &
+        roa, ustar, monin_l, raero, vs
+    call check(nf90_put_var(iunit, varid%t2m, start=ipos, count=isize, values=t2m))
+    call check(nf90_put_var(iunit, varid%xflux, start=ipos, count=isize, values=xflux))
+    call check(nf90_put_var(iunit, varid%yflux, start=ipos, count=isize, values=yflux))
+    call check(nf90_put_var(iunit, varid%z0, start=ipos, count=isize, values=z0))
+    call check(nf90_put_var(iunit, varid%hflux, start=ipos, count=isize, values=hflux))
+    call check(nf90_put_var(iunit, varid%lai, start=ipos, count=isize, values=leaf_area_index))
+    call check(nf90_put_var(iunit, varid%roa, start=ipos, count=isize, values=roa))
+    call check(nf90_put_var(iunit, varid%ustar, start=ipos, count=isize, values=ustar))
+    call check(nf90_put_var(iunit, varid%monin_l, start=ipos, count=isize, values=monin_l))
+    call check(nf90_put_var(iunit, varid%raero, start=ipos, count=isize, values=raero))
+    call check(nf90_put_var(iunit, varid%vs, start=ipos, count=isize, values=vs))
     end block
   endif
 
@@ -1205,6 +1216,16 @@ subroutine initialize_output(filename, itime, ierror)
         call nc_declare(iunit, dimids3d, varid%t2m, &
           "t2m", units=temp_units, &
           chunksize=chksz3d)
+        call nc_declare(iunit, dimids3d, varid%roa, &
+          "roa", units="??", chunksize=chksz3d)
+        call nc_declare(iunit, dimids3d, varid%ustar, &
+          "ustar", units="??", chunksize=chksz3d)
+        call nc_declare(iunit, dimids3d, varid%monin_l, &
+          "monin_l", units="??", chunksize=chksz3d)
+        call nc_declare(iunit, dimids3d, varid%raero, &
+          "raero", units="??", chunksize=chksz3d)
+        call nc_declare(iunit, dimids3d, varid%vs, &
+          "vs", units="??", chunksize=chksz3d)
         end block
       endif
 
@@ -1307,6 +1328,16 @@ subroutine get_varids(iunit, varid, ierror)
   ierror = nf90_inq_varid(iunit, "z0", varid%z0)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
   ierror = nf90_inq_varid(iunit, "t2m", varid%t2m)
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+  ierror = nf90_inq_varid(iunit, "roa", varid%roa)
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+  ierror = nf90_inq_varid(iunit, "ustar", varid%ustar)
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+  ierror = nf90_inq_varid(iunit, "monin_l", varid%monin_l)
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+  ierror = nf90_inq_varid(iunit, "raero", varid%raero)
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+  ierror = nf90_inq_varid(iunit, "vs", varid%vs)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
 
   do m=1,ncomp

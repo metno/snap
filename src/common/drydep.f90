@@ -227,7 +227,8 @@ pure elemental subroutine drydep_emep_vd(surface_pressure, t2m, yflux, xflux, z0
 end subroutine
 
 pure elemental subroutine drydep_zhang_emerson_vd(surface_pressure, t2m, yflux, xflux, z0, &
-    hflux, leaf_area_index, diam, density, vd_dep, emerson_mode)
+    hflux, leaf_area_index, diam, density, vd_dep, emerson_mode, &
+    roa, ustar, monin_obukhov_length, raero, vs)
   !> In hPa
   real, intent(in) :: surface_pressure
   real, intent(in) :: t2m
@@ -238,14 +239,14 @@ pure elemental subroutine drydep_zhang_emerson_vd(surface_pressure, t2m, yflux, 
   real(real64), intent(in) :: density
   real, intent(out) :: vd_dep
   logical, intent(in) :: emerson_mode
+  real(real64), intent(out) :: roa, monin_obukhov_length, raero, vs, ustar
 
   !> Aerial factor for interception (table 3 Zhang et al. (2001)), corresponding to evergreen
   !>  needleleaf trees (i.e. close to maximum deposition)
   real(real64), parameter :: A = 3e-3
   real(real64), parameter :: k = 0.4
 
-  real(real64) :: fac1, cslip, bdiff, my, roa, sc, EB, EIM, EIN, rs, stokes
-  real(real64) :: monin_obukhov_length, raero, vs, ustar
+  real(real64) :: fac1, cslip, bdiff, my, sc, EB, EIM, EIN, rs, stokes
 
   roa = surface_pressure / (t2m * R)
   vs = gravitational_settling(roa, diam, density)
