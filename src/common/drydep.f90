@@ -34,18 +34,18 @@ module drydep
   integer, save, public :: drydep_scheme = DRYDEP_SCHEME_UNDEFINED
 
 
-  real, parameter :: R = 287.05
-  real, parameter :: grav = 9.8
-  real, parameter :: CP = 1005.0
-  real, parameter :: pi = 2.0*asin(1.0)
+  real(real64), parameter :: R = 287.05
+  real(real64), parameter :: grav = 9.8
+  real(real64), parameter :: CP = 1005.0
+  real(real64), parameter :: pi = 2.0*asin(1.0)
 
   !> Kinematic viscosity of air, m2 s-1 at +15 C
-  real, parameter :: ny = 1.5e-5
+  real(real64), parameter :: ny = 1.5e-5
   !> Mean free path of air molecules [m]
-  real, parameter :: lambda = 0.065e-6
+  real(real64), parameter :: lambda = 0.065e-6
 
   !> Boltzmanns constant, J K-1
-  real, parameter :: bolzc = 1.380649e-23
+  real(real64), parameter :: bolzc = 1.380649e-23
 
 
   contains
@@ -151,12 +151,14 @@ pure function aerodynres(L, ustar, z0) result(raero)
   raero = (1 / (ka * ustar)) * (log(z/z0) - fi)
 end function
 
-pure elemental real function gravitational_settling(roa, diam, ro_part) result(vs)
+pure elemental function gravitational_settling(roa, diam, ro_part) result(vs)
     real(real64), intent(in) :: roa
     !> Diameter in m
     real(real64), intent(in) :: diam
     !> Density in km b-3
     real(real64), intent(in) :: ro_part
+
+    real(real64) :: vs
 
     real(real64) :: my ! Dynamic visocity of air, kg m-1 s-1
 
@@ -180,20 +182,20 @@ pure elemental subroutine drydep_emep_vd(surface_pressure, t2m, yflux, xflux, z0
   real, intent(in) :: density
   real, intent(out) :: vd_dep
 
-  real :: roa
-  real :: ustar
-  real :: monin_obukhov_length
-  real :: SAI
+  real(real64) :: roa
+  real(real64) :: ustar
+  real(real64) :: monin_obukhov_length
+  real(real64) :: SAI
 
-  real, parameter :: k = 0.4
+  real(real64), parameter :: k = 0.4
   ! real, parameter :: a1 = 0.002
-  real :: a1
-  real, parameter :: a2 = 300
-  real :: a1sai
-  real :: vs
-  real :: rsemep
-  real :: raero
-  real :: fac
+  real(real64) :: a1
+  real(real64), parameter :: a2 = 300
+  real(real64) :: a1sai
+  real(real64) :: vs
+  real(real64) :: rsemep
+  real(real64) :: raero
+  real(real64) :: fac
 
 
   roa = surface_pressure / (t2m * R)
