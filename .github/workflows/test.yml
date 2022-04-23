@@ -52,10 +52,13 @@ jobs:
             sudo make -j2 install
 
       - name: Create binaries (with fimex)
-        run: cd src && make -j2
+        run: cd src && make clean && make -j2
 
       - name: Install test requirements
         run: sudo apt-get install python3-numpy python3-netcdf4
 
       - name: Test binaries
-        run: cd src && env LD_LIBRARY_PATH=/usr/local/lib make test
+        env:
+          LD_LIBRARY_PATH: "/usr/local/lib/x86_64-linux-gnu"
+        run: |
+            cd src && make test
