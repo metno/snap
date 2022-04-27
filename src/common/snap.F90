@@ -866,7 +866,8 @@ contains
                          TIME_PROFILE_CONSTANT, TIME_PROFILE_LINEAR, TIME_PROFILE_LINEAR, TIME_PROFILE_STEPS, &
                          TIME_PROFILE_UNDEFINED
     use snapfimexML, only: parse_interpolator
-    use snapgrdml, only: compute_column_max_conc, compute_aircraft_doserate, aircraft_doserate_threshold
+    use snapgrdml, only: compute_column_max_conc, compute_aircraft_doserate, aircraft_doserate_threshold, &
+    output_column
 
     !> Open file unit
     integer, intent(in) :: snapinput_unit
@@ -1466,6 +1467,8 @@ contains
       case ('output.aircraft_doserate.threshold.sv_h')
         if (.not. has_value) goto 12
         read (cinput(pname_start:pname_end), *, err=12) aircraft_doserate_threshold
+      case ('output.column.on')
+        output_column = .true.
       case ('release.pos')
         !..release.pos=<'name',latitude,longitude>
         if (.not. has_value) goto 12

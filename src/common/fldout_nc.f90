@@ -44,6 +44,7 @@ module fldout_ncML
     integer :: ac
     integer :: ic
     integer :: icml
+    integer :: conc_column = -1
   end type
 
 !> Variables in a file
@@ -96,7 +97,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
   USE iso_fortran_env, only: int16
   USE snapgrdML, only: imodlevel, imslp, precipitation_in_output, &
       itotcomp, compute_column_max_conc, compute_aircraft_doserate, &
-      aircraft_doserate_threshold
+      aircraft_doserate_threshold, output_column
   USE snapfldML, only: field1, field2, field3, field4, &
       depdry, depwet, &
       avgbq1, avgbq2, garea, pmsl1, pmsl2, hbl1, hbl2, &
@@ -270,6 +271,14 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     write(iulog,*) '   Bq,particles above abl: ',bqtot2,nptot2
     write(iulog,*) '   Bq,particles          : ',bqtot1+bqtot2, &
         nptot1+nptot2
+
+
+    if (output_column) then
+      field3 = field1 + field2
+      field3 = field3 / garea
+      call check(nf90_put_var(iunit, varid%comp(m)%conc_column, start=[ipos], count=[isize], &
+        values=field3), "output_column")
+    endif
 
   !..instant part of Bq in boundary layer
     scale = 100.
@@ -972,7 +981,7 @@ subroutine initialize_output(filename, itime, ierror)
   USE snapfilML, only: ncsummary, nctitle, simulation_start
   USE snapgrdML, only: gparam, igtype, imodlevel, imslp, precipitation_in_output, &
       itotcomp, modleveldump, compute_column_max_conc, compute_aircraft_doserate, &
-      aircraft_doserate_threshold
+      aircraft_doserate_threshold, output_column
   USE snapfldML, only:  &
       garea, &
       xm, ym, &
@@ -1144,6 +1153,11 @@ subroutine initialize_output(filename, itime, ierror)
       !     +          "Bq*hour/m3","",
       !     +          TRIM(def_comp(mm)%compnamemc)//"_accumulated_concentration_ml")
       end if
+      if (output_column) then
+        string = trim(def_comp(mm)%compnamemc) // "_column_concentration"
+        call nc_declare_3d(iunit, dimids3d, varid%comp(m)%conc_column, &
+            chksz3d, string, "Bq/m2","", string)
+      endif
     end do
     if (itotcomp == 1) then
       call nc_declare_3d(iunit, dimids3d, varid%icblt, &
@@ -1284,6 +1298,10 @@ subroutine get_varids(iunit, varid, ierror)
         if (ierror /= NF90_NOERR) return
       endif
     endif
+
+    varname = trim(def_comp(mm)%compnamemc) // "_column_concentration"
+    ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%conc_column)
+    if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
   enddo
 
   ierror = NF90_NOERR
