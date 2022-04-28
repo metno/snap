@@ -864,7 +864,8 @@ contains
           select case(drydep_scheme)
           case (DRYDEP_SCHEME_EMEP)
             call drydep_emep_vd(ps2*100, t2m, yflux, xflux, z0, &
-              hflux, leaf_area_index, real(diam), real(dens), vd_dep(:, :, ncomp))
+              hflux, leaf_area_index, real(diam), real(dens), vd_dep(:, :, ncomp), &
+              roa, ustar, monin_l, raero, vs)
           case (DRYDEP_SCHEME_ZHANG)
             call drydep_zhang_emerson_vd(ps2*100, t2m, yflux, xflux, z0, &
               hflux, leaf_area_index, diam, dens, vd_dep(:, :, ncomp), .false., &

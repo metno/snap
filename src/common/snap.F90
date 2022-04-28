@@ -880,7 +880,7 @@ contains
                          TIME_PROFILE_UNDEFINED
     use snapfimexML, only: parse_interpolator
     use snapgrdml, only: compute_column_max_conc, compute_aircraft_doserate, aircraft_doserate_threshold, &
-    output_column, output_vd
+    output_column, output_vd, output_vd_debug
 
     !> Open file unit
     integer, intent(in) :: snapinput_unit
@@ -1106,6 +1106,14 @@ contains
         endif
         if (has_value) goto 12
         output_vd = .true.
+      case ('dry.deposition.save.debug')
+        if (.not.output_vd) then
+          write(error_unit, *) "dry.deposition.save must be set"
+          goto 12
+        endif
+        warning = .true.
+        write(error_unit, *) "This option is a hack, only use for a single component"
+        output_vd_debug = .true.
       case ('wet.deposition.old')
         write (error_unit, *) "This option is deprecated and removed"
         goto 12

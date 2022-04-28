@@ -171,7 +171,9 @@ pure elemental function gravitational_settling(roa, diam, ro_part) result(vs)
     vs = ro_part * diam * diam * grav * cslip / (18*my)
 end function
 
-pure elemental subroutine drydep_emep_vd(surface_pressure, t2m, yflux, xflux, z0, hflux, leaf_area_index, diam, density, vd_dep)
+pure elemental subroutine drydep_emep_vd(surface_pressure, t2m, yflux, xflux, z0, &
+    hflux, leaf_area_index, diam, density, vd_dep, &
+    roa, ustar, monin_obukhov_length, raero, vs)
   !> In hPa
   real, intent(in) :: surface_pressure
   real, intent(in) :: t2m
@@ -182,9 +184,9 @@ pure elemental subroutine drydep_emep_vd(surface_pressure, t2m, yflux, xflux, z0
   real, intent(in) :: density
   real, intent(out) :: vd_dep
 
-  real(real64) :: roa
-  real(real64) :: ustar
-  real(real64) :: monin_obukhov_length
+  real(real64), intent(out) :: roa
+  real(real64), intent(out) :: ustar
+  real(real64), intent(out) :: monin_obukhov_length
   real(real64) :: SAI
 
   real(real64), parameter :: k = 0.4
@@ -192,9 +194,9 @@ pure elemental subroutine drydep_emep_vd(surface_pressure, t2m, yflux, xflux, z0
   real(real64) :: a1
   real(real64), parameter :: a2 = 300
   real(real64) :: a1sai
-  real(real64) :: vs
+  real(real64), intent(out) :: vs
   real(real64) :: rsemep
-  real(real64) :: raero
+  real(real64), intent(out) :: raero
   real(real64) :: fac
 
 

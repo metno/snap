@@ -85,6 +85,7 @@ module fldout_ncML
     integer :: monin_l = -1
     integer :: raero = -1
     integer :: vs = -1
+    integer :: ps_vd = -1
   end type
 
 !> dimensions used in a file
@@ -112,7 +113,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
   USE snapgrdML, only: imodlevel, imslp, precipitation_in_output, &
       itotcomp, compute_column_max_conc, compute_aircraft_doserate, &
       aircraft_doserate_threshold, &
-      output_column, output_vd
+      output_column, output_vd, output_vd_debug
   USE snapfldML, only: field1, field2, field3, field4, &
       depdry, depwet, &
       avgbq1, avgbq2, garea, pmsl1, pmsl2, hbl1, hbl2, &
@@ -204,7 +205,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
   end if
 
 !..mslp (if switched on)
-  if(imslp == 1 .or. output_vd) then
+  if(imslp == 1) then
     field1(:,:) = rt1*pmsl1 + rt2*pmsl2
     if(idebug == 1) call ftest('mslp', field1)
 
@@ -572,10 +573,11 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     call write_ml_fields(iunit, varid, average, [1, 1, -1, ihrs_pos], [nx, ny, 1, 1], rt1, rt2)
   endif
 
-  if (output_vd) then
+  if (output_vd_debug) then
     block
       use snapfldml, only: t2m, xflux, yflux, z0, hflux, leaf_area_index, &
-        roa, ustar, monin_l, raero, vs
+        roa, ustar, monin_l, raero, vs, ps2
+    call check(nf90_put_var(iunit, varid%ps_vd, start=ipos, count=isize, values=ps2))
     call check(nf90_put_var(iunit, varid%t2m, start=ipos, count=isize, values=t2m))
     call check(nf90_put_var(iunit, varid%xflux, start=ipos, count=isize, values=xflux))
     call check(nf90_put_var(iunit, varid%yflux, start=ipos, count=isize, values=yflux))
@@ -1018,7 +1020,7 @@ subroutine initialize_output(filename, itime, ierror)
   USE snapgrdML, only: gparam, igtype, imodlevel, imslp, precipitation_in_output, &
       itotcomp, modleveldump, compute_column_max_conc, compute_aircraft_doserate, &
       aircraft_doserate_threshold, &
-      output_vd, output_column
+      output_vd, output_column, output_vd_debug
   USE snapfldML, only:  &
       garea, &
       xm, ym, &
@@ -1194,7 +1196,7 @@ subroutine initialize_output(filename, itime, ierror)
           units="m/s", chunksize=chksz3d)
       endif
 
-      if (output_vd) then
+      if (output_vd_debug) then
         block
           use snapmetml, only: downward_momentum_flux_units, surface_heat_flux_units, &
             leaf_area_index_units, surface_roughness_length_units, temp_units
@@ -1226,6 +1228,8 @@ subroutine initialize_output(filename, itime, ierror)
           "raero", units="??", chunksize=chksz3d)
         call nc_declare(iunit, dimids3d, varid%vs, &
           "vs", units="??", chunksize=chksz3d)
+        call nc_declare(iunit, dimids3d, varid%ps_vd, &
+          "ps_vd", units="hPa", chunksize=chksz3d)
         end block
       endif
 
@@ -1263,7 +1267,7 @@ end subroutine
 
 subroutine get_varids(iunit, varid, ierror)
   USE snapparML, only: ncomp, run_comp, def_comp
-  USE snapgrdML, only: imodlevel, modleveldump, output_vd
+  USE snapgrdML, only: imodlevel, modleveldump
   integer, intent(in) :: iunit
   type(common_var), intent(out) :: varid
   integer, intent(out) :: ierror
@@ -1339,6 +1343,8 @@ subroutine get_varids(iunit, varid, ierror)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
   ierror = nf90_inq_varid(iunit, "vs", varid%vs)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+  ierror = nf90_inq_varid(iunit, "ps_vd", varid%ps_vd)
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
 
   do m=1,ncomp
     mm = run_comp(m)%to_defined
@@ -1367,11 +1373,9 @@ subroutine get_varids(iunit, varid, ierror)
       ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%accdd)
       if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
 
-      if (output_vd) then
-        varname = trim(def_comp(mm)%compnamemc) // "_dry_deposition_velocity"
-        ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%vd)
-        if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
-      endif
+      varname = trim(def_comp(mm)%compnamemc) // "_dry_deposition_velocity"
+      ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%vd)
+      if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
     endif
 
     if (def_comp(mm)%kwetdep == 1) then
