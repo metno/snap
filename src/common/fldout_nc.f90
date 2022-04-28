@@ -677,90 +677,53 @@ subroutine write_ml_fields(iunit, varid, average, ipos, isize, rt1, rt2)
   end do
 end subroutine
 
-subroutine nc_declare_2d(iunit, dimids, varid, &
-    chksz, varnm, units, stdnm, metnm)
+
+subroutine nc_declare(iunit, dimids, varid, varname, units, stdname, chunksize)
   USE snapdebug, only: iulog
+  integer, intent(in) :: iunit
+  integer, intent(out)   :: varid
+  integer, intent(in)    :: dimids(:)
 
-  INTEGER, INTENT(OUT)   :: varid
-  INTEGER, INTENT(IN)    :: iunit, dimids(2), chksz(2)
-  CHARACTER(LEN=*), INTENT(IN) :: varnm, stdnm, metnm, units
+  character(len=*), intent(in) :: units
+  character(len=*), intent(in) :: varname
+  character(len=*), intent(in), optional :: stdname
+  integer, intent(in), optional :: chunksize(:)
 
-  if (.false.) write (error_unit,*) chksz ! Silence compiler
+  write(iulog,"('declaring ' (a) ' ' (a) )",advance="NO") varname, units
+  if (present(stdname)) write(iulog, "(' ' (a))",advance="NO") trim(stdname)
+  write(iulog,'()',advance="YES")
 
-  write(iulog,*) "declaring ", TRIM(varnm), TRIM(units), &
-      TRIM(stdnm),TRIM(metnm)
-  call check(nf90_def_var(iunit, TRIM(varnm), &
-      NF90_FLOAT, dimids, varid), "def_"//varnm)
-!       call check(NF_DEF_VAR_CHUNKING(iunit, varid, NF_CHUNKED, chksz))
-  call check(NF90_DEF_VAR_DEFLATE(iunit, varid, 1,1,1))
-  call check(nf90_put_att(iunit,varid, "units", TRIM(units)))
-  if (LEN_TRIM(stdnm) > 0) then
-    call check(nf90_put_att(iunit,varid,"standard_name", TRIM(stdnm)))
+  call check(nf90_def_var(iunit, TRIM(varname), &
+      NF90_FLOAT, dimids, varid), "def_"//varname)
+  if (present(chunksize)) then
+    call check(nf90_def_var_chunking(iunit, varid, NF90_CHUNKED, chunksize))
+    call check(nf90_def_var_deflate(iunit, varid, &
+      shuffle=1, deflate=1, deflate_level=1))
   endif
-!       if (LEN_TRIM(metnm).gt.0)
-!     +    call check(nf_put_att_text(iunit,varid,"metno_name",
-!     +    LEN_TRIM(metnm), TRIM(metnm)))
+  call check(nf90_put_att(iunit,varid, "units", TRIM(units)))
+  if (present(stdname)) then
+    call check(nf90_put_att(iunit,varid,"standard_name", TRIM(stdname)))
+  endif
 
   call check(nf90_put_att(iunit,varid,"coordinates", "longitude latitude"))
   call check(nf90_put_att(iunit,varid,"grid_mapping", "projection"))
+end subroutine
 
-end subroutine nc_declare_2d
+subroutine nc_declare_put(iunit, dimids, varid, varname, units, stdname, chunksize, values)
+  integer, intent(in) :: iunit
+  integer, intent(out)   :: varid
+  integer, intent(in)    :: dimids(:)
 
-subroutine nc_declare_3d(iunit, dimids, varid, &
-    chksz, varnm, units, stdnm, metnm)
-  USE snapdebug, only: iulog
+  character(len=*), intent(in) :: units
+  character(len=*), intent(in) :: varname
+  character(len=*), intent(in), optional :: stdname
+  integer, intent(in), optional :: chunksize(:)
 
-  INTEGER, INTENT(OUT)   :: varid
-  INTEGER, INTENT(IN)    :: iunit, dimids(3), chksz(3)
-  CHARACTER(LEN=*), INTENT(IN) :: varnm, stdnm, metnm, units
+  real, intent(in) :: values(:, :)
 
-  if (.false.) write (error_unit,*) chksz ! Silence compiler
-
-  write(iulog,*) "declaring ", TRIM(varnm), TRIM(units), &
-      TRIM(stdnm),TRIM(metnm)
-  call check(nf90_def_var(iunit, TRIM(varnm), &
-      NF90_FLOAT, dimids, varid), "def_"//varnm)
-!       call check(NF_DEF_VAR_CHUNKING(iunit, varid, NF_CHUNKED, chksz))
-  call check(NF90_DEF_VAR_DEFLATE(iunit, varid, 1,1,1))
-  call check(nf90_put_att(iunit,varid, "units", TRIM(units)))
-  if (LEN_TRIM(stdnm) > 0) then
-    call check(nf90_put_att(iunit,varid,"standard_name", TRIM(stdnm)))
-  endif
-!       if (LEN_TRIM(metnm).gt.0)
-!     +    call check(nf_put_att_text(iunit,varid,"metno_name",
-!     +    LEN_TRIM(metnm), TRIM(metnm)))
-
-  call check(nf90_put_att(iunit,varid,"coordinates", "longitude latitude"))
-  call check(nf90_put_att(iunit,varid,"grid_mapping", "projection"))
-
-end subroutine nc_declare_3d
-
-subroutine nc_declare_4d(iunit, dimids, varid, &
-    chksz, varnm, units, stdnm, metnm)
-  USE snapdebug, only: iulog
-
-  INTEGER, INTENT(OUT)   :: varid
-  INTEGER, INTENT(IN)    :: iunit, dimids(4), chksz(4)
-  CHARACTER(LEN=*), INTENT(IN) :: varnm, stdnm, metnm, units
-
-  write(iulog,*) "declaring ", TRIM(varnm), TRIM(units), &
-      TRIM(stdnm),TRIM(metnm)
-  call check(nf90_def_var(iunit, TRIM(varnm), &
-      NF90_FLOAT, dimids, varid), "def_"//varnm)
-  call check(NF90_DEF_VAR_CHUNKING(iunit, varid, NF90_CHUNKED, chksz))
-  call check(NF90_DEF_VAR_DEFLATE(iunit, varid, 1,1,1))
-  call check(nf90_put_att(iunit,varid, "units", TRIM(units)))
-  if (LEN_TRIM(stdnm) > 0) then
-    call check(nf90_put_att(iunit,varid,"standard_name", TRIM(stdnm)))
-  endif
-!       if (LEN_TRIM(metnm).gt.0)
-!     +    call check(nf_put_att_text(iunit,varid,"metno_name",
-!     +    LEN_TRIM(metnm), TRIM(metnm)))
-
-  call check(nf90_put_att(iunit,varid,"coordinates", "longitude latitude"))
-  call check(nf90_put_att(iunit,varid,"grid_mapping", "projection"))
-
-end subroutine nc_declare_4d
+  call nc_declare(iunit, dimids, varid, varname, units, stdname, chunksize)
+  call check(nf90_put_var(iunit, varid, values), "Could not put values")
+end subroutine
 
 subroutine nc_set_vtrans(iunit, kdimid,k_varid,ap_varid,b_varid)
   use snapgrdML, only: vlevel, alevel, blevel
@@ -1082,53 +1045,51 @@ subroutine initialize_output(filename, itime, ierror)
     chksz4d = [nx, ny, 1, 1]
 
     if (imodlevel) then
-      call nc_declare_3d(iunit, dimids3d, varid%ps, &
-          chksz3d, "surface_air_pressure", &
-          "hPa", "surface_air_pressure", "")
+      call nc_declare(iunit, dimids3d, varid%ps, &
+          "surface_air_pressure", units="hPa", &
+          stdname="surface_air_pressure", chunksize=chksz3d)
     endif
     if (imslp == 1) then
-      call nc_declare_3d(iunit, dimids3d, varid%mslp, &
-          chksz3d, "air_pressure_at_sea_level", &
-          "hPa", "air_pressure_at_sea_level", "")
+      call nc_declare(iunit, dimids3d, varid%mslp, &
+        "air_pressure_at_sea_level", units="hPa", &
+        stdname="air_pressure_at_sea_level", chunksize=chksz3d)
     endif
     if (precipitation_in_output) then
-      call nc_declare_3d(iunit, dimids3d, varid%accum_prc, &
-          chksz3d, "precipitation_amount_acc", &
-          "kg/m2", "precipitation_amount", "")
-          call nc_declare_3d(iunit, dimids3d, varid%prc, &
-          chksz3d, "lwe_precipitation_rate", &
-          "mm/("//itoa(nhfout)//"hr)", "lwe_precipitation_rate", "")
+      call nc_declare(iunit, dimids3d, varid%accum_prc, &
+        "precipitation_amount_acc", units="kg/m2", &
+        stdname="precipitation_amount", chunksize=chksz3d)
+
+      call nc_declare(iunit, dimids3d, varid%prc, &
+        "lwe_precipitation_rate", units="mm/("//itoa(nhfout)//"hr)", &
+        stdname="lwe_precipitation_rate", chunksize=chksz3d)
     endif
 
-    call nc_declare_3d(iunit, dimids3d, varid%ihbl, &
-        chksz3d, "instant_height_boundary_layer", &
-        "m", "height", &
-        "instant_height_boundary_layer")
-    call nc_declare_3d(iunit, dimids3d, varid%ahbl, &
-        chksz3d, "average_height_boundary_layer", &
-        "m", "height", &
-        "average_height_boundary_layer")
+    call nc_declare(iunit, dimids3d, varid%ihbl, &
+        "instant_height_boundary_layer", units="m", &
+        stdname="height", chunksize=chksz3d)
+
+    call nc_declare(iunit, dimids3d, varid%ahbl, &
+      "average_height_boundary_layer", units="m", &
+      stdname="height", chunksize=chksz3d)
 
     if (compute_column_max_conc) then
-      string = "max_column_concentration"
-      call nc_declare_3d(iunit, dimids3d, varid%column_max_conc, &
-          chksz3d, string, "Bq/m3", "", string)
+      call nc_declare(iunit, dimids3d, varid%column_max_conc, &
+       "max_column_concentration", units="Bq/m3", &
+       chunksize=chksz3d)
     endif
     if (compute_aircraft_doserate) then
-      string = "aircraft_doserate"
-      call nc_declare_3d(iunit, dimids3d, varid%aircraft_doserate, &
-          chksz3d, string, "Sv/h", "", string)
+      call nc_declare(iunit, dimids3d, varid%aircraft_doserate, &
+        "aircraft_doserate", units="Sv/h", &
+        chunksize=chksz3d)
       if (aircraft_doserate_threshold > 0.0) then
-        string = "aircraft_doserate_threshold_height"
-        call nc_declare_3d(iunit, dimids3d, varid%aircraft_doserate_threshold_height, &
-            chksz3d, string, "m", "", string)
+        call nc_declare(iunit, dimids3d, varid%aircraft_doserate_threshold_height, &
+          "aircraft_doserate_threshold_height", units="m", &
+          chunksize=chksz3d)
       endif
     endif
 
-    call nc_declare_2d(iunit, dimids2d, varid%garea, &
-          [nx, ny], "area", &
-          "m2", "area", "")
-    call check(nf90_put_var(iunit, varid%garea, garea))
+    call nc_declare_put(iunit, dimids2d, varid%garea, "area", units="m2", &
+      stdname="area", chunksize=[nx,ny], values=garea)
 
     call check(nf90_def_var(iunit, "components", NF90_CHAR, [dimid%maxcompname, dimid%ncomp], varid%components))
 
@@ -1137,95 +1098,77 @@ subroutine initialize_output(filename, itime, ierror)
       call check(nf90_put_var(iunit, varid%components, &
         start=[1, m], count=[len_trim(def_comp(mm)%compnamemc), 1], &
         values=trim(def_comp(mm)%compnamemc)))
-      call nc_declare_3d(iunit, dimids3d, varid%comp(m)%ic, &
-          chksz3d, TRIM(def_comp(mm)%compnamemc)//"_concentration", &
-          "Bq/m3","", &
-          TRIM(def_comp(mm)%compnamemc)//"_concentration")
-      call nc_declare_3d(iunit, dimids3d, varid%comp(m)%icbl, &
-          chksz3d, TRIM(def_comp(mm)%compnamemc)//"_concentration_bl", &
-          "Bq/m3","", &
-          TRIM(def_comp(mm)%compnamemc)//"_concentration_boundary_layer")
-      call nc_declare_3d(iunit, dimids3d, varid%comp(m)%ac, &
-          chksz3d, TRIM(def_comp(mm)%compnamemc)//"_acc_concentration", &
-          "Bq*hr/m3","", &
-          TRIM(def_comp(mm)%compnamemc)//"_accumulated_concentration")
-      call nc_declare_3d(iunit, dimids3d, varid%comp(m)%acbl, &
-          chksz3d, TRIM(def_comp(mm)%compnamemc)//"_avg_concentration_bl", &
-          "Bq/m3","", &
-          TRIM(def_comp(mm)%compnamemc)//"_average_concentration_bl")
+      call nc_declare(iunit, dimids3d, varid%comp(m)%ic, &
+        trim(def_comp(mm)%compnamemc)//"_concentration", &
+        units="Bq/m3", chunksize=chksz3d)
+      call nc_declare(iunit, dimids3d, varid%comp(m)%icbl, &
+        trim(def_comp(mm)%compnamemc)//"_concentration_bl", &
+        units="Bq/m3", chunksize=chksz3d)
+      call nc_declare(iunit, dimids3d, varid%comp(m)%ac, &
+        trim(def_comp(mm)%compnamemc)//"_acc_concentration", &
+        units="Bq*hr/m3", chunksize=chksz3d)
+      call nc_declare(iunit, dimids3d, varid%comp(m)%acbl, &
+        trim(def_comp(mm)%compnamemc)//"_avg_concentration_bl", &
+        "Bq/m3", chunksize=chksz3d)
       if (def_comp(mm)%kdrydep > 0) then
-        call nc_declare_3d(iunit, dimids3d, varid%comp(m)%idd, &
-            chksz3d, TRIM(def_comp(mm)%compnamemc)//"_dry_deposition", &
-            "Bq/m2","", &
-            TRIM(def_comp(mm)%compnamemc)//"_dry_deposition")
-        call nc_declare_3d(iunit, dimids3d, varid%comp(m)%accdd, &
-            chksz3d, TRIM(def_comp(mm)%compnamemc)//"_acc_dry_deposition", &
-            "Bq/m2","", &
-            TRIM(def_comp(mm)%compnamemc)//"_accumulated_dry_deposition")
+        call nc_declare(iunit, dimids3d, varid%comp(m)%idd, &
+          trim(def_comp(mm)%compnamemc)//"_dry_deposition", &
+          units="Bq/m2", chunksize=chksz3d)
+        call nc_declare(iunit, dimids3d, varid%comp(m)%accdd, &
+          trim(def_comp(mm)%compnamemc)//"_acc_dry_deposition", &
+          units="Bq/m2", chunksize=chksz3d)
       end if
       if (def_comp(mm)%kwetdep > 0) then
-        call nc_declare_3d(iunit, dimids3d, varid%comp(m)%iwd, &
-            chksz3d, TRIM(def_comp(mm)%compnamemc)//"_wet_deposition", &
-            "Bq/m2","", &
-            TRIM(def_comp(mm)%compnamemc)//"_wet_deposition")
-        call nc_declare_3d(iunit, dimids3d, varid%comp(m)%accwd, &
-            chksz3d, TRIM(def_comp(mm)%compnamemc)//"_acc_wet_deposition", &
-            "Bq/m2","", &
-            TRIM(def_comp(mm)%compnamemc)//"_accumulated_wet_deposition")
+        call nc_declare(iunit, dimids3d, varid%comp(m)%iwd, &
+          trim(def_comp(mm)%compnamemc)//"_wet_deposition", &
+            units="Bq/m2", chunksize=chksz3d)
+        call nc_declare(iunit, dimids3d, varid%comp(m)%accwd, &
+          trim(def_comp(mm)%compnamemc)//"_acc_wet_deposition", &
+          units="Bq/m2", chunksize=chksz3d)
       end if
       if (imodlevel) then
         if (modleveldump > 0.) then
-          string = TRIM(def_comp(mm)%compnamemc)//"_concentration_dump_ml"
+          string = trim(def_comp(mm)%compnamemc)//"_concentration_dump_ml"
         else
-          string = TRIM(def_comp(mm)%compnamemc)//"_concentration_ml"
+          string = trim(def_comp(mm)%compnamemc)//"_concentration_ml"
         endif
-        call nc_declare_4d(iunit, dimids4d, varid%comp(m)%icml, &
-            chksz4d, TRIM(string), &
-            "Bq/m3","", &
-            TRIM(string))
-      !           call nc_declare_4d(iunit, dimids4d, acml_varid(m),
-      !     +          chksz4d, TRIM(def_comp(mm)%compnamemc)//"_avg_concentration_ml",
-      !     +          "Bq*hour/m3","",
-      !     +          TRIM(def_comp(mm)%compnamemc)//"_accumulated_concentration_ml")
+        call nc_declare(iunit, dimids4d, varid%comp(m)%icml, &
+          string, units="Bq/m3", chunksize=chksz4d)
+      !           call nc_declare(iunit, dimids4d, acml_varid(m), &
+      !     +          TRIM(def_comp(mm)%compnamemc)//"_avg_concentration_ml", &
+      !     +          units="Bq*hour/m3")
       end if
       if (output_column) then
-        string = trim(def_comp(mm)%compnamemc) // "_column_concentration"
-        call nc_declare_3d(iunit, dimids3d, varid%comp(m)%conc_column, &
-            chksz3d, string, "Bq/m2","", string)
+        call nc_declare(iunit, dimids3d, varid%comp(m)%conc_column, &
+          trim(def_comp(mm)%compnamemc)//"_column_concentration", &
+          units="Bq/m2", chunksize=chksz3d)
       endif
     end do
     if (itotcomp == 1) then
-      call nc_declare_3d(iunit, dimids3d, varid%icblt, &
-          chksz3d, "total_concentration_bl", &
-          "Bq/m3","", &
-          "total_concentration_bl")
-      call nc_declare_3d(iunit, dimids3d, varid%acblt, &
-          chksz3d, "total_avg_concentration_bl", &
-          "Bq/m3","", &
-          "total_average_concentration_bl")
-      call nc_declare_3d(iunit, dimids3d, varid%act, &
-          chksz3d, "total_acc_concentration", &
-          "Bq/m3","", &
-          "total_accumulated_concentration")
+      call nc_declare(iunit, dimids3d, varid%icblt, &
+        "total_concentration_bl", units="Bq/m3", &
+          chunksize=chksz3d)
+      call nc_declare(iunit, dimids3d, varid%acblt, &
+        "total_avg_concentration_bl", units="Bq/m3", &
+        chunksize=chksz3d)
+      call nc_declare(iunit, dimids3d, varid%act, &
+        "total_acc_concentration", units="Bq/m3", &
+          chunksize=chksz3d)
       if (compute_total_dry_deposition) then
-        call nc_declare_3d(iunit, dimids3d, varid%iddt, &
-            chksz3d, "total_dry_deposition", &
-            "Bq/m2","", &
-            "total_dry_deposition")
-        call nc_declare_3d(iunit, dimids3d, varid%accddt, &
-            chksz3d, "total_acc_dry_deposition", &
-            "Bq/m2","", &
-            "total_accumulated_dry_deposition")
+        call nc_declare(iunit, dimids3d, varid%iddt, &
+          "total_dry_deposition", units="Bq/m2", &
+            chunksize=chksz3d)
+        call nc_declare(iunit, dimids3d, varid%accddt, &
+          "total_acc_dry_deposition", units="Bq/m2", &
+          chunksize=chksz3d)
       end if
       if (compute_total_wet_deposition) then
-        call nc_declare_3d(iunit, dimids3d, varid%iwdt, &
-            chksz3d, "total_wet_deposition", &
-            "Bq/m2","", &
-            "total_wet_deposition")
-        call nc_declare_3d(iunit, dimids3d, varid%accwdt, &
-            chksz3d, "total_acc_wet_deposition", &
-            "Bq/m2","", &
-            "total_accumulated_wet_deposition")
+        call nc_declare(iunit, dimids3d, varid%iwdt, &
+          "total_wet_deposition", units="Bq/m2", &
+            chunksize=chksz3d)
+        call nc_declare(iunit, dimids3d, varid%accwdt, &
+          "total_acc_wet_deposition", units="Bq/m2", &
+          chunksize=chksz3d)
       end if
     end if
     call check(nf90_enddef(iunit))
