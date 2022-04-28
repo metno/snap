@@ -70,6 +70,7 @@ module fldout_ncML
     integer :: aircraft_doserate
     integer :: aircraft_doserate_threshold_height
     integer :: components
+    integer :: garea
     type(component_var) :: comp(mcomp)
   end type
 
@@ -676,6 +677,35 @@ subroutine write_ml_fields(iunit, varid, average, ipos, isize, rt1, rt2)
   end do
 end subroutine
 
+subroutine nc_declare_2d(iunit, dimids, varid, &
+    chksz, varnm, units, stdnm, metnm)
+  USE snapdebug, only: iulog
+
+  INTEGER, INTENT(OUT)   :: varid
+  INTEGER, INTENT(IN)    :: iunit, dimids(2), chksz(2)
+  CHARACTER(LEN=*), INTENT(IN) :: varnm, stdnm, metnm, units
+
+  if (.false.) write (error_unit,*) chksz ! Silence compiler
+
+  write(iulog,*) "declaring ", TRIM(varnm), TRIM(units), &
+      TRIM(stdnm),TRIM(metnm)
+  call check(nf90_def_var(iunit, TRIM(varnm), &
+      NF90_FLOAT, dimids, varid), "def_"//varnm)
+!       call check(NF_DEF_VAR_CHUNKING(iunit, varid, NF_CHUNKED, chksz))
+  call check(NF90_DEF_VAR_DEFLATE(iunit, varid, 1,1,1))
+  call check(nf90_put_att(iunit,varid, "units", TRIM(units)))
+  if (LEN_TRIM(stdnm) > 0) then
+    call check(nf90_put_att(iunit,varid,"standard_name", TRIM(stdnm)))
+  endif
+!       if (LEN_TRIM(metnm).gt.0)
+!     +    call check(nf_put_att_text(iunit,varid,"metno_name",
+!     +    LEN_TRIM(metnm), TRIM(metnm)))
+
+  call check(nf90_put_att(iunit,varid,"coordinates", "longitude latitude"))
+  call check(nf90_put_att(iunit,varid,"grid_mapping", "projection"))
+
+end subroutine nc_declare_2d
+
 subroutine nc_declare_3d(iunit, dimids, varid, &
     chksz, varnm, units, stdnm, metnm)
   USE snapdebug, only: iulog
@@ -1094,6 +1124,11 @@ subroutine initialize_output(filename, itime, ierror)
             chksz3d, string, "m", "", string)
       endif
     endif
+
+    call nc_declare_2d(iunit, dimids2d, varid%garea, &
+          [nx, ny], "area", &
+          "m2", "area", "")
+    call check(nf90_put_var(iunit, varid%garea, garea))
 
     call check(nf90_def_var(iunit, "components", NF90_CHAR, [dimid%maxcompname, dimid%ncomp], varid%components))
 
