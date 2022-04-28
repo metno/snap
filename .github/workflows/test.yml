@@ -1,3 +1,4 @@
+---
 name: Test
 
 on:
@@ -48,8 +49,8 @@ jobs:
       - name: Install fimex
         run: |
             cd fimex && mkdir build && cd build &&
-            cmake .. -DENABLE_ECCODES=true -DENABLE_FORTRAN=true -DENABLE_PYTHON=false &&
-            sudo make -j2 install
+            cmake .. -DENABLE_ECCODES=true -DENABLE_FORTRAN=true -DENABLE_PYTHON=false -DCMAKE_INSTALL_PREFIX=/usr/ &&
+            sudo cmake --build . --target install --config RelWithDebInfo
 
       - name: Create binaries (with fimex)
         run: cd src && make clean && make -j2
@@ -58,7 +59,4 @@ jobs:
         run: sudo apt-get install python3-numpy python3-netcdf4
 
       - name: Test binaries
-        env:
-          LD_LIBRARY_PATH: "/usr/local/lib/x86_64-linux-gnu"
-        run: |
-            cd src && make test
+        run: cd src && make test
