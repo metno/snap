@@ -133,4 +133,7 @@ module snapgrdML
 !>
 !> (key is vlevel*10000)
     integer, save, public :: ivlayer(0:10000)
+
+!> Output concentration in each column
+    logical, save, public :: output_column = .false.
 end module snapgrdML
