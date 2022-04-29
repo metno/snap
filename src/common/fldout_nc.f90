@@ -124,7 +124,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
   integer, intent(out) :: ierror
 
   integer :: iunit
-  integer :: ipos(4), isize(4)
+  integer :: ipos(3), isize(3)
   integer, save :: ihrs, ihrs_pos
 
   integer :: nptot1,nptot2
@@ -160,8 +160,8 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
   call check(nf90_put_var(iunit, varid%t, start=[ihrs_pos], values=FLOAT(ihrs)), &
       "set time")
 
-  ipos = [1, 1, ihrs_pos, ihrs_pos]
-  isize = [nx, ny, 1, 1]
+  ipos = [1, 1, ihrs_pos]
+  isize = [nx, ny, 1]
 
   average=float(naverage)
   naverage=0
@@ -174,7 +174,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
   if(imodlevel) then
     field1(:,:) = rt1*ps1 + rt2*ps2
     if(idebug == 1) call ftest('ps', field1)
-    call check(nf90_put_var(iunit, varid%ps, start=[ipos], count=[isize], &
+    call check(nf90_put_var(iunit, varid%ps, start=ipos, count=isize, &
         values=field1), "set_ps")
   end if
 
@@ -184,7 +184,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     field1(:,:) = accprec
     if(idebug == 1) call ftest('accprec', field1)
 
-    call check(nf90_put_var(iunit, varid%accum_prc, start=[ipos], count=[isize], &
+    call check(nf90_put_var(iunit, varid%accum_prc, start=ipos, count=isize, &
         values=field1), "set_accum_prc")
   end if
 
@@ -193,7 +193,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     field1(:,:) = rt1*pmsl1 + rt2*pmsl2
     if(idebug == 1) call ftest('mslp', field1)
 
-    call check(nf90_put_var(iunit, varid%mslp, start=[ipos], count=[isize], &
+    call check(nf90_put_var(iunit, varid%mslp, start=ipos, count=isize, &
         values=field1), "set_mslp")
   end if
 
@@ -201,14 +201,14 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
   field4(:,:) = rt1*hbl1 + rt2*hbl2
   if(idebug == 1) call ftest('hbl', field4)
 
-  call check(nf90_put_var(iunit, varid%ihbl, start=[ipos], count=[isize], &
+  call check(nf90_put_var(iunit, varid%ihbl, start=ipos, count=isize, &
       values=field4), "set_ihbl")
 
 !..average height of boundary layer
   field1(:,:) = avghbl / average
   if(idebug == 1) call ftest('avghbl', field1)
 
-  call check(nf90_put_var(iunit, varid%ahbl, start=[ipos], count=[isize], &
+  call check(nf90_put_var(iunit, varid%ahbl, start=ipos, count=isize, &
       values=field1), "set_ahbl")
 
 !..precipitation accummulated between field output
@@ -216,22 +216,22 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     field1(:,:) = avgprec
     if(idebug == 1) call ftest('prec', field1)
 
-    call check(nf90_put_var(iunit, varid%prc, start=[ipos], count=[isize], &
+    call check(nf90_put_var(iunit, varid%prc, start=ipos, count=isize, &
         values=field1), "set_prc")
   end if
 
   if (compute_column_max_conc) then
     call check(nf90_put_var(iunit, varid%column_max_conc, &
-      start=[ipos], count=[isize], &
+      start=ipos, count=isize, &
       values=max_column_concentration(:,:)), "column_max_concentration")
   endif
   if (compute_aircraft_doserate) then
     call check(nf90_put_var(iunit, varid%aircraft_doserate, &
-      start=[ipos], count=[isize], &
+      start=ipos, count=isize, &
       values=aircraft_doserate(:,:)), "aircraft_doserate")
     if (aircraft_doserate_threshold > 0.0) then
       call check(nf90_put_var(iunit, varid%aircraft_doserate_threshold_height, &
-        start=[ipos], count=[isize], &
+        start=ipos, count=isize, &
         values=aircraft_doserate_threshold_height(:,:)), "aircraft threshold height")
     endif
   endif
@@ -277,7 +277,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     if (output_column) then
       field3 = field1 + field2
       field3 = field3 / garea
-      call check(nf90_put_var(iunit, varid%comp(m)%conc_column, start=[ipos], count=[isize], &
+      call check(nf90_put_var(iunit, varid%comp(m)%conc_column, start=ipos, count=isize, &
         values=field3), "output_column")
     endif
 
@@ -295,14 +295,14 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     end associate
     if(idebug == 1) call ftest('conc', field2)
 
-    call check(nf90_put_var(iunit, varid%comp(m)%icbl, start=[ipos], count=[isize], &
+    call check(nf90_put_var(iunit, varid%comp(m)%icbl, start=ipos, count=isize, &
         values=field2), "set_icbl")
 
   !..average concentration in boundary layer
     field1(:,:) = cscale*avgbq1(:,:,m)/(garea*avghbl)
     if(idebug == 1) call ftest('avgconc', field1)
 
-    call check(nf90_put_var(iunit, varid%comp(m)%acbl, start=[ipos], count=[isize], &
+    call check(nf90_put_var(iunit, varid%comp(m)%acbl, start=ipos, count=isize, &
         values=field1), "set_acbl")
 
   !..dry deposition
@@ -311,7 +311,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       accdry(:,:,m) = accdry(:,:,m) + depdry(:,:,m)
       if(idebug == 1) call ftest('dry', field1)
 
-      call check(nf90_put_var(iunit, varid%comp(m)%idd, start=[ipos], count=[isize], &
+      call check(nf90_put_var(iunit, varid%comp(m)%idd, start=ipos, count=isize, &
           values=field1), "set_idd(m)")
     end if
 
@@ -321,7 +321,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       accwet(:,:,m) = accwet(:,:,m) + depwet(:,:,m)
       if(idebug == 1) call ftest('wet', field1)
 
-      call check(nf90_put_var(iunit, varid%comp(m)%iwd, start=[ipos], count=[isize], &
+      call check(nf90_put_var(iunit, varid%comp(m)%iwd, start=ipos, count=isize, &
           values=field1), "set_iwd(m)")
     end if
 
@@ -330,7 +330,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       field1(:,:) = dscale*sngl(accdry(:,:,m))/garea
       if(idebug == 1) call ftest('adry', field1)
 
-      call check(nf90_put_var(iunit, varid%comp(m)%accdd, start=[ipos], count=[isize], &
+      call check(nf90_put_var(iunit, varid%comp(m)%accdd, start=ipos, count=isize, &
           values=field1), "set_accdd(m)")
     end if
 
@@ -339,7 +339,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       field1(:,:) = dscale*sngl(accwet(:,:,m))/garea
       if(idebug == 1) call ftest('awet', field1)
 
-      call check(nf90_put_var(iunit, varid%comp(m)%accwd, start=[ipos], count=[isize], &
+      call check(nf90_put_var(iunit, varid%comp(m)%accwd, start=ipos, count=isize, &
           values=field1), "set_accwd(m)")
     end if
 
@@ -360,14 +360,14 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
   !..instant concentration on surface (not in felt-format)
     field3(:,:) = concen(:,:,m)
     if(idebug == 1) call ftest('concen', field3, contains_undef=.true.)
-    call check(nf90_put_var(iunit, varid%comp(m)%ic, start=[ipos], count=[isize], &
+    call check(nf90_put_var(iunit, varid%comp(m)%ic, start=ipos, count=isize, &
         values=field3), "set_ic(m)")
 
   !..accumulated/integrated concentration surface = dose
     field3(:,:) = concacc(:,:,m)
     if(idebug == 1) call ftest('concac', field3, contains_undef=.true.)
 
-    call check(nf90_put_var(iunit, varid%comp(m)%ac, start=[ipos], count=[isize], &
+    call check(nf90_put_var(iunit, varid%comp(m)%ac, start=ipos, count=isize, &
         values=field3), "set_ac(m)")
   !.....end do m=1,ncomp
 
@@ -404,14 +404,14 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
   ! field4 : hbl
     field2(:,:) = cscale*field1/(field4*garea)
     if(idebug == 1) call ftest('tconc', field2)
-    call check(nf90_put_var(iunit, varid%icblt, start=[ipos], count=[isize], &
+    call check(nf90_put_var(iunit, varid%icblt, start=ipos, count=isize, &
         values=field2), "set_icblt(m)")
 
   !..total average concentration in boundary layer
     field1(:,:) = sum(avgbq1, dim=3)
     field1(:,:) = cscale*field1/(garea*avghbl)
     if(idebug == 1) call ftest('tavgconc', field1)
-    call check(nf90_put_var(iunit, varid%acblt, start=[ipos], count=[isize], &
+    call check(nf90_put_var(iunit, varid%acblt, start=ipos, count=isize, &
         values=field1), "set_acblt")
 
   !..total dry deposition
@@ -425,7 +425,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       end do
       field1(:,:) = dscale*field1/garea
       if(idebug == 1) call ftest('tdry', field1)
-      call check(nf90_put_var(iunit, varid%iddt, start=[ipos], count=[isize], &
+      call check(nf90_put_var(iunit, varid%iddt, start=ipos, count=isize, &
           values=field1), "set_iddt")
     end if
 
@@ -440,7 +440,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       end do
       field1(:,:) = dscale*field1/garea
       if(idebug == 1) call ftest('twet', field1)
-      call check(nf90_put_var(iunit, varid%iwdt, start=[ipos], count=[isize], &
+      call check(nf90_put_var(iunit, varid%iwdt, start=ipos, count=isize, &
           values=field1), "set_iwdt")
     end if
 
@@ -455,7 +455,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       end do
       field1(:,:) = dscale*field1/garea
       if(idebug == 1) call ftest('tadry', field1)
-      call check(nf90_put_var(iunit, varid%accddt, start=[ipos], count=[isize], &
+      call check(nf90_put_var(iunit, varid%accddt, start=ipos, count=isize, &
           values=field1), "set_accddt")
     end if
 
@@ -470,7 +470,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       end do
       field1(:,:) = dscale*field1/garea
       if(idebug == 1) call ftest('tawet', field1)
-      call check(nf90_put_var(iunit, varid%accwdt, start=[ipos], count=[isize], &
+      call check(nf90_put_var(iunit, varid%accwdt, start=ipos, count=isize, &
           values=field1), "set_accwdt")
     end if
 
@@ -493,7 +493,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     field3(:,:) = sum(concacc, dim=3)
     if(idebug == 1) call ftest('concac', field3, contains_undef=.true.)
 
-    call check(nf90_put_var(iunit, varid%act, start=[ipos], count=[isize], &
+    call check(nf90_put_var(iunit, varid%act, start=ipos, count=isize, &
         values=field3), "set_act")
 
   !.....end if(ncomp.gt.1 .and. itotcomp.eq.1) then
@@ -548,7 +548,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
 
 !..model level fields...................................................
   if (imodlevel) then
-    call write_ml_fields(iunit, varid, average, ipos, isize, rt1, rt2)
+    call write_ml_fields(iunit, varid, average, [1, 1, -1, ihrs_pos], [nx, ny, 1, 1], rt1, rt2)
   endif
 
 ! reset fields
@@ -567,7 +567,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
 end subroutine fldout_nc
 
 
-subroutine write_ml_fields(iunit, varid, average, ipos, isize, rt1, rt2)
+subroutine write_ml_fields(iunit, varid, average, ipos_in, isize, rt1, rt2)
   USE releaseML, only: nplume, iplume
   USE particleML, only: pdata, Particle
   USE snapparML, only: def_comp, ncomp
@@ -581,7 +581,7 @@ subroutine write_ml_fields(iunit, varid, average, ipos, isize, rt1, rt2)
   integer, intent(in) :: iunit
   type(common_var), intent(in) :: varid
   real, intent(in) :: average
-  integer, intent(inout) :: ipos(4)
+  integer, intent(in) :: ipos_in(4)
   integer, intent(in) :: isize(4)
   real, intent(in) :: rt1, rt2
 
@@ -589,9 +589,12 @@ subroutine write_ml_fields(iunit, varid, average, ipos, isize, rt1, rt2)
   real :: avg, total
   integer :: ivlvl
   integer :: i, j, k, loop, m, maxage, n, npl
+  integer :: ipos(4)
 
 !..concentration in each layer
 !..(height only computed at time of output)
+
+  ipos(:) = ipos_in
 
 !..loop for 1=average and 2=instant concentration
 !..(now computing average first, then using the same arrays for instant)
@@ -656,8 +659,6 @@ subroutine write_ml_fields(iunit, varid, average, ipos, isize, rt1, rt2)
           ipos(3) = k
           call check(nf90_put_var(iunit, varid%comp(m)%icml, start=ipos, &
               count=isize, values=field1), "icml(m)")
-        ! reset ipos(3) for 3d fields to time-pos (=ipos(4))
-          ipos(3) = ipos(4)
         endif
       end do
     end do
