@@ -131,6 +131,12 @@
 ! FIELD.USE_MODEL_WIND_INSTEAD_OF_10M= [.false.]/.true
 ! OUTPUT.COLUMN_MAX_CONC.ENABLE
 ! OUTPUT.COLUMN_MAX_CONC.DISABLE
+! * Output column concentration (height independent)
+! OUTPUT.COLUMN.ON
+! * Computing dosimetry for occupants of aircraft flying through plumes
+! OUTPUT.AIRCRAFT_DOSERATE.ENABLE
+! OUTPUT.AIRCRAFT_DOSERATE.DISABLE * default
+! OUTPUT.AIRCRAFT_DOSERATE.THRESHOLD.SV_H
 ! * timestamp which will also be written to netcdf-files, default: now
 ! SIMULATION.START.DATE=2010-01-01_10:00:00
 ! LOG.FILE=     snap.log
@@ -866,7 +872,8 @@ contains
                          TIME_PROFILE_CONSTANT, TIME_PROFILE_LINEAR, TIME_PROFILE_LINEAR, TIME_PROFILE_STEPS, &
                          TIME_PROFILE_UNDEFINED
     use snapfimexML, only: parse_interpolator
-    use snapgrdml, only: compute_column_max_conc, compute_aircraft_doserate, aircraft_doserate_threshold
+    use snapgrdml, only: compute_column_max_conc, compute_aircraft_doserate, aircraft_doserate_threshold, &
+    output_column
 
     !> Open file unit
     integer, intent(in) :: snapinput_unit
@@ -1466,6 +1473,8 @@ contains
       case ('output.aircraft_doserate.threshold.sv_h')
         if (.not. has_value) goto 12
         read (cinput(pname_start:pname_end), *, err=12) aircraft_doserate_threshold
+      case ('output.column.on')
+        output_column = .true.
       case ('release.pos')
         !..release.pos=<'name',latitude,longitude>
         if (.not. has_value) goto 12

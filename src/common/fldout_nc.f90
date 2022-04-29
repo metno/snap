@@ -44,6 +44,7 @@ module fldout_ncML
     integer :: ac
     integer :: ic
     integer :: icml
+    integer :: conc_column = -1
   end type
 
 !> Variables in a file
@@ -69,6 +70,7 @@ module fldout_ncML
     integer :: aircraft_doserate
     integer :: aircraft_doserate_threshold_height
     integer :: components
+    integer :: garea
     type(component_var) :: comp(mcomp)
   end type
 
@@ -96,7 +98,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
   USE iso_fortran_env, only: int16
   USE snapgrdML, only: imodlevel, imslp, precipitation_in_output, &
       itotcomp, compute_column_max_conc, compute_aircraft_doserate, &
-      aircraft_doserate_threshold
+      aircraft_doserate_threshold, output_column
   USE snapfldML, only: field1, field2, field3, field4, &
       depdry, depwet, &
       avgbq1, avgbq2, garea, pmsl1, pmsl2, hbl1, hbl2, &
@@ -122,7 +124,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
   integer, intent(out) :: ierror
 
   integer :: iunit
-  integer :: ipos(4), isize(4)
+  integer :: ipos(3), isize(3)
   integer, save :: ihrs, ihrs_pos
 
   integer :: nptot1,nptot2
@@ -158,8 +160,8 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
   call check(nf90_put_var(iunit, varid%t, start=[ihrs_pos], values=FLOAT(ihrs)), &
       "set time")
 
-  ipos = [1, 1, ihrs_pos, ihrs_pos]
-  isize = [nx, ny, 1, 1]
+  ipos = [1, 1, ihrs_pos]
+  isize = [nx, ny, 1]
 
   average=float(naverage)
   naverage=0
@@ -172,7 +174,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
   if(imodlevel) then
     field1(:,:) = rt1*ps1 + rt2*ps2
     if(idebug == 1) call ftest('ps', field1)
-    call check(nf90_put_var(iunit, varid%ps, start=[ipos], count=[isize], &
+    call check(nf90_put_var(iunit, varid%ps, start=ipos, count=isize, &
         values=field1), "set_ps")
   end if
 
@@ -182,7 +184,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     field1(:,:) = accprec
     if(idebug == 1) call ftest('accprec', field1)
 
-    call check(nf90_put_var(iunit, varid%accum_prc, start=[ipos], count=[isize], &
+    call check(nf90_put_var(iunit, varid%accum_prc, start=ipos, count=isize, &
         values=field1), "set_accum_prc")
   end if
 
@@ -191,7 +193,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     field1(:,:) = rt1*pmsl1 + rt2*pmsl2
     if(idebug == 1) call ftest('mslp', field1)
 
-    call check(nf90_put_var(iunit, varid%mslp, start=[ipos], count=[isize], &
+    call check(nf90_put_var(iunit, varid%mslp, start=ipos, count=isize, &
         values=field1), "set_mslp")
   end if
 
@@ -199,14 +201,14 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
   field4(:,:) = rt1*hbl1 + rt2*hbl2
   if(idebug == 1) call ftest('hbl', field4)
 
-  call check(nf90_put_var(iunit, varid%ihbl, start=[ipos], count=[isize], &
+  call check(nf90_put_var(iunit, varid%ihbl, start=ipos, count=isize, &
       values=field4), "set_ihbl")
 
 !..average height of boundary layer
   field1(:,:) = avghbl / average
   if(idebug == 1) call ftest('avghbl', field1)
 
-  call check(nf90_put_var(iunit, varid%ahbl, start=[ipos], count=[isize], &
+  call check(nf90_put_var(iunit, varid%ahbl, start=ipos, count=isize, &
       values=field1), "set_ahbl")
 
 !..precipitation accummulated between field output
@@ -214,22 +216,22 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     field1(:,:) = avgprec
     if(idebug == 1) call ftest('prec', field1)
 
-    call check(nf90_put_var(iunit, varid%prc, start=[ipos], count=[isize], &
+    call check(nf90_put_var(iunit, varid%prc, start=ipos, count=isize, &
         values=field1), "set_prc")
   end if
 
   if (compute_column_max_conc) then
     call check(nf90_put_var(iunit, varid%column_max_conc, &
-      start=[ipos], count=[isize], &
+      start=ipos, count=isize, &
       values=max_column_concentration(:,:)), "column_max_concentration")
   endif
   if (compute_aircraft_doserate) then
     call check(nf90_put_var(iunit, varid%aircraft_doserate, &
-      start=[ipos], count=[isize], &
+      start=ipos, count=isize, &
       values=aircraft_doserate(:,:)), "aircraft_doserate")
     if (aircraft_doserate_threshold > 0.0) then
       call check(nf90_put_var(iunit, varid%aircraft_doserate_threshold_height, &
-        start=[ipos], count=[isize], &
+        start=ipos, count=isize, &
         values=aircraft_doserate_threshold_height(:,:)), "aircraft threshold height")
     endif
   endif
@@ -271,6 +273,14 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     write(iulog,*) '   Bq,particles          : ',bqtot1+bqtot2, &
         nptot1+nptot2
 
+
+    if (output_column) then
+      field3 = field1 + field2
+      field3 = field3 / garea
+      call check(nf90_put_var(iunit, varid%comp(m)%conc_column, start=ipos, count=isize, &
+        values=field3), "output_column")
+    endif
+
   !..instant part of Bq in boundary layer
     scale = 100.
     where (field1 + field2 > 0.0)
@@ -285,14 +295,14 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     end associate
     if(idebug == 1) call ftest('conc', field2)
 
-    call check(nf90_put_var(iunit, varid%comp(m)%icbl, start=[ipos], count=[isize], &
+    call check(nf90_put_var(iunit, varid%comp(m)%icbl, start=ipos, count=isize, &
         values=field2), "set_icbl")
 
   !..average concentration in boundary layer
     field1(:,:) = cscale*avgbq1(:,:,m)/(garea*avghbl)
     if(idebug == 1) call ftest('avgconc', field1)
 
-    call check(nf90_put_var(iunit, varid%comp(m)%acbl, start=[ipos], count=[isize], &
+    call check(nf90_put_var(iunit, varid%comp(m)%acbl, start=ipos, count=isize, &
         values=field1), "set_acbl")
 
   !..dry deposition
@@ -301,7 +311,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       accdry(:,:,m) = accdry(:,:,m) + depdry(:,:,m)
       if(idebug == 1) call ftest('dry', field1)
 
-      call check(nf90_put_var(iunit, varid%comp(m)%idd, start=[ipos], count=[isize], &
+      call check(nf90_put_var(iunit, varid%comp(m)%idd, start=ipos, count=isize, &
           values=field1), "set_idd(m)")
     end if
 
@@ -311,7 +321,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       accwet(:,:,m) = accwet(:,:,m) + depwet(:,:,m)
       if(idebug == 1) call ftest('wet', field1)
 
-      call check(nf90_put_var(iunit, varid%comp(m)%iwd, start=[ipos], count=[isize], &
+      call check(nf90_put_var(iunit, varid%comp(m)%iwd, start=ipos, count=isize, &
           values=field1), "set_iwd(m)")
     end if
 
@@ -320,7 +330,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       field1(:,:) = dscale*sngl(accdry(:,:,m))/garea
       if(idebug == 1) call ftest('adry', field1)
 
-      call check(nf90_put_var(iunit, varid%comp(m)%accdd, start=[ipos], count=[isize], &
+      call check(nf90_put_var(iunit, varid%comp(m)%accdd, start=ipos, count=isize, &
           values=field1), "set_accdd(m)")
     end if
 
@@ -329,7 +339,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       field1(:,:) = dscale*sngl(accwet(:,:,m))/garea
       if(idebug == 1) call ftest('awet', field1)
 
-      call check(nf90_put_var(iunit, varid%comp(m)%accwd, start=[ipos], count=[isize], &
+      call check(nf90_put_var(iunit, varid%comp(m)%accwd, start=ipos, count=isize, &
           values=field1), "set_accwd(m)")
     end if
 
@@ -350,14 +360,14 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
   !..instant concentration on surface (not in felt-format)
     field3(:,:) = concen(:,:,m)
     if(idebug == 1) call ftest('concen', field3, contains_undef=.true.)
-    call check(nf90_put_var(iunit, varid%comp(m)%ic, start=[ipos], count=[isize], &
+    call check(nf90_put_var(iunit, varid%comp(m)%ic, start=ipos, count=isize, &
         values=field3), "set_ic(m)")
 
   !..accumulated/integrated concentration surface = dose
     field3(:,:) = concacc(:,:,m)
     if(idebug == 1) call ftest('concac', field3, contains_undef=.true.)
 
-    call check(nf90_put_var(iunit, varid%comp(m)%ac, start=[ipos], count=[isize], &
+    call check(nf90_put_var(iunit, varid%comp(m)%ac, start=ipos, count=isize, &
         values=field3), "set_ac(m)")
   !.....end do m=1,ncomp
 
@@ -394,14 +404,14 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
   ! field4 : hbl
     field2(:,:) = cscale*field1/(field4*garea)
     if(idebug == 1) call ftest('tconc', field2)
-    call check(nf90_put_var(iunit, varid%icblt, start=[ipos], count=[isize], &
+    call check(nf90_put_var(iunit, varid%icblt, start=ipos, count=isize, &
         values=field2), "set_icblt(m)")
 
   !..total average concentration in boundary layer
     field1(:,:) = sum(avgbq1, dim=3)
     field1(:,:) = cscale*field1/(garea*avghbl)
     if(idebug == 1) call ftest('tavgconc', field1)
-    call check(nf90_put_var(iunit, varid%acblt, start=[ipos], count=[isize], &
+    call check(nf90_put_var(iunit, varid%acblt, start=ipos, count=isize, &
         values=field1), "set_acblt")
 
   !..total dry deposition
@@ -415,7 +425,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       end do
       field1(:,:) = dscale*field1/garea
       if(idebug == 1) call ftest('tdry', field1)
-      call check(nf90_put_var(iunit, varid%iddt, start=[ipos], count=[isize], &
+      call check(nf90_put_var(iunit, varid%iddt, start=ipos, count=isize, &
           values=field1), "set_iddt")
     end if
 
@@ -430,7 +440,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       end do
       field1(:,:) = dscale*field1/garea
       if(idebug == 1) call ftest('twet', field1)
-      call check(nf90_put_var(iunit, varid%iwdt, start=[ipos], count=[isize], &
+      call check(nf90_put_var(iunit, varid%iwdt, start=ipos, count=isize, &
           values=field1), "set_iwdt")
     end if
 
@@ -445,7 +455,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       end do
       field1(:,:) = dscale*field1/garea
       if(idebug == 1) call ftest('tadry', field1)
-      call check(nf90_put_var(iunit, varid%accddt, start=[ipos], count=[isize], &
+      call check(nf90_put_var(iunit, varid%accddt, start=ipos, count=isize, &
           values=field1), "set_accddt")
     end if
 
@@ -460,7 +470,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       end do
       field1(:,:) = dscale*field1/garea
       if(idebug == 1) call ftest('tawet', field1)
-      call check(nf90_put_var(iunit, varid%accwdt, start=[ipos], count=[isize], &
+      call check(nf90_put_var(iunit, varid%accwdt, start=ipos, count=isize, &
           values=field1), "set_accwdt")
     end if
 
@@ -483,7 +493,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     field3(:,:) = sum(concacc, dim=3)
     if(idebug == 1) call ftest('concac', field3, contains_undef=.true.)
 
-    call check(nf90_put_var(iunit, varid%act, start=[ipos], count=[isize], &
+    call check(nf90_put_var(iunit, varid%act, start=ipos, count=isize, &
         values=field3), "set_act")
 
   !.....end if(ncomp.gt.1 .and. itotcomp.eq.1) then
@@ -538,7 +548,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
 
 !..model level fields...................................................
   if (imodlevel) then
-    call write_ml_fields(iunit, varid, average, ipos, isize, rt1, rt2)
+    call write_ml_fields(iunit, varid, average, [1, 1, -1, ihrs_pos], [nx, ny, 1, 1], rt1, rt2)
   endif
 
 ! reset fields
@@ -557,7 +567,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
 end subroutine fldout_nc
 
 
-subroutine write_ml_fields(iunit, varid, average, ipos, isize, rt1, rt2)
+subroutine write_ml_fields(iunit, varid, average, ipos_in, isize, rt1, rt2)
   USE releaseML, only: nplume, iplume
   USE particleML, only: pdata, Particle
   USE snapparML, only: def_comp, ncomp
@@ -571,7 +581,7 @@ subroutine write_ml_fields(iunit, varid, average, ipos, isize, rt1, rt2)
   integer, intent(in) :: iunit
   type(common_var), intent(in) :: varid
   real, intent(in) :: average
-  integer, intent(inout) :: ipos(4)
+  integer, intent(in) :: ipos_in(4)
   integer, intent(in) :: isize(4)
   real, intent(in) :: rt1, rt2
 
@@ -579,9 +589,12 @@ subroutine write_ml_fields(iunit, varid, average, ipos, isize, rt1, rt2)
   real :: avg, total
   integer :: ivlvl
   integer :: i, j, k, loop, m, maxage, n, npl
+  integer :: ipos(4)
 
 !..concentration in each layer
 !..(height only computed at time of output)
+
+  ipos(:) = ipos_in
 
 !..loop for 1=average and 2=instant concentration
 !..(now computing average first, then using the same arrays for instant)
@@ -646,8 +659,6 @@ subroutine write_ml_fields(iunit, varid, average, ipos, isize, rt1, rt2)
           ipos(3) = k
           call check(nf90_put_var(iunit, varid%comp(m)%icml, start=ipos, &
               count=isize, values=field1), "icml(m)")
-        ! reset ipos(3) for 3d fields to time-pos (=ipos(4))
-          ipos(3) = ipos(4)
         endif
       end do
     end do
@@ -667,61 +678,53 @@ subroutine write_ml_fields(iunit, varid, average, ipos, isize, rt1, rt2)
   end do
 end subroutine
 
-subroutine nc_declare_3d(iunit, dimids, varid, &
-    chksz, varnm, units, stdnm, metnm)
+
+subroutine nc_declare(iunit, dimids, varid, varname, units, stdname, chunksize)
   USE snapdebug, only: iulog
+  integer, intent(in) :: iunit
+  integer, intent(out)   :: varid
+  integer, intent(in)    :: dimids(:)
 
-  INTEGER, INTENT(OUT)   :: varid
-  INTEGER, INTENT(IN)    :: iunit, dimids(3), chksz(3)
-  CHARACTER(LEN=*), INTENT(IN) :: varnm, stdnm, metnm, units
+  character(len=*), intent(in) :: units
+  character(len=*), intent(in) :: varname
+  character(len=*), intent(in), optional :: stdname
+  integer, intent(in), optional :: chunksize(:)
 
-  if (.false.) write (error_unit,*) chksz ! Silence compiler
+  write(iulog,"('declaring ' (a) ' ' (a) )",advance="NO") varname, units
+  if (present(stdname)) write(iulog, "(' ' (a))",advance="NO") trim(stdname)
+  write(iulog,'()',advance="YES")
 
-  write(iulog,*) "declaring ", TRIM(varnm), TRIM(units), &
-      TRIM(stdnm),TRIM(metnm)
-  call check(nf90_def_var(iunit, TRIM(varnm), &
-      NF90_FLOAT, dimids, varid), "def_"//varnm)
-!       call check(NF_DEF_VAR_CHUNKING(iunit, varid, NF_CHUNKED, chksz))
-  call check(NF90_DEF_VAR_DEFLATE(iunit, varid, 1,1,1))
-  call check(nf90_put_att(iunit,varid, "units", TRIM(units)))
-  if (LEN_TRIM(stdnm) > 0) then
-    call check(nf90_put_att(iunit,varid,"standard_name", TRIM(stdnm)))
+  call check(nf90_def_var(iunit, TRIM(varname), &
+      NF90_FLOAT, dimids, varid), "def_"//varname)
+  if (present(chunksize)) then
+    call check(nf90_def_var_chunking(iunit, varid, NF90_CHUNKED, chunksize))
+    call check(nf90_def_var_deflate(iunit, varid, &
+      shuffle=1, deflate=1, deflate_level=1))
   endif
-!       if (LEN_TRIM(metnm).gt.0)
-!     +    call check(nf_put_att_text(iunit,varid,"metno_name",
-!     +    LEN_TRIM(metnm), TRIM(metnm)))
+  call check(nf90_put_att(iunit,varid, "units", TRIM(units)))
+  if (present(stdname)) then
+    call check(nf90_put_att(iunit,varid,"standard_name", TRIM(stdname)))
+  endif
 
   call check(nf90_put_att(iunit,varid,"coordinates", "longitude latitude"))
   call check(nf90_put_att(iunit,varid,"grid_mapping", "projection"))
+end subroutine
 
-end subroutine nc_declare_3d
+subroutine nc_declare_put(iunit, dimids, varid, varname, units, stdname, chunksize, values)
+  integer, intent(in) :: iunit
+  integer, intent(out)   :: varid
+  integer, intent(in)    :: dimids(:)
 
-subroutine nc_declare_4d(iunit, dimids, varid, &
-    chksz, varnm, units, stdnm, metnm)
-  USE snapdebug, only: iulog
+  character(len=*), intent(in) :: units
+  character(len=*), intent(in) :: varname
+  character(len=*), intent(in), optional :: stdname
+  integer, intent(in), optional :: chunksize(:)
 
-  INTEGER, INTENT(OUT)   :: varid
-  INTEGER, INTENT(IN)    :: iunit, dimids(4), chksz(4)
-  CHARACTER(LEN=*), INTENT(IN) :: varnm, stdnm, metnm, units
+  real, intent(in) :: values(:, :)
 
-  write(iulog,*) "declaring ", TRIM(varnm), TRIM(units), &
-      TRIM(stdnm),TRIM(metnm)
-  call check(nf90_def_var(iunit, TRIM(varnm), &
-      NF90_FLOAT, dimids, varid), "def_"//varnm)
-  call check(NF90_DEF_VAR_CHUNKING(iunit, varid, NF90_CHUNKED, chksz))
-  call check(NF90_DEF_VAR_DEFLATE(iunit, varid, 1,1,1))
-  call check(nf90_put_att(iunit,varid, "units", TRIM(units)))
-  if (LEN_TRIM(stdnm) > 0) then
-    call check(nf90_put_att(iunit,varid,"standard_name", TRIM(stdnm)))
-  endif
-!       if (LEN_TRIM(metnm).gt.0)
-!     +    call check(nf_put_att_text(iunit,varid,"metno_name",
-!     +    LEN_TRIM(metnm), TRIM(metnm)))
-
-  call check(nf90_put_att(iunit,varid,"coordinates", "longitude latitude"))
-  call check(nf90_put_att(iunit,varid,"grid_mapping", "projection"))
-
-end subroutine nc_declare_4d
+  call nc_declare(iunit, dimids, varid, varname, units, stdname, chunksize)
+  call check(nf90_put_var(iunit, varid, values), "Could not put values")
+end subroutine
 
 subroutine nc_set_vtrans(iunit, kdimid,k_varid,ap_varid,b_varid)
   use snapgrdML, only: vlevel, alevel, blevel
@@ -972,7 +975,7 @@ subroutine initialize_output(filename, itime, ierror)
   USE snapfilML, only: ncsummary, nctitle, simulation_start
   USE snapgrdML, only: gparam, igtype, imodlevel, imslp, precipitation_in_output, &
       itotcomp, modleveldump, compute_column_max_conc, compute_aircraft_doserate, &
-      aircraft_doserate_threshold
+      aircraft_doserate_threshold, output_column
   USE snapfldML, only:  &
       garea, &
       xm, ym, &
@@ -1043,48 +1046,51 @@ subroutine initialize_output(filename, itime, ierror)
     chksz4d = [nx, ny, 1, 1]
 
     if (imodlevel) then
-      call nc_declare_3d(iunit, dimids3d, varid%ps, &
-          chksz3d, "surface_air_pressure", &
-          "hPa", "surface_air_pressure", "")
+      call nc_declare(iunit, dimids3d, varid%ps, &
+          "surface_air_pressure", units="hPa", &
+          stdname="surface_air_pressure", chunksize=chksz3d)
     endif
     if (imslp == 1) then
-      call nc_declare_3d(iunit, dimids3d, varid%mslp, &
-          chksz3d, "air_pressure_at_sea_level", &
-          "hPa", "air_pressure_at_sea_level", "")
+      call nc_declare(iunit, dimids3d, varid%mslp, &
+        "air_pressure_at_sea_level", units="hPa", &
+        stdname="air_pressure_at_sea_level", chunksize=chksz3d)
     endif
     if (precipitation_in_output) then
-      call nc_declare_3d(iunit, dimids3d, varid%accum_prc, &
-          chksz3d, "precipitation_amount_acc", &
-          "kg/m2", "precipitation_amount", "")
-          call nc_declare_3d(iunit, dimids3d, varid%prc, &
-          chksz3d, "lwe_precipitation_rate", &
-          "mm/("//itoa(nhfout)//"hr)", "lwe_precipitation_rate", "")
+      call nc_declare(iunit, dimids3d, varid%accum_prc, &
+        "precipitation_amount_acc", units="kg/m2", &
+        stdname="precipitation_amount", chunksize=chksz3d)
+
+      call nc_declare(iunit, dimids3d, varid%prc, &
+        "lwe_precipitation_rate", units="mm/("//itoa(nhfout)//"hr)", &
+        stdname="lwe_precipitation_rate", chunksize=chksz3d)
     endif
 
-    call nc_declare_3d(iunit, dimids3d, varid%ihbl, &
-        chksz3d, "instant_height_boundary_layer", &
-        "m", "height", &
-        "instant_height_boundary_layer")
-    call nc_declare_3d(iunit, dimids3d, varid%ahbl, &
-        chksz3d, "average_height_boundary_layer", &
-        "m", "height", &
-        "average_height_boundary_layer")
+    call nc_declare(iunit, dimids3d, varid%ihbl, &
+        "instant_height_boundary_layer", units="m", &
+        stdname="height", chunksize=chksz3d)
+
+    call nc_declare(iunit, dimids3d, varid%ahbl, &
+      "average_height_boundary_layer", units="m", &
+      stdname="height", chunksize=chksz3d)
 
     if (compute_column_max_conc) then
-      string = "max_column_concentration"
-      call nc_declare_3d(iunit, dimids3d, varid%column_max_conc, &
-          chksz3d, string, "Bq/m3", "", string)
+      call nc_declare(iunit, dimids3d, varid%column_max_conc, &
+       "max_column_concentration", units="Bq/m3", &
+       chunksize=chksz3d)
     endif
     if (compute_aircraft_doserate) then
-      string = "aircraft_doserate"
-      call nc_declare_3d(iunit, dimids3d, varid%aircraft_doserate, &
-          chksz3d, string, "Sv/h", "", string)
+      call nc_declare(iunit, dimids3d, varid%aircraft_doserate, &
+        "aircraft_doserate", units="Sv/h", &
+        chunksize=chksz3d)
       if (aircraft_doserate_threshold > 0.0) then
-        string = "aircraft_doserate_threshold_height"
-        call nc_declare_3d(iunit, dimids3d, varid%aircraft_doserate_threshold_height, &
-            chksz3d, string, "m", "", string)
+        call nc_declare(iunit, dimids3d, varid%aircraft_doserate_threshold_height, &
+          "aircraft_doserate_threshold_height", units="m", &
+          chunksize=chksz3d)
       endif
     endif
+
+    call nc_declare_put(iunit, dimids2d, varid%garea, "area", units="m2", &
+      stdname="area", chunksize=[nx,ny], values=garea)
 
     call check(nf90_def_var(iunit, "components", NF90_CHAR, [dimid%maxcompname, dimid%ncomp], varid%components))
 
@@ -1093,90 +1099,77 @@ subroutine initialize_output(filename, itime, ierror)
       call check(nf90_put_var(iunit, varid%components, &
         start=[1, m], count=[len_trim(def_comp(mm)%compnamemc), 1], &
         values=trim(def_comp(mm)%compnamemc)))
-      call nc_declare_3d(iunit, dimids3d, varid%comp(m)%ic, &
-          chksz3d, TRIM(def_comp(mm)%compnamemc)//"_concentration", &
-          "Bq/m3","", &
-          TRIM(def_comp(mm)%compnamemc)//"_concentration")
-      call nc_declare_3d(iunit, dimids3d, varid%comp(m)%icbl, &
-          chksz3d, TRIM(def_comp(mm)%compnamemc)//"_concentration_bl", &
-          "Bq/m3","", &
-          TRIM(def_comp(mm)%compnamemc)//"_concentration_boundary_layer")
-      call nc_declare_3d(iunit, dimids3d, varid%comp(m)%ac, &
-          chksz3d, TRIM(def_comp(mm)%compnamemc)//"_acc_concentration", &
-          "Bq*hr/m3","", &
-          TRIM(def_comp(mm)%compnamemc)//"_accumulated_concentration")
-      call nc_declare_3d(iunit, dimids3d, varid%comp(m)%acbl, &
-          chksz3d, TRIM(def_comp(mm)%compnamemc)//"_avg_concentration_bl", &
-          "Bq/m3","", &
-          TRIM(def_comp(mm)%compnamemc)//"_average_concentration_bl")
+      call nc_declare(iunit, dimids3d, varid%comp(m)%ic, &
+        trim(def_comp(mm)%compnamemc)//"_concentration", &
+        units="Bq/m3", chunksize=chksz3d)
+      call nc_declare(iunit, dimids3d, varid%comp(m)%icbl, &
+        trim(def_comp(mm)%compnamemc)//"_concentration_bl", &
+        units="Bq/m3", chunksize=chksz3d)
+      call nc_declare(iunit, dimids3d, varid%comp(m)%ac, &
+        trim(def_comp(mm)%compnamemc)//"_acc_concentration", &
+        units="Bq*hr/m3", chunksize=chksz3d)
+      call nc_declare(iunit, dimids3d, varid%comp(m)%acbl, &
+        trim(def_comp(mm)%compnamemc)//"_avg_concentration_bl", &
+        "Bq/m3", chunksize=chksz3d)
       if (def_comp(mm)%kdrydep > 0) then
-        call nc_declare_3d(iunit, dimids3d, varid%comp(m)%idd, &
-            chksz3d, TRIM(def_comp(mm)%compnamemc)//"_dry_deposition", &
-            "Bq/m2","", &
-            TRIM(def_comp(mm)%compnamemc)//"_dry_deposition")
-        call nc_declare_3d(iunit, dimids3d, varid%comp(m)%accdd, &
-            chksz3d, TRIM(def_comp(mm)%compnamemc)//"_acc_dry_deposition", &
-            "Bq/m2","", &
-            TRIM(def_comp(mm)%compnamemc)//"_accumulated_dry_deposition")
+        call nc_declare(iunit, dimids3d, varid%comp(m)%idd, &
+          trim(def_comp(mm)%compnamemc)//"_dry_deposition", &
+          units="Bq/m2", chunksize=chksz3d)
+        call nc_declare(iunit, dimids3d, varid%comp(m)%accdd, &
+          trim(def_comp(mm)%compnamemc)//"_acc_dry_deposition", &
+          units="Bq/m2", chunksize=chksz3d)
       end if
       if (def_comp(mm)%kwetdep > 0) then
-        call nc_declare_3d(iunit, dimids3d, varid%comp(m)%iwd, &
-            chksz3d, TRIM(def_comp(mm)%compnamemc)//"_wet_deposition", &
-            "Bq/m2","", &
-            TRIM(def_comp(mm)%compnamemc)//"_wet_deposition")
-        call nc_declare_3d(iunit, dimids3d, varid%comp(m)%accwd, &
-            chksz3d, TRIM(def_comp(mm)%compnamemc)//"_acc_wet_deposition", &
-            "Bq/m2","", &
-            TRIM(def_comp(mm)%compnamemc)//"_accumulated_wet_deposition")
+        call nc_declare(iunit, dimids3d, varid%comp(m)%iwd, &
+          trim(def_comp(mm)%compnamemc)//"_wet_deposition", &
+            units="Bq/m2", chunksize=chksz3d)
+        call nc_declare(iunit, dimids3d, varid%comp(m)%accwd, &
+          trim(def_comp(mm)%compnamemc)//"_acc_wet_deposition", &
+          units="Bq/m2", chunksize=chksz3d)
       end if
       if (imodlevel) then
         if (modleveldump > 0.) then
-          string = TRIM(def_comp(mm)%compnamemc)//"_concentration_dump_ml"
+          string = trim(def_comp(mm)%compnamemc)//"_concentration_dump_ml"
         else
-          string = TRIM(def_comp(mm)%compnamemc)//"_concentration_ml"
+          string = trim(def_comp(mm)%compnamemc)//"_concentration_ml"
         endif
-        call nc_declare_4d(iunit, dimids4d, varid%comp(m)%icml, &
-            chksz4d, TRIM(string), &
-            "Bq/m3","", &
-            TRIM(string))
-      !           call nc_declare_4d(iunit, dimids4d, acml_varid(m),
-      !     +          chksz4d, TRIM(def_comp(mm)%compnamemc)//"_avg_concentration_ml",
-      !     +          "Bq*hour/m3","",
-      !     +          TRIM(def_comp(mm)%compnamemc)//"_accumulated_concentration_ml")
+        call nc_declare(iunit, dimids4d, varid%comp(m)%icml, &
+          string, units="Bq/m3", chunksize=chksz4d)
+      !           call nc_declare(iunit, dimids4d, acml_varid(m), &
+      !     +          TRIM(def_comp(mm)%compnamemc)//"_avg_concentration_ml", &
+      !     +          units="Bq*hour/m3")
       end if
+      if (output_column) then
+        call nc_declare(iunit, dimids3d, varid%comp(m)%conc_column, &
+          trim(def_comp(mm)%compnamemc)//"_column_concentration", &
+          units="Bq/m2", chunksize=chksz3d)
+      endif
     end do
     if (itotcomp == 1) then
-      call nc_declare_3d(iunit, dimids3d, varid%icblt, &
-          chksz3d, "total_concentration_bl", &
-          "Bq/m3","", &
-          "total_concentration_bl")
-      call nc_declare_3d(iunit, dimids3d, varid%acblt, &
-          chksz3d, "total_avg_concentration_bl", &
-          "Bq/m3","", &
-          "total_average_concentration_bl")
-      call nc_declare_3d(iunit, dimids3d, varid%act, &
-          chksz3d, "total_acc_concentration", &
-          "Bq/m3","", &
-          "total_accumulated_concentration")
+      call nc_declare(iunit, dimids3d, varid%icblt, &
+        "total_concentration_bl", units="Bq/m3", &
+          chunksize=chksz3d)
+      call nc_declare(iunit, dimids3d, varid%acblt, &
+        "total_avg_concentration_bl", units="Bq/m3", &
+        chunksize=chksz3d)
+      call nc_declare(iunit, dimids3d, varid%act, &
+        "total_acc_concentration", units="Bq/m3", &
+          chunksize=chksz3d)
       if (compute_total_dry_deposition) then
-        call nc_declare_3d(iunit, dimids3d, varid%iddt, &
-            chksz3d, "total_dry_deposition", &
-            "Bq/m2","", &
-            "total_dry_deposition")
-        call nc_declare_3d(iunit, dimids3d, varid%accddt, &
-            chksz3d, "total_acc_dry_deposition", &
-            "Bq/m2","", &
-            "total_accumulated_dry_deposition")
+        call nc_declare(iunit, dimids3d, varid%iddt, &
+          "total_dry_deposition", units="Bq/m2", &
+            chunksize=chksz3d)
+        call nc_declare(iunit, dimids3d, varid%accddt, &
+          "total_acc_dry_deposition", units="Bq/m2", &
+          chunksize=chksz3d)
       end if
       if (compute_total_wet_deposition) then
-        call nc_declare_3d(iunit, dimids3d, varid%iwdt, &
-            chksz3d, "total_wet_deposition", &
-            "Bq/m2","", &
-            "total_wet_deposition")
-        call nc_declare_3d(iunit, dimids3d, varid%accwdt, &
-            chksz3d, "total_acc_wet_deposition", &
-            "Bq/m2","", &
-            "total_accumulated_wet_deposition")
+        call nc_declare(iunit, dimids3d, varid%iwdt, &
+          "total_wet_deposition", units="Bq/m2", &
+            chunksize=chksz3d)
+        call nc_declare(iunit, dimids3d, varid%accwdt, &
+          "total_acc_wet_deposition", units="Bq/m2", &
+          chunksize=chksz3d)
       end if
     end if
     call check(nf90_enddef(iunit))
@@ -1284,6 +1277,10 @@ subroutine get_varids(iunit, varid, ierror)
         if (ierror /= NF90_NOERR) return
       endif
     endif
+
+    varname = trim(def_comp(mm)%compnamemc) // "_column_concentration"
+    ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%conc_column)
+    if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
   enddo
 
   ierror = NF90_NOERR
