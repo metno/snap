@@ -5,11 +5,13 @@ F77 = gfortran
 
 F77FLAGS=-DVERSION=\"$(VERSION)\" -O2 -ftree-vectorize -fno-math-errno -g -mavx2 -mfma -Wall -Wextra -fimplicit-none -fmodule-private -Wno-conversion
 
-FIMEXLIB = -L/modules/centos7/conda/Feb2021/envs/production-fimex-1.6.9/lib -lfimex -Xlinker -rpath=/modules/centos7/conda/Feb2021/envs/production-fimex-1.6.9/lib
+CONDAPATH=/modules/rhel8/conda/install/envs/atom-fimex/
+
+FIMEXLIB = -L${CONDAPATH}/lib -lfimex -Xlinker -rpath=${CONDAPATH}/lib
 FIMEXINC =
 
-NETCDFLIB = -L/modules/centos7/conda/Feb2021/envs/production-fimex-1.6.9/lib -lnetcdff -lnetcdf
-NETCDFINC = -I/modules/centos7/conda/Feb2021/envs/production-fimex-1.6.9/include -I/modules/centos7/conda/Feb2021/envs/production-fimex-1.6.9/include
+NETCDFLIB = -L${CONDAPATH}/lib -lnetcdff -lnetcdf
+NETCDFINC = -I${CONDAPATH}/include -I${CONDAPATH}/include
 
 MILIB_FLAGS = -fno-implicit-none -fno-module-private -Wno-all -Wno-extra
 
