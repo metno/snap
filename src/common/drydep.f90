@@ -248,6 +248,8 @@ pure elemental subroutine drydep_zhang_emerson_vd(surface_pressure, t2m, yflux, 
   !>  needleleaf trees (i.e. close to maximum deposition)
   real(real64) :: A
   real(real64), parameter :: k = 0.4
+  !> Below this we ignore A
+  real(real64), parameter :: lai_A_cutoff = 0.3
 
   real(real64) :: fac1, cslip, bdiff, my, sc, EB, EIM, EIN, rs, stokes
 
@@ -278,11 +280,7 @@ pure elemental subroutine drydep_zhang_emerson_vd(surface_pressure, t2m, yflux, 
     EB = 0.2 * sc ** (-2.0 / 3.0)
   endif
 
-  ! Impaction
-  ! Stokes number for vegetated surfaces (Zhang (2001)
-  if (leaf_area_index <= 0) then
-    A = ieee_value(A, IEEE_QUIET_NAN)
-  else if (leaf_area_index < 0.3) then
+  if (leaf_area_index < lai_A_cutoff) then
     A = ieee_value(A, IEEE_QUIET_NAN)
   else if (leaf_area_index < 1) then
     A = 10 * 1e-3
@@ -291,6 +289,8 @@ pure elemental subroutine drydep_zhang_emerson_vd(surface_pressure, t2m, yflux, 
   else
     A = 2 * 1e-3
   endif
+  ! Impaction
+  ! Stokes number for vegetated surfaces (Zhang (2001)
   if (leaf_area_index >= 1) then
     stokes = vs * ustar / (grav * A)
   else
@@ -307,7 +307,8 @@ pure elemental subroutine drydep_zhang_emerson_vd(surface_pressure, t2m, yflux, 
   endif
 
   ! Interception
-  if (leaf_area_index == 0) then
+  ! if (leaf_area_index == 0) then
+  if (leaf_area_index < lai_A_cutoff) then
     ! No interception over water surfaces
     EIN = 0.0
   else
