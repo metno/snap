@@ -284,7 +284,7 @@ pure elemental subroutine drydep_zhang_emerson_vd(surface_pressure, t2m, yflux, 
     A = ieee_value(A, IEEE_QUIET_NAN)
   else if (leaf_area_index < 1) then
     A = 10 * 1e-3
-  else if (leaf_area_index < 1) then
+  else if (leaf_area_index < 3) then
     A = 5 * 1e-3
   else
     A = 2 * 1e-3
