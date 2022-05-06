@@ -231,6 +231,7 @@ end subroutine
 pure elemental subroutine drydep_zhang_emerson_vd(surface_pressure, t2m, yflux, xflux, z0, &
     hflux, leaf_area_index, diam, density, vd_dep, emerson_mode, &
     roa, ustar, monin_obukhov_length, raero, vs)
+  use ieee_arithmetic, only: ieee_value, IEEE_QUIET_NAN
   !> In hPa
   real, intent(in) :: surface_pressure
   real, intent(in) :: t2m
@@ -245,7 +246,7 @@ pure elemental subroutine drydep_zhang_emerson_vd(surface_pressure, t2m, yflux, 
 
   !> Aerial factor for interception (table 3 Zhang et al. (2001)), corresponding to evergreen
   !>  needleleaf trees (i.e. close to maximum deposition)
-  real(real64), parameter :: A = 3e-3
+  real(real64) :: A
   real(real64), parameter :: k = 0.4
 
   real(real64) :: fac1, cslip, bdiff, my, sc, EB, EIM, EIN, rs, stokes
@@ -279,6 +280,17 @@ pure elemental subroutine drydep_zhang_emerson_vd(surface_pressure, t2m, yflux, 
 
   ! Impaction
   ! Stokes number for vegetated surfaces (Zhang (2001)
+  if (leaf_area_index <= 0) then
+    A = ieee_value(A, IEEE_QUIET_NAN)
+  else if (leaf_area_index < 0.3) then
+    A = ieee_value(A, IEEE_QUIET_NAN)
+  else if (leaf_area_index < 1) then
+    A = 10 * 1e-3
+  else if (leaf_area_index < 1) then
+    A = 5 * 1e-3
+  else
+    A = 2 * 1e-3
+  endif
   if (leaf_area_index >= 1) then
     stokes = vs * ustar / (grav * A)
   else
