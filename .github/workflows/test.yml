@@ -21,7 +21,7 @@ jobs:
         run: cd src && ln -s gcc_pkgconfig.mk current.mk
 
       - name: Create binaries (no fimex)
-        run: cd src && make -j2
+        run: cd src && env DEBUG=1 make -j2
 
       - name: Clean up
         run: cd src && make clean
@@ -53,10 +53,10 @@ jobs:
             sudo cmake --build . --target install --config RelWithDebInfo
 
       - name: Create binaries (with fimex)
-        run: cd src && make clean && make -j2
+        run: cd src && make clean && env DEBUG=1 make -j2
 
       - name: Install test requirements
         run: sudo apt-get install python3-numpy python3-netcdf4
 
       - name: Test binaries
-        run: cd src && make test
+        run: cd src && env DEBUG=1 make test
