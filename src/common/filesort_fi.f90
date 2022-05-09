@@ -188,7 +188,8 @@ contains
     do i = 2, navail
       !       run back until time is >= existing time
       j = kavail(2)
-      do while (j > 0 .AND. iavail(i)%oHour < iavail(j)%oHour)
+      do while (j > 0)
+        if (.not. iavail(i)%oHour < iavail(j)%oHour) exit
         j = iavail(j)%pAvail
       end do
       if (j == kavail(2)) kavail(2) = i
