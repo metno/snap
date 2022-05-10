@@ -4,6 +4,9 @@
 F77 = gfortran
 
 F77FLAGS=-DVERSION=\"$(VERSION)\" -O2 -ftree-vectorize -fno-math-errno -g -mavx2 -mfma -Wall -Wextra -fimplicit-none -fmodule-private -Wno-conversion
+ifdef SNAP_PARALLEL
+    F77FLAGS+=-fopenmp
+endif
 
 CONDAPATH=/modules/rhel8/conda/install/envs/atom-fimex/
 
