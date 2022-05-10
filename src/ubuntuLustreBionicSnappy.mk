@@ -3,9 +3,9 @@
 
 F77 = gfortran
 
-F77DEBUGFLAGS= -ffpe-trap=invalid,zero,overflow -fbounds-check
+F77DEBUGFLAGS=-ffpe-trap=invalid,zero,overflow -fcheck=bounds
 F77FLAGS=-DVERSION=\"$(VERSION)\" -O2 -ftree-vectorize -fno-math-errno -g -mavx2 -mfma -fopt-info-optimized-vec -Wall -Wextra -fimplicit-none -fmodule-private -Wno-conversion
-ifdef DEBUG
+ifdef SNAP_DEBUG_CHECKS
   F77FLAGS+=$(F77DEBUGFLAGS)
 endif
 

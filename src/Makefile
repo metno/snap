@@ -11,6 +11,7 @@ test:
 
 clean:
 	@$(MAKE) -C naccident clean;
+	@$(MAKE) -C test clean;
 
 dist: clean
 	cp -R . ../snap-$(VERSION); cd ..; \
