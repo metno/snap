@@ -30,7 +30,7 @@ PRECIPITATION.OFF
 MODEL.LEVEL.FIELDS.OFF
 
 FIELD.TYPE=fimex
-FIELD.INPUT= https://thredds.met.no/thredds/dodsC/metusers/heikok/snap_testdata/meps_det_2_5km_20200316T00Z_ringhals.nc
+FIELD.INPUT= ../snap_testdata/meps_det_2_5km_20200316T00Z_ringhals.nc
 FIMEX.FILE_TYPE= netcdf
 
 GRID.NCTYPE = arome
