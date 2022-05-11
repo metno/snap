@@ -20,6 +20,7 @@ install:
 
 
 snap_testdata/%.nc :
+	mkdir -p snap_testdata
 	curl https://thredds.met.no/thredds/fileServer/metusers/heikok/$@ -o $@
 
 

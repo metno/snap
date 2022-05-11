@@ -13,6 +13,9 @@ clean:
 	@$(MAKE) -C naccident clean;
 	@$(MAKE) -C test clean;
 
+distclean:
+	@$(MAKE) -C test distclean;
+
 dist: clean
 	cp -R . ../snap-$(VERSION); cd ..; \
 	rm snap-$(VERSION)/current.mk; \
