@@ -13,8 +13,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Install dependencies
-        run: sudo apt-get install libnetcdff-dev gfortran
+      - name: Get machine info
+        run: |
+          cat /proc/cpuinfo | grep 'model name' | uniq
+          cat /proc/cpuinfo | grep flags | uniq
+          free -h
+
+
+      - name: Install dependencies and launchpad-repo
+        run: |
+            sudo add-apt-repository -y ppa:met-norway/fimex
+            sudo apt update
+            sudo apt-get install libnetcdff-dev gfortran
 
       - name: Link appropriate make configuration
         run: cd src && ln -s gcc_pkgconfig.mk current.mk
@@ -26,10 +36,7 @@ jobs:
         run: cd src && make clean
 
       - name: Install official fimex-binary from launchpad
-        run: |
-            sudo add-apt-repository -y ppa:met-norway/fimex
-            sudo apt update
-            sudo apt install libfimex-1.6-dev
+        run: sudo apt install libfimex-1.6-dev
 
       - name: Create binaries (with fimex)
         run: cd src && make clean && env SNAP_FIMEX_VERSION=1.6 SNAP_DEBUG_CHECKS=1 make -j2
