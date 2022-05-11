@@ -10,11 +10,22 @@ include ../common/snap.mk
 # export FIMEXLIB
 .EXPORT_ALL_VARIABLES:
 
+TESTFILES = snap_testdata/meteo20200415_00_ringhals.nc \
+			snap_testdata/meteo20200415_01_ringhals.nc \
+            snap_testdata/meps_det_2_5km_20200316T00Z_ringhals.nc \
+			snap_testdata/snap_ecemep_expected.nc \
+			snap_testdata/snap_meps_interpolated_expected.nc
+
 install:
 
-test: find_parameters_fi_test bsnap_naccident
-	./find_parameters_fi_test https://thredds.met.no/thredds/dodsC/metusers/heikok/snap_testdata/meteo20200415_00_ringhals.nc u_wind && \
-	./find_parameters_fi_test https://thredds.met.no/thredds/dodsC/metusers/heikok/snap_testdata/meps_det_2_5km_20200316T00Z_ringhals.nc x_wind_ml && \
+
+snap_testdata/%.nc :
+	curl https://thredds.met.no/thredds/fileServer/metusers/heikok/$@ -o $@
+
+
+test: find_parameters_fi_test bsnap_naccident $(TESTFILES)
+	./find_parameters_fi_test snap_testdata/meteo20200415_00_ringhals.nc u_wind && \
+	./find_parameters_fi_test snap_testdata/meps_det_2_5km_20200316T00Z_ringhals.nc x_wind_ml && \
 	python3 -m unittest snap_forward_test.py
 
 
@@ -34,12 +45,14 @@ clean: clean_links
 	rm -rf __pycache__
 
 distclean: clean
-    
+	rm -f $(TESTFILES)
+
 find_parameters_fi_test.o: find_parameters_fi_test.f90 $(MODELOBJ)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 
 testDateCalc.o: testDateCalc.f90
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+
 
 
 .PHONY: clean distclean test install
