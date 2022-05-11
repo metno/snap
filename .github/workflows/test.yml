@@ -3,7 +3,6 @@ name: Test
 
 on:
   push:
-  pull_request:
 
 jobs:
   test:
@@ -26,37 +25,17 @@ jobs:
       - name: Clean up
         run: cd src && make clean
 
-      - name: Install fimex requirements
-        run: sudo apt-get install libxml2-dev libproj-dev libudunits2-dev libeccodes-dev libeccodes-tools libopenjp2-7-dev
-
-      - name: Download and unpack fimex
+      - name: Install official fimex-binary from launchpad
         run: |
-            wget https://github.com/metno/fimex/archive/refs/tags/v1.6.7.tar.gz -O fimex.tar.gz &&
-            tar -xf fimex.tar.gz --one-top-level=fimex --strip-components=1
-
-      - name: Download and unpack third party libraries
-        run: |
-            cd fimex && mkdir -p third_party && cd third_party &&
-            wget https://github.com/metno/mi-cpptest/archive/refs/tags/v0.1.1.tar.gz -O mi-cpptest.tar.gz &&
-            tar -xf mi-cpptest.tar.gz --one-top-level=mi-cpptest --strip-components=1 &&
-            wget https://github.com/metno/mi-programoptions/archive/refs/tags/v1.0.0.tar.gz -O mi-programoptions.tar.gz &&
-            tar -xf mi-programoptions.tar.gz --one-top-level=mi-programoptions --strip-components=1 &&
-            wget https://github.com/metno/mi-cpptest/archive/refs/tags/v0.1.1.tar.gz -O mi-cpptest.tar.gz &&
-            tar -xf mi-cpptest.tar.gz --one-top-level=mi-cpptest --strip-components=1 &&
-            wget https://github.com/HowardHinnant/date/archive/refs/tags/v2.4.1.tar.gz -O date.tar.gz &&
-            tar -xf date.tar.gz --one-top-level=date --strip-components=1
-
-      - name: Install fimex
-        run: |
-            cd fimex && mkdir build && cd build &&
-            cmake .. -DENABLE_ECCODES=true -DENABLE_FORTRAN=true -DENABLE_PYTHON=false -DCMAKE_INSTALL_PREFIX=/usr/ &&
-            sudo cmake --build . --target install --config RelWithDebInfo
+            sudo add-apt-repository -y ppa:met-norway/fimex
+            sudo apt update
+            sudo apt install libfimex-1.6-dev
 
       - name: Create binaries (with fimex)
-        run: cd src && make clean && env SNAP_DEBUG_CHECKS=1 make -j2
+        run: cd src && make clean && env SNAP_FIMEX_VERSION=1.6 SNAP_DEBUG_CHECKS=1 make -j2
 
       - name: Install test requirements
         run: sudo apt-get install python3-numpy python3-netcdf4
 
       - name: Test binaries
-        run: cd src && env SNAP_DEBUG_CHECKS=1 make test
+        run: cd src && env SNAP_FIMEX_VERSION=1.6 SNAP_DEBUG_CHECKS=1 make test

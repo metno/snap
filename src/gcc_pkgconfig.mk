@@ -9,8 +9,13 @@ ifdef SNAP_DEBUG_CHECKS
   F77FLAGS+=$(F77DEBUGFLAGS)
 endif
 
-FIMEXLIB = $(shell pkg-config --libs fimex)
-FIMEXINC = $(shell pkg-config --cflags-only-I fimex)
+# optional versioned fimex
+FIMEX = fimex
+ifdef SNAP_FIMEX_VERSION
+  FIMEX := fimex-$(SNAP_FIMEX_VERSION)
+endif
+FIMEXLIB = $(shell pkg-config --libs $(FIMEX))
+FIMEXINC = $(shell pkg-config --cflags-only-I $(FIMEX))
 FIMEXINC =
 
 NETCDFLIB = $(shell nf-config --flibs)
