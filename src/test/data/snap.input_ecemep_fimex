@@ -76,8 +76,8 @@ MODEL.LEVEL.FIELDS.OFF
 *
 ** INPUT FIELD FILES
 FIELD.TYPE=fimex
-FIELD.INPUT= https://thredds.met.no/thredds/dodsC/metusers/heikok/snap_testdata/meteo20200415_00_ringhals.nc 
-FIELD.INPUT= https://thredds.met.no/thredds/dodsC/metusers/heikok/snap_testdata/meteo20200415_01_ringhals.nc
+FIELD.INPUT= ../snap_testdata/meteo20200415_00_ringhals.nc 
+FIELD.INPUT= ../snap_testdata/meteo20200415_01_ringhals.nc
 ** USE FIMEX
 FIMEX.FILE_TYPE= netcdf
 FIMEX.CONFIG=ecemep_fixunit.ncml 
