@@ -94,13 +94,20 @@ class ModelRunner():
             return ModelRunner.logger
 
         ModelRunner.logger = logging.getLogger("ModelRunner")
+        ModelRunner.logger.setLevel(logging.DEBUG)
         fmt = logging.Formatter('%(asctime)s: %(message)s', datefmt="%Y%m%dT%H%M%SZ")
         fmt.converter = gmtime #Make sure we are using UTC time
+        # logging to file
         fh = logging.FileHandler(os.path.join(path, 'volcano.log'))
         fh.setLevel(logging.DEBUG)
         fh.setFormatter(fmt)
+        # errors on stderr, too (e.g. for cron)
+        sh = logging.StreamHandler(stream=sys.stderr)
+        sh.setLevel(logging.WARNING)
+        sh.setFormatter(fmt)
+        # add the handlers
         ModelRunner.logger.addHandler(fh)
-        ModelRunner.logger.setLevel(logging.DEBUG)
+        ModelRunner.logger.addHandler(sh)
         return ModelRunner.logger
 
     def __init__(self, path, hpcMachine, npp=False):
@@ -379,7 +386,7 @@ class ModelRunner():
         #Get age of files on HPC
         file_age = self.get_run_file_ages()
         if file_age is None:
-            self.logger.debug("Could not get file ages - something is wrong!")
+            self.logger.error(f"Could not get run-file ages on {self.hpcMachine} - something is wrong!")
             return
 
         #Download output files
@@ -391,7 +398,7 @@ class ModelRunner():
             else:
                 age = 999
             if (age > 120):
-                self.logger.debug("File {} too old on {}".format(filename, self.hpcMachine))
+                self.logger.error("File {} too old on {}".format(filename, self.hpcMachine))
                 return
             self.logger.debug("downloading {}:{} to {}".format(filename, self.hpcMachine, self.path))
             self.hpc.get_files([filename], self.path, 1200)
@@ -412,10 +419,10 @@ class ModelRunner():
         file = 'EMEP_OUT_{}.nc'.format(tomorrow)
         age = file_age.pop(os.path.join(self.hpc_outdir, file), None)
         if (age is None):
-            self.logger.debug("File {} does not exist on {}".format(file, self.hpcMachine))
+            self.logger.error("File {} does not exist on {}".format(file, self.hpcMachine))
             return
         if (age/datetime.timedelta(minutes=1) > 120):
-            self.logger.debug("File {} too old on {}".format(file, self.hpcMachine))
+            self.logger.error("File {} too old on {}".format(file, self.hpcMachine))
             return
         self.logger.debug("downloading {}:{} to {}".format(file, self.hpcMachine, self.path))
         try :
@@ -445,7 +452,7 @@ class ModelRunner():
         try:
             self.hpc.syscall('find', findArgs, timeout=30)
         except Exception as ex:
-            self.logger.debug("cannot excecute command 'find {args}': {ex}".format(args=" ".join(findArgs),
+            self.logger.warning("cannot excecute command 'find {args}': {ex}".format(args=" ".join(findArgs),
                                                                                  ex=ex.args))
 
     def work(self):
@@ -454,11 +461,11 @@ class ModelRunner():
         self.do_upload_files()
         status = self.run_and_wait()
         if (status == QJobStatus.failed):
-            self.logger.debug("HPC-job failed: Not downloading any results.")
+            self.logger.error("HPC-job failed: Not downloading any results.")
         elif (status == QJobStatus.queued):
-            self.logger.debug("HPC-resource not available on {}, giving up.".format(self.hpcMachine))
+            self.logger.error("HPC-resource not available on {}, giving up.".format(self.hpcMachine))
         elif (status == QJobStatus.running):
-            self.logger.debug("HPC-job on {} not finished in time, downloading partial".format(self.hpcMachine))
+            self.logger.error("HPC-job on {} not finished in time, downloading partial".format(self.hpcMachine))
         else:
             self.download_results()
 
