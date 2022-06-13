@@ -5,4 +5,6 @@
 
 <remove type="attribute" name="SIMULATION_START_DATE" />
 
+{variables}
+
 </netcdf>

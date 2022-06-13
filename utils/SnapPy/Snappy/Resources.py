@@ -49,7 +49,6 @@ class MetModel(enum.Enum):
     def __hash__(self):
         return self.value.__hash__()
 
-
 class Resources(ResourcesCommon):
     """
     Read the resources and combine them
@@ -247,7 +246,9 @@ GRAVITY.FIXED.M/S=0.0002
         return "\n".join(snapinputs)
 
     def getGribWriterConfig(self, isotopes):
-        """Return a dictionary with a xml: xml-configuration string and a exracts: output-type and variable-names"""
+        """Return a dictionary with a xml: xml-configuration string and a exracts: output-type and variable-names.
+        Use in conjunction with convert_to_grib.
+        """
         allIsos = self.getIsotopes()
         extracts = {
             "tofa": ["time_of_arrival"],
@@ -265,11 +266,11 @@ GRAVITY.FIXED.M/S=0.0002
         for isoId in isotopes:
             isoName = allIsos[isoId]["isotope"]
             isoStr += isoTemp.format(ISOTOPE=isoName, ID=isoId)
-            extracts["conc"].append("{}_concentration".format(isoName))
-            extracts["dose"].append("{}_acc_concentration".format(isoName))
+            extracts["conc"].append(f"{isoName}_concentration")
+            extracts["dose"].append(f"{isoName}_acc_concentration")
             if allIsos[isoId]["type"] > 0:
-                extracts["depo"].append("{}_acc_total_deposition".format(isoName))
-                extracts["wetd"].append("{}_acc_wet_deposition".format(isoName))
+                extracts["depo"].append(f"{isoName}_acc_total_deposition")
+                extracts["wetd"].append(f"{isoName}_acc_wet_deposition")
 
         with open(
             os.path.join(self.directory, "cdmGribWriterIsotopesTemplate.xml")
@@ -283,10 +284,27 @@ GRAVITY.FIXED.M/S=0.0002
             ),
         )
 
+        # change the ncml-config
+        with open(
+            os.path.join(self.directory, "fillValue_template.ncml")
+        ) as fillValueFH:
+            fillValueTemp = fillValueFH.read()
+
+        varFills = []
+        for t in ("conc", "dose", "depo", "wetd"):
+            for var in extracts[t]:
+                varFills.append(fillValueTemp.format(varname=var))
+
+        with open(
+            os.path.join(self.directory, "removeSnapReferenceTime.ncml")
+        ) as ncmlFH:
+            ncmlOut = ncmlFH.read()
+        ncmlOut = ncmlOut.format(variables="\n".join(varFills))
+        
         return {
             "extracts": extracts,
             "xml": xmlOut,
-            "ncml": os.path.join(self.directory, "removeSnapReferenceTime.ncml"),
+            "ncml": ncmlOut,
         }
 
     def readNPPs(
@@ -596,6 +614,9 @@ GRAVITY.FIXED.M/S=0.0002
         except Exception as e:
             dosecoeffs = None
         return dosecoeffs
+
+
+
 
 
 if __name__ == "__main__":
