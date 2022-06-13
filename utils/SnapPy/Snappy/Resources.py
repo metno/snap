@@ -27,6 +27,7 @@ import enum
 import math
 import os
 import re
+import subprocess
 import sys
 import time as mtime
 from time import gmtime, strftime
@@ -615,6 +616,57 @@ GRAVITY.FIXED.M/S=0.0002
             dosecoeffs = None
         return dosecoeffs
 
+def snapNc_convert_to_grib(snapNc, basedir, ident, isotopes):
+    """simple function to implement conversion to grib snap.nc using fimex
+    and resources-setup
+    """
+    config = Resources().getGribWriterConfig(isotopes)
+    xmlFile = "cdmGribWriterConfig.xml"
+    basexmlFile = os.path.join(basedir, xmlFile)
+    with open(basexmlFile, 'w') as xh:
+        xh.write(config['xml'])
+    ncmlFile = "config.ncml"
+    baseNcmlFile = os.path.join(basedir, ncmlFile)
+    with open(baseNcmlFile, 'w') as nh:
+        nh.write(config['ncml'])
+    
+    errlog = open(os.path.join(basedir, "fimex.errlog"), "w")
+    outlog = open(os.path.join(basedir, "fimex.outlog"), "w")
+    tempfile = 'tmp.grib'
+    basetempfile = os.path.join(basedir, tempfile)
+    # fimex works in basedir, so it does not need the basefiles
+    for appendix, params in config['extracts'].items():
+        outFile = os.path.join(basedir, f"{ident}_{appendix}")
+        with open(outFile, 'wb') as gh:
+            for param in params:
+                if (os.path.exists(basetempfile)):
+                    os.remove(basetempfile)
+                procOptions = ['fimex', f'--input.file={snapNc}', f'--input.config={ncmlFile}',
+                       # avoid problem with lat/lon variables
+                       # in fimex grib-writer< 0.64
+                       # '--extract.removeVariable=longitude',
+                       # '--extract.removeVariable=latitude',
+                       f'--output.file={tempfile}',
+                       '--output.type=grib', f'--output.config={xmlFile}']
+                procOptions.append(f'--extract.selectVariables={param}')
+                print(" ".join(procOptions))
+                proc = subprocess.Popen(procOptions, cwd=basedir, stderr=errlog, stdout=outlog)
+                if (proc.wait() != 0):
+                    errlog.write("'{fimex}' in {dir} failed".format(fimex=' '.join(procOptions), dir=basedir))
+                else:
+                    # append tmp-file to final grib-file
+                    with (open(basetempfile, 'rb')) as th:
+                        while True:
+                            data = th.read(16*1024*1024) # read max 16M blocks
+                            if data:
+                                gh.write(data)
+                            else:
+                                break
+                if (os.path.exists(basetempfile)):
+                    os.remove(basetempfile)
+
+    errlog.close()
+    outlog.close()
 
 
 
