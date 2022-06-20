@@ -27,6 +27,7 @@ import enum
 import math
 import os
 import re
+import subprocess
 import sys
 import time as mtime
 from time import gmtime, strftime
@@ -48,7 +49,6 @@ class MetModel(enum.Enum):
 
     def __hash__(self):
         return self.value.__hash__()
-
 
 class Resources(ResourcesCommon):
     """
@@ -247,7 +247,9 @@ GRAVITY.FIXED.M/S=0.0002
         return "\n".join(snapinputs)
 
     def getGribWriterConfig(self, isotopes):
-        """Return a dictionary with a xml: xml-configuration string and a exracts: output-type and variable-names"""
+        """Return a dictionary with a xml: xml-configuration string and a exracts: output-type and variable-names.
+        Use in conjunction with convert_to_grib.
+        """
         allIsos = self.getIsotopes()
         extracts = {
             "tofa": ["time_of_arrival"],
@@ -265,11 +267,11 @@ GRAVITY.FIXED.M/S=0.0002
         for isoId in isotopes:
             isoName = allIsos[isoId]["isotope"]
             isoStr += isoTemp.format(ISOTOPE=isoName, ID=isoId)
-            extracts["conc"].append("{}_concentration".format(isoName))
-            extracts["dose"].append("{}_acc_concentration".format(isoName))
+            extracts["conc"].append(f"{isoName}_concentration")
+            extracts["dose"].append(f"{isoName}_acc_concentration")
             if allIsos[isoId]["type"] > 0:
-                extracts["depo"].append("{}_acc_total_deposition".format(isoName))
-                extracts["wetd"].append("{}_acc_wet_deposition".format(isoName))
+                extracts["depo"].append(f"{isoName}_acc_total_deposition")
+                extracts["wetd"].append(f"{isoName}_acc_wet_deposition")
 
         with open(
             os.path.join(self.directory, "cdmGribWriterIsotopesTemplate.xml")
@@ -283,10 +285,27 @@ GRAVITY.FIXED.M/S=0.0002
             ),
         )
 
+        # change the ncml-config
+        with open(
+            os.path.join(self.directory, "fillValue_template.ncml")
+        ) as fillValueFH:
+            fillValueTemp = fillValueFH.read()
+
+        varFills = []
+        for t in ("conc", "dose", "depo", "wetd"):
+            for var in extracts[t]:
+                varFills.append(fillValueTemp.format(varname=var))
+
+        with open(
+            os.path.join(self.directory, "removeSnapReferenceTime.ncml")
+        ) as ncmlFH:
+            ncmlOut = ncmlFH.read()
+        ncmlOut = ncmlOut.format(variables="\n".join(varFills))
+        
         return {
             "extracts": extracts,
             "xml": xmlOut,
-            "ncml": os.path.join(self.directory, "removeSnapReferenceTime.ncml"),
+            "ncml": ncmlOut,
         }
 
     def readNPPs(
@@ -596,6 +615,60 @@ GRAVITY.FIXED.M/S=0.0002
         except Exception as e:
             dosecoeffs = None
         return dosecoeffs
+
+def snapNc_convert_to_grib(snapNc, basedir, ident, isotopes):
+    """simple function to implement conversion to grib snap.nc using fimex
+    and resources-setup
+    """
+    config = Resources().getGribWriterConfig(isotopes)
+    xmlFile = "cdmGribWriterConfig.xml"
+    basexmlFile = os.path.join(basedir, xmlFile)
+    with open(basexmlFile, 'w') as xh:
+        xh.write(config['xml'])
+    ncmlFile = "config.ncml"
+    baseNcmlFile = os.path.join(basedir, ncmlFile)
+    with open(baseNcmlFile, 'w') as nh:
+        nh.write(config['ncml'])
+    
+    errlog = open(os.path.join(basedir, "fimex.errlog"), "w")
+    outlog = open(os.path.join(basedir, "fimex.outlog"), "w")
+    tempfile = 'tmp.grib'
+    basetempfile = os.path.join(basedir, tempfile)
+    # fimex works in basedir, so it does not need the basefiles
+    for appendix, params in config['extracts'].items():
+        outFile = os.path.join(basedir, f"{ident}_{appendix}")
+        with open(outFile, 'wb') as gh:
+            for param in params:
+                if (os.path.exists(basetempfile)):
+                    os.remove(basetempfile)
+                procOptions = ['fimex', f'--input.file={snapNc}', f'--input.config={ncmlFile}',
+                       # avoid problem with lat/lon variables
+                       # in fimex grib-writer< 0.64
+                       # '--extract.removeVariable=longitude',
+                       # '--extract.removeVariable=latitude',
+                       f'--output.file={tempfile}',
+                       '--output.type=grib', f'--output.config={xmlFile}']
+                procOptions.append(f'--extract.selectVariables={param}')
+                print(" ".join(procOptions))
+                proc = subprocess.Popen(procOptions, cwd=basedir, stderr=errlog, stdout=outlog)
+                if (proc.wait() != 0):
+                    errlog.write("'{fimex}' in {dir} failed".format(fimex=' '.join(procOptions), dir=basedir))
+                else:
+                    # append tmp-file to final grib-file
+                    with (open(basetempfile, 'rb')) as th:
+                        while True:
+                            data = th.read(16*1024*1024) # read max 16M blocks
+                            if data:
+                                gh.write(data)
+                            else:
+                                break
+                if (os.path.exists(basetempfile)):
+                    os.remove(basetempfile)
+
+    errlog.close()
+    outlog.close()
+
+
 
 
 if __name__ == "__main__":

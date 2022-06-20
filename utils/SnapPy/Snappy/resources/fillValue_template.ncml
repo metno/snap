@@ -1,0 +1,4 @@
+<!-- change the isotopes fill-value to be able to set 0 as bit-map in grib1-packing -->
+<variable name="{varname}" type="float">
+   <attribute name="_FillValue" type="float" value="0."/>
+</variable>
