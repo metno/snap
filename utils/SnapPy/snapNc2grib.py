@@ -25,7 +25,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="convert a snap.nc output-file to grib, should be run after snapAddToa")
     parser.add_argument("--nc", help="snap.nc filename", required=True)
     parser.add_argument("--ident", help="output-file identifier", required=True)
-    parser.add_argument("--noBitmapCompress", help="disable grib bitmap-compression", action='store_true')
+    parser.add_argument("--bitmapCompress", help="enable grib bitmap-compression", action='store_true')
     
     args = parser.parse_args()
 
@@ -33,7 +33,7 @@ if __name__ == "__main__":
     isotopes = getIsotopesFromFile(ncfile)
     ident = args.ident
     bitmapCompress = True
-    if args.noBitmapCompress:
-        bitmapCompress= False
+    if args.bitmapCompress:
+        bitmapCompress= True
     dirname = os.path.dirname(ncfile)
     snapNc_convert_to_grib(ncfile, dirname, ident, isotopes, bitmapCompress=bitmapCompress)
