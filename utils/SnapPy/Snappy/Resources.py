@@ -617,7 +617,10 @@ GRAVITY.FIXED.M/S=0.0002
             dosecoeffs = None
         return dosecoeffs
 
-def snapNc_convert_to_grib(snapNc, basedir, ident, isotopes, bitmapCompress=True):
+# setting bitmapCompress as default to False
+# fimex drops all fields which are completely missing, which argos doesn't like
+# waiting for fimex-fix
+def snapNc_convert_to_grib(snapNc, basedir, ident, isotopes, bitmapCompress=False):
     """simple function to implement conversion to grib snap.nc using fimex
     and resources-setup
     """
