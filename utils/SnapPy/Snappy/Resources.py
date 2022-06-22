@@ -246,7 +246,7 @@ GRAVITY.FIXED.M/S=0.0002
 
         return "\n".join(snapinputs)
 
-    def getGribWriterConfig(self, isotopes):
+    def getGribWriterConfig(self, isotopes, setFillValue=True):
         """Return a dictionary with a xml: xml-configuration string and a exracts: output-type and variable-names.
         Use in conjunction with convert_to_grib.
         """
@@ -292,9 +292,10 @@ GRAVITY.FIXED.M/S=0.0002
             fillValueTemp = fillValueFH.read()
 
         varFills = []
-        for t in ("conc", "dose", "depo", "wetd"):
-            for var in extracts[t]:
-                varFills.append(fillValueTemp.format(varname=var))
+        if setFillValue:
+            for t in ("conc", "dose", "depo", "wetd"):
+                for var in extracts[t]:
+                    varFills.append(fillValueTemp.format(varname=var))
 
         with open(
             os.path.join(self.directory, "removeSnapReferenceTime.ncml")
@@ -616,11 +617,11 @@ GRAVITY.FIXED.M/S=0.0002
             dosecoeffs = None
         return dosecoeffs
 
-def snapNc_convert_to_grib(snapNc, basedir, ident, isotopes):
+def snapNc_convert_to_grib(snapNc, basedir, ident, isotopes, bitmapCompress=True):
     """simple function to implement conversion to grib snap.nc using fimex
     and resources-setup
     """
-    config = Resources().getGribWriterConfig(isotopes)
+    config = Resources().getGribWriterConfig(isotopes, setFillValue=bitmapCompress)
     xmlFile = "cdmGribWriterConfig.xml"
     basexmlFile = os.path.join(basedir, xmlFile)
     with open(basexmlFile, 'w') as xh:
