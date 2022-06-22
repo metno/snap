@@ -37,6 +37,7 @@ setup(
         "snapPy",
         "snap4rimsterm",
         "snapCombineInverse",
+        "snapNc2grib.py",
         "snapRunnerNpps",
         "eemepModelRunner",
         "snapRemoteRunner.py",
