@@ -32,7 +32,7 @@ if __name__ == "__main__":
     ncfile = args.nc
     isotopes = getIsotopesFromFile(ncfile)
     ident = args.ident
-    bitmapCompress = True
+    bitmapCompress = False
     if args.bitmapCompress:
         bitmapCompress= True
     dirname = os.path.dirname(ncfile)
