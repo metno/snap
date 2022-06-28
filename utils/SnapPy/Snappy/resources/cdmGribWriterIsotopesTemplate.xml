@@ -28,6 +28,11 @@ unsigned[2] isotopeIdentificationNumber : dump ;
 -->
 <!-- <template_file name="template_conc_Am-241.ID_328.grib" /> -->
 <template_file name="{GRIB_TEMPLATE_PATH}" />
+<processing_options>
+    <!-- omitEmptyFields should be false except for TOA -->
+    <omitEmptyFields>{{OMIT_EMPTY_FIELDS:d}}</omitEmptyFields>
+</processing_options>
+
 <global_attributes>
     <!-- type can be double, long, string -->
     <attribute name="identificationOfOriginatingGeneratingCentre" value="54" type="long" />

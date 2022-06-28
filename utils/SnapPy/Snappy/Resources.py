@@ -246,7 +246,7 @@ GRAVITY.FIXED.M/S=0.0002
 
         return "\n".join(snapinputs)
 
-    def getGribWriterConfig(self, isotopes, setFillValue=True):
+    def _getGribWriterConfig(self, isotopes, setFillValue=True):
         """Return a dictionary with a xml: xml-configuration string and a exracts: output-type and variable-names.
         Use in conjunction with convert_to_grib.
         """
@@ -624,11 +624,9 @@ def snapNc_convert_to_grib(snapNc, basedir, ident, isotopes, bitmapCompress=Fals
     """simple function to implement conversion to grib snap.nc using fimex
     and resources-setup
     """
-    config = Resources().getGribWriterConfig(isotopes, setFillValue=bitmapCompress)
+    config = Resources()._getGribWriterConfig(isotopes, setFillValue=bitmapCompress)
     xmlFile = "cdmGribWriterConfig.xml"
     basexmlFile = os.path.join(basedir, xmlFile)
-    with open(basexmlFile, 'w') as xh:
-        xh.write(config['xml'])
     ncmlFile = "config.ncml"
     baseNcmlFile = os.path.join(basedir, ncmlFile)
     with open(baseNcmlFile, 'w') as nh:
@@ -640,6 +638,12 @@ def snapNc_convert_to_grib(snapNc, basedir, ident, isotopes, bitmapCompress=Fals
     basetempfile = os.path.join(basedir, tempfile)
     # fimex works in basedir, so it does not need the basefiles
     for appendix, params in config['extracts'].items():
+        if appendix == 'tofa':
+            omitEmptyFields = True
+        else:
+            omitEmptyFields = False
+        with open(basexmlFile, 'w') as xh:
+            xh.write(config['xml'].format(OMIT_EMPTY_FIELDS=omitEmptyFields))
         outFile = os.path.join(basedir, f"{ident}_{appendix}")
         with open(outFile, 'wb') as gh:
             for param in params:
