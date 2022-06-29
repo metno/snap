@@ -80,6 +80,7 @@ subroutine  releasefile(filename, release1)
     if (debugrelfile) write (error_unit,*) 'cinput (',nlines,'):',cinput
     if (cinput == "end") exit inputlines
     if (cinput(1:1) == '*') cycle inputlines
+    if (cinput == '') cycle inputlines
 
     read(cinput, *, err=12) hour, height, comp, rel_s
     if (hour < lasthour) then
