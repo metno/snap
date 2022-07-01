@@ -182,7 +182,7 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
 
     return sourceTerm
 
-def snap4rimsterm(rimsterm, argosrequest, basedir, ident, met_model):
+def snap4rimsterm(rimsterm, argosrequest, basedir, ident, met_model, bitmapCompress):
     '''run snap with rimsterm definition in basedir dir'''
     tree = ET.parse(rimsterm)
     root = tree.getroot()
@@ -225,14 +225,14 @@ def snap4rimsterm(rimsterm, argosrequest, basedir, ident, met_model):
         for oformat in argosRoot.findall("OutputFormat"):
             print("output in format: {}".format(oformat.text))
             if oformat.text == 'GRIB':
-                snapNc_convert_to_grib(snapNC, basedir, ident, rimstermGetIsotopes(root).values())
+                snapNc_convert_to_grib(snapNC, basedir, ident, rimstermGetIsotopes(root).values(), bitmapCompress=bitmapCompress)
             elif oformat.text == 'NetCDF':
                 # create a filename which can be picked up by SMS
                 os.symlink(snapNC, os.path.join(basedir,"{}_all.nc".format(ident)))
             else:
                 raise Exception("unknown OutputFormat in request: {}".format(oformat.text))
     else:
-        snapNc_convert_to_grib(snapNC, basedir, ident, rimstermGetIsotopes(root).values())
+        snapNc_convert_to_grib(snapNC, basedir, ident, rimstermGetIsotopes(root).values(), bitmapCompress=bitmapCompress)
 
 
 
@@ -245,8 +245,10 @@ if __name__ == "__main__":
     parser.add_argument("--metmodel", help="select the NWP input model, nrpa_ec_0p1, nrpa_ec_0p1_global, meps_2_5km, gfs_grib_filter_fimex, icon_0p25_global", required=True, default='nrpa_ec_0p1')
     parser.add_argument("--dir", help="output-directory", required=True)
     parser.add_argument("--ident", help="output-file identifier", required=True)
+    parser.add_argument("--bitmapCompress", help="enable grib bitmap-compression", action='store_true')
+
     args = parser.parse_args()
     if args.rimsterm is not None:
-        snap4rimsterm(args.rimsterm, args.argosrequest, args.dir, args.ident, args.metmodel)
+        snap4rimsterm(args.rimsterm, args.argosrequest, args.dir, args.ident, args.metmodel, bitmapCompress=args.bitmapCompress)
     else:
         print("need rimsterm option", file=sys.stderr)
