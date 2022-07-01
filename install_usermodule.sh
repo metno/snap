@@ -41,8 +41,9 @@ make install
 
 cat > $PREFIX/bin/fimex<< 'EOF'
 #! /bin/bash
-froot=/modules/bionic/conda/Feb2021/envs/production-fimex-1.8.1
-LD_LIBRARY_PATH=${froot}/lib:$LD_LIBRARY_PATH ${froot}/bin/fimex "$@"
+source /modules/bionic/conda/Feb2021/etc/profile.d/conda.sh
+conda activate production-fimex-1.8.1
+fimex "$@"
 EOF
 chmod +x $PREFIX/bin/fimex
 
