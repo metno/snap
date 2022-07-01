@@ -104,15 +104,16 @@ function send_msg()
 }}
 
 
-module load SnapPy/2.1.2
-#module load fimex/1.5.0
+module load SnapPy/2.1.4
+# requires fimex version 1.8.1 for bitmapCompression
+# module load fimex/1.8.1
 
 ulimit -c 0
 export OMP_NUM_THREADS=1
 
 cd {rundir}
 send_msg 101 "Starting run for {model} (timeout: 2h)"
-snap4rimsterm --rimsterm {xmlfile} {argosrequest} --dir . --ident {ident}_SNAP --metmodel {metmodel}
+snap4rimsterm --rimsterm {xmlfile} {argosrequest} --dir . --ident {ident}_SNAP --metmodel {metmodel} --bitmapCompress
 if [ $? -ne 0 ]; then
     send_msg 409 "{model} output data does not exist, snap4rimsterm failed"
     exit 1;
