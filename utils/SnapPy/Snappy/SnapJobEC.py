@@ -73,7 +73,6 @@ class SnapJobEC:
         script = """#!/bin/bash
 #$ -N dsa_bsnap
 #$ -S /bin/bash
-#$ -V
 #$ -j n
 #$ -r y
 #$ -l h_rt=2:00:00
