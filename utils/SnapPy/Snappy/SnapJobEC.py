@@ -24,6 +24,8 @@ Created on Mar 8, 2018
 import os
 import re
 
+from Snappy.ResourcesCommon import getLustreStore
+
 
 class SnapJobEC:
     """tasks to work with the model SNAP, SNAPGLOBAL and TRAJ with EC-data"""
@@ -89,6 +91,8 @@ class SnapJobEC:
 chmod g+rw {rundir}/$JOB_NAME.$JOB_ID.logout
 chmod g+rw {rundir}/$JOB_NAME.$JOB_ID.logerr
 
+export STORE={store}
+
 function send_status()
 {{
     scp {scpoptions} {statusfile} {scpdestination}
@@ -148,6 +152,7 @@ exit 0;
             statusfile=self.task.status_filename(),
             scpoptions=self.task.scpoptions,
             scpdestination=self.task.scpdestination,
+            store=getLustreStore(),
         )
 
         return script

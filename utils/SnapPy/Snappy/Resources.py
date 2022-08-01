@@ -32,7 +32,7 @@ import sys
 import time as mtime
 from time import gmtime, strftime
 
-from Snappy.ResourcesCommon import ResourcesCommon
+from Snappy.ResourcesCommon import getLustreDir
 from Snappy import read_dosecoefficients_icrp
 
 
@@ -50,7 +50,7 @@ class MetModel(enum.Enum):
     def __hash__(self):
         return self.value.__hash__()
 
-class Resources(ResourcesCommon):
+class Resources:
     """
     Read the resources and combine them
     """
@@ -437,7 +437,7 @@ GRAVITY.FIXED.M/S=0.0002
         return filename
 
     def getSnapOutputDir(self):
-        return self._OUTPUTDIR.format(LUSTREDIR=self.getLustreDir())
+        return self._OUTPUTDIR.format(LUSTREDIR=getLustreDir())
 
     def _findFileInPathes(self, file, pathes):
         for path in pathes:
@@ -447,7 +447,7 @@ GRAVITY.FIXED.M/S=0.0002
         return None
 
     def _lustreTemplateDirs(self, dirs):
-        return [x.format(LUSTREDIR=self.getLustreDir()) for x in dirs]
+        return [x.format(LUSTREDIR=getLustreDir()) for x in dirs]
 
     def getMetGlobalInputDirs(self, metmodel):
         return self._lustreTemplateDirs(self._MET_GLOBAL_INPUTDIRS[metmodel])
@@ -617,6 +617,9 @@ GRAVITY.FIXED.M/S=0.0002
             dosecoeffs = None
         return dosecoeffs
 
+    def getLustreDir(self):
+        return getLustreDir()
+
 # setting bitmapCompress as default to False
 # fimex drops all fields which are completely missing, which argos doesn't like
 # waiting for fimex-fix
@@ -675,8 +678,6 @@ def snapNc_convert_to_grib(snapNc, basedir, ident, isotopes, bitmapCompress=Fals
 
     errlog.close()
     outlog.close()
-
-
 
 
 if __name__ == "__main__":
