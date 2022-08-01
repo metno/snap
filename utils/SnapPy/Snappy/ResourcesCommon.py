@@ -19,58 +19,57 @@
 import os
 import subprocess
 import sys
+from functools import lru_cache
 
 """
 Common Resource-definitions for EEmep and Snap, parent abstract interface
 """
 
 
-class ResourcesCommon:
+@lru_cache(maxsize=1)
+def getLustreDir():
     """
-    common resources for snap and eemep, setting/using the following variables:
-
-    self._lustredir
+    Get current lustre directory
     """
+    lustredir = "/lustre/storeB"
+    store = os.getenv("STORE", None)
+    if store:
+        lustredir = os.path.join(os.sep, "lustre", store)
+    else:
+        lustredirenv = _getLustreMappEnv()
+        if os.path.isdir(lustredirenv):
+            lustredir = lustredirenv
+    return lustredir
 
-    def getLustreDir(self):
-        if not hasattr(self, "_lustredir"):
-            lustredir = "/lustre/storeB"
-            store = os.getenv("STORE", None)
-            if store:
-                lustredir = os.path.join(os.sep, "lustre", store)
-            else:
-                lustredirenv = self._getLustreMappEnv()
-                if os.path.isdir(lustredirenv):
-                    lustredir = lustredirenv
-            self._lustredir = lustredir
-        return self._lustredir
 
-    @staticmethod
-    def _getLustreMappEnv():
-        sh_script = os.path.join(
-            os.path.dirname(__file__), "resources/lustredir_serviceenv.sh"
+def _getLustreMappEnv():
+    sh_script = os.path.join(
+        os.path.dirname(__file__), "resources/lustredir_serviceenv.sh"
+    )
+    lustredir = "/no_such_file"
+    try:
+        proc = subprocess.run(
+            ["/bin/sh", sh_script],
+            check=True,
+            stdout=subprocess.PIPE,
+            timeout=10,
+            encoding="utf-8",
         )
-        lustredir = "/no_such_file"
-        try:
-            proc = subprocess.run(
-                ["/bin/sh", sh_script],
-                check=True,
-                stdout=subprocess.PIPE,
-                timeout=10,
-                encoding="utf-8",
-            )
-            for line in proc.stdout.splitlines():
-                if line.rstrip():
-                    lustredir = line.rstrip()  # lustredir in last line
-        except subprocess.SubprocessError as se:
-            print(se, file=sys.stderr)
+        for line in proc.stdout.splitlines():
+            if line.rstrip():
+                lustredir = line.rstrip()  # lustredir in last line
+    except subprocess.SubprocessError as se:
+        print(se, file=sys.stderr)
 
-        return lustredir
+    return lustredir
+
+def getLustreStore():
+    lustredir = getLustreDir()
+    return lustredir[len("/lustre/"):]
 
 
 if __name__ == "__main__":
     # test code
-    rc = ResourcesCommon()
-    print(rc.getLustreDir())
-    assert rc.getLustreDir().startswith("/lustre/store")
-    assert len(rc.getLustreDir()) < 15
+    print(getLustreDir())
+    assert getLustreDir().startswith("/lustre/store")
+    assert len(getLustreDir()) < 15

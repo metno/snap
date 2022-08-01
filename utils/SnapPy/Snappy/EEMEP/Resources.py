@@ -28,10 +28,10 @@ import re
 import sys
 from time import gmtime, strftime
 
-from Snappy.ResourcesCommon import ResourcesCommon
+from Snappy.ResourcesCommon import getLustreDir
 
 
-class Resources(ResourcesCommon):
+class Resources:
     """
     Read the resources and combine them
     """
@@ -106,10 +106,10 @@ class Resources(ResourcesCommon):
         return self.HPC[hpcname]["RUNDIR"]
 
     def getOutputDir(self):
-        return self._OUTPUTDIR.format(LUSTREDIR=self.getLustreDir())
+        return self._OUTPUTDIR.format(LUSTREDIR=getLustreDir())
 
     def _lustreTemplateDirs(self, dirs):
-        return [x.format(LUSTREDIR=self.getLustreDir()) for x in dirs]
+        return [x.format(LUSTREDIR=getLustreDir()) for x in dirs]
 
     def getECInputDirs(self):
         return self._lustreTemplateDirs(self._ECINPUTDIRS)
@@ -175,7 +175,7 @@ class Resources(ResourcesCommon):
                     volcano["LONGITUDE"] *= -1
                 try:
                     volcano["ELEV"] = float(volcano["ELEV"])
-                except:
+                except Exception as _:
                     volcano["ELEV"] = 0.0
                 if volcano["NAME"] == "Unnamed":
                     volcano["NAME"] = "_"
@@ -362,6 +362,9 @@ class Resources(ResourcesCommon):
                     dates.append((filename, 8))
 
         return dates
+
+    def getLustreDir(self):
+        return getLustreDir()
 
 
 if __name__ == "__main__":
