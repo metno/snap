@@ -27,7 +27,7 @@ RUNTAG="{runtag}"
 RUNDIR={rundir}
 SRCDIR=/home/metno_op/emep/eemep2/src/
 #DATA_DIR=/home/metno_op/emep/eemep2/input/eEMEP_OpenSource
-VERSION=active
+VERSION=active_volcano
 
 
 YEAR={year}
