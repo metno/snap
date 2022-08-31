@@ -34,7 +34,7 @@ RUNTAG="{runtag}"
 RUNDIR={rundir}
 SRCDIR=$HDIR/emep/eemep2/src/
 DATA_DIR=$HDIR/emep/eemep2/input/eEMEP_OpenSource
-VERSION=centos7_active
+VERSION=centos7_active_volcano
 
 
 YEAR={year}
