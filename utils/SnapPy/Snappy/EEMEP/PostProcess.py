@@ -49,8 +49,8 @@ def _get_isotope_setup(isotope, type):
         retval['acc_only'] = False
         retval['decay_needed'] = True
         retval['decayrate'] = 1 # TBD
-        retval['units'] = 'uBq/m2'
-        retval['units_acc'] = 'uBq/m2' # no *hr, since this is what is on ground
+        retval['units'] = 'mBq/m2'
+        retval['units_acc'] = 'mBq/m2' # no *hr, since this is what is on ground
     elif type == 'DDEP':
         retval['eemep_name'] = f'DDEP_NPP_{isotope}_m2Grid'
         retval['snap_acc_name'] = f'{isotope}_acc_dry_deposition'
@@ -58,8 +58,8 @@ def _get_isotope_setup(isotope, type):
         retval['acc_only'] = False
         retval['decay_needed'] = True
         retval['decayrate'] = 1 # TBD
-        retval['units'] = 'uBq/m2'
-        retval['units_acc'] = 'uBq/m2'
+        retval['units'] = 'mBq/m2'
+        retval['units_acc'] = 'mBq/m2'
     else:
         raise Exception(f'wrong type: {type}')
     return retval
