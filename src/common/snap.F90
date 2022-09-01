@@ -454,7 +454,7 @@ PROGRAM bsnap
         &,":",I2.2)') time_start
     ncsummary = trim(ncsummary)//" "//trim(tempstr)
     do n = 1, nrelpos
-      write (tempstr, '("Release Pos (lat, lon): (", F5.1, ",", F6.1 &
+      write (tempstr, '("Release Pos (lat, lon): (", F6.2, ",", F7.2 &
           &,")")') &
           release_positions(n)%geo_latitude, &
           release_positions(n)%geo_longitude
