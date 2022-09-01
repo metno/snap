@@ -19,17 +19,16 @@
 #
 
 import netCDF4
-import argparse
 import numpy
 
-parser = argparse.ArgumentParser()
-parser.add_argument("snapNc", help="snap.nc file to be changed")
-args = parser.parse_args()
-
-
-with netCDF4.Dataset(args.snapNc, "a") as nc:
+def add_toa_to_nc(nc):
+    '''
+    add time of arrival and total depositions
+    to the nc-filehandle (netCDF4.Dataset)
+    filehandle must be rewriteable snap-output file
+    '''
     if ('time_of_arrival' in nc.variables):
-        exit(0)
+        return
     times = netCDF4.num2date(nc.variables['time'][:],units=nc.variables['time'].units)
     timeMax = abs(int((times[-1] - times[0]).total_seconds() / (60*60)))
     timeDelta = abs(int((times[1] - times[0]).total_seconds() / (60*60)))
@@ -71,3 +70,15 @@ with netCDF4.Dataset(args.snapNc, "a") as nc:
                     if attr in nc.variables[v].ncattrs():
                         totalVar.setncattr(attr, nc.variables[v].getncattr(attr))
                 totalVar[:] = total
+
+
+if __name__ == '__main__':
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("snapNc", help="snap.nc file to be changed")
+    args = parser.parse_args()
+
+
+    with netCDF4.Dataset(args.snapNc, "a") as nc:
+        add_toa_to_nc(nc)

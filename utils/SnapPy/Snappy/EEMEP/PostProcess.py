@@ -10,6 +10,7 @@ import numpy as np
 
 from Snappy.EEMEP.SixHourMax import SixHourMax
 from Snappy.Isotopes import Isotopes
+from Snappy.AddToa import add_toa_to_nc
 
 
 class StderrLogger():
@@ -108,7 +109,7 @@ pp.convert_files('eemep_hourInst.nc', 'eemep_hour.nc')
 
 
 
-    def accumulate_nuc_files(self, instantFilename, averageFilename) -> None:
+    def accumulate_and_toa_nuc_files(self, instantFilename, averageFilename) -> None:
         self.logger._write_log(f"Accumulating nuclear outputs found in {self.path}")
         # rename files, make them available to further processes
         timestamp = self.timestamp.strftime("%Y%m%dT%H%M%S")
@@ -131,7 +132,7 @@ pp.convert_files('eemep_hourInst.nc', 'eemep_hour.nc')
                 varname = f'SURF_uBq_NPP_{isotope}'
                 newvar = f'{isotope}_concentration'
                 if varname in nc.variables:
-                    print(f"renaming {varname} to {newvar}")
+                    self.logger._write_log(f"renaming {varname} to {newvar}")
                     # nc.renameVariabe(varname, newvar) # bug in renameVariable -> just create a copy for now
                     var = nc[varname]
                     nvar = nc.createVariable(newvar, var.datatype, dimensions=var.dimensions,
@@ -146,7 +147,7 @@ pp.convert_files('eemep_hourInst.nc', 'eemep_hour.nc')
                 for isotope in isotopes:
                     for type in ('CONC', 'WDEP', 'DDEP'):
                         isosetup = _get_isotope_setup(isotope, type)
-                        print(isotope, isosetup)
+                        self.logger._write_log(f"fix output for {isotope}, {type}, {isosetup}")
                         varname = isosetup['eemep_name']
                         newaccvar = isosetup['snap_acc_name']
                         newvar = isosetup['snap_name']
@@ -181,11 +182,13 @@ pp.convert_files('eemep_hourInst.nc', 'eemep_hour.nc')
                                 else:
                                     decayfactor = 1
                                 naccvar[t,:] = naccvar[t-1,:]*decayfactor + data
-            
+                            # sync after each variable
                             nc.sync()
-
+            # file is now very like snap-output, so possible to add toa
+            self.logger._write_log('adding toa and totals to output')
+            add_toa_to_nc(nc)
 
 if __name__ == '__main__':
     pp = PostProcess('.', datetime.datetime.now())
     #pp.convert_files('eemep_hourInst.nc', 'eemep_hour.nc')
-    pp.accumulate_nuc_files('eemep_hourInst.nc', 'eemep_hour.nc')
+    pp.accumulate_and_toa_nuc_files('eemep_hourInst.nc', 'eemep_hour.nc')

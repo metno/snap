@@ -439,8 +439,8 @@ class ModelRunner():
         #Postprocess
         pp = PostProcess(self.path, self.timestamp, logger=self)
         if self.npp:
-            pp.accumulate_nuc_files(os.path.join(self.path, ModelRunner.OUTPUT_INSTANT_FILENAME),
-                                    os.path.join(self.path, ModelRunner.OUTPUT_AVERAGE_FILENAME))
+            pp.accumulate_and_toa_nuc_files(os.path.join(self.path, ModelRunner.OUTPUT_INSTANT_FILENAME),
+                                            os.path.join(self.path, ModelRunner.OUTPUT_AVERAGE_FILENAME))
         else:
             pp.convert_files(os.path.join(self.path, ModelRunner.OUTPUT_INSTANT_FILENAME),
                              os.path.join(self.path, ModelRunner.OUTPUT_AVERAGE_FILENAME))
