@@ -15,9 +15,10 @@ clean: clean_links
 distclean: clean
 	rm -f bsnap_naccident create_naccident_input create_naccident_output
 
-install: bsnap_naccident ../../utils/snapAddToa
-	install $^ $(BINDIR)/
-#	cp ../../utils/snapAddToa $(BINDIR)/
+install: bsnap_naccident ../../utils/SnapPy/Snappy/AddToa.py
+	cp bsnap_naccident $(BINDIR)/
+	cp ../../utils/SnapPy/Snappy/AddToa.py $(BINDIR)/snapAddToa
+	chmod 755 $(BINDIR)/snapAddToa
 
 
 .PHONY: all clean distclean install
