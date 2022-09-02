@@ -138,7 +138,7 @@ pp.convert_files('eemep_hourInst.nc', 'eemep_hour.nc')
                     nvar = nc.createVariable(newvar, var.datatype, dimensions=var.dimensions,
                                             zlib=True, complevel=1)
                     nvar.setncatts(var.__dict__)
-                    for t in range(0, nc['time'][:].shape[0]):
+                    for t in range(0, nc['time'].shape[0]):
                         nvar[t,:] = var[t,:]
                 
                     
@@ -171,7 +171,7 @@ pp.convert_files('eemep_hourInst.nc', 'eemep_hour.nc')
                             naccvar[0,:] = data
                             if not isosetup['acc_only']:
                                 nvar[0,:] = data
-                            for t in range(1, nc['time'][:].shape[0]):
+                            for t in range(1, nc['time'].shape[0]):
                                 data = var[t,:]
                                 if not isosetup['acc_only']:
                                     nvar[t,:] = data
