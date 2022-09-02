@@ -21,7 +21,7 @@
 import netCDF4
 import numpy
 
-def add_toa_to_nc(nc):
+def add_toa_to_nc(nc: netCDF4.Dataset):
     '''
     add time of arrival and total depositions
     to the nc-filehandle (netCDF4.Dataset)
