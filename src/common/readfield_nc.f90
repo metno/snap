@@ -309,7 +309,7 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
 !  input ps, must be hPa, otherwise:
   if (nctype == 'arome' .OR. nctype == 'dmi_eps' .OR. &
   nctype == 'ec_det' .OR. nctype == 'h12_grib' .OR. &
-  nctype == "ec_n1s" .OR. nctype == "SLIM" .OR. &
+  nctype == "SLIM" .OR. &
   nctype == 'gfs_grib_filter_fimex') then
     ps2 = ps2*0.01
   endif
@@ -578,6 +578,40 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
   return
 end subroutine readfield_nc
 
+!> Reads `units` attribute of the precipitation variable
+!> unitScale == 0.0 on error
+subroutine read_precip_unit_scale(ncid, varname, unitScale)
+  use snapmetML, only: precip_units, precip_units_fallback
+  integer, intent(in) :: ncid
+  character(len=*), intent(in) :: varname
+  real, intent(out) :: unitScale
+
+  integer :: attr_len
+  character(len=:), allocatable :: attr
+
+  integer :: varid
+  integer :: nferr
+
+  unitScale = 0.0
+
+  nferr = nf90_inq_varid(ncid, varname, varid)
+  if (nferr /= NF90_NOERR) return
+
+  nferr = nf90_inquire_attribute(ncid, varid, "units", len=attr_len)
+  if (nferr /= NF90_NOERR) return
+  allocate(character(len=attr_len) :: attr)
+  nferr = nf90_get_att(ncid, varid, "units", attr)
+  if (nferr /= NF90_NOERR) return
+
+  select case (attr)
+    case ("m")
+      unitScale = 1000.0
+    case (precip_units, precip_units_fallback)
+      unitScale = 1.0
+  end select
+end subroutine
+
+
 !> read precipitation
 subroutine read_precipitation(ncid, nhdiff, timepos, timeposm1)
   use iso_fortran_env, only: error_unit
@@ -637,9 +671,11 @@ subroutine read_precipitation(ncid, nhdiff, timepos, timeposm1)
           start3d, count3d, field3)
       call nfcheckload(ncid, met_params%precconaccumv, &
           start3d, count3d, field4)
+
+      call read_precip_unit_scale(ncid, met_params%precstratiaccumv, unitScale)
+      if (unitScale == 0.0) unitScale = 1.0
+
     !..the difference below may get negative due to different scaling
-      unitScale = 1.
-      if (nctype == 'ec_det' .or. nctype == "ec_n1s") unitScale = 1000.
       precip(:,:) = (field3 + field4) - (field1 + field2)
       precip(:,:) = precip/nhdiff*unitScale
       where (precip < 0.0)
@@ -659,11 +695,11 @@ subroutine read_precipitation(ncid, nhdiff, timepos, timeposm1)
       totalprec = sum(field3) + sum(field4)
 
       if (totalprec > 1e-5) then
-      !..the difference below may get negative due to different scaling
         write(iulog,*) "found precip in first timestep, assuming ", &
             "empty 0 timestep to deaccumulate precip"
-        unitScale = 1.
-        if (nctype == 'ec_det' .or. nctype == "ec_n1s") unitScale = 1000.
+        call read_precip_unit_scale(ncid, met_params%precstratiaccumv, unitScale)
+        if (unitScale == 0.0) unitScale = 1.0
+      !..the difference below may get negative due to different scaling
         precip(:,:) = (field3 + field4) - (field1 + field2)
         precip(:,:) = precip/nhdiff*unitScale
         where (precip < 0.0)
