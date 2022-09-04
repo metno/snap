@@ -152,8 +152,8 @@ module snapmetML
       met_params%precaccumv = ''
       met_params%precstrativrt = ''
       met_params%precconvrt = ''
-      met_params%precstratiaccumv = 'lwe_thickness_of_stratiform_precipitation_amount'
-      met_params%precconaccumv = 'lwe_thickness_of_convective_precipitation_amount'
+      met_params%precstratiaccumv = 'lwe_thickness_of_stratiform_precipitation_amount_acc'
+      met_params%precconaccumv = 'lwe_thickness_of_convective_precipitation_amount_acc'
 !..get grid parameters from field identification
     case('era5')
       met_params%manual_level_selection = .true.
@@ -286,26 +286,6 @@ module snapmetML
       met_params%precconvrt = ''
 !..get grid parameters from field identification
 ! set as long as sortfield still is called
-    case('ec_n1s')
-      met_params%manual_level_selection = .true.
-      met_params%has_dummy_dim = .true.
-      met_params%xwindv = 'x_wind_ml'
-      met_params%ywindv = 'y_wind_ml'
-      met_params%xwind10mv = 'x_wind_10m'
-      met_params%ywind10mv = 'y_wind_10m'
-      met_params%pottempv = 'air_temperature_ml'
-      met_params%temp_is_abs = .true.
-      met_params%sigmav = ''
-      met_params%ptopv = ''
-      met_params%apv = 'ap'
-      met_params%bv = 'b'
-      met_params%sigmadotv = ''
-      met_params%psv = 'surface_air_pressure'
-      met_params%precaccumv = ''
-      met_params%precstratiaccumv = 'lwe_thickness_of_stratiform_precipitation_amount_acc'
-      met_params%precconaccumv = 'lwe_thickness_of_convective_precipitation_amount_acc'
-      met_params%precstrativrt = ''
-      met_params%precconvrt = ''
 !..get grid parameters from field identification
     case('SLIM')
       met_params%manual_level_selection = .true.
