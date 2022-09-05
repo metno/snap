@@ -35,7 +35,7 @@ import logging
 import tempfile
 
 from Snappy.EEMEP.Resources import Resources
-from Snappy.EEMEP.PostProcess import PostProcess, Accumulate
+from Snappy.EEMEP.PostProcess import PostProcess
 from Snappy.EEMEP.VolcanoRun import VolcanoRun
 from Snappy.EEMEP.NppRun import NppRun
 import Snappy.Resources
@@ -437,13 +437,11 @@ class ModelRunner():
                       os.path.join(self.path, 'EMEP_IN_{}.nc'.format(tomorrow)))
 
         #Postprocess
-
+        pp = PostProcess(self.path, self.timestamp, logger=self)
         if self.npp:
-            pp = Accumulate(self.path, logger=self)
-            pp.accumulate_file("eemep_hour.nc")
-            pp.accumulate_file("eemep_hourInst.nc")
+            pp.accumulate_and_toa_nuc_files(os.path.join(self.path, ModelRunner.OUTPUT_INSTANT_FILENAME),
+                                            os.path.join(self.path, ModelRunner.OUTPUT_AVERAGE_FILENAME))
         else:
-            pp = PostProcess(self.path, self.timestamp, logger=self)
             pp.convert_files(os.path.join(self.path, ModelRunner.OUTPUT_INSTANT_FILENAME),
                              os.path.join(self.path, ModelRunner.OUTPUT_AVERAGE_FILENAME))
 
