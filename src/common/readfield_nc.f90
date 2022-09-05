@@ -579,11 +579,13 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
 end subroutine readfield_nc
 
 !> Reads `units` attribute of the precipitation variable
-!> unitScale == 0.0 on error
 subroutine read_precip_unit_scale(ncid, varname, unitScale)
   use snapmetML, only: precip_units, precip_units_fallback
   integer, intent(in) :: ncid
   character(len=*), intent(in) :: varname
+  !> Scaling factor to multiply input value to obtain the value
+  !> in model units
+  !> Defaults to 1.0 on error on reading the netCDF file
   real, intent(out) :: unitScale
 
   integer :: attr_len
@@ -592,7 +594,7 @@ subroutine read_precip_unit_scale(ncid, varname, unitScale)
   integer :: varid
   integer :: nferr
 
-  unitScale = 0.0
+  unitScale = 1.0
 
   nferr = nf90_inq_varid(ncid, varname, varid)
   if (nferr /= NF90_NOERR) return
@@ -673,7 +675,6 @@ subroutine read_precipitation(ncid, nhdiff, timepos, timeposm1)
           start3d, count3d, field4)
 
       call read_precip_unit_scale(ncid, met_params%precstratiaccumv, unitScale)
-      if (unitScale == 0.0) unitScale = 1.0
 
     !..the difference below may get negative due to different scaling
       precip(:,:) = (field3 + field4) - (field1 + field2)
@@ -698,7 +699,6 @@ subroutine read_precipitation(ncid, nhdiff, timepos, timeposm1)
         write(iulog,*) "found precip in first timestep, assuming ", &
             "empty 0 timestep to deaccumulate precip"
         call read_precip_unit_scale(ncid, met_params%precstratiaccumv, unitScale)
-        if (unitScale == 0.0) unitScale = 1.0
       !..the difference below may get negative due to different scaling
         precip(:,:) = (field3 + field4) - (field1 + field2)
         precip(:,:) = precip/nhdiff*unitScale

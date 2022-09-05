@@ -1508,7 +1508,10 @@ contains
         !..grid.nctype=<emep/hirlam12>
         if (.not. has_value) goto 12
         read (cinput(pname_start:pname_end), *, err=12) nctype
-
+        if (nctype == "ec_n1s") then
+          write(error_unit, *) "grid type 'ec_n1s' is deprecated, mapping to ec_det"
+          nctype = "ec_det"
+        end if
         call init_meteo_params(nctype, ierror)
         if (ierror /= 0) goto 12
       case ('grid.size')
