@@ -139,7 +139,7 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
   character(len=1024), save :: file_name = ""
   logical, save :: first_time_read = .true.
 
-  integer :: i, k, ilevel, i1, i2
+  integer :: i, j, k, ilevel, i1, i2
   integer :: nhdiff
   real :: alev(nk), blev(nk), db, dxgrid, dygrid
   integer :: kk
@@ -455,17 +455,23 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
     if (allocated(t2_abs)) t2_abs(:,:,:) = t2
   !..abs.temp. -> pot.temp.
     do k=2,nk-kadd
-      associate(p => alevel(k) + blevel(k)*ps2(:,:))
-        t2(:,:,k) = t2(:,:,k)*t2thetafac(p)
-      end associate
+      do j = 1, ny
+        do i = 1, nx
+          p = alevel(k) + blevel(k)*ps2(i,j)
+          t2(i,j,k) = t2(i,j,k)*t2thetafac(p)
+        end do
+      end do
     end do
   else
     if (allocated(t2_abs)) then
       ! pot.temp -> abs.temp
       do k=2,nk-kadd
-        associate(p => alevel(k) + blevel(k)*ps2(:,:))
-          t2_abs(:,:,k) = t2(:,:,k)/t2thetafac(p)
-        end associate
+        do j = 1, ny
+          do i = 1, nx
+            p = alevel(k) + blevel(k)*ps2(i,j)
+            t2_abs(i,j,k) = t2(i,j,k)/t2thetafac(p)
+          end do
+        end do
       end do
     endif
   end if
