@@ -14,7 +14,7 @@ CXXFLAGS=-O2 -mavx -ftree-vectorize -fno-math-errno -Wall -Wextra
 CCFLAGS=-O2 -mavx -ftree-vectorize -fno-math-errno -Wall -Wextra
 
 # some additional flags for fimex
-LDFLAGS=-Wl,-rpath,/modules/xenial/user-apps/mi-programoptions/0.1.0/lib/ -Wl,-rpath,/modules/xenial/user-apps/eccodes/2.12.0/lib/ -Wl,-rpath,/modules/xenial/hdf5/1.8.17/lib
+# LDFLAGS=-Wl,-rpath,/modules/xenial/user-apps/mi-programoptions/0.1.0/lib/ -Wl,-rpath,/modules/xenial/user-apps/eccodes/2.12.0/lib/ -Wl,-rpath,/modules/xenial/hdf5/1.8.17/lib
 
 # NCDIR not required if /usr or /usr/local
 #NCDIR = /modules/trusty/NETCDF/4.3.2/C/
@@ -29,7 +29,7 @@ NCLIBS=$(shell nf-config --flibs)
 FIMEXLD = $(shell pkg-config --libs-only-L fimex  | cut -c 3-)
 FIMEXLIB = $(shell pkg-config --libs fimex)
 
-MIINC = -I/usr/include
+# MIINC = -I/usr/include
 MILIB_FLAGS = -fno-implicit-none -fno-module-private -Wno-all -Wno-extra
 EXLIBS = -lpthread -ldl
 
@@ -45,9 +45,9 @@ BLIBS += $(NCLIBS) -Wl,-rpath,$(NCDIR)/lib
 INCLUDES += $(NCINC)
 endif
 
-LIBS= $(MILIB) $(EXLIBS)
+LIBS= $(EXLIBS)
 ifdef FIMEXLIB
-BLIBS += $(MILIB) $(FIMEXLIB) -Wl,-rpath,$(FIMEXLD) $(LDFLAGS)
+BLIBS += $(FIMEXLIB) -Wl,-rpath,$(FIMEXLD) $(LDFLAGS)
 endif
 
 
