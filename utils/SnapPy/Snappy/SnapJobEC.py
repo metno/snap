@@ -104,7 +104,7 @@ function send_msg()
 }}
 
 
-module load SnapPy/2.1.4
+module load SnapPy/2.1.6
 # requires fimex version 1.8.1 for bitmapCompression
 # module load fimex/1.8.1
 
