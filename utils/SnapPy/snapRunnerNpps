@@ -137,7 +137,7 @@ m=SNAP.current t=fimex format=netcdf f={dirname}/snap.nc
         
 
 def runsnap(npps, outdir):
-    release_dt = datetime.datetime.now()
+    release_dt = datetime.datetime.now() + datetime.timedelta(hours=1)
 
     nppdir = {}
     runparams = []
