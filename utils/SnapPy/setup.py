@@ -39,6 +39,7 @@ setup(
         "snapCombineInverse",
         "snapNc2grib.py",
         "snapRunnerNpps",
+        "snapRunnerNpp",
         "eemepModelRunner",
         "snapRemoteRunner.py",
     ],
