@@ -289,10 +289,8 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       field3 = undef
     endwhere
 
-  !..instant concentration in boundary layer
-    associate(hbl => field4)
-      field2(:,:) = cscale*field1 / (hbl*garea)
-    end associate
+  !..instant concentration in boundary layer; field4 = hbl
+    field2(:,:) = cscale*field1 / (field4*garea)
     if(idebug == 1) call ftest('conc', field2)
 
     call check(nf90_put_var(iunit, varid%comp(m)%icbl, start=ipos, count=isize, &
@@ -348,13 +346,16 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
 
   !..average part of Bq in boundary layer
     scale=100.
-    associate(avgbq1 => avgbq1(:,:,m), avgbq2 => avgbq2(:,:,m))
-      where (avgbq1 + avgbq2 > 0.0)
-        field3 = scale*avgbq1 / (avgbq1 + avgbq2)
-      elsewhere
-        field3 = undef
-      endwhere
-    end associate
+
+    do j=1,ny
+      do i=1,nx
+        if (avgbq1(i,j,m) + avgbq2(i,j,m) > 0.0) then
+          field3(i,j) = scale*avgbq1(i,j,m) / (avgbq1(i,j,m) + avgbq2(i,j,m))
+        else
+          field3(i,j) = undef
+        endif
+      end do
+    end do
     if(idebug == 1) call ftest('apbq', field3, contains_undef=.true.)
 
   !..instant concentration on surface (not in felt-format)
@@ -576,7 +577,7 @@ subroutine write_ml_fields(iunit, varid, average, ipos_in, isize, rt1, rt2)
   USE ftestML, only: ftest
   USE snapdebug, only: idebug
   USE snapgrdML, only: itotcomp, modleveldump, ivlayer
-  USE snapdimML, only: nk
+  USE snapdimML, only: nx,ny,nk
 
   integer, intent(in) :: iunit
   type(common_var), intent(in) :: varid
@@ -586,7 +587,7 @@ subroutine write_ml_fields(iunit, varid, average, ipos_in, isize, rt1, rt2)
   real, intent(in) :: rt1, rt2
 
   type(Particle) :: part
-  real :: avg, total
+  real :: avg, total, dh
   integer :: ivlvl
   integer :: i, j, k, loop, m, maxage, n, npl
   integer :: ipos(4)
@@ -639,10 +640,13 @@ subroutine write_ml_fields(iunit, varid, average, ipos_in, isize, rt1, rt2)
     end if
 
     do k=1,nk-1
-      associate(dh => rt1*hlayer1(:,:,k) + rt2*hlayer2(:,:,k))
-        field1(:,:) = dh
-        field4(:,:) = dh*garea*avg
-      end associate
+      do j=1,ny
+        do i=1,nx
+          dh = rt1*hlayer1(i,j,k) + rt2*hlayer2(i,j,k)
+          field1(:,:) = dh
+          field4(:,:) = dh*garea(i,j)*avg
+        end do
+      end do
 
       do m=1,ncomp
         avgbq(:,:,k,m) = avgbq(:,:,k,m)/field4
@@ -1298,7 +1302,7 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
       max_column_scratch, max_column_concentration, garea, &
       ps1, ps2, t1_abs, t2_abs, aircraft_doserate_scratch, aircraft_doserate, &
       aircraft_doserate_threshold_height
-  USE snapdimml, only: nk
+  USE snapdimml, only: nx, ny, nk
   USE snapparML, only: ncomp, def_comp, run_comp
   USE ftestML, only: ftest
   USE releaseML, only: npart
@@ -1307,7 +1311,9 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
   real, intent(in) :: tf1, tf2, tnow, tstep
   integer, intent(in) :: nsteph
 
-  real :: rt1, rt2
+  real :: rt1, rt2, dh
+  real :: outside_pressure, outside_temperature, inside_pressure
+  real :: pressure, pressure_altitude, doserate
   real :: scale
   integer :: i, j, m, n, k
   integer :: ivlvl
@@ -1382,13 +1388,15 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
   end do
 
   do m=1,ncomp
-    associate(concen => concen(:,:,m), concacc => concacc(:,:,m), &
-              dh => rt1*hlayer1(:,:,1) + rt2*hlayer2(:,:,1))
-      where (concen > 0.0)
-        concen = concen / (dh*dgarea)
-        concacc = concacc + concen*hrstep
-      endwhere
-    end associate
+    do j=1,ny
+      do i=1,nx
+        if(concen(i,j,m) > 0.0d0) then
+          dh= rt1*hlayer1(i,j,1)+rt2*hlayer2(i,j,1)
+          concen(i,j,m)= concen(i,j,m)/(dh*dgarea(i,j))
+          concacc(i,j,m)= concacc(i,j,m) + concen(i,j,m)*hrstep
+        end if
+      end do
+    end do
   end do
 
   if(imodlevel) then
@@ -1417,10 +1425,13 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
     end do
 
     do k=1,nk-1
-      associate(dh => rt1*hlayer1(:,:,k) + rt2*hlayer2(:,:,k))
-        max_column_scratch(:,:,k) = max_column_scratch(:,:,k)/(dh*garea)
-      end associate
-    enddo
+      do j = 1, ny
+        do i = 1, nx
+          dh = rt1*hlayer1(i,j,k) + rt2*hlayer2(i,j,k)
+          max_column_scratch(i,j,k) = max_column_scratch(i,j,k)/(dh*garea(i,j))
+        end do
+      end do
+    end do
 
     max_column_concentration(:,:) = max( &
               max_column_concentration(:,:), &
@@ -1453,26 +1464,30 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
     ! Normalise by volume to obtain concentration
     do n=1,ncomp
       do k=2,nk-1
-        associate(dh => rt1*hlayer1(:,:,k) + rt2*hlayer2(:,:,k))
-          aircraft_doserate_scratch(:,:,k,n) = aircraft_doserate_scratch(:,:,k,n)/(dh*garea)
-        end associate
+        do j = 1, ny
+          do i = 1, nx
+            dh = rt1*hlayer1(i,j,k) + rt2*hlayer2(i,j,k)
+            aircraft_doserate_scratch(i,j,k,n) = aircraft_doserate_scratch(i,j,k,n)/(dh*garea(i,j))
+          enddo
+        enddo
       enddo
     enddo
 
     ! Correct for aircraft compressing outside air to +20 C, 750hPa
     do k=2,nk-1
-      associate( &
-          outside_pressure => rt1*(alevel(k) + blevel(k)*ps1) + rt2*(alevel(k)+blevel(k)*ps2), &
-          outside_temperature => rt1*t1_abs(:,:,k) + rt2*t2_abs(:,:,k))
-      associate(inside_pressure => max(outside_pressure, regulatory_minimum_pressure))
+      do j = 1, ny
+        do i = 1, nx
+          outside_pressure = rt1*(alevel(k) + blevel(k)*ps1(i,j)) + rt2*(alevel(k)+blevel(k)*ps2(i,j))
+          outside_temperature = rt1*t1_abs(i,j,k) + rt2*t2_abs(i,j,k)
+          inside_pressure = max(outside_pressure, regulatory_minimum_pressure)
 
-      do n=1,ncomp
-        aircraft_doserate_scratch(:,:,k,n) = aircraft_doserate_scratch(:,:,k,n) * &
-          inside_pressure / outside_pressure * &
-          outside_temperature / inside_temperature
-      enddo
-      end associate
-      end associate
+          do n=1,ncomp
+            aircraft_doserate_scratch(i,j,k,n) = aircraft_doserate_scratch(i,j,k,n) * &
+              inside_pressure / outside_pressure * &
+              outside_temperature / inside_temperature
+          enddo
+        end do
+      end do
     enddo
 
     ! Weight the dose contributions from each isotope
@@ -1485,18 +1500,19 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
     enddo
 
     if (aircraft_doserate_threshold > 0.0) then
-      associate(doserate => aircraft_doserate_scratch(:,:,:,ncomp+1), thresh => aircraft_doserate_threshold)
       do k=2,nk-2
-        associate(pressure => rt1*(alevel(k+1) + blevel(k+1)*ps1) + rt2*(alevel(k+1)+blevel(k+1)*ps2))
-        ! NOAA conversion formula www.weather.gov/media/epz/wxcalc/pressureConversion.pdf
-        associate(pressure_altitude => 0.3048 * (1 - (pressure / 1013.25) ** 0.190284) * 145366.45 )
-        where (doserate(:,:,k) > thresh)
-          aircraft_doserate_threshold_height = max(aircraft_doserate_threshold_height, pressure_altitude)
-        endwhere
-        end associate
-        end associate
-      enddo
-      end associate
+        do j = 1, ny
+          do i = 1, nx
+            doserate = aircraft_doserate_scratch(i,j,k,ncomp+1)
+            pressure = rt1*(alevel(k+1) + blevel(k+1)*ps1(i,j)) + rt2*(alevel(k+1)+blevel(k+1)*ps2(i,j))
+            ! NOAA conversion formula www.weather.gov/media/epz/wxcalc/pressureConversion.pdf
+            pressure_altitude = 0.3048 * (1 - (pressure / 1013.25) ** 0.190284) * 145366.45
+            if (doserate > aircraft_doserate_threshold) then
+              aircraft_doserate_threshold_height(i,j) = max(aircraft_doserate_threshold_height(i,j), pressure_altitude)
+            end if
+          end do
+        end do
+      end do
     endif
 
     ! Take max over column, skip k=1 since this we do not have temp here
