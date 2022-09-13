@@ -1508,8 +1508,8 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
             ! NOAA conversion formula www.weather.gov/media/epz/wxcalc/pressureConversion.pdf
             pressure_altitude = 0.3048 * (1 - (pressure / 1013.25) ** 0.190284) * 145366.45
             if (doserate > aircraft_doserate_threshold) then
-              aircraft_doserate_threshold_height = max(aircraft_doserate_threshold_height, pressure_altitude)
-            end if  
+              aircraft_doserate_threshold_height(i,j) = max(aircraft_doserate_threshold_height(i,j), pressure_altitude)
+            end if
           end do
         end do
       end do
