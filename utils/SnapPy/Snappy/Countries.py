@@ -50,5 +50,17 @@ class Country:
     def __repr__(self) -> str:
         return f"Country({self})"
 
+def _to_diana_txt_file(filename, name):
+    with open(filename, 'wt') as fh:
+        fh.write('''# -*- coding: utf-8 -*-
+[COLUMNS
+Lon:r  Lat:r Name:s ]
+
+[DATA]
+''')
+        for cc in get_country_list(name):
+            fh.write(f"{cc.lon} {cc.lat} \"{cc.name}\"\n")
+
+
 if __name__ == '__main__':
     print(get_country_list('europe'))

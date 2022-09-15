@@ -193,7 +193,7 @@ class SnapController:
             prod_dir = os.path.join(self.lastOutputDir, "prod")
             os.mkdir(prod_dir)
             with open(os.path.join(prod_dir, "diana.setup"), "wt") as fh:
-                di_setup = """
+                di_setup = f"""
 %include /etc/diana/setup/diana.setup-COMMON
 <COLOURS>
 seablueOSM=174,207,224
@@ -204,12 +204,17 @@ landOSM=242,239,233
 dsa_toa=255:0:255,255:128:255,128:0:128,128:0:255,128:128:255,128:128:192,192:192:192
 </PALETTES>
 
+<OBSERVATION_FILES>
+PROD=ascii:EuropeISO3
+file={self.res.directory}/europe3.txt
+</OBSERVATION_FILES>
+
 <FIELD_FILES>
 filegroup=SNAP
-m=SNAP.current t=fimex format=netcdf f={}
+m=SNAP.current t=fimex format=netcdf f={self.lastOutputDir}/snap.nc
 </FIELD_FILES>
 """
-                fh.write(di_setup.format(os.path.join(self.lastOutputDir, "snap.nc")))
+                fh.write(di_setup)
 
             hours = ",".join(
                 [

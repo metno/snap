@@ -21,9 +21,10 @@ LOOP[HOUR]|[FILEHOUR]={hours}
     FILENAME=snap_[FILEHOUR]h.png
     PLOT
 FIELD  model=SNAP.current plot={component}_acc_total_deposition colour=off plottype=contour linetype=solid linewidth=1 base=0 frame=1 log.line.values=100,300 extreme.type=None extreme.size=1 extreme.radius=1 palettecolours=who_uvi patterns=off table=1 repeat=0 value.label=1 line.smooth=0 field.smooth=0 label.size=1 grid.lines=0 grid.lines.max=0 undef.masking=0 undef.colour=255:255:255:255 undef.linewidth=1 undef.linetype=solid grid.value=0 colour_2=off dim=1 unit=Bq/m2
+OBS plot=EuropeISO3 data=EuropeISO3 parameter=Name colour=grey50 density=1 image=off orientation=horizontal scale=1.2 tempprecision=true timediff=60
 AREA name={areaname}
 MAP map=Gshhs-Auto contour=on cont.colour=graywhite cont.linewidth=1 cont.linetype=solid cont.zorder=1 land=on land.colour=landOSM land.zorder=0 lon=off lat=off frame=off
-MAP map=Euro2 contour=on cont.colour=gray cont.linewidth=1 cont.linetype=solid cont.zorder=1 land=off lon=off lat=off frame=off
+MAP map=Euro2 contour=on cont.colour=grey50 cont.linewidth=1 cont.linetype=solid cont.zorder=1 land=off lon=off lat=off frame=off
 MAP backcolour=seablueOSM map=Fylker contour=on cont.colour=gray cont.linewidth=1 cont.linetype=solid cont.zorder=1 land=off lon=on lon.colour=lightgray lon.linewidth=1 lon.linetype=solid lon.density=10 lon.zorder=2 lon.showvalue=off lon.value_pos=bottom lon.fontsize=10 lat=on lat.colour=lightgray lat.linewidth=1 lat.linetype=solid lat.density=10 lat.zorder=2 lat.showvalue=off lat.value_pos=left lat.fontsize=10 frame=off
 LABEL data font=BITMAPFONT fontsize=8
 LABEL text="$day $date $auto UTC" tcolour=red bcolour=black fcolour=white:200 polystyle=both halign=left valign=top font=BITMAPFONT fontsize=8
@@ -36,9 +37,10 @@ FILENAME=snap_toa.png
 ADDHOUR=0
 PLOT
 FIELD model=SNAP.current plot=TimeOfArrival colour=off plottype=contour linetype=solid linewidth=1 base=0 frame=1 line.values=0,3,6,9,12,24,36,48 extreme.type=None extreme.size=1 extreme.radius=1 palettecolours=dsa_toa table=1 repeat=0 value.label=1 line.smooth=0 field.smooth=0 label.size=1 grid.lines=0 grid.lines.max=0 undef.masking=0 undef.colour=255:255:255:255 undef.linewidth=1 undef.linetype=solid grid.value=0 colour_2=off dim=1 patterns=off
+OBS plot=EuropeISO3 data=EuropeISO3 parameter=Name colour=grey50 density=1 image=off orientation=horizontal scale=1.2 tempprecision=true timediff=60
 AREA name={areaname}
 MAP map=Gshhs-Auto contour=on cont.colour=graywhite cont.linewidth=1 cont.linetype=solid cont.zorder=1 land=on land.colour=landOSM land.zorder=0 lon=off lat=off frame=off
-MAP map=Euro2 contour=on cont.colour=gray cont.linewidth=1 cont.linetype=solid cont.zorder=1 land=off lon=off lat=off frame=off
+MAP map=Euro2 contour=on cont.colour=grey50 cont.linewidth=1 cont.linetype=solid cont.zorder=1 land=off lon=off lat=off frame=off
 MAP backcolour=seablueOSM map=Fylker contour=on cont.colour=gray cont.linewidth=1 cont.linetype=solid cont.zorder=1 land=off lon=on lon.colour=lightgray lon.linewidth=1 lon.linetype=solid lon.density=10 lon.zorder=2 lon.showvalue=off lon.value_pos=bottom lon.fontsize=10 lat=on lat.colour=lightgray lat.linewidth=1 lat.linetype=solid lat.density=10 lat.zorder=2 lat.showvalue=off lat.value_pos=left lat.fontsize=10 frame=off
 LABEL data font=BITMAPFONT fontsize=8
 LABEL text="$day $date $auto UTC" tcolour=red bcolour=black fcolour=white:200 polystyle=both halign=left valign=top font=BITMAPFONT fontsize=8
