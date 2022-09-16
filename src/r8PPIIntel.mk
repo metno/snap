@@ -20,8 +20,6 @@ NCDIR=$(shell nf-config --prefix)
 NCINC=$(shell nf-config --fflags)
 #NCLIBS=-L/modules/rhel8/user-apps/fou-modules/netcdf/netcdf_4.9.0/lib64 -L/modules/rhel8/user-apps/fou-modules/netcdff/netcdf-fortran_intel_4.6.0/lib64 -lnetcdff -lnetcdf -lnetcdff -Wl,-rpath,/modules/rhel8/user-apps/fou-modules/netcdf/netcdf_4.9.0/lib64 -Wl,-rpath,/modules/rhel8/user-apps/fou-modules/netcdff/netcdf-fortran_intel_4.6.0/lib64
 NCLIBS=$(shell nf-config --flibs)
-NCLIBS+=-Wl,-rpath,/modules/rhel8/user-apps/Compiler/Intel-2018/compilers_and_libraries/linux/lib/intel64/ -Wl,-rpath,/modules/rhel8/user-apps/fou-modules/netcdf/netcdf_4.9.0/lib64 -Wl,-rpath,/modules/rhel8/user-apps/fou-modules/netcdff/netcdf-fortran_intel_4.6.0/lib64 -Wl,-rpath,/modules/rhel8/user-apps/fou-modules/hdf5/hdf5_1_13_1/lib/
-
 
 EXLIBS = -lpthread -ldl
 
