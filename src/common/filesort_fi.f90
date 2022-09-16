@@ -47,7 +47,7 @@ contains
     real(real64), allocatable, target :: times(:)
     real(real64), allocatable, target :: field(:)
     integer :: zeroHour, status, count_nan
-    integer :: dateTime(6)
+    integer :: date_time(6)
 
 ! position in iavail
     navail = 0
@@ -147,11 +147,11 @@ contains
           end if
           navail = mavail
         end if
-        dateTime = epochToDate(int(times(t), kind=int64))
-        iavail(navail)%aYear = dateTime(6)
-        iavail(navail)%aMonth = dateTime(5)
-        iavail(navail)%aDay = dateTime(4)
-        iavail(navail)%aHour = dateTime(3)
+        date_time = epochToDate(int(times(t), kind=int64))
+        iavail(navail)%aYear = date_time(6)
+        iavail(navail)%aMonth = date_time(5)
+        iavail(navail)%aDay = date_time(4)
+        iavail(navail)%aHour = date_time(3)
         !         iavail(n)%fcHour: forecast hour
         iavail(navail)%fcHour = 0
         iavail(navail)%fileNo = nf
