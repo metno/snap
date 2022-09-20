@@ -38,6 +38,8 @@ def add_toa_to_nc(nc: netCDF4.Dataset):
         if (v[-18:] == "_acc_concentration"):
             exampleVar = v
             data += nc.variables[v][:]
+    if not isinstance(data, numpy.ndarray):
+        raise Exception(f"no variable with *_acc_concentration found in file: {nc.filepath()}")
     arrived = numpy.where(data >= 0.0001)
     flying = numpy.where(data < 0.0001)
     data[arrived] = 0
