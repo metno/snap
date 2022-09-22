@@ -1,3 +1,9 @@
+snap-py (1.7.3-1) bionic; urgency=medium
+
+  * upgrade NPP-locations
+
+ -- Heiko Klein <heikok@pc5558.pc.met.no>  Thu, 08 Sep 2022 16:44:15 +0200
+
 snap-py (1.7.2-1) bionic; urgency=medium
 
   * use OSM-colours for land and sea; dsa-palette for toa
