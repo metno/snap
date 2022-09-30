@@ -71,7 +71,7 @@ module snapmetML
   character(len=*), parameter, public :: temp_units = 'K'
 
 
-  public init_meteo_params
+  public init_meteo_params, requires_precip_deaccumulation
 
   contains
 
@@ -306,5 +306,9 @@ module snapmetML
       ierr = 1
     end select
   end subroutine init_meteo_params
+
+  pure logical function requires_precip_deaccumulation() result(req)
+    req = (met_params%precaccumv /= '') .or. (met_params%precstratiaccumv /= '')
+  end function
 
 end module snapmetML

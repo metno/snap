@@ -115,7 +115,7 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
       t1_abs, t2_abs
   USE snapgrdML, only: alevel, blevel, vlevel, ahalf, bhalf, vhalf, &
       gparam, kadd, klevel, ivlevel, imslp, igtype, ivlayer, ivcoor
-  USE snapmetML, only: met_params
+  USE snapmetML, only: met_params, requires_precip_deaccumulation
   USE snapdimML, only: nx, ny, nk
   USE datetime, only: datetime_t, duration_t
 !> current timestep (always positive), negative istep means reset
@@ -140,12 +140,13 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
   logical, save :: first_time_read = .true.
 
   integer :: i, j, k, ilevel, i1, i2
-  integer :: nhdiff
+  integer :: nhdiff, nhdiff_precip
   real :: alev(nk), blev(nk), db, dxgrid, dygrid
   integer :: kk
   real :: dred, red, p, px, dp, p1, p2,ptop
   real :: ptoptmp(1)
   real, parameter :: mean_surface_air_pressure = 1013.26
+  integer :: prev_tstep_same_file
 
   integer :: timepos, timeposm1
   integer :: start3d(7), start4d(7), count3d(7), count4d(7)
@@ -191,15 +192,30 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
   end if
 
 !     set timepos and nhdiff
-  nhdiff = 3
-  if (ntav1 /= 0) &
+  if (ntav1 /= 0) then
     nhdiff = abs(iavail(ntav2)%oHour - iavail(ntav1)%oHour)
+  else
+    ! Irrelevant time difference for the first timestep
+    nhdiff = 0
+  endif
 
   timepos = iavail(ntav2)%timePos
   timeposm1 = timepos ! Default: No deaccumulation possible
-  if (iavail(ntav2)%pavail_same_file /= 0) then
+  prev_tstep_same_file = iavail(ntav2)%pavail_same_file
+  if (prev_tstep_same_file /= 0) then
     ! previous timestep in same file for deaccumulation, even if not in list
-    timeposm1 = iavail(iavail(ntav2)%pavail_same_file)%timePos
+    timeposm1 = iavail(prev_tstep_same_file)%timePos
+    nhdiff_precip = abs(iavail(ntav2)%oHour - iavail(prev_tstep_same_file)%oHour)
+  else
+    if (requires_precip_deaccumulation()) then
+      ! Figure out if the next timestep belongs to the same forecast
+      if ((filef(ntav2+1) /= filef(ntav2)) .or. (iavail(ntav2+1)%fchour /= iavail(ntav2)%fchour)) then
+        error stop "Deaccumulation of precipitation is required, but can't figure out the precip rate"
+      endif
+      nhdiff_precip = abs(iavail(ntav2+1)%oHour - iavail(ntav2)%oHour)
+    else
+      nhdiff_precip = 0
+    endif
   endif
   itimefi = datetime_t(iavail(ntav2)%aYear, &
                        iavail(ntav2)%aMonth, &
@@ -346,7 +362,7 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
   end if
 
   if (met_params%need_precipitation) then
-    call read_precipitation(ncid, nhdiff, timepos, timeposm1)
+    call read_precipitation(ncid, nhdiff_precip, timepos, timeposm1)
   else
     precip = 0.0
   endif
@@ -619,7 +635,6 @@ subroutine read_precip_unit_scale(ncid, varname, unitScale)
   end select
 end subroutine
 
-
 !> read precipitation
 subroutine read_precipitation(ncid, nhdiff, timepos, timeposm1)
   use iso_fortran_env, only: error_unit
@@ -646,26 +661,33 @@ subroutine read_precipitation(ncid, nhdiff, timepos, timeposm1)
 
   if (met_params%precaccumv /= '') then
   !..precipitation between input time 't1' and 't2'
-    if (timepos /= 1) then
+    if (timepos == 1) then
+      ! Can not deaccumulate using this file only,
+      ! assume first timestep is accumulated from start of run
+      field1 = 0.0
+    else
       call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
           enspos, timeposm1, met_params%has_dummy_dim)
       call nfcheckload(ncid, met_params%precaccumv, &
           start3d, count3d, field1(:,:))
+    endif
 
-      call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
+    call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
           enspos, timepos, met_params%has_dummy_dim)
-      call nfcheckload(ncid, met_params%precaccumv, &
+    call nfcheckload(ncid, met_params%precaccumv, &
           start3d, count3d, field2(:,:))
 
-    !..the difference below may get negative due to different scaling
-      precip(:, :) = (field2 - field1)/nhdiff
-      where (precip < 0.0)
-        precip = 0.0
-      end where
-    end if
+    precip(:, :) = (field2 - field1)/nhdiff
   else if (met_params%precstratiaccumv /= '') then
-  ! accumulated stratiform and convective precipitation
-  !..precipitation between input time 't1' and 't2'
+    ! accumulated stratiform and convective precipitation
+    !..precipitation between input time 't1' and 't2'
+    call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
+          enspos, timepos, met_params%has_dummy_dim)
+    call nfcheckload(ncid, met_params%precstratiaccumv, &
+          start3d, count3d, field3)
+    call nfcheckload(ncid, met_params%precconaccumv, &
+          start3d, count3d, field4)
+
     if (timepos /= 1) then
       call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
           enspos, timeposm1, met_params%has_dummy_dim)
@@ -673,30 +695,8 @@ subroutine read_precipitation(ncid, nhdiff, timepos, timeposm1)
           start3d, count3d, field1)
       call nfcheckload(ncid, met_params%precconaccumv, &
           start3d, count3d, field2)
-      call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
-          enspos, timepos, met_params%has_dummy_dim)
-      call nfcheckload(ncid, met_params%precstratiaccumv, &
-          start3d, count3d, field3)
-      call nfcheckload(ncid, met_params%precconaccumv, &
-          start3d, count3d, field4)
-
-      call read_precip_unit_scale(ncid, met_params%precstratiaccumv, unitScale)
-
-    !..the difference below may get negative due to different scaling
-      precip(:,:) = (field3 + field4) - (field1 + field2)
-      precip(:,:) = precip/nhdiff*unitScale
-      where (precip < 0.0)
-        precip = 0.0
-      end where
     else
-    ! timepos eq 1, check if precipitation already present / assume dummy step 0
-      call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
-          enspos, timepos, met_params%has_dummy_dim)
-      call nfcheckload(ncid, met_params%precstratiaccumv, &
-          start3d, count3d, field3(:,:))
-      call nfcheckload(ncid, met_params%precconaccumv, &
-          start3d, count3d, field4(:,:))
-
+      ! assuming empty 0 timestep to deaccumulate precip"
       field1 = 0.0
       field2 = 0.0
       totalprec = sum(field3) + sum(field4)
@@ -704,15 +704,13 @@ subroutine read_precipitation(ncid, nhdiff, timepos, timeposm1)
       if (totalprec > 1e-5) then
         write(iulog,*) "found precip in first timestep, assuming ", &
             "empty 0 timestep to deaccumulate precip"
-        call read_precip_unit_scale(ncid, met_params%precstratiaccumv, unitScale)
-      !..the difference below may get negative due to different scaling
-        precip(:,:) = (field3 + field4) - (field1 + field2)
-        precip(:,:) = precip/nhdiff*unitScale
-        where (precip < 0.0)
-          precip = 0.0
-        end where
       endif
-    end if
+    endif
+
+    call read_precip_unit_scale(ncid, met_params%precstratiaccumv, unitScale)
+
+    precip(:,:) = (field3 + field4) - (field1 + field2)
+    precip(:,:) = precip/nhdiff*unitScale
   else if (met_params%total_column_rain /= '') then
       call calc_2d_start_length(start3d, count3d, nx, ny, 1, &
           enspos, timepos, met_params%has_dummy_dim)
@@ -721,7 +719,7 @@ subroutine read_precipitation(ncid, nhdiff, timepos, timeposm1)
       precip(:,:) = field3
       write(error_unit, *) "Check precipation correctness"
   else
-  !..non-accumulated emissions in stratiform an convective
+  !..non-accumulated emissions in stratiform and convective
     call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
               enspos, timepos, met_params%has_dummy_dim)
     call nfcheckload(ncid, met_params%precstrativrt, &
@@ -736,11 +734,11 @@ subroutine read_precipitation(ncid, nhdiff, timepos, timeposm1)
     unitScale = 3600.*1000.0 ! m/s -> mm/h
     if (nctype == 'gfs_grib_filter_fimex') unitScale = 3600. !kg/m3/s -> mm/h
     precip(:,:) = (field1 + field2)*unitScale
-    where (precip < 0.0)
-      precip = 0.0
-    end where
-
   end if
+
+  where (precip < 0.0)
+    precip = 0.0
+  end where
 end subroutine
 
 
