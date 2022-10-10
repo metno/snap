@@ -207,14 +207,21 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
     timeposm1 = iavail(prev_tstep_same_file)%timePos
     nhdiff_precip = abs(iavail(ntav2)%oHour - iavail(prev_tstep_same_file)%oHour)
   else
-    if (requires_precip_deaccumulation()) then
-      ! Figure out if the next timestep belongs to the same forecast
-      if ((filef(ntav2+1) /= filef(ntav2)) .or. (iavail(ntav2+1)%fchour /= iavail(ntav2)%fchour)) then
-        error stop "Deaccumulation of precipitation is required, but can't figure out the precip rate"
-      endif
-      nhdiff_precip = abs(iavail(ntav2+1)%oHour - iavail(ntav2)%oHour)
-    else
+    if (.not.requires_precip_deaccumulation()) then
       nhdiff_precip = 0
+    else
+      ! Figure out if the next timestep belongs to the same forecast
+      if ((filef(ntav2+1) == filef(ntav2)) .and. (iavail(ntav2+1)%fchour == iavail(ntav2)%fchour)) then
+        nhdiff_precip = abs(iavail(ntav2+1)%oHour - iavail(ntav2)%oHour)
+      else
+        nhdiff_precip = nhdiff
+        if (nhdiff == 0) then
+           ! Default in case nhdiff not set
+          nhdiff_precip = 3
+        endif
+        write(iulog,'("Deaccumulation of precipitation requires estimate of nhdiff, nhdiff=","I","hours")') nhdiff_precip
+        write(error_unit,'("Deaccumulation of precipitation requires estimate of nhdiff, nhdiff=","I","hours")') nhdiff_precip
+      endif
     endif
   endif
   itimefi = datetime_t(iavail(ntav2)%aYear, &
