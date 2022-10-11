@@ -1,0 +1,55 @@
+***********************************************************************
+*** MET Norway SNAP input file
+***********************************************************************
+RANDOM.WALK.ON
+BOUNDARY.LAYER.FULL.MIX.OFF
+DRY.DEPOSITION.NEW
+WET.DEPOSITION.VERSION = 2
+
+REMOVE.RELATIVE.MASS.LIMIT= 0.
+
+MAX.TOTALPARTICLES= 20000000
+MAX.PARTICLES.PER.RELEASE= 2000
+TIME.STEP= 600.
+STEP.HOUR.INPUT.MIN= 3 
+STEP.HOUR.INPUT.MAX= 6
+STEP.HOUR.OUTPUT.FIELDS= 3
+ASYNOPTIC.OUTPUT
+TOTAL.COMPONENTS.OFF
+MSLP.OFF
+PRECIPITATION.ON
+MODEL.LEVEL.FIELDS.OFF
+POSITIONS.DECIMAL
+
+** INPUT FIELD FILES
+*
+FIELD.TYPE=fimex
+FIMEX.FILE_TYPE= netcdf
+FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|-50,-49.8,...,70|25,25.2,...,85|degree
+
+GRID.AUTODETECT.FROM_INPUT
+GRID.NCTYPE = ec_det
+DATA.ETA.LEVELS
+ENSEMBLE_MEMBER.INPUT = 0
+* use all layers (autodetect removes lowest)
+LEVELS.INPUT= 49,0,48,47,46,45,44,43,42,41,40,39,38,37,36,35,34,33,32,31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1
+
+
+FIELD_TIME.FORECAST
+
+** OUTPUT FILES
+FIELD.OUTTYPE=netcdf
+FIELD.OUTPUT= snap.nc
+
+* OUTPUT.AIRCRAFT_DOSERATE.ENABLE
+* Tiltaksgrense Avsperring
+* Se Sivilforsvaret Bestemmelser om sikkerhet under opplæring, øving og
+* innsats i Sivilforsvaret
+* Grense i Sv/h
+OUTPUT.AIRCRAFT_DOSERATE.THRESHOLD.SV_H = 60e-6
+
+
+LOG.FILE=     snap.log
+DEBUG.ON
+
+
