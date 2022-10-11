@@ -69,6 +69,26 @@ class MeteoDataNotAvailableException(Exception):
 class MeteorologyCalculator(abc.ABC):
     '''Base-class to pre-calculate/extract meteorology'''
     @staticmethod
+    def findAllGlobalData(res: GlobalMeteoResource): 
+        '''Static method to find the all global dataset
+
+        Args:
+            dtime: datetime object with a start-time, which should be included in the dataset
+            count: number of file
+
+        Returns:
+            A list of tuples with [(forecast-time, file)]
+        '''
+        timesFiles = [] # tuples with datetime, file
+        for inDir in res.indirs:
+            for iFile in iglob(os.path.join(inDir, res.pathglob)):
+                statinfo = os.stat(iFile)
+                if statinfo.st_mtime < (time.time() - res.path_grace_period_sec): # file hasn't been changed in x sec
+                    dateFile = datetime.strptime(os.path.basename(iFile), res.pathptime)
+                    timesFiles.append((dateFile, iFile))
+        return timesFiles
+
+    @staticmethod
     def findGlobalData(res: GlobalMeteoResource, dtime: datetime):
         '''Method to find the closest global dataset earlier than dtime.
 
@@ -82,15 +102,7 @@ class MeteorologyCalculator(abc.ABC):
         Raises:
             MeteoDataNotAvailableException: no data for the dtime can be found
         '''
-        #should eventually use productstatus.met.no?
-
-        timesFiles = [] # tuples with datetime, file
-        for inDir in res.indirs:
-            for iFile in iglob(os.path.join(inDir, res.pathglob)):
-                statinfo = os.stat(iFile)
-                if statinfo.st_mtime < (time.time() - res.path_grace_period_sec): # file hasn't been changed in x sec
-                    dateFile = datetime.strptime(os.path.basename(iFile), res.pathptime)
-                    timesFiles.append((dateFile, iFile))
+        timesFiles = MeteorologyCalculator.findAllGlobalData(res)
         lastTimeFile = (None, None)
         for timeFile in sorted(timesFiles, key=lambda t: t[0]):
             if (timeFile[0] <= dtime):
@@ -100,6 +112,7 @@ class MeteorologyCalculator(abc.ABC):
         if (lastTimeFile[0] is None):
             raise MeteoDataNotAvailableException("no input data in {dirs} for {time}: ".format(dirs=res.indirs, time=dtime))
         return lastTimeFile
+
 
     @abc.abstractstaticmethod
     def getGlobalMeteoResources():
