@@ -42,6 +42,7 @@ class MetModel(enum.Enum):
     Meps2p5 = "meps_2_5km"
     NrpaEC0p1 = "nrpa_ec_0p1"
     NrpaEC0p1Global = "nrpa_ec_0p1_global"
+    EC0p1Global = "ec_0p1_global"
     GfsGribFilter = "gfs_grib_filter_fimex"
 
     def __eq__(self, other):
@@ -67,6 +68,9 @@ class Resources(ResourcesCommon):
 
     _MET_GLOBAL_INPUTDIRS = {
         MetModel.NrpaEC0p1Global: [
+            "{LUSTREDIR}/project/metproduction/products/ecmwf/nc/"
+        ],
+        MetModel.EC0p1Global: [
             "{LUSTREDIR}/project/metproduction/products/ecmwf/nc/"
         ],
         MetModel.Icon0p25Global: ["{LUSTREDIR}/project/metproduction/products/icon/"],
@@ -133,6 +137,8 @@ class Resources(ResourcesCommon):
                 "dx": self.ecDomainRes,
                 "dy": self.ecDomainRes,
             }
+        elif metmodel == MetModel.EC0p1Global:
+            return {}
         elif metmodel == MetModel.Meps2p5:
             return {}
         elif metmodel == MetModel.Icon0p25Global:
@@ -380,6 +386,8 @@ GRAVITY.FIXED.M/S=0.0002
         """
         if (metmodel == MetModel.NrpaEC0p1) or (metmodel == MetModel.NrpaEC0p1Global):
             filename = os.path.join(self.directory, "snap.input_nrpa_ec_0p1.tmpl")
+        elif metmodel == MetModel.EC0p1Global:
+            filename = os.path.join(self.directory, "snap.input_ec_0p1.tmpl")
         elif metmodel == MetModel.Meps2p5:
             filename = os.path.join(self.directory, "snap.input_meps_2_5km.tmpl")
         elif metmodel == MetModel.Icon0p25Global:
@@ -405,6 +413,9 @@ GRAVITY.FIXED.M/S=0.0002
             # no setup needed, autdetection in snap
             pass
         elif metmodel == MetModel.NrpaEC0p1Global:
+            # no setup needed, autdetection in snap
+            pass
+        elif metmodel == MetModel.EC0p1Global:
             # no setup needed, autdetection in snap
             pass
         elif metmodel == MetModel.Meps2p5:

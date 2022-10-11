@@ -107,6 +107,18 @@ class MeteorologyCalculator(abc.ABC):
         pass
 
 
+    def getLat0(latCenter, domainHeight):
+        # get a domain starting every 10th degree
+        lat0 = math.floor((latCenter-(domainHeight/2.))/10.)*10
+        if (lat0 < -80): lat0 = -89
+        if (lat0+domainHeight > 89): lat0 = 89 - domainHeight
+        return lat0
+    def getLon0(lonCenter, domainWidth):
+        # get a domain starting every 10th degree
+        lon0 = math.floor((lonCenter-(domainWidth/2.))/10.)*10
+        return lon0
+
+
     def __init__(self, res: GlobalMeteoResource, dtime: datetime, domainCenterX, domainCenterY):
         '''Calculate the ec-meteorology unless it exists
 
