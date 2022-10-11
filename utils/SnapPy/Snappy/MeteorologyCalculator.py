@@ -36,18 +36,21 @@ class GlobalMeteoResource:
 
             indirs: inputdirectories
             outputdir: output directory
+            output_filename_pattern: pattern of output file
             pathglob: glob for files in inputdirectories, e.g. ec_atmo_0_1deg_????????T??????Z_3h.nc
             pathptime: strptime for files, e.g. ec_atmo_0_1deg_%Y%m%dT%H%M%SZ_3h.nc
+            path_grace_period_sec: seconds to wait before a file is used (i.e. no longer written)
             domainHeight: total y-Axis length of domain
             domainWidth: total x-Axis lenght of domain
             domainDeltaX: x-resolution of domain
             domainDeltaY: y-resolution of domain
     '''
     indirs = []
-    pathglob = ""
-    pathptime = ""
     outputdir = ""
     output_filename_pattern = ""
+    pathglob = ""
+    pathptime = ""
+    path_grace_period_sec = 60*15
     domainHeight = 10
     domainWidth = 10
     domainDeltaX = 0.1
@@ -85,7 +88,7 @@ class MeteorologyCalculator(abc.ABC):
         for inDir in res.indirs:
             for iFile in iglob(os.path.join(inDir, res.pathglob)):
                 statinfo = os.stat(iFile)
-                if statinfo.st_mtime < (time.time() - 15*60): # file hasn't been changed in 15 minutes
+                if statinfo.st_mtime < (time.time() - res.path_grace_period_sec): # file hasn't been changed in x sec
                     dateFile = datetime.strptime(os.path.basename(iFile), res.pathptime)
                     timesFiles.append((dateFile, iFile))
         lastTimeFile = (None, None)

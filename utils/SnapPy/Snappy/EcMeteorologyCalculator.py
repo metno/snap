@@ -66,6 +66,7 @@ class EcMeteorologyCalculator(Snappy.MeteorologyCalculator.MeteorologyCalculator
         res.indirs = ecres.getMetGlobalInputDirs(MetModel.NrpaEC0p1Global)
         res.pathglob = "ec_atmo_0_1deg_????????T??????Z_3h.nc"
         res.pathptime = "ec_atmo_0_1deg_%Y%m%dT%H%M%SZ_3h.nc"
+        res.path_grace_period_sec = 15*60 # files continuously written, wait for completion
         res.outputdir = ecres.getSnapOutputDir()
         res.output_filename_pattern = ecres.EC_FILENAME_PATTERN
         res.domainHeight = ecres.ecDomainHeight
