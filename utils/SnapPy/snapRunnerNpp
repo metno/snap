@@ -4,6 +4,7 @@ import argparse
 import datetime
 import cartopy
 import matplotlib
+
 matplotlib.use('Agg')
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from matplotlib import pyplot as plt
@@ -17,6 +18,7 @@ from time import gmtime, strftime, strptime
 
 from Snappy.EcMeteorologyCalculator import EcMeteorologyCalculator
 from Snappy.ICONMeteorologyCalculator import ICONMeteorologyCalculator
+from Snappy.MeteorologyCalculator import MeteorologyCalculator
 from Snappy.Resources import MetModel, Resources
 from Snappy.Countries import get_country_list
 
@@ -182,6 +184,14 @@ def runsnap(npp, met_model, outdir, release_dt, runtime, plot_from_file=None):
                     raise Exception("no EC met-files calculated for {}".format(release_dt))
                 files = ecmet.get_meteorology_files()
                 (metdef["startX"], metdef["startY"]) = ecmet.get_grid_startX_Y()
+            elif met_model == MetModel.EC0p1Global:
+                globalRes = EcMeteorologyCalculator.getGlobalMeteoResources()
+                files = [x[1] for x in sorted(MeteorologyCalculator.findAllGlobalData(globalRes), key=lambda x: x[0])]
+                lat0 = MeteorologyCalculator.getLat0(float(lat), globalRes.domainHeight)
+                lon0 = MeteorologyCalculator.getLat0(float(lon), globalRes.domainWidth)
+                fh.write(f"FIELD.TYPE=fimex\n")
+                fh.write(f"FIMEX.FILE_TYPE=netcdf\n")
+                fh.write(f"FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|{lon0},{lon0+0.2},...,{lon0+globalRes.domainWidth}|{lat0},{lat0+0.2},...,{lat0+globalRes.domainHeight}|degree\n")
             elif met_model == MetModel.Meps2p5:
                 files = res.getMeteorologyFiles(met_model, release_dt, runtime, "best")
                 if (len(files) == 0):
@@ -330,7 +340,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--outdir", help="output directory for file ", default='.')
     parser.add_argument("--store", help="storeA or storeB, meteo and runtime-datastore, default used from MAPP-system")
-    parser.add_argument("--metmodel", help="the metmodel to use: nrpa_ec_0p1, nrpa_ec_0p1_global, meps_2_5km, gfs_grib_filter_fimex, icon_0p25_global", default='nrpa_ec_0p1')
+    parser.add_argument("--metmodel", help="the metmodel to use: nrpa_ec_0p1, nrpa_ec_0p1_global, ec_0p1_global, meps_2_5km, gfs_grib_filter_fimex, icon_0p25_global", default='nrpa_ec_0p1')
     parser.add_argument("--starttime", help="start time YYYY-MM-DD_HH")
     parser.add_argument("--runtime", help="the run and releasetime", required=True)
     parser.add_argument("--plotonly_ncfile", help="don't run the model plot only from this ncfile")
