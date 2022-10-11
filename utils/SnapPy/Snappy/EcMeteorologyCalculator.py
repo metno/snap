@@ -58,6 +58,7 @@ class EcMeteorologyCalculator(Snappy.MeteorologyCalculator.MeteorologyCalculator
         '''
         return Snappy.MeteorologyCalculator.MeteorologyCalculator.findGlobalData(EcMeteorologyCalculator.getGlobalMeteoResources(), dtime)
 
+
     @staticmethod
     def getGlobalMeteoResources():
         '''retrieve the GlobalMeteoResources from internal resources'''

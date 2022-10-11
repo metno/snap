@@ -627,13 +627,16 @@ STEP.HOUR.OUTPUT.FIELDS= 3
                 self.write_log("problems creating EC-met: {}".format(e.args[0]))
         elif qDict["metmodel"] == MetModel.EC0p1Global:
             try:
-                files = EcMeteorologyCalculator.findECGlobalData(startDT)
                 globalRes = EcMeteorologyCalculator.getGlobalMeteoResources()
+                files = [x[1] for x in sorted(MeteorologyCalculator.findAllGlobalData(globalRes), key=lambda x: x[0])]
                 lat0 = MeteorologyCalculator.getLat0(latf, globalRes.domainHeight)
                 lon0 = MeteorologyCalculator.getLat0(lonf, globalRes.domainWidth)
                 with open(os.path.join(self.lastOutputDir, "snap.input"), "a") as fh:
-                    fh.write(f'FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|{lon0},{lon0+0.2},...,{lon0+globalRes.domainWidth}|{lat0},{lat0+0.2},...,{lat0+globalRes.domainHeight}|degree')
+                    fh.write(f"FIELD.TYPE=fimex\n")
+                    fh.write(f"FIMEX.FILE_TYPE=netcdf\n")
+                    fh.write(f"FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|{lon0},{lon0+0.2},...,{lon0+globalRes.domainWidth}|{lat0},{lat0+0.2},...,{lat0+globalRes.domainHeight}|degree\n")
                     fh.write(self.res.getSnapInputMetDefinitions(qDict["metmodel"], files))
+                self._snap_model_run()
             except MeteoDataNotAvailableException as e:
                 self.write_log("problems finding global EC-met: {}".format(e.args[0]))
         elif qDict["metmodel"] == MetModel.Icon0p25Global:
