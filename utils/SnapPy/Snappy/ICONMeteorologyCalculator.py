@@ -43,6 +43,7 @@ class ICONMeteorologyCalculator(Snappy.MeteorologyCalculator.MeteorologyCalculat
         # icon_20200427T00Z.nc
         res.pathglob = "icon_????????T??Z.nc"
         res.pathptime = "icon_%Y%m%dT%HZ.nc"
+        res.path_grace_period_sec = 0 # files are written atomic (rsync)
         res.outputdir = gres.getSnapOutputDir()
         res.output_filename_pattern = gres.MET_FILENAME_PATTERN[MetModel.Icon0p25Global] # keeping filename for extracted data
         res.domainHeight = gres.ecDomainHeight # reuse domainHeight/Width
