@@ -69,21 +69,15 @@ class MeteoDataNotAvailableException(Exception):
 class MeteorologyCalculator(abc.ABC):
     '''Base-class to pre-calculate/extract meteorology'''
     @staticmethod
-    def findGlobalData(res: GlobalMeteoResource, dtime: datetime):
-        '''Method to find the closest global dataset earlier than dtime.
+    def findAllGlobalData(res: GlobalMeteoResource): 
+        '''Static method to find all global dataset.
 
         Args:
-            res: resources from getGlobalMeteoResources
             dtime: datetime object with a start-time, which should be included in the dataset
 
         Returns:
-            A tuple with referencetime and filename
-
-        Raises:
-            MeteoDataNotAvailableException: no data for the dtime can be found
+            A list of tuples with [(forecast-time, file)]
         '''
-        #should eventually use productstatus.met.no?
-
         timesFiles = [] # tuples with datetime, file
         for inDir in res.indirs:
             for iFile in iglob(os.path.join(inDir, res.pathglob)):
@@ -91,6 +85,23 @@ class MeteorologyCalculator(abc.ABC):
                 if statinfo.st_mtime < (time.time() - res.path_grace_period_sec): # file hasn't been changed in x sec
                     dateFile = datetime.strptime(os.path.basename(iFile), res.pathptime)
                     timesFiles.append((dateFile, iFile))
+        return timesFiles
+
+    @staticmethod
+    def findGlobalData(res: GlobalMeteoResource, dtime: datetime):
+        '''Method to find the global dataset with the latest forecast time which includes dtime.
+
+        Args:
+            res: resources from getGlobalMeteoResources
+            dtime: datetime object with a start-time, which will be included in the dataset
+
+        Returns:
+            A tuple with referencetime and filename
+
+        Raises:
+            MeteoDataNotAvailableException: no data for the dtime can be found
+        '''
+        timesFiles = MeteorologyCalculator.findAllGlobalData(res)
         lastTimeFile = (None, None)
         for timeFile in sorted(timesFiles, key=lambda t: t[0]):
             if (timeFile[0] <= dtime):
@@ -101,10 +112,23 @@ class MeteorologyCalculator(abc.ABC):
             raise MeteoDataNotAvailableException("no input data in {dirs} for {time}: ".format(dirs=res.indirs, time=dtime))
         return lastTimeFile
 
+
     @abc.abstractstaticmethod
     def getGlobalMeteoResources():
         '''retrieve the GlobalMeteoResources from internal resources'''
         pass
+
+
+    def getLat0(latCenter, domainHeight):
+        # get a domain starting every 10th degree
+        lat0 = math.floor((latCenter-(domainHeight/2.))/10.)*10
+        if (lat0 < -80): lat0 = -89
+        if (lat0+domainHeight > 89): lat0 = 89 - domainHeight
+        return lat0
+    def getLon0(lonCenter, domainWidth):
+        # get a domain starting every 10th degree
+        lon0 = math.floor((lonCenter-(domainWidth/2.))/10.)*10
+        return lon0
 
 
     def __init__(self, res: GlobalMeteoResource, dtime: datetime, domainCenterX, domainCenterY):
