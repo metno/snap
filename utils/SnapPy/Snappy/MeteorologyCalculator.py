@@ -70,11 +70,10 @@ class MeteorologyCalculator(abc.ABC):
     '''Base-class to pre-calculate/extract meteorology'''
     @staticmethod
     def findAllGlobalData(res: GlobalMeteoResource): 
-        '''Static method to find the all global dataset
+        '''Static method to find all global dataset.
 
         Args:
             dtime: datetime object with a start-time, which should be included in the dataset
-            count: number of file
 
         Returns:
             A list of tuples with [(forecast-time, file)]
@@ -90,11 +89,11 @@ class MeteorologyCalculator(abc.ABC):
 
     @staticmethod
     def findGlobalData(res: GlobalMeteoResource, dtime: datetime):
-        '''Method to find the closest global dataset earlier than dtime.
+        '''Method to find the global dataset with the latest forecast time which includes dtime.
 
         Args:
             res: resources from getGlobalMeteoResources
-            dtime: datetime object with a start-time, which should be included in the dataset
+            dtime: datetime object with a start-time, which will be included in the dataset
 
         Returns:
             A tuple with referencetime and filename
