@@ -26,6 +26,7 @@ import sys
 
 from Snappy.EcMeteorologyCalculator import EcMeteorologyCalculator
 from Snappy.ICONMeteorologyCalculator import ICONMeteorologyCalculator
+from Snappy.MeteorologyCalculator import MeteorologyCalculator
 from Snappy.Resources import MetModel, Resources, snapNc_convert_to_grib
 import xml.etree.ElementTree as ET
 
@@ -160,6 +161,14 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
             raise Exception("no EC met-files calculated for {}".format(startDTime))
         files = ecmet.get_meteorology_files()
         (metdef["startX"], metdef["startY"]) = ecmet.get_grid_startX_Y()
+    elif met_model == MetModel.EC0p1Global:
+        globalRes = EcMeteorologyCalculator.getGlobalMeteoResources()
+        files = [x[1] for x in sorted(MeteorologyCalculator.findAllGlobalData(globalRes), key=lambda x: x[0])]
+        lat0 = MeteorologyCalculator.getLat0(float(lat), globalRes.domainHeight)
+        lon0 = MeteorologyCalculator.getLat0(float(lon), globalRes.domainWidth)
+        sourceTerm += f"FIELD.TYPE=fimex\n"
+        sourceTerm += f"FIMEX.FILE_TYPE=netcdf\n"
+        sourceTerm += f"FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|{lon0},{lon0+0.2},...,{lon0+globalRes.domainWidth}|{lat0},{lat0+0.2},...,{lat0+globalRes.domainHeight}|degree\n"
     elif met_model == MetModel.Meps2p5:
         files = res.getMeteorologyFiles(met_model, startDTime, runTime, "best")
         if (len(files) == 0):
@@ -242,7 +251,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="run snap from a rimsterm.xml file and convert to grib-files named ident_conc, ident_depo ident_wetd ident_dose ident_tofa")
     parser.add_argument("--rimsterm", help="source-term in rimsterm format", required=False)
     parser.add_argument("--argosrequest", help="optional argos-request xml file in addition to --rimsterm file", required=False)
-    parser.add_argument("--metmodel", help="select the NWP input model, nrpa_ec_0p1, nrpa_ec_0p1_global, meps_2_5km, gfs_grib_filter_fimex, icon_0p25_global", required=True, default='nrpa_ec_0p1')
+    parser.add_argument("--metmodel", help="select the NWP input model, nrpa_ec_0p1, nrpa_ec_0p1_global, meps_2_5km, ec_0p1_global, gfs_grib_filter_fimex, icon_0p25_global", required=True, default='nrpa_ec_0p1')
     parser.add_argument("--dir", help="output-directory", required=True)
     parser.add_argument("--ident", help="output-file identifier", required=True)
     parser.add_argument("--bitmapCompress", help="enable grib bitmap-compression", action='store_true')

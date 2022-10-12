@@ -35,7 +35,7 @@ from PyQt5.QtCore import (
 from Snappy.BrowserWidget import BrowserWidget
 from Snappy.EcMeteorologyCalculator import EcMeteorologyCalculator
 from Snappy.ICONMeteorologyCalculator import ICONMeteorologyCalculator
-from Snappy.MeteorologyCalculator import MeteoDataNotAvailableException
+from Snappy.MeteorologyCalculator import MeteoDataNotAvailableException, MeteorologyCalculator
 from Snappy.MailImages import sendPngsFromDir
 from Snappy.Resources import Resources, MetModel
 import Snappy.Utils
@@ -597,7 +597,7 @@ STEP.HOUR.OUTPUT.FIELDS= 3
         with open(os.path.join(self.lastOutputDir, "snap.input"), "w") as fh:
             fh.write(self.lastSourceTerm)
 
-        if qDict["metmodel"] == "nrpa_ec_0p1":
+        if qDict["metmodel"] == MetModel.NrpaEC0p1:
             files = self.res.getECMeteorologyFiles(
                 startDT, int(qDict["runTime"]), qDict["ecmodelrun"]
             )
@@ -625,6 +625,20 @@ STEP.HOUR.OUTPUT.FIELDS= 3
                 self._met_calculate_and_run()
             except MeteoDataNotAvailableException as e:
                 self.write_log("problems creating EC-met: {}".format(e.args[0]))
+        elif qDict["metmodel"] == MetModel.EC0p1Global:
+            try:
+                globalRes = EcMeteorologyCalculator.getGlobalMeteoResources()
+                files = [x[1] for x in sorted(MeteorologyCalculator.findAllGlobalData(globalRes), key=lambda x: x[0])]
+                lat0 = MeteorologyCalculator.getLat0(latf, globalRes.domainHeight)
+                lon0 = MeteorologyCalculator.getLat0(lonf, globalRes.domainWidth)
+                with open(os.path.join(self.lastOutputDir, "snap.input"), "a") as fh:
+                    fh.write(f"FIELD.TYPE=fimex\n")
+                    fh.write(f"FIMEX.FILE_TYPE=netcdf\n")
+                    fh.write(f"FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|{lon0},{lon0+0.2},...,{lon0+globalRes.domainWidth}|{lat0},{lat0+0.2},...,{lat0+globalRes.domainHeight}|degree\n")
+                    fh.write(self.res.getSnapInputMetDefinitions(qDict["metmodel"], files))
+                self._snap_model_run()
+            except MeteoDataNotAvailableException as e:
+                self.write_log("problems finding global EC-met: {}".format(e.args[0]))
         elif qDict["metmodel"] == MetModel.Icon0p25Global:
             try:
                 self.write_log("extracting meteorology from ICON for domain")
