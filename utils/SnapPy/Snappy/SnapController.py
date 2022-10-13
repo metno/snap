@@ -630,7 +630,7 @@ STEP.HOUR.OUTPUT.FIELDS= 3
                 globalRes = EcMeteorologyCalculator.getGlobalMeteoResources()
                 files = [x[1] for x in sorted(MeteorologyCalculator.findAllGlobalData(globalRes), key=lambda x: x[0])]
                 lat0 = MeteorologyCalculator.getLat0(latf, globalRes.domainHeight)
-                lon0 = MeteorologyCalculator.getLat0(lonf, globalRes.domainWidth)
+                lon0 = MeteorologyCalculator.getLon0(lonf, globalRes.domainWidth)
                 with open(os.path.join(self.lastOutputDir, "snap.input"), "a") as fh:
                     fh.write(f"FIELD.TYPE=fimex\n")
                     fh.write(f"FIMEX.FILE_TYPE=netcdf\n")
