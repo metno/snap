@@ -188,7 +188,7 @@ def runsnap(npp, met_model, outdir, release_dt, runtime, plot_from_file=None):
                 globalRes = EcMeteorologyCalculator.getGlobalMeteoResources()
                 files = [x[1] for x in sorted(MeteorologyCalculator.findAllGlobalData(globalRes), key=lambda x: x[0])]
                 lat0 = MeteorologyCalculator.getLat0(float(lat), globalRes.domainHeight)
-                lon0 = MeteorologyCalculator.getLat0(float(lon), globalRes.domainWidth)
+                lon0 = MeteorologyCalculator.getLon0(float(lon), globalRes.domainWidth)
                 fh.write(f"FIELD.TYPE=fimex\n")
                 fh.write(f"FIMEX.FILE_TYPE=netcdf\n")
                 fh.write(f"FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|{lon0},{lon0+0.2},...,{lon0+globalRes.domainWidth}|{lat0},{lat0+0.2},...,{lat0+globalRes.domainHeight}|degree\n")
