@@ -1219,7 +1219,7 @@ subroutine get_varids(iunit, varid, ierror)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
   ierror = nf90_inq_varid(iunit, "total_wet_deposition", varid%iwdt)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
-  ierror = nf90_inq_varid(iunit, "total_wet_deposition", varid%accwdt)
+  ierror = nf90_inq_varid(iunit, "total_acc_wet_deposition", varid%accwdt)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
   ierror = nf90_inq_varid(iunit, "p0", varid%ps)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
