@@ -60,7 +60,7 @@ module snapfilML
         integer(kind=int16) :: NAVAIL
         !> pointer to next backward (=previous) time data
         integer(kind=int16) :: PAVAIL
-        !> pointer to  previous time data in same file (needed for deaccumulation)
+        !> pointer to previous time data in same file (needed for deaccumulation)
         integer(kind=int16) :: pavail_same_file
     end type fileInfo
 !> unsorted list of timesteps with data as defined in fileInfo

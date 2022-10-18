@@ -73,7 +73,7 @@ contains
     USE snapgrdML, only: alevel, blevel, vlevel, ahalf, bhalf, vhalf, &
                          gparam, kadd, klevel, ivlevel, imslp, igtype, ivlayer, ivcoor
     USE snapmetML, only: met_params, xy_wind_units, pressure_units, omega_units, &
-                         sigmadot_units, temp_units
+                         sigmadot_units, temp_units, requires_precip_deaccumulation
     USE snapdimML, only: nx, ny, nk
     USE datetime, only: datetime_t, duration_t
     USE readfield_ncML, only: find_index
@@ -100,7 +100,7 @@ contains
     logical, save :: first_time_read = .true.
 
     integer :: i, j, k, ilevel, i1, i2
-    integer :: nhdiff
+    integer :: nhdiff, nhdiff_precip, prev_tstep_same_file
     real :: alev(nk), blev(nk), db, dxgrid, dygrid
     integer :: kk, ifb, kfb
     real :: dred, red, p, px, dp, p1, p2, ptop
@@ -148,15 +148,37 @@ contains
     call fimex_open(file_name, fio)
 
 !     set timepos and nhdiff
-    nhdiff = 3
-    if (ntav1 /= 0) &
+    if (ntav1 /= 0) then
       nhdiff = abs(iavail(ntav2)%oHour - iavail(ntav1)%oHour)
+    else
+      ! Irrelevant time difference for the first timestep
+      nhdiff = 0
+    endif
 
     timepos = iavail(ntav2)%timePos
     timeposm1 = timepos ! Default: No deaccumulation possible
-    if (iavail(ntav2)%pavail_same_file /= 0) then
+    prev_tstep_same_file = iavail(ntav2)%pavail_same_file
+    if (prev_tstep_same_file /= 0) then
       ! previous timestep in same file for deaccumulation, even if not in list
-      timeposm1 = iavail(iavail(ntav2)%pavail_same_file)%timePos
+      timeposm1 = iavail(prev_tstep_same_file)%timePos
+      nhdiff_precip = abs(iavail(ntav2)%oHour - iavail(prev_tstep_same_file)%oHour)
+    else
+     if (.not.requires_precip_deaccumulation()) then
+       nhdiff_precip = 0
+     else
+       ! Figure out if the next timestep belongs to the same forecast
+       if ((filef(ntav2+1) == filef(ntav2)) .and. (iavail(ntav2+1)%fchour == iavail(ntav2)%fchour)) then
+         nhdiff_precip = abs(iavail(ntav2+1)%oHour - iavail(ntav2)%oHour)
+       else
+         nhdiff_precip = nhdiff
+         if (nhdiff == 0) then
+           ! Default in case nhdiff not set
+           nhdiff_precip = 3
+         endif
+         write(iulog,'("Deaccumulation of precipitation requires estimate of nhdiff, nhdiff=","I","hours")') nhdiff_precip
+         write(error_unit,'("Deaccumulation of precipitation requires estimate of nhdiff, nhdiff=","I","hours")') nhdiff_precip
+       endif
+     endif
     endif
 
     itimefi = datetime_t(iavail(ntav2)%aYear, &
@@ -277,7 +299,7 @@ contains
     end if
 
     if (met_params%need_precipitation) then
-      call read_precipitation(fio, nhdiff, timepos, timeposm1)
+      call read_precipitation(fio, nhdiff_precip, timepos, timeposm1)
     else
       precip = 0.0
     endif
@@ -546,16 +568,14 @@ contains
 
     if (met_params%precaccumv /= '') then
       !..precipitation between input time 't1' and 't2'
-      if (timepos /= 1) then
+      if (timepos == 1) then
+        field1 = 0.0
+      else
         call fi_checkload(fio, met_params%precaccumv, precip_units, field1(:, :), nt=timeposm1, nr=nr, nz=1)
-        call fi_checkload(fio, met_params%precaccumv, precip_units, field2(:, :), nt=timepos, nr=nr, nz=1)
+      endif
+      call fi_checkload(fio, met_params%precaccumv, precip_units, field2(:, :), nt=timepos, nr=nr, nz=1)
 
-        !..the difference below may get negative due to different scaling
-        precip(:,:) = (field2 - field1)/nhdiff
-        where (precip < 0.0)
-          precip = 0.0
-        end where
-      end if
+      precip(:,:) = (field2 - field1)/nhdiff
     else if (met_params%precstratiaccumv /= '') then
       ! accumulated stratiform and convective precipitation
       !..precipitation between input time 't1' and 't2'
@@ -582,9 +602,6 @@ contains
       endif
 
       precip(:,:) = ((field3 + field4) - (field1 + field2))/nhdiff
-      where (precip < 0.0)
-        precip = 0.0
-      end where
 
     else if (met_params%total_column_rain /= '') then
       call fi_checkload(fio, met_params%total_column_rain, precip_units, field3(:, :), nt=timepos, nr=nr, nz=1)
@@ -599,12 +616,12 @@ contains
         field2 = 0.
       endif
 
-      precip(:,:) = (field1 + field2)
-      where (precip < 0.0)
-        precip = 0.0
-      end where
-
+      precip(:,:) = field1 + field2
     end if
+
+    where (precip < 0.0)
+      precip = 0.0
+    end where
   end subroutine read_precipitation
 
   subroutine check(status, errmsg)
