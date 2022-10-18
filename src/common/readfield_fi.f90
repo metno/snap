@@ -175,8 +175,8 @@ contains
            ! Default in case nhdiff not set
            nhdiff_precip = 3
          endif
-         write(iulog,'("Deaccumulation of precipitation requires estimate of nhdiff, nhdiff=","I","hours")') nhdiff_precip
-         write(error_unit,'("Deaccumulation of precipitation requires estimate of nhdiff, nhdiff=","I","hours")') nhdiff_precip
+         write(iulog,'("Deaccumulation of precipitation requires estimate of nhdiff, nhdiff=",I3,"hours")') nhdiff_precip
+         write(error_unit,'("Deaccumulation of precipitation requires estimate of nhdiff, nhdiff=",I3,"hours")') nhdiff_precip
        endif
      endif
     endif
