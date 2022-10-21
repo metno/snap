@@ -23,7 +23,7 @@ NETCDFINC = $(shell nf-config --fflags)
 
 MILIB_FLAGS = -fno-implicit-none -fno-module-private -Wno-all -Wno-extra
 
-BINDIR=../../bin/
+BINDIR?=../../bin/
 
 INCLUDES =
 
