@@ -35,7 +35,7 @@ EXLIBS = -lpthread -ldl
 
 ##########################################################
 
-BINDIR=../../bin/
+BINDIR?=../../bin/
 
 INCLUDES = -I. $(MIINC) $(FIMEXINC)
 

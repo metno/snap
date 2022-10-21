@@ -20,7 +20,7 @@ NETCDFINC = $(shell nf-config --fflags)
 
 MILIB_FLAGS = -fno-implicit-none -fno-module-private -Wno-all -Wno-extra
 
-BINDIR ?= /modules/bionic/user-apps/SnapPy/$(VERSION)/bin/
+BINDIR?=/modules/bionic/user-apps/SnapPy/$(VERSION)/bin/
 
 INCLUDES =
 
