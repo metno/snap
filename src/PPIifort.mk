@@ -30,8 +30,17 @@ BLIBS += $(NCLIBS) -Wl,-rpath,$(NCDIR)/lib
 INCLUDES += $(NCINC)
 endif
 
+# optional versioned fimex
+FIMEX = fimex
+ifdef SNAP_FIMEX_VERSION
+  FIMEX := fimex-$(SNAP_FIMEX_VERSION)
+endif
+FIMEXLIB = $(shell pkg-config --libs $(FIMEX))
+FIMEXINC =
+
 LIBS= $(MILIB) $(EXLIBS)
 BLIBS += $(MILIB) $(NCLIBS)
+BLIBS += $(FIMEXLIB)
 
 
 # clear out all suffixes
