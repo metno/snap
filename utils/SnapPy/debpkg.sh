@@ -52,8 +52,8 @@ if [ ! -f "Snappy/resources/1-s2.0-S0146645313000110-mmc1.zip" ]; then
 fi
 
 HOST=bionic
-VERSION=1.7.3
-CHANGELOG="upgrade NPP-locations"
+VERSION=1.8.1
+CHANGELOG="enabling ec-global direct as datasource"
 rm -f debian
 ln -s debian.$HOST debian
 dch -v ${VERSION}-1 -U "${CHANGELOG}"
