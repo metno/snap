@@ -26,7 +26,7 @@ from Snappy.BrowserWidget import BrowserWidget
 import Snappy.EEMEP.Resources
 import Snappy.EEMEP.Controller
 
-if __name__ == "__main__":
+def main():
     app = QtWidgets.QApplication(sys.argv)
     tabs = QtWidgets.QTabWidget()
     snap = SnapController()
@@ -42,3 +42,6 @@ if __name__ == "__main__":
 
 
     sys.exit(app.exec_())
+
+if __name__ == "__main__":
+    main()

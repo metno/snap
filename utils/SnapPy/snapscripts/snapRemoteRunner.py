@@ -403,7 +403,7 @@ class SnapRemoteRunner:
             self.ssh.syscall("rm", delete_upload_files, 30)
 
 
-if __name__ == "__main__":
+def main():
     os.umask(0o002)
     import argparse
 
@@ -482,3 +482,7 @@ if __name__ == "__main__":
             delete_oldfiles(args.dir, args.cleanup)
         if dir2 and dirIsWritable(dir2):
             delete_oldfiles(dir2, args.cleanup)
+
+
+if __name__ == "__main__":
+    main()

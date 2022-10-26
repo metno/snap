@@ -182,7 +182,7 @@ def runsnap(npps, outdir):
 
 
 
-if __name__ == "__main__":
+def main():
     os.umask(0o002)
 
     parser = argparse.ArgumentParser(
@@ -197,3 +197,7 @@ if __name__ == "__main__":
     if (args.store):
         os.environ["STORE"] = args.store
     runsnap(args.NPP, args.dir)
+
+
+if __name__ == "__main__":
+    main()

@@ -19,11 +19,11 @@ override_dh_auto_build:
 
 
 override_dh_auto_install:
-	python3 setup.py install --force --root=debian/snap-py --no-compile -O0 --install-layout=deb
+	python3 setup.py install --force --root=debian/snap-py --no-compile -O0 --install-layout=deb --prefix=/usr
 
 
 
 override_dh_python2:
-	echo "omit: dh_python2 --no-guessing-versions"
+	dh_python2 --no-guessing-versions
 
 

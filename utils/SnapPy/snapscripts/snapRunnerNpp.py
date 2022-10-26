@@ -345,7 +345,7 @@ def runsnap(npp, met_model, outdir, release_dt, runtime, plot_from_file=None):
 
 
 
-if __name__ == "__main__":
+def main():
     os.umask(0o002)
 
     parser = argparse.ArgumentParser(
@@ -373,3 +373,7 @@ if __name__ == "__main__":
     if (args.store):
         os.environ["STORE"] = args.store
     runsnap(outdir=args.outdir, met_model=args.metmodel, runtime=int(args.runtime), npp=args.npp, release_dt=release_dt, plot_from_file=plot_from_file)
+
+
+if __name__ == "__main__":
+    main()

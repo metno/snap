@@ -245,7 +245,7 @@ def snap4rimsterm(rimsterm, argosrequest, basedir, ident, met_model, bitmapCompr
 
 
 
-if __name__ == "__main__":
+def main():
     os.umask(0) # make sure files can be deleted later
     import argparse
     parser = argparse.ArgumentParser(description="run snap from a rimsterm.xml file and convert to grib-files named ident_conc, ident_depo ident_wetd ident_dose ident_tofa")
@@ -261,3 +261,7 @@ if __name__ == "__main__":
         snap4rimsterm(args.rimsterm, args.argosrequest, args.dir, args.ident, args.metmodel, bitmapCompress=args.bitmapCompress)
     else:
         print("need rimsterm option", file=sys.stderr)
+
+
+if __name__ == "__main__":
+    main()
