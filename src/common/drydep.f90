@@ -20,8 +20,8 @@ module drydep
   implicit none
   private
 
-  public drydep1, drydep2, drydep_emep_vd, drydep_zhang_emerson_vd, &
-    drydep_nonconstant_vd
+  public :: drydep1, drydep2, drydep_emep_vd, drydep_zhang_emerson_vd, &
+    drydep_nonconstant_vd, gravitational_settling
 
   integer, parameter, public :: DRYDEP_SCHEME_UNDEFINED = 0
   integer, parameter, public :: DRYDEP_SCHEME_OLD = 1
@@ -155,7 +155,7 @@ pure elemental function gravitational_settling(roa, diam, ro_part) result(vs)
     real(real64), intent(in) :: roa
     !> Diameter in m
     real(real64), intent(in) :: diam
-    !> Density in km b-3
+    !> Density in kg m-3
     real(real64), intent(in) :: ro_part
 
     real(real64) :: vs

@@ -112,7 +112,7 @@ split_particles.o: ../common/split_particles.f90 snapparML.o release.o snapdebug
 	${F77} -c ${F77FLAGS} $<
 utils.o: ../common/utils.f90
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-vgravtables.o: ../common/vgravtables.f90 snapparML.o snapdimML.o
+vgravtables.o: ../common/vgravtables.f90 snapparML.o snapdimML.o drydep.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 wetdep.o: ../common/wetdep.f90 particleML.o snapgrdML.o snapfldML.o snapparML.o snaptabML.o snapdimML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
