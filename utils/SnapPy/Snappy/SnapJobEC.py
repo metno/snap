@@ -70,6 +70,12 @@ class SnapJobEC:
             argosrequest = "--argosrequest " + requestfile
 
         module_to_load = os.getenv("SNAP_MODULE", default="SnapPy/2.1.7")
+        if self.task.queue == "operational-r8.q":
+            mem_options = "h_rss=8G,mem_free=8G,s_rss=7.9G"
+            queue = self.task.queue
+        else:
+            mem_options = "h_vmem=8G"
+            queue = "operational-bionic.q"
 
         # Create qsub script
         script = """#!/bin/bash
@@ -79,12 +85,12 @@ class SnapJobEC:
 #$ -j n
 #$ -r y
 #$ -l h_rt=2:00:00
-#$ -l h_vmem=8G
+#$ -l {mem_options}
 #$ -M beredskap-fou-kl@met.no
 #$ -m a
 #$ -P dsa
 #$ -pe shmem-1 1
-#$ -q operational-bionic.q
+#$ -q {queue}
 #$ -sync no
 #$ -o {rundir}/$JOB_NAME.$JOB_ID.logout
 #$ -e {rundir}/$JOB_NAME.$JOB_ID.logerr
@@ -150,6 +156,8 @@ exit 0;
             scpoptions=self.task.scpoptions,
             scpdestination=self.task.scpdestination,
             module_to_load=module_to_load,
+            queue=queue,
+            mem_options=mem_options,
         )
 
         return script

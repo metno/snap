@@ -70,9 +70,18 @@ class SnapTask:
     scpdestination = typed_property("scpdestination", str)
     timestamp = typed_property("timestamp", datetime.datetime)
     rundir = typed_property("rundir", str)
+    queue: str = typed_property("queue", str)
 
     def __init__(
-        self, topdir, backupdir, zip_file, model, ident, scpdestination, scpoptions
+        self,
+        topdir,
+        backupdir,
+        zip_file,
+        model,
+        ident,
+        scpdestination,
+        scpoptions,
+        queue,
     ):
         self.topdir = topdir
         self.backupdir = backupdir
@@ -82,6 +91,7 @@ class SnapTask:
         self.scpdestination = scpdestination
         self.scpoptions = scpoptions
         self.timestamp = datetime.datetime.now()
+        self.queue = queue
 
     def status_filename(self):
         return "{ident}_{model}_status".format(ident=self.id, model=self.model)
@@ -156,6 +166,7 @@ class SnapRemoteRunner:
     WORK_DIR = "work"
 
     hpc = typed_property("hpc", HPC)
+    queue = typed_property("queue", str)
     ssh = typed_property("ssh", SSHConnection)
     directory = typed_property("directory", str)
     directory2 = typed_property("directory2", str)
@@ -166,7 +177,15 @@ class SnapRemoteRunner:
     statusfile = typed_property("statusfile", str)
 
     def __init__(
-        self, directory, hpc, directory2, remote, remoteUser, remoteDir, dryrun=False
+        self,
+        directory,
+        hpc,
+        directory2,
+        remote,
+        remoteUser,
+        remoteDir,
+        queue,
+        dryrun=False,
     ):
         self.dryrun = dryrun
         self.hpc = HPC.by_name(hpc)
@@ -177,6 +196,7 @@ class SnapRemoteRunner:
         self.scpdestination = "{remote}:{remoteDir}".format(
             remote=self.remote, remoteDir=self.remote_dir
         )
+        self.queue = queue
         if self.remote_user:
             self.scpdestination = self.remote_user + "@" + self.scpdestination
 
@@ -354,6 +374,7 @@ class SnapRemoteRunner:
                         model=m.group(2),
                         scpdestination=self.scpdestination,
                         scpoptions=" ".join(self.ssh.scp_options),
+                        queue=self.queue,
                     )
                     if task.is_complete(reldir=self.UPLOAD_DIR):
                         if DEBUG:
@@ -396,6 +417,12 @@ if __name__ == "__main__":
     parser.add_argument("--remoteUser", help="remote username", required=True)
     parser.add_argument("--remoteDir", help="remote main directory", default="")
     parser.add_argument("--hpc", help="HPC-machine to run job on", required=True)
+    parser.add_argument(
+        "--queue",
+        help="Which queue to run job on",
+        choices=["operational-bionic.q", "operational-r8.q"],
+        default="operational-bionic.q",
+    )
     parser.add_argument(
         "--cleanup",
         type=int,
@@ -446,6 +473,7 @@ if __name__ == "__main__":
             remoteUser=args.remoteUser,
             remote=args.remote,
             dryrun=args.dryrun,
+            queue=args.queue,
         )
 
     if (args.cleanup > 0) and not args.dryrun:
