@@ -94,7 +94,7 @@ def add_toa_to_nc(nc: netCDF4.Dataset):
                 totalVar[:] = total
 
 
-if __name__ == "__main__":
+def main():
     import argparse
 
     parser = argparse.ArgumentParser()
@@ -103,3 +103,7 @@ if __name__ == "__main__":
 
     with netCDF4.Dataset(args.snapNc, "a") as nc:
         add_toa_to_nc(nc)
+
+
+if __name__ == "__main__":
+    main()

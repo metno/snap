@@ -14,13 +14,8 @@ import os
 import sys
 
 import numpy as np
-
-# suppress some warnings
-warnings.filterwarnings("ignore", category=UserWarning,
-                        message="Warning: 'partition' will ignore the 'mask' of the MaskedArray.")
-# shapefile.py uses root logger :-( and warns a lot about GSHHS
 import logging
-logging.root.setLevel(logging.ERROR)
+
 
 def plotMap(data, x, y, ax, title="", title_loc="center", clevs=[10,100,300,1000,3000,10000,30000,100000, 300000, 10000000], colors=None, extend='max'):
     ax.add_feature(cartopy.feature.GSHHSFeature(scale='low', facecolor='none', edgecolor='whitesmoke', linewidth=.2), zorder=100)
@@ -266,9 +261,14 @@ def snapens(ncfiles, hour, outfile):
     fig.subplots_adjust(hspace=0.12, wspace=0.01)
     fig.savefig(outfile, bbox_inches='tight')
 
-    
 
-if __name__ == "__main__":
+def main():
+    # suppress some warnings
+    warnings.filterwarnings("ignore", category=UserWarning,
+                            message="Warning: 'partition' will ignore the 'mask' of the MaskedArray.")
+    # shapefile.py uses root logger :-( and warns a lot about GSHHS
+    logging.root.setLevel(logging.ERROR)
+
     os.umask(0o002)
 
     parser = argparse.ArgumentParser(
@@ -282,3 +282,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     snapens(args.SNAPNC, args.hour, args.out)
+
+
+if __name__ == "main":
+    main()
