@@ -5,27 +5,31 @@ import datetime
 import multiprocessing
 import subprocess
 from Snappy.Resources import Resources
+from Snappy.AddToa import add_toa_to_nc
 import os
 import sys
 from time import gmtime, strftime
+import netCDF4
+
 
 def get_isotope_release(res, reldict):
     errors = ""
     for tag in ('releaseTime', 'radius', 'lowerHeight', 'upperHeight'):
-        if not tag in reldict:
+        if tag not in reldict:
             errors += "Cannot interprete {}: {}".format(tag, reldict[tag])
 
     source_tmpl = '''
 MAX.PARTICLES.PER.RELEASE= 2000
 TIME.RELEASE.PROFILE.STEPS
 RELEASE.HOUR= 0, {releaseTime}
-RELEASE.RADIUS.M= {radius}, {radius}
-RELEASE.LOWER.M= {lowerHeight}, {lowerHeight}
-RELEASE.UPPER.M= {upperHeight}, {upperHeight}
+RELEASE.RADIUS.M= {radius}
+RELEASE.LOWER.M= {lowerHeight}
+RELEASE.UPPER.M= {upperHeight}
 '''
     source_term = source_tmpl.format(releaseTime=reldict['releaseTime'],
-                                        radius=reldict['radius'],
-                                        lowerHeight=reldict['lowerHeight'], upperHeight=reldict['upperHeight'])
+                                     radius=reldict['radius'],
+                                     lowerHeight=reldict['lowerHeight'],
+                                     upperHeight=reldict['upperHeight'])
 
     isotopes = {'relI131': 'I131',
                 'relXE133': 'Xe133',
@@ -36,13 +40,14 @@ RELEASE.UPPER.M= {upperHeight}, {upperHeight}
             emis = float(reldict[rel])
         except:
             pass
-        if (emis > 0.):
+        if emis > 0.0:
             source_term += "RELEASE.BQ/SEC.COMP= {rel}, {rel}, '{iso}'\n".format(rel=reldict[rel], iso=iso)
 
     # add Cs137, I131 and Xe133
     source_term += res.isotopes2snapinput([169, 158, 148])
 
     return (source_term, errors)
+
 
 def runsnapsingle(npp, release_dt, tag_time, dirname, res):
     nPPs = res.readNPPs()
@@ -86,11 +91,9 @@ STEP.HOUR.OUTPUT.FIELDS= 3
                             stderr=stderr
                             )
             # add time of arrival
-            subprocess.run(['snapAddToa', 'snap.nc'],
-                            cwd=dirname,
-                            stdout=stdout,
-                            stderr=stderr
-                            )
+            fh = netCDF4.Dataset(os.path.join(dirname, "snap.nc"), mode="a")
+            add_toa_to_nc(fh)
+
     # and plot
     prod_dir = os.path.join(dirname, 'prod')
     os.mkdir(prod_dir)
@@ -139,22 +142,24 @@ m=SNAP.current t=fimex format=netcdf f={dirname}/snap.nc
                     cwd=prod_dir
                     )
     return True
-        
 
-def runsnap(npps, outdir):
+
+def runsnap(npps, workdir, outdir):
     release_dt = datetime.datetime.now() + datetime.timedelta(hours=1)
 
     nppdir = {}
     runparams = []
     res = Resources()
-    res.getLustreDir() # set lustredir within res before parallelization - mapp-services.sh not parallelizable yet
+    res.getLustreDir()  # set lustredir within res before parallelization - mapp-services.sh not parallelizable yet
     nPPs = res.readNPPs()
+    if workdir is None:
+        workdir = res.getSnapOutputDir()
     for i, tag in enumerate(npps):
-        if not tag in nPPs:
+        if tag not in nPPs:
             print(f"unknown NPP: {tag}", file=sys.stderr)
             sys.exit(1)
-        tag_time = gmtime(release_dt.timestamp() + i) # ensure a few secs difference for tags
-        nppdir[tag] = os.path.join(res.getSnapOutputDir(), "{0}_{1}".format(tag, strftime("%Y-%m-%dT%H%M%S", tag_time)))
+        tag_time = gmtime(release_dt.timestamp() + i)  # ensure a few secs difference for tags
+        nppdir[tag] = os.path.join(workdir, "{0}_{1}".format(tag, strftime("%Y-%m-%dT%H%M%S", tag_time)))
         runparams.append([tag, release_dt, tag_time, nppdir[tag], res])
 
     with multiprocessing.Pool(4) as p:
@@ -164,10 +169,10 @@ def runsnap(npps, outdir):
     opts = ['montage', '-mode', 'concatenate', '-tile', f"4x{len(npps)}"]
     for tag in npps:
         opts += ['-label', tag]
-        for t in [12,24,36,48]:
+        for t in [12, 24, 36, 48]:
             opts += [f"{nppdir[tag]}/prod/snap_{t}h.png"]
     opts.append(f'{outdir}/plots_{release_dt:%Y-%m-%dT%H}0000Z.png')
-    print('running montage with:\n'+" ".join(opts))
+    print('running montage with:\n' + " ".join(opts))
     subprocess.run(opts)
 
     # montage toa
@@ -176,7 +181,7 @@ def runsnap(npps, outdir):
         opts += ['-label', tag]
         opts += [f"{nppdir[tag]}/prod/snap_toa.png"]
     opts.append(f'{outdir}/plots_{release_dt:%Y-%m-%dT%H}0000Z_toa.png')
-    print('running montage for toa with:\n'+" ".join(opts))
+    print('running montage for toa with:\n' + " ".join(opts))
     subprocess.run(opts)
 
 
@@ -189,14 +194,15 @@ def main():
         description="Run snap for several Nuclear Power Plants and receive figures of dispersion",
         usage=f"{sys.argv[0]} NPP [NPP NPP ...]"
     )
+    parser.add_argument("--workdir", help="output directory, default set from --store", default=None)
     parser.add_argument("--dir", help="output directory", default="/home/VGLSHARE/SNAP4DSA/")
-    parser.add_argument("--store", help="storeA or storeB, meteo and runtime-datastore, default used from MAPP-system")
-    parser.add_argument('NPP', help="name of Nuclear Power Plant, e.g. CHERNOBYL (see list in SnapPy)", nargs='+')
+    parser.add_argument("--store", help="meteo and runtime-datastore, default used from MAPP-system", choices=["storeA", "storeB"])
+    parser.add_argument('NPP', help="name of Nuclear Power Plant(s), e.g. CHERNOBYL (see list in SnapPy)", nargs='+')
     args = parser.parse_args()
 
-    if (args.store):
+    if args.store:
         os.environ["STORE"] = args.store
-    runsnap(args.NPP, args.dir)
+    runsnap(args.NPP, args.workdir, args.dir)
 
 
 if __name__ == "__main__":
