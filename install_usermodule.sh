@@ -39,13 +39,13 @@ ln -sf ubuntuLustreSnappy.mk current.mk
 make clean
 make install
 
-cat > $PREFIX/bin/fimex<< 'EOF'
+cat > "$PREFIX"/bin/fimex<< 'EOF'
 #! /bin/bash
 source /modules/bionic/conda/Feb2021/etc/profile.d/conda.sh
 conda activate production-fimex-1.8.1
 fimex "$@"
 EOF
-chmod +x $PREFIX/bin/fimex
+chmod +x "$PREFIX"/bin/fimex
 
 cat > /modules/MET/bionic/user-modules/SnapPy/"$VERSION"<< EOF
 #%Module1.0#####################################################################
@@ -58,4 +58,5 @@ module-whatis   "SnapPy - scripts and python modules to run snap"
 set              root             /modules/bionic/user-apps/SnapPy/$VERSION
 prepend-path     PATH             \$root/bin
 prepend-path     PYTHONPATH       \$root/lib/python3.6/site-packages
+setenv          SNAP_MODULE       \$ModulesCurrentModulefile
 EOF

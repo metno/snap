@@ -69,6 +69,8 @@ class SnapJobEC:
         if os.path.exists(os.path.join(self.task.rundir, requestfile)):
             argosrequest = "--argosrequest " + requestfile
 
+        module_to_load = os.getenv("SNAP_MODULE", default="SnapPy/2.1.7")
+
         # Create qsub script
         script = """#!/bin/bash
 #$ -N dsa_bsnap
@@ -104,9 +106,7 @@ function send_msg()
 }}
 
 
-module load SnapPy/2.1.7
-# requires fimex version 1.8.1 for bitmapCompression
-# module load fimex/1.8.1
+module load {module_to_load}
 
 ulimit -c 0
 export OMP_NUM_THREADS=1
@@ -149,6 +149,7 @@ exit 0;
             statusfile=self.task.status_filename(),
             scpoptions=self.task.scpoptions,
             scpdestination=self.task.scpdestination,
+            module_to_load=module_to_load,
         )
 
         return script
