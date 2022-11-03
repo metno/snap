@@ -113,8 +113,15 @@ class EcMeteorologyCalculator(Snappy.MeteorologyCalculator.MeteorologyCalculator
 #            raise ECDataNotAvailableException("unable to load module")
 
         precommand = '''#! /bin/bash
-. /usr/share/modules/init/bash
-module load ecdis4cwf/1.2.6
+source /etc/profile.d/modules.sh
+release=$(lsb_release --release --short)
+if [[ "$release" == "8.5" ]]; then
+    module use /modules/MET/rhel8/user-modules/ /modules/MET/rhel8/user-modules/fou-modules
+    module load ecdis4cwf/1.6.1
+else
+    module load ecdis4cwf/1.2.6
+fi
+
 export OMP_NUM_THREADS=1
 export DATE='{year:04d}{month:02d}{day:02d}'
 export UTC='{utc}'
