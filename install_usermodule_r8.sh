@@ -3,27 +3,24 @@
 set -e
 
 if [ -z "$1" ]; then
-    VERSION="TEST"
+    MODULE_VERSION="TEST"
     SNAPPY_VERSION="0.0.0.dev0"
 else
-    VERSION="$1"
-    SNAPPY_VERSION="$VERSION"
+    MODULE_VERSION="$1"
+    SNAPPY_VERSION="$MODULE_VERSION"
 fi
-export VERSION
 
-PREFIX=/modules/rhel8/user-apps/fou-modules/SnapPy/"$VERSION"/
-if [ -d "$PREFIX" ]; then
-    echo "This version ('$VERSION') already exists, overwriting in 10 seconds"
+MODULE_PREFIX=/modules/rhel8/user-apps/fou-modules/SnapPy/"$MODULE_VERSION"/
+if [ -d "$MODULE_PREFIX" ]; then
+    echo "This version ('$MODULE_VERSION') already exists, overwriting in 10 seconds"
     echo "Use ctrl-C to cancel"
     sleep 10
-else
-    mkdir "$PREFIX"
 fi
-export PREFIX
 
-source /modules/rhel8/conda/install/bin/activate
+# Ignore implicit loading of $1
+source /modules/rhel8/conda/install/bin/activate || true
 
-conda create --channel conda-forge --prefix "$PREFIX" --yes --file /dev/stdin <<EOF
+conda create --channel conda-forge --prefix "$MODULE_PREFIX" --yes --file /dev/stdin <<EOF
 python=3.10
 cartopy
 # fimex=1.9.0  # Regression in this fimex
@@ -32,9 +29,10 @@ netcdf4
 matplotlib
 nco
 EOF
-conda activate "$PREFIX"
+conda activate "$MODULE_PREFIX"
 
 (
+    # Ensure SnapPy contains dose conversion factors
     cd utils/SnapPy || exit 2
 
     if [ ! -f "Snappy/resources/1-s2.0-S0146645313000110-mmc1.zip" ]; then
@@ -42,17 +40,20 @@ conda activate "$PREFIX"
     fi
 )
 
-env VERSION="$SNAPPY_VERSION" pip install ./utils/SnapPy/
+(
+    export VERSION="$SNAPPY_VERSION"
+    pip install ./utils/SnapPy/
+)
 
 cd src || exit 2
 module load /modules/MET/rhel8/user-modules/fou-modules/netcdf-fortran/4.6.0_conda_intel
 ln --symbolic --force -- PPIifort.mk current.mk
 make clean
-make BINDIR="$PREFIX"/bin install
+env VERSION="$MODULE_VERSION" make BINDIR="$MODULE_PREFIX"/bin install
 
-MODULEFILE=/modules/MET/rhel8/user-modules/fou-modules/SnapPy/"$VERSION"
+MODULEFILE=/modules/MET/rhel8/user-modules/fou-modules/SnapPy/"$MODULE_VERSION"
 
-sed "s+CONDAMODULEPATH+$PREFIX+g" > "$MODULEFILE" <<EOF
+sed "s+CONDAMODULEPATH+$MODULE_PREFIX+g" > "$MODULEFILE" <<EOF
 #%Module1.0
 
 set             conda_env               CONDAMODULEPATH
