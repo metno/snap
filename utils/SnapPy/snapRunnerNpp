@@ -305,14 +305,18 @@ def runsnap(npp, met_model, outdir, release_dt, runtime, plot_from_file=None):
     # 128:128:255 12-24 (split in two)
     # 128:128:192 24-36 (split in two)
     # 192:192:192 36-48 (split in two)
-    colors[0] = rgbToColor('255:128:255')
-    colors[1] = rgbToColor('128:0:255')
-    colors[2] = rgbToColor('128:64:255')
-    colors[3] = rgbToColor('128:128:255')
-    colors[4] = rgbToColor('128:128:225')
-    colors[5] = rgbToColor('128:128:192')
-    colors[6] = rgbToColor('160:160:192')
-    colors[7] = rgbToColor('192:192:192')
+    rgbs = [
+        '255:128:255',
+        '128:0:255',
+        '128:64:255',
+        '128:128:255',
+        '128:128:225',
+        '128:128:192',
+        '160:160:192',
+        '192:192:192',
+    ]
+    for i, (_, c) in enumerate(zip(colors, rgbs)):
+        colors[i] = rgbToColor(c)
     cs = plotMap(toa[:],
             title="Time of arrival",
             title_loc="left",
