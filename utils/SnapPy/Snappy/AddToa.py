@@ -36,31 +36,37 @@ def add_toa_to_nc(nc: netCDF4.Dataset):
     data = 0
     exampleVar = ""
     for v in list(nc.variables.keys()):
-        if v[-18:] == "_acc_concentration":
+        if v[-18:] == "_acc_concentration" or v[-19:] == "_acc_wet_deposition":
             exampleVar = v
             data += nc.variables[v][:]
     if not isinstance(data, numpy.ndarray):
         raise Exception(
             f"no variable with *_acc_concentration found in file: {nc.filepath()}"
         )
-    arrived = numpy.where(data >= 0.0001)
-    flying = numpy.where(data < 0.0001)
-    data[arrived] = 0
-    data[flying] = timeDelta  # timeDelta hourly data
+    th = 0.0001 # low threshold
+    # arrived: data >= th
+    # flying: data < th
+    data = numpy.where(data >= th, 0., timeDelta)
+    # print(data.dtype) must be float!
     toa = numpy.sum(data, axis=0)
-    toa[numpy.where(toa > timeMax)] = -999
+    toa[toa > timeMax] = -999
     # snap output start at first timeDelta, not 0, so 0 means 0 - 3h
     # make sure that timestamp means 'within this time', e.g. 0 -> 3
     # use slightly less, so that diana is satisfied [0,3[
-    toa[numpy.where(toa != -999)] += float(timeDelta) - 0.01
+    toa[toa != -999] += float(timeDelta) - 0.01
 
-    toaVar = nc.createVariable(
-        "time_of_arrival",
-        "f",
-        nc.variables[exampleVar].dimensions,
-        zlib=True,
-        fill_value=-999,
-    )
+    if "time_of_arrival" in nc.variables:
+        # for debugging or in special cases only
+        toaVar = nc["time_of_arrival"]
+        print("overwriting existing variable time_of_arrival")
+    else:
+        toaVar = nc.createVariable(
+            "time_of_arrival",
+            "f",
+            nc.variables[exampleVar].dimensions,
+            zlib=True,
+            fill_value=-999,
+        )
     toaVar.units = "hours"
     for attr in ("grid_mapping", "coordinates"):
         if attr in nc.variables[exampleVar].ncattrs():
