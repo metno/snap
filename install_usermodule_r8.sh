@@ -23,8 +23,7 @@ source /modules/rhel8/conda/install/bin/activate || true
 conda create --channel conda-forge --prefix "$MODULE_PREFIX" --yes --file /dev/stdin <<EOF
 python=3.10
 cartopy
-# fimex=1.9.0  # Regression in this fimex
-fimex=1.8.1
+fimex>=1.9.3
 netcdf4
 matplotlib
 nco
