@@ -87,6 +87,7 @@
 ! FIELD.IDENTIFICATION= 1
 ! TOTAL.COMPONENTS.OFF
 ! TOTAL.COMPONENTS.ON
+! RANDOM.SEED = 0
 ! STEP.HOUR.INPUT.MIN=  6
 ! STEP.HOUR.INPUT.MAX= 12
 ! STEP.HOUR.OUTPUT.FIELDS=  3
@@ -874,6 +875,7 @@ contains
     use snapfimexML, only: parse_interpolator
     use snapgrdml, only: compute_column_max_conc, compute_aircraft_doserate, aircraft_doserate_threshold, &
     output_column
+    use init_random_seedML, only: extra_seed
 
     !> Open file unit
     integer, intent(in) :: snapinput_unit
@@ -1655,6 +1657,10 @@ contains
       case ('ensemble.project.output.off')
         write (error_unit, *) "ensemble.project is deprecated, key is not used"
         warning = .true.
+
+      case ('random.seed')
+        if (.not. has_value) goto 12
+        read(cinput(pname_start:pname_end), *, err=12) extra_seed
 
       ! Old argos options
       case ('argos.output.off')

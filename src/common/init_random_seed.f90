@@ -19,7 +19,9 @@ module init_random_seedML
   implicit none
   private
 
-  public init_random_seed
+  integer, public, save :: extra_seed = 0
+
+  public :: init_random_seed
 
   contains
 
@@ -30,9 +32,8 @@ module init_random_seedML
   CALL RANDOM_SEED(size = n)
   ALLOCATE(seed(n))
 
-  seed(:) = 3 + 37 * (/ (i - 1, i = 1, n) /)
+  seed(:) = 3 + 37 * (/ (i - 1, i = 1, n) /) + extra_seed
   CALL RANDOM_SEED(PUT = seed)
 
-!  DEALLOCATE(seed), not called unsure if this doesn't break later calls to random-generator
   END SUBROUTINE
 end module init_random_seedML
