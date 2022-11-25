@@ -17,12 +17,12 @@
 
 module particleML
     USE iso_fortran_env, only: real64, int16
-    USE ieee_arithmetic, only: IEEE_POSITIVE_DENORMAL, IEEE_CLASS_TYPE
     implicit none
     private
 
     !> numerical limit for particle-rad contents so that common computations
-    !> like decay or deposition don't become subnormal (float-subnormal: 1e-38)
+    !> like decay or deposition don't become subnormal
+    !> (smallest possible normal float: ~1e-38)
     real, public, parameter :: numeric_limit_rad = 1000. * 1e-38
 
 !> a simple particle to be stored
