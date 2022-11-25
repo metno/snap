@@ -28,7 +28,7 @@ module rmpartML
 !> remaining mass is transferred to to the other particles
 !> in the same plume (or to the next plume if none left).
 subroutine rmpart(rmlimit)
-  USE particleML, only: pdata
+  USE particleML, only: pdata, numeric_limit_rad
   USE snapparML, only: ncomp, run_comp, iparnum, def_comp
   USE releaseML, only: iplume, plume_release, nplume, npart
 
@@ -76,7 +76,8 @@ subroutine rmpart(rmlimit)
       do i=i1,i2
         m=pdata(i)%icomp
         mm = def_comp(m)%to_running
-        if(pdata(i)%rad > (plume_release(npl, mm)*rmlimit)) then
+        if((pdata(i)%rad > numeric_limit_rad) .and. &
+           (pdata(i)%rad > (plume_release(npl, mm)*rmlimit))) then
           pbqtotal(mm)=pbqtotal(mm)+pdata(i)%rad
           npkeep(mm) = npkeep(mm) + 1
         else

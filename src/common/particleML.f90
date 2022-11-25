@@ -20,6 +20,11 @@ module particleML
     implicit none
     private
 
+    !> numerical limit for particle-rad contents so that common computations
+    !> like decay or deposition don't become subnormal
+    !> (smallest possible normal float: ~1e-38)
+    real, public, parameter :: numeric_limit_rad = 1000. * 1e-38
+
 !> a simple particle to be stored
     type, public :: particle
         sequence
