@@ -34,7 +34,7 @@ subroutine decay(part)
   integer :: m
 
   m = part%icomp
-  if(def_comp(m)%kdecay == 1) then
+  if(def_comp(m)%kdecay >= 1) then
     part%rad = part%rad * def_comp(m)%decayrate
   end if
 
@@ -48,30 +48,53 @@ end subroutine decay
 subroutine decayDeps(tstep)
   USE snapfldML, only: depdry, depwet, accdry, accwet
   USE snapparML, only: ncomp, run_comp, def_comp
+  USE iso_fortran_env, only: real64
 
   real, intent(in) :: tstep
 
   integer :: m, mm
+  real :: bomb_decay_rate, current_state, next_state
   logical, save :: prepare = .TRUE.
+  logical, save :: has_bomb_decay = .FALSE.
+  !> totalstep in seconds run in decay
+  !> start at 1h to satisfy t[h]^-1.2 initial state
+  real(real64), save :: total_steps = 3600.
 
   if(prepare) then
-
   !..radioactive decay rate
     do m=1,ncomp
       mm = run_comp(m)%to_defined
       if (def_comp(mm)%kdecay == 1) then
         def_comp(mm)%decayrate = exp(-log(2.0)*tstep/(def_comp(mm)%halftime*3600.))
+      elseif (def_comp(mm)%kdecay == 2) then
+        has_bomb_decay = .TRUE.
       else
-        def_comp(mm)%decayrate = 1.0
+        def_comp(mm)%decayrate = 1.
       end if
     end do
 
     prepare= .FALSE.
   end if
 
+  ! bomb t[h]^-1.2 power-function, 
+  ! see glassstone/dolan: effects of nuclear weapons
+  ! converted  to decay-rate factor per tstep
+  if (has_bomb_decay) then
+    current_state = (total_steps/3600.)**-1.2
+    next_state = ((total_steps+tstep)/3600.)**-1.2
+    bomb_decay_rate = next_state/current_state
+    do m=1,ncomp
+      mm = run_comp(m)%to_defined
+      if (def_comp(mm)%kdecay == 2) then
+        def_comp(mm)%decayrate = bomb_decay_rate
+      end if
+    end do
+    total_steps = total_steps + tstep
+  end if
+
   do m=1,ncomp
     mm = run_comp(m)%to_defined
-    if(def_comp(mm)%kdecay == 1) then
+    if(def_comp(mm)%kdecay >= 1) then
       depdry(:,:,m) = depdry(:,:,m)*def_comp(mm)%decayrate
       depwet(:,:,m) = depwet(:,:,m)*def_comp(mm)%decayrate
       accdry(:,:,m) = accdry(:,:,m)*def_comp(mm)%decayrate
