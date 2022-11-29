@@ -7,13 +7,14 @@ Files are stored on production machine and then copied to the remote machine.
   ```status_number:timestamp:text```
 
 with status_number/text combinations like:
-|code| message|type|
-|--- | --- | --- |
+|code| message|type|note|
+|--- | --- | --- | --- |
 |100 | Getting ARGOS data from server | Processing |
-|101 | running {model} | Processing |
-|202 | Finished extracting {model} data for ARGOS | Success |
-|409 | {model} output data do not exist | Error, customers responsibility |
-|409 | {model} output data does not exist, snap4rimsterm failed |  Error, customers responsibility |
+|101 | queued {model} for processing | Processing  | queued |
+|102 | Starting run for {model} (timeout: 2h) | Processing | running |
+|202 | Finished extracting {model} data for ARGOS | Success | only code ARGOS reacts upon, all others are send to user |
+|409 | {model} output data do not exist | Input Error | customer responsibility |
+|409 | {model} output data does not exist, snap4rimsterm failed |  Input Error | customers responsibility |
 |410 | {model} internal error copying data to destination | Internal Error |
 |410 | {model} internal error, zip failed | Internal Error |
 |410 | {model} internal error, ncatted failed | Internal Error |

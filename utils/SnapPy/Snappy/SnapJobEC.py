@@ -118,7 +118,7 @@ ulimit -c 0
 export OMP_NUM_THREADS=1
 
 cd {rundir}
-send_msg 101 "Starting run for {model} (timeout: 2h)"
+send_msg 102 "Starting run for {model} (timeout: 2h)"
 snap4rimsterm --rimsterm {xmlfile} {argosrequest} --dir . --ident {ident}_SNAP --metmodel {metmodel} --bitmapCompress
 if [ $? -ne 0 ]; then
     send_msg 409 "{model} output data does not exist, snap4rimsterm failed"
