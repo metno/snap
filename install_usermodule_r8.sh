@@ -45,6 +45,21 @@ conda activate "$MODULE_PREFIX"
     pip install ./utils/SnapPy/
 )
 
+cat > "$MODULE_PREFIX/bin/bdiana" <<EOF
+#! /bin/bash
+module use /modules/MET/rhel8/user-modules/
+module load singularity/3.10.2
+
+singularity exec \
+    --no-home --bind /lustre/\${STORE}:/lustre/\${STORE} \
+    --cleanenv \
+    --env QT_QPA_PLATFORMTHEME='' \
+    --env QT_QPA_FONTDIR='/usr/share/fonts/truetype' \
+    --env QT_QPA_PLATFORM='offscreen' \
+    /modules/singularityrepo/geoutv/mapp/prod/diana_latest.sif bdiana \$@
+EOF
+chmod +x -- "$MODULE_PREFIX/bin/bdiana"
+
 cd src || exit 2
 module load /modules/MET/rhel8/user-modules/fou-modules/netcdf-fortran/4.6.0_conda_intel
 ln --symbolic --force -- PPIifort.mk current.mk
