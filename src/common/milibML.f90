@@ -26,11 +26,5 @@ module milibML
       real, intent(out), dimension(nx, ny) :: xm, ym, fc
       real, intent(out) :: hx, hy
     end subroutine mapfield
-
-    subroutine rmfile(filnam, iprint, ierror)
-      character*(*) :: filnam
-      integer, intent(in) :: iprint
-      integer, intent(out) :: ierror
-    end subroutine rmfile
   end interface
 end module milibML
