@@ -319,7 +319,7 @@ class SnapRemoteRunner:
                 )
             elif tag == "running":
                 fh.write(
-                    "101:{ts}::running {model}\n".format(ts=timestamp, model=task.model)
+                    "101:{ts}::queued {model} for processing\n".format(ts=timestamp, model=task.model)
                 )
             elif tag == "internal":
                 fh.write(

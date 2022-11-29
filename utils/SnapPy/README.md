@@ -10,7 +10,8 @@ with status_number/text combinations like:
 |code| message|type|
 |--- | --- | --- |
 |100 | Getting ARGOS data from server | Processing |
-|101 | running {model} | Processing |
+|101 | queued {model} for processing | Processing  (queued) |
+|102 | Starting run for {model} (timeout: 2h) | Processing (running) |
 |202 | Finished extracting {model} data for ARGOS | Success |
 |409 | {model} output data do not exist | Error, customers responsibility |
 |409 | {model} output data does not exist, snap4rimsterm failed |  Error, customers responsibility |
