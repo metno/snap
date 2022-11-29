@@ -14,7 +14,6 @@ find_parameters.o datetime.o
 
 # old milib files
 MODELOBJ += gridpar.o  mapfield.o  xyconvert.o \
-     rmfile.o \
      earthr.o pol2sph.o sph2rot.o lam2sph.o mer2sph.o milibML.o
 
 ifdef FIMEXLIB
