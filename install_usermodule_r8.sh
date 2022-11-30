@@ -56,7 +56,7 @@ singularity exec \
     --env QT_QPA_PLATFORMTHEME='' \
     --env QT_QPA_FONTDIR='/usr/share/fonts/truetype' \
     --env QT_QPA_PLATFORM='offscreen' \
-    /modules/singularityrepo/geoutv/mapp/prod/diana_latest.sif bdiana \$@
+    /modules/singularityrepo/fou/kl/atom/bdiana_3.57.0.sif bdiana \$@
 EOF
 chmod +x -- "$MODULE_PREFIX/bin/bdiana"
 
