@@ -52,6 +52,7 @@ module load singularity/3.10.2
 
 singularity exec \
     --no-home --bind /lustre/\${STORE}:/lustre/\${STORE} \
+    --bind $MODULE_PREFIX:$MODULE_PREFIX \
     --cleanenv \
     --env QT_QPA_PLATFORMTHEME='' \
     --env QT_QPA_FONTDIR='/usr/share/fonts/truetype' \
