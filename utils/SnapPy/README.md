@@ -20,3 +20,16 @@ with status_number/text combinations like:
 |410 | {model} internal error, ncatted failed | Internal Error |
 |500 | internal error, cannot start job in queue in dir '{rundir}'| Internal Error |
 
+status codes from status_exporter (alert-manager):
+|code| explanation |
+|--- | --- |
+|501 | input directory missing | 
+|502 | upload directory missing |
+|503 | files hanging in upload (>10in) | 
+|504 | strange files in upload |
+|505 | uploaded (100), but not queued/started after 10 min |
+|506 | queued (101), but not started after 10 min |
+|507 | started (102), but no change after 2 hours |
+
+
+
