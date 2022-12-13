@@ -58,10 +58,8 @@ contains
 
       deprate = wet_deposition_rate(def_comp(m)%radiusmym, q, run_comp(mm)%depconst, tstep)
 
-      ! b... 25.04.12 wet deposition for convective and gases
-      dep = deprate*part%rad
-      if (dep > part%rad) dep = part%rad
-      part%rad = part%rad - dep
+      dep = part%scale_rad(1.0 - deprate)
+
       i = nint(part%x)
       j = nint(part%y)
       mm = def_comp(m)%to_running

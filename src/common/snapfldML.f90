@@ -141,4 +141,11 @@ module snapfldML
   real, allocatable, save, public :: aircraft_doserate(:,:)
   !> Height of doserates exceeding the given threshold
   real, allocatable, save, public :: aircraft_doserate_threshold_height(:,:)
+
+! > Total released activity per species
+  real(kind=real64), allocatable, save, public :: total_activity_released(:)
+  ! > Activity lost through exiting domain
+  real(kind=real64), allocatable, save, public :: total_activity_lost_domain(:)
+  ! > Activity lost through exiting rmlimit, maxage
+  real(kind=real64), allocatable, save, public :: total_activity_lost_other(:)
 end module snapfldML

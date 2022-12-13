@@ -170,10 +170,10 @@ PROGRAM bsnap
   USE fldout_ncML, only: fldout_nc, initialize_output, accumulate_fields
   USE rmpartML, only: rmpart
   USE split_particlesML, only: split_particles
-  USE checkdomainML, only: checkdomain
+  USE checkdomainML, only: constrain_to_domain
   USE rwalkML, only: rwalk, rwalk_init
   USE milibML, only: xyconvert
-  use snapfldML, only: depwet
+  use snapfldML, only: depwet, total_activity_lost_domain
   USE forwrdML, only: forwrd, forwrd_init
   USE wetdep, only: wetdep2, wetdep2_init
   USE drydep, only: drydep1, drydep2
@@ -238,6 +238,7 @@ PROGRAM bsnap
   real ::    rscale
   integer :: ntprof
   type(duration_t) :: dur
+  logical :: out_of_domain
 ! ipcount(mdefcomp, nk)
 ! integer, dimension(:,:), allocatable:: ipcount
 ! npcount(nk)
@@ -694,9 +695,9 @@ PROGRAM bsnap
 
       call particleloop_timer%start()
       ! particle loop
-      !$OMP PARALLEL DO PRIVATE(pextra) SCHEDULE(guided) !np is private by default
+      !$OMP PARALLEL DO PRIVATE(pextra,np,m,out_of_domain) SCHEDULE(guided) REDUCTION(+:total_activity_lost_domain)
       part_do: do np = 1, npart
-        if (.not. pdata(np)%active) cycle part_do
+        if (pdata(np)%is_inactive()) cycle part_do
 
         !..interpolation of boundary layer top, height, precipitation etc.
         !  creates and save temporary data to pextra%prc, pextra%
@@ -719,7 +720,13 @@ PROGRAM bsnap
         if (use_random_walk) call rwalk(blfullmix, pdata(np), pextra)
 
         !.. check domain (%active) after moving particle
-        call checkDomain(pdata(np))
+        call constrain_to_domain(pdata(np), out_of_domain)
+        if (out_of_domain) then
+          m = def_comp(pdata(np)%icomp)%to_running
+          total_activity_lost_domain(m) = &
+            total_activity_lost_domain(m) + pdata(np)%get_set_rad(0.0)
+        endif
+
       end do part_do
       !$OMP END PARALLEL DO
       call particleloop_timer%stop_and_log()
