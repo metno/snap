@@ -80,7 +80,7 @@ subroutine posint(part,tf1,tf2,tnow,pextra)
   real :: rt1,rt2,dxgrid,dygrid,dx,dy,c1,c2,c3,c4,bl,hbl,rmx,rmy
   real :: pr
 
-  if (.not.part%active) then
+  if (part%is_inactive()) then
     ! No need to compute any properties on the particle
     return
   endif

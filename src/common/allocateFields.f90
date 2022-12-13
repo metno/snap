@@ -26,7 +26,8 @@ module allocateFieldsML
       garea, dgarea, &
       max_column_scratch, max_column_concentration, &
       aircraft_doserate, aircraft_doserate_scratch, t1_abs, t2_abs, &
-      aircraft_doserate_threshold_height
+      aircraft_doserate_threshold_height, &
+      total_activity_released, total_activity_lost_domain, total_activity_lost_other
   USE snapfilML, only: idata, fdata
   USE snapgrdML, only: ahalf, bhalf, vhalf, alevel, blevel, vlevel, imodlevel, &
       compute_column_max_conc, compute_aircraft_doserate, aircraft_doserate_threshold
@@ -199,6 +200,13 @@ subroutine allocateFields
     endif
   endif
 
+  allocate(total_activity_released(ncomp), total_activity_lost_domain(ncomp), &
+    total_activity_lost_other(ncomp), stat=AllocateStatus)
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
+  total_activity_released(:) = 0.0
+  total_activity_lost_domain(:) = 0.0
+  total_activity_lost_other(:) = 0.0
+
 end subroutine allocateFields
 
 
@@ -286,6 +294,8 @@ subroutine deAllocateFields
 
   DEALLOCATE ( iplume )
   DEALLOCATE ( plume_release )
+
+  DEALLOCATE( total_activity_released, total_activity_lost_domain, total_activity_lost_other )
 
 end subroutine deAllocateFields
 end module allocateFieldsML

@@ -28,23 +28,23 @@ module rmpartML
 !> remaining mass is transferred to to the other particles
 !> in the same plume (or to the next plume if none left).
 subroutine rmpart(rmlimit)
-  USE particleML, only: pdata, numeric_limit_rad
+  USE particleML, only: pdata
   USE snapparML, only: ncomp, run_comp, iparnum, def_comp
   USE releaseML, only: iplume, plume_release, nplume, npart
+  use snapfldMl, only: total_activity_lost_other
 
   !> if particles content drop to rmlimit*initial-content
   !> the particle will be removed and it's content redistributed
   real, intent(in) :: rmlimit
 
-  integer :: m,n,npl,i,i1,i2,iredist, mm
+  integer :: m,n,npl,i,i1,i2, mm
+  logical :: redistribute
 
   integer, allocatable, save :: npkeep(:)
-  real, allocatable, save :: pbqmin(:), pbqtotal(:), pbqlost(:)
+  real, allocatable, save :: pbqlost(:)
   real, allocatable, save :: pbqdist(:)
 
   if (.not.allocated(npkeep)) allocate(npkeep(ncomp))
-  if (.not.allocated(pbqmin)) allocate(pbqmin(ncomp))
-  if (.not.allocated(pbqtotal)) allocate(pbqtotal(ncomp))
   if (.not.allocated(pbqlost)) allocate(pbqlost(ncomp))
   if (.not.allocated(pbqdist)) allocate(pbqdist(ncomp))
 
@@ -64,44 +64,40 @@ subroutine rmpart(rmlimit)
 
   n=0
 
-  do npl=1,nplume
+  plume_loop: do npl=1,nplume
 
     i1 = iplume(npl)%start
     i2 = iplume(npl)%end
 
   !..redistribution of lost mass (within one plume)
-    if(has_reduction == 1 .AND. i1 > 0) then
-      pbqtotal = 0.0
+    if(has_reduction == 1 .AND. i1 > 0 .and. rmlimit > 0) then
       npkeep = 0
       do i=i1,i2
         m=pdata(i)%icomp
         mm = def_comp(m)%to_running
-        if((pdata(i)%rad > numeric_limit_rad) .and. &
-           (pdata(i)%rad > (plume_release(npl, mm)*rmlimit))) then
-          pbqtotal(mm)=pbqtotal(mm)+pdata(i)%rad
-          npkeep(mm) = npkeep(mm) + 1
-        else
-          pbqlost(mm) = pbqlost(mm) + pdata(i)%rad
-          pdata(i)%rad=0.
-          pdata(i)%active = .FALSE.
-          pdata(i)%x=0.
-          pdata(i)%y=0.
+        if (pdata(i)%is_active()) then
+          if(pdata(i)%rad() <= (plume_release(npl, mm)*rmlimit)) then
+            ! Reset to avoid double count
+            pbqlost(mm) = pbqlost(mm) + pdata(i)%get_set_rad(0.0)
+          else
+            npkeep(mm) = npkeep(mm) + 1
+          endif
         end if
       end do
-      iredist=0
+      redistribute = .false.
       do m=1,ncomp
-        pbqdist(m)=0.
+        pbqdist(m) = 0.0
         if(pbqlost(m) > 0. .AND. npkeep(m) > 0) then
-          pbqdist(m)=pbqlost(m)/float(npkeep(m))
+          pbqdist(m) = pbqlost(m)/float(npkeep(m))
           pbqlost(m) = 0.0
-          iredist=1
+          redistribute = .true.
         end if
       end do
-      if(iredist == 1) then
+      if(redistribute) then
         do i=i1,i2
-          if(pdata(i)%rad > 0.0) then
-            m=pdata(i)%icomp
-            pdata(i)%rad= pdata(i)%rad+pbqdist(m)
+          if(pdata(i)%is_active()) then
+            m = pdata(i)%icomp
+            call pdata(i)%add_rad(pbqdist(m))
           end if
         end do
       end if
@@ -112,13 +108,16 @@ subroutine rmpart(rmlimit)
     iplume(npl)%start = n + 1
     do i=i1,i2
     ! reorder all particles, only keep active
-      if(pdata(i)%active) then
+      if(pdata(i)%is_active()) then
         n=n+1
         if(n /= i) then
         !             moving paricle to new position in pdata (n < i)
           pdata(n) = pdata(i)
           iparnum(n)=iparnum(i)
         end if
+      else
+        m = def_comp(pdata(i)%icomp)%to_running
+        total_activity_lost_other(m) = total_activity_lost_other(m) + (-pdata(i)%rad())
       end if
     end do
 
@@ -130,14 +129,15 @@ subroutine rmpart(rmlimit)
       iplume(npl)%end = -1
     end if
 
-  end do
+  end do plume_loop
 
 ! updating the used number of particles
   npart=n
 
-!..note: if pmlost>0 we lost mass inside the grid area
+!..note: if pbqlost>0 we lost mass inside the grid area
 !..      (no later plumes to take the mass).
+  total_activity_lost_other(:) = total_activity_lost_other + pbqlost
 
-  return
 end subroutine rmpart
+
 end module rmpartML

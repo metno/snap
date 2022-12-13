@@ -44,8 +44,7 @@ subroutine drydep1(part)
   !..using boundary layer height, then just linear in sigma/eta !!! ????
     h = part%hbl*(1.-part%z)/(1.-part%tbl)
     if (h < def_comp(m)%drydephgt) then
-      dep = def_comp(m)%drydeprat*part%rad
-      part%rad = part%rad - dep
+      dep = part%scale_rad(1.0 - def_comp(m)%drydeprat)
       i = nint(part%x)
       j = nint(part%y)
       mm = def_comp(m)%to_running
@@ -93,8 +92,7 @@ subroutine drydep2(tstep, part)
     ! complete deposition when particle hits ground
       if (part%z == vlevel(1)) deprate = 1.
     endif
-    dep = deprate*part%rad
-    part%rad = part%rad - dep
+    dep = part%scale_rad(1.0 - deprate)
     i = nint(part%x)
     j = nint(part%y)
     mm = def_comp(m)%to_running

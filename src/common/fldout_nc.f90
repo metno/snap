@@ -70,7 +70,6 @@ module fldout_ncML
     integer :: aircraft_doserate
     integer :: aircraft_doserate_threshold_height
     integer :: components
-    integer :: garea
     type(component_var) :: comp(mcomp)
   end type
 
@@ -104,7 +103,8 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       avgbq1, avgbq2, garea, pmsl1, pmsl2, hbl1, hbl2, &
       accdry, accwet, avgprec, concen, ps1, ps2, avghbl, &
       concacc, accprec, max_column_concentration, aircraft_doserate, &
-      aircraft_doserate_threshold_height
+      aircraft_doserate_threshold_height, &
+      total_activity_released, total_activity_lost_domain, total_activity_lost_other
   USE snapparML, only: time_profile, ncomp, run_comp, def_comp, &
     TIME_PROFILE_BOMB
   USE snapdebug, only: iulog, idebug
@@ -238,9 +238,10 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
 
 !..parameters for each component......................................
 
-  do m=1,ncomp
+  all_components: do m=1,ncomp
 
     mm = run_comp(m)%to_defined
+    write(iulog,*) ' component: ', def_comp(mm)%compnamemc
 
   !..instant Bq in and above boundary layer
     field1 = 0.0
@@ -256,23 +257,16 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
         i = nint(part%x)
         j = nint(part%y)
         if(part%z >= part%tbl) then
-          field1(i,j) = field1(i,j) + part%rad
-          bqtot1 = bqtot1 + dble(part%rad)
+          field1(i,j) = field1(i,j) + part%rad()
+          bqtot1 = bqtot1 + dble(part%rad())
           nptot1 = nptot1 + 1
         else
-          field2(i,j) = field2(i,j) + part%rad
-          bqtot2 = bqtot2 + dble(part%rad)
+          field2(i,j) = field2(i,j) + part%rad()
+          bqtot2 = bqtot2 + dble(part%rad())
           nptot2 = nptot2 + 1
         end if
       end if
     end do
-
-    write(iulog,*) ' component: ', def_comp(mm)%compname
-    write(iulog,*) '   Bq,particles in    abl: ',bqtot1,nptot1
-    write(iulog,*) '   Bq,particles above abl: ',bqtot2,nptot2
-    write(iulog,*) '   Bq,particles          : ',bqtot1+bqtot2, &
-        nptot1+nptot2
-
 
     if (output_column) then
       field3 = field1 + field2
@@ -370,9 +364,22 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
 
     call check(nf90_put_var(iunit, varid%comp(m)%ac, start=ipos, count=isize, &
         values=field3), "set_ac(m)")
-  !.....end do m=1,ncomp
 
-  end do
+    write(iulog,*) '   Bq,particles in    abl  : ',bqtot1,nptot1
+    write(iulog,*) '   Bq,particles above abl  : ',bqtot2,nptot2
+    write(iulog,*) '   Bq,particles            : ',bqtot1+bqtot2, &
+        nptot1+nptot2
+    write(iulog,*) '   Bq,particles added      : ', total_activity_released(m)
+    write(iulog,*) '   Bq,particles (domain)   : ', total_activity_lost_domain(m)
+    write(iulog,*) '   Bq,particles lost (misc): ', total_activity_lost_other(m)
+    if (def_comp(mm)%kdrydep == 1) then
+    write(iulog,*) '   Bq,particles dry dep    : ', sum(accdry(:,:,m)*garea)
+    endif
+    if (def_comp(mm)%kwetdep == 1) then
+    write(iulog,*) '   Bq,particles wet dep    : ', sum(accwet(:,:,m)*garea)
+    endif
+
+  end do all_components
 
 
 !..total parameters (sum of all components).............................
@@ -387,9 +394,9 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       i=nint(pdata(n)%x)
       j=nint(pdata(n)%y)
       if(pdata(n)%z >= pdata(n)%tbl) then
-        field1(i,j)=field1(i,j)+pdata(n)%rad
+        field1(i,j)=field1(i,j)+pdata(n)%rad()
       else
-        field2(i,j)=field2(i,j)+pdata(n)%rad
+        field2(i,j)=field2(i,j)+pdata(n)%rad()
       end if
     end do
 
@@ -512,7 +519,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
 
       mm = run_comp(m)%to_defined
 
-      if(idebug == 1) write(iulog,*) ' component: ', def_comp(mm)%compname
+      if(idebug == 1) write(iulog,*) ' component: ', def_comp(mm)%compnamemc
 
     !..scale to % of total released Bq (in a single bomb)
       dblscale= 100.0d0/dble(run_comp(m)%totalbq)
@@ -623,14 +630,14 @@ subroutine write_ml_fields(iunit, varid, average, ipos_in, isize, rt1, rt2)
           !.. dump and remove old particles, don't touch  new ones
             if (iplume(npl)%ageInSteps >= nint(modleveldump)) then
               maxage = max(maxage, int(iplume(npl)%ageInSteps, kind(maxage)))
-              avgbq(i,j,k,m) = avgbq(i,j,k,m) + part%rad
-              total = total + part%rad
-              part%active = .FALSE.
-              part%rad = 0.
+              avgbq(i,j,k,m) = avgbq(i,j,k,m) + part%rad()
+              total = total + part%rad()
+
+              call part%inactivate()
               pdata(n) = part
             end if
           else
-            avgbq(i,j,k,m)=avgbq(i,j,k,m)+pdata(n)%rad
+            avgbq(i,j,k,m)=avgbq(i,j,k,m)+pdata(n)%rad()
           endif
         end do
         end do
@@ -712,22 +719,6 @@ subroutine nc_declare(iunit, dimids, varid, varname, units, stdname, chunksize)
 
   call check(nf90_put_att(iunit,varid,"coordinates", "longitude latitude"))
   call check(nf90_put_att(iunit,varid,"grid_mapping", "projection"))
-end subroutine
-
-subroutine nc_declare_put(iunit, dimids, varid, varname, units, stdname, chunksize, values)
-  integer, intent(in) :: iunit
-  integer, intent(out)   :: varid
-  integer, intent(in)    :: dimids(:)
-
-  character(len=*), intent(in) :: units
-  character(len=*), intent(in) :: varname
-  character(len=*), intent(in), optional :: stdname
-  integer, intent(in), optional :: chunksize(:)
-
-  real, intent(in) :: values(:, :)
-
-  call nc_declare(iunit, dimids, varid, varname, units, stdname, chunksize)
-  call check(nf90_put_var(iunit, varid, values), "Could not put values")
 end subroutine
 
 subroutine nc_set_vtrans(iunit, kdimid,k_varid,ap_varid,b_varid)
@@ -1086,9 +1077,6 @@ subroutine initialize_output(filename, itime, ierror)
       endif
     endif
 
-    call nc_declare_put(iunit, dimids2d, varid%garea, "area", units="m2", &
-      stdname="area", chunksize=[nx,ny], values=garea)
-
     call check(nf90_def_var(iunit, "components", NF90_CHAR, [dimid%maxcompname, dimid%ncomp], varid%components))
 
     do m=1,ncomp
@@ -1357,10 +1345,10 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
     m = def_comp(part%icomp)%to_running
     if(part%z >= part%tbl) then
     !..in boundary layer
-      avgbq1(i,j,m) = avgbq1(i,j,m) + part%rad
+      avgbq1(i,j,m) = avgbq1(i,j,m) + part%rad()
     else
     !..above boundary layer
-      avgbq2(i,j,m) = avgbq2(i,j,m) + part%rad
+      avgbq2(i,j,m) = avgbq2(i,j,m) + part%rad()
     end if
   end do
 
@@ -1376,7 +1364,7 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
       i = nint(part%x)
       j = nint(part%y)
       m = def_comp(part%icomp)%to_running
-      concen(i,j,m) = concen(i,j,m) + dble(part%rad)
+      concen(i,j,m) = concen(i,j,m) + dble(part%rad())
     end if
   end do
 
@@ -1401,7 +1389,7 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
       k = ivlayer(ivlvl)
       m = def_comp(part%icomp)%to_running
     !..in each sigma/eta (input model) layer
-      avgbq(i,j,k,m) = avgbq(i,j,k,m) + part%rad
+      avgbq(i,j,k,m) = avgbq(i,j,k,m) + part%rad()
     end do
   end if
 
@@ -1414,7 +1402,7 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
       ivlvl = part%z*10000.
       k = ivlayer(ivlvl)
     !..in each sigma/eta (input model) layer
-      max_column_scratch(i,j,k) = max_column_scratch(i,j,k) + part%rad
+      max_column_scratch(i,j,k) = max_column_scratch(i,j,k) + part%rad()
     end do
 
     do k=1,nk-1
@@ -1451,7 +1439,7 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
       k = ivlayer(ivlvl)
       m = def_comp(part%icomp)%to_running
     !..in each sigma/eta (input model) layer
-      aircraft_doserate_scratch(i,j,k,m) = aircraft_doserate_scratch(i,j,k,m) + part%rad
+      aircraft_doserate_scratch(i,j,k,m) = aircraft_doserate_scratch(i,j,k,m) + part%rad()
     enddo
 
     ! Normalise by volume to obtain concentration

@@ -22,6 +22,7 @@
 !>     otherwise in a column
 module releaseML
   use snapdimML, only: mcomp
+  use snapfldMl, only: total_activity_released
   implicit none
   private
 
@@ -110,7 +111,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
       TIME_PROFILE_BOMB, TIME_PROFILE_STEPS
   USE snapposML, only: irelpos, release_positions
   USE snaptabML, only: g, pmult, pitab
-  USE snapdimML, only: nx, ny, nk, mcomp
+  USE snapdimML, only: nx, ny, nk
   USE snapdebug, only: iulog
 
   integer, intent(in) :: istep, nsteph
@@ -119,7 +120,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
 
 !..local
   integer :: ih,i,j,n,k,m,itab,nprel,nt,npar1,numradius,nrad
-  integer :: nrel(mcomp),nrel2(mcomp,2)
+  integer, allocatable :: nrel(:), nrel2(:,:)
   real ::    x,y,dxgrid,dygrid,dx,dy,xrand,yrand,zrand,twodx,twody
   real ::    rt1,rt2,dxx,dyy,c1,c2,c3,c4,tstep
   real :: ps,rtab,th,p,pihu,pih,pif,hhu,h1,h2,h,vlev
@@ -128,7 +129,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
   real ::    e,a,b,c,ecos,esin,s,gcos,gsin,rcos,smax,b2,en,en2
   real ::    radius,hlower,hupper,stemradius
   real :: volume1,volume2
-  real ::    relbq(mcomp),pbq(mcomp)
+  real, allocatable :: relbq(:),pbq(:)
   real ::    hlevel(nk)
   real ::    hlower2(2),hupper2(2),radius2(2)
 
@@ -147,6 +148,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
 
 
   ierror = 0
+  allocate( nrel(ncomp), nrel2(ncomp,2), relbq(ncomp), pbq(ncomp) )
 
   ! Release may occur first after simulation start
   if (istep < releases(1)%frelhour*nsteph) then
@@ -220,6 +222,8 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
     ! c	  write(error_unit,*) 'release comp,num,bq:',m,nrel(m),pbq(m)
       write(iulog,*) 'release comp,num,bq:',m,nrel(m),pbq(m)
     end do
+
+    total_activity_released(:) = total_activity_released + nrel*pbq
   ! c	write(error_unit,*) 'nprel: ',nprel
     write(iulog,*) 'nprel: ',nprel
   !      end if
@@ -423,9 +427,8 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
               pdata(npart)%x= x+dx
               pdata(npart)%y= y+dy
               pdata(npart)%z= vlev
-              pdata(npart)%rad= pbq(m)
+              call pdata(npart)%set_rad(pbq(m))
               pdata(npart)%grv= 0
-              pdata(npart)%active = .TRUE.
               pdata(npart)%icomp = run_comp(m)%to_defined
             !..an unique particle identifier (for testing...)
               nparnum=nparnum+1
@@ -465,8 +468,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
             pdata(npart)%x= x
             pdata(npart)%y= y
             pdata(npart)%z= vlev
-            pdata(npart)%rad= pbq(m)
-            pdata(npart)%active = .TRUE.
+            call pdata(npart)%set_rad(pbq(m))
             pdata(npart)%icomp = run_comp(m)%to_defined
           !..an unique particle identifier (for testing...)
             nparnum=nparnum+1
