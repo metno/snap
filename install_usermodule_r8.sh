@@ -94,7 +94,7 @@ main() {
     if [ -d "$MODULE_PREFIX" ]; then
         echo "This version ('$MODULE_VERSION') already exists, overwriting in 10 seconds"
         echo "Use ctrl-C to cancel"
-        # sleep 10
+        sleep 10
     fi
 
     # Ignore implicit loading of $1
