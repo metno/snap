@@ -5,11 +5,11 @@ F77 = ifort
 CXX = icc
 CC  = icc
 
-F77FLAGS=-DVERSION=\"$(VERSION)\" -O2 -qopenmp -warn all
-CXXFLAGS=-O2 -qopenmp
-CCFLAGS=-O2 -qopenmp
+F77FLAGS=-DVERSION=\"$(VERSION)\" -O2 -warn all -g
+CXXFLAGS=-O2
+CCFLAGS=-O2
 
-LDFLAGS=-qopenmp
+LDFLAGS=
 
 # NCDIR not required if /usr or /usr/local
 NCDIR=$(shell nf-config --prefix)
