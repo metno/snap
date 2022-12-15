@@ -643,8 +643,8 @@ subroutine write_ml_fields(iunit, varid, average, ipos_in, isize, rt1, rt2)
       do j=1,ny
         do i=1,nx
           dh = rt1*hlayer1(i,j,k) + rt2*hlayer2(i,j,k)
-          field1(:,:) = dh
-          field4(:,:) = dh*garea(i,j)*avg
+          field1(i,j) = dh
+          field4(i,j) = dh*garea(i,j)*avg
         end do
       end do
 
