@@ -734,7 +734,6 @@ subroutine nc_set_vtrans(iunit, kdimid,k_varid,ap_varid,b_varid)
   use snapgrdML, only: vlevel, alevel, blevel
   INTEGER, INTENT(IN) :: iunit, kdimid
   INTEGER, INTENT(OUT) :: k_varid, ap_varid, b_varid
-  INTEGER ::p0_varid
 
   call check(nf90_def_var(iunit, "k", &
       NF90_FLOAT, kdimid, k_varid), "def_k")
@@ -743,7 +742,7 @@ subroutine nc_set_vtrans(iunit, kdimid,k_varid,ap_varid,b_varid)
   call check(nf90_put_att(iunit,k_varid, "formula", &
       TRIM("p(n,k,j,i) = ap(k) + b(k)*ps(n,j,i)")))
   call check(nf90_put_att(iunit,k_varid, "formula_terms", &
-      TRIM("ap: ap b: b ps: surface_air_pressure p0: p0")))
+      TRIM("ap: ap b: b ps: surface_air_pressure")))
   call check(nf90_put_att(iunit,k_varid, "positive", TRIM("down")))
   call check(nf90_put_var(iunit, k_varid, vlevel(2:)))
 
@@ -755,12 +754,6 @@ subroutine nc_set_vtrans(iunit, kdimid,k_varid,ap_varid,b_varid)
   call check(nf90_def_var(iunit, "b", &
       NF90_FLOAT, kdimid, b_varid), "def_b")
   call check(nf90_put_var(iunit, b_varid, blevel(2:)))
-
-  call check(nf90_def_var(iunit, "p0", &
-      NF90_FLOAT, varid=p0_varid))
-  call check(nf90_put_att(iunit,p0_varid, "units", &
-      TRIM("hPa")))
-  call check(nf90_put_var(iunit, p0_varid, 100))
 
 end subroutine nc_set_vtrans
 
@@ -1221,7 +1214,7 @@ subroutine get_varids(iunit, varid, ierror)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
   ierror = nf90_inq_varid(iunit, "total_acc_wet_deposition", varid%accwdt)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
-  ierror = nf90_inq_varid(iunit, "p0", varid%ps)
+  ierror = nf90_inq_varid(iunit, "surface_air_pressure", varid%ps)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
   ierror = nf90_inq_varid(iunit, "k", varid%k)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
