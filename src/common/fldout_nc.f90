@@ -1509,7 +1509,12 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
     endif
 
     ! Take max over column, skip k=1 since this we do not have temp here
-    aircraft_doserate_scratch(:,:,1,ncomp+1) = maxval(aircraft_doserate_scratch(:,:,2:,ncomp+1), dim=3)
+    aircraft_doserate_scratch(:,:,1,ncomp+1) = 0.0
+    do k=2,nk
+      aircraft_doserate_scratch(:,:,1,ncomp+1) = &
+          max(aircraft_doserate_scratch(:,:,1,ncomp+1), &
+              aircraft_doserate_scratch(:,:,k,ncomp+1))
+    end do
 
     aircraft_doserate(:,:) = max(aircraft_doserate, &
       aircraft_doserate_scratch(:,:,1,ncomp+1))
