@@ -300,25 +300,15 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
   !..dry deposition
     if (def_comp(mm)%kdrydep == 1) then
       field1(:,:) = dscale*sngl(depdry(:,:,m)) / garea
-      accdry(:,:,m) = accdry(:,:,m) + depdry(:,:,m)
       if(idebug == 1) call ftest('dry', field1)
 
       call check(nf90_put_var(iunit, varid%comp(m)%idd, start=ipos, count=isize, &
           values=field1), "set_idd(m)")
     end if
 
-  !..wet deposition
-    if (def_comp(mm)%kwetdep == 1) then
-      field1(:,:) = dscale*sngl(depwet(:,:,m))/garea
-      accwet(:,:,m) = accwet(:,:,m) + depwet(:,:,m)
-      if(idebug == 1) call ftest('wet', field1)
-
-      call check(nf90_put_var(iunit, varid%comp(m)%iwd, start=ipos, count=isize, &
-          values=field1), "set_iwd(m)")
-    end if
-
   !..accumulated dry deposition
     if (def_comp(mm)%kdrydep == 1) then
+      accdry(:,:,m) = accdry(:,:,m) + depdry(:,:,m)
       field1(:,:) = dscale*sngl(accdry(:,:,m))/garea
       if(idebug == 1) call ftest('adry', field1)
 
@@ -326,8 +316,18 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
           values=field1), "set_accdd(m)")
     end if
 
+  !..wet deposition
+    if (def_comp(mm)%kwetdep == 1) then
+      field1(:,:) = dscale*sngl(depwet(:,:,m))/garea
+      if(idebug == 1) call ftest('wet', field1)
+
+      call check(nf90_put_var(iunit, varid%comp(m)%iwd, start=ipos, count=isize, &
+          values=field1), "set_iwd(m)")
+    end if
+
   !..accumulated wet deposition
     if (def_comp(mm)%kwetdep == 1) then
+      accwet(:,:,m) = accwet(:,:,m) + depwet(:,:,m)
       field1(:,:) = dscale*sngl(accwet(:,:,m))/garea
       if(idebug == 1) call ftest('awet', field1)
 
@@ -373,10 +373,10 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     write(iulog,*) '   Bq,particles (domain)   : ', total_activity_lost_domain(m)
     write(iulog,*) '   Bq,particles lost (misc): ', total_activity_lost_other(m)
     if (def_comp(mm)%kdrydep == 1) then
-    write(iulog,*) '   Bq,particles dry dep    : ', sum(accdry(:,:,m)*garea)
+    write(iulog,*) '   Bq,particles dry dep    : ', sum(accdry(:,:,m))
     endif
     if (def_comp(mm)%kwetdep == 1) then
-    write(iulog,*) '   Bq,particles wet dep    : ', sum(accwet(:,:,m)*garea)
+    write(iulog,*) '   Bq,particles wet dep    : ', sum(accwet(:,:,m))
     endif
 
   end do all_components
