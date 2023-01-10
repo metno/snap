@@ -110,20 +110,25 @@ module snapfldML
   real(kind=real64), allocatable, save, public :: depwet(:,:,:)
 
 !> accumulated dry deposition
+!> This is not weighted by area
   real(kind=real64), allocatable, save, public :: accdry(:,:,:)
 !> accumulated wet deposition
+!> This is not weighted by area
   real(kind=real64), allocatable, save, public :: accwet(:,:,:)
 !> accumulated/integrated concentration
   real(kind=real64), allocatable, save, public :: concacc(:,:,:)
 !> average Bq (per square area) in boundary layer (accum.)
+!> This is not weighted by area
   real(kind=real64), allocatable, save, public :: avgbq1(:,:,:)
 !> average Bq (per square area) above boundary layer (accum.)
+!> This is not weighted by area
   real(kind=real64), allocatable, save, public :: avgbq2(:,:,:)
 
   real(kind=real64), allocatable, save, public :: concen(:,:,:)
 !> average Bq (per square area) in each layer (accum.)
 !>
 !> only used if imodlevel
+!> This is not weighted by area
   real(kind=real64), allocatable, save, public :: avgbq(:,:,:,:)
 
 !> Scratch space for finding max column concentration
