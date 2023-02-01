@@ -9,6 +9,8 @@ else
     exit 0
 fi
 
+set -e
+
 #INSTRUCTIONS
 # 1 - Update version, changelog, etc. in this script
 #     Then run this script with -y option (you have to have devscripts installed)
@@ -17,7 +19,7 @@ fi
 #     (you need a properly configured .dupload.conf in your home directory, copy this from https://gitlab.met.no/it/sd/klient/linux/internrepo/-/raw/master/.dupload.conf)
 #
 #     Check first that it looks plausible:
-#     $ dupload --no --to bionic dist/snap-py_<version>-1_amd64.changes
+#     $ dupload --no --to bionic/jammy dist/snap-py_<version>-1_amd64.changes
 #     then remove --no option
 #
 #     Wait for confirmation email that package has been accepted
@@ -51,14 +53,15 @@ if [ ! -f "Snappy/resources/1-s2.0-S0146645313000110-mmc1.zip" ]; then
     wget https://ars.els-cdn.com/content/image/1-s2.0-S0146645313000110-mmc1.zip --output-document Snappy/resources/1-s2.0-S0146645313000110-mmc1.zip
 fi
 
-HOST=bionic
-VERSION=1.8.1
-CHANGELOG="enabling ec-global direct as datasource"
-rm -f debian
-ln -s debian.$HOST debian
-dch -v ${VERSION}-1 -U "${CHANGELOG}"
-dch -r ''
-VERSION=$VERSION python3 setup.py sdist
+HOST=$(lsb_release --codename --short)
+export VERSION=1.8.2
+CHANGELOG="packaging for jammy"
+export DEBEMAIL=${USER}@met.no
+rm --force debian
+ln --symbolic debian.$HOST debian
+dch --package snap-py --newversion ${VERSION}-1 --upstream "$CHANGELOG"
+dch --release ''
+python3 setup.py sdist
 cd dist || exit 1
 tar xvfz Snappy-${VERSION}.tar.gz
 cd Snappy-${VERSION} || exit 1

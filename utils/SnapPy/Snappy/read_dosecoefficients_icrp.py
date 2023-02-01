@@ -39,7 +39,7 @@ class DoseCoefficientsICRP:
             for row in reader:
                 if prev is not None:
                     for fillforward in fieldnames:
-                        if row[fillforward] is "":
+                        if row[fillforward] == "":
                             row[fillforward] = prev[fillforward]
                 prev = row
                 if "-" not in row["Nuclide"]:
@@ -64,10 +64,10 @@ class DoseCoefficientsICRP:
             for row in reader:
                 if prev is not None:
                     for fillforward in fieldnames:
-                        if row[fillforward] is "":
+                        if row[fillforward] == "":
                             row[fillforward] = prev[fillforward]
                 prev = row
-                if row["e (Sv Bq-1)"] is "":
+                if row["e (Sv Bq-1)"] == "":
                     continue
                 contents.append(row)
 
@@ -101,10 +101,10 @@ class DoseCoefficientsICRP:
             for row in reader:
                 if prev is not None:
                     for fillforward in fieldnames:
-                        if row[fillforward] is "":
+                        if row[fillforward] == "":
                             row[fillforward] = prev[fillforward]
                 prev = row
-                if row["Sv d-1 per Bq m-3"] is "":
+                if row["Sv d-1 per Bq m-3"] == "":
                     continue
                 contents.append(row)
 

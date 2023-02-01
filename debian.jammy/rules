@@ -1,0 +1,15 @@
+#!/usr/bin/make -f
+%:
+	dh $@
+
+override_dh_auto_build:
+	ln -sf debian/ubuntuPackage.mk current.mk
+	dh_auto_build
+
+override_dh_auto_clean:
+	ln -sf debian/ubuntuPackage.mk current.mk
+	dh_auto_clean
+	rm -f current.mk
+
+override_dh_auto_test:
+

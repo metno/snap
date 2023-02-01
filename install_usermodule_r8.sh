@@ -70,7 +70,10 @@ install_snappy() {
 
     (
         export VERSION="$SNAPPY_VERSION"
-        pip install ./utils/SnapPy/
+        # Pip install messes up shebang: https://github.com/pypa/setuptools/issues/494
+        # pip install ./utils/SnapPy/
+        cd utils/SnapPy || exit 2
+        python3 setup.py install
     )
 }
 

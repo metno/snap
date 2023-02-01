@@ -3,7 +3,7 @@
 You are welcome to contribute to the SNAP model and it's utilities.
 
 The snap code is stored in the `src/common` directory. It will be preprocessed 
-under make and copied to the `naccident`, `volcano` and `traj` directory.
+under make and copied to the `naccident` directory.
 Utilities, like operational implementations or visualizations scripts for results, 
 can be found in the `utils` directory.
 
