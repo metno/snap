@@ -22,11 +22,15 @@ module rwalkML
   private
 
   real(real64), save :: vrdbla ! l-eta above mixing height
-  real(real64), save :: tfactor ! tfactor=tstep/tmix
+  real(real64), save :: tfactor_v ! tfactor=tstep/tmix
+  real(real64), save :: tsqrtfactor_v ! tsqrtfactor_v=1/sqrt(tmix/tstep)
+  real(real64), save :: tfactor_h ! tfactor=tstep/thour
+  real(real64), save :: tsqrtfactor_h ! tsqrtfactor_h=1/sqrt(thour/tstep)
   real(real64), save :: tstep
 
   real(real64), parameter :: hmax = 2500.0 ! maximum mixing height
-  real(real64), parameter :: tmix = 15.0*60.0 ! Characteristic mixing time = 15 min
+  real(real64), parameter :: tmix_v = 15.0*60.0 ! Characteristic mixing time = 15 min (to reach full bl-height)
+  real(real64), parameter :: tmix_h = 60.0*60.0 ! Horizontal base-time time = 60 min (to reach ax^b width)
   real(real64), parameter :: lmax = 0.28 ! Maximum l-eta in the mixing layer
   real(real64), parameter :: labove = 0.03 ! Standard l-eta above the mixing layer
 
@@ -39,11 +43,14 @@ subroutine rwalk_init(timestep)
 !> time step in seconds (trajectory calculations)
   real, intent(in) :: timestep
 
-  tfactor = timestep/tmix
+  tfactor_v = timestep/tmix_v
+  tsqrtfactor_v=1./sqrt(1./tfactor_v)
+  tfactor_h = timestep/tmix_h
+  tsqrtfactor_h=1./sqrt(1./tfactor_h)
   tstep = timestep
 
   ! l-eta above mixing height
-  vrdbla = labove*tfactor
+  vrdbla = labove*tsqrtfactor_v
 end subroutine
 
 !>  Purpose:  Diffusion, in and above boudary layer.
@@ -90,7 +97,7 @@ subroutine rwalk(blfullmix,part,pextra)
   endif
 
   vabs = hypot(pextra%u, pextra%v)
-  rl = 2*a*((vabs*tstep)**b)
+  rl = 2*a*((vabs*tmix_h)**b) * tsqrtfactor_h ! sqrt error/sigma propagation
   part%x = part%x + rl*rnd(1)*pextra%rmx
   part%y = part%y + rl*rnd(2)*pextra%rmy
 
@@ -102,8 +109,10 @@ subroutine rwalk(blfullmix,part,pextra)
     if (blfullmix) then
       part%z = 1.0 - (1.0 - part%tbl)*1.1*(rnd(3)+0.5)
     else ! not full mixing
+      ! lmax*hfactor: mixing-height in eta-distance from surface (1)
+      !   ((1-0.28)eta ~ 750hPa ~ 2500m)
       hfactor = part%hbl/hmax
-      rv = lmax*hfactor*tfactor
+      rv = lmax*hfactor*tsqrtfactor_v
       rvmax = 1.0 - part%tbl
 
       rv = min(rv, rvmax)
