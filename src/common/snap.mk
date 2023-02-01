@@ -113,7 +113,7 @@ utils.o: ../common/utils.f90
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 vgravtables.o: ../common/vgravtables.f90 snapparML.o snapdimML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-wetdep.o: ../common/wetdep.f90 particleML.o snapgrdML.o snapfldML.o snapparML.o snaptabML.o snapdimML.o
+wetdep.o: ../common/wetdep.f90 particleML.o snapgrdML.o snapfldML.o snapparML.o snaptabML.o snapdimML.o snapdebugML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 datetime.o: ../common/datetime.f90
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<

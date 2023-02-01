@@ -1,0 +1,12 @@
+Source: snap-py
+Maintainer: Heiko Klein <Heiko.Klein@met.no>
+Section: python
+Priority: optional
+Build-Depends: debhelper-compat (= 11), python3:any, dh-python
+Standards-Version: 3.9.7
+
+
+Package: snap-py
+Architecture: all
+Depends: ${misc:Depends}, ${python3:Depends}, bsnap (>= 2.1.2), python3-pyqt5, python3-pyqt5.qtwebkit, python3-netcdf4
+Description: SNAP GUI in python

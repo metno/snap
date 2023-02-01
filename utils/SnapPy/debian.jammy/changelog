@@ -1,0 +1,5 @@
+snap-py (1.8.2-1) jammy; urgency=medium
+
+  * packaging for jammy
+
+ -- Magnus Ulimoen <magnusu@met.no>  Mon, 09 Jan 2023 12:24:19 +0000
