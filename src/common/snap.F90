@@ -36,6 +36,7 @@
 ! DRY.DEPOSITION.NEW
 ! DRY.DEPOSITION.SCHEME = "emep"/"old"/"..."
 ! DRY.DEPOSITION.SAVE
+! DRY.DEPOSITION.LARGEST_LANDFRACTION_FILE = "landclasses.nc"
 ! WET.DEPOSITION.OLD .......................... (default)
 ! WET.DEPOSITION.NEW
 ! TIME.STEP= 900.
@@ -191,7 +192,8 @@ PROGRAM bsnap
   USE wetdep, only: wetdep2, wetdep2_init
   USE drydep, only: drydep1, drydep2, drydep_nonconstant_vd, drydep_scheme, &
           DRYDEP_SCHEME_OLD, DRYDEP_SCHEME_NEW, DRYDEP_SCHEME_EMEP, &
-          DRYDEP_SCHEME_ZHANG, DRYDEP_SCHEME_EMERSON, DRYDEP_SCHEME_UNDEFINED
+          DRYDEP_SCHEME_ZHANG, DRYDEP_SCHEME_EMERSON, DRYDEP_SCHEME_UNDEFINED, &
+          largest_landfraction_file,  drydep_unload => unload
   USE decayML, only: decay, decayDeps
   USE posintML, only: posint, posint_init
   USE bldpML, only: bldp
@@ -863,6 +865,7 @@ PROGRAM bsnap
   call fldout_unload()
 
 ! deallocate all fields
+  call drydep_unload()
   CALL deAllocateFields()
 
   close (iulog)
@@ -1151,6 +1154,9 @@ contains
         warning = .true.
         write(error_unit, *) "This option is a hack, only use for a single component"
         output_vd_debug = .true.
+      case ('dry.deposition.largest_landfraction_file')
+        if (.not.has_value) goto 12
+        largest_landfraction_file = cinput(pname_start:pname_end)
       case ('wet.deposition.old')
         write (error_unit, *) "This option is deprecated and removed"
         goto 12
@@ -1829,6 +1835,7 @@ contains
     use find_parameter, only: detect_gridparams, get_klevel
 #if defined(FIMEX)
     use find_parameters_fi, only: detect_gridparams_fi
+    use readfield_fiML, only: read_landfractions
 #endif
     integer, intent(out) :: ierror
 
@@ -2083,6 +2090,9 @@ contains
     end do
 
     if (i1 == 0) drydep_scheme = DRYDEP_SCHEME_UNDEFINED
+    if (drydep_scheme /= DRYDEP_SCHEME_UNDEFINED .and. largest_landfraction_file /= "not set") then
+      call read_landfractions(largest_landfraction_file)
+    endif
 
     if (itotcomp == 1 .AND. ncomp == 1) itotcomp = 0
 

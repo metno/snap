@@ -16,12 +16,12 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 module drydep
-  use ISO_FORTRAN_ENV, only: real64
+  use ISO_FORTRAN_ENV, only: real64, int8
   implicit none
   private
 
   public :: drydep1, drydep2, drydep_emep_vd, drydep_zhang_emerson_vd, &
-    drydep_nonconstant_vd, gravitational_settling
+    drydep_nonconstant_vd, gravitational_settling, preprocess_landfraction, unload
 
   integer, parameter, public :: DRYDEP_SCHEME_UNDEFINED = 0
   integer, parameter, public :: DRYDEP_SCHEME_OLD = 1
@@ -47,8 +47,43 @@ module drydep
   !> Boltzmanns constant, J K-1
   real(real64), parameter :: bolzc = 1.380649e-23
 
+  character(len=256), save, public :: largest_landfraction_file = "not set"
+
+  integer(int8), save, allocatable :: classnr(:, :)
+
 
   contains
+
+subroutine preprocess_landfraction(values)
+  use iso_fortran_env, only: real32, error_unit
+  real(real32), intent(in) :: values(:,:)
+
+  integer :: i, j
+
+  write(error_unit,*) "We do not currently check the landclasses programatically"
+  write(error_unit,*) "The classes must be:"
+  write(error_unit,*) "    11: Sea"
+  write(error_unit,*) "    12: Inland water"
+  write(error_unit,*) "    13: Tundra/desert"
+  write(error_unit,*) "    14: Ice and ice sheets"
+  write(error_unit,*) "    15: Urban"
+  write(error_unit,*) "    16: Crops"
+  write(error_unit,*) "    17: Grass"
+  write(error_unit,*) "    18: Wetlands"
+  write(error_unit,*) "    19: Evergreen needleleaf"
+  write(error_unit,*) "    20: Deciduous broadleaf"
+  write(error_unit,*) "    21: Mixed forest"
+  write(error_unit,*) "    22: Shrubs and interrupted woodlands"
+
+  allocate(classnr(size(values,dim=1),size(values,dim=2)))
+  classnr(:,:) = nint(values)
+
+  error stop "Not implemented"
+end subroutine
+
+subroutine unload()
+  if (allocated(classnr)) deallocate(classnr)
+end subroutine
 
 !> Purpose:  Compute dry deposition for each particle and each component
 !>           and store depositions in nearest gridpoint in a field

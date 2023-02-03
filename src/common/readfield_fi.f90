@@ -32,11 +32,11 @@ module readfield_fiML
   implicit none
   private
 
-  public readfield_fi, fi_checkload, check, fimex_open
+  public :: readfield_fi, fi_checkload, check, fimex_open, read_landfractions
 
   !> @brief load and check an array from a source
   interface fi_checkload
-    module procedure fi_checkload1d, fi_checkload2d, fi_checkload3d
+    module procedure :: fi_checkload1d, fi_checkload2d, fi_checkload3d
   end interface
 
 contains
@@ -802,5 +802,31 @@ contains
         endif
       end do
     endif
+  end subroutine
+
+  subroutine read_landfractions(inputfile)
+    use snapdimML, only: nx, ny
+    use drydep, only: preprocess_landfraction
+    use ISO_C_BINDING, only: C_INT
+    character(len=*), intent(in) :: inputfile
+
+    type(fimexIO) :: fio, fio_intern
+
+    real(kind=real32), allocatable :: arr(:,:)
+
+    if (fint%method >= 0) then
+      call check(fio_intern%open(inputfile, "", "nc4"), &
+        "can't open landclass file")
+      call check(fio%interpolate(fio_intern, fint%method, fint%proj, fint%x_axis, &
+                                 fint%y_axis, fint%unit_is_degree), &
+                 "Can't interpolate landclass file")
+    else
+      call check(fio%open(inputfile, "", "nc4"), "Can't open landclass file")
+    endif
+
+    allocate(arr(nx, ny))
+    call fi_checkload(fio, "Main_Nature_Cover", "1", arr)
+
+    call preprocess_landfraction(arr)
   end subroutine
 end module readfield_fiML
