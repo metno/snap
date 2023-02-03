@@ -708,7 +708,8 @@ contains
       temp_units, downward_momentum_flux_units, surface_roughness_length_units, &
       surface_heat_flux_units, leaf_area_index_units
     use drydep, only: drydep_scheme, DRYDEP_SCHEME_EMEP, drydep_emep_vd, &
-      DRYDEP_SCHEME_EMERSON, DRYDEP_SCHEME_ZHANG, drydep_zhang_emerson_vd
+      DRYDEP_SCHEME_EMERSON, DRYDEP_SCHEME_ZHANG, drydep_zhang_emerson_vd, &
+      classnr
     use snapparML, only: ncomp, run_comp, def_comp
     use snapfldML, only: ps2, vd_dep, xflux, yflux, hflux, z0, leaf_area_index, t2m, &
       roa, ustar, monin_l, raero, vs
@@ -786,15 +787,15 @@ contains
           select case(drydep_scheme)
           case (DRYDEP_SCHEME_EMEP)
             call drydep_emep_vd(ps2*100, t2m, yflux, xflux, z0, &
-              hflux, leaf_area_index, real(diam), real(dens), vd_dep(:, :, ncomp), &
+              hflux, leaf_area_index, real(diam), real(dens), classnr, vd_dep(:, :, ncomp), &
               roa, ustar, monin_l, raero, vs)
           case (DRYDEP_SCHEME_ZHANG)
             call drydep_zhang_emerson_vd(ps2*100, t2m, yflux, xflux, z0, &
-              hflux, leaf_area_index, diam, dens, vd_dep(:, :, ncomp), .false., &
+              hflux, leaf_area_index, diam, dens, classnr, vd_dep(:, :, ncomp), .false., &
               roa, ustar, monin_l, raero, vs)
           case (DRYDEP_SCHEME_EMERSON)
             call drydep_zhang_emerson_vd(ps2*100, t2m, yflux, xflux, z0, &
-              hflux, leaf_area_index, diam, dens, vd_dep(:, :, ncomp), .true., &
+              hflux, leaf_area_index, diam, dens, classnr, vd_dep(:, :, ncomp), .true., &
               roa, ustar, monin_l, raero, vs)
           case default
             error stop "Unreachable"

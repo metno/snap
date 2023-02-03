@@ -49,7 +49,7 @@ module drydep
 
   character(len=256), save, public :: largest_landfraction_file = "not set"
 
-  integer(int8), save, allocatable :: classnr(:, :)
+  integer(int8), save, public, allocatable :: classnr(:, :)
 
 
   contains
@@ -208,7 +208,7 @@ pure elemental function gravitational_settling(roa, diam, ro_part) result(vs)
 end function
 
 pure elemental subroutine drydep_emep_vd(surface_pressure, t2m, yflux, xflux, z0, &
-    hflux, leaf_area_index, diam, density, vd_dep, &
+    hflux, leaf_area_index, diam, density, classnr, vd_dep, &
     roa, ustar, monin_obukhov_length, raero, vs)
   !> In hPa
   real, intent(in) :: surface_pressure
@@ -218,6 +218,7 @@ pure elemental subroutine drydep_emep_vd(surface_pressure, t2m, yflux, xflux, z0
   real, intent(in) :: leaf_area_index
   real, intent(in) :: diam
   real, intent(in) :: density
+  integer(int8), intent(in) :: classnr
   real, intent(out) :: vd_dep
 
   real(real64), intent(out) :: roa
@@ -243,17 +244,19 @@ pure elemental subroutine drydep_emep_vd(surface_pressure, t2m, yflux, xflux, z0
   monin_obukhov_length = - roa * CP * t2m * (ustar**3) / (k * grav * hflux)
 
   SAI = leaf_area_index + 1
-  a1sai = 0.008 * SAI / 10
+  if (classnr >= 19 .and. classnr <= 21) then
+    a1sai = 0.008 * SAI / 10
+  else
+    a1sai = 0.0
+  endif
+
+  a1 = max(a1sai, 0.002)
 
   raero = aerodynres(real(monin_obukhov_length, real64), real(ustar, real64), real(z0, real64))
 
-  if (leaf_area_index > 0.75 .and. a1sai > 0.002) then
-    a1 = a1sai
-  else
-    a1 = 0.002
+  if (monin_obukhov_length > -25.0 .and. monin_obukhov_length < 0.0) then
+    monin_obukhov_length = -25.0
   endif
-
-  monin_obukhov_length = max(-25.0, monin_obukhov_length)
   if (monin_obukhov_length > 0) then
     rsemep = 1.0 / (ustar * a1)
   else
@@ -264,10 +267,32 @@ pure elemental subroutine drydep_emep_vd(surface_pressure, t2m, yflux, xflux, z0
   vd_dep = 1.0 / (rsemep + raero) + vs
 end subroutine
 
-pure elemental subroutine drydep_zhang_emerson_vd(surface_pressure, t2m, yflux, xflux, z0, &
-    hflux, leaf_area_index, diam, density, vd_dep, emerson_mode, &
-    roa, ustar, monin_obukhov_length, raero, vs)
+pure real(kind=real64) function lookup_A(classnr)
   use ieee_arithmetic, only: ieee_value, IEEE_QUIET_NAN
+  integer(int8), intent(in) :: classnr
+
+  select case(classnr)
+  ! Sea, Inland_water, Tundra_and_desert, Ice_and_ice_sheets
+  case(11,12,13,14)
+    lookup_A = IEEE_VALUE(lookup_A, IEEE_QUIET_NAN)
+  ! Urban, Wetlands, Shurbs_and_interrupted_woodlands
+  case(15,18,22)
+    lookup_A = 10.0
+  ! Crops, Grass, Evergreen_needleleaf
+  case(16,17,19)
+    lookup_A = 2.0
+  ! Decidious_broadleaf, Mixed_forest
+  case(20,21)
+    lookup_A = 5.0
+  case default
+    lookup_A = IEEE_VALUE(lookup_A, IEEE_QUIET_NAN)
+  end select
+
+end function
+
+pure elemental subroutine drydep_zhang_emerson_vd(surface_pressure, t2m, yflux, xflux, z0, &
+    hflux, leaf_area_index, diam, density, classnr, vd_dep, emerson_mode, &
+    roa, ustar, monin_obukhov_length, raero, vs)
   !> In hPa
   real, intent(in) :: surface_pressure
   real, intent(in) :: t2m
@@ -276,6 +301,7 @@ pure elemental subroutine drydep_zhang_emerson_vd(surface_pressure, t2m, yflux, 
   real, intent(in) :: leaf_area_index
   real(real64), intent(in) :: diam
   real(real64), intent(in) :: density
+  integer(int8), intent(in) :: classnr
   real, intent(out) :: vd_dep
   logical, intent(in) :: emerson_mode
   real(real64), intent(out) :: roa, monin_obukhov_length, raero, vs, ustar
@@ -285,9 +311,10 @@ pure elemental subroutine drydep_zhang_emerson_vd(surface_pressure, t2m, yflux, 
   real(real64) :: A
   real(real64), parameter :: k = 0.4
   !> Below this we ignore A
-  real(real64), parameter :: lai_A_cutoff = 0.3
+  real(real64), parameter :: lai_A_cutoff = 0.01
 
   real(real64) :: fac1, cslip, bdiff, my, sc, EB, EIM, EIN, rs, stokes
+  real(real64) :: Apar
 
   roa = surface_pressure / (t2m * R)
   vs = gravitational_settling(roa, diam, density)
@@ -316,15 +343,8 @@ pure elemental subroutine drydep_zhang_emerson_vd(surface_pressure, t2m, yflux, 
     EB = 0.2 * sc ** (-2.0 / 3.0)
   endif
 
-  if (leaf_area_index < lai_A_cutoff) then
-    A = ieee_value(A, IEEE_QUIET_NAN)
-  else if (leaf_area_index < 1) then
-    A = 10 * 1e-3
-  else if (leaf_area_index < 3) then
-    A = 5 * 1e-3
-  else
-    A = 2 * 1e-3
-  endif
+  Apar = lookup_A(classnr)
+  A = Apar * 1e-3
   ! Impaction
   ! Stokes number for vegetated surfaces (Zhang (2001)
   if (leaf_area_index >= 1) then
