@@ -45,7 +45,7 @@ module particleML
         integer(int16) :: icomp
         contains
           procedure :: scale_rad, set_rad, rad => get_rad, add_rad, get_set_rad
-          procedure :: is_inactive, is_active, inactivate
+          procedure :: is_active, inactivate
           procedure, private :: flush_away_denormal
     end type particle
 
@@ -80,7 +80,7 @@ module particleML
         real, value :: factor
         real :: previous
 
-        if (p%is_inactive()) then
+        if (.not.p%is_active()) then
           removed = 0.0
           return
         endif
@@ -128,15 +128,9 @@ module particleML
       !> Lost activity is stored as negative
       subroutine inactivate(p)
         class(particle), intent(inout) :: p
-        if (p%is_inactive()) return
+        if (.not.p%is_active()) return
         p%rad_ = -p%rad_
       end subroutine
-
-      !> Get status of particle
-      logical pure function is_inactive(p)
-        class(particle), intent(in) :: p
-          is_inactive = .not. p%is_active()
-      end function
 
       !> Get status of particle
       logical pure function is_active(p)
@@ -149,7 +143,7 @@ module particleML
       subroutine flush_away_denormal(p)
         class(particle), intent(inout) :: p
 
-        if (p%is_inactive()) return
+        if (.not. p%is_active()) return
 
         if (p%rad() < numeric_limit_rad) p%rad_ = 0.0
       end subroutine

@@ -170,7 +170,7 @@ PROGRAM bsnap
   USE fldout_ncML, only: fldout_nc, initialize_output, accumulate_fields
   USE rmpartML, only: rmpart
   USE split_particlesML, only: split_particles
-  USE checkdomainML, only: constrain_to_domain
+  USE checkdomainML, only: check_in_domain
   USE rwalkML, only: rwalk, rwalk_init
   USE milibML, only: xyconvert
   use snapfldML, only: depwet, total_activity_lost_domain
@@ -697,7 +697,7 @@ PROGRAM bsnap
       ! particle loop
       !$OMP PARALLEL DO PRIVATE(pextra,np,m,out_of_domain) SCHEDULE(guided) REDUCTION(+:total_activity_lost_domain)
       part_do: do np = 1, npart
-        if (pdata(np)%is_inactive()) cycle part_do
+        if (.not.pdata(np)%is_active()) cycle part_do
 
         !..interpolation of boundary layer top, height, precipitation etc.
         !  creates and save temporary data to pextra%prc, pextra%
@@ -720,7 +720,7 @@ PROGRAM bsnap
         if (use_random_walk) call rwalk(blfullmix, pdata(np), pextra)
 
         !.. check domain (%active) after moving particle
-        call constrain_to_domain(pdata(np), out_of_domain)
+        call check_in_domain(pdata(np), out_of_domain)
         if (out_of_domain) then
           m = def_comp(pdata(np)%icomp)%to_running
           total_activity_lost_domain(m) = &

@@ -19,14 +19,14 @@ module checkDomainML
   implicit none
   private
 
-  public :: constrain_to_domain
+  public :: check_in_domain
 
   contains
 
 !> Purpose:
 !>   check if particle is inside domain (set active = .false. if outside)
 !>   move particle to lowest (highest) level if below lowest (highest) level
-subroutine constrain_to_domain(part, out_of_domain)
+subroutine check_in_domain(part, out_of_domain)
   USE snapdimML, only: nx,ny,nk
   use snapgrdML, only: vlevel
   use particleML, only: Particle
