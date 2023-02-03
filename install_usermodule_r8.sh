@@ -90,7 +90,11 @@ main() {
         SNAPPY_VERSION="0.0.0.dev0"
     else
         MODULE_VERSION="$1"
-        SNAPPY_VERSION="$MODULE_VERSION"
+        if [ -z "$2" ]; then
+            SNAPPY_VERSION="$MODULE_VERSION"
+        else
+            SNAPPY_VERSION="$2"
+        fi
     fi
 
     MODULE_PREFIX=/modules/rhel8/user-apps/fou-modules/SnapPy/"$MODULE_VERSION"/
