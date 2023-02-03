@@ -143,6 +143,7 @@
 ! LOG.FILE=     snap.log
 ! DEBUG.OFF ..................................... (default)
 ! DEBUG.ON
+! DEBUG.MASSBALANCE.FILE = "massbalance.txt"
 ! END
 !=======================================================================
 
@@ -167,7 +168,8 @@ PROGRAM bsnap
   USE snaptabML, only: tabcon
   USE particleML, only: pdata, extraParticle
   USE allocateFieldsML, only: allocateFields, deallocateFields
-  USE fldout_ncML, only: fldout_nc, initialize_output, accumulate_fields
+  USE fldout_ncML, only: fldout_nc, initialize_output, accumulate_fields, &
+                         massbalance_filename, fldout_unload => unload
   USE rmpartML, only: rmpart
   USE split_particlesML, only: split_particles
   USE checkdomainML, only: check_in_domain
@@ -836,6 +838,9 @@ PROGRAM bsnap
   ! b_end
   write (iulog, *) ' SNAP run finished'
   write (error_unit, *) ' SNAP run finished'
+
+
+  call fldout_unload()
 
 ! deallocate all fields
   CALL deAllocateFields()
@@ -1661,6 +1666,9 @@ contains
       case ('debug.on')
         !..debug.on
         idebug = 1
+      case('debug.massbalance.file')
+        if (.not.has_value) goto 12
+        massbalance_filename = cinput(pname_start:pname_end)
       case ('ensemble.project.output.off')
         write (error_unit, *) "ensemble.project is deprecated, key is not used"
         warning = .true.

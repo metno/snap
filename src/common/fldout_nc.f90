@@ -26,7 +26,7 @@ module fldout_ncML
   implicit none
   private
 
-  public fldout_nc, initialize_output, accumulate_fields
+  public :: fldout_nc, initialize_output, accumulate_fields, unload
 
 !> fixed base scaling for concentrations (unit 10**-12 g/m3 = 1 picog/m3)
   real, parameter :: cscale = 1.0
@@ -89,6 +89,10 @@ module fldout_ncML
   !> Number of times fields has been accumulated before
   !> being flushed to file
   integer, save :: naverage = 0
+
+  !> Massbalance
+  character(len=256), save, public :: massbalance_filename = ""
+  integer, save, allocatable :: massbalance_file
 
   contains
 
@@ -377,6 +381,22 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     endif
     if (def_comp(mm)%kwetdep == 1) then
     write(iulog,*) '   Bq,particles wet dep    : ', sum(accwet(:,:,m))
+    endif
+    if (allocated(massbalance_file)) then
+      write(massbalance_file,*) ' component: ', def_comp(mm)%compnamemc
+      write(massbalance_file,*) '   Bq,particles in    abl  : ',bqtot1,nptot1
+      write(massbalance_file,*) '   Bq,particles above abl  : ',bqtot2,nptot2
+      write(massbalance_file,*) '   Bq,particles            : ',bqtot1+bqtot2, &
+          nptot1+nptot2
+      write(massbalance_file,*) '   Bq,particles added      : ', total_activity_released(m)
+      write(massbalance_file,*) '   Bq,particles (domain)   : ', total_activity_lost_domain(m)
+      write(massbalance_file,*) '   Bq,particles lost (misc): ', total_activity_lost_other(m)
+      if (def_comp(mm)%kdrydep == 1) then
+      write(massbalance_file,*) '   Bq,particles dry dep    : ', sum(accdry(:,:,m))
+      endif
+      if (def_comp(mm)%kwetdep == 1) then
+      write(massbalance_file,*) '   Bq,particles wet dep    : ', sum(accwet(:,:,m))
+      endif
     endif
 
   end do all_components
@@ -1159,6 +1179,25 @@ subroutine initialize_output(filename, itime, ierror)
     end if
     call check(nf90_enddef(iunit))
     call check(nf90_close(iunit))
+
+    if (massbalance_filename /= "") then
+      call open_massbalance_file()
+    endif
+end subroutine
+
+subroutine open_massbalance_file()
+   allocate(massbalance_file)
+   open(NEWUNIT=massbalance_file, FILE=massbalance_filename, ACTION="WRITE", ENCODING="UTF-8")
+end subroutine
+
+subroutine close_massbalance_file()
+  if (.not.allocated(massbalance_file)) return
+  close(massbalance_file)
+  deallocate(massbalance_file)
+end subroutine
+
+subroutine unload()
+  call close_massbalance_file()
 end subroutine
 
 subroutine get_varids(iunit, varid, ierror)
