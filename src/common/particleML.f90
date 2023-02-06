@@ -23,11 +23,10 @@ module particleML
     !> numerical limit for particle-rad contents so that common computations
     !> like decay or deposition don't become subnormal
     !> (smallest possible normal float: ~1e-38)
-    real, public, parameter :: numeric_limit_rad = 1000. * 1e-38
+    real, parameter :: numeric_limit_rad = 1e-35
 
 !> a simple particle to be stored
     type, public :: particle
-        sequence
         !> x position in grid
         real(real64)   :: x
         !> y position in grid
@@ -37,15 +36,17 @@ module particleML
         !> sigma/eta at top of boundary layer
         real           :: tbl
         !> radioactive content (Bq)
-        real           :: rad
+        real, private  :: rad_
         !> height of boundary layer
         real           :: hbl
         !> gravity in m/s (fixed or computed)
         real           :: grv = 0.
-        !> inside/outside domain
-        logical        :: active = .false.
         !> index to the defined component
         integer(int16) :: icomp
+        contains
+          procedure :: scale_rad, set_rad, rad => get_rad, add_rad, get_set_rad
+          procedure :: is_active, inactivate
+          procedure, private :: flush_away_denormal
     end type particle
 
 !> storage for extra particle data
@@ -67,5 +68,90 @@ module particleML
 !>
 !> will be allocated in allocatefieldsml::allocatefields
     type(particle), allocatable, public, save :: pdata(:)
+
+    contains
+      !> Scale activity of the particle,
+      !>
+      !> Activity remaining in the particle is
+      !> factor * original
+      !> The "lost" activity is returned
+      real function scale_rad(p, factor) result(removed)
+        class(particle), intent(inout) :: p
+        real, value :: factor
+        real :: previous
+
+        if (.not.p%is_active()) then
+          removed = 0.0
+          return
+        endif
+
+        factor = min(factor, 1.0)
+        factor = max(factor, 0.0)
+
+        previous = p%rad_
+        p%rad_ = factor * previous
+        call p%flush_away_denormal()
+
+        removed = previous - p%rad_
+      end function
+
+      !> Set activity of particle
+      real function set_rad(p, rad)
+        class(particle), intent(inout) :: p
+        real, intent(in) :: rad
+        p%rad_ = rad
+        set_rad = p%rad_
+      end function
+
+      !> Get activity of particle
+      real pure function get_rad(p)
+        class(particle), intent(in) :: p
+        get_rad = p%rad_
+      end function
+
+      !> Get current activity and set activity
+      real function get_set_rad(p, rad) result(previous)
+        class(particle), intent(inout) :: p
+        real, intent(in) :: rad
+        previous = p%rad_
+        p%rad_ = rad
+      end function
+
+      !> Add activity to the particle
+      real function add_rad(p, rad)
+        class(particle), intent(inout) :: p
+        real, intent(in) :: rad
+        p%rad_ = p%rad_ + rad
+        add_rad = p%rad_
+      end function
+
+      !> Deactivate a particle
+      !>
+      !> Lost activity is stored as negative
+      logical function inactivate(p)
+        class(particle), intent(inout) :: p
+        if (.not.p%is_active()) then
+          inactivate = .false.
+          return
+        endif
+        p%rad_ = -p%rad_
+        inactivate = .true.
+      end function
+
+      !> Get status of particle
+      logical pure function is_active(p)
+        class(particle), intent(in) :: p
+        is_active = p%rad_ > 0
+      end function
+
+      !> Ensure there is a sensible lower limit
+      !> for the activity (machine precision)
+      subroutine flush_away_denormal(p)
+        class(particle), intent(inout) :: p
+
+        if (.not. p%is_active()) return
+
+        if (p%rad_ < numeric_limit_rad) p%rad_ = 0.0
+      end subroutine
 
 end module particleML

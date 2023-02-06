@@ -32,10 +32,11 @@ subroutine decay(part)
 
   type(Particle), intent(inout) :: part
   integer :: m
+  real :: removed
 
   m = part%icomp
   if(def_comp(m)%kdecay == 1) then
-    part%rad = part%rad * def_comp(m)%decayrate
+    removed = part%scale_rad(def_comp(m)%decayrate)
   end if
 
   return
@@ -46,7 +47,8 @@ end subroutine decay
 !>
 !>     NEEDS TO BE RUN BEFORE ::decay
 subroutine decayDeps(tstep)
-  USE snapfldML, only: depdry, depwet, accdry, accwet
+  USE snapfldML, only: depdry, depwet, accdry, accwet, &
+    total_activity_released, total_activity_lost_domain, total_activity_lost_other
   USE snapparML, only: ncomp, run_comp, def_comp
 
   real, intent(in) :: tstep
@@ -76,6 +78,10 @@ subroutine decayDeps(tstep)
       depwet(:,:,m) = depwet(:,:,m)*def_comp(mm)%decayrate
       accdry(:,:,m) = accdry(:,:,m)*def_comp(mm)%decayrate
       accwet(:,:,m) = accwet(:,:,m)*def_comp(mm)%decayrate
+
+      total_activity_released(m) = total_activity_released(m)*def_comp(mm)%decayrate
+      total_activity_lost_domain(m) = total_activity_lost_domain(m)*def_comp(mm)%decayrate
+      total_activity_lost_other(m) = total_activity_lost_other(m)*def_comp(mm)%decayrate
     endif
   enddo
   return
