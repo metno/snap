@@ -618,6 +618,7 @@ subroutine write_ml_fields(iunit, varid, average, ipos_in, isize, rt1, rt2)
   integer :: ivlvl
   integer :: i, j, k, loop, m, maxage, n, npl
   integer :: ipos(4)
+  logical :: inactivated_ ! dummy param
 
 !..concentration in each layer
 !..(height only computed at time of output)
@@ -653,7 +654,7 @@ subroutine write_ml_fields(iunit, varid, average, ipos_in, isize, rt1, rt2)
               avgbq(i,j,k,m) = avgbq(i,j,k,m) + part%rad()
               total = total + part%rad()
 
-              call part%inactivate()
+              inactivated_ =  part%inactivate()
               pdata(n) = part
             end if
           else

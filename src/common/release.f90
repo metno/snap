@@ -132,6 +132,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
   real, allocatable :: relbq(:),pbq(:)
   real ::    hlevel(nk)
   real ::    hlower2(2),hupper2(2),radius2(2)
+  real :: rad_ ! dummy param
 
 !..for random number functions
   real :: rnd(3)
@@ -427,7 +428,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
               pdata(npart)%x= x+dx
               pdata(npart)%y= y+dy
               pdata(npart)%z= vlev
-              call pdata(npart)%set_rad(pbq(m))
+              rad_ = pdata(npart)%set_rad(pbq(m))
               pdata(npart)%grv= 0
               pdata(npart)%icomp = run_comp(m)%to_defined
             !..an unique particle identifier (for testing...)
@@ -468,7 +469,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
             pdata(npart)%x= x
             pdata(npart)%y= y
             pdata(npart)%z= vlev
-            call pdata(npart)%set_rad(pbq(m))
+            rad_ =  pdata(npart)%set_rad(pbq(m))
             pdata(npart)%icomp = run_comp(m)%to_defined
           !..an unique particle identifier (for testing...)
             nparnum=nparnum+1
