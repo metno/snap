@@ -77,8 +77,6 @@ subroutine preprocess_landfraction(values)
 
   allocate(classnr(size(values,dim=1),size(values,dim=2)))
   classnr(:,:) = nint(values)
-
-  error stop "Not implemented"
 end subroutine
 
 subroutine unload()
