@@ -43,6 +43,7 @@ subroutine rmpart(rmlimit)
   integer, allocatable, save :: npkeep(:)
   real, allocatable, save :: pbqlost(:)
   real, allocatable, save :: pbqdist(:)
+  real :: rad_ ! dummy param
 
   if (.not.allocated(npkeep)) allocate(npkeep(ncomp))
   if (.not.allocated(pbqlost)) allocate(pbqlost(ncomp))
@@ -97,7 +98,7 @@ subroutine rmpart(rmlimit)
         do i=i1,i2
           if(pdata(i)%is_active()) then
             m = pdata(i)%icomp
-            call pdata(i)%add_rad(pbqdist(m))
+            rad_ = pdata(i)%add_rad(pbqdist(m))
           end if
         end do
       end if

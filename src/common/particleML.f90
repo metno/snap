@@ -96,11 +96,12 @@ module particleML
       end function
 
       !> Set activity of particle
-      subroutine set_rad(p, rad)
+      real function set_rad(p, rad)
         class(particle), intent(inout) :: p
         real, intent(in) :: rad
         p%rad_ = rad
-      end subroutine
+        set_rad = p%rad_
+      end function
 
       !> Get activity of particle
       real pure function get_rad(p)
@@ -117,20 +118,25 @@ module particleML
       end function
 
       !> Add activity to the particle
-      subroutine add_rad(p, rad)
+      real function add_rad(p, rad)
         class(particle), intent(inout) :: p
         real, intent(in) :: rad
         p%rad_ = p%rad_ + rad
-      end subroutine
+        add_rad = p%rad_
+      end function
 
       !> Deactivate a particle
       !>
       !> Lost activity is stored as negative
-      subroutine inactivate(p)
+      logical function inactivate(p)
         class(particle), intent(inout) :: p
-        if (.not.p%is_active()) return
+        if (.not.p%is_active()) then
+          inactivate = .false.
+          return
+        endif
         p%rad_ = -p%rad_
-      end subroutine
+        inactivate = .true.
+      end function
 
       !> Get status of particle
       logical pure function is_active(p)
