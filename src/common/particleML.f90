@@ -141,7 +141,7 @@ module particleML
       !> Get status of particle
       logical pure function is_active(p)
         class(particle), intent(in) :: p
-        is_active = p%rad() > 0
+        is_active = p%rad_ > 0
       end function
 
       !> Ensure there is a sensible lower limit
@@ -151,7 +151,7 @@ module particleML
 
         if (.not. p%is_active()) return
 
-        if (p%rad() < numeric_limit_rad) p%rad_ = 0.0
+        if (p%rad_ < numeric_limit_rad) p%rad_ = 0.0
       end subroutine
 
 end module particleML
