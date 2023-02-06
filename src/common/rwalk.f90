@@ -33,6 +33,7 @@ module rwalkML
   real(real64), parameter :: tmix_h = 60.0*60.0 ! Horizontal base-time time = 60 min (to reach ax^b width)
   real(real64), parameter :: lmax = 0.28 ! Maximum l-eta in the mixing layer
   real(real64), parameter :: labove = 0.03 ! Standard l-eta above the mixing layer
+  real(real64), parameter :: entrainment = 0.1 ! Entrainment zone = 10%*h
 
   public rwalk, rwalk_init
 
@@ -79,7 +80,7 @@ subroutine rwalk(blfullmix,part,pextra)
   type(extraParticle), intent(in) :: pextra
 
   real(real64) :: rnd(3), rl, vabs
-  real(real64) :: hfactor, rv, rvmax
+  real(real64) :: hfactor, rv, rvmax, top_entrainment
 
   real(real64) :: a
   real(real64), parameter :: b = 0.875
@@ -106,20 +107,18 @@ subroutine rwalk(blfullmix,part,pextra)
   if (part%z <= part%tbl) then ! Above boundary layer
       part%z = part%z + vrdbla*rnd(3)
   else ! In boundary layer
-    if (blfullmix) then
-      part%z = 1.0 - (1.0 - part%tbl)*1.1*(rnd(3)+0.5)
-    else ! not full mixing
-      ! lmax*hfactor: mixing-height in eta-distance from surface (1)
-      !   ((1-0.28)eta ~ 750hPa ~ 2500m)
-      hfactor = part%hbl/hmax
-      rv = lmax*hfactor*tsqrtfactor_v
-      rvmax = 1.0 - part%tbl
+    if (blfullmix .or. (tsqrtfactor_v .gt. 1.0)) then ! full mixing
+      part%z = 1.0 - (1.0 - part%tbl)*(1.+entrainment)*(rnd(3)+0.5)
+    else ! vertical mixing splittet in smaller time-steps      
+      rv  = (1-part%tbl)*tsqrtfactor_v
 
-      rv = min(rv, rvmax)
       part%z = part%z + rv*rnd(3)
 
     !... reflection from the ABL top
-      if(part%z < part%tbl) then
+    !... but allow for entrainment
+      ! top_entrainment 10% higher than tbl
+      top_entrainment = max(0., 1.0 - ((1.0 - part%tbl)*(1.+entrainment)))
+      if(part%z < top_entrainment) then
         part%z = 2.0*part%tbl - part%z
       endif
 
@@ -130,7 +129,7 @@ subroutine rwalk(blfullmix,part,pextra)
 
     !..vertical limits
       part%z = min(part%z, 1.0d0)
-      part%z = max(part%z, real(part%tbl, kind=kind(part%z)))
+      part%z = max(part%z, real(top_entrainment, kind=kind(part%z)))
     end if
   end if
 end subroutine rwalk
