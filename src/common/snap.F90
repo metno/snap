@@ -74,6 +74,7 @@
 ! DRY.DEP.RATIO=  0.1
 ! WET.DEP.RATIO=  0.2
 ! RADIOACTIVE.DECAY.ON
+! RADIOACTIVE.DECAY.BOMB
 ! RADIOACTIVE.DECAY.OFF
 ! HALF.LIFETIME.MINUTES= 45.5
 ! HALF.LIFETIME.HOURS= ...
@@ -234,7 +235,9 @@ PROGRAM bsnap
   integer :: ihdiff, ifldout, idailyout = 0, ihour, split_particle_after_step, split_particle_hours
   integer :: date_time(8)
   logical :: warning = .false.
-  real :: tstep = 900, rmlimit = -1.0, rnhrel, tf1, tf2, tnow, tnext
+  !> tstep: timestep in seconds
+  real :: tstep = 900
+  real :: rmlimit = -1.0, rnhrel, tf1, tf2, tnow, tnext
   real ::    x(1), y(1)
   type(extraParticle) :: pextra
   real ::    rscale
@@ -1326,6 +1329,11 @@ contains
         if (.not. associated(d_comp)) goto 12
         if (d_comp%kdecay /= -1) goto 12
         d_comp%kdecay = 1
+      case ('radioactive.decay.bomb')
+        !..radioactive.decay.on
+        if (.not. associated(d_comp)) goto 12
+        if (d_comp%kdecay /= -1) goto 12
+        d_comp%kdecay = 2
       case ('radioactive.decay.off')
         !..radioactive.decay.off
         if (.not. associated(d_comp)) goto 12
@@ -1984,6 +1992,8 @@ contains
       end if
 
       if (def_comp(m)%kdecay == 1 .AND. def_comp(m)%halftime > 0.) then
+        idecay = 1
+      else if (def_comp(m)%kdecay == 2) then
         idecay = 1
       else
         def_comp(m)%kdecay = 0

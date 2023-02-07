@@ -49,7 +49,7 @@ module snapparML
 !> density in unit g/cm3
     real :: densitygcm3 = 0.0
 
-!> for each component: 0=radioactive decay off  1=decay on
+!> for each component: 0=radioactive decay off  1=decay on 2=bomb-decay (t^-1.2)
     integer :: kdecay = -1
 !> radioactive half lifetime (hours)
     real :: halftime = -1.0
