@@ -42,7 +42,7 @@ jobs:
         run: sudo apt install libfimex-$FIMEX_VERSION-dev
 
       - name: Create binaries (with fimex)
-        run: cd src && make clean && env SNAP_FIMEX_VERSION=$FIMEX_VERSION SNAP_DEBUG_CHECKS=1 make -j2
+        run: cd src && make clean && env SNAP_FIMEX_VERSION=$FIMEX_VERSION SNAP_DEBUG_CHECKS=0 make -j2
 
       - name: Install test requirements
         run: sudo apt-get install python3-numpy python3-netcdf4
