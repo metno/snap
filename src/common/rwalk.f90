@@ -22,13 +22,18 @@ module rwalkML
   private
 
   real(real64), save :: vrdbla ! l-eta above mixing height
-  real(real64), save :: tfactor ! tfactor=tstep/tmix
+  real(real64), save :: tfactor_v ! tfactor=tstep/tmix
+  real(real64), save :: tsqrtfactor_v ! tsqrtfactor_v=1/sqrt(tmix/tstep)
+  real(real64), save :: tfactor_h ! tfactor=tstep/thour
+  real(real64), save :: tsqrtfactor_h ! tsqrtfactor_h=1/sqrt(thour/tstep)
   real(real64), save :: tstep
 
   real(real64), parameter :: hmax = 2500.0 ! maximum mixing height
-  real(real64), parameter :: tmix = 15.0*60.0 ! Characteristic mixing time = 15 min
+  real(real64), parameter :: tmix_v = 15.0*60.0 ! Characteristic mixing time = 15 min (to reach full bl-height)
+  real(real64), parameter :: tmix_h = 60.0*60.0 ! Horizontal base-time time = 60 min (to reach ax^b width)
   real(real64), parameter :: lmax = 0.28 ! Maximum l-eta in the mixing layer
   real(real64), parameter :: labove = 0.03 ! Standard l-eta above the mixing layer
+  real(real64), parameter :: entrainment = 0.1 ! Entrainment zone = 10%*h
 
   public rwalk, rwalk_init
 
@@ -39,11 +44,14 @@ subroutine rwalk_init(timestep)
 !> time step in seconds (trajectory calculations)
   real, intent(in) :: timestep
 
-  tfactor = timestep/tmix
+  tfactor_v = timestep/tmix_v
+  tsqrtfactor_v=sqrt(tfactor_v)
+  tfactor_h = timestep/tmix_h
+  tsqrtfactor_h=sqrt(tfactor_h)
   tstep = timestep
 
   ! l-eta above mixing height
-  vrdbla = labove*tfactor
+  vrdbla = labove*tsqrtfactor_v
 end subroutine
 
 !>  Purpose:  Diffusion, in and above boudary layer.
@@ -72,7 +80,7 @@ subroutine rwalk(blfullmix,part,pextra)
   type(extraParticle), intent(in) :: pextra
 
   real(real64) :: rnd(3), rl, vabs
-  real(real64) :: hfactor, rv, rvmax
+  real(real64) :: rv, top_entrainment, bl_entrainment_thickness
 
   real(real64) :: a
   real(real64), parameter :: b = 0.875
@@ -90,7 +98,7 @@ subroutine rwalk(blfullmix,part,pextra)
   endif
 
   vabs = hypot(pextra%u, pextra%v)
-  rl = 2*a*((vabs*tstep)**b)
+  rl = 2*a*((vabs*tmix_h)**b) * tsqrtfactor_h ! sqrt error/sigma propagation
   part%x = part%x + rl*rnd(1)*pextra%rmx
   part%y = part%y + rl*rnd(2)*pextra%rmy
 
@@ -99,18 +107,19 @@ subroutine rwalk(blfullmix,part,pextra)
   if (part%z <= part%tbl) then ! Above boundary layer
       part%z = part%z + vrdbla*rnd(3)
   else ! In boundary layer
-    if (blfullmix) then
-      part%z = 1.0 - (1.0 - part%tbl)*1.1*(rnd(3)+0.5)
-    else ! not full mixing
-      hfactor = part%hbl/hmax
-      rv = lmax*hfactor*tfactor
-      rvmax = 1.0 - part%tbl
+    bl_entrainment_thickness = (1.0 - part%tbl)*(1.+entrainment)
+    if (blfullmix .or. (tsqrtfactor_v .gt. 1.0)) then ! full mixing
+      part%z = 1.0 - bl_entrainment_thickness*(rnd(3)+0.5)
+    else ! vertical mixing splittet in smaller time-steps      
+      rv  = (1-part%tbl)*tsqrtfactor_v
 
-      rv = min(rv, rvmax)
       part%z = part%z + rv*rnd(3)
 
     !... reflection from the ABL top
-      if(part%z < part%tbl) then
+    !... but allow for entrainment
+      ! top_entrainment 10% higher than tbl
+      top_entrainment = max(0., 1.0 - bl_entrainment_thickness)
+      if(part%z < top_entrainment) then
         part%z = 2.0*part%tbl - part%z
       endif
 
@@ -121,7 +130,7 @@ subroutine rwalk(blfullmix,part,pextra)
 
     !..vertical limits
       part%z = min(part%z, 1.0d0)
-      part%z = max(part%z, real(part%tbl, kind=kind(part%z)))
+      part%z = max(part%z, real(top_entrainment, kind=kind(part%z)))
     end if
   end if
 end subroutine rwalk
