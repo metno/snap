@@ -45,9 +45,9 @@ subroutine rwalk_init(timestep)
   real, intent(in) :: timestep
 
   tfactor_v = timestep/tmix_v
-  tsqrtfactor_v=1./sqrt(1./tfactor_v)
+  tsqrtfactor_v=sqrt(tfactor_v)
   tfactor_h = timestep/tmix_h
-  tsqrtfactor_h=1./sqrt(1./tfactor_h)
+  tsqrtfactor_h=sqrt(tfactor_h)
   tstep = timestep
 
   ! l-eta above mixing height
@@ -80,7 +80,7 @@ subroutine rwalk(blfullmix,part,pextra)
   type(extraParticle), intent(in) :: pextra
 
   real(real64) :: rnd(3), rl, vabs
-  real(real64) :: hfactor, rv, rvmax, top_entrainment
+  real(real64) :: rv, top_entrainment, bl_entrainment_thickness
 
   real(real64) :: a
   real(real64), parameter :: b = 0.875
@@ -107,8 +107,9 @@ subroutine rwalk(blfullmix,part,pextra)
   if (part%z <= part%tbl) then ! Above boundary layer
       part%z = part%z + vrdbla*rnd(3)
   else ! In boundary layer
+    bl_entrainment_thickness = (1.0 - part%tbl)*(1.+entrainment)
     if (blfullmix .or. (tsqrtfactor_v .gt. 1.0)) then ! full mixing
-      part%z = 1.0 - (1.0 - part%tbl)*(1.+entrainment)*(rnd(3)+0.5)
+      part%z = 1.0 - bl_entrainment_thickness*(rnd(3)+0.5)
     else ! vertical mixing splittet in smaller time-steps      
       rv  = (1-part%tbl)*tsqrtfactor_v
 
@@ -117,7 +118,7 @@ subroutine rwalk(blfullmix,part,pextra)
     !... reflection from the ABL top
     !... but allow for entrainment
       ! top_entrainment 10% higher than tbl
-      top_entrainment = max(0., 1.0 - ((1.0 - part%tbl)*(1.+entrainment)))
+      top_entrainment = max(0., 1.0 - bl_entrainment_thickness)
       if(part%z < top_entrainment) then
         part%z = 2.0*part%tbl - part%z
       endif

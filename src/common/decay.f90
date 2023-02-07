@@ -59,7 +59,7 @@ subroutine decayDeps(tstep)
   logical, save :: prepare = .TRUE.
   logical, save :: has_bomb_decay = .FALSE.
   !> totalstep in seconds run in decay
-  !> start at 1h to satisfy t[h]^-1.2 initial state
+  !> start at 1h to satisfy C(t) = C_0 * t^-1.2 (t in [hrs])
   real(real64), save :: total_steps = 3600.
 
   if(prepare) then
