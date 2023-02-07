@@ -35,8 +35,8 @@ jobs:
       - name: Install test requirements
         run: sudo apt-get install python3-numpy python3-netcdf4
 
-      - name: Create and test binaries (no fimex)
-        run: cd src && env SNAP_BOUND_CHECKS=1 make -j2 test
+      - name: Create binaries (no fimex) (no tests without fimex)
+        run: cd src && env SNAP_BOUND_CHECKS=1 make -j2
 
       - name: Clean up
         run: cd src && make clean
@@ -45,4 +45,4 @@ jobs:
         run: sudo apt install libfimex-$FIMEX_VERSION-dev
 
       - name: Create and test binaries (with fimex)
-        run: cd src && make clean && env SNAP_FIMEX_VERSION=$FIMEX_VERSION SNAP_BOUND_CHECKS=1 make -j2 test
+        run: cd src && make clean && env SNAP_FIMEX_VERSION=$FIMEX_VERSION SNAP_BOUND_CHECKS=1 make test
