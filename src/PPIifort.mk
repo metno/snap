@@ -5,7 +5,7 @@ F77 = ifort
 CXX = icc
 CC  = icc
 
-F77FLAGS=-DVERSION=\"$(VERSION)\" -O2 -warn all -g
+F77FLAGS=-DVERSION=\"$(VERSION)\" -O2 -warn all -g -mavx2
 CXXFLAGS=-O2
 CCFLAGS=-O2
 

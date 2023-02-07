@@ -40,6 +40,7 @@ subroutine split_particles(split_particle_after_step)
   !> number of timesteps before a particle will be split
   integer, intent(IN) :: split_particle_after_step
   integer :: n, np, npl, nplume_old
+  real :: removed
 
   nplume_old = nplume
 
@@ -71,7 +72,7 @@ subroutine split_particles(split_particle_after_step)
         iplume(nplume)%start = npart
       end if
 
-      pdata(np)%rad = pdata(np)%rad / 2.
+      removed = pdata(np)%scale_rad(0.5)
       pdata(npart) = pdata(np)
     end do
   end do
