@@ -26,7 +26,7 @@ module fldout_ncML
   implicit none
   private
 
-  public fldout_nc, initialize_output, accumulate_fields
+  public :: fldout_nc, initialize_output, accumulate_fields, unload
 
 !> fixed base scaling for concentrations (unit 10**-12 g/m3 = 1 picog/m3)
   real, parameter :: cscale = 1.0
@@ -70,7 +70,6 @@ module fldout_ncML
     integer :: aircraft_doserate
     integer :: aircraft_doserate_threshold_height
     integer :: components
-    integer :: garea
     type(component_var) :: comp(mcomp)
   end type
 
@@ -91,6 +90,10 @@ module fldout_ncML
   !> being flushed to file
   integer, save :: naverage = 0
 
+  !> Massbalance
+  character(len=256), save, public :: massbalance_filename = ""
+  integer, save, allocatable :: massbalance_file
+
   contains
 
 subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
@@ -104,7 +107,8 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       avgbq1, avgbq2, garea, pmsl1, pmsl2, hbl1, hbl2, &
       accdry, accwet, avgprec, concen, ps1, ps2, avghbl, &
       concacc, accprec, max_column_concentration, aircraft_doserate, &
-      aircraft_doserate_threshold_height
+      aircraft_doserate_threshold_height, &
+      total_activity_released, total_activity_lost_domain, total_activity_lost_other
   USE snapparML, only: time_profile, ncomp, run_comp, def_comp, &
     TIME_PROFILE_BOMB
   USE snapdebug, only: iulog, idebug
@@ -238,9 +242,10 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
 
 !..parameters for each component......................................
 
-  do m=1,ncomp
+  all_components: do m=1,ncomp
 
     mm = run_comp(m)%to_defined
+    write(iulog,*) ' component: ', def_comp(mm)%compnamemc
 
   !..instant Bq in and above boundary layer
     field1 = 0.0
@@ -256,23 +261,16 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
         i = nint(part%x)
         j = nint(part%y)
         if(part%z >= part%tbl) then
-          field1(i,j) = field1(i,j) + part%rad
-          bqtot1 = bqtot1 + dble(part%rad)
+          field1(i,j) = field1(i,j) + part%rad()
+          bqtot1 = bqtot1 + dble(part%rad())
           nptot1 = nptot1 + 1
         else
-          field2(i,j) = field2(i,j) + part%rad
-          bqtot2 = bqtot2 + dble(part%rad)
+          field2(i,j) = field2(i,j) + part%rad()
+          bqtot2 = bqtot2 + dble(part%rad())
           nptot2 = nptot2 + 1
         end if
       end if
     end do
-
-    write(iulog,*) ' component: ', def_comp(mm)%compname
-    write(iulog,*) '   Bq,particles in    abl: ',bqtot1,nptot1
-    write(iulog,*) '   Bq,particles above abl: ',bqtot2,nptot2
-    write(iulog,*) '   Bq,particles          : ',bqtot1+bqtot2, &
-        nptot1+nptot2
-
 
     if (output_column) then
       field3 = field1 + field2
@@ -306,25 +304,15 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
   !..dry deposition
     if (def_comp(mm)%kdrydep == 1) then
       field1(:,:) = dscale*sngl(depdry(:,:,m)) / garea
-      accdry(:,:,m) = accdry(:,:,m) + depdry(:,:,m)
       if(idebug == 1) call ftest('dry', field1)
 
       call check(nf90_put_var(iunit, varid%comp(m)%idd, start=ipos, count=isize, &
           values=field1), "set_idd(m)")
     end if
 
-  !..wet deposition
-    if (def_comp(mm)%kwetdep == 1) then
-      field1(:,:) = dscale*sngl(depwet(:,:,m))/garea
-      accwet(:,:,m) = accwet(:,:,m) + depwet(:,:,m)
-      if(idebug == 1) call ftest('wet', field1)
-
-      call check(nf90_put_var(iunit, varid%comp(m)%iwd, start=ipos, count=isize, &
-          values=field1), "set_iwd(m)")
-    end if
-
   !..accumulated dry deposition
     if (def_comp(mm)%kdrydep == 1) then
+      accdry(:,:,m) = accdry(:,:,m) + depdry(:,:,m)
       field1(:,:) = dscale*sngl(accdry(:,:,m))/garea
       if(idebug == 1) call ftest('adry', field1)
 
@@ -332,8 +320,18 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
           values=field1), "set_accdd(m)")
     end if
 
+  !..wet deposition
+    if (def_comp(mm)%kwetdep == 1) then
+      field1(:,:) = dscale*sngl(depwet(:,:,m))/garea
+      if(idebug == 1) call ftest('wet', field1)
+
+      call check(nf90_put_var(iunit, varid%comp(m)%iwd, start=ipos, count=isize, &
+          values=field1), "set_iwd(m)")
+    end if
+
   !..accumulated wet deposition
     if (def_comp(mm)%kwetdep == 1) then
+      accwet(:,:,m) = accwet(:,:,m) + depwet(:,:,m)
       field1(:,:) = dscale*sngl(accwet(:,:,m))/garea
       if(idebug == 1) call ftest('awet', field1)
 
@@ -370,9 +368,38 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
 
     call check(nf90_put_var(iunit, varid%comp(m)%ac, start=ipos, count=isize, &
         values=field3), "set_ac(m)")
-  !.....end do m=1,ncomp
 
-  end do
+    write(iulog,*) '   Bq,particles in    abl  : ',bqtot1,nptot1
+    write(iulog,*) '   Bq,particles above abl  : ',bqtot2,nptot2
+    write(iulog,*) '   Bq,particles            : ',bqtot1+bqtot2, &
+        nptot1+nptot2
+    write(iulog,*) '   Bq,particles added      : ', total_activity_released(m)
+    write(iulog,*) '   Bq,particles (domain)   : ', total_activity_lost_domain(m)
+    write(iulog,*) '   Bq,particles lost (misc): ', total_activity_lost_other(m)
+    if (def_comp(mm)%kdrydep == 1) then
+    write(iulog,*) '   Bq,particles dry dep    : ', sum(accdry(:,:,m))
+    endif
+    if (def_comp(mm)%kwetdep == 1) then
+    write(iulog,*) '   Bq,particles wet dep    : ', sum(accwet(:,:,m))
+    endif
+    if (allocated(massbalance_file)) then
+      write(massbalance_file,*) ' component: ', def_comp(mm)%compnamemc
+      write(massbalance_file,*) '   Bq,particles in    abl  : ',bqtot1,nptot1
+      write(massbalance_file,*) '   Bq,particles above abl  : ',bqtot2,nptot2
+      write(massbalance_file,*) '   Bq,particles            : ',bqtot1+bqtot2, &
+          nptot1+nptot2
+      write(massbalance_file,*) '   Bq,particles added      : ', total_activity_released(m)
+      write(massbalance_file,*) '   Bq,particles (domain)   : ', total_activity_lost_domain(m)
+      write(massbalance_file,*) '   Bq,particles lost (misc): ', total_activity_lost_other(m)
+      if (def_comp(mm)%kdrydep == 1) then
+      write(massbalance_file,*) '   Bq,particles dry dep    : ', sum(accdry(:,:,m))
+      endif
+      if (def_comp(mm)%kwetdep == 1) then
+      write(massbalance_file,*) '   Bq,particles wet dep    : ', sum(accwet(:,:,m))
+      endif
+    endif
+
+  end do all_components
 
 
 !..total parameters (sum of all components).............................
@@ -387,9 +414,9 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       i=nint(pdata(n)%x)
       j=nint(pdata(n)%y)
       if(pdata(n)%z >= pdata(n)%tbl) then
-        field1(i,j)=field1(i,j)+pdata(n)%rad
+        field1(i,j)=field1(i,j)+pdata(n)%rad()
       else
-        field2(i,j)=field2(i,j)+pdata(n)%rad
+        field2(i,j)=field2(i,j)+pdata(n)%rad()
       end if
     end do
 
@@ -512,7 +539,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
 
       mm = run_comp(m)%to_defined
 
-      if(idebug == 1) write(iulog,*) ' component: ', def_comp(mm)%compname
+      if(idebug == 1) write(iulog,*) ' component: ', def_comp(mm)%compnamemc
 
     !..scale to % of total released Bq (in a single bomb)
       dblscale= 100.0d0/dble(run_comp(m)%totalbq)
@@ -591,6 +618,7 @@ subroutine write_ml_fields(iunit, varid, average, ipos_in, isize, rt1, rt2)
   integer :: ivlvl
   integer :: i, j, k, loop, m, maxage, n, npl
   integer :: ipos(4)
+  logical :: inactivated_ ! dummy param
 
 !..concentration in each layer
 !..(height only computed at time of output)
@@ -623,14 +651,14 @@ subroutine write_ml_fields(iunit, varid, average, ipos_in, isize, rt1, rt2)
           !.. dump and remove old particles, don't touch  new ones
             if (iplume(npl)%ageInSteps >= nint(modleveldump)) then
               maxage = max(maxage, int(iplume(npl)%ageInSteps, kind(maxage)))
-              avgbq(i,j,k,m) = avgbq(i,j,k,m) + part%rad
-              total = total + part%rad
-              part%active = .FALSE.
-              part%rad = 0.
+              avgbq(i,j,k,m) = avgbq(i,j,k,m) + part%rad()
+              total = total + part%rad()
+
+              inactivated_ =  part%inactivate()
               pdata(n) = part
             end if
           else
-            avgbq(i,j,k,m)=avgbq(i,j,k,m)+pdata(n)%rad
+            avgbq(i,j,k,m)=avgbq(i,j,k,m)+pdata(n)%rad()
           endif
         end do
         end do
@@ -712,22 +740,6 @@ subroutine nc_declare(iunit, dimids, varid, varname, units, stdname, chunksize)
 
   call check(nf90_put_att(iunit,varid,"coordinates", "longitude latitude"))
   call check(nf90_put_att(iunit,varid,"grid_mapping", "projection"))
-end subroutine
-
-subroutine nc_declare_put(iunit, dimids, varid, varname, units, stdname, chunksize, values)
-  integer, intent(in) :: iunit
-  integer, intent(out)   :: varid
-  integer, intent(in)    :: dimids(:)
-
-  character(len=*), intent(in) :: units
-  character(len=*), intent(in) :: varname
-  character(len=*), intent(in), optional :: stdname
-  integer, intent(in), optional :: chunksize(:)
-
-  real, intent(in) :: values(:, :)
-
-  call nc_declare(iunit, dimids, varid, varname, units, stdname, chunksize)
-  call check(nf90_put_var(iunit, varid, values), "Could not put values")
 end subroutine
 
 subroutine nc_set_vtrans(iunit, kdimid,k_varid,ap_varid,b_varid)
@@ -1086,9 +1098,6 @@ subroutine initialize_output(filename, itime, ierror)
       endif
     endif
 
-    call nc_declare_put(iunit, dimids2d, varid%garea, "area", units="m2", &
-      stdname="area", chunksize=[nx,ny], values=garea)
-
     call check(nf90_def_var(iunit, "components", NF90_CHAR, [dimid%maxcompname, dimid%ncomp], varid%components))
 
     do m=1,ncomp
@@ -1171,6 +1180,25 @@ subroutine initialize_output(filename, itime, ierror)
     end if
     call check(nf90_enddef(iunit))
     call check(nf90_close(iunit))
+
+    if (massbalance_filename /= "") then
+      call open_massbalance_file()
+    endif
+end subroutine
+
+subroutine open_massbalance_file()
+   allocate(massbalance_file)
+   open(NEWUNIT=massbalance_file, FILE=massbalance_filename, ACTION="WRITE", ENCODING="UTF-8")
+end subroutine
+
+subroutine close_massbalance_file()
+  if (.not.allocated(massbalance_file)) return
+  close(massbalance_file)
+  deallocate(massbalance_file)
+end subroutine
+
+subroutine unload()
+  call close_massbalance_file()
 end subroutine
 
 subroutine get_varids(iunit, varid, ierror)
@@ -1357,10 +1385,10 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
     m = def_comp(part%icomp)%to_running
     if(part%z >= part%tbl) then
     !..in boundary layer
-      avgbq1(i,j,m) = avgbq1(i,j,m) + part%rad
+      avgbq1(i,j,m) = avgbq1(i,j,m) + part%rad()
     else
     !..above boundary layer
-      avgbq2(i,j,m) = avgbq2(i,j,m) + part%rad
+      avgbq2(i,j,m) = avgbq2(i,j,m) + part%rad()
     end if
   end do
 
@@ -1376,7 +1404,7 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
       i = nint(part%x)
       j = nint(part%y)
       m = def_comp(part%icomp)%to_running
-      concen(i,j,m) = concen(i,j,m) + dble(part%rad)
+      concen(i,j,m) = concen(i,j,m) + dble(part%rad())
     end if
   end do
 
@@ -1401,7 +1429,7 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
       k = ivlayer(ivlvl)
       m = def_comp(part%icomp)%to_running
     !..in each sigma/eta (input model) layer
-      avgbq(i,j,k,m) = avgbq(i,j,k,m) + part%rad
+      avgbq(i,j,k,m) = avgbq(i,j,k,m) + part%rad()
     end do
   end if
 
@@ -1414,7 +1442,7 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
       ivlvl = part%z*10000.
       k = ivlayer(ivlvl)
     !..in each sigma/eta (input model) layer
-      max_column_scratch(i,j,k) = max_column_scratch(i,j,k) + part%rad
+      max_column_scratch(i,j,k) = max_column_scratch(i,j,k) + part%rad()
     end do
 
     do k=1,nk-1
@@ -1451,7 +1479,7 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
       k = ivlayer(ivlvl)
       m = def_comp(part%icomp)%to_running
     !..in each sigma/eta (input model) layer
-      aircraft_doserate_scratch(i,j,k,m) = aircraft_doserate_scratch(i,j,k,m) + part%rad
+      aircraft_doserate_scratch(i,j,k,m) = aircraft_doserate_scratch(i,j,k,m) + part%rad()
     enddo
 
     ! Normalise by volume to obtain concentration
