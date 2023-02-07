@@ -32,20 +32,17 @@ jobs:
       - name: Link appropriate make configuration
         run: cd src && ln -s gcc_pkgconfig.mk current.mk
 
-#      - name: Create binaries (no fimex)
-#        run: cd src && env SNAP_DEBUG_CHECKS=1 make -j2
+      - name: Install test requirements
+        run: sudo apt-get install python3-numpy python3-netcdf4
 
-#      - name: Clean up
-#        run: cd src && make clean
+      - name: Create and test binaries (no fimex)
+        run: cd src && env SNAP_BOUND_CHECKS=1 make -j2 test
+
+      - name: Clean up
+        run: cd src && make clean
 
       - name: Install official fimex-binary from launchpad
         run: sudo apt install libfimex-$FIMEX_VERSION-dev
 
-#      - name: Create binaries (with fimex)
-#        run: cd src && make clean && env SNAP_FIMEX_VERSION=$FIMEX_VERSION make -j2
-
-      - name: Install test requirements
-        run: sudo apt-get install python3-numpy python3-netcdf4
-
-      - name: Test binaries
-        run: cd src && env SNAP_FIMEX_VERSION=$FIMEX_VERSION make test
+      - name: Create and test binaries (with fimex)
+        run: cd src && make clean && env SNAP_FIMEX_VERSION=$FIMEX_VERSION SNAP_BOUND_CHECKS=1 make -j2 test
