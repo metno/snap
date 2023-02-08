@@ -30,7 +30,7 @@ module rwalkML
 
   real(real64), parameter :: hmax = 2500.0 ! maximum mixing height
   real(real64), parameter :: tmix_v = 15.0*60.0 ! Characteristic mixing time = 15 min (to reach full bl-height)
-  real(real64), parameter :: tmix_h = 60.0*60.0 ! Horizontal base-time time = 60 min (to reach ax^b width)
+  real(real64), parameter :: tmix_h = 15.0*60.0 ! Horizontal base-time time = 15 min (to reach ax^b width)
   real(real64), parameter :: lmax = 0.28 ! Maximum l-eta in the mixing layer
   real(real64), parameter :: labove = 0.03 ! Standard l-eta above the mixing layer
   real(real64), parameter :: entrainment = 0.1 ! Entrainment zone = 10%*h
