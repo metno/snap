@@ -30,9 +30,9 @@ from METNO.SGEQueue import SGEQueue
 from METNO.DirectConnection import DirectConnection
 
 
-class PPI_Direct(HPC):
+class PPI_R8_Direct(HPC):
     '''
-    Implementation of a HPC machine for alvin.nsc.liu.se
+    Implementation of a HPC machine for PPI-r8
     '''
 
 
@@ -49,7 +49,7 @@ class TestPPI_Direct(unittest.TestCase):
     '''tests for alvin, only working when having an existing forecast account on alvin'''
     def setUp(self):
         unittest.TestCase.setUp(self)
-        self.hpc = HPC.by_name("ppi_direct")
+        self.hpc = HPC.by_name("ppi_r8_direct")
         self.rdir = "/lustre/storeB/users/heikok/tmp/metno_hpc_test"
         self.testFiles = ["script.job", "status"]
 

@@ -268,15 +268,15 @@ class HPC():
         elif (name == "alvin"):
             from . import Alvin
             return Alvin.Alvin()
-        elif (name == "ppi"):
-            from . import PPI
-            return PPI.PPI()
-        elif (name == "ppi_direct"):
-            from . import PPI_Direct
-            return PPI_Direct.PPI_Direct()
+        elif (name == "ppi_r8b"):
+            from . import PPI_R8B
+            return PPI_R8B.PPI_R8B()
         elif (name == "ppi_centos7_direct"):
             from . import PPI_CentOS7_Direct
             return PPI_CentOS7_Direct.PPI_CentOS7_Direct()
+        elif (name == "ppi_r8_direct"):
+            from . import PPI_R8_Direct
+            return PPI_R8_Direct.PPI_R8_Direct()
         else:
             raise NotImplementedError("no HPC named '{}'".format(name))
         return
