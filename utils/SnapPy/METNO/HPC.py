@@ -274,9 +274,9 @@ class HPC():
         elif (name == "ppi_centos7_direct"):
             from . import PPI_CentOS7_Direct
             return PPI_CentOS7_Direct.PPI_CentOS7_Direct()
-        elif (name == "ppi_r8_direct"):
-            from . import PPI_R8_Direct
-            return PPI_R8_Direct.PPI_R8_Direct()
+        elif (name == "ppi_r8B_direct"):
+            from . import PPI_R8B_Direct
+            return PPI_R8B_Direct.PPI_R8_Direct()
         else:
             raise NotImplementedError("no HPC named '{}'".format(name))
         return
