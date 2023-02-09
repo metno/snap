@@ -347,7 +347,7 @@ pure elemental subroutine drydep_zhang_emerson_vd(surface_pressure, t2m, yflux, 
   ! Impaction
   ! Stokes number for vegetated surfaces (Zhang (2001)
   ! Check if A is nan in case of discretisation error in largest_landfraction
-  if (leaf_area_index >= 1 .or. ieee_is_nan(A)) then
+  if (classnr >= 16 .and. .not. ieee_is_nan(A)) then
     stokes = vs * ustar / (grav * A)
   else
     ! ???????
