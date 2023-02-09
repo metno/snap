@@ -12,6 +12,9 @@ endif
 ifdef SNAP_BOUND_CHECKS
   F77FLAGS+=$(F77BOUNDFLAGS)
 endif
+ifdef SNAP_USE_OMP
+  F77FLAGS+=-fopenmp
+endif
 
 # optional versioned fimex
 FIMEX = fimex
