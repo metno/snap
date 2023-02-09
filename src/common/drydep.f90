@@ -291,6 +291,7 @@ end function
 pure elemental subroutine drydep_zhang_emerson_vd(surface_pressure, t2m, yflux, xflux, z0, &
     hflux, leaf_area_index, diam, density, classnr, vd_dep, emerson_mode, &
     roa, ustar, monin_obukhov_length, raero, vs)
+  use ieee_arithmetic, only: ieee_is_nan
   !> In hPa
   real, intent(in) :: surface_pressure
   real, intent(in) :: t2m
@@ -345,7 +346,8 @@ pure elemental subroutine drydep_zhang_emerson_vd(surface_pressure, t2m, yflux, 
   A = Apar * 1e-3
   ! Impaction
   ! Stokes number for vegetated surfaces (Zhang (2001)
-  if (leaf_area_index >= 1) then
+  ! Check if A is nan in case of discretisation error in largest_landfraction
+  if (leaf_area_index >= 1 .or. ieee_is_nan(A)) then
     stokes = vs * ustar / (grav * A)
   else
     ! ???????
