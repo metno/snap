@@ -96,6 +96,28 @@ module fldout_ncML
 
   contains
 
+!> translate a field in normal resolution to high output resolution
+function hres_field(field) result(field_hres)
+  USE snapdimML, only: nx, ny, output_resolution_factor
+  USE iso_fortran_env, only: real32
+  real(kind=real32), allocatable :: field_hres(:,:)
+  real(kind=real32), intent(in) :: field(:,:)
+  integer :: i, j, k, l
+
+  allocate(field_hres(nx*output_resolution_factor, ny*output_resolution_factor))
+
+  do j = 1, ny
+    do i = 1, nx
+      do l = 1, output_resolution_factor
+        do k = 1, output_resolution_factor
+          field_hres(i+k-1, j+l-1) = field(i,j)
+        end do
+      end do
+    end do
+  end do
+end function hres_field
+
+
 subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     ierror)
   USE iso_fortran_env, only: int16
@@ -103,6 +125,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       itotcomp, compute_column_max_conc, compute_aircraft_doserate, &
       aircraft_doserate_threshold, output_column
   USE snapfldML, only: field1, field2, field3, field4, &
+      field_hres1, &
       depdry, depwet, &
       avgbq1, avgbq2, garea, pmsl1, pmsl2, hbl1, hbl2, &
       accdry, accwet, avgprec, concen, ps1, ps2, avghbl, &
@@ -113,7 +136,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     TIME_PROFILE_BOMB
   USE snapdebug, only: iulog, idebug
   USE ftestML, only: ftest
-  USE snapdimML, only: nx, ny
+  USE snapdimML, only: nx, ny, output_resolution_factor
   USE releaseML, only: npart
   USE particleML, only: pdata, Particle
 
@@ -165,7 +188,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       "set time")
 
   ipos = [1, 1, ihrs_pos]
-  isize = [nx, ny, 1]
+  isize = [nx*output_resolution_factor, ny*output_resolution_factor, 1]
 
   average=float(naverage)
   naverage=0
@@ -179,7 +202,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     field1(:,:) = rt1*ps1 + rt2*ps2
     if(idebug == 1) call ftest('ps', field1)
     call check(nf90_put_var(iunit, varid%ps, start=ipos, count=isize, &
-        values=field1), "set_ps")
+        values=hres_field(field1)), "set_ps")
   end if
 
 !..total accumulated precipitation from start of run
@@ -189,7 +212,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     if(idebug == 1) call ftest('accprec', field1)
 
     call check(nf90_put_var(iunit, varid%accum_prc, start=ipos, count=isize, &
-        values=field1), "set_accum_prc")
+        values=hres_field(field1)), "set_accum_prc")
   end if
 
 !..mslp (if switched on)
@@ -198,7 +221,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     if(idebug == 1) call ftest('mslp', field1)
 
     call check(nf90_put_var(iunit, varid%mslp, start=ipos, count=isize, &
-        values=field1), "set_mslp")
+        values=hres_field(field1)), "set_mslp")
   end if
 
 !..instant height of boundary layer
@@ -206,14 +229,14 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
   if(idebug == 1) call ftest('hbl', field4)
 
   call check(nf90_put_var(iunit, varid%ihbl, start=ipos, count=isize, &
-      values=field4), "set_ihbl")
+      values=hres_field(field4)), "set_ihbl")
 
 !..average height of boundary layer
   field1(:,:) = avghbl / average
   if(idebug == 1) call ftest('avghbl', field1)
 
   call check(nf90_put_var(iunit, varid%ahbl, start=ipos, count=isize, &
-      values=field1), "set_ahbl")
+      values=hres_field(field1)), "set_ahbl")
 
 !..precipitation accummulated between field output
   if(precipitation_in_output) then
@@ -221,13 +244,13 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     if(idebug == 1) call ftest('prec', field1)
 
     call check(nf90_put_var(iunit, varid%prc, start=ipos, count=isize, &
-        values=field1), "set_prc")
+        values=hres_field(field1)), "set_prc")
   end if
 
   if (compute_column_max_conc) then
     call check(nf90_put_var(iunit, varid%column_max_conc, &
       start=ipos, count=isize, &
-      values=max_column_concentration(:,:)), "column_max_concentration")
+      values=hres_field(max_column_concentration(:,:))), "column_max_concentration")
   endif
   if (compute_aircraft_doserate) then
     call check(nf90_put_var(iunit, varid%aircraft_doserate, &
@@ -236,7 +259,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     if (aircraft_doserate_threshold > 0.0) then
       call check(nf90_put_var(iunit, varid%aircraft_doserate_threshold_height, &
         start=ipos, count=isize, &
-        values=aircraft_doserate_threshold_height(:,:)), "aircraft threshold height")
+        values=hres_field(aircraft_doserate_threshold_height(:,:))), "aircraft threshold height")
     endif
   endif
 
@@ -276,7 +299,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       field3 = field1 + field2
       field3 = field3 / garea
       call check(nf90_put_var(iunit, varid%comp(m)%conc_column, start=ipos, count=isize, &
-        values=field3), "output_column")
+        values=hres_field(field3)), "output_column")
     endif
 
   !..instant part of Bq in boundary layer
@@ -292,14 +315,14 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     if(idebug == 1) call ftest('conc', field2)
 
     call check(nf90_put_var(iunit, varid%comp(m)%icbl, start=ipos, count=isize, &
-        values=field2), "set_icbl")
+        values=hres_field(field2)), "set_icbl")
 
   !..average concentration in boundary layer
     field1(:,:) = cscale*avgbq1(:,:,m)/(garea*avghbl)
     if(idebug == 1) call ftest('avgconc', field1)
 
     call check(nf90_put_var(iunit, varid%comp(m)%acbl, start=ipos, count=isize, &
-        values=field1), "set_acbl")
+        values=hres_field(field1)), "set_acbl")
 
   !..dry deposition
     if (def_comp(mm)%kdrydep == 1) then
@@ -307,7 +330,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       if(idebug == 1) call ftest('dry', field1)
 
       call check(nf90_put_var(iunit, varid%comp(m)%idd, start=ipos, count=isize, &
-          values=field1), "set_idd(m)")
+          values=hres_field(field1)), "set_idd(m)")
     end if
 
   !..accumulated dry deposition
@@ -317,7 +340,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       if(idebug == 1) call ftest('adry', field1)
 
       call check(nf90_put_var(iunit, varid%comp(m)%accdd, start=ipos, count=isize, &
-          values=field1), "set_accdd(m)")
+          values=hres_field(field1)), "set_accdd(m)")
     end if
 
   !..wet deposition
@@ -326,7 +349,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       if(idebug == 1) call ftest('wet', field1)
 
       call check(nf90_put_var(iunit, varid%comp(m)%iwd, start=ipos, count=isize, &
-          values=field1), "set_iwd(m)")
+          values=hres_field(field1)), "set_iwd(m)")
     end if
 
   !..accumulated wet deposition
@@ -336,7 +359,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       if(idebug == 1) call ftest('awet', field1)
 
       call check(nf90_put_var(iunit, varid%comp(m)%accwd, start=ipos, count=isize, &
-          values=field1), "set_accwd(m)")
+          values=hres_field(field1)), "set_accwd(m)")
     end if
 
   !..instant part of Bq in boundary layer
@@ -360,14 +383,14 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     field3(:,:) = concen(:,:,m)
     if(idebug == 1) call ftest('concen', field3, contains_undef=.true.)
     call check(nf90_put_var(iunit, varid%comp(m)%ic, start=ipos, count=isize, &
-        values=field3), "set_ic(m)")
+        values=hres_field(field3)), "set_ic(m)")
 
   !..accumulated/integrated concentration surface = dose
     field3(:,:) = concacc(:,:,m)
     if(idebug == 1) call ftest('concac', field3, contains_undef=.true.)
 
     call check(nf90_put_var(iunit, varid%comp(m)%ac, start=ipos, count=isize, &
-        values=field3), "set_ac(m)")
+        values=hres_field(field3)), "set_ac(m)")
 
     write(iulog,*) '   Bq,particles in    abl  : ',bqtot1,nptot1
     write(iulog,*) '   Bq,particles above abl  : ',bqtot2,nptot2
@@ -433,14 +456,14 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     field2(:,:) = cscale*field1/(field4*garea)
     if(idebug == 1) call ftest('tconc', field2)
     call check(nf90_put_var(iunit, varid%icblt, start=ipos, count=isize, &
-        values=field2), "set_icblt(m)")
+        values=hres_field(field2)), "set_icblt(m)")
 
   !..total average concentration in boundary layer
     field1(:,:) = sum(avgbq1, dim=3)
     field1(:,:) = cscale*field1/(garea*avghbl)
     if(idebug == 1) call ftest('tavgconc', field1)
     call check(nf90_put_var(iunit, varid%acblt, start=ipos, count=isize, &
-        values=field1), "set_acblt")
+        values=hres_field(field1)), "set_acblt")
 
   !..total dry deposition
     if(compute_total_dry_deposition) then
@@ -454,7 +477,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       field1(:,:) = dscale*field1/garea
       if(idebug == 1) call ftest('tdry', field1)
       call check(nf90_put_var(iunit, varid%iddt, start=ipos, count=isize, &
-          values=field1), "set_iddt")
+          values=hres_field(field1)), "set_iddt")
     end if
 
   !..total wet deposition
@@ -469,7 +492,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       field1(:,:) = dscale*field1/garea
       if(idebug == 1) call ftest('twet', field1)
       call check(nf90_put_var(iunit, varid%iwdt, start=ipos, count=isize, &
-          values=field1), "set_iwdt")
+          values=hres_field(field1)), "set_iwdt")
     end if
 
   !..total accumulated dry deposition
@@ -484,7 +507,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       field1(:,:) = dscale*field1/garea
       if(idebug == 1) call ftest('tadry', field1)
       call check(nf90_put_var(iunit, varid%accddt, start=ipos, count=isize, &
-          values=field1), "set_accddt")
+          values=hres_field(field1)), "set_accddt")
     end if
 
   !..total accumulated wet deposition
@@ -499,7 +522,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       field1(:,:) = dscale*field1/garea
       if(idebug == 1) call ftest('tawet', field1)
       call check(nf90_put_var(iunit, varid%accwdt, start=ipos, count=isize, &
-          values=field1), "set_accwdt")
+          values=hres_field(field1)), "set_accwdt")
     end if
 
   !..total instant part of Bq in boundary layer
@@ -522,7 +545,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     if(idebug == 1) call ftest('concac', field3, contains_undef=.true.)
 
     call check(nf90_put_var(iunit, varid%act, start=ipos, count=isize, &
-        values=field3), "set_act")
+        values=hres_field(field3)), "set_act")
 
   !.....end if(ncomp.gt.1 .and. itotcomp.eq.1) then
 
@@ -690,7 +713,7 @@ subroutine write_ml_fields(iunit, varid, average, ipos_in, isize, rt1, rt2)
         if (loop == 2) then
           ipos(3) = k
           call check(nf90_put_var(iunit, varid%comp(m)%icml, start=ipos, &
-              count=isize, values=field1), "icml(m)")
+              count=isize, values=hres_field(field1)), "icml(m)")
         endif
       end do
     end do
@@ -770,9 +793,9 @@ subroutine nc_set_vtrans(iunit, kdimid,k_varid,ap_varid,b_varid)
 end subroutine nc_set_vtrans
 
 subroutine nc_set_projection(iunit, xdimid, ydimid, &
-    igtype,nx,ny,gparam,garea, xm, ym, &
+    igtype,nx,ny,output_resolution_factor, gparam,garea, xm, ym, &
     simulation_start)
-  INTEGER, INTENT(IN) :: iunit, xdimid, ydimid, igtype, nx, ny
+  INTEGER, INTENT(IN) :: iunit, xdimid, ydimid, igtype, nx, ny, output_resolution_factor
   REAL(real32), INTENT(IN):: gparam(8)
   REAL(real32), INTENT(IN), DIMENSION(nx,ny) :: garea
   REAL(real32), INTENT(IN), DIMENSION(nx,ny) :: xm
@@ -782,8 +805,11 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
   INTEGER :: i, j, ierror, x_varid, y_varid, proj_varid, &
   lon_varid, lat_varid, carea_varid, mapx_varid, mapy_varid, &
   dimids(2)
-  REAL(KIND=real32) :: xvals(nx), yvals(ny), lon(nx,ny), lat(nx,ny), &
-  val, gparam2(6)
+  REAL(KIND=real32) :: xvals(nx*output_resolution_factor), &
+  yvals(ny*output_resolution_factor), &
+  lon(nx*output_resolution_factor,ny*output_resolution_factor), &
+  lat(nx*output_resolution_factor,ny*output_resolution_factor), &
+  val, gparam2(6), gparam_hres(8)
   real(kind=real32) :: llparam(6) = [1.0, 1.0, 1.0, 1.0, 0.0, 0.0]
 
   call check(nf90_def_var(iunit, "x", &
@@ -802,6 +828,7 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
   call check(nf90_put_att(iunit, NF90_GLOBAL, &
       "SIMULATION_START_DATE", trim(simulation_start)))
 
+  gparam_hres(:) = gparam(:)
   select case(igtype)
   case(2) !..geographic
     call check(nf90_put_att(iunit,x_varid, "units", &
@@ -810,11 +837,17 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
         TRIM("degrees_north")))
     call check(nf90_put_att(iunit,proj_varid, &
         "grid_mapping_name", TRIM("latitude_longitude")))
-    do i=1,nx
-      xvals(i) = gparam(1) + (i-1)*gparam(3)
+    gparam_hres(3) = gparam(3)/output_resolution_factor
+    gparam_hres(4) = gparam(4)/output_resolution_factor
+    ! first cell center, not left edge. must be moved
+    gparam_hres(1) = gparam(1) - .5 * (output_resolution_factor-1) * gparam_hres(3)
+    gparam_hres(2) = gparam(2) - .5 * (output_resolution_factor-1) * gparam_hres(4)
+
+    do i=1,nx*output_resolution_factor
+      xvals(i) = gparam_hres(1) + (i-1)*gparam_hres(3)
     end do
-    do i=1,ny
-      yvals(i) = gparam(2) + (i-1)*gparam(4)
+    do i=1,ny*output_resolution_factor
+      yvals(i) = gparam_hres(2) + (i-1)*gparam_hres(4)
     end do
   case(3) !..rot_geographic
     call check(nf90_put_att(iunit,x_varid, "units", &
@@ -835,11 +868,11 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
         "grid_north_pole_latitude", 90.0-gparam(6)))
     call check(nf90_sync(iunit))
 
-    do i=1,nx
-      xvals(i) = gparam(1) + (i-1)*gparam(3)
+    do i=1,nx*output_resolution_factor
+      xvals(i) = gparam_hres(1) + (i-1)*gparam_hres(3)
     end do
-    do i=1,ny
-      yvals(i) = gparam(2) + (i-1)*gparam(4)
+    do i=1,ny*output_resolution_factor
+      yvals(i) = gparam_hres(2) + (i-1)*gparam_hres(4)
     end do
   case(1,4) !..polar_stereographic
     call check(nf90_put_att(iunit,x_varid, "units", TRIM("m")))
@@ -859,10 +892,15 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
     call check(nf90_put_att(iunit,proj_varid, &
         "latitude_of_projection_origin", 90))
   !..increment
-    do i=1,nx
-      xvals(i) = (i-gparam(1))*gparam(7)
+    gparam_hres(7) = gparam(7)/output_resolution_factor
+    gparam_hres(8) = gparam(8)/output_resolution_factor
+    ! first cell center, not left edge. must be moved
+    gparam_hres(1) = gparam(1) + .5 * (output_resolution_factor-1)
+    gparam_hres(2) = gparam(2) + .5 * (output_resolution_factor-1)
+    do i=1,nx*output_resolution_factor
+      xvals(i) = (i-gparam(1))*gparam_hres(7)
     end do
-    do i=1,ny
+    do i=1,ny*output_resolution_factor
       yvals(i) = (i-gparam(2))*gparam(8)
     end do
   case(6) !..lcc
@@ -895,15 +933,22 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
       write (error_unit,*) "error converting lcc to ll"
       error stop 1
     end if
+
     xvals(1) = (xvals(1)-1)*gparam(7)
     yvals(1) = (yvals(1)-1)*gparam(8)
-  ! xvals is currently the lowerd left corner in plane-coordinates
-  ! but must be in m from center
-    do i=2,nx
-      xvals(i) = xvals(1) + (i-1)*gparam(7)
+    ! xvals is currently the lowerd left corner in plane-coordinates
+    ! but must be in m from center
+    gparam_hres(7) = gparam(7) / output_resolution_factor
+    gparam_hres(8) = gparam(8) / output_resolution_factor
+    ! first cell center, not left edge. must be moved
+    xvals(1) = xvals(1) - .5 * (output_resolution_factor-1) * gparam_hres(7)
+    yvals(2) = yvals(2) - .5 * (output_resolution_factor-1) * gparam_hres(8)
+
+    do i=2,nx*output_resolution_factor
+      xvals(i) = xvals(1) + (i-1)*gparam_hres(7)
     end do
-    do i=2,ny
-      yvals(i) = yvals(1) + (i-1)*gparam(8)
+    do i=2,ny*output_resolution_factor
+      yvals(i) = yvals(1) + (i-1)*gparam_hres(8)
     end do
   case default
     write (error_unit,*) "unkown grid-type:", igtype
@@ -929,13 +974,14 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
   call check(nf90_sync(iunit))
 
 !.... create latitude/longitude variable-values
-  do j=1,ny
-    do i=1,nx
+  do j=1,ny*output_resolution_factor
+    do i=1,nx*output_resolution_factor
       lon(i,j) = i
       lat(i,j) = j
     end do
   end do
-  call xyconvert(nx*ny, lon, lat,igtype, gparam, &
+  call xyconvert(nx*output_resolution_factor*ny*output_resolution_factor, &
+      lon, lat,igtype, gparam_hres, &
       2, llparam, ierror)
   if (ierror /= 0) then
     write (error_unit,*) "error converting pos to latlon-projection"
@@ -965,7 +1011,7 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
   call check(nf90_put_att(iunit,mapx_varid, "coordinates", &
       TRIM("longitude latitude")))
 
-  call check(nf90_put_var(iunit, mapx_varid, xm))
+  call check(nf90_put_var(iunit, mapx_varid, hres_field(xm)))
 
   call check(nf90_def_var(iunit, "map_factor_y", &
       NF90_FLOAT, dimids, mapy_varid))
@@ -975,7 +1021,7 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
   call check(nf90_put_att(iunit,mapy_varid, "coordinates", &
       TRIM("longitude latitude")))
 
-  call check(nf90_put_var(iunit, mapy_varid, ym))
+  call check(nf90_put_var(iunit, mapy_varid, hres_field(ym)))
 
   call check(nf90_sync(iunit))
 end subroutine nc_set_projection
@@ -991,7 +1037,7 @@ subroutine initialize_output(filename, itime, ierror)
       nhfout
   USE snapparML, only: ncomp, run_comp, def_comp
   USE ftestML, only: ftest
-  USE snapdimML, only: nx, ny, nk
+  USE snapdimML, only: nx, ny, nk, output_resolution_factor
   USE particleML, only: Particle
 
   character(len=*), intent(in) :: filename
@@ -1017,8 +1063,8 @@ subroutine initialize_output(filename, itime, ierror)
     call check(nf90_create(filename, ior(NF90_NETCDF4, NF90_CLOBBER), iunit), filename)
     call check(nf90_def_dim(iunit, "time", NF90_UNLIMITED, dimid%t), &
         "t-dim")
-    call check(nf90_def_dim(iunit, "x", nx, dimid%x), "x-dim")
-    call check(nf90_def_dim(iunit, "y", ny, dimid%y), "y-dim")
+    call check(nf90_def_dim(iunit, "x", nx*output_resolution_factor, dimid%x), "x-dim")
+    call check(nf90_def_dim(iunit, "y", ny*output_resolution_factor, dimid%y), "y-dim")
     call check(nf90_def_dim(iunit, "k", nk-1, dimid%k), "k-dim")
     call check(nf90_def_dim(iunit, "ncomp", ncomp, dimid%ncomp), "ncomp-dim")
     call check(nf90_def_dim(iunit, "compnamelenmax", len(def_comp(1)%compname), dimid%maxcompname), "maxcompname-dim")
@@ -1031,8 +1077,8 @@ subroutine initialize_output(filename, itime, ierror)
         "summary", trim(ncsummary)))
 
     call nc_set_projection(iunit, dimid%x, dimid%y, &
-        igtype,nx,ny,gparam, garea, xm, ym, &
-        simulation_start)
+        igtype,nx,ny, output_resolution_factor, &
+        gparam, garea, xm, ym, simulation_start)
     if (imodlevel) then
       call nc_set_vtrans(iunit, dimid%k, varid%k, varid%ap, varid%b)
     endif

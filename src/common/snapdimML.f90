@@ -39,6 +39,9 @@ module snapdimML
 !> length of buffer for field input/output
     integer, save, public :: ldata
 
+!> allow output grids to have finer resolution than input by this factor
+    integer, save, public :: output_resolution_factor = 1
+
 !> max no. of components used in one run
 !>
 !> (keep as small as "possible", it dimensions 2d/3d output fields)

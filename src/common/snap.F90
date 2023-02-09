@@ -128,6 +128,8 @@
 ! FIELD_TIME.FORECAST
 ! FIELD_TIME.VALID
 ! FIELD.OUTPUT= snap.felt
+! * increase output-resolution to factor*input_resolution
+! FIELD.OUTPUT_RESOLUTION_FACTOR
 ! FIELD.OUTTYPE=netcdf
 ! FIELD.DAILY.OUTPUT.ON
 ! FIELD.USE_MODEL_WIND_INSTEAD_OF_10M= [.false.]/.true
@@ -154,7 +156,7 @@ PROGRAM bsnap
   USE DateCalc, only: epochToDate, timeGM
   USE datetime, only: datetime_t, duration_t
   USE snapdebug, only: iulog, idebug, acc_timer => prefixed_accumulating_timer
-  USE snapdimML, only: nx, ny, nk, ldata, maxsiz, mcomp
+  USE snapdimML, only: nx, ny, nk, output_resolution_factor, ldata, maxsiz, mcomp
   USE snapfilML, only: filef, itimer, ncsummary, nctitle, nhfmax, nhfmin, &
                        nctype, nfilef, simulation_start, spinup_steps
   USE snapfldML, only: nhfout, enspos
@@ -1650,6 +1652,10 @@ contains
         !..field.output= <'file_name'>
         if (.not. has_value) goto 12
         fldfil = cinput(pname_start:pname_end)
+      case ('field.output_resolution_factor')
+        !..field.output= <'file_name'>
+        if (.not. has_value) goto 12
+        read (cinput(pname_start:pname_end), *, err=12) output_resolution_factor
       case ('field.outtype')
         !..field.outtype= <'felt|netcdf'>
         if (.not. has_value) goto 12
