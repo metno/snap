@@ -30,9 +30,9 @@ from METNO.SGEQueue import SGEQueue
 from METNO.SSHConnection import SSHConnection
 
 
-class PPI(HPC):
+class PPI_R8B(HPC):
     '''
-    Implementation of a HPC machine for alvin.nsc.liu.se
+    Implementation of a HPC machine for ppi-r8login-b1
     '''
 
 
@@ -40,16 +40,16 @@ class PPI(HPC):
         '''
         Constructor
         '''
-        connection = SSHConnection(machine="xvis-m3b.met.no", port=22)
+        connection = SSHConnection(machine="ppi-r8login-b1", port=22)
         queue = SGEQueue()
         super().__init__(connection, queue)
 
 
-class TestPPI(unittest.TestCase):
+class Test_PPI_R8B(unittest.TestCase):
     '''tests for ppi, only working when having an existing account on ppi'''
     def setUp(self):
         unittest.TestCase.setUp(self)
-        self.hpc = HPC.by_name("ppi")
+        self.hpc = HPC.by_name("ppi_r8b")
         self.rdir = "/lustre/storeB/users/heikok/tmp/metno_hpc_test"
         self.testFiles = ["script.job", "status"]
 

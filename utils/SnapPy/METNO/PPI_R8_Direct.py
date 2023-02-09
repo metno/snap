@@ -45,7 +45,7 @@ class PPI_R8_Direct(HPC):
         super().__init__(connection, queue)
 
 
-class TestPPI_Direct(unittest.TestCase):
+class TestPPI_R8_Direct(unittest.TestCase):
     '''tests for alvin, only working when having an existing forecast account on alvin'''
     def setUp(self):
         unittest.TestCase.setUp(self)
