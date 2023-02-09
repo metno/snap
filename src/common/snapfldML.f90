@@ -92,6 +92,8 @@ module snapfldML
   real(kind=real32), allocatable, save, public :: field3(:,:)
 !> Work array
   real(kind=real32), allocatable, save, public :: field4(:,:)
+!> Work array, high resolution
+  real(kind=real32), allocatable, save, public :: field_hres1(:,:)
 
 !> the ensemble-member to read met-data from
 !> default (-1) : no ensemble member
