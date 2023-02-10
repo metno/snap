@@ -8,6 +8,7 @@ RUN apt-get update -y && \
     apt-get update -y && \
     apt-get install -y libnetcdff-dev gfortran libfimex-$SNAP_FIMEX_VERSION-dev make && \
     apt-get remove -y software-properties-common && \
+    apt-get -y autoremove && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /snap
@@ -26,6 +27,7 @@ RUN apt-get update -y && \
     apt-get update -y && \
     apt-get install -y libnetcdff7 libfimex-$SNAP_FIMEX_VERSION-0 tini && \
     apt-get remove -y software-properties-common && \
+    apt-get -y autoremove && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /snap
