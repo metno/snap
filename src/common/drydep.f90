@@ -309,8 +309,6 @@ pure elemental subroutine drydep_zhang_emerson_vd(surface_pressure, t2m, yflux, 
   !>  needleleaf trees (i.e. close to maximum deposition)
   real(real64) :: A
   real(real64), parameter :: k = 0.4
-  !> Below this we ignore A
-  real(real64), parameter :: lai_A_cutoff = 0.01
 
   real(real64) :: fac1, cslip, bdiff, my, sc, EB, EIM, EIN, rs, stokes
   real(real64) :: Apar
@@ -347,7 +345,7 @@ pure elemental subroutine drydep_zhang_emerson_vd(surface_pressure, t2m, yflux, 
   ! Impaction
   ! Stokes number for vegetated surfaces (Zhang (2001)
   ! Check if A is nan in case of discretisation error in largest_landfraction
-  if (classnr >= 16 .and. .not. ieee_is_nan(A)) then
+  if (classnr >= 15 .and. .not. ieee_is_nan(A)) then
     stokes = vs * ustar / (grav * A)
   else
     ! ???????
@@ -363,8 +361,7 @@ pure elemental subroutine drydep_zhang_emerson_vd(surface_pressure, t2m, yflux, 
   endif
 
   ! Interception
-  ! if (leaf_area_index == 0) then
-  if (leaf_area_index < lai_A_cutoff) then
+  if (classnr <= 14 .or. ieee_is_nan(A)) then
     ! No interception over water surfaces
     EIN = 0.0
   else
