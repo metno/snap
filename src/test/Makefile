@@ -21,7 +21,7 @@ install:
 
 snap_testdata/%.nc :
 	mkdir -p snap_testdata
-	curl https://thredds.met.no/thredds/fileServer/metusers/heikok/$@ -o $@
+	curl --fail https://thredds.met.no/thredds/fileServer/metusers/heikok/$@ -o $@
 
 
 test: find_parameters_fi_test bsnap_naccident $(TESTFILES)
