@@ -91,6 +91,7 @@ module fldout_ncML
     integer :: raero = -1
     integer :: vs = -1
     integer :: ps_vd = -1
+    integer :: landfraction = -1
   end type
 
 !> dimensions used in a file
@@ -760,7 +761,7 @@ subroutine write_ml_fields(iunit, varid, average, ipos_in, isize, rt1, rt2)
 end subroutine
 
 
-subroutine nc_declare(iunit, dimids, varid, varname, units, stdname, chunksize)
+subroutine nc_declare(iunit, dimids, varid, varname, units, stdname, chunksize, datatype)
   USE snapdebug, only: iulog
   integer, intent(in) :: iunit
   integer, intent(out)   :: varid
@@ -770,13 +771,21 @@ subroutine nc_declare(iunit, dimids, varid, varname, units, stdname, chunksize)
   character(len=*), intent(in) :: varname
   character(len=*), intent(in), optional :: stdname
   integer, intent(in), optional :: chunksize(:)
+  integer, intent(in), optional :: datatype
+
+  integer :: datatype_internal
 
   write(iulog,"('declaring ' (a) ' ' (a) )",advance="NO") varname, units
   if (present(stdname)) write(iulog, "(' ' (a))",advance="NO") trim(stdname)
   write(iulog,'()',advance="YES")
 
+  if (present(datatype)) then
+    datatype_internal = datatype
+  else
+    datatype_internal = NF90_FLOAT
+  endif
   call check(nf90_def_var(iunit, TRIM(varname), &
-      NF90_FLOAT, dimids, varid), "def_"//varname)
+      datatype_internal, dimids, varid), "def_"//varname)
   if (present(chunksize)) then
     call check(nf90_def_var_chunking(iunit, varid, NF90_CHUNKED, chunksize))
     call check(nf90_def_var_deflate(iunit, varid, &
@@ -1272,6 +1281,28 @@ subroutine initialize_output(filename, itime, ierror)
           "ps_vd", units="hPa", chunksize=chksz3d)
         end block
       endif
+
+      block
+        use drydep, only: largest_landfraction_file, classnr
+        if (largest_landfraction_file /= "not set") then
+            call nc_declare(iunit, dimids2d, varid%landfraction, &
+              "land_fraction", units="1", datatype=NF90_BYTE)
+            call check(nf90_put_var(iunit, varid%landfraction, start=[1, 1], count=[nx, ny], &
+              values=classnr), "Put landfraction")
+            call check(nf90_put_att(iunit, varid%landfraction, "11", "Sea"))
+            call check(nf90_put_att(iunit, varid%landfraction, "12", "Inland water"))
+            call check(nf90_put_att(iunit, varid%landfraction, "13", "Tundra/desert"))
+            call check(nf90_put_att(iunit, varid%landfraction, "14", "Ice and ice sheets"))
+            call check(nf90_put_att(iunit, varid%landfraction, "15", "Urban"))
+            call check(nf90_put_att(iunit, varid%landfraction, "16", "Crops"))
+            call check(nf90_put_att(iunit, varid%landfraction, "17", "Grass"))
+            call check(nf90_put_att(iunit, varid%landfraction, "18", "Wetlands"))
+            call check(nf90_put_att(iunit, varid%landfraction, "19", "Evergreen needleleaf"))
+            call check(nf90_put_att(iunit, varid%landfraction, "20", "Deciduous broadleaf"))
+            call check(nf90_put_att(iunit, varid%landfraction, "21", "Mixed forest"))
+            call check(nf90_put_att(iunit, varid%landfraction, "22", "Shrubs and interrupted woodlands"))
+        endif
+    end block
 
     end do
     if (itotcomp == 1) then
