@@ -107,10 +107,10 @@ function hres_field(field) result(field_hres)
   allocate(field_hres(nx*output_resolution_factor, ny*output_resolution_factor))
 
   do j = 1, ny
-    do i = 1, nx
-      do l = 1, output_resolution_factor
+    do l = 1, output_resolution_factor
+      do i = 1, nx
         do k = 1, output_resolution_factor
-          field_hres(i+k-1, j+l-1) = field(i,j)
+          field_hres(output_resolution_factor*(i-1)+k, output_resolution_factor*(j-1)+l) = field(i,j)
         end do
       end do
     end do
@@ -933,13 +933,15 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
       write (error_unit,*) "error converting lcc to ll"
       error stop 1
     end if
+    gparam_hres(2) = gparam(2) / output_resolution_factor
+    gparam_hres(3) = gparam(3) / output_resolution_factor
+    gparam_hres(7) = gparam(7) / output_resolution_factor
+    gparam_hres(8) = gparam(8) / output_resolution_factor
 
     xvals(1) = (xvals(1)-1)*gparam(7)
     yvals(1) = (yvals(1)-1)*gparam(8)
     ! xvals is currently the lowerd left corner in plane-coordinates
     ! but must be in m from center
-    gparam_hres(7) = gparam(7) / output_resolution_factor
-    gparam_hres(8) = gparam(8) / output_resolution_factor
     ! first cell center, not left edge. must be moved
     xvals(1) = xvals(1) - .5 * (output_resolution_factor-1) * gparam_hres(7)
     yvals(2) = yvals(2) - .5 * (output_resolution_factor-1) * gparam_hres(8)
@@ -1000,7 +1002,8 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
   call check(nf90_put_att(iunit,carea_varid, "coordinates", &
       TRIM("longitude latitude")))
 
-  call check(nf90_put_var(iunit, carea_varid, garea))
+  call check(nf90_put_var(iunit, carea_varid, &
+    hres_field(garea/(output_resolution_factor*output_resolution_factor))))
 
 !.... add map_factor_x and map_factor_y
   call check(nf90_def_var(iunit, "map_factor_x", &
