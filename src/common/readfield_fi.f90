@@ -712,7 +712,7 @@ contains
       classnr
     use snapparML, only: ncomp, run_comp, def_comp
     use snapfldML, only: ps2, vd_dep, xflux, yflux, hflux, z0, leaf_area_index, t2m, &
-      roa, ustar, monin_l, raero, vs
+      roa, ustar, monin_l, raero, vs, rs
     type(FimexIO), intent(inout) :: fio
     integer, intent(in) :: timepos, timeposm1
     integer, intent(in) :: nr
@@ -788,15 +788,15 @@ contains
           case (DRYDEP_SCHEME_EMEP)
             call drydep_emep_vd(ps2*100, t2m, yflux, xflux, z0, &
               hflux, leaf_area_index, real(diam), real(dens), classnr, vd_dep(:, :, i), &
-              roa, ustar, monin_l, raero, vs)
+              roa, ustar, monin_l, raero, vs, rs)
           case (DRYDEP_SCHEME_ZHANG)
             call drydep_zhang_emerson_vd(ps2*100, t2m, yflux, xflux, z0, &
               hflux, leaf_area_index, diam, dens, classnr, vd_dep(:, :, i), .false., &
-              roa, ustar, monin_l, raero, vs)
+              roa, ustar, monin_l, raero, vs, rs)
           case (DRYDEP_SCHEME_EMERSON)
             call drydep_zhang_emerson_vd(ps2*100, t2m, yflux, xflux, z0, &
               hflux, leaf_area_index, diam, dens, classnr, vd_dep(:, :, i), .true., &
-              roa, ustar, monin_l, raero, vs)
+              roa, ustar, monin_l, raero, vs, rs)
           case default
             error stop "Unreachable"
           end select

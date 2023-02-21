@@ -90,6 +90,7 @@ module fldout_ncML
     integer :: monin_l = -1
     integer :: raero = -1
     integer :: vs = -1
+    integer :: rs = -1
     integer :: ps_vd = -1
     integer :: landfraction = -1
   end type
@@ -615,7 +616,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
   if (output_vd_debug) then
     block
       use snapfldml, only: t2m, xflux, yflux, z0, hflux, leaf_area_index, &
-        roa, ustar, monin_l, raero, vs, ps2
+        roa, ustar, monin_l, raero, vs, rs, ps2
     call check(nf90_put_var(iunit, varid%ps_vd, start=ipos, count=isize, values=ps2))
     call check(nf90_put_var(iunit, varid%t2m, start=ipos, count=isize, values=t2m))
     call check(nf90_put_var(iunit, varid%xflux, start=ipos, count=isize, values=xflux))
@@ -628,6 +629,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     call check(nf90_put_var(iunit, varid%monin_l, start=ipos, count=isize, values=monin_l))
     call check(nf90_put_var(iunit, varid%raero, start=ipos, count=isize, values=raero))
     call check(nf90_put_var(iunit, varid%vs, start=ipos, count=isize, values=vs))
+    call check(nf90_put_var(iunit, varid%rs, start=ipos, count=isize, values=rs))
     end block
   endif
 
@@ -1277,6 +1279,8 @@ subroutine initialize_output(filename, itime, ierror)
           "raero", units="??", chunksize=chksz3d)
         call nc_declare(iunit, dimids3d, varid%vs, &
           "vs", units="??", chunksize=chksz3d)
+        call nc_declare(iunit, dimids3d, varid%rs, &
+          "rs", units="??", chunksize=chksz3d)
         call nc_declare(iunit, dimids3d, varid%ps_vd, &
           "ps_vd", units="hPa", chunksize=chksz3d)
         end block
@@ -1432,6 +1436,8 @@ subroutine get_varids(iunit, varid, ierror)
   ierror = nf90_inq_varid(iunit, "raero", varid%raero)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
   ierror = nf90_inq_varid(iunit, "vs", varid%vs)
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+  ierror = nf90_inq_varid(iunit, "rs", varid%rs)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
   ierror = nf90_inq_varid(iunit, "ps_vd", varid%ps_vd)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return

@@ -166,5 +166,5 @@ module snapfldML
   real, allocatable, save, public :: vd_dep(:, :, :)
 
   real, allocatable, save, public :: xflux(:, :), yflux(:, :), hflux(:, :), z0(:, :), leaf_area_index(:, :), t2m(:, :)
-  real(real64), allocatable, save, public :: roa(:,:), ustar(:,:), monin_l(:,:), raero(:,:), vs(:,:)
+  real(real64), allocatable, save, public :: roa(:,:), ustar(:,:), monin_l(:,:), raero(:,:), vs(:,:), rs(:,:)
 end module snapfldML

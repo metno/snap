@@ -207,7 +207,7 @@ end function
 
 pure elemental subroutine drydep_emep_vd(surface_pressure, t2m, yflux, xflux, z0, &
     hflux, leaf_area_index, diam, density, classnr, vd_dep, &
-    roa, ustar, monin_obukhov_length, raero, vs)
+    roa, ustar, monin_obukhov_length, raero, vs, rs)
   !> In hPa
   real, intent(in) :: surface_pressure
   real, intent(in) :: t2m
@@ -230,8 +230,8 @@ pure elemental subroutine drydep_emep_vd(surface_pressure, t2m, yflux, xflux, z0
   real(real64), parameter :: a2 = 300
   real(real64) :: a1sai
   real(real64), intent(out) :: vs
-  real(real64) :: rsemep
   real(real64), intent(out) :: raero
+  real(real64), intent(out) :: rs
   real(real64) :: fac
 
 
@@ -256,13 +256,13 @@ pure elemental subroutine drydep_emep_vd(surface_pressure, t2m, yflux, xflux, z0
     monin_obukhov_length = -25.0
   endif
   if (monin_obukhov_length > 0) then
-    rsemep = 1.0 / (ustar * a1)
+    rs = 1.0 / (ustar * a1)
   else
     fac = (-a2 / monin_obukhov_length) ** ( 2.0 / 3.0 )
-    rsemep = 1.0 / (ustar * a1 * (1 + fac))
+    rs = 1.0 / (ustar * a1 * (1 + fac))
   endif
 
-  vd_dep = 1.0 / (rsemep + raero) + vs
+  vd_dep = 1.0 / (rs + raero) + vs
 end subroutine
 
 pure real(kind=real64) function lookup_A(classnr)
@@ -290,7 +290,7 @@ end function
 
 pure elemental subroutine drydep_zhang_emerson_vd(surface_pressure, t2m, yflux, xflux, z0, &
     hflux, leaf_area_index, diam, density, classnr, vd_dep, emerson_mode, &
-    roa, ustar, monin_obukhov_length, raero, vs)
+    roa, ustar, monin_obukhov_length, raero, vs, rs)
   use ieee_arithmetic, only: ieee_is_nan
   !> In hPa
   real, intent(in) :: surface_pressure
@@ -303,14 +303,14 @@ pure elemental subroutine drydep_zhang_emerson_vd(surface_pressure, t2m, yflux, 
   integer(int8), intent(in) :: classnr
   real, intent(out) :: vd_dep
   logical, intent(in) :: emerson_mode
-  real(real64), intent(out) :: roa, monin_obukhov_length, raero, vs, ustar
+  real(real64), intent(out) :: roa, monin_obukhov_length, raero, vs, ustar, rs
 
   !> Aerial factor for interception (table 3 Zhang et al. (2001)), corresponding to evergreen
   !>  needleleaf trees (i.e. close to maximum deposition)
   real(real64) :: A
   real(real64), parameter :: k = 0.4
 
-  real(real64) :: fac1, cslip, bdiff, my, sc, EB, EIM, EIN, rs, stokes
+  real(real64) :: fac1, cslip, bdiff, my, sc, EB, EIM, EIN, stokes
   real(real64) :: Apar
 
   roa = surface_pressure / (t2m * R)
@@ -344,8 +344,7 @@ pure elemental subroutine drydep_zhang_emerson_vd(surface_pressure, t2m, yflux, 
   A = Apar * 1e-3
   ! Impaction
   ! Stokes number for vegetated surfaces (Zhang (2001)
-  ! Check if A is nan in case of discretisation error in largest_landfraction
-  if (classnr >= 15 .and. .not. ieee_is_nan(A)) then
+  if (.not. ieee_is_nan(A)) then
     stokes = vs * ustar / (grav * A)
   else
     ! ???????
@@ -361,7 +360,7 @@ pure elemental subroutine drydep_zhang_emerson_vd(surface_pressure, t2m, yflux, 
   endif
 
   ! Interception
-  if (classnr <= 14 .or. ieee_is_nan(A)) then
+  if (ieee_is_nan(A)) then
     ! No interception over water surfaces
     EIN = 0.0
   else
