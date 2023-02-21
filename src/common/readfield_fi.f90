@@ -787,15 +787,15 @@ contains
           select case(drydep_scheme)
           case (DRYDEP_SCHEME_EMEP)
             call drydep_emep_vd(ps2*100, t2m, yflux, xflux, z0, &
-              hflux, leaf_area_index, real(diam), real(dens), classnr, vd_dep(:, :, ncomp), &
+              hflux, leaf_area_index, real(diam), real(dens), classnr, vd_dep(:, :, i), &
               roa, ustar, monin_l, raero, vs)
           case (DRYDEP_SCHEME_ZHANG)
             call drydep_zhang_emerson_vd(ps2*100, t2m, yflux, xflux, z0, &
-              hflux, leaf_area_index, diam, dens, classnr, vd_dep(:, :, ncomp), .false., &
+              hflux, leaf_area_index, diam, dens, classnr, vd_dep(:, :, i), .false., &
               roa, ustar, monin_l, raero, vs)
           case (DRYDEP_SCHEME_EMERSON)
             call drydep_zhang_emerson_vd(ps2*100, t2m, yflux, xflux, z0, &
-              hflux, leaf_area_index, diam, dens, classnr, vd_dep(:, :, ncomp), .true., &
+              hflux, leaf_area_index, diam, dens, classnr, vd_dep(:, :, i), .true., &
               roa, ustar, monin_l, raero, vs)
           case default
             error stop "Unreachable"
