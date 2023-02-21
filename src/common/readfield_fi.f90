@@ -808,6 +808,7 @@ contains
   subroutine read_landfractions(inputfile)
     use snapdimML, only: nx, ny
     use drydep, only: preprocess_landfraction
+    use fimex, only: INTERPOL_NEAREST_NEIGHBOR
     use ISO_C_BINDING, only: C_INT
     character(len=*), intent(in) :: inputfile
 
@@ -818,7 +819,7 @@ contains
     if (fint%method >= 0) then
       call check(fio_intern%open(inputfile, "", "nc4"), &
         "can't open landclass file")
-      call check(fio%interpolate(fio_intern, fint%method, fint%proj, fint%x_axis, &
+      call check(fio%interpolate(fio_intern, INTERPOL_NEAREST_NEIGHBOR, fint%proj, fint%x_axis, &
                                  fint%y_axis, fint%unit_is_degree), &
                  "Can't interpolate landclass file")
     else
