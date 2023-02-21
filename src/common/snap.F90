@@ -244,6 +244,7 @@ PROGRAM bsnap
   integer :: ihdiff, ifldout, idailyout = 0, ihour, split_particle_after_step, split_particle_hours
   integer :: date_time(8)
   logical :: warning = .false.
+  integer :: npartmax
   !> tstep: timestep in seconds
   real :: tstep = 900
   real :: rmlimit = -1.0, rnhrel, tf1, tf2, tnow, tnext
@@ -620,12 +621,14 @@ PROGRAM bsnap
 
     ! start time loop
     itimei = time_start
+    npartmax = 0
     time_loop: do istep = 0, nstep
       call timeloop_timer%start()
+      npartmax = max(npartmax, npart)
       write (iulog, *) 'istep,nplume,npart: ', istep, nplume, npart
       flush (iulog)
       if (mod(istep, nsteph) == 0) then
-        write (error_unit, *) 'istep,nplume,npart: ', istep, nplume, npart
+        write (error_unit, *) 'istep,nplume,npart: ', istep, nplume
         flush (error_unit)
       end if
 
@@ -840,6 +843,8 @@ PROGRAM bsnap
 
     call snap_error_exit(iulog)
   end if
+  write(error_unit, *) 'npart: Used a maximum of ', npartmax, ' out of available ', mpart
+  write(output_unit, *) 'npart: Used a maximum of ', npartmax, ' out of available ', mpart
 
   ! b_240311
   write (error_unit, *)
