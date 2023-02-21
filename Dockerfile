@@ -15,6 +15,7 @@ WORKDIR /snap
 ARG VERSION="latest"
 ADD src .
 RUN ln --symbolic --force gcc_pkgconfig.mk current.mk
+ENV SNAP_USE_OMP=1
 RUN make clean && make
 
 FROM ubuntu:22.04
