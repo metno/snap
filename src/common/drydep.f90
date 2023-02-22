@@ -393,7 +393,7 @@ subroutine drydep_nonconstant_vd(tstep, vd, part)
   real, parameter :: h = 30.0
 
   integer :: m, mm, i, j
-  real :: dep, deprate
+  real :: dep, deprate_m1
 
 
   m = part%icomp
@@ -404,8 +404,8 @@ subroutine drydep_nonconstant_vd(tstep, vd, part)
     i = nint(part%x)
     j = nint(part%y)
 
-    deprate = 1.0 - exp(-tstep*vd(i,j,mm)/h)
-    dep = part%scale_rad(deprate)
+    deprate_m1 = exp(-tstep*vd(i,j,mm)/h)
+    dep = part%scale_rad(deprate_m1)
     !$OMP atomic
     depdry(i,j,mm) = depdry(i,j,mm) + dble(dep)
   end if
