@@ -23,7 +23,7 @@ module allocateFieldsML
       concacc, avgbq1, avgbq2, avgbq, accwet, accdry, concen, &
       depdry, depwet, accprec, avgprec, avghbl, precip, &
       pmsl1, pmsl2, field1, field2, field3, field4, xm, ym, &
-      garea, dgarea, &
+      garea, field_hr1, field_hr2, field_hr3, hbl_hr, &
       max_column_scratch, max_column_concentration, &
       aircraft_doserate, aircraft_doserate_scratch, t1_abs, t2_abs, &
       aircraft_doserate_threshold_height, &
@@ -41,16 +41,21 @@ module allocateFieldsML
 
 subroutine allocateFields
   USE particleML, only: pdata
-  USE snapdimML, only: nx, ny, nk, ldata, maxsiz
+  USE snapdimML, only: nx, ny, nk, output_resolution_factor, ldata, maxsiz
   USE snapparML, only: ncomp, iparnum
   USE releaseML, only: mplume, iplume, plume_release, mpart
 
   logical, save :: FirstCall = .TRUE.
   integer :: AllocateStatus
+  integer :: nxhr, nyhr
   character(len=*), parameter :: errmsg = "*** Not enough memory ***"
 
   if ( .NOT. FirstCall) return
   FirstCall = .FALSE.
+
+  ! high resolution dimensions/arrays (output)
+  nxhr = nx * output_resolution_factor
+  nyhr = ny * output_resolution_factor
 
   ALLOCATE ( alevel(nk), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
@@ -111,7 +116,15 @@ subroutine allocateFields
   IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( ym(nx,ny), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
-  ALLOCATE ( garea(nx,ny), STAT = AllocateStatus)
+  ALLOCATE ( garea(nxhr,nyhr), STAT = AllocateStatus)
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
+  ALLOCATE ( field_hr1(nxhr,nyhr), STAT = AllocateStatus)
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
+  ALLOCATE ( field_hr2(nxhr,nyhr), STAT = AllocateStatus)
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
+  ALLOCATE ( field_hr3(nxhr,nyhr), STAT = AllocateStatus)
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
+  ALLOCATE ( hbl_hr(nxhr,nyhr), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( field1(nx,ny), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
@@ -131,8 +144,6 @@ subroutine allocateFields
   IF (AllocateStatus /= 0) ERROR STOP errmsg
 
 ! the calculation-fields
-  ALLOCATE ( dgarea(nx,ny), STAT = AllocateStatus)
-  IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( avghbl(nx,ny), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( avgprec(nx,ny), STAT = AllocateStatus)
@@ -141,31 +152,31 @@ subroutine allocateFields
   IF (AllocateStatus /= 0) ERROR STOP errmsg
   accprec = 0.0
 
-  ALLOCATE ( depdry(nx,ny,ncomp), STAT = AllocateStatus)
+  ALLOCATE ( depdry(nxhr,nyhr,ncomp), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
   depdry = 0.0
-  ALLOCATE ( depwet(nx,ny,ncomp), STAT = AllocateStatus)
+  ALLOCATE ( depwet(nxhr,nyhr,ncomp), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
   depwet = 0.0
-  ALLOCATE ( accdry(nx,ny,ncomp), STAT = AllocateStatus)
+  ALLOCATE ( accdry(nxhr,nyhr,ncomp), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
   accdry = 0.0
-  ALLOCATE ( accwet(nx,ny,ncomp), STAT = AllocateStatus)
+  ALLOCATE ( accwet(nxhr,nyhr,ncomp), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
   accwet = 0.0
-  ALLOCATE ( concen(nx,ny,ncomp), STAT = AllocateStatus)
+  ALLOCATE ( concen(nxhr,nyhr,ncomp), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
   concen = 0.0
-  ALLOCATE ( concacc(nx,ny,ncomp), STAT = AllocateStatus)
+  ALLOCATE ( concacc(nxhr,nyhr,ncomp), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
   concacc = 0.0
-  ALLOCATE ( avgbq1(nx,ny,ncomp), STAT = AllocateStatus)
+  ALLOCATE ( avgbq1(nxhr,nyhr,ncomp), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
-  ALLOCATE ( avgbq2(nx,ny,ncomp), STAT = AllocateStatus)
+  ALLOCATE ( avgbq2(nxhr,nyhr,ncomp), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
 
   if (imodlevel) then
-    ALLOCATE ( avgbq(nx,ny,nk-1,ncomp), STAT = AllocateStatus)
+    ALLOCATE ( avgbq(nxhr,nyhr,nk-1,ncomp), STAT = AllocateStatus)
     IF (AllocateStatus /= 0) ERROR STOP errmsg
   endif
 
@@ -182,20 +193,20 @@ subroutine allocateFields
   IF (AllocateStatus /= 0) ERROR STOP errmsg
 
   if (compute_column_max_conc) then
-    allocate(max_column_scratch(nx,ny,nk), &
-      max_column_concentration(nx,ny), &
+    allocate(max_column_scratch(nxhr,nyhr,nk), &
+      max_column_concentration(nxhr,nyhr), &
       STAT=AllocateStatus)
     if (AllocateStatus /= 0) ERROR STOP errmsg
   endif
 
   if (compute_aircraft_doserate) then
-    allocate(aircraft_doserate_scratch(nx,ny,nk,ncomp+1), &
-      aircraft_doserate(nx,ny), &
-      t1_abs(nx,ny,nk), t2_abs(nx,ny,nk), &
+    allocate(aircraft_doserate_scratch(nxhr,nyhr,nk,ncomp+1), &
+      aircraft_doserate(nxhr,nyhr), &
+      t1_abs(nxhr,nyhr,nk), t2_abs(nxhr,nyhr,nk), &
       STAT=AllocateStatus)
     if (AllocateStatus /= 0) ERROR STOP errmsg
     if (aircraft_doserate_threshold > 0.0) then
-      allocate(aircraft_doserate_threshold_height(nx,ny), STAT=allocatestatus)
+      allocate(aircraft_doserate_threshold_height(nxhr,nyhr), STAT=allocatestatus)
       if (AllocateStatus /= 0) ERROR STOP errmsg
     endif
   endif
@@ -250,13 +261,16 @@ subroutine deAllocateFields
   DEALLOCATE ( field2)
   DEALLOCATE ( field3)
   DEALLOCATE ( field4)
+  DEALLOCATE ( field_hr1)
+  DEALLOCATE ( field_hr2)
+  DEALLOCATE ( field_hr3)
+  DEALLOCATE ( hbl_hr)
 
   DEALLOCATE ( pmsl1)
   DEALLOCATE ( pmsl2)
 
   DEALLOCATE ( precip)
 
-  DEALLOCATE ( dgarea )
   DEALLOCATE ( avghbl )
   DEALLOCATE ( avgprec )
   DEALLOCATE ( accprec )

@@ -93,8 +93,9 @@ subroutine posint(part,tf1,tf2,tnow,pextra)
   dygrid=gparam(8)
 
   !..for horizontal interpolations
-  i=part%x
-  j=part%y
+  ! i,j = lower left corner
+  i=int(part%x)
+  j=int(part%y)
   dx=part%x-i
   dy=part%y-j
   c1=(1.-dy)*(1.-dx)
