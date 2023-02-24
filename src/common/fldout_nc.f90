@@ -580,7 +580,8 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
 
 !..model level fields...................................................
   if (imodlevel) then
-    call write_ml_fields(iunit, varid, average, [1, 1, -1, ihrs_pos], [nx, ny, 1, 1], rt1, rt2)
+    call write_ml_fields(iunit, varid, average, [1, 1, -1, ihrs_pos], &
+        [nx*output_resolution_factor, ny*output_resolution_factor, 1, 1], rt1, rt2)
   endif
 
 ! reset fields
@@ -675,11 +676,9 @@ subroutine write_ml_fields(iunit, varid, average, ipos_in, isize, rt1, rt2)
       do j=1,ny*output_resolution_factor
         do i=1,nx*output_resolution_factor
           dh = rt1*hlayer1(i,j,k) + rt2*hlayer2(i,j,k)
-          field_hr1(i,j) = dh
           field_hr2(i,j) = dh*garea(i,j)*avg
         end do
       end do
-
       do m=1,ncomp
         avgbq(:,:,k,m) = avgbq(:,:,k,m)/field_hr2
       end do
@@ -1356,7 +1355,7 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
       max_column_scratch, max_column_concentration, garea, &
       ps1, ps2, t1_abs, t2_abs, aircraft_doserate_scratch, aircraft_doserate, &
       aircraft_doserate_threshold_height
-  USE snapdimml, only: nx, ny, nk, output_resolution_factor, hres_pos
+  USE snapdimml, only: nx, ny, nk, output_resolution_factor, hres_pos, lres_pos
   USE snapparML, only: ncomp, def_comp, run_comp
   USE ftestML, only: ftest
   USE releaseML, only: npart
@@ -1369,7 +1368,7 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
   real :: outside_pressure, outside_temperature, inside_pressure
   real :: pressure, pressure_altitude, doserate
   real :: scale
-  integer :: i, j, m, n, k
+  integer :: i, j, m, n, k, ii, ji
   integer :: ivlvl
   type(Particle) :: part
   real :: hrstep
@@ -1531,8 +1530,10 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
     do k=2,nk-1
       do j = 1, ny*output_resolution_factor
         do i = 1, nx*output_resolution_factor
-          outside_pressure = rt1*(alevel(k) + blevel(k)*ps1(i,j)) + rt2*(alevel(k)+blevel(k)*ps2(i,j))
-          outside_temperature = rt1*t1_abs(i,j,k) + rt2*t2_abs(i,j,k)
+          ii = lres_pos(i)
+          ji = lres_pos(j)
+          outside_pressure = rt1*(alevel(k) + blevel(k)*ps1(ii,ji)) + rt2*(alevel(k)+blevel(k)*ps2(ii,ji))
+          outside_temperature = rt1*t1_abs(ii,ji,k) + rt2*t2_abs(ii,ji,k)
           inside_pressure = max(outside_pressure, regulatory_minimum_pressure)
 
           do n=1,ncomp
@@ -1557,8 +1558,10 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
       do k=2,nk-2
         do j = 1, ny*output_resolution_factor
           do i = 1, nx*output_resolution_factor
-            doserate = aircraft_doserate_scratch(i,j,k,ncomp+1)
-            pressure = rt1*(alevel(k+1) + blevel(k+1)*ps1(i,j)) + rt2*(alevel(k+1)+blevel(k+1)*ps2(i,j))
+            ii = lres_pos(i)
+            ji = lres_pos(j)
+              doserate = aircraft_doserate_scratch(i,j,k,ncomp+1)
+            pressure = rt1*(alevel(k+1) + blevel(k+1)*ps1(ii,ji)) + rt2*(alevel(k+1)+blevel(k+1)*ps2(ii,ji))
             ! NOAA conversion formula www.weather.gov/media/epz/wxcalc/pressureConversion.pdf
             pressure_altitude = 0.3048 * (1 - (pressure / 1013.25) ** 0.190284) * 145366.45
             if (doserate > aircraft_doserate_threshold) then

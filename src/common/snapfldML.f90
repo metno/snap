@@ -90,6 +90,8 @@ module snapfldML
   real(kind=real32), allocatable, save, public :: field3(:,:)
 !> Work array (low input resolution)
   real(kind=real32), allocatable, save, public :: field4(:,:)
+!> 3D Work array (low input resolution)
+  real(kind=real32), allocatable, save, public :: field3d1(:,:,:)
 !> Work array (high output resolution)
   real(kind=real32), allocatable, save, public :: field_hr1(:,:)
 !> Work array (high output resolution)
