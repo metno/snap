@@ -22,7 +22,7 @@ module allocateFieldsML
       ps1, ps2, hbl1, hbl2, hlevel1, hlevel2, hlayer1, hlayer2, &
       concacc, avgbq1, avgbq2, avgbq, accwet, accdry, concen, &
       depdry, depwet, accprec, avgprec, avghbl, precip, &
-      pmsl1, pmsl2, field1, field2, field3, field4, xm, ym, &
+      pmsl1, pmsl2, field1, field2, field3, field4, field3d1, xm, ym, &
       garea, field_hr1, field_hr2, field_hr3, hbl_hr, &
       max_column_scratch, max_column_concentration, &
       aircraft_doserate, aircraft_doserate_scratch, t1_abs, t2_abs, &
@@ -86,8 +86,9 @@ subroutine allocateFields
   ALLOCATE ( hbl1(nx,ny), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( hlevel1(nx,ny,nk), STAT = AllocateStatus)
+  ! hlayer calculated and only needed for output
   IF (AllocateStatus /= 0) ERROR STOP errmsg
-  ALLOCATE ( hlayer1(nx,ny,nk), STAT = AllocateStatus)
+  ALLOCATE ( hlayer1(nxhr,nyhr,nk), STAT = AllocateStatus)
 
   ALLOCATE ( u2(nx,ny,nk), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
@@ -104,8 +105,9 @@ subroutine allocateFields
   ALLOCATE ( hbl2(nx,ny), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( hlevel2(nx,ny,nk), STAT = AllocateStatus)
+  ! hlayer calculated and only needed for output
   IF (AllocateStatus /= 0) ERROR STOP errmsg
-  ALLOCATE ( hlayer2(nx,ny,nk), STAT = AllocateStatus)
+  ALLOCATE ( hlayer2(nxhr,nyhr,nk), STAT = AllocateStatus)
 
   ALLOCATE ( idata(ldata), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
@@ -134,6 +136,9 @@ subroutine allocateFields
   IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( field4(nx,ny), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
+  ALLOCATE ( field3d1(nx,ny,nk), STAT = AllocateStatus)
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
+
 
   ALLOCATE ( pmsl1(nx,ny), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
@@ -261,6 +266,7 @@ subroutine deAllocateFields
   DEALLOCATE ( field2)
   DEALLOCATE ( field3)
   DEALLOCATE ( field4)
+  DEALLOCATE ( field3d1)
   DEALLOCATE ( field_hr1)
   DEALLOCATE ( field_hr2)
   DEALLOCATE ( field_hr3)
