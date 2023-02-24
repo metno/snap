@@ -129,7 +129,7 @@
 ! FIELD_TIME.VALID
 ! FIELD.OUTPUT= snap.felt
 ! * increase output-resolution to factor*input_resolution
-! FIELD.OUTPUT_RESOLUTION_FACTOR
+! FIELD.OUTPUT_RESOLUTION_FACTOR= 1
 ! FIELD.OUTTYPE=netcdf
 ! FIELD.DAILY.OUTPUT.ON
 ! FIELD.USE_MODEL_WIND_INSTEAD_OF_10M= [.false.]/.true

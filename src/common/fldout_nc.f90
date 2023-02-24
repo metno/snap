@@ -96,21 +96,9 @@ module fldout_ncML
 
   contains
 
-!> translate a x or y position in the input-grid to the
-!> high_resolution output grid position
-integer function hres_pos(lres_pos)
-  USE snapdimML, only: nx, ny, output_resolution_factor
-  USE iso_fortran_env, only: real64
-  real(kind=real64), intent(in) :: lres_pos
-
-  ! convert to 0-starting positions, extend to new range, convert to 1-start
-  hres_pos = 1 + nint((lres_pos-1.) * output_resolution_factor)
-end function hres_pos
-
 subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     ierror)
   USE iso_fortran_env, only: int16
-  USE snapdimML, only: hres_field
   USE snapgrdML, only: imodlevel, imslp, precipitation_in_output, &
       itotcomp, compute_column_max_conc, compute_aircraft_doserate, &
       aircraft_doserate_threshold, output_column
@@ -126,7 +114,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     TIME_PROFILE_BOMB
   USE snapdebug, only: iulog, idebug
   USE ftestML, only: ftest
-  USE snapdimML, only: nx, ny, output_resolution_factor
+  USE snapdimML, only: nx, ny, output_resolution_factor, hres_field, hres_pos
   USE releaseML, only: npart
   USE particleML, only: pdata, Particle
 
@@ -620,7 +608,7 @@ subroutine write_ml_fields(iunit, varid, average, ipos_in, isize, rt1, rt2)
   USE ftestML, only: ftest
   USE snapdebug, only: idebug
   USE snapgrdML, only: itotcomp, modleveldump, ivlayer
-  USE snapdimML, only: nx,ny,nk,output_resolution_factor
+  USE snapdimML, only: nx,ny,nk,output_resolution_factor, hres_pos
 
   integer, intent(in) :: iunit
   type(common_var), intent(in) :: varid
@@ -1368,7 +1356,7 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
       max_column_scratch, max_column_concentration, garea, &
       ps1, ps2, t1_abs, t2_abs, aircraft_doserate_scratch, aircraft_doserate, &
       aircraft_doserate_threshold_height
-  USE snapdimml, only: nx, ny, nk, output_resolution_factor
+  USE snapdimml, only: nx, ny, nk, output_resolution_factor, hres_pos
   USE snapparML, only: ncomp, def_comp, run_comp
   USE ftestML, only: ftest
   USE releaseML, only: npart

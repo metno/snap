@@ -31,6 +31,7 @@ subroutine drydep1(part)
   USE particleML, only: Particle
   USE snapfldML, only: depdry
   USE snapparML, only: def_comp
+  USE snapdimML, only: hres_pos
 
 !> particle
   type(Particle), intent(inout) :: part
@@ -45,8 +46,8 @@ subroutine drydep1(part)
     h = part%hbl*(1.-part%z)/(1.-part%tbl)
     if (h < def_comp(m)%drydephgt) then
       dep = part%scale_rad(1.0 - def_comp(m)%drydeprat)
-      i = nint(part%x)
-      j = nint(part%y)
+      i = hres_pos(part%x)
+      j = hres_pos(part%y)
       mm = def_comp(m)%to_running
     !$OMP atomic
       depdry(i,j,mm) = depdry(i,j,mm) + dble(dep)
@@ -62,6 +63,7 @@ end subroutine drydep1
 subroutine drydep2(tstep, part)
   USE particleML, only: Particle
   USE snapfldML, only: depdry
+  USE snapdimML, only: hres_pos
   USE snapparML, only: def_comp
   USE snapgrdML, only: vlevel
 
@@ -93,8 +95,8 @@ subroutine drydep2(tstep, part)
       if (part%z == vlevel(1)) deprate = 1.
     endif
     dep = part%scale_rad(1.0 - deprate)
-    i = nint(part%x)
-    j = nint(part%y)
+    i = hres_pos(part%x)
+    j = hres_pos(part%y)
     mm = def_comp(m)%to_running
   !$OMP atomic
     depdry(i,j,mm) = depdry(i,j,mm) + dble(dep)

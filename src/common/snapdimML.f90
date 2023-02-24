@@ -52,6 +52,9 @@ module snapdimML
 
 !> translate a field in normal resolution to high output resolution
   public :: hres_field
+!> translate a x or y position in the input-grid to the
+!> high_resolution output grid position
+  public :: hres_pos
 
   contains
 
@@ -102,5 +105,14 @@ module snapdimML
       end do
     end if
   end subroutine hres_field
+
+!> translate a x or y position in the input-grid to the
+!> high_resolution output grid position
+  integer function hres_pos(lres_pos)
+    USE iso_fortran_env, only: real64
+    real(kind=real64), intent(in) :: lres_pos
+    ! convert to 0-starting positions, extend to new range, convert to 1-start
+    hres_pos = 1 + nint((lres_pos-1.) * output_resolution_factor)
+  end function hres_pos
 
 end module snapdimML

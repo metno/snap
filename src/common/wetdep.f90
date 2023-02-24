@@ -33,6 +33,7 @@ contains
     USE iso_fortran_env, only: real64
     USE particleML, only: Particle, extraParticle
     USE snapparML, only: def_comp, run_comp
+    USE snapdimML, only: hres_pos
 
 !> Field which ret deposition gets added to
     real(real64), intent(inout) :: depwet(:, :, :)
@@ -60,8 +61,8 @@ contains
 
       dep = part%scale_rad(1.0 - deprate)
 
-      i = nint(part%x)
-      j = nint(part%y)
+      i = hres_pos(part%x)
+      j = hres_pos(part%y)
       mm = def_comp(m)%to_running
 
       !$OMP atomic
