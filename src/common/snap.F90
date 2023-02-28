@@ -37,8 +37,8 @@
 ! DRY.DEPOSITION.SCHEME = "emep"/"old"/"..."
 ! DRY.DEPOSITION.SAVE
 ! DRY.DEPOSITION.LARGEST_LANDFRACTION_FILE = "landclasses.nc"
-! WET.DEPOSITION.OLD .......................... (default)
-! WET.DEPOSITION.NEW
+! WET.DEPOSITION.NEW ! deprecated
+! WET.DEPOSITION.SCHEME = Bartnicki ! (default)
 ! TIME.STEP= 900.
 ! TIME.RELEASE.PROFILE.CONSTANT
 ! TIME.RELEASE.PROFILE.BOMB
@@ -191,7 +191,8 @@ PROGRAM bsnap
   USE milibML, only: xyconvert
   use snapfldML, only: depwet, total_activity_lost_domain, vd_dep
   USE forwrdML, only: forwrd, forwrd_init
-  USE wetdep, only: wetdep2, wetdep2_init
+  USE wetdep, only: wetdep2, wetdep2_init, wetdep_scheme_t, WETDEP_SCHEME_UNDEFINED, WETDEP_SCHEME_BARTNICKI, &
+    operator(==), operator(/=)
   USE drydep, only: drydep1, drydep2, drydep_nonconstant_vd, drydep_scheme, &
           DRYDEP_SCHEME_OLD, DRYDEP_SCHEME_NEW, DRYDEP_SCHEME_EMEP, &
           DRYDEP_SCHEME_ZHANG, DRYDEP_SCHEME_EMERSON, DRYDEP_SCHEME_UNDEFINED, &
@@ -245,7 +246,8 @@ PROGRAM bsnap
   integer :: k, ierror, i, n
   integer, allocatable :: klevel_manual(:)
   integer :: ih
-  integer :: wetdep_version = 0, idecay
+  type(wetdep_scheme_t) :: wetdep_scheme = WETDEP_SCHEME_UNDEFINED
+  integer :: idecay
   integer :: ntimefo
   integer :: nsteph, nstep, nstepr
   integer :: ihread, isteph, lstepr, iendrel, istep, nhleft
@@ -494,7 +496,7 @@ PROGRAM bsnap
     write (iulog, *) 'ifltim:  ', ifltim
     write (iulog, *) 'irwalk:  ', use_random_walk
     write (iulog, *) 'drydep_scheme: ', drydep_scheme
-    write (iulog, *) 'wetdep_version: ', wetdep_version
+    write (iulog, *) 'wetdep_scheme: ', wetdep_scheme%description
     write (iulog, *) 'idecay:  ', idecay
     write (iulog, *) 'rmlimit: ', rmlimit
     write (iulog, *) 'ndefcomp:', size(def_comp)
@@ -712,7 +714,7 @@ PROGRAM bsnap
       if (init) then
         ! setting particle-number to 0 means init
         call posint_init()
-        if (wetdep_version == 2) call wetdep2_init(tstep)
+        if (wetdep_scheme == WETDEP_SCHEME_BARTNICKI) call wetdep2_init(tstep)
         call forwrd_init()
         if (use_random_walk) call rwalk_init(tstep)
         init = .FALSE.
@@ -746,7 +748,7 @@ PROGRAM bsnap
             drydep_scheme == DRYDEP_SCHEME_EMERSON) call drydep_nonconstant_vd(tstep, vd_dep, pdata(np))
 
         !..wet deposition (1=old, 2=new version)
-        if (wetdep_version == 2) call wetdep2(depwet, tstep, pdata(np), pextra)
+        if (wetdep_scheme == WETDEP_SCHEME_BARTNICKI) call wetdep2(depwet, tstep, pdata(np), pextra)
 
         !..move all particles forward, save u and v to pextra
         call forwrd(tf1, tf2, tnow, tstep, pdata(np), pextra)
@@ -1172,20 +1174,18 @@ contains
       case ('dry.deposition.largest_landfraction_file')
         if (.not.has_value) goto 12
         largest_landfraction_file = cinput(pname_start:pname_end)
-      case ('wet.deposition.old')
-        write (error_unit, *) "This option is deprecated and removed"
-        goto 12
       case ('wet.deposition.new')
         !..wet.deposition.new
-        write (error_unit, *) "Deprecated, please use wet.deposition.version = 2"
+        write (error_unit, *) "Deprecated, please use wet.deposition.scheme = Bartnicki"
         warning = .true.
-        if (wetdep_version /= 0) then
+        if (wetdep_scheme /= WETDEP_SCHEME_UNDEFINED) then
           write (error_unit, *) "already set"
           goto 12
         endif
-        wetdep_version = 2
+        wetdep_scheme = WETDEP_SCHEME_BARTNICKI
       case ('wet.deposition.version')
-        if (wetdep_version /= 0) then
+        write (error_unit, *) "Deprecated, please use wet.deposition.scheme = Bartnicki"
+        if (wetdep_scheme /= WETDEP_SCHEME_UNDEFINED) then
           write (error_unit, *) "already set"
           goto 12
         endif
@@ -1193,7 +1193,26 @@ contains
           write (error_unit, *) "expected a keyword"
           goto 12
         endif
-        read (cinput(pname_start:pname_end), *, err=12) wetdep_version
+        block
+          integer :: scheme_number
+          read (cinput(pname_start:pname_end), *, err=12) scheme_number
+          if (scheme_number /= 2) goto 12
+          wetdep_scheme = WETDEP_SCHEME_BARTNICKI
+        end block
+      case ('wet.deposition.scheme')
+        if (.not.has_value) goto 12
+        if (wetdep_scheme /= WETDEP_SCHEME_UNDEFINED) then
+          write (error_unit, *) "already set"
+          goto 12
+        endif
+        call to_lowercase(cinput(pname_start:pname_end))
+        select case(cinput(pname_start:pname_end))
+          case("bartnicki")
+            wetdep_scheme = WETDEP_SCHEME_BARTNICKI
+          case default
+            write(error_unit,*) "Unknown scheme ", cinput(pname_start:pname_end)
+            goto 12
+        end select
       case ('time.step')
         !..time.step=<seconds>
         if (.not. has_value) goto 12
@@ -2094,11 +2113,13 @@ contains
     end do
 
     if (drydep_scheme == DRYDEP_SCHEME_UNDEFINED) drydep_scheme = DRYDEP_SCHEME_OLD
-    if (wetdep_version == 0) then ! Set default wetdep version
-      wetdep_version = 2
+
+    if (wetdep_scheme == WETDEP_SCHEME_UNDEFINED) then ! Set default wetdep version
+      wetdep_scheme = WETDEP_SCHEME_BARTNICKI
     endif
-    if (wetdep_version /= 2) then
-      write (error_unit, *) "Unknown wet deposition version"
+
+    if (wetdep_scheme /= WETDEP_SCHEME_BARTNICKI) then
+      write (error_unit, *) "Unknown wet deposition scheme: ", wetdep_scheme%description
       ierror = 1
     endif
     i1 = 0
@@ -2139,7 +2160,7 @@ contains
         end if
       end if
 
-      if (wetdep_version == 2 .AND. def_comp(m)%kwetdep == 1) then
+      if (wetdep_scheme == WETDEP_SCHEME_BARTNICKI .AND. def_comp(m)%kwetdep == 1) then
         if (def_comp(m)%radiusmym > 0.) then
           i2 = i2 + 1
         else

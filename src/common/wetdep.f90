@@ -19,9 +19,40 @@ module wetdep
   implicit none
   private
 
-  public wetdep2, wetdep2_init
+  public :: wetdep2, wetdep2_init
+  public :: operator(==), operator(/=)
+
+  type, public :: wetdep_scheme_t
+    integer, private :: scheme
+    character(len=32), public :: description
+  end type
+
+  type(wetdep_scheme_t), parameter, public :: WETDEP_SCHEME_UNDEFINED = &
+      wetdep_scheme_t(0, "Not defined")
+  type(wetdep_scheme_t), parameter, public :: WETDEP_SCHEME_BARTNICKI = &
+      wetdep_scheme_t(2, "Bartnicki")
+
+  interface operator (==)
+    module procedure :: equal_scheme
+  end interface
+
+  interface operator (/=)
+    module procedure :: not_equal_scheme
+  end interface
 
 contains
+
+  logical pure function equal_scheme(this, other) result(eq)
+    type(wetdep_scheme_t), intent(in) :: this, other
+    eq = this%scheme == other%scheme
+  end function
+
+  logical pure function not_equal_scheme(this, other) result(eq)
+    type(wetdep_scheme_t), intent(in) :: this, other
+    eq = .not. (this == other)
+  end function
+
+
 
 !> Purpose:  Compute wet deposition for each particle and each component
 !>           and store depositions in nearest gridpoint in a field
