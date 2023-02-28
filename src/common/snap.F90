@@ -189,8 +189,10 @@ PROGRAM bsnap
   USE milibML, only: xyconvert
   use snapfldML, only: depwet, total_activity_lost_domain, vd_dep
   USE forwrdML, only: forwrd, forwrd_init
-  USE wetdep, only: wetdep2, wetdep2_init, wetdep_scheme_t, WETDEP_SCHEME_UNDEFINED, WETDEP_SCHEME_BARTNICKI, &
-    operator(==), operator(/=)
+  !USE wetdep, only: wetdep2, wetdep2_init, wetdep_scheme_t, WETDEP_SCHEME_UNDEFINED, WETDEP_SCHEME_BARTNICKI, &
+  !  operator(==), operator(/=), wet_deposition_conventional_params => conventional_params
+  use wetdep
+  use wetdep, only: wet_deposition_conventional_params => conventional_params
   USE drydep, only: drydep1, drydep2, drydep_nonconstant_vd, drydep_scheme, &
           DRYDEP_SCHEME_OLD, DRYDEP_SCHEME_NEW, DRYDEP_SCHEME_EMEP, &
           DRYDEP_SCHEME_ZHANG, DRYDEP_SCHEME_EMERSON, DRYDEP_SCHEME_UNDEFINED, &
@@ -243,7 +245,6 @@ PROGRAM bsnap
   logical :: synoptic_output = .false.
   integer :: k, ierror, i, n
   integer :: ih
-  type(wetdep_scheme_t) :: wetdep_scheme = WETDEP_SCHEME_UNDEFINED
   integer :: idecay
   integer :: ntimefo
   integer :: nsteph, nstep, nstepr
@@ -562,6 +563,9 @@ PROGRAM bsnap
     mhmax = -10.0
     ! b_end
 
+
+    if (wetdep_scheme == WETDEP_SCHEME_CONVENTIONAL) call wetdep_conventional_init()
+
 ! reset readfield_nc (eventually, traj will rerun this loop)
     if (ftype == "netcdf") then
       call readfield_nc(-1, nhrun < 0, time_start, nhfmin, nhfmax, &
@@ -632,11 +636,10 @@ PROGRAM bsnap
     npartmax = 0
     time_loop: do istep = 0, nstep
       call timeloop_timer%start()
-      npartmax = max(npartmax, npart)
       write (iulog, *) 'istep,nplume,npart: ', istep, nplume, npart
       flush (iulog)
       if (mod(istep, nsteph) == 0) then
-        write (error_unit, *) 'istep,nplume,npart: ', istep, nplume
+        write (error_unit, *) 'istep,nplume,npart: ', istep, nplume, npart
         flush (error_unit)
       end if
 
@@ -668,6 +671,13 @@ PROGRAM bsnap
         !..calculate boundary layer (top and height)
         call bldp
 
+        if (wetdep_scheme == WETDEP_SCHEME_CONVENTIONAL) then
+          block
+            use snapfldml, only: precip
+            call wetdep_conventional_compute(precip)
+          end block
+        endif
+
         dur = time_file - itimei
         ihdiff = dur%hours
         tf1 = 0.
@@ -687,6 +697,7 @@ PROGRAM bsnap
         !..release one plume of particles
 
         call release(istep, nsteph, tf1, tf2, tnow, ierror)
+        npartmax = max(npartmax, npart)
 
         if (ierror == 0) then
           lstepr = istep
@@ -707,7 +718,9 @@ PROGRAM bsnap
       if (init) then
         ! setting particle-number to 0 means init
         call posint_init()
+
         if (wetdep_scheme == WETDEP_SCHEME_BARTNICKI) call wetdep2_init(tstep)
+
         call forwrd_init()
         if (use_random_walk) call rwalk_init(tstep)
         init = .FALSE.
@@ -740,8 +753,11 @@ PROGRAM bsnap
             drydep_scheme == DRYDEP_SCHEME_ZHANG .or. &
             drydep_scheme == DRYDEP_SCHEME_EMERSON) call drydep_nonconstant_vd(tstep, vd_dep, pdata(np))
 
-        !..wet deposition (1=old, 2=new version)
-        if (wetdep_scheme == WETDEP_SCHEME_BARTNICKI) call wetdep2(depwet, tstep, pdata(np), pextra)
+        !..wet deposition
+        if (def_comp(pdata(np)%icomp)%kwetdep == 1) then
+          if (wetdep_scheme == WETDEP_SCHEME_BARTNICKI) call wetdep2(depwet, tstep, pdata(np), pextra)
+          if (wetdep_scheme == WETDEP_SCHEME_CONVENTIONAL) call wetdep_conventional(depwet, pdata(np), tstep)
+        endif
 
         !..move all particles forward, save u and v to pextra
         call forwrd(tf1, tf2, tnow, tstep, pdata(np), pextra)
@@ -770,6 +786,7 @@ PROGRAM bsnap
       if (split_particle_after_step > 0) then
         call split_particles(split_particle_after_step)
       end if
+      npartmax = max(npartmax, npart)
 
       !$OMP PARALLEL DO REDUCTION(max : mhmax) REDUCTION(min : mhmin)
       do n = 1, npart
@@ -1202,10 +1219,18 @@ contains
         select case(cinput(pname_start:pname_end))
           case("bartnicki")
             wetdep_scheme = WETDEP_SCHEME_BARTNICKI
+          case("conventional")
+            wetdep_scheme = WETDEP_SCHEME_CONVENTIONAL
           case default
             write(error_unit,*) "Unknown scheme ", cinput(pname_start:pname_end)
             goto 12
         end select
+      case ('wet.deposition.conventional.a')
+        if (.not.has_value) goto 12
+        read(cinput(pname_start:pname_end), *) wet_deposition_conventional_params%A
+      case ('wet.deposition.conventional.b')
+        if (.not.has_value) goto 12
+        read(cinput(pname_start:pname_end), *) wet_deposition_conventional_params%B
       case ('time.step')
         !..time.step=<seconds>
         if (.not. has_value) goto 12
@@ -2060,14 +2085,9 @@ contains
 
     if (drydep_scheme == DRYDEP_SCHEME_UNDEFINED) drydep_scheme = DRYDEP_SCHEME_OLD
 
-    if (wetdep_scheme == WETDEP_SCHEME_UNDEFINED) then ! Set default wetdep version
-      wetdep_scheme = WETDEP_SCHEME_BARTNICKI
-    endif
+    ! Set default wetdep version
+    if (wetdep_scheme == WETDEP_SCHEME_UNDEFINED) wetdep_scheme = WETDEP_SCHEME_BARTNICKI
 
-    if (wetdep_scheme /= WETDEP_SCHEME_BARTNICKI) then
-      write (error_unit, *) "Unknown wet deposition scheme: ", wetdep_scheme%description
-      ierror = 1
-    endif
     i1 = 0
     i2 = 0
     idecay = 0

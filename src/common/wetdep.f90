@@ -16,10 +16,12 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 module wetdep
+  use iso_fortran_env, only: real64
   implicit none
   private
 
-  public :: wetdep2, wetdep2_init
+  public :: wetdep2, wetdep2_init, &
+      wetdep_conventional, wetdep_conventional_init, wetdep_conventional_deinit, wetdep_conventional_compute
   public :: operator(==), operator(/=)
 
   type, public :: wetdep_scheme_t
@@ -31,6 +33,8 @@ module wetdep
       wetdep_scheme_t(0, "Not defined")
   type(wetdep_scheme_t), parameter, public :: WETDEP_SCHEME_BARTNICKI = &
       wetdep_scheme_t(2, "Bartnicki")
+  type(wetdep_scheme_t), parameter, public :: WETDEP_SCHEME_CONVENTIONAL = &
+      wetdep_scheme_t(3, "Conventional")
 
   interface operator (==)
     module procedure :: equal_scheme
@@ -39,6 +43,16 @@ module wetdep
   interface operator (/=)
     module procedure :: not_equal_scheme
   end interface
+
+  type, public :: conventional_params_t
+    real(real64) :: A
+    real(real64) :: B
+  end type
+
+  type(conventional_params_t), save, public :: conventional_params = conventional_params_t(0.0, 0.0)
+  real(real64), allocatable, save, public :: conventional_deprate_m1(:,:)
+
+  type(wetdep_scheme_t), save, public :: wetdep_scheme = WETDEP_SCHEME_UNDEFINED
 
 contains
 
@@ -188,4 +202,47 @@ contains
     endif
     deprate = 1.0 - exp(-tstep*rkw)
   end function
+
+  subroutine wetdep_conventional_init()
+    use snapdimML, only: nx, ny
+    allocate(conventional_deprate_m1(nx,ny))
+  end subroutine
+
+  subroutine wetdep_conventional_deinit()
+    deallocate(conventional_deprate_m1)
+  end subroutine
+
+  subroutine wetdep_conventional_compute(precip)
+    real, intent(in) :: precip(:,:)
+
+    conventional_deprate_m1(:,:) = conventional_params%A * (precip ** conventional_params%B)
+  end subroutine
+
+  subroutine wetdep_conventional(depwet, part, tstep)
+    USE iso_fortran_env, only: real64
+    USE particleML, only: Particle, extraParticle
+    USE snapparML, only: def_comp
+
+!> Field which ret deposition gets added to
+    real(real64), intent(inout) :: depwet(:, :, :)
+!> particle
+    type(Particle), intent(inout) :: part
+    real, intent(in) :: tstep
+
+    integer :: m, i, j, mm
+    real :: dep, deprate
+
+    m = part%icomp
+
+    i = nint(part%x)
+    j = nint(part%y)
+
+    deprate = exp(-tstep * conventional_deprate_m1(i, j))
+    dep = part%scale_rad(deprate)
+
+    mm = def_comp(m)%to_running
+
+    !$OMP atomic
+    depwet(i, j, mm) = depwet(i, j, mm) + dble(dep)
+  end subroutine
 end module wetdep
