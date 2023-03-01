@@ -39,6 +39,7 @@
 ! DRY.DEPOSITION.LARGEST_LANDFRACTION_FILE = "landclasses.nc"
 ! WET.DEPOSITION.NEW ! deprecated
 ! WET.DEPOSITION.SCHEME = Bartnicki ! (default)
+! WET.DEPOSITION.SAVE
 ! TIME.STEP= 900.
 ! TIME.RELEASE.PROFILE.CONSTANT
 ! TIME.RELEASE.PROFILE.BOMB
@@ -1225,6 +1226,12 @@ contains
             write(error_unit,*) "Unknown scheme ", cinput(pname_start:pname_end)
             goto 12
         end select
+      case ('wet.deposition.save')
+        if (has_value) goto 12
+        block
+          use fldout_ncml, only: output_wetdeprate
+          output_wetdeprate = .true.
+        end block
       case ('wet.deposition.conventional.a')
         if (.not.has_value) goto 12
         read(cinput(pname_start:pname_end), *) wet_deposition_conventional_params%A
