@@ -13,15 +13,15 @@ include ../common/snap.mk
 TESTFILES = snap_testdata/meteo20200415_00_ringhals.nc \
 			snap_testdata/meteo20200415_01_ringhals.nc \
             snap_testdata/meps_det_2_5km_20200316T00Z_ringhals.nc \
-			snap_testdata/snap_ecemep_expected2.nc \
-			snap_testdata/snap_meps_interpolated_expected2.nc
+			snap_testdata/snap_ecemep_expected3.nc \
+			snap_testdata/snap_meps_interpolated_expected3.nc
 
 install:
 
 
 snap_testdata/%.nc :
 	mkdir -p snap_testdata
-	curl https://thredds.met.no/thredds/fileServer/metusers/heikok/$@ -o $@
+	curl --fail https://thredds.met.no/thredds/fileServer/metusers/heikok/$@ -o $@
 
 
 test: find_parameters_fi_test bsnap_naccident $(TESTFILES)
