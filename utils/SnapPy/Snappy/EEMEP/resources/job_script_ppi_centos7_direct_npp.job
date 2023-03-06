@@ -34,7 +34,7 @@ RUNTAG="{runtag}"
 RUNDIR={rundir}
 SRCDIR=$HDIR/emep/eemep2/src/
 DATA_DIR=$HDIR/emep/eemep2/input/eEMEP_OpenSource
-VERSION=centos7_active_npp
+VERSION=centos7_active
 
 
 YEAR={year}
@@ -68,7 +68,7 @@ head -n 3 eemep_script.job
 
 echo "running" > status
 
-sed -e " s/startdate\s*=.*/startdate = $STARTDATE/;s/enddate.*/enddate = $ENDDATE/;s/outdate\s*=.*/outdate = $RESTARTDATE/" $SRCDIR/Unimod.$VERSION/config_emep.nml > config_emep.nml
+sed -e " s/startdate\s*=.*/startdate = $STARTDATE/;s/enddate.*/enddate = $ENDDATE/;s/outdate\s*=.*/outdate = $RESTARTDATE/" $SRCDIR/Unimod.$VERSION/config_emep_npp.nml > config_emep.nml
 
 
 # Run the model
