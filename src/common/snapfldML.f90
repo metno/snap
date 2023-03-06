@@ -78,20 +78,28 @@ module snapfldML
   real(kind=real32), allocatable, save, public :: xm(:,:)
 !> map ratio in y direction
   real(kind=real32), allocatable, save, public :: ym(:,:)
-!> grid square area (m**2)
+!> grid square area (m**2) )(high output resolution)
   real(kind=real32), allocatable, save, public :: garea(:,:)
-!> grid square area (m**2) ... double precision
-  real(kind=real64), allocatable, save, public :: dgarea(:,:)
 
 
-!> Work array
+!> Work array (low input resolution)
   real(kind=real32), allocatable, save, public :: field1(:,:)
-!> Work array
+!> Work array (low input resolution)
   real(kind=real32), allocatable, save, public :: field2(:,:)
-!> Work array
+!> Work array (low input resolution)
   real(kind=real32), allocatable, save, public :: field3(:,:)
-!> Work array
+!> Work array (low input resolution)
   real(kind=real32), allocatable, save, public :: field4(:,:)
+!> 3D Work array (low input resolution)
+  real(kind=real32), allocatable, save, public :: field3d1(:,:,:)
+!> Work array (high output resolution)
+  real(kind=real32), allocatable, save, public :: field_hr1(:,:)
+!> Work array (high output resolution)
+  real(kind=real32), allocatable, save, public :: field_hr2(:,:)
+!> Work array (high output resolution)
+  real(kind=real32), allocatable, save, public :: field_hr3(:,:)
+!> Work array (high output resolution) for hbl
+  real(kind=real32), allocatable, save, public :: hbl_hr(:,:)
 
 !> the ensemble-member to read met-data from
 !> default (-1) : no ensemble member
@@ -153,4 +161,5 @@ module snapfldML
   real(kind=real64), allocatable, save, public :: total_activity_lost_domain(:)
   ! > Activity lost through exiting rmlimit, maxage
   real(kind=real64), allocatable, save, public :: total_activity_lost_other(:)
+
 end module snapfldML
