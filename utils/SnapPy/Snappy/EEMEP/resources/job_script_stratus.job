@@ -27,7 +27,7 @@ RUNTAG="{runtag}"
 RUNDIR={rundir}
 SRCDIR=/home/metno_op/emep/eemep2/src/
 #DATA_DIR=/home/metno_op/emep/eemep2/input/eEMEP_OpenSource
-VERSION=active_volcano
+VERSION=active
 
 
 YEAR={year}
@@ -66,7 +66,7 @@ echo "running" > status
 
 # Link the input data
 #ln -s $DATA_DIR/* .   # input files except meteorology
-sed -e " s/startdate\s*=.*/startdate = $STARTDATE/;s/enddate.*/enddate = $ENDDATE/;s/outdate\s*=.*/outdate = $RESTARTDATE/" $SRCDIR/Unimod.$VERSION/config_emep.nml > config_emep.nml
+sed -e " s/startdate\s*=.*/startdate = $STARTDATE/;s/enddate.*/enddate = $ENDDATE/;s/outdate\s*=.*/outdate = $RESTARTDATE/" $SRCDIR/Unimod.$VERSION/config_emep_volcano.nml > config_emep.nml
 
 
 # Run the model
