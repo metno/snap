@@ -16,7 +16,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 '''
-Created on Aug 08, 2017
+Created on Apr 28, 2017
 
 @author: heikok
 '''
@@ -27,12 +27,12 @@ import unittest
 
 from METNO.HPC import HPC, StatusFile, QJobStatus
 from METNO.SGEQueue import SGEQueue
-from METNO.SSHConnection import SSHConnection
+from METNO.DirectConnection import DirectConnection
 
 
-class PPI(HPC):
+class PPI_R8B_Direct(HPC):
     '''
-    Implementation of a HPC machine for alvin.nsc.liu.se
+    Implementation of a HPC machine for PPI-r8
     '''
 
 
@@ -40,16 +40,16 @@ class PPI(HPC):
         '''
         Constructor
         '''
-        connection = SSHConnection(machine="xvis-m3b.met.no", port=22)
+        connection = DirectConnection()
         queue = SGEQueue()
         super().__init__(connection, queue)
 
 
-class TestPPI(unittest.TestCase):
-    '''tests for ppi, only working when having an existing account on ppi'''
+class TestPPI_R8B_Direct(unittest.TestCase):
+    '''tests for alvin, only working when having an existing forecast account on alvin'''
     def setUp(self):
         unittest.TestCase.setUp(self)
-        self.hpc = HPC.by_name("ppi")
+        self.hpc = HPC.by_name("ppi_r8b_direct")
         self.rdir = "/lustre/storeB/users/heikok/tmp/metno_hpc_test"
         self.testFiles = ["script.job", "status"]
 
