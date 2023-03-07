@@ -245,4 +245,58 @@ contains
     !$OMP atomic
     depwet(i, j, mm) = depwet(i, j, mm) + dble(dep)
   end subroutine
+
+  subroutine wetdep_takemura()
+    real :: lambda
+
+    !> raindrop radius, in µm
+    real, parameter :: r_r = 500
+    !> raindrop terminal velocity in m/s
+    real, parameter :: v_r = 0.5
+    !> Collection efficienty
+    real, parameter :: E = 2.05e-4
+    real, parameter :: pi = 4.0 * atan(1.0)
+
+    !> Size of aerosol, input
+    real, parameter :: r_aer = 500
+    !> Density of aerosol, input
+    real, parameter :: rho_aer = 1.0
+
+    !> Number density of aerosols
+    real, parameter :: N_aer = 1.0
+    !> Number density of cloud droplets, input
+    real, parameter :: N_r = 1e-6
+    !> Air viscosity in kg/(ms)
+    real, parameter :: mu = 1.78e-5
+    real, parameter :: g = 9.81
+
+    real :: v_aer
+
+    v_aer = 2.0/9.0 * rho_aer * (r_aer ** 2) * g / mu
+
+    ! TODO: How to get number density of hygrometeors?
+    ! TODO: Use distribution for raindrop radius?
+    ! TODO: Set raindrop radius/velocity based on precip rate?
+    ! TODO: Skip N_aer, we can work with the rate instead
+
+    lambda = E * pi * (r_r + r_aer) ** 2 * (v_r - v_aer) * N_r * N_aer
+
+  end subroutine
+
+  !> Aerosol rainout process also known as GCM-type wet deposition process
+  subroutine wetdep_rainout()
+    real :: lambda
+    !> vertical flux of hydrometeors
+    real, parameter :: P = 1.0
+    !> Fraction of aerosol mass in cloud water to total aerosol mass in the grid
+    !> A tuning parameter necessary for other GCMs
+    real, parameter :: f_inc = 1.0
+    !> cloud water
+    real, parameter :: C_w = 1.0
+    !> Cloud fraction
+    real, parameter :: C_f = 1.0
+
+
+    lambda = 1 - P/(P + C_w) * f_inc * C_f
+  end subroutine
 end module wetdep
