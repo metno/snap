@@ -40,7 +40,7 @@ class PPI_R8B(HPC):
         '''
         Constructor
         '''
-        connection = SSHConnection(machine="ppi-r8login-b1", port=22)
+        connection = SSHConnection(machine="ppi-r8login-b1.int.met.no", port=22)
         queue = SGEQueue()
         super().__init__(connection, queue)
 
