@@ -2,7 +2,7 @@
 
 set -e
 
-export VERSION=2.1.3
+export VERSION=2.2.0
 #VERSION_=`echo -n $VERSION | tr '.' '_'`
 
 # We do not have a way of cross-compiling,
@@ -28,7 +28,7 @@ mv debian.${PLATFORM} debian
 
 export DEBEMAIL=${USER}@met.no
 FULLVERSION=${VERSION}-1
-dch --package bsnap --newversion ${FULLVERSION} "Initial jammy version"
+dch --package bsnap --newversion ${FULLVERSION} "Improved vertical diffusion"
 dch --release ""
 export DEB_BUILD_OPTIONS='nostrip'
 export BINDIR="../debian/bsnap/usr/bin/"
