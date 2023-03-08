@@ -1,3 +1,9 @@
+snap-py (2.2.0-1) bionic; urgency=medium
+
+  * improved vertical diffusion
+
+ -- Charlie Negri <charlien@met.no>  Wed, 08 Mar 2023 12:58:25 +0100
+
 snap-py (1.8.1-1) bionic; urgency=medium
 
   * enabling ec-global direct as datasource
