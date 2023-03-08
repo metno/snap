@@ -468,7 +468,7 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
     gparam(7)=dxgrid
     gparam(8)=dygrid
       !..set garea size of each grid square (m**2) in output grid-size
-    field1 = (dxgrid/xm)*(dygrid/ym) / (output_resolution_factor*output_resolution_factor)
+    field1 = abs((dxgrid/xm)*(dygrid/ym)) / (output_resolution_factor*output_resolution_factor)
     call hres_field(field1, garea, .true.)
 
   ! end initialization
