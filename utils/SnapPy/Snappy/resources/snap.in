@@ -7,8 +7,6 @@ buffersize=800x600       # plotbuffer (WIDTHxHEIGHT)
                          #  ratio of MAP-area (defined under PLOT)
 
 #- Optional: values for each option below are default-values
-output=PNG               # POSTSCRIPT/EPS/PNG/RASTER
-                         #  RASTER: format from filename-suffix
 keepPlotArea=NO          # YES=try to keep plotarea for several
                          # plots
 
