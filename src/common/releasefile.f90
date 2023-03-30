@@ -42,7 +42,7 @@ subroutine  releasefile(filename, release1)
   integer :: ifd, ios, iexit, nlines
   integer :: i, AllocateStatus
   real :: hour, lasthour
-  integer :: height
+  real :: height
   integer :: ihour, iheight, icmp
   real ::    rel_s
   character(32) :: comp
