@@ -1146,11 +1146,11 @@ contains
         if (drydep_scheme /= DRYDEP_SCHEME_EMEP .and. &
             drydep_scheme /= DRYDEP_SCHEME_ZHANG .and. &
             drydep_scheme /= DRYDEP_SCHEME_EMERSON) then
-          write(error_unit, *) "The scheme is not set to a compatible value"
-          goto 12
+          write(error_unit, *) "The scheme is not set to a compatible value, ignoring"
+        else
+          output_vd = .true.
         endif
         if (has_value) goto 12
-        output_vd = .true.
       case ('dry.deposition.save.debug')
         if (.not.output_vd) then
           write(error_unit, *) "dry.deposition.save must be set"
