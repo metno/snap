@@ -147,10 +147,7 @@ subroutine drydep2(tstep, part)
     ! gas
       deprate = 1.0 - exp(-tstep*(0.008)/h)
     else if (def_comp(m)%radiusmym <= 10.0) then
-    ! particle 0.05<r<10
-      deprate = 1.0 - exp(-tstep*(0.002)/h)
-    else
-    ! particle r>=10
+    ! particle 0.05<r
       deprate = 1.0 - exp(-tstep*(0.002+part%grv)/h)
     ! complete deposition when particle hits ground
       if (part%z == vlevel(1)) deprate = 1.
