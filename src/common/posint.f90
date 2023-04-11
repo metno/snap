@@ -21,37 +21,10 @@ module posintML
 
   public posint, posint_init
 
-  real, save :: vminprec = -1.
-  real, parameter :: precmin = 0.01
-
   contains
 
 !> initialisation function for ::posint
 subroutine posint_init()
-  USE snapgrdML, only: alevel, blevel, vlevel
-  USE snapdimML, only: nk
-  USE snapdebug, only: iulog
-
-  integer :: k
-  real :: p1,p2
-  real, parameter :: plim = 550.0
-
-  if(vminprec < 0.) then
-    p2 = 1000.
-    k = 1
-    do while (p2 > plim .AND. k < nk)
-      k = k+1
-      p1 = p2
-      p2 = alevel(k) + blevel(k)*1000.
-    end do
-    if(k > 1) then
-      vminprec = vlevel(k-1) &
-          + (vlevel(k)-vlevel(k-1))*(p1-plim)/(p1-p2)
-    else
-      vminprec = vlevel(nk)
-    end if
-    write(iulog,*) 'POSINT. precmin,vminprec: ',precmin,vminprec
-  end if
 end subroutine
 
 !> Purpose:  Interpolation of boundary layer top and height
@@ -133,13 +106,5 @@ subroutine posint(part,tf1,tf2,tnow,pextra)
   pextra%rmy=rmy/dygrid
   pextra%prc=pr
 
-  !..reset precipitation to zero if pressure less than approx. 550 hPa.
-  !..and if less than a minimum precipitation intensity (mm/hour)
-  if(part%z < vminprec .OR. &
-      pextra%prc < precmin) then
-      pextra%prc=0.
-  endif
-
-  return
 end subroutine posint
 end module posintML
