@@ -20,6 +20,9 @@ module wetdep
   implicit none
   private
 
+  real, save :: vminprec = -1.
+  real, parameter :: precmin = 0.01
+
   public :: wetdep2, wetdep2_init, &
       wetdep_conventional, wetdep_conventional_init, wetdep_conventional_deinit, wetdep_conventional_compute
   public :: operator(==), operator(/=)
@@ -93,8 +96,11 @@ contains
     real :: precint, deprate, dep, q
 
     m = part%icomp
-    if (def_comp(m)%kwetdep == 1 .AND. pextra%prc > 0.0 &
-        .AND. part%z > 0.67) then
+
+    !..reset precipitation to zero if pressure less than approx. 550 hPa.
+    !..and if less than a minimum precipitation intensity (mm/hour)
+    if (def_comp(m)%kwetdep == 1 .AND. pextra%prc > precmin &
+        .AND. part%z > 0.67 .AND. part%z > vminprec) then
       !..find particles with wet deposition and
       !..reset precipitation to zero if not wet deposition
       precint = pextra%prc
@@ -154,6 +160,33 @@ contains
 1010  format(1x, f5.1, ':', 12f7.4)
     end do
     write (iulog, *) '-------------------------------------------------'
+
+    block
+      USE snapgrdML, only: alevel, blevel, vlevel
+      USE snapdimML, only: nk
+      USE snapdebug, only: iulog
+
+      integer :: k
+      real :: p1,p2
+      real, parameter :: plim = 550.0
+
+      if(vminprec < 0.) then
+        p2 = 1000.
+        k = 1
+        do while (p2 > plim .AND. k < nk)
+          k = k+1
+          p1 = p2
+          p2 = alevel(k) + blevel(k)*1000.
+        end do
+        if(k > 1) then
+          vminprec = vlevel(k-1) &
+              + (vlevel(k)-vlevel(k-1))*(p1-plim)/(p1-p2)
+        else
+          vminprec = vlevel(nk)
+        end if
+        write(iulog,*) 'POSINT. precmin,vminprec: ',precmin,vminprec
+      end if
+    end block
   end subroutine
 
   pure real function wet_deposition_constant(rm) result(depconst)
