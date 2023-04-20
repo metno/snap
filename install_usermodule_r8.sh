@@ -7,13 +7,13 @@ set -e
 install_conda_env() {
     conda create --channel conda-forge --prefix "$1" --yes --file /dev/stdin <<EOF
 python=3.10
-cartopy
-fimex>=1.9.3
-netcdf4
-matplotlib
-nco
-openssh
-pkg-config
+cartopy=0.21.1
+fimex=1.9.5
+netcdf4=1.6.3
+matplotlib=3.7.1
+nco=5.1.4
+openssh=9.2p1
+pkg-config=0.29.2
 EOF
 }
 

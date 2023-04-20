@@ -1,5 +1,11 @@
-PACKAGE (2.1.3-1) jammy; urgency=medium
+snap-py (2.2.0-1) jammy; urgency=medium
 
-  * Initial jammy version
+  * improved vertical diffusion
 
- -- Magnus Ulimoen <magnusu@met.no>  Mon, 09 Jan 2023 09:36:50 +0000
+ -- Charlie Negri <charlien@met.no>  Wed, 08 Mar 2023 12:05:03 +0000
+
+snap-py (1.8.2-1) jammy; urgency=medium
+
+  * packaging for jammy
+
+ -- Magnus Ulimoen <magnusu@met.no>  Mon, 09 Jan 2023 12:24:19 +0000

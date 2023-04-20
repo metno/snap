@@ -110,13 +110,13 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
   USE snapfilML, only: nctype, iavail, filef
   USE snapfldML, only: &
       xm, ym, u1, u2, v1, v2, w1, w2, t1, t2, ps1, ps2, pmsl1, pmsl2, &
-      hbl1, hbl2, hlayer1, hlayer2, garea, dgarea, hlevel1, hlevel2, &
+      hbl1, hbl2, hlayer1, hlayer2, garea, hlevel1, hlevel2, &
       hlayer1, hlayer2, bl1, bl2, enspos, precip, &
-      t1_abs, t2_abs
+      t1_abs, t2_abs, field1
   USE snapgrdML, only: alevel, blevel, vlevel, ahalf, bhalf, vhalf, &
       gparam, kadd, klevel, ivlevel, imslp, igtype, ivlayer, ivcoor
   USE snapmetML, only: met_params, requires_precip_deaccumulation
-  USE snapdimML, only: nx, ny, nk
+  USE snapdimML, only: nx, ny, nk, output_resolution_factor, hres_field
   USE datetime, only: datetime_t, duration_t
 !> current timestep (always positive), negative istep means reset
   integer, intent(in) :: istep
@@ -467,9 +467,9 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
     end if
     gparam(7)=dxgrid
     gparam(8)=dygrid
-  !..size of each grid square (m**2)
-    garea(:,:) = abs((dxgrid/xm) * (dygrid/ym))
-    dgarea(:,:) = garea
+      !..set garea size of each grid square (m**2) in output grid-size
+    field1 = abs((dxgrid/xm)*(dygrid/ym)) / (output_resolution_factor*output_resolution_factor)
+    call hres_field(field1, garea, .true.)
 
   ! end initialization
   end if

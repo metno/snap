@@ -54,8 +54,8 @@ if [ ! -f "Snappy/resources/1-s2.0-S0146645313000110-mmc1.zip" ]; then
 fi
 
 HOST=$(lsb_release --codename --short)
-export VERSION=1.8.2
-CHANGELOG="packaging for jammy"
+export VERSION=2.2.0
+CHANGELOG="improved vertical diffusion"
 export DEBEMAIL=${USER}@met.no
 rm --force debian
 ln --symbolic debian.$HOST debian
