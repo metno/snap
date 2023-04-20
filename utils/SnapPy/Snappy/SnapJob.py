@@ -25,7 +25,7 @@ import os
 import re
 
 
-class SnapJobEC:
+class SnapJob:
     """tasks to work with the model SNAP, SNAPGLOBAL and TRAJ with EC-data"""
 
     def __init__(self, task, hpc):
