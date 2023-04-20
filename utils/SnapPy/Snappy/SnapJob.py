@@ -24,6 +24,9 @@ Created on Mar 8, 2018
 import os
 import re
 
+class UnknownModelException(Exception):
+    '''Exception when wrong model/prefix-name is send to SnapJob'''
+    pass
 
 class SnapJob:
     """tasks to work with the model SNAP, SNAPGLOBAL and TRAJ with EC-data"""
@@ -40,7 +43,7 @@ class SnapJob:
         elif re.match(r"^SNAP.*", self.task.model):
             return self.task.id + "_" + self.task.model + "2ARGOS.zip"
         else:
-            raise Exception("unknown model:" + self.task.model)
+            raise UnknownModelException("unknown model:" + self.task.model)
 
     def get_input_files(self):
         """return a list of input-files for each model"""
@@ -49,20 +52,29 @@ class SnapJob:
         elif re.match(r"^SNAP.*", self.task.model):
             return [self.task.id + "_Rimsterm.xml", self.task.id + "_SNAP_request.xml"]
         else:
-            raise Exception("unknown model:" + self.task.model)
+            raise UnknownModelException("unknown model:" + self.task.model)
 
     def job_script(self):
-        """return a sge job-script for the different models """
-        if self.task.model == "SNAP":
+        """return a sge job-script for the different models 
+        allow for SNAP, SNAPGLOBAL, SNAPNORDIC, SNAPICONGLOBAL
+        and       SNAPBOMB, SNAPBOMBGLOBAL, SNAPBOMBNORDIC, SNAPBOMBICONGLOBAL
+        """
+        if self.task.model.startswith('SNAPBOMB'):
+            task_model = self.task.model[8:]
+        elif self.task.model.startswith('SNAP'):
+            task_model = self.task.model[4:]
+        else:
+            raise UnknownModelException("unknown model:" + self.task.model)
+        if task_model == "":
             metmodel = "nrpa_ec_0p1"
-        elif self.task.model == "SNAPGLOBAL":
+        elif task_model == "GLOBAL":
             metmodel = "nrpa_ec_0p1_global"
-        elif self.task.model == "SNAPNORDIC":
+        elif task_model == "NORDIC":
             metmodel = "meps_2_5km"
-        elif self.task.model == "SNAPICONGLOBAL":
+        elif task_model == "ICONGLOBAL":
             metmodel = "icon_0p25_global"
         else:
-            raise Exception("unknown model:" + self.task.model)
+            raise UnknownModelException("unknown model:" + self.task.model)
 
         (xmlfile, requestfile) = self.get_input_files()
         argosrequest = ""
