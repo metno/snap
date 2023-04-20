@@ -46,7 +46,7 @@ import sys
 import traceback
 import zipfile
 
-from Snappy.SnapJobEC import SnapJobEC
+from Snappy.SnapJob import SnapJob
 
 
 DEBUG = 0
@@ -135,7 +135,7 @@ class SnapTask:
             zf.extractall(path=self.rundir)
 
         # start a remote detached qsub job
-        snapJob = SnapJobEC(self, hpc)
+        snapJob = SnapJob(self, hpc)
         jobscript = snapJob.job_script()
         jobfile = os.path.join(self.rundir, "snap.job")
         with open(jobfile, "w") as jh:
