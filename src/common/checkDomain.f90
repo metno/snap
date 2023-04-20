@@ -37,9 +37,10 @@ subroutine check_in_domain(part, out_of_domain)
 
   out_of_domain = .false.
 
-  if (part%x < 1. .OR. part%y < 1. .OR. &
-      part%x > nx .OR. part%y > ny) then
-      out_of_domain = .true.
+  ! first and last half col/row excl for bilinear interpolation
+  if (part%x < 1 .OR. part%y < 1 .OR. &
+      part%x >= nx .OR. part%y >= ny) then
+    out_of_domain = .true.
   else
     vmin = vlevel(nk)
     vmax = vlevel( 1)

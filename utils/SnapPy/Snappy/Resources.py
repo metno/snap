@@ -78,7 +78,8 @@ class Resources(ResourcesCommon):
 
     _MET_INPUTDIRS = {
         MetModel.Meps2p5: [
-            "{LUSTREDIR}/immutable/archive/projects/metproduction/MEPS/"
+            "{LUSTREDIR}/immutable/archive/projects/metproduction/MEPS/",
+            "{LUSTREDIR}/project/fou/kl/cerad/Projects/2022_ArcticReihn/Meteo/MEPS/"
         ],
         MetModel.GfsGribFilter: ["/disk1/tmp/"],
     }

@@ -33,8 +33,9 @@ module compheightML
 subroutine compheight()
   USE snapgrdML, only: ahalf, bhalf, alevel, blevel
   USE snapfldML, only: ps2, hlayer2, hlevel2, t2
+  USE snapfldML, only: hlayer => field3d1
   USE snaptabML, only: pitab, g, pmult
-  USE snapdimML, only: nx,ny,nk
+  USE snapdimML, only: nx,ny,nk,hres_field
   USE ftestML, only: ftest
 
   real, parameter :: ginv = 1.0/g
@@ -45,7 +46,7 @@ subroutine compheight()
 
 !..compute height of model levels (in the model grid)
   hlev = 0.0
-  hlayer2(:,:,nk) = 9999.0
+  hlayer(:,:,nk) = 9999.0
   hlevel2(:,:,1) = 0.0
   do j=1,ny
     do i=1,nx
@@ -71,7 +72,7 @@ subroutine compheight()
         h1 = hlev(i,j)
         h2 = h1 + t2(i,j,k)*(pihl(i,j)-pih)*ginv
 
-        hlayer2(i,j,k-1) = h2-h1
+        hlayer(i,j,k-1) = h2-h1
         hlevel2(i,j,k) = h1 + (h2-h1)*(pihl(i,j)-pif) &
             /(pihl(i,j)-pih)
 
@@ -81,8 +82,10 @@ subroutine compheight()
     end do
   end do
 
-  call ftest('hlayer', hlayer2, contains_undef=.true., reverse_third_dim=.true.)
+  call ftest('hlayer', hlayer, contains_undef=.true., reverse_third_dim=.true.)
   call ftest('hlevel', hlevel2, contains_undef=.true., reverse_third_dim=.true.)
-
+  do k=1,nk
+    call hres_field(hlayer(:,:,k), hlayer2(:,:,k))
+  end do
 end subroutine compheight
 end module compheightML

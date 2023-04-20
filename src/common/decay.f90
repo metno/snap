@@ -82,8 +82,8 @@ subroutine decayDeps(tstep)
   ! see glassstone/dolan: effects of nuclear weapons
   ! converted  to decay-rate factor per tstep
   if (has_bomb_decay) then
-    current_state = (total_steps/3600.)**-1.2
-    next_state = ((total_steps+tstep)/3600.)**-1.2
+    current_state = (total_steps/3600.)**(-1.2)
+    next_state = ((total_steps+tstep)/3600.)**(-1.2)
     bomb_decay_rate = next_state/current_state
     do m=1,ncomp
       mm = run_comp(m)%to_defined
