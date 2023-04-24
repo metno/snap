@@ -24,6 +24,7 @@ module allocateFieldsML
       depdry, depwet, accprec, avgprec, avghbl, precip, &
       pmsl1, pmsl2, field1, field2, field3, field4, field3d1, xm, ym, &
       garea, field_hr1, field_hr2, field_hr3, hbl_hr, &
+      precip3d, cw3d, &
       max_column_scratch, max_column_concentration, &
       aircraft_doserate, aircraft_doserate_scratch, t1_abs, t2_abs, &
       aircraft_doserate_threshold_height, vd_dep, &
@@ -48,6 +49,7 @@ subroutine allocateFields
   USE releaseML, only: mplume, iplume, plume_release, mpart
   USE drydep, only: drydep_scheme, DRYDEP_SCHEME_EMEP, DRYDEP_SCHEME_EMERSON, &
     DRYDEP_SCHEME_ZHANG
+  USE snapmetML, only: met_params
 
   logical, save :: FirstCall = .TRUE.
   integer :: AllocateStatus
@@ -151,6 +153,10 @@ subroutine allocateFields
 
   ALLOCATE ( precip(nx,ny), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
+  if (met_params%use_hybrid) then
+    ALLOCATE(precip3d(nx,ny,nk), cw3d(nx,ny,nk), STAT=AllocateStatus)
+    if (AllocateStatus /= 0) ERROR STOP errmsg
+  endif
 
 ! the calculation-fields
   ALLOCATE ( avghbl(nx,ny), STAT = AllocateStatus)
@@ -289,6 +295,8 @@ subroutine deAllocateFields
   DEALLOCATE ( pmsl2)
 
   DEALLOCATE ( precip)
+  if (allocated(precip3d)) deallocate(precip3d)
+  if (allocated(cw3d)) deallocate(cw3d)
 
   DEALLOCATE ( avghbl )
   DEALLOCATE ( avgprec )

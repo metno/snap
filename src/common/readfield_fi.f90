@@ -490,7 +490,48 @@ contains
     nr = enspos + 1
     if (enspos <= 0) nr = 1
 
-    if (met_params%precaccumv /= '') then
+    if (met_params%use_hybrid) then
+      block ! read_precip
+        use snaptabML, only: g
+        use snapfldML, only: ps2, precip3d, cw3d
+        use snapgrdML, only: ahalf, bhalf
+        real(real32), allocatable :: rain_in_air(:,:), graupel_in_air(:,:), snow_in_air(:,:)
+        real(real32), allocatable :: cloud_water(:,:), cloud_ice(:,:)
+        real(real32), allocatable :: pdiff(:,:)
+
+        allocate(rain_in_air,graupel_in_air,snow_in_air,pdiff,mold=ps2)
+        allocate(cloud_water,cloud_ice,mold=ps2)
+
+        precip3d(:,:,:) = 0.0
+        cw3d(:,:,:) = 0.0
+
+        do k=nk-kadd,2,-1
+          ilevel = klevel(k)
+          call fi_checkload(fio, "mass_fraction_of_rain_in_air_ml", mass_fraction_units, &
+                            rain_in_air, nt=timepos, nz=ilevel, nr=nr)
+          call fi_checkload(fio, "mass_fraction_of_graupel_in_air_ml", mass_fraction_units, &
+                            graupel_in_air, nt=timepos, nz=ilevel, nr=nr)
+          call fi_checkload(fio, "mass_fraction_of_snow_in_air_ml", mass_fraction_units, &
+                            snow_in_air, nt=timepos, nz=ilevel, nr=nr)
+
+          pdiff(:,:) = 100*( (ahalf(k) - ahalf(k-1)) - (bhalf(k) - bhalf(k-1))*ps2 )
+
+          precip3d(:,:,k) = rain_in_air + graupel_in_air + snow_in_air
+          precip3d(:,:,k) = precip3d(:,:,k) * pdiff / g
+
+          call fi_checkload(fio, "mass_fraction_of_cloud_condensed_water_in_air_ml", mass_fraction_units, &
+                            cloud_water, nt=timepos, nz=ilevel, nr=nr)
+          call fi_checkload(fio, "mass_fraction_of_cloud_ice_in_air_ml", mass_fraction_units, &
+                            cloud_ice, nt=timepos, nz=ilevel, nr=nr)
+          cw3d(:,:,k) = cloud_water + cloud_ice
+          cw3d(:,:,k) = cw3d(:,:,k) * pdiff / g
+        enddo
+        ! Accumulate precipitation from top down
+        do k=(nk-kadd)-1,2,-1
+          precip3d(:,:,k) = precip3d(:,:,k) + precip3d(:,:,k+1)
+        enddo
+      end block
+    else if (met_params%precaccumv /= '') then
       !..precipitation between input time 't1' and 't2'
       if (timepos == 1) then
         field1 = 0.0
