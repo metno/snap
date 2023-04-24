@@ -69,6 +69,40 @@ contains
     eq = .not. (this == other)
   end function
 
+  subroutine wetdep_bartnicki(wscav, precip, cw, radius)
+    use iso_fortran_env, only: real32
+    !> 1/s
+    real(real32), intent(out) :: wscav(:,:,:)
+    !> mm/hr
+    real(real32), intent(in) :: precip(:,:,:)
+    !> mm
+    real(real32), intent(in) :: cw(:,:,:)
+    !> micrometer
+    real(real32), intent(in) :: radius
+
+    real, parameter :: a0 = 8.4e-5
+    real, parameter :: a1 = 2.7e-4
+    real, parameter :: a2 = -3.618e-6
+    real :: rkw
+
+    if (radius > 10.0) then
+      wscav = a1*precip + a2*precip*precip
+    elseif (radius > 1.4) then
+      wscav = wet_deposition_constant(radius)*(a1*precip + a2*precip*precip)
+    elseif (radius > 0.1) then
+      wscav = a0*precip**0.79
+    else ! gas
+      wscav = 1.12e-4*precip**0.79
+    endif
+
+    if (radius > 0.1) then
+      ! Convective rain
+      where(precip > 7.0)
+        wscav = 3.36e-4*precip**0.79
+      endwhere
+    endif
+  end subroutine
+
 
 
 !> Purpose:  Compute wet deposition for each particle and each component

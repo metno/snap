@@ -53,6 +53,10 @@ module snapfldML
 
 !> hourly precipitation intensity (mm/hour)
   real(kind=real32), allocatable, save, public :: precip(:,:)
+!> instant precipitation intensity in three dimensions (mm/hour)
+  real(kind=real32), allocatable, save, public :: precip3d(:,:,:)
+!> Cloud water content (mm)
+  real(kind=real32), allocatable, save, public :: cw3d(:,:,:)
 
 !> surface pressure (time step 1)
   real(kind=real32), allocatable, save, public :: ps1(:,:)
