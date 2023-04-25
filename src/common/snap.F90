@@ -190,9 +190,9 @@ PROGRAM bsnap
   USE milibML, only: xyconvert
   use snapfldML, only: depwet, total_activity_lost_domain, vd_dep
   USE forwrdML, only: forwrd, forwrd_init
-  !USE wetdep, only: wetdep2, wetdep2_init, wetdep_scheme_t, WETDEP_SCHEME_UNDEFINED, WETDEP_SCHEME_BARTNICKI, &
-  !  operator(==), operator(/=), wet_deposition_conventional_params => conventional_params
-  use wetdep
+  USE wetdep, only: wetdep2, wetdep2_init, wetdep_scheme, WETDEP_SCHEME_UNDEFINED, WETDEP_SCHEME_BARTNICKI, &
+    operator(==), operator(/=), wet_deposition_conventional_params => conventional_params, &
+    WETDEP_SCHEME_CONVENTIONAL, wetdep_conventional_init, wetdep_conventional_compute, wetdep_conventional
   use wetdep, only: wet_deposition_conventional_params => conventional_params
   USE drydep, only: drydep1, drydep2, drydep_nonconstant_vd, drydep_scheme, &
           DRYDEP_SCHEME_OLD, DRYDEP_SCHEME_NEW, DRYDEP_SCHEME_EMEP, &
@@ -264,13 +264,8 @@ PROGRAM bsnap
   integer :: ntprof
   type(duration_t) :: dur
   logical :: out_of_domain
-! ipcount(mdefcomp, nk)
-! integer, dimension(:,:), allocatable:: ipcount
-! npcount(nk)
-! integer, dimension(:), allocatable:: npcount
-! b_start
+
   real :: mhmin, mhmax  ! minimum and maximum of mixing height
-! b_end
 !> Information for reading from a releasefile
   type(release_t) :: release1
 

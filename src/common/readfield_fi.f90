@@ -306,7 +306,7 @@ contains
       precip = 0.0
     endif
 
-    if (met_params%use_hybrid) then
+    if (met_params%use_3d_precip) then
       block
         use snapparML, only: ncomp, run_comp
         use snapfldML, only: wscav, cw3d, precip3d
@@ -510,14 +510,18 @@ contains
     nr = enspos + 1
     if (enspos <= 0) nr = 1
 
-    if (met_params%use_hybrid) then
+    if (met_params%use_3d_precip) then
       block ! read_precip
         use snaptabML, only: g
         use snapfldML, only: ps2, precip3d, cw3d, cloud_cover
-        use snapgrdML, only: ahalf, bhalf
+        use snapgrdML, only: ahalf, bhalf, kadd, klevel
+        use snapdimML, only: nk
         real(real32), allocatable :: rain_in_air(:,:), graupel_in_air(:,:), snow_in_air(:,:)
         real(real32), allocatable :: cloud_water(:,:), cloud_ice(:,:)
         real(real32), allocatable :: pdiff(:,:)
+
+        integer :: ilevel, k
+        character(len=*), parameter :: mass_fraction_units = "kg/kg"
 
         allocate(rain_in_air,graupel_in_air,snow_in_air,pdiff,mold=ps2)
         allocate(cloud_water,cloud_ice,mold=ps2)
