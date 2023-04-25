@@ -20,11 +20,6 @@ module snapgrdML
     implicit none
     private
 
-
-!> input producer no.
-    integer, save, public :: iprod = 0
-!> input grid no.
-    integer, save, public :: igrid = 0
 !> model level no.
 !>
 !> sequence: bottom to top (kk,kk-1,....1)
@@ -37,23 +32,6 @@ module snapgrdML
 !>
 !> klevel needs to get allocated in main program while reading parameters
     integer, dimension(:), allocatable, save, public ::  klevel
-!> output producer no. (usually as input)
-    integer, save, public :: iprodr = 0
-!> output grid no. (may be different from input)
-    integer, save, public :: igridr = 0
-
-!> lower left corner in input fields (combined with ::iybase)
-!> (size is set by nx,ny at compilation time)
-    integer, save, public :: ixbase = 0
-!> lower left corner in input fields (combined with ::ixbase)
-!> (size is set by nx,ny at compilation time)
-    integer, save, public :: iybase = 0
-
-!> step in x and y direction
-!>
-!> (ixystp>1 means lower resolution fields than input,
-!> decrease memory size)
-    integer, save, public :: ixystp = 0
 
     logical, save, public :: precipitation_in_output = .true.
 !> * 0=not read mslp

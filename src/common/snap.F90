@@ -165,8 +165,8 @@ PROGRAM bsnap
                        ncomp, def_comp, nparnum, &
                        time_profile, TIME_PROFILE_BOMB
   USE snapposML, only: irelpos, nrelpos, release_positions
-  USE snapgrdML, only: modleveldump, ivcoor, ixbase, iybase, ixystp, kadd, &
-                       klevel, imslp, iprod, iprodr, itotcomp, gparam, igrid, igridr, &
+  USE snapgrdML, only: modleveldump, ivcoor, kadd, &
+                       klevel, imslp, itotcomp, gparam, &
                        igtype, imodlevel, precipitation_in_output
   USE snaptabML, only: tabcon
   USE particleML, only: pdata, extraParticle
@@ -1525,9 +1525,8 @@ contains
           write (error_unit, *) '  ==> ', cinput(pname_start:pname_end)
         end if
       case ('grid.input')
-        !..grid.input=<producer,grid>
-        if (.not. has_value) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) iprod, igrid
+        write(error_unit,*) "grid.input is deprecated (has no effect)"
+        warning = .true.
       case ('grid.nctype')
         !..grid.nctype=<emep/hirlam12>
         if (.not. has_value) goto 12
@@ -1547,9 +1546,8 @@ contains
         if (.not. has_value) goto 12
         read (cinput(pname_start:pname_end), *, err=12) igtype, (gparam(i), i=1, 6)
       case ('grid.run')
-        !..grid.run=<producer,grid,ixbase,iybase,ixystp>
-        if (.not. has_value) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) iprodr, igridr, ixbase, iybase, ixystp
+        write(error_unit,*) "grid.run is deprecated (has no effect)"
+        warning = .true.
       case ('ensemble_member.input')
         read (cinput(pname_start:pname_end), *, err=12) enspos
       case ('data.sigma.levels')
@@ -2012,9 +2010,6 @@ contains
     if (itotcomp == 1 .AND. ncomp == 1) itotcomp = 0
 
     if (rmlimit < 0.0) rmlimit = 0.0001
-
-    if (iprodr == 0) iprodr = iprod
-    if (igridr == 0) igridr = igrid
 
     if (compute_aircraft_doserate) then
       ! Disable aircract_dose if no component has DPUI defined
