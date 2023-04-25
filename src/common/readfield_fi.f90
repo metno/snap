@@ -306,6 +306,26 @@ contains
       precip = 0.0
     endif
 
+    if (met_params%use_hybrid) then
+      block
+        use snapparML, only: ncomp, run_comp
+        use snapfldML, only: wscav, cw3d, precip3d
+        use wetdep, only: wetdep_scheme, operator(==), &
+                          WETDEP_SCHEME_BARTNICKI, wetdep_bartnicki
+
+        integer :: i
+
+        if (wetdep_scheme == WETDEP_SCHEME_BARTNICKI) then
+          do i=1,ncomp
+            if (.not.run_comp(i)%defined%kdrydep == 1) cycle
+            call wetdep_bartnicki(wscav(:,:,:,i), precip3d, cw3d, run_comp(i)%defined%radiusmym)
+          enddo
+        else
+          error stop "Not implemented"
+        endif
+      end block
+    endif
+
     call read_drydep(fio, timepos, timeposm1, nr)
 
     call check(fio%close(), "close fio")
@@ -493,7 +513,7 @@ contains
     if (met_params%use_hybrid) then
       block ! read_precip
         use snaptabML, only: g
-        use snapfldML, only: ps2, precip3d, cw3d
+        use snapfldML, only: ps2, precip3d, cw3d, cloud_cover
         use snapgrdML, only: ahalf, bhalf
         real(real32), allocatable :: rain_in_air(:,:), graupel_in_air(:,:), snow_in_air(:,:)
         real(real32), allocatable :: cloud_water(:,:), cloud_ice(:,:)
@@ -525,6 +545,9 @@ contains
                             cloud_ice, nt=timepos, nz=ilevel, nr=nr)
           cw3d(:,:,k) = cloud_water + cloud_ice
           cw3d(:,:,k) = cw3d(:,:,k) * pdiff / g
+
+          call fi_checkload(fio, "cloud_area_fraction_ml", "1", &
+                            cloud_cover(:,:,k), nt=timepos, nz=ilevel, nr=nr)
         enddo
         ! Accumulate precipitation from top down
         do k=(nk-kadd)-1,2,-1

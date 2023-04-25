@@ -30,7 +30,8 @@ module allocateFieldsML
       aircraft_doserate_threshold_height, vd_dep, &
       xflux, yflux, hflux, t2m, z0, leaf_area_index, &
       roa, ustar, monin_l, raero, vs, rs, &
-      total_activity_released, total_activity_lost_domain, total_activity_lost_other
+      total_activity_released, total_activity_lost_domain, total_activity_lost_other, &
+      wscav, cloud_cover
   USE snapfilML, only: idata, fdata
   USE snapgrdML, only: ahalf, bhalf, vhalf, alevel, blevel, vlevel, imodlevel, &
       compute_column_max_conc, compute_aircraft_doserate, aircraft_doserate_threshold
@@ -156,6 +157,9 @@ subroutine allocateFields
   if (met_params%use_hybrid) then
     ALLOCATE(precip3d(nx,ny,nk), cw3d(nx,ny,nk), STAT=AllocateStatus)
     if (AllocateStatus /= 0) ERROR STOP errmsg
+    ALLOCATE(wscav(nx,ny,nk,ncomp),STAT=AllocateStatus)
+    if (AllocateStatus /= 0) ERROR STOP errmsg
+    allocate(cloud_cover(nx,ny,nk))
   endif
 
 ! the calculation-fields
@@ -297,6 +301,8 @@ subroutine deAllocateFields
   DEALLOCATE ( precip)
   if (allocated(precip3d)) deallocate(precip3d)
   if (allocated(cw3d)) deallocate(cw3d)
+  if (allocated(wscav)) deallocate(wscav)
+  if (allocated(cloud_cover)) deallocate(cloud_cover)
 
   DEALLOCATE ( avghbl )
   DEALLOCATE ( avgprec )
