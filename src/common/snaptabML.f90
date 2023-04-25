@@ -32,6 +32,14 @@ module snaptabML
     real, parameter, public :: g=9.81, r=287.0, cp=1004.0
     real, parameter, public :: rcp = r/cp
 
+!> Height of surface layer
+!>
+!> Used for dry deposition and computing ground concentrations
+    real, parameter, public :: surface_height_sigma = 0.996
+
+!> Height of surface layer (approximate) in meters
+    real, parameter, public :: surface_height_m = 30.0
+
 !> create precomputed table for pressures between 0.1 and 1500hPa
     real, save :: t2thetafac_table(15000)
 
