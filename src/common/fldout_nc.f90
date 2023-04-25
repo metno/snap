@@ -360,7 +360,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     end do
     if(idebug == 1) call ftest('apbq', field_hr3, contains_undef=.true.)
 
-  !..instant concentration on surface (not in felt-format)
+  !..instant concentration in surface layer
     field_hr3(:,:) = concen(:,:,m)
     if(idebug == 1) call ftest('concen', field_hr3, contains_undef=.true.)
     call check(nf90_put_var(iunit, varid%comp(m)%ic, start=ipos, count=isize, &
@@ -1360,6 +1360,7 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
   USE ftestML, only: ftest
   USE releaseML, only: npart
   USE particleML, only: pdata, Particle
+  USE snaptabML, only: surface_height_sigma, surface_height_m
 
   real, intent(in) :: tf1, tf2, tnow, tstep
   integer, intent(in) :: nsteph
@@ -1430,9 +1431,7 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
 
   do n=1,npart
     part = pdata(n)
-    ivlvl=part%z*10000.
-    k=ivlayer(ivlvl)
-    if(k == 1) then
+    if(part%z > surface_height_sigma) then
       i = hres_pos(part%x)
       j = hres_pos(part%y)
       m = def_comp(part%icomp)%to_running
@@ -1444,7 +1443,7 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
     do j=1,ny*output_resolution_factor
       do i=1,nx*output_resolution_factor
         if(concen(i,j,m) > 0.0d0) then
-          dh= rt1*hlayer1(i,j,1)+rt2*hlayer2(i,j,1)
+          dh = surface_height_m
           concen(i,j,m)= concen(i,j,m)/(dh*garea(i,j))
           concacc(i,j,m)= concacc(i,j,m) + concen(i,j,m)*hrstep
         end if
