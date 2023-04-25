@@ -26,6 +26,7 @@ module wetdep
   public :: wetdep2, wetdep2_init, &
       wetdep_conventional, wetdep_conventional_init, wetdep_conventional_deinit, wetdep_conventional_compute
   public :: operator(==), operator(/=)
+  public :: wetdep_bartnicki
 
   type, public :: wetdep_scheme_t
     integer, private :: scheme
