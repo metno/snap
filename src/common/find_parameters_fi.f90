@@ -137,6 +137,11 @@ contains
     endif
 
     ! set the klevels = 0, nk, nk-1, nk-2, ..., 1
+    if (allocated(klevel)) then
+      write(error_unit,*) "Manual klevel selection is not implmented when fimex reading"
+      deallocate(klevel)
+    endif
+
     allocate (klevel(nk+1))
     klevel(1) = 0
     do i = 2, nk+1
