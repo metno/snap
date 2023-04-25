@@ -154,7 +154,7 @@ subroutine allocateFields
 
   ALLOCATE ( precip(nx,ny), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
-  if (met_params%use_hybrid) then
+  if (met_params%use_3d_precip) then
     ALLOCATE(precip3d(nx,ny,nk), cw3d(nx,ny,nk), STAT=AllocateStatus)
     if (AllocateStatus /= 0) ERROR STOP errmsg
     ALLOCATE(wscav(nx,ny,nk,ncomp),STAT=AllocateStatus)
