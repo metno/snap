@@ -58,6 +58,12 @@ module snapfldML
 !> Cloud water content (mm)
   real(kind=real32), allocatable, save, public :: cw3d(:,:,:)
 
+!> Cloud cover fraction
+  real(kind=real32), allocatable, save, public :: cloud_cover(:,:,:)
+
+!> wet scavenging rate
+  real(kind=real32), allocatable, save, public :: wscav(:,:,:,:)
+
 !> surface pressure (time step 1)
   real(kind=real32), allocatable, save, public :: ps1(:,:)
 !> surface pressure (time step 2)
