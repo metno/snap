@@ -20,7 +20,7 @@ module snapgrdML
     implicit none
     private
 
-!> model level no.
+!> mapping from internal vertical coordinate to MET vertical coord
 !>
 !> sequence: bottom to top (kk,kk-1,....1)
 !>
