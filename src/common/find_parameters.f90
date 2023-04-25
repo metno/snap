@@ -17,8 +17,8 @@ module find_parameter
 
   integer, parameter :: ERROR_THIS_MODULE = -451123435
 
-  public detect_gridparams
-  public get_klevel
+  public :: detect_gridparams
+  public :: get_klevel
 
 contains
 

@@ -1793,9 +1793,11 @@ contains
         if (ierror /= 0) then
           error stop "Autodetection did not work (detect_gridparams)"
         endif
-        call get_klevel(filef(1), klevel, ierror)
-        if (ierror /= 0) then
-          error stop "Autodetection did not work (klevel)"
+        if (.not.allocated(klevel)) then
+          call get_klevel(filef(1), klevel, ierror)
+          if (ierror /= 0) then
+            error stop "Autodetection did not work (klevel)"
+          endif
         endif
       end if
       nlevel = size(klevel)
