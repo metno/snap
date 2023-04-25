@@ -79,17 +79,30 @@ module snapgrdML
 !> * gparam(8): dygrid - grid resolution in meters in y direction
 !>                         (latitude)
     real, save, public :: gparam(8)
+
 !> eta a_level (sigma levels: alevel=ptop*(1.-sigma))
+!> For hybrid levels p = alevel(k) + blevel(k) * ps
+!> alevel(1) is ground level (=0.0)
     real, allocatable, save, public :: alevel(:)
+!> Halfway levels
+!> ahalf(1) is ground level (=0.0)
+!> ahalf(2) is between alevel(2) and alevel(3)
+!> ahalf(nk) is top of atmosphere (p=0.0,a=0.0)
     real, allocatable, save, public :: ahalf(:)
+
 !> eta b_level (sigma levels: blevel=sigma)
+!> blevel(1) is ground level (=1.0)
     real, allocatable, save, public :: blevel(:)
+!> Halfway levels
+!> bhalf(1) is ground level (=1.0)
+!> bhalf(2) is between blevel(2) and blevel(3)
+!> bhalf(nk) is top of atmosphere (p=0.0,b=0.0)
     real, allocatable, save, public :: bhalf(:)
-!..vlevel:    vertical level (sigma or eta)
+
+!> vertical level (sigma / eta / hybrid)
     real, allocatable, save, public :: vlevel(:)
     real, allocatable, save, public :: vhalf(:)
 
-    real, allocatable, save, public :: surface_pressure
 !> grid type
 !> * 1=polarstereographic
 !> * 2=geographic
@@ -97,7 +110,7 @@ module snapgrdML
     integer, save, public :: igtype
 ! vertical coordinate
 !> * 2=sigma (Norlam)
-!> * 10=eta   (Hirlam,...))
+!> * 10=eta/hybrid   (Hirlam,...))
     integer, save, public :: ivcoor = 0
 !> levels added at the top (when missing upper model levels)
 !>
