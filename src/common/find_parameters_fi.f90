@@ -136,12 +136,11 @@ contains
       return
     endif
 
-    ! set the klevels = 0, nk-1, nk-2, ..., 1
-    ! skipping the lowest level, which usually is much below 80m and as such not suitable for dry-dep-velocities
-    allocate (klevel(nk))
+    ! set the klevels = 0, nk, nk-1, nk-2, ..., 1
+    allocate (klevel(nk+1))
     klevel(1) = 0
-    do i = 2, nk
-      klevel(i) = nk - i + 1
+    do i = 2, nk+1
+      klevel(i) = (nk+1) - i + 1
     enddo
 
     stat = fio%close()
