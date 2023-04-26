@@ -364,8 +364,8 @@ contains
     endif
     allocate (klevel(hybrid_len+1))
     klevel(1) = 0
-    do i = 2, hybrid_len+1
-      klevel(i) = (hybrid_len+1) - i + 1
+    do i = 1, hybrid_len
+      klevel(i+1) = (hybrid_len+1) - i
     enddo
   end subroutine
 end module

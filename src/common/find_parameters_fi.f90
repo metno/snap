@@ -144,8 +144,8 @@ contains
 
     allocate (klevel(nk+1))
     klevel(1) = 0
-    do i = 2, nk+1
-      klevel(i) = (nk+1) - i + 1
+    do i = 1, nk
+      klevel(i+1) = (nk+1) - i
     enddo
 
     stat = fio%close()
