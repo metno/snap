@@ -100,6 +100,7 @@ module snapgrdML
     real, allocatable, save, public :: bhalf(:)
 
 !> vertical level (sigma / eta / hybrid)
+!> sigma = p / p_sfc
     real, allocatable, save, public :: vlevel(:)
     real, allocatable, save, public :: vhalf(:)
 
