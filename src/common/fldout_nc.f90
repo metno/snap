@@ -1360,7 +1360,7 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
   USE ftestML, only: ftest
   USE releaseML, only: npart
   USE particleML, only: pdata, Particle
-  USE snaptabML, only: surface_height_sigma, surface_height_m
+  USE snaptabML, only: surface_height_m
 
   real, intent(in) :: tf1, tf2, tnow, tstep
   integer, intent(in) :: nsteph
@@ -1426,18 +1426,30 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
   end do
 
 !..accumulated/integrated concentration
+  block
+  use snapfldML, only: sigma_level_of_30m => field1, surface_temp => field2, &
+                       surface_pressure =>field3, t1, t2
+  use snaptabML, only: hypsometric_eq_inv
+
+  ! Approximate temperature by using first model layer
+  surface_temp(:,:) = rt1*t1(:,:,2) + rt2*t2(:,:,2)
+  surface_pressure(:,:) = rt1*ps1 + rt2*ps2
+  ! pressure at 30m height (negative depth)
+  sigma_level_of_30m(:,:) = hypsometric_eq_inv(-surface_height_m, surface_pressure, surface_temp)
+  sigma_level_of_30m(:,:) = sigma_level_of_30m / surface_pressure
 
   concen = 0.0
-
   do n=1,npart
     part = pdata(n)
-    if(part%z > surface_height_sigma) then
-      i = hres_pos(part%x)
-      j = hres_pos(part%y)
+
+    i = hres_pos(part%x)
+    j = hres_pos(part%y)
+    if(part%z > sigma_level_of_30m(i,j)) then
       m = def_comp(part%icomp)%to_running
       concen(i,j,m) = concen(i,j,m) + dble(part%rad())
     end if
   end do
+  end block
 
   do m=1,ncomp
     do j=1,ny*output_resolution_factor
