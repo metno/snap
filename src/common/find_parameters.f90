@@ -17,8 +17,8 @@ module find_parameter
 
   integer, parameter :: ERROR_THIS_MODULE = -451123435
 
-  public detect_gridparams
-  public get_klevel
+  public :: detect_gridparams
+  public :: get_klevel
 
 contains
 
@@ -362,10 +362,10 @@ contains
       dummy_int = nf90_close(ncid)
       return
     endif
-    allocate (klevel(hybrid_len))
+    allocate (klevel(hybrid_len+1))
     klevel(1) = 0
-    do i = 2, hybrid_len
-      klevel(i) = hybrid_len - i + 1
+    do i = 1, hybrid_len
+      klevel(i+1) = (hybrid_len+1) - i
     enddo
   end subroutine
 end module
