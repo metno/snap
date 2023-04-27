@@ -98,6 +98,12 @@
 ! MSLP.OFF
 ! PRECIPITATION.ON
 ! PRECIPITATION.OFF
+! * Define surface layer used for calculating the surface concentration
+! * to instead of lowest level use a specific height.
+! * Can be useful if the lowest level is very thin
+! *
+! * default is 30 meters, can set specific value by setting the parameter
+! SURFACE.LAYER.CONCENTRATION.AT.HEIGHT (= 30)
 ! MODEL.LEVEL.FIELDS.ON
 ! MODEL.LEVEL.FIELDS.OFF
 ! * only write particles to model-level, which are at least DUMPTIME in h
@@ -895,6 +901,7 @@ contains
     use snapgrdml, only: compute_column_max_conc, compute_aircraft_doserate, aircraft_doserate_threshold, &
     output_column
     use init_random_seedML, only: extra_seed
+    use fldout_ncML, only: surface_layer_is_lowest_level, surface_height_m
 
     !> Open file unit
     integer, intent(in) :: snapinput_unit
@@ -1081,6 +1088,15 @@ contains
       case ('boundary.layer.full.mix.on')
         !..boundary.layer.full.mix.on
         blfullmix = .TRUE.
+      case ('surface.layer.concentration.at.height')
+        surface_layer_is_lowest_level = .false.
+        if (has_value) then
+          read(cinput(pname_start:pname_end),*) surface_height_m
+          if (surface_height_m <= 0.0) then
+            write(*,*) "surface.layer.concentration.at.height must be positive"
+            goto 12
+          endif
+        endif
       case ('dry.deposition.old')
         !..dry.deposition.old
         if (idrydep /= 0 .AND. idrydep /= 1) goto 12
