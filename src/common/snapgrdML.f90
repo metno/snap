@@ -20,12 +20,7 @@ module snapgrdML
     implicit none
     private
 
-
-!> input producer no.
-    integer, save, public :: iprod = 0
-!> input grid no.
-    integer, save, public :: igrid = 0
-!> model level no.
+!> mapping from internal vertical coordinate to MET vertical coord
 !>
 !> sequence: bottom to top (kk,kk-1,....1)
 !>
@@ -37,23 +32,6 @@ module snapgrdML
 !>
 !> klevel needs to get allocated in main program while reading parameters
     integer, dimension(:), allocatable, save, public ::  klevel
-!> output producer no. (usually as input)
-    integer, save, public :: iprodr = 0
-!> output grid no. (may be different from input)
-    integer, save, public :: igridr = 0
-
-!> lower left corner in input fields (combined with ::iybase)
-!> (size is set by nx,ny at compilation time)
-    integer, save, public :: ixbase = 0
-!> lower left corner in input fields (combined with ::ixbase)
-!> (size is set by nx,ny at compilation time)
-    integer, save, public :: iybase = 0
-
-!> step in x and y direction
-!>
-!> (ixystp>1 means lower resolution fields than input,
-!> decrease memory size)
-    integer, save, public :: ixystp = 0
 
     logical, save, public :: precipitation_in_output = .true.
 !> * 0=not read mslp
@@ -101,17 +79,31 @@ module snapgrdML
 !> * gparam(8): dygrid - grid resolution in meters in y direction
 !>                         (latitude)
     real, save, public :: gparam(8)
+
 !> eta a_level (sigma levels: alevel=ptop*(1.-sigma))
+!> For hybrid levels p = alevel(k) + blevel(k) * ps
+!> alevel(1) is ground level (=0.0)
     real, allocatable, save, public :: alevel(:)
+!> Halfway levels
+!> ahalf(1) is ground level (=0.0)
+!> ahalf(2) is between alevel(2) and alevel(3)
+!> ahalf(nk) is top of atmosphere (p=0.0,a=0.0)
     real, allocatable, save, public :: ahalf(:)
+
 !> eta b_level (sigma levels: blevel=sigma)
+!> blevel(1) is ground level (=1.0)
     real, allocatable, save, public :: blevel(:)
+!> Halfway levels
+!> bhalf(1) is ground level (=1.0)
+!> bhalf(2) is between blevel(2) and blevel(3)
+!> bhalf(nk) is top of atmosphere (p=0.0,b=0.0)
     real, allocatable, save, public :: bhalf(:)
-!..vlevel:    vertical level (sigma or eta)
+
+!> vertical level (sigma / eta / hybrid)
+!> sigma = p / p_sfc
     real, allocatable, save, public :: vlevel(:)
     real, allocatable, save, public :: vhalf(:)
 
-    real, allocatable, save, public :: surface_pressure
 !> grid type
 !> * 1=polarstereographic
 !> * 2=geographic
@@ -119,7 +111,7 @@ module snapgrdML
     integer, save, public :: igtype
 ! vertical coordinate
 !> * 2=sigma (Norlam)
-!> * 10=eta   (Hirlam,...))
+!> * 10=eta/hybrid   (Hirlam,...))
     integer, save, public :: ivcoor = 0
 !> levels added at the top (when missing upper model levels)
 !>

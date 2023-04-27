@@ -115,7 +115,7 @@ subroutine forwrd_dx(tf1, tf2, tnow, tstep, part, &
   USE snapgrdML, only: vlevel, vhalf, alevel, ahalf, blevel, bhalf, &
       ivlayer, ivlevel
   USE snapfldML, only: u1, u2, v1, v2, w1, w2, t1, t2, ps1, ps2
-  USE snaptabML, only: cp, g, pmult, r, pitab
+  USE snaptabML, only: cp, g, pmult, r, pitab, surface_height_sigma
   USE vgravtablesML, only: vgtable, pbasevg, tbasevg, pincrvg, tincrvg
   USE snapdimML, only: nk
   USE snapparML, only: def_comp
@@ -275,26 +275,30 @@ subroutine forwrd_dx(tf1, tf2, tnow, tstep, part, &
     end if
 
     part%grv = gravity
-
-
-  !..gravity ... a very simple, probably too simple (!!!) conversion
-  !............. from m/s to model etadot/sigmadot "vertical velocity"
-    k1 = ivlayer(ilvl)
-  !.......................................???????????????????????????????
-    if (k1 == nk) k1 = k1-1
-  !.......................................???????????????????????????????
-    k2 = k1 + 1
-    p = ahalf(k1) + bhalf(k1)*ps
-    rtab = p*pmult
-    itab = int(rtab)
-    pi1 = pitab(itab)+(pitab(itab+1)-pitab(itab))*(rtab-itab)
-    p = ahalf(k2) + bhalf(k2)*ps
-    rtab = p*pmult
-    itab = int(rtab)
-    pi2 = pitab(itab)+(pitab(itab+1)-pitab(itab))*(rtab-itab)
-    dz = th*(pi1-pi2)*ginv
-    deta = vhalf(k1)-vhalf(k2)
-    wg = gravity*deta/dz
+    if (def_comp(part%icomp)%kdrydep == 1 .and. part%z > surface_height_sigma) then
+      ! Gravitional settling should only be handled in the dry deposition module
+      ! for particles in the surface layer
+      wg = 0.0
+    else
+    !..gravity ... a very simple, probably too simple (!!!) conversion
+    !............. from m/s to model etadot/sigmadot "vertical velocity"
+      k1 = ivlayer(ilvl)
+    !.......................................???????????????????????????????
+      if (k1 == nk) k1 = k1-1
+    !.......................................???????????????????????????????
+      k2 = k1 + 1
+      p = ahalf(k1) + bhalf(k1)*ps
+      rtab = p*pmult
+      itab = int(rtab)
+      pi1 = pitab(itab)+(pitab(itab+1)-pitab(itab))*(rtab-itab)
+      p = ahalf(k2) + bhalf(k2)*ps
+      rtab = p*pmult
+      itab = int(rtab)
+      pi2 = pitab(itab)+(pitab(itab+1)-pitab(itab))*(rtab-itab)
+      dz = th*(pi1-pi2)*ginv
+      deta = vhalf(k1)-vhalf(k2)
+      wg = gravity*deta/dz
+    endif
   !######################################################################
   !   if(np.lt.21) write(error_unit,*) 'np,k2,w,wg: ',np,k2,w,wg
   !######################################################################
