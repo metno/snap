@@ -724,6 +724,8 @@ PROGRAM bsnap
         call forwrd(tf1, tf2, tnow, tstep, pdata(np), pextra)
 
         !..apply the random walk method (diffusion)
+        ! diffusion is applied after deposition to mix
+        ! before output (which computes surface concentrations)
         if (use_random_walk) call rwalk(blfullmix, pdata(np), pextra)
 
         !.. check domain (%active) after moving particle
