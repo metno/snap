@@ -159,6 +159,7 @@ subroutine allocateFields
     if (AllocateStatus /= 0) ERROR STOP errmsg
     ALLOCATE(wscav(nx,ny,nk,ncomp),STAT=AllocateStatus)
     if (AllocateStatus /= 0) ERROR STOP errmsg
+    wscav(:,:,:,:) = 0.0
     allocate(cloud_cover(nx,ny,nk))
   endif
 

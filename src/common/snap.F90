@@ -750,9 +750,17 @@ PROGRAM bsnap
             drydep_scheme == DRYDEP_SCHEME_EMERSON) call drydep_nonconstant_vd(tstep, vd_dep, pdata(np))
 
         !..wet deposition
-        if (def_comp(pdata(np)%icomp)%kwetdep == 1) then
-          if (wetdep_scheme == WETDEP_SCHEME_BARTNICKI) call wetdep2(depwet, tstep, pdata(np), pextra)
-          if (wetdep_scheme == WETDEP_SCHEME_CONVENTIONAL) call wetdep_conventional(depwet, pdata(np), tstep)
+        if (met_params%use_3d_precip) then
+          block ! TODO
+          use snapfldML, only: wscav, depwet
+          use wetdep, only: wetdep_using_precomputed_wscav
+          call wetdep_using_precomputed_wscav(pdata(np), wscav, depwet)
+          end block
+        else
+          if (def_comp(pdata(np)%icomp)%kwetdep == 1) then
+            if (wetdep_scheme == WETDEP_SCHEME_BARTNICKI) call wetdep2(depwet, tstep, pdata(np), pextra)
+            if (wetdep_scheme == WETDEP_SCHEME_CONVENTIONAL) call wetdep_conventional(depwet, pdata(np), tstep)
+          endif
         endif
 
         !..move all particles forward, save u and v to pextra
