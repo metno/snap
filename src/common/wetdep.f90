@@ -27,6 +27,7 @@ module wetdep
       wetdep_conventional, wetdep_conventional_init, wetdep_conventional_deinit, wetdep_conventional_compute
   public :: operator(==), operator(/=)
   public :: wetdep_bartnicki
+  public :: prepare_wetdep, wetdep_using_precomputed_wscav
 
   type, public :: wetdep_scheme_t
     integer, private :: scheme
@@ -236,7 +237,7 @@ contains
     depconst = b0 + b1*rm + b2*rm*rm + b3*rm*rm*rm
   end function
 
-  pure real function wet_deposition_rate(radius, q, depconst, tstep) result(deprate)
+  pure elemental real function wet_deposition_rate(radius, q, depconst, tstep) result(deprate)
     !> radius in micrometer
     real, intent(in) :: radius
     !> precipitation intensity in mm/h
@@ -367,4 +368,48 @@ contains
 
     lambda = 1 - P/(P + C_w) * f_inc * C_f
   end subroutine
+
+  subroutine prepare_wetdep(wscav, radius, scheme, precip, cw, tstep)
+    type(wetdep_scheme_t), intent(in) :: scheme
+    real, intent(out) :: wscav(:,:,:)
+    real, intent(in) :: precip(:,:,:)
+    real, intent(in) :: radius
+    real, intent(in) :: cw(:,:,:)
+    real, intent(in) :: tstep
+
+    real :: depconst
+
+    if (scheme == WETDEP_SCHEME_BARTNICKI) then
+      depconst = wet_deposition_constant(radius)
+      wscav(:,:,:) = wet_deposition_rate(radius, precip, depconst, tstep)
+    else
+      error stop "Not implemented"
+    endif
+  end subroutine
+
+  subroutine wetdep_using_precomputed_wscav(part, wscav, dep)
+    use iso_fortran_env, only: real64
+    use particleml, only: particle
+    use snapparML, only: def_comp
+    use snapgrdML, only: ivlevel
+    type(particle), intent(inout) :: part
+    real, intent(in) :: wscav(:,:,:,:)
+    real(real64), intent(inout) :: dep(:,:,:)
+
+    real :: radlost
+    integer :: ivlvl, i, j, k, mm
+
+    ivlvl = part%z * 10000.0
+    k = ivlevel(ivlvl)
+    i = int(part%x)
+    j = int(part%y)
+
+    mm = def_comp(part%icomp)%to_running
+
+    radlost = part%scale_rad(wscav(i,j,k,mm))
+
+    !$OMP atomic
+    dep(i, j, mm) = dep(i, j, mm) + real(radlost, kind=real64)
+  end subroutine
+
 end module wetdep
