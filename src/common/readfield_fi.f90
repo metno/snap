@@ -306,26 +306,6 @@ contains
       precip = 0.0
     endif
 
-    if (met_params%use_3d_precip) then
-      block
-        use snapparML, only: ncomp, run_comp
-        use snapfldML, only: wscav, cw3d, precip3d
-        use wetdep, only: wetdep_scheme, operator(==), &
-                          WETDEP_SCHEME_BARTNICKI, wetdep_bartnicki
-
-        integer :: i
-
-        if (wetdep_scheme == WETDEP_SCHEME_BARTNICKI) then
-          do i=1,ncomp
-            if (.not.run_comp(i)%defined%kdrydep == 1) cycle
-            call wetdep_bartnicki(wscav(:,:,:,i), precip3d, cw3d, run_comp(i)%defined%radiusmym)
-          enddo
-        else
-          error stop "Not implemented"
-        endif
-      end block
-    endif
-
     call read_drydep(fio, timepos, timeposm1, nr)
 
     call check(fio%close(), "close fio")
@@ -481,6 +461,21 @@ contains
         write (iulog, *) k, i1, i2, vhalf(k + 1), vhalf(k)
       end do
     end if
+
+    if (met_params%use_3d_precip) then
+      block
+        use snapparML, only: ncomp, run_comp
+        use snapfldML, only: wscav, cw3d, precip3d
+        use wetdep, only: prepare_wetdep, wetdep_scheme
+
+        integer :: i
+
+        do i=1,ncomp
+          if (.not.run_comp(i)%defined%kdrydep == 1) cycle
+          call prepare_wetdep(wscav(:,:,:,i), run_comp(i)%defined%radiusmym, wetdep_scheme, precip3d, cw3d)
+        enddo
+      end block
+    endif
   end subroutine readfield_fi
 
 !> read precipitation
