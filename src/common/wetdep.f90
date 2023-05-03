@@ -237,15 +237,13 @@ contains
     depconst = b0 + b1*rm + b2*rm*rm + b3*rm*rm*rm
   end function
 
-  pure elemental real function wet_deposition_rate(radius, q, depconst, tstep) result(deprate)
+  pure elemental real function wet_deposition_rate_imm(radius, q, depconst) result(deprate)
     !> radius in micrometer
     real, intent(in) :: radius
     !> precipitation intensity in mm/h
     real, intent(in) :: q
     !> deposition constant
     real, intent(in) :: depconst
-    !> length of a timestep in hours
-    real, intent(in) :: tstep
 
     real, parameter :: a0 = 8.4e-5
     real, parameter :: a1 = 2.7e-4
@@ -269,6 +267,22 @@ contains
     if (radius <= 0.1) then ! gas
       rkw = 1.12e-4*q**0.79
     endif
+  end function
+
+  pure elemental real function wet_deposition_rate(radius, q, depconst, tstep) result(deprate)
+    !> radius in micrometer
+    real, intent(in) :: radius
+    !> precipitation intensity in mm/h
+    real, intent(in) :: q
+    !> deposition constant
+    real, intent(in) :: depconst
+    !> length of a timestep in seconds
+    real, intent(in) :: tstep
+
+    real :: rkw
+
+    rkw = wet_deposition_rate_imm(radius, q, depconst)
+
     deprate = 1.0 - exp(-tstep*rkw)
   end function
 
@@ -369,25 +383,24 @@ contains
     lambda = 1 - P/(P + C_w) * f_inc * C_f
   end subroutine
 
-  subroutine prepare_wetdep(wscav, radius, scheme, precip, cw, tstep)
+  subroutine prepare_wetdep(wscav, radius, scheme, precip, cw)
     type(wetdep_scheme_t), intent(in) :: scheme
     real, intent(out) :: wscav(:,:,:)
     real, intent(in) :: precip(:,:,:)
     real, intent(in) :: radius
     real, intent(in) :: cw(:,:,:)
-    real, intent(in) :: tstep
 
     real :: depconst
 
     if (scheme == WETDEP_SCHEME_BARTNICKI) then
       depconst = wet_deposition_constant(radius)
-      wscav(:,:,:) = wet_deposition_rate(radius, precip, depconst, tstep)
+      wscav(:,:,:) = wet_deposition_rate_imm(radius, precip, depconst)
     else
       error stop "Not implemented"
     endif
   end subroutine
 
-  subroutine wetdep_using_precomputed_wscav(part, wscav, dep)
+  subroutine wetdep_using_precomputed_wscav(part, wscav, dep, tstep)
     use iso_fortran_env, only: real64
     use particleml, only: particle
     use snapparML, only: def_comp
@@ -395,8 +408,9 @@ contains
     type(particle), intent(inout) :: part
     real, intent(in) :: wscav(:,:,:,:)
     real(real64), intent(inout) :: dep(:,:,:)
+    real, intent(in) :: tstep
 
-    real :: radlost
+    real :: radlost, rkw
     integer :: ivlvl, i, j, k, mm
 
     ivlvl = part%z * 10000.0
@@ -406,7 +420,9 @@ contains
 
     mm = def_comp(part%icomp)%to_running
 
-    radlost = part%scale_rad(wscav(i,j,k,mm))
+    rkw = wscav(i,j,k,mm)
+
+    radlost = part%scale_rad(exp(-rkw*tstep))
 
     !$OMP atomic
     dep(i, j, mm) = dep(i, j, mm) + real(radlost, kind=real64)

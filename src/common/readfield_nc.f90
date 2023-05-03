@@ -979,7 +979,7 @@ end subroutine
 
   subroutine compute_vertical_levels(alev, blev, ptop)
     use iso_fortran_env, only: error_unit
-    use snapgrdML, only: alevel, blevel, ahalf, bhalf, vlevel, vhalf, klevel, kadd, &
+    use snapgrdML, only: alevel, blevel, ahalf, bhalf, vlevel, vhalf, klevel, &
                          ivcoor
     use snapdimML, only: nk
     use snapmetML, only: met_params
@@ -991,37 +991,11 @@ end subroutine
     real :: p1, p2, dp, db
     integer :: k
 
-    do k = 2, nk - kadd
+    do k = 2, nk
       alevel(k) = alev(k)
       blevel(k) = blev(k)
     end do
 
-    if (kadd > 0) then
-      if (ivcoor == 2) then
-        !..sigma levels ... blevel=sigma
-        db = blevel(nk - kadd - 1) - blevel(nk - kadd)
-        db = max(db, blevel(nk - kadd)/float(kadd))
-        do k = nk - kadd + 1, nk
-          blevel(k) = max(blevel(k - 1) - db, 0.)
-        end do
-      elseif (ivcoor == 10) then
-        !..eta (hybrid) levels
-        p1 = alevel(nk - kadd) + blevel(nk - kadd)*1000.
-        p2 = alevel(nk - kadd - 1) + blevel(nk - kadd - 1)*1000.
-        dp = p2 - p1
-        if (p1 - dp*kadd < 10.) dp = (p1 - 10.)/kadd
-        db = blevel(nk - kadd - 1) - blevel(nk - kadd)
-        db = max(db, blevel(nk - kadd)/float(kadd))
-        do k = nk - kadd + 1, nk
-          p1 = p1 - dp
-          blevel(k) = max(blevel(k - 1) - db, 0.)
-          alevel(k) = p1 - blevel(k)*1000.
-        end do
-      else
-        write (error_unit, *) 'PROGRAM ERROR.  ivcoor= ', ivcoor
-        error stop 255
-      end if
-    end if
 
     if (ivcoor == 2) then
       !..sigma levels (norlam)
