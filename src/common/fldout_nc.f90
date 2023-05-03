@@ -52,7 +52,9 @@ module fldout_ncML
     integer :: icml
     integer :: conc_column = -1
     !> Dry deposition velocity
-    integer :: vd
+    integer :: vd = -1
+    !> Wet scavenging rate
+    integer :: wetscavrate = -1
   end type
 
 !> Variables in a file
@@ -271,16 +273,6 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     endif
   endif
 
-  if (output_wetdeprate) then
-    block
-      use wetdep
-      if (wetdep_scheme == WETDEP_SCHEME_CONVENTIONAL) then
-        call check(nf90_put_var(iunit, varid%wetdeprate, start=ipos, count=isize, &
-            values=conventional_deprate_m1(:, :)), "Wet deposition rate")
-      endif
-    end block
-  endif
-
 !..parameters for each component......................................
 
   all_components: do m=1,nocomp
@@ -386,6 +378,20 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       call check(nf90_put_var(iunit, varid%comp(m)%accwd, start=ipos, count=isize, &
           values=field_hr1), "set_accwd(m)")
     end if
+
+    if (output_component(m)%has_wetdep) then
+      block
+        use snapfldML, only: wscav
+        use snapdimML, only: nk
+      if (output_wetdeprate) then
+        call check(nf90_put_var(iunit, varid%comp(m)%wetscavrate, start=[1,1,1,ihrs_pos], &
+          count=[nx,ny,nk-1,1], values=wscav(:,:,2:,m)), "wscavrate")
+      endif
+      end block
+    endif
+
+  !..instant part of Bq in boundary layer
+    if(idebug == 1) call ftest('pbq', field_hr3, contains_undef=.true.)
 
   !..average part of Bq in boundary layer
     scale=100.
@@ -1214,6 +1220,7 @@ subroutine initialize_output(filename, itime, ierror)
           trim(output_component(m)%name)//"_acc_dry_deposition", &
           units="Bq/m2", chunksize=chksz3d)
       end if
+
       if (output_component(m)%has_wetdep) then
         call nc_declare(iunit, dimids3d, varid%comp(m)%iwd, &
           trim(output_component(m)%name)//"_wet_deposition", &
@@ -1221,7 +1228,12 @@ subroutine initialize_output(filename, itime, ierror)
         call nc_declare(iunit, dimids3d, varid%comp(m)%accwd, &
           trim(output_component(m)%name)//"_acc_wet_deposition", &
           units="Bq/m2", chunksize=chksz3d)
+        if (output_wetdeprate) then
+          call nc_declare(iunit, dimids4d, varid%comp(m)%wetscavrate, &
+             trim(output_component(m)%name)//"_wetdeprate", units="m/s", chunksize=chksz4d)
+        endif
       end if
+
       if (imodlevel) then
         if (modleveldump > 0.) then
           string = trim(output_component(m)%name)//"_concentration_dump_ml"
@@ -1442,8 +1454,6 @@ subroutine get_varids(iunit, varid, ierror)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
   ierror = nf90_inq_varid(iunit, "ps_vd", varid%ps_vd)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
-  ierror = nf90_inq_varid(iunit, "wetdeprate", varid%wetdeprate)
-  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
 
   do m=1,nocomp
     varname = trim(output_component(m)%name) // "_concentration"
@@ -1496,6 +1506,9 @@ subroutine get_varids(iunit, varid, ierror)
 
     varname = trim(output_component(m)%name) // "_acc_wet_deposition"
     ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%accwd)
+    if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+
+    ierror = nf90_inq_varid(iunit, trim(output_component(m)%name)//"_wetdeprate", varid%comp(m)%wetscavrate)
     if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
 
     if (imodlevel) then
