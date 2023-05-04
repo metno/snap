@@ -220,34 +220,6 @@ module snapmetML
       met_params%z0 = 'surface_roughness_length'
       met_params%hflux = 'integral_of_surface_downward_sensible_heat_flux_wrt_time'
       met_params%leaf_area_index = 'leaf_area_index'
-    case('arome_3dprecip')
-      met_params%manual_level_selection = .true.
-      met_params%has_dummy_dim = .true.
-      met_params%xwindv = 'x_wind_ml'
-      met_params%ywindv = 'y_wind_ml'
-      met_params%xwind10mv = 'x_wind_10m'
-      met_params%ywind10mv = 'y_wind_10m'
-!       !! real temperature, convert to pot-temp later
-      met_params%pottempv = 'air_temperature_ml'
-      met_params%temp_is_abs = .true.
-      met_params%sigmav = ''
-      met_params%ptopv = ''
-      met_params%apv = 'ap'
-      met_params%bv = 'b'
-! upward_air_velocity_ml, not used yet?
-      met_params%sigmadotv = ''
-      met_params%psv = 'surface_air_pressure'
-      met_params%mslpv = 'air_pressure_at_sea_level'
-      met_params%precaccumv = 'precipitation_amount_acc'
-      met_params%precstrativrt = ''
-      met_params%precconvrt = ''
-
-      met_params%t2m = 'air_temperature_2m'
-      met_params%xflux = 'downward_northward_momentum_flux_in_air'
-      met_params%yflux = 'downward_eastward_momentum_flux_in_air'
-      met_params%z0 = 'surface_roughness_length'
-      met_params%hflux = 'integral_of_surface_downward_sensible_heat_flux_wrt_time'
-      met_params%use_3d_precip = .true.
 !..get grid parameters from field identification
     case('dmi_eps')
       met_params%has_dummy_dim = .true.
