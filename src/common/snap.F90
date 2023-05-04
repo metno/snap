@@ -39,6 +39,7 @@
 ! DRY.DEPOSITION.LARGEST_LANDFRACTION_FILE = "landclasses.nc"
 ! WET.DEPOSITION.NEW ! deprecated
 ! WET.DEPOSITION.SCHEME = Bartnicki ! (default)
+! WET.DEPOSITION.USE.VERTICAL ! (use vertical layers)
 ! WET.DEPOSITION.SAVE
 ! TIME.STEP= 900.
 ! TIME.RELEASE.PROFILE.CONSTANT
@@ -1235,6 +1236,9 @@ contains
           use fldout_ncml, only: output_wetdeprate
           output_wetdeprate = .true.
         end block
+      case ('wet.deposition.use.vertical')
+        if (has_value) goto 12
+        met_params%use_3d_precip = .true.
       case ('wet.deposition.conventional.a')
         if (.not.has_value) goto 12
         read(cinput(pname_start:pname_end), *) wet_deposition_conventional_params%A

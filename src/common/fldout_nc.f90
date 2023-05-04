@@ -60,6 +60,7 @@ module fldout_ncML
 !> Variables in a file
   type :: common_var
     integer :: accum_prc
+    integer :: instant_prc = -1
     integer :: prc
     integer :: mslp
     integer :: icblt
@@ -137,7 +138,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       concacc, accprec, max_column_concentration, aircraft_doserate, &
       aircraft_doserate_threshold_height, &
       total_activity_released, total_activity_lost_domain, total_activity_lost_other, &
-      vd_dep
+      vd_dep, precip3d
   USE snapparML, only: time_profile, ncomp, run_comp, def_comp, &
     TIME_PROFILE_BOMB
   USE snapdebug, only: iulog, idebug
@@ -220,6 +221,12 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     call hres_field(field1, field_hr1)
     call check(nf90_put_var(iunit, varid%accum_prc, start=ipos, count=isize, &
         values=field_hr1), "set_accum_prc")
+
+    if (allocated(precip3d)) then
+      field1(:,:) = precip3d(:,:,2)
+      call check(nf90_put_var(iunit, varid%instant_prc, start=ipos, count=isize, &
+          values=field1), "set_accum_prc")
+    endif
   end if
 
 !..mslp (if switched on)
@@ -1132,6 +1139,7 @@ subroutine initialize_output(filename, itime, ierror)
   USE ftestML, only: ftest
   USE snapdimML, only: nx, ny, nk, output_resolution_factor
   USE particleML, only: Particle
+  use snapmetML, only: met_params
 
   character(len=*), intent(in) :: filename
   type(datetime_t), intent(in) :: itime
@@ -1210,6 +1218,12 @@ subroutine initialize_output(filename, itime, ierror)
       call nc_declare(iunit, dimids3d, varid%prc, &
         "lwe_precipitation_rate", units="mm/("//itoa(nhfout)//"hr)", &
         stdname="lwe_precipitation_rate", chunksize=chksz3d)
+
+      if (met_params%use_3d_precip) then
+        call nc_declare(iunit, dimids3d, varid%instant_prc, &
+          "precipitation_amount_instant", units="mm/h", &
+          stdname="precipitation", chunksize=chksz3d)
+      endif
     endif
 
     call nc_declare(iunit, dimids3d, varid%ihbl, &
@@ -1435,6 +1449,8 @@ subroutine get_varids(iunit, varid, ierror)
 
   ! Optional
   ierror = nf90_inq_varid(iunit, "precipitation_amount_acc", varid%accum_prc)
+  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+  ierror = nf90_inq_varid(iunit, "precipitation_amount_instant", varid%instant_prc)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
   ierror = nf90_inq_varid(iunit, "lwe_precipitation_rate", varid%prc)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
