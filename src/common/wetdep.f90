@@ -237,7 +237,7 @@ contains
     depconst = b0 + b1*rm + b2*rm*rm + b3*rm*rm*rm
   end function
 
-  pure elemental real function wet_deposition_rate_imm(radius, q, depconst) result(deprate)
+  pure elemental real function wet_deposition_rate_imm(radius, q, depconst) result(rkw)
     !> radius in micrometer
     real, intent(in) :: radius
     !> precipitation intensity in mm/h
@@ -248,8 +248,6 @@ contains
     real, parameter :: a0 = 8.4e-5
     real, parameter :: a1 = 2.7e-4
     real, parameter :: a2 = -3.618e-6
-
-    real :: rkw
 
     rkw = 0
     if (radius > 0.05 .AND. radius <= 1.4) then

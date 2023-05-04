@@ -561,7 +561,6 @@ contains
         ! Accumulate precipitation from top down
         do k=nk-1,2,-1
           precip3d(:,:,k) = precip3d(:,:,k) + precip3d(:,:,k+1)
-          write(*,*) "PRECIP MAX: ", k, maxval(precip3d(:,:,k))
         enddo
       end block
     end if
