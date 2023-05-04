@@ -36,7 +36,8 @@ module readfield_fiML
 
   !> @brief load and check an array from a source
   interface fi_checkload
-    module procedure :: fi_checkload1d, fi_checkload2d, fi_checkload3d
+    module procedure :: fi_checkload1d, fi_checkload2d, fi_checkload3d, &
+                        fi_checkload2d_64, fi_checkload3d_64
   end interface
 
 contains
@@ -300,6 +301,10 @@ contains
       endif
     end if
 
+    if (first_time_read) then
+      call compute_vertical_coords(alev, blev, ptop)
+    endif
+
     if (met_params%need_precipitation) then
       call read_precipitation(fio, nhdiff_precip, timepos, timeposm1)
     else
@@ -313,8 +318,6 @@ contains
 ! first time initialized data
     if (first_time_read) then
       first_time_read = .false.
-
-      call compute_vertical_coords(alev, blev, ptop)
 
       !..compute map ratio
       call mapfield(1, 0, igtype, gparam, nx, ny, xm, ym, &
@@ -510,16 +513,16 @@ contains
         use snaptabML, only: g
         use snapfldML, only: ps2, precip3d, cw3d, cloud_cover
         use snapgrdML, only: ahalf, bhalf, kadd, klevel
-        use snapdimML, only: nk
-        real(real32), allocatable :: rain_in_air(:,:), graupel_in_air(:,:), snow_in_air(:,:)
-        real(real32), allocatable :: cloud_water(:,:), cloud_ice(:,:)
-        real(real32), allocatable :: pdiff(:,:)
+        use snapdimML, only: nx, ny, nk
+        real(real64), allocatable :: rain_in_air(:,:), graupel_in_air(:,:), snow_in_air(:,:)
+        real(real64), allocatable :: cloud_water(:,:), cloud_ice(:,:)
+        real(real64), allocatable :: pdiff(:,:)
 
         integer :: ilevel, k
         character(len=*), parameter :: mass_fraction_units = "kg/kg"
 
-        allocate(rain_in_air,graupel_in_air,snow_in_air,pdiff,mold=ps2)
-        allocate(cloud_water,cloud_ice,mold=ps2)
+        allocate(rain_in_air(nx,ny),graupel_in_air(nx,ny),snow_in_air(nx,ny),pdiff(nx,ny))
+        allocate(cloud_water(nx,ny),cloud_ice(nx,ny))
 
         precip3d(:,:,:) = 0.0
         cw3d(:,:,:) = 0.0
@@ -533,7 +536,17 @@ contains
           call fi_checkload(fio, "mass_fraction_of_snow_in_air_ml", mass_fraction_units, &
                             snow_in_air, nt=timepos, nz=ilevel, nr=nr)
 
-          pdiff(:,:) = 100*( (ahalf(k) - ahalf(k-1)) - (bhalf(k) - bhalf(k-1))*ps2 )
+          where (rain_in_air < 0.0)
+            rain_in_air = 0.0
+          end where
+          where (graupel_in_air < 0.0)
+            graupel_in_air = 0.0
+          end where
+          where (snow_in_air < 0.0)
+            snow_in_air = 0.0
+          end where
+
+          pdiff(:,:) = 100*( (ahalf(k-1) - ahalf(k)) + (bhalf(k-1) - bhalf(k))*ps2 )
 
           precip3d(:,:,k) = rain_in_air + graupel_in_air + snow_in_air
           precip3d(:,:,k) = precip3d(:,:,k) * pdiff / g
@@ -542,6 +555,13 @@ contains
                             cloud_water, nt=timepos, nz=ilevel, nr=nr)
           call fi_checkload(fio, "mass_fraction_of_cloud_ice_in_air_ml", mass_fraction_units, &
                             cloud_ice, nt=timepos, nz=ilevel, nr=nr)
+
+          where (cloud_water < 0.0)
+            cloud_water = 0.0
+          end where
+          where (cloud_ice < 0.0)
+            cloud_ice = 0.0
+          end where
           cw3d(:,:,k) = cloud_water + cloud_ice
           cw3d(:,:,k) = cw3d(:,:,k) * pdiff / g
 
@@ -551,9 +571,11 @@ contains
         ! Accumulate precipitation from top down
         do k=(nk-kadd)-1,2,-1
           precip3d(:,:,k) = precip3d(:,:,k) + precip3d(:,:,k+1)
+          write(*,*) "PRECIP MAX: ", k, maxval(precip3d(:,:,k))
         enddo
       end block
-    else if (met_params%precaccumv /= '') then
+    end if
+    if (met_params%precaccumv /= '') then
       !..precipitation between input time 't1' and 't2'
       if (timepos == 1) then
         field1 = 0.0
@@ -666,6 +688,21 @@ contains
     deallocate(zfield)
   end subroutine fi_checkload2d
 
+  subroutine fi_checkload2d_64(fio, varname, units, field, nt, nz, nr, ierror)
+    TYPE(FimexIO), intent(inout) :: fio
+    character(len=*), intent(in) :: varname, units
+    integer, intent(in), optional :: nt, nz, nr
+    real(real64), intent(out) :: field(:, :)
+    integer, intent(out), optional :: ierror
+
+    real(kind=real64), dimension(:), allocatable, target :: zfield
+
+    call fi_checkload_intern(fio, varname, units, zfield, nt, nz, nr, ierror)
+
+    field(:,:) = reshape(zfield, shape(field))
+    deallocate(zfield)
+  end subroutine fi_checkload2d_64
+
   subroutine fi_checkload3d(fio, varname, units, field, nt, nz, nr, ierror)
     TYPE(FimexIO), intent(inout) :: fio
     character(len=*), intent(in) :: varname, units
@@ -680,6 +717,21 @@ contains
     field(:,:,:) = REAL(reshape(zfield, shape(field)), KIND=real32)
     deallocate(zfield)
   end subroutine fi_checkload3d
+
+  subroutine fi_checkload3d_64(fio, varname, units, field, nt, nz, nr, ierror)
+    TYPE(FimexIO), intent(inout) :: fio
+    character(len=*), intent(in) :: varname, units
+    integer, intent(in), optional :: nt, nz, nr
+    real(real64), intent(out) :: field(:, :, :)
+    integer, intent(out), optional :: ierror
+
+    real(kind=real64), dimension(:), allocatable, target :: zfield
+
+    call fi_checkload_intern(fio, varname, units, zfield, nt, nz, nr, ierror)
+
+    field(:,:,:) = reshape(zfield, shape(field))
+    deallocate(zfield)
+  end subroutine fi_checkload3d_64
 
   !> internal implementation, allocating the zfield
   subroutine fi_checkload_intern(fio, varname, units, zfield, nt, nz, nr, ierror)
