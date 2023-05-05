@@ -1132,7 +1132,7 @@ subroutine initialize_output(filename, itime, ierror)
 
     call nc_set_projection(iunit, dimid%x, dimid%y, &
         igtype, gparam, garea, xm, ym, simulation_start)
-    if (imodlevel) then
+    if (imodlevel .or. met_params%use_3d_precip) then
       call nc_set_vtrans(iunit, dimid%k, varid%k, varid%ap, varid%b)
     endif
 
