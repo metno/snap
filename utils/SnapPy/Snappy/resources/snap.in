@@ -34,7 +34,7 @@ LABEL anno=<arrow> halign=right valign=bottom fcolour=220:220:220:160 fontsize=1
 FILENAME=snap_toa.png
 ADDHOUR=0
 PLOT
-FIELD model=SNAP.current plot=TimeOfArrival colour=off plottype=contour linetype=solid linewidth=1 base=0 frame=1 line.values=0,3,6,9,12,24,36,48 extreme.type=None extreme.size=1 extreme.radius=1 palettecolours=dsa_toa table=1 repeat=0 value.label=1 line.smooth=0 field.smooth=0 label.size=1 grid.lines=0 grid.lines.max=0 undef.masking=0 undef.colour=255:255:255:255 undef.linewidth=1 undef.linetype=solid grid.value=0 colour_2=off dim=1 patterns=off
+FIELD model=SNAP.current plot=TimeOfArrival colour=off plottype=contour linetype=solid linewidth=1 base=0 frame=1 line.interval=off line.values=0,3,6,9,12,24,36,48 extreme.type=None extreme.size=1 extreme.radius=1 palettecolours=dsa_toa table=1 repeat=0 value.label=1 line.smooth=0 field.smooth=0 label.size=1 grid.lines=0 grid.lines.max=0 undef.masking=0 undef.colour=255:255:255:255 undef.linewidth=1 undef.linetype=solid grid.value=0 colour_2=off dim=1 patterns=off
 OBS plot=EuropeISO3 data=EuropeISO3 parameter=Name colour=grey50 density=1 image=off orientation=horizontal scale=1.2 tempprecision=true timediff=60
 AREA name={areaname}
 MAP map=Gshhs-Auto contour=on cont.colour=graywhite cont.linewidth=1 cont.linetype=solid cont.zorder=1 land=on land.colour=landOSM land.zorder=0 lon=off lat=off frame=off
