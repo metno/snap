@@ -104,7 +104,7 @@ def plotMap(data, x, y, ax, countries, title="", title_loc="center", clevs=[10,1
         name='admin_0_boundary_lines_land',
         scale='10m',
         facecolor='none'),edgecolor="dimgrey", linewidth=.5, zorder=100)
-    ax.add_feature(cartopy.feature.OCEAN,facecolor="none", edgecolor='#f2efe9', zorder=10) # land-border on top
+    ax.add_feature(cartopy.feature.OCEAN,facecolor="none", edgecolor='#f2efe9', zorder=100) # ocean/land-border on top
     #ax.gridlines(draw_labels=True)
     ax.gridlines(edgecolor="lightgray", linewidth=.3, zorder=100)
 
@@ -299,6 +299,7 @@ def runsnap(npp, met_model, outdir, release_dt, runtime, plot_from_file=None):
     ax = fig.add_subplot(2,4, (6,7), projection=proj)
     ax.set_extent([x[50],x[-50],y[25],y[-1]], crs=proj)
     clevs=range(0,(steps+1)*stepH,2*stepH)
+    print(clevs, steps, stepH)
     colors = [ plt.cm.jet(x) for x in numpy.linspace(0.95,0.1,len(clevs)) ]
     # dsa colors up to 48 hours, here only every 6 hours
     # 255:0:255,255:128:255  0-3;3-6
