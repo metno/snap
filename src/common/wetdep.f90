@@ -71,21 +71,18 @@ contains
     eq = .not. (this == other)
   end function
 
-  subroutine wetdep_bartnicki(wscav, precip, cw, radius)
+  subroutine wetdep_bartnicki(wscav, precip, radius)
     use iso_fortran_env, only: real32
     !> 1/s
     real(real32), intent(out) :: wscav(:,:,:)
     !> mm/hr
     real(real32), intent(in) :: precip(:,:,:)
-    !> mm
-    real(real32), intent(in) :: cw(:,:,:)
     !> micrometer
     real(real32), intent(in) :: radius
 
     real, parameter :: a0 = 8.4e-5
     real, parameter :: a1 = 2.7e-4
     real, parameter :: a2 = -3.618e-6
-    real :: rkw
 
     if (radius > 10.0) then
       wscav = a1*precip + a2*precip*precip
@@ -104,8 +101,6 @@ contains
       endwhere
     endif
   end subroutine
-
-
 
 !> Purpose:  Compute wet deposition for each particle and each component
 !>           and store depositions in nearest gridpoint in a field
@@ -381,6 +376,63 @@ contains
     lambda = 1 - P/(P + C_w) * f_inc * C_f
   end subroutine
 
+  subroutine wet_deposition_rate_bartnicki(wscav, radius, precip, cc)
+    real, intent(out) :: wscav(:,:,:)
+    real, intent(in) :: precip(:,:,:)
+    real, intent(in) :: radius
+    real, optional, intent(in) :: cc(:,:,:)
+
+    real :: depconst
+
+    depconst = wet_deposition_constant(radius)
+    if (.not.present(cc)) then
+      wscav(:,:,:) = wet_deposition_rate_imm(radius, precip, depconst)
+      return
+    endif
+
+    block
+      integer :: i, j, k, nx, ny, nk
+      real, allocatable :: precip_scaled(:,:)
+      real, allocatable :: cc_max(:,:)
+
+      nx = size(precip,1)
+      ny = size(precip,2)
+      nk = size(precip,3)
+
+      allocate(precip_scaled(nx,ny), cc_max(nx,ny))
+
+      cc_max(:,:) = 0.0
+
+      do k=nk,2,-1
+        precip_scaled(:,:) = 0.0
+        cc_max(:,:) = max(cc_max, cc(:,:,k))
+
+        do j=1,ny
+          do i=1,nx
+            if (precip(i,j,k) <= 0.0) cycle
+
+            if (cc_max(i,j) > 0.0) then
+              ! Scales up the precipitation intensity
+              precip_scaled(i,j) = precip(i,j,k) / cc_max(i,j)
+            else
+              precip_scaled(i,j) = precip(i,j,k)
+            endif
+          enddo
+        enddo
+        wscav(:,:,k) = wet_deposition_rate_imm(radius, precip_scaled, depconst)
+
+        do j=1,ny
+          do i=1,nx
+            if (cc_max(i,j) > 0.0) then
+              ! Only applies to the portion in the cloud
+              wscav(:,:,k) = wscav(:,:,k) * cc_max
+            endif
+          enddo
+        enddo
+      enddo
+    end block
+  end subroutine
+
   subroutine prepare_wetdep(wscav, radius, scheme, precip, cw)
     type(wetdep_scheme_t), intent(in) :: scheme
     real, intent(out) :: wscav(:,:,:)
@@ -388,11 +440,12 @@ contains
     real, intent(in) :: radius
     real, intent(in) :: cw(:,:,:)
 
-    real :: depconst
-
     if (scheme == WETDEP_SCHEME_BARTNICKI) then
-      depconst = wet_deposition_constant(radius)
-      wscav(:,:,:) = wet_deposition_rate_imm(radius, precip, depconst)
+      if (.false.) then
+        call wet_deposition_rate_bartnicki(wscav, radius, precip)
+      else
+        call wet_deposition_rate_bartnicki(wscav, radius, precip, cw)
+      endif
     else
       error stop "Not implemented"
     endif
