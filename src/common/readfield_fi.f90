@@ -468,14 +468,14 @@ contains
     if (met_params%use_3d_precip) then
       block
         use snapparML, only: ncomp, run_comp
-        use snapfldML, only: wscav, cw3d, precip3d
+        use snapfldML, only: wscav, cw3d, precip3d, cloud_cover
         use wetdep, only: prepare_wetdep, wetdep_scheme
 
         integer :: i
 
         do i=1,ncomp
           if (.not.run_comp(i)%defined%kdrydep == 1) cycle
-          call prepare_wetdep(wscav(:,:,:,i), run_comp(i)%defined%radiusmym, wetdep_scheme, precip3d, cw3d)
+          call prepare_wetdep(wscav(:,:,:,i), run_comp(i)%defined%radiusmym, wetdep_scheme, precip3d, cw3d, cloud_cover)
         enddo
       end block
     endif
