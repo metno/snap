@@ -98,6 +98,12 @@
 ! MSLP.OFF
 ! PRECIPITATION.ON
 ! PRECIPITATION.OFF
+! * Define surface layer used for calculating the surface concentration
+! * to instead of lowest level use a specific height.
+! * Can be useful if the lowest level is very thin
+! *
+! * default is 30 meters, can set specific value by setting the parameter
+! SURFACE.LAYER.CONCENTRATION.AT.HEIGHT (= 30)
 ! MODEL.LEVEL.FIELDS.ON
 ! MODEL.LEVEL.FIELDS.OFF
 ! * only write particles to model-level, which are at least DUMPTIME in h
@@ -165,8 +171,8 @@ PROGRAM bsnap
                        ncomp, def_comp, nparnum, &
                        time_profile, TIME_PROFILE_BOMB
   USE snapposML, only: irelpos, nrelpos, release_positions
-  USE snapgrdML, only: modleveldump, ivcoor, ixbase, iybase, ixystp, kadd, &
-                       klevel, imslp, iprod, iprodr, itotcomp, gparam, igrid, igridr, &
+  USE snapgrdML, only: modleveldump, ivcoor, kadd, &
+                       klevel, imslp, itotcomp, gparam, &
                        igtype, imodlevel, precipitation_in_output
   USE snaptabML, only: tabcon
   USE particleML, only: pdata, extraParticle
@@ -724,6 +730,8 @@ PROGRAM bsnap
         call forwrd(tf1, tf2, tnow, tstep, pdata(np), pextra)
 
         !..apply the random walk method (diffusion)
+        ! diffusion is applied after deposition to mix
+        ! before output (which computes surface concentrations)
         if (use_random_walk) call rwalk(blfullmix, pdata(np), pextra)
 
         !.. check domain (%active) after moving particle
@@ -893,6 +901,7 @@ contains
     use snapgrdml, only: compute_column_max_conc, compute_aircraft_doserate, aircraft_doserate_threshold, &
     output_column
     use init_random_seedML, only: extra_seed
+    use fldout_ncML, only: surface_layer_is_lowest_level, surface_height_m
 
     !> Open file unit
     integer, intent(in) :: snapinput_unit
@@ -1079,6 +1088,15 @@ contains
       case ('boundary.layer.full.mix.on')
         !..boundary.layer.full.mix.on
         blfullmix = .TRUE.
+      case ('surface.layer.concentration.at.height')
+        surface_layer_is_lowest_level = .false.
+        if (has_value) then
+          read(cinput(pname_start:pname_end),*) surface_height_m
+          if (surface_height_m <= 0.0) then
+            write(*,*) "surface.layer.concentration.at.height must be positive"
+            goto 12
+          endif
+        endif
       case ('dry.deposition.old')
         !..dry.deposition.old
         if (idrydep /= 0 .AND. idrydep /= 1) goto 12
@@ -1525,9 +1543,8 @@ contains
           write (error_unit, *) '  ==> ', cinput(pname_start:pname_end)
         end if
       case ('grid.input')
-        !..grid.input=<producer,grid>
-        if (.not. has_value) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) iprod, igrid
+        write(error_unit,*) "grid.input is deprecated (has no effect)"
+        warning = .true.
       case ('grid.nctype')
         !..grid.nctype=<emep/hirlam12>
         if (.not. has_value) goto 12
@@ -1547,9 +1564,8 @@ contains
         if (.not. has_value) goto 12
         read (cinput(pname_start:pname_end), *, err=12) igtype, (gparam(i), i=1, 6)
       case ('grid.run')
-        !..grid.run=<producer,grid,ixbase,iybase,ixystp>
-        if (.not. has_value) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) iprodr, igridr, ixbase, iybase, ixystp
+        write(error_unit,*) "grid.run is deprecated (has no effect)"
+        warning = .true.
       case ('ensemble_member.input')
         read (cinput(pname_start:pname_end), *, err=12) enspos
       case ('data.sigma.levels')
@@ -1795,9 +1811,11 @@ contains
         if (ierror /= 0) then
           error stop "Autodetection did not work (detect_gridparams)"
         endif
-        call get_klevel(filef(1), klevel, ierror)
-        if (ierror /= 0) then
-          error stop "Autodetection did not work (klevel)"
+        if (.not.allocated(klevel)) then
+          call get_klevel(filef(1), klevel, ierror)
+          if (ierror /= 0) then
+            error stop "Autodetection did not work (klevel)"
+          endif
         endif
       end if
       nlevel = size(klevel)
@@ -2012,9 +2030,6 @@ contains
     if (itotcomp == 1 .AND. ncomp == 1) itotcomp = 0
 
     if (rmlimit < 0.0) rmlimit = 0.0001
-
-    if (iprodr == 0) iprodr = iprod
-    if (igridr == 0) igridr = igrid
 
     if (compute_aircraft_doserate) then
       ! Disable aircract_dose if no component has DPUI defined

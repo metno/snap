@@ -83,10 +83,6 @@ class ICONMeteorologyCalculator(Snappy.MeteorologyCalculator.MeteorologyCalculat
             return
 
         precommand = '''#! /bin/bash
-. /usr/share/modules/init/bash
-module load fimex/1.4.2
-export OMP_NUM_THREADS=1
-
 cd {outputdir} || exit 1
 echo "Preprocessing 5-7days icon meteorology, please wait ca. 3min"
 echo "MET-Input: {globalfile}"

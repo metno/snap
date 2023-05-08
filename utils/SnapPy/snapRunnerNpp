@@ -104,6 +104,7 @@ def plotMap(data, x, y, ax, countries, title="", title_loc="center", clevs=[10,1
         name='admin_0_boundary_lines_land',
         scale='10m',
         facecolor='none'),edgecolor="dimgrey", linewidth=.5, zorder=100)
+    ax.add_feature(cartopy.feature.OCEAN,facecolor="none", edgecolor='#f2efe9', zorder=100) # ocean/land-border on top
     #ax.gridlines(draw_labels=True)
     ax.gridlines(edgecolor="lightgray", linewidth=.3, zorder=100)
 

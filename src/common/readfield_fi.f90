@@ -77,7 +77,7 @@ contains
                          sigmadot_units, temp_units, requires_precip_deaccumulation
     USE snapdimML, only: nx, ny, nk, output_resolution_factor, hres_field
     USE datetime, only: datetime_t, duration_t
-    USE readfield_ncML, only: find_index
+    USE readfield_ncML, only: find_index, compute_vertical_coords
 !> current timestep (always positive), negative istep means reset
     integer, intent(in) :: istep
 !> whether meteorology should be read backwards
@@ -102,11 +102,10 @@ contains
 
     integer :: i, j, k, ilevel, i1, i2
     integer :: nhdiff, nhdiff_precip, prev_tstep_same_file
-    real :: alev(nk), blev(nk), db, dxgrid, dygrid
+    real :: alev(nk), blev(nk), dxgrid, dygrid
     integer :: kk, ifb, kfb
-    real :: dred, red, p, px, dp, p1, p2, ptop
+    real :: dred, red, p, px, ptop
     real :: ptoptmp(1)
-    real, parameter :: mean_surface_air_pressure = 1013.26
 
     integer :: timepos, timeposm1, nr
 
@@ -311,85 +310,7 @@ contains
     if (first_time_read) then
       first_time_read = .false.
 
-      do k = 2, nk - kadd
-        alevel(k) = alev(k)
-        blevel(k) = blev(k)
-      end do
-
-      if (kadd > 0) then
-        if (ivcoor == 2) then
-          !..sigma levels ... blevel=sigma
-          db = blevel(nk - kadd - 1) - blevel(nk - kadd)
-          db = max(db, blevel(nk - kadd)/float(kadd))
-          do k = nk - kadd + 1, nk
-            blevel(k) = max(blevel(k - 1) - db, 0.)
-          end do
-        elseif (ivcoor == 10) then
-          !..eta (hybrid) levels
-          p1 = alevel(nk - kadd) + blevel(nk - kadd)*1000.
-          p2 = alevel(nk - kadd - 1) + blevel(nk - kadd - 1)*1000.
-          dp = p2 - p1
-          if (p1 - dp*kadd < 10.) dp = (p1 - 10.)/kadd
-          db = blevel(nk - kadd - 1) - blevel(nk - kadd)
-          db = max(db, blevel(nk - kadd)/float(kadd))
-          do k = nk - kadd + 1, nk
-            p1 = p1 - dp
-            blevel(k) = max(blevel(k - 1) - db, 0.)
-            alevel(k) = p1 - blevel(k)*1000.
-          end do
-        else
-          write (error_unit, *) 'PROGRAM ERROR.  ivcoor= ', ivcoor
-          error stop 255
-        end if
-      end if
-
-      if (ivcoor == 2) then
-        !..sigma levels (norlam)
-        do k = 2, nk
-          alevel(k) = ptop*(1.-blevel(k))
-        end do
-      end if
-
-      !..surface
-      alevel(1) = 0.
-      blevel(1) = 1.
-
-      if (ivcoor == 2) then
-        !..sigma levels ... vlevel=sigma
-        vlevel(:) = blevel
-      elseif (ivcoor == 10) then
-        !..eta (hybrid) levels ... vlevel=eta (eta as defined in Hirlam)
-        vlevel(:) = alevel/mean_surface_air_pressure + blevel
-      else
-        write (error_unit, *) 'PROGRAM ERROR.  ivcoor= ', ivcoor
-        error stop 255
-      end if
-
-      !..half levels where height is found,
-      !..alevel and blevel are in the middle of each layer
-      ahalf(1) = alevel(1)
-      bhalf(1) = blevel(1)
-      vhalf(1) = vlevel(1)
-      !..check if subselection of levels
-      do k = 2, nk - 1
-        if (klevel(k + 1) /= klevel(k) - 1) then
-          met_params%manual_level_selection = .TRUE.
-        endif
-      end do
-      do k = 2, nk - 1
-        if (.NOT. met_params%manual_level_selection) then
-          ahalf(k) = alevel(k) + (alevel(k) - ahalf(k - 1))
-          bhalf(k) = blevel(k) + (blevel(k) - bhalf(k - 1))
-          vhalf(k) = ahalf(k)/mean_surface_air_pressure + bhalf(k)
-        else
-          ahalf(k) = (alevel(k) + alevel(k + 1))*0.5
-          bhalf(k) = (blevel(k) + blevel(k + 1))*0.5
-          vhalf(k) = ahalf(k)/mean_surface_air_pressure + bhalf(k)
-        end if
-      end do
-      ahalf(nk) = alevel(nk)
-      bhalf(nk) = blevel(nk)
-      vhalf(nk) = vlevel(nk)
+      call compute_vertical_coords(alev, blev, ptop)
 
       !..compute map ratio
       call mapfield(1, 0, igtype, gparam, nx, ny, xm, ym, &
