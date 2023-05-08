@@ -50,29 +50,10 @@ def rimstermGetIsotopes(rimxml):
         isoItems[itemXML.attrib['ItemName']] = int(itemXML.attrib['ItemNum'])
     return isoItems
 
-def rimsterm2input(rimxml, argosxml, met_model):
-    """create a full snap.input sourceterm from a rimsterm.xml file using the ec-nrpa meteo"""
-
-    sourceTermTemplate = """
-SET_RELEASE.POS= P=   {lat},   {lon}
-TIME.START= {startTime}
-TIME.RUN = {runTime:d}h
-STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
-"""
+def rimsterm2npp_release(rimxml, runTime, releaseStartTime, startDTime):
+    """create a release part of snap.input rimsterm.xml file for a nuclear accident at a npp"""
     res = Resources()
-    lat = rimxml.find("Header/Place/Location/[@Latitude]").attrib['Latitude']
-    lon = rimxml.find("Header/Place/Location/[@Longitude]").attrib['Longitude']
 
-    startTime = rimxml.find("TimeOfInitialRelease").text
-    runTime = 48
-    outputTimestep = 3    
-    if argosxml:
-        runTime = int(argosxml.find("RunLength").text)
-        outputTimestep = int(argosxml.find("OutputTimestep").text)
-    
-    releaseStartTime = datetime.datetime.strptime(startTime, '%Y-%m-%dT%H:%M:%SZ')
-    startDTime = releaseStartTime.replace(minute=0, second=0, microsecond=0) # snap requires hourly start
-    
     isoItems = rimstermGetIsotopes(rimxml)
     isos = res.getIsotopes()
     releases = []
@@ -141,13 +122,48 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
         vals.append("0")
         vals.append("'{}'".format(isos[isoId]['isotope']))
         releaseTerm += "RELEASE.BQ/SEC.COMP= {}\n".format(','.join(vals))
+    # add isotopes definitions (size/density/type/decay)
+    releaseTerm += "\n" + res.isotopes2snapinput(isoItems.values())
+    return releaseTerm
 
+def rimsterm2bomb_release(rimxml, argosxml, runTime, releaseStartTime, startDTime):
+    """create a release part of snap.input from rimsterm.xml and request.xml file for a nuclear bomb"""
+    TBD
+
+def rimsterm2input(rimxml, argosxml, met_model):
+    """create a full snap.input sourceterm from a rimsterm.xml file using the met_model meteo"""
+
+    res = Resources()
+    lat = rimxml.find("Header/Place/Location/[@Latitude]").attrib['Latitude']
+    lon = rimxml.find("Header/Place/Location/[@Longitude]").attrib['Longitude']
+
+    startTime = rimxml.find("TimeOfInitialRelease").text
+    runTime = 48
+    outputTimestep = 3
+    is_bomb = False
+    if argosxml:
+        runTime = int(argosxml.find("RunLength").text)
+        outputTimestep = int(argosxml.find("OutputTimestep").text)
+        if argosxml.find("NuclearYield"):
+            is_bomb = True
+    
+    releaseStartTime = datetime.datetime.strptime(startTime, '%Y-%m-%dT%H:%M:%SZ')
+    startDTime = releaseStartTime.replace(minute=0, second=0, microsecond=0) # snap requires hourly start
+    
+    if is_bomb:
+        releaseTerm = rimsterm2bomb_release(rimxml, runTime, releaseStartTime, startDTime)
+    else: # npp
+        releaseTerm = rimsterm2npp_release(rimxml, runTime, releaseStartTime, startDTime)
 
     snapStartTime="{year} {month} {day} {hour}".format(year=startDTime.year,month=startDTime.month,day=startDTime.day, hour=startDTime.hour)
+    sourceTermTemplate = """
+SET_RELEASE.POS= P=   {lat},   {lon}
+TIME.START= {startTime}
+TIME.RUN = {runTime:d}h
+STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
+"""
     sourceTerm = sourceTermTemplate.format(lat=lat,lon=lon,startTime=snapStartTime, runTime=runTime, outputTimestep=outputTimestep)
     sourceTerm += releaseTerm + "\n"
-
-    sourceTerm += res.isotopes2snapinput(isoItems.values())
 
     metdef = res.getDefaultMetDefinitions(met_model)
     if (met_model == MetModel.NrpaEC0p1):
@@ -198,10 +214,14 @@ def snap4rimsterm(rimsterm, argosrequest, basedir, ident, met_model, bitmapCompr
     assert root.tag == 'CBRN_Sourceterm', "Not a rimsterm input file: {}".format(rimsterm)
 
     argosRoot = None
+    is_bomb = False
     if argosrequest:
         argosTree = ET.parse(argosrequest)
         argosRoot = argosTree.getroot()
         assert argosRoot.tag == 'Request', "Not a argos request xml file: {}". format(argosrequest)
+        if argosRoot.find("NuclearYield"):
+            is_bomb = True
+
 
     if (not os.path.isdir(basedir)):
         os.makedirs(basedir)
@@ -249,7 +269,7 @@ if __name__ == "__main__":
     os.umask(0) # make sure files can be deleted later
     import argparse
     parser = argparse.ArgumentParser(description="run snap from a rimsterm.xml file and convert to grib-files named ident_conc, ident_depo ident_wetd ident_dose ident_tofa")
-    parser.add_argument("--rimsterm", help="source-term in rimsterm format", required=False)
+    parser.add_argument("--rimsterm", help="source-term in rimsterm format", required=True)
     parser.add_argument("--argosrequest", help="optional argos-request xml file in addition to --rimsterm file", required=False)
     parser.add_argument("--metmodel", help="select the NWP input model, nrpa_ec_0p1, nrpa_ec_0p1_global, meps_2_5km, ec_0p1_global, gfs_grib_filter_fimex, icon_0p25_global", required=True, default='nrpa_ec_0p1')
     parser.add_argument("--dir", help="output-directory", required=True)
@@ -257,7 +277,4 @@ if __name__ == "__main__":
     parser.add_argument("--bitmapCompress", help="enable grib bitmap-compression", action='store_true')
 
     args = parser.parse_args()
-    if args.rimsterm is not None:
-        snap4rimsterm(args.rimsterm, args.argosrequest, args.dir, args.ident, args.metmodel, bitmapCompress=args.bitmapCompress)
-    else:
-        print("need rimsterm option", file=sys.stderr)
+    snap4rimsterm(args.rimsterm, args.argosrequest, args.dir, args.ident, args.metmodel, bitmapCompress=args.bitmapCompress)
