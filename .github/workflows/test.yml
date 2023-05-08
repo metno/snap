@@ -3,6 +3,9 @@ name: Test
 
 on:
   push:
+  pull_request:
+    branches:
+      - master
 
 env:
   FIMEX_VERSION: "1.9"

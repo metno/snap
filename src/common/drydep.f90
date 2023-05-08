@@ -66,6 +66,7 @@ subroutine drydep2(tstep, part)
   USE snapdimML, only: hres_pos
   USE snapparML, only: def_comp
   USE snapgrdML, only: vlevel
+  USE snaptabML, only: surface_height_sigma
 
 ! ... 23.04.12 - gas, particle 0.1<d<10, particle d>10 - J. Bartnicki|
 !> timestep of the simulation, affects the deposition rate
@@ -79,7 +80,7 @@ subroutine drydep2(tstep, part)
 
   m = part%icomp
 !#### 30m = surface-layer (deposition-layer); sigma(hybrid)=0.996 ~ 30m
-  if (def_comp(m)%kdrydep == 1 .AND. part%z > 0.996) then
+  if (def_comp(m)%kdrydep == 1 .AND. part%z > surface_height_sigma) then
   ! b...23.04.12... difference between particle and gas
 
     if (def_comp(m)%radiusmym <= 0.05) then

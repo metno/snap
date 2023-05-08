@@ -33,6 +33,12 @@ module fldout_ncML
 !> fixed base scaling for depositions (unit 10**-9 g/m2 = 1 nanog/m3)
   real, parameter :: dscale = 1.0
 
+
+!> Computation mode for computing the surface concentration
+  logical, save, public :: surface_layer_is_lowest_level = .true.
+!> Height of surface layer for concentrations
+  real, save, public :: surface_height_m = 30.0
+
 !> Variables for each component
   type :: component_var
     integer :: icbl
@@ -360,7 +366,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     end do
     if(idebug == 1) call ftest('apbq', field_hr3, contains_undef=.true.)
 
-  !..instant concentration on surface (not in felt-format)
+  !..instant concentration in surface layer
     field_hr3(:,:) = concen(:,:,m)
     if(idebug == 1) call ftest('concen', field_hr3, contains_undef=.true.)
     call check(nf90_put_var(iunit, varid%comp(m)%ic, start=ipos, count=isize, &
@@ -1425,32 +1431,54 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
   end do
 
 !..accumulated/integrated concentration
+  block
+  use snapfldML, only: sigma_level_of_surface_h => field1, surface_temp => field2, &
+                       surface_pressure =>field3, dh=>field4, t1, t2
+  use snaptabML, only: hypsometric_eq_inv
+  integer :: ilvl
 
-  concen = 0.0
+  if (surface_layer_is_lowest_level) then
+    do n=1,npart
+      part = pdata(n)
+      ilvl = part%z*10000.0
+      k = ivlayer(ilvl)
+      if (k==1) then
+        i = hres_pos(part%x)
+        j = hres_pos(part%y)
+        m = def_comp(part%icomp)%to_running
+        concen(i,j,m) = concen(i,j,m) + dble(part%rad())
+      endif
+    enddo
+    dh(:,:) = rt1*hlayer1(:,:,1) + rt2*hlayer2(:,:,1)
+  else
+    ! Use a predetermined height as the surface layer
+    ! Approximate temperature by using first model layer
+    surface_temp(:,:) = rt1*t1(:,:,2) + rt2*t2(:,:,2)
+    surface_pressure(:,:) = rt1*ps1 + rt2*ps2
+    ! pressure at 30m height (negative depth)
+    sigma_level_of_surface_h(:,:) = hypsometric_eq_inv(-surface_height_m, surface_pressure, surface_temp)
+    sigma_level_of_surface_h(:,:) = sigma_level_of_surface_h / surface_pressure
 
-  do n=1,npart
-    part = pdata(n)
-    ivlvl=part%z*10000.
-    k=ivlayer(ivlvl)
-    if(k == 1) then
+    concen = 0.0
+    do n=1,npart
+      part = pdata(n)
+
       i = hres_pos(part%x)
       j = hres_pos(part%y)
-      m = def_comp(part%icomp)%to_running
-      concen(i,j,m) = concen(i,j,m) + dble(part%rad())
-    end if
-  end do
+      if(part%z > sigma_level_of_surface_h(i,j)) then
+        m = def_comp(part%icomp)%to_running
+        concen(i,j,m) = concen(i,j,m) + dble(part%rad())
+      end if
+    end do
+    dh(:,:) = surface_height_m
+  end if
 
   do m=1,ncomp
-    do j=1,ny*output_resolution_factor
-      do i=1,nx*output_resolution_factor
-        if(concen(i,j,m) > 0.0d0) then
-          dh= rt1*hlayer1(i,j,1)+rt2*hlayer2(i,j,1)
-          concen(i,j,m)= concen(i,j,m)/(dh*garea(i,j))
-          concacc(i,j,m)= concacc(i,j,m) + concen(i,j,m)*hrstep
-        end if
-      end do
-    end do
+    concen(:,:,m) = concen(:,:,m) / (dh * garea)
+    concacc(:,:,m) = concacc(:,:,m) + concen(:,:,m)*hrstep
   end do
+
+  end block
 
   if(imodlevel) then
     do n=1,npart
