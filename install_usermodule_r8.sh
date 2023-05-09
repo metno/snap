@@ -1,7 +1,5 @@
 #! /bin/bash
 
-INTEL_COMPILER=/modules/MET/rhel8/user-modules/compiler/Intel2018
-
 set -e
 
 install_conda_env() {
@@ -14,6 +12,8 @@ matplotlib=3.7.1
 nco=5.1.4
 openssh=9.2p1
 pkg-config=0.29.2
+netcdf-fortran=4.6.0
+gfortran=12.2.0
 EOF
 }
 
@@ -33,24 +33,6 @@ singularity exec \
     /modules/singularityrepo/fou/kl/atom/bdiana_3.57.0.sif bdiana \$@
 EOF
     chmod +x -- "$1/bin/bdiana"
-}
-
-install_netcdf_fortran() {
-    module load $INTEL_COMPILER
-    mkdir --parent tmp && cd tmp
-    mkdir --parent build
-    NETCDFF_VERSION=4.6.0
-    wget https://github.com/Unidata/netcdf-fortran/archive/refs/tags/v$NETCDFF_VERSION.tar.gz --continue
-    tar -xf v$NETCDFF_VERSION.tar.gz
-
-    cmake -S netcdf-fortran-$NETCDFF_VERSION -B build \
-        -DCMAKE_INSTALL_PREFIX=$MODULE_PREFIX \
-        -DCMAKE_INSTALL_LIBDIR=lib \
-        -DENABLE_TESTS=false \
-        -DCMAKE_BUILD_TYPE=RelWithDebInfo
-    cmake --build build -j4
-    cmake --install build
-    cd ..
 }
 
 patch_fimex_pkgconfig() {
@@ -79,7 +61,7 @@ install_snappy() {
 
 install_bsnap() {
     cd src || exit 2
-    ln --symbolic --force -- PPIifort.mk current.mk
+    ln --symbolic --force -- gcc_pkgconfig.mk current.mk
     make clean
     env VERSION="$MODULE_VERSION" make BINDIR="$MODULE_PREFIX"/bin install
 }
@@ -112,14 +94,11 @@ main() {
         install_conda_env "$MODULE_PREFIX"
         conda activate "$MODULE_PREFIX"
         patch_fimex_pkgconfig
-        (install_netcdf_fortran)
         install_bdiana $MODULE_PREFIX
     else
         echo "Reusing conda module, remove '$MODULE_PREFIX' to run"
         echo "a clean installation"
     fi
-
-    module load $INTEL_COMPILER
 
     install_snappy
     install_bsnap
@@ -141,7 +120,6 @@ proc ModulesHelp { } {
 }
 
 module-whatis   "SnapPy"
-module          load                    $INTEL_COMPILER
 set             rootenv                 \$conda_env
 setenv          UDUNITS2_XML_PATH       \$rootenv/share/udunits/udunits2.xml
 setenv          PROJ_DATA               \$rootenv/share/proj
