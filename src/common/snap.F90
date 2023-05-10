@@ -40,6 +40,7 @@
 ! WET.DEPOSITION.NEW ! deprecated
 ! WET.DEPOSITION.SCHEME = Bartnicki ! (default)
 ! WET.DEPOSITION.USE.VERTICAL ! (use vertical layers)
+! WET.DEPOSITION.USE.CLOUD_FRACTION
 ! WET.DEPOSITION.SAVE
 ! TIME.STEP= 900.
 ! TIME.RELEASE.PROFILE.CONSTANT
@@ -1239,6 +1240,9 @@ contains
       case ('wet.deposition.use.vertical')
         if (has_value) goto 12
         met_params%use_3d_precip = .true.
+      case ('wet.deposition.use.cloud_fraction')
+        if (has_value) goto 12
+        met_params%use_ccf = .true.
       case ('wet.deposition.conventional.a')
         if (.not.has_value) goto 12
         read(cinput(pname_start:pname_end), *) wet_deposition_conventional_params%A

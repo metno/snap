@@ -475,7 +475,8 @@ contains
 
         do i=1,ncomp
           if (.not.run_comp(i)%defined%kdrydep == 1) cycle
-          call prepare_wetdep(wscav(:,:,:,i), run_comp(i)%defined%radiusmym, wetdep_scheme, precip3d, cw3d, cloud_cover)
+          call prepare_wetdep(wscav(:,:,:,i), run_comp(i)%defined%radiusmym, wetdep_scheme, precip3d, cw3d, cloud_cover, &
+            use_ccf=met_params%use_ccf)
         enddo
       end block
     endif
@@ -565,7 +566,7 @@ contains
           cw3d(:,:,k) = cloud_water + cloud_ice
           cw3d(:,:,k) = cw3d(:,:,k) * pdiff / g
 
-          call fi_checkload(fio, "cloud_area_fraction_ml", "1", &
+          call fi_checkload(fio, "cloud_area_fraction_ml", "%", &
                             cloud_cover(:,:,k), nt=timepos, nz=ilevel, nr=nr)
         enddo
         ! Accumulate precipitation from top down
