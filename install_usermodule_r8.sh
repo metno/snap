@@ -22,7 +22,7 @@ install_bdiana() {
     cat > "$1/bin/bdiana" <<EOF
 #! /bin/bash
 module use /modules/MET/rhel8/user-modules/
-module load singularity/3.10.2
+module load singularity/3.10.5
 
 singularity exec \
     --no-home --bind /lustre/\${STORE}:/lustre/\${STORE} \
@@ -31,7 +31,7 @@ singularity exec \
     --env QT_QPA_PLATFORMTHEME='' \
     --env QT_QPA_FONTDIR='/usr/share/fonts/truetype' \
     --env QT_QPA_PLATFORM='offscreen' \
-    /modules/singularityrepo/fou/kl/atom/bdiana_3.57.0.sif bdiana \$@
+    /modules/singularityrepo/fou/kl/atom/bdiana_3.57.13.sif bdiana \$@
 EOF
     chmod +x -- "$1/bin/bdiana"
 }
