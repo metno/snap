@@ -61,8 +61,10 @@ module snapmetML
     !> Use lowest level in #xwindv/#ywindv in place of
     !> #xwind10mv/#ywind10mv
     logical :: use_model_wind_for_10m = .false.
-    !> Use 3D precip
+    !> Wet deposition: Use 3D precip
     logical :: use_3d_precip = .false.
+    !> Wet deposition: Use cloud cover fraction
+    logical :: use_ccf = .false.
   end type
 
   type(met_params_t), save, public :: met_params = met_params_t()
