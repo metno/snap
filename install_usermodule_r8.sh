@@ -11,6 +11,7 @@ netcdf4=1.6.3
 matplotlib=3.7.1
 nco=5.1.4
 openssh=9.2p1
+openssl=3.0.8
 pkg-config=0.29.2
 netcdf-fortran=4.6.0
 gfortran=12.2.0
