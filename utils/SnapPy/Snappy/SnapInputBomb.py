@@ -344,7 +344,7 @@ class SnapInputBomb():
             rellower.append(0)
             relupper.append(0)
             relstem.append(0)
-            activity.append(0)
+            activity.append("0.")
         relradius.append(self.cloud_radius)
         rellower.append(self.cloud_bottom)
         relupper.append(self.cloud_top)
@@ -362,7 +362,7 @@ RELEASE.MUSHROOM.STEM.RADIUS.M= {",".join(map(str, relstem))}
         pclass_tmpl = """COMPONENT= {classname}
 DRY.DEP.ON
 WET.DEP.ON
-RADIOACTIVE.BOMB_DECAY
+RADIOACTIVE.DECAY.BOMB
 RADIUS.MICROMETER= {radius}
 DENSITY.G/CM3={density}
 {gravity}
@@ -380,6 +380,11 @@ DENSITY.G/CM3={density}
                                             classname=self.component_name(i),
                                             gravity=gravity))
         
+        for i, frac in enumerate(self.size_distribution):
+            size_activity = activity + [f"{self.activity_after_1h*frac:.3E}"]
+            lines.append(f"RELEASE.BQ/STEP.COMP= {','.join(size_activity)} '{self.component_name(i)}'")
+
+
         return "\n".join(lines)
 
 if __name__ == "__main__":
@@ -406,5 +411,6 @@ if __name__ == "__main__":
         pass
     sib.size_distribution = [.3,.4,.2]
     assert(abs(sib.size_distribution[3]-0.1) <= 0.01)
+    sib.minutes = 30
     print(sib.snap_input())
     #print(SnapInputBomb(.25).snap_input())
