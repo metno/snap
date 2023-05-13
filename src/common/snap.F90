@@ -895,7 +895,7 @@ contains
   !> reads information from an inputfile and loads into the program
   subroutine read_inputfile(snapinput_unit)
     use snapparML, only: push_down_dcomp, defined_component, &
-                         TIME_PROFILE_CONSTANT, TIME_PROFILE_LINEAR, TIME_PROFILE_LINEAR, TIME_PROFILE_STEPS, &
+                         TIME_PROFILE_CONSTANT, TIME_PROFILE_BOMB, TIME_PROFILE_LINEAR, TIME_PROFILE_STEPS, &
                          TIME_PROFILE_UNDEFINED
     use snapfimexML, only: parse_interpolator
     use snapgrdml, only: compute_column_max_conc, compute_aircraft_doserate, aircraft_doserate_threshold, &
@@ -1777,7 +1777,7 @@ contains
 !> checks the data from the input for errors or missing information,
 !> and copies information to structures used when running the program.
   subroutine conform_input(ierror)
-    use snapparML, only: TIME_PROFILE_UNDEFINED
+    use snapparML, only: TIME_PROFILE_UNDEFINED, TIME_PROFILE_BOMB
     use snapfimexML, only: parse_interpolator
     use snapgrdml, only: compute_aircraft_doserate
     use find_parameter, only: detect_gridparams, get_klevel
@@ -1887,14 +1887,17 @@ contains
       ierror = 1
     end if
 
-    do i = 1, ntprof - 1
-      if ((releases(i + 1)%frelhour - releases(i)%frelhour)*3600 < tstep) then
-        warning = .true.
-        write (error_unit, *) "WARNING: Release interval is shorter than timestep; ", &
-          "some releases may be skipped"
-        exit
-      endif
-    enddo
+    if (time_profile /= TIME_PROFILE_BOMB) then
+      ! bomb releases everything at once, so the following check does not apply
+      do i = 1, ntprof - 1
+        if ((releases(i + 1)%frelhour - releases(i)%frelhour)*3600 < tstep) then
+          warning = .true.
+          write (error_unit, *) "WARNING: Release interval is shorter than timestep; ", &
+            "some releases may be skipped"
+          exit
+        endif
+      enddo
+    end if
 
     if (ncomp < 0) then
       write (error_unit, *) 'No (release) components specified for run'
