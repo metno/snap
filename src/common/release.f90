@@ -108,7 +108,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
   USE snapfldML, only: xm, ym, t1, t2, ps1, ps2
   USE snapparML, only: time_profile, ncomp, nparnum, run_comp, &
       iparnum, &
-      TIME_PROFILE_BOMB, TIME_PROFILE_STEPS
+      TIME_PROFILE_BOMB, TIME_PROFILE_LINEAR
   USE snapposML, only: irelpos, release_positions
   USE snaptabML, only: g, pmult, pitab
   USE snapdimML, only: nx, ny, nk
@@ -158,9 +158,6 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
 
   if(time_profile == TIME_PROFILE_BOMB) then
   !..single bomb release
-    if (istep /= 0) then
-      return
-    endif
     tstep=1.
   else
     if (istep >= releases(size(releases))%frelhour*nsteph) then
@@ -179,7 +176,8 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
 ! loop over all heights
   do ih=1,nrelheight
 
-    if(time_profile /= TIME_PROFILE_STEPS .AND. nt < size(releases)) then
+    if(time_profile == TIME_PROFILE_LINEAR .and. nt < size(releases)) then
+      ! linear release to next step
       c1 = releases(nt)%frelhour*nsteph
       c2 = releases(nt+1)%frelhour*nsteph
       c3=istep
@@ -194,6 +192,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
     ! stemradius not with height profiles, nrelheight must be 1
       stemradius = releases(nt)%relstemradius*rt1 + releases(nt+1)%relstemradius*rt2
     else
+      ! constant release between timesteps 
       do n=1,ncomp
         relbq(n) = releases(nt)%relbqsec(n,ih)
       end do
@@ -202,6 +201,13 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
       hlower = releases(nt)%rellower(ih)
     ! stemradius not with height profiles, nrelheight must be 1
       stemradius = releases(nt)%relstemradius
+      if (time_profile == TIME_PROFILE_BOMB) then
+        ! complete release in one timestep
+        if(releases(nt)%frelhour*nsteph <= (istep-1)) then
+          ! already released in previous timestep
+          return
+        end if
+      end if
     end if
 
     nprel=0
@@ -209,7 +215,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
     ! Number of particles equal for each component, but not Bq
       nrel(m)=nint(float(mprel)/float(ncomp))
       if(nrel(m) > 0 .and. relbq(m) > 0) then
-        pbq(m)= relbq(m)*tstep/float(nrel(m))
+       pbq(m)= relbq(m)*tstep/float(nrel(m))
         nprel= nprel + nrel(m)
       else
         nrel(m)= 0
