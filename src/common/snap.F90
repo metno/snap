@@ -452,7 +452,7 @@ PROGRAM bsnap
     nstepr = nsteph*nhrel
 
     !..nuclear bomb case
-    if (time_profile == TIME_PROFILE_BOMB) nstepr = 1
+    !if (time_profile == TIME_PROFILE_BOMB) nstepr = 1
 
     !..information to log file
     write (iulog, *) 'nx,ny,nk:  ', nx, ny, nk
@@ -1226,7 +1226,12 @@ contains
         elseif (ntprof > 1) then
           if (keyword == 'release.bq/step.comp') then
             do i = 1, ntprof - 1
-              rscale = 1./(3600.*(releases(i + 1)%frelhour - releases(i)%frelhour))
+              if (time_profile == TIME_PROFILE_BOMB) then
+                ! everything released in one timestep
+                rscale = 1.
+              else
+                rscale = 1./(3600.*(releases(i + 1)%frelhour - releases(i)%frelhour))
+              end if
               releases(i)%relbqsec(ncomp, 1) = releases(i)%relbqsec(ncomp, 1)*rscale
             end do
           end if
