@@ -24,6 +24,7 @@ import re
 import subprocess
 import sys
 
+from Snappy.SnapInputBomb import SnapInputBomb, ExplosionType
 from Snappy.EcMeteorologyCalculator import EcMeteorologyCalculator
 from Snappy.ICONMeteorologyCalculator import ICONMeteorologyCalculator
 from Snappy.MeteorologyCalculator import MeteorologyCalculator
@@ -126,9 +127,19 @@ def rimsterm2npp_release(rimxml, runTime, releaseStartTime, startDTime):
     releaseTerm += "\n" + res.isotopes2snapinput(isoItems.values())
     return releaseTerm
 
-def rimsterm2bomb_release(rimxml, argosxml, runTime, releaseStartTime, startDTime):
+def rimsterm2bomb_release(argosxml, offset_time: datetime.timedelta):
     """create a release part of snap.input from rimsterm.xml and request.xml file for a nuclear bomb"""
-    TBD
+    nuclear_yield = float(argosxml.find("NuclearYield").text)
+    explosion_type = argosxml.find("ExplosionType").text
+    no_of_detonations = int(argosxml.find("NoOfDetonations").text)
+
+    # ignore FissionProportion, SurfaceType, HeightOfBurst, GroudnType, WeaponType
+    if (no_of_detonations != 1):
+        raise Exception(f"Unsupported NoOfDetonations : {no_of_detonations} != 1")
+
+    sib = SnapInputBomb(nuclear_yield, ExplosionType.by_argosname(explosion_type))
+    sib.minutes = offset_time.seconds // 60
+    return sib.snap_input()
 
 def rimsterm2input(rimxml, argosxml, met_model):
     """create a full snap.input sourceterm from a rimsterm.xml file using the met_model meteo"""
@@ -144,14 +155,14 @@ def rimsterm2input(rimxml, argosxml, met_model):
     if argosxml:
         runTime = int(argosxml.find("RunLength").text)
         outputTimestep = int(argosxml.find("OutputTimestep").text)
-        if argosxml.find("NuclearYield"):
+        if argosxml.find("NuclearYield") is not None:
             is_bomb = True
     
     releaseStartTime = datetime.datetime.strptime(startTime, '%Y-%m-%dT%H:%M:%SZ')
     startDTime = releaseStartTime.replace(minute=0, second=0, microsecond=0) # snap requires hourly start
-    
+    offset_time = releaseStartTime - startDTime
     if is_bomb:
-        releaseTerm = rimsterm2bomb_release(rimxml, runTime, releaseStartTime, startDTime)
+        releaseTerm = rimsterm2bomb_release(argosxml, offset_time)
     else: # npp
         releaseTerm = rimsterm2npp_release(rimxml, runTime, releaseStartTime, startDTime)
 
