@@ -399,7 +399,7 @@ FIELD.IDENTIFICATION={identification:03d}
             lines.append(f"RELEASE.BQ/STEP.COMP= {','.join(size_activity)} '{self.component_name(i)}'")
 
 
-        return "\n".join(lines)
+        return "\n".join(lines) + "\n"
 
 if __name__ == "__main__":
     # unit test
