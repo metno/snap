@@ -5,7 +5,7 @@ import numpy
 import io
 import typing
 
-_ExplosionType = namedtuple('ExplosionType', ['value', 'radius_sizes', "size_distribution"])
+_ExplosionType = namedtuple('ExplosionType', ['name', 'radius_sizes', "size_distribution"])
 
 class ExplosionType(Enum):    
     @property
@@ -17,17 +17,17 @@ class ExplosionType(Enum):
         return self.value.size_distribution
 
     # default snap
-    MIXED = _ExplosionType(0,
+    MIXED = _ExplosionType("Mixed",
                            [2.2, 4.4, 8.6, 14.6, 22.8, 36.1, 56.5, 92.3, 173.2, 250.0],
                            [ .1,  .1,  .1,   .1,   .1,   .1,   .1,   .1,    .1,    .1]
                            )
     # Glasstone Dolan, lognormal ~(3.78, 0.68)
-    SURFACE = _ExplosionType(1,
+    SURFACE = _ExplosionType("Surface",
                            [          8.6, 14.6, 22.8, 36.1, 56.5, 92.3, 173.2, 250.0],
                            [          .02,  .08,  .17,  .25,  .24,  .17,   .06,   .01] 
                            )
     # Glassstone Dolan, uniform below 20µm
-    HIGH_ALTITUDE = _ExplosionType(2,
+    HIGH_ALTITUDE = _ExplosionType("1000 meters",
                            [2.2, 4.4, 8.6, 14.6],
                            [.25, .25, .25,  .25] 
                            )
