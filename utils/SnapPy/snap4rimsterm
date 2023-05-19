@@ -24,11 +24,12 @@ import re
 import subprocess
 import sys
 
-from Snappy.SnapInputBomb import SnapInputBomb, ExplosionType
+from Snappy.BombIsotopeFractions import BombIsotopeFractions 
 from Snappy.EcMeteorologyCalculator import EcMeteorologyCalculator
 from Snappy.ICONMeteorologyCalculator import ICONMeteorologyCalculator
 from Snappy.MeteorologyCalculator import MeteorologyCalculator
 from Snappy.Resources import MetModel, Resources, snapNc_convert_to_grib
+from Snappy.SnapInputBomb import SnapInputBomb, ExplosionType
 import xml.etree.ElementTree as ET
 
 
@@ -261,11 +262,24 @@ def snap4rimsterm(rimsterm, argosrequest, basedir, ident, met_model, bitmapCompr
     errlog.close()
     outlog.close()
 
+    if is_bomb:
+        print("snapAddBombIsotopes --nc snap.nc")
+        proc2 = subprocess.Popen(['snapAddBombIsotopes', '--nc', 'snap.nc'], cwd=basedir, stderr=errlog, stdout=outlog)
+        if (proc2.wait() != 0):
+            errlog.write("snapAddBombIsotopes --nc snap.nc in {} failed\n".format(basedir))
+        errlog.close()
+        outlog.close()
+
+
     if argosRoot:
         for oformat in argosRoot.findall("OutputFormat"):
             print("output in format: {}".format(oformat.text))
             if oformat.text == 'GRIB':
-                snapNc_convert_to_grib(snapNC, basedir, ident, rimstermGetIsotopes(root).values(), bitmapCompress=bitmapCompress)
+                if is_bomb:
+                    isotopes = BombIsotopeFractions().isotopes
+                else:
+                    isotopes = rimstermGetIsotopes(root).values()
+                snapNc_convert_to_grib(snapNC, basedir, ident, isotopes, bitmapCompress=bitmapCompress)
             elif oformat.text == 'NetCDF':
                 # create a filename which can be picked up by SMS
                 os.symlink(snapNC, os.path.join(basedir,"{}_all.nc".format(ident)))
