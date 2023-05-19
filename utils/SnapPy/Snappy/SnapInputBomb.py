@@ -21,15 +21,15 @@ class ExplosionType(Enum):
                            [2.2, 4.4, 8.6, 14.6, 22.8, 36.1, 56.5, 92.3, 173.2, 250.0],
                            [ .1,  .1,  .1,   .1,   .1,   .1,   .1,   .1,    .1,    .1]
                            )
-    # TBD
-    SURFACE = _ExplosionType(0,
-                           [2.2, 4.4, 8.6, 14.6, 22.8, 36.1, 56.5, 92.3, 173.2, 250.0],
-                           [ .1,  .1,  .1,   .1,   .1,   .1,   .1,   .1,    .1,    .1] 
+    # Glasstone Dolan, lognormal ~(3.78, 0.68)
+    SURFACE = _ExplosionType(1,
+                           [          8.6, 14.6, 22.8, 36.1, 56.5, 92.3, 173.2, 250.0],
+                           [          .02,  .08,  .17,  .25,  .24,  .17,   .06,   .01] 
                            )
-    # TBD
-    HIGH_ALTITUDE = _ExplosionType(0,
-                           [2.2, 4.4, 8.6, 14.6, 22.8, 36.1, 56.5, 92.3, 173.2, 250.0],
-                           [ .1,  .1,  .1,   .1,   .1,   .1,   .1,   .1,    .1,    .1] 
+    # Glassstone Dolan, uniform below 20µm
+    HIGH_ALTITUDE = _ExplosionType(2,
+                           [2.2, 4.4, 8.6, 14.6],
+                           [.25, .25, .25,  .25] 
                            )
 
     @classmethod
@@ -121,7 +121,7 @@ class YieldParameters():
                             self._cloud_defs[tag][pos], self._cloud_defs[tag][pos1])
 
 
-    def activity_after_1h(self) -> float:
+    def activity_after_1min(self) -> float:
         """
         Get the total activity for relatively long-lived isotopes
         """
@@ -196,11 +196,11 @@ class SnapInputBomb():
         return None
 
     @property
-    def activity_after_1h(self) -> float:
+    def activity_after_1min(self) -> float:
         """
         Get the total activity for relatively long-lived isotopes
         """
-        return self._yield_parameters.activity_after_1h()
+        return self._yield_parameters.activity_after_1min()
 
     @property
     def cloud_bottom(self) -> float:
@@ -395,7 +395,7 @@ FIELD.IDENTIFICATION={identification:03d}
                                             identification=i+1))
         
         for i, frac in enumerate(self.size_distribution):
-            size_activity = activity + [f"{self.activity_after_1h*frac:.3E}"]
+            size_activity = activity + [f"{self.activity_after_1min*frac:.3E}"]
             lines.append(f"RELEASE.BQ/STEP.COMP= {','.join(size_activity)} '{self.component_name(i)}'")
 
 
