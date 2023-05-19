@@ -19,18 +19,21 @@
 #
 from collections import OrderedDict
 import datetime
+import netCDF4
 import os
 import re
 import subprocess
 import sys
+import xml.etree.ElementTree as ET
 
+from Snappy.AddBombIsotopes import snap_add_bomb_isotopes
+from Snappy.AddToa import add_toa_to_nc
 from Snappy.BombIsotopeFractions import BombIsotopeFractions 
 from Snappy.EcMeteorologyCalculator import EcMeteorologyCalculator
 from Snappy.ICONMeteorologyCalculator import ICONMeteorologyCalculator
 from Snappy.MeteorologyCalculator import MeteorologyCalculator
 from Snappy.Resources import MetModel, Resources, snapNc_convert_to_grib
 from Snappy.SnapInputBomb import SnapInputBomb, ExplosionType
-import xml.etree.ElementTree as ET
 
 
 def parseIsoTimeDelta(period):
@@ -142,6 +145,9 @@ def rimsterm2bomb_release(argosxml, offset_time: datetime.timedelta):
     sib.minutes = offset_time.seconds // 60
     return sib.snap_input()
 
+def request_is_bomb(argosRoot):
+    return argosRoot.find("NuclearYield") is not None
+
 def rimsterm2input(rimxml, argosxml, met_model):
     """create a full snap.input sourceterm from a rimsterm.xml file using the met_model meteo"""
 
@@ -156,8 +162,7 @@ def rimsterm2input(rimxml, argosxml, met_model):
     if argosxml:
         runTime = int(argosxml.find("RunLength").text)
         outputTimestep = int(argosxml.find("OutputTimestep").text)
-        if argosxml.find("NuclearYield") is not None:
-            is_bomb = True
+        is_bomb = request_is_bomb(argosxml)
     
     releaseStartTime = datetime.datetime.strptime(startTime, '%Y-%m-%dT%H:%M:%SZ')
     startDTime = releaseStartTime.replace(minute=0, second=0, microsecond=0) # snap requires hourly start
@@ -231,9 +236,7 @@ def snap4rimsterm(rimsterm, argosrequest, basedir, ident, met_model, bitmapCompr
         argosTree = ET.parse(argosrequest)
         argosRoot = argosTree.getroot()
         assert argosRoot.tag == 'Request', "Not a argos request xml file: {}". format(argosrequest)
-        if argosRoot.find("NuclearYield"):
-            is_bomb = True
-
+        is_bomb = request_is_bomb(argosRoot)
 
     if (not os.path.isdir(basedir)):
         os.makedirs(basedir)
@@ -256,20 +259,19 @@ def snap4rimsterm(rimsterm, argosrequest, basedir, ident, met_model, bitmapCompr
             raise Exception("bsnap_naccident in {} failed".format(basedir))
 
     print("snapAddToa snap.nc")
-    proc2 = subprocess.Popen(['snapAddToa', 'snap.nc'], cwd=basedir, stderr=errlog, stdout=outlog)
-    if (proc2.wait() != 0):
-        errlog.write("snapAddToa snap.nc in {} failed\n".format(basedir))
-    errlog.close()
-    outlog.close()
-
-    if is_bomb:
-        print("snapAddBombIsotopes --nc snap.nc")
-        proc2 = subprocess.Popen(['snapAddBombIsotopes', '--nc', 'snap.nc'], cwd=basedir, stderr=errlog, stdout=outlog)
-        if (proc2.wait() != 0):
-            errlog.write("snapAddBombIsotopes --nc snap.nc in {} failed\n".format(basedir))
-        errlog.close()
-        outlog.close()
-
+    with netCDF4.Dataset(os.path.join(basedir, 'snap.nc'), 'a') as nc:
+        try:
+            add_toa_to_nc(nc)
+        except Exception as ex:
+            # don't raise exception here, just log, data might still be useful without toa
+            errlog.write(f"snapAddToa snap.nc in {basedir} failed: {ex}\n")
+        if is_bomb:
+            print("snapAddBombIsotopes --nc snap.nc")
+            try:
+                snap_add_bomb_isotopes(nc)
+            except Exception as ex:
+                errlog.write(f"snapAddBombIsotopes --nc snap.nc in {basedir} failed: {ex}\n")
+                raise ex
 
     if argosRoot:
         for oformat in argosRoot.findall("OutputFormat"):
