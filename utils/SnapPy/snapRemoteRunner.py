@@ -436,8 +436,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--queue",
         help="Which queue to run job on",
-        choices=["operational-bionic.q", "operational-r8.q"],
-        default="operational-bionic.q",
+        choices=["research-r8.q", "operational-r8.q"],
+        default="operational-r8.q",
     )
     parser.add_argument(
         "--cleanup",
