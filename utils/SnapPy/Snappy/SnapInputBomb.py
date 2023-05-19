@@ -32,6 +32,18 @@ class ExplosionType(Enum):
                            [ .1,  .1,  .1,   .1,   .1,   .1,   .1,   .1,    .1,    .1] 
                            )
 
+    @classmethod
+    def by_argosname(cls, name: str):
+        """get a ExplosionType by name used in Argos. Unknown names will be translated to MIXED"""
+        name = name.lower().strip()
+        if name == 'surface':
+            return ExplosionType.SURFACE
+        elif name == '1000 meters':
+            return ExplosionType.HIGH_ALTITUDE
+        else:
+            return ExplosionType.MIXED
+
+
 def _lin_interpol(a0,a,b, x,y):
     '''linear interpolation of x=f(a), y=f(b) to f(a0)'''
     if (a == b):
@@ -337,9 +349,9 @@ class SnapInputBomb():
         relupper = []
         relstem = []
         activity = []
-        relsecs = [0]
+        relmins = [0]
         if self.minutes > 0:
-            relsecs.append(self.minutes * 60)
+            relmins.append(self.minutes)
             relradius.append(0)
             rellower.append(0)
             relupper.append(0)
@@ -351,7 +363,7 @@ class SnapInputBomb():
         relstem.append(self.stem_radius)
 
         lines.append(f"""
-RELEASE.SECOND= {",".join(map(str, relsecs))}
+RELEASE.MINUTE= {",".join(map(str, relmins))}
 RELEASE.RADIUS.M= {",".join(map(str, relradius))}
 RELEASE.LOWER.M= {",".join(map(str, rellower))}
 RELEASE.UPPER.M= {",".join(map(str, relupper))}
@@ -366,6 +378,7 @@ RADIOACTIVE.DECAY.BOMB
 RADIUS.MICROMETER= {radius}
 DENSITY.G/CM3={density}
 {gravity}
+FIELD.IDENTIFICATION={identification:03d}
 """
         densities = self.densities
         for i, radius in enumerate(self.radius_sizes):
@@ -378,7 +391,8 @@ DENSITY.G/CM3={density}
             lines.append(pclass_tmpl.format(radius=radius,
                                             density=dens,
                                             classname=self.component_name(i),
-                                            gravity=gravity))
+                                            gravity=gravity,
+                                            identification=i+1))
         
         for i, frac in enumerate(self.size_distribution):
             size_activity = activity + [f"{self.activity_after_1h*frac:.3E}"]
