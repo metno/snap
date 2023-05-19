@@ -184,6 +184,33 @@ class Resources(ResourcesCommon):
                     }
         return isotopes
 
+    def isotopes2isoIds(self, isotopes: list) -> list:
+        '''
+        translate a list of isotopes, i.e. ['Cs-137', ...] or ['Cs137', ...] or ['17', ...]
+        to argos isotope id's
+        '''
+        retval = []
+        allIsos = self.getIsotopes()
+        for iso in isotopes:
+            isoId = -1
+            try:
+                iId = int(iso)
+                if iId in allIsos:
+                    isoId = iId
+                continue
+            except:
+                pass
+            iso = iso.replace('-', '')
+            for iId, isoDict in allIsos.items():
+                if iso == isoDict['isotope']:
+                    isoId = iId
+                    break
+            if isoId == -1:
+                raise Exception(f"no isotope-id for isotope {iso}")
+            retval.append(isoId)
+        return retval
+
+
     def isotopes2snapinput(self, isotopeIds, add_DPUI=True):
         """Read a list of isotopeIds and return a text-block to be used for a snap.input file, like
 COMPONENT= Cs137
@@ -253,7 +280,7 @@ GRAVITY.FIXED.M/S=0.0002
 
         return "\n".join(snapinputs)
 
-    def _getGribWriterConfig(self, isotopes, setFillValue=True):
+    def _getGribWriterConfig(self, isoIds, setFillValue=True):
         """Return a dictionary with a xml: xml-configuration string and a exracts: output-type and variable-names.
         Use in conjunction with convert_to_grib.
         """
@@ -271,7 +298,7 @@ GRAVITY.FIXED.M/S=0.0002
             isoTemp = isoTemplate.read()
 
         isoStr = ""
-        for isoId in isotopes:
+        for isoId in isoIds:
             isoName = allIsos[isoId]["isotope"]
             isoStr += isoTemp.format(ISOTOPE=isoName, ID=isoId)
             extracts["conc"].append(f"{isoName}_concentration")
@@ -629,14 +656,23 @@ GRAVITY.FIXED.M/S=0.0002
             dosecoeffs = None
         return dosecoeffs
 
+
+
 # setting bitmapCompress as default to False
 # fimex drops all fields which are completely missing, which argos doesn't like
 # waiting for fimex-fix
 def snapNc_convert_to_grib(snapNc, basedir, ident, isotopes, bitmapCompress=False):
     """simple function to implement conversion to grib snap.nc using fimex
     and resources-setup
+
+    Parameters
+    ----------
+    isotopes : list
+        list of isoIds [1,2,3,4...] or isotope-names like ['Cs-137', 'Cs-134',...]
     """
-    config = Resources()._getGribWriterConfig(isotopes, setFillValue=bitmapCompress)
+    res = Resources()
+    isoIds = res.isotopes2isoIds(isotopes)
+    config = res._getGribWriterConfig(isoIds, setFillValue=bitmapCompress)
     xmlFile = "cdmGribWriterConfig.xml"
     basexmlFile = os.path.join(basedir, xmlFile)
     ncmlFile = "config.ncml"

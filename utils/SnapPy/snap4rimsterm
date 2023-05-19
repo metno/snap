@@ -278,7 +278,7 @@ def snap4rimsterm(rimsterm, argosrequest, basedir, ident, met_model, bitmapCompr
             print("output in format: {}".format(oformat.text))
             if oformat.text == 'GRIB':
                 if is_bomb:
-                    isotopes = BombIsotopeFractions().isotopes
+                    isotopes = BombIsotopeFractions().isotopes()
                 else:
                     isotopes = rimstermGetIsotopes(root).values()
                 snapNc_convert_to_grib(snapNC, basedir, ident, isotopes, bitmapCompress=bitmapCompress)

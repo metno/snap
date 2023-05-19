@@ -1,5 +1,6 @@
 import os
 import csv
+import re
 
 class BombIsotopeFractions:
     # fractions{isotope} = {0: frac0, 10: frac10, 20: frac20} with 0-40 in hours and frac0-frac40 fractions of total fission-products in Bq
@@ -36,14 +37,14 @@ class BombIsotopeFractions:
             list over isotopes as ['Cs137', 'Cs134', ...]
         '''
         return self._fractions.keys()
-            
-
+    
     def fraction(self, isotope: str, hrs: int) -> float:
         '''
-            @param isotope is a isotope name like Cs137
+            @param isotope is a isotope name like Cs137 or Cs-137
             @param hrs since bomb, intra/extrapolated
             return a fraction of the total activity
         '''
+        isotope = isotope.replace("-", "")
         stepfracs = self._fractions[isotope]
         if hrs < 0:
             return 0
