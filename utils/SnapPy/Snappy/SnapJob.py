@@ -112,7 +112,7 @@ chmod g+rw {rundir}/$JOB_NAME.$JOB_ID.logerr
 
 function send_status()
 {{
-    scp {scpoptions} {statusfile} {scpdestination}
+    rsync -a -e 'ssh {sshoptions}' {statusfile} {scpdestination}
 }}
 
 function send_msg()
@@ -149,7 +149,7 @@ if [ $? -ne 0 ]; then
     send_msg 410 "{model} internal error, zip failed"
     exit 1;
 fi
-scp {scpoptions} {zipreturnfile} {scpdestination}
+rsync -a -e 'ssh {sshoptions}' {zipreturnfile} {scpdestination}
 if [ $? -ne 0 ]; then
     send_msg 410 "{model} internal error copying data to destination"
     exit 1;
@@ -165,7 +165,7 @@ exit 0;
             zipreturnfile=self.get_return_filename(),
             model=self.task.model,
             statusfile=self.task.status_filename(),
-            scpoptions=self.task.scpoptions,
+            sshoptions=self.task.sshoptions,
             scpdestination=self.task.scpdestination,
             module_to_load=module_to_load,
             queue=queue,
