@@ -258,13 +258,7 @@ def snap4rimsterm(rimsterm, argosrequest, basedir, ident, met_model, bitmapCompr
         else:
             raise Exception("bsnap_naccident in {} failed".format(basedir))
 
-    print("snapAddToa snap.nc")
     with netCDF4.Dataset(os.path.join(basedir, 'snap.nc'), 'a') as nc:
-        try:
-            add_toa_to_nc(nc)
-        except Exception as ex:
-            # don't raise exception here, just log, data might still be useful without toa
-            errlog.write(f"snapAddToa snap.nc in {basedir} failed: {ex}\n")
         if is_bomb:
             print("snapAddBombIsotopes --nc snap.nc")
             try:
@@ -272,6 +266,12 @@ def snap4rimsterm(rimsterm, argosrequest, basedir, ident, met_model, bitmapCompr
             except Exception as ex:
                 errlog.write(f"snapAddBombIsotopes --nc snap.nc in {basedir} failed: {ex}\n")
                 raise ex
+        try:
+            print("snapAddToa snap.nc")
+            add_toa_to_nc(nc)
+        except Exception as ex:
+            # don't raise exception here, just log, data might still be useful without toa
+            errlog.write(f"snapAddToa snap.nc in {basedir} failed: {ex}\n")
 
     if argosRoot:
         for oformat in argosRoot.findall("OutputFormat"):
