@@ -68,6 +68,7 @@ class SnapTask:
     model = typed_property("model", str)
     id = typed_property("id", str)
     scpdestination = typed_property("scpdestination", str)
+    sshoptions = typed_property("sshoptions", str)
     timestamp = typed_property("timestamp", datetime.datetime)
     rundir = typed_property("rundir", str)
     queue: str = typed_property("queue", str)
@@ -80,7 +81,7 @@ class SnapTask:
         model,
         ident,
         scpdestination,
-        scpoptions,
+        sshoptions,
         queue,
     ):
         self.topdir = topdir
@@ -89,7 +90,7 @@ class SnapTask:
         self.model = model
         self.id = ident
         self.scpdestination = scpdestination
-        self.scpoptions = scpoptions
+        self.sshoptions = sshoptions,
         self.timestamp = datetime.datetime.now()
         self.queue = queue
 
@@ -373,7 +374,7 @@ class SnapRemoteRunner:
                         ident=m.group(1),
                         model=m.group(2),
                         scpdestination=self.scpdestination,
-                        scpoptions=" ".join(self.ssh.scp_options),
+                        sshoptions=" ".join(self.ssh.ssh_options),
                         queue=self.queue,
                     )
                     if task.is_complete(reldir=self.UPLOAD_DIR):
