@@ -2,27 +2,8 @@
 
 set -e
 
-if [ -z "$1" ]; then
-    VERSION="TEST"
-else
-    VERSION="$1"
-fi
-export VERSION
-
-PREFIX=/modules/rhel8/user-apps/fou-modules/SnapPy/"$VERSION"/
-if [ -d "$PREFIX" ]; then
-    echo "This version ('$VERSION') already exists, overwriting in 10 seconds"
-    echo "Use ctrl-C to cancel"
-    sleep 10
-else
-    mkdir "$PREFIX"
-fi
-export PREFIX
-
-source /modules/rhel8/conda/install/bin/activate
-
 install_conda_env() {
-conda create --channel conda-forge --prefix "$PREFIX" --yes --file /dev/stdin <<EOF
+    conda create --channel conda-forge --prefix "$1" --yes --file /dev/stdin <<EOF
 python=3.10
 cartopy=0.21.1
 fimex=1.9.5
@@ -71,11 +52,9 @@ install_snappy() {
     )
 
     (
-        export VERSION="$SNAPPY_VERSION"
         # Pip install messes up shebang: https://github.com/pypa/setuptools/issues/494
         # pip install ./utils/SnapPy/
-        cd utils/SnapPy || exit 2
-        python3 setup.py install
+        pip install ./utils/SnapPy
     )
 }
 
@@ -89,14 +68,8 @@ install_bsnap() {
 main() {
     if [ -z "$1" ]; then
         MODULE_VERSION="TEST"
-        SNAPPY_VERSION="0.0.0.dev0"
     else
         MODULE_VERSION="$1"
-        if [ -z "$2" ]; then
-            SNAPPY_VERSION="$MODULE_VERSION"
-        else
-            SNAPPY_VERSION="$2"
-        fi
     fi
 
     MODULE_PREFIX=/modules/rhel8/user-apps/fou-modules/SnapPy/"$MODULE_VERSION"/
