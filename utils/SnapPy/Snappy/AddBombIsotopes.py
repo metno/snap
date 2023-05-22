@@ -24,7 +24,7 @@ def snap_add_bomb_isotopes(nc: netCDF4.Dataset):
         for iso in isos:
             # declare variables
             name = f"{iso}_{var}"
-            if not name in nc.variables:
+            if name not in nc.variables:
                 nc.createVariable(name, basevar.datatype, basevar.dimensions, zlib=True,
                     chunksizes=basevar.chunking())
                 for attr in basevar.ncattrs():
