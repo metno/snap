@@ -20,7 +20,7 @@ with status_number/text combinations like:
 |410 | {model} internal error, zip failed | Internal Error |
 |410 | {model} internal error, ncatted failed | Internal Error |
 |500 | internal error, cannot start job in queue in dir '{rundir}'| Internal Error |
-|500 | internal error in status tag| Internal Error |
+|500 | internal error in status tag | Internal Error |
 
 status codes from status_exporter (alert-manager):
 |code| explanation |
