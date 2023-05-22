@@ -118,7 +118,7 @@ class SnapTask:
         except Exception as ex:
             traceback.print_exc()
             raise ex
-        if retval == False:
+        if not retval:
             raise Exception("Could not submit to queue")
 
     def _handle(self, hpc):
