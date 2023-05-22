@@ -20,7 +20,7 @@ class BombIsotopeFractions:
                 header = next(csvreader)
                 offset = 9
                 for i,hrs in enumerate(cls._timesteps):
-                    if not f"t={hrs}" in header[offset+i]:
+                    if f"t={hrs}" not in header[offset+i]:
                         raise Exception(f"error in header for hour {hrs}: {header[offset+i]}")
                 for row in csvreader:
                     if '-' in row[0]:
