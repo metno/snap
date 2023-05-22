@@ -192,7 +192,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
     ! stemradius not with height profiles, nrelheight must be 1
       stemradius = releases(nt)%relstemradius*rt1 + releases(nt+1)%relstemradius*rt2
     else
-      ! constant release between timesteps 
+      ! constant release rate between timesteps 
       do n=1,ncomp
         relbq(n) = releases(nt)%relbqsec(n,ih)
       end do
