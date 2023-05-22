@@ -100,7 +100,7 @@ chmod g+rw {rundir}/$JOB_NAME.$JOB_ID.logerr
 
 function send_status()
 {{
-    rsync -a -e 'ssh {sshoptions}' {statusfile} {scpdestination}
+    rsync --archive --rsh 'ssh {sshoptions}' {statusfile} {scpdestination}
 }}
 
 function send_msg()
@@ -137,7 +137,7 @@ if [ $? -ne 0 ]; then
     send_msg 410 "{model} internal error, zip failed"
     exit 1;
 fi
-rsync -a -e 'ssh {sshoptions}' {zipreturnfile} {scpdestination}
+rsync --archive --rsh 'ssh {sshoptions}' {zipreturnfile} {scpdestination}
 if [ $? -ne 0 ]; then
     send_msg 410 "{model} internal error copying data to destination"
     exit 1;
