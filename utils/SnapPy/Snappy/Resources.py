@@ -198,7 +198,7 @@ class Resources(ResourcesCommon):
                 if iId in allIsos:
                     isoId = iId
                 continue
-            except:
+            except Exception:
                 pass
             iso = iso.replace('-', '')
             for iId, isoDict in allIsos.items():
