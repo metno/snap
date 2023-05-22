@@ -15,7 +15,7 @@ with status_number/text combinations like:
 |202 | Finished extracting {model} data for ARGOS | Success | only code ARGOS reacts upon, all others are send to user |
 |409 | {model} output data do not exist | Input Error | customer responsibility |
 |409 | {model} output data does not exist, snap4rimsterm failed |  Input Error | customers responsibility |
-|409 | unknown input model {model} | Input Error | customers responsibility |
+|409 | unknown input model {model} | Input Error | customer responsibility |
 |410 | {model} internal error copying data to destination | Internal Error |
 |410 | {model} internal error, zip failed | Internal Error |
 |410 | {model} internal error, ncatted failed | Internal Error |
