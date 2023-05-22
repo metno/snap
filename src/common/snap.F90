@@ -451,7 +451,6 @@ PROGRAM bsnap
     !..total no. of timesteps to release particles
     nstepr = nsteph*nhrel
 
-    !if (time_profile == TIME_PROFILE_BOMB) nstepr = 1
 
     !..information to log file
     write (iulog, *) 'nx,ny,nk:  ', nx, ny, nk
