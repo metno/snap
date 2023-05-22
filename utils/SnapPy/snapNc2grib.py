@@ -21,7 +21,7 @@ def getIsotopesFromFile(filename):
             isotopes.append(isoId)
             used_isotop_names.append(iso['isotope'])
     print(f"converting isotopes: {', '.join(used_isotop_names)}", file=sys.stderr)
-    dropped_names = [name for name in isotop_names if name not in used_isotop_names]
+    dropped_names = set(isotop_names).difference(used_isotop_names)
     print(f"dropping unknown isotopes: {', '.join(dropped_names)}", file=sys.stderr)
     return isotopes
 
