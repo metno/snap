@@ -21,7 +21,7 @@ def getIsotopesFromFile(filename):
     print(f"converting isotopes: {', '.join(isotop_names)}", file=sys.stderr)
     return isotopes
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description="convert a snap.nc output-file to grib, should be run after snapAddToa")
     parser.add_argument("--nc", help="snap.nc filename", required=True)
     parser.add_argument("--ident", help="output-file identifier", required=True)
@@ -37,3 +37,6 @@ if __name__ == "__main__":
         bitmapCompress= True
     dirname = os.path.dirname(ncfile)
     snapNc_convert_to_grib(ncfile, dirname, ident, isotopes, bitmapCompress=bitmapCompress)
+
+if __name__ == "__main__":
+    main()

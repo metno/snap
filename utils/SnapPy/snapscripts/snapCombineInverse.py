@@ -135,21 +135,25 @@ def initializeNc(ncFile, outNcFile, isotope):
 
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument("-i", required=True, action="append", help="one or more snap.nc file from an inverse run to a measurement")
-parser.add_argument("-n", action="append", help="zero or more snap.nc file from an inverse run to a stations without measurement")
-parser.add_argument("-o", required=True, help="output nc file")
-parser.add_argument("-I", default="I131", help="isotope (default: I131)")
-args = parser.parse_args()
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-i", required=True, action="append", help="one or more snap.nc file from an inverse run to a measurement")
+    parser.add_argument("-n", action="append", help="zero or more snap.nc file from an inverse run to a stations without measurement")
+    parser.add_argument("-o", required=True, help="output nc file")
+    parser.add_argument("-I", default="I131", help="isotope (default: I131)")
+    args = parser.parse_args()
 
-(times, out_nc, conc, prob) = initializeNc(args.i[0], args.o, args.I)
-# remove first input
-args.i.pop(0)
-for i in args.i:
-    (conc, prob) = addFile(i, args.I, times, conc, prob)
+    (times, out_nc, conc, prob) = initializeNc(args.i[0], args.o, args.I)
+    # remove first input
+    args.i.pop(0)
+    for i in args.i:
+        (conc, prob) = addFile(i, args.I, times, conc, prob)
 
-if args.n:
-    for i in args.n:
-        (conc, prob) = addFile(i, args.I, times, conc, prob, False)
+    if args.n:
+        for i in args.n:
+            (conc, prob) = addFile(i, args.I, times, conc, prob, False)
 
-finishOutput(out_nc, args.I, times, conc, prob)
+    finishOutput(out_nc, args.I, times, conc, prob)
+
+if __name__ == "__main__":
+    main()

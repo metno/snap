@@ -176,7 +176,7 @@ class EemepModelRunner():
 
 
 
-if __name__ == '__main__':
+def main():
     os.umask(0)
     import argparse
     parser = argparse.ArgumentParser(description="Search for volcano.xml/npp.xml files in the top-level directory, take the newest one and run the model on a HPC machine")
@@ -197,3 +197,7 @@ if __name__ == '__main__':
             delete_oldfiles(args.dir, args.cleanup)
         if dir2 and dirIsWritable(dir2):
             delete_oldfiles(dir2, args.cleanup)
+
+
+if __name__ == '__main__':
+    main()

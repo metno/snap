@@ -52,11 +52,9 @@ install_snappy() {
     )
 
     (
-        export VERSION="$SNAPPY_VERSION"
         # Pip install messes up shebang: https://github.com/pypa/setuptools/issues/494
         # pip install ./utils/SnapPy/
-        cd utils/SnapPy || exit 2
-        python3 setup.py install
+        pip install ./utils/SnapPy
     )
 }
 
@@ -70,14 +68,8 @@ install_bsnap() {
 main() {
     if [ -z "$1" ]; then
         MODULE_VERSION="TEST"
-        SNAPPY_VERSION="0.0.0.dev0"
     else
         MODULE_VERSION="$1"
-        if [ -z "$2" ]; then
-            SNAPPY_VERSION="$MODULE_VERSION"
-        else
-            SNAPPY_VERSION="$2"
-        fi
     fi
 
     MODULE_PREFIX=/modules/rhel8/user-apps/fou-modules/SnapPy/"$MODULE_VERSION"/
