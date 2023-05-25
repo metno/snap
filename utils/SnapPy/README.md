@@ -30,6 +30,7 @@ status codes from status_exporter (alert-manager):
 |505 | uploaded (100), but not queued/started after 10 min |
 |506 | queued (101), but not started after 10 min |
 |507 | started (102), but no change after 2 hours |
+|508 | `*_status` file not readable or malformatted |
 
 
 
