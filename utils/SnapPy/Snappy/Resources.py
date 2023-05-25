@@ -184,7 +184,7 @@ class Resources(ResourcesCommon):
                     }
         return isotopes
 
-    def isotopes2isoIds(self, isotopes: list) -> list:
+    def isotopes2isoIds(self, isotopes: list[str | int]) -> list[int]:
         '''
         translate a list of isotopes, i.e. ['Cs-137', ...] or ['Cs137', ...] or ['17', ...]
         to argos isotope id's
@@ -197,14 +197,14 @@ class Resources(ResourcesCommon):
                 iId = int(iso)
                 if iId in allIsos:
                     isoId = iId
-                continue
             except Exception:
                 pass
-            iso = iso.replace('-', '')
-            for iId, isoDict in allIsos.items():
-                if iso == isoDict['isotope']:
-                    isoId = iId
-                    break
+            if isoId == -1:
+                iso = iso.replace('-', '')
+                for iId, isoDict in allIsos.items():
+                    if iso == isoDict['isotope']:
+                        isoId = iId
+                        break
             if isoId == -1:
                 raise Exception(f"no isotope-id for isotope {iso}")
             retval.append(isoId)
@@ -753,4 +753,10 @@ if __name__ == "__main__":
             datetime.combine(date.today(), time(0)), -72
         )
     )
-    print(Resources().get_dosecoefficients())
+    print(Resources().getDoseCoefficients())
+    isotopes = ['Cs-137', 'Cs134']
+    isoIds = Resources().isotopes2isoIds(isotopes)
+    print(f"f{isotopes} have ids:  {isoIds}")
+    assert len(isotopes) == len(isoIds)
+    # isotopes2isoIds idempotent
+    assert len(isoIds) == len(Resources().isotopes2isoIds(isoIds))
