@@ -90,7 +90,7 @@ class SnapTask:
         self.model = model
         self.id = ident
         self.scpdestination = scpdestination
-        self.sshoptions = sshoptions,
+        self.sshoptions = sshoptions
         self.timestamp = datetime.datetime.now()
         self.queue = queue
 
