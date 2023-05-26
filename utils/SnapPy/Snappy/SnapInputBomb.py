@@ -27,7 +27,7 @@ class ExplosionType(Enum):
                            [          .02,  .08,  .17,  .25,  .24,  .17,   .06,   .01] 
                            )
     # Glassstone Dolan, uniform below 20µm
-    HIGH_ALTITUDE = _ExplosionType("1000 meters",
+    HIGH_ALTITUDE = _ExplosionType("High Altitude",
                            [2.2, 4.4, 8.6, 14.6],
                            [.25, .25, .25,  .25] 
                            )
@@ -38,7 +38,8 @@ class ExplosionType(Enum):
         name = name.lower().strip()
         if name == 'surface':
             return ExplosionType.SURFACE
-        elif name == '1000 meters':
+        elif name == '1000 meters' or name == 'high altitude':
+            # '1000 meters' was previous name
             return ExplosionType.HIGH_ALTITUDE
         else:
             return ExplosionType.MIXED
