@@ -1244,7 +1244,7 @@ subroutine initialize_output(filename, itime, ierror)
           units="Bq/m2", chunksize=chksz3d)
         if (output_wetdeprate) then
           call nc_declare(iunit, dimids4d, varid%comp(m)%wetscavrate, &
-             trim(output_component(m)%name)//"_wetdeprate", units="m/s", chunksize=chksz4d)
+             trim(output_component(m)%name)//"_wetdeprate", units="1/s", chunksize=chksz4d)
         endif
       end if
 

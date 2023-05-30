@@ -42,12 +42,27 @@ module wetdep
       wetdep_scheme_t(3, "Conventional")
 
   interface operator (==)
-    module procedure :: equal_scheme
+    module procedure :: equal_scheme, equal_incloud_scheme
   end interface
 
   interface operator (/=)
-    module procedure :: not_equal_scheme
+    module procedure :: not_equal_scheme, not_equal_incloud_scheme
   end interface
+
+
+  type, public :: wetdep_incloud_scheme_t
+    integer, private :: scheme
+    character(len=32), public :: description
+  end type
+
+  type(wetdep_incloud_scheme_t), parameter, public :: WETDEP_INCLOUD_SCHEME_UNDEFINED = &
+      wetdep_incloud_scheme_t(0, "Not defined")
+  type(wetdep_incloud_scheme_t), parameter, public :: WETDEP_INCLOUD_SCHEME_NONE = &
+      wetdep_incloud_scheme_t(1, "No scheme (skip)")
+  type(wetdep_incloud_scheme_t), parameter, public :: WETDEP_INCLOUD_SCHEME_GCM = &
+      wetdep_incloud_scheme_t(2, "GCM")
+  type(wetdep_incloud_scheme_t), parameter, public :: WETDEP_INCLOUD_SCHEME_CTM = &
+      wetdep_incloud_scheme_t(3, "CTM")
 
   type, public :: conventional_params_t
     real(real64) :: A
@@ -58,6 +73,7 @@ module wetdep
   real(real64), allocatable, save, public :: conventional_deprate_m1(:,:)
 
   type(wetdep_scheme_t), save, public :: wetdep_scheme = WETDEP_SCHEME_UNDEFINED
+  type(wetdep_incloud_scheme_t), save, public :: wetdep_incloud_scheme = WETDEP_INCLOUD_SCHEME_UNDEFINED
 
 contains
 
@@ -68,6 +84,16 @@ contains
 
   logical pure function not_equal_scheme(this, other) result(eq)
     type(wetdep_scheme_t), intent(in) :: this, other
+    eq = .not. (this == other)
+  end function
+
+  logical pure function equal_incloud_scheme(this, other) result(eq)
+    type(wetdep_incloud_scheme_t), intent(in) :: this, other
+    eq = this%scheme == other%scheme
+  end function
+
+  logical pure function not_equal_incloud_scheme(this, other) result(eq)
+    type(wetdep_incloud_scheme_t), intent(in) :: this, other
     eq = .not. (this == other)
   end function
 
@@ -294,6 +320,7 @@ contains
     conventional_deprate_m1(:,:) = conventional_params%A * (precip ** conventional_params%B)
   end subroutine
 
+  !> TODO: Expand to 3D
   subroutine wetdep_conventional(depwet, part, tstep)
     USE iso_fortran_env, only: real64
     USE particleML, only: Particle, extraParticle
@@ -360,93 +387,152 @@ contains
   end subroutine
 
   !> Aerosol rainout process also known as GCM-type wet deposition process
-  subroutine wetdep_rainout()
-    real :: lambda
+  subroutine wetdep_incloud_gcm(lambda, q, cloud_water, cloud_fraction)
+    real, intent(out) :: lambda(:,:)
     !> vertical flux of hydrometeors
-    real, parameter :: P = 1.0
+    real, intent(in) :: q(:,:)
     !> Fraction of aerosol mass in cloud water to total aerosol mass in the grid
-    !> A tuning parameter necessary for other GCMs
+    !> or the absorbtion coefficient
+    !> Usually very high
     real, parameter :: f_inc = 1.0
     !> cloud water
-    real, parameter :: C_w = 1.0
+    real, intent(in) :: cloud_water(:,:)
     !> Cloud fraction
-    real, parameter :: C_f = 1.0
+    real, intent(in) :: cloud_fraction(:,:)
 
 
-    lambda = 1 - P/(P + C_w) * f_inc * C_f
+    lambda(:,:) = 1 - q/(q + cloud_water) * f_inc * cloud_fraction
   end subroutine
 
-  subroutine wet_deposition_rate_bartnicki(wscav, radius, precip, ccf, use_ccf)
+  !> Aerosol rainout process also known as CTM-type wet deposition process
+  subroutine wetdep_incloud_ctm(lambda, q, cloud_water, cloud_fraction)
+    real, intent(out) :: lambda(:,:)
+    !> vertical flux of hydrometeors
+    real, intent(in) :: q(:,:)
+    !> Fraction of aerosol mass in cloud water to total aerosol mass in the grid
+    !> or the absorbtion coefficient
+    !> Usually very high
+    real, parameter :: f_inc = 1.0
+    !> cloud water
+    real, intent(in) :: cloud_water(:,:)
+    !> Cloud fraction
+    real, intent(in) :: cloud_fraction(:,:)
+
+    !> Characteristic time of cloud (equal to timestep?)
+    real, parameter :: tau_cloud = 1.0
+
+    real, allocatable :: tau_rain(:,:)
+
+    allocate(tau_rain, mold=lambda)
+
+    tau_rain(:,:) = q / cloud_water
+
+    lambda(:,:) = (1.0 - exp(-tau_cloud / tau_rain)) / tau_cloud * f_inc * cloud_fraction
+  end subroutine
+
+  subroutine wet_deposition_rate_bartnicki(wscav, radius, precip, cw, ccf, use_ccf)
     real, intent(out) :: wscav(:,:,:)
     real, intent(in) :: precip(:,:,:)
+    real, intent(in) :: cw(:,:,:)
     real, intent(in) :: radius
     real, intent(in) :: ccf(:,:,:)
     logical, intent(in) :: use_ccf
 
     real :: depconst
-
-    depconst = wet_deposition_constant(radius)
-    if (.not.use_ccf) then
-      wscav(:,:,:) = wet_deposition_rate_imm(radius, precip, depconst)
-      return
-    endif
-
-    block
-      integer :: i, j, k, nx, ny, nk
-      real, allocatable :: precip_scaled(:,:)
-      real, allocatable :: ccf_max(:,:)
+    integer :: nx, ny, nk
 
       nx = size(precip,1)
       ny = size(precip,2)
       nk = size(precip,3)
 
-      allocate(precip_scaled(nx,ny), ccf_max(nx,ny))
+    depconst = wet_deposition_constant(radius)
+    if (.not.use_ccf) then
+      wscav(:,:,:) = wet_deposition_rate_imm(radius, precip, depconst)
 
-      ccf_max(:,:) = 0.0
+    else
+      block
+        integer :: i, j, k
+        real, allocatable :: precip_scaled(:,:)
+        real, allocatable :: ccf_max(:,:)
+
+
+        allocate(precip_scaled(nx,ny), ccf_max(nx,ny))
+
+        ccf_max(:,:) = 0.0
+
+        do k=nk,1,-1
+          precip_scaled(:,:) = 0.0
+          ccf_max(:,:) = max(ccf_max, ccf(:,:,k))
+
+          do j=1,ny
+            do i=1,nx
+              if (precip(i,j,k) <= 0.0) cycle
+
+              if (ccf_max(i,j) > 0.0) then
+                ! Scales up the precipitation intensity
+                precip_scaled(i,j) = precip(i,j,k) / ccf_max(i,j)
+              else
+                precip_scaled(i,j) = precip(i,j,k)
+              endif
+            enddo
+          enddo
+          wscav(:,:,k) = wet_deposition_rate_imm(radius, precip_scaled, depconst)
+
+          do j=1,ny
+            do i=1,nx
+              if (ccf_max(i,j) > 0.0) then
+                ! Only applies to the portion in the cloud
+                wscav(i,j,k) = wscav(i,j,k) * ccf_max(i,j)
+              endif
+            enddo
+          enddo
+        enddo
+      end block
+    endif
+
+    block
+      integer :: k
+      real, allocatable :: incloud_coeff(:,:)
+
+      allocate(incloud_coeff(nx,ny))
 
       do k=nk,1,-1
-        precip_scaled(:,:) = 0.0
-        ccf_max(:,:) = max(ccf_max, ccf(:,:,k))
-
-        do j=1,ny
-          do i=1,nx
-            if (precip(i,j,k) <= 0.0) cycle
-
-            if (ccf_max(i,j) > 0.0) then
-              ! Scales up the precipitation intensity
-              precip_scaled(i,j) = precip(i,j,k) / ccf_max(i,j)
-            else
-              precip_scaled(i,j) = precip(i,j,k)
-            endif
-          enddo
-        enddo
-        wscav(:,:,k) = wet_deposition_rate_imm(radius, precip_scaled, depconst)
-
-        do j=1,ny
-          do i=1,nx
-            if (ccf_max(i,j) > 0.0) then
-              ! Only applies to the portion in the cloud
-              wscav(:,:,k) = wscav(:,:,k) * ccf_max
-            endif
-          enddo
-        enddo
+        select case(wetdep_incloud_scheme%scheme)
+          case (WETDEP_INCLOUD_SCHEME_NONE%scheme)
+            incloud_coeff(:,:) = 0.0
+          case (WETDEP_INCLOUD_SCHEME_GCM%scheme)
+            call wetdep_incloud_gcm(incloud_coeff, precip(:,:,k), cw(:,:,k), ccf(:,:,k))
+          case (WETDEP_INCLOUD_SCHEME_CTM%scheme)
+            call wetdep_incloud_ctm(incloud_coeff, precip(:,:,k), cw(:,:,k), ccf(:,:,k))
+          case default
+            error stop "Unknown scheme"
+        end select
+        ! call incloud_scavenging(incloud_coeff, precip(:,:,k), cw(:,:,k), ccf(:,:,k))
+        wscav(:,:,k) = max(wscav(:,:,k), incloud_coeff)
       enddo
     end block
   end subroutine
 
-  elemental subroutine incloud_scavenging(scav, precip, cw, cc)
-    real, intent(out) :: scav
-    real, intent(in) :: precip
-    real, intent(in) :: cw
-    real, intent(in) :: cc
-
-    real :: drainage_time
-
-
-    drainage_time = cw / precip
-
-    scav = 1.0 / drainage_time
-  end subroutine
+!  elemental subroutine incloud_scavenging(scav, precip, cw, cc)
+!    USE IEEE_ARITHMETIC, only: IEEE_VALUE, IEEE_POSITIVE_INF
+!    real, intent(out) :: scav
+!    real, intent(in) :: precip
+!    real, intent(in) :: cw
+!    real, intent(in) :: cc
+!
+!    real :: drainage_time
+!    real, parameter :: MIN_DRAINAGE_TIME = 300
+!
+!    if (precip == 0.0) then
+!      drainage_time = IEEE_VALUE(drainage_time, IEEE_POSITIVE_INF)
+!    else
+!      drainage_time = cw / precip
+!    endif
+!
+!    drainage_time = max(drainage_time, MIN_DRAINAGE_TIME)
+!
+!    scav = 1.0 / drainage_time
+!  end subroutine
 
   subroutine prepare_wetdep(wscav, radius, scheme, precip, cw, ccf, use_ccf)
     type(wetdep_scheme_t), intent(in) :: scheme
@@ -459,7 +545,7 @@ contains
     logical, intent(in) :: use_ccf
 
     if (scheme == WETDEP_SCHEME_BARTNICKI) then
-      call wet_deposition_rate_bartnicki(wscav, radius, precip, ccf, &
+      call wet_deposition_rate_bartnicki(wscav, radius, precip, cw, ccf, &
                 use_ccf=use_ccf)
     else
       error stop "Not implemented"
