@@ -1,32 +1,14 @@
 ***********************************************************************
-*** snap.input  ('snap.input')
-***
-*** DNMI SNAP - Severe Nuclear Accident Program
-***
-*SET_RELEASE.POS= P=   61.9720,   10.8100
-*TIME.START=   2012 12 20 06
-*SET_RELEASE.POS= P=   57.25,   16.67
-*TIME.RUN  = 48h
+*** MET Norway SNAP input file derived from snap.input_nrpa_ec_0p1.tmpl
+***********************************************************************
 
 RANDOM.WALK.ON
-* RANDOM.WALK.OFF
 
-* BOUNDARY.LAYER.FULL.MIX.ON
 BOUNDARY.LAYER.FULL.MIX.OFF
 
-* DRY.DEPOSITION.OLD
 DRY.DEPOSITION.NEW
 
 WET.DEPOSITION.VERSION = 2
-
-*TIME.RELEASE.PROFILE.STEPS
-*RELEASE.HOUR=                0,       12
-*RELEASE.RADIUS.M=           50,       50
-*RELEASE.LOWER.M=            15,       15
-*RELEASE.UPPER.M=           500,      500
-*RELEASE.BQ/SEC.COMP= 1.39e+13, 1.39e+13, 'I131'
-*RELEASE.BQ/SEC.COMP= 1.0e+13, 1.0e+13, 'Xe133'
-*RELEASE.BQ/SEC.COMP=  2.6e+11,  2.6e+11, 'Cs137'
 
 *** particles distributed on components according to mass
 MAX.TOTALPARTICLES= 20000000
@@ -36,9 +18,7 @@ REMOVE.RELATIVE.MASS.LIMIT= 0.
 
 TIME.STEP= 300.
 STEP.HOUR.INPUT.MIN=  3
-* STEP.HOUR.INPUT.MIN=  6
 STEP.HOUR.INPUT.MAX= 6
-*STEP.HOUR.OUTPUT.FIELDS= 240
 ASYNOPTIC.OUTPUT
 *SYNOPTIC.OUTPUT
 
@@ -49,11 +29,7 @@ PRECIPITATION.ON
 MODEL.LEVEL.FIELDS.OFF
 * MODEL.LEVEL.FIELDS.ON
 
-** RELEASE POSITIONS
-** (release.pos= 'name', latitude,longitude)
-
 POSITIONS.DECIMAL
-
 
 ** ECRead output
 GRID.NCTYPE = ecemep
@@ -62,11 +38,7 @@ GRID.AUTODETECT.FROM_INPUT
 
 ** INPUT FIELD FILES
 
-FORECAST.HOUR.MIN= +3
-FORECAST.HOUR.MAX= +9999
-
 FIELD.TYPE=netcdf
-*FIELD.INPUT=/lustre/storeB/users/heikok/Meteorology/ecdis2cwf/NRPA_EUROPE_0_1_00/meteo20160606_00.nc
 
 
 ** IDENTIFY OUTPUT FIELDS WITH FORECAST LENGTH OR VALID TIME
