@@ -46,7 +46,7 @@ import sys
 import traceback
 import zipfile
 
-from Snappy.SnapJobEC import SnapJobEC
+from Snappy.SnapJob import SnapJob, UnknownModelException
 
 
 DEBUG = 0
@@ -90,7 +90,7 @@ class SnapTask:
         self.model = model
         self.id = ident
         self.scpdestination = scpdestination
-        self.sshoptions = sshoptions,
+        self.sshoptions = sshoptions
         self.timestamp = datetime.datetime.now()
         self.queue = queue
 
@@ -108,13 +108,18 @@ class SnapTask:
         return False
 
     def handle(self, hpc):
-        """ Handle the job on the hpc. HPC directories must be writable locally. Return True if job is submitted """
+        """ Handle the job on the hpc. HPC directories must be writable locally.
+        Raise SnapJob.UnknownModelException on input-zip error
+        Raise Exception on any error
+        """
         retval = False
         try:
             retval = self._handle(hpc)
-        except Exception:
+        except Exception as ex:
             traceback.print_exc()
-        return retval
+            raise ex
+        if not retval:
+            raise Exception("Could not submit to queue")
 
     def _handle(self, hpc):
         top_rundir = os.path.join(self.topdir, SnapRemoteRunner.RUN_DIR)
@@ -136,7 +141,7 @@ class SnapTask:
             zf.extractall(path=self.rundir)
 
         # start a remote detached qsub job
-        snapJob = SnapJobEC(self, hpc)
+        snapJob = SnapJob(self, hpc)
         jobscript = snapJob.job_script()
         jobfile = os.path.join(self.rundir, "snap.job")
         with open(jobfile, "w") as jh:
@@ -274,28 +279,24 @@ class SnapRemoteRunner:
 
         self._check_and_unpack_new_files()
 
-    def write_status(self, task, tag, msg=""):
+    def write_status(self, task, tag):
         """Write a status file to the remote host. All errors here are ignored"""
         try:
-            return self._write_status(task, tag, msg)
+            return self._write_status(task, tag)
         except Exception:
             traceback.print_exc()
 
-    def _write_status(self, task, tag, msg=""):
+    def _write_status(self, task, tag):
         """
-    Old codes from perl:
-    if ($status_number == 100) {$text = ":Getting ARGOS data from server";}
-    if ($status_number == 200) {$text = ":Finished getting ARGOS-data from server";}
-    if ($status_number == 201) {$text = ":Finished running ${model}";}
-    if ($status_number == 202) {$text = ":Finished extracting ${model} data for ARGOS";}
-    if ($status_number == 401) {$text = ":$run_ident" . "_${model}_input does not exist";}
-    if ($status_number == 402) {$text = ":$run_ident" . "_${model}_iso does not exist";}
-    if ($status_number == 403) {$text = ":$run_ident" . "_${model}_src does not exist";}
-    if ($status_number == 404) {$text = ":Inconsistent isotope identification (isotop-navn)";}
-    if ($status_number == 408) {$text = ":Initial time not covered by NWP database";}
-    if ($status_number == 409) {$text = ":${model} output data do not exist";}
-    my $message = "$status_number" . ":" . "$timestamp" . ":" . "$text";
-"""
+        Status codes, see README.md
+        tags:
+          * downloading -> 100
+          * running -> 101
+          * success -> 202
+          * error -> 409
+          * modelerror -> 409
+          * internal -> 500
+        """
         filename = task.status_filename()
         work_file = os.path.join(self.directory, self.WORK_DIR, filename)
         timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M")
@@ -310,6 +311,12 @@ class SnapRemoteRunner:
                 fh.write(
                     "{x}:{ts}::Finished extracting {model} data for ARGOS\n".format(
                         x=202, ts=timestamp, model=task.model
+                    )
+                )
+            elif tag == "inputerror":
+                fh.write(
+                    "{x}:{ts}::{model} unknown input model {model}\n".format(
+                        x=409, ts=timestamp, model=task.model
                     )
                 )
             elif tag == "error":
@@ -329,7 +336,12 @@ class SnapRemoteRunner:
                     )
                 )
             else:
-                fh.write("{tag}:{ts} {msg}\n".format(ts=timestamp, tag=tag, msg=msg))
+                fh.write(
+                    "{x}:{ts}::internal error in status tag\n".format(
+                        x=500, ts=timestamp, rundir=task.rundir
+                    )
+                )
+                print(f"wrong status tag: {tag}", file=sys.stderr)
         self.ssh.put_files([work_file], self.remote_dir, 30)
 
     def _check_and_unpack_new_files(self):
@@ -379,11 +391,14 @@ class SnapRemoteRunner:
                     )
                     if task.is_complete(reldir=self.UPLOAD_DIR):
                         if DEBUG:
-                            print("handling zipfile: {}".format(f))
+                            print("handling input-zipfile: {}".format(f))
                         if not self.dryrun:
-                            if task.handle(self.hpc):
+                            try:
+                                task.handle(self.hpc)
                                 self.write_status(task, tag="running")
-                            else:
+                            except UnknownModelException as umex:
+                                self.write_status(task, tag="inputerror")
+                            except Exception as ex:
                                 self.write_status(task, tag="internal")
                         delete_in_upload.append(f)
                     else:
@@ -421,8 +436,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--queue",
         help="Which queue to run job on",
-        choices=["operational-bionic.q", "operational-r8.q"],
-        default="operational-bionic.q",
+        choices=["research-r8.q", "operational-r8.q"],
+        default="operational-r8.q",
     )
     parser.add_argument(
         "--cleanup",

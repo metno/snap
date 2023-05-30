@@ -18,7 +18,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-from distutils.core import setup
+from setuptools import setup
 import os
 
 version = os.getenv("VERSION", "0.5")
@@ -41,6 +41,11 @@ setup(
         "snapRunnerNpps",
         "snapRunnerNpp",
         "eemepModelRunner",
-        "snapRemoteRunner.py",
+        "snapRemoteRunner.py"
     ],
+    entry_points={
+        'console_scripts': [
+            'snapAddBombIsotopes = Snappy.AddBombIsotopes:main'
+        ]
+    }
 )

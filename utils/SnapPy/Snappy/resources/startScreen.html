@@ -101,7 +101,7 @@ function togglebomb(element)
          <div id="advanced_sourceterm" style="display: none">
          <label>Nuclear bomb: <input type="checkbox" name="isBomb" value="1" onchange="togglebomb(this)"></label>
          <div id="bombRelease" style="display: none">
-         Bomb: Explosive yield: <select name="yield" size="1">
+         Explosive yield: <select name="yield" size="1">
          <option value="1">1kt</option>
          <option value="3">3kt</option>
          <option selected="selected" value="10">10kt</option>
@@ -110,6 +110,12 @@ function togglebomb(element)
          <option value="300">300kt</option>
          <option value="1000">1000kt</option>
          <option value="3000">3000kt</option>
+         </select>
+         <br />
+         Explosion type: <select name="explosion_type" size="1">
+         <option selected="selected" value="Mixed">Mixed</option>
+         <option value="Surface">Surface</option>
+         <option value="High Altitude">High Altitude</option>
          </select>
          </div>
          <p />

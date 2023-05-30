@@ -15,10 +15,14 @@ def getIsotopesFromFile(filename):
             if var.endswith('_concentration'):
                 isotop_names.append(var[:-14])
     isotopes = []
+    used_isotop_names = []
     for isoId, iso in Resources().getIsotopes().items():
         if iso['isotope'] in isotop_names:
             isotopes.append(isoId)
-    print(f"converting isotopes: {', '.join(isotop_names)}", file=sys.stderr)
+            used_isotop_names.append(iso['isotope'])
+    print(f"converting isotopes: {', '.join(used_isotop_names)}", file=sys.stderr)
+    dropped_names = set(isotop_names).difference(used_isotop_names)
+    print(f"dropping unknown isotopes: {', '.join(dropped_names)}", file=sys.stderr)
     return isotopes
 
 if __name__ == "__main__":
