@@ -65,6 +65,8 @@ module snapmetML
     logical :: use_3d_precip = .false.
     !> Wet deposition: Use cloud cover fraction
     logical :: use_ccf = .false.
+    !> Wet deposition: Use incloud scavenging
+    logical :: use_incloud = .false.
   end type
 
   type(met_params_t), save, public :: met_params = met_params_t()
