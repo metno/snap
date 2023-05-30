@@ -2,7 +2,7 @@
 
 set -e
 
-export VERSION=2.2.0
+export VERSION=2.3.0
 #VERSION_=`echo -n $VERSION | tr '.' '_'`
 
 # We do not have a way of cross-compiling,
@@ -15,6 +15,7 @@ rm --force current.mk
 if [ $PLATFORM = bionic ]; then
     ln --symbolic ubuntuBionic.mk current.mk
 elif [ $PLATFORM = jammy ]; then
+    export SNAP_FIMEX_VERSION=1.9
     ln --symbolic gcc_pkgconfig.mk current.mk
 fi
 make clean
