@@ -4,7 +4,7 @@
 #$ -N eemep
 #$ -l h_rt=01:30:00
 #$ -pe opa-fn 144
-#$ -l h_rss=3G,mem_free=3G
+#$ -l h_rss=3G,mem_free=3G,h_data=3G
 #$ -q opath-r8.q
 #$ -M beredskap-fou-kl@met.no
 #$ -P eemep
