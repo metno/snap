@@ -82,7 +82,7 @@ class SnapJob:
             argosrequest = "--argosrequest " + requestfile
 
         module_to_load = os.getenv("SNAP_MODULE", default="SnapPy/2.1.7")
-        mem_options = "h_rss=8G,mem_free=8G,s_rss=7.9G"
+        mem_options = "h_rss=8G,mem_free=8G,h_data=8G"
         queue = self.task.queue
 
         # Create qsub script
