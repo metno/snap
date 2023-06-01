@@ -52,7 +52,7 @@ install_snappy() {
     )
 
     (
-        export VERSION="$SNAPPY_VERSION"
+        export VERSION="0.0.0.dev0"
         # Pip install messes up shebang: https://github.com/pypa/setuptools/issues/494
         # pip install ./utils/SnapPy/
         cd utils/SnapPy || exit 2
@@ -67,42 +67,23 @@ install_bsnap() {
     env VERSION="$MODULE_VERSION" make BINDIR="$MODULE_PREFIX"/bin install
 }
 
-main() {
-    if [ -z "$1" ]; then
-        MODULE_VERSION="TEST"
-        SNAPPY_VERSION="0.0.0.dev0"
-    else
-        MODULE_VERSION="$1"
-        if [ -z "$2" ]; then
-            SNAPPY_VERSION="$MODULE_VERSION"
-        else
-            SNAPPY_VERSION="$2"
-        fi
-    fi
+install_baseenv() {
+    MODULE_VERSION="$1"
 
     MODULE_PREFIX=/modules/rhel8/user-apps/fou-modules/SnapPy/"$MODULE_VERSION"/
     if [ -d "$MODULE_PREFIX" ]; then
-        echo "This version ('$MODULE_VERSION') already exists, overwriting in 10 seconds"
-        echo "Use ctrl-C to cancel"
-        sleep 10
+        echo "This module ('$MODULE_VERSION') already exists" >/dev/stderr
+	exit 2
     fi
 
     # Ignore implicit loading of $1
     source /modules/rhel8/conda/install/bin/activate || true
 
-    if ! conda activate "$MODULE_PREFIX" ; then
-        echo "Installing a fresh conda environment"
-        install_conda_env "$MODULE_PREFIX"
-        conda activate "$MODULE_PREFIX"
-        patch_fimex_pkgconfig
-        install_bdiana $MODULE_PREFIX
-    else
-        echo "Reusing conda module, remove '$MODULE_PREFIX' to run"
-        echo "a clean installation"
-    fi
-
-    install_snappy
-    install_bsnap
+    echo "Installing a fresh conda environment"
+    install_conda_env "$MODULE_PREFIX"
+    conda activate "$MODULE_PREFIX"
+    patch_fimex_pkgconfig
+    install_bdiana $MODULE_PREFIX
 
     MODULEFILE=/modules/MET/rhel8/user-modules/fou-modules/SnapPy/"$MODULE_VERSION"
 
@@ -120,7 +101,7 @@ proc ModulesHelp { } {
     puts stderr "\tconda activate \$conda_env"
 }
 
-module-whatis   "SnapPy"
+module-whatis   "SnapPy - Base deps"
 set             rootenv                 \$conda_env
 setenv          UDUNITS2_XML_PATH       \$rootenv/share/udunits/udunits2.xml
 setenv          PROJ_DATA               \$rootenv/share/proj
@@ -128,8 +109,68 @@ prepend-path    PATH                    \$rootenv/bin
 prepend-path    LD_LIBRARY_PATH         \$rootenv/lib
 prepend-path    MANPATH                 \$rootenv/man
 prepend-path    PKG_CONFIG_PATH         \$rootenv/lib/pkgconfig
+EOF
+}
+
+
+install_snap() {
+    # Ignore implicit loading of $1
+    source /modules/rhel8/conda/install/bin/activate || true
+
+    BASE_MODULE_VERSION="$1"
+    BASE_MODULE_PREFIX=/modules/rhel8/user-apps/fou-modules/SnapPy/"$BASE_MODULE_VERSION"/
+
+    conda activate "$BASE_MODULE_PREFIX"
+
+    MODULE_VERSION="$2"
+    MODULE_PREFIX=/modules/rhel8/user-apps/fou-modules/SnapPy/"$MODULE_VERSION"/
+    mkdir --parent -- "$MODULE_PREFIX/bin"
+
+    python3 -m venv "$MODULE_PREFIX/" --system-site-packages
+    source "$MODULE_PREFIX/bin/activate"
+    install_snappy
+
+    install_bsnap
+
+    BASE_MODULEFILE=/modules/MET/rhel8/user-modules/fou-modules/SnapPy/"$BASE_MODULE_VERSION"
+    MODULEFILE=/modules/MET/rhel8/user-modules/fou-modules/SnapPy/"$MODULE_VERSION"
+
+    sed "s+CONDAMODULEPATH+$MODULE_PREFIX+g" > "$MODULEFILE" <<EOF
+#%Module1.0
+
+set             conda_env               CONDAMODULEPATH
+
+proc ModulesHelp { } {
+    global conda_env
+    puts stderr "\tSNAP in a conda environment (using intel compiler)"
+    puts stderr "\tRead-only view of conda environment (\$conda_env)"
+    puts stderr "\tDo not try to install using this module"
+    puts stderr "\tTo activate the conda module run"
+    puts stderr "\tconda activate \$conda_env"
+}
+
+module-whatis   "SnapPy"
+module          load                    $BASE_MODULEFILE
+set             rootenv                 \$conda_env
+prepend-path    PATH                    \$rootenv/bin
+prepend-path    LD_LIBRARY_PATH         \$rootenv/lib
 setenv          SNAP_MODULE             \$ModulesCurrentModulefile
 EOF
 }
 
-main $@
+
+case "${1:-help}" in
+  install_baseenv)
+    install_baseenv "${2:-TEST}"
+    ;;
+  install_snap)
+    install_snap "${2:-TEST}" "${3:-TEST_SNAP}"
+    ;;
+  *)
+    echo "Usage: ./install_usermodule_r8.sh <CMD>"
+    echo "CMD: install_baseenv <BASEENVNAME>"
+    echo "CMD: install_snap <BASEENVNAME> <ENVNAME>"
+    ;;
+esac
+
+exit
