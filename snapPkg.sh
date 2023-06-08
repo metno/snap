@@ -29,11 +29,11 @@ mv debian.${PLATFORM} debian
 
 export DEBEMAIL=${USER}@met.no
 FULLVERSION=${VERSION}-1
-dch --package bsnap --newversion ${FULLVERSION} "Improved vertical diffusion"
+dch --package bsnap --newversion ${FULLVERSION} "bombs"
 dch --release ""
 export DEB_BUILD_OPTIONS='nostrip'
 export BINDIR="../debian/bsnap/usr/bin/"
-debuild --preserve-envvar VERSION --preserve-envvar BINDIR -us -uc -sa
+debuild --preserve-envvar VERSION --preserve-envvar BINDIR --preserve-envvar SNAP_FIMEX_VERSION -us -uc -sa
 
 # To publish:
 # dupload --no --to $PLATFORM bsnap_$FULLVERSION_amd64.changes
