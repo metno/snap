@@ -28,6 +28,22 @@ def rgbToColor(rgb):
         color.append(1.)
     return color
 
+def get_tag_NPP(tag):
+    return tag.split(':')[0]
+
+def get_tag_relTerm(tag):
+    '''returns a dictionary with the releaseterms from a tag like 
+    NPP:relI131=1.0e13:relXE133=1.0e13:relCS137=1.0e13:relKR85=0
+    '''
+    tag_split = tag.split(':')
+    tag_split.pop(0)
+    relTerm = {}
+    for term in tag_split:
+        relTerm[term.split('=')[0]] = float(term.split('=')[1])
+    return relTerm
+
+
+
 def get_isotope_release(res, reldict):
     errors = ""
     for tag in ('releaseTime', 'radius', 'lowerHeight', 'upperHeight'):
@@ -48,7 +64,8 @@ RELEASE.UPPER.M= {upperHeight}, {upperHeight}
 
     isotopes = {'relI131': 'I131',
                 'relXE133': 'Xe133',
-                'relCS137': 'Cs137'}
+                'relCS137': 'Cs137',
+                'relKR85': 'Kr85'}
     for rel, iso in isotopes.items():
         emis = 0.
         try:
@@ -59,7 +76,7 @@ RELEASE.UPPER.M= {upperHeight}, {upperHeight}
             source_term += "RELEASE.BQ/SEC.COMP= {rel}, {rel}, '{iso}'\n".format(rel=reldict[rel], iso=iso)
 
     # add Cs137, I131 and Xe133
-    source_term += res.isotopes2snapinput([169, 158, 148])
+    source_term += res.isotopes2snapinput([169, 158, 148, 27])
 
     return (source_term, errors)
 
@@ -112,7 +129,7 @@ def plotMap(data, x, y, ax, countries, title="", title_loc="center", clevs=[10,1
     nx = data.shape[1]
     # draw filled contours.
     if colors is None:
-        colors = [ plt.cm.hsv(x) for x in np.linspace(0.5, 0, len(clevs)) ]
+        colors = [ plt.cm.hsv(x) for x in numpy.linspace(0.5, 0, len(clevs)) ]
     cs = ax.contourf(x,y,data,clevs,colors=colors, extend=extend, zorder=50)
 
     for country in countries:
@@ -133,8 +150,9 @@ def plotMap(data, x, y, ax, countries, title="", title_loc="center", clevs=[10,1
 
 
 #def runsnapsingle(npp, release_dt, tag_time, dirname, res):
-def runsnap(npp, met_model, outdir, release_dt, runtime, plot_from_file=None):
+def runsnap(npp_tag, met_model, outdir, release_dt, runtime, plot_from_file=None):
     tag_time = gmtime() # ensure a few secs difference for tags
+    npp = get_tag_NPP(npp_tag)
     res = Resources()
     dirname = os.path.join(res.getSnapOutputDir(), "{0}_{1}".format(npp, strftime("%Y-%m-%dT%H%M%S", tag_time)))
 
@@ -151,8 +169,12 @@ def runsnap(npp, met_model, outdir, release_dt, runtime, plot_from_file=None):
             'upperHeight': 500,
             'relI131': 1.39e13,
             'relXE133': 1.0e13,
-            'relCS137': 2.6e11
+            'relCS137': 2.6e11,
+            'relKR85': 0,
         }
+        for param, value in get_tag_relTerm(npp_tag).items():
+            reldict[param] = value
+
         (term, errors) = get_isotope_release(res, reldict)
         if (len(errors) > 0):
             print(errors, file=sys.stderr)
@@ -358,7 +380,9 @@ if __name__ == "__main__":
     parser.add_argument("--starttime", help="start time YYYY-MM-DD_HH")
     parser.add_argument("--runtime", help="the run and releasetime", required=True)
     parser.add_argument("--plotonly_ncfile", help="don't run the model plot only from this ncfile")
-    parser.add_argument("--npp", help="name of Nuclear Power Plant, e.g. CHERNOBYL (see list in SnapPy)")
+    parser.add_argument("--npp", help="""name of Nuclear Power Plant, e.g. CHERNOBYL (see list in SnapPy).
+    It might also be extended by a colon-separated list with release-term specifications like
+    CHERNOBYL:relI131=1.0e13:relXE133=1.0e13:relCS137=1.0e13:relKR85=0""")
     args = parser.parse_args()
 
     if (args.starttime):
