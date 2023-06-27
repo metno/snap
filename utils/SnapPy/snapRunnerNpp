@@ -73,7 +73,7 @@ RELEASE.UPPER.M= {upperHeight}
         except:
             pass
         if (emis > 0.):
-            source_term += "RELEASE.BQ/SEC.COMP= {rel}, '{iso}'\n".format(rel=reldict[rel], iso=iso)
+            source_term += "RELEASE.BQ/SEC.COMP= {rel}, {rel}, '{iso}'\n".format(rel=reldict[rel], iso=iso)
 
     # add Cs137, I131 and Xe133
     source_term += res.isotopes2snapinput([169, 158, 148, 27])
@@ -163,7 +163,7 @@ def runsnap(npp_tag, met_model, outdir, release_dt, runtime, plot_from_file=None
 
     if not plot_from_file:
         reldict = {
-            'releaseTime': 96,
+            'releaseTime': runtime,
             'radius': 50,
             'lowerHeight': 50,
             'upperHeight': 500,
@@ -185,12 +185,12 @@ def runsnap(npp_tag, met_model, outdir, release_dt, runtime, plot_from_file=None
         print(f'outputdir for {simStart}: {dirname}')
         os.mkdir(dirname)
         sourceTerm = f"""
-    TITLE={npp} {release_dt:%Y %m %d %H}
-    SIMULATION.START.DATE={simStart}
-    SET_RELEASE.POS= P=   {lat},   {lon}
-    TIME.START= {release_dt:%Y %m %d %H}
-    TIME.RUN = {runtime}h
-    STEP.HOUR.OUTPUT.FIELDS= 3
+TITLE={npp} {release_dt:%Y %m %d %H}
+SIMULATION.START.DATE={simStart}
+SET_RELEASE.POS= P=   {lat},   {lon}
+TIME.START= {release_dt:%Y %m %d %H}
+TIME.RUN = {runtime}h
+STEP.HOUR.OUTPUT.FIELDS= 3
     """
         sourceTerm += term
         with open(os.path.join(dirname, "snap.input"),'w') as fh:
@@ -396,4 +396,4 @@ if __name__ == "__main__":
 
     if (args.store):
         os.environ["STORE"] = args.store
-    runsnap(outdir=args.outdir, met_model=args.metmodel, runtime=int(args.runtime), npp=args.npp, release_dt=release_dt, plot_from_file=plot_from_file)
+    runsnap(outdir=args.outdir, met_model=args.metmodel, runtime=int(args.runtime), npp_tag=args.npp, release_dt=release_dt, plot_from_file=plot_from_file)
