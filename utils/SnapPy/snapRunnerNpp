@@ -54,9 +54,9 @@ def get_isotope_release(res, reldict):
 MAX.PARTICLES.PER.RELEASE= 2000
 TIME.RELEASE.PROFILE.STEPS
 RELEASE.HOUR= 0, {releaseTime}
-RELEASE.RADIUS.M= {radius}, {radius}
-RELEASE.LOWER.M= {lowerHeight}, {lowerHeight}
-RELEASE.UPPER.M= {upperHeight}, {upperHeight}
+RELEASE.RADIUS.M= {radius}
+RELEASE.LOWER.M= {lowerHeight}
+RELEASE.UPPER.M= {upperHeight}
 '''
     source_term = source_tmpl.format(releaseTime=reldict['releaseTime'],
                                         radius=reldict['radius'],
@@ -73,7 +73,7 @@ RELEASE.UPPER.M= {upperHeight}, {upperHeight}
         except:
             pass
         if (emis > 0.):
-            source_term += "RELEASE.BQ/SEC.COMP= {rel}, {rel}, '{iso}'\n".format(rel=reldict[rel], iso=iso)
+            source_term += "RELEASE.BQ/SEC.COMP= {rel}, '{iso}'\n".format(rel=reldict[rel], iso=iso)
 
     # add Cs137, I131 and Xe133
     source_term += res.isotopes2snapinput([169, 158, 148, 27])

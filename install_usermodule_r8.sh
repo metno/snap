@@ -114,15 +114,15 @@ EOF
 
 
 install_snap() {
-    # Ignore implicit loading of $1
-    source /modules/rhel8/conda/install/bin/activate || true
+    MODULE_VERSION="$1"
+    BASE_MODULE_VERSION="$2"
 
-    BASE_MODULE_VERSION="$1"
+    source /modules/rhel8/conda/install/etc/profile.d/conda.sh
+
     BASE_MODULE_PREFIX=/modules/rhel8/user-apps/fou-modules/SnapPy/"$BASE_MODULE_VERSION"/
 
     conda activate "$BASE_MODULE_PREFIX"
 
-    MODULE_VERSION="$2"
     MODULE_PREFIX=/modules/rhel8/user-apps/fou-modules/SnapPy/"$MODULE_VERSION"/
     mkdir --parent -- "$MODULE_PREFIX/bin"
 
@@ -164,12 +164,12 @@ case "${1:-help}" in
     install_baseenv "${2:-TEST}"
     ;;
   install_snap)
-    install_snap "${2:-TEST}" "${3:-TEST_SNAP}"
+    install_snap "${2:-TEST_SNAP}" "${3:-conda202305}"
     ;;
   *)
     echo "Usage: ./install_usermodule_r8.sh <CMD>"
     echo "CMD: install_baseenv <BASEENVNAME>"
-    echo "CMD: install_snap <BASEENVNAME> <ENVNAME>"
+    echo "CMD: install_snap <ENVNAME> [<BASEENVNAME>]"
     ;;
 esac
 
