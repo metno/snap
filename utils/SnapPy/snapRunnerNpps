@@ -53,7 +53,7 @@ RELEASE.UPPER.M= {upperHeight}
         except:
             pass
         if (emis > 0.):
-            source_term += "RELEASE.BQ/SEC.COMP= {rel}, '{iso}'\n".format(rel=reldict[rel], iso=iso)
+            source_term += "RELEASE.BQ/SEC.COMP= {rel}, {rel}, '{iso}'\n".format(rel=reldict[rel], iso=iso)
 
     # add Cs137, I131 and Xe133 and Kr85
     source_term += res.isotopes2snapinput([169, 158, 148, 27])
@@ -169,19 +169,21 @@ def runsnap(npps, outdir):
     res = Resources()
     res.getLustreDir() # set lustredir within res before parallelization - mapp-services.sh not parallelizable yet
     nPPs = res.readNPPs()
-    for i, tag in enumerate(npps):
-        if not get_tag_NPP(tag) in nPPs:
-            raise Exception(f"unknown NPP: {get_tag_NPP(tag)}", file=sys.stderr)
+    for i, npp_tag in enumerate(npps):
+        tag = get_tag_NPP(npp_tag)
+        if not tag in nPPs:
+            raise Exception(f"unknown NPP: {tag}", file=sys.stderr)
         tag_time = gmtime(release_dt.timestamp() + i) # ensure a few secs difference for tags
         nppdir[tag] = os.path.join(res.getSnapOutputDir(), "{0}_{1}".format(tag, strftime("%Y-%m-%dT%H%M%S", tag_time)))
-        runparams.append([tag, release_dt, tag_time, nppdir[tag], res])
+        runparams.append([npp_tag, release_dt, tag_time, nppdir[tag], res])
 
     with multiprocessing.Pool(4) as p:
         print(p.starmap(runsnapsingle, runparams))
 
     # montage
     opts = ['montage', '-mode', 'concatenate', '-tile', f"4x{len(npps)}"]
-    for tag in npps:
+    for npp_tag in npps:
+        tag = get_tag_NPP(npp_tag)
         opts += ['-label', tag]
         for t in [12,24,36,48]:
             opts += [f"{nppdir[tag]}/prod/snap_{t}h.png"]
@@ -191,7 +193,8 @@ def runsnap(npps, outdir):
 
     # montage toa
     opts = ['montage', '-mode', 'concatenate', '-tile', f"{len(npps)}x1"]
-    for tag in npps:
+    for npp_tag in npps:
+        tag = get_tag_NPP(npp_tag)
         opts += ['-label', tag]
         opts += [f"{nppdir[tag]}/prod/snap_toa.png"]
     opts.append(f'{outdir}/plots_{release_dt:%Y-%m-%dT%H}0000Z_toa.png')
