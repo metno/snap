@@ -1,3 +1,15 @@
+snap-py (2.3.2-1) jammy; urgency=medium
+
+  * updated Mastin table
+
+ -- Charlie Negri <charlien@met.no>  Wed, 05 Jul 2023 14:49:13 +0200
+
+snap-py (2.3.2-1) jammy; urgency=medium
+
+  * updated Mastin table
+
+ -- Charlie Negri <charlien@met.no>  Wed, 05 Jul 2023 14:47:58 +0200
+
 snap-py (2.3.0-1) jammy; urgency=medium
 
   * enable bomb-decay
