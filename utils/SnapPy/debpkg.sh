@@ -25,14 +25,27 @@ set -e
 #     Wait for confirmation email that package has been accepted
 #
 # 3 - Check that it works on one machine
-#     $ ssh -X vglserver2
+#     $ ssh -X ppi-vglserver-b1.met.no
 #     $ sudo apt-get update
 #     $ sudo apt-get install snap-py
 #     $ snapPy
 #     If something goes wrong, downgrade to last version again using
 #     $ sudo apt-get install snap-py=<version-number>
 #
-# 4 - Roll out to all machines with ansible
+# 4 - Roll out to all machines with ansible (jammy)
+#     # Setup
+#     $ git clone git@gitlab.met.no:met/mapp/desktop/vgl-ansible.git
+#     $ sudo apt-get install ansible
+#     # Rollout
+#     $ cd vgl-ansible
+#     #Roll out to selected host
+#     $ ansible-playbook -i hosts --tags snap --limit ppi-vglserver-b1.met.no install.yml
+#     #Roll out to all hosts
+#     $ ansible-playbook -i hosts --tags snap install.yml
+#
+#     It may take a bit of time before the package is available for ansible (10 minutes)
+
+# 4.1 - Roll out to all machines with ansible (bionic)
 #     # Setup
 #     $ git clone git@gitlab.met.no:ansible/workstation.git
 #     $ sudo apt-get install ansible
@@ -44,8 +57,6 @@ set -e
 #     #Roll out to all hosts
 #     $ ansible-playbook -i hosts -t snap install.yml
 #
-#     It may take a bit of time before the package is available for ansible (10 minutes)
-#
 # 5 - Inform meteorologists that a new version is available
 #INSTRUCTIONS_END
 
@@ -54,8 +65,8 @@ if [ ! -f "Snappy/resources/1-s2.0-S0146645313000110-mmc1.zip" ]; then
 fi
 
 HOST=$(lsb_release --codename --short)
-export VERSION=2.3.0
-CHANGELOG="enable bomb-decay"
+export VERSION=2.3.2
+CHANGELOG="updated Mastin table"
 export DEBEMAIL=${USER}@met.no
 rm --force debian
 ln --symbolic debian.$HOST debian
