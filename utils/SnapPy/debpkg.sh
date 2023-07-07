@@ -65,8 +65,8 @@ if [ ! -f "Snappy/resources/1-s2.0-S0146645313000110-mmc1.zip" ]; then
 fi
 
 HOST=$(lsb_release --codename --short)
-export VERSION=2.3.2
-CHANGELOG="updated Mastin table"
+export VERSION=2.3.3
+CHANGELOG="updated Mastin table with Eldey"
 export DEBEMAIL=${USER}@met.no
 rm --force debian
 ln --symbolic debian.$HOST debian

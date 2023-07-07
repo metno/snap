@@ -1,3 +1,9 @@
+snap-py (2.3.3-1) jammy; urgency=medium
+
+  * updated Mastin table with Eldey
+
+ -- Heiko Klein <heikok@met.no>  Fri, 07 Jul 2023 18:41:43 +0200
+
 snap-py (2.3.2-1) jammy; urgency=medium
 
   * updated Mastin table
