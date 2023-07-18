@@ -79,7 +79,7 @@ class Test_PPI_R8B(unittest.TestCase):
 sleep 8
 echo "finished" > {status}
             """.format(
-                    status=status_file, rdir=self.rdir
+                    status=status_file,
                 )
             )
         self.hpc.put_files([self.testFiles[0]], self.rdir)
