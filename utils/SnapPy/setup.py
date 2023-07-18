@@ -41,11 +41,9 @@ setup(
         "snapRunnerNpps",
         "snapRunnerNpp",
         "eemepModelRunner",
-        "snapRemoteRunner.py"
+        "snapRemoteRunner.py",
     ],
     entry_points={
-        'console_scripts': [
-            'snapAddBombIsotopes = Snappy.AddBombIsotopes:main'
-        ]
-    }
+        "console_scripts": ["snapAddBombIsotopes = Snappy.AddBombIsotopes:main"]
+    },
 )
