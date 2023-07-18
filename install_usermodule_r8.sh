@@ -116,12 +116,9 @@ EOF
 install_snap() {
     MODULE_VERSION="$1"
     BASE_MODULE_VERSION="$2"
-
-    source /modules/rhel8/conda/install/etc/profile.d/conda.sh
-
     BASE_MODULE_PREFIX=/modules/rhel8/user-apps/fou-modules/SnapPy/"$BASE_MODULE_VERSION"/
 
-    conda activate "$BASE_MODULE_PREFIX"
+    source /modules/rhel8/conda/install/etc/profile.d/conda.sh "$BASE_MODULE_PREFIX"
 
     MODULE_PREFIX=/modules/rhel8/user-apps/fou-modules/SnapPy/"$MODULE_VERSION"/
     mkdir --parent -- "$MODULE_PREFIX/bin"

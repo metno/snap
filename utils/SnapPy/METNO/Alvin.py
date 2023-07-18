@@ -1,25 +1,25 @@
 # SNAP: Servere Nuclear Accident Programme
 # Copyright (C) 1992-2017   Norwegian Meteorological Institute
-# 
-# This file is part of SNAP. SNAP is free software: you can 
-# redistribute it and/or modify it under the terms of the 
-# GNU General Public License as published by the 
+#
+# This file is part of SNAP. SNAP is free software: you can
+# redistribute it and/or modify it under the terms of the
+# GNU General Public License as published by the
 # Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-'''
+"""
 Created on Apr 28, 2017
 
 @author: heikok
-'''
+"""
 import os
 from subprocess import TimeoutExpired
 from time import sleep
@@ -31,22 +31,24 @@ from METNO.SSHConnection import SSHConnection
 
 
 class Alvin(HPC):
-    '''
+    """
     Implementation of a HPC machine for alvin.nsc.liu.se
-    '''
-
+    """
 
     def __init__(self):
-        '''
+        """
         Constructor
-        '''
-        connection = SSHConnection(username="metno_op", machine="alvin.nsc.liu.se", port=22)
+        """
+        connection = SSHConnection(
+            username="metno_op", machine="alvin.nsc.liu.se", port=22
+        )
         queue = SLURMQueue()
         super().__init__(connection, queue)
 
 
 class TestFrost(unittest.TestCase):
-    '''tests for alvin, only working when having an existing forecast account on alvin'''
+    """tests for alvin, only working when having an existing forecast account on alvin"""
+
     def setUp(self):
         unittest.TestCase.setUp(self)
         self.hpc = HPC.by_name("alvin")
@@ -56,14 +58,13 @@ class TestFrost(unittest.TestCase):
     def tearDown(self):
         unittest.TestCase.tearDown(self)
         for f in self.testFiles:
-            if (os.path.exists(f)):
+            if os.path.exists(f):
                 os.unlink(f)
 
     def test_connect(self):
         (out, error, retval) = self.hpc.syscall("echo", ["5"])
         self.assertEqual(retval, 0, "command succeeded")
         self.assertEqual(int(out), 5, "command output correct")
-
 
     def test_timeout(self):
         with self.assertRaises(TimeoutExpired):
@@ -74,7 +75,8 @@ class TestFrost(unittest.TestCase):
         self.hpc.syscall("rm", ["-r", self.rdir])
         self.hpc.syscall("mkdir", ["-p", self.rdir])
         with open(self.testFiles[0], "w") as fh:
-            fh.write('''#! /bin/bash
+            fh.write(
+                """#! /bin/bash
 
 #SBATCH -A met
 #SBATCH --nodes=1 --ntasks-per-node=1 --time=01:00:00
@@ -84,7 +86,10 @@ class TestFrost(unittest.TestCase):
 
 sleep 8
 echo "finished" > {status}
-            '''.format(status=status_file, rdir=self.rdir))
+            """.format(
+                    status=status_file, rdir=self.rdir
+                )
+            )
         self.hpc.put_files([self.testFiles[0]], self.rdir)
         qjob = self.hpc.submit_job(os.path.join(self.rdir, self.testFiles[0]), [])
         self.assertIsNotNone(qjob, "job submitted")
@@ -108,6 +113,7 @@ echo "finished" > {status}
             self.assertEqual(content, "finished\n")
 
         self.hpc.syscall("rm", ["-r", self.rdir])
+
 
 if __name__ == "__main__":
     unittest.main()
