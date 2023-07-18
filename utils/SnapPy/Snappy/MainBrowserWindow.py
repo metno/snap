@@ -24,7 +24,7 @@
     *******************************************************************
 """
 
-from PyQt5 import QtCore, QtGui, QtWidgets, QtWebKit, QtWebKitWidgets, QtNetwork
+from PyQt5 import QtCore, QtGui, QtWidgets, QtWebKitWidgets
 from builtins import str
 import sys
 

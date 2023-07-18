@@ -6,7 +6,6 @@ from pathlib import Path
 
 import math
 import netCDF4
-import numpy as np
 
 from Snappy.EEMEP.SixHourMax import SixHourMax
 from Snappy.Isotopes import Isotopes

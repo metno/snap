@@ -22,7 +22,6 @@ Created on Nov 24, 2016
 """
 import datetime
 import re
-import unittest
 
 import xml.etree.ElementTree as ET
 

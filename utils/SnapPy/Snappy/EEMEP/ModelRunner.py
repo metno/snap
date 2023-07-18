@@ -15,13 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-from Snappy.EcMeteorologyCalculator import EcMeteorologyCalculator
-
 """
 Created on Sep 2, 2016
 
 @author: heikok
 """
+from Snappy.EcMeteorologyCalculator import EcMeteorologyCalculator
+
 from METNO.HPC import HPC, StatusFile, QJobStatus
 import datetime
 from netCDF4 import Dataset, num2date
@@ -81,7 +81,7 @@ class AbortFile:
         if self.filename and os.path.exists(self.filename):
             try:
                 os.remove(self.filename)
-            except:
+            except Exception:
                 pass
 
 
@@ -578,7 +578,7 @@ class TestModelRunner(unittest.TestCase):
 
         volcanoFile = os.path.join(self.indir, "volcano.xml")
         self.logger.debug("Input volcano file: {:s}".format(volcanoFile))
-        volc = VolcanoRun(volcanoFile)
+        VolcanoRun(volcanoFile)
 
         self.dir = tempfile.TemporaryDirectory(prefix="volcano_download_")
         self.logger.debug("Download directory: {:s}".format(self.dir.name))
@@ -636,7 +636,7 @@ class TestModelRunner(unittest.TestCase):
             )
             self.assertTrue(file_ages[filename] / datetime.timedelta(minutes=1) < 15)
 
-        if self.doRun == False:
+        if self.doRun is False:
             self.logger.debug("Skipping remainder of test - not doRun is false")
         else:
             # Test running.
@@ -697,7 +697,7 @@ class TestModelRunner(unittest.TestCase):
                 filename = os.path.join(mr.hpc_outdir, filename)
                 self.assertFalse(filename in file_ages.keys(), " ")
 
-    @unittest.skipIf(doRun == False, "Do run is false")
+    @unittest.skipIf(doRun is False, "Do run is false")
     def testWork(self):
         # Create model runner and test
         mr = ModelRunner(self.dir.name, TestModelRunner.hpcMachine)
@@ -730,7 +730,7 @@ if __name__ == "__main__":
 
     # Do not sort tests
 
-    self.logger.warning("This test takes 1-2 hours to complete")
+    logging.warning("This test takes 1-2 hours to complete")
 
     unittest.TestLoader.sortTestMethodsUsing = None
     unittest.main(verbosity=2, failfast=True)

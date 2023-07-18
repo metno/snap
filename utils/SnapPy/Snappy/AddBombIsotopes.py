@@ -67,7 +67,7 @@ def main():
     parser.add_argument("--nc", help="snap.nc filename", required=True)
 
     args = parser.parse_args()
-    with netCDF4.Dataset(args.nc, "a") as nc:
+    with netCDF4.Dataset(args.nc, "a"):
         snap_add_bomb_isotopes(args.nc)
 
 

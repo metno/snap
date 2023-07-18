@@ -288,8 +288,8 @@ class SnapInputBomb:
         """
         sum_dist = 0
         size_dist = []
-        l = min(len(self.radius_sizes), len(self._size_distribution))
-        for i in range(l):
+        l_min = min(len(self.radius_sizes), len(self._size_distribution))
+        for i in range(l_min):
             nextsum = sum_dist + self._size_distribution[i]
             if nextsum <= 1:
                 size_dist.append(self._size_distribution[i])
@@ -446,7 +446,7 @@ if __name__ == "__main__":
     try:
         sib.size_distribution = [0.3, 0.4, 0.5, 0.6]
         assert False
-    except:
+    except Exception:
         pass
     sib.size_distribution = [0.3, 0.4, 0.2]
     assert abs(sib.size_distribution[3] - 0.1) <= 0.01

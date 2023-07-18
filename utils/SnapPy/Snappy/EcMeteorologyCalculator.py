@@ -21,12 +21,9 @@ Created on Oct 24, 2016
 @author: heikok
 """
 
-from datetime import datetime, timedelta
-from glob import iglob
-import math
+from datetime import datetime
 import os
 import subprocess
-import time
 
 from Snappy.Resources import Resources, MetModel
 import Snappy.MeteorologyCalculator

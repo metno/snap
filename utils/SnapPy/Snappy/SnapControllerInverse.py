@@ -23,14 +23,10 @@ import re
 import sys
 from time import gmtime, strftime
 
-from PyQt5 import QtWidgets, QtGui
+from PyQt5 import QtWidgets
 from PyQt5.QtCore import (
-    QProcess,
-    QProcessEnvironment,
     QThread,
-    QIODevice,
     QThreadPool,
-    pyqtSignal,
 )
 from Snappy.BrowserWidget import BrowserWidget
 from Snappy.Resources import Resources
@@ -184,7 +180,7 @@ class SnapControllerInverse:
         if not os.path.isdir(self.lastOutputDir):
             try:
                 os.mkdir(self.lastOutputDir)
-            except:
+            except Exception:
                 errors += "cannot create directory: {}".format(self.lastOutputDir)
         else:
             errors += "cowardly refusing to write into existing directory: {}".format(
@@ -362,7 +358,7 @@ m=combined t=fimex format=netcdf f={dir}/snapCombined.nc
                 self.write_log("type-error: {}".format(ex))
             except ValueError as ex:
                 self.write_log("value-error: {}".format(ex))
-            except:
+            except Exception:
                 self.write_log(
                     "Unexpected error on {0}: {1}".format(
                         qDict["action"], sys.exc_info()[0]
