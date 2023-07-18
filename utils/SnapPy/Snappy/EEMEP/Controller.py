@@ -22,7 +22,6 @@ Created on Aug 9, 2016
 """
 
 from PyQt5 import QtWidgets
-from collections import deque
 import datetime
 import getpass
 import json
@@ -31,15 +30,10 @@ import time
 import pwd
 import re
 import sys
-from time import gmtime, strftime
 import traceback
 
 from PyQt5.QtCore import (
-    QProcess,
-    QProcessEnvironment,
     QThread,
-    QIODevice,
-    QThreadPool,
     pyqtSignal,
 )
 from Snappy.BrowserWidget import BrowserWidget
@@ -74,7 +68,7 @@ class _UpdateThread(QThread):
                 debug("running")
                 self.update_log_signal.emit()
                 self.sleep(3)
-        except:
+        except Exception:
             traceback.print_exc()
 
 
@@ -110,7 +104,6 @@ class Controller:
         # Write at most 30 lines to screen
         if len(self.lastLog) > max_lines:
             self.lastLog = self.lastLog[-max_lines:]
-        lines = None
 
         self.main.evaluate_javaScript(
             "updateEemepLog({0});".format(json.dumps("\n".join(self.lastLog)))
@@ -171,7 +164,7 @@ class Controller:
                         with open(os.path.join(dirpath, abortLogFile), "wt") as lh:
                             lh.write("aborted by {}".format(getpass.getuser()))
                         os.remove(os.path.join(dirpath, file))
-                    except:
+                    except Exception:
                         traceback.print_exc()
                         self.write_log("aborting {} failed!".format(dirpath))
         pass
@@ -231,7 +224,7 @@ class Controller:
                 self.write_log("type-error: {}".format(ex))
             except ValueError as ex:
                 self.write_log("value-error: {}".format(ex))
-            except:
+            except Exception:
                 self.write_log(
                     "Unexpected error on {0}: {1}".format(
                         qDict["action"], sys.exc_info()[0]
@@ -263,7 +256,7 @@ class Controller:
 
         try:
             runTime = int(qDict["runTime"])
-        except:
+        except Exception:
             errors += "Cannot interpret runTime: {}\n".format(qDict["runTime"])
 
         restart = "false"
@@ -276,7 +269,7 @@ class Controller:
             type = qDict["volcanotype"]
         volcanoes = self.res.readVolcanoes()
         if qDict["volcano"] and volcanoes[qDict["volcano"]]:
-            tag = qDict["volcano"]
+            qDict["volcano"]
             volcano = re.sub(r"[^\w.-_]", "_", volcanoes[qDict["volcano"]]["NAME"])
             latf = volcanoes[qDict["volcano"]]["LATITUDE"]
             lonf = volcanoes[qDict["volcano"]]["LONGITUDE"]
@@ -291,7 +284,7 @@ class Controller:
                 latf = Snappy.Utils.parseLat(lat)
                 lonf = Snappy.Utils.parseLon(lon)
                 altf = float(alt)
-            except:
+            except Exception:
                 latf = 0.0
                 lonf = 0.0
                 altf = 0.0
@@ -322,7 +315,7 @@ class Controller:
         if qDict["cloudheight"]:
             try:
                 cheight = float(qDict["cloudheight"])
-            except:
+            except Exception:
                 errors += "cannot interpret cloudheight (m): {0}\n".format(
                     qDict["cloudheight"]
                 )
@@ -454,7 +447,7 @@ class Controller:
             # Mode x - open for exclusive creation, failing if the file already exists
             with open(self.volcano_file, "x") as fh:
                 fh.write(self.lastSourceTerm)
-        except FileExistsError as e:
+        except FileExistsError:
             owner = "unknown"
             if os.path.exists(self.volcano_file):
                 owner, gecos = getFileOwner(self.volcano_file)

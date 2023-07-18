@@ -22,7 +22,7 @@ Created on Nov 7, 2016
 """
 from abc import ABCMeta, abstractmethod
 from enum import Enum, unique
-from subprocess import CalledProcessError, TimeoutExpired, SubprocessError
+from subprocess import SubprocessError
 import sys
 
 

@@ -26,10 +26,8 @@ import abc
 from glob import iglob
 import math
 import os
-import subprocess
 import time
 
-from Snappy.Resources import Resources
 
 
 class GlobalMeteoResource:

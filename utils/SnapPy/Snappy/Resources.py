@@ -266,7 +266,7 @@ GRAVITY.FIXED.M/S=0.0002
                     DPUI = dosecoeff.DPUI(iso["isotope"], "particulate")
             else:
                 raise Exception(
-                    "Error, unknown type '{1}' for isotope '{2}'".format(
+                    "Error, unknown type '{0}' for isotope '{1}'".format(
                         iso["type"], iso["isotope"]
                     )
                 )
@@ -382,7 +382,7 @@ GRAVITY.FIXED.M/S=0.0002
             mode="r",
             encoding="UTF-8",
         ) as f:
-            degree_minute_regex = re.compile("([0-9]+)°\s([0-9]+)’\s[NØ]")
+            degree_minute_regex = re.compile(r"([0-9]+)°\s([0-9]+)’\s[NØ]")
             for line in f:
                 if line.startswith("#"):
                     continue
@@ -651,7 +651,7 @@ GRAVITY.FIXED.M/S=0.0002
             dosecoeffs = read_dosecoefficients_icrp.DoseCoefficientsICRP(
                 os.path.join(self.directory, "1-s2.0-S0146645313000110-mmc1.zip")
             )
-        except Exception as e:
+        except Exception:
             dosecoeffs = None
         return dosecoeffs
 

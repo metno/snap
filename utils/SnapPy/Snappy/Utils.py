@@ -166,9 +166,9 @@ def dirIsWritable(directory):
     if not directory:
         return False
     try:
-        with tempfile.TemporaryFile(dir=directory) as fh:
+        with tempfile.TemporaryFile(dir=directory):
             return True
-    except:
+    except Exception:
         return False
 
 

@@ -18,7 +18,7 @@
 """
     ********************* BrowserWidget ************************
 
-    A simpel Web Browser as interface-tab using javascript callbacks
+    A simple Web Browser as interface-tab using javascript callbacks
     to get the information back to python
 
     *******************************************************************
@@ -27,6 +27,8 @@
 
 # Get Qt version
 from PyQt5 import Qt
+
+import sys
 
 qt_version = [int(v) for v in Qt.QT_VERSION_STR.split(".")]
 
@@ -45,9 +47,6 @@ elif qt_version[0] >= 5:
     from PyQt5.QtWebKitWidgets import QWebPage, QWebView
 else:
     raise ImportError("Unsupported version of PyQt")
-
-from builtins import str
-import sys
 
 
 class StartWebPage(QWebPage):

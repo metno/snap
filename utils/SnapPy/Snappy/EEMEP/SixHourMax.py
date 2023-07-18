@@ -23,7 +23,6 @@ Created on Feb 12, 2018
 import math
 import numpy as np
 from netCDF4 import Dataset
-import datetime
 from collections import deque
 
 
@@ -80,10 +79,10 @@ class SixHourMax:
             max350 = np.zeros(pa.shape, dtype="float")
             max550 = np.zeros(pa.shape, dtype="float")
 
-            for l in range(len(lev)):
+            for il in range(len(lev)):
                 # 6h mean of ash in level l
-                ashal = np.squeeze(asha[l, :, :])
-                pal = pa * hybi[l] + hyai[l]
+                ashal = np.squeeze(asha[il, :, :])
+                pal = pa * hybi[il] + hyai[il]
                 tmp = np.where((pFL[0] < pal), ashal, 0)
                 max200 = np.maximum(tmp, max200)
 

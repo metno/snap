@@ -3,18 +3,18 @@
 import argparse
 import warnings
 import cartopy
-import datetime
 import matplotlib
-from pyproj import Proj
 
-matplotlib.use("Agg")
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from matplotlib import pyplot as plt
 import netCDF4
 import os
 import sys
+import logging
 
 import numpy as np
+
+matplotlib.use("Agg")
 
 # suppress some warnings
 warnings.filterwarnings(
@@ -23,7 +23,6 @@ warnings.filterwarnings(
     message="Warning: 'partition' will ignore the 'mask' of the MaskedArray.",
 )
 # shapefile.py uses root logger :-( and warns a lot about GSHHS
-import logging
 
 logging.root.setLevel(logging.ERROR)
 
@@ -51,8 +50,8 @@ def plotMap(
     # ax.gridlines(draw_labels=True)
     ax.gridlines(edgecolor="lightgray", linewidth=0.3, zorder=100)
 
-    ny = data.shape[0]
-    nx = data.shape[1]
+    data.shape[0]
+    data.shape[1]
     # draw filled contours.
     if colors is None:
         colors = [plt.cm.hsv(x) for x in np.linspace(0.5, 0, len(clevs))]
@@ -90,8 +89,8 @@ def plotMapGrid(
     )
     ax.gridlines()
     ax.add_feature(cartopy.feature.BORDERS)
-    ny = data.shape[0]
-    nx = data.shape[1]
+    data.shape[0]
+    data.shape[1]
     # draw filled contours.
     if colors is None:
         colors = [plt.cm.hsv(x) for x in np.linspace(0.5, 0, len(clevs))]
@@ -139,7 +138,7 @@ def snapens(ncfiles, hour, outfile):
                         sys.stderr,
                     )
                     sys.exit(1)
-            if not "time_of_arrival" in nc.variables:
+            if "time_of_arrival" not in nc.variables:
                 print(
                     f"time_of_arrival not in {ncf}, please run 'snapAddToa {ncf}",
                     file=sys.stderr,
