@@ -1,10 +1,12 @@
 import os
 
+
 class Isotopes:
     _isoByName = None
     _isoById = None
+
     def __new__(cls):
-        '''Isotopes singleton data'''
+        """Isotopes singleton data"""
         if cls._isoById is None:
             cls._isoById = dict()
             cls._isoByName = dict()
@@ -29,23 +31,23 @@ class Isotopes:
                         cls._isoByName[isotope["isotope"]] = isotope
         obj = object.__new__(cls)
         return obj
-    
+
     def byId(self, id):
-        '''
-            id is a number in the isotopes file
-            return a dict with isotopte-name, type=0,1,2 (nobelgas, gas, aerosol) and decayrate (/s)
-        '''
+        """
+        id is a number in the isotopes file
+        return a dict with isotopte-name, type=0,1,2 (nobelgas, gas, aerosol) and decayrate (/s)
+        """
         return self._isoById[id]
 
     def byName(self, name):
-        '''
-            @param name is a isotope name like Cs137
-            return a dict with isotopte-name, type=0,1,2 (nobelgas, gas, aerosol) and decayrate (/s)
-        '''
+        """
+        @param name is a isotope name like Cs137
+        return a dict with isotopte-name, type=0,1,2 (nobelgas, gas, aerosol) and decayrate (/s)
+        """
         return self._isoByName[name]
 
 
 if __name__ == "__main__":
     isotopes = Isotopes()
-    print(isotopes.byName('Cs137'))
-    print(isotopes.byName('I131'))
+    print(isotopes.byName("Cs137"))
+    print(isotopes.byName("I131"))

@@ -1,25 +1,25 @@
 # SNAP: Servere Nuclear Accident Programme
 # Copyright (C) 1992-2017   Norwegian Meteorological Institute
-# 
-# This file is part of SNAP. SNAP is free software: you can 
-# redistribute it and/or modify it under the terms of the 
-# GNU General Public License as published by the 
+#
+# This file is part of SNAP. SNAP is free software: you can
+# redistribute it and/or modify it under the terms of the
+# GNU General Public License as published by the
 # Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-'''
+"""
 Created on Aug 08, 2017
 
 @author: heikok
-'''
+"""
 
 import os
 import shutil
@@ -31,11 +31,10 @@ from METNO.HPC import typed_property, Connection
 
 
 class DirectConnection(Connection):
-    '''no connection, working directly on that machine
+    """no connection, working directly on that machine"""
 
-    '''
     charset = typed_property("charset", str)
-    '''charset of stdout of the machine, usually utf-8'''
+    """charset of stdout of the machine, usually utf-8"""
 
     def __init__(self):
         super().__init__()
@@ -56,25 +55,28 @@ class DirectConnection(Connection):
 
     def syscall(self, program, args, timeout=None):
         if sys.version_info > (3, 5, 0):
-            proc = subprocess.run([program]+ args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout)
-            return (proc.stdout.decode(self.charset),
-                    proc.stderr.decode(self.charset),
-                    proc.returncode)
+            proc = subprocess.run(
+                [program] + args,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=timeout,
+            )
+            return (
+                proc.stdout.decode(self.charset),
+                proc.stderr.decode(self.charset),
+                proc.returncode,
+            )
         else:
             try:
                 output = subprocess.check_output([program] + args, timeout=timeout)
-                return (output.decode(self.charset),
-                        '',
-                        0)
+                return (output.decode(self.charset), "", 0)
             except subprocess.CalledProcessError as cpe:
-                return (cpe.output.decode(self.charset),
-                        '',
-                        cpe.returncode)
-
+                return (cpe.output.decode(self.charset), "", cpe.returncode)
 
 
 class TestDirectConnection(unittest.TestCase):
-    '''Test for DirectConnection'''
+    """Test for DirectConnection"""
+
     def setUp(self):
         unittest.TestCase.setUp(self)
         self.dir1 = os.path.join(os.path.dirname(__file__), "testdir1")
@@ -84,18 +86,16 @@ class TestDirectConnection(unittest.TestCase):
         if not os.path.exists(self.dir2):
             os.mkdir(self.dir2)
 
-        self.files = ['file1', 'file2']
+        self.files = ["file1", "file2"]
         for file in self.files:
             infile = os.path.join(self.dir1, file)
             if not os.path.exists(infile):
-                with open(infile, 'w') as ifh:
+                with open(infile, "w") as ifh:
                     ifh.write("file: {name}".format(name=infile))
             outfile = os.path.join(self.dir2, file)
             if os.path.exists(outfile):
                 os.unlink(outfile)
         self.conn = DirectConnection()
-
-
 
     def tearDown(self):
         unittest.TestCase.tearDown(self)
@@ -120,8 +120,7 @@ class TestDirectConnection(unittest.TestCase):
         files_o = [os.path.join(self.dir2, x) for x in self.files]
         self.conn.get_files(files_i, self.dir2, 5)
         for file in files_o:
-            self.assertTrue(os.path.exists(file),
-                            "file {} exists".format(file))
+            self.assertTrue(os.path.exists(file), "file {} exists".format(file))
             os.unlink(file)
 
     def test_put_files(self):
