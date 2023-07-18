@@ -108,7 +108,7 @@ class SnapTask:
         return False
 
     def handle(self, hpc):
-        """ Handle the job on the hpc. HPC directories must be writable locally.
+        """Handle the job on the hpc. HPC directories must be writable locally.
         Raise SnapJob.UnknownModelException on input-zip error
         Raise Exception on any error
         """
@@ -327,7 +327,9 @@ class SnapRemoteRunner:
                 )
             elif tag == "running":
                 fh.write(
-                    "101:{ts}::queued {model} for processing\n".format(ts=timestamp, model=task.model)
+                    "101:{ts}::queued {model} for processing\n".format(
+                        ts=timestamp, model=task.model
+                    )
                 )
             elif tag == "internal":
                 fh.write(

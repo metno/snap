@@ -43,10 +43,10 @@ def add_toa_to_nc(nc: netCDF4.Dataset):
         raise Exception(
             f"no variable with *_acc_concentration found in file: {nc.filepath()}"
         )
-    th = 0.0001 # low threshold
+    th = 0.0001  # low threshold
     # arrived: data >= th
     # flying: data < th
-    data = numpy.where(data >= th, 0., timeDelta)
+    data = numpy.where(data >= th, 0.0, timeDelta)
     # print(data.dtype) must be float!
     toa = numpy.sum(data, axis=0)
     toa[toa > timeMax] = -999

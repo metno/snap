@@ -1,17 +1,17 @@
 # SNAP: Servere Nuclear Accident Programme
 # Copyright (C) 1992-2017   Norwegian Meteorological Institute
-# 
-# This file is part of SNAP. SNAP is free software: you can 
-# redistribute it and/or modify it under the terms of the 
-# GNU General Public License as published by the 
+#
+# This file is part of SNAP. SNAP is free software: you can
+# redistribute it and/or modify it under the terms of the
+# GNU General Public License as published by the
 # Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
@@ -25,26 +25,27 @@
 """
 
 
-#Get Qt version 
+# Get Qt version
 from PyQt5 import Qt
-qt_version = [ int(v) for v in Qt.QT_VERSION_STR.split('.') ]
 
-#Import correct parts of Qt
-#if (qt_version[0] >= 5 and qt_version[1] >= 6):
+qt_version = [int(v) for v in Qt.QT_VERSION_STR.split(".")]
+
+# Import correct parts of Qt
+# if (qt_version[0] >= 5 and qt_version[1] >= 6):
 # QtWebEngineWidgets broken under bionic:
 # https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=882805 (fixed Dec. 2019)
-if (False):
-    #Qt5.6 and later - QtWebKitWidgets is deprecated
+if False:
+    # Qt5.6 and later - QtWebKitWidgets is deprecated
     from PyQt5 import QtCore, QtWidgets
     from PyQt5.QtWebEngineWidgets import QWebEnginePage as QWebPage
     from PyQt5.QtWebEngineWidgets import QWebEngineView as QWebView
-elif (qt_version[0] >= 5):
-    #Qt5.5 and earlier
+elif qt_version[0] >= 5:
+    # Qt5.5 and earlier
     from PyQt5 import QtCore, QtWidgets
     from PyQt5.QtWebKitWidgets import QWebPage, QWebView
 else:
     raise ImportError("Unsupported version of PyQt")
-    
+
 from builtins import str
 import sys
 
@@ -61,14 +62,15 @@ class StartWebPage(QWebPage):
             self.formSubmitted.emit(req.url())
             return False
         else:
-            return super(StartWebPage, self).acceptNavigationRequest(frame, req, nav_type)
+            return super(StartWebPage, self).acceptNavigationRequest(
+                frame, req, nav_type
+            )
 
 
 class BrowserWidget(QtWidgets.QWidget):
-
     def __init__(self):
         """
-            Create main window with browser and a button
+        Create main window with browser and a button
         """
         super(BrowserWidget, self).__init__()
 
@@ -82,9 +84,9 @@ class BrowserWidget(QtWidgets.QWidget):
 
         self.set_form_handler(self._default_form_handler)
 
-        #self.default_url = "https://dokit.met.no/fou/kl/prosjekter/eemep/esnap_userdoc"
-        #self.tb_url.setText(self.default_url)
-        #self.browse()
+        # self.default_url = "https://dokit.met.no/fou/kl/prosjekter/eemep/esnap_userdoc"
+        # self.tb_url.setText(self.default_url)
+        # self.browse()
 
     def browse(self):
         """browse an url"""
@@ -93,12 +95,11 @@ class BrowserWidget(QtWidgets.QWidget):
         self.webview.load(QtCore.QUrl(url))
         self.webview.show()
 
-
     def url_changed(self, url):
-        """ Triggered when the url is changed """
+        """Triggered when the url is changed"""
 
     def set_html(self, text: str):
-        """ set html string"""
+        """set html string"""
         self.web_page = StartWebPage()
         self.webview.setPage(self.web_page)
         self.webview.page().formSubmitted.connect(self._handle_formSubmitted)
@@ -110,25 +111,23 @@ class BrowserWidget(QtWidgets.QWidget):
             print(str.format("{0} => {1}", key, value))
 
     def set_form_handler(self, handler):
-        """ the form handler should accept a dictionary with query results as input """
+        """the form handler should accept a dictionary with query results as input"""
         self.form_handler = handler
 
     def evaluate_javaScript(self, jscript):
-        self.webview.page().mainFrame().evaluateJavaScript(jscript);
+        self.webview.page().mainFrame().evaluateJavaScript(jscript)
 
     def _handle_formSubmitted(self, url):
         # I don't manage to get the right query strings from the web-page
-        print("handleFromSubmitted:"+url.toString());
-        self.form_handler(QtCore.QUrlQuery(url).queryItems(QtCore.QUrl.FullyDecoded));
-
-
+        print("handleFromSubmitted:" + url.toString())
+        self.form_handler(QtCore.QUrlQuery(url).queryItems(QtCore.QUrl.FullyDecoded))
 
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
 
     tab1 = BrowserWidget()
-    html = '''
+    html = """
 <html>
 <body>
 <form action="http://example.org" method="get">
@@ -140,10 +139,10 @@ Like it?
 </form>
 </body>
 </html>
-'''
+"""
     tab1.set_html(html)
     tabs = QtWidgets.QTabWidget()
-    tabs.addTab(tab1, 'Test')
-    tabs.resize(960,1024)
+    tabs.addTab(tab1, "Test")
+    tabs.resize(960, 1024)
     tabs.show()
     sys.exit(app.exec_())

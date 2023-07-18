@@ -1,17 +1,17 @@
 # SNAP: Servere Nuclear Accident Programme
 # Copyright (C) 1992-2017   Norwegian Meteorological Institute
-# 
-# This file is part of SNAP. SNAP is free software: you can 
-# redistribute it and/or modify it under the terms of the 
-# GNU General Public License as published by the 
+#
+# This file is part of SNAP. SNAP is free software: you can
+# redistribute it and/or modify it under the terms of the
+# GNU General Public License as published by the
 # Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
@@ -41,18 +41,19 @@ class StartWebPage(QtWebKitWidgets.QWebPage):
             self.formSubmitted.emit(req.url())
             return False
         else:
-            return super(StartWebPage, self).acceptNavigationRequest(frame, req, nav_type)
+            return super(StartWebPage, self).acceptNavigationRequest(
+                frame, req, nav_type
+            )
 
 
 class MainBrowserWindow(QtWidgets.QMainWindow):
-
     def __init__(self):
         """
-            Create main window with browser and a button
+        Create main window with browser and a button
         """
         super(MainBrowserWindow, self).__init__()
 
-        self.resize(960,1024)
+        self.resize(960, 1024)
         self.centralwidget = QtWidgets.QWidget(self)
 
         self.mainLayout = QtWidgets.QHBoxLayout(self.centralwidget)
@@ -68,9 +69,9 @@ class MainBrowserWindow(QtWidgets.QMainWindow):
         self.bt_back.setHidden(True)
         self.bt_ahead.setHidden(True)
         self.tb_url.setHidden(True)
-#         self.horizontalLayout.addWidget(self.bt_back)
-#         self.horizontalLayout.addWidget(self.bt_ahead)
-#         self.horizontalLayout.addWidget(self.tb_url)
+        #         self.horizontalLayout.addWidget(self.bt_back)
+        #         self.horizontalLayout.addWidget(self.bt_ahead)
+        #         self.horizontalLayout.addWidget(self.tb_url)
         self.gridLayout.addLayout(self.horizontalLayout)
 
         self.webview = QtWebKitWidgets.QWebView()
@@ -85,9 +86,9 @@ class MainBrowserWindow(QtWidgets.QMainWindow):
 
         self.set_form_handler(self._default_form_handler)
 
-        #self.default_url = "https://dokit.met.no/fou/kl/prosjekter/eemep/esnap_userdoc"
-        #self.tb_url.setText(self.default_url)
-        #self.browse()
+        # self.default_url = "https://dokit.met.no/fou/kl/prosjekter/eemep/esnap_userdoc"
+        # self.tb_url.setText(self.default_url)
+        # self.browse()
 
     def browse(self):
         """browse an url"""
@@ -96,13 +97,12 @@ class MainBrowserWindow(QtWidgets.QMainWindow):
         self.webview.load(QtCore.QUrl(url))
         self.webview.show()
 
-
     def url_changed(self, url):
-        """ Triggered when the url is changed """
+        """Triggered when the url is changed"""
         self.tb_url.setText(url.toString())
 
     def set_html(self, text: str):
-        """ set html string"""
+        """set html string"""
         self.tb_url.setText("")
         self.web_page = StartWebPage()
         self.webview.setPage(self.web_page)
@@ -115,24 +115,22 @@ class MainBrowserWindow(QtWidgets.QMainWindow):
             print(str.format("{0} => {1}", key, value))
 
     def set_form_handler(self, handler):
-        """ the form handler should accept a dictionary with query results as input """
+        """the form handler should accept a dictionary with query results as input"""
         self.form_handler = handler
 
     def evaluate_javaScript(self, jscript):
-        self.webview.page().mainFrame().evaluateJavaScript(jscript);
+        self.webview.page().mainFrame().evaluateJavaScript(jscript)
 
     def _handle_formSubmitted(self, url):
         # I don't manage to get the right query strings from the web-page
-        print("handleFromSubmitted:"+url.toString());
-        self.form_handler(QtCore.QUrlQuery(url).queryItems(QtCore.QUrl.FullyDecoded));
-
-
+        print("handleFromSubmitted:" + url.toString())
+        self.form_handler(QtCore.QUrlQuery(url).queryItems(QtCore.QUrl.FullyDecoded))
 
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     main = MainBrowserWindow()
-    html = '''
+    html = """
 <html>
 <body>
 <form action="http://example.org" method="get">
@@ -144,7 +142,7 @@ Like it?
 </form>
 </body>
 </html>
-'''
+"""
     main.set_html(html)
     main.show()
     sys.exit(app.exec_())
