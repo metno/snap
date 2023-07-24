@@ -196,7 +196,7 @@ PROGRAM bsnap
   USE wetdep, only: wetdep2, wetdep2_init, wetdep_scheme, WETDEP_SCHEME_UNDEFINED, WETDEP_SCHEME_BARTNICKI, &
     operator(==), operator(/=), wet_deposition_conventional_params => conventional_params, &
     WETDEP_SCHEME_CONVENTIONAL, wetdep_conventional_init, wetdep_conventional_compute, wetdep_conventional, &
-    wetdep_incloud_scheme, WETDEP_INCLOUD_SCHEME_NONE, WETDEP_INCLOUD_SCHEME_GCM, WETDEP_INCLOUD_SCHEME_CTM, &
+    wetdep_incloud_scheme, WETDEP_INCLOUD_SCHEME_NONE, WETDEP_INCLOUD_SCHEME_GCM, WETDEP_INCLOUD_SCHEME_ROSELLE, &
     WETDEP_INCLOUD_SCHEME_UNDEFINED
   use wetdep, only: wet_deposition_conventional_params => conventional_params
   USE drydep, only: drydep1, drydep2, drydep_nonconstant_vd, drydep_scheme, &
@@ -1247,8 +1247,8 @@ contains
             wetdep_incloud_scheme = WETDEP_INCLOUD_SCHEME_NONE
           case("gcm")
             wetdep_incloud_scheme = WETDEP_INCLOUD_SCHEME_GCM
-          case("ctm")
-            wetdep_incloud_scheme = WETDEP_INCLOUD_SCHEME_CTM
+          case("roselle")
+            wetdep_incloud_scheme = WETDEP_INCLOUD_SCHEME_ROSELLE
           case default
             write(error_unit,*) "Unknown scheme ", cinput(pname_start:pname_end)
             goto 12

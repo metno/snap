@@ -61,8 +61,8 @@ module wetdep
       wetdep_incloud_scheme_t(1, "No scheme (skip)")
   type(wetdep_incloud_scheme_t), parameter, public :: WETDEP_INCLOUD_SCHEME_GCM = &
       wetdep_incloud_scheme_t(2, "GCM")
-  type(wetdep_incloud_scheme_t), parameter, public :: WETDEP_INCLOUD_SCHEME_CTM = &
-      wetdep_incloud_scheme_t(3, "CTM")
+  type(wetdep_incloud_scheme_t), parameter, public :: WETDEP_INCLOUD_SCHEME_ROSELLE = &
+      wetdep_incloud_scheme_t(3, "Roselle")
 
   type, public :: conventional_params_t
     real(real64) :: A
@@ -401,11 +401,11 @@ contains
     real, intent(in) :: cloud_fraction(:,:)
 
 
-    lambda(:,:) = 1 - q/(q + cloud_water) * f_inc * cloud_fraction
+    lambda(:,:) = q/(q + cloud_water) * f_inc * cloud_fraction / 3600.0
   end subroutine
 
-  !> Aerosol rainout process also known as CTM-type wet deposition process
-  subroutine wetdep_incloud_ctm(lambda, q, cloud_water, cloud_fraction)
+  !> Aerosol rainout process from Roselle and Binkowski 1999
+  subroutine wetdep_incloud_roselle(lambda, q, cloud_water, cloud_fraction)
     real, intent(out) :: lambda(:,:)
     !> vertical flux of hydrometeors
     real, intent(in) :: q(:,:)
@@ -421,13 +421,16 @@ contains
     !> Characteristic time of cloud (equal to timestep?)
     real, parameter :: tau_cloud = 1.0
 
-    real, allocatable :: tau_rain(:,:)
+    real, allocatable :: tau_washout(:,:)
 
-    allocate(tau_rain, mold=lambda)
+    allocate(tau_washout, mold=lambda)
 
-    tau_rain(:,:) = q / cloud_water
-
-    lambda(:,:) = (1.0 - exp(-tau_cloud / tau_rain)) / tau_cloud * f_inc * cloud_fraction
+    where (q > 0.0)
+      tau_washout = cloud_water / q
+      lambda = (1.0 - exp(-tau_cloud / tau_washout)) / tau_cloud * f_inc * cloud_fraction / 3600.0
+    elsewhere
+      lambda = 0.0
+    endwhere
   end subroutine
 
   subroutine wet_deposition_rate_bartnicki(wscav, radius, precip, cw, ccf, use_ccf)
@@ -448,7 +451,6 @@ contains
     depconst = wet_deposition_constant(radius)
     if (.not.use_ccf) then
       wscav(:,:,:) = wet_deposition_rate_imm(radius, precip, depconst)
-
     else
       block
         integer :: i, j, k
@@ -502,8 +504,8 @@ contains
             incloud_coeff(:,:) = 0.0
           case (WETDEP_INCLOUD_SCHEME_GCM%scheme)
             call wetdep_incloud_gcm(incloud_coeff, precip(:,:,k), cw(:,:,k), ccf(:,:,k))
-          case (WETDEP_INCLOUD_SCHEME_CTM%scheme)
-            call wetdep_incloud_ctm(incloud_coeff, precip(:,:,k), cw(:,:,k), ccf(:,:,k))
+          case (WETDEP_INCLOUD_SCHEME_ROSELLE%scheme)
+            call wetdep_incloud_roselle(incloud_coeff, precip(:,:,k), cw(:,:,k), ccf(:,:,k))
           case default
             error stop "Unknown scheme"
         end select
