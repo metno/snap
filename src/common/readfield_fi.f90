@@ -469,14 +469,13 @@ contains
       block
         use snapparML, only: ncomp, run_comp
         use snapfldML, only: wscav, cw3d, precip3d, cloud_cover
-        use wetdep, only: prepare_wetdep, wetdep_scheme
+        use wetdep, only: prepare_wetdep
 
         integer :: i
 
         do i=1,ncomp
           if (.not.run_comp(i)%defined%kdrydep == 1) cycle
-          call prepare_wetdep(wscav(:,:,:,i), run_comp(i)%defined%radiusmym, wetdep_scheme, precip3d, cw3d, cloud_cover, &
-            use_ccf=met_params%use_ccf)
+          call prepare_wetdep(wscav(:,:,:,i), run_comp(i)%defined%radiusmym, precip3d, cw3d, cloud_cover)
         enddo
       end block
     endif
@@ -569,10 +568,12 @@ contains
           call fi_checkload(fio, "cloud_area_fraction_ml", "%", &
                             cloud_cover(:,:,k), nt=timepos, nz=ilevel, nr=nr)
         enddo
+
         ! Accumulate precipitation from top down
-        do k=(nk-kadd)-1,2,-1
-          precip3d(:,:,k) = precip3d(:,:,k) + precip3d(:,:,k+1)
-        enddo
+        ! Doing this in the wetdep module
+        !do k=(nk-kadd)-1,2,-1
+        !  precip3d(:,:,k) = precip3d(:,:,k) + precip3d(:,:,k+1)
+        !enddo
       end block
     end if
     if (met_params%precaccumv /= '') then
