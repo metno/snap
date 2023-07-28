@@ -1271,9 +1271,6 @@ contains
       case ('wet.deposition.use.cloud_fraction')
         if (has_value) goto 12
         met_params%use_ccf = .true.
-      case ('wet.deposition.use.incloud')
-        if (has_value) goto 12
-        met_params%use_incloud = .true.
       case ('wet.deposition.conventional.a')
         if (.not.has_value) goto 12
         read(cinput(pname_start:pname_end), *) wet_deposition_conventional_params%A
