@@ -398,10 +398,9 @@ contains
     endwhere
   end subroutine
 
-  subroutine wet_deposition_rate_bartnicki(wscav, radius, precip, cw, ccf, use_ccf)
+  subroutine wet_deposition_rate_bartnicki(wscav, radius, precip, ccf, use_ccf)
     real, intent(out) :: wscav(:,:)
     real, intent(in) :: precip(:,:)
-    real, intent(in) :: cw(:,:)
     real, intent(in) :: radius
     real, intent(in) :: ccf(:,:)
     logical, intent(in) :: use_ccf
@@ -417,10 +416,8 @@ contains
       wscav(:,:) = wet_deposition_rate_imm(radius, precip, depconst)
     else
       block
-        integer :: i, j, k
-        real, allocatable :: precip_scaled(:,:)
-
-        allocate(precip_scaled(nx,ny), mold=precip)
+        integer :: i, j
+        real :: precip_scaled
 
         do j=1,ny
           do i=1,nx
@@ -430,21 +427,20 @@ contains
             endif
 
             if (ccf(i,j) > 0.0) then
-              precip_scaled(i,j) = precip(i,j) / ccf(i,j)
+              ! Scale up precip intensity
+              precip_scaled = precip(i,j) / ccf(i,j)
             else
-              precip_scaled(i,j) = precip(i,j)
+              precip_scaled = precip(i,j)
+            endif
+
+            wscav(i,j) = wet_deposition_rate_imm(radius, precip_scaled, depconst)
+
+            if (ccf(i,j) > 0.0) then
+              ! Scale down efficiency
+              wscav(i,j) = wscav(i,j) * ccf(i,j)
             endif
           enddo
-          wscav(i,j) = wet_deposition_rate_imm(radius, precip_scaled(i,j), depconst)
-
-          if (ccf(i,j) > 0.0) then
-            wscav(i,j) = wscav(i,j) * ccf(i,j)
-          endif
         enddo
-
-        where (ccf > 0.0)
-          wscav = wscav * ccf
-        endwhere
       end block
     endif
   end subroutine
@@ -487,7 +483,7 @@ contains
 
       select case (wetdep_belowcloud_scheme%scheme)
         case (WETDEP_BELOWCLOUD_SCHEME_BARTNICKI%scheme)
-          call wet_deposition_rate_bartnicki(wscav(:,:,k), radius, accum_precip, cw(:,:,k), accum_ccf(:,:), use_ccf=.true.)
+          call wet_deposition_rate_bartnicki(wscav(:,:,k), radius, accum_precip(:,:), accum_ccf(:,:), use_ccf=.true.)
         case (WETDEP_BELOWCLOUD_SCHEME_NONE%scheme)
           wscav(:,:,k) = 0.0
         case default
