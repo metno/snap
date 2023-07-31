@@ -484,6 +484,8 @@ contains
       select case (wetdep_belowcloud_scheme%scheme)
         case (WETDEP_BELOWCLOUD_SCHEME_BARTNICKI%scheme)
           call wet_deposition_rate_bartnicki(wscav(:,:,k), radius, accum_precip(:,:), accum_ccf(:,:), use_ccf=.true.)
+        case (WETDEP_BELOWCLOUD_SCHEME_CONVENTIONAL%scheme)
+          wscav(:,:, k) = conventional_params%A * (accum_precip ** conventional_params%B)
         case (WETDEP_BELOWCLOUD_SCHEME_NONE%scheme)
           wscav(:,:,k) = 0.0
         case default
