@@ -490,7 +490,7 @@ contains
             real :: adj_precip
             do j=1,ny
               do i=1,nx
-                if (ccf(i,j,k) > 0.0) then
+                if (accum_ccf(i,j) > 0.0) then
                   adj_precip = accum_precip(i,j) / accum_ccf(i,j)
                   wscav(i,j,k) = accum_ccf(i,j) * conventional_params%A * adj_precip ** conventional_params%B
                 else
