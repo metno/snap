@@ -1,25 +1,25 @@
 # SNAP: Servere Nuclear Accident Programme
 # Copyright (C) 1992-2017   Norwegian Meteorological Institute
-#
-# This file is part of SNAP. SNAP is free software: you can
-# redistribute it and/or modify it under the terms of the
-# GNU General Public License as published by the
+# 
+# This file is part of SNAP. SNAP is free software: you can 
+# redistribute it and/or modify it under the terms of the 
+# GNU General Public License as published by the 
 # Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-#
+# 
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#
+# 
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-"""
+'''
 Created on Nov 17, 2016
 
 @author: heikok
-"""
+'''
 import re
 import sys
 import unittest
@@ -36,47 +36,48 @@ class SLURMQJob(QJob):
 
 
 class SLURMQueue(Queue):
+
     def __init__(self):
         super().__init__()
 
     def submit_command(self, jobscript, args):
-        """return the submit command, e.g. qsub or sbatch
+        '''return the submit command, e.g. qsub or sbatch
 
         Keyword arguments:
             jobscript -- the jobscript to submit
             args -- arguments to the jobscript
 
         Returns: the complete command as tuple (program, args), e.g. (qsub, [jobscript arg1 arg2 arg3]
-        """
+        '''
         jobargs = [jobscript]
         jobargs.extend(args)
         return ("sbatch", jobargs)
 
     def parse_submit(self, command_output, command_error, returncode):
-        """parse the output from the job-submission and return a QJob object"""
-        if returncode == 0:
+        '''parse the output from the job-submission and return a QJob object'''
+        if (returncode == 0):
             fields = command_output.split()
             jobid = fields[3]
             return SLURMQJob(jobid)
         else:
-            print(
-                "sbatch failed with code {}: {}".format(returncode, command_error),
-                file=sys.stderr,
-            )
+            print("sbatch failed with code {}: {}".format(returncode, command_error),
+                  file=sys.stderr)
         return None
 
+
     def status_command(self, qJob):
-        """return the status command for the QJob"""
-        assert isinstance(qJob, SLURMQJob)
-        return ("squeue", ["-j", "{}".format(qJob.jobid)])
+        '''return the status command for the QJob'''
+        assert(isinstance(qJob, SLURMQJob))
+        return ("squeue", ['-j', "{}".format(qJob.jobid)])
 
     def delete_command(self, qJob):
-        """return the delete command for the QJob"""
-        assert isinstance(qJob, SLURMQJob)
+        '''return the delete command for the QJob'''
+        assert(isinstance(qJob, SLURMQJob))
         return ("scancel", ["{}".format(qJob.jobid)])
 
+
     def _parse_int(self, string):
-        m = re.search(r"(\d+)", string)
+        m = re.search(r'(\d+)', string)
         if m:
             return int(m.group(1))
         return 0
@@ -101,42 +102,40 @@ class SLURMQueue(Queue):
             return QJobStatus.finished
         return QJobStatus.unknown
 
-    def parse_status(self, qJob, status_output, status_err, returncode):
-        """return the QJobStatus the QJob, except for testing for the status-file"""
 
-        assert isinstance(qJob, SLURMQJob)
+    def parse_status(self, qJob, status_output, status_err, returncode):
+        '''return the QJobStatus the QJob, except for testing for the status-file'''
+
+        assert(isinstance(qJob, SLURMQJob))
         if returncode == 0:
             return self._pure_parse_status(qJob, status_output)
         else:
             return QJobStatus.unknown
 
 
+
 class TestSLURMQueue(unittest.TestCase):
+
     def setUp(self):
         super().setUp()
         self.queue = SLURMQueue()
         self.jobid = "2839455"
 
+
     def test_parse_status(self):
-        status_output = """
+        status_output = '''
              JOBID PARTITION     NAME     USER ST       TIME  NODES NODELIST(REASON)
            2839455     frost interact   cooper  R    1:17:46      1 n362
-"""
+'''
         qJob = SLURMQJob(self.jobid)
-        self.assertEqual(
-            self.queue.parse_status(qJob, status_output, "", 0),
-            QJobStatus.running,
-            "parsing output",
-        )
+        self.assertEqual(self.queue.parse_status(qJob, status_output, "", 0),
+                         QJobStatus.running, "parsing output")
 
     def test_parse_submit(self):
-        command_output = """Submitted batch job 2839455
-"""
-        self.assertEqual(
-            self.queue.parse_submit(command_output, "", 0).jobid,
-            self.jobid,
-            "parsing squeue command",
-        )
+        command_output = '''Submitted batch job 2839455
+'''
+        self.assertEqual(self.queue.parse_submit(command_output, "", 0).jobid,
+                         self.jobid, "parsing squeue command")
 
 
 if __name__ == "__main__":

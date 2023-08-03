@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+from METNO.SSHConnection import SSHConnection
 
 """
 Created on Mar 2, 2018
@@ -34,7 +35,6 @@ Structure below directory is:
 @author: heikok
 """
 
-from METNO.SSHConnection import SSHConnection
 from METNO.HPC import typed_property, HPC
 from Snappy.Utils import delete_oldfiles, dirIsWritable
 import atexit
@@ -108,7 +108,7 @@ class SnapTask:
         return False
 
     def handle(self, hpc):
-        """Handle the job on the hpc. HPC directories must be writable locally.
+        """ Handle the job on the hpc. HPC directories must be writable locally.
         Raise SnapJob.UnknownModelException on input-zip error
         Raise Exception on any error
         """
@@ -327,9 +327,7 @@ class SnapRemoteRunner:
                 )
             elif tag == "running":
                 fh.write(
-                    "101:{ts}::queued {model} for processing\n".format(
-                        ts=timestamp, model=task.model
-                    )
+                    "101:{ts}::queued {model} for processing\n".format(ts=timestamp, model=task.model)
                 )
             elif tag == "internal":
                 fh.write(
@@ -340,7 +338,8 @@ class SnapRemoteRunner:
             else:
                 fh.write(
                     "{x}:{ts}::internal error in status tag\n".format(
-                        x=500, ts=timestamp, )
+                        x=500, ts=timestamp, rundir=task.rundir
+                    )
                 )
                 print(f"wrong status tag: {tag}", file=sys.stderr)
         self.ssh.put_files([work_file], self.remote_dir, 30)
@@ -397,9 +396,9 @@ class SnapRemoteRunner:
                             try:
                                 task.handle(self.hpc)
                                 self.write_status(task, tag="running")
-                            except UnknownModelException:
+                            except UnknownModelException as umex:
                                 self.write_status(task, tag="inputerror")
-                            except Exception:
+                            except Exception as ex:
                                 self.write_status(task, tag="internal")
                         delete_in_upload.append(f)
                     else:
