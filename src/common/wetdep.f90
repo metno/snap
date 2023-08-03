@@ -260,17 +260,25 @@ contains
     depconst = b0 + b1*rm + b2*rm*rm + b3*rm*rm*rm
   end function
 
-  pure elemental real function wet_deposition_rate_imm(radius, q, depconst) result(rkw)
+  pure elemental real function wet_deposition_rate_imm(radius, q, depconst, no_use_convective_rain) result(rkw)
     !> radius in micrometer
     real, intent(in) :: radius
     !> precipitation intensity in mm/h
     real, intent(in) :: q
     !> deposition constant
     real, intent(in) :: depconst
+    logical, optional, intent(in) :: no_use_convective_rain
 
     real, parameter :: a0 = 8.4e-5
     real, parameter :: a1 = 2.7e-4
     real, parameter :: a2 = -3.618e-6
+    logical :: use_convective
+
+    if (present(no_use_convective_rain)) then
+      use_convective = .not.no_use_convective_rain
+    else
+      use_convective = .true.
+    endif
 
     rkw = 0
     if (radius > 0.05 .AND. radius <= 1.4) then
@@ -282,7 +290,7 @@ contains
     if (radius > 10.0) then
       rkw = a1*q + a2*q*q
     endif
-    if (q > 7.0) then ! convective
+    if (use_convective .and. q > 7.0) then ! convective
       rkw = 3.36e-4*q**0.79
     endif
     if (radius <= 0.1) then ! gas
@@ -413,7 +421,7 @@ contains
 
     depconst = wet_deposition_constant(radius)
     if (.not.use_ccf) then
-      wscav(:,:) = wet_deposition_rate_imm(radius, precip, depconst)
+      wscav(:,:) = wet_deposition_rate_imm(radius, precip, depconst, no_use_convective_rain=.true.)
     else
       block
         integer :: i, j
@@ -433,7 +441,7 @@ contains
               precip_scaled = precip(i,j)
             endif
 
-            wscav(i,j) = wet_deposition_rate_imm(radius, precip_scaled, depconst)
+            wscav(i,j) = wet_deposition_rate_imm(radius, precip_scaled, depconst, no_use_convective_rain=.true.)
 
             if (ccf(i,j) > 0.0) then
               ! Scale down efficiency
@@ -545,6 +553,42 @@ contains
 
     !$OMP atomic
     dep(i, j, mm) = dep(i, j, mm) + real(radlost, kind=real64)
+  end subroutine
+
+
+  !> Laakso et al. 2003, Ultrafine particle scavenging coefficients
+  !> Valid for particle diameter in between 10 nm < diameter < 510 nm
+  !> Valid for precipitation intensity between 0-20 mm/h
+  elemental subroutine laakso_preciprate(dia_p, p, lambda)
+    !> Diameter of particle [m]
+    real, intent(in) :: dia_p
+    !> Precipitation intensity [mm/hr]
+    real, intent(in) :: p
+    !> Scavenging rate [1/s]
+    real, intent(out) :: lambda
+
+    ! [1/s]
+    real, parameter :: lambda0 = 1.0
+    ! [m]
+    real, parameter :: dia_p0 = 1.0
+    ! [mm/hr]
+    real, parameter :: p0 = 1.0
+
+    real, parameter :: a = 274.35758
+    real, parameter :: b = 332839.59273
+    real, parameter :: c = 226656.57259
+    real, parameter :: d = 58005.91340
+    real, parameter :: e = 6588.38582
+    real, parameter :: f = 0.244984
+
+    real(real64) :: dp, log10_l_l0
+
+    dp = log10(dia_p/ dia_p0)
+
+    log10_l_l0 = a + b*dp**-4 + c*dp**-3 + d * dp**-2 + e * dp**-1 + f*(p/p0)**0.5
+
+    lambda = lambda0 * 10.0**log10_l_l0
+
   end subroutine
 
 end module wetdep
