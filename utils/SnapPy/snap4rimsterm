@@ -2,18 +2,18 @@
 #
 # SNAP: Servere Nuclear Accident Programme
 # Copyright (C) 1992-2020   Norwegian Meteorological Institute
-# 
-# This file is part of SNAP. SNAP is free software: you can 
-# redistribute it and/or modify it under the terms of the 
-# GNU General Public License as published by the 
+#
+# This file is part of SNAP. SNAP is free software: you can
+# redistribute it and/or modify it under the terms of the
+# GNU General Public License as published by the
 # Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
@@ -28,7 +28,7 @@ import xml.etree.ElementTree as ET
 
 from Snappy.AddBombIsotopes import snap_add_bomb_isotopes
 from Snappy.AddToa import add_toa_to_nc
-from Snappy.BombIsotopeFractions import BombIsotopeFractions 
+from Snappy.BombIsotopeFractions import BombIsotopeFractions
 from Snappy.EcMeteorologyCalculator import EcMeteorologyCalculator
 from Snappy.ICONMeteorologyCalculator import ICONMeteorologyCalculator
 from Snappy.MeteorologyCalculator import MeteorologyCalculator
@@ -79,7 +79,7 @@ def rimsterm2npp_release(rimxml, runTime, releaseStartTime, startDTime):
         # offset endtime
         if runTime < 0: # backward run
             # StartTime is earliest measuremnt, Endtime end of measurement after starttime
-            # snap needs to start at the end of the measurements, i.e. the last time 
+            # snap needs to start at the end of the measurements, i.e. the last time
             #     and run backupward in time
             startDTime = startDTime + endtime
         posXML = relXML.find("SourcePosition")
@@ -148,6 +148,7 @@ def rimsterm2bomb_release(argosxml, offset_time: datetime.timedelta):
 def request_is_bomb(argosRoot):
     return argosRoot.find("NuclearYield") is not None
 
+
 def rimsterm2input(rimxml, argosxml, met_model):
     """create a full snap.input sourceterm from a rimsterm.xml file using the met_model meteo"""
 
@@ -163,7 +164,15 @@ def rimsterm2input(rimxml, argosxml, met_model):
         runTime = int(argosxml.find("RunLength").text)
         outputTimestep = int(argosxml.find("OutputTimestep").text)
         is_bomb = request_is_bomb(argosxml)
-    
+        # GridSize: size of grid-cell, i.e. 2.5, 0.1 (km or degree), available since Argos10
+        gridSize = 0 # default
+        if findGridSize := argosxml.find("GridSize"):
+            gridSize = float(findGridSize.text)
+        # CalcGridSize: number of x and y cells in grid, available since Argos10
+        calcGridSize = 0 # default
+        if findCalcGridSize := argosxml.find("CalcGridSize"):
+            calcGridSize = int(findCalcGridSize)
+
     releaseStartTime = datetime.datetime.strptime(startTime, '%Y-%m-%dT%H:%M:%SZ')
     startDTime = releaseStartTime.replace(minute=0, second=0, microsecond=0) # snap requires hourly start
     offset_time = releaseStartTime - startDTime
