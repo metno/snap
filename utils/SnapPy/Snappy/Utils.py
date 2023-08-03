@@ -159,6 +159,20 @@ def delete_oldfiles(dir_to_search, age_in_days):
                 pass
 
 def restrictDomainSizeAndResolution(file: str, lon: float, lat: float, gridSize: float, calcGridSize: int) -> str:
+    """Get snap.input parameters to increase the resolution (supersampling) or
+    reduce the calculation domain. This requires the input file to be in
+    netcdf and to be read in snap using fimex, i.e. FIELD.TYPE=fimex and
+    FIMEX.FILE_TYPE=netcdf
+
+    :param file: example netcdf file
+    :param lon: longitude of center of new/modified domain
+    :param lat: latitude of center of new/modified domain
+    :param gridSize: grid-cell size in km or degree (from ARGOS), ignored if 0
+    :param calcGridSize: number of grid-cells in the output domain (does not need to be exact), ignored if 0 or larger than domain in file
+    :raises Exception: on errors while reading file
+    :return: sniplet for use in snap.input to supersample to new gridSize (e.g. "FIELD.OUTPUT_RESOLUTION_FACTOR= 2\n")
+        and for restricting the calculation domain, (e.g. "FIMEX.INTERPOLATION=nearest|+proj=l...")
+    """
     retStr = ""
     with netCDF4.Dataset(file, 'r') as nc:
         if 'x_wind_ml' in nc.variables:
@@ -227,8 +241,6 @@ def restrictDomainSizeAndResolution(file: str, lon: float, lat: float, gridSize:
             if yfirst < 0:
                 yfirst = 0
 
-            retStr += "FIELD.TYPE=fimex\n"
-            retStr += "FIMEX.FILE_TYPE=netcdf\n"
             retStr += f"FIMEX.INTERPOLATION=nearest|{projstr}|{xvals[xfirst]},{xvals[xfirst+1]},...,{xvals[xlast]}|{yvals[yfirst]},{yvals[yfirst+1]},...,{yvals[ylast]}|degree\n"
     return retStr
 
@@ -245,17 +257,13 @@ class RestrictDomainSizeAndResolutionTests(unittest.TestCase):
     def testLatLonDomainSize(self):
         if not os.path.exists(self.latLonFile):
             self.skipTest(f"file not available: {self.latLonFile}")
-        self.assertTrue(restrictDomainSizeAndResolution(self.latLonFile, 10, 60, 0, 350).startswith("""FIELD.TYPE=fimex
-FIMEX.FILE_TYPE=netcdf
-FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|-7"""))
+        self.assertTrue(restrictDomainSizeAndResolution(self.latLonFile, 10, 60, 0, 350).startswith("FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|-7"))
 
     def testLatLonSupersampling(self):
         if not os.path.exists(self.latLonFile):
             self.skipTest(f"file not available: {self.latLonFile}")
         #print(restrictDomainSizeAndResolution(self.latLonFile, 10, 60, 0.05, 350))
         self.assertTrue(restrictDomainSizeAndResolution(self.latLonFile, 10, 60, 0.05, 350).startswith("""FIELD.OUTPUT_RESOLUTION_FACTOR= 2
-FIELD.TYPE=fimex
-FIMEX.FILE_TYPE=netcdf
 FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|1"""))
 
 
@@ -267,16 +275,12 @@ FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|1"""))
     def testLambertDomainSize(self):
         if not os.path.exists(self.latLonFile):
             self.skipTest(f"file not available: {self.lambertFile}")
-        self.assertTrue(restrictDomainSizeAndResolution(self.lambertFile, 10, 60, 0, 350).startswith("""FIELD.TYPE=fimex
-FIMEX.FILE_TYPE=netcdf
-FIMEX.INTERPOLATION=nearest|+proj=lcc +lat_0=63.3 +lon_0=15 +lat_1=63.3 +lat_2=63.3 +x_0=0 +y_0=0 +R=6371000 +units=m +no_defs +type=crs|-7"""))
+        self.assertTrue(restrictDomainSizeAndResolution(self.lambertFile, 10, 60, 0, 350).startswith("FIMEX.INTERPOLATION=nearest|+proj=lcc +lat_0=63.3 +lon_0=15 +lat_1=63.3 +lat_2=63.3 +x_0=0 +y_0=0 +R=6371000 +units=m +no_defs +type=crs|-7"))
 
     def testLambertSupersampling(self):
         if not os.path.exists(self.latLonFile):
             self.skipTest(f"file not available: {self.lambertFile}")
         self.assertTrue(restrictDomainSizeAndResolution(self.lambertFile, 10, 60, 1.25, 350).startswith("""FIELD.OUTPUT_RESOLUTION_FACTOR= 2
-FIELD.TYPE=fimex
-FIMEX.FILE_TYPE=netcdf
 FIMEX.INTERPOLATION=nearest|+proj=lcc +lat_0=63.3 +lon_0=15 +lat_1=63.3 +lat_2=63.3 +x_0=0 +y_0=0 +R=6371000 +units=m +no_defs +type=crs|-4"""))
 
 
