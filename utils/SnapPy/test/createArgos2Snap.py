@@ -2,28 +2,28 @@
 #
 # SNAP: Servere Nuclear Accident Programme
 # Copyright (C) 1992-2017   Norwegian Meteorological Institute
-#
-# This file is part of SNAP. SNAP is free software: you can
-# redistribute it and/or modify it under the terms of the
-# GNU General Public License as published by the
+# 
+# This file is part of SNAP. SNAP is free software: you can 
+# redistribute it and/or modify it under the terms of the 
+# GNU General Public License as published by the 
 # Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-#
+# 
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#
+# 
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-"""Create *ARGOS2SNAP.zip and *ARGOS2TRAJ.zip files with current dates"""
+'''Create *ARGOS2SNAP.zip and *ARGOS2TRAJ.zip files with current dates'''
 
 import datetime
 import zipfile
 
 
-rimsterm = """<CBRN_Sourceterm Version="23">
+rimsterm = '''<CBRN_Sourceterm Version="23">
 <Header><Author>ARGOS application: 9.3.8.0  - User: msolberg</Author>
 <SourceDoc/>
 <Place>
@@ -46,9 +46,9 @@ rimsterm = """<CBRN_Sourceterm Version="23">
 <BinStrength BinId="1" Value="1e+11"/></SourceStrength>
 <SourcePosition Longitude="-1.18083" Latitude="54.6344" HeightAboveGround="100" HeightAboveGroundMax="0" Datum="WGS84"/>
 <SourcePuffSigmaYZ Unit="m" SigmaY="1" SigmaZ="1"/>
-<SourceHeat Unit="W" Value="0"/></ReleaseInterval></TimeDependent></Source></CBRN_Sourceterm>"""
+<SourceHeat Unit="W" Value="0"/></ReleaseInterval></TimeDependent></Source></CBRN_Sourceterm>'''
 
-rimsterm_back = """<?xml version="1.0" encoding="Windows-1252"?>
+rimsterm_back = '''<?xml version="1.0" encoding="Windows-1252"?>
 <CBRN_Sourceterm Version="23">
 <Header><Author>ARGOS application: 9.4.9.0  - User: JanErik</Author>
 <SourceDoc/>
@@ -76,16 +76,16 @@ rimsterm_back = """<?xml version="1.0" encoding="Windows-1252"?>
 <SourcePosition Longitude="12.1" Latitude="57.25" HeightAboveGround="0" HeightAboveGroundMax="0" Datum="WGS84"/>
 <SourcePuffSigmaYZ Unit="m" SigmaY="10" SigmaZ="10"/>
 <SourceHeat Unit="W" Value="0"/></ReleaseInterval></TimeDependent></Source></CBRN_Sourceterm>
-"""
-request_back = """<?xml version="1.0" encoding="Windows-1252"?>
+'''
+request_back = '''<?xml version="1.0" encoding="Windows-1252"?>
 <Request>
 <RunLength>-24</RunLength>
 <OutputTimestep>3</OutputTimestep>
 <OutputFormat>NetCDF</OutputFormat>
 </Request>
-"""
+'''
 
-traj_input = """BROKDORF_(KBR)       Source name
+traj_input = '''BROKDORF_(KBR)       Source name
  53.851              Latitude (dec.deg.)
   9.346              Longitude (dec.deg.)
 {date}1029         Start (UTC)
@@ -95,9 +95,9 @@ forward             Mode (forward / backward)
   50.0               First parcel (metres above surface)
  100.0               Second parcel (metres above surface)
  500.0               Third parcel (metres above surface)
-"""
+'''
 
-traj_back = """backward2            Source name
+traj_back = '''backward2            Source name
  69.387              Latitude (dec.deg.)
  23.760              Longitude (dec.deg.)
 {date}0703         Start (UTC)
@@ -107,27 +107,20 @@ backward             Mode (forward / backward)
   30.0               First parcel (metres above surface)
  500.0               Second parcel (metres above surface)
 1500.0               Third parcel (metres above surface)
-"""
+'''
 
 today = datetime.datetime.now()
 tomorrow = today + datetime.timedelta(days=1)
 
-with zipfile.ZipFile("Hartlepool-777_ARGOS2SNAP.zip", "w") as zh:
-    zh.writestr(
-        "Hartlepool-777_Rimsterm.xml", rimsterm.format(date=today.strftime("%Y-%m-%d"))
-    )
+with zipfile.ZipFile('Hartlepool-777_ARGOS2SNAP.zip', 'w') as zh:
+    zh.writestr('Hartlepool-777_Rimsterm.xml', rimsterm.format(date=today.strftime('%Y-%m-%d')))
 
-with zipfile.ZipFile("TestBackModeling_ARGOS2SNAP.zip", "w") as zh:
-    zh.writestr(
-        "TestBackModeling_Rimsterm.xml",
-        rimsterm_back.format(date=today.strftime("%Y-%m-%d")),
-    )
-    zh.writestr("TestBackModeling_SNAP_request.xml", request_back)
+with zipfile.ZipFile('TestBackModeling_ARGOS2SNAP.zip', 'w') as zh:
+    zh.writestr('TestBackModeling_Rimsterm.xml', rimsterm_back.format(date=today.strftime('%Y-%m-%d')))
+    zh.writestr('TestBackModeling_SNAP_request.xml', request_back)
+    
+with zipfile.ZipFile('Brokdorf_test_2_ARGOS2TRAJ.zip', 'w') as zh:
+    zh.writestr('Brokdorf_test_2_TRAJ_input', traj_input.format(date=today.strftime('%Y%m%d')))
 
-with zipfile.ZipFile("Brokdorf_test_2_ARGOS2TRAJ.zip", "w") as zh:
-    zh.writestr(
-        "Brokdorf_test_2_TRAJ_input", traj_input.format(date=today.strftime("%Y%m%d"))
-    )
-
-with zipfile.ZipFile("backward2_ARGOS2TRAJ.zip", "w") as zh:
-    zh.writestr("backward2_TRAJ_input", traj_back.format(date=today.strftime("%Y%m%d")))
+with zipfile.ZipFile('backward2_ARGOS2TRAJ.zip', 'w') as zh:
+    zh.writestr('backward2_TRAJ_input', traj_back.format(date=today.strftime('%Y%m%d')))

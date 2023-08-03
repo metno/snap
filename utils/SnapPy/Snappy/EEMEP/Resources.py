@@ -175,7 +175,7 @@ class Resources(ResourcesCommon):
                     volcano["LONGITUDE"] *= -1
                 try:
                     volcano["ELEV"] = float(volcano["ELEV"])
-                except Exception:
+                except:
                     volcano["ELEV"] = 0.0
                 if volcano["NAME"] == "Unnamed":
                     volcano["NAME"] = "_"

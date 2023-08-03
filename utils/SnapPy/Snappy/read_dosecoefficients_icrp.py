@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 import numpy as np
+import pathlib
 import zipfile
 import csv
 import io

@@ -51,7 +51,6 @@ class MetModel(enum.Enum):
     def __hash__(self):
         return self.value.__hash__()
 
-
 class Resources(ResourcesCommon):
     """
     Read the resources and combine them
@@ -71,14 +70,16 @@ class Resources(ResourcesCommon):
         MetModel.NrpaEC0p1Global: [
             "{LUSTREDIR}/project/metproduction/products/ecmwf/nc/"
         ],
-        MetModel.EC0p1Global: ["{LUSTREDIR}/project/metproduction/products/ecmwf/nc/"],
+        MetModel.EC0p1Global: [
+            "{LUSTREDIR}/project/metproduction/products/ecmwf/nc/"
+        ],
         MetModel.Icon0p25Global: ["{LUSTREDIR}/project/metproduction/products/icon/"],
     }
 
     _MET_INPUTDIRS = {
         MetModel.Meps2p5: [
             "{LUSTREDIR}/immutable/archive/projects/metproduction/MEPS/",
-            "{LUSTREDIR}/project/fou/kl/cerad/Projects/2022_ArcticReihn/Meteo/MEPS/",
+            "{LUSTREDIR}/project/fou/kl/cerad/Projects/2022_ArcticReihn/Meteo/MEPS/"
         ],
         MetModel.GfsGribFilter: ["/disk1/tmp/"],
     }
@@ -164,7 +165,7 @@ class Resources(ResourcesCommon):
         return os.path.join(self.directory, "radioMapIcon.png")
 
     def getIsotopes(self):
-        """return a dictionary of isotope-ids mapping to a dictionary with isotope,type and decay"""
+        """ return a dictionary of isotope-ids mapping to a dictionary with isotope,type and decay"""
         isotopes = dict()
         with open(
             os.path.join(self.directory, "isotope_list.txt"), mode="r", encoding="UTF-8"
@@ -184,10 +185,10 @@ class Resources(ResourcesCommon):
         return isotopes
 
     def isotopes2isoIds(self, isotopes: list[str | int]) -> list[int]:
-        """
+        '''
         translate a list of isotopes, i.e. ['Cs-137', ...] or ['Cs137', ...] or ['17', ...]
         to argos isotope id's
-        """
+        '''
         retval = []
         allIsos = self.getIsotopes()
         for iso in isotopes:
@@ -199,9 +200,9 @@ class Resources(ResourcesCommon):
             except Exception:
                 pass
             if isoId == -1:
-                iso = iso.replace("-", "")
+                iso = iso.replace('-', '')
                 for iId, isoDict in allIsos.items():
-                    if iso == isoDict["isotope"]:
+                    if iso == isoDict['isotope']:
                         isoId = iId
                         break
             if isoId == -1:
@@ -209,17 +210,19 @@ class Resources(ResourcesCommon):
             retval.append(isoId)
         return retval
 
+
     def isotopes2snapinput(self, isotopeIds, add_DPUI=True):
         """Read a list of isotopeIds and return a text-block to be used for a snap.input file, like
-        COMPONENT= Cs137
-        RADIOACTIVE.DECAY.ON
-        HALF.LIFETIME.YEARS= 30
-        DRY.DEP.ON
-        WET.DEP.ON
-        RADIUS.MICROMETER=0.55
-        DENSITY.G/CM3=2.3
-        GRAVITY.FIXED.M/S=0.0002
-        FIELD.IDENTIFICATION=01"""
+COMPONENT= Cs137
+RADIOACTIVE.DECAY.ON
+HALF.LIFETIME.YEARS= 30
+DRY.DEP.ON
+WET.DEP.ON
+RADIUS.MICROMETER=0.55
+DENSITY.G/CM3=2.3
+GRAVITY.FIXED.M/S=0.0002
+FIELD.IDENTIFICATION=01
+"""
         if add_DPUI:
             dosecoeff = self.getDoseCoefficients()
         else:
@@ -266,7 +269,7 @@ GRAVITY.FIXED.M/S=0.0002
                     DPUI = dosecoeff.DPUI(iso["isotope"], "particulate")
             else:
                 raise Exception(
-                    "Error, unknown type '{0}' for isotope '{1}'".format(
+                    "Error, unknown type '{1}' for isotope '{2}'".format(
                         iso["type"], iso["isotope"]
                     )
                 )
@@ -333,7 +336,7 @@ GRAVITY.FIXED.M/S=0.0002
         ) as ncmlFH:
             ncmlOut = ncmlFH.read()
         ncmlOut = ncmlOut.format(variables="\n".join(varFills))
-
+        
         return {
             "extracts": extracts,
             "xml": xmlOut,
@@ -373,16 +376,14 @@ GRAVITY.FIXED.M/S=0.0002
         nppsFile.close()
         return OrderedDict(sorted(npps.items(), key=lambda t: t[0].lower()))
 
-    def readRadnett(
-        self,
-    ):
+    def readRadnett(self,):
         stations = OrderedDict()
         with open(
             os.path.join(os.path.dirname(__file__), "resources/radnett.csv"),
             mode="r",
             encoding="UTF-8",
         ) as f:
-            degree_minute_regex = re.compile(r"([0-9]+)°\s([0-9]+)’\s[NØ]")
+            degree_minute_regex = re.compile("([0-9]+)°\s([0-9]+)’\s[NØ]")
             for line in f:
                 if line.startswith("#"):
                     continue
@@ -651,9 +652,10 @@ GRAVITY.FIXED.M/S=0.0002
             dosecoeffs = read_dosecoefficients_icrp.DoseCoefficientsICRP(
                 os.path.join(self.directory, "1-s2.0-S0146645313000110-mmc1.zip")
             )
-        except Exception:
+        except Exception as e:
             dosecoeffs = None
         return dosecoeffs
+
 
 
 # setting bitmapCompress as default to False
@@ -675,63 +677,54 @@ def snapNc_convert_to_grib(snapNc, basedir, ident, isotopes, bitmapCompress=Fals
     basexmlFile = os.path.join(basedir, xmlFile)
     ncmlFile = "config.ncml"
     baseNcmlFile = os.path.join(basedir, ncmlFile)
-    with open(baseNcmlFile, "w") as nh:
-        nh.write(config["ncml"])
-
+    with open(baseNcmlFile, 'w') as nh:
+        nh.write(config['ncml'])
+    
     errlog = open(os.path.join(basedir, "fimex.errlog"), "w")
     outlog = open(os.path.join(basedir, "fimex.outlog"), "w")
-    tempfile = "tmp.grib"
+    tempfile = 'tmp.grib'
     basetempfile = os.path.join(basedir, tempfile)
     # fimex works in basedir, so it does not need the basefiles
-    for appendix, params in config["extracts"].items():
-        if appendix == "tofa":
+    for appendix, params in config['extracts'].items():
+        if appendix == 'tofa':
             omitEmptyFields = True
         else:
             omitEmptyFields = False
-        with open(basexmlFile, "w") as xh:
-            xh.write(config["xml"].format(OMIT_EMPTY_FIELDS=omitEmptyFields))
+        with open(basexmlFile, 'w') as xh:
+            xh.write(config['xml'].format(OMIT_EMPTY_FIELDS=omitEmptyFields))
         outFile = os.path.join(basedir, f"{ident}_{appendix}")
-        with open(outFile, "wb") as gh:
+        with open(outFile, 'wb') as gh:
             for param in params:
-                if os.path.exists(basetempfile):
+                if (os.path.exists(basetempfile)):
                     os.remove(basetempfile)
-                procOptions = [
-                    "fimex",
-                    f"--input.file={snapNc}",
-                    f"--input.config={ncmlFile}",
-                    # avoid problem with lat/lon variables
-                    # in fimex grib-writer< 0.64
-                    # '--extract.removeVariable=longitude',
-                    # '--extract.removeVariable=latitude',
-                    f"--output.file={tempfile}",
-                    "--output.type=grib",
-                    f"--output.config={xmlFile}",
-                ]
-                procOptions.append(f"--extract.selectVariables={param}")
+                procOptions = ['fimex', f'--input.file={snapNc}', f'--input.config={ncmlFile}',
+                       # avoid problem with lat/lon variables
+                       # in fimex grib-writer< 0.64
+                       # '--extract.removeVariable=longitude',
+                       # '--extract.removeVariable=latitude',
+                       f'--output.file={tempfile}',
+                       '--output.type=grib', f'--output.config={xmlFile}']
+                procOptions.append(f'--extract.selectVariables={param}')
                 print(" ".join(procOptions))
-                proc = subprocess.Popen(
-                    procOptions, cwd=basedir, stderr=errlog, stdout=outlog
-                )
-                if proc.wait() != 0:
-                    errlog.write(
-                        "'{fimex}' in {dir} failed".format(
-                            fimex=" ".join(procOptions), dir=basedir
-                        )
-                    )
+                proc = subprocess.Popen(procOptions, cwd=basedir, stderr=errlog, stdout=outlog)
+                if (proc.wait() != 0):
+                    errlog.write("'{fimex}' in {dir} failed".format(fimex=' '.join(procOptions), dir=basedir))
                 else:
                     # append tmp-file to final grib-file
-                    with (open(basetempfile, "rb")) as th:
+                    with (open(basetempfile, 'rb')) as th:
                         while True:
-                            data = th.read(16 * 1024 * 1024)  # read max 16M blocks
+                            data = th.read(16*1024*1024) # read max 16M blocks
                             if data:
                                 gh.write(data)
                             else:
                                 break
-                if os.path.exists(basetempfile):
+                if (os.path.exists(basetempfile)):
                     os.remove(basetempfile)
 
     errlog.close()
     outlog.close()
+
+
 
 
 if __name__ == "__main__":
@@ -761,7 +754,7 @@ if __name__ == "__main__":
         )
     )
     print(Resources().getDoseCoefficients())
-    isotopes = ["Cs-137", "Cs134"]
+    isotopes = ['Cs-137', 'Cs134']
     isoIds = Resources().isotopes2isoIds(isotopes)
     print(f"f{isotopes} have ids:  {isoIds}")
     assert len(isotopes) == len(isoIds)
