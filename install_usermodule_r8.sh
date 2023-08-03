@@ -76,8 +76,7 @@ install_baseenv() {
 	exit 2
     fi
 
-    # Ignore implicit loading of $1
-    source /modules/rhel8/conda/install/bin/activate || true
+    source /modules/rhel8/conda/install/etc/profile.d/conda.sh
 
     echo "Installing a fresh conda environment"
     install_conda_env "$MODULE_PREFIX"
@@ -116,12 +115,9 @@ EOF
 install_snap() {
     MODULE_VERSION="$1"
     BASE_MODULE_VERSION="$2"
-
-    source /modules/rhel8/conda/install/etc/profile.d/conda.sh
-
     BASE_MODULE_PREFIX=/modules/rhel8/user-apps/fou-modules/SnapPy/"$BASE_MODULE_VERSION"/
 
-    conda activate "$BASE_MODULE_PREFIX"
+    source /modules/rhel8/conda/install/bin/activate "$BASE_MODULE_PREFIX"
 
     MODULE_PREFIX=/modules/rhel8/user-apps/fou-modules/SnapPy/"$MODULE_VERSION"/
     mkdir --parent -- "$MODULE_PREFIX/bin"
@@ -158,18 +154,18 @@ setenv          SNAP_MODULE             \$ModulesCurrentModulefile
 EOF
 }
 
-
+DEFAULT_BASEENV=conda202305
 case "${1:-help}" in
   install_baseenv)
     install_baseenv "${2:-TEST}"
     ;;
   install_snap)
-    install_snap "${2:-TEST_SNAP}" "${3:-conda202305}"
+    install_snap "${2:-TEST_SNAP}" "${3:-$DEFAULT_BASEENV}"
     ;;
   *)
     echo "Usage: ./install_usermodule_r8.sh <CMD>"
     echo "CMD: install_baseenv <BASEENVNAME>"
-    echo "CMD: install_snap <ENVNAME> [<BASEENVNAME>]"
+    echo "CMD: install_snap <ENVNAME> [<BASEENVNAME> (default: ${DEFAULT_BASEENV})]"
     ;;
 esac
 
