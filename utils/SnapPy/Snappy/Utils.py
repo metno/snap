@@ -200,11 +200,13 @@ def restrictDomainSizeAndResolution(file: str, lon: float, lat: float, gridSize:
 
         if 'deg' in nc[x_dim].units:
             # latlon
+            units = 'degree'
             xpos = numpy.argmin(numpy.abs(xvals - lon))
             ypos = numpy.argmin(numpy.abs(yvals- lat))
             projstr = "+proj=latlon +R=6371000 +no_defs"
         else:
             # other projection (lcc) in m
+            units = 'm'
             grid_mapping = nc[var.grid_mapping]
             if grid_mapping.grid_mapping_name == "lambert_conformal_conic":
                 # projstr = f"+proj=lcc +lat_0={grid_mapping.latitude_of_projection_origin} +lon_0={grid_mapping.longitude_of_central_meridian} +lat_1={grid_mapping.standard_parallel[0]} +lat_2={grid_mapping.standard_parallel[1]} +x_0=0 +y_0=0 +R={grid_mapping.earth_radius} +units=m +no_defs +type=crs"
@@ -241,7 +243,7 @@ def restrictDomainSizeAndResolution(file: str, lon: float, lat: float, gridSize:
             if yfirst < 0:
                 yfirst = 0
 
-            retStr += f"FIMEX.INTERPOLATION=nearest|{projstr}|{xvals[xfirst]},{xvals[xfirst+1]},...,{xvals[xlast]}|{yvals[yfirst]},{yvals[yfirst+1]},...,{yvals[ylast]}|degree\n"
+            retStr += f"FIMEX.INTERPOLATION=nearest|{projstr}|{xvals[xfirst]},{xvals[xfirst+1]},...,{xvals[xlast]}|{yvals[yfirst]},{yvals[yfirst+1]},...,{yvals[ylast]}|{units}\n"
     return retStr
 
 class RestrictDomainSizeAndResolutionTests(unittest.TestCase):

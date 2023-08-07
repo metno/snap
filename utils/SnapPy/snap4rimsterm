@@ -19,6 +19,7 @@
 #
 from collections import OrderedDict
 import datetime
+import logging
 import netCDF4
 import os
 import re
@@ -167,12 +168,14 @@ def rimsterm2input(rimxml, argosxml, met_model):
         is_bomb = request_is_bomb(argosxml)
         # GridSize: size of grid-cell, i.e. 2.5, 0.1 (km or degree), available since Argos10
         gridSize = 0 # default
-        if findGridSize := argosxml.find("GridSize"):
+        #gridSize = float(argosxml.find("GridSize").text)
+        if (findGridSize := argosxml.find("GridSize")) is not None:
             gridSize = float(findGridSize.text)
         # CalcGridSize: number of x and y cells in grid, available since Argos10
         calcGridSize = 0 # default
-        if findCalcGridSize := argosxml.find("CalcGridSize"):
-            calcGridSize = int(findCalcGridSize)
+        if (findCalcGridSize := argosxml.find("CalcGridSize")) is not None:
+            calcGridSize = int(findCalcGridSize.text)
+    logging.info(f"using calcGridSize {calcGridSize} and gridSize {gridSize}")
 
     releaseStartTime = datetime.datetime.strptime(startTime, '%Y-%m-%dT%H:%M:%SZ')
     startDTime = releaseStartTime.replace(minute=0, second=0, microsecond=0) # snap requires hourly start
@@ -192,6 +195,7 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
     sourceTerm = sourceTermTemplate.format(lat=lat,lon=lon,startTime=snapStartTime, runTime=runTime, outputTimestep=outputTimestep)
     sourceTerm += releaseTerm + "\n"
 
+    interpolation = ""
     metdef = res.getDefaultMetDefinitions(met_model)
     if (met_model == MetModel.NrpaEC0p1):
         files = res.getECMeteorologyFiles(dtime=startDTime, run_hours=int(runTime))
@@ -209,7 +213,7 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
         files = [x[1] for x in sorted(MeteorologyCalculator.findAllGlobalData(globalRes), key=lambda x: x[0])]
         lat0 = MeteorologyCalculator.getLat0(float(lat), globalRes.domainHeight)
         lon0 = MeteorologyCalculator.getLon0(float(lon), globalRes.domainWidth)
-        sourceTerm += f"FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|{lon0},{lon0+0.2},...,{lon0+globalRes.domainWidth}|{lat0},{lat0+0.2},...,{lat0+globalRes.domainHeight}|degree\n"
+        interpolation = f"FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|{lon0},{lon0+0.2},...,{lon0+globalRes.domainWidth}|{lat0},{lat0+0.2},...,{lat0+globalRes.domainHeight}|degree\n"
     elif met_model == MetModel.Meps2p5:
         files = res.getMeteorologyFiles(met_model, startDTime, runTime, "best")
         if (len(files) == 0):
@@ -228,9 +232,10 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
     else:
         raise Exception('unknown met_model: {}'.format(met_model))
 
-    sourceTerm += res.getSnapInputMetDefinitions(met_model, files, **metdef)
+    if interpolation == "":
+        interpolation = Snappy.Utils.restrictDomainSizeAndResolution(files[-1], float(lon), float(lat), gridSize, calcGridSize)
 
-    soureTerm += Snappy.Utils.restrictDomainSizeAndResolution(files[0], float(lon), float(lat), gridSize, calcGridSize)
+    sourceTerm += res.getSnapInputMetDefinitions(met_model, files, interpolation=interpolation, **metdef)
 
     return sourceTerm
 
