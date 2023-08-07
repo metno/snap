@@ -64,7 +64,7 @@ install_bsnap() {
     cd src || exit 2
     ln --symbolic --force -- gcc_pkgconfig.mk current.mk
     make clean
-    env VERSION="$MODULE_VERSION" make BINDIR="$MODULE_PREFIX"/bin install
+    env VERSION="$MODULE_VERSION" make -j 4 BINDIR="$MODULE_PREFIX"/bin install
 }
 
 install_baseenv() {
