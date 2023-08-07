@@ -336,7 +336,7 @@ GRAVITY.FIXED.M/S=0.0002
         ) as ncmlFH:
             ncmlOut = ncmlFH.read()
         ncmlOut = ncmlOut.format(variables="\n".join(varFills))
-        
+
         return {
             "extracts": extracts,
             "xml": xmlOut,
@@ -431,7 +431,7 @@ GRAVITY.FIXED.M/S=0.0002
         return f.read()
 
     def getSnapInputMetDefinitions(
-        self, metmodel, files, nx=0, ny=0, startX=0, startY=0, dx=0, dy=0
+        self, metmodel, files, nx=0, ny=0, startX=0, startY=0, dx=0, dy=0, interpolation=""
     ):
         """Get the definitions for the metmodel, including met-files and domain (unless default).
         This should be written to the snap.input file, in addition to the source-term. files may be empty
@@ -464,7 +464,7 @@ GRAVITY.FIXED.M/S=0.0002
             lines.append("FIELD.INPUT={}".format(f))
 
         lines.append("")
-        lines.append(self._getSnapInputTemplate(metmodel))
+        lines.append(self._getSnapInputTemplate(metmodel).format(interpolation=interpolation))
         return "\n".join(lines)
 
     def getSendmailScript(self):
@@ -679,7 +679,7 @@ def snapNc_convert_to_grib(snapNc, basedir, ident, isotopes, bitmapCompress=Fals
     baseNcmlFile = os.path.join(basedir, ncmlFile)
     with open(baseNcmlFile, 'w') as nh:
         nh.write(config['ncml'])
-    
+
     errlog = open(os.path.join(basedir, "fimex.errlog"), "w")
     outlog = open(os.path.join(basedir, "fimex.outlog"), "w")
     tempfile = 'tmp.grib'
