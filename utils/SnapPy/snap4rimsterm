@@ -208,8 +208,6 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
         files = [x[1] for x in sorted(MeteorologyCalculator.findAllGlobalData(globalRes), key=lambda x: x[0])]
         lat0 = MeteorologyCalculator.getLat0(float(lat), globalRes.domainHeight)
         lon0 = MeteorologyCalculator.getLon0(float(lon), globalRes.domainWidth)
-        sourceTerm += f"FIELD.TYPE=fimex\n"
-        sourceTerm += f"FIMEX.FILE_TYPE=netcdf\n"
         sourceTerm += f"FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|{lon0},{lon0+0.2},...,{lon0+globalRes.domainWidth}|{lat0},{lat0+0.2},...,{lat0+globalRes.domainHeight}|degree\n"
     elif met_model == MetModel.Meps2p5:
         files = res.getMeteorologyFiles(met_model, startDTime, runTime, "best")
