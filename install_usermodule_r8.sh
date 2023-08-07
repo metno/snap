@@ -166,6 +166,7 @@ case "${1:-help}" in
     echo "Usage: ./install_usermodule_r8.sh <CMD>"
     echo "CMD: install_baseenv <BASEENVNAME>"
     echo "CMD: install_snap <ENVNAME> [<BASEENVNAME> (default: ${DEFAULT_BASEENV})]"
+    echo "  with ENVNAME e.g. 2.3.3-dev0"
     ;;
 esac
 
