@@ -34,6 +34,7 @@ from Snappy.ICONMeteorologyCalculator import ICONMeteorologyCalculator
 from Snappy.MeteorologyCalculator import MeteorologyCalculator
 from Snappy.Resources import MetModel, Resources, snapNc_convert_to_grib
 from Snappy.SnapInputBomb import SnapInputBomb, ExplosionType
+import Snappy.Utils
 
 
 def parseIsoTimeDelta(period):
@@ -228,6 +229,8 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
         raise Exception('unknown met_model: {}'.format(met_model))
 
     sourceTerm += res.getSnapInputMetDefinitions(met_model, files, **metdef)
+
+    soureTerm += Snappy.Utils.restrictDomainSizeAndResolution(files[0], float(lon), float(lat), gridSize, calcGridSize)
 
     return sourceTerm
 
