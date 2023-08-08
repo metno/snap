@@ -195,6 +195,7 @@ STEP.HOUR.OUTPUT.FIELDS= 3
         sourceTerm += term
         with open(os.path.join(dirname, "snap.input"),'w') as fh:
             fh.write(sourceTerm)
+            interpolation = ""
             metdef = res.getDefaultMetDefinitions(met_model)
             if (met_model == MetModel.NrpaEC0p1):
                 files = res.getECMeteorologyFiles(dtime=release_dt, run_hours=int(runtime))
@@ -212,7 +213,7 @@ STEP.HOUR.OUTPUT.FIELDS= 3
                 files = [x[1] for x in sorted(MeteorologyCalculator.findAllGlobalData(globalRes), key=lambda x: x[0])]
                 lat0 = MeteorologyCalculator.getLat0(float(lat), globalRes.domainHeight)
                 lon0 = MeteorologyCalculator.getLon0(float(lon), globalRes.domainWidth)
-                fh.write(f"FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|{lon0},{lon0+0.2},...,{lon0+globalRes.domainWidth}|{lat0},{lat0+0.2},...,{lat0+globalRes.domainHeight}|degree\n")
+                interpolation = f"FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|{lon0},{lon0+0.2},...,{lon0+globalRes.domainWidth}|{lat0},{lat0+0.2},...,{lat0+globalRes.domainHeight}|degree\n"
             elif met_model == MetModel.Meps2p5:
                 files = res.getMeteorologyFiles(met_model, release_dt, runtime, "best")
                 if (len(files) == 0):
@@ -230,7 +231,7 @@ STEP.HOUR.OUTPUT.FIELDS= 3
                     raise Exception("no GFS-grib-filter-fimex met-files found for {}, runtime {}".format(release_dt, runtime))
             else:
                 raise Exception('unknown met_model: {}'.format(met_model))
-            fh.write(res.getSnapInputMetDefinitions(met_model, files, **metdef))
+            fh.write(res.getSnapInputMetDefinitions(met_model, files, interpolation=interpolation, **metdef))
 
         with open(f"{dirname}/snap.stdout.log", 'wt') as stdout:
             with open(f"{dirname}/snap.stderr.log", 'wt') as stderr:
