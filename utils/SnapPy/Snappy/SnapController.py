@@ -468,8 +468,8 @@ STEP.HOUR.OUTPUT.FIELDS= 3
                 lat0 = MeteorologyCalculator.getLat0(latf, globalRes.domainHeight)
                 lon0 = MeteorologyCalculator.getLon0(lonf, globalRes.domainWidth)
                 with open(os.path.join(self.lastOutputDir, "snap.input"), "a") as fh:
-                    fh.write(f"FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|{lon0},{lon0+0.2},...,{lon0+globalRes.domainWidth}|{lat0},{lat0+0.2},...,{lat0+globalRes.domainHeight}|degree\n")
-                    fh.write(self.res.getSnapInputMetDefinitions(qDict["metmodel"], files))
+                    interpol = f"FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|{lon0},{lon0+0.2},...,{lon0+globalRes.domainWidth}|{lat0},{lat0+0.2},...,{lat0+globalRes.domainHeight}|degree\n"
+                    fh.write(self.res.getSnapInputMetDefinitions(qDict["metmodel"], files, interpolation=interpol))
                 self._snap_model_run()
             except MeteoDataNotAvailableException as e:
                 self.write_log("problems finding global EC-met: {}".format(e.args[0]))
