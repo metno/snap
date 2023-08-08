@@ -64,7 +64,7 @@ install_bsnap() {
     cd src || exit 2
     ln --symbolic --force -- gcc_pkgconfig.mk current.mk
     make clean
-    env VERSION="$MODULE_VERSION" make BINDIR="$MODULE_PREFIX"/bin install
+    env VERSION="$MODULE_VERSION" make -j 4 BINDIR="$MODULE_PREFIX"/bin install
 }
 
 install_baseenv() {
@@ -166,6 +166,7 @@ case "${1:-help}" in
     echo "Usage: ./install_usermodule_r8.sh <CMD>"
     echo "CMD: install_baseenv <BASEENVNAME>"
     echo "CMD: install_snap <ENVNAME> [<BASEENVNAME> (default: ${DEFAULT_BASEENV})]"
+    echo "  with ENVNAME e.g. 2.3.3-dev0"
     ;;
 esac
 

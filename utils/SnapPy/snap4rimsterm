@@ -2,23 +2,24 @@
 #
 # SNAP: Servere Nuclear Accident Programme
 # Copyright (C) 1992-2020   Norwegian Meteorological Institute
-# 
-# This file is part of SNAP. SNAP is free software: you can 
-# redistribute it and/or modify it under the terms of the 
-# GNU General Public License as published by the 
+#
+# This file is part of SNAP. SNAP is free software: you can
+# redistribute it and/or modify it under the terms of the
+# GNU General Public License as published by the
 # Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 from collections import OrderedDict
 import datetime
+import logging
 import netCDF4
 import os
 import re
@@ -28,12 +29,13 @@ import xml.etree.ElementTree as ET
 
 from Snappy.AddBombIsotopes import snap_add_bomb_isotopes
 from Snappy.AddToa import add_toa_to_nc
-from Snappy.BombIsotopeFractions import BombIsotopeFractions 
+from Snappy.BombIsotopeFractions import BombIsotopeFractions
 from Snappy.EcMeteorologyCalculator import EcMeteorologyCalculator
 from Snappy.ICONMeteorologyCalculator import ICONMeteorologyCalculator
 from Snappy.MeteorologyCalculator import MeteorologyCalculator
 from Snappy.Resources import MetModel, Resources, snapNc_convert_to_grib
 from Snappy.SnapInputBomb import SnapInputBomb, ExplosionType
+import Snappy.Utils
 
 
 def parseIsoTimeDelta(period):
@@ -79,7 +81,7 @@ def rimsterm2npp_release(rimxml, runTime, releaseStartTime, startDTime):
         # offset endtime
         if runTime < 0: # backward run
             # StartTime is earliest measuremnt, Endtime end of measurement after starttime
-            # snap needs to start at the end of the measurements, i.e. the last time 
+            # snap needs to start at the end of the measurements, i.e. the last time
             #     and run backupward in time
             startDTime = startDTime + endtime
         posXML = relXML.find("SourcePosition")
@@ -148,6 +150,7 @@ def rimsterm2bomb_release(argosxml, offset_time: datetime.timedelta):
 def request_is_bomb(argosRoot):
     return argosRoot.find("NuclearYield") is not None
 
+
 def rimsterm2input(rimxml, argosxml, met_model):
     """create a full snap.input sourceterm from a rimsterm.xml file using the met_model meteo"""
 
@@ -163,7 +166,17 @@ def rimsterm2input(rimxml, argosxml, met_model):
         runTime = int(argosxml.find("RunLength").text)
         outputTimestep = int(argosxml.find("OutputTimestep").text)
         is_bomb = request_is_bomb(argosxml)
-    
+        # GridSize: size of grid-cell, i.e. 2.5, 0.1 (km or degree), available since Argos10
+        gridSize = 0 # default
+        #gridSize = float(argosxml.find("GridSize").text)
+        if (findGridSize := argosxml.find("GridSize")) is not None:
+            gridSize = float(findGridSize.text)
+        # CalcGridSize: number of x and y cells in grid, available since Argos10
+        calcGridSize = 0 # default
+        if (findCalcGridSize := argosxml.find("CalcGridSize")) is not None:
+            calcGridSize = int(findCalcGridSize.text)
+    logging.info(f"using calcGridSize {calcGridSize} and gridSize {gridSize}")
+
     releaseStartTime = datetime.datetime.strptime(startTime, '%Y-%m-%dT%H:%M:%SZ')
     startDTime = releaseStartTime.replace(minute=0, second=0, microsecond=0) # snap requires hourly start
     offset_time = releaseStartTime - startDTime
@@ -182,6 +195,7 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
     sourceTerm = sourceTermTemplate.format(lat=lat,lon=lon,startTime=snapStartTime, runTime=runTime, outputTimestep=outputTimestep)
     sourceTerm += releaseTerm + "\n"
 
+    interpolation = ""
     metdef = res.getDefaultMetDefinitions(met_model)
     if (met_model == MetModel.NrpaEC0p1):
         files = res.getECMeteorologyFiles(dtime=startDTime, run_hours=int(runTime))
@@ -199,9 +213,7 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
         files = [x[1] for x in sorted(MeteorologyCalculator.findAllGlobalData(globalRes), key=lambda x: x[0])]
         lat0 = MeteorologyCalculator.getLat0(float(lat), globalRes.domainHeight)
         lon0 = MeteorologyCalculator.getLon0(float(lon), globalRes.domainWidth)
-        sourceTerm += f"FIELD.TYPE=fimex\n"
-        sourceTerm += f"FIMEX.FILE_TYPE=netcdf\n"
-        sourceTerm += f"FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|{lon0},{lon0+0.2},...,{lon0+globalRes.domainWidth}|{lat0},{lat0+0.2},...,{lat0+globalRes.domainHeight}|degree\n"
+        interpolation = f"FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|{lon0},{lon0+0.2},...,{lon0+globalRes.domainWidth}|{lat0},{lat0+0.2},...,{lat0+globalRes.domainHeight}|degree\n"
     elif met_model == MetModel.Meps2p5:
         files = res.getMeteorologyFiles(met_model, startDTime, runTime, "best")
         if (len(files) == 0):
@@ -220,7 +232,10 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
     else:
         raise Exception('unknown met_model: {}'.format(met_model))
 
-    sourceTerm += res.getSnapInputMetDefinitions(met_model, files, **metdef)
+    if interpolation == "":
+        interpolation = Snappy.Utils.restrictDomainSizeAndResolution(files[-1], float(lon), float(lat), gridSize, calcGridSize)
+
+    sourceTerm += res.getSnapInputMetDefinitions(met_model, files, interpolation=interpolation, **metdef)
 
     return sourceTerm
 

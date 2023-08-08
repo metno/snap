@@ -1433,7 +1433,7 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
 !..accumulated/integrated concentration
   block
   use snapfldML, only: sigma_level_of_surface_h => field1, surface_temp => field2, &
-                       surface_pressure =>field3, dh=>field4, t1, t2
+                       surface_pressure =>field3, dh=>field_hr3, t1, t2
   use snaptabML, only: hypsometric_eq_inv
   integer :: ilvl
 

@@ -32,7 +32,7 @@ def get_tag_NPP(tag):
     return tag.split(':')[0]
 
 def get_tag_relTerm(tag):
-    '''returns a dictionary with the releaseterms from a tag like 
+    '''returns a dictionary with the releaseterms from a tag like
     NPP:relI131=1.0e13:relXE133=1.0e13:relCS137=1.0e13:relKR85=0
     '''
     tag_split = tag.split(':')
@@ -114,8 +114,8 @@ def get_country_plotlist(fig, ax, country_listname):
 def plotMap(data, x, y, ax, countries, title="", title_loc="center", clevs=[10,100,300,1000,3000,10000,30000,100000, 300000, 10000000], colors=None, extend='max'):
 
     ax.add_feature(cartopy.feature.GSHHSFeature(scale='low', facecolor='none', edgecolor='whitesmoke', linewidth=.2), zorder=100)
-    #ax.add_feature(cartopy.feature.BORDERS, edgecolor="black", linewidth=.5, zorder=100) 
-    #ax.add_feature(cartopy.feature.BORDERS, edgecolor="black", linewidth=.5, zorder=100) 
+    #ax.add_feature(cartopy.feature.BORDERS, edgecolor="black", linewidth=.5, zorder=100)
+    #ax.add_feature(cartopy.feature.BORDERS, edgecolor="black", linewidth=.5, zorder=100)
     ax.add_feature(cartopy.feature.NaturalEarthFeature(
         category='cultural',
         name='admin_0_boundary_lines_land',
@@ -140,7 +140,7 @@ def plotMap(data, x, y, ax, countries, title="", title_loc="center", clevs=[10,1
             color='gray',
             #transform=cartopy.crs.GeoDetic(),
             zorder=51)
-        
+
     # add title
     ax.set_title(title, loc=title_loc)
     ax.add_feature(cartopy.feature.OCEAN,facecolor="#aecfe0", edgecolor='none', zorder=10) # #aecfe0 = osm-sea
@@ -195,6 +195,7 @@ STEP.HOUR.OUTPUT.FIELDS= 3
         sourceTerm += term
         with open(os.path.join(dirname, "snap.input"),'w') as fh:
             fh.write(sourceTerm)
+            interpolation = ""
             metdef = res.getDefaultMetDefinitions(met_model)
             if (met_model == MetModel.NrpaEC0p1):
                 files = res.getECMeteorologyFiles(dtime=release_dt, run_hours=int(runtime))
@@ -212,9 +213,7 @@ STEP.HOUR.OUTPUT.FIELDS= 3
                 files = [x[1] for x in sorted(MeteorologyCalculator.findAllGlobalData(globalRes), key=lambda x: x[0])]
                 lat0 = MeteorologyCalculator.getLat0(float(lat), globalRes.domainHeight)
                 lon0 = MeteorologyCalculator.getLon0(float(lon), globalRes.domainWidth)
-                fh.write(f"FIELD.TYPE=fimex\n")
-                fh.write(f"FIMEX.FILE_TYPE=netcdf\n")
-                fh.write(f"FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|{lon0},{lon0+0.2},...,{lon0+globalRes.domainWidth}|{lat0},{lat0+0.2},...,{lat0+globalRes.domainHeight}|degree\n")
+                interpolation = f"FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|{lon0},{lon0+0.2},...,{lon0+globalRes.domainWidth}|{lat0},{lat0+0.2},...,{lat0+globalRes.domainHeight}|degree\n"
             elif met_model == MetModel.Meps2p5:
                 files = res.getMeteorologyFiles(met_model, release_dt, runtime, "best")
                 if (len(files) == 0):
@@ -232,7 +231,7 @@ STEP.HOUR.OUTPUT.FIELDS= 3
                     raise Exception("no GFS-grib-filter-fimex met-files found for {}, runtime {}".format(release_dt, runtime))
             else:
                 raise Exception('unknown met_model: {}'.format(met_model))
-            fh.write(res.getSnapInputMetDefinitions(met_model, files, **metdef))
+            fh.write(res.getSnapInputMetDefinitions(met_model, files, interpolation=interpolation, **metdef))
 
         with open(f"{dirname}/snap.stdout.log", 'wt') as stdout:
             with open(f"{dirname}/snap.stderr.log", 'wt') as stderr:
@@ -274,7 +273,7 @@ STEP.HOUR.OUTPUT.FIELDS= 3
             plotsteps.append(-1)
         plottimes = [ times[x] for x in plotsteps ]
         deps = [ nc['Cs137_acc_total_deposition'][x,:] for x in plotsteps ]
-        
+
 
     formatter = matplotlib.ticker.ScalarFormatter()
     formatter.set_powerlimits((-3,10))

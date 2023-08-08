@@ -28,6 +28,11 @@ MODEL.LEVEL.FIELDS.OFF
 
 POSITIONS.DECIMAL
 
+FIELD.TYPE=fimex
+FIMEX.FILE_TYPE= netcdf
+FIMEX.CONFIG=
+{interpolation}
+
 ** arome/meps output
 GRID.NCTYPE = arome
 ENSEMBLE_MEMBER.INPUT = -1
@@ -35,8 +40,6 @@ DATA.ETA.LEVELS
 
 * autodetect gparams and levels (omitting lowest level)
 GRID.AUTODETECT.FROM_INPUT
-
-FIELD.TYPE=netcdf
 
 
 FIELD_TIME.FORECAST
