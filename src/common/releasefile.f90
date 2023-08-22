@@ -40,7 +40,7 @@ subroutine  releasefile(filename, release1)
 
   character(256) :: cinput
   integer :: ifd, ios, iexit, nlines
-  integer :: i
+  integer :: i, AllocateStatus
   real :: hour, lasthour
   integer :: height
   integer :: ihour, iheight, icmp
@@ -96,7 +96,8 @@ subroutine  releasefile(filename, release1)
         allocate(releases(1))
       else
         call move_alloc(from=releases, to=tmp_release)
-        allocate(releases(size(tmp_release)+1))
+        allocate(releases(size(tmp_release)+1), STAT=AllocateStatus)
+        IF (AllocateStatus /= 0) ERROR STOP "cannot allocate releases"
         releases(1:size(tmp_release)) = tmp_release
         deallocate(tmp_release)
       endif
@@ -117,14 +118,19 @@ subroutine  releasefile(filename, release1)
     ! find the height
     iheight = 0
     do i=1,nrelheight
-      if(height == release1%rellower(i)) iheight = i
+      if(int(height) == int(release1%rellower(i))) iheight = i
     end do
     if (iheight == 0) then
       write (error_unit,*) 'unkown lower height: ', height
       goto 12
     end if
     ! save the release
-    releases(ihour)%relbqsec(icmp, iheight) = rel_s
+    if (releases(ihour)%relbqsec(icmp, iheight) < 0) then
+      releases(ihour)%relbqsec(icmp, iheight) = rel_s
+    else
+      write (error_unit,*) 'double definition of release in line: ', nlines
+      goto 12
+    end if
     ! end ifnot comment '*'
   end do inputlines
   goto 18
