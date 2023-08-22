@@ -515,7 +515,7 @@ PROGRAM bsnap
       write (iulog, *) '  gravityms:  ', def_comp(m)%gravityms
       write (iulog, *) '  radiusmym:  ', def_comp(m)%radiusmym
       write (iulog, *) '  densitygcm3:', def_comp(m)%densitygcm3
-      write (iulog, *) '  Relase time profile:   ntprof: ', ntprof
+      write (iulog, *) '  Release time profile:   ntprof: ', ntprof
       ncsummary = trim(ncsummary)//". Release "//trim(def_comp(m)%compname) &
                   //" (hour, Bq/s): "
       do i = 1, ntprof

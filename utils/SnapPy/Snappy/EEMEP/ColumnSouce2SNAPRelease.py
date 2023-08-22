@@ -61,8 +61,8 @@ def readEmepWriteSnap(infile, outfile, outsnap):
                             ofh.write(f"{release_hour_steps[-1]} {rl} {cn} 0\n")
                 step = (row['START'] - last_start).total_seconds() / (60 * 60)
                 release_hour_steps.append(step + release_hour_steps[-1])
-                last_start = last_end
-                last_end = row['START']
+                last_start = row['START']
+                last_end = row['END']
             # write the current emission
             if not row['BASE[m]'] in release_lower:
                 release_lower.append(row['BASE[m]'])
