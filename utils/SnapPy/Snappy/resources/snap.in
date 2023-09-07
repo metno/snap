@@ -22,7 +22,7 @@ FIELD  model=SNAP.current plot={component}_acc_total_deposition colour=off plott
 OBS plot=EuropeISO3 data=EuropeISO3 parameter=Name colour=grey50 density=1 image=off orientation=horizontal scale=1.2 tempprecision=true timediff=60
 AREA name={areaname}
 MAP map=Gshhs-Auto contour=on cont.colour=graywhite cont.linewidth=1 cont.linetype=solid cont.zorder=1 land=on land.colour=landOSM land.zorder=0 lon=off lat=off frame=off
-MAP map=Euro2 contour=on cont.colour=grey50 cont.linewidth=1 cont.linetype=solid cont.zorder=1 land=off lon=off lat=off frame=off
+MAP map=countries contour=on cont.colour=grey50 cont.linewidth=1 cont.linetype=solid cont.zorder=1 land=off lon=off lat=off frame=off
 MAP backcolour=seablueOSM map=Fylker contour=on cont.colour=gray cont.linewidth=1 cont.linetype=solid cont.zorder=1 land=off lon=on lon.colour=lightgray lon.linewidth=1 lon.linetype=solid lon.density=10 lon.zorder=2 lon.showvalue=off lon.value_pos=bottom lon.fontsize=10 lat=on lat.colour=lightgray lat.linewidth=1 lat.linetype=solid lat.density=10 lat.zorder=2 lat.showvalue=off lat.value_pos=left lat.fontsize=10 frame=off
 LABEL data font=BITMAPFONT fontsize=8
 LABEL text="$day $date $auto UTC" tcolour=red bcolour=black fcolour=white:200 polystyle=both halign=left valign=top font=BITMAPFONT fontsize=8
@@ -38,7 +38,7 @@ FIELD model=SNAP.current plot=TimeOfArrival colour=off plottype=contour linetype
 OBS plot=EuropeISO3 data=EuropeISO3 parameter=Name colour=grey50 density=1 image=off orientation=horizontal scale=1.2 tempprecision=true timediff=60
 AREA name={areaname}
 MAP map=Gshhs-Auto contour=on cont.colour=graywhite cont.linewidth=1 cont.linetype=solid cont.zorder=1 land=on land.colour=landOSM land.zorder=0 lon=off lat=off frame=off
-MAP map=Euro2 contour=on cont.colour=grey50 cont.linewidth=1 cont.linetype=solid cont.zorder=1 land=off lon=off lat=off frame=off
+MAP map=countries contour=on cont.colour=grey50 cont.linewidth=1 cont.linetype=solid cont.zorder=1 land=off lon=off lat=off frame=off
 MAP backcolour=seablueOSM map=Fylker contour=on cont.colour=gray cont.linewidth=1 cont.linetype=solid cont.zorder=1 land=off lon=on lon.colour=lightgray lon.linewidth=1 lon.linetype=solid lon.density=10 lon.zorder=2 lon.showvalue=off lon.value_pos=bottom lon.fontsize=10 lat=on lat.colour=lightgray lat.linewidth=1 lat.linetype=solid lat.density=10 lat.zorder=2 lat.showvalue=off lat.value_pos=left lat.fontsize=10 frame=off
 LABEL data font=BITMAPFONT fontsize=8
 LABEL text="$day $date $auto UTC" tcolour=red bcolour=black fcolour=white:200 polystyle=both halign=left valign=top font=BITMAPFONT fontsize=8
