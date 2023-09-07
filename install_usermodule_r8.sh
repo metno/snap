@@ -22,7 +22,7 @@ install_bdiana() {
     cat > "$1/bin/bdiana" <<EOF
 #! /bin/bash
 module use /modules/MET/rhel8/user-modules/
-module load singularity/3.10.5
+module load --silent singularity/3.11.3
 
 singularity exec \
     --no-home --bind /lustre/\${STORE}:/lustre/\${STORE} \
