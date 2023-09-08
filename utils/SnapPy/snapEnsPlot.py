@@ -23,17 +23,12 @@ import logging
 logging.root.setLevel(logging.ERROR)
 
 def plotMap(data, x, y, ax, title="", title_loc="center", clevs=[10,100,300,1000,3000,10000,30000,100000, 300000, 10000000], colors=None, extend='max'):
-    ax.set_facecolor("#f2efe9") # background, osm-land
+    ax.set_facecolor("#f2efe9") # background, osm-land color
     ax.add_feature(cartopy.feature.NaturalEarthFeature(
             category='physical',
             name='ocean',
             scale='50m',
-            facecolor="#aecfe0"),edgecolor="none", zorder=10) # #aecfe0 = osm-ocean
-    # ax.add_feature(cartopy.feature.NaturalEarthFeature(
-    #     category='physical',
-    #     name='land',
-    #     scale='50m',
-    #     facecolor='none'),edgecolor="black", linewidth=.5, zorder=10)
+            facecolor="#aecfe0"),edgecolor="none", zorder=10) # osm-ocean color
     ax.add_feature(cartopy.feature.NaturalEarthFeature(
         category='physical',
         name='lakes',
@@ -41,7 +36,6 @@ def plotMap(data, x, y, ax, title="", title_loc="center", clevs=[10,100,300,1000
         facecolor='#aecfe0'),edgecolor="whitesmoke", linewidth=.2, zorder=20)
     ax.add_feature(cartopy.feature.NaturalEarthFeature(
         category='cultural',
-        #name='admin_0_boundary_lines_land',
         name='admin_0_countries_deu',
         scale='10m',
         facecolor='none'),edgecolor="lightgray", linewidth=.5, zorder=100)
