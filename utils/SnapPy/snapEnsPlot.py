@@ -23,9 +23,23 @@ import logging
 logging.root.setLevel(logging.ERROR)
 
 def plotMap(data, x, y, ax, title="", title_loc="center", clevs=[10,100,300,1000,3000,10000,30000,100000, 300000, 10000000], colors=None, extend='max'):
-    ax.add_feature(cartopy.feature.GSHHSFeature(scale='low', facecolor='none', edgecolor='whitesmoke', linewidth=.2), zorder=100)
-    ax.add_feature(cartopy.feature.BORDERS, edgecolor="lightgray", linewidth=.5, zorder=100) 
-    #ax.gridlines(draw_labels=True)
+    ax.set_facecolor("#f2efe9") # background, osm-land color
+    ax.add_feature(cartopy.feature.NaturalEarthFeature(
+            category='physical',
+            name='ocean',
+            scale='50m',
+            facecolor="#aecfe0"),edgecolor="none", zorder=10) # osm-ocean color
+    ax.add_feature(cartopy.feature.NaturalEarthFeature(
+        category='physical',
+        name='lakes',
+        scale='10m',
+        facecolor='#aecfe0'),edgecolor="whitesmoke", linewidth=.2, zorder=20)
+    ax.add_feature(cartopy.feature.NaturalEarthFeature(
+        category='cultural',
+        name='admin_0_countries_deu',
+        scale='10m',
+        facecolor='none'),edgecolor="lightgray", linewidth=.5, zorder=100)
+
     ax.gridlines(edgecolor="lightgray", linewidth=.3, zorder=100)
 
     ny = data.shape[0]
@@ -36,9 +50,6 @@ def plotMap(data, x, y, ax, title="", title_loc="center", clevs=[10,100,300,1000
     cs = ax.contourf(x,y,data,clevs,colors=colors, extend=extend, zorder=50)
     # add title
     ax.set_title(title, loc=title_loc)
-    ax.add_feature(cartopy.feature.OCEAN,facecolor="#aecfe0", edgecolor='none', zorder=10) # #aecfe0 = osm-sea
-    ax.add_feature(cartopy.feature.LAND, facecolor="#f2efe9", edgecolor='none', zorder=10) # f2efe9 = osm-land
-    ax.add_feature(cartopy.feature.LAKES,facecolor="#aecfe0", edgecolor='whitesmoke', linewidth=.2, zorder=20)
     return cs
 
 
@@ -266,7 +277,7 @@ def snapens(ncfiles, hour, outfile):
     fig.subplots_adjust(hspace=0.12, wspace=0.01)
     fig.savefig(outfile, bbox_inches='tight')
 
-    
+
 
 if __name__ == "__main__":
     os.umask(0o002)
