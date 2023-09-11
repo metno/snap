@@ -133,7 +133,7 @@ class ModelRunner():
         else:
             volcano_path = os.path.join(path, ModelRunner.VOLCANO_FILENAME)
 
-        
+
         if not os.path.exists(volcano_path):
             raise Exception("no such file or directory: {}".format(volcano_path))
 
@@ -444,14 +444,6 @@ class ModelRunner():
         else:
             pp.convert_files(os.path.join(self.path, ModelRunner.OUTPUT_INSTANT_FILENAME),
                              os.path.join(self.path, ModelRunner.OUTPUT_AVERAGE_FILENAME))
-
-        # cleanup softlinks in output-dir
-        findArgs = [self.hpc_outdir, '-type', 'l', '-delete']
-        try:
-            self.hpc.syscall('find', findArgs, timeout=30)
-        except Exception as ex:
-            self.logger.warning("cannot excecute command 'find {args}': {ex}".format(args=" ".join(findArgs),
-                                                                                 ex=ex.args))
 
     def work(self):
         '''do the complete work, e.g. upload, run, wait and download'''
