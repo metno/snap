@@ -22,7 +22,7 @@ install_bdiana() {
     cat > "$1/bin/bdiana" <<EOF
 #! /bin/bash
 module use /modules/MET/rhel8/user-modules/
-module load singularity/3.10.5
+module load --silent singularity/3.11.3
 
 singularity exec \
     --no-home --bind /lustre/\${STORE}:/lustre/\${STORE} \
@@ -31,7 +31,7 @@ singularity exec \
     --env QT_QPA_PLATFORMTHEME='' \
     --env QT_QPA_FONTDIR='/usr/share/fonts/truetype' \
     --env QT_QPA_PLATFORM='offscreen' \
-    /modules/singularityrepo/fou/kl/atom/bdiana_3.57.13.sif bdiana \$@
+    /modules/singularityrepo/fou/kl/atom/diana_3.58.0.sif bdiana \$@
 EOF
     chmod +x -- "$1/bin/bdiana"
 }
@@ -65,6 +65,8 @@ install_bsnap() {
     ln --symbolic --force -- gcc_pkgconfig.mk current.mk
     make clean
     env VERSION="$MODULE_VERSION" make -j 4 BINDIR="$MODULE_PREFIX"/bin install
+
+    install_bdiana $MODULE_PREFIX
 }
 
 install_baseenv() {
@@ -82,7 +84,6 @@ install_baseenv() {
     install_conda_env "$MODULE_PREFIX"
     conda activate "$MODULE_PREFIX"
     patch_fimex_pkgconfig
-    install_bdiana $MODULE_PREFIX
 
     MODULEFILE=/modules/MET/rhel8/user-modules/fou-modules/SnapPy/"$MODULE_VERSION"
 

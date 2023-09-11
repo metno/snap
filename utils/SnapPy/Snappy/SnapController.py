@@ -195,7 +195,7 @@ class SnapController:
             os.mkdir(prod_dir)
             with open(os.path.join(prod_dir, "diana.setup"), "wt") as fh:
                 di_setup = f"""
-%include /etc/diana/setup/diana.setup-COMMON
+%include /etc/diana/$(PVERSION)/diana.setup-COMMON
 <COLOURS>
 seablueOSM=174,207,224
 landOSM=242,239,233
