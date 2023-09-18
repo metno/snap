@@ -78,7 +78,7 @@ def readEmepWriteSnap(infile, outfile, outsnap):
         ofh.write(f"TIME.START= {release_start: %Y %m %d %H}\n")
         ofh.write(f"RELEASE.FILE= {outfile}\n")
         ofh.write(f"RELEASE.HEIGHTLOWER.M = {', '.join([str(x) for x in release_lower])}\n")
-        ofh.write(f"RELEASE.HEIGHTUPPER.M = {', '.join([str(x) for x in release_lower])}\n")
+        ofh.write(f"RELEASE.HEIGHTUPPER.M = {', '.join([str(x) for x in release_upper])}\n")
         ofh.write(f"RELEASE.HEIGHTRADIUS.M = {', '.join(['1000' for _ in release_lower])}\n")
         comps = [f"'{x}'" for (i, x) in classnames]
         ofh.write(f"RELEASE.COMPONENTS= {', '.join(comps)}\n\n")
