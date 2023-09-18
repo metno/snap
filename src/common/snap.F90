@@ -200,6 +200,7 @@ PROGRAM bsnap
 #if defined(FIMEX)
   USE readfield_fiML, only: readfield_fi
   USE filesort_fiML, only: filesort_fi
+  use Fimex, only: fimex_set_loglevel => set_default_log_level, FIMEX_LOGLEVEL_WARN => LOGLEVEL_WARN
 #endif
   USE releasefileML, only: releasefile
   USE filesort_ncML, only: filesort_nc
@@ -282,6 +283,10 @@ PROGRAM bsnap
   character(len=*), parameter :: VERSION_ = VERSION
 #else
   character(len=*), parameter :: VERSION_ = "UNVERSIONED"
+#endif
+
+#if defined(FIMEX)
+  call fimex_set_loglevel(FIMEX_LOGLEVEL_WARN)
 #endif
 
   if (command_argument_count() < 1) then
