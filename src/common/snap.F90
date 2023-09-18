@@ -1890,7 +1890,7 @@ contains
       endif
     end do
     if (error_release_profile) then
-      write (error_unit, *) 'ERROR in relase profiles ', &
+      write (error_unit, *) 'ERROR in release profiles ', &
           &'of upper,lower and/or radius'
       ierror = 1
     end if
