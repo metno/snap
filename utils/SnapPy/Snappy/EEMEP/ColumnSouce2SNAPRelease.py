@@ -82,7 +82,7 @@ def readEmepWriteSnap(infile, outfile, outsnap):
         ofh.write(f"RELEASE.HEIGHTRADIUS.M = {', '.join(['1000' for _ in release_lower])}\n")
         comps = [f"'{x}'" for (i, x) in classnames]
         ofh.write(f"RELEASE.COMPONENTS= {', '.join(comps)}\n\n")
-        for (i, cn) in classnames:
+        for j, (i, cn) in enumerate(classnames):
             if i < 2:
                 radius = diameters[i] / 2
             else:
@@ -93,9 +93,10 @@ def readEmepWriteSnap(infile, outfile, outsnap):
             ofh.write("DRY.DEP.ON\n")
             ofh.write("WET.DEP.ON\n")
             ofh.write("RADIOACTIVE.DECAY.OFF\n")
-            ofh.write(f"FIELD.IDENTIFICATION= {i+1:02d}\n")
+            ofh.write(f"FIELD.IDENTIFICATION= {j+1:02d}\n")
             ofh.write(f"RADIUS.MICROMETER={radius:.2f}\n")
-            ofh.write("DENSITY.G/CM3=1\n\n") # rephra between 0.4 and 1.5
+            ofh.write("* VAAC London Tephra Density: 2.3g/cm3 based on Sparks et al, 1997\n")
+            ofh.write("DENSITY.G/CM3=2.3\n\n") # rephra between 0.4 and 1.5
 
 if __name__ == "__main__":
     import os
