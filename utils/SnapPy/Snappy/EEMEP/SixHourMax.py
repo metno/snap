@@ -20,10 +20,12 @@ Created on Feb 12, 2018
 
 @author: heikok
 '''
+import logging
 import math
+import re
+import netCDF4
 import numpy as np
 from netCDF4 import Dataset
-import datetime
 from collections import deque
 
 def flightlevel_in_pressure(flightlevel):
@@ -33,84 +35,125 @@ def flightlevel_in_pressure(flightlevel):
     return p
 
 class SixHourMax:
-    '''Calculate the 6h max VAAC output from 3D eemep-hourly mean output
+    """Calculate the 6h max VAAC output from 3D eemep-hourly mean output
 
 i.e. calculate the 6hour mean of the last six hours (running) (average also the surface pressure)
      retrieve the max value within the fat flight layers (FL == atmospheric pressure altitude above 1013.25hPa) (0-200, 200-350, 350-550)
 
      Multiply by 10, to match observations from Eyjafjella. (https://www.mdpi.com/2073-4433/11/4/352 Becket et al. 2020 (VAAC developments))
-    '''
+    """
     # performance option
     USE_2D = False
-
     FL = (200, 350, 550)
+    SNAP_ASH_CONC_PATTERN = re.compile(r"ASH_\d+_concentration_ml")
+    SNAP_ASH_COL_PATTERN = re.compile(r"ASH_\d+_column_concentration")
+
+    @classmethod
+    def detect_ash_model(cls, nc: netCDF4.Dataset) -> str:
+        """check what type of ash-model the netcdf-dataset is
+
+        :param nc: netCDF4 dataset to check
+        :return: 'emep' or 'snap' or '' (undetected)
+        """
+        if 'D3_ug_ASH' in nc.variables:
+            return 'emep'
+        else:
+            for vname, _ in nc.variables.items():
+                if re.match(cls.SNAP_ASH_CONC_PATTERN, vname):
+                    return 'snap'
+        return ''
 
     def _detect_model(self):
-        if 'D3_ug_ASH' in self.nc.variables:
-            self.model = 'emep'
-            return
+        model = self.detect_ash_model(self.nc)
+        if model == '':
+            raise Exception('cannot detect model of nc-file')
         else:
-            for vname, v in self.nc.variables.items():
-                if vname.startswith('ASH_') and vname.endswith('_concentration_ml'):
-                    self.model = 'snap'
-                    return
-        raise Exception('cannot detect model of nc-file')
+            self.model = model
+        return
 
     def _get_3d_dims(self):
         if self.model == 'emep':
             return [self.nc['D3_ug_ASH'].dimensions[i] for i in (0,2,3)]
         elif self.model == 'snap':
             for vname, v in self.nc.variables.items():
-                if vname.startswith('ASH_') and vname.endswith('_concentration_ml'):
+                if re.match(self.SNAP_ASH_CONC_PATTERN, vname):
                     return [v.dimensions[i] for i in (0,2,3)]
         raise Exception('cannot detect dimension names in nc-file')
 
-    def _get_ash_units(self):
+    def _get_ash_attrib(self, attrib: str):
         if self.model == 'emep':
-            return self.nc['D3_ug_ASH'].units
+            if attrib in self.nc['D3_ug_ASH'].ncattrs():
+                return self.nc['D3_ug_ASH'].getncattr(attrib)
         elif self.model == 'snap':
             for vname, v in self.nc.variables.items():
-                if vname.startswith('ASH_') and vname.endswith('_concentration_ml'):
-                    return v.units.replace('Bq', 'g')
-        raise Exception('cannot detect units in nc-file')
+                if re.match(self.SNAP_ASH_CONC_PATTERN, vname):
+                    if attrib in v.ncattrs():
+                        val = v.getncattr(attrib)
+                        if attrib == "units":
+                            val = val.replace('Bq', 'g')
+                        return val
+        return None
 
     def _get_ap_levels(self):
         # in hPa
         if self.model == 'emep':
-            return np.ma.filled(nc['hyam'][:], np.nan)
+            return np.ma.filled(self.nc['hyam'][:], np.nan)
         elif self.model == 'snap':
-            return np.ma.filled(nc['ap'][:], np.nan)
+            return np.ma.filled(self.nc['ap'][:], np.nan)
         raise Exception(f'unknown model: {self.model}')
 
     def _get_b_levels(self):
         if self.model == 'emep':
-            return np.ma.filled(nc['hybm'][:], np.nan)
+            return np.ma.filled(self.nc['hybm'][:], np.nan)
         elif self.model == 'snap':
-            return np.ma.filled(nc['b'][:], np.nan)
+            return np.ma.filled(self.nc['b'][:], np.nan)
         raise Exception(f'unknown model: {self.model}')
 
     def _get_surface_pressure(self, t: int):
         if self.model == 'emep':
-            return np.ma.filled(nc['PS'][t,:,:], np.nan)
+            return np.ma.filled(self.nc['PS'][t,:,:], np.nan)
         elif self.model == 'snap':
-            return np.ma.filled(nc['surface_air_pressure'][t,:,:], np.nan)
+            return np.ma.filled(self.nc['surface_air_pressure'][t,:,:], np.nan)
         raise Exception(f'unknown model: {self.model}')
 
 
-    def _get_ash_data(self, t: int):
+    def _get_ash_data(self, t: int) -> np.ndarray:
         if self.model == 'emep':
             return np.ma.filled(nc['D3_ug_ASH'][t,:,:,:], np.nan)
         elif self.model == 'snap':
             data = 0
             for vname, v in self.nc.variables.items():
-                if vname.startswith('ASH_') and vname.endswith('_concentration_ml'):
+                if re.match(self.SNAP_ASH_CONC_PATTERN, vname):
                     data += np.ma.filled(v[t,:,:,:], np.nan)
             return data
         raise Exception(f'unknown model: {self.model}')
 
+    def _snap_add_total_ash_column(self) -> None:
+        if self.model != 'snap':
+            return
+        exampleVar = None
+        data = 0
+        for vName, var in self.nc.variables.items():
+            if re.match(self.SNAP_ASH_COL_PATTERN, vName):
+                var.units = var.units.replace('Bq', 'g')
+                exampleVar = var
+                data += var[:]
+        if exampleVar:
+            logging.info(f"adding COLUMN_ASH_kmax to snap-model")
+            columnName = 'COLUMN_ASH_kmax' # name in emep-model
+            if not columnName in self.nc.variables:
+                self.nc.createVariable(columnName,'f4',exampleVar.dimensions, zlib=True)
+            v = self.nc[columnName]
+            for attr in ("units", "grid_mapping", "coordinates"):
+                if attr in exampleVar.ncattrs():
+                    v.setncattr(attr, exampleVar.getncattr(attr))
+            v[:] = data
+            self.nc.sync()
+        return
 
     def __init__(self, nc):
         '''Initialize with Dataset nc'''
+        logging.info("Adding 6hour max to nc-file")
         self.nc = nc
         self._detect_model()
 
@@ -119,14 +162,18 @@ i.e. calculate the 6hour mean of the last six hours (running) (average also the 
             v200 = nc.createVariable('MAX6h_ASH_fl000-200','f4',self._get_3d_dims(), zlib=True)
             v350 = nc.createVariable('MAX6h_ASH_fl200-350','f4',self._get_3d_dims(), zlib=True)
             v550 = nc.createVariable('MAX6h_ASH_fl350-550','f4',self._get_3d_dims(), zlib=True)
+
         else:
             v200 = nc['MAX6h_ASH_fl000-200']
             v350 = nc['MAX6h_ASH_fl200-350']
             v550 = nc['MAX6h_ASH_fl350-550']
 
-        v200.units = self._get_ash_units()
-        v350.units = v200.units
-        v550.units = v200.units
+        for attr in ("units", "grid_mapping", "coordinates"):
+            val = self._get_ash_attrib(attr)
+            if val:
+                v200.setncattr(attr, val)
+                v350.setncattr(attr, val)
+                v550.setncattr(attr, val)
 
         hy_ap = self._get_ap_levels() # in hPa
         hy_b = self._get_b_levels()
@@ -173,12 +220,16 @@ i.e. calculate the 6hour mean of the last six hours (running) (average also the 
             v550[t,:] = max550 * 10.
             nc.sync()
 
+        self._snap_add_total_ash_column()
+        return
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
     print ('FL180=',flightlevel_in_pressure(180),'should result in ~ 500hPa')
 #    import cProfile
-    # with Dataset('/disk1/Fimex/eemep_hour.nc', 'a') as nc:
-    with Dataset('/lustre/storeB/project/fou/kl/snap/run_ecens/20230918T00/snap_GRIMSVOTN_1.nc', 'a') as nc:
+
+    with Dataset('/home/heikok/emep_hour.nc', 'a') as nc:
+    #with Dataset('/lustre/storeB/project/fou/kl/snap/run_ecens/20230918T00/snap_GRIMSVOTN_1.nc', 'a') as nc:
     # with Dataset('/lustre/storeB/project/fou/kl/eva/eemep/runs/etna/eemep_hour_20230918T143002.nc', 'a') as nc:
         SixHourMax(nc)
 #    cProfile.run("SixHourMax('/lustre/storeB/project/fou/kl/eva/eemep/runs/Jan_Mayen_ondemand/eemep_hour.nc')")
