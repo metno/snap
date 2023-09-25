@@ -78,7 +78,9 @@ def add_toa_to_nc(nc: netCDF4.Dataset, overwrite=False):
     toaVar[0, :] = toa
 
     # add also total depositions
-    for v, var in nc.variables.items():
+    # run over list(keys()) since variables-dict is exanded in loop
+    for v in list(nc.variables.keys()):
+        var = nc[v]
         if v.endswith("_acc_dry_deposition"):
             total = var[:]
             comp = v.replace("_acc_dry_deposition","")
