@@ -41,7 +41,8 @@ setup(
         "snapRunnerNpps",
         "snapRunnerNpp",
         "eemepModelRunner",
-        "snapRemoteRunner.py"
+        "snapRemoteRunner.py",
+        "snapEnsAshPlot.py"
     ],
     entry_points={
         'console_scripts': [
