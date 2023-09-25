@@ -162,7 +162,6 @@ i.e. calculate the 6hour mean of the last six hours (running) (average also the 
             v200 = nc.createVariable('MAX6h_ASH_fl000-200','f4',self._get_3d_dims(), zlib=True)
             v350 = nc.createVariable('MAX6h_ASH_fl200-350','f4',self._get_3d_dims(), zlib=True)
             v550 = nc.createVariable('MAX6h_ASH_fl350-550','f4',self._get_3d_dims(), zlib=True)
-
         else:
             v200 = nc['MAX6h_ASH_fl000-200']
             v350 = nc['MAX6h_ASH_fl200-350']
