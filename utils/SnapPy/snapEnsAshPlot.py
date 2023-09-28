@@ -2,27 +2,45 @@
 
 import argparse
 import warnings
+
 import cartopy
-import datetime
 import matplotlib
 from pyproj import Proj
+
 matplotlib.use('Agg')
-from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-from matplotlib import pyplot as plt
-import netCDF4
 import os
 import sys
 
+import netCDF4
 import numpy as np
+from matplotlib import pyplot as plt
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+from scipy.ndimage import gaussian_filter
 
 # suppress some warnings
 warnings.filterwarnings("ignore", category=UserWarning,
                         message="Warning: 'partition' will ignore the 'mask' of the MaskedArray.")
 # shapefile.py uses root logger :-( and warns a lot about GSHHS
 import logging
+
 logging.root.setLevel(logging.ERROR)
 
-def plotMap(data, x, y, ax, title="", title_loc="center", clevs=[10,100,300,1000,3000,10000,30000,100000, 300000, 10000000], colors=None, extend='max'):
+
+def plotBasicMap(ax,title="", title_loc="center"):
+    """Plot multiple data on a map as contours with legends
+
+    :param data: a list of data
+    :param legend: a list of identifiers for each dataset
+    :param x: x dimension, common for all data
+    :param y: y dimension, common for all data
+    :param ax: plot axis, common for all data
+    :param clevs: levels where to put iso-lines, common for all plots
+    :param colors: colors, should be a list (len(data)) of lists (len(levels))
+    :param title: title of the plot, defaults to ""
+    :param title_loc: location of the title, defaults to "center"
+    :return: None
+    """
+
     ax.set_facecolor("#f2efe9") # background, osm-land color
     ax.add_feature(cartopy.feature.NaturalEarthFeature(
             category='physical',
@@ -42,23 +60,22 @@ def plotMap(data, x, y, ax, title="", title_loc="center", clevs=[10,100,300,1000
 
     ax.gridlines(edgecolor="lightgray", linewidth=.3, zorder=100)
 
-    ny = data.shape[0]
-    nx = data.shape[1]
+    # add title
+    ax.set_title(title, loc=title_loc)
+    return
+
+def plotMap(data, x, y, ax, title="", title_loc="center", clevs=[10,100,300,1000,3000,10000,30000,100000, 300000, 10000000], colors=None, extend='max'):
+    plotBasicMap(ax=ax, title=title, title_loc=title_loc)
+
     # draw filled contours.
     if colors is None:
         colors = [ plt.cm.hsv(x) for x in np.linspace(0.5, 0, len(clevs)) ]
-    cs = ax.contourf(x,y,data,clevs,colors=colors, extend=extend, zorder=50)
-    # add title
-    ax.set_title(title, loc=title_loc)
+    cs = ax.contourf(x,y,gaussian_filter(data, 1.0),clevs,colors=colors, extend=extend, zorder=50)
     return cs
 
 
 def plotMapGrid(data, x, y, ax, title="", title_loc="center", clevs=[10,100,300,1000,3000,10000,30000,100000, 300000, 10000000], colors=None):
-    ax.add_feature(cartopy.feature.GSHHSFeature(scale='auto', facecolor='none', edgecolor='black'))
-    ax.gridlines()
-    ax.add_feature(cartopy.feature.BORDERS)
-    ny = data.shape[0]
-    nx = data.shape[1]
+    plotBasicMap(ax=ax, title=title, title_loc=title_loc)
     # draw filled contours.
     if colors is None:
         colors = [ plt.cm.hsv(x) for x in np.linspace(0.5, 0, len(clevs)) ]
@@ -66,8 +83,6 @@ def plotMapGrid(data, x, y, ax, title="", title_loc="center", clevs=[10,100,300,
     norm = matplotlib.colors.BoundaryNorm(clevs, ncolors=cmap.N, clip=True)
 
     cs = ax.pcolormesh(x,y,data,norm=norm, cmap=cmap)
-    # add title
-    ax.set_title(title, loc=title_loc)
     return cs
 
 
@@ -78,7 +93,7 @@ def rgbToColor(rgb):
     return color
 
 
-def snapens(ncfiles, hour, outfile):
+def snapens(ncfiles, hour, outfile, contours_only=False):
     title = ""
     pos = -1
     steps = -1
@@ -145,6 +160,7 @@ def snapens(ncfiles, hour, outfile):
                 data_y = lats
                 proj = cartopy.crs.PlateCarree()
 
+    thresholds = [0.2, 2, 4] # ash threshold 0.2,2,4mg/m3
     toa = np.stack(toa)
     toa = toa.filled(fill_value=fillvalue)
     toa[toa == fillvalue] = (steps+1)*stepH
@@ -157,80 +173,94 @@ def snapens(ncfiles, hour, outfile):
         fl[fli] = flv
         flPerc[fli] = np.percentile(flv, [17,50,83], axis=0)
         flTH[fli] = []
-        for th in [0.2, 2, 4]: # ash threshold 0.2,2,4mg/m3
+        for th in thresholds:
             flTH[fli].append(np.sum(flv > th, axis=0)*100/flv.shape[0])
 
     # and the plot
     formatter = matplotlib.ticker.ScalarFormatter()
     formatter.set_powerlimits((-3,10))
 
-    fig = plt.figure(figsize=(12, 10.7))
-    fig.suptitle(f'{title}+{hour}hours ({endDT:%Y-%m-%d %H}:00Z). Uncertainty based upon {fl["350-550"].shape[0]} members.',
-        y=0.92)
-    colors=('cyan', 'silver', 'r')
-    extent = ([x[0],x[-200],y[0],y[-60]])
-    # ax = fig.add_subplot(6,3, 1, projection=proj)
-    # ax.set_extent(extent, crs=proj)
-    # cs = plotMap(depsPerc[0,:],
-    #         title="Ash conc: 17 perc.",
-    #         title_loc="left",
-    #         ax=ax,
-    #         colors=colors,
-    #         clevs=[0.2,2,4],
-    #         x=data_x, y=data_y)
-    # ax = fig.add_subplot(6,3, 2, projection=proj)
-    # ax.set_extent(extent, crs=proj)
-    # cs = plotMap(depsPerc[1,:],
-    #         title="median",
-    #         ax=ax,
-    #         colors=colors,
-    #         clevs=[0.2,2,4],
-    #         x=data_x, y=data_y)
-    # ax = fig.add_subplot(6,3, 3, projection=proj)
-    # ax.set_extent(extent, crs=proj)
-    # cs = plotMap(depsPerc[2,:],
-    #         title="83 percentile",
-    #         ax=ax,
-    #         colors=colors,
-    #         clevs=[0.2,2,4],
-    #         x=data_x, y=data_y)
-    # axins = inset_axes(ax,
-    #         width="3%",
-    #         height="95%",
-    #         loc='lower right',
-    #         bbox_to_anchor=(0., 0., 1.05, 1),
-    #         bbox_transform=ax.transAxes,
-    #         borderpad=0,
-    #     )
-    # cbar = fig.colorbar(cs, cax=axins, format=formatter, orientation='vertical')
-    # cbar.set_label('mg/m³')
+    if contours_only == False:
+        fig = plt.figure(figsize=(12, 10.7))
+        fig.suptitle(f'{title}+{hour}hours ({endDT:%Y-%m-%d %H}:00Z). Uncertainty based upon {fl["350-550"].shape[0]} members.',
+            y=0.92)
+        colors=('cyan', 'silver', 'r')
+        extent = ([x[0],x[-200],y[0],y[-60]])
 
-    for i, (fli, flv) in enumerate(fl.items()):
-        ax = fig.add_subplot(4,3, i*3+1, projection=proj)
+        for i, (fli, flv) in enumerate(fl.items()):
+            ax = fig.add_subplot(4,3, i*3+1, projection=proj)
+            ax.set_extent(extent, crs=proj)
+            colors = [ plt.cm.Paired(x) for x in [1,10,7,5,9] ]
+            cs = plotMap(flTH[fli][0],
+                    title=f"FL{fli} Probability: > 0.2mg/m³",
+                    title_loc="left",
+                    ax=ax,
+                    colors=colors,
+                    clevs=[10,30,50,70,90],
+                    x=data_x, y=data_y)
+            ax = fig.add_subplot(4,3, i*3+2, projection=proj)
+            ax.set_extent(extent, crs=proj)
+            cs = plotMap(flTH[fli][1],
+                    title=" > 2mg/m³",
+                    ax=ax,
+                    colors=colors,
+                    clevs=[10,30,50,70,90],
+                    x=data_x, y=data_y)
+            ax = fig.add_subplot(4,3, i*3+3, projection=proj)
+            ax.set_extent(extent, crs=proj)
+            cs = plotMap(flTH[fli][2],
+                    title="> 4mg/m³",
+                    ax=ax,
+                    colors=colors,
+                    clevs=[10,30,50,70,90],
+                    x=data_x, y=data_y)
+            axins = inset_axes(ax,
+                    width="3%",
+                    height="95%",
+                    loc='lower right',
+                    bbox_to_anchor=(0., 0., 1.05, 1),
+                    bbox_transform=ax.transAxes,
+                    borderpad=0,
+                )
+            cbar = fig.colorbar(cs, cax=axins, format=formatter, orientation='vertical')
+            cbar.set_label('%')
+
+
+        # Time of arrival
+        ax = fig.add_subplot(4,3, 10, projection=proj)
         ax.set_extent(extent, crs=proj)
-        colors = [ plt.cm.Paired(x) for x in [1,10,7,5,9] ]
-        cs = plotMap(flTH[fli][0],
-                title=f"FL{fli} Probability: > 0.2mg/m³",
+        clevs=range(0,(steps+1)*stepH,2*stepH)
+        colors = [ plt.cm.jet(x) for x in np.linspace(0.95,0.1,len(clevs)) ]
+        # dsa colors up to 48 hours
+        colors[0] = rgbToColor('128:0:255')
+        colors[1] = rgbToColor('128:128:255')
+        colors[2] = rgbToColor('128:128:192')
+        colors[3] = rgbToColor('192:192:192')
+        cs = plotMap(toaPerc[2,:],
+                title="Time of arrival: 90 perc.",
                 title_loc="left",
                 ax=ax,
                 colors=colors,
-                clevs=[10,30,50,70,90],
+                clevs=clevs,
+                extend=None,
                 x=data_x, y=data_y)
-        ax = fig.add_subplot(4,3, i*3+2, projection=proj)
+        ax = fig.add_subplot(4,3, 11, projection=proj)
         ax.set_extent(extent, crs=proj)
-        cs = plotMap(flTH[fli][1],
-                title=" > 2mg/m³",
+        cs = plotMap(toaPerc[1,:],
+                title="median",
                 ax=ax,
                 colors=colors,
-                clevs=[10,30,50,70,90],
+                clevs=clevs,
+                extend=None,
                 x=data_x, y=data_y)
-        ax = fig.add_subplot(4,3, i*3+3, projection=proj)
+        ax = fig.add_subplot(4,3, 12, projection=proj)
         ax.set_extent(extent, crs=proj)
-        cs = plotMap(flTH[fli][2],
-                title="> 4mg/m³",
+        cs = plotMap(toaPerc[0,:],
+                title="10 percentile",
                 ax=ax,
                 colors=colors,
-                clevs=[10,30,50,70,90],
+                clevs=clevs,
+                extend=None,
                 x=data_x, y=data_y)
         axins = inset_axes(ax,
                 width="3%",
@@ -241,56 +271,58 @@ def snapens(ncfiles, hour, outfile):
                 borderpad=0,
             )
         cbar = fig.colorbar(cs, cax=axins, format=formatter, orientation='vertical')
-        cbar.set_label('%')
+        cbar.set_label('hours')
+    else: # contours_only
+        fig = plt.figure(figsize=(20, 8))
+        fig.suptitle(f'{title}+{hour}hours ({endDT:%Y-%m-%d %H}:00Z). Uncertainty based upon {fl["350-550"].shape[0]} members.',
+            y=0.92)
 
+        extent = ([x[0],x[-200],y[0],y[-60]])
+        for i, th in enumerate(thresholds):
+            ax = fig.add_subplot(2,3, i+1, projection=proj)
+            ax.set_extent(extent, crs=proj)
+            plotBasicMap(
+                ax=ax,
+                title=f"ash conc. > {th}mg/m³",
+                title_loc="center",
+            )
+            # 000-200 red, 200-350 green, 350-550 blue
+            #colors =  plt.cm.tab20c([4,5,7, 8,9,11, 0,1,3])
+            colors =  ['#ff0000ff','#ff000060','#ff000030', '#00a000ff','#00a00060','#00a00030', '#0000ffff','#0000ff60','#0000ff30']
+            for fli, flv in enumerate(fl):
+                data = gaussian_filter(flTH[flv][i], 1.0)
+                cs = ax.contour(x,y,data,[30,50,70],colors=[colors[fli*3+2-j] for j in range(3)],
+                                zorder=50+fli)
+                #ax.clabel(cs, cs.levels, inline=False, fmt={x: f"FL{flv} {x}%" for x in cs.levels}, fontsize=7)
 
-    # Time of arrival
-    ax = fig.add_subplot(4,3, 10, projection=proj)
-    ax.set_extent(extent, crs=proj)
-    clevs=range(0,(steps+1)*stepH,2*stepH)
-    colors = [ plt.cm.jet(x) for x in np.linspace(0.95,0.1,len(clevs)) ]
-    # dsa colors up to 48 hours
-    colors[0] = rgbToColor('128:0:255')
-    colors[1] = rgbToColor('128:128:255')
-    colors[2] = rgbToColor('128:128:192')
-    colors[3] = rgbToColor('192:192:192')
-    cs = plotMap(toaPerc[2,:],
-            title="Time of arrival: 90 perc.",
-            title_loc="left",
-            ax=ax,
-            colors=colors,
-            clevs=clevs,
-            extend=None,
-            x=data_x, y=data_y)
-    ax = fig.add_subplot(4,3, 11, projection=proj)
-    ax.set_extent(extent, crs=proj)
-    cs = plotMap(toaPerc[1,:],
-            title="median",
-            ax=ax,
-            colors=colors,
-            clevs=clevs,
-            extend=None,
-            x=data_x, y=data_y)
-    ax = fig.add_subplot(4,3, 12, projection=proj)
-    ax.set_extent(extent, crs=proj)
-    cs = plotMap(toaPerc[0,:],
-            title="10 percentile",
-            ax=ax,
-            colors=colors,
-            clevs=clevs,
-            extend=None,
-            x=data_x, y=data_y)
-    axins = inset_axes(ax,
-            width="3%",
-            height="95%",
-            loc='lower right',
-            bbox_to_anchor=(0., 0., 1.05, 1),
-            bbox_transform=ax.transAxes,
-            borderpad=0,
-        )
-    cbar = fig.colorbar(cs, cax=axins, format=formatter, orientation='vertical')
-    cbar.set_label('hours')
-
+        # Time of arrival
+        ax = fig.add_subplot(2,3, 5, projection=proj)
+        ax.set_extent(extent, crs=proj)
+        clevs=range(0,(steps+1)*stepH,2*stepH)
+        colors = [ plt.cm.jet(x) for x in np.linspace(0.95,0.1,len(clevs)) ]
+        # dsa colors up to 48 hours
+        colors[0] = rgbToColor('128:0:255')
+        colors[1] = rgbToColor('128:128:255')
+        colors[2] = rgbToColor('128:128:192')
+        colors[3] = rgbToColor('192:192:192')
+        cs = plotMap(toaPerc[2,:],
+                title="Time of arrival: 10% (fastest)",
+                title_loc="center",
+                ax=ax,
+                colors=colors,
+                clevs=clevs,
+                extend=None,
+                x=data_x, y=data_y)
+        axins = inset_axes(ax,
+                width="3%",
+                height="95%",
+                loc='lower right',
+                bbox_to_anchor=(0., 0., 1.05, 1),
+                bbox_transform=ax.transAxes,
+                borderpad=0,
+            )
+        cbar = fig.colorbar(cs, cax=axins, format=formatter, orientation='vertical')
+        cbar.set_label('hours')
 
 
     fig.subplots_adjust(hspace=0.12, wspace=0.01)
@@ -307,8 +339,9 @@ if __name__ == "__main__":
     )
     parser.add_argument("--out", help="output png file", required=True)
     parser.add_argument("--hour", help="hour of output to analyse", type=int, required=True)
+    parser.add_argument("--contours", help="plot only contours", action=argparse.BooleanOptionalAction, default=False)
     #parser.add_argument("--store", help="storeA or storeB, meteo and runtime-datastore, default used from MAPP-system")
     parser.add_argument('SNAPNC', help="snap*.nc filenames", nargs='+')
     args = parser.parse_args()
 
-    snapens(args.SNAPNC, args.hour, args.out)
+    snapens(args.SNAPNC, args.hour, args.out, contours_only=args.contours)
