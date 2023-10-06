@@ -4,8 +4,9 @@
 #SBATCH -A met
 #SBATCH --nodes=6 --ntasks-per-core=1 --time=01:00:00
 #SBATCH -D /home/metno_op/work/emep/eemep/
-#SBATCH -J eemep2 -o /home/metno_op/work/emep/eemep/tmp/eemep_single.log
-#SBATCH -e /home/metno_op/work/emep/eemep/tmp/eemep_single.log
+#SBATCH -J eemep2
+#SBATCH -o /home/metno_op/work/emep/eemep2/tmp/eemep_single.log
+#SBATCH -e /home/metno_op/work/emep/eemep2/tmp/eemep_single.log
 #SBATCH --mail-type=FAIL --mail-user=beredskap-fou-kl@met.no
 #SBATCH --exclusive
 
