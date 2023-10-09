@@ -27,20 +27,6 @@ logging.root.setLevel(logging.ERROR)
 
 
 def plotBasicMap(ax,title="", title_loc="center"):
-    """Plot multiple data on a map as contours with legends
-
-    :param data: a list of data
-    :param legend: a list of identifiers for each dataset
-    :param x: x dimension, common for all data
-    :param y: y dimension, common for all data
-    :param ax: plot axis, common for all data
-    :param clevs: levels where to put iso-lines, common for all plots
-    :param colors: colors, should be a list (len(data)) of lists (len(levels))
-    :param title: title of the plot, defaults to ""
-    :param title_loc: location of the title, defaults to "center"
-    :return: None
-    """
-
     ax.set_facecolor("#f2efe9") # background, osm-land color
     ax.add_feature(cartopy.feature.NaturalEarthFeature(
             category='physical',
@@ -65,6 +51,19 @@ def plotBasicMap(ax,title="", title_loc="center"):
     return
 
 def plotMap(data, x, y, ax, title="", title_loc="center", clevs=[10,100,300,1000,3000,10000,30000,100000, 300000, 10000000], colors=None, extend='max'):
+    """Plot multiple data on a map as contours with legends
+
+    :param data: a list of data
+    :param x: x dimension, common for all data
+    :param y: y dimension, common for all data
+    :param ax: plot axis, common for all data
+    :param title: title of the plot, defaults to ""
+    :param title_loc: location of the title, defaults to "center"
+    :param clevs: levels where to put iso-lines, common for all plots
+    :param colors: colors, should be a list (len(data)) of lists (len(levels))
+    :param extend: extend parameter for countourf
+    :return: contourf-object
+    """
     plotBasicMap(ax=ax, title=title, title_loc=title_loc)
 
     # draw filled contours.
@@ -75,6 +74,18 @@ def plotMap(data, x, y, ax, title="", title_loc="center", clevs=[10,100,300,1000
 
 
 def plotMapGrid(data, x, y, ax, title="", title_loc="center", clevs=[10,100,300,1000,3000,10000,30000,100000, 300000, 10000000], colors=None):
+    """Plot multiple data on a map as contours with legends
+
+    :param data: a list of data
+    :param x: x dimension, common for all data
+    :param y: y dimension, common for all data
+    :param ax: plot axis, common for all data
+    :param title: title of the plot, defaults to ""
+    :param title_loc: location of the title, defaults to "center"
+    :param clevs: levels where to put iso-lines, common for all plots
+    :param colors: colors, should be a list (len(data)) of lists (len(levels))
+    :return: contourf-object
+    """
     plotBasicMap(ax=ax, title=title, title_loc=title_loc)
     # draw filled contours.
     if colors is None:
@@ -160,7 +171,7 @@ def snapens(ncfiles, hour, outfile, contours_only=False):
                 data_y = lats
                 proj = cartopy.crs.PlateCarree()
 
-    thresholds = [0.2, 2, 4] # ash threshold 0.2,2,4mg/m3
+    thresholds = [0.2, 2, 4] # ash threshold in mg/m3
     toa = np.stack(toa)
     toa = toa.filled(fill_value=fillvalue)
     toa[toa == fillvalue] = (steps+1)*stepH
@@ -180,7 +191,7 @@ def snapens(ncfiles, hour, outfile, contours_only=False):
     formatter = matplotlib.ticker.ScalarFormatter()
     formatter.set_powerlimits((-3,10))
 
-    if contours_only == False:
+    if not contours_only:
         fig = plt.figure(figsize=(12, 10.7))
         fig.suptitle(f'{title}+{hour}hours ({endDT:%Y-%m-%d %H}:00Z). Uncertainty based upon {fl["350-550"].shape[0]} members.',
             y=0.92)

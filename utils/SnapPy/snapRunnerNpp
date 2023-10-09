@@ -92,8 +92,8 @@ def get_country_plotlist(fig, ax, country_listname, extent=None):
     textboxes = []
     for country in get_country_list(country_listname):
         if extent:
-            if (country.lon < extent[0] or country.lon > extent[1] or
-                country.lat < extent[2] or country.lat > extent[3]):
+            in_extent = (extent[0] <= country.lon <= extent[1]) and (extent[2] <= country.lat <= extent[3])
+            if not in_extent:
                 continue
         txt = ax.text(country.lon, country.lat, country.name,
             horizontalalignment='center',
