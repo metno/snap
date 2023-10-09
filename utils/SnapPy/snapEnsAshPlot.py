@@ -141,7 +141,7 @@ def snapens(ncfiles, hour, outfile, contours_only=False):
             fillvalue = nc["time_of_arrival"]._FillValue
             # read flight-levels
             for fli, flv in fl.items():
-                flv.append(nc[f"MAX6h_ASH_fl{fli}"][pos,:])
+                flv.append(np.ma.filled(nc[f"MAX6h_ASH_fl{fli}"][pos,:], np.nan))
             lons = nc["longitude"][:]
             lats = nc["latitude"][:]
             x = nc["x"][:]
@@ -171,7 +171,7 @@ def snapens(ncfiles, hour, outfile, contours_only=False):
                 data_y = lats
                 proj = cartopy.crs.PlateCarree()
 
-    thresholds = [0.2, 2, 4] # ash threshold in mg/m3
+    thresholds = [0.2, 2, 5, 10] # QVA ash threshold in mg/m3
     toa = np.stack(toa)
     toa = toa.filled(fill_value=fillvalue)
     toa[toa == fillvalue] = (steps+1)*stepH
@@ -185,7 +185,9 @@ def snapens(ncfiles, hour, outfile, contours_only=False):
         flPerc[fli] = np.percentile(flv, [17,50,83], axis=0)
         flTH[fli] = []
         for th in thresholds:
-            flTH[fli].append(np.sum(flv > th, axis=0)*100/flv.shape[0])
+            data = np.sum(flv > th, axis=0, dtype='f4')*100/flv.shape[0]
+            data[data < 1] = np.nan
+            flTH[fli].append(data)
 
     # and the plot
     formatter = matplotlib.ticker.ScalarFormatter()
@@ -195,36 +197,23 @@ def snapens(ncfiles, hour, outfile, contours_only=False):
         fig = plt.figure(figsize=(12, 10.7))
         fig.suptitle(f'{title}+{hour}hours ({endDT:%Y-%m-%d %H}:00Z). Uncertainty based upon {fl["350-550"].shape[0]} members.',
             y=0.92)
-        colors=('cyan', 'silver', 'r')
+        colors = [ plt.cm.Paired(x) for x in [2,1,10,7,5,9] ]
         extent = ([x[0],x[-200],y[0],y[-60]])
 
         for i, (fli, flv) in enumerate(fl.items()):
-            ax = fig.add_subplot(4,3, i*3+1, projection=proj)
-            ax.set_extent(extent, crs=proj)
-            colors = [ plt.cm.Paired(x) for x in [1,10,7,5,9] ]
-            cs = plotMap(flTH[fli][0],
-                    title=f"FL{fli} Probability: > 0.2mg/m³",
-                    title_loc="left",
-                    ax=ax,
-                    colors=colors,
-                    clevs=[10,30,50,70,90],
-                    x=data_x, y=data_y)
-            ax = fig.add_subplot(4,3, i*3+2, projection=proj)
-            ax.set_extent(extent, crs=proj)
-            cs = plotMap(flTH[fli][1],
-                    title=" > 2mg/m³",
-                    ax=ax,
-                    colors=colors,
-                    clevs=[10,30,50,70,90],
-                    x=data_x, y=data_y)
-            ax = fig.add_subplot(4,3, i*3+3, projection=proj)
-            ax.set_extent(extent, crs=proj)
-            cs = plotMap(flTH[fli][2],
-                    title="> 4mg/m³",
-                    ax=ax,
-                    colors=colors,
-                    clevs=[10,30,50,70,90],
-                    x=data_x, y=data_y)
+            for j, th in enumerate(thresholds):
+                ax = fig.add_subplot(4,4, i*4+j+1, projection=proj)
+                ax.set_extent(extent, crs=proj)
+                title = f"> {th}mg/m³"
+                if j == 0:
+                    title= f"FL{fli} Probability: " + title
+                cs = plotMap(flTH[fli][j],
+                        title=title,
+                        ax=ax,
+                        colors=colors,
+                        extend="both",
+                        clevs=[10,30,50,70,90],
+                        x=data_x, y=data_y)
             axins = inset_axes(ax,
                     width="3%",
                     height="95%",
@@ -238,7 +227,7 @@ def snapens(ncfiles, hour, outfile, contours_only=False):
 
 
         # Time of arrival
-        ax = fig.add_subplot(4,3, 10, projection=proj)
+        ax = fig.add_subplot(4,4, 14, projection=proj)
         ax.set_extent(extent, crs=proj)
         clevs=range(0,(steps+1)*stepH,2*stepH)
         colors = [ plt.cm.jet(x) for x in np.linspace(0.95,0.1,len(clevs)) ]
@@ -255,7 +244,7 @@ def snapens(ncfiles, hour, outfile, contours_only=False):
                 clevs=clevs,
                 extend=None,
                 x=data_x, y=data_y)
-        ax = fig.add_subplot(4,3, 11, projection=proj)
+        ax = fig.add_subplot(4,4, 15, projection=proj)
         ax.set_extent(extent, crs=proj)
         cs = plotMap(toaPerc[1,:],
                 title="median",
@@ -264,7 +253,7 @@ def snapens(ncfiles, hour, outfile, contours_only=False):
                 clevs=clevs,
                 extend=None,
                 x=data_x, y=data_y)
-        ax = fig.add_subplot(4,3, 12, projection=proj)
+        ax = fig.add_subplot(4,4, 16, projection=proj)
         ax.set_extent(extent, crs=proj)
         cs = plotMap(toaPerc[0,:],
                 title="10 percentile",
