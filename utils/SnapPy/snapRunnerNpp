@@ -87,10 +87,14 @@ def does_overlap(bbox, bboxlist):
             return True
     return False
 
-def get_country_plotlist(fig, ax, country_listname):
+def get_country_plotlist(fig, ax, country_listname, extent=None):
     countries = []
     textboxes = []
-    for country in get_country_list('europe2'):
+    for country in get_country_list(country_listname):
+        if extent:
+            in_extent = (extent[0] <= country.lon <= extent[1]) and (extent[2] <= country.lat <= extent[3])
+            if not in_extent:
+                continue
         txt = ax.text(country.lon, country.lat, country.name,
             horizontalalignment='center',
             verticalalignment='center',
@@ -282,13 +286,14 @@ STEP.HOUR.OUTPUT.FIELDS= 3
     proj = cartopy.crs.PlateCarree()
     fig = plt.figure(figsize=(24, 9))
     ax = fig.add_subplot(2, 4, 1, projection=proj)
-    ax.set_extent([x[0],x[-1],y[0],y[-1]], crs=proj)
-    countries_small_fig = get_country_plotlist(fig=fig, ax=ax, country_listname='europe2')
+    extent=[x[0],x[-1],y[0],y[-1]]
+    ax.set_extent(extent, crs=proj)
+    countries_small_fig = get_country_plotlist(fig=fig, ax=ax, country_listname='europe2', extent=extent)
     fig = plt.figure(figsize=(24, 9))
     ax = fig.add_subplot(2, 4, (6,7), projection=proj)
-    ax.set_extent([x[50],x[-50],y[25],y[-1]], crs=proj)
-    countries_large_fig = get_country_plotlist(fig=fig, ax=ax, country_listname='europe2')
-
+    extent=[x[50],x[-50],y[25],y[-1]]
+    ax.set_extent(extent, crs=proj)
+    countries_large_fig = get_country_plotlist(fig=fig, ax=ax, country_listname='europe2', extent=extent)
 
     fig = plt.figure(figsize=(24, 9))
     fig.suptitle(f'{title} +{runtime}hours ({release_dt+datetime.timedelta(hours=runtime):%Y-%m-%d %H}:00Z).',

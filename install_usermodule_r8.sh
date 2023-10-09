@@ -16,6 +16,8 @@ pkg-config=0.29.2
 netcdf-fortran=4.6.0
 gfortran=12.2.0
 EOF
+# scipy installed internally (cartopy?) Used for only for smoothing plots, should be
+# added when updating the dependencies
 }
 
 install_bdiana() {
