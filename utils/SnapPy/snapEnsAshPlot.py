@@ -186,7 +186,7 @@ def snapens(ncfiles, hour, outfile, contours_only=False):
         flTH[fli] = []
         for th in thresholds:
             data = np.sum(flv > th, axis=0, dtype='f4')*100/flv.shape[0]
-            data[data < 1] = np.nan
+            # data[data < 1] = np.nan
             flTH[fli].append(data)
 
     # and the plot
@@ -197,7 +197,7 @@ def snapens(ncfiles, hour, outfile, contours_only=False):
         fig = plt.figure(figsize=(12, 10.7))
         fig.suptitle(f'{title}+{hour}hours ({endDT:%Y-%m-%d %H}:00Z). Uncertainty based upon {fl["350-550"].shape[0]} members.',
             y=0.92)
-        colors = [ plt.cm.Paired(x) for x in [2,1,10,7,5,9] ]
+        colors = [ plt.cm.Paired(x) for x in [1,10,7,5,9] ]
         extent = ([x[0],x[-200],y[0],y[-60]])
 
         for i, (fli, flv) in enumerate(fl.items()):
@@ -211,7 +211,7 @@ def snapens(ncfiles, hour, outfile, contours_only=False):
                         title=title,
                         ax=ax,
                         colors=colors,
-                        extend="both",
+                        extend="max", # dropping <10% outliers, but keep values > 90%
                         clevs=[10,30,50,70,90],
                         x=data_x, y=data_y)
             axins = inset_axes(ax,
@@ -229,13 +229,25 @@ def snapens(ncfiles, hour, outfile, contours_only=False):
         # Time of arrival
         ax = fig.add_subplot(4,4, 14, projection=proj)
         ax.set_extent(extent, crs=proj)
-        clevs=range(0,(steps+1)*stepH,2*stepH)
+        clevs=range(0,(steps+1)*stepH,6)
         colors = [ plt.cm.jet(x) for x in np.linspace(0.95,0.1,len(clevs)) ]
-        # dsa colors up to 48 hours
-        colors[0] = rgbToColor('128:0:255')
-        colors[1] = rgbToColor('128:128:255')
-        colors[2] = rgbToColor('128:128:192')
-        colors[3] = rgbToColor('192:192:192')
+        # 255:0:255,255:128:255  0-3;3-6
+        # 128:0:128,128:0:255    6-9,9-12
+        # 128:128:255 12-24 (split in two)
+        # 128:128:192 24-36 (split in two)
+        # 192:192:192 36-48 (split in two)
+        rgbs = [
+            '255:128:255',
+            '128:0:255',
+            '128:64:255',
+            '128:128:255',
+            '128:128:225',
+            '128:128:192',
+            '160:160:192',
+            '192:192:192',
+        ]
+        for i, (_, c) in enumerate(zip(colors, rgbs)):
+            colors[i] = rgbToColor(c)
         cs = plotMap(toaPerc[2,:],
                 title="Time of arrival: 90 perc.",
                 title_loc="left",
@@ -298,13 +310,25 @@ def snapens(ncfiles, hour, outfile, contours_only=False):
         # Time of arrival
         ax = fig.add_subplot(2,3, 5, projection=proj)
         ax.set_extent(extent, crs=proj)
-        clevs=range(0,(steps+1)*stepH,2*stepH)
+        clevs=range(0,(steps+1)*stepH,6)
         colors = [ plt.cm.jet(x) for x in np.linspace(0.95,0.1,len(clevs)) ]
-        # dsa colors up to 48 hours
-        colors[0] = rgbToColor('128:0:255')
-        colors[1] = rgbToColor('128:128:255')
-        colors[2] = rgbToColor('128:128:192')
-        colors[3] = rgbToColor('192:192:192')
+        # 255:0:255,255:128:255  0-3;3-6
+        # 128:0:128,128:0:255    6-9,9-12
+        # 128:128:255 12-24 (split in two)
+        # 128:128:192 24-36 (split in two)
+        # 192:192:192 36-48 (split in two)
+        rgbs = [
+            '255:128:255',
+            '128:0:255',
+            '128:64:255',
+            '128:128:255',
+            '128:128:225',
+            '128:128:192',
+            '160:160:192',
+            '192:192:192',
+        ]
+        for i, (_, c) in enumerate(zip(colors, rgbs)):
+            colors[i] = rgbToColor(c)
         cs = plotMap(toaPerc[2,:],
                 title="Time of arrival: 10% (fastest)",
                 title_loc="center",
