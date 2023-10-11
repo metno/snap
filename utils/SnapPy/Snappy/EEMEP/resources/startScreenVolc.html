@@ -78,7 +78,7 @@ function toggle_advanced_sourceterm() {
         <input type="submit" name="action" value="Cancel submitted" />
      </fieldset>
     </form>
-     
+
   </div>
 
 </div>
@@ -107,7 +107,7 @@ function toggle_advanced_sourceterm() {
          <div style="float:right;">
            <input type="checkbox" name="restart_file" value="true">
          </div>
-         
+
          <br clear="both" style="clear:both;"/>
          <label>Volcano-Type: </label>
          <div style="float:right;">
@@ -116,7 +116,14 @@ function toggle_advanced_sourceterm() {
            %VOLCANOTYPE_OPTIONS%
          </select>
          </div>
-         
+
+         <br clear="both" style="clear:both;"/>
+         <span title="decimal between 0 and 1, or Mastin"><label>Fine-Ash Fraction:</label>
+           <div style="float:right;">
+            <input name="m63" type="text" size="6" maxlength="6" value="0.05">
+           </div>
+         </span>
+
          <br clear="both" style="clear:both;"/>
          <label>MET-MODEL:</label>
            <div style="float:right;">
@@ -124,8 +131,8 @@ function toggle_advanced_sourceterm() {
                <option selected="selected" value="nrpa_ec_0p1">EC 0.1, NRPA-domain</option>
              </select>
            </div>
-         
-           
+
+
          <br clear="both" style="clear:both;"/>
          <label>EC-Model Runtime:</label>
          <div style="float:right;">
@@ -137,7 +144,7 @@ function toggle_advanced_sourceterm() {
 
          </div>
          </fieldset>
-         
+
          <p>Volcanoes<br>
          <select name="volcano" size="20">
              <option selected="selected" value="">Use Lat-Lon</option>

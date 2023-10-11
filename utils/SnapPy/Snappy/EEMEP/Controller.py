@@ -265,6 +265,18 @@ class Controller():
             errors += str(ex) + "\n"
             errors += 'Please select Height and Type (Advanced) manually.\n'
 
+        # fine-ash fraction (particles < 63µm)
+        try:
+            m63 = qDict['m63']
+            if m63.lower() == 'mastin':
+                m63f = volctype['m63']
+            else:
+                m63f = float(m63)
+                if not (0 < m63f <= 1):
+                    raise Exception(f"fine-ash fraction out of range 0-1: {m63f}")
+        except Exception as ex:
+            errors += str(ex) + "\n"
+
         self.write_log("working with {:s} (lat={:.2f}N lon={:.2f}E) starting at {:s}".format(volcano, latf, lonf, startTime))
 
 
@@ -326,7 +338,7 @@ class Controller():
                                          bottom=0,
                                          top=cheight,
                                          rate=rate,
-                                         m63=volctype['m63']))
+                                         m63=m63f))
 
         self.lastOutputDir = os.path.join(self.res.getOutputDir(), "{0}_ondemand".format(volcano))
         self.volcano_file = os.path.join(self.lastOutputDir, ModelRunner.VOLCANO_FILENAME)
