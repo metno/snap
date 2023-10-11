@@ -1,3 +1,21 @@
+snap-py (2.3.7-1) jammy; urgency=medium
+
+  * changes in Ash emissions and products following VAAC London, patched
+
+ -- Charlie Negri <charlien@met.no>  Wed, 11 Oct 2023 13:41:49 +0200
+
+snap-py (2.3.6-1) jammy; urgency=medium
+
+  * changes in Ash emissions and products following VAAC London
+
+ -- Charlie Negri <charlien@met.no>  Wed, 11 Oct 2023 13:38:19 +0200
+
+snap-py (2.3.6-1) jammy; urgency=medium
+
+  * changes in Ash emissions and products following VAAC London
+
+ -- Charlie Negri <charlien@met.no>  Wed, 11 Oct 2023 13:20:47 +0200
+
 snap-py (2.3.3-1) jammy; urgency=medium
 
   * updated Mastin table with Eldey
