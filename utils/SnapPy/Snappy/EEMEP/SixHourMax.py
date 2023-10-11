@@ -40,11 +40,13 @@ class SixHourMax:
 i.e. calculate the 6hour mean of the last six hours (running) (average also the surface pressure)
      retrieve the max value within the fat flight layers (FL == atmospheric pressure altitude above 1013.25hPa) (0-200, 200-350, 350-550)
 
-     Multiply by 10, to match observations from Eyjafjella. (https://www.mdpi.com/2073-4433/11/4/352 Becket et al. 2020 (VAAC developments))
+     The peak to mean factor, which was 10 for Eyjafjella is now set to 1 following
+      (https://www.mdpi.com/2073-4433/11/4/352 Becket et al. 2020 (VAAC developments))
     """
     # performance option
     USE_2D = False
     FL = (200, 350, 550)
+    PEAK_TO_MEAN_CALIBRATION = 1.
     SNAP_ASH_CONC_PATTERN = re.compile(r"ASH_\d+_concentration_ml")
     SNAP_ASH_COL_PATTERN = re.compile(r"ASH_\d+_column_concentration")
 
@@ -213,10 +215,10 @@ i.e. calculate the 6hour mean of the last six hours (running) (average also the 
                 max550 = np.max(asha, axis=0, where=(pFL[1] >= pal) & (pFL[2] < pal), initial=0)
 
 
-            # add factor 10 for obs/model differences
-            v200[t,:] = max200 * 10.
-            v350[t,:] = max350 * 10.
-            v550[t,:] = max550 * 10.
+            # use factor for obs/model differences
+            v200[t,:] = max200 * self.PEAK_TO_MEAN_CALIBRATION
+            v350[t,:] = max350 * self.PEAK_TO_MEAN_CALIBRATION
+            v550[t,:] = max550 * self.PEAK_TO_MEAN_CALIBRATION
             nc.sync()
 
         self._snap_add_total_ash_column()
