@@ -34,6 +34,8 @@ def flightlevel_in_pressure(flightlevel):
     p = 1013.25 * math.pow(1-(0.0065*h)/288.15,5.255) # international formula
     return p
 
+logger = logging.getLogger('SixHourMax')
+
 class SixHourMax:
     """Calculate the 6h max VAAC output from 3D eemep-hourly mean output
 
@@ -141,7 +143,7 @@ i.e. calculate the 6hour mean of the last six hours (running) (average also the 
                 exampleVar = var
                 data += var[:]
         if exampleVar:
-            logging.info(f"adding COLUMN_ASH_kmax to snap-model")
+            logger.info(f"adding COLUMN_ASH_kmax to snap-model")
             columnName = 'COLUMN_ASH_kmax' # name in emep-model
             if not columnName in self.nc.variables:
                 self.nc.createVariable(columnName,'f4',exampleVar.dimensions, zlib=True)
@@ -155,7 +157,7 @@ i.e. calculate the 6hour mean of the last six hours (running) (average also the 
 
     def __init__(self, nc):
         '''Initialize with Dataset nc'''
-        logging.info("Adding 6hour max to nc-file")
+        logger.info("Adding 6hour max to nc-file")
         self.nc = nc
         self._detect_model()
 
