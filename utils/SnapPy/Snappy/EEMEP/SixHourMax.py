@@ -121,7 +121,7 @@ i.e. calculate the 6hour mean of the last six hours (running) (average also the 
 
     def _get_ash_data(self, t: int) -> np.ndarray:
         if self.model == 'emep':
-            return np.ma.filled(nc['D3_ug_ASH'][t,:,:,:], np.nan)
+            return np.ma.filled(self.nc['D3_ug_ASH'][t,:,:,:], np.nan)
         elif self.model == 'snap':
             data = 0
             for vname, v in self.nc.variables.items():
