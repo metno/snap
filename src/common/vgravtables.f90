@@ -77,13 +77,13 @@ do_comp: do n=1,ncomp
     select case(drydep_scheme)
     case (DRYDEP_SCHEME_EMEP,DRYDEP_SCHEME_ZHANG,DRYDEP_SCHEME_EMERSON)
       ! expected kg/m3
-      rho_part = def_comp(m)%densitygcm3 / 1000.0
+      rho_part = def_comp(m)%densitygcm3 * 1e3
       ! expected m
       diam_part = 2 * def_comp(m)%radiusmym / 1e6
 
       do ip=1,numpresvg
         ! Expecting pascal
-        p = max(1.0, pbasevg + ip*pincrvg) / 100.0
+        p = max(1.0, pbasevg + ip*pincrvg) * 100.0
         do it=1,numtempvg
           t = tbasevg + it*tincrvg
           roa = p / (real(t, kind=real64) * R)
@@ -113,6 +113,22 @@ do_comp: do n=1,ncomp
         end do
       end do
     end select
+
+    block
+      use snapdebug, only: iulog, idebug
+      if (idebug == 1) then
+        write(iulog,*) "VGRAV PRINTOUT START COMPONENT ", n
+        write(iulog,*) "p t vg"
+          do it=1,size(vgtable,1)
+            do ip=1,size(vgtable,2)
+              t = tbasevg + it*tincrvg
+              p = pbasevg + ip*pincrvg
+              write(iulog,'(F7.1 F7.1,F14.6)') p, t, vgtable(it,ip,n)
+            end do
+          end do
+        write(iulog,*) "VGRAV PRINTOUT END"
+      endif
+    end block
   end do do_comp
 end subroutine vgravtables
 
