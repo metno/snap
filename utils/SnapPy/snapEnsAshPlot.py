@@ -103,6 +103,24 @@ def rgbToColor(rgb):
         color.append(1.)
     return color
 
+def toa_in_level(nc, times, variable):
+    tdata = []
+    for t in range(times.shape[0]):
+        ldata = np.ma.filled(np.squeeze(nc[variable][t,:]), np.nan)
+        ldata = gaussian_filter(ldata, 1.0)
+        if len(tdata) > 0:
+            ldata += tdata[-1]
+        tdata.append(ldata)
+    data = np.stack(tdata)
+    step = times[1] - times[0]
+    times_max_h = (times[-1] - times[0]).total_seconds() / (60 * 60)
+    timeDelta = step.total_seconds() / (60 * 60)
+    data = np.where(data >= 0.00001, 0., timeDelta)
+    toa = np.sum(data, axis=0)
+    toa[toa > times_max_h] = np.nan
+    toa += timeDelta - 0.01
+    return toa
+
 
 def snapens(ncfiles, hour, outfile, contours_only=False):
     title = ""
@@ -111,6 +129,11 @@ def snapens(ncfiles, hour, outfile, contours_only=False):
     startDT = None
     endDT = None
     toa = []
+    flToa = {
+        "000-200": [],
+        "200-350": [],
+        "350-550": []
+    }
     fl = {
         "000-200": [],
         "200-350": [],
@@ -138,6 +161,9 @@ def snapens(ncfiles, hour, outfile, contours_only=False):
                 sys.exit(2)
             exVar = nc["MAX6h_ASH_fl350-550"]
             toa.append(nc["time_of_arrival"][0,:])
+            for level in flToa.keys():
+                print(f"reading toa for {ncf}, {level}", file=sys.stderr)
+                flToa[level].append(toa_in_level(nc, times, f"MAX6h_ASH_fl{level}"))
             fillvalue = nc["time_of_arrival"]._FillValue
             # read flight-levels
             for fli, flv in fl.items():
@@ -175,7 +201,11 @@ def snapens(ncfiles, hour, outfile, contours_only=False):
     toa = np.stack(toa)
     toa = toa.filled(fill_value=fillvalue)
     toa[toa == fillvalue] = (steps+1)*stepH
-    toaPerc = np.percentile(toa, [10,50,90], axis=0)
+    toaPerc = np.percentile(toa, [10], axis=0)
+    flToaPerc = {}
+    for fli, flv in flToa.items():
+        toa = np.stack(flv)
+        flToaPerc[fli] = np.percentile(toa, [10], axis=0)
     flPerc = {}
     flTH = {}
     for fli, flv in fl.items():
@@ -227,8 +257,6 @@ def snapens(ncfiles, hour, outfile, contours_only=False):
 
 
         # Time of arrival
-        ax = fig.add_subplot(4,4, 14, projection=proj)
-        ax.set_extent(extent, crs=proj)
         clevs=range(0,(steps+1)*stepH,6)
         colors = [ plt.cm.jet(x) for x in np.linspace(0.95,0.1,len(clevs)) ]
         # 255:0:255,255:128:255  0-3;3-6
@@ -248,32 +276,26 @@ def snapens(ncfiles, hour, outfile, contours_only=False):
         ]
         for i, (_, c) in enumerate(zip(colors, rgbs)):
             colors[i] = rgbToColor(c)
-        cs = plotMap(toaPerc[2,:],
-                title="Time of arrival: 90 perc.",
+        ax = fig.add_subplot(4,4, 13, projection=proj)
+        ax.set_extent(extent, crs=proj)
+        cs = plotMap(toaPerc[0,:],
+                title="Time of arrival: surface",
                 title_loc="left",
                 ax=ax,
                 colors=colors,
                 clevs=clevs,
                 extend=None,
                 x=data_x, y=data_y)
-        ax = fig.add_subplot(4,4, 15, projection=proj)
-        ax.set_extent(extent, crs=proj)
-        cs = plotMap(toaPerc[1,:],
-                title="median",
-                ax=ax,
-                colors=colors,
-                clevs=clevs,
-                extend=None,
-                x=data_x, y=data_y)
-        ax = fig.add_subplot(4,4, 16, projection=proj)
-        ax.set_extent(extent, crs=proj)
-        cs = plotMap(toaPerc[0,:],
-                title="10 percentile",
-                ax=ax,
-                colors=colors,
-                clevs=clevs,
-                extend=None,
-                x=data_x, y=data_y)
+        for i, (fli, flToaPercV) in enumerate(flToaPerc.items()):
+            ax = fig.add_subplot(4,4, 14+i, projection=proj)
+            ax.set_extent(extent, crs=proj)
+            cs = plotMap(flToaPercV[0,:],
+                    title=f"FL{fli}",
+                    ax=ax,
+                    colors=colors,
+                    clevs=clevs,
+                    extend=None,
+                    x=data_x, y=data_y)
         axins = inset_axes(ax,
                 width="3%",
                 height="95%",
