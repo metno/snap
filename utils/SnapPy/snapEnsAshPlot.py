@@ -115,7 +115,7 @@ def toa_in_level(nc, times, variable):
     step = times[1] - times[0]
     times_max_h = (times[-1] - times[0]).total_seconds() / (60 * 60)
     timeDelta = step.total_seconds() / (60 * 60)
-    data = np.where(data >= 0.00001, 0., timeDelta)
+    data = np.where(data >= 0.00001, 0., timeDelta) # 0.01 mg threshold, very low
     toa = np.sum(data, axis=0)
     toa[toa > times_max_h] = np.nan
     toa += timeDelta - 0.01
@@ -143,19 +143,18 @@ def snapens(ncfiles, hour, outfile, contours_only=False):
         with netCDF4.Dataset(ncf, 'r') as nc:
             if not title:
                 title = nc.title
-            if not startDT:
-                # estimate starttime
-                times = netCDF4.num2date(nc["time"][:], nc["time"].units)
-                steps = len(times)
-                step = times[1] - times[0]
-                startDT = times[0] - step
-                stepH = step.seconds // 3600 + step.days * 24
-                if (hour % stepH) == 0:
-                    pos = hour//stepH - 1
-                    endDT = times[pos]
-                else:
-                    print(f"cannot devide {hour} forecast_hour by {stepH}h timesteps", sys.stderr)
-                    sys.exit(1)
+            # estimate starttime
+            times = netCDF4.num2date(nc["time"][:], nc["time"].units)
+            steps = len(times)
+            step = times[1] - times[0]
+            startDT = times[0] - step
+            stepH = step.seconds // 3600 + step.days * 24
+            if (hour % stepH) == 0:
+                pos = hour//stepH - 1
+                endDT = times[pos]
+            else:
+                print(f"cannot devide {hour} forecast_hour by {stepH}h timesteps", sys.stderr)
+                sys.exit(1)
             if not "MAX6h_ASH_fl350-550" in nc.variables:
                 print(f"MAX6h_ASH_fl350-550 not in {ncf}, please run 'snapAddToa {ncf}", file=sys.stderr)
                 sys.exit(2)
