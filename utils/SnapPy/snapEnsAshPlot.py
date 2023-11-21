@@ -69,7 +69,8 @@ def plotMap(data, x, y, ax, title="", title_loc="center", clevs=[10,100,300,1000
     # draw filled contours.
     if colors is None:
         colors = [ plt.cm.hsv(x) for x in np.linspace(0.5, 0, len(clevs)) ]
-    cs = ax.contourf(x,y,gaussian_filter(data, 1.0),clevs,colors=colors, extend=extend, zorder=50)
+    #cs = ax.contourf(x,y,gaussian_filter(data, 1.0),clevs,colors=colors, extend=extend, zorder=50)
+    cs = ax.contourf(x,y, data,clevs,colors=colors, extend=extend, zorder=50)
     return cs
 
 
@@ -122,7 +123,7 @@ def toa_in_level(nc, times, variable):
     return toa
 
 
-def snapens(ncfiles, hour, outfile, contours_only=False):
+def snapens(ncfiles, hour, outfile, extent, dpi, contours_only=False):
     title = ""
     pos = -1
     steps = -1
@@ -166,7 +167,7 @@ def snapens(ncfiles, hour, outfile, contours_only=False):
             fillvalue = nc["time_of_arrival"]._FillValue
             # read flight-levels
             for fli, flv in fl.items():
-                flv.append(np.ma.filled(nc[f"MAX6h_ASH_fl{fli}"][pos,:], np.nan))
+                flv.append(gaussian_filter(np.ma.filled(nc[f"MAX6h_ASH_fl{fli}"][pos,:], np.nan), 1.0))
             lons = nc["longitude"][:]
             lats = nc["latitude"][:]
             x = nc["x"][:]
@@ -195,6 +196,8 @@ def snapens(ncfiles, hour, outfile, contours_only=False):
                 data_x = lons
                 data_y = lats
                 proj = cartopy.crs.PlateCarree()
+
+
 
     thresholds = [0.2, 2, 5, 10] # QVA ash threshold in mg/m3
     toa = np.stack(toa)
@@ -226,8 +229,10 @@ def snapens(ncfiles, hour, outfile, contours_only=False):
         fig = plt.figure(figsize=(12, 10.7))
         fig.suptitle(f'{title}+{hour}hours ({endDT:%Y-%m-%d %H}:00Z). Uncertainty based upon {fl["350-550"].shape[0]} members.',
             y=0.92)
-        colors = [ plt.cm.Paired(x) for x in [1,10,7,5,9] ]
-        extent = ([x[0],x[-200],y[0],y[-60]])
+        colors = [ plt.cm.Paired(x) for x in [1,10,6,9,8] ] #[1,10,7,5,9] ]
+        #colors = [ plt.cm.tab20(x) for x in [0,17,16,11,10] ]
+        if extent is None:
+            extent = ([x[0],x[-200],y[0],y[-60]])
 
         for i, (fli, flv) in enumerate(fl.items()):
             for j, th in enumerate(thresholds):
@@ -251,7 +256,12 @@ def snapens(ncfiles, hour, outfile, contours_only=False):
                     bbox_transform=ax.transAxes,
                     borderpad=0,
                 )
-            cbar = fig.colorbar(cs, cax=axins, format=formatter, orientation='vertical')
+            cbar = fig.colorbar(cs,
+                                extendfrac=.15,
+#                                extendrect=True,
+                                cax=axins,
+                                format=formatter,
+                                orientation='vertical')
             cbar.set_label('%')
 
 
@@ -371,7 +381,7 @@ def snapens(ncfiles, hour, outfile, contours_only=False):
 
 
     fig.subplots_adjust(hspace=0.12, wspace=0.01)
-    fig.savefig(outfile, bbox_inches='tight')
+    fig.savefig(outfile, bbox_inches='tight', dpi=dpi)
 
 
 
@@ -386,7 +396,9 @@ if __name__ == "__main__":
     parser.add_argument("--hour", help="hour of output to analyse", type=int, required=True)
     parser.add_argument("--contours", help="plot only contours", action=argparse.BooleanOptionalAction, default=False)
     #parser.add_argument("--store", help="storeA or storeB, meteo and runtime-datastore, default used from MAPP-system")
+    parser.add_argument("--extent", help="lon_min lon_max lat_min lat_max", type=float, nargs=4)
+    parser.add_argument("--dpi", help="output resolution", type=int, default=150)
     parser.add_argument('SNAPNC', help="snap*.nc filenames", nargs='+')
     args = parser.parse_args()
 
-    snapens(args.SNAPNC, args.hour, args.out, contours_only=args.contours)
+    snapens(args.SNAPNC, args.hour, args.out, args.extent, args.dpi, args.contours)
