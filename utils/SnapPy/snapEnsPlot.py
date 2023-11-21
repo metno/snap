@@ -23,12 +23,17 @@ import logging
 logging.root.setLevel(logging.ERROR)
 
 def plotMap(data, x, y, ax, title="", title_loc="center", clevs=[10,100,300,1000,3000,10000,30000,100000, 300000, 10000000], colors=None, extend='max'):
-    ax.set_facecolor("#f2efe9") # background, osm-land color
+    ax.set_facecolor("#f2efe9") # background, osm-land
     ax.add_feature(cartopy.feature.NaturalEarthFeature(
             category='physical',
             name='ocean',
             scale='50m',
-            facecolor="#aecfe0"),edgecolor="none", zorder=10) # osm-ocean color
+            facecolor="#aecfe0"),edgecolor="none", zorder=10) # #aecfe0 = osm-ocean
+    # ax.add_feature(cartopy.feature.NaturalEarthFeature(
+    #     category='physical',
+    #     name='land',
+    #     scale='50m',
+    #     facecolor='none'),edgecolor="black", linewidth=.5, zorder=10)
     ax.add_feature(cartopy.feature.NaturalEarthFeature(
         category='physical',
         name='lakes',
@@ -36,6 +41,7 @@ def plotMap(data, x, y, ax, title="", title_loc="center", clevs=[10,100,300,1000
         facecolor='#aecfe0'),edgecolor="whitesmoke", linewidth=.2, zorder=20)
     ax.add_feature(cartopy.feature.NaturalEarthFeature(
         category='cultural',
+        #name='admin_0_boundary_lines_land',
         name='admin_0_countries_deu',
         scale='10m',
         facecolor='none'),edgecolor="lightgray", linewidth=.5, zorder=100)
@@ -53,19 +59,47 @@ def plotMap(data, x, y, ax, title="", title_loc="center", clevs=[10,100,300,1000
     return cs
 
 
-def plotMapGrid(data, x, y, ax, title="", title_loc="center", clevs=[10,100,300,1000,3000,10000,30000,100000, 300000, 10000000], colors=None):
-    ax.add_feature(cartopy.feature.GSHHSFeature(scale='auto', facecolor='none', edgecolor='black'))
-    ax.gridlines()
-    ax.add_feature(cartopy.feature.BORDERS)
+def plotMapGrid(data, x, y, ax, title="", title_loc="center", clevs=[10,100,300,1000,3000,10000,30000,100000, 300000, 10000000], colors=None, extend='max'):
+    ax.set_facecolor("#f2efe9") # background, osm-land
+    ax.add_feature(cartopy.feature.NaturalEarthFeature(
+            category='physical',
+            name='ocean',
+            scale='50m',
+            facecolor="#aecfe0"),edgecolor="none", zorder=10) # #aecfe0 = osm-ocean
+    ax.add_feature(cartopy.feature.NaturalEarthFeature(
+        category='physical',
+        name='lakes',
+        scale='10m',
+        facecolor='#aecfe0'),edgecolor="whitesmoke", linewidth=.2, zorder=20)
+    ax.add_feature(cartopy.feature.NaturalEarthFeature(
+        category='cultural',
+        #name='admin_0_boundary_lines_land',
+        name='admin_0_countries_deu',
+        scale='10m',
+        facecolor='none'),edgecolor="lightgray", linewidth=.5, zorder=100)
+
+    ax.gridlines(edgecolor="lightgray", linewidth=.3, zorder=100)
     ny = data.shape[0]
     nx = data.shape[1]
     # draw filled contours.
     if colors is None:
         colors = [ plt.cm.hsv(x) for x in np.linspace(0.5, 0, len(clevs)) ]
-    cmap = plt.get_cmap('tab10')
-    norm = matplotlib.colors.BoundaryNorm(clevs, ncolors=cmap.N, clip=True)
+    # cmap = plt.get_cmap('tab10')
+    if extend is None:
+        data[data < clevs[0]] = np.nan
+        data[data > clevs[-1]] = np.nan
+        cmap = matplotlib.colors.ListedColormap(colors)
+        norm = matplotlib.colors.BoundaryNorm(clevs, ncolors=len(clevs), clip=False)
+    elif extend == 'max':
+        data[data < clevs[0]] = np.nan
+        cmap = matplotlib.colors.ListedColormap(colors[:-1])
+        cmap.set_over(colors[-1])
+        norm = matplotlib.colors.BoundaryNorm(clevs, ncolors=len(clevs)-1, clip=False)
+    else:
+        raise Exception(f"extend '{extend}' not implemented")
 
-    cs = ax.pcolormesh(x,y,data,norm=norm, cmap=cmap)
+
+    cs = ax.pcolormesh(x,y,data,norm=norm, cmap=cmap, zorder=50)
     # add title
     ax.set_title(title, loc=title_loc)
     return cs
@@ -78,7 +112,7 @@ def rgbToColor(rgb):
     return color
 
 
-def snapens(ncfiles, hour, outfile):
+def snapens(ncfiles, hour, outfile, extent, dpi):
     title = ""
     pos = -1
     steps = -1
@@ -127,6 +161,14 @@ def snapens(ncfiles, hour, outfile):
     formatter = matplotlib.ticker.ScalarFormatter()
     formatter.set_powerlimits((-3,10))
 
+    proj = cartopy.crs.PlateCarree()
+
+    def set_extent(ax):
+        if extent is None:
+            ax.set_extent([x[50],x[-50],y[25],y[-25]], crs=proj)
+        else:
+            ax.set_extent(extent, crs=cartopy.crs.PlateCarree())
+
     fig = plt.figure(figsize=(12, 10.7))
     fig.suptitle(f'{title}+{hour}hours ({endDT:%Y-%m-%d %H}:00Z). Uncertainty based upon {deps.shape[0]} members.',
         y=0.92)
@@ -152,8 +194,8 @@ def snapens(ncfiles, hour, outfile):
 
     colors=('g', 'y', 'tab:orange', 'r', 'tab:red')
     ax = fig.add_subplot(3,3, 1, projection=proj)
-    ax.set_extent([x[50],x[-50],y[25],y[-25]], crs=proj)
-    cs = plotMap(depsPerc[0,:]/1000,
+    set_extent(ax)
+    cs = plotMapGrid(depsPerc[0,:]/1000,
             title="Cs-137 deps: 10 perc.",
             title_loc="left",
             ax=ax,
@@ -161,16 +203,16 @@ def snapens(ncfiles, hour, outfile):
             clevs=[0.1,1, 10, 100, 1000],
             x=data_x, y=data_y)
     ax = fig.add_subplot(3,3, 2, projection=proj)
-    ax.set_extent([x[50],x[-50],y[25],y[-25]], crs=proj)
-    cs = plotMap(depsPerc[1,:]/1000,
+    set_extent(ax)
+    cs = plotMapGrid(depsPerc[1,:]/1000,
             title="median",
             ax=ax,
             colors=colors,
             clevs=[0.1,1, 10, 100, 1000],
             x=data_x, y=data_y)
     ax = fig.add_subplot(3,3, 3, projection=proj)
-    ax.set_extent([x[50],x[-50],y[25],y[-25]], crs=proj)
-    cs = plotMap(depsPerc[2,:]/1000,
+    set_extent(ax)
+    cs = plotMapGrid(depsPerc[2,:]/1000,
             title="90 percentile",
             ax=ax,
             colors=colors,
@@ -184,13 +226,13 @@ def snapens(ncfiles, hour, outfile):
             bbox_transform=ax.transAxes,
             borderpad=0,
         )
-    cbar = fig.colorbar(cs, cax=axins, format=formatter, orientation='vertical')
+    cbar = fig.colorbar(cs, extend="max", cax=axins, format=formatter, orientation='vertical')
     cbar.set_label('kBq/m²')
 
     ax = fig.add_subplot(3,3, 4, projection=proj)
-    ax.set_extent([x[50],x[-50],y[25],y[-25]], crs=proj)
+    set_extent(ax)
     colors = [ plt.cm.Paired(x) for x in [1,10,7,5,9] ]
-    cs = plotMap(depTH[0],
+    cs = plotMapGrid(depTH[0],
             title="Probability: dep. > 1kBq/m2",
             title_loc="left",
             ax=ax,
@@ -198,16 +240,16 @@ def snapens(ncfiles, hour, outfile):
             clevs=[10,30,50,70,90],
             x=data_x, y=data_y)
     ax = fig.add_subplot(3,3, 5, projection=proj)
-    ax.set_extent([x[50],x[-50],y[25],y[-25]], crs=proj)
-    cs = plotMap(depTH[1],
+    set_extent(ax)
+    cs = plotMapGrid(depTH[1],
             title="depo. > 10kBq/m2",
             ax=ax,
             colors=colors,
             clevs=[10,30,50,70,90],
             x=data_x, y=data_y)
     ax = fig.add_subplot(3,3, 6, projection=proj)
-    ax.set_extent([x[50],x[-50],y[25],y[-25]], crs=proj)
-    cs = plotMap(depTH[2],
+    set_extent(ax)
+    cs = plotMapGrid(depTH[2],
             title="depo. > 100kBq/m2",
             ax=ax,
             colors=colors,
@@ -221,13 +263,13 @@ def snapens(ncfiles, hour, outfile):
             bbox_transform=ax.transAxes,
             borderpad=0,
         )
-    cbar = fig.colorbar(cs, cax=axins, format=formatter, orientation='vertical')
+    cbar = fig.colorbar(cs, extend="max", cax=axins, format=formatter, orientation='vertical')
     cbar.set_label('%')
 
 
     # Time of arrival
     ax = fig.add_subplot(3,3, 7, projection=proj)
-    ax.set_extent([x[50],x[-50],y[25],y[-25]], crs=proj)
+    set_extent(ax)
     clevs=range(0,(steps+1)*stepH,2*stepH)
     colors = [ plt.cm.jet(x) for x in np.linspace(0.95,0.1,len(clevs)) ]
     # dsa colors up to 48 hours
@@ -235,7 +277,7 @@ def snapens(ncfiles, hour, outfile):
     colors[1] = rgbToColor('128:128:255')
     colors[2] = rgbToColor('128:128:192')
     colors[3] = rgbToColor('192:192:192')
-    cs = plotMap(toaPerc[2,:],
+    cs = plotMapGrid(toaPerc[2,:],
             title="Time of arrival: 90 perc.",
             title_loc="left",
             ax=ax,
@@ -244,8 +286,8 @@ def snapens(ncfiles, hour, outfile):
             extend=None,
             x=data_x, y=data_y)
     ax = fig.add_subplot(3,3, 8, projection=proj)
-    ax.set_extent([x[50],x[-50],y[25],y[-25]], crs=proj)
-    cs = plotMap(toaPerc[1,:],
+    set_extent(ax)
+    cs = plotMapGrid(toaPerc[1,:],
             title="median",
             ax=ax,
             colors=colors,
@@ -253,8 +295,8 @@ def snapens(ncfiles, hour, outfile):
             extend=None,
             x=data_x, y=data_y)
     ax = fig.add_subplot(3,3, 9, projection=proj)
-    ax.set_extent([x[50],x[-50],y[25],y[-25]], crs=proj)
-    cs = plotMap(toaPerc[0,:],
+    set_extent(ax)
+    cs = plotMapGrid(toaPerc[0,:],
             title="10 percentile",
             ax=ax,
             colors=colors,
@@ -269,13 +311,13 @@ def snapens(ncfiles, hour, outfile):
             bbox_transform=ax.transAxes,
             borderpad=0,
         )
-    cbar = fig.colorbar(cs, cax=axins, format=formatter, orientation='vertical')
+    cbar = fig.colorbar(cs, extend=None, cax=axins, format=formatter, orientation='vertical')
     cbar.set_label('hours')
 
 
 
     fig.subplots_adjust(hspace=0.12, wspace=0.01)
-    fig.savefig(outfile, bbox_inches='tight')
+    fig.savefig(outfile, bbox_inches='tight', dpi=dpi)
 
 
 
@@ -289,7 +331,9 @@ if __name__ == "__main__":
     parser.add_argument("--out", help="output png file", required=True)
     parser.add_argument("--hour", help="hour of output to analyse", type=int, required=True)
     #parser.add_argument("--store", help="storeA or storeB, meteo and runtime-datastore, default used from MAPP-system")
+    parser.add_argument("--extent", help="lon_min lon_max lat_min lat_max", type=float, nargs=4)
+    parser.add_argument("--dpi", help="output resolution", type=int, default=150)
     parser.add_argument('SNAPNC', help="snap*.nc filenames", nargs='+')
     args = parser.parse_args()
 
-    snapens(args.SNAPNC, args.hour, args.out)
+    snapens(args.SNAPNC, args.hour, args.out, args.extent, args.dpi)
