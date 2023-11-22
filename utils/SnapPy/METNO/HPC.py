@@ -277,7 +277,7 @@ class HPC():
         elif (name == "ppi_r8b_direct"):
             from . import PPI_R8_Direct
             return PPI_R8_Direct.PPI_R8_Direct()
-        elif (name == "ppi_r8infiA_direct"):
+        elif (name == "ppi_r8ibA_direct"):
             from . import PPI_R8_Direct
             return PPI_R8_Direct.PPI_R8_Direct()
         else:

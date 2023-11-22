@@ -3,11 +3,12 @@
 
 #$ -N eemep
 #$ -l h_rt=01:30:00
-#$ -pe mpi 144
+#$ -pe ib-fn 128
 #$ -l h_rss=3G,mem_free=3G,h_data=3G
 #$ -q ib-a-r8.q
-#$ -M beredskap-fou-kl@met.no
-#$ -P eemep
+##$ -M beredskap-fou-kl@met.no
+#$ -M heikok@met.no
+##$ -P eemep
 #$ -S /bin/bash
 #$ -m a
 #$ -o /lustre/storeA/project/fou/kl/eva/eemep/HPC/work/emep/eemep/tmp/eemep_single.log
@@ -71,7 +72,7 @@ sed -e " s/startdate\s*=.*/startdate = $STARTDATE/;s/enddate.*/enddate = $ENDDAT
 # Load necessary modules
 source $SRCDIR/Unimod.$VERSION/Unimod_modules.sh
 date
-if mpirun -np $NSLOTS -report-bindings -mca btl self -mca pml ucx -x UCX_NET_DEVICES=mlx5_0:1 -x UCX_TLS=ib,shm,rc_x $SRCDIR/Unimod.$VERSION/emepctm ;
+if mpirun -report-bindings -mca btl self -mca pml ucx -x UCX_NET_DEVICES=mlx5_0:1 -x UCX_TLS=ib,shm,rc_x $SRCDIR/Unimod.$VERSION/emepctm ;
 then
     echo "finished" > status
 else
