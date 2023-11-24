@@ -226,7 +226,7 @@ def snapens(ncfiles, hour, outfile, extent, dpi):
             bbox_transform=ax.transAxes,
             borderpad=0,
         )
-    cbar = fig.colorbar(cs, extend="max", cax=axins, format=formatter, orientation='vertical')
+    cbar = fig.colorbar(cs, extend="max", extendfrac=.15, cax=axins, format=formatter, orientation='vertical')
     cbar.set_label('kBq/m²')
 
     ax = fig.add_subplot(3,3, 4, projection=proj)
@@ -263,7 +263,7 @@ def snapens(ncfiles, hour, outfile, extent, dpi):
             bbox_transform=ax.transAxes,
             borderpad=0,
         )
-    cbar = fig.colorbar(cs, extend="max", cax=axins, format=formatter, orientation='vertical')
+    cbar = fig.colorbar(cs, extend="max", extendfrac=.15, cax=axins, format=formatter, orientation='vertical')
     cbar.set_label('%')
 
 
