@@ -44,6 +44,9 @@ class Resources(ResourcesCommon):
         "ppi_r8b_direct": {
             "RUNDIR": "/lustre/storeB/project/fou/kl/eva/eemep/HPC/run/eemep/single_run/"
         },
+        "ppi_r8ibA_direct": {
+            "RUNDIR": "/lustre/storeA/project/fou/kl/eva/eemep/HPC/run/eemep/single_run/"
+        },
         "ppi_centos7_direct": {
             "RUNDIR": "/lustre/storeB/project/fou/kl/eva/eemep/HPC/run/eemep/single_run/"
         },

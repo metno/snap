@@ -1,17 +1,17 @@
 # SNAP: Servere Nuclear Accident Programme
 # Copyright (C) 1992-2017   Norwegian Meteorological Institute
-# 
-# This file is part of SNAP. SNAP is free software: you can 
-# redistribute it and/or modify it under the terms of the 
-# GNU General Public License as published by the 
+#
+# This file is part of SNAP. SNAP is free software: you can
+# redistribute it and/or modify it under the terms of the
+# GNU General Public License as published by the
 # Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
@@ -30,7 +30,7 @@ from METNO.SGEQueue import SGEQueue
 from METNO.DirectConnection import DirectConnection
 
 
-class PPI_R8B_Direct(HPC):
+class PPI_R8_Direct(HPC):
     '''
     Implementation of a HPC machine for PPI-r8
     '''
@@ -45,7 +45,7 @@ class PPI_R8B_Direct(HPC):
         super().__init__(connection, queue)
 
 
-class TestPPI_R8B_Direct(unittest.TestCase):
+class TestPPI_R8_Direct(unittest.TestCase):
     '''tests for alvin, only working when having an existing forecast account on alvin'''
     def setUp(self):
         unittest.TestCase.setUp(self)
