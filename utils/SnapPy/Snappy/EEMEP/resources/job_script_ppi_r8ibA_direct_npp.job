@@ -6,8 +6,7 @@
 #$ -pe ib-fn 160
 #$ -l h_rss=3G,mem_free=3G,h_data=3G
 #$ -q ib-a-r8.q
-##$ -M beredskap-fou-kl@met.no
-#$ -M heikok@met.no
+#$ -M beredskap-fou-kl@met.no
 #$ -P eemep
 #$ -S /bin/bash
 #$ -m a
