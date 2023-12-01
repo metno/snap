@@ -1,17 +1,17 @@
 # SNAP: Servere Nuclear Accident Programme
 # Copyright (C) 1992-2020   Norwegian Meteorological Institute
-# 
-# This file is part of SNAP. SNAP is free software: you can 
-# redistribute it and/or modify it under the terms of the 
-# GNU General Public License as published by the 
+#
+# This file is part of SNAP. SNAP is free software: you can
+# redistribute it and/or modify it under the terms of the
+# GNU General Public License as published by the
 # Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
@@ -21,18 +21,44 @@ Created on Oct 24, 2016
 @author: heikok
 '''
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from glob import iglob
-import math
+import netCDF4
+import numpy as np
 import os
 import subprocess
-import time
 
 from Snappy.Resources import Resources, MetModel
 import Snappy.MeteorologyCalculator
 
 class ICONMeteorologyCalculator(Snappy.MeteorologyCalculator.MeteorologyCalculator):
     '''Calculate dwd icon-meteorology'''
+
+    @staticmethod
+    def get_valid_timesteps(filename):
+        """Extract the valid timesteps usable for SNAP from a icon-netcdf file.
+
+        :param filename: filename of the netcdf-file
+        :return: (timesteps, times) a tuple of step-numbers and datetime-values for the valid timesteps
+        """
+        time_var = 'time'
+        x_wind_var = 'x_wind_pl'
+        with netCDF4.Dataset(filename, 'r') as nc:
+            times = netCDF4.num2date(nc['time'][:], nc['time'].units, only_use_python_datetimes=True)
+            x_wind = nc['x_wind_pl']
+
+            valid_times = []
+            for i, dt in enumerate(times):
+                wind0 = np.ma.filled(x_wind[i,0,0,0], np.nan) # convert masked array to float
+                if not np.isnan(wind0):
+                    if len(valid_times):
+                        stepH = (dt - times[valid_times[-1]]).total_seconds() / 3600
+                        if (stepH <= 6):
+                            valid_times.append(i)
+                    else:
+                        valid_times.append(i)
+            return valid_times, times[valid_times]
+
 
     @staticmethod
     def getGlobalMeteoResources():
@@ -72,7 +98,7 @@ class ICONMeteorologyCalculator(Snappy.MeteorologyCalculator.MeteorologyCalculat
 
     def calc(self, proc=None):
         '''run the calculation of ec-data if required.
-        
+
         Args:
            proc -- A QProcess, which will be used to run a longer process in the background.
                   STDERR/STDOUT and signal-handler should be set. If proc is None, the
@@ -106,15 +132,8 @@ fimex -c icon_fimex.cfg \
       && mv $tmpfile {outputfile}
 rm {outputdir}/running
 '''
-        # pressurelevel only defined for certain timesteps, different for each forecast-reference-time
-        if self.globalfile.endswith('T00Z.nc') or self.globalfile.endswith('T12Z.nc'):
-           timeStepList = '0,2,...,16,20,24,26,28,30,32,33,34,35,36,37'
-        elif self.globalfile.endswith('T06Z.nc'):
-            timeStepList = '0,1,...,33'
-        elif self.globalfile.endswith('T18Z.nc'):
-            timeStepList = '0,2,...,16,17,21,22,...,25'
-        else:
-            print(f"ERROR: don't understand file {self.globalfile}, should end with TXXZ.nc")
+        (timesteps, _) = ICONMeteorologyCalculator.get_valid_timesteps(self.globalfile)
+        timeStepList = ",".join([str(x) for x in timesteps])
         command = precommand.format(resdir=Resources().directory,
                                     xAxisValues="{},{},...,{}".format(self.lon0,
                                                                       self.lon0+self.res.domainDeltaX,
@@ -140,7 +159,18 @@ rm {outputdir}/running
         return
 
 if __name__ == "__main__":
-    mydate = datetime.strptime("2020-05-05T00", "%Y-%m-%dT%H")
+    from datetime import timedelta
+    yesterday = datetime.today() - timedelta(days=1)
+    yesterdaytime = datetime.combine(yesterday, datetime.min.time())
+    for utc in (0, 6, 12, 18):
+        dt = yesterdaytime + timedelta(hours=utc)
+        file = f"/lustre/storeB/project/metproduction/products/icon/icon_{dt:%Y%m%dT%H}Z.nc"
+        steps, times = ICONMeteorologyCalculator.get_valid_timesteps(file)
+        print(file)
+        print(steps)
+        print([f"{x:%Y-%m-%dT%H}" for x in times])
+
+    mydate = yesterdaytime
     print(ICONMeteorologyCalculator.findGlobalData(ICONMeteorologyCalculator.getGlobalMeteoResources(), mydate))
     try:
         ICONMeteorologyCalculator.findGlobalData(ICONMeteorologyCalculator.getGlobalMeteoResources(), datetime.strptime("2010-10-24T00", "%Y-%m-%dT%H"))
