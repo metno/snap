@@ -168,7 +168,6 @@ fi
 """
         in_files = [self.globalfile] + self.globalOptionalFiles
         out_files = self.files + self.optFiles
-        print(in_files, out_files, self.optFiles)
         for i, file in enumerate(in_files):
             (timesteps, _) = ICONMeteorologyCalculator.get_valid_timesteps(file)
             timeStepList = ",".join([str(x) for x in timesteps])
