@@ -1,17 +1,17 @@
 # SNAP: Servere Nuclear Accident Programme
 # Copyright (C) 1992-2017   Norwegian Meteorological Institute
-# 
-# This file is part of SNAP. SNAP is free software: you can 
-# redistribute it and/or modify it under the terms of the 
-# GNU General Public License as published by the 
+#
+# This file is part of SNAP. SNAP is free software: you can
+# redistribute it and/or modify it under the terms of the
+# GNU General Public License as published by the
 # Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
@@ -100,7 +100,7 @@ class EcMeteorologyCalculator(Snappy.MeteorologyCalculator.MeteorologyCalculator
 
     def calc(self, proc=None):
         '''run the calculation of ec-data if required.
-        
+
         Args:
            proc -- A QProcess, which will be used to run a longer process in the background.
                   STDERR/STDOUT and signal-handler should be set. If proc is None, the
@@ -164,11 +164,13 @@ rm {outdir}/running
         return
 
 if __name__ == "__main__":
-    print(EcMeteorologyCalculator.findECGlobalData(datetime.strptime("2020-04-29T00", "%Y-%m-%dT%H")))
+    yesterday = datetime.today() - timedelta(days=1)
+    yesterdaytime = datetime.combine(yesterday, datetime.min.time())
+    print(EcMeteorologyCalculator.findECGlobalData(yesterdaytime))
     try:
         EcMeteorologyCalculator.findECGlobalData(datetime.strptime("2010-10-24T00", "%Y-%m-%dT%H"))
     except Exception as e:
         print(e.args[0])
 #    print(EcMeteorologyCalculator(Resources(), datetime.strptime("2016-10-24T00", "%Y-%m-%dT%H"), 63, 42, None))
-    ecmet = EcMeteorologyCalculator(EcMeteorologyCalculator.getGlobalMeteoResources(), datetime.strptime("2020-04-29T00", "%Y-%m-%dT%H"), -159, 20) # hawaii
+    ecmet = EcMeteorologyCalculator(EcMeteorologyCalculator.getGlobalMeteoResources(), yesterdaytime, -159, 20) # hawaii
     print("recalc: ", ecmet.must_calc())
