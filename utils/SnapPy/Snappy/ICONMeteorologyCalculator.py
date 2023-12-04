@@ -21,8 +21,7 @@ Created on Oct 24, 2016
 @author: heikok
 '''
 
-from datetime import datetime
-from glob import iglob
+from datetime import datetime, timedelta
 import netCDF4
 import numpy as np
 import os
@@ -33,6 +32,8 @@ import Snappy.MeteorologyCalculator
 
 class ICONMeteorologyCalculator(Snappy.MeteorologyCalculator.MeteorologyCalculator):
     '''Calculate dwd icon-meteorology'''
+    dir_template = "NRPA_LON{lon0}_LAT{lat0}_ICON"
+
 
     @staticmethod
     def get_valid_timesteps(filename):
@@ -79,21 +80,48 @@ class ICONMeteorologyCalculator(Snappy.MeteorologyCalculator.MeteorologyCalculat
         res.timeoffset = 0 # required offset between reference-time and first useful startup-time
         return res
 
-#    def __init__(self, res: Snappy.MeteorologyCalculator.GlobalMeteoResource, dtime: datetime, domainCenterX, domainCenterY):
-#        super(res, dtime, domainCenterX, domainCenterY)
-
-    def add_expected_files(self, date):
+    def __init__(self, res: Snappy.MeteorologyCalculator.GlobalMeteoResource, dtime: datetime, domainCenterX, domainCenterY):
         self.files = []
         self.optFiles = []
+        # not utc-dependent for ICON-data
+        super().__init__(res, dtime, domainCenterX, domainCenterY)
+        self.globalOptionalFiles = []
+        for hr in (6, 12, 18): # earlier hours
+            hdate = self.date - timedelta(hours=hr)
+            datefile = self.findGlobalData(res, hdate)
+            self.add_expected_files(datefile[0], optional=True)
+            self.globalOptionalFiles.append(datefile[1])
 
+    def add_expected_files(self, date, optional=False):
         # only one file expected
-        self.files.append(os.path.join(self.outputdir,
-                                       self.res.output_filename_pattern.format(year=date.year,
-                                                                               month=date.month,
-                                                                               day=date.day,
-                                                                               UTC=date.hour,
-                                                                               resdir=Resources().directory)))
+        file = os.path.join(
+            self.outputdir,
+            self.res.output_filename_pattern.format(year=date.year,
+                                                    month=date.month,
+                                                    day=date.day,
+                                                    UTC=date.hour,
+                                                    resdir=Resources().directory)
+        )
+        if optional:
+            self.optFiles.append(file)
+        else:
+            self.files.append(file)
+
         return
+
+    def get_meteorology_files(self):
+        # The Icon-Meteorology calcuator has the newest file as expected, and
+        # older ones as optional, while snap expects the newest ones to be last,
+        # so reversing the files
+        return reversed(super().get_meteorology_files())
+
+    def must_calc(self):
+        '''check if calculation is required or has been done earlier'''
+        recalc = False
+        for f in self.files + self.optFiles:
+            if (not os.path.isfile(f)):
+                recalc = True
+        return recalc
 
 
     def calc(self, proc=None):
@@ -105,47 +133,58 @@ class ICONMeteorologyCalculator(Snappy.MeteorologyCalculator.MeteorologyCalculat
                   subprocess will be run in the current-process. If proc is set, the caller
                   needs to wait for the proc to finish before calling other methods of this object
 '''
-        if (not self.must_calc()):
+        if not self.must_calc():
             return
 
-        precommand = '''#! /bin/bash
-cd {outputdir} || exit 1
-echo "Preprocessing 5-7days icon meteorology, please wait ca. 3min"
-echo "MET-Input: {globalfile}"
-echo "MET-Output: {outputdir}"
+        command = f"""#! /bin/bash
+echo "Preprocessing 2-5days icon meteorology, please wait ca. 5min"
+echo "MET-Output-Directory: {self.outputdir}"
+cd {self.outputdir} || exit 1
 
 umask 000
 touch running
-cp {resdir}/icon_fimex.cfg .
+cp {Resources().directory}/icon_fimex.cfg .
 chmod 666 icon_fimex.cfg
-cp {resdir}/icon_sigma_hybrid.ncml .
+cp {Resources().directory}/icon_sigma_hybrid.ncml .
 chmod 666 icon_sigma_hybrid.ncml
-tmpfile=out$$.nc4
-fimex -c icon_fimex.cfg \
-      --input.file={globalfile} \
-      --interpolate.xAxisValues={xAxisValues} \
-      --interpolate.yAxisValues={yAxisValues} \
-      --extract.pickDimension.name=time \
-      --extract.pickDimension.list={timeStepList} \
-      --output.file=$tmpfile \
-      --output.type=nc4 \
-      && mv $tmpfile {outputfile}
-rm {outputdir}/running
-'''
-        (timesteps, _) = ICONMeteorologyCalculator.get_valid_timesteps(self.globalfile)
-        timeStepList = ",".join([str(x) for x in timesteps])
-        command = precommand.format(resdir=Resources().directory,
-                                    xAxisValues="{},{},...,{}".format(self.lon0,
-                                                                      self.lon0+self.res.domainDeltaX,
-                                                                      self.lon0+self.res.domainWidth),
-                                    yAxisValues="{},{},...,{}".format(self.lat0,
-                                                                      self.lat0+self.res.domainDeltaY,
-                                                                      self.lat0+self.res.domainHeight),
-                                    globalfile=self.globalfile,
-                                    timeStepList=timeStepList,
-                                    outputfile=self.files[0],
-                                    outputdir=self.outputdir
-                                    )
+
+"""
+        precommand = """
+echo "MET-Input: {file}"
+if [ -e "{outputfile}" ]; then
+    echo "{outputfile} exists, skipping..."
+else
+    tmpfile=out$$.nc4
+    fimex -c icon_fimex.cfg \
+        --input.file={file} \
+        --interpolate.xAxisValues={xAxisValues} \
+        --interpolate.yAxisValues={yAxisValues} \
+        --extract.pickDimension.name=time \
+        --extract.pickDimension.list={timeStepList} \
+        --output.file=$tmpfile \
+        --output.type=nc4 \
+        && mv $tmpfile {outputfile}
+fi
+"""
+        in_files = [self.globalfile] + self.globalOptionalFiles
+        out_files = self.files + self.optFiles
+        print(in_files, out_files, self.optFiles)
+        for i, file in enumerate(in_files):
+            (timesteps, _) = ICONMeteorologyCalculator.get_valid_timesteps(file)
+            timeStepList = ",".join([str(x) for x in timesteps])
+            command += precommand.format(
+                file=file,
+                xAxisValues="{},{},...,{}".format(self.lon0,
+                                                self.lon0+self.res.domainDeltaX,
+                                                self.lon0+self.res.domainWidth),
+                yAxisValues="{},{},...,{}".format(self.lat0,
+                                                self.lat0+self.res.domainDeltaY,
+                                                self.lat0+self.res.domainHeight),
+                timeStepList=timeStepList,
+                outputfile=out_files[i],
+                outputdir=self.outputdir
+            )
+        command += f"rm {self.outputdir}/running\n"
         scriptFile = os.path.join(self.outputdir, "command.sh")
         with open(scriptFile, 'w') as script:
             script.write(command)
@@ -159,7 +198,6 @@ rm {outputdir}/running
         return
 
 if __name__ == "__main__":
-    from datetime import timedelta
     yesterday = datetime.today() - timedelta(days=1)
     yesterdaytime = datetime.combine(yesterday, datetime.min.time())
     for utc in (0, 6, 12, 18):
