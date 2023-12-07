@@ -1,17 +1,17 @@
 # SNAP: Servere Nuclear Accident Programme
 # Copyright (C) 1992-2017   Norwegian Meteorological Institute
-# 
-# This file is part of SNAP. SNAP is free software: you can 
-# redistribute it and/or modify it under the terms of the 
-# GNU General Public License as published by the 
+#
+# This file is part of SNAP. SNAP is free software: you can
+# redistribute it and/or modify it under the terms of the
+# GNU General Public License as published by the
 # Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
@@ -67,9 +67,11 @@ class MeteoDataNotAvailableException(Exception):
 
 
 class MeteorologyCalculator(abc.ABC):
+    dir_template = "NRPA_LON{lon0}_LAT{lat0}_{utc:02d}"
+
     '''Base-class to pre-calculate/extract meteorology'''
     @staticmethod
-    def findAllGlobalData(res: GlobalMeteoResource): 
+    def findAllGlobalData(res: GlobalMeteoResource):
         '''Static method to find all global dataset.
 
         Args:
@@ -158,18 +160,29 @@ class MeteorologyCalculator(abc.ABC):
         lon0 = math.floor((domainCenterX-(res.domainWidth/2.))/10.)*10
         self.lat0 = int(lat0)
         self.lon0 = int(lon0)
-        self.outputdir = os.path.join(res.outputdir, "NRPA_LON{x}_LAT{y}_{utc:02d}".format(x=self.lon0, y=self.lat0, utc=utc))
+        self._set_outputdir(res, self.dir_template, self.lon0, self.lat0, utc)
+        self.add_expected_files(lastDateFile[0])
 
+    def _set_outputdir(self, res, template, lon0, lat0, utc):
+        self.outputdir = os.path.join(res.outputdir,
+                                      template.format(lon0=lon0, lat0=lat0, utc=utc))
+        self._check_create_outputdir(res)
+
+    def _check_create_outputdir(self, res):
+        """Create the output-directory and, when already in use, create a temporary one.
+
+        In use is defined by the existence of a 'running' file (no locking since
+        not well enough supported across nodes on lustre)
+        """
         # try to avoid conflicting processes (not 100% save)
         i = 1
         while (os.path.isfile(os.path.join(self.outputdir, "running"))):
-            self.outputdir =  os.path.join(res.outputdir, "NRPA_TEMP_{utc:02d}_{i}".format(utc=utc, i=i))
+            self.outputdir = os.path.join(res.outputdir, f"NRPA_TEMP_{utc}_{i}")
             i+=1
 
         if (not os.path.exists(self.outputdir)):
             os.makedirs(self.outputdir)
-        
-        self.add_expected_files(lastDateFile[0])
+
 
     @abc.abstractmethod
     def add_expected_files(self, date):
@@ -207,7 +220,7 @@ class MeteorologyCalculator(abc.ABC):
     @abc.abstractmethod
     def calc(self, proc=None):
         '''abstract baseclass to run the calculation of meteo-data if required. Should check if self.must_calc() at the beginning.
-        
+
         Args:
            proc -- A QProcess, which will be used to run a longer process in the background.
                   STDERR/STDOUT and signal-handler should be set. If proc is None, the
