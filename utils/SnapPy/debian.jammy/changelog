@@ -1,3 +1,9 @@
+snap-py (2.3.8-1) jammy; urgency=medium
+
+  * Read only valid ICON timesteps
+
+ -- Magnus Ulimoen <magnusu@met.no>  Thu, 07 Dec 2023 11:51:56 +0100
+
 snap-py (2.3.7-1) jammy; urgency=medium
 
   * changes in Ash emissions and products following VAAC London, patched

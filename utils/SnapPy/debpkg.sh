@@ -19,7 +19,7 @@ set -e
 #     (you need a properly configured .dupload.conf in your home directory, copy this from https://gitlab.met.no/it/sd/klient/linux/internrepo/-/raw/master/.dupload.conf)
 #
 #     Check first that it looks plausible:
-#     $ dupload --no --to bionic/jammy dist/snap-py_<version>-1_amd64.changes
+#     $ dupload --no --to jammy dist/snap-py_<version>-1_amd64.changes
 #     then remove --no option
 #
 #     Wait for confirmation email that package has been accepted
@@ -65,8 +65,8 @@ if [ ! -f "Snappy/resources/1-s2.0-S0146645313000110-mmc1.zip" ]; then
 fi
 
 HOST=$(lsb_release --codename --short)
-export VERSION=2.3.7
-CHANGELOG="changes in Ash emissions and products following VAAC London, patched"
+export VERSION=2.3.8
+CHANGELOG="Read only valid ICON timesteps"
 export DEBEMAIL=${USER}@met.no
 rm --force debian
 ln --symbolic debian.$HOST debian
