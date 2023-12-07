@@ -113,7 +113,7 @@ class ICONMeteorologyCalculator(Snappy.MeteorologyCalculator.MeteorologyCalculat
         # The Icon-Meteorology calcuator has the newest file as expected, and
         # older ones as optional, while snap expects the newest ones to be last,
         # so reversing the files
-        return reversed(super().get_meteorology_files())
+        return list(reversed(super().get_meteorology_files()))
 
     def must_calc(self):
         '''check if calculation is required or has been done earlier'''
