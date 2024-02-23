@@ -18,7 +18,7 @@ To download the first 16 timesteps of this model and ar region from [-10,50] lon
 # timesteps
 DATE=20200106
 HOUR=00
-for x in 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16; do
+for x in 03 06 09 12 15 18 21 24 27 30 33 36 39 42 45 48 51; do
 
 # 10m-winds
    wget -O uv10m.grib$x "https://nomads.ncep.noaa.gov/cgi-bin/filter_gfs_0p25.pl?file=gfs.t00z.pgrb2.0p25.f0$x&lev_10_m_above_ground=on&var_UGRD=on&var_VGRD=on&subregion=&leftlon=-10&rightlon=50&toplat=80&bottomlat=50&dir=%2Fgfs.${DATE}%2F${HOUR}%2Fatmos";
