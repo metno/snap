@@ -43,6 +43,7 @@ class MetModel(enum.Enum):
     NrpaEC0p1 = "nrpa_ec_0p1"
     NrpaEC0p1Global = "nrpa_ec_0p1_global"
     EC0p1Global = "ec_0p1_global"
+    EC0p1Europe = "ec_0p1_europe"
     GfsGribFilter = "gfs_grib_filter_fimex"
 
     def __eq__(self, other):
@@ -73,6 +74,9 @@ class Resources(ResourcesCommon):
         MetModel.EC0p1Global: [
             "{LUSTREDIR}/project/metproduction/products/ecmwf/nc/"
         ],
+        MetModel.EC0p1Europe: [
+            "{LUSTREDIR}/project/metproduction/products/ecmwf/nc_europe/"
+        ],
         MetModel.Icon0p25Global: ["{LUSTREDIR}/project/metproduction/products/icon/"],
     }
 
@@ -86,6 +90,7 @@ class Resources(ResourcesCommon):
         MetModel.Meps2p5: "{year:04d}/{month:02d}/{day:02d}/meps_det_2_5km_{year:04d}{month:02d}{day:02d}T{UTC:02d}Z.nc",
         MetModel.Icon0p25Global: "icon_{year:04d}{month:02d}{day:02d}T{UTC:02d}Z.nc",
         MetModel.GfsGribFilter: "gfs_0p25deg_{year:04d}{month:02d}{day:02d}T{UTC:02d}Z.nc",
+        MetModel.EC0p1Europe: "ec_atmo_0_1deg_{year:04d}{month:02d}{day:02d}T{dayoffset:02d}0000Z_3h.nc",
     }
 
     def __init__(self):
@@ -138,6 +143,8 @@ class Resources(ResourcesCommon):
                 "dy": self.ecDomainRes,
             }
         elif metmodel == MetModel.EC0p1Global:
+            return {}
+        elif metmodel == MetModel.EC0p1Europe:
             return {}
         elif metmodel == MetModel.Meps2p5:
             return {}
@@ -413,7 +420,7 @@ GRAVITY.FIXED.M/S=0.0002
         """
         if (metmodel == MetModel.NrpaEC0p1) or (metmodel == MetModel.NrpaEC0p1Global):
             filename = os.path.join(self.directory, "snap.input_nrpa_ec_0p1.tmpl")
-        elif metmodel == MetModel.EC0p1Global:
+        elif metmodel == MetModel.EC0p1Global or metmodel == MetModel.EC0p1Europe:
             filename = os.path.join(self.directory, "snap.input_ec_0p1.tmpl")
         elif metmodel == MetModel.Meps2p5:
             filename = os.path.join(self.directory, "snap.input_meps_2_5km.tmpl")
