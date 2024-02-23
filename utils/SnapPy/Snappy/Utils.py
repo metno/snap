@@ -179,8 +179,10 @@ def restrictDomainSizeAndResolution(file: str, lon: float, lat: float, gridSize:
             var = nc['x_wind_ml']
         elif 'u_wind' in nc.variables:
             var = nc['u_wind']
+        elif 'x_wind_pl' in nc.variables:
+            var = nc['x_wind_pl'] # gfs ml converted from pl
         else:
-            raise Exception('neither x_wind_ml nor u_wind in file: {file}')
+            raise Exception(f'neither x_wind_ml, x_wind_pl nor u_wind in file: {file}')
 
         dims = var.dimensions
         # snap expects x-dim to be fastest moving dimension
