@@ -502,7 +502,7 @@ STEP.HOUR.OUTPUT.FIELDS= 3
             with open(os.path.join(self.lastOutputDir, "snap.input"), "a") as fh:
                 fh.write(self.res.getSnapInputMetDefinitions(qDict["metmodel"], files))
             self._snap_model_run()
-        elif qDict["metmodel"] == MetModel.GfsGribFilter:
+        elif qDict["metmodel"] == MetModel.GfsGribFilter or qDict["metmodel"] == MetModel.EC0p1Europe:
             files = self.res.getMeteorologyFiles(
                 qDict["metmodel"], startDT, int(qDict["runTime"]), "best"
             )
@@ -510,9 +510,7 @@ STEP.HOUR.OUTPUT.FIELDS= 3
                 return
             if len(files) == 0:
                 self.write_log(
-                    "no GFS  met-files found for {}, runtime {}".format(
-                        startDT, qDict["runTime"]
-                    )
+                    f"no {qDict['metmodel']}  met-files found for {startDT}, runtime {qDict['runTime']}"
                 )
                 return
             with open(os.path.join(self.lastOutputDir, "snap.input"), "a") as fh:
