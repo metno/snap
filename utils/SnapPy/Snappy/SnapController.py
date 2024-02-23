@@ -16,6 +16,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 import datetime
+import html
 import json
 import os
 import re
@@ -124,7 +125,7 @@ class SnapController:
 
     def write_log(self, txt: str):
         debug(txt)
-        self.main.evaluate_javaScript("updateSnapLog({0});".format(json.dumps(txt)))
+        self.main.evaluate_javaScript("updateSnapLog({0});".format(json.dumps(html.escape(txt))))
 
     def _snap_finished(self):
         debug("finished")
@@ -501,13 +502,25 @@ STEP.HOUR.OUTPUT.FIELDS= 3
             with open(os.path.join(self.lastOutputDir, "snap.input"), "a") as fh:
                 fh.write(self.res.getSnapInputMetDefinitions(qDict["metmodel"], files))
             self._snap_model_run()
-        else:
-            # hirlam
+        elif qDict["metmodel"] == MetModel.GfsGribFilter:
+            files = self.res.getMeteorologyFiles(
+                qDict["metmodel"], startDT, int(qDict["runTime"]), "best"
+            )
             if not self._defaultDomainCheck(lonf, latf):
                 return
+            if len(files) == 0:
+                self.write_log(
+                    "no GFS  met-files found for {}, runtime {}".format(
+                        startDT, qDict["runTime"]
+                    )
+                )
+                return
             with open(os.path.join(self.lastOutputDir, "snap.input"), "a") as fh:
-                fh.write(self.res.getSnapInputMetDefinitions(qDict["metmodel"], []))
+                fh.write(self.res.getSnapInputMetDefinitions(qDict["metmodel"], files))
             self._snap_model_run()
+        else:
+            self.write_log(f"unsupported MET-model '{qDict['metmodel']}' requested")
+            return
 
     def _snap_model_run(self):
         self.snap_run = SnapRun(self)
