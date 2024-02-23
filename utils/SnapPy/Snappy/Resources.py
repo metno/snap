@@ -74,15 +74,15 @@ class Resources(ResourcesCommon):
         MetModel.EC0p1Global: [
             "{LUSTREDIR}/project/metproduction/products/ecmwf/nc/"
         ],
-        MetModel.EC0p1Europe: [
-            "{LUSTREDIR}/project/metproduction/products/ecmwf/nc_europe/"
-        ],
         MetModel.Icon0p25Global: ["{LUSTREDIR}/project/metproduction/products/icon/"],
     }
 
     _MET_INPUTDIRS = {
         MetModel.Meps2p5: [
             "{LUSTREDIR}/immutable/archive/projects/metproduction/MEPS/"
+        ],
+        MetModel.EC0p1Europe: [
+            "{LUSTREDIR}/project/metproduction/products/ecmwf/nc_europe/"
         ],
         MetModel.GfsGribFilter: ["/disk1/tmp/"],
     }
