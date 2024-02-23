@@ -452,6 +452,9 @@ GRAVITY.FIXED.M/S=0.0002
         elif metmodel == MetModel.EC0p1Global:
             # no setup needed, autdetection in snap
             pass
+        elif metmodel == MetModel.EC0p1Europe:
+            # no setup needed, autdetection in snap
+            pass
         elif metmodel == MetModel.Meps2p5:
             # no setup needed, autdetection in snap
             pass
