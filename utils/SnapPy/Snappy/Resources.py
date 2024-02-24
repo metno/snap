@@ -82,9 +82,11 @@ class Resources(ResourcesCommon):
             "{LUSTREDIR}/immutable/archive/projects/metproduction/MEPS/"
         ],
         MetModel.EC0p1Europe: [
-            "{LUSTREDIR}/project/metproduction/products/ecmwf/nc_europe/"
+            "{LUSTREDIR}/project/fou/kl/snap/meteo/ec_europe/"
         ],
-        MetModel.GfsGribFilter: ["/disk1/tmp/"],
+        MetModel.GfsGribFilter: [
+            "{LUSTREDIR}/project/fou/kl/snap/meteo/gfs_europe/"
+        ],
     }
     MET_FILENAME_PATTERN = {
         MetModel.Meps2p5: "{year:04d}/{month:02d}/{day:02d}/meps_det_2_5km_{year:04d}{month:02d}{day:02d}T{UTC:02d}Z.nc",
