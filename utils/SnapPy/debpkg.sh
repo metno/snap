@@ -65,7 +65,7 @@ if [ ! -f "Snappy/resources/1-s2.0-S0146645313000110-mmc1.zip" ]; then
 fi
 
 HOST=$(lsb_release --codename --short)
-export VERSION=2.3.8
+export VERSION=2.3.9
 CHANGELOG="Read only valid ICON timesteps"
 export DEBEMAIL=${USER}@met.no
 rm --force debian
