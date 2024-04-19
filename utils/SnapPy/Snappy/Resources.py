@@ -111,7 +111,7 @@ class Resources(ResourcesCommon):
         )
         self.startScreen = startScreenFH.read()
         startScreenFH.close()
-        plantBB = {"west": -60, "east": 70, "north": 85, "south": 30}
+        plantBB = {"west": -60, "east": 70, "north": 85, "south": 26}
         npps = self.readNPPs(plantBB)
         npps.update(self.readRadnett())
         nppStrings = []
