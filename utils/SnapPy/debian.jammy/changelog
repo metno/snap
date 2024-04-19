@@ -1,3 +1,15 @@
+snap-py (2.4.1-1) jammy; urgency=medium
+
+  * Read only valid ICON timesteps
+
+ -- Heiko Klein <heikok@met.no>  Fri, 19 Apr 2024 11:50:06 +0200
+
+snap-py (2.4.0-1) jammy; urgency=medium
+
+  * Read only valid ICON timesteps
+
+ -- Heiko Klein <heikok@met.no>  Fri, 19 Apr 2024 11:07:49 +0200
+
 snap-py (2.3.9-1) jammy; urgency=medium
 
   * Read only valid ICON timesteps
