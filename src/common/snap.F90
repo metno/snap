@@ -2199,7 +2199,11 @@ contains
 
     if (i1 == 0) drydep_scheme = DRYDEP_SCHEME_UNDEFINED
     if (drydep_scheme /= DRYDEP_SCHEME_UNDEFINED .and. largest_landfraction_file /= "not set") then
+#if defined(FIMEX)
       call read_landfractions(largest_landfraction_file)
+#else
+      error stop "Reading of landfractions requires fimex support"
+#endif
     endif
 
     if (itotcomp == 1 .AND. ncomp == 1) itotcomp = 0
