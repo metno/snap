@@ -65,8 +65,8 @@ if [ ! -f "Snappy/resources/1-s2.0-S0146645313000110-mmc1.zip" ]; then
 fi
 
 HOST=$(lsb_release --codename --short)
-export VERSION=2.4.2
-CHANGELOG="adding Natanz"
+export VERSION=2.4.3
+CHANGELOG="fixing non-continuous releases; adding column-output"
 export DEBEMAIL=${USER}@met.no
 rm --force debian
 ln --symbolic debian.$HOST debian

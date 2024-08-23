@@ -1,3 +1,9 @@
+snap-py (2.4.3-1) jammy; urgency=medium
+
+  * fixing non-continuous releases; adding column-output
+
+ -- Heiko Klein <heikok@met.no>  Fri, 23 Aug 2024 09:16:38 +0200
+
 snap-py (2.4.2-1) jammy; urgency=medium
 
   * adding Natanz
