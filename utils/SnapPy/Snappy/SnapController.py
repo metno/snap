@@ -331,7 +331,7 @@ RELEASE.UPPER.M= {upperHeight}, {upperHeight}
             except Exception:
                 pass
             if emis > 0.0:
-                source_term += "RELEASE.BQ/SEC.COMP= {rel}, {rel}, '{iso}'\n".format(
+                source_term += "RELEASE.BQ/SEC.COMP= {rel}, 0, '{iso}'\n".format(
                     rel=qDict[rel], iso=iso
                 )
 
