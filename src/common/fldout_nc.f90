@@ -295,6 +295,8 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     elsewhere
       field_hr3 = undef
     endwhere
+    !..instant part of Bq in boundary layer
+    if(idebug == 1) call ftest('pbq', field_hr3, contains_undef=.true.)
 
   !..instant concentration in boundary layer
     field_hr2(:,:) = cscale*field_hr1 / (hbl_hr*garea)
@@ -348,9 +350,6 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       call check(nf90_put_var(iunit, varid%comp(m)%accwd, start=ipos, count=isize, &
           values=field_hr1), "set_accwd(m)")
     end if
-
-  !..instant part of Bq in boundary layer
-    if(idebug == 1) call ftest('pbq', field_hr3, contains_undef=.true.)
 
   !..average part of Bq in boundary layer
     scale=100.
