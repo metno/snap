@@ -1,13 +1,14 @@
 from enum import Enum
 from collections import namedtuple
 import csv
+import math
 import numpy
 import io
 import typing
 
 _ExplosionType = namedtuple('ExplosionType', ['name', 'radius_sizes', "size_distribution"])
 
-class ExplosionType(Enum):    
+class ExplosionType(Enum):
     @property
     def radius_sizes(self):
         return self.value.radius_sizes
@@ -24,12 +25,12 @@ class ExplosionType(Enum):
     # Glasstone Dolan, lognormal ~(3.78, 0.68)
     SURFACE = _ExplosionType("Surface",
                            [          8.6, 14.6, 22.8, 36.1, 56.5, 92.3, 173.2, 250.0],
-                           [          .02,  .08,  .17,  .25,  .24,  .17,   .06,   .01] 
+                           [          .02,  .08,  .17,  .25,  .24,  .17,   .06,   .01]
                            )
     # Glassstone Dolan, uniform below 20µm
     HIGH_ALTITUDE = _ExplosionType("High Altitude",
                            [2.2, 4.4, 8.6, 14.6],
-                           [.25, .25, .25,  .25] 
+                           [.25, .25, .25,  .25]
                            )
 
     @classmethod
@@ -80,7 +81,7 @@ class YieldParameters():
         self._explosion_type = explosion_type
         self._cloud_defs = self._parse_clouds(io.StringIO(self._cloud_defs1))
         return
-    
+
     @property
     def nuclear_yield(self):
         return self._nuclear_yield
@@ -104,7 +105,7 @@ class YieldParameters():
         for tag in retval.keys():
             retval[tag] = numpy.asarray(retval[tag])
         return retval
-    
+
     def _get_linear_cloud_def(self, tag) -> dict:
         '''get a dict of cloud bottom, top, and radius and stemradius depending on yield'''
         cloudyield = self._cloud_defs['yield']
@@ -128,7 +129,7 @@ class YieldParameters():
         """
         # formula from 2^19Bq/kT(TNT) as of
         # Fission Products from Nuclear Weapons Explosions (Tovedal)
-        # https://inis.iaea.org/collection/NCLCollectionStore/_Public/32/055/32055989.pdf 
+        # https://inis.iaea.org/collection/NCLCollectionStore/_Public/32/055/32055989.pdf
         return self._nuclear_yield * 2e19
 
     def cloud_bottom(self):
@@ -139,13 +140,19 @@ class YieldParameters():
         return self._get_linear_cloud_def('top')
     def cloud_radius(self):
         '''cloud radius in m'''
-        # Typical radius of mushroom cloud after ~ 10 - 15 min is 1-3 km seen from different studies (Kanarska et al., 2009, Arthur et al., 2021) 
+        # Typical radius of mushroom cloud after ~ 10 - 15 min is 1-3 km seen from different studies (Kanarska et al., 2009, Arthur et al., 2021)
         return 2500.
     def stem_radius(self):
         '''cloud radius in m'''
-        # Typical radius of mushroom cloud after ~ 10 - 15 min is 1-3 km seen from different studies (Kanarska et al., 2009, Arthur et al., 2021) 
-        return 0.
-    
+        if self.explosion_type == ExplosionType.HIGH_ALTITUDE:
+            return 0.
+        else:
+            # Glasstone-Dolan 9.61: the mushroom head from a contact land-surface burst initially contains about 90 percent with the remainder residing in the stem.
+            fraction = 0.1
+            vol_head = math.pi*(self.cloud_radius()*self.cloud_radius()) * (self.cloud_top() - self.cloud_bottom())
+            stem_radius = math.sqrt(fraction*vol_head/(math.pi*self.cloud_bottom()))
+            return round(stem_radius)
+
 
 
 
@@ -176,12 +183,12 @@ class SnapInputBomb():
         self._minutes = 0. # explosion starts minutes after full hour
 
         return
-    
+
     @property
     def nuclear_yield(self) -> float:
         """nuclear yield in Mg(=kTonnes) TNT"""
         return self._yield_parameters.nuclear_yield
-    
+
     @property
     def explosion_type(self) -> ExplosionType:
         return self._yield_parameters.explosion_type
@@ -207,7 +214,7 @@ class SnapInputBomb():
     def cloud_bottom(self) -> float:
         """cloud bottom height in m"""
         return self._yield_parameters.cloud_bottom()
-    
+
     @property
     def cloud_top(self) -> float:
         """cloud top height in m"""
@@ -222,7 +229,7 @@ class SnapInputBomb():
     def stem_radius(self) -> float:
         """cloud top height in m"""
         return self._yield_parameters.stem_radius()
-    
+
     @property
     def total_activity(self) -> float:
         """total activity of cloud and stem in Bq"""
@@ -232,7 +239,7 @@ class SnapInputBomb():
     def component_basename(self) -> str:
         """name of the component used in snap"""
         return self._component_basename
-    
+
     def component_name(self, pos: int) -> str:
         """name of component of size[pos] in SNAP"""
         return self._component_formatter.format(component=self.component_basename,
@@ -242,7 +249,7 @@ class SnapInputBomb():
     def minutes(self) -> float:
         """offset in minutes the explosion start after start of SNAP run (starting at full hour)"""
         return self._minutes
-    
+
     @minutes.setter
     def minutes(self, minutes: float) -> None:
         self._minutes = minutes
@@ -252,7 +259,7 @@ class SnapInputBomb():
     def radius_sizes(self) -> list[float]:
         """retrieve a list of radius sizes in µm for different size-classes"""
         return self._radius_sizes
-        
+
     @radius_sizes.setter
     def radius_sizes(self, radius_sizes: list[float]) -> None:
         """
@@ -262,7 +269,7 @@ class SnapInputBomb():
         self._radius_sizes = radius_sizes
         self._size_distribution = []
         return
-        
+
     @property
     def size_distribution(self) -> list[float]:
         """
@@ -285,7 +292,7 @@ class SnapInputBomb():
         if extras > 0:
             frac = (1-sum_dist)/extras
             for i in range(extras):
-                size_dist.append(frac)            
+                size_dist.append(frac)
         # assertion
         sum_size_dist = sum(size_dist)
         if abs(1-sum_size_dist) > 0.01:
@@ -304,7 +311,7 @@ class SnapInputBomb():
     def default_density(self) -> float:
         '''density in g/cm³ used for all particle classes unless specified otherwise'''
         return self._default_density
-    
+
     @default_density.setter
     def default_density(self, default_density: float) -> None:
         '''set the default density in g/cm^3'''
@@ -394,7 +401,7 @@ FIELD.IDENTIFICATION={identification:03d}
                                             classname=self.component_name(i),
                                             gravity=gravity,
                                             identification=i+1))
-        
+
         for i, frac in enumerate(self.size_distribution):
             size_activity = activity + [f"{self.activity_after_1min*frac:.3E}"]
             lines.append(f"RELEASE.BQ/STEP.COMP= {','.join(size_activity)} '{self.component_name(i)}'")
@@ -409,7 +416,7 @@ if __name__ == "__main__":
     assert(abs(yp.cloud_bottom()-750) < .1)
     assert(abs(yp.cloud_top()-1125) < .1)
     assert(abs(yp.cloud_radius()-2500) < .1)
-    assert(abs(yp.stem_radius()-0) < .1)
+    assert(abs(yp.stem_radius()-559) < .1)
 
     sib = SnapInputBomb(nyield)
     assert(nyield == sib.nuclear_yield)
