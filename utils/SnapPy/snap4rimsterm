@@ -233,6 +233,10 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
         files = res.getMeteorologyFiles(met_model, startDTime, runTime, "best")
         if (len(files) == 0):
             raise Exception("no GFS-grib-filter-fimex met-files found for {}, runtime {}".format(startDTime, runTime))
+    elif met_model == MetModel.Era5Nancy:
+        files = res.getMeteorologyFiles(met_model, startDTime, runTime, "best")
+        if (len(files) == 0):
+            raise Exception("no era5_nancy met-files found for {}, runtime {}".format(startDTime, runTime))
     else:
         raise Exception('unknown met_model: {}'.format(met_model))
 
@@ -317,7 +321,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="run snap from a rimsterm.xml file and convert to grib-files named ident_conc, ident_depo ident_wetd ident_dose ident_tofa")
     parser.add_argument("--rimsterm", help="source-term in rimsterm format", required=True)
     parser.add_argument("--argosrequest", help="optional argos-request xml file in addition to --rimsterm file", required=False)
-    parser.add_argument("--metmodel", help="select the NWP input model, nrpa_ec_0p1, nrpa_ec_0p1_global, meps_2_5km, ec_0p1_global, ec_0p1_europe, gfs_grib_filter_fimex, icon_0p25_global", required=True, default='nrpa_ec_0p1')
+    parser.add_argument("--metmodel", help="select the NWP input model, nrpa_ec_0p1, nrpa_ec_0p1_global, meps_2_5km, ec_0p1_global, ec_0p1_europe, gfs_grib_filter_fimex, icon_0p25_global, era5_nancy", required=True, default='nrpa_ec_0p1')
     parser.add_argument("--dir", help="output-directory", required=True)
     parser.add_argument("--ident", help="output-file identifier", required=True)
     parser.add_argument("--bitmapCompress", help="enable grib bitmap-compression", action='store_true')

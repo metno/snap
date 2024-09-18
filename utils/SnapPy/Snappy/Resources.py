@@ -45,7 +45,7 @@ class MetModel(enum.Enum):
     EC0p1Global = "ec_0p1_global"
     EC0p1Europe = "ec_0p1_europe"
     GfsGribFilter = "gfs_grib_filter_fimex"
-
+    Era5Nancy = "era5_nancy"
     def __eq__(self, other):
         return self.value == str(other)
 
@@ -87,12 +87,15 @@ class Resources(ResourcesCommon):
         MetModel.GfsGribFilter: [
             "{LUSTREDIR}/project/fou/kl/snap/meteo/gfs_europe/"
         ],
+        MetModel.Era5Nancy: ["{LUSTREDIR}/project/fou/kl/cerad//Meteorology/EC/Era5/Nancy/"],
+
     }
     MET_FILENAME_PATTERN = {
         MetModel.Meps2p5: "{year:04d}/{month:02d}/{day:02d}/meps_det_2_5km_{year:04d}{month:02d}{day:02d}T{UTC:02d}Z.nc",
         MetModel.Icon0p25Global: "icon_{year:04d}{month:02d}{day:02d}T{UTC:02d}Z.nc",
         MetModel.GfsGribFilter: "gfs_0p25deg_{year:04d}{month:02d}{day:02d}T{UTC:02d}Z.nc",
         MetModel.EC0p1Europe: "ec_atmo_0_1deg_{year:04d}{month:02d}{day:02d}T{UTC:02d}0000Z_3h.nc",
+        MetModel.Era5Nancy: "nancy_{year:04d}-{month:02d}-{day:02d}_{UTC:02d}.nc",
     }
 
     def __init__(self):
@@ -153,6 +156,8 @@ class Resources(ResourcesCommon):
         elif metmodel == MetModel.Icon0p25Global:
             return {}
         elif metmodel == MetModel.GfsGribFilter:
+            return {}
+        elif metmodel == MetModel.Era5Nancy:
             return {}
 
         raise (NotImplementedError("metmodel='{}' not implememented".format(metmodel)))
@@ -430,6 +435,8 @@ GRAVITY.FIXED.M/S=0.0002
             filename = os.path.join(self.directory, "snap.input_icon_0p25.tmpl")
         elif metmodel == MetModel.GfsGribFilter:
             filename = os.path.join(self.directory, "snap.input_gfs_grib_filter.tmpl")
+        elif metmodel == MetModel.Era5Nancy:
+            filename = os.path.join(self.directory, "snap.input_era5_nancy.tmpl")
         else:
             raise (
                 NotImplementedError("metmodel='{}' not implememented".format(metmodel))
@@ -465,6 +472,8 @@ GRAVITY.FIXED.M/S=0.0002
             pass
         elif metmodel == MetModel.GfsGribFilter:
             # no setup needed, autdetection in snap
+            pass
+        elif metmodel == MetModel.Era5Nancy:
             pass
         else:
             raise (
