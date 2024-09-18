@@ -1,5 +1,5 @@
 ***********************************************************************
-*** MET Norway SNAP input file derived from snap.input_ec_0p1.tmpl
+*** MET Norway SNAP input file derived from snap.input_era5_nancy.tmpl
 ***********************************************************************
 RANDOM.WALK.ON
 BOUNDARY.LAYER.FULL.MIX.OFF
@@ -9,8 +9,8 @@ WET.DEPOSITION.VERSION = 2
 REMOVE.RELATIVE.MASS.LIMIT= 0.
 
 MAX.TOTALPARTICLES= 20000000
-TIME.STEP= 600.
-STEP.HOUR.INPUT.MIN= 3
+TIME.STEP= 300.
+STEP.HOUR.INPUT.MIN= 1
 STEP.HOUR.INPUT.MAX= 6
 ASYNOPTIC.OUTPUT
 TOTAL.COMPONENTS.OFF
@@ -27,7 +27,7 @@ FIMEX.CONFIG=
 
 GRID.AUTODETECT.FROM_INPUT
 * ec_det in newer versions of snap
-GRID.NCTYPE = ec_n1s
+GRID.NCTYPE = era5
 DATA.ETA.LEVELS
 ENSEMBLE_MEMBER.INPUT = 0
 
