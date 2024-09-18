@@ -169,7 +169,7 @@ PROGRAM bsnap
   USE snapmetML, only: init_meteo_params, met_params
   USE snapparML, only: component, run_comp, &
                        ncomp, def_comp, nparnum, &
-                       time_profile, TIME_PROFILE_BOMB
+                       time_profile
   USE snapposML, only: irelpos, nrelpos, release_positions
   USE snapgrdML, only: modleveldump, ivcoor, kadd, &
                        klevel, imslp, itotcomp, gparam, &
