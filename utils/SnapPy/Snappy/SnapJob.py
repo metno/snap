@@ -55,7 +55,7 @@ class SnapJob:
             raise UnknownModelException("unknown model:" + self.task.model)
 
     def job_script(self):
-        """return a sge job-script for the different models 
+        """return a sge job-script for the different models
         allow for SNAP, SNAPGLOBAL, SNAPNORDIC, SNAPICONGLOBAL
         and       SNAPBOMB, SNAPBOMBGLOBAL, SNAPBOMBNORDIC, SNAPBOMBICONGLOBAL
         """
@@ -73,6 +73,8 @@ class SnapJob:
             metmodel = "meps_2_5km"
         elif task_model == "ICONGLOBAL":
             metmodel = "icon_0p25_global"
+        elif task_model == "ERA5":
+            metmodel = "era5_nancy"
         else:
             raise UnknownModelException("unknown model:" + self.task.model)
 
