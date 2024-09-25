@@ -192,7 +192,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
     ! stemradius not with height profiles, nrelheight must be 1
       stemradius = releases(nt)%relstemradius*rt1 + releases(nt+1)%relstemradius*rt2
     else
-      ! constant release rate between timesteps 
+      ! constant release rate between timesteps
       do n=1,ncomp
         relbq(n) = releases(nt)%relbqsec(n,ih)
       end do
@@ -255,8 +255,6 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
 
     x= release_positions(irelpos)%grid_x
     y= release_positions(irelpos)%grid_y
-    i= nint(x)
-    j= nint(y)
 
   !..compute height in model (eta/sigma) levels
 
@@ -361,8 +359,8 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
 
       dxgrid= gparam(7)
       dygrid= gparam(8)
-      dx= radius/(dxgrid/xm(i,j))
-      dy= radius/(dygrid/ym(i,j))
+      dx= abs(radius/(dxgrid/xm(i,j)))
+      dy= abs(radius/(dygrid/ym(i,j)))
 
       if (x-dx < 1.01 .OR. x+dx > nx-0.01 .OR. &
       y-dy < 1.01 .OR. y+dy > ny-0.01) then
@@ -377,7 +375,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
 
 
     !----------------------------------------------
-      if (dx > 0.01 .AND. dy > 0.01) then
+      if (dx > 0.001 .AND. dy > 0.001) then
       !----------------------------------------------
 
       !..want an uniform spread in x,y,z within a real cylinder,
