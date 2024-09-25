@@ -780,7 +780,7 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
     igtype, gparam, garea, xm, ym, &
     simulation_start)
   USE snapdimML, only : nx, ny, output_resolution_factor, hres_field
-  USE snapfldML, only : field_hr1
+  USE snapfldML, only : field_hr1, field_hr2
   INTEGER, INTENT(IN) :: iunit, xdimid, ydimid, igtype
   REAL(real32), INTENT(IN):: gparam(8)
   REAL(real32), INTENT(IN), DIMENSION(nx*output_resolution_factor,ny*output_resolution_factor) :: garea
@@ -962,22 +962,35 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
   call check(nf90_sync(iunit))
 
 !.... create latitude/longitude variable-values
-  do j=1,ny
-    do i=1,nx
-      lon(i,j) = i
-      lat(i,j) = j
+  if (igtype .eq. 2) then
+    ! exact
+    do j=1,ny*output_resolution_factor
+      do i=1,nx*output_resolution_factor
+        ! longitude field
+        field_hr1(i,j) = xvals(i)
+        ! latitude field
+        field_hr2(i,j) = yvals(j)
+      enddo
+    enddo
+  else
+    ! interpolated
+    do j=1,ny
+      do i=1,nx
+        lon(i,j) = i
+        lat(i,j) = j
+      end do
     end do
-  end do
-  call xyconvert(nx*ny, lon, lat,igtype, gparam, &
-      2, llparam, ierror)
-  if (ierror /= 0) then
-    write (error_unit,*) "error converting pos to latlon-projection"
-    error stop 1
-  end if
-  call hres_field(lon, field_hr1, .true.)
+    call xyconvert(nx*ny, lon, lat,igtype, gparam, &
+        2, llparam, ierror)
+    if (ierror /= 0) then
+      write (error_unit,*) "error converting pos to latlon-projection"
+      error stop 1
+    end if
+    call hres_field(lon, field_hr1, .true.)
+    call hres_field(lat, field_hr2, .true.)
+  endif
   call check(nf90_put_var(iunit, lon_varid, field_hr1))
-  call hres_field(lat, field_hr1, .true.)
-  call check(nf90_put_var(iunit, lat_varid, field_hr1))
+  call check(nf90_put_var(iunit, lat_varid, field_hr2))
 
 !.... create cell_area
   call check(nf90_def_var(iunit, "cell_area", &
