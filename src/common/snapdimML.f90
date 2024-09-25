@@ -87,19 +87,22 @@ module snapdimML
     end do
 
     if (is_bilinear) then
-      or_2 = output_resolution_factor - int(output_resolution_factor / 2.)
+      or_2 = int(output_resolution_factor / 2.)
       dd = 1./output_resolution_factor
       do j = 1, ny-1
         do l = 1, output_resolution_factor
           do i = 1, nx-1
             do k = 1, output_resolution_factor
-              dx=(k-1)*dd
-              dy=(l-1)*dd
+              ! this will partly extrapolate to left/bottom
+              ! but otherwise too many corner-cases needed
+              dx=(k-1-or_2)*dd
+              dy=(l-1-or_2)*dd
               c1=(1.-dy)*(1.-dx)
               c2=(1.-dy)*dx
               c3=dy*(1.-dx)
               c4=dy*dx
-              field_hres(or_2+output_resolution_factor*(i-1)+k, or_2+output_resolution_factor*(j-1)+l) = &
+              ! go here from -5 to 4 (for case resolution-factor 10)
+              field_hres(output_resolution_factor*i+k-or_2, output_resolution_factor*j+l-or_2) = &
                 c1 * field(i, j)   + c2 * field(i+1, j) + &
                 c3 * field(i, j+1) + c4 * field(i+1, j+1)
             end do
@@ -114,8 +117,8 @@ module snapdimML
   integer function hres_pos(lres_pos)
     USE iso_fortran_env, only: real64
     real(kind=real64), intent(in) :: lres_pos
-    ! convert to 0-starting positions, extend to new range, convert to 1-start
-    hres_pos = 1 + nint((lres_pos-1.) * output_resolution_factor)
+    ! convert to 0.5-starting position (cell 1 from [0.5,1.5[, extend to new range, convert to 1-start
+    hres_pos = nint((lres_pos-.5) * output_resolution_factor + 1.)
   end function hres_pos
 
 !> translate a x or y position in the output-grid to the
@@ -124,7 +127,7 @@ module snapdimML
     USE iso_fortran_env, only: real64
     integer, intent(in) :: hres_pos
     ! convert to 0-starting positions, extend to new range, convert to 1-start
-    lres_pos = 1 + nint((hres_pos - 1.)/output_resolution_factor)
+    lres_pos = nint((hres_pos - 1.)/output_resolution_factor + .5)
   end function lres_pos
 
 
