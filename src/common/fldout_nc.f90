@@ -352,8 +352,9 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
           values=field_hr1), "set_idd(m)")
 
       if (output_vd) then
-        call check(nf90_put_var(iunit, varid%comp(m)%vd, start=ipos, count=isize, &
-            values=vd_dep(:, :, m)), "dry_deposition_velocity(m)")
+        call hres_field(vd_dep(:,:,m), field_hr2)
+        call check(nf90_put_var(iunit, varid%comp(m)%vd, start=ipos, count=shape(field_hr2), &
+            values=field_hr2), "dry_deposition_velocity(m)")
       endif
     end if
 
@@ -1090,7 +1091,7 @@ subroutine initialize_output(filename, itime, ierror)
       nhfout
   USE snapparML, only: nocomp, output_component, def_comp
   USE ftestML, only: ftest
-  USE snapdimML, only: nx, ny, nk, output_resolution_factor
+  USE snapdimML, only: nx, ny, nk, output_resolution_factor, hres_field
   USE particleML, only: Particle
   use snapmetML, only: met_params
 
@@ -1320,8 +1321,7 @@ subroutine initialize_output(filename, itime, ierror)
         if (largest_landfraction_file /= "not set") then
             call nc_declare(iunit, dimids2d, varid%landfraction, &
               "land_fraction", units="1", datatype=NF90_BYTE)
-            allocate(classnr_hr(nx*output_resolution_factor, ny*output_resolution_factor))
-            call upscale(classnr, classnr_hr, output_resolution_factor)
+            call hres_field(classnr, classnr_hr)
             call check(nf90_put_var(iunit, varid%landfraction, start=[1, 1], count=shape(classnr_hr), &
               values=classnr_hr), "Put landfraction")
             call check(nf90_put_att(iunit, varid%landfraction, "11", "Sea"))
@@ -1834,31 +1834,6 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
       aircraft_doserate_scratch(:,:,1,ncomp+1))
     end block
   endif
-end subroutine
-
-pure subroutine upscale(input, output, factor)
-  use iso_fortran_env, only: int8
-  integer(int8), intent(in) :: input(:,:)
-  integer(int8), intent(out) :: output(:,:)
-  integer, intent(in) :: factor
-
-  integer :: i,j,nx,ny,ii,jj
-  integer(int8) :: val
-
-  nx = size(input,1)
-  ny = size(input,2)
-
-  do j=1,ny
-    do i=1,nx
-      val = input(i, j)
-      do jj=1,factor
-        do ii=1,factor
-          output(factor*(i-1)+ii, factor*(j-1)+jj) = val
-        end do
-      end do
-    end do
-  end do
-  
 end subroutine
 
 end module fldout_ncML

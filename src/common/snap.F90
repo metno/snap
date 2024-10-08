@@ -1191,7 +1191,7 @@ contains
         if (drydep_scheme /= DRYDEP_SCHEME_EMEP .and. &
             drydep_scheme /= DRYDEP_SCHEME_ZHANG .and. &
             drydep_scheme /= DRYDEP_SCHEME_EMERSON) then
-          write(error_unit, *) "The scheme is not set to a compatible value, ignoring"
+          write(error_unit, *) "The drydep scheme is not set to a compatible value, ignoring"
         else
           output_vd = .true.
         endif

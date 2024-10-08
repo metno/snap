@@ -60,10 +60,15 @@ module snapdimML
 !> low_resolution input grid position
   public :: lres_pos
 
+!> translate a field in normal resolution to high output resolution
+  interface hres_field
+    module procedure :: hres_field_real32, hres_field_int8
+  end interface
+
   contains
 
 !> translate a field in normal resolution to high output resolution
-  subroutine hres_field(field, field_hres, bilinear)
+  subroutine hres_field_real32(field, field_hres, bilinear)
     USE iso_fortran_env, only: real32
     real(kind=real32), intent(in) :: field(:,:)
     real(kind=real32), intent(inout) :: field_hres(:,:)
@@ -111,7 +116,30 @@ module snapdimML
         end do
       end do
     end if
-  end subroutine hres_field
+  end subroutine
+
+  subroutine hres_field_int8(field, field_hres)
+    USE iso_fortran_env, only: int8
+    integer(kind=int8), intent(in) :: field(:,:)
+    integer(kind=int8), allocatable, intent(out) :: field_hres(:,:)
+
+    integer :: newshape(2)
+
+    integer :: i, j, k, l
+
+    newshape(:) = shape(field)*output_resolution_factor
+    allocate(field_hres(newshape(1), newshape(2)))
+
+    do j = 1, ny
+      do l = 1, output_resolution_factor
+        do i = 1, nx
+          do k = 1, output_resolution_factor
+            field_hres(output_resolution_factor*(i-1)+k, output_resolution_factor*(j-1)+l) = field(i,j)
+          end do
+        end do
+      end do
+    end do
+  end subroutine
 
 !> translate a x or y position in the input-grid to the
 !> high_resolution output grid position
