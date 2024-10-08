@@ -391,10 +391,14 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       block
         use snapfldML, only: wscav
         use snapdimML, only: nk
-      if (output_wetdeprate) then
-        call check(nf90_put_var(iunit, varid%comp(m)%wetscavrate, start=[1,1,1,ihrs_pos], &
-          count=[nx,ny,nk-1,1], values=wscav(:,:,2:,m)), "wscavrate")
-      endif
+        integer :: k
+        if (output_wetdeprate) then
+          do k=2,nk
+            call hres_field(wscav(:,:,k,m), field_hr1)
+            call check(nf90_put_var(iunit, varid%comp(m)%wetscavrate, start=[1,1,k-1,ihrs_pos], &
+              count=[nx*output_resolution_factor,ny*output_resolution_factor,1,1], values=field_hr1), "wscavrate")
+          end do
+        endif
       end block
     endif
 
@@ -593,38 +597,32 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     block
       use snapfldml, only: t2m, xflux, yflux, z0, hflux, leaf_area_index, &
         roa, ustar, monin_l, raero, vs, rs, ps2
-    call check(nf90_put_var(iunit, varid%ps_vd, start=ipos, count=isize, values=ps2))
-    call check(nf90_put_var(iunit, varid%t2m, start=ipos, count=isize, values=t2m))
-    call check(nf90_put_var(iunit, varid%xflux, start=ipos, count=isize, values=xflux))
-    call check(nf90_put_var(iunit, varid%yflux, start=ipos, count=isize, values=yflux))
-    call check(nf90_put_var(iunit, varid%z0, start=ipos, count=isize, values=z0))
-    call check(nf90_put_var(iunit, varid%hflux, start=ipos, count=isize, values=hflux))
-    call check(nf90_put_var(iunit, varid%lai, start=ipos, count=isize, values=leaf_area_index))
-    call check(nf90_put_var(iunit, varid%roa, start=ipos, count=isize, values=roa))
-    call check(nf90_put_var(iunit, varid%ustar, start=ipos, count=isize, values=ustar))
-    call check(nf90_put_var(iunit, varid%monin_l, start=ipos, count=isize, values=monin_l))
-    call check(nf90_put_var(iunit, varid%raero, start=ipos, count=isize, values=raero))
-    call check(nf90_put_var(iunit, varid%vs, start=ipos, count=isize, values=vs))
-    call check(nf90_put_var(iunit, varid%rs, start=ipos, count=isize, values=rs))
-    end block
-  endif
-
-  if (output_vd_debug) then
-    block
-      use snapfldml, only: t2m, xflux, yflux, z0, hflux, leaf_area_index, &
-        roa, ustar, monin_l, raero, vs, ps2
-    call check(nf90_put_var(iunit, varid%ps_vd, start=ipos, count=isize, values=ps2))
-    call check(nf90_put_var(iunit, varid%t2m, start=ipos, count=isize, values=t2m))
-    call check(nf90_put_var(iunit, varid%xflux, start=ipos, count=isize, values=xflux))
-    call check(nf90_put_var(iunit, varid%yflux, start=ipos, count=isize, values=yflux))
-    call check(nf90_put_var(iunit, varid%z0, start=ipos, count=isize, values=z0))
-    call check(nf90_put_var(iunit, varid%hflux, start=ipos, count=isize, values=hflux))
-    call check(nf90_put_var(iunit, varid%lai, start=ipos, count=isize, values=leaf_area_index))
-    call check(nf90_put_var(iunit, varid%roa, start=ipos, count=isize, values=roa))
-    call check(nf90_put_var(iunit, varid%ustar, start=ipos, count=isize, values=ustar))
-    call check(nf90_put_var(iunit, varid%monin_l, start=ipos, count=isize, values=monin_l))
-    call check(nf90_put_var(iunit, varid%raero, start=ipos, count=isize, values=raero))
-    call check(nf90_put_var(iunit, varid%vs, start=ipos, count=isize, values=vs))
+      call hres_field(ps2, field_hr1)
+      call check(nf90_put_var(iunit, varid%ps_vd, start=ipos, count=isize, values=field_hr1))
+      call hres_field(t2m, field_hr1)
+      call check(nf90_put_var(iunit, varid%t2m, start=ipos, count=isize, values=field_hr1))
+      call hres_field(xflux, field_hr1)
+      call check(nf90_put_var(iunit, varid%xflux, start=ipos, count=isize, values=field_hr1))
+      call hres_field(yflux, field_hr1)
+      call check(nf90_put_var(iunit, varid%yflux, start=ipos, count=isize, values=field_hr1))
+      call hres_field(z0, field_hr1)
+      call check(nf90_put_var(iunit, varid%z0, start=ipos, count=isize, values=field_hr1))
+      call hres_field(hflux, field_hr1)
+      call check(nf90_put_var(iunit, varid%hflux, start=ipos, count=isize, values=field_hr1))
+      call hres_field(leaf_area_index, field_hr1)
+      call check(nf90_put_var(iunit, varid%lai, start=ipos, count=isize, values=field_hr1))
+      call hres_field(roa, field_hr1)
+      call check(nf90_put_var(iunit, varid%roa, start=ipos, count=isize, values=field_hr1))
+      call hres_field(ustar, field_hr1)
+      call check(nf90_put_var(iunit, varid%ustar, start=ipos, count=isize, values=field_hr1))
+      call hres_field(monin_l, field_hr1)
+      call check(nf90_put_var(iunit, varid%monin_l, start=ipos, count=isize, values=field_hr1))
+      call hres_field(raero, field_hr1)
+      call check(nf90_put_var(iunit, varid%raero, start=ipos, count=isize, values=field_hr1))
+      call hres_field(vs, field_hr1)
+      call check(nf90_put_var(iunit, varid%vs, start=ipos, count=isize, values=field_hr1))
+      call hres_field(rs, field_hr1)
+      call check(nf90_put_var(iunit, varid%rs, start=ipos, count=isize, values=field_hr1))
     end block
   endif
 
