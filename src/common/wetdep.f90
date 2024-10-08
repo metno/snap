@@ -378,7 +378,11 @@ contains
     real, intent(in) :: cloud_fraction(:,:)
 
 
-    lambda(:,:) = q/(q + cloud_water) * f_inc * cloud_fraction / 3600.0
+    where (q > 0.0)
+      lambda = q/(q + cloud_water) * f_inc * cloud_fraction / 3600.0
+    elsewhere
+      lambda = 0.0
+    end where
   end subroutine
 
   !> Aerosol rainout process from Roselle and Binkowski 1999
@@ -536,6 +540,7 @@ contains
     use particleml, only: particle
     use snapparML, only: def_comp
     use snapgrdML, only: ivlevel
+    use snapdimML, only: hres_pos
     type(particle), intent(inout) :: part
     real, intent(in) :: wscav(:,:,:,:)
     real(real64), intent(inout) :: dep(:,:,:)
@@ -546,8 +551,8 @@ contains
 
     ivlvl = part%z * 10000.0
     k = ivlevel(ivlvl)
-    i = int(part%x)
-    j = int(part%y)
+    i = nint(part%x)
+    j = nint(part%y)
 
     mm = def_comp(part%icomp)%to_running
 
@@ -555,6 +560,8 @@ contains
 
     radlost = part%scale_rad(exp(-rkw*tstep))
 
+    i = hres_pos(part%x)
+    j = hres_pos(part%y)
     !$OMP atomic
     dep(i, j, mm) = dep(i, j, mm) + real(radlost, kind=real64)
   end subroutine
