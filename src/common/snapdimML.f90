@@ -143,7 +143,7 @@ module snapdimML
 
 !> translate a x or y position in the input-grid to the
 !> high_resolution output grid position
-  integer function hres_pos(lres_pos)
+  pure integer function hres_pos(lres_pos)
     USE iso_fortran_env, only: real64
     real(kind=real64), intent(in) :: lres_pos
     ! convert to 0.5-starting position (cell 1 from [0.5,1.5[, extend to new range, convert to 1-start
@@ -151,8 +151,8 @@ module snapdimML
   end function hres_pos
 
 !> translate a x or y position in the output-grid to the
-!> lwo_resolution input grid position
-  integer function lres_pos(hres_pos)
+!> low_resolution input grid position
+  pure integer function lres_pos(hres_pos)
     USE iso_fortran_env, only: real64
     integer, intent(in) :: hres_pos
     ! convert to 0-starting positions, extend to new range, convert to 1-start
