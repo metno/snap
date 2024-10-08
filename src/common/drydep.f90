@@ -381,6 +381,7 @@ subroutine drydep_nonconstant_vd(tstep, vd, part)
   use particleML, only: Particle
   use snapfldML, only: depdry
   use snapparML, only: def_comp
+  use snapdimML, only: hres_pos
 
   !> Timestep of the simulation in seconds
   real, intent(in) :: tstep
@@ -403,6 +404,9 @@ subroutine drydep_nonconstant_vd(tstep, vd, part)
     j = nint(part%y)
 
     deprate_m1 = exp(-tstep*vd(i,j,mm)/h)
+
+    i = hres_pos(part%x)
+    j = hres_pos(part%y)
     dep = part%scale_rad(deprate_m1)
     !$OMP atomic
     depdry(i,j,mm) = depdry(i,j,mm) + dble(dep)
