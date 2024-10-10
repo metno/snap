@@ -57,6 +57,13 @@ module wetdep
   type(wetdep_incloud_scheme_t), parameter, public :: WETDEP_INCLOUD_SCHEME_ROSELLE = &
       wetdep_incloud_scheme_t(3, "Roselle")
 
+  type, public :: wetdep_scheme_t
+    type(wetdep_belowcloud_scheme_t) :: subcloud
+    type(wetdep_incloud_scheme_t) :: incloud
+    logical :: use_vertical
+    logical :: use_cloudfraction
+  end type
+
   interface operator (==)
     module procedure :: equal_belowcloud_scheme, equal_incloud_scheme
   end interface
@@ -72,10 +79,11 @@ module wetdep
   end type
 
   type(conventional_params_t), save, public :: conventional_params = conventional_params_t(0.0, 0.0)
+  type(conventional_params_t), parameter, public :: RATM_params = conventional_params_t(2.98e-5, 0.75)
   real(real64), allocatable, save, public :: conventional_deprate_m1(:,:)
 
-  type(wetdep_belowcloud_scheme_t), save, public :: wetdep_belowcloud_scheme = WETDEP_BELOWCLOUD_SCHEME_UNDEFINED
-  type(wetdep_incloud_scheme_t), save, public :: wetdep_incloud_scheme = WETDEP_INCLOUD_SCHEME_UNDEFINED
+  type(wetdep_scheme_t), save, public :: wetdep_scheme = &
+      wetdep_scheme_t(WETDEP_BELOWCLOUD_SCHEME_UNDEFINED, WETDEP_INCLOUD_SCHEME_UNDEFINED, .false., .false.)
 
 contains
 
@@ -497,7 +505,7 @@ contains
         accum_ccf = 1.0
       endwhere
 
-      select case (wetdep_belowcloud_scheme%scheme)
+      select case (wetdep_scheme%subcloud%scheme)
         case (WETDEP_BELOWCLOUD_SCHEME_BARTNICKI%scheme)
           call wet_deposition_rate_bartnicki(wscav(:,:,k), radius, accum_precip(:,:), accum_ccf(:,:), use_ccf=.true.)
         case (WETDEP_BELOWCLOUD_SCHEME_CONVENTIONAL%scheme)
@@ -518,10 +526,10 @@ contains
         case (WETDEP_BELOWCLOUD_SCHEME_NONE%scheme)
           wscav(:,:,k) = 0.0
         case default
-          error stop wetdep_belowcloud_scheme%description
+          error stop wetdep_scheme%subcloud%description
       end select
 
-      select case (wetdep_incloud_scheme%scheme)
+      select case (wetdep_scheme%incloud%scheme)
         case (WETDEP_INCLOUD_SCHEME_NONE%scheme)
           wscav_tmp(:,:,k) = 0.0
         case (WETDEP_INCLOUD_SCHEME_ROSELLE%scheme)
@@ -529,7 +537,7 @@ contains
         case (WETDEP_INCLOUD_SCHEME_TAKEMURA%scheme)
           call wetdep_incloud_takemura(wscav_tmp(:,:,k), precip(:,:,k), cw(:,:,k), ccf(:,:,k))
         case default
-          error stop wetdep_incloud_scheme%description
+          error stop wetdep_scheme%incloud%description
       end select
       wscav(:,:,k) = max(wscav(:,:,k), wscav_tmp(:,:,k))
     end do
