@@ -24,24 +24,24 @@ module wetdep
   real, parameter :: precmin = 0.01
 
   public :: wetdep2, wetdep2_init, &
-      wetdep_conventional, wetdep_conventional_compute, init
+      wetdep_conventional, wetdep_conventional_compute, init, deinit
   public :: operator(==), operator(/=)
   public :: wetdep_bartnicki
   public :: prepare_wetdep, wetdep_using_precomputed_wscav
 
-  type, public :: wetdep_belowcloud_scheme_t
+  type, public :: wetdep_subcloud_scheme_t
     integer, private :: scheme
     character(len=32), public :: description
   end type
 
-  type(wetdep_belowcloud_scheme_t), parameter, public :: WETDEP_BELOWCLOUD_SCHEME_UNDEFINED = &
-      wetdep_belowcloud_scheme_t(0, "Not defined")
-  type(wetdep_belowcloud_scheme_t), parameter, public :: WETDEP_BELOWCLOUD_SCHEME_NONE = &
-      wetdep_belowcloud_scheme_t(1, "No scheme (skip)")
-  type(wetdep_belowcloud_scheme_t), parameter, public :: WETDEP_BELOWCLOUD_SCHEME_BARTNICKI = &
-      wetdep_belowcloud_scheme_t(2, "Bartnicki")
-  type(wetdep_belowcloud_scheme_t), parameter, public :: WETDEP_BELOWCLOUD_SCHEME_CONVENTIONAL = &
-      wetdep_belowcloud_scheme_t(3, "Conventional")
+  type(wetdep_subcloud_scheme_t), parameter, public :: WETDEP_SUBCLOUD_SCHEME_UNDEFINED = &
+      wetdep_subcloud_scheme_t(0, "Not defined")
+  type(wetdep_subcloud_scheme_t), parameter, public :: WETDEP_SUBCLOUD_SCHEME_NONE = &
+      wetdep_subcloud_scheme_t(1, "No scheme (skip)")
+  type(wetdep_subcloud_scheme_t), parameter, public :: WETDEP_SUBCLOUD_SCHEME_BARTNICKI = &
+      wetdep_subcloud_scheme_t(2, "Bartnicki")
+  type(wetdep_subcloud_scheme_t), parameter, public :: WETDEP_SUBCLOUD_SCHEME_CONVENTIONAL = &
+      wetdep_subcloud_scheme_t(3, "Conventional")
 
   type, public :: wetdep_incloud_scheme_t
     integer, private :: scheme
@@ -58,18 +58,18 @@ module wetdep
       wetdep_incloud_scheme_t(3, "Roselle")
 
   type, public :: wetdep_scheme_t
-    type(wetdep_belowcloud_scheme_t) :: subcloud
+    type(wetdep_subcloud_scheme_t) :: subcloud
     type(wetdep_incloud_scheme_t) :: incloud
     logical :: use_vertical
     logical :: use_cloudfraction
   end type
 
   interface operator (==)
-    module procedure :: equal_belowcloud_scheme, equal_incloud_scheme
+    module procedure :: equal_subcloud_scheme, equal_incloud_scheme
   end interface
 
   interface operator (/=)
-    module procedure :: not_equal_belowcloud_scheme, not_equal_incloud_scheme
+    module procedure :: not_equal_subcloud_scheme, not_equal_incloud_scheme
   end interface
 
 
@@ -83,17 +83,17 @@ module wetdep
   real(real64), allocatable, save, public :: conventional_deprate_m1(:,:)
 
   type(wetdep_scheme_t), save, public :: wetdep_scheme = &
-      wetdep_scheme_t(WETDEP_BELOWCLOUD_SCHEME_UNDEFINED, WETDEP_INCLOUD_SCHEME_UNDEFINED, .false., .false.)
+      wetdep_scheme_t(WETDEP_SUBCLOUD_SCHEME_UNDEFINED, WETDEP_INCLOUD_SCHEME_UNDEFINED, .false., .false.)
 
 contains
 
-  logical pure function equal_belowcloud_scheme(this, other) result(eq)
-    type(wetdep_belowcloud_scheme_t), intent(in) :: this, other
+  logical pure function equal_subcloud_scheme(this, other) result(eq)
+    type(wetdep_subcloud_scheme_t), intent(in) :: this, other
     eq = this%scheme == other%scheme
   end function
 
-  logical pure function not_equal_belowcloud_scheme(this, other) result(eq)
-    type(wetdep_belowcloud_scheme_t), intent(in) :: this, other
+  logical pure function not_equal_subcloud_scheme(this, other) result(eq)
+    type(wetdep_subcloud_scheme_t), intent(in) :: this, other
     eq = .not. (this == other)
   end function
 
@@ -110,12 +110,12 @@ contains
   subroutine init(tstep)
     use snapdimML, only: nx, ny
     real, intent(in) :: tstep
-    if (wetdep_scheme%subcloud == WETDEP_BELOWCLOUD_SCHEME_CONVENTIONAL .and. &
+    if (wetdep_scheme%subcloud == WETDEP_SUBCLOUD_SCHEME_CONVENTIONAL .and. &
         wetdep_scheme%use_vertical) then
         allocate(conventional_deprate_m1(nx,ny))
     endif
 
-    if (wetdep_scheme%subcloud == WETDEP_BELOWCLOUD_SCHEME_BARTNICKI.and. &
+    if (wetdep_scheme%subcloud == WETDEP_SUBCLOUD_SCHEME_BARTNICKI.and. &
         wetdep_scheme%use_vertical) then
         call wetdep2_init(tstep)
     endif
@@ -516,9 +516,9 @@ contains
       endwhere
 
       select case (wetdep_scheme%subcloud%scheme)
-        case (WETDEP_BELOWCLOUD_SCHEME_BARTNICKI%scheme)
+        case (WETDEP_SUBCLOUD_SCHEME_BARTNICKI%scheme)
           call wet_deposition_rate_bartnicki(wscav(:,:,k), radius, accum_precip(:,:), accum_ccf(:,:), use_ccf=.true.)
-        case (WETDEP_BELOWCLOUD_SCHEME_CONVENTIONAL%scheme)
+        case (WETDEP_SUBCLOUD_SCHEME_CONVENTIONAL%scheme)
           block
             integer :: i, j
             real :: adj_precip
@@ -533,7 +533,7 @@ contains
               enddo
             enddo
           end block
-        case (WETDEP_BELOWCLOUD_SCHEME_NONE%scheme)
+        case (WETDEP_SUBCLOUD_SCHEME_NONE%scheme)
           wscav(:,:,k) = 0.0
         case default
           error stop wetdep_scheme%subcloud%description
