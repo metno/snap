@@ -24,7 +24,7 @@ module wetdep
   real, parameter :: precmin = 0.01
 
   public :: wetdep2, wetdep2_init, &
-      wetdep_conventional, wetdep_conventional_init, wetdep_conventional_deinit, wetdep_conventional_compute
+      wetdep_conventional, wetdep_conventional_compute, init
   public :: operator(==), operator(/=)
   public :: wetdep_bartnicki
   public :: prepare_wetdep, wetdep_using_precomputed_wscav
@@ -106,6 +106,25 @@ contains
     type(wetdep_incloud_scheme_t), intent(in) :: this, other
     eq = .not. (this == other)
   end function
+
+  subroutine init(tstep)
+    use snapdimML, only: nx, ny
+    real, intent(in) :: tstep
+    if (wetdep_scheme%subcloud == WETDEP_BELOWCLOUD_SCHEME_CONVENTIONAL .and. &
+        wetdep_scheme%use_vertical) then
+        allocate(conventional_deprate_m1(nx,ny))
+    endif
+
+    if (wetdep_scheme%subcloud == WETDEP_BELOWCLOUD_SCHEME_BARTNICKI.and. &
+        wetdep_scheme%use_vertical) then
+        call wetdep2_init(tstep)
+    endif
+      
+  end subroutine
+
+  subroutine deinit()
+    if (allocated(conventional_deprate_m1)) deallocate(conventional_deprate_m1)
+  end subroutine
 
   subroutine wetdep_bartnicki(wscav, precip, radius)
     use iso_fortran_env, only: real32
@@ -189,10 +208,11 @@ contains
   end subroutine wetdep2
 
 !> Initialisation routine for ::wetdep2
+!> Setting vminprec
+!> Output diagnostics
   subroutine wetdep2_init(tstep)
 ! initalization
     USE snapdebug, only: iulog
-    USE particleML, only: Particle, extraParticle
     USE snapparML, only: ncomp
     USE snapparML, only: run_comp, def_comp
 
@@ -323,22 +343,12 @@ contains
     deprate = 1.0 - exp(-tstep*rkw)
   end function
 
-  subroutine wetdep_conventional_init()
-    use snapdimML, only: nx, ny
-    allocate(conventional_deprate_m1(nx,ny))
-  end subroutine
-
-  subroutine wetdep_conventional_deinit()
-    deallocate(conventional_deprate_m1)
-  end subroutine
-
   subroutine wetdep_conventional_compute(precip)
     real, intent(in) :: precip(:,:)
 
     conventional_deprate_m1(:,:) = conventional_params%A * (precip ** conventional_params%B)
   end subroutine
 
-  !> TODO: Expand to 3D
   subroutine wetdep_conventional(depwet, part, tstep)
     USE iso_fortran_env, only: real64
     USE particleML, only: Particle, extraParticle
