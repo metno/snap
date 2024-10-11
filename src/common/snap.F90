@@ -198,9 +198,10 @@ PROGRAM bsnap
     WETDEP_BELOWCLOUD_SCHEME_CONVENTIONAL, &
     operator(==), operator(/=), wet_deposition_conventional_params => conventional_params, &
     wet_deposition_RATM => RATM_params, &
-    wetdep_conventional_init, wetdep_conventional_compute, wetdep_conventional, &
+    wetdep_conventional_compute, wetdep_conventional, &
     WETDEP_INCLOUD_SCHEME_NONE, WETDEP_INCLOUD_SCHEME_TAKEMURA, WETDEP_INCLOUD_SCHEME_ROSELLE, &
-    WETDEP_INCLOUD_SCHEME_UNDEFINED
+    WETDEP_INCLOUD_SCHEME_UNDEFINED, &
+    wetdep_init => init
   use wetdep, only: wet_deposition_conventional_params => conventional_params
   USE drydep, only: drydep1, drydep2, drydep_nonconstant_vd, drydep_scheme, &
           DRYDEP_SCHEME_OLD, DRYDEP_SCHEME_NEW, DRYDEP_SCHEME_EMEP, &
@@ -499,10 +500,10 @@ PROGRAM bsnap
     write (iulog, *) 'ifltim:  ', ifltim
     write (iulog, *) 'irwalk:  ', use_random_walk
     write (iulog, *) 'drydep_scheme: ', drydep_scheme
-    write (iulog, *) 'wetdep_scheme: subcloud: ', wetdep_scheme%subcloud%description
-    write (iulog, *) 'wetdep_scheme: incloud: ', wetdep_scheme%incloud%description
-    write (iulog, *) 'wetdep_scheme: vertical: ', wetdep_scheme%use_vertical
-    write (iulog, *) 'wetdep_scheme: cloudfraction: ', wetdep_scheme%use_cloudfraction
+    write (iulog, *) 'wetdep_scheme: subcloud scheme:   ', wetdep_scheme%subcloud%description
+    write (iulog, *) 'wetdep_scheme: incloud  scheme:   ', wetdep_scheme%incloud%description
+    write (iulog, *) 'wetdep_scheme: use vertical:      ', wetdep_scheme%use_vertical
+    write (iulog, *) 'wetdep_scheme: use cloudfraction: ', wetdep_scheme%use_cloudfraction
     write (iulog, *) 'idecay:  ', idecay
     write (iulog, *) 'rmlimit: ', rmlimit
     write (iulog, *) 'ndefcomp:', size(def_comp)
@@ -574,8 +575,6 @@ PROGRAM bsnap
     mhmax = -10.0
     ! b_end
 
-
-    if (wetdep_scheme%subcloud == WETDEP_BELOWCLOUD_SCHEME_CONVENTIONAL) call wetdep_conventional_init()
 
 ! reset readfield_nc (eventually, traj will rerun this loop)
     if (ftype == "netcdf") then
@@ -730,8 +729,7 @@ PROGRAM bsnap
         ! setting particle-number to 0 means init
         call posint_init()
 
-        if (wetdep_scheme%subcloud == WETDEP_BELOWCLOUD_SCHEME_BARTNICKI) call wetdep2_init(tstep)
-
+        call wetdep_init(tstep)
         call forwrd_init()
         if (use_random_walk) call rwalk_init(tstep)
         init = .FALSE.
@@ -766,11 +764,11 @@ PROGRAM bsnap
 
         !..wet deposition
         if (def_comp(pdata(np)%icomp)%kwetdep == 1) then
-          if (met_params%use_3d_precip) then
-            block ! TODO
-            use snapfldML, only: wscav, depwet
-            use wetdep, only: wetdep_using_precomputed_wscav
-            call wetdep_using_precomputed_wscav(pdata(np), wscav, depwet, tstep)
+          if (wetdep_scheme%use_vertical) then
+            block
+              use snapfldML, only: wscav, depwet
+              use wetdep, only: wetdep_using_precomputed_wscav
+              call wetdep_using_precomputed_wscav(pdata(np), wscav, depwet, tstep)
             end block
           else
             if (wetdep_scheme%subcloud == WETDEP_BELOWCLOUD_SCHEME_BARTNICKI) then
