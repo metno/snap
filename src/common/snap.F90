@@ -194,14 +194,14 @@ PROGRAM bsnap
   use snapfldML, only: depwet, total_activity_lost_domain, vd_dep
   USE forwrdML, only: forwrd, forwrd_init
   USE wetdep, only: wetdep2, wetdep2_init, wetdep_scheme, wetdep_scheme_t, &
-    WETDEP_BELOWCLOUD_SCHEME_UNDEFINED, WETDEP_BELOWCLOUD_SCHEME_BARTNICKI, &
-    WETDEP_BELOWCLOUD_SCHEME_CONVENTIONAL, &
+    WETDEP_SUBCLOUD_SCHEME_UNDEFINED, WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
+    WETDEP_SUBCLOUD_SCHEME_CONVENTIONAL, &
     operator(==), operator(/=), wet_deposition_conventional_params => conventional_params, &
     wet_deposition_RATM => RATM_params, &
     wetdep_conventional_compute, wetdep_conventional, &
     WETDEP_INCLOUD_SCHEME_NONE, WETDEP_INCLOUD_SCHEME_TAKEMURA, WETDEP_INCLOUD_SCHEME_ROSELLE, &
     WETDEP_INCLOUD_SCHEME_UNDEFINED, &
-    wetdep_init => init
+    wetdep_init => init, wetdep_deinit => deinit
   use wetdep, only: wet_deposition_conventional_params => conventional_params
   USE drydep, only: drydep1, drydep2, drydep_nonconstant_vd, drydep_scheme, &
           DRYDEP_SCHEME_OLD, DRYDEP_SCHEME_NEW, DRYDEP_SCHEME_EMEP, &
@@ -681,7 +681,7 @@ PROGRAM bsnap
         !..calculate boundary layer (top and height)
         call bldp
 
-        if (wetdep_scheme%subcloud == WETDEP_BELOWCLOUD_SCHEME_CONVENTIONAL) then
+        if (wetdep_scheme%subcloud == WETDEP_SUBCLOUD_SCHEME_CONVENTIONAL) then
           block
             use snapfldml, only: precip
             call wetdep_conventional_compute(precip)
@@ -771,10 +771,10 @@ PROGRAM bsnap
               call wetdep_using_precomputed_wscav(pdata(np), wscav, depwet, tstep)
             end block
           else
-            if (wetdep_scheme%subcloud == WETDEP_BELOWCLOUD_SCHEME_BARTNICKI) then
+            if (wetdep_scheme%subcloud == WETDEP_SUBCLOUD_SCHEME_BARTNICKI) then
               call wetdep2(depwet, tstep, pdata(np), pextra)
             endif
-            if (wetdep_scheme%subcloud == WETDEP_BELOWCLOUD_SCHEME_CONVENTIONAL) then
+            if (wetdep_scheme%subcloud == WETDEP_SUBCLOUD_SCHEME_CONVENTIONAL) then
               call wetdep_conventional(depwet, pdata(np), tstep)
             endif
           endif
@@ -913,6 +913,7 @@ PROGRAM bsnap
   call fldout_unload()
 
 ! deallocate all fields
+  call wetdep_deinit()
   call drydep_unload()
   CALL deAllocateFields()
 
@@ -1209,19 +1210,19 @@ contains
         !..wet.deposition.new
         write (error_unit, *) "Deprecated, please use wet.deposition.scheme = Bartnicki"
         warning = .true.
-        if (wetdep_scheme%subcloud /= WETDEP_BELOWCLOUD_SCHEME_UNDEFINED .or. &
+        if (wetdep_scheme%subcloud /= WETDEP_SUBCLOUD_SCHEME_UNDEFINED .or. &
             wetdep_scheme%incloud /= WETDEP_INCLOUD_SCHEME_UNDEFINED) then
           write (error_unit, *) "wet deposition already set"
           goto 12
         endif
         wetdep_scheme = wetdep_scheme_t( &
-          WETDEP_BELOWCLOUD_SCHEME_BARTNICKI, &
+          WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
           WETDEP_INCLOUD_SCHEME_NONE, &
           .false., .false.)
       case ('wet.deposition.version')
         write (error_unit, *) "Deprecated, please use wet.deposition.scheme = Bartnicki"
         warning = .true.
-        if (wetdep_scheme%subcloud /= WETDEP_BELOWCLOUD_SCHEME_UNDEFINED .or. &
+        if (wetdep_scheme%subcloud /= WETDEP_SUBCLOUD_SCHEME_UNDEFINED .or. &
             wetdep_scheme%incloud /= WETDEP_INCLOUD_SCHEME_UNDEFINED) then
           write (error_unit, *) "wet deposition already set"
           goto 12
@@ -1235,7 +1236,7 @@ contains
           read (cinput(pname_start:pname_end), *, err=12) scheme_number
           if (scheme_number /= 2) goto 12
           wetdep_scheme = wetdep_scheme_t( &
-            WETDEP_BELOWCLOUD_SCHEME_BARTNICKI, &
+            WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
             WETDEP_INCLOUD_SCHEME_NONE, &
             .false., &
             .false.)
@@ -1256,7 +1257,7 @@ contains
         read(cinput(pname_start:pname_end), *) wet_deposition_conventional_params%B
       case ('wet.deposition.scheme')
         if (.not.has_value) goto 12
-        if (wetdep_scheme%subcloud /= WETDEP_BELOWCLOUD_SCHEME_UNDEFINED .or. &
+        if (wetdep_scheme%subcloud /= WETDEP_SUBCLOUD_SCHEME_UNDEFINED .or. &
             wetdep_scheme%incloud /= WETDEP_INCLOUD_SCHEME_UNDEFINED) then
           write (error_unit, *) "wet deposition already set"
           goto 12
@@ -1265,13 +1266,13 @@ contains
         select case(cinput(pname_start:pname_end))
           case("bartnicki")
             wetdep_scheme = wetdep_scheme_t( &
-              WETDEP_BELOWCLOUD_SCHEME_BARTNICKI, &
+              WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
               WETDEP_INCLOUD_SCHEME_NONE, &
               .false., .false. &
             )
           case("conventional")
             wetdep_scheme = wetdep_scheme_t( &
-              WETDEP_BELOWCLOUD_SCHEME_CONVENTIONAL, &
+              WETDEP_SUBCLOUD_SCHEME_CONVENTIONAL, &
               WETDEP_INCLOUD_SCHEME_NONE, &
               .false., .false. &
             )
@@ -1279,7 +1280,7 @@ contains
             met_params%use_3d_precip = .true.
             met_params%use_ccf = .true.
             wetdep_scheme = wetdep_scheme_t( &
-              WETDEP_BELOWCLOUD_SCHEME_BARTNICKI, &
+              WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
               WETDEP_INCLOUD_SCHEME_NONE, &
               .true., .true. &
             )
@@ -1287,7 +1288,7 @@ contains
             met_params%use_3d_precip = .true.
             met_params%use_ccf = .true.
             wetdep_scheme = wetdep_scheme_t( &
-              WETDEP_BELOWCLOUD_SCHEME_BARTNICKI, &
+              WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
               WETDEP_INCLOUD_SCHEME_ROSELLE, &
               .true., .true. &
             )
@@ -1295,7 +1296,7 @@ contains
             met_params%use_3d_precip = .true.
             met_params%use_ccf = .true.
             wetdep_scheme = wetdep_scheme_t( &
-              WETDEP_BELOWCLOUD_SCHEME_BARTNICKI, &
+              WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
               WETDEP_INCLOUD_SCHEME_TAKEMURA, &
               .true., .true. &
             )
@@ -1309,7 +1310,7 @@ contains
             met_params%use_3d_precip = .true.
             met_params%use_ccf = .true.
             wetdep_scheme = wetdep_scheme_t( &
-              WETDEP_BELOWCLOUD_SCHEME_CONVENTIONAL, &
+              WETDEP_SUBCLOUD_SCHEME_CONVENTIONAL, &
               WETDEP_INCLOUD_SCHEME_ROSELLE, &
               .true., .true. &
             )
@@ -1323,7 +1324,7 @@ contains
             met_params%use_3d_precip = .true.
             met_params%use_ccf = .true.
             wetdep_scheme = wetdep_scheme_t( &
-              WETDEP_BELOWCLOUD_SCHEME_CONVENTIONAL, &
+              WETDEP_SUBCLOUD_SCHEME_CONVENTIONAL, &
               WETDEP_INCLOUD_SCHEME_TAKEMURA, &
               .true., .true. &
             )
@@ -2236,10 +2237,10 @@ contains
     if (drydep_scheme == DRYDEP_SCHEME_UNDEFINED) drydep_scheme = DRYDEP_SCHEME_OLD
 
     ! Set default wetdep schemes
-    if (wetdep_scheme%subcloud == WETDEP_BELOWCLOUD_SCHEME_UNDEFINED .and. &
+    if (wetdep_scheme%subcloud == WETDEP_SUBCLOUD_SCHEME_UNDEFINED .and. &
         wetdep_scheme%incloud == WETDEP_INCLOUD_SCHEME_UNDEFINED) then
         wetdep_scheme = wetdep_scheme_t( &
-          WETDEP_BELOWCLOUD_SCHEME_BARTNICKI, &
+          WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
           WETDEP_INCLOUD_SCHEME_NONE, &
           .false., .false. &
         )
@@ -2282,7 +2283,7 @@ contains
         end if
       end if
 
-      if (wetdep_scheme%subcloud == WETDEP_BELOWCLOUD_SCHEME_BARTNICKI .AND. def_comp(m)%kwetdep == 1) then
+      if (wetdep_scheme%subcloud == WETDEP_SUBCLOUD_SCHEME_BARTNICKI .AND. def_comp(m)%kwetdep == 1) then
         if (def_comp(m)%radiusmym <= 0.) then
           write (error_unit, *) 'Wet deposition error. radius: ', &
             def_comp(m)%radiusmym
