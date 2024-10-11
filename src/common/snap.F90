@@ -32,16 +32,14 @@
 ! RANDOM.WALK.OFF
 ! BOUNDARY.LAYER.FULL.MIX.OFF
 ! BOUNDARY.LAYER.FULL.MIX.ON
-! DRY.DEPOSITION.OLD .......................... (default)
-! DRY.DEPOSITION.NEW
+! DRY.DEPOSITION.OLD  * deprecated
+! DRY.DEPOSITION.NEW  * deprecated
 ! DRY.DEPOSITION.SCHEME = "emep"/"old"/"..."
 ! DRY.DEPOSITION.SAVE
 ! DRY.DEPOSITION.LARGEST_LANDFRACTION_FILE = "landclasses.nc"
 ! WET.DEPOSITION.NEW ! deprecated
-! WET.DEPOSITION.SCHEME = Bartnicki ! (default)
-! WET.DEPOSITION.SCHEME.INCLOUD  ! Roselle, Takemura
-! WET.DEPOSITION.SCHEME.SUBCLOUD ! Bartnicki, RATM
-! WET.DEPOSITION.SAVE
+! WET.DEPOSITION.SCHEME = Bartnicki ! (default), others: bartnicki-takemura, bartnicki-vertical etc.
+! WET.DEPOSITION.SAVE  ! Outputs wet scavenging rate (for 3D output only)
 ! TIME.STEP= 900.
 ! TIME.RELEASE.PROFILE.CONSTANT
 ! TIME.RELEASE.PROFILE.BOMB
@@ -124,8 +122,7 @@
 ! GRID.GPARAM = 3,-46.400002,-36.400002,0.10800000,0.10800000, 0.0000000, 65.000000
 ! * emep 1x1 deg lat lon
 ! * GRID.GPARAM = 2, -179.,-89.5,1.,1., 0., 0.
-! GRID.RUN=   88,1814, 1,1,1
-! * Norlam (sigma levels)
+! GRID.RUN ! deprecated
 ! DATA.SIGMA.LEVELS
 ! * Hirlam (eta levels)
 ! DATA.ETA.LEVELS
@@ -144,7 +141,7 @@
 ! * increase output-resolution to factor*input_resolution
 ! FIELD.OUTPUT_RESOLUTION_FACTOR= 1
 ! FIELD.OUTTYPE=netcdf
-! FIELD.DAILY.OUTPUT.ON
+! FIELD.DAILY.OUTPUT.ON ! Output a file per day
 ! FIELD.USE_MODEL_WIND_INSTEAD_OF_10M= [.false.]/.true
 ! OUTPUT.COLUMN_MAX_CONC.ENABLE
 ! OUTPUT.COLUMN_MAX_CONC.DISABLE
@@ -1159,10 +1156,14 @@ contains
       case ('dry.deposition.old')
         !..dry.deposition.old
         if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_OLD) goto 12
+        write(error_unit,*) "dry.deposition.old is deprecated, use dry.deposition.scheme=old"
+        warning = .true.
         drydep_scheme = DRYDEP_SCHEME_OLD
       case ('dry.deposition.new')
         !..dry.deposition.new
         if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_NEW) goto 12
+        write(error_unit,*) "dry.deposition.new is deprecated, use dry.deposition.scheme=new"
+        warning = .true.
         drydep_scheme = DRYDEP_SCHEME_NEW
       case ('dry.deposition.scheme')
         if (.not. has_value) goto 12
@@ -1334,6 +1335,9 @@ contains
         end select
       case ('wet.deposition.save')
         if (has_value) goto 12
+        if (.not.wetdep_scheme%use_vertical) then
+          write(error_unit,*) "wet.depositon.save is only allowed when 3D wetdep scheme is used"
+        endif
         block
           use fldout_ncml, only: output_wetdeprate
           output_wetdeprate = .true.
