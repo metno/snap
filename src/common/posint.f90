@@ -19,18 +19,12 @@ module posintML
   implicit none
   private
 
-  public posint, posint_init
+  public :: posint
 
   contains
 
-!> initialisation function for ::posint
-subroutine posint_init()
-end subroutine
-
 !> Purpose:  Interpolation of boundary layer top and height
 !>           and precipitation intensity to particle positions
-!>
-!> must call ::posint_init first
 subroutine posint(part,tf1,tf2,tnow,pextra)
   USE particleML, only: Particle, extraParticle
   USE snapgrdML, only: gparam

@@ -32,7 +32,7 @@ module readfield_fiML
   implicit none
   private
 
-  public :: readfield_fi, fi_checkload, check, fimex_open, read_landfractions
+  public :: readfield_fi, fi_checkload, check, fimex_open, read_largest_landfraction
 
   !> @brief load and check an array from a source
   interface fi_checkload
@@ -314,7 +314,7 @@ contains
       precip = 0.0
     endif
 
-    call read_drydep(fio, timepos, timeposm1, nr)
+    call read_drydep_required_fields(fio, timepos, timeposm1, nr)
 
     call check(fio%close(), "close fio")
 
@@ -806,7 +806,7 @@ contains
     write (iulog, *) "reading "//trim(varname)//", min, max: ", minval(zfield), maxval(zfield)
   end subroutine fi_checkload_intern
 
-  subroutine read_drydep(fio, timepos, timeposm1, nr)
+  subroutine read_drydep_required_fields(fio, timepos, timeposm1, nr)
     USE ieee_arithmetic, only: ieee_is_nan
     USE iso_fortran_env, only: real64
     USE snapmetML, only: met_params, &
@@ -829,6 +829,7 @@ contains
     if (.not.(drydep_scheme == DRYDEP_SCHEME_EMEP .or. &
               drydep_scheme == DRYDEP_SCHEME_EMERSON .or. &
               drydep_scheme == DRYDEP_SCHEME_ZHANG)) then
+      ! Other schemes do not require additional fields to be read
       return
     endif
 
@@ -880,37 +881,33 @@ contains
     endwhere
     call fi_checkload(fio, met_params%t2m, temp_units, t2m(:, :), nt=timepos, nr=nr)
 
-    if (drydep_scheme == DRYDEP_SCHEME_EMEP .or. &
-        drydep_scheme == DRYDEP_SCHEME_EMERSON .or. &
-        drydep_scheme == DRYDEP_SCHEME_ZHANG) then
-      do i=1,ncomp
-        mm = run_comp(i)%to_defined
+    do i=1,ncomp
+      mm = run_comp(i)%to_defined
 
-        if (def_comp(mm)%kdrydep == 1) then
-          diam = 2*def_comp(mm)%radiusmym*1e-6
-          dens = def_comp(mm)%densitygcm3*1e3
-          select case(drydep_scheme)
-          case (DRYDEP_SCHEME_EMEP)
-            call drydep_emep_vd(ps2*100, t2m, yflux, xflux, z0, &
-              hflux, leaf_area_index, real(diam), real(dens), classnr, vd_dep(:, :, i), &
-              roa, ustar, monin_l, raero, vs, rs)
-          case (DRYDEP_SCHEME_ZHANG)
-            call drydep_zhang_emerson_vd(ps2*100, t2m, yflux, xflux, z0, &
-              hflux, leaf_area_index, diam, dens, classnr, vd_dep(:, :, i), .false., &
-              roa, ustar, monin_l, raero, vs, rs)
-          case (DRYDEP_SCHEME_EMERSON)
-            call drydep_zhang_emerson_vd(ps2*100, t2m, yflux, xflux, z0, &
-              hflux, leaf_area_index, diam, dens, classnr, vd_dep(:, :, i), .true., &
-              roa, ustar, monin_l, raero, vs, rs)
-          case default
-            error stop "Unreachable"
-          end select
-        endif
-      end do
-    endif
+      if (def_comp(mm)%kdrydep == 1) then
+        diam = 2*def_comp(mm)%radiusmym*1e-6
+        dens = def_comp(mm)%densitygcm3*1e3
+        select case(drydep_scheme)
+        case (DRYDEP_SCHEME_EMEP)
+          call drydep_emep_vd(ps2*100, t2m, yflux, xflux, z0, &
+            hflux, leaf_area_index, real(diam), real(dens), classnr, vd_dep(:, :, i), &
+            roa, ustar, monin_l, raero, vs, rs)
+        case (DRYDEP_SCHEME_ZHANG)
+          call drydep_zhang_emerson_vd(ps2*100, t2m, yflux, xflux, z0, &
+            hflux, leaf_area_index, diam, dens, classnr, vd_dep(:, :, i), .false., &
+            roa, ustar, monin_l, raero, vs, rs)
+        case (DRYDEP_SCHEME_EMERSON)
+          call drydep_zhang_emerson_vd(ps2*100, t2m, yflux, xflux, z0, &
+            hflux, leaf_area_index, diam, dens, classnr, vd_dep(:, :, i), .true., &
+            roa, ustar, monin_l, raero, vs, rs)
+        case default
+          error stop "Unreachable"
+        end select
+      endif
+    end do
   end subroutine
 
-  subroutine read_landfractions(inputfile)
+  subroutine read_largest_landfraction(inputfile)
     use snapdimML, only: nx, ny
     use drydep, only: preprocess_landfraction
     use fimex, only: INTERPOL_NEAREST_NEIGHBOR
@@ -923,12 +920,12 @@ contains
 
     if (fint%method >= 0) then
       call check(fio_intern%open(inputfile, "", "nc4"), &
-        "can't open landclass file")
+        "can't open largest landfraction file")
       call check(fio%interpolate(fio_intern, INTERPOL_NEAREST_NEIGHBOR, fint%proj, fint%x_axis, &
                                  fint%y_axis, fint%unit_is_degree), &
-                 "Can't interpolate landclass file")
+                 "Can't interpolate largest landfraction file")
     else
-      call check(fio%open(inputfile, "", "nc4"), "Can't open landclass file")
+      call check(fio%open(inputfile, "", "nc4"), "Can't open largest landraction file")
     endif
 
     allocate(arr(nx, ny))
