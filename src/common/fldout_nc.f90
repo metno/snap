@@ -1131,7 +1131,8 @@ subroutine initialize_output(filename, itime, ierror)
 
     call nc_set_projection(iunit, dimid%x, dimid%y, &
         igtype, gparam, garea, xm, ym, simulation_start)
-    if (imodlevel .or. met_params%use_3d_precip) then
+    if (imodlevel .or. output_wetdeprate .or. &
+        (precipitation_in_output .and. met_params%use_3d_precip)) then
       call nc_set_vtrans(iunit, dimid%k, varid%k, varid%ap, varid%b)
     endif
 
@@ -1173,8 +1174,8 @@ subroutine initialize_output(filename, itime, ierror)
 
       if (met_params%use_3d_precip) then
         call nc_declare(iunit, dimids3d, varid%instant_prc, &
-          "precipitation_amount_instant", units="mm/h", &
-          stdname="precipitation", chunksize=chksz3d)
+          "lwe_instantaneous_precipitation_rate_ml", units="mm/hr", &
+          stdname="lwe_instantaneous_precipitation_rate_ml", chunksize=chksz3d)
       endif
     endif
 
@@ -1318,22 +1319,16 @@ subroutine initialize_output(filename, itime, ierror)
         integer(kind=int8), allocatable :: classnr_hr(:,:)
         if (largest_landfraction_file /= "not set") then
             call nc_declare(iunit, dimids2d, varid%landfraction, &
-              "land_fraction", units="1", datatype=NF90_BYTE)
+              "largest_land_fraction", units="1", datatype=NF90_BYTE)
             call hres_field(classnr, classnr_hr)
             call check(nf90_put_var(iunit, varid%landfraction, start=[1, 1], count=shape(classnr_hr), &
               values=classnr_hr), "Put landfraction")
-            call check(nf90_put_att(iunit, varid%landfraction, "11", "Sea"))
-            call check(nf90_put_att(iunit, varid%landfraction, "12", "Inland water"))
-            call check(nf90_put_att(iunit, varid%landfraction, "13", "Tundra/desert"))
-            call check(nf90_put_att(iunit, varid%landfraction, "14", "Ice and ice sheets"))
-            call check(nf90_put_att(iunit, varid%landfraction, "15", "Urban"))
-            call check(nf90_put_att(iunit, varid%landfraction, "16", "Crops"))
-            call check(nf90_put_att(iunit, varid%landfraction, "17", "Grass"))
-            call check(nf90_put_att(iunit, varid%landfraction, "18", "Wetlands"))
-            call check(nf90_put_att(iunit, varid%landfraction, "19", "Evergreen needleleaf"))
-            call check(nf90_put_att(iunit, varid%landfraction, "20", "Deciduous broadleaf"))
-            call check(nf90_put_att(iunit, varid%landfraction, "21", "Mixed forest"))
-            call check(nf90_put_att(iunit, varid%landfraction, "22", "Shrubs and interrupted woodlands"))
+            call check(nf90_put_att(iunit, varid%landfraction, "flag_values", &
+              [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]))
+            call check(nf90_put_att(iunit, varid%landfraction, "flag_meanings", &
+              "sea inland_water tundra_and_desert ice_and_ice_sheets urban crops" // &
+              " grass wetlands evergreen_needleleaf deciduous_broadleaf" // &
+              " mixed_forest shrubs_and_interrupted_woodlands"))
         endif
     end block
 
@@ -1411,7 +1406,7 @@ subroutine get_varids(iunit, varid, ierror)
   ! Optional
   ierror = nf90_inq_varid(iunit, "precipitation_amount_acc", varid%accum_prc)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
-  ierror = nf90_inq_varid(iunit, "precipitation_amount_instant", varid%instant_prc)
+  ierror = nf90_inq_varid(iunit, "lwe_instantaneous_precipitation_rate_ml", varid%instant_prc)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
   ierror = nf90_inq_varid(iunit, "lwe_precipitation_rate", varid%prc)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
@@ -1498,22 +1493,6 @@ subroutine get_varids(iunit, varid, ierror)
     ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%accdd)
     if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
 
-    varname = trim(output_component(m)%name) // "_wet_deposition"
-    ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%iwd)
-    if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
-
-    varname = trim(output_component(m)%name) // "_acc_wet_deposition"
-    ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%accwd)
-    if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
-
-    varname = trim(output_component(m)%name) // "_dry_deposition"
-    ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%idd)
-    if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
-
-    varname = trim(output_component(m)%name) // "_acc_dry_deposition"
-    ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%accdd)
-    if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
-
     varname = trim(output_component(m)%name) // "_dry_deposition_velocity"
     ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%vd)
     if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
@@ -1526,8 +1505,10 @@ subroutine get_varids(iunit, varid, ierror)
     ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%accwd)
     if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
 
+
     ierror = nf90_inq_varid(iunit, trim(output_component(m)%name)//"_wetdeprate", varid%comp(m)%wetscavrate)
     if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
+
 
     if (imodlevel) then
       if (modleveldump > 0.) then

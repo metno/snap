@@ -205,7 +205,7 @@ PROGRAM bsnap
           DRYDEP_SCHEME_ZHANG, DRYDEP_SCHEME_EMERSON, DRYDEP_SCHEME_UNDEFINED, &
           largest_landfraction_file,  drydep_unload => unload
   USE decayML, only: decay, decayDeps
-  USE posintML, only: posint, posint_init
+  USE posintML, only: posint
   USE bldpML, only: bldp
   USE releaseML, only: release, releases, tpos_bomb, nrelheight, mprel, &
                        mplume, nplume, iplume, npart, mpart, release_t
@@ -723,9 +723,6 @@ PROGRAM bsnap
       if (idecay == 1) call decayDeps(tstep)
       ! prepare particle functions once before loop
       if (init) then
-        ! setting particle-number to 0 means init
-        call posint_init()
-
         call wetdep_init(tstep)
         call forwrd_init()
         if (use_random_walk) call rwalk_init(tstep)
@@ -2008,7 +2005,7 @@ contains
     use find_parameter, only: detect_gridparams, get_klevel
 #if defined(FIMEX)
     use find_parameters_fi, only: detect_gridparams_fi
-    use readfield_fiML, only: read_landfractions
+    use readfield_fiML, only: read_largest_landfraction
 #endif
     integer, intent(out) :: ierror
 
@@ -2308,9 +2305,9 @@ contains
     if (i1 == 0) drydep_scheme = DRYDEP_SCHEME_UNDEFINED
     if (drydep_scheme /= DRYDEP_SCHEME_UNDEFINED .and. largest_landfraction_file /= "not set") then
 #if defined(FIMEX)
-      call read_landfractions(largest_landfraction_file)
+      call read_largest_landfraction(largest_landfraction_file)
 #else
-      error stop "Reading of landfractions requires fimex support"
+      error stop "Reading of largest landfraction requires fimex support"
 #endif
     endif
 
