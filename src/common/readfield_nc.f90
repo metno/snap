@@ -516,7 +516,7 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
     end do
   end if
 
-  call read_drydep()
+  call read_additional_drydep_fields()
 end subroutine readfield_nc
 
 !> Reads `units` attribute of the precipitation variable
@@ -969,11 +969,10 @@ subroutine compute_vertical_coords(alev, blev, ptop)
   vhalf(nk) = vlevel(nk)
 end subroutine
 
-subroutine read_drydep()
-  use drydep, only: drydep_scheme, DRYDEP_SCHEME_EMEP
-
-  if (drydep_scheme == DRYDEP_SCHEME_EMEP) then
-    error stop "Reading of dry deposition is not implemented for netCDF"
+subroutine read_additional_drydep_fields()
+  use drydepml, only: requires_extra_fields_to_be_read
+  if (requires_extra_fields_to_be_read()) then
+    error stop "Reading of extra dry deposition fields is not implemented for netCDF"
   endif
 end subroutine
 

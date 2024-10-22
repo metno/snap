@@ -1315,7 +1315,7 @@ subroutine initialize_output(filename, itime, ierror)
 
       block
         use iso_fortran_env, only: int8
-        use drydep, only: largest_landfraction_file, classnr
+        use drydepml, only: largest_landfraction_file, classnr
         integer(kind=int8), allocatable :: classnr_hr(:,:)
         if (largest_landfraction_file /= "not set") then
             call nc_declare(iunit, dimids2d, varid%landfraction, &

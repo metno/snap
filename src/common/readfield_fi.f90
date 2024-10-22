@@ -812,9 +812,7 @@ contains
     USE snapmetML, only: met_params, &
       temp_units, downward_momentum_flux_units, surface_roughness_length_units, &
       surface_heat_flux_units, leaf_area_index_units
-    use drydep, only: drydep_scheme, DRYDEP_SCHEME_EMEP, drydep_emep_vd, &
-      DRYDEP_SCHEME_EMERSON, DRYDEP_SCHEME_ZHANG, drydep_zhang_emerson_vd, &
-      classnr
+    use drydepml, only: drydep_precompute, requires_extra_fields_to_be_read, classnr
     use snapparML, only: ncomp, run_comp, def_comp
     use snapfldML, only: ps2, vd_dep, xflux, yflux, hflux, z0, leaf_area_index, t2m, &
       roa, ustar, monin_l, raero, vs, rs
@@ -826,10 +824,7 @@ contains
     integer :: i, mm
     real(real64) :: diam, dens
 
-    if (.not.(drydep_scheme == DRYDEP_SCHEME_EMEP .or. &
-              drydep_scheme == DRYDEP_SCHEME_EMERSON .or. &
-              drydep_scheme == DRYDEP_SCHEME_ZHANG)) then
-      ! Other schemes do not require additional fields to be read
+    if (.not.requires_extra_fields_to_be_read()) then
       return
     endif
 
@@ -887,29 +882,16 @@ contains
       if (def_comp(mm)%kdrydep == 1) then
         diam = 2*def_comp(mm)%radiusmym*1e-6
         dens = def_comp(mm)%densitygcm3*1e3
-        select case(drydep_scheme)
-        case (DRYDEP_SCHEME_EMEP)
-          call drydep_emep_vd(ps2*100, t2m, yflux, xflux, z0, &
+        call drydep_precompute(ps2*100, t2m, yflux, xflux, z0, &
             hflux, leaf_area_index, real(diam), real(dens), classnr, vd_dep(:, :, i), &
             roa, ustar, monin_l, raero, vs, rs)
-        case (DRYDEP_SCHEME_ZHANG)
-          call drydep_zhang_emerson_vd(ps2*100, t2m, yflux, xflux, z0, &
-            hflux, leaf_area_index, diam, dens, classnr, vd_dep(:, :, i), .false., &
-            roa, ustar, monin_l, raero, vs, rs)
-        case (DRYDEP_SCHEME_EMERSON)
-          call drydep_zhang_emerson_vd(ps2*100, t2m, yflux, xflux, z0, &
-            hflux, leaf_area_index, diam, dens, classnr, vd_dep(:, :, i), .true., &
-            roa, ustar, monin_l, raero, vs, rs)
-        case default
-          error stop "Unreachable"
-        end select
       endif
     end do
   end subroutine
 
   subroutine read_largest_landfraction(inputfile)
     use snapdimML, only: nx, ny
-    use drydep, only: preprocess_landfraction
+    use drydepml, only: preprocess_landfraction
     use fimex, only: INTERPOL_NEAREST_NEIGHBOR
     use ISO_C_BINDING, only: C_INT
     character(len=*), intent(in) :: inputfile

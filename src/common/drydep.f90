@@ -15,13 +15,13 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-module drydep
+module drydepml
   use ISO_FORTRAN_ENV, only: real64, int8
   implicit none
   private
 
-  public :: drydep1, drydep2, drydep_emep_vd, drydep_zhang_emerson_vd, &
-    drydep_nonconstant_vd, gravitational_settling, preprocess_landfraction, unload
+  public :: drydep, gravitational_settling, preprocess_landfraction, unload, &
+    requires_extra_fields_to_be_read, drydep_precompute
 
   integer, parameter, public :: DRYDEP_SCHEME_UNDEFINED = 0
   integer, parameter, public :: DRYDEP_SCHEME_OLD = 1
@@ -53,11 +53,67 @@ module drydep
 
   contains
 
+subroutine drydep(tstep, part)
+  use snapfldML, only: vd_dep
+  use particleML, only: Particle
+  real, intent(in) :: tstep
+  type(particle), intent(inout) :: part
+
+
+  if (drydep_scheme == DRYDEP_SCHEME_OLD) call drydep1(part)
+  if (drydep_scheme == DRYDEP_SCHEME_NEW) call drydep2(tstep, part)
+  if (drydep_scheme == DRYDEP_SCHEME_EMEP .or. &
+      drydep_scheme == DRYDEP_SCHEME_ZHANG .or. &
+      drydep_scheme == DRYDEP_SCHEME_EMERSON) call drydep_nonconstant_vd(tstep, vd_dep, part)
+end subroutine
+
+pure logical function requires_extra_fields_to_be_read()
+  requires_extra_fields_to_be_read = ( &
+    (drydep_scheme == DRYDEP_SCHEME_ZHANG).or. &
+    (drydep_scheme == DRYDEP_SCHEME_EMERSON).or. &
+    (drydep_scheme == DRYDEP_SCHEME_EMEP))
+end function
+
+!> Precompute dry deposition constants for (x, y)
+!> At every time step dry deposition is computed
+!> by lookup into the vd_dep matrix
+pure subroutine drydep_precompute(surface_pressure, t2m, yflux, xflux, z0, &
+    hflux, leaf_area_index, diam, density, classnr, vd_dep, &
+    roa, ustar, monin_obukhov_length, raero, vs, rs)
+  use iso_fortran_env, only: real64, int8
+  real, intent(in) :: surface_pressure(:,:) !> [hPa]
+  real, intent(in) :: t2m(:,:)
+  real, intent(in) :: yflux(:,:), xflux(:,:)
+  real, intent(in) :: z0(:,:), hflux(:,:)
+  real, intent(in) :: leaf_area_index(:,:)
+  real, intent(in) :: diam
+  real, intent(in) :: density
+  integer(int8), intent(in) :: classnr(:,:)
+  real, intent(out) :: vd_dep(:,:)
+  real(real64), intent(out) :: roa(:,:), monin_obukhov_length(:,:), raero(:,:), vs(:,:), ustar(:,:), rs(:,:)
+
+  select case(drydep_scheme)
+    case (DRYDEP_SCHEME_EMEP)
+      call drydep_emep_vd(surface_pressure, t2m, yflux, xflux, z0, &
+            hflux, leaf_area_index, diam, density, classnr, vd_dep, &
+            roa, ustar, monin_obukhov_length, raero, vs, rs)
+    case (DRYDEP_SCHEME_ZHANG)
+      call drydep_zhang_vd(surface_pressure, t2m, yflux, xflux, z0, &
+            hflux, real(diam, kind=real64), real(density, kind=real64), classnr, vd_dep, &
+            roa, ustar, monin_obukhov_length, raero, vs, rs)
+    case (DRYDEP_SCHEME_EMERSON)
+      call drydep_emerson_vd(surface_pressure, t2m, yflux, xflux, z0, &
+            hflux, real(diam, kind=real64), real(density, kind=real64), classnr, vd_dep, &
+            roa, ustar, monin_obukhov_length, raero, vs, rs)
+    case default
+      error stop "Precomputation should not be called for this dry deposition scheme"
+    end select
+end subroutine
+
+!> Stoer landfraction values
 subroutine preprocess_landfraction(values)
   use iso_fortran_env, only: real32, error_unit
   real(real32), intent(in) :: values(:,:)
-
-  integer :: i, j
 
   write(error_unit,*) "We do not currently check the landclasses programatically"
   write(error_unit,*) "The classes must be:"
@@ -74,6 +130,9 @@ subroutine preprocess_landfraction(values)
   write(error_unit,*) "    21: Mixed forest"
   write(error_unit,*) "    22: Shrubs and interrupted woodlands"
 
+  if (allocated(classnr)) then
+    error stop "preprocess_landfraction is to be called once only"
+  endif
   allocate(classnr(size(values,dim=1),size(values,dim=2)))
   classnr(:,:) = nint(values)
 end subroutine
@@ -135,7 +194,9 @@ subroutine drydep2(tstep, part)
 
   integer :: m,i,j,mm
   real :: deprate, dep
-  real, parameter :: h = 30.0
+  real, parameter :: h = 30.0  ! [m]
+  real, parameter :: vd_gas = 0.008  ! [m/s]
+  real, parameter :: vd_particles = 0.002  ! [m/s]
 
   m = part%icomp
 !#### 30m = surface-layer (deposition-layer); sigma(hybrid)=0.996 ~ 30m
@@ -144,13 +205,13 @@ subroutine drydep2(tstep, part)
 
     if (def_comp(m)%radiusmym <= 0.05) then
     ! gas
-      deprate = 1.0 - exp(-tstep*(0.008)/h)
+      deprate = 1.0 - exp(-tstep*(vd_gas)/h)
     else if (def_comp(m)%radiusmym <= 10.0) then
     ! particle 0.05<r<10
-      deprate = 1.0 - exp(-tstep*(0.002+part%grv)/h)
+      deprate = 1.0 - exp(-tstep*(vd_particles + part%grv)/h)
     else
     ! particle r>=10.0
-      deprate = 1.0 - exp(-tstep*(0.002+part%grv)/h)
+      deprate = 1.0 - exp(-tstep*(vd_particles + part%grv)/h)
     ! complete deposition when particle hits ground
       if (part%z == vlevel(1)) deprate = 1.
     endif
@@ -193,7 +254,7 @@ pure elemental function gravitational_settling(roa, diam, ro_part) result(vs)
 
     real(real64) :: vs
 
-    real(real64) :: my ! Dynamic visocity of air, kg m-1 s-1
+    real(real64) :: my ! Dynamic visocity of air [kg/(m s)]
 
     real(real64) :: fac1, cslip
 
@@ -204,6 +265,9 @@ pure elemental function gravitational_settling(roa, diam, ro_part) result(vs)
     vs = ro_part * diam * diam * grav * cslip / (18*my)
 end function
 
+!> Dry deposition velocity given by
+!> Simpson et al. 2012, The EMEP MSC-W chemical transport model - technical description
+!> https://doi.org/10.5194/acp-12-7825-2012
 pure elemental subroutine drydep_emep_vd(surface_pressure, t2m, yflux, xflux, z0, &
     hflux, leaf_area_index, diam, density, classnr, vd_dep, &
     roa, ustar, monin_obukhov_length, raero, vs, rs)
@@ -287,8 +351,11 @@ pure real(kind=real64) function lookup_A(classnr)
 
 end function
 
-pure elemental subroutine drydep_zhang_emerson_vd(surface_pressure, t2m, yflux, xflux, z0, &
-    hflux, leaf_area_index, diam, density, classnr, vd_dep, emerson_mode, &
+!> Dry deposition velocites based on
+!> Zhang et al. 2001, A size-segregated particle dry deposition scheme for an atmospheric aerosol module
+!> https://doi.org/10.1016/S1352-2310(00)00326-5
+pure elemental subroutine drydep_zhang_vd(surface_pressure, t2m, yflux, xflux, z0, &
+    hflux, diam, density, classnr, vd_dep, &
     roa, ustar, monin_obukhov_length, raero, vs, rs)
   use ieee_arithmetic, only: ieee_is_nan
   !> In hPa
@@ -296,12 +363,10 @@ pure elemental subroutine drydep_zhang_emerson_vd(surface_pressure, t2m, yflux, 
   real, intent(in) :: t2m
   real, intent(in) :: yflux, xflux
   real, intent(in) :: z0, hflux
-  real, intent(in) :: leaf_area_index
   real(real64), intent(in) :: diam
   real(real64), intent(in) :: density
   integer(int8), intent(in) :: classnr
   real, intent(out) :: vd_dep
-  logical, intent(in) :: emerson_mode
   real(real64), intent(out) :: roa, monin_obukhov_length, raero, vs, ustar, rs
 
   !> Aerial factor for interception (table 3 Zhang et al. (2001)), corresponding to evergreen
@@ -331,45 +396,27 @@ pure elemental subroutine drydep_zhang_emerson_vd(surface_pressure, t2m, yflux, 
    bdiff = bolzc * t2m * cslip / (3 * pi * my * diam)
 
   sc = ny / bdiff
-  if (.not.emerson_mode) then
-    ! A range og 0.5-0.58 dependening on the surface is given, 0.54=grass
-    EB = sc ** (-0.54)
-  else
-    ! Revised Emerson et al. (2020)
-    EB = 0.2 * sc ** (-2.0 / 3.0)
-  endif
+  ! A range og 0.5-0.58 dependening on the surface is given, 0.54=grass
+  EB = sc ** (-0.54)
 
   Apar = lookup_A(classnr)
   A = Apar * 1e-3
   ! Impaction
-  ! Stokes number for vegetated surfaces (Zhang (2001)
   if (.not. ieee_is_nan(A)) then
+    ! Stokes number for vegetated surfaces (Zhang (2001)
     stokes = vs * ustar / (grav * A)
   else
-    ! ???????
     stokes = vs * ustar * ustar / (grav * ny)
   endif
 
-  if (.not.emerson_mode) then
-    ! Zhang et al. (2001)
-    EIM = (stokes / (0.8 + stokes)) ** 2
-  else
-    ! Revised Emerson et al. (2020)
-    EIM = 0.4 * (stokes / (0.8 + stokes)) ** 1.7
-  endif
+  EIM = (stokes / (0.8 + stokes)) ** 2
 
   ! Interception
   if (ieee_is_nan(A)) then
     ! No interception over water surfaces
     EIN = 0.0
   else
-    if (.not.emerson_mode) then
-      ! Zhang et al. (2001)
-      EIN = 0.5 * (diam / A) ** 2
-    else
-      ! Revised Emerson et al. (2020)
-      EIN = 2.5 * (diam / A) ** 0.8
-    endif
+    EIN = 0.5 * (diam / A) ** 2
   endif
 
   rs = 1.0 / (3.0 * ustar * (EB + EIM + EIN))
@@ -377,6 +424,77 @@ pure elemental subroutine drydep_zhang_emerson_vd(surface_pressure, t2m, yflux, 
   vd_dep = 1.0 / (raero + rs) + vs
 end subroutine
 
+!> Dry deposition velocites based on
+!> Emerson et al. 2020, Revisiting particle dry deposition and its role in radiative effect estimates
+!> https://doi.org/10.1073/pnas.2014761117
+pure elemental subroutine drydep_emerson_vd(surface_pressure, t2m, yflux, xflux, z0, &
+    hflux, diam, density, classnr, vd_dep, &
+    roa, ustar, monin_obukhov_length, raero, vs, rs)
+  use ieee_arithmetic, only: ieee_is_nan
+  !> In hPa
+  real, intent(in) :: surface_pressure
+  real, intent(in) :: t2m
+  real, intent(in) :: yflux, xflux
+  real, intent(in) :: z0, hflux
+  real(real64), intent(in) :: diam
+  real(real64), intent(in) :: density
+  integer(int8), intent(in) :: classnr
+  real, intent(out) :: vd_dep
+  real(real64), intent(out) :: roa, monin_obukhov_length, raero, vs, ustar, rs
+
+  !> Aerial factor for interception (table 3 Zhang et al. (2001)), corresponding to evergreen
+  !>  needleleaf trees (i.e. close to maximum deposition)
+  real(real64) :: A
+  real(real64), parameter :: k = 0.4
+
+  real(real64) :: fac1, cslip, bdiff, my, sc, EB, EIM, EIN, stokes
+  real(real64) :: Apar
+
+  roa = surface_pressure / (t2m * R)
+  vs = gravitational_settling(roa, diam, density)
+
+  ustar = hypot(yflux, xflux) / sqrt(roa)
+  monin_obukhov_length = - roa * CP * t2m * (ustar**3) / (k * grav * hflux)
+  raero = aerodynres(monin_obukhov_length, ustar, real(z0, real64))
+
+  my = ny * roa
+
+  fac1 = -0.55 * diam / lambda
+  ! Cunningham slip factor
+  cslip = 1 + 2 * lambda / diam * (1.257 + 0.4*exp(fac1))
+
+  ! Brownian diffusion
+  ! Brownian diffusivity of air (see equation 19 of Giardiana and Buffa, 2018)
+  ! bdiff=2.83e-11 # Browian diffusion coefficient for 1 um particle (see Brereton, 2014)
+   bdiff = bolzc * t2m * cslip / (3 * pi * my * diam)
+
+  sc = ny / bdiff
+  EB = 0.2 * sc ** (-2.0 / 3.0)
+
+  Apar = lookup_A(classnr)
+  A = Apar * 1e-3
+  ! Impaction
+  if (.not. ieee_is_nan(A)) then
+    ! Stokes number for vegetated surfaces (Zhang (2001)
+    stokes = vs * ustar / (grav * A)
+  else
+    stokes = vs * ustar * ustar / (grav * ny)
+  endif
+  EIM = 0.4 * (stokes / (0.8 + stokes)) ** 1.7
+
+  ! Interception
+  if (ieee_is_nan(A)) then
+    ! No interception over water surfaces
+    EIN = 0.0
+  else
+    EIN = 2.5 * (diam / A) ** 0.8
+  endif
+
+  rs = 1.0 / (3.0 * ustar * (EB + EIM + EIN))
+  vd_dep = 1.0 / (raero + rs) + vs
+end subroutine
+
+!> Apply precomputed dry deposition velocities
 subroutine drydep_nonconstant_vd(tstep, vd, part)
   use particleML, only: Particle
   use snapfldML, only: depdry
@@ -413,4 +531,4 @@ subroutine drydep_nonconstant_vd(tstep, vd, part)
   end if
 end subroutine
 
-end module drydep
+end module drydepml

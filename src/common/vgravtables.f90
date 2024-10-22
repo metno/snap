@@ -16,7 +16,7 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 module vgravtablesML
-  use drydep, only: drydep_scheme, DRYDEP_SCHEME_EMEP, DRYDEP_SCHEME_ZHANG, DRYDEP_SCHEME_EMERSON
+  use drydepml, only: drydep_scheme, DRYDEP_SCHEME_EMEP, DRYDEP_SCHEME_ZHANG, DRYDEP_SCHEME_EMERSON
   implicit none
   private
 
@@ -44,7 +44,7 @@ module vgravtablesML
 subroutine vgravtables
   USE ISO_FORTRAN_ENV, only: real64
   USE snapparML, only: ncomp, run_comp, def_comp
-  USE drydep, only: gravitational_settling
+  USE drydepml, only: gravitational_settling
 
   real, parameter :: R = 287.05
   !> absolute temperature (K)
