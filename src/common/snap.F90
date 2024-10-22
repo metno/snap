@@ -188,7 +188,7 @@ PROGRAM bsnap
   USE checkdomainML, only: check_in_domain
   USE rwalkML, only: rwalk, rwalk_init
   USE milibML, only: xyconvert
-  use snapfldML, only: depwet, total_activity_lost_domain, vd_dep
+  use snapfldML, only: depwet, total_activity_lost_domain
   USE forwrdML, only: forwrd, forwrd_init
   USE wetdep, only: wetdep2, wetdep2_init, wetdep_scheme, wetdep_scheme_t, &
     WETDEP_SUBCLOUD_SCHEME_UNDEFINED, WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
@@ -200,7 +200,7 @@ PROGRAM bsnap
     WETDEP_INCLOUD_SCHEME_UNDEFINED, &
     wetdep_init => init, wetdep_deinit => deinit
   use wetdep, only: wet_deposition_conventional_params => conventional_params
-  USE drydep, only: drydep1, drydep2, drydep_nonconstant_vd, drydep_scheme, &
+  USE drydepml, only: drydep, drydep_scheme, &
           DRYDEP_SCHEME_OLD, DRYDEP_SCHEME_NEW, DRYDEP_SCHEME_EMEP, &
           DRYDEP_SCHEME_ZHANG, DRYDEP_SCHEME_EMERSON, DRYDEP_SCHEME_UNDEFINED, &
           largest_landfraction_file,  drydep_unload => unload
@@ -750,11 +750,7 @@ PROGRAM bsnap
         if (idecay == 1) call decay(pdata(np))
 
         !..dry deposition
-        if (drydep_scheme == DRYDEP_SCHEME_OLD) call drydep1(pdata(np))
-        if (drydep_scheme == DRYDEP_SCHEME_NEW) call drydep2(tstep, pdata(np))
-        if (drydep_scheme == DRYDEP_SCHEME_EMEP .or. &
-            drydep_scheme == DRYDEP_SCHEME_ZHANG .or. &
-            drydep_scheme == DRYDEP_SCHEME_EMERSON) call drydep_nonconstant_vd(tstep, vd_dep, pdata(np))
+        call drydep(tstep, pdata(np))
 
         !..wet deposition
         if (def_comp(pdata(np)%icomp)%kwetdep == 1) then

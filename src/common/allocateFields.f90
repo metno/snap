@@ -48,8 +48,6 @@ subroutine allocateFields
   USE snapdimML, only: nx, ny, nk, output_resolution_factor, ldata, maxsiz
   USE snapparML, only: ncomp, nocomp, iparnum
   USE releaseML, only: mplume, iplume, plume_release, mpart
-  USE drydep, only: drydep_scheme, DRYDEP_SCHEME_EMEP, DRYDEP_SCHEME_EMERSON, &
-    DRYDEP_SCHEME_ZHANG
   USE snapmetML, only: met_params
 
   logical, save :: FirstCall = .TRUE.
@@ -237,15 +235,18 @@ subroutine allocateFields
   total_activity_released(:) = 0.0
   total_activity_lost_domain(:) = 0.0
   total_activity_lost_other(:) = 0.0
-  if (drydep_scheme == DRYDEP_SCHEME_EMEP .or. &
-      drydep_scheme == DRYDEP_SCHEME_ZHANG .or. &
-      drydep_scheme == DRYDEP_SCHEME_EMERSON) then
-    allocate(vd_dep(nx,ny,ncomp), STAT=AllocateStatus)
-    if (AllocateStatus /= 0) ERROR STOP errmsg
-    allocate(xflux, yflux, hflux, t2m, z0, leaf_area_index, mold=ps2)
-    allocate(roa(nx, ny))
-    allocate(ustar, monin_l, raero, vs, rs, mold=roa)
-  endif
+
+  ! Dry deposition fields
+  block
+    use drydepml, only: requires_extra_fields_to_be_read
+    if (requires_extra_fields_to_be_read()) then
+      allocate(vd_dep(nx,ny,ncomp), STAT=AllocateStatus)
+      if (AllocateStatus /= 0) ERROR STOP errmsg
+      allocate(xflux, yflux, hflux, t2m, z0, leaf_area_index, mold=ps2)
+      allocate(roa(nx, ny))
+      allocate(ustar, monin_l, raero, vs, rs, mold=roa)
+    endif
+  end block
 
 end subroutine allocateFields
 
