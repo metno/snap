@@ -15,7 +15,7 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-module wetdep
+module wetdepml
   use iso_fortran_env, only: real64
   implicit none
   private
@@ -23,11 +23,9 @@ module wetdep
   real, save :: vminprec = -1.
   real, parameter :: precmin = 0.01
 
-  public :: wetdep2, wetdep2_init, &
-      wetdep_conventional, wetdep_conventional_compute, init, deinit
+  public :: wetdep, init, deinit, requires_extra_precip_fields, &
+      wetdep_precompute
   public :: operator(==), operator(/=)
-  public :: wetdep_bartnicki
-  public :: prepare_wetdep, wetdep_using_precomputed_wscav
 
   type, public :: wetdep_subcloud_scheme_t
     integer, private :: scheme
@@ -60,7 +58,9 @@ module wetdep
   type, public :: wetdep_scheme_t
     type(wetdep_subcloud_scheme_t) :: subcloud
     type(wetdep_incloud_scheme_t) :: incloud
+    !> Use 3D precip and precomputed parameters
     logical :: use_vertical
+    !> Whether to use cloud fraction correction for belowcloud schemes
     logical :: use_cloudfraction
   end type
 
@@ -116,7 +116,7 @@ contains
     endif
 
     if (wetdep_scheme%subcloud == WETDEP_SUBCLOUD_SCHEME_BARTNICKI.and. &
-        wetdep_scheme%use_vertical) then
+        .not.wetdep_scheme%use_vertical) then
         call wetdep2_init(tstep)
     endif
       
@@ -126,36 +126,39 @@ contains
     if (allocated(conventional_deprate_m1)) deallocate(conventional_deprate_m1)
   end subroutine
 
-  subroutine wetdep_bartnicki(wscav, precip, radius)
-    use iso_fortran_env, only: real32
-    !> 1/s
-    real(real32), intent(out) :: wscav(:,:,:)
-    !> mm/hr
-    real(real32), intent(in) :: precip(:,:,:)
-    !> micrometer
-    real(real32), intent(in) :: radius
+  pure logical function requires_extra_precip_fields()
+    requires_extra_precip_fields = wetdep_scheme%use_vertical
+  end function
 
-    real, parameter :: a0 = 8.4e-5
-    real, parameter :: a1 = 2.7e-4
-    real, parameter :: a2 = -3.618e-6
+  !> Move activity from particle to wet deposition field
+  !> depending on the precipitation at the place of the
+  !> particle.
+  subroutine wetdep(tstep, part, pextra)
+    use iso_fortran_env, only: real64
+    USE particleML, only: particle, extraParticle
+    use snapparML, only: def_comp
+    use snapfldml, only: depwet
+  
+    real, intent(in) :: tstep
+    type(particle), intent(inout) :: part
+    type(extraParticle), intent(in) :: pextra
 
-    if (radius > 10.0) then
-      wscav = a1*precip + a2*precip*precip
-    elseif (radius > 1.4) then
-      wscav = wet_deposition_constant(radius)*(a1*precip + a2*precip*precip)
-    elseif (radius > 0.1) then
-      wscav = a0*precip**0.79
-    else ! gas
-      wscav = 1.12e-4*precip**0.79
-    endif
-
-    if (radius > 0.1) then
-      ! Convective rain
-      where(precip > 7.0)
-        wscav = 3.36e-4*precip**0.79
-      endwhere
+    if (def_comp(part%icomp)%kwetdep == 1) then
+      if (wetdep_scheme%use_vertical) then
+        block
+          use snapfldML, only: wscav, depwet
+          call wetdep_using_precomputed_wscav(part, wscav, depwet, tstep)
+        end block
+      else
+        if (wetdep_scheme%subcloud == WETDEP_SUBCLOUD_SCHEME_BARTNICKI) then
+          call wetdep2(depwet, tstep, part, pextra)
+        elseif (wetdep_scheme%subcloud == WETDEP_SUBCLOUD_SCHEME_CONVENTIONAL) then
+          call wetdep_conventional(depwet, part, tstep)
+        endif
+      endif
     endif
   end subroutine
+
 
 !> Purpose:  Compute wet deposition for each particle and each component
 !>           and store depositions in nearest gridpoint in a field
@@ -288,7 +291,7 @@ contains
     depconst = b0 + b1*rm + b2*rm*rm + b3*rm*rm*rm
   end function
 
-  pure elemental real function wet_deposition_rate_imm(radius, q, depconst, no_use_convective_rain) result(rkw)
+  pure elemental real function wet_deposition_rate_bartnicki_imm(radius, q, depconst, no_use_convective_rain) result(rkw)
     !> radius in micrometer
     real, intent(in) :: radius
     !> precipitation intensity in mm/h
@@ -338,7 +341,7 @@ contains
 
     real :: rkw
 
-    rkw = wet_deposition_rate_imm(radius, q, depconst)
+    rkw = wet_deposition_rate_bartnicki_imm(radius, q, depconst)
 
     deprate = 1.0 - exp(-tstep*rkw)
   end function
@@ -447,7 +450,7 @@ contains
 
     depconst = wet_deposition_constant(radius)
     if (.not.use_ccf) then
-      wscav(:,:) = wet_deposition_rate_imm(radius, precip, depconst, no_use_convective_rain=.true.)
+      wscav(:,:) = wet_deposition_rate_bartnicki_imm(radius, precip, depconst, no_use_convective_rain=.true.)
     else
       block
         integer :: i, j
@@ -467,7 +470,7 @@ contains
               precip_scaled = precip(i,j)
             endif
 
-            wscav(i,j) = wet_deposition_rate_imm(radius, precip_scaled, depconst, no_use_convective_rain=.true.)
+            wscav(i,j) = wet_deposition_rate_bartnicki_imm(radius, precip_scaled, depconst, no_use_convective_rain=.true.)
 
             if (ccf(i,j) > 0.0) then
               ! Scale down efficiency
@@ -479,9 +482,56 @@ contains
     endif
   end subroutine
 
+  
+  subroutine wet_deposition_rate_ratm(wscav, precip, ccf, use_ccf)
+    real, intent(out) :: wscav(:,:)
+    real, intent(in) :: precip(:,:)
+    real, intent(in) :: ccf(:,:)
+    logical, intent(in) :: use_ccf
+
+    integer :: i, j
+    real adj_precip
+    integer :: nx, ny
+
+    nx = size(precip,1)
+    ny = size(precip,2)
+    
+    do j=1,ny
+      do i=1,nx
+        if (use_ccf .and. (ccf(i,j) > 0.0)) then
+          adj_precip = precip(i,j) / ccf(i,j)
+          wscav(i,j) = ccf(i,j) * conventional_params%A * adj_precip ** conventional_params%B
+        else
+          wscav(i,j) = conventional_params%A * (precip(i,j) ** conventional_params%B)
+        endif
+      enddo
+    enddo
+  end subroutine
+
+  !> Should be called every input timestep to
+  !> prepare the scavenging rates
+  subroutine wetdep_precompute()
+    use snapparML, only: ncomp, run_comp
+    use snapfldML, only: wscav, cw3d, precip3d, cloud_cover, precip
+
+    integer :: i
+
+    do i=1,ncomp
+      if (.not.run_comp(i)%defined%kdrydep == 1) cycle
+      if (wetdep_scheme%use_vertical) then
+        if (.not.(allocated(precip3d).and.allocated(cw3d).and.allocated(wscav))) then
+          error stop "Some wetdep/precip fields not allocated"
+        endif
+        call prepare_wetdep_3d(wscav(:,:,:,i), run_comp(i)%defined%radiusmym, precip3d, cw3d, cloud_cover)
+      else if (wetdep_scheme%subcloud == WETDEP_SUBCLOUD_SCHEME_CONVENTIONAL) then
+        call wetdep_conventional_compute(precip)
+      endif
+    enddo
+  end subroutine
+
 
   !> Precompute wet scavenging coefficients
-  subroutine prepare_wetdep(wscav, radius, precip, cw, ccf)
+  subroutine prepare_wetdep_3d(wscav, radius, precip, cw, ccf)
     !> Wet scavenging coefficient [1/s]
     real, intent(out) :: wscav(:,:,:)
     !> Precipitation intensity
@@ -515,30 +565,21 @@ contains
         accum_ccf = 1.0
       endwhere
 
+      ! Subcloud
       select case (wetdep_scheme%subcloud%scheme)
         case (WETDEP_SUBCLOUD_SCHEME_BARTNICKI%scheme)
-          call wet_deposition_rate_bartnicki(wscav(:,:,k), radius, accum_precip(:,:), accum_ccf(:,:), use_ccf=.true.)
+          call wet_deposition_rate_bartnicki(wscav(:,:,k), radius, accum_precip(:,:), &
+           accum_ccf(:,:), use_ccf=wetdep_scheme%use_cloudfraction)
         case (WETDEP_SUBCLOUD_SCHEME_CONVENTIONAL%scheme)
-          block
-            integer :: i, j
-            real :: adj_precip
-            do j=1,ny
-              do i=1,nx
-                if (accum_ccf(i,j) > 0.0) then
-                  adj_precip = accum_precip(i,j) / accum_ccf(i,j)
-                  wscav(i,j,k) = accum_ccf(i,j) * conventional_params%A * adj_precip ** conventional_params%B
-                else
-                  wscav(i,j,k) = conventional_params%A * (accum_precip(i,j) ** conventional_params%B)
-                endif
-              enddo
-            enddo
-          end block
+          call wet_deposition_rate_ratm(wscav(:,:,k), accum_precip(:,:), &
+           accum_ccf(:,:), use_ccf=wetdep_scheme%use_cloudfraction)
         case (WETDEP_SUBCLOUD_SCHEME_NONE%scheme)
           wscav(:,:,k) = 0.0
         case default
           error stop wetdep_scheme%subcloud%description
       end select
 
+      ! Incloud
       select case (wetdep_scheme%incloud%scheme)
         case (WETDEP_INCLOUD_SCHEME_NONE%scheme)
           wscav_tmp(:,:,k) = 0.0
@@ -620,4 +661,4 @@ contains
 
   end subroutine
 
-end module wetdep
+end module wetdepml
