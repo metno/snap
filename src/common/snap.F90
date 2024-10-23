@@ -188,18 +188,17 @@ PROGRAM bsnap
   USE checkdomainML, only: check_in_domain
   USE rwalkML, only: rwalk, rwalk_init
   USE milibML, only: xyconvert
-  use snapfldML, only: depwet, total_activity_lost_domain
+  use snapfldML, only: total_activity_lost_domain
   USE forwrdML, only: forwrd, forwrd_init
-  USE wetdep, only: wetdep2, wetdep2_init, wetdep_scheme, wetdep_scheme_t, &
+  USE wetdepML, only: wetdep_scheme, wetdep_scheme_t, &
     WETDEP_SUBCLOUD_SCHEME_UNDEFINED, WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
     WETDEP_SUBCLOUD_SCHEME_CONVENTIONAL, &
     operator(==), operator(/=), wet_deposition_conventional_params => conventional_params, &
     wet_deposition_RATM => RATM_params, &
-    wetdep_conventional_compute, wetdep_conventional, &
     WETDEP_INCLOUD_SCHEME_NONE, WETDEP_INCLOUD_SCHEME_TAKEMURA, WETDEP_INCLOUD_SCHEME_ROSELLE, &
     WETDEP_INCLOUD_SCHEME_UNDEFINED, &
     wetdep_init => init, wetdep_deinit => deinit
-  use wetdep, only: wet_deposition_conventional_params => conventional_params
+  use wetdepML, only: wetdep, wet_deposition_conventional_params => conventional_params
   USE drydepml, only: drydep, drydep_scheme, &
           DRYDEP_SCHEME_OLD, DRYDEP_SCHEME_NEW, DRYDEP_SCHEME_EMEP, &
           DRYDEP_SCHEME_ZHANG, DRYDEP_SCHEME_EMERSON, DRYDEP_SCHEME_UNDEFINED, &
@@ -678,13 +677,6 @@ PROGRAM bsnap
         !..calculate boundary layer (top and height)
         call bldp
 
-        if (wetdep_scheme%subcloud == WETDEP_SUBCLOUD_SCHEME_CONVENTIONAL) then
-          block
-            use snapfldml, only: precip
-            call wetdep_conventional_compute(precip)
-          end block
-        endif
-
         dur = time_file - itimei
         ihdiff = dur%hours
         tf1 = 0.
@@ -753,22 +745,7 @@ PROGRAM bsnap
         call drydep(tstep, pdata(np))
 
         !..wet deposition
-        if (def_comp(pdata(np)%icomp)%kwetdep == 1) then
-          if (wetdep_scheme%use_vertical) then
-            block
-              use snapfldML, only: wscav, depwet
-              use wetdep, only: wetdep_using_precomputed_wscav
-              call wetdep_using_precomputed_wscav(pdata(np), wscav, depwet, tstep)
-            end block
-          else
-            if (wetdep_scheme%subcloud == WETDEP_SUBCLOUD_SCHEME_BARTNICKI) then
-              call wetdep2(depwet, tstep, pdata(np), pextra)
-            endif
-            if (wetdep_scheme%subcloud == WETDEP_SUBCLOUD_SCHEME_CONVENTIONAL) then
-              call wetdep_conventional(depwet, pdata(np), tstep)
-            endif
-          endif
-        endif
+        call wetdep(tstep, pdata(np), pextra)
 
         !..move all particles forward, save u and v to pextra
         call forwrd(tf1, tf2, tnow, tstep, pdata(np), pextra)
