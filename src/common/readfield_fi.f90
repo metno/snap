@@ -455,23 +455,10 @@ contains
       end do
     end if
 
-    if (met_params%use_3d_precip) then
-      block
-        use snapparML, only: ncomp, run_comp
-        use snapfldML, only: wscav, cw3d, precip3d, cloud_cover
-        use wetdep, only: prepare_wetdep
-
-        integer :: i
-
-        do i=1,ncomp
-          if (.not.run_comp(i)%defined%kdrydep == 1) cycle
-          call prepare_wetdep(wscav(:,:,:,i), run_comp(i)%defined%radiusmym, precip3d, cw3d, cloud_cover)
-        enddo
-      end block
-    endif
   end subroutine readfield_fi
 
-!> read precipitation
+!> read precipitation fields and precompute
+!> for wet deposition
   subroutine read_precipitation(fio, nhdiff, timepos, timeposm1)
     use iso_fortran_env, only: error_unit
     use snapdebug, only: iulog
@@ -479,6 +466,7 @@ contains
                          precip_rate_units, precip_units_ => precip_units, precip_units_fallback
     use snapfldML, only: field1, field2, field3, field4, precip, &
                          enspos, precip
+    use wetdepML, only: requires_extra_precip_fields, wetdep_precompute
 
 !> open netcdf file
     TYPE(FimexIO), intent(inout) :: fio
@@ -565,6 +553,7 @@ contains
         enddo
       end block
     end if
+
     if (met_params%precaccumv /= '') then
       !..precipitation between input time 't1' and 't2'
       if (timepos == 1) then
@@ -621,8 +610,85 @@ contains
     where (precip < 0.0)
       precip = 0.0
     end where
+
+    if (requires_extra_precip_fields()) then
+      call read_extra_precipitation_fields(fio, timepos)
+    endif
+
+    call wetdep_precompute()
   end subroutine read_precipitation
 
+  subroutine read_extra_precipitation_fields(fio, timepos)
+    use iso_fortran_env, only: error_unit
+    use snaptabML, only: g
+    use snapfldML, only: ps2, precip3d, cw3d, cloud_cover, enspos
+    use snapgrdML, only: ahalf, bhalf, klevel
+    use snapdimML, only: nx, ny, nk
+!> open netcdf file
+    TYPE(FimexIO), intent(inout) :: fio
+!> timestep in file
+    integer, intent(in) :: timepos
+
+    real(real64), allocatable :: rain_in_air(:,:), graupel_in_air(:,:), snow_in_air(:,:)
+    real(real64), allocatable :: cloud_water(:,:), cloud_ice(:,:)
+    real(real64), allocatable :: pdiff(:,:)
+
+    integer :: ilevel, k, nr
+    character(len=*), parameter :: mass_fraction_units = "kg/kg"
+
+!.. get the correct ensemble/realization position, nr starting with 1, enspos starting with 0
+    nr = enspos + 1
+    if (enspos <= 0) nr = 1
+
+    allocate(rain_in_air(nx,ny),graupel_in_air(nx,ny),snow_in_air(nx,ny),pdiff(nx,ny))
+    allocate(cloud_water(nx,ny),cloud_ice(nx,ny))
+
+    precip3d(:,:,:) = 0.0
+    cw3d(:,:,:) = 0.0
+
+    do k=nk,2,-1
+      ilevel = klevel(k)
+      call fi_checkload(fio, "mass_fraction_of_rain_in_air_ml", mass_fraction_units, &
+                        rain_in_air, nt=timepos, nz=ilevel, nr=nr)
+      call fi_checkload(fio, "mass_fraction_of_graupel_in_air_ml", mass_fraction_units, &
+                        graupel_in_air, nt=timepos, nz=ilevel, nr=nr)
+      call fi_checkload(fio, "mass_fraction_of_snow_in_air_ml", mass_fraction_units, &
+                        snow_in_air, nt=timepos, nz=ilevel, nr=nr)
+
+      where (rain_in_air < 0.0)
+        rain_in_air = 0.0
+      end where
+      where (graupel_in_air < 0.0)
+        graupel_in_air = 0.0
+      end where
+      where (snow_in_air < 0.0)
+        snow_in_air = 0.0
+      end where
+
+      pdiff(:,:) = 100*( (ahalf(k-1) - ahalf(k)) + (bhalf(k-1) - bhalf(k))*ps2 )
+
+      precip3d(:,:,k) = rain_in_air + graupel_in_air + snow_in_air
+      precip3d(:,:,k) = precip3d(:,:,k) * pdiff / g
+
+      call fi_checkload(fio, "mass_fraction_of_cloud_condensed_water_in_air_ml", mass_fraction_units, &
+                        cloud_water, nt=timepos, nz=ilevel, nr=nr)
+      call fi_checkload(fio, "mass_fraction_of_cloud_ice_in_air_ml", mass_fraction_units, &
+                        cloud_ice, nt=timepos, nz=ilevel, nr=nr)
+
+      where (cloud_water < 0.0)
+        cloud_water = 0.0
+      end where
+      where (cloud_ice < 0.0)
+        cloud_ice = 0.0
+      end where
+      cw3d(:,:,k) = cloud_water + cloud_ice
+      cw3d(:,:,k) = cw3d(:,:,k) * pdiff / g
+
+      call fi_checkload(fio, "cloud_area_fraction_ml", "%", &
+                        cloud_cover(:,:,k), nt=timepos, nz=ilevel, nr=nr)
+    enddo
+  end subroutine
+  
   subroutine check(status, errmsg)
     integer, intent(in) :: status
     character(len=*), intent(in), optional :: errmsg
