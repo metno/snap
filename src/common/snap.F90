@@ -34,11 +34,11 @@
 ! BOUNDARY.LAYER.FULL.MIX.ON
 ! DRY.DEPOSITION.OLD  * deprecated
 ! DRY.DEPOSITION.NEW  * deprecated
-! DRY.DEPOSITION.SCHEME = "emep"/"old"/"..."
+! DRY.DEPOSITION.SCHEME = emerson / new
 ! DRY.DEPOSITION.SAVE
 ! DRY.DEPOSITION.LARGEST_LANDFRACTION_FILE = "landclasses.nc"
 ! WET.DEPOSITION.NEW ! deprecated
-! WET.DEPOSITION.SCHEME = Bartnicki ! (default), others: bartnicki-takemura, bartnicki-vertical etc.
+! WET.DEPOSITION.SCHEME = Bartnicki ! (default) bartnicki-takemura
 ! WET.DEPOSITION.SAVE  ! Outputs wet scavenging rate (for 3D output only)
 ! TIME.STEP= 900.
 ! TIME.RELEASE.PROFILE.CONSTANT
@@ -190,15 +190,18 @@ PROGRAM bsnap
   USE milibML, only: xyconvert
   use snapfldML, only: total_activity_lost_domain
   USE forwrdML, only: forwrd, forwrd_init
-  USE wetdepML, only: wetdep_scheme, wetdep_scheme_t, &
+  USE wetdepML, only: wetdep, wetdep_scheme, wetdep_scheme_t, &
     WETDEP_SUBCLOUD_SCHEME_UNDEFINED, WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
-    WETDEP_SUBCLOUD_SCHEME_CONVENTIONAL, &
-    operator(==), operator(/=), wet_deposition_conventional_params => conventional_params, &
-    wet_deposition_RATM => RATM_params, &
-    WETDEP_INCLOUD_SCHEME_NONE, WETDEP_INCLOUD_SCHEME_TAKEMURA, WETDEP_INCLOUD_SCHEME_ROSELLE, &
+    WETDEP_INCLOUD_SCHEME_NONE, WETDEP_INCLOUD_SCHEME_TAKEMURA, &
     WETDEP_INCLOUD_SCHEME_UNDEFINED, &
+    operator(==), operator(/=), &
     wetdep_init => init, wetdep_deinit => deinit
-  use wetdepML, only: wetdep, wet_deposition_conventional_params => conventional_params
+#if defined(SNAP_EXPERIMENTAL)
+  USE wetdepML, only: WETDEP_SUBCLOUD_SCHEME_CONVENTIONAL, &
+    wet_deposition_conventional_params => conventional_params, &
+    wet_deposition_RATM => RATM_params, &
+    WETDEP_INCLOUD_SCHEME_ROSELLE
+#endif
   USE drydepml, only: drydep, drydep_scheme, &
           DRYDEP_SCHEME_OLD, DRYDEP_SCHEME_NEW, DRYDEP_SCHEME_EMEP, &
           DRYDEP_SCHEME_ZHANG, DRYDEP_SCHEME_EMERSON, DRYDEP_SCHEME_UNDEFINED, &
@@ -1144,12 +1147,14 @@ contains
         case ('new')
           if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_NEW) goto 12
           drydep_scheme = DRYDEP_SCHEME_NEW
+#if defined(SNAP_EXPERIMENTAL)
         case ('emep')
           if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_EMEP) goto 12
           drydep_scheme = DRYDEP_SCHEME_EMEP
         case ('zhang')
           if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_ZHANG) goto 12
           drydep_scheme = DRYDEP_SCHEME_ZHANG
+#endif
         case ('emerson')
           if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_EMERSON) goto 12
           drydep_scheme = DRYDEP_SCHEME_EMERSON
@@ -1212,6 +1217,7 @@ contains
             .false., &
             .false.)
         end block
+#if defined(SNAP_EXPERIMENTAL)
       case ('wet.deposition.conventional.a')
         if (wet_deposition_conventional_params%A /= 0.0) then
             write(error_unit,*) "wet deposition parameter already set"
@@ -1226,6 +1232,7 @@ contains
         endif
         if (.not.has_value) goto 12
         read(cinput(pname_start:pname_end), *) wet_deposition_conventional_params%B
+#endif
       case ('wet.deposition.scheme')
         if (.not.has_value) goto 12
         if (wetdep_scheme%subcloud /= WETDEP_SUBCLOUD_SCHEME_UNDEFINED .or. &
@@ -1241,6 +1248,15 @@ contains
               WETDEP_INCLOUD_SCHEME_NONE, &
               .false., .false. &
             )
+          case("bartnicki-takemura")
+            met_params%use_3d_precip = .true.
+            met_params%use_ccf = .true.
+            wetdep_scheme = wetdep_scheme_t( &
+              WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
+              WETDEP_INCLOUD_SCHEME_TAKEMURA, &
+              .true., .true. &
+            )
+#if defined(SNAP_EXPERIMENTAL)
           case("conventional")
             wetdep_scheme = wetdep_scheme_t( &
               WETDEP_SUBCLOUD_SCHEME_CONVENTIONAL, &
@@ -1261,14 +1277,6 @@ contains
             wetdep_scheme = wetdep_scheme_t( &
               WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
               WETDEP_INCLOUD_SCHEME_ROSELLE, &
-              .true., .true. &
-            )
-          case("bartnicki-takemura")
-            met_params%use_3d_precip = .true.
-            met_params%use_ccf = .true.
-            wetdep_scheme = wetdep_scheme_t( &
-              WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
-              WETDEP_INCLOUD_SCHEME_TAKEMURA, &
               .true., .true. &
             )
           case("ratm-roselle")
@@ -1299,6 +1307,7 @@ contains
               WETDEP_INCLOUD_SCHEME_TAKEMURA, &
               .true., .true. &
             )
+#endif
           case default
             write(error_unit,*) "Unknown scheme ", cinput(pname_start:pname_end)
             goto 12
