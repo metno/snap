@@ -1256,13 +1256,6 @@ contains
               WETDEP_INCLOUD_SCHEME_TAKEMURA, &
               .true., .true. &
             )
-#if defined(SNAP_EXPERIMENTAL)
-          case("conventional")
-            wetdep_scheme = wetdep_scheme_t( &
-              WETDEP_SUBCLOUD_SCHEME_CONVENTIONAL, &
-              WETDEP_INCLOUD_SCHEME_NONE, &
-              .false., .false. &
-            )
           case("bartnicki-vertical")
             met_params%use_3d_precip = .true.
             met_params%use_ccf = .true.
@@ -1270,6 +1263,13 @@ contains
               WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
               WETDEP_INCLOUD_SCHEME_NONE, &
               .true., .true. &
+            )
+#if defined(SNAP_EXPERIMENTAL)
+          case("conventional")
+            wetdep_scheme = wetdep_scheme_t( &
+              WETDEP_SUBCLOUD_SCHEME_CONVENTIONAL, &
+              WETDEP_INCLOUD_SCHEME_NONE, &
+              .false., .false. &
             )
           case("bartnicki-roselle")
             met_params%use_3d_precip = .true.
@@ -2126,10 +2126,6 @@ contains
       end if
 
       do m = 1, size(def_comp) - 1
-        if (def_comp(m)%idcomp < 1) then
-          write (error_unit, *) 'Component has no field identification: ', &
-            trim(def_comp(m)%compname)
-        end if
         do i = m + 1, size(def_comp)
           if (def_comp(m)%compname == def_comp(i)%compname) then
             write (error_unit, *) 'Component defined more than once: ', &

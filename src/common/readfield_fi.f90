@@ -462,6 +462,7 @@ contains
   subroutine read_precipitation(fio, nhdiff, timepos, timeposm1)
     use iso_fortran_env, only: error_unit
     use snapdebug, only: iulog
+    use snapfilML, only: nctype
     use snapmetML, only: met_params, &
                          precip_rate_units, precip_units_ => precip_units, precip_units_fallback
     use snapfldML, only: field1, field2, field3, field4, precip, &
@@ -612,13 +613,19 @@ contains
     end where
 
     if (requires_extra_precip_fields()) then
-      call read_extra_precipitation_fields(fio, timepos)
+      if (nctype == "arome") then
+        call read_extra_precipitation_fields_arome(fio, timepos)
+      elseif (nctype == "ecemep") then
+        call read_extra_precipitation_fields_ecemep(fio, timepos)
+      else
+        error stop "Can not read extra 3D precipition for this meteorology"
+      endif
     endif
 
     call wetdep_precompute()
   end subroutine read_precipitation
 
-  subroutine read_extra_precipitation_fields(fio, timepos)
+  subroutine read_extra_precipitation_fields_arome(fio, timepos)
     use iso_fortran_env, only: error_unit
     use snaptabML, only: g
     use snapfldML, only: ps2, precip3d, cw3d, cloud_cover, enspos
@@ -686,6 +693,60 @@ contains
 
       call fi_checkload(fio, "cloud_area_fraction_ml", "%", &
                         cloud_cover(:,:,k), nt=timepos, nz=ilevel, nr=nr)
+    enddo
+  end subroutine
+
+  !> Read and convert fields from ecemep input to what we need for 3D precip
+  subroutine read_extra_precipitation_fields_ecemep(fio, timepos)
+    use iso_fortran_env, only: error_unit
+    use snaptabML, only: g
+    use snapfldML, only: ps2, precip3d, cw3d, cloud_cover, enspos, precip
+    use snapgrdML, only: ahalf, bhalf, kadd, klevel
+    use snapdimML, only: nx, ny, nk
+!> open netcdf file
+    TYPE(FimexIO), intent(inout) :: fio
+!> timestep in file
+    integer, intent(in) :: timepos
+
+    real(real64), allocatable :: specific_humidity(:,:), spec_humidity_norm(:,:)
+    real(real64), allocatable :: pdiff(:,:)
+
+    integer :: ilevel, k, nr
+    character(len=*), parameter :: mass_fraction_units = "kg/kg"
+
+!.. get the correct ensemble/realization position, nr starting with 1, enspos starting with 0
+    nr = enspos + 1
+    if (enspos <= 0) nr = 1
+
+    allocate(specific_humidity(nx,ny),pdiff(nx,ny))
+    allocate(spec_humidity_norm(nx,ny))
+
+    precip3d(:,:,:) = 0.0
+    cw3d(:,:,:) = 0.0
+
+    spec_humidity_norm(:,:) = 0.0
+
+    do k=nk-kadd,2,-1
+      ilevel = klevel(k)
+      call fi_checkload(fio, "specific_humidity", mass_fraction_units, &
+                        specific_humidity, nt=timepos, nz=ilevel, nr=nr)
+
+      spec_humidity_norm(:,:) = spec_humidity_norm + specific_humidity
+
+      precip3d(:,:,k) = precip * specific_humidity
+
+      pdiff(:,:) = 100*( (ahalf(k-1) - ahalf(k)) + (bhalf(k-1) - bhalf(k))*ps2 )
+      call fi_checkload(fio, "cloudwater", mass_fraction_units, &
+                        cw3d(:,:,k), nt=timepos, nz=ilevel, nr=nr)
+
+      cw3d(:,:,k) = cw3d(:,:,k) * pdiff / g
+      call fi_checkload(fio, "3D_cloudcover", "%", &
+                        cloud_cover(:,:,k), nt=timepos, nz=ilevel, nr=nr)
+    enddo
+
+    do k=nk-kadd,2,-1
+      ! Normalise based on sum of specific humidity in each column
+      precip3d(:,:,k) = precip3d(:,:,k) / spec_humidity_norm
     enddo
   end subroutine
   
