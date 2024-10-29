@@ -31,7 +31,7 @@ module snaptabML
 
     real, parameter, public :: g=9.81, r=287.0, cp=1004.0
     real, parameter, public :: rcp = r/cp
-
+!> Units of hPa
     real, parameter, public :: standard_atmosphere = 1013.25
 
 !> Height of surface layer

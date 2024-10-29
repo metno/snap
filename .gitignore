@@ -81,35 +81,17 @@ Snappy.egg-info
 /src/naccident/snap_batch_copy.f90
 /src/naccident/snap_batch_copy.F90
 
-/src/nbomb/*.inc
-/src/nbomb/*.mod
-/src/nbomb/bsnap_nbomb
-/src/nbomb/create_bomb_input
-/src/nbomb/snap_batch_copy.f90
-/src/nbomb/snap_batch_copy.F90
-
 /src/test/testDateCalc
 /src/test/find_parameters_fi_test
 /src/test/snap_batch_copy.F90
 
-/src/traj/*.inc
-/src/traj/*.mod
-/src/traj/bsnap_traj
-/src/traj/create_traj_input
-/src/traj/snap_batch_copy.f90
-/src/traj/snap_batch_copy.F90
-
-/src/volcano/*.mod
-/src/volcano/*.inc
-/src/volcano/snapargos.inc
-/src/volcano/bsnap_volcano
-/src/volcano/snap_batch_copy.f90
-/src/volcano/snap_batch_copy.F90
 
 src/test/snap_testdata
-
 
 docs/html
 docs/latex
 
 bsnap_*
+
+utils/SnapPy/Snappy.egg-info
+src/test/snap_testdata
