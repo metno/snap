@@ -109,9 +109,9 @@ class VolcanoRun:
         M0,,VENT,  10.000,  96,  1987149.0,  0.05,2016-10-11 05:00:00,SE+D, no description
         """
         desc = "#TYPE/NPP,VARIABLE,BASE[km],H[km above vent],D[h],dM/dt[kBq/s],m63[-],START[code/date],END[code/date],DESCRIPTION\n"
-        definition = "M0,,VENT,  {height},  {duration},  {rate},  {m63},{startdate},{enddate}, no description\n"
+        definition = "M0,,VENT,  {height},  {duration},  {rate},  {m63},{startdate:%Y-%m-%d %H:%M:%S},{enddate:%Y-%m-%d %H:%M:%S}, no description\n"
         # add constant 2h emissions of 0.1Tg/h SO2 from the beginning of the run for all emissions (M0)
-        definition += "M0,SO2,VENT, 2.0,  2.0,  27777,  1.,{startdate},SE+D, 0.1 Tg/h - Holuraun: ~ 0.1-0.5Tg/day: 1 DU = 2.85*10^-5 kg/m2\n"
+        definition += "M0,SO2,VENT, 2.0,  2.0,  27777,  1.,{startdate:%Y-%m-%d %H:%M:%S},SE+D, 0.1 Tg/h - Holuraun: ~ 0.1-0.5Tg/day: 1 DU = 2.85*10^-5 kg/m2\n"
         out = [desc]
         for erup in self.root.findall("eruptions/eruption"):
             defs = {}
@@ -123,8 +123,8 @@ class VolcanoRun:
             )
             end = datetime.datetime.strptime(erup.attrib["end"], "%Y-%m-%dT%H:%M:%SZ")
             defs["duration"] = (end - start).total_seconds() / (60.0 * 60.0)
-            defs["startdate"] = start.strftime("%Y-%m-%d %H:%M:%S")
-            defs["enddate"] = end.strftime("%Y-%m-%d %H:%M:%S")
+            defs["startdate"] = start
+            defs["enddate"] = end
             out.append(definition.format(**defs))
 
         assert len(out) > 1, "no eruptions found"
