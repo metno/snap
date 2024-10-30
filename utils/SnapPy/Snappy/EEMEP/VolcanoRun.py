@@ -1,17 +1,17 @@
 # SNAP: Servere Nuclear Accident Programme
 # Copyright (C) 1992-2017   Norwegian Meteorological Institute
-# 
-# This file is part of SNAP. SNAP is free software: you can 
-# redistribute it and/or modify it under the terms of the 
-# GNU General Public License as published by the 
+#
+# This file is part of SNAP. SNAP is free software: you can
+# redistribute it and/or modify it under the terms of the
+# GNU General Public License as published by the
 # Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
@@ -88,7 +88,7 @@ class VolcanoRun():
 
         self.latitude = defs['lat']
         self.longitude = defs ['lon']
-        
+
         return desc + definition
 
 
@@ -100,7 +100,8 @@ class VolcanoRun():
         '''
         desc = "#TYPE/NPP,VARIABLE,BASE[km],H[km above vent],D[h],dM/dt[kBq/s],m63[-],START[code/date],END[code/date],DESCRIPTION\n"
         definition = "M0,,VENT,  {height},  {duration},  {rate},  {m63},{startdate},{enddate}, no description\n"
-
+        # add constant 2h emissions of 0.1Tg/h SO2 from the beginning of the run for all emissions (M0)
+        definition += "M0,SO2,VENT, 2.0,  2.0,  27777,  1.,{startdate},SE+D, 0.1 Tg/h - Holuraun: ~ 0.1-0.5Tg/day: 1 DU = 2.85×10^-5 kg/m2 \n"
         out = [desc]
         for erup in self.root.findall('eruptions/eruption'):
             defs = {}
