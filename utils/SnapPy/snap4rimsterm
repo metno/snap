@@ -89,6 +89,15 @@ def rimsterm2npp_release(rimxml, runTime, releaseStartTime, startDTime):
         uHeight = posXML.attrib['HeightAboveGroundMax']
         if uHeight < lHeight:
             uHeight = lHeight
+        if uHeight == lHeight:
+            # ARGOS configuration for stack-height, add +-100m as initial atmoshperic release
+            # as discussed with DSA, 2024-09-16
+            if uHeight > 100:
+                lHeight = uHeight - 100
+                uHeight += 100
+            else:
+                lHeight = 0
+                uHeight = 200
         isoBqs = {}
         for isoName in isoItems.keys():
             xpath = 'SourceStrength[@ItemName="{}"]'.format(isoName)
