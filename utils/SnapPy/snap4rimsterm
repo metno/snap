@@ -85,8 +85,8 @@ def rimsterm2npp_release(rimxml, runTime, releaseStartTime, startDTime):
             #     and run backupward in time
             startDTime = startDTime + endtime
         posXML = relXML.find("SourcePosition")
-        lHeight = posXML.attrib['HeightAboveGround']
-        uHeight = posXML.attrib['HeightAboveGroundMax']
+        lHeight = float(posXML.attrib['HeightAboveGround'])
+        uHeight = float(posXML.attrib['HeightAboveGroundMax'])
         if uHeight < lHeight:
             uHeight = lHeight
         if uHeight == lHeight:
@@ -106,7 +106,7 @@ def rimsterm2npp_release(rimxml, runTime, releaseStartTime, startDTime):
                 isoBqs[isoName] = float(relValXML.find('BinStrength').attrib['Value'])
             else:
                 isoBqs[isoName] = 0
-        releaseDef =  {'endtime': endtime, 'lower': lHeight, 'upper': uHeight, 'isoBqs': isoBqs}
+        releaseDef =  {'endtime': endtime, 'lower': str(lHeight), 'upper': str(uHeight), 'isoBqs': isoBqs}
         if runTime >= 0:
             releases.append(releaseDef)
         else:
