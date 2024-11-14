@@ -305,7 +305,7 @@ m=SNAP.current t=fimex format=netcdf f={self.lastOutputDir}/snap.nc
     def get_isotope_release(self, qDict):
         errors = ""
         for tag in ("releaseTime", "radius", "lowerHeight", "upperHeight"):
-            if not re.search("\d+", qDict[tag]):
+            if not re.search(r"\d+", qDict[tag]):
                 errors += "Cannot interprete {}: {}".format(tag, qDict[tag])
 
         source_tmpl = """
@@ -356,7 +356,7 @@ RELEASE.UPPER.M= {upperHeight}, {upperHeight}
         else:
             errors += "Cannot interprete startTime: {0}\n".format(qDict["startTime"])
 
-        if not re.search("-?\d+(.\d+)?", qDict["runTime"]):
+        if not re.search(r"-?\d+(.\d+)?", qDict["runTime"]):
             errors += "Cannot interprete runTime: {}\n".format(qDict["runTime"])
 
         lat = qDict["latitude"]

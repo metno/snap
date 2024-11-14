@@ -396,7 +396,7 @@ GRAVITY.FIXED.M/S=0.0002
             mode="r",
             encoding="UTF-8",
         ) as f:
-            degree_minute_regex = re.compile("([0-9]+)°\s([0-9]+)’\s[NØ]")
+            degree_minute_regex = re.compile(r"([0-9]+)°\s([0-9]+)’\s[NØ]")
             for line in f:
                 if line.startswith("#"):
                     continue
