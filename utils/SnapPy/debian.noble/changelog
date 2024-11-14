@@ -1,0 +1,89 @@
+snap-py (2.4.3-1) noble; urgency=medium
+
+  * fixing non-continuous releases; adding column-output
+
+ -- Ubuntu <ubuntu@met.no>  Thu, 14 Nov 2024 15:03:03 +0000
+
+snap-py (2.4.3-1) jammy; urgency=medium
+
+  * fixing non-continuous releases; adding column-output
+
+ -- Heiko Klein <heikok@met.no>  Fri, 23 Aug 2024 09:16:38 +0200
+
+snap-py (2.4.2-1) jammy; urgency=medium
+
+  * adding Natanz
+
+ -- Heiko Klein <heikok@met.no>  Fri, 19 Apr 2024 13:31:28 +0200
+
+snap-py (2.4.1-1) jammy; urgency=medium
+
+  * Read only valid ICON timesteps
+
+ -- Heiko Klein <heikok@met.no>  Fri, 19 Apr 2024 11:50:06 +0200
+
+snap-py (2.4.0-1) jammy; urgency=medium
+
+  * Read only valid ICON timesteps
+
+ -- Heiko Klein <heikok@met.no>  Fri, 19 Apr 2024 11:07:49 +0200
+
+snap-py (2.3.9-1) jammy; urgency=medium
+
+  * Read only valid ICON timesteps
+
+ -- Heiko Klein <heikok@met.no>  Wed, 17 Apr 2024 15:59:54 +0200
+
+snap-py (2.3.8-1) jammy; urgency=medium
+
+  * Read only valid ICON timesteps
+
+ -- Magnus Ulimoen <magnusu@met.no>  Thu, 07 Dec 2023 11:51:56 +0100
+
+snap-py (2.3.7-1) jammy; urgency=medium
+
+  * changes in Ash emissions and products following VAAC London, patched
+
+ -- Charlie Negri <charlien@met.no>  Wed, 11 Oct 2023 13:41:49 +0200
+
+snap-py (2.3.6-1) jammy; urgency=medium
+
+  * changes in Ash emissions and products following VAAC London
+
+ -- Charlie Negri <charlien@met.no>  Wed, 11 Oct 2023 13:38:19 +0200
+
+snap-py (2.3.6-1) jammy; urgency=medium
+
+  * changes in Ash emissions and products following VAAC London
+
+ -- Charlie Negri <charlien@met.no>  Wed, 11 Oct 2023 13:20:47 +0200
+
+snap-py (2.3.3-1) jammy; urgency=medium
+
+  * updated Mastin table with Eldey
+
+ -- Heiko Klein <heikok@met.no>  Fri, 07 Jul 2023 18:41:43 +0200
+
+snap-py (2.3.2-1) jammy; urgency=medium
+
+  * updated Mastin table
+
+ -- Charlie Negri <charlien@met.no>  Wed, 05 Jul 2023 14:49:13 +0200
+
+snap-py (2.3.2-1) jammy; urgency=medium
+
+  * updated Mastin table
+
+ -- Charlie Negri <charlien@met.no>  Wed, 05 Jul 2023 14:47:58 +0200
+
+snap-py (2.3.0-1) jammy; urgency=medium
+
+  * enable bomb-decay
+
+ -- Heiko Klein <heikok@met.no>  Tue, 30 May 2023 11:30:30 +0200
+
+snap-py (1.8.2-1) jammy; urgency=medium
+
+  * packaging for jammy
+
+ -- Magnus Ulimoen <magnusu@met.no>  Mon, 09 Jan 2023 12:24:19 +0000

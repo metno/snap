@@ -17,6 +17,9 @@ if [ $PLATFORM = bionic ]; then
 elif [ $PLATFORM = jammy ]; then
     export SNAP_FIMEX_VERSION=1.9
     ln --symbolic gcc_pkgconfig.mk current.mk
+elif [ $PLATFORM = noble ]; then
+    export SNAP_FIMEX_VERSION=2.1
+    ln --symbolic gcc_pkgconfig.mk current.mk
 fi
 make clean
 make dist
