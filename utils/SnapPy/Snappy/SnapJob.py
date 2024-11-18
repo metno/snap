@@ -24,15 +24,18 @@ Created on Mar 8, 2018
 import os
 import re
 
+
 class UnknownModelException(Exception):
-    '''Exception when wrong model/prefix-name is send to SnapJob'''
+    """Exception when wrong model/prefix-name is send to SnapJob"""
+
     pass
+
 
 class SnapJob:
     """tasks to work with the model SNAP, SNAPGLOBAL and TRAJ with EC-data"""
 
     def __init__(self, task, hpc):
-        """ construct a snap-job with a task (see snapRemoteRunner)  and a hpc"""
+        """construct a snap-job with a task (see snapRemoteRunner)  and a hpc"""
         self.task = task
         self.hpc = hpc
 
@@ -59,9 +62,9 @@ class SnapJob:
         allow for SNAP, SNAPGLOBAL, SNAPNORDIC, SNAPICONGLOBAL
         and       SNAPBOMB, SNAPBOMBGLOBAL, SNAPBOMBNORDIC, SNAPBOMBICONGLOBAL
         """
-        if self.task.model.startswith('SNAPBOMB'):
+        if self.task.model.startswith("SNAPBOMB"):
             task_model = self.task.model[8:]
-        elif self.task.model.startswith('SNAP'):
+        elif self.task.model.startswith("SNAP"):
             task_model = self.task.model[4:]
         else:
             raise UnknownModelException("unknown model:" + self.task.model)
