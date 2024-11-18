@@ -21,6 +21,7 @@ def snap_add_bomb_isotopes(nc: netCDF4.Dataset):
     hours = nc["time"][:]  # snap writes usually hours since start
     for var in [
         "concentration",
+        "column_concentration",
         "acc_dry_deposition",
         "acc_wet_deposition",
         "acc_concentration",

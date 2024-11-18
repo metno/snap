@@ -5,6 +5,13 @@
         <attribute name="isotopeIdentificationNumber" type="long" value="{ID}" />
     </grib1>
 </parameter>
+<!-- column-concentrations should end in _coco files -->
+<parameter name="{ISOTOPE}_column_concentration">
+    <grib1 parameterNumber="207" codeTable="133" units="Bq*m/m3">
+        <!-- see isotope_list.txt file -->
+        <attribute name="isotopeIdentificationNumber" type="long" value="{ID}" />
+    </grib1>
+</parameter>
 <!-- dose/time-integrated concentration, should end in files named _dose -->
 <parameter name="{ISOTOPE}_acc_concentration">
     <grib1 parameterNumber="202" codeTable="133" units="Bq*h/m3">
