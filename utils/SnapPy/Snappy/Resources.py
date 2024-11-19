@@ -21,8 +21,6 @@ Created on Apr 13, 2016
 @author: heikok
 """
 
-from collections import OrderedDict
-from datetime import datetime, time, date, timedelta
 import enum
 import math
 import os
@@ -30,10 +28,12 @@ import re
 import subprocess
 import sys
 import time as mtime
+from collections import OrderedDict
+from datetime import date, datetime, time, timedelta
 from time import gmtime, strftime
 
-from Snappy.ResourcesCommon import ResourcesCommon
 from Snappy import read_dosecoefficients_icrp
+from Snappy.ResourcesCommon import ResourcesCommon
 
 
 @enum.unique
@@ -46,11 +46,13 @@ class MetModel(enum.Enum):
     EC0p1Europe = "ec_0p1_europe"
     GfsGribFilter = "gfs_grib_filter_fimex"
     Era5Nancy = "era5_nancy"
+
     def __eq__(self, other):
         return self.value == str(other)
 
     def __hash__(self):
         return self.value.__hash__()
+
 
 class Resources(ResourcesCommon):
     """
@@ -71,9 +73,7 @@ class Resources(ResourcesCommon):
         MetModel.NrpaEC0p1Global: [
             "{LUSTREDIR}/project/metproduction/products/ecmwf/nc/"
         ],
-        MetModel.EC0p1Global: [
-            "{LUSTREDIR}/project/metproduction/products/ecmwf/nc/"
-        ],
+        MetModel.EC0p1Global: ["{LUSTREDIR}/project/metproduction/products/ecmwf/nc/"],
         MetModel.Icon0p25Global: ["{LUSTREDIR}/project/metproduction/products/icon/"],
     }
 
@@ -81,14 +81,11 @@ class Resources(ResourcesCommon):
         MetModel.Meps2p5: [
             "{LUSTREDIR}/immutable/archive/projects/metproduction/MEPS/"
         ],
-        MetModel.EC0p1Europe: [
-            "{LUSTREDIR}/project/fou/kl/snap/meteo/ec_europe/"
+        MetModel.EC0p1Europe: ["{LUSTREDIR}/project/fou/kl/snap/meteo/ec_europe/"],
+        MetModel.GfsGribFilter: ["{LUSTREDIR}/project/fou/kl/snap/meteo/gfs_europe/"],
+        MetModel.Era5Nancy: [
+            "{LUSTREDIR}/project/fou/kl/cerad//Meteorology/EC/Era5/Nancy/"
         ],
-        MetModel.GfsGribFilter: [
-            "{LUSTREDIR}/project/fou/kl/snap/meteo/gfs_europe/"
-        ],
-        MetModel.Era5Nancy: ["{LUSTREDIR}/project/fou/kl/cerad//Meteorology/EC/Era5/Nancy/"],
-
     }
     MET_FILENAME_PATTERN = {
         MetModel.Meps2p5: "{year:04d}/{month:02d}/{day:02d}/meps_det_2_5km_{year:04d}{month:02d}{day:02d}T{UTC:02d}Z.nc",
@@ -178,7 +175,7 @@ class Resources(ResourcesCommon):
         return os.path.join(self.directory, "radioMapIcon.png")
 
     def getIsotopes(self):
-        """ return a dictionary of isotope-ids mapping to a dictionary with isotope,type and decay"""
+        """return a dictionary of isotope-ids mapping to a dictionary with isotope,type and decay"""
         isotopes = dict()
         with open(
             os.path.join(self.directory, "isotope_list.txt"), mode="r", encoding="UTF-8"
@@ -198,10 +195,10 @@ class Resources(ResourcesCommon):
         return isotopes
 
     def isotopes2isoIds(self, isotopes: list[str | int]) -> list[int]:
-        '''
+        """
         translate a list of isotopes, i.e. ['Cs-137', ...] or ['Cs137', ...] or ['17', ...]
         to argos isotope id's
-        '''
+        """
         retval = []
         allIsos = self.getIsotopes()
         for iso in isotopes:
@@ -213,9 +210,9 @@ class Resources(ResourcesCommon):
             except Exception:
                 pass
             if isoId == -1:
-                iso = iso.replace('-', '')
+                iso = iso.replace("-", "")
                 for iId, isoDict in allIsos.items():
-                    if iso == isoDict['isotope']:
+                    if iso == isoDict["isotope"]:
                         isoId = iId
                         break
             if isoId == -1:
@@ -223,19 +220,17 @@ class Resources(ResourcesCommon):
             retval.append(isoId)
         return retval
 
-
     def isotopes2snapinput(self, isotopeIds, add_DPUI=True):
         """Read a list of isotopeIds and return a text-block to be used for a snap.input file, like
-COMPONENT= Cs137
-RADIOACTIVE.DECAY.ON
-HALF.LIFETIME.YEARS= 30
-DRY.DEP.ON
-WET.DEP.ON
-RADIUS.MICROMETER=0.55
-DENSITY.G/CM3=2.3
-GRAVITY.FIXED.M/S=0.0002
-FIELD.IDENTIFICATION=01
-"""
+        COMPONENT= Cs137
+        RADIOACTIVE.DECAY.ON
+        HALF.LIFETIME.YEARS= 30
+        DRY.DEP.ON
+        WET.DEP.ON
+        RADIUS.MICROMETER=0.55
+        DENSITY.G/CM3=2.3
+        GRAVITY.FIXED.M/S=0.0002
+        FIELD.IDENTIFICATION=01"""
         if add_DPUI:
             dosecoeff = self.getDoseCoefficients()
         else:
@@ -296,6 +291,8 @@ GRAVITY.FIXED.M/S=0.0002
     def _getGribWriterConfig(self, isoIds, setFillValue=True):
         """Return a dictionary with a xml: xml-configuration string and a exracts: output-type and variable-names.
         Use in conjunction with convert_to_grib.
+
+        Definitions from: https://wiki.pdc-argos.com/argoswiki/images/f/fc/ARGOS-MLDP.pdf
         """
         allIsos = self.getIsotopes()
         extracts = {
@@ -305,6 +302,7 @@ GRAVITY.FIXED.M/S=0.0002
             "depo": [],
             "dose": [],
             "conc": [],
+            "coco": [],
         }
 
         with open(os.path.join(self.directory, "isotopes_template.xml")) as isoTemplate:
@@ -315,6 +313,8 @@ GRAVITY.FIXED.M/S=0.0002
             isoName = allIsos[isoId]["isotope"]
             isoStr += isoTemp.format(ISOTOPE=isoName, ID=isoId)
             extracts["conc"].append(f"{isoName}_concentration")
+            extracts["coco"].append(f"{isoName}_column_concentration")
+            extracts["dose"].append(f"{isoName}_acc_concentration")
             extracts["dose"].append(f"{isoName}_acc_concentration")
             if allIsos[isoId]["type"] > 0:
                 extracts["depo"].append(f"{isoName}_acc_total_deposition")
@@ -340,7 +340,7 @@ GRAVITY.FIXED.M/S=0.0002
 
         varFills = []
         if setFillValue:
-            for t in ("conc", "dose", "depo", "wetd"):
+            for t in ("conc", "coco", "dose", "depo", "wetd"):
                 for var in extracts[t]:
                     varFills.append(fillValueTemp.format(varname=var))
 
@@ -389,7 +389,9 @@ GRAVITY.FIXED.M/S=0.0002
         nppsFile.close()
         return OrderedDict(sorted(npps.items(), key=lambda t: t[0].lower()))
 
-    def readRadnett(self,):
+    def readRadnett(
+        self,
+    ):
         stations = OrderedDict()
         with open(
             os.path.join(os.path.dirname(__file__), "resources/radnett.csv"),
@@ -446,7 +448,16 @@ GRAVITY.FIXED.M/S=0.0002
         return f.read()
 
     def getSnapInputMetDefinitions(
-        self, metmodel, files, nx=0, ny=0, startX=0, startY=0, dx=0, dy=0, interpolation=""
+        self,
+        metmodel,
+        files,
+        nx=0,
+        ny=0,
+        startX=0,
+        startY=0,
+        dx=0,
+        dy=0,
+        interpolation="",
     ):
         """Get the definitions for the metmodel, including met-files and domain (unless default).
         This should be written to the snap.input file, in addition to the source-term. files may be empty
@@ -484,7 +495,9 @@ GRAVITY.FIXED.M/S=0.0002
             lines.append("FIELD.INPUT={}".format(f))
 
         lines.append("")
-        lines.append(self._getSnapInputTemplate(metmodel).format(interpolation=interpolation))
+        lines.append(
+            self._getSnapInputTemplate(metmodel).format(interpolation=interpolation)
+        )
         return "\n".join(lines)
 
     def getSendmailScript(self):
@@ -677,7 +690,6 @@ GRAVITY.FIXED.M/S=0.0002
         return dosecoeffs
 
 
-
 # setting bitmapCompress as default to False
 # fimex drops all fields which are completely missing, which argos doesn't like
 # waiting for fimex-fix
@@ -697,54 +709,63 @@ def snapNc_convert_to_grib(snapNc, basedir, ident, isotopes, bitmapCompress=Fals
     basexmlFile = os.path.join(basedir, xmlFile)
     ncmlFile = "config.ncml"
     baseNcmlFile = os.path.join(basedir, ncmlFile)
-    with open(baseNcmlFile, 'w') as nh:
-        nh.write(config['ncml'])
+    with open(baseNcmlFile, "w") as nh:
+        nh.write(config["ncml"])
 
     errlog = open(os.path.join(basedir, "fimex.errlog"), "w")
     outlog = open(os.path.join(basedir, "fimex.outlog"), "w")
-    tempfile = 'tmp.grib'
+    tempfile = "tmp.grib"
     basetempfile = os.path.join(basedir, tempfile)
     # fimex works in basedir, so it does not need the basefiles
-    for appendix, params in config['extracts'].items():
-        if appendix == 'tofa':
+    for appendix, params in config["extracts"].items():
+        if appendix == "tofa":
             omitEmptyFields = True
         else:
             omitEmptyFields = False
-        with open(basexmlFile, 'w') as xh:
-            xh.write(config['xml'].format(OMIT_EMPTY_FIELDS=omitEmptyFields))
+        with open(basexmlFile, "w") as xh:
+            xh.write(config["xml"].format(OMIT_EMPTY_FIELDS=omitEmptyFields))
         outFile = os.path.join(basedir, f"{ident}_{appendix}")
-        with open(outFile, 'wb') as gh:
+        with open(outFile, "wb") as gh:
             for param in params:
-                if (os.path.exists(basetempfile)):
+                if os.path.exists(basetempfile):
                     os.remove(basetempfile)
-                procOptions = ['fimex', f'--input.file={snapNc}', f'--input.config={ncmlFile}',
-                       # avoid problem with lat/lon variables
-                       # in fimex grib-writer< 0.64
-                       # '--extract.removeVariable=longitude',
-                       # '--extract.removeVariable=latitude',
-                       f'--output.file={tempfile}',
-                       '--output.type=grib', f'--output.config={xmlFile}']
-                procOptions.append(f'--extract.selectVariables={param}')
+                procOptions = [
+                    "fimex",
+                    f"--input.file={snapNc}",
+                    f"--input.config={ncmlFile}",
+                    # avoid problem with lat/lon variables
+                    # in fimex grib-writer< 0.64
+                    # '--extract.removeVariable=longitude',
+                    # '--extract.removeVariable=latitude',
+                    f"--output.file={tempfile}",
+                    "--output.type=grib",
+                    f"--output.config={xmlFile}",
+                ]
+                procOptions.append(f"--extract.selectVariables={param}")
                 print(" ".join(procOptions))
-                proc = subprocess.Popen(procOptions, cwd=basedir, stderr=errlog, stdout=outlog)
-                if (proc.wait() != 0):
-                    errlog.write("'{fimex}' in {dir} failed".format(fimex=' '.join(procOptions), dir=basedir))
+                proc = subprocess.Popen(
+                    procOptions, cwd=basedir, stderr=errlog, stdout=outlog
+                )
+                if proc.wait() != 0:
+                    errlog.write(
+                        "'{fimex}' in {dir} failed".format(
+                            fimex=" ".join(procOptions), dir=basedir
+                        )
+                    )
                 else:
                     # append tmp-file to final grib-file
-                    with (open(basetempfile, 'rb')) as th:
+                    with (open(basetempfile, "rb")) as th:
                         while True:
-                            data = th.read(16*1024*1024) # read max 16M blocks
+                            data = th.read(16 * 1024 * 1024)  # read max 16M blocks
                             if data:
                                 gh.write(data)
                             else:
                                 break
-                if (os.path.exists(basetempfile)):
+                if os.path.exists(basetempfile):
                     os.remove(basetempfile)
 
     errlog.close()
     outlog.close()
-
-
 
 
 if __name__ == "__main__":
@@ -774,7 +795,7 @@ if __name__ == "__main__":
         )
     )
     print(Resources().getDoseCoefficients())
-    isotopes = ['Cs-137', 'Cs134']
+    isotopes = ["Cs-137", "Cs134"]
     isoIds = Resources().isotopes2isoIds(isotopes)
     print(f"f{isotopes} have ids:  {isoIds}")
     assert len(isotopes) == len(isoIds)

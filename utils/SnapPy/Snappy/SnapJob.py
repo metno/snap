@@ -24,15 +24,18 @@ Created on Mar 8, 2018
 import os
 import re
 
+
 class UnknownModelException(Exception):
-    '''Exception when wrong model/prefix-name is send to SnapJob'''
+    """Exception when wrong model/prefix-name is send to SnapJob"""
+
     pass
+
 
 class SnapJob:
     """tasks to work with the model SNAP, SNAPGLOBAL and TRAJ with EC-data"""
 
     def __init__(self, task, hpc):
-        """ construct a snap-job with a task (see snapRemoteRunner)  and a hpc"""
+        """construct a snap-job with a task (see snapRemoteRunner)  and a hpc"""
         self.task = task
         self.hpc = hpc
 
@@ -59,9 +62,9 @@ class SnapJob:
         allow for SNAP, SNAPGLOBAL, SNAPNORDIC, SNAPICONGLOBAL
         and       SNAPBOMB, SNAPBOMBGLOBAL, SNAPBOMBNORDIC, SNAPBOMBICONGLOBAL
         """
-        if self.task.model.startswith('SNAPBOMB'):
+        if self.task.model.startswith("SNAPBOMB"):
             task_model = self.task.model[8:]
-        elif self.task.model.startswith('SNAP'):
+        elif self.task.model.startswith("SNAP"):
             task_model = self.task.model[4:]
         else:
             raise UnknownModelException("unknown model:" + self.task.model)
@@ -142,7 +145,7 @@ fi
 
 
 # create and deliver the file
-zip {zipreturnfile} {ident}_SNAP_conc {ident}_SNAP_dose {ident}_SNAP_depo {ident}_SNAP_prec {ident}_SNAP_wetd {ident}_SNAP_tofa {ident}_SNAP_all.nc {ident}_SNAP_IncidentFile.zip
+zip {zipreturnfile} {ident}_SNAP_conc {ident}_SNAP_coco {ident}_SNAP_dose {ident}_SNAP_depo {ident}_SNAP_prec {ident}_SNAP_wetd {ident}_SNAP_tofa {ident}_SNAP_all.nc {ident}_SNAP_IncidentFile.zip
 if [ $? -ne 0 ]; then
     send_msg 410 "{model} internal error, zip failed"
     exit 1;
