@@ -40,6 +40,7 @@ EOF
 
 patch_fimex_pkgconfig() {
     fimex_pkgconfig_path=$MODULE_PREFIX/lib/pkgconfig/fimex.pc
+    # shellcheck disable=SC2016,SC2086
     sed -i 's/^libdir.*/libdir=${prefix}\/lib/' $fimex_pkgconfig_path
 }
 
@@ -68,21 +69,27 @@ install_bsnap() {
     make clean
     env VERSION="$MODULE_VERSION" make -j 4 BINDIR="$MODULE_PREFIX"/bin install
 
-    install_bdiana $MODULE_PREFIX
+    install_bdiana "$MODULE_PREFIX"
 }
 
 install_baseenv() {
     MODULE_VERSION="$1"
+    FORCEOPT="$2"
 
     MODULE_PREFIX=/modules/rhel8/user-apps/fou-modules/SnapPy/"$MODULE_VERSION"/
     if [ -d "$MODULE_PREFIX" ]; then
         echo "This module ('$MODULE_VERSION') already exists" >/dev/stderr
-	exit 2
+        if [ "$FORCEOPT" == "--force" ]; then
+          echo "Overwriting module since --force was specified" >/dev/stderr
+        else
+        	exit 2
+        fi
+    else
+        echo "Installing a fresh conda environment"
     fi
 
     source /modules/rhel8/conda/install/etc/profile.d/conda.sh
 
-    echo "Installing a fresh conda environment"
     install_conda_env "$MODULE_PREFIX"
     conda activate "$MODULE_PREFIX"
     patch_fimex_pkgconfig
@@ -118,11 +125,20 @@ EOF
 install_snap() {
     MODULE_VERSION="$1"
     BASE_MODULE_VERSION="$2"
+    FORCEOPT="$3"
     BASE_MODULE_PREFIX=/modules/rhel8/user-apps/fou-modules/SnapPy/"$BASE_MODULE_VERSION"/
 
     source /modules/rhel8/conda/install/bin/activate "$BASE_MODULE_PREFIX"
 
     MODULE_PREFIX=/modules/rhel8/user-apps/fou-modules/SnapPy/"$MODULE_VERSION"/
+    if [ -d "$MODULE_PREFIX" ]; then
+        echo "Module $MODULE_PREFIX seems to already exists" >/dev/stderr
+        if [ "$FORCEOPT" = "--force" ]; then
+            echo "Overwriting module since --force was specified" >/dev/stderr
+        else
+            exit 2
+        fi
+    fi
     mkdir --parent -- "$MODULE_PREFIX/bin"
 
     python3 -m venv "$MODULE_PREFIX/" --system-site-packages
@@ -160,16 +176,17 @@ EOF
 DEFAULT_BASEENV=conda202305
 case "${1:-help}" in
   install_baseenv)
-    install_baseenv "${2:-TEST}"
+    install_baseenv "${2:-TEST}" "${3:---no-force}"
     ;;
   install_snap)
-    install_snap "${2:-TEST_SNAP}" "${3:-$DEFAULT_BASEENV}"
+    install_snap "${2:-TEST_SNAP}" "${3:-$DEFAULT_BASEENV}" "${4:---no-force}"
     ;;
   *)
     echo "Usage: ./install_usermodule_r8.sh <CMD>"
     echo "CMD: install_baseenv <BASEENVNAME>"
     echo "CMD: install_snap <ENVNAME> [<BASEENVNAME> (default: ${DEFAULT_BASEENV})]"
     echo "  with ENVNAME e.g. 2.3.3-dev0"
+    echo " --force can be used with the above CMDs to overwrite modules"
     ;;
 esac
 
