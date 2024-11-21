@@ -315,7 +315,6 @@ GRAVITY.FIXED.M/S=0.0002
             extracts["conc"].append(f"{isoName}_concentration")
             extracts["coco"].append(f"{isoName}_column_concentration")
             extracts["dose"].append(f"{isoName}_acc_concentration")
-            extracts["dose"].append(f"{isoName}_acc_concentration")
             if allIsos[isoId]["type"] > 0:
                 extracts["depo"].append(f"{isoName}_acc_total_deposition")
                 extracts["wetd"].append(f"{isoName}_acc_wet_deposition")
