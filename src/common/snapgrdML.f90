@@ -22,7 +22,7 @@ module snapgrdML
 
 !> mapping from internal vertical coordinate to MET vertical coord
 !>
-!> sequence: bottom to top (kk,kk-1,....1)
+!> sequence: bottom to top (0,kk,kk-1,...,1)
 !>
 !> level no.  1 should be 0    (surface fields here)
 !>
@@ -113,10 +113,6 @@ module snapgrdML
 !> * 2=sigma (Norlam)
 !> * 10=eta/hybrid   (Hirlam,...))
     integer, save, public :: ivcoor = 0
-!> levels added at the top (when missing upper model levels)
-!>
-!> (u,v copied up, w reduced, pot.temp. const.)
-    integer, save, public :: kadd
 !> table of level numbers for interpolation
 !>
 !> (key is vlevel*10000)

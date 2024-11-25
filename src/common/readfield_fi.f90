@@ -72,7 +72,7 @@ contains
       hlayer1, hlayer2, bl1, bl2, enspos, precip, t1_abs, t2_abs, &
       field1
     USE snapgrdML, only: alevel, blevel, vlevel, ahalf, bhalf, vhalf, &
-                         gparam, kadd, klevel, ivlevel, imslp, igtype, ivlayer, ivcoor
+                         gparam, klevel, ivlevel, imslp, igtype, ivlayer, ivcoor
     USE snapmetML, only: met_params, xy_wind_units, pressure_units, omega_units, &
                          sigmadot_units, temp_units, requires_precip_deaccumulation
     USE snapdimML, only: nx, ny, nk, output_resolution_factor, hres_field
@@ -215,7 +215,7 @@ contains
     end if
 
     ptop = 100.0
-    do k = nk - kadd, 2, -1
+    do k = nk , 2, -1
 
       !..input model level no.
       ilevel = klevel(k)
@@ -269,7 +269,7 @@ contains
         end if
       end if
 
-    end do ! k=nk-kadd,2,-1
+    end do ! k=nk,2,-1
 
 !..surface pressure, 10m wind and possibly mean sea level pressure,
 !..precipitation
@@ -333,7 +333,7 @@ contains
     if (met_params%temp_is_abs) then
       if (allocated(t2_abs)) t2_abs(:,:,:) = t2
       !..abs.temp. -> pot.temp.
-      do k = 2, nk - kadd
+      do k = 2, nk
         do j = 1, ny
           do i = 1, nx
             p = alevel(k) + blevel(k)*ps2(i,j)
@@ -344,7 +344,7 @@ contains
     else
       if (allocated(t2_abs)) then
         ! pot.temp -> abs.temp
-        do k=2,nk-kadd
+        do k=2,nk
           do j = 1, ny
             do i = 1, nx
               p = alevel(k) + blevel(k)*ps2(i,j)
@@ -370,19 +370,6 @@ contains
 
 !..no temperature at or near surface (not used, yet)
     t2(:, :, 1) = -999.0
-    if (kadd > 0) then
-      !..levels added at the top
-      dred = 0.5/float(kadd)
-      red = 1.
-      kk = nk - kadd
-      do k = nk - kadd + 1, nk
-        red = red - dred
-        u2(:, :, k) = u2(:, :, kk)
-        v2(:, :, k) = v2(:, :, kk)
-        w2(:, :, k) = w2(:, :, kk)*red
-        t2(:, :, k) = t2(:, :, kk)
-      end do
-    end if
 
     if (backward) then
       ! backward-calculation, switch sign of winds
