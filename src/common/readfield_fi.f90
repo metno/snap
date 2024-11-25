@@ -708,46 +708,82 @@ contains
 !> timestep in file
     integer, intent(in) :: timepos
 
-    real(real64), allocatable :: specific_humidity(:,:), spec_humidity_norm(:,:)
+    real(real64), allocatable :: normaliser(:,:)
     real(real64), allocatable :: pdiff(:,:)
+    real(real64), allocatable :: cloud_water(:,:), cloud_ice(:,:)
 
-    integer :: ilevel, k, nr
+    integer :: ilevel, k, nr, i, j
     character(len=*), parameter :: mass_fraction_units = "kg/kg"
 
 !.. get the correct ensemble/realization position, nr starting with 1, enspos starting with 0
     nr = enspos + 1
     if (enspos <= 0) nr = 1
 
-    allocate(specific_humidity(nx,ny),pdiff(nx,ny))
-    allocate(spec_humidity_norm(nx,ny))
+    allocate(pdiff(nx,ny))
+    allocate(normaliser(nx,ny))
+    allocate(cloud_water(nx,ny), cloud_ice(nx,ny))
 
     precip3d(:,:,:) = 0.0
     cw3d(:,:,:) = 0.0
 
-    spec_humidity_norm(:,:) = 0.0
+    normaliser(:,:) = 0.0
 
     do k=nk-kadd,2,-1
       ilevel = klevel(k)
-      call fi_checkload(fio, "specific_humidity", mass_fraction_units, &
-                        specific_humidity, nt=timepos, nz=ilevel, nr=nr)
-
-      spec_humidity_norm(:,:) = spec_humidity_norm + specific_humidity
-
-      precip3d(:,:,k) = precip * specific_humidity
 
       pdiff(:,:) = 100*( (ahalf(k-1) - ahalf(k)) + (bhalf(k-1) - bhalf(k))*ps2 )
       call fi_checkload(fio, "cloudwater", mass_fraction_units, &
-                        cw3d(:,:,k), nt=timepos, nz=ilevel, nr=nr)
+                        cloud_water(:,:), nt=timepos, nz=ilevel, nr=nr)
+      call fi_checkload(fio, "cloudice", mass_fraction_units, &
+                        cloud_ice(:,:), nt=timepos, nz=ilevel, nr=nr)
 
-      cw3d(:,:,k) = cw3d(:,:,k) * pdiff / g
+      cw3d(:,:,k) = (abs(cloud_water(:,:)) + abs(cloud_ice(:,:))) * pdiff / g
+
+      ! Use cloud water to assign precipitation at model levels
+      normaliser(:,:) = normaliser + cw3d(:,:,k)
+      precip3d(:,:,k) = precip * cw3d(:,:,k)
+
       call fi_checkload(fio, "3D_cloudcover", "%", &
                         cloud_cover(:,:,k), nt=timepos, nz=ilevel, nr=nr)
     enddo
 
+    block
+    use snapgrdML, only: ivlevel
+    integer :: klimit
+    klimit = ivlevel(nint(0.67*10000.0))
     do k=nk-kadd,2,-1
-      ! Normalise based on sum of specific humidity in each column
-      precip3d(:,:,k) = precip3d(:,:,k) / spec_humidity_norm
+      do j=1,ny
+        do i=1,nx
+          if (normaliser(i,j) > 0.0) then
+            precip3d(i,j,k) = precip3d(i,j,k) / normaliser(i,j)
+          elseif (k == klimit) then
+            ! Put all precip at level closest to 0.67, analoguous
+            ! with the old formulation of the precipitation
+            precip3d(i,j,k) = precip(i,j)
+          endif
+        enddo
+      enddo
     enddo
+    end block
+
+    ! block ! Debug
+    !   use snapfldML, only: garea
+    !   real :: total_precip
+    !   real :: total_precip2
+    !   real, allocatable :: tmp(:,:)
+
+    !   allocate(tmp(nx,ny))
+
+    !   tmp(:,:) = precip * garea
+    !   total_precip = sum(tmp)
+    !   tmp(:,:) = sum(precip3d, dim=3)
+    !   tmp(:,:) = tmp * garea
+    !   total_precip2 = sum(tmp)
+
+    !   write(*,*) "PRECIP LOSS: ", total_precip2 - total_precip
+    !   write(*,*) "Precip from 2D fields: ", total_precip
+    !   write(*,*) "Precip from 3d fields: ", total_precip2
+    ! end block
   end subroutine
   
   subroutine check(status, errmsg)
