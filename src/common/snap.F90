@@ -1140,6 +1140,7 @@ contains
         drydep_scheme = DRYDEP_SCHEME_NEW
       case ('dry.deposition.scheme')
         if (.not. has_value) goto 12
+        call to_lowercase(cinput(pname_start:pname_end))
         select case (cinput(pname_start:pname_end))
         case ('old')
           if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_OLD) goto 12
