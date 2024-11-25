@@ -171,7 +171,7 @@ PROGRAM bsnap
                        ncomp, def_comp, nparnum, &
                        time_profile
   USE snapposML, only: irelpos, nrelpos, release_positions
-  USE snapgrdML, only: modleveldump, ivcoor, kadd, &
+  USE snapgrdML, only: modleveldump, ivcoor, &
                        klevel, imslp, itotcomp, gparam, &
                        igtype, imodlevel, precipitation_in_output
   USE snaptabML, only: tabcon
@@ -232,7 +232,7 @@ PROGRAM bsnap
   integer :: nhrun = 0, nhrel = 0
   logical :: use_random_walk = .true.
   logical :: autodetect_grid_params = .false.
-  integer :: m, np, npl, nlevel = 0, ifltim = 0
+  integer :: m, np, npl, nlevel, ifltim = 0
   logical :: synoptic_output = .false.
   integer :: k, ierror, i, n
   integer :: ih
@@ -459,7 +459,6 @@ PROGRAM bsnap
 
     !..information to log file
     write (iulog, *) 'nx,ny,nk:  ', nx, ny, nk
-    write (iulog, *) 'kadd:      ', kadd
     write (iulog, *) 'klevel:'
     write (iulog, *) (klevel(i), i=1, nk)
     write (iulog, *) 'imslp:     ', imslp
@@ -1584,25 +1583,21 @@ contains
         ivcoor = 10
       case ('levels.input')
         !..levels.input=<num_levels, 0,kk,k,k,k,....,1>
-        !..levels.input=<num_levels, 0,kk,k,k,k,....,18,0,0,...>
+        !..levels.input=<num_levels, 0,kk,k,k,k,....,18>
         if (.not. has_value) goto 12
-        if (nlevel /= 0) then
+        if (allocated(klevel)) then
           write (error_unit, *) "re-assigning levels"
           DEALLOCATE(klevel, STAT=AllocateStatus)
         end if
         read (cinput(pname_start:pname_end), *, err=12) nlevel
         nk = nlevel
-        ALLOCATE (klevel(nk), STAT=AllocateStatus)
+        ALLOCATE(klevel(nk), STAT=AllocateStatus)
         IF (AllocateStatus /= 0) ERROR STOP AllocateErrorMessage
-!         ALLOCATE ( ipcount(mdefcomp, nk), STAT = AllocateStatus)
-!         IF (AllocateStatus /= 0) ERROR STOP AllocateErrorMessage
-!         ALLOCATE ( npcount(nk), STAT = AllocateStatus)
-!         IF (AllocateStatus /= 0) ERROR STOP AllocateErrorMessage
 
         read (cinput(pname_start:pname_end), *, err=12) nlevel, (klevel(i), i=1, nlevel)
         if (klevel(1) /= 0 .OR. klevel(2) == 0) goto 12
-        kadd = count(klevel(2:nk) == 0)
-        do i = nk - kadd - 1, 2, -1
+
+        do i = nk - 1, 2, -1
           if (klevel(i) <= klevel(i + 1)) goto 12
         end do
       case ('forecast.hour.min')
@@ -1826,8 +1821,7 @@ contains
           endif
         endif
       end if
-      nlevel = size(klevel)
-      nk = nlevel
+      nk = size(klevel)
       write (error_unit, *) "autodetection of grid-param: ", gparam
     end if
 
@@ -1845,7 +1839,7 @@ contains
       write (error_unit, *) 'Input model level type (sigma,eta) not specified'
       ierror = 1
     end if
-    if (nlevel == 0) then
+    if (.not.allocated(klevel)) then
       write (error_unit, *) 'Input model levels not specified'
       ierror = 1
     end if

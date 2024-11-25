@@ -142,10 +142,11 @@ contains
       deallocate(klevel)
     endif
 
-    allocate (klevel(nk+1))
+    nk = nk + 1
+    allocate(klevel(nk))
     klevel(1) = 0
-    do i = 1, nk
-      klevel(i+1) = (nk+1) - i
+    do i = 2, nk
+      klevel(i) = nk - i + 1
     enddo
 
     stat = fio%close()

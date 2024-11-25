@@ -345,6 +345,7 @@ contains
     integer :: ncid
     integer :: hybrid_dimid, hybrid_len
     integer :: i
+    integer :: nk
     stat = 0
 
     stat = nf90_open(ncfile, NF90_NOWRITE, ncid)
@@ -362,10 +363,11 @@ contains
       dummy_int = nf90_close(ncid)
       return
     endif
-    allocate (klevel(hybrid_len+1))
+    nk = hybrid_len + 1
+    allocate(klevel(nk))
     klevel(1) = 0
-    do i = 1, hybrid_len
-      klevel(i+1) = (hybrid_len+1) - i
+    do i = 2, nk
+      klevel(i) = nk - i + 1
     enddo
   end subroutine
 end module
