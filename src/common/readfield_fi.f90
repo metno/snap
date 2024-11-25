@@ -462,7 +462,6 @@ contains
   subroutine read_precipitation(fio, nhdiff, timepos, timeposm1)
     use iso_fortran_env, only: error_unit
     use snapdebug, only: iulog
-    use snapfilML, only: nctype
     use snapmetML, only: met_params, &
                          precip_rate_units, precip_units_ => precip_units, precip_units_fallback
     use snapfldML, only: field1, field2, field3, field4, precip, &
@@ -613,10 +612,11 @@ contains
     end where
 
     if (requires_extra_precip_fields()) then
-      if (nctype == "arome") then
-        call read_extra_precipitation_fields_arome(fio, timepos)
-      elseif (nctype == "ecemep") then
-        call read_extra_precipitation_fields_ecemep(fio, timepos)
+      if ((met_params%mass_fraction_rain_in_air /= "") .and. &
+          (met_params%mass_fraction_cloud_condensed_water_in_air /= "")) then
+        call read_extra_precipitation_fields(fio, timepos)
+      else if (met_params%mass_fraction_cloud_condensed_water_in_air /= "") then
+        call read_extra_precipitation_fields_infer_3d_precip(fio, timepos)
       else
         error stop "Can not read extra 3D precipition for this meteorology"
       endif
@@ -625,12 +625,13 @@ contains
     call wetdep_precompute()
   end subroutine read_precipitation
 
-  subroutine read_extra_precipitation_fields_arome(fio, timepos)
+  subroutine read_extra_precipitation_fields(fio, timepos)
     use iso_fortran_env, only: error_unit
     use snaptabML, only: g
     use snapfldML, only: ps2, precip3d, cw3d, cloud_cover, enspos
     use snapgrdML, only: ahalf, bhalf, klevel
     use snapdimML, only: nx, ny, nk
+    use snapmetML, only: mass_fraction_units, cloud_fraction_units, met_params
 !> open netcdf file
     TYPE(FimexIO), intent(inout) :: fio
 !> timestep in file
@@ -641,7 +642,6 @@ contains
     real(real64), allocatable :: pdiff(:,:)
 
     integer :: ilevel, k, nr
-    character(len=*), parameter :: mass_fraction_units = "kg/kg"
 
 !.. get the correct ensemble/realization position, nr starting with 1, enspos starting with 0
     nr = enspos + 1
@@ -655,11 +655,11 @@ contains
 
     do k=nk,2,-1
       ilevel = klevel(k)
-      call fi_checkload(fio, "mass_fraction_of_rain_in_air_ml", mass_fraction_units, &
+      call fi_checkload(fio, met_params%mass_fraction_rain_in_air, mass_fraction_units, &
                         rain_in_air, nt=timepos, nz=ilevel, nr=nr)
-      call fi_checkload(fio, "mass_fraction_of_graupel_in_air_ml", mass_fraction_units, &
+      call fi_checkload(fio, met_params%mass_fraction_graupel_in_air, mass_fraction_units, &
                         graupel_in_air, nt=timepos, nz=ilevel, nr=nr)
-      call fi_checkload(fio, "mass_fraction_of_snow_in_air_ml", mass_fraction_units, &
+      call fi_checkload(fio, met_params%mass_fraction_snow_in_air, mass_fraction_units, &
                         snow_in_air, nt=timepos, nz=ilevel, nr=nr)
 
       where (rain_in_air < 0.0)
@@ -677,9 +677,9 @@ contains
       precip3d(:,:,k) = rain_in_air + graupel_in_air + snow_in_air
       precip3d(:,:,k) = precip3d(:,:,k) * pdiff / g
 
-      call fi_checkload(fio, "mass_fraction_of_cloud_condensed_water_in_air_ml", mass_fraction_units, &
+      call fi_checkload(fio, met_params%mass_fraction_cloud_condensed_water_in_air, mass_fraction_units, &
                         cloud_water, nt=timepos, nz=ilevel, nr=nr)
-      call fi_checkload(fio, "mass_fraction_of_cloud_ice_in_air_ml", mass_fraction_units, &
+      call fi_checkload(fio, met_params%mass_fraction_cloud_ice_in_air, mass_fraction_units, &
                         cloud_ice, nt=timepos, nz=ilevel, nr=nr)
 
       where (cloud_water < 0.0)
@@ -691,18 +691,19 @@ contains
       cw3d(:,:,k) = cloud_water + cloud_ice
       cw3d(:,:,k) = cw3d(:,:,k) * pdiff / g
 
-      call fi_checkload(fio, "cloud_area_fraction_ml", "%", &
+      call fi_checkload(fio, met_params%cloud_fraction, cloud_fraction_units, &
                         cloud_cover(:,:,k), nt=timepos, nz=ilevel, nr=nr)
     enddo
   end subroutine
 
   !> Read and convert fields from ecemep input to what we need for 3D precip
-  subroutine read_extra_precipitation_fields_ecemep(fio, timepos)
+  subroutine read_extra_precipitation_fields_infer_3d_precip(fio, timepos)
     use iso_fortran_env, only: error_unit
     use snaptabML, only: g
     use snapfldML, only: ps2, precip3d, cw3d, cloud_cover, enspos, precip
     use snapgrdML, only: ahalf, bhalf, kadd, klevel
     use snapdimML, only: nx, ny, nk
+    use snapmetML, only: mass_fraction_units, cloud_fraction_units, met_params
 !> open netcdf file
     TYPE(FimexIO), intent(inout) :: fio
 !> timestep in file
@@ -713,7 +714,6 @@ contains
     real(real64), allocatable :: cloud_water(:,:), cloud_ice(:,:)
 
     integer :: ilevel, k, nr, i, j
-    character(len=*), parameter :: mass_fraction_units = "kg/kg"
 
 !.. get the correct ensemble/realization position, nr starting with 1, enspos starting with 0
     nr = enspos + 1
@@ -732,9 +732,9 @@ contains
       ilevel = klevel(k)
 
       pdiff(:,:) = 100*( (ahalf(k-1) - ahalf(k)) + (bhalf(k-1) - bhalf(k))*ps2 )
-      call fi_checkload(fio, "cloudwater", mass_fraction_units, &
+      call fi_checkload(fio, met_params%mass_fraction_cloud_condensed_water_in_air, mass_fraction_units, &
                         cloud_water(:,:), nt=timepos, nz=ilevel, nr=nr)
-      call fi_checkload(fio, "cloudice", mass_fraction_units, &
+      call fi_checkload(fio, met_params%mass_fraction_cloud_ice_in_air, mass_fraction_units, &
                         cloud_ice(:,:), nt=timepos, nz=ilevel, nr=nr)
 
       cw3d(:,:,k) = (abs(cloud_water(:,:)) + abs(cloud_ice(:,:))) * pdiff / g
@@ -743,7 +743,7 @@ contains
       normaliser(:,:) = normaliser + cw3d(:,:,k)
       precip3d(:,:,k) = precip * cw3d(:,:,k)
 
-      call fi_checkload(fio, "3D_cloudcover", "%", &
+      call fi_checkload(fio, met_params%cloud_fraction, cloud_fraction_units, &
                         cloud_cover(:,:,k), nt=timepos, nz=ilevel, nr=nr)
     enddo
 
