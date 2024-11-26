@@ -162,7 +162,7 @@ PROGRAM bsnap
   USE DateCalc, only: epochToDate, timeGM
   USE datetime, only: datetime_t, duration_t
   USE snapdebug, only: iulog, idebug, acc_timer => prefixed_accumulating_timer
-  USE snapdimML, only: nx, ny, nk, output_resolution_factor, ldata, maxsiz, mcomp
+  USE snapdimML, only: nx, ny, nk, output_resolution_factor, ldata, maxsiz, mcomp, surface_index
   USE snapfilML, only: filef, itimer, ncsummary, nctitle, nhfmax, nhfmin, &
                        nctype, nfilef, simulation_start, spinup_steps
   USE snapfldML, only: nhfout, enspos
@@ -235,6 +235,7 @@ PROGRAM bsnap
   integer :: m, np, npl, nlevel, ifltim = 0
   logical :: synoptic_output = .false.
   integer :: k, ierror, i, n
+  integer, allocatable :: klevel_manual(:)
   integer :: ih
   integer :: idrydep = 0, wetdep_version = 0, idecay
   integer :: ntimefo
@@ -1585,20 +1586,20 @@ contains
         !..levels.input=<num_levels, 0,kk,k,k,k,....,1>
         !..levels.input=<num_levels, 0,kk,k,k,k,....,18>
         if (.not. has_value) goto 12
-        if (allocated(klevel)) then
+        if (allocated(klevel_manual)) then
           write (error_unit, *) "re-assigning levels"
-          DEALLOCATE(klevel, STAT=AllocateStatus)
+          DEALLOCATE(klevel_manual, STAT=AllocateStatus)
         end if
         read (cinput(pname_start:pname_end), *, err=12) nlevel
         nk = nlevel
-        ALLOCATE(klevel(nk), STAT=AllocateStatus)
+        ALLOCATE(klevel_manual(nk), STAT=AllocateStatus)
         IF (AllocateStatus /= 0) ERROR STOP AllocateErrorMessage
 
-        read (cinput(pname_start:pname_end), *, err=12) nlevel, (klevel(i), i=1, nlevel)
-        if (klevel(1) /= 0 .OR. klevel(2) == 0) goto 12
+        read (cinput(pname_start:pname_end), *, err=12) nlevel, (klevel_manual(i), i=1, nlevel)
+        if (klevel_manual(1) /= 0 .OR. klevel_manual(2) == 0) goto 12
 
         do i = nk - 1, 2, -1
-          if (klevel(i) <= klevel(i + 1)) goto 12
+          if (klevel_manual(i) <= klevel_manual(i + 1)) goto 12
         end do
       case ('forecast.hour.min')
         warning = .true.
@@ -1802,7 +1803,7 @@ contains
       endif
       if (ftype .eq. "fimex") then
 #ifdef FIMEX
-        call detect_gridparams_fi(filef(1), met_params%xwindv, nx, ny, igtype, gparam, klevel, ierror)
+        call detect_gridparams_fi(filef(1), met_params%xwindv, nx, ny, igtype, gparam, klevel, surface_index, ierror)
         if (ierror /= 0) then
           error stop "Could not detect gridparams"
         endif
@@ -1815,12 +1816,16 @@ contains
           error stop "Autodetection did not work (detect_gridparams)"
         endif
         if (.not.allocated(klevel)) then
-          call get_klevel(filef(1), klevel, ierror)
+          call get_klevel(filef(1), klevel, surface_index, ierror)
           if (ierror /= 0) then
             error stop "Autodetection did not work (klevel)"
           endif
         endif
       end if
+      if (allocated(klevel_manual)) then
+        deallocate(klevel)
+        call move_alloc(klevel_manual, klevel)
+      endif
       nk = size(klevel)
       write (error_unit, *) "autodetection of grid-param: ", gparam
     end if
