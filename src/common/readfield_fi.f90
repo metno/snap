@@ -72,10 +72,10 @@ contains
       hlayer1, hlayer2, bl1, bl2, enspos, precip, t1_abs, t2_abs, &
       field1
     USE snapgrdML, only: alevel, blevel, vlevel, ahalf, bhalf, vhalf, &
-                         gparam, kadd, klevel, ivlevel, imslp, igtype, ivlayer, ivcoor
+                         gparam, klevel, ivlevel, imslp, igtype, ivlayer, ivcoor
     USE snapmetML, only: met_params, xy_wind_units, pressure_units, omega_units, &
                          sigmadot_units, temp_units, requires_precip_deaccumulation
-    USE snapdimML, only: nx, ny, nk, output_resolution_factor, hres_field
+    USE snapdimML, only: nx, ny, nk, output_resolution_factor, hres_field, surface_index
     USE datetime, only: datetime_t, duration_t
     USE readfield_ncML, only: find_index, compute_vertical_coords
 !> current timestep (always positive), negative istep means reset
@@ -103,8 +103,8 @@ contains
     integer :: i, j, k, ilevel, i1, i2
     integer :: nhdiff, nhdiff_precip, prev_tstep_same_file
     real :: alev(nk), blev(nk), dxgrid, dygrid
-    integer :: kk, ifb, kfb
-    real :: dred, red, p, px, ptop
+    integer :: ifb, kfb
+    real :: p, px, ptop
     real :: ptoptmp(1)
 
     integer :: timepos, timeposm1, nr
@@ -215,7 +215,7 @@ contains
     end if
 
     ptop = 100.0
-    do k = nk - kadd, 2, -1
+    do k = nk , 2, -1
 
       !..input model level no.
       ilevel = klevel(k)
@@ -269,7 +269,7 @@ contains
         end if
       end if
 
-    end do ! k=nk-kadd,2,-1
+    end do ! k=nk,2,-1
 
 !..surface pressure, 10m wind and possibly mean sea level pressure,
 !..precipitation
@@ -283,8 +283,11 @@ contains
       call fi_checkload(fio, met_params%xwind10mv, xy_wind_units, u2(:, :, 1), nt=timepos, nr=nr, nz=1)
       call fi_checkload(fio, met_params%ywind10mv, xy_wind_units, v2(:, :, 1), nt=timepos, nr=nr, nz=1)
     else
-      call fi_checkload(fio, met_params%xwindv, xy_wind_units, u2(:, :, 1), nt=timepos, nr=nr, nz=nk)
-      call fi_checkload(fio, met_params%ywindv, xy_wind_units, v2(:, :, 1), nt=timepos, nr=nr, nz=nk)
+      if (surface_index <= 0) then
+        error stop "Surface index is invalid"
+      endif
+      call fi_checkload(fio, met_params%xwindv, xy_wind_units, u2(:, :, 1), nt=timepos, nr=nr, nz=surface_index)
+      call fi_checkload(fio, met_params%ywindv, xy_wind_units, v2(:, :, 1), nt=timepos, nr=nr, nz=surface_index)
     endif
 
 !..mean sea level pressure, not used in computations,
@@ -333,7 +336,7 @@ contains
     if (met_params%temp_is_abs) then
       if (allocated(t2_abs)) t2_abs(:,:,:) = t2
       !..abs.temp. -> pot.temp.
-      do k = 2, nk - kadd
+      do k = 2, nk
         do j = 1, ny
           do i = 1, nx
             p = alevel(k) + blevel(k)*ps2(i,j)
@@ -344,7 +347,7 @@ contains
     else
       if (allocated(t2_abs)) then
         ! pot.temp -> abs.temp
-        do k=2,nk-kadd
+        do k=2,nk
           do j = 1, ny
             do i = 1, nx
               p = alevel(k) + blevel(k)*ps2(i,j)
@@ -370,19 +373,6 @@ contains
 
 !..no temperature at or near surface (not used, yet)
     t2(:, :, 1) = -999.0
-    if (kadd > 0) then
-      !..levels added at the top
-      dred = 0.5/float(kadd)
-      red = 1.
-      kk = nk - kadd
-      do k = nk - kadd + 1, nk
-        red = red - dred
-        u2(:, :, k) = u2(:, :, kk)
-        v2(:, :, k) = v2(:, :, kk)
-        w2(:, :, k) = w2(:, :, kk)*red
-        t2(:, :, k) = t2(:, :, kk)
-      end do
-    end if
 
     if (backward) then
       ! backward-calculation, switch sign of winds

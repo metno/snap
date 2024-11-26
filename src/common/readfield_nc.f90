@@ -115,9 +115,9 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
       hlayer1, hlayer2, bl1, bl2, enspos, precip, &
       t1_abs, t2_abs, field1
   USE snapgrdML, only: alevel, blevel, vlevel, ahalf, bhalf, vhalf, &
-      gparam, kadd, klevel, ivlevel, imslp, igtype, ivlayer, ivcoor
+      gparam, klevel, ivlevel, imslp, igtype, ivlayer, ivcoor
   USE snapmetML, only: met_params, requires_precip_deaccumulation
-  USE snapdimML, only: nx, ny, nk, output_resolution_factor, hres_field
+  USE snapdimML, only: nx, ny, nk, output_resolution_factor, hres_field, surface_index
   USE datetime, only: datetime_t, duration_t
 !> current timestep (always positive), negative istep means reset
   integer, intent(in) :: istep
@@ -143,8 +143,7 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
   integer :: i, j, k, ilevel, i1, i2
   integer :: nhdiff, nhdiff_precip
   real :: alev(nk), blev(nk), dxgrid, dygrid
-  integer :: kk
-  real :: dred, red, p, px, ptop
+  real :: p, px, ptop
   real :: ptoptmp(1)
   integer :: prev_tstep_same_file
 
@@ -261,7 +260,7 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
   end if
 
   ptop = 100.0
-  do k=nk-kadd,2,-1
+  do k=nk,2,-1
 
   !..input model level no.
     ilevel=klevel(k)
@@ -318,7 +317,7 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
           start4d, count4d, w2(:,:,k))
     end if
 
-  end do ! k=nk-kadd,2,-1
+  end do ! k=nk,2,-1
 
 
 !..surface pressure, 10m wind and possibly mean sea level pressure,
@@ -345,14 +344,14 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
     call nfcheckload(ncid, met_params%ywind10mv, start3d, count3d, v2(:,:,1))
   else
     if (enspos >= 0) then
-      call nfcheckload(ncid, met_params%xwindv, [1, 1, enspos+1, nk, timepos], &
+      call nfcheckload(ncid, met_params%xwindv, [1, 1, enspos+1, surface_index, timepos], &
           [nx, ny, 1, 1, 1], u2(:,:,1))
-      call nfcheckload(ncid, met_params%ywindv, [1, 1, enspos+1, nk, timepos], &
+      call nfcheckload(ncid, met_params%ywindv, [1, 1, enspos+1, surface_index, timepos], &
           [nx, ny, 1, 1, 1], v2(:,:,1))
     else
-      call nfcheckload(ncid, met_params%xwindv, [1, 1, nk, timepos], &
+      call nfcheckload(ncid, met_params%xwindv, [1, 1, surface_index, timepos], &
           [nx, ny, 1, 1], u2(:,:,1))
-      call nfcheckload(ncid, met_params%ywindv, [1, 1, nk, timepos], &
+      call nfcheckload(ncid, met_params%ywindv, [1, 1, surface_index, timepos], &
           [nx, ny, 1, 1], v2(:,:,1))
     endif
   endif
@@ -401,7 +400,7 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
   if (met_params%temp_is_abs) then
     if (allocated(t2_abs)) t2_abs(:,:,:) = t2
   !..abs.temp. -> pot.temp.
-    do k=2,nk-kadd
+    do k=2,nk
       do j = 1, ny
         do i = 1, nx
           p = alevel(k) + blevel(k)*ps2(i,j)
@@ -412,7 +411,7 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
   else
     if (allocated(t2_abs)) then
       ! pot.temp -> abs.temp
-      do k=2,nk-kadd
+      do k=2,nk
         do j = 1, ny
           do i = 1, nx
             p = alevel(k) + blevel(k)*ps2(i,j)
@@ -438,19 +437,6 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
 
 !..no temperature at or near surface (not used, yet)
   t2(:,:,1) = -999.0
-  if(kadd > 0) then
-  !..levels added at the top
-    dred=0.5/float(kadd)
-    red=1.
-    kk=nk-kadd
-    do k=nk-kadd+1,nk
-      red=red-dred
-      u2(:,:,k) = u2(:,:,kk)
-      v2(:,:,k) = v2(:,:,kk)
-      w2(:,:,k) = w2(:,:,kk)*red
-      t2(:,:,k) = t2(:,:,kk)
-    end do
-  end if
 
   if(backward) then
   ! backward-calculation, switch sign of winds
@@ -916,7 +902,7 @@ end subroutine nfcheckload3d
 
 subroutine compute_vertical_coords(alev, blev, ptop)
   use iso_fortran_env, only: error_unit
-  use snapgrdML, only: alevel, blevel, vlevel, ivcoor, klevel, kadd, &
+  use snapgrdML, only: alevel, blevel, vlevel, ivcoor, klevel, &
                        ahalf, bhalf, vhalf
   use snapmetML, only: met_params
   use snapdimML, only: nk
@@ -926,40 +912,12 @@ subroutine compute_vertical_coords(alev, blev, ptop)
   real, intent(in) :: blev(:)
   real, intent(in) :: ptop
 
-  real :: db, dp, p1, p2
   integer :: k
 
-  do k = 2, nk - kadd
+  do k = 2, nk
     alevel(k) = alev(k)
     blevel(k) = blev(k)
   end do
-
-  if (kadd > 0) then
-    if (ivcoor == 2) then
-      !..sigma levels ... blevel=sigma
-      db = blevel(nk - kadd - 1) - blevel(nk - kadd)
-      db = max(db, blevel(nk - kadd)/float(kadd))
-      do k = nk - kadd + 1, nk
-        blevel(k) = max(blevel(k - 1) - db, 0.)
-      end do
-    elseif (ivcoor == 10) then
-      !..eta (hybrid) levels
-      p1 = alevel(nk - kadd) + blevel(nk - kadd)*1000.
-      p2 = alevel(nk - kadd - 1) + blevel(nk - kadd - 1)*1000.
-      dp = p2 - p1
-      if (p1 - dp*kadd < 10.) dp = (p1 - 10.)/kadd
-      db = blevel(nk - kadd - 1) - blevel(nk - kadd)
-      db = max(db, blevel(nk - kadd)/float(kadd))
-      do k = nk - kadd + 1, nk
-        p1 = p1 - dp
-        blevel(k) = max(blevel(k - 1) - db, 0.)
-        alevel(k) = p1 - blevel(k)*1000.
-      end do
-    else
-      write (error_unit, *) 'PROGRAM ERROR.  ivcoor= ', ivcoor
-      error stop 255
-    end if
-  end if
 
   if (ivcoor == 2) then
     !..sigma levels (norlam)

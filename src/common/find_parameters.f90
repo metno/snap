@@ -330,7 +330,7 @@ contains
 
   !> Forms the k-levels to search, starting from max
   !> of the hybrid dimension, to 1, skipping 0
-  subroutine get_klevel(ncfile, klevel, stat)
+  subroutine get_klevel(ncfile, klevel, surface_index, stat)
     !> path to nc file
     character(len=*), intent(in) :: ncfile
     !> resulting klevels, ranging from 0 to len(hybrid)
@@ -338,6 +338,8 @@ contains
     !>
     !> 0, nk, nk-1, ..., 1
     integer, allocatable, intent(out) :: klevel(:)
+    !> surface index for this meteorology
+    integer, intent(out) :: surface_index
     !> error code (0 for success)
     integer, intent(out) :: stat
 
@@ -345,6 +347,7 @@ contains
     integer :: ncid
     integer :: hybrid_dimid, hybrid_len
     integer :: i
+    integer :: nk
     stat = 0
 
     stat = nf90_open(ncfile, NF90_NOWRITE, ncid)
@@ -362,10 +365,12 @@ contains
       dummy_int = nf90_close(ncid)
       return
     endif
-    allocate (klevel(hybrid_len+1))
+    surface_index = hybrid_len
+    nk = hybrid_len + 1
+    allocate(klevel(nk))
     klevel(1) = 0
-    do i = 1, hybrid_len
-      klevel(i+1) = (hybrid_len+1) - i
+    do i = 2, nk
+      klevel(i) = nk - i + 1
     enddo
   end subroutine
 end module

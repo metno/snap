@@ -55,7 +55,7 @@ module om2edotML
 !>                 More than half of the model levels and the upper
 !>                 level are required.
 subroutine om2edot
-  USE snapgrdML, only: ahalf, bhalf, vhalf, kadd, klevel, gparam
+  USE snapgrdML, only: ahalf, bhalf, vhalf, klevel, gparam
   USE snapfldML, only: xm, ym, ps2, u2, v2, w2, field1, field2, field3, field4
   USE snapdimML, only: nx,ny,nk
   USE snapdebug, only: iulog
@@ -67,7 +67,7 @@ subroutine om2edot
 
   write(iulog,*) 'OM2EDOT'
 
-  do k=2,nk-kadd
+  do k=2,nk
 
     deta=vhalf(k-1)-vhalf(k)
 
@@ -85,11 +85,11 @@ subroutine om2edot
 !..check if required model levels are present for subr. edcomp
 
 !..no. of present levels
-  kk=(nk-kadd)-1
+  kk=(nk)-1
 !..assuming that the lower model level is always present above surface level
   km=klevel(2)
 
-  if(kk > km/2 .AND. kadd == 0 .AND. klevel(nk) == 1) then
+  if(kk > km/2 .AND. klevel(nk) == 1) then
 
     d2hx=1./(gparam(7)*2.)
     d2hy=1./(gparam(8)*2.)

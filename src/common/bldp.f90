@@ -39,7 +39,7 @@ module bldpML
 subroutine bldp
   USE snapdimML, only: nx,ny,nk
   USE snaptabML, only: cp, g, pmult, pitab
-  USE snapgrdML, only: ahalf, bhalf, vhalf, alevel, blevel, kadd
+  USE snapgrdML, only: ahalf, bhalf, vhalf, alevel, blevel
   USE snapfldML, only: u2, v2, ps2, t2, hbl2, bl2
   USE ftestML, only: ftest
   USE snapdebug, only: iulog
@@ -80,7 +80,7 @@ subroutine bldp
   if(pblbot > p) pblbot=p
   kbltop=2
   kblbot=2
-  nkk=min(nk-2,nk-kadd)
+  nkk=min(nk-2,nk)
   do k=2,nkk
     p=ahalf(k)+bhalf(k)*psurf
     if(p > pbltop) kbltop=k+1
