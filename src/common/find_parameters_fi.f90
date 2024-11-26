@@ -43,7 +43,7 @@ contains
   !> Tries to detect grid parameters given by the
   !> netcdf file, taking the projection from
   !> the varname
-  subroutine detect_gridparams_fi(file, varname, nx, ny, igtype, gparam, klevel, stat)
+  subroutine detect_gridparams_fi(file, varname, nx, ny, igtype, gparam, klevel, surface_index, stat)
     !> Path to the netcdf file
     character(len=*), intent(in) :: file
     character(len=*), intent(in) :: varname
@@ -65,6 +65,8 @@ contains
     !> of the hybrid dimension, to 1, skipping 00
     !> nk, nk-1, ..., 1
     integer, allocatable, intent(out) :: klevel(:)
+    !> Index of surface level
+    integer, intent(out) :: surface_index
     !> Error code, 0 for success
     integer, intent(out) :: stat
 
@@ -108,6 +110,7 @@ contains
     nx = length(xpos)
     ny = length(ypos)
     nk = length(kpos)
+    surface_index = nk
     xdim = fio%get_dimname(xpos)
     ydim = fio%get_dimname(ypos)
     kdim = fio%get_dimname(kpos)
@@ -142,10 +145,12 @@ contains
       deallocate(klevel)
     endif
 
-    allocate (klevel(nk+1))
+    ! Add the surface level
+    nk = nk + 1
+    allocate(klevel(nk))
     klevel(1) = 0
-    do i = 1, nk
-      klevel(i+1) = (nk+1) - i
+    do i = 2, nk
+      klevel(i) = nk - i + 1
     enddo
 
     stat = fio%close()

@@ -33,6 +33,8 @@ module snapdimML
   integer, save, public :: ny = nypre
 !> number of levels
   integer, save, public :: nk = nkpre
+!> Index of the surface level of the meteorology
+  integer, save, public :: surface_index = -1
 
 !> max. input field size (possibly larger than nx*ny)
   integer, save, public :: maxsiz
