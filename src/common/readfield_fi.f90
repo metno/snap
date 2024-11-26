@@ -75,7 +75,7 @@ contains
                          gparam, klevel, ivlevel, imslp, igtype, ivlayer, ivcoor
     USE snapmetML, only: met_params, xy_wind_units, pressure_units, omega_units, &
                          sigmadot_units, temp_units, requires_precip_deaccumulation
-    USE snapdimML, only: nx, ny, nk, output_resolution_factor, hres_field
+    USE snapdimML, only: nx, ny, nk, output_resolution_factor, hres_field, surface_index
     USE datetime, only: datetime_t, duration_t
     USE readfield_ncML, only: find_index, compute_vertical_coords
 !> current timestep (always positive), negative istep means reset
@@ -283,8 +283,11 @@ contains
       call fi_checkload(fio, met_params%xwind10mv, xy_wind_units, u2(:, :, 1), nt=timepos, nr=nr, nz=1)
       call fi_checkload(fio, met_params%ywind10mv, xy_wind_units, v2(:, :, 1), nt=timepos, nr=nr, nz=1)
     else
-      call fi_checkload(fio, met_params%xwindv, xy_wind_units, u2(:, :, 1), nt=timepos, nr=nr, nz=nk-1)
-      call fi_checkload(fio, met_params%ywindv, xy_wind_units, v2(:, :, 1), nt=timepos, nr=nr, nz=nk-1)
+      if (surface_index <= 0) then
+        error stop "Surface index is invalid"
+      endif
+      call fi_checkload(fio, met_params%xwindv, xy_wind_units, u2(:, :, 1), nt=timepos, nr=nr, nz=surface_index)
+      call fi_checkload(fio, met_params%ywindv, xy_wind_units, v2(:, :, 1), nt=timepos, nr=nr, nz=surface_index)
     endif
 
 !..mean sea level pressure, not used in computations,

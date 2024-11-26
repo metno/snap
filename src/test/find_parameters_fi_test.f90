@@ -12,6 +12,7 @@ program find_parameters_fi_test
   integer :: nx, ny
   integer :: igtype
   real :: gparam(6)
+  integer :: surface_index
 
   integer, allocatable :: klevel(:)
 
@@ -43,12 +44,13 @@ program find_parameters_fi_test
   end if
 
 
-  call detect_gridparams_fi(ncfile, varname, nx, ny, igtype, gparam, klevel, stat)
+  call detect_gridparams_fi(ncfile, varname, nx, ny, igtype, gparam, klevel, surface_index, stat)
   if (stat /= 0) error stop "Could not detect gridparams"
 
   write(*,*) "GRID.SIZE= ", nx, ny
   write(*,*) "IGTYPE= ", igtype
   write(*,*) "GRID PARAMS :", gparam
+  write(*,*) "SURFACE INDEX: ", surface_index
   write(*,*) "KLEVEL :", klevel
 
   ! call get_klevel_fi(ncfile, klevel, stat)

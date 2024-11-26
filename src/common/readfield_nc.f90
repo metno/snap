@@ -117,7 +117,7 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
   USE snapgrdML, only: alevel, blevel, vlevel, ahalf, bhalf, vhalf, &
       gparam, klevel, ivlevel, imslp, igtype, ivlayer, ivcoor
   USE snapmetML, only: met_params, requires_precip_deaccumulation
-  USE snapdimML, only: nx, ny, nk, output_resolution_factor, hres_field
+  USE snapdimML, only: nx, ny, nk, output_resolution_factor, hres_field, surface_index
   USE datetime, only: datetime_t, duration_t
 !> current timestep (always positive), negative istep means reset
   integer, intent(in) :: istep
@@ -345,14 +345,14 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
     call nfcheckload(ncid, met_params%ywind10mv, start3d, count3d, v2(:,:,1))
   else
     if (enspos >= 0) then
-      call nfcheckload(ncid, met_params%xwindv, [1, 1, enspos+1, nk, timepos], &
+      call nfcheckload(ncid, met_params%xwindv, [1, 1, enspos+1, surface_index, timepos], &
           [nx, ny, 1, 1, 1], u2(:,:,1))
-      call nfcheckload(ncid, met_params%ywindv, [1, 1, enspos+1, nk, timepos], &
+      call nfcheckload(ncid, met_params%ywindv, [1, 1, enspos+1, surface_index, timepos], &
           [nx, ny, 1, 1, 1], v2(:,:,1))
     else
-      call nfcheckload(ncid, met_params%xwindv, [1, 1, nk, timepos], &
+      call nfcheckload(ncid, met_params%xwindv, [1, 1, surface_index, timepos], &
           [nx, ny, 1, 1], u2(:,:,1))
-      call nfcheckload(ncid, met_params%ywindv, [1, 1, nk, timepos], &
+      call nfcheckload(ncid, met_params%ywindv, [1, 1, surface_index, timepos], &
           [nx, ny, 1, 1], v2(:,:,1))
     endif
   endif
