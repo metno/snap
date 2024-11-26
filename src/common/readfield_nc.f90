@@ -143,8 +143,7 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
   integer :: i, j, k, ilevel, i1, i2
   integer :: nhdiff, nhdiff_precip
   real :: alev(nk), blev(nk), dxgrid, dygrid
-  integer :: kk
-  real :: dred, red, p, px, ptop
+  real :: p, px, ptop
   real :: ptoptmp(1)
   integer :: prev_tstep_same_file
 
@@ -913,7 +912,6 @@ subroutine compute_vertical_coords(alev, blev, ptop)
   real, intent(in) :: blev(:)
   real, intent(in) :: ptop
 
-  real :: db, dp, p1, p2
   integer :: k
 
   do k = 2, nk
