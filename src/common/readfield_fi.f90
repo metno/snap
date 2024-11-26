@@ -103,8 +103,8 @@ contains
     integer :: i, j, k, ilevel, i1, i2
     integer :: nhdiff, nhdiff_precip, prev_tstep_same_file
     real :: alev(nk), blev(nk), dxgrid, dygrid
-    integer :: kk, ifb, kfb
-    real :: dred, red, p, px, ptop
+    integer :: ifb, kfb
+    real :: p, px, ptop
     real :: ptoptmp(1)
 
     integer :: timepos, timeposm1, nr
