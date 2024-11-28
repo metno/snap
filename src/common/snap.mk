@@ -59,7 +59,7 @@ bldp.o: ../common/bldp.f90 snapdimML.o snaptabML.o snapgrdML.o snapfldML.o ftest
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 particleML.o: ../common/particleML.f90
 	${F77} -c ${F77FLAGS} $<
-decay.o: ../common/decay.f90 particleML.o snapfldML.o snapparML.o
+decay.o: ../common/decay.f90 particleML.o snapfldML.o snapparML.o release.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 compheight.o: ../common/compheight.f90 snapgrdML.o snapfldML.o snaptabML.o snapdimML.o ftest.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
