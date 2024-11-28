@@ -45,12 +45,14 @@ end subroutine decay
 !>  Purpose:  Decrease radioactive contents of deposition fields
 !>            due to decay
 !>
+!>     param: tstep model timestep in seconds
 !>     NEEDS TO BE RUN BEFORE ::decay
 subroutine decayDeps(tstep)
   USE snapfldML, only: depdry, depwet, accdry, accwet, &
     total_activity_released, total_activity_lost_domain, total_activity_lost_other
   USE snapparML, only: ncomp, run_comp, def_comp
   USE iso_fortran_env, only: real64
+  USE releaseML, only: tpos_bomb
 
   real, intent(in) :: tstep
 
@@ -58,9 +60,9 @@ subroutine decayDeps(tstep)
   real :: bomb_decay_rate, current_state, next_state
   logical, save :: prepare = .TRUE.
   logical, save :: has_bomb_decay = .FALSE.
-  !> totalstep in seconds run in decay
+  !> totalstep in seconds run in decay, assumed to be H+1 after release (stable cloud)
   !> start at 1h to satisfy C(t) = C_0 * t^-1.2 (t in [hrs])
-  real(real64), save :: total_steps = 3600.
+  real(real64), save :: total_steps = 0.
 
   if(prepare) then
   !..radioactive decay rate
@@ -78,13 +80,20 @@ subroutine decayDeps(tstep)
     prepare= .FALSE.
   end if
 
-  ! bomb t[h]^-1.2 power-function, 
+  ! bomb t[h]^-1.2 power-function,
   ! see glassstone/dolan: effects of nuclear weapons
   ! converted  to decay-rate factor per tstep
+  ! initial release to be defined at H+1
   if (has_bomb_decay) then
-    current_state = (total_steps/3600.)**(-1.2)
-    next_state = ((total_steps+tstep)/3600.)**(-1.2)
-    bomb_decay_rate = next_state/current_state
+    if (total_steps >= (3600+tpos_bomb)) then
+      ! start decay after 1h after explosion
+      current_state = ((total_steps-tpos_bomb)/3600.)**(-1.2)
+      next_state = ((total_steps+tstep-tpos_bomb)/3600.)**(-1.2)
+      bomb_decay_rate = next_state/current_state
+    else
+      ! no decay before release+1h
+      bomb_decay_rate = 1.
+    end if
     do m=1,ncomp
       mm = run_comp(m)%to_defined
       if (def_comp(mm)%kdecay == 2) then

@@ -169,7 +169,7 @@ PROGRAM bsnap
   USE snapmetML, only: init_meteo_params, met_params
   USE snapparML, only: component, run_comp, &
                        ncomp, def_comp, nparnum, &
-                       time_profile
+                       time_profile, TIME_PROFILE_BOMB
   USE snapposML, only: irelpos, nrelpos, release_positions
   USE snapgrdML, only: modleveldump, ivcoor, kadd, &
                        klevel, imslp, itotcomp, gparam, &
@@ -191,7 +191,7 @@ PROGRAM bsnap
   USE decayML, only: decay, decayDeps
   USE posintML, only: posint, posint_init
   USE bldpML, only: bldp
-  USE releaseML, only: release, releases, nrelheight, mprel, &
+  USE releaseML, only: release, releases, tpos_bomb, nrelheight, mprel, &
                        mplume, nplume, iplume, npart, mpart, release_t
   USE init_random_seedML, only: init_random_seed
   USE compheightML, only: compheight
@@ -524,13 +524,24 @@ PROGRAM bsnap
       ncsummary = trim(ncsummary)//". Release "//trim(def_comp(m)%compname) &
                   //" (hour, Bq/s): "
       do i = 1, ntprof
-        write (iulog, *) '  hour,Bq/hour: ', &
-          releases(i)%frelhour, (releases(i)%relbqsec(n, ih)*3600., ih=1, nrelheight)
+        if (time_profile /= TIME_PROFILE_BOMB) then
+          write (iulog, *) '  hour,Bq/hour: ', &
+            releases(i)%frelhour, (releases(i)%relbqsec(n, ih)*3600., ih=1, nrelheight)
+        else
+          write (iulog, *) '  hour,Bq: ', &
+            releases(i)%frelhour, (releases(i)%relbqsec(n, ih), ih=1, nrelheight)
+          if (tpos_bomb == 0) then
+            if (any(releases(i)%relbqsec > 0.)) tpos_bomb = releases(i)%frelhour * 3600
+          end if
+          end if
         write (tempstr, '("(",f5.1,",",ES9.2,")")') &
           releases(i)%frelhour, releases(i)%relbqsec(n, 1)
         ncsummary = trim(ncsummary)//" "//trim(tempstr)
       end do
     end do
+    if (time_profile == TIME_PROFILE_BOMB) then
+      write (iulog, *) 'tpos_bomb:  ', tpos_bomb
+    end if
     write (iulog, *) 'itotcomp:   ', itotcomp
     write (iulog, *) 'blfulmix:   ', blfullmix
     write (error_unit, *) 'Title:      ', trim(nctitle)
