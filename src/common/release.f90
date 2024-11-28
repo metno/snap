@@ -99,6 +99,9 @@ module releaseML
 !> max. no. of particles, total in all plumes, preset, can be configured in snap.input
   integer, save, public :: mpart = mpartpre
 
+!> seconds since start of run when bomb-release occurs
+  integer, save, public :: tpos_bomb = 0
+
   contains
 
 subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
