@@ -173,18 +173,18 @@ setenv          SNAP_MODULE             \$ModulesCurrentModulefile
 EOF
 }
 
-DEFAULT_BASEENV=conda202305
+FIXED_BASEENV=conda202305
 case "${1:-help}" in
   install_baseenv)
     install_baseenv "${2:-TEST}" "${3:---no-force}"
     ;;
   install_snap)
-    install_snap "${2:-TEST_SNAP}" "${3:-$DEFAULT_BASEENV}" "${4:---no-force}"
+    install_snap "${2:-TEST_SNAP}" "${FIXED_BASEENV}" "${3:---no-force}"
     ;;
   *)
     echo "Usage: ./install_usermodule_r8.sh <CMD>"
     echo "CMD: install_baseenv <BASEENVNAME>"
-    echo "CMD: install_snap <ENVNAME> [<BASEENVNAME> (default: ${DEFAULT_BASEENV})]"
+    echo "CMD: install_snap <ENVNAME>"
     echo "  with ENVNAME e.g. 2.3.3-dev0"
     echo " --force can be used with the above CMDs to overwrite modules"
     ;;
