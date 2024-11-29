@@ -175,29 +175,31 @@ class YieldParameters:
             return round(stem_radius)
 
 
-class SnapInputBomb:
+class SnapInputBomb():
     """
     Description of the bomb-part of a snap.input file
     Excluding meteorology and start-position
+
+    Parameters
+    ----------
+    nuclear_yield : float, optional
+        nuclear yield of explosion in kilotonnes TNT, default 15
+    explosion_type : ExplosionType, optional
+        type of explosion (defines size distributions)
+    operational : operational mode, i.e. non-decay H+1 run
     """
 
     def __init__(
         self,
         nuclear_yield: float = 15,
         explosion_type: ExplosionType = ExplosionType.MIXED,
+        operational: bool = False
     ) -> None:
-        """
-        Parameters
-        ----------
-        nuclear_yield : float, optional
-            nuclear yield of explosion in kilotonnes TNT, default 15
-        explosion_type : ExplosionType, optional
-            type of explosion (defines size distributions)
-        """
         self.set_bomb(nuclear_yield, explosion_type)
         # _yield_parameters
         # _radius_sizes
         # _size_distribution
+        self._operational = operational
         self._component_basename = "Aerosol"
         self._component_formatter = "{component}_{size:.1f}mym"
         self._gravity = []  # might be empty array or fixed gravity per size
@@ -215,6 +217,12 @@ class SnapInputBomb:
     @property
     def explosion_type(self) -> ExplosionType:
         return self._yield_parameters.explosion_type
+
+    @property
+    def operational(self) -> bool:
+        """Operational status, i.e. fast run without decay and H+1 particles only
+        """
+        return self._operational
 
     def set_bomb(
         self, nuclear_yield: float, explosion_type: ExplosionType = None
@@ -409,7 +417,7 @@ RELEASE.MUSHROOM.STEM.RADIUS.M= {",".join(map(str, relstem))}
         pclass_tmpl = """COMPONENT= {classname}
 DRY.DEP.ON
 WET.DEP.ON
-RADIOACTIVE.DECAY.BOMB
+RADIOACTIVE.DECAY.{decay_mode}
 RADIUS.MICROMETER= {radius}
 DENSITY.G/CM3={density}
 {gravity}
@@ -423,12 +431,17 @@ FIELD.IDENTIFICATION={identification:03d}
                 gravity = "GRAVITY.OFF"
             else:
                 gravity = "*GRAVITY.OFF"
+            if self.operational:
+                decay_mode = "OFF"
+            else:
+                decay_mode = "BOMB"
             lines.append(
                 pclass_tmpl.format(
                     radius=radius,
                     density=dens,
                     classname=self.component_name(i),
                     gravity=gravity,
+                    decay_mode=decay_mode,
                     identification=i + 1,
                 )
             )
@@ -469,3 +482,6 @@ if __name__ == "__main__":
     sib.minutes = 30
     print(sib.snap_input())
     # print(SnapInputBomb(.25).snap_input())
+
+    sib_op = SnapInputBomb(nyield,operational=True)
+    assert "RADIOACTIVE.DECAY.OFF" in sib_op.snap_input()
