@@ -378,8 +378,11 @@ def snap4rimsterm(rimsterm, argosrequest, basedir, ident, met_model, bitmapCompr
                     snapNC, basedir, ident, isotopes, bitmapCompress=bitmapCompress
                 )
             elif oformat.text == "NetCDF":
-                # create a filename which can be picked up by SMS
-                os.symlink(snapNC, os.path.join(basedir, f"{ident}_all.nc"))
+                # create a filename which can be picked up by ARGOS
+                outfile = os.path.join(basedir, f"{ident}_all.nc")
+                if os.path.exists(outfile):
+                    os.unlink(outfile)  # avoid symlink exception
+                os.symlink(snapNC, outfile)
             else:
                 raise Exception(f"unknown OutputFormat in request: {oformat.text}")
     else:
