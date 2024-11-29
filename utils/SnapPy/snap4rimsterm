@@ -40,7 +40,9 @@ import Snappy.Utils
 
 def parseIsoTimeDelta(period):
     """parse string like P2DT12H5M to timedelta-objects"""
-    regex = re.compile(r'P((?P<days>\d+?)D)?T?((?P<hours>\d+?)H)?((?P<minutes>\d+?)M)?((?P<seconds>\d+?)S)?')
+    regex = re.compile(
+        r"P((?P<days>\d+?)D)?T?((?P<hours>\d+?)H)?((?P<minutes>\d+?)M)?((?P<seconds>\d+?)S)?"
+    )
     match = regex.match(period)
     if not match:
         return
@@ -50,12 +52,14 @@ def parseIsoTimeDelta(period):
             time_params[name] = int(param)
     return datetime.timedelta(**time_params)
 
+
 def rimstermGetIsotopes(rimxml):
     """return ordered dictionary of isotopeNames (used by rimsterm) and isotopeIds"""
     isoItems = OrderedDict()
     for itemXML in rimxml.findall("ItemsTot/Item"):
-        isoItems[itemXML.attrib['ItemName']] = int(itemXML.attrib['ItemNum'])
+        isoItems[itemXML.attrib["ItemName"]] = int(itemXML.attrib["ItemNum"])
     return isoItems
+
 
 def rimsterm2npp_release(rimxml, runTime, releaseStartTime, startDTime):
     """create a release part of snap.input rimsterm.xml file for a nuclear accident at a npp"""
@@ -68,25 +72,33 @@ def rimsterm2npp_release(rimxml, runTime, releaseStartTime, startDTime):
     if releaseStartTime > startDTime:
         # add a 0 release from model start to release start
         # this handling does not cover non-hourly backward runs yet
-        offsetTime = releaseStartTime-startDTime
+        offsetTime = releaseStartTime - startDTime
         zeroIsoBqs = {}
         for isoName in isoItems.keys():
             zeroIsoBqs[isoName] = 0
-        releaseDef =  {'endtime': offsetTime, 'lower': '0', 'upper': '1', 'isoBqs': zeroIsoBqs}
+        releaseDef = {
+            "endtime": offsetTime,
+            "lower": "0",
+            "upper": "1",
+            "isoBqs": zeroIsoBqs,
+        }
         releases.append(releaseDef)
 
     for relXML in rimxml.findall("Source/TimeDependent/ReleaseInterval"):
         # add real releases
-        endtime = parseIsoTimeDelta(relXML.find("SourceTime/[@EndTime]").attrib['EndTime']) + offsetTime
+        endtime = (
+            parseIsoTimeDelta(relXML.find("SourceTime/[@EndTime]").attrib["EndTime"])
+            + offsetTime
+        )
         # offset endtime
-        if runTime < 0: # backward run
+        if runTime < 0:  # backward run
             # StartTime is earliest measuremnt, Endtime end of measurement after starttime
             # snap needs to start at the end of the measurements, i.e. the last time
             #     and run backupward in time
             startDTime = startDTime + endtime
         posXML = relXML.find("SourcePosition")
-        lHeight = float(posXML.attrib['HeightAboveGround'])
-        uHeight = float(posXML.attrib['HeightAboveGroundMax'])
+        lHeight = float(posXML.attrib["HeightAboveGround"])
+        uHeight = float(posXML.attrib["HeightAboveGroundMax"])
         if uHeight < lHeight:
             uHeight = lHeight
         if uHeight == lHeight:
@@ -100,13 +112,18 @@ def rimsterm2npp_release(rimxml, runTime, releaseStartTime, startDTime):
                 uHeight = 200
         isoBqs = {}
         for isoName in isoItems.keys():
-            xpath = 'SourceStrength[@ItemName="{}"]'.format(isoName)
+            xpath = f'SourceStrength[@ItemName="{isoName}"]'
             relValXML = relXML.find(xpath)
             if relValXML:
-                isoBqs[isoName] = float(relValXML.find('BinStrength').attrib['Value'])
+                isoBqs[isoName] = float(relValXML.find("BinStrength").attrib["Value"])
             else:
                 isoBqs[isoName] = 0
-        releaseDef =  {'endtime': endtime, 'lower': str(lHeight), 'upper': str(uHeight), 'isoBqs': isoBqs}
+        releaseDef = {
+            "endtime": endtime,
+            "lower": str(lHeight),
+            "upper": str(uHeight),
+            "isoBqs": isoBqs,
+        }
         if runTime >= 0:
             releases.append(releaseDef)
         else:
@@ -117,30 +134,33 @@ def rimsterm2npp_release(rimxml, runTime, releaseStartTime, startDTime):
     lowervals = []
     uppervals = []
     for rel in releases:
-        timevals.append("{:.2f}".format(rel['endtime'].total_seconds()/(60*60)))
+        timevals.append(f'{rel["endtime"].total_seconds() / (60 * 60):.2f}')
         radiusvals.append("50")
-        lowervals.append(rel['lower'])
-        uppervals.append(rel['upper'])
+        lowervals.append(rel["lower"])
+        uppervals.append(rel["upper"])
     radiusvals.append("0")
     lowervals.append("0")
     uppervals.append("0")
-    releaseTerm = "TIME.RELEASE.PROFILE.STEPS\n"
-    releaseTerm += "MAX.PARTICLES.PER.RELEASE= {:d}\n".format(min(5000, 400*len(isoItems)))
-    releaseTerm += "MAX.TOTALPARTICLES= {:d}\n".format(20000000) # rough estimate
-    releaseTerm += "RELEASE.HOUR= {}\n".format(", ".join(timevals))
-    releaseTerm += "RELEASE.RADIUS.M= {}\n".format(", ".join(radiusvals))
-    releaseTerm += "RELEASE.LOWER.M= {}\n".format(", ".join(lowervals))
-    releaseTerm += "RELEASE.UPPER.M= {}\n".format(', '.join(uppervals))
+    releaseTerm = f"""
+TIME.RELEASE.PROFILE.STEPS
+MAX.PARTICLES.PER.RELEASE= {min(5000, 400 * len(isoItems)):d}
+MAX.TOTALPARTICLES= {20000000:d}
+RELEASE.HOUR= {timevals}
+RELEASE.RADIUS.M= {", ".join(radiusvals)}
+RELEASE.LOWER.M= {", ".join(lowervals)}
+RELEASE.UPPER.M= {", ".join(uppervals)}
+"""
     for isoName, isoId in isoItems.items():
         vals = []
         for rel in releases:
-            vals.append("{:10.3E}".format(rel['isoBqs'][isoName]))
+            vals.append(f'{rel["isoBqs"][isoName]:10.3E}')
         vals.append("0")
-        vals.append("'{}'".format(isos[isoId]['isotope']))
-        releaseTerm += "RELEASE.BQ/SEC.COMP= {}\n".format(','.join(vals))
+        vals.append(f"'{isos[isoId]['isotope']}'")
+        releaseTerm += f'RELEASE.BQ/SEC.COMP= {",".join(vals)}\n'
     # add isotopes definitions (size/density/type/decay)
     releaseTerm += "\n" + res.isotopes2snapinput(isoItems.values())
     return releaseTerm
+
 
 def rimsterm2bomb_release(argosxml, offset_time: datetime.timedelta):
     """create a release part of snap.input from rimsterm.xml and request.xml file for a nuclear bomb"""
@@ -149,12 +169,13 @@ def rimsterm2bomb_release(argosxml, offset_time: datetime.timedelta):
     no_of_detonations = int(argosxml.find("NoOfDetonations").text)
 
     # ignore FissionProportion, SurfaceType, HeightOfBurst, GroudnType, WeaponType
-    if (no_of_detonations != 1):
+    if no_of_detonations != 1:
         raise Exception(f"Unsupported NoOfDetonations : {no_of_detonations} != 1")
 
     sib = SnapInputBomb(nuclear_yield, ExplosionType.by_argosname(explosion_type))
     sib.minutes = offset_time.seconds // 60
     return sib.snap_input()
+
 
 def request_is_bomb(argosRoot):
     return argosRoot.find("NuclearYield") is not None
@@ -164,8 +185,8 @@ def rimsterm2input(rimxml, argosxml, met_model):
     """create a full snap.input sourceterm from a rimsterm.xml file using the met_model meteo"""
 
     res = Resources()
-    lat = rimxml.find("Header/Place/Location/[@Latitude]").attrib['Latitude']
-    lon = rimxml.find("Header/Place/Location/[@Longitude]").attrib['Longitude']
+    lat = rimxml.find("Header/Place/Location/[@Latitude]").attrib["Latitude"]
+    lon = rimxml.find("Header/Place/Location/[@Longitude]").attrib["Longitude"]
 
     startTime = rimxml.find("TimeOfInitialRelease").text
     runTime = 48
@@ -176,127 +197,167 @@ def rimsterm2input(rimxml, argosxml, met_model):
         outputTimestep = int(argosxml.find("OutputTimestep").text)
         is_bomb = request_is_bomb(argosxml)
         # GridSize: size of grid-cell, i.e. 2.5, 0.1 (km or degree), available since Argos10
-        gridSize = 0 # default
-        #gridSize = float(argosxml.find("GridSize").text)
+        gridSize = 0  # default
+        # gridSize = float(argosxml.find("GridSize").text)
         if (findGridSize := argosxml.find("GridSize")) is not None:
             gridSize = float(findGridSize.text)
         # CalcGridSize: number of x and y cells in grid, available since Argos10
-        calcGridSize = 0 # default
+        calcGridSize = 0  # default
         if (findCalcGridSize := argosxml.find("CalcGridSize")) is not None:
             calcGridSize = int(findCalcGridSize.text)
     logging.info(f"using calcGridSize {calcGridSize} and gridSize {gridSize}")
 
-    releaseStartTime = datetime.datetime.strptime(startTime, '%Y-%m-%dT%H:%M:%SZ')
-    startDTime = releaseStartTime.replace(minute=0, second=0, microsecond=0) # snap requires hourly start
+    releaseStartTime = datetime.datetime.strptime(startTime, "%Y-%m-%dT%H:%M:%SZ")
+    startDTime = releaseStartTime.replace(
+        minute=0, second=0, microsecond=0
+    )  # snap requires hourly start
     offset_time = releaseStartTime - startDTime
     if is_bomb:
         releaseTerm = rimsterm2bomb_release(argosxml, offset_time)
-    else: # npp
-        releaseTerm = rimsterm2npp_release(rimxml, runTime, releaseStartTime, startDTime)
+    else:  # npp
+        releaseTerm = rimsterm2npp_release(
+            rimxml, runTime, releaseStartTime, startDTime
+        )
 
-    snapStartTime="{year} {month} {day} {hour}".format(year=startDTime.year,month=startDTime.month,day=startDTime.day, hour=startDTime.hour)
-    sourceTermTemplate = """
+    sourceTerm = f"""
 SET_RELEASE.POS= P=   {lat},   {lon}
-TIME.START= {startTime}
+TIME.START= {startDTime.year} {startDTime.month} {startDTime.day} {startDTime.hour}
 TIME.RUN = {runTime:d}h
 STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
 """
-    sourceTerm = sourceTermTemplate.format(lat=lat,lon=lon,startTime=snapStartTime, runTime=runTime, outputTimestep=outputTimestep)
     sourceTerm += releaseTerm + "\n"
 
     interpolation = ""
     metdef = res.getDefaultMetDefinitions(met_model)
-    if (met_model == MetModel.NrpaEC0p1):
+    if met_model == MetModel.NrpaEC0p1:
         files = res.getECMeteorologyFiles(dtime=startDTime, run_hours=int(runTime))
-        if (len(files) == 0):
-            raise Exception("no EC met-files found for {}, runtime {}".format(startDTime, runTime))
+        if len(files) == 0:
+            raise Exception(
+                f"no {met_model} met-files found for {startDTime}, runtime {runTime}"
+            )
     elif met_model == MetModel.NrpaEC0p1Global:
-        ecmet = EcMeteorologyCalculator(EcMeteorologyCalculator.getGlobalMeteoResources(), startDTime, float(lon), float(lat))
+        ecmet = EcMeteorologyCalculator(
+            EcMeteorologyCalculator.getGlobalMeteoResources(),
+            startDTime,
+            float(lon),
+            float(lat),
+        )
         ecmet.calc()
         if ecmet.must_calc():
-            raise Exception("no EC met-files calculated for {}".format(startDTime))
+            raise Exception(f"no {met_model} met-files calculated for {startDTime}")
         files = ecmet.get_meteorology_files()
         (metdef["startX"], metdef["startY"]) = ecmet.get_grid_startX_Y()
     elif met_model == MetModel.EC0p1Global:
         globalRes = EcMeteorologyCalculator.getGlobalMeteoResources()
-        files = [x[1] for x in sorted(MeteorologyCalculator.findAllGlobalData(globalRes), key=lambda x: x[0])]
+        files = [
+            x[1]
+            for x in sorted(
+                MeteorologyCalculator.findAllGlobalData(globalRes), key=lambda x: x[0]
+            )
+        ]
         lat0 = MeteorologyCalculator.getLat0(float(lat), globalRes.domainHeight)
         lon0 = MeteorologyCalculator.getLon0(float(lon), globalRes.domainWidth)
         interpolation = f"FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|{lon0},{lon0+0.2},...,{lon0+globalRes.domainWidth}|{lat0},{lat0+0.2},...,{lat0+globalRes.domainHeight}|degree\n"
     elif met_model == MetModel.Meps2p5:
         files = res.getMeteorologyFiles(met_model, startDTime, runTime, "best")
-        if (len(files) == 0):
-            raise Exception("no MEPS2_5 met-files found for {}, runtime {}".format(startDTime, runTime))
+        if len(files) == 0:
+            raise Exception(
+                f"no {met_model} met-files found for {startDTime}, runtime {runTime}"
+            )
     elif met_model == MetModel.Icon0p25Global:
-        metcalc = ICONMeteorologyCalculator(ICONMeteorologyCalculator.getGlobalMeteoResources(), startDTime, float(lon), float(lat))
+        metcalc = ICONMeteorologyCalculator(
+            ICONMeteorologyCalculator.getGlobalMeteoResources(),
+            startDTime,
+            float(lon),
+            float(lat),
+        )
         metcalc.calc()
         if metcalc.must_calc():
-            raise Exception("no ICON met-files calculated for {}".format(startDTime))
+            raise Exception(f"no ICON met-files calculated for {startDTime}")
         files = metcalc.get_meteorology_files()
         (metdef["startX"], metdef["startY"]) = metcalc.get_grid_startX_Y()
     elif met_model == MetModel.EC0p1Europe:
         files = res.getMeteorologyFiles(met_model, startDTime, runTime, "best")
-        if (len(files) == 0):
-            raise Exception("no ec-0p1-europe met-files found for {}, runtime {}".format(startDTime, runTime))
+        if len(files) == 0:
+            raise Exception(
+                f"no {met_model} met-files found for {startDTime}, runtime {runTime}"
+            )
     elif met_model == MetModel.GfsGribFilter:
         files = res.getMeteorologyFiles(met_model, startDTime, runTime, "best")
-        if (len(files) == 0):
-            raise Exception("no GFS-grib-filter-fimex met-files found for {}, runtime {}".format(startDTime, runTime))
+        if len(files) == 0:
+            raise Exception(
+                f"no {met_model} met-files found for {startDTime}, runtime {runTime}"
+            )
     elif met_model == MetModel.Era5Nancy:
         files = res.getMeteorologyFiles(met_model, startDTime, runTime, "best")
-        if (len(files) == 0):
-            raise Exception("no era5_nancy met-files found for {}, runtime {}".format(startDTime, runTime))
+        if len(files) == 0:
+            raise Exception(
+                f"no {met_model} met-files found for {startDTime}, runtime {runTime}"
+            )
     else:
-        raise Exception('unknown met_model: {}'.format(met_model))
+        raise Exception(f"unknown met_model: {met_model}")
 
     if interpolation == "":
-        interpolation = Snappy.Utils.restrictDomainSizeAndResolution(files[-1], float(lon), float(lat), gridSize, calcGridSize)
+        interpolation = Snappy.Utils.restrictDomainSizeAndResolution(
+            files[-1], float(lon), float(lat), gridSize, calcGridSize
+        )
 
-    sourceTerm += res.getSnapInputMetDefinitions(met_model, files, interpolation=interpolation, **metdef)
+    sourceTerm += res.getSnapInputMetDefinitions(
+        met_model, files, interpolation=interpolation, **metdef
+    )
 
     return sourceTerm
 
+
 def snap4rimsterm(rimsterm, argosrequest, basedir, ident, met_model, bitmapCompress):
-    '''run snap with rimsterm definition in basedir dir'''
+    """run snap with rimsterm definition in basedir dir"""
     tree = ET.parse(rimsterm)
     root = tree.getroot()
-    assert root.tag == 'CBRN_Sourceterm', "Not a rimsterm input file: {}".format(rimsterm)
+    assert root.tag == f"CBRN_Sourceterm", "Not a rimsterm input file: {rimsterm}"
 
     argosRoot = None
     is_bomb = False
     if argosrequest:
         argosTree = ET.parse(argosrequest)
         argosRoot = argosTree.getroot()
-        assert argosRoot.tag == 'Request', "Not a argos request xml file: {}". format(argosrequest)
+        assert (
+            argosRoot.tag == f"Request"
+        ), "Not a argos request xml file: {argosrequest}"
         is_bomb = request_is_bomb(argosRoot)
 
-    if (not os.path.isdir(basedir)):
+    if not os.path.isdir(basedir):
         os.makedirs(basedir)
-    snapNC = os.path.join(basedir, 'snap.nc')
+    snapNC = os.path.join(basedir, "snap.nc")
     if os.path.exists(snapNC):
         os.remove(snapNC)
 
-    snapInput = "title={}\n".format(ident) + rimsterm2input(root, argosRoot, met_model)
+    snapInput = f"title={ident}\n" + rimsterm2input(root, argosRoot, met_model)
     with open(os.path.join(basedir, "snap.input"), "w") as fh:
         fh.write(snapInput)
 
     errlog = open(os.path.join(basedir, "snap.errlog"), "a")
     outlog = open(os.path.join(basedir, "snap.outlog"), "a")
     print("bsnap_naccident snap.input")
-    proc = subprocess.Popen(['bsnap_naccident', 'snap.input'], cwd=basedir, stderr=errlog, stdout=outlog)
-    if (proc.wait() != 0):
+    proc = subprocess.Popen(
+        ["bsnap_naccident", "snap.input"], cwd=basedir, stderr=errlog, stdout=outlog
+    )
+    if proc.wait() != 0:
         if os.path.exists(snapNC):
-            errlog.write("bsnap_naccident in {} did not finished completely. Continuing anyway.\n".format(basedir))
+            errlog.write(
+                f"bsnap_naccident in {basedir} did not finished completely. Continuing anyway.\n"
+            )
         else:
-            raise Exception("bsnap_naccident in {} failed".format(basedir))
+            raise Exception(f"bsnap_naccident in {basedir} failed")
 
-    with netCDF4.Dataset(os.path.join(basedir, 'snap.nc'), 'a') as nc:
+    with netCDF4.Dataset(os.path.join(basedir, "snap.nc"), "a") as nc:
         if is_bomb:
             print("snapAddBombIsotopes --nc snap.nc")
             try:
                 snap_add_bomb_isotopes(nc)
             except Exception as ex:
-                errlog.write(f"snapAddBombIsotopes --nc snap.nc in {basedir} failed: {ex}\n")
+                errlog.write(
+                    f"snapAddBombIsotopes --nc snap.nc in {basedir} failed: {ex}\n"
+                )
                 raise ex
         try:
             print("snapAddToa snap.nc")
@@ -307,33 +368,66 @@ def snap4rimsterm(rimsterm, argosrequest, basedir, ident, met_model, bitmapCompr
 
     if argosRoot:
         for oformat in argosRoot.findall("OutputFormat"):
-            print("output in format: {}".format(oformat.text))
-            if oformat.text == 'GRIB':
+            print(f"output in format: {oformat.text}")
+            if oformat.text == "GRIB":
                 if is_bomb:
                     isotopes = BombIsotopeFractions().isotopes()
                 else:
                     isotopes = rimstermGetIsotopes(root).values()
-                snapNc_convert_to_grib(snapNC, basedir, ident, isotopes, bitmapCompress=bitmapCompress)
-            elif oformat.text == 'NetCDF':
-                # create a filename which can be picked up by SMS
-                os.symlink(snapNC, os.path.join(basedir,"{}_all.nc".format(ident)))
+                snapNc_convert_to_grib(
+                    snapNC, basedir, ident, isotopes, bitmapCompress=bitmapCompress
+                )
+            elif oformat.text == "NetCDF":
+                # create a filename which can be picked up by ARGOS
+                outfile = os.path.join(basedir, f"{ident}_all.nc")
+                if os.path.exists(outfile):
+                    os.unlink(outfile)  # avoid symlink exception
+                os.symlink(snapNC, outfile)
             else:
-                raise Exception("unknown OutputFormat in request: {}".format(oformat.text))
+                raise Exception(f"unknown OutputFormat in request: {oformat.text}")
     else:
-        snapNc_convert_to_grib(snapNC, basedir, ident, rimstermGetIsotopes(root).values(), bitmapCompress=bitmapCompress)
-
+        snapNc_convert_to_grib(
+            snapNC,
+            basedir,
+            ident,
+            rimstermGetIsotopes(root).values(),
+            bitmapCompress=bitmapCompress,
+        )
 
 
 if __name__ == "__main__":
-    os.umask(0) # make sure files can be deleted later
+    os.umask(0)  # make sure files can be deleted later
     import argparse
-    parser = argparse.ArgumentParser(description="run snap from a rimsterm.xml file and convert to grib-files named ident_conc, ident_depo ident_wetd ident_dose ident_tofa")
-    parser.add_argument("--rimsterm", help="source-term in rimsterm format", required=True)
-    parser.add_argument("--argosrequest", help="optional argos-request xml file in addition to --rimsterm file", required=False)
-    parser.add_argument("--metmodel", help="select the NWP input model, nrpa_ec_0p1, nrpa_ec_0p1_global, meps_2_5km, ec_0p1_global, ec_0p1_europe, gfs_grib_filter_fimex, icon_0p25_global, era5_nancy", required=True, default='nrpa_ec_0p1')
+
+    parser = argparse.ArgumentParser(
+        description="run snap from a rimsterm.xml file and convert to grib-files named ident_conc, ident_depo ident_wetd ident_dose ident_tofa"
+    )
+    parser.add_argument(
+        "--rimsterm", help="source-term in rimsterm format", required=True
+    )
+    parser.add_argument(
+        "--argosrequest",
+        help="optional argos-request xml file in addition to --rimsterm file",
+        required=False,
+    )
+    parser.add_argument(
+        "--metmodel",
+        help="select the NWP input model, nrpa_ec_0p1, nrpa_ec_0p1_global, meps_2_5km, ec_0p1_global, ec_0p1_europe, gfs_grib_filter_fimex, icon_0p25_global, era5_nancy",
+        required=True,
+        default="nrpa_ec_0p1",
+    )
     parser.add_argument("--dir", help="output-directory", required=True)
     parser.add_argument("--ident", help="output-file identifier", required=True)
-    parser.add_argument("--bitmapCompress", help="enable grib bitmap-compression", action='store_true')
+    parser.add_argument(
+        "--bitmapCompress", help="enable grib bitmap-compression", action="store_true"
+    )
 
     args = parser.parse_args()
-    snap4rimsterm(args.rimsterm, args.argosrequest, args.dir, args.ident, args.metmodel, bitmapCompress=args.bitmapCompress)
+    snap4rimsterm(
+        args.rimsterm,
+        args.argosrequest,
+        args.dir,
+        args.ident,
+        args.metmodel,
+        bitmapCompress=args.bitmapCompress,
+    )
