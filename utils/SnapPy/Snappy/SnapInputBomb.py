@@ -135,7 +135,7 @@ class YieldParameters:
             self._cloud_defs[tag][pos1],
         )
 
-    def activity_after_1min(self) -> float:
+    def activity_after_1hour(self) -> float:
         """
         Get the total activity for relatively long-lived isotopes
         """
@@ -237,11 +237,11 @@ class SnapInputBomb():
         return None
 
     @property
-    def activity_after_1min(self) -> float:
+    def activity_after_1hour(self) -> float:
         """
         Get the total activity for relatively long-lived isotopes
         """
-        return self._yield_parameters.activity_after_1min()
+        return self._yield_parameters.activity_after_1hour()
 
     @property
     def cloud_bottom(self) -> float:
@@ -447,7 +447,7 @@ FIELD.IDENTIFICATION={identification:03d}
             )
 
         for i, frac in enumerate(self.size_distribution):
-            size_activity = activity + [f"{self.activity_after_1min*frac:.3E}"]
+            size_activity = activity + [f"{self.activity_after_1hour*frac:.3E}"]
             lines.append(
                 f"RELEASE.BQ/STEP.COMP= {','.join(size_activity)} '{self.component_name(i)}'"
             )
