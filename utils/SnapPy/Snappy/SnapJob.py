@@ -63,12 +63,12 @@ class SnapJob:
         and       SNAPBOMB, SNAPBOMBERA5, SNAPBOMBGLOBAL, SNAPBOMBNORDIC, SNAPBOMBICONGLOBAL
         and       SNAPOPBOMB, SNAPOPBOMBERA5, SNAPOPBOMBGLOBAL, SNAPOPBOMBNORDIC, SNAPOPBOMBICONGLOBAL
         """
-        operational = ""
+        argos_operational = ""
         if self.task.model.startswith("SNAPBOMB"):
             task_model = self.task.model[8:]
         if self.task.model.startswith("SNAPOPBOMB"):
             task_model = self.task.model[10:]
-            operational = "--operational"
+            argos_operational = "--argos_operational"
         elif self.task.model.startswith("SNAP"):
             task_model = self.task.model[4:]
         else:
@@ -137,7 +137,7 @@ export OMP_NUM_THREADS=1
 
 cd {rundir}
 send_msg 102 "Starting run for {model} (timeout: 2h)"
-snap4rimsterm --rimsterm {xmlfile} {argosrequest} {operational} --dir . --ident {ident}_SNAP --metmodel {metmodel} --bitmapCompress
+snap4rimsterm --rimsterm {xmlfile} {argosrequest} {argos_operational} --dir . --ident {ident}_SNAP --metmodel {metmodel} --bitmapCompress
 if [ $? -ne 0 ]; then
     send_msg 409 "{model} output data does not exist, snap4rimsterm failed"
     exit 1;
@@ -167,7 +167,7 @@ exit 0;
             ident=self.task.id,
             xmlfile=xmlfile,
             argosrequest=argosrequest,
-            operational=operational,
+            argos_operational=argos_operational,
             metmodel=metmodel,
             zipreturnfile=self.get_return_filename(),
             model=self.task.model,

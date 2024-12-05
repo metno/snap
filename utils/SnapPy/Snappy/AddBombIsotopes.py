@@ -8,10 +8,10 @@ import netCDF4
 from Snappy.BombIsotopeFractions import BombIsotopeFractions
 
 
-def snap_add_bomb_isotopes(nc: netCDF4.Dataset, operational=False):
+def snap_add_bomb_isotopes(nc: netCDF4.Dataset, argos_operational=False):
     """
     ncfile: a netcdf-file with Aerosols opened in 'a'-mode
-    operational: only aerosols, no isotopes for faster operation
+    argos_operational: only aerosols, no isotopes for faster operation
     """
     bomb_isotopes = BombIsotopeFractions()
     aerosols = []
@@ -19,7 +19,7 @@ def snap_add_bomb_isotopes(nc: netCDF4.Dataset, operational=False):
         if var.startswith("Aerosol") and var.endswith("acc_concentration"):
             aerosols.append(var[:-18])
     isos = ["H1"]
-    if not operational:
+    if not argos_operational:
         isos += bomb_isotopes.isotopes()
     hours = nc["time"][:]  # snap writes usually hours since start
     for var in [
@@ -74,8 +74,8 @@ def main():
     )
     parser.add_argument("--nc", help="snap.nc filename", required=True)
     parser.add_argument(
-        "--operational",
-        help="operational mode, no isotopes, just H+1",
+        "--argos_operational",
+        help="argos_operational mode, no isotopes, just H+1",
         action="store_true",
     )
 
