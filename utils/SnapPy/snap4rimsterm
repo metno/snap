@@ -162,7 +162,9 @@ RELEASE.UPPER.M= {", ".join(uppervals)}
     return releaseTerm
 
 
-def rimsterm2bomb_release(argosxml, offset_time: datetime.timedelta):
+def rimsterm2bomb_release(
+    argosxml, offset_time: datetime.timedelta, argos_operational=False
+):
     """create a release part of snap.input from rimsterm.xml and request.xml file for a nuclear bomb"""
     nuclear_yield = float(argosxml.find("NuclearYield").text)
     explosion_type = argosxml.find("ExplosionType").text
@@ -172,7 +174,9 @@ def rimsterm2bomb_release(argosxml, offset_time: datetime.timedelta):
     if no_of_detonations != 1:
         raise Exception(f"Unsupported NoOfDetonations : {no_of_detonations} != 1")
 
-    sib = SnapInputBomb(nuclear_yield, ExplosionType.by_argosname(explosion_type))
+    sib = SnapInputBomb(
+        nuclear_yield, ExplosionType.by_argosname(explosion_type), argos_operational
+    )
     sib.minutes = offset_time.seconds // 60
     return sib.snap_input()
 
@@ -181,7 +185,7 @@ def request_is_bomb(argosRoot):
     return argosRoot.find("NuclearYield") is not None
 
 
-def rimsterm2input(rimxml, argosxml, met_model):
+def rimsterm2input(rimxml, argosxml, met_model, argos_operational):
     """create a full snap.input sourceterm from a rimsterm.xml file using the met_model meteo"""
 
     res = Resources()
@@ -213,7 +217,7 @@ def rimsterm2input(rimxml, argosxml, met_model):
     )  # snap requires hourly start
     offset_time = releaseStartTime - startDTime
     if is_bomb:
-        releaseTerm = rimsterm2bomb_release(argosxml, offset_time)
+        releaseTerm = rimsterm2bomb_release(argosxml, offset_time, argos_operational)
     else:  # npp
         releaseTerm = rimsterm2npp_release(
             rimxml, runTime, releaseStartTime, startDTime
@@ -309,7 +313,9 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
     return sourceTerm
 
 
-def snap4rimsterm(rimsterm, argosrequest, basedir, ident, met_model, bitmapCompress):
+def snap4rimsterm(
+    rimsterm, argosrequest, argos_operational, basedir, ident, met_model, bitmapCompress
+):
     """run snap with rimsterm definition in basedir dir"""
     tree = ET.parse(rimsterm)
     root = tree.getroot()
@@ -331,7 +337,9 @@ def snap4rimsterm(rimsterm, argosrequest, basedir, ident, met_model, bitmapCompr
     if os.path.exists(snapNC):
         os.remove(snapNC)
 
-    snapInput = f"title={ident}\n" + rimsterm2input(root, argosRoot, met_model)
+    snapInput = f"title={ident}\n" + rimsterm2input(
+        root, argosRoot, met_model, argos_operational
+    )
     with open(os.path.join(basedir, "snap.input"), "w") as fh:
         fh.write(snapInput)
 
@@ -351,12 +359,15 @@ def snap4rimsterm(rimsterm, argosrequest, basedir, ident, met_model, bitmapCompr
 
     with netCDF4.Dataset(os.path.join(basedir, "snap.nc"), "a") as nc:
         if is_bomb:
-            print("snapAddBombIsotopes --nc snap.nc")
+            op_option = ""
+            if argos_operational:
+                op_option = "--argos_operational"
+            print(f"snapAddBombIsotopes {op_option} --nc snap.nc")
             try:
-                snap_add_bomb_isotopes(nc)
+                snap_add_bomb_isotopes(nc, argos_operational)
             except Exception as ex:
                 errlog.write(
-                    f"snapAddBombIsotopes --nc snap.nc in {basedir} failed: {ex}\n"
+                    f"snapAddBombIsotopes {op_option} --nc snap.nc in {basedir} failed: {ex}\n"
                 )
                 raise ex
         try:
@@ -371,7 +382,10 @@ def snap4rimsterm(rimsterm, argosrequest, basedir, ident, met_model, bitmapCompr
             print(f"output in format: {oformat.text}")
             if oformat.text == "GRIB":
                 if is_bomb:
-                    isotopes = BombIsotopeFractions().isotopes()
+                    if argos_operational:
+                        isotopes = ["H1"]
+                    else:
+                        isotopes = BombIsotopeFractions().isotopes()
                 else:
                     isotopes = rimstermGetIsotopes(root).values()
                 snapNc_convert_to_grib(
@@ -416,6 +430,11 @@ if __name__ == "__main__":
         required=True,
         default="nrpa_ec_0p1",
     )
+    parser.add_argument(
+        "--argos_operational",
+        help="enable argos_operational mode, e.g. H+1 non-decay bomb runs",
+        action="store_true",
+    )
     parser.add_argument("--dir", help="output-directory", required=True)
     parser.add_argument("--ident", help="output-file identifier", required=True)
     parser.add_argument(
@@ -426,6 +445,7 @@ if __name__ == "__main__":
     snap4rimsterm(
         args.rimsterm,
         args.argosrequest,
+        args.argos_operational,
         args.dir,
         args.ident,
         args.metmodel,

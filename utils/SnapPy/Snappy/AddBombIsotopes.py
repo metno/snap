@@ -8,16 +8,19 @@ import netCDF4
 from Snappy.BombIsotopeFractions import BombIsotopeFractions
 
 
-def snap_add_bomb_isotopes(nc: netCDF4.Dataset):
+def snap_add_bomb_isotopes(nc: netCDF4.Dataset, argos_operational=False):
     """
     ncfile: a netcdf-file with Aerosols opened in 'a'-mode
+    argos_operational: only aerosols, no isotopes for faster operation
     """
     bomb_isotopes = BombIsotopeFractions()
     aerosols = []
     for var in nc.variables:
         if var.startswith("Aerosol") and var.endswith("acc_concentration"):
             aerosols.append(var[:-18])
-    isos = bomb_isotopes.isotopes()
+    isos = ["H1"]
+    if not argos_operational:
+        isos += bomb_isotopes.isotopes()
     hours = nc["time"][:]  # snap writes usually hours since start
     for var in [
         "concentration",
@@ -48,7 +51,11 @@ def snap_add_bomb_isotopes(nc: netCDF4.Dataset):
                 basedata += nc[f"{aero}_{var}"][t, :]
             for iso in isos:
                 name = f"{iso}_{var}"
-                frac = bomb_isotopes.fraction(iso, hr)
+                if iso == "H1":
+                    # sum all aerosols, e.g. frac = 1.
+                    frac = 1.0
+                else:
+                    frac = bomb_isotopes.fraction(iso, hr)
                 if (var == "acc_concentration") and t > 1:
                     # no decay in dose-equivalent
                     nc[name][t, :] = (
@@ -63,9 +70,14 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(
-        description="add isotope distribution to a snap.nc with bomb-aerosols"
+        description="add isotope distribution and aerosol-sums to a snap.nc with bomb-aerosols"
     )
     parser.add_argument("--nc", help="snap.nc filename", required=True)
+    parser.add_argument(
+        "--argos_operational",
+        help="argos_operational mode, no isotopes, just H+1",
+        action="store_true",
+    )
 
     args = parser.parse_args()
     with netCDF4.Dataset(args.nc, "a") as nc:
