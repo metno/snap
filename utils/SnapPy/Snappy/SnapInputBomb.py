@@ -175,7 +175,7 @@ class YieldParameters:
             return round(stem_radius)
 
 
-class SnapInputBomb():
+class SnapInputBomb:
     """
     Description of the bomb-part of a snap.input file
     Excluding meteorology and start-position
@@ -186,20 +186,20 @@ class SnapInputBomb():
         nuclear yield of explosion in kilotonnes TNT, default 15
     explosion_type : ExplosionType, optional
         type of explosion (defines size distributions)
-    operational : operational mode, i.e. non-decay H+1 run
+    argos_operational : operational mode, i.e. non-decay H+1 run
     """
 
     def __init__(
         self,
         nuclear_yield: float = 15,
         explosion_type: ExplosionType = ExplosionType.MIXED,
-        operational: bool = False
+        argos_operational: bool = False,
     ) -> None:
         self.set_bomb(nuclear_yield, explosion_type)
         # _yield_parameters
         # _radius_sizes
         # _size_distribution
-        self._operational = operational
+        self._argos_operational = argos_operational
         self._component_basename = "Aerosol"
         self._component_formatter = "{component}_{size:.1f}mym"
         self._gravity = []  # might be empty array or fixed gravity per size
@@ -219,10 +219,9 @@ class SnapInputBomb():
         return self._yield_parameters.explosion_type
 
     @property
-    def operational(self) -> bool:
-        """Operational status, i.e. fast run without decay and H+1 particles only
-        """
-        return self._operational
+    def argos_operational(self) -> bool:
+        """Operational mode in ARGOS, i.e. fast run without decay and H+1 particles only"""
+        return self._argos_operational
 
     def set_bomb(
         self, nuclear_yield: float, explosion_type: ExplosionType = None
@@ -431,7 +430,7 @@ FIELD.IDENTIFICATION={identification:03d}
                 gravity = "GRAVITY.OFF"
             else:
                 gravity = "*GRAVITY.OFF"
-            if self.operational:
+            if self.argos_operational:
                 decay_mode = "OFF"
             else:
                 decay_mode = "BOMB"
@@ -483,5 +482,5 @@ if __name__ == "__main__":
     print(sib.snap_input())
     # print(SnapInputBomb(.25).snap_input())
 
-    sib_op = SnapInputBomb(nyield,operational=True)
+    sib_op = SnapInputBomb(nyield, argos_operational=True)
     assert "RADIOACTIVE.DECAY.OFF" in sib_op.snap_input()
