@@ -37,18 +37,18 @@ class Resources(ResourcesCommon):
     """
 
     HPC = {
-        "vilje": {"RUNDIR": "/prod/forecast/run/eemep/single_run/"},
-        "frost": {"RUNDIR": "/home/metno_op/run/eemep/single_run/"},
         "stratus": {"RUNDIR": "/home/metno_op/run/eemep/single_run/"},
-        "alvin": {"RUNDIR": "/home/metno_op/run/eemep/single_run/"},
         "ppi_r8b_direct": {
             "RUNDIR": "/lustre/storeB/project/fou/kl/eva/eemep/HPC/run/eemep/single_run/"
         },
         "ppi_r8ibA_direct": {
             "RUNDIR": "/lustre/storeA/project/fou/kl/eva/eemep/HPC/run/eemep/single_run/"
         },
-        "ppi_centos7_direct": {
+        "ppi_r8ucxB_direct": {
             "RUNDIR": "/lustre/storeB/project/fou/kl/eva/eemep/HPC/run/eemep/single_run/"
+        },
+        "ppi_r8ucxA_direct": {
+            "RUNDIR": "/lustre/storeA/project/fou/kl/eva/eemep/HPC/run/eemep/single_run/"
         },
     }
 
