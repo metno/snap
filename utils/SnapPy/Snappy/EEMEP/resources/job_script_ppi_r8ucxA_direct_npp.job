@@ -30,7 +30,7 @@ RUNTAG="{runtag}"
 # /prod/forecast/run/eemep2/
 RUNDIR={rundir}
 SRCDIR=$HDIR/emep/eemep2/src/
-VERSION=r8_active
+VERSION=r8ucx_active
 
 
 YEAR={year}
