@@ -259,33 +259,25 @@ class HPC:
     @staticmethod
     def by_name(name):
         """
-        Initialize a HPC by names, e.g. vilje, frost
+        Initialize a HPC by names, e.g. stratus, ppi_r8ucxB_direct
         """
-        if name == "vilje":
-            from . import Vilje
-
-            return Vilje.Vilje()
-        elif name == "frost":
-            from . import Frost
-
-            return Frost.Frost()
-        elif name == "stratus":
+        if name == "stratus":
             from . import Stratus
 
             return Stratus.Stratus()
-        elif name == "alvin":
-            from . import Alvin
-
-            return Alvin.Alvin()
         elif name == "ppi_r8b":
             from . import PPI_R8B
 
             return PPI_R8B.PPI_R8B()
-        elif name == "ppi_centos7_direct":
-            from . import PPI_CentOS7_Direct
-
-            return PPI_CentOS7_Direct.PPI_CentOS7_Direct()
         elif name == "ppi_r8b_direct":
+            from . import PPI_R8_Direct
+
+            return PPI_R8_Direct.PPI_R8_Direct()
+        elif name == "ppi_r8ucxB_direct":
+            from . import PPI_R8_Direct
+
+            return PPI_R8_Direct.PPI_R8_Direct()
+        elif name == "ppi_r8ucxA_direct":
             from . import PPI_R8_Direct
 
             return PPI_R8_Direct.PPI_R8_Direct()
