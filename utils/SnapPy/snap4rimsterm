@@ -145,7 +145,7 @@ def rimsterm2npp_release(rimxml, runTime, releaseStartTime, startDTime):
 TIME.RELEASE.PROFILE.STEPS
 MAX.PARTICLES.PER.RELEASE= {min(5000, 400 * len(isoItems)):d}
 MAX.TOTALPARTICLES= {20000000:d}
-RELEASE.HOUR= {timevals}
+RELEASE.HOUR= {", ".join(timevals)}
 RELEASE.RADIUS.M= {", ".join(radiusvals)}
 RELEASE.LOWER.M= {", ".join(lowervals)}
 RELEASE.UPPER.M= {", ".join(uppervals)}
