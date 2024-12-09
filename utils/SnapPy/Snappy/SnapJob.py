@@ -66,7 +66,7 @@ class SnapJob:
         argos_operational = ""
         if self.task.model.startswith("SNAPBOMB"):
             task_model = self.task.model[8:]
-        if self.task.model.startswith("SNAPOPBOMB"):
+        elif self.task.model.startswith("SNAPOPBOMB"):
             task_model = self.task.model[10:]
             argos_operational = "--argos_operational"
         elif self.task.model.startswith("SNAP"):
