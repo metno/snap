@@ -61,6 +61,7 @@ class Resources(ResourcesCommon):
 
     # OUTPUTDIR = "/disk1/tmp"
     _OUTPUTDIR = "{LUSTREDIR}/project/fou/kl/snap/runs"
+    _OUTPUTDIR_AUTOMATED = "{LUSTREDIR}/project/fou/kl/snap/automated_runs"
     _ECINPUTDIRS = ["{LUSTREDIR}/project/metproduction/products/cwf-input/"]
     # ECINPUTDIRS = ["/lustre/storeB/users/heikok/Meteorology/ecdis2cwf/"]
     EC_FILENAME_PATTERN = "meteo{year:04d}{month:02d}{day:02d}_{dayoffset:02d}.nc"
@@ -508,7 +509,20 @@ GRAVITY.FIXED.M/S=0.0002
         return filename
 
     def getSnapOutputDir(self):
+        """Output directory of SNAP-runs for manual runs through the front-end.
+        This directory is available for all SnapPy users.
+
+        :return: path as directory, adapted for LUSTREDIR
+        """
         return self._OUTPUTDIR.format(LUSTREDIR=self.getLustreDir())
+
+    def getSnapOutputDirAutomated(self):
+        """Output directory of SNAP-runs for automated runs, e.g. run through cron.
+        This directory is available for group snap-op.
+
+        :return: path as directory, adapted for LUSTREDIR
+        """
+        return self._OUTPUTDIR_AUTOMATED.format(LUSTREDIR=self.getLustreDir())
 
     def _findFileInPathes(self, file, pathes):
         for path in pathes:
