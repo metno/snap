@@ -9,81 +9,91 @@ import os
 import sys
 from time import gmtime, strftime
 
+
 def get_tag_NPP(tag):
-    return tag.split(':')[0]
+    return tag.split(":")[0]
+
 
 def get_tag_relTerm(tag):
-    '''returns a dictionary with the releaseterms from a tag like 
+    """returns a dictionary with the releaseterms from a tag like
     NPP:relI131=1.0e13:relXE133=1.0e13:relCS137=1.0e13:relKR85=0
-    '''
-    tag_split = tag.split(':')
+    """
+    tag_split = tag.split(":")
     tag_split.pop(0)
     relTerm = {}
     for term in tag_split:
-        relTerm[term.split('=')[0]] = float(term.split('=')[1])
+        relTerm[term.split("=")[0]] = float(term.split("=")[1])
     return relTerm
 
 
 def get_isotope_release(res, reldict):
     errors = ""
-    for tag in ('releaseTime', 'radius', 'lowerHeight', 'upperHeight'):
+    for tag in ("releaseTime", "radius", "lowerHeight", "upperHeight"):
         if not tag in reldict:
             errors += "Cannot interprete {}: {}".format(tag, reldict[tag])
 
-    source_tmpl = '''
+    source_tmpl = """
 MAX.PARTICLES.PER.RELEASE= 2000
 TIME.RELEASE.PROFILE.STEPS
 RELEASE.HOUR= 0, {releaseTime}
 RELEASE.RADIUS.M= {radius}
 RELEASE.LOWER.M= {lowerHeight}
 RELEASE.UPPER.M= {upperHeight}
-'''
-    source_term = source_tmpl.format(releaseTime=reldict['releaseTime'],
-                                        radius=reldict['radius'],
-                                        lowerHeight=reldict['lowerHeight'], upperHeight=reldict['upperHeight'])
+"""
+    source_term = source_tmpl.format(
+        releaseTime=reldict["releaseTime"],
+        radius=reldict["radius"],
+        lowerHeight=reldict["lowerHeight"],
+        upperHeight=reldict["upperHeight"],
+    )
 
-    isotopes = {'relI131': 'I131',
-                'relXE133': 'Xe133',
-                'relCS137': 'Cs137',
-                'relKR85': 'Kr85'}
+    isotopes = {
+        "relI131": "I131",
+        "relXE133": "Xe133",
+        "relCS137": "Cs137",
+        "relKR85": "Kr85",
+    }
     for rel, iso in isotopes.items():
-        emis = 0.
+        emis = 0.0
         try:
             emis = float(reldict[rel])
         except:
             pass
-        if (emis > 0.):
-            source_term += "RELEASE.BQ/SEC.COMP= {rel}, {rel}, '{iso}'\n".format(rel=reldict[rel], iso=iso)
+        if emis > 0.0:
+            source_term += "RELEASE.BQ/SEC.COMP= {rel}, {rel}, '{iso}'\n".format(
+                rel=reldict[rel], iso=iso
+            )
 
     # add Cs137, I131 and Xe133 and Kr85
     source_term += res.isotopes2snapinput([169, 158, 148, 27])
 
     return (source_term, errors)
 
+
 def runsnapsingle(npp_tag, release_dt, tag_time, dirname, res):
     npp = get_tag_NPP(npp_tag)
     nPPs = res.readNPPs()
     reldict = {
-        'releaseTime': 96,
-        'radius': 50,
-        'lowerHeight': 50,
-        'upperHeight': 500,
-        'relI131': 1.39e13,
-        'relXE133': 1.0e13,
-        'relCS137': 2.6e11,
-        'relKR85': 0
+        "releaseTime": 96,
+        "radius": 50,
+        "lowerHeight": 50,
+        "upperHeight": 500,
+        "relI131": 1.39e13,
+        "relXE133": 1.0e13,
+        "relCS137": 2.6e11,
+        "relKR85": 0,
     }
     for param, value in get_tag_relTerm(npp_tag).items():
         reldict[param] = value
-    
+
     (term, errors) = get_isotope_release(res, reldict)
-    if (len(errors) > 0):
+    if len(errors) > 0:
         print(errors, file=sys.stderr)
         return False
-    lat = float(nPPs[npp]['lat'])
-    lon = float(nPPs[npp]['lon'])
+    lat = float(nPPs[npp]["lat"])
+    lon = float(nPPs[npp]["lon"])
     simStart = strftime("%Y-%m-%d_%H:%M:%S", tag_time)
-    print(f'outputdir for {simStart}: {dirname}')
+    print(f"outputdir for {simStart}: {dirname}")
     os.mkdir(dirname)
     sourceTerm = f"""
 TITLE={npp} {release_dt:%Y %m %d %H}
@@ -94,28 +104,27 @@ TIME.RUN = 52h
 STEP.HOUR.OUTPUT.FIELDS= 3
 """
     sourceTerm += term
-    with open(os.path.join(dirname, "snap.input"),'w') as fh:
+    with open(os.path.join(dirname, "snap.input"), "w") as fh:
         fh.write(sourceTerm)
-        files = res.getECMeteorologyFiles(release_dt, 52, 'best')
-        fh.write(res.getSnapInputMetDefinitions('nrpa_ec_0p1', files))
-    with open(f"{dirname}/snap.stdout.log", 'wt') as stdout:
-        with open(f"{dirname}/snap.stderr.log", 'wt') as stderr:
-            os.environ['OMP_NUM_THREADS']='2' # moderate thread usage
-            subprocess.run(['bsnap_naccident', 'snap.input'],
-                            cwd=dirname,
-                            stdout=stdout,
-                            stderr=stderr
-                            )
+        files = res.getECMeteorologyFiles(release_dt, 52, "best")
+        fh.write(res.getSnapInputMetDefinitions("nrpa_ec_0p1", files))
+    with open(f"{dirname}/snap.stdout.log", "wt") as stdout:
+        with open(f"{dirname}/snap.stderr.log", "wt") as stderr:
+            os.environ["OMP_NUM_THREADS"] = "2"  # moderate thread usage
+            subprocess.run(
+                ["bsnap_naccident", "snap.input"],
+                cwd=dirname,
+                stdout=stdout,
+                stderr=stderr,
+            )
             # add time of arrival
-            subprocess.run(['snapAddToa', 'snap.nc'],
-                            cwd=dirname,
-                            stdout=stdout,
-                            stderr=stderr
-                            )
+            subprocess.run(
+                ["snapAddToa", "snap.nc"], cwd=dirname, stdout=stdout, stderr=stderr
+            )
     # and plot
-    prod_dir = os.path.join(dirname, 'prod')
+    prod_dir = os.path.join(dirname, "prod")
     os.mkdir(prod_dir)
-    with open(os.path.join(prod_dir, "diana.setup"),'wt') as fh:
+    with open(os.path.join(prod_dir, "diana.setup"), "wt") as fh:
         di_setup = f"""
 %include /etc/diana/setup/diana.setup-COMMON
 <COLOURS>
@@ -139,27 +148,26 @@ m=SNAP.current t=fimex format=netcdf f={dirname}/snap.nc
 """
         fh.write(di_setup)
 
-    hours = ",".join(["{x} | {y}".format(x=x, y=x+3) for x in range(0,48,3)])
-    component = 'Cs137'
+    hours = ",".join(["{x} | {y}".format(x=x, y=x + 3) for x in range(0, 48, 3)])
+    component = "Cs137"
     dianaIn = os.path.join(prod_dir, "diana.in")
     dianaInTmpl = ""
-    with open(res.getBSnapInputFile(), 'rt') as fh:
+    with open(res.getBSnapInputFile(), "rt") as fh:
         for line in fh:
-            if line.startswith('AREA'):
+            if line.startswith("AREA"):
                 # zoom into area (lon_min:lon_max:lat_min:lat_max in radians)
-                dianaInTmpl += "AREA proj4string=\"+proj=latlon +R=6371000 +no_defs\" rectangle=-0.38:1.0:0.55:1.35\n"
+                dianaInTmpl += 'AREA proj4string="+proj=latlon +R=6371000 +no_defs" rectangle=-0.38:1.0:0.55:1.35\n'
             else:
                 dianaInTmpl += line
-    with open(dianaIn, 'wt') as fh:
+    with open(dianaIn, "wt") as fh:
         fh.write(dianaInTmpl.format(hours=hours, component=component))
     # env-vars for bdiana without display
-    os.environ['QT_QPA_PLATFORMTHEME']=''
-    os.environ['QT_QPA_FONTDIR']='/usr/share/fonts/truetype'
-    os.environ['QT_QPA_PLATFORM']='offscreen'
-    subprocess.run(['bdiana', '-i', 'diana.in', '-s', 'diana.setup'],
-                    cwd=prod_dir
-                    )
+    os.environ["QT_QPA_PLATFORMTHEME"] = ""
+    os.environ["QT_QPA_FONTDIR"] = "/usr/share/fonts/truetype"
+    os.environ["QT_QPA_PLATFORM"] = "offscreen"
+    subprocess.run(["bdiana", "-i", "diana.in", "-s", "diana.setup"], cwd=prod_dir)
     return True
+
 
 def runsnap(npps, outdir):
     release_dt = datetime.datetime.now() + datetime.timedelta(hours=1)
@@ -167,41 +175,44 @@ def runsnap(npps, outdir):
     nppdir = {}
     runparams = []
     res = Resources()
-    res.getLustreDir() # set lustredir within res before parallelization - mapp-services.sh not parallelizable yet
+    res.getLustreDir()  # set lustredir within res before parallelization - mapp-services.sh not parallelizable yet
     nPPs = res.readNPPs()
     for i, npp_tag in enumerate(npps):
         tag = get_tag_NPP(npp_tag)
         if not tag in nPPs:
             raise Exception(f"unknown NPP: {tag}", file=sys.stderr)
-        tag_time = gmtime(release_dt.timestamp() + i) # ensure a few secs difference for tags
-        nppdir[tag] = os.path.join(res.getSnapOutputDir(), "{0}_{1}".format(tag, strftime("%Y-%m-%dT%H%M%S", tag_time)))
+        tag_time = gmtime(
+            release_dt.timestamp() + i
+        )  # ensure a few secs difference for tags
+        nppdir[tag] = os.path.join(
+            res.getSnapOutputDirAutomated(),
+            "{0}_{1}".format(tag, strftime("%Y-%m-%dT%H%M%S", tag_time)),
+        )
         runparams.append([npp_tag, release_dt, tag_time, nppdir[tag], res])
 
     with multiprocessing.Pool(4) as p:
         print(p.starmap(runsnapsingle, runparams))
 
     # montage
-    opts = ['montage', '-mode', 'concatenate', '-tile', f"4x{len(npps)}"]
+    opts = ["montage", "-mode", "concatenate", "-tile", f"4x{len(npps)}"]
     for npp_tag in npps:
         tag = get_tag_NPP(npp_tag)
-        opts += ['-label', tag]
-        for t in [12,24,36,48]:
+        opts += ["-label", tag]
+        for t in [12, 24, 36, 48]:
             opts += [f"{nppdir[tag]}/prod/snap_{t}h.png"]
-    opts.append(f'{outdir}/plots_{release_dt:%Y-%m-%dT%H}0000Z.png')
-    print('running montage with:\n'+" ".join(opts))
+    opts.append(f"{outdir}/plots_{release_dt:%Y-%m-%dT%H}0000Z.png")
+    print("running montage with:\n" + " ".join(opts))
     subprocess.run(opts)
 
     # montage toa
-    opts = ['montage', '-mode', 'concatenate', '-tile', f"{len(npps)}x1"]
+    opts = ["montage", "-mode", "concatenate", "-tile", f"{len(npps)}x1"]
     for npp_tag in npps:
         tag = get_tag_NPP(npp_tag)
-        opts += ['-label', tag]
+        opts += ["-label", tag]
         opts += [f"{nppdir[tag]}/prod/snap_toa.png"]
-    opts.append(f'{outdir}/plots_{release_dt:%Y-%m-%dT%H}0000Z_toa.png')
-    print('running montage for toa with:\n'+" ".join(opts))
+    opts.append(f"{outdir}/plots_{release_dt:%Y-%m-%dT%H}0000Z_toa.png")
+    print("running montage for toa with:\n" + " ".join(opts))
     subprocess.run(opts)
-
-
 
 
 if __name__ == "__main__":
@@ -209,15 +220,24 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
         description="Run snap for several Nuclear Power Plants and receive figures of dispersion",
-        usage=f"{sys.argv[0]} NPP [NPP NPP ...]"
+        usage=f"{sys.argv[0]} NPP [NPP NPP ...]",
     )
-    parser.add_argument("--dir", help="output directory", default="/home/VGLSHARE/SNAP4DSA/")
-    parser.add_argument("--store", help="storeA or storeB, meteo and runtime-datastore, default used from MAPP-system")
-    parser.add_argument('NPP', help="""name of Nuclear Power Plant, e.g. CHERNOBYL (see list in SnapPy).
+    parser.add_argument(
+        "--dir", help="output directory", default="/home/VGLSHARE/SNAP4DSA/"
+    )
+    parser.add_argument(
+        "--store",
+        help="storeA or storeB, meteo and runtime-datastore, default used from MAPP-system",
+    )
+    parser.add_argument(
+        "NPP",
+        help="""name of Nuclear Power Plant, e.g. CHERNOBYL (see list in SnapPy).
     It might also be extended by a colon-separated list with release-term specifications like
-    CHERNOBYL:relI131=1.0e13:relXE133=1.0e13:relCS137=1.0e13:relKR85=0""", nargs='+')
+    CHERNOBYL:relI131=1.0e13:relXE133=1.0e13:relCS137=1.0e13:relKR85=0""",
+        nargs="+",
+    )
     args = parser.parse_args()
 
-    if (args.store):
+    if args.store:
         os.environ["STORE"] = args.store
     runsnap(args.NPP, args.dir)
