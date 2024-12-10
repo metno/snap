@@ -185,7 +185,7 @@ def runsnap(npps, outdir):
             release_dt.timestamp() + i
         )  # ensure a few secs difference for tags
         nppdir[tag] = os.path.join(
-            res.getSnapOutputDir(),
+            res.getSnapOutputDirAutomated(),
             "{0}_{1}".format(tag, strftime("%Y-%m-%dT%H%M%S", tag_time)),
         )
         runparams.append([npp_tag, release_dt, tag_time, nppdir[tag], res])
