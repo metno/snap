@@ -214,7 +214,7 @@ def runsnap(npp_tag, met_model, outdir, release_dt, runtime, plot_from_file=None
     npp = get_tag_NPP(npp_tag)
     res = Resources()
     dirname = os.path.join(
-        res.getSnapOutputDir(),
+        res.getSnapOutputDirAutomated(),
         "{0}_{1}".format(npp, strftime("%Y-%m-%dT%H%M%S", tag_time)),
     )
 
