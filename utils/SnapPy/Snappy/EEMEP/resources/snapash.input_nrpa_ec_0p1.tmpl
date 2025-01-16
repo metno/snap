@@ -1,0 +1,139 @@
+***********************************************************************
+*** MET Norway SNAP input file for ash ec_0p1
+*** f-string parameters:
+***   * start (datetime, start of run/eruption)
+***   * runtime (int)
+***   * simulationstart (datetime, now)
+***   * longitude
+***   * latitude
+***   * interpolation fimex-interpolation string
+***   * lowerlist (comma separated list of columns)
+***   * upperlist (comma separated list of columns)
+***   * radiuslist (comma separated list of columns)
+***   * meteofiles (FIELD.INPUT=filepath lines)
+***
+*** this file requires also an additional release.txt file
+***********************************************************************
+TITLE={volcano_name} {start:%Y-%m-%d %H:%M}
+SIMULATION.START.DATE= {simulationstart:%Y-%m-%d_%H:%M:%S}
+SET_RELEASE.POS= P=   {latitude}, {longitude}
+
+TIME.START= {start:%Y %m %d %H}
+TIME.RUN = {runtime}h
+STEP.HOUR.OUTPUT.FIELDS= 1
+MODEL.LEVEL.FIELDS.ON
+PRECIPITATION.ON
+
+RANDOM.WALK.ON
+BOUNDARY.LAYER.FULL.MIX.OFF
+DRY.DEPOSITION.NEW
+WET.DEPOSITION.VERSION = 2
+
+REMOVE.RELATIVE.MASS.LIMIT= 0.
+
+MAX.TOTALPARTICLES= 20000000
+TIME.STEP= 300.
+STEP.HOUR.INPUT.MIN= 3
+STEP.HOUR.INPUT.MAX= 6
+ASYNOPTIC.OUTPUT
+TOTAL.COMPONENTS.OFF
+MSLP.OFF
+PRECIPITATION.ON
+MODEL.LEVEL.FIELDS.OFF
+POSITIONS.DECIMAL
+
+
+FIELD.TYPE=fimex
+FIMEX.FILE_TYPE= netcdf
+FIMEX.CONFIG=
+{interpolation}
+
+{meteofiles}
+
+GRID.AUTODETECT.FROM_INPUT
+* ec_det in newer versions of snap
+GRID.NCTYPE = ecemep
+DATA.ETA.LEVELS
+ENSEMBLE_MEMBER.INPUT = 0
+
+FIELD_TIME.FORECAST
+
+** OUTPUT FILES
+FIELD.OUTTYPE=netcdf
+FIELD.OUTPUT= snap.nc
+
+
+OUTPUT.COLUMN.ON
+
+
+LOG.FILE=     snap.log
+DEBUG.ON
+
+* ASH setup
+* release.txt contains of space-sparated columns with
+* hour  height_lower  comp  release[Bq/s]
+RELEASE.FILE= release.txt
+TIME.RELEASE.PROFILE.STEPS
+RELEASE.HEIGHTLOWER.M = {lowerlist}
+RELEASE.HEIGHTUPPER.M = {upperlist}
+RELEASE.HEIGHTRADIUS.M = {radiuslist}
+RELEASE.COMPONENTS= 'ASH_1', 'ASH_2', 'ASH_3', 'ASH_4', 'ASH_5', 'ASH_6'
+
+***List of components
+COMPONENT= ASH_1
+DRY.DEP.ON
+WET.DEP.ON
+RADIOACTIVE.DECAY.OFF
+FIELD.IDENTIFICATION= 01
+RADIUS.MICROMETER=0.15
+* VAAC London Tephra Density: 2.3g/cm3 based on Sparks et al, 1997
+DENSITY.G/CM3=2.3
+
+COMPONENT= ASH_2
+DRY.DEP.ON
+WET.DEP.ON
+RADIOACTIVE.DECAY.OFF
+FIELD.IDENTIFICATION= 02
+RADIUS.MICROMETER=0.27
+* VAAC London Tephra Density: 2.3g/cm3 based on Sparks et al, 1997
+DENSITY.G/CM3=2.3
+
+COMPONENT= ASH_3
+DRY.DEP.ON
+WET.DEP.ON
+RADIOACTIVE.DECAY.OFF
+FIELD.IDENTIFICATION= 03
+RADIUS.MICROMETER=0.87
+* VAAC London Tephra Density: 2.3g/cm3 based on Sparks et al, 1997
+DENSITY.G/CM3=2.3
+
+COMPONENT= ASH_4
+DRY.DEP.ON
+WET.DEP.ON
+RADIOACTIVE.DECAY.OFF
+FIELD.IDENTIFICATION= 04
+RADIUS.MICROMETER=2.74
+* VAAC London Tephra Density: 2.3g/cm3 based on Sparks et al, 1997
+DENSITY.G/CM3=2.3
+
+COMPONENT= ASH_5
+DRY.DEP.ON
+WET.DEP.ON
+RADIOACTIVE.DECAY.OFF
+FIELD.IDENTIFICATION= 05
+RADIUS.MICROMETER=8.66
+* VAAC London Tephra Density: 2.3g/cm3 based on Sparks et al, 1997
+DENSITY.G/CM3=2.3
+
+COMPONENT= ASH_6
+DRY.DEP.ON
+WET.DEP.ON
+RADIOACTIVE.DECAY.OFF
+FIELD.IDENTIFICATION= 06
+RADIUS.MICROMETER=27.39
+* VAAC London Tephra Density: 2.3g/cm3 based on Sparks et al, 1997
+DENSITY.G/CM3=2.3
+
+
+
+
