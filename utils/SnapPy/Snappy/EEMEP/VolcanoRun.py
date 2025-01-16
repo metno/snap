@@ -31,6 +31,7 @@ class Eruption:
     def __init__(
         self,
         top: int,
+        bottom: int,
         rate: float,
         m63: float,
         start: datetime.datetime,
@@ -39,12 +40,13 @@ class Eruption:
         """Container class for eruption parameters
 
         :param top: top of the eruption-cloud above MSL in m
-        :param rate: emission rate in g/s
+        :param rate: emission rate in kg/s
         :param m63: fraction of particles below 63µm
         :param start: start of eruption
         :param end: end of this eruption
         """
         self._top = top
+        self._bottom = bottom
         self._rate = rate
         self._m63 = m63
         self._start = start
@@ -69,7 +71,7 @@ class Eruption:
 
     @property
     def rate(self) -> float:
-        """Emission rate of plume in g/s
+        """Emission rate of plume in kg/s
 
         :return: rate
         """
@@ -117,11 +119,10 @@ class VolcanoXML:
         self.xmlFile = xmlFile
         # raise eventual xml-parsing errors already in init
         self._defs = {}
-        self._parseXML()
-        # self.get_columnsource_emission()
-        # self.get_columnsource_location()
-        # self.get_meteo_dates()
-        # self.run_as_restart()
+        try:
+            self._parseXML()
+        except Exception as ex:
+            raise Exception(f"Error while parsing {xmlFile}") from ex
 
     def _parseXML(self):
         """parse volcano.xml file to self._defs"""
@@ -145,20 +146,25 @@ class VolcanoXML:
         self._defs["name"] = name
 
         # meteo-dates
-        weather = root.find("model_setup/weather_forecast")
-        self._defs["reference_date"] = weather.attrib["reference_date"]
-        self._defs["model_start_time"] = datetime.datetime.strptime(
-            weather.attrib["model_start_time"], "%Y-%m-%dT%H:%M:%SZ"
-        )
+        if (weather := root.find("model_setup/weather_forecast")) is not None:
+            self._defs["eemep"] = {}
+            self._defs["eemep"]["reference_date"] = weather.attrib["reference_date"]
+            self._defs["eemep"]["model_start_time"] = datetime.datetime.strptime(
+                weather.attrib["model_start_time"], "%Y-%m-%dT%H:%M:%SZ"
+            )
+            # restart-file
+            model_run = root.find("model_setup[@use_restart_file]")
+            self._defs["eemep"]["use_restart_file"] = False
+            if model_run.attrib["use_restart_file"] == "restart":
+                self._defs["eemep"]["use_restart_file"] = True
+
+        if (snap := root.find("snap_model_setup/weather_forecast")) is not None:
+            self._defs["snap"] = {}
+            self._defs["snap"]["reference_date"] = snap.attrib["reference_date"]
+            self._defs["snap"]["model"] = snap.attrib["model"]
 
         # eruptions
         self._defs["eruptions"] = self._parseEruptions(root)
-
-        # restart-file
-        model_run = root.find("model_setup[@use_restart_file]")
-        self._defs["use_restart_file"] = False
-        if model_run.attrib["use_restart_file"] == "restart":
-            self._defs["use_restart_file"] = True
 
     def _parseEruptions(self, root):
         erups = []
@@ -171,16 +177,33 @@ class VolcanoXML:
                 erup.attrib["start"], "%Y-%m-%dT%H:%M:%SZ"
             )
             end = datetime.datetime.strptime(erup.attrib["end"], "%Y-%m-%dT%H:%M:%SZ")
-            erups.append(Eruption(top, rate, m63, start, end))
+            erups.append(Eruption(top, bottom, rate, m63, start, end))
         return erups
 
-    def get_meteo_dates(self) -> tuple[str, datetime.datetime]:
-        """meteorological dates
+    @property
+    def eemep_model_setup(self) -> None | tuple[str, datetime.datetime, bool]:
+        """get the model setup parameters for eemep, i.e. the reference-date as string
+        (allways best currently), the model start-time, which might be different from the
+        eruption start, and a boolean flag if restart-files should be used
 
-        :return: (reference_date, model_start_time) of the meteorology,
-        where reference_date is a string (e.g. "best") and model_start_time a datetime object
+        :return: tuple of reference-date, start-date, use-restart-file
         """
-        return (self._defs["reference_date"], self._defs["model_start_time"])
+        if "eemep" in self._defs:
+            return (
+                self._defs["eemep"]["reference_date"],
+                self._defs["eemep"]["model_start_time"],
+                self._defs["eemep"]["use_restart_file"],
+            )
+        return None
+
+    @property
+    def snap_model_setup(self) -> None | tuple[str, str]:
+        """get the model setup parameters for snap-ash runs, i.e. the reference date ("best) and meteorological model
+
+        :return: tuple of reference-date and met-model, None if snap not configured
+        """
+        if "snap" in self._defs:
+            return (self._defs["snap"]["reference_date"], self._defs["snap"]["model"])
 
     @property
     def outputdir(self) -> str:
@@ -188,7 +211,7 @@ class VolcanoXML:
         return self._defs["outputDir"]
 
     @property
-    def runtime(self) -> float:
+    def runTimeHours(self) -> float:
         """Runtime of the volcano-run in hours
 
         :return: hours
@@ -227,17 +250,24 @@ class VolcanoXML:
         """
         return self._defs["eruptions"]
 
-    @property
-    def use_restart_file(self) -> bool:
-        """Flag if a previously generated restart-file should be used"""
-        return self._defs["use_restart_file"]
-
 
 class VolcanoRun(VolcanoXML):
     """
     volcano-run definition handling for eemep, e.g. reading from a xml-file and translating
     to columnsource-emission/location files
     """
+
+    def get_meteo_dates(self) -> tuple[str, datetime.datetime]:
+        """meteorological dates
+
+        :return: (reference_date, model_start_time) of the meteorology,
+        where reference_date is a string (e.g. "best") and model_start_time a datetime object
+        """
+        if self.eemep_model_setup is None:
+            raise Exception(
+                f"{self.xmlFile} not configured for eemep, no model_setup found"
+            )
+        return self.eemep_model_setup[0:2]
 
     def get_columnsource_location(self):
         """get a string used within a eemep columnsource_location.csv file, e.g.
@@ -290,7 +320,11 @@ class VolcanoRun(VolcanoXML):
         return "".join(out)
 
     def run_as_restart(self):
-        return self.use_restart_file
+        if self.eemep_model_setup is None:
+            raise Exception(
+                f"{self.xmlFile} not configured for eemep, no model_setup found"
+            )
+        return self.eemep_model_setup[2]
 
 
 class TestVolcanoRun(unittest.TestCase):
