@@ -90,6 +90,7 @@ class SnapVolcanoWorker(QThread):
     def run(self):
         """Run the snapVolcano as subprocess command."""
 
+        dtnow = datetime.datetime.now()
         with open(os.path.join(self.outputdir, "snapVolcano.log"), "w") as fh:
             process = subprocess.run(
                 ["snapVolcano", self.volcanofile],
@@ -98,7 +99,11 @@ class SnapVolcanoWorker(QThread):
                 cwd=self.outputdir,
             )
             process.wait()
-            self.finished.emit()
+        snapnc = os.path.join(self.outputdir, "snap.nc")
+        if os.path.exists(snapnc):
+            finalsnapnc = os.path.join(self.outputdir, f"snapash_{dtnow:%Y%m%dT%H%M%S}.nc")
+            os.rename(snapnc, finalsnapnc)
+        self.finished.emit()
 
 
 class Controller:
@@ -508,7 +513,7 @@ class Controller:
         self.model_update.start(QThread.LowPriority)
 
         if snapsetup != "":
-            # start a background snap run on volcano.xml
+            self.write_log(f"starting a background snapash run in {self.lastOutputDir}")
             self.snap_thread = SnapVolcanoWorker(self.lastOutputDir, self.volcano_file)
             self.snap_thread.start()
 
