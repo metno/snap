@@ -70,7 +70,7 @@ CHANGELOG="automatic snapash runs"
 export DEBEMAIL=${USER}@met.no
 rm --force debian
 ln --symbolic debian.$HOST debian
-dch --package snap-py --newversion ${VERSION}-1 --upstream "$CHANGELOG"
+dch --package snap-py --newversion ${VERSION}-2 --upstream "$CHANGELOG"
 dch --release ''
 python3 setup.py sdist
 cd dist || exit 1
