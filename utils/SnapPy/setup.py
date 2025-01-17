@@ -46,7 +46,8 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'snapAddBombIsotopes = Snappy.AddBombIsotopes:main'
+            'snapAddBombIsotopes = Snappy.AddBombIsotopes:main',
+            'snapVolcano = Snappy.EEMEP.SnapVolcanoTranslator:main'
         ]
     }
 )
