@@ -18,16 +18,16 @@
 import copy
 import datetime
 import os
+import subprocess
+from logging import getLogger
 
 from Snappy.EEMEP.SnapAshResources import SnapAshResources
 from Snappy.EEMEP.VolcanoRun import VolcanoXML
 
-from logging import getLogger
-
 logger = getLogger(__name__)
 
 
-class SnapAshRunner:
+class SnapVolcanoTranslator:
     def __init__(self, volcano_file):
         """Run a snap-run with the input parameters from a volcano.xml file. The run will be started
         in the background as a qsub script in a SGE queue defined in resources/snapash.job
@@ -35,6 +35,10 @@ class SnapAshRunner:
         :param volcano_file: volcano.xml file-path
         """
         self.volcano = VolcanoXML(volcano_file)
+        if self.volcano.snap_model_setup is None:
+            logger.warning(f"no snap_model_setup in file: '{volcano_file}'")
+            return
+
         os.makedirs(name=self.volcano.outputdir, exist_ok=True)
 
         defs = {}
@@ -138,9 +142,60 @@ class SnapAshRunner:
 
         return (snap_start, all_lower, all_upper)
 
+    def run(self) -> int:
+        """
+        The run method is a convenient method to actually run bsnap_naccident and
+        snapAddToa on the results in the output-directory of volcano.xml.
+
+        return returncode of snapAddToa, return-code of bsnap is ignored since that might
+            fail due to missing meteo, but still give a good beginning.
+        """
+        with open(os.path.join(self.volcano.outputdir, "snap.outlog"), "w") as fh:
+            proc = subprocess.run(
+                ["bsnap_naccident", "snap.input"],
+                cwd=self.volcano.outputdir,
+                stderr=fh,
+                stdout=fh,
+            )
+        with open(os.path.join(self.volcano.outputdir, "snapAddToa.outlog"), "w") as fh:
+            proc = subprocess.run(
+                ["snapAddToa", "snap.nc"],
+                cwd=self.volcano.outputdir,
+                stderr=fh,
+                stdout=fh,
+            )
+        return proc.returncode
+
+
+def main() -> int:
+    import argparse
+    import sys
+
+    # umask to make files group-writable for later cleanup
+    os.umask(0o002)
+
+    parser = argparse.ArgumentParser(
+        description="run snap from a volcano.xml file",
+        usage=f"{sys.argv[0]} [--translate_only] volcano.xml",
+    )
+    parser.add_argument(
+        "--translate_only",
+        help="translate volcano.xml to snap.input and release.txt",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+    )
+    parser.add_argument(
+        "volcano_filepath",
+        help="volcano.xml filepath, with volcano definition",
+        nargs=1,
+    )
+    args = parser.parse_args()
+
+    svt = SnapVolcanoTranslator(args.volcano_filepath[0])
+    if not args.translate_only:
+        exit(svt.run())
+    exit(0)
+
 
 if __name__ == "__main__":
-    # tests
-    sr = SnapAshRunner(os.path.join(os.path.dirname(__file__), "test/volcano.xml"))
-    print(sr.volcano.outputdir)
-    print(os.listdir(sr.volcano.outputdir))
+    main()
