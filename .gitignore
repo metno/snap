@@ -19,7 +19,7 @@
 **/*__genmod.f90
 Snappy.egg-info
 
-# eclipse stuff
+# editor stuff
 /.cdtproject
 /.project
 /.cproject
@@ -27,6 +27,7 @@ Snappy.egg-info
 /.settings
 /.csettings
 /.dep
+/.vscode
 
 # /
 /bsnap_1.*
