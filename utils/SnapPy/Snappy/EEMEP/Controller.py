@@ -21,6 +21,7 @@ Created on Aug 9, 2016
 @author: heikok
 """
 
+import subprocess
 from PyQt5 import QtWidgets
 from collections import deque
 import datetime
@@ -76,6 +77,28 @@ class _UpdateThread(QThread):
                 self.sleep(3)
         except:
             traceback.print_exc()
+
+
+class SnapVolcanoWorker(QThread):
+    finished = pyqtSignal()
+
+    def __init__(self, outputdir, volcanofile):
+        super().__init__()
+        self.outputdir = outputdir
+        self.volcanofile = volcanofile
+
+    def run(self):
+        """Run the snapVolcano as subprocess command."""
+
+        with open(os.path.join(self.outputdir, "snapVolcano.log"), "w") as fh:
+            process = subprocess.run(
+                ["snapVolcano", self.volcanofile],
+                stdout=fh,
+                stderr=fh,
+                cwd=self.outputdir,
+            )
+            process.wait()
+            self.finished.emit()
 
 
 class Controller:
@@ -402,7 +425,7 @@ class Controller:
             cheight = eemep_cheight_max
 
         eruptions = []
-        eruption = '<eruption start="{start}Z" end="{end}Z" bottom="{bottom:.0f}" top="{top:.0f}" rate="{rate:.0f}" m63="{m63:.2f}"/>'
+        eruption = '<eruption start="{start}Z" end="{end}Z" bottom="{bottom:.0f}" top="{top:.0f}" rate="{rate:.0f}" m63="{m63:.2f}"/>\n'
         eruptions.append(
             eruption.format(
                 start=startDT.isoformat(),
@@ -421,35 +444,36 @@ class Controller:
             self.lastOutputDir, ModelRunner.VOLCANO_FILENAME
         )
         self.lastQDict = qDict
-        sourceTerm = """<?xml version="1.0" encoding="UTF-8"?>
-<volcanic_eruption_run run_time_hours="{runTime}" output_directory="{outdir}">
-<model_setup use_restart_file="{restart}">
-   <!-- reference_date might also be best_estimate, e.g. mix latest forecasts -->
-   <weather_forecast reference_date="{model_run}" model_start_time="{model_start_time}Z"/>
-</model_setup>
-<volcano name="{volcano}" lat="{lat}" lon="{lon}" altitude="{alt:.0f}" />
-<eruptions>
-<!-- bottom and top of ash-cloud in m above ground -->
-<!-- rate in kg/s -->
-{eruptions}
-</eruptions>
-
-</volcanic_eruption_run>"""
         ecModelRun = qDict["ecmodelrun"]
         if not ecModelRun == "best":
             ecModelRun += "Z"
-        self.lastSourceTerm = sourceTerm.format(
-            lat=latf,
-            lon=lonf,
-            volcano=volcano,
-            alt=altf,
-            outdir=self.lastOutputDir,
-            restart=restart,
-            model_run=ecModelRun,
-            model_start_time=modelStartDT.isoformat(),
-            eruptions="\n".join(eruptions),
-            runTime=runTime,
-        )
+        snapMetModel = qDict["snap_metmodel"]
+        snapModelRun = qDict["snap_modelrun"]
+        if snapMetModel == "":
+            snapsetup = ""
+        else:
+            snapsetup = f"""
+  <!-- optional snap setup -->
+  <snap_model_setup>
+    <weather_forecast reference_date="{snapModelRun}" model="{snapMetModel}" />
+  </snap_model_setup>
+            """
+
+        self.lastSourceTerm = f"""<?xml version="1.0" encoding="UTF-8"?>
+<volcanic_eruption_run run_time_hours="{runTime}" output_directory="{self.lastOutputDir}">
+<model_setup use_restart_file="{restart}">
+   <!-- reference_date might also be best_estimate, e.g. mix latest forecasts -->
+   <weather_forecast reference_date="{ecModelRun}" model_start_time="{modelStartDT.isoformat()}Z"/>
+</model_setup>
+{snapsetup}
+<volcano name="{volcano}" lat="{latf:.3f}" lon="{lonf:.3f}" altitude="{altf:.0f}" />
+<eruptions>
+<!-- bottom and top of ash-cloud in m above ground -->
+<!-- rate in kg/s -->
+{"".join(eruptions)}
+</eruptions>
+
+</volcanic_eruption_run>"""
         debug("output directory: {}".format(self.lastOutputDir))
         os.makedirs(self.lastOutputDir, exist_ok=True)
 
@@ -482,6 +506,11 @@ class Controller:
         self.model_update = _UpdateThread(self)
         self.model_update.update_log_signal.connect(self.update_log)
         self.model_update.start(QThread.LowPriority)
+
+        if snapsetup != "":
+            # start a background snap run on volcano.xml
+            self.snap_thread = SnapVolcanoWorker(self.lastOutputDir, self.volcano_file)
+            self.snap_thread.start()
 
 
 if __name__ == "__main__":

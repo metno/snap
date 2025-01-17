@@ -151,8 +151,6 @@ class ModelRunner:
             self.volcano = NppRun(volcano_path)
         else:
             self.volcano = VolcanoRun(volcano_path)
-            if self.volcano.snap_model_setup is not None:
-                SnapAshRunner(volcano_path)
 
         self.runtag = "eemep_{}".format(os.path.basename(self.volcano.outputDir))
         self.hpc_outdir = os.path.join(self.rundir, self.runtag)
