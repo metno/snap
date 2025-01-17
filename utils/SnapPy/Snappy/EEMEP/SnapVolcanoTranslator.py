@@ -151,6 +151,7 @@ class SnapVolcanoTranslator:
             fail due to missing meteo, but still give a good beginning.
         """
         with open(os.path.join(self.volcano.outputdir, "snap.outlog"), "w") as fh:
+            logger.info("Starting bsnap_naccident snap.input")
             proc = subprocess.run(
                 ["bsnap_naccident", "snap.input"],
                 cwd=self.volcano.outputdir,
@@ -158,6 +159,7 @@ class SnapVolcanoTranslator:
                 stdout=fh,
             )
         with open(os.path.join(self.volcano.outputdir, "snapAddToa.outlog"), "w") as fh:
+            logger.info("Starting snapAddToa snap.nc")
             proc = subprocess.run(
                 ["snapAddToa", "snap.nc"],
                 cwd=self.volcano.outputdir,
