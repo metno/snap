@@ -103,9 +103,7 @@ def add_toa_to_nc(nc: netCDF4.Dataset, overwrite=False):
     if SixHourMax.detect_ash_model(nc) == 'snap':
         SixHourMax(nc)
 
-
-
-if __name__ == "__main__":
+def main():
     import argparse
 
     parser = argparse.ArgumentParser(
@@ -128,3 +126,6 @@ if __name__ == "__main__":
     logging.basicConfig(level=args.loglevel)
     with netCDF4.Dataset(args.snapNc, "a") as nc:
         add_toa_to_nc(nc, args.overwrite)
+
+if __name__ == "__main__":
+    main()
