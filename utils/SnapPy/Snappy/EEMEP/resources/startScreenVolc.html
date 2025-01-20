@@ -126,11 +126,11 @@ function toggle_advanced_sourceterm() {
 
          <br clear="both" style="clear:both;"/>
          <label>MET-MODEL:</label>
-           <div style="float:right;">
-             <select name="metmodel">
-               <option selected="selected" value="nrpa_ec_0p1">EC 0.1, NRPA-domain</option>
-             </select>
-           </div>
+          <div style="float:right;">
+            <select name="metmodel">
+              <option selected="selected" value="nrpa_ec_0p1">EC 0.1, NRPA-domain</option>
+            </select>
+          </div>
 
 
          <br clear="both" style="clear:both;"/>
@@ -141,6 +141,22 @@ function toggle_advanced_sourceterm() {
              %ECMODELRUN%
            </select>
          </div>
+
+          <br clear="both" style="clear:both;"/>
+          <label>SNAP-MET-MODEL:</label>
+          <div style="float:right;">
+            <select name="snap_metmodel">
+            <option value="">Off</option>
+            <option selected="selected" value="nrpa_ec_0p1">EC 0.1, NRPA-domain</option>
+            </select>
+          </div>
+          <br clear="both" style="clear:both;"/>
+          <label>EC-Model Runtime:</label>
+          <div style="float:right;">
+            <select name="snap_modelrun">
+              <option selected="selected" value="best">Best mixed</option>
+            </select>
+          </div>
 
          </div>
          </fieldset>
