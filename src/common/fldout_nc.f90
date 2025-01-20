@@ -538,7 +538,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
 
 !..model level fields...................................................
   if (imodlevel) then
-    call write_ml_fields(iunit, varid, average, [1, 1, -1, ihrs_pos], &
+    call write_ml_fields(iunit, varid, [1, 1, -1, ihrs_pos], &
         [nx*output_resolution_factor, ny*output_resolution_factor, 1, 1], rt1, rt2)
   endif
 
@@ -558,12 +558,12 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
 end subroutine fldout_nc
 
 
-subroutine write_ml_fields(iunit, varid, average, ipos_in, isize, rt1, rt2)
+subroutine write_ml_fields(iunit, varid, ipos_in, isize, rt1, rt2)
   USE releaseML, only: nplume, iplume
   USE particleML, only: pdata, Particle
   USE snapparML, only: def_comp, ncomp
   USE snapfldML, only: field_hr1, field_hr2, &
-      hlayer1, hlayer2, garea, avgbq
+      hlayer1, hlayer2, garea, instmlbq
   USE ftestML, only: ftest
   USE snapdebug, only: idebug
   USE snapgrdML, only: itotcomp, modleveldump, ivlayer
@@ -571,7 +571,6 @@ subroutine write_ml_fields(iunit, varid, average, ipos_in, isize, rt1, rt2)
 
   integer, intent(in) :: iunit
   type(common_var), intent(in) :: varid
-  real, intent(in) :: average
   integer, intent(in) :: ipos_in(4)
   integer, intent(in) :: isize(4)
   real, intent(in) :: rt1, rt2
@@ -590,85 +589,75 @@ subroutine write_ml_fields(iunit, varid, average, ipos_in, isize, rt1, rt2)
 
 !..loop for 1=average and 2=instant concentration
 !..(now computing average first, then using the same arrays for instant)
-  do loop=1,2
+  total=0.
+  maxage=0
 
-    if(loop == 1) then
-      avg=average
-    else
-      avg=1.
-      total=0.
-      maxage=0
+  instmlbq = 0.0
 
-      avgbq = 0.0
-
-      do npl = 1, nplume
-        do n = iplume(npl)%start, iplume(npl)%end
-          part = pdata(n)
-          i = hres_pos(part%x)
-          j = hres_pos(part%y)
-          ivlvl = part%z*10000.
-          k = ivlayer(ivlvl)
-          m = def_comp(part%icomp)%to_running
-        !..in each sigma/eta (input model) layer
-          if (modleveldump > 0) then
-          !.. dump and remove old particles, don't touch  new ones
-            if (iplume(npl)%ageInSteps >= nint(modleveldump)) then
-              maxage = max(maxage, int(iplume(npl)%ageInSteps, kind(maxage)))
-              avgbq(i,j,k,m) = avgbq(i,j,k,m) + part%rad()
-              total = total + part%rad()
-
-              inactivated_ =  part%inactivate()
-              pdata(n) = part
-            end if
-          else
-            avgbq(i,j,k,m)=avgbq(i,j,k,m)+pdata(n)%rad()
-          endif
-        end do
-        end do
+  do npl = 1, nplume
+    do n = iplume(npl)%start, iplume(npl)%end
+      part = pdata(n)
+      i = hres_pos(part%x)
+      j = hres_pos(part%y)
+      ivlvl = part%z*10000.
+      k = ivlayer(ivlvl)
+      m = def_comp(part%icomp)%to_running
+    !..in each sigma/eta (input model) layer
       if (modleveldump > 0) then
-        write (error_unit,*) "dumped; maxage, total", maxage, total
+      !.. dump and remove old particles, don't touch  new ones
+        if (iplume(npl)%ageInSteps >= nint(modleveldump)) then
+          maxage = max(maxage, int(iplume(npl)%ageInSteps, kind(maxage)))
+          instmlbq(i,j,k,m) = instmlbq(i,j,k,m) + part%rad()
+          total = total + part%rad()
+
+          inactivated_ =  part%inactivate()
+          pdata(n) = part
+        end if
+      else
+        instmlbq(i,j,k,m)=instmlbq(i,j,k,m)+pdata(n)%rad()
       endif
-    end if
-
-    do k=1,nk-1
-      do j=1,ny*output_resolution_factor
-        do i=1,nx*output_resolution_factor
-          dh = rt1*hlayer1(i,j,k) + rt2*hlayer2(i,j,k)
-          field_hr2(i,j) = dh*garea(i,j)*avg
-        end do
-      end do
-      do m=1,ncomp
-        avgbq(:,:,k,m) = avgbq(:,:,k,m)/field_hr2
-      end do
     end do
-
-  !..average concentration in each layer for each type
-    do m=1,ncomp
-      do k=1,nk-1
-        field_hr1(:,:) = cscale*avgbq(:,:,k,m)
-        if(idebug == 1) call ftest('avconcl', field_hr1)
-
-        if (loop == 2) then
-          ipos(3) = k
-          call check(nf90_put_var(iunit, varid%comp(m)%icml, start=ipos, &
-              count=isize, values=field_hr1), "icml(m)")
-        endif
-      end do
-    end do
-
-  !..total average concentration in each layer
-    if(ncomp > 1 .AND. itotcomp == 1) then
-      do m=2,ncomp
-        do k=1,nk-1
-          avgbq(:,:,k,1) = avgbq(:,:,k,1) + avgbq(:,:,k,m)
-        end do
-      end do
-      do k=1,nk-1
-        field_hr1(:,:) = cscale*avgbq(:,:,k,1)
-        if(idebug == 1) call ftest('tavconcl', field_hr1)
-      end do
-    end if
   end do
+  if (modleveldump > 0) then
+    write (error_unit,*) "dumped; maxage, total", maxage, total
+  endif
+
+  do k=1,nk-1
+    do j=1,ny*output_resolution_factor
+      do i=1,nx*output_resolution_factor
+        dh = rt1*hlayer1(i,j,k) + rt2*hlayer2(i,j,k)
+        field_hr2(i,j) = dh*garea(i,j)
+      end do
+    end do
+    do m=1,ncomp
+      instmlbq(:,:,k,m) = instmlbq(:,:,k,m)/field_hr2
+    end do
+  end do
+
+!..average concentration in each layer for each type
+  do m=1,ncomp
+    do k=1,nk-1
+      field_hr1(:,:) = cscale*instmlbq(:,:,k,m)
+      if(idebug == 1) call ftest('instconcml', field_hr1)
+
+      ipos(3) = k
+      call check(nf90_put_var(iunit, varid%comp(m)%icml, start=ipos, &
+          count=isize, values=field_hr1), "icml(m)")
+    end do
+  end do
+
+!..total average concentration in each layer
+  if(ncomp > 1 .AND. itotcomp == 1) then
+    do m=2,ncomp
+      do k=1,nk-1
+        instmlbq(:,:,k,1) = instmlbq(:,:,k,1) + instmlbq(:,:,k,m)
+      end do
+    end do
+    do k=1,nk-1
+      field_hr1(:,:) = cscale*instmlbq(:,:,k,1)
+      if(idebug == 1) call ftest('tinstconcml', field_hr1)
+    end do
+  end if
 end subroutine
 
 
@@ -1144,9 +1133,6 @@ subroutine initialize_output(filename, itime, ierror)
         endif
         call nc_declare(iunit, dimids4d, varid%comp(m)%icml, &
           string, units="Bq/m3", chunksize=chksz4d)
-      !           call nc_declare(iunit, dimids4d, acml_varid(m), &
-      !     +          TRIM(def_comp(mm)%compnamemc)//"_avg_concentration_ml", &
-      !     +          units="Bq*hour/m3")
       end if
       if (output_column) then
         call nc_declare(iunit, dimids3d, varid%comp(m)%conc_column, &
@@ -1322,7 +1308,7 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
   USE snapfldML, only:  &
       avgbq1, avgbq2, hlayer1, hlayer2, hbl1, hbl2, &
       avgprec, concen, avghbl, &
-      avgbq, concacc, precip, &
+      concacc, precip, &
       max_column_scratch, max_column_concentration, garea, &
       ps1, ps2, t1_abs, t2_abs, aircraft_doserate_scratch, aircraft_doserate, &
       aircraft_doserate_threshold_height
@@ -1351,9 +1337,6 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
     avgbq1 = 0.0
     avgbq2 = 0.0
 
-    if (imodlevel) then
-      avgbq = 0.0
-    end if
     if (compute_column_max_conc) then
       max_column_concentration = 0.0
     endif
@@ -1444,19 +1427,6 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
   end do
 
   end block
-
-  if(imodlevel) then
-    do n=1,npart
-      part = pdata(n)
-      i = hres_pos(part%x)
-      j = hres_pos(part%y)
-      ivlvl = part%z*10000.
-      k = ivlayer(ivlvl)
-      m = def_comp(part%icomp)%to_running
-    !..in each sigma/eta (input model) layer
-      avgbq(i,j,k,m) = avgbq(i,j,k,m) + part%rad()
-    end do
-  end if
 
   if (compute_column_max_conc) then
     max_column_scratch = 0.0
