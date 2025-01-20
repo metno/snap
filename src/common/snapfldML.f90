@@ -137,7 +137,7 @@ module snapfldML
 !>
 !> only used if imodlevel
 !> This is not weighted by area
-  real(kind=real64), allocatable, save, public :: avgbq(:,:,:,:)
+  real(kind=real64), allocatable, save, public :: instmlbq(:,:,:,:)
 
 !> Scratch space for finding max column concentration
 !>
