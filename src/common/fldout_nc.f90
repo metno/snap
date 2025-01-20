@@ -536,52 +536,6 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
 
   end if
 
-
-!..BOMB fields..........................................................
-
-  if (time_profile == TIME_PROFILE_BOMB) then
-
-  !..bomb parameters for each component.........
-
-    do m=1,ncomp
-
-      mm = run_comp(m)%to_defined
-
-      if(idebug == 1) write(iulog,*) ' component: ', def_comp(mm)%compnamemc
-
-    !..scale to % of total released Bq (in a single bomb)
-      dblscale= 100.0d0/dble(run_comp(m)%totalbq)
-
-    !..dry deposition
-      if (def_comp(mm)%kdrydep == 1) then
-        field_hr1(:,:) = dblscale*depdry(:,:,m)
-        if(idebug == 1) call ftest('dry%', field_hr1)
-      end if
-
-    !..wet deposition
-      if (def_comp(mm)%kwetdep == 1) then
-        field_hr1(:,:) = dblscale*depwet(:,:,m)
-        if(idebug == 1) call ftest('wet%', field_hr1)
-      end if
-
-    !..accumulated dry deposition
-      if (def_comp(mm)%kdrydep == 1) then
-        field_hr1(:,:) = dblscale*accdry(:,:,m)
-        if(idebug == 1) call ftest('adry%', field_hr1)
-      end if
-
-    !..accumulated wet deposition
-      if (def_comp(mm)%kwetdep == 1) then
-        field_hr1(:,:) = dblscale*accwet(:,:,m)
-        if(idebug == 1) call ftest('awet%', field_hr1)
-      end if
-
-    !.......end do m=1,ncomp
-    end do
-
-  end if
-
-
 !..model level fields...................................................
   if (imodlevel) then
     call write_ml_fields(iunit, varid, average, [1, 1, -1, ihrs_pos], &
