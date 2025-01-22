@@ -7,6 +7,6 @@ Build-Depends: debhelper-compat (= 13), libnetcdff-dev, gfortran, libfimex-1.9-d
 
 Package: bsnap
 Architecture: amd64
-Depends: ${shlibs:Depends}, ${misc:Depends}, python3:any, python3-netcdf4
+Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: Severe Nuclear Accident Programme
  Dispersion model specialized for nuclear accidents.
