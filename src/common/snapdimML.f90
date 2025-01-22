@@ -45,9 +45,8 @@ module snapdimML
   integer, save, public :: output_resolution_factor = 1
 
 !> max no. of components used in one run
-!>
-!> (keep as small as "possible", it dimensions 2d/3d output fields)
-  integer, parameter, public :: mcomp=51
+!>   use only for simple arrays, for large arrays, use ncomp (dynamic allocation)
+  integer, parameter, public :: mcomp=1024
 
 !> max. no. of available timesteps with data
   integer, parameter, public :: mavail = 8192
