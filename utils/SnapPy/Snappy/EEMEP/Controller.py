@@ -93,16 +93,12 @@ class SnapVolcanoWorker(QThread):
         dtnow = datetime.datetime.now()
         with open(os.path.join(self.outputdir, "snapVolcano.log"), "w") as fh:
             process = subprocess.run(
-                ["snapVolcano", self.volcanofile],
+                ["snapVolcano", self.volcanofile, '--snapnc', f"snapash_{dtnow:%Y%m%dT%H%M%S}.nc"],
                 stdout=fh,
                 stderr=fh,
                 cwd=self.outputdir,
             )
             process.wait()
-        snapnc = os.path.join(self.outputdir, "snap.nc")
-        if os.path.exists(snapnc):
-            finalsnapnc = os.path.join(self.outputdir, f"snapash_{dtnow:%Y%m%dT%H%M%S}.nc")
-            os.rename(snapnc, finalsnapnc)
         self.finished.emit()
 
 

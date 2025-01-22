@@ -20,7 +20,7 @@ module allocateFieldsML
   USE snapparML, only: ncomp, iparnum
   USE snapfldML, only: u1, u2, v1, v2, w1, w2, bl1, bl2, t1, t2, &
       ps1, ps2, hbl1, hbl2, hlevel1, hlevel2, hlayer1, hlayer2, &
-      concacc, avgbq1, avgbq2, avgbq, accwet, accdry, concen, &
+      concacc, avgbq1, avgbq2, instmlbq, accwet, accdry, concen, &
       depdry, depwet, accprec, avgprec, avghbl, precip, &
       pmsl1, pmsl2, field1, field2, field3, field4, field3d1, xm, ym, &
       garea, field_hr1, field_hr2, field_hr3, hbl_hr, &
@@ -42,7 +42,7 @@ module allocateFieldsML
 subroutine allocateFields
   USE particleML, only: pdata
   USE snapdimML, only: nx, ny, nk, output_resolution_factor, ldata, maxsiz
-  USE snapparML, only: ncomp, iparnum
+  USE snapparML, only: ncomp, nocomp, iparnum
   USE releaseML, only: mplume, iplume, plume_release, mpart
 
   logical, save :: FirstCall = .TRUE.
@@ -157,31 +157,31 @@ subroutine allocateFields
   IF (AllocateStatus /= 0) ERROR STOP errmsg
   accprec = 0.0
 
-  ALLOCATE ( depdry(nxhr,nyhr,ncomp), STAT = AllocateStatus)
+  ALLOCATE ( depdry(nxhr,nyhr,nocomp), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
   depdry = 0.0
-  ALLOCATE ( depwet(nxhr,nyhr,ncomp), STAT = AllocateStatus)
+  ALLOCATE ( depwet(nxhr,nyhr,nocomp), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
   depwet = 0.0
-  ALLOCATE ( accdry(nxhr,nyhr,ncomp), STAT = AllocateStatus)
+  ALLOCATE ( accdry(nxhr,nyhr,nocomp), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
   accdry = 0.0
-  ALLOCATE ( accwet(nxhr,nyhr,ncomp), STAT = AllocateStatus)
+  ALLOCATE ( accwet(nxhr,nyhr,nocomp), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
   accwet = 0.0
-  ALLOCATE ( concen(nxhr,nyhr,ncomp), STAT = AllocateStatus)
+  ALLOCATE ( concen(nxhr,nyhr,nocomp), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
   concen = 0.0
-  ALLOCATE ( concacc(nxhr,nyhr,ncomp), STAT = AllocateStatus)
+  ALLOCATE ( concacc(nxhr,nyhr,nocomp), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
   concacc = 0.0
-  ALLOCATE ( avgbq1(nxhr,nyhr,ncomp), STAT = AllocateStatus)
+  ALLOCATE ( avgbq1(nxhr,nyhr,nocomp), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
-  ALLOCATE ( avgbq2(nxhr,nyhr,ncomp), STAT = AllocateStatus)
+  ALLOCATE ( avgbq2(nxhr,nyhr,nocomp), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
 
   if (imodlevel) then
-    ALLOCATE ( avgbq(nxhr,nyhr,nk-1,ncomp), STAT = AllocateStatus)
+    ALLOCATE ( instmlbq(nxhr,nyhr,nk-1,nocomp), STAT = AllocateStatus)
     IF (AllocateStatus /= 0) ERROR STOP errmsg
   endif
 
@@ -290,8 +290,8 @@ subroutine deAllocateFields
   DEALLOCATE ( avgbq1 )
   DEALLOCATE ( avgbq2 )
 
-  if (allocated(avgbq)) then
-    deallocate(avgbq)
+  if (allocated(instmlbq)) then
+    deallocate(instmlbq)
   endif
 
   if (allocated(max_column_concentration)) then

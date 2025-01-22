@@ -65,7 +65,9 @@
 ! RELEASE.HEIGHTLOWER.M= 0  ,626,
 ! RELEASE.HEIGHTUPPER.M= 625,1275
 ! RELEASE.HEIGHTRADIUS.M= 0, 0
-! COMPONENT= Aerosol
+! COMPONENT= Aerosol1
+! * optional: move all Aerosol1 .. AerosolN classes into a common ouput using MERGE.NAME
+! MERGE.NAME= Aerosol
 ! DRY.DEP.ON
 ! DRY.DEP.OFF
 ! WET.DEP.ON
@@ -167,8 +169,8 @@ PROGRAM bsnap
                        nctype, nfilef, simulation_start, spinup_steps
   USE snapfldML, only: nhfout, enspos
   USE snapmetML, only: init_meteo_params, met_params
-  USE snapparML, only: component, run_comp, &
-                       ncomp, def_comp, nparnum, &
+  USE snapparML, only: component, run_comp, output_component, &
+                       ncomp, nocomp, def_comp, nparnum, &
                        time_profile, TIME_PROFILE_BOMB
   USE snapposML, only: irelpos, nrelpos, release_positions
   USE snapgrdML, only: modleveldump, ivcoor, &
@@ -330,15 +332,6 @@ PROGRAM bsnap
     call releasefile(relfile, release1)
     ntprof = size(releases)
   end if
-
-! canonicalise names
-  call to_uppercase(srelnam)
-  do n = 1, nrelpos
-    call to_uppercase(release_positions(n)%name)
-  end do
-  do n=1,ncomp
-    call to_uppercase(component(n))
-  enddo
 
   allocate (run_comp(ncomp))
   run_comp%totalbq = 0
@@ -508,6 +501,9 @@ PROGRAM bsnap
       write (iulog, *) 'component no:  ', n
       write (iulog, *) 'compname:   ', def_comp(m)%compname
       write (iulog, *) '  field id:   ', def_comp(m)%idcomp
+      write (iulog, *) '  output:     ', output_component(def_comp(m)%to_output)%name
+      write (iulog, *) '  output-defs:', output_component(def_comp(m)%to_output)%to_defined
+      write (iulog, *) '  output_id:  ', def_comp(m)%to_output
       write (iulog, *) '  kdrydep:    ', def_comp(m)%kdrydep
       write (iulog, *) '  drydephgt:  ', def_comp(m)%drydephgt
       write (iulog, *) '  drydeprat:  ', def_comp(m)%drydeprat
@@ -1323,8 +1319,11 @@ contains
         call push_down_dcomp(def_comp, top=d_comp)
 
         d_comp%compname = cinput(pname_start:pname_end)
-        d_comp%compnamemc = cinput(pname_start:pname_end)
-        call to_uppercase(d_comp%compname)
+        d_comp%output_name = d_comp%compname ! default
+      case ('merge.name')
+        !..output component name if merged
+        if (.not. associated(d_comp)) goto 12
+        d_comp%output_name = cinput(pname_start:pname_end)
       case ('dry.dep.on')
         !..dry.dep.on
         if (.not. associated(d_comp)) goto 12
@@ -1792,7 +1791,8 @@ contains
 !> checks the data from the input for errors or missing information,
 !> and copies information to structures used when running the program.
   subroutine conform_input(ierror)
-    use snapparML, only: TIME_PROFILE_UNDEFINED, TIME_PROFILE_BOMB
+    use iso_fortran_env, only: int16
+    use snapparML, only: TIME_PROFILE_UNDEFINED, TIME_PROFILE_BOMB, output_component, output_component_type
     use snapfimexML, only: parse_interpolator
     use snapgrdml, only: compute_aircraft_doserate
     use find_parameter, only: detect_gridparams, get_klevel
@@ -1978,7 +1978,43 @@ contains
       end if
     end do
 
-!..gravity
+!..match output components with defined components
+    allocate(output_component(0))
+    do m = 1, ncomp
+      k = 0
+      do i = 1, size(output_component)
+        if (output_component(i)%name == def_comp(m)%output_name) k = i
+      end do
+      if (k == 0) then
+        ! initialize new output_component
+        k = size(output_component) + 1
+        block
+          ! temp_comp auto-deallocated when out of block
+          type(output_component_type), allocatable :: temp_comp(:)
+          call move_alloc(from=output_component, to=temp_comp)
+          allocate(output_component(k))
+          output_component(:size(temp_comp)) = temp_comp(:)
+        end block
+        allocate(output_component(k)%to_defined(0))
+        output_component(k)%name = def_comp(m)%output_name
+      end if
+      ! add m to the output-component(k) (might be new)
+      block
+        integer(int16), allocatable :: temp_defs(:)
+        integer :: s
+        s = size(output_component(k)%to_defined)
+        call move_alloc(from=output_component(k)%to_defined, to=temp_defs)
+        allocate(output_component(k)%to_defined(s+1))
+        output_component(k)%to_defined(:s) = temp_defs
+        output_component(k)%to_defined(s+1) = m
+      end block
+      if (def_comp(m)%kwetdep > 0) output_component(k)%has_wetdep = .true.
+      if (def_comp(m)%kdrydep > 0) output_component(k)%has_drydep = .true.
+      def_comp(m)%to_output = k
+    end do
+    nocomp = size(output_component)
+
+!..gravity depending on ncomp
     do n = 1, ncomp
       m = run_comp(n)%to_defined
       if (m == 0) cycle

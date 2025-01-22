@@ -1,7 +1,7 @@
 # this file contains the common parts to compile bsnap
 # should be included after all: target
 
-MODELOBJ = dateCalc.o utils.o particleML.o snapdimML.o snapfilML.o snapfimexML.o \
+MODELOBJ = array_utils.o dateCalc.o utils.o particleML.o snapdimML.o snapfilML.o snapfimexML.o \
 snapfldML.o snapgrdML.o snapmetML.o snapparML.o \
 snapposML.o snaptabML.o snapdebugML.o posint.o decay.o \
 om2edot.o ftest.o readfield_nc.o rwalk.o epinterp.o \
@@ -38,6 +38,8 @@ snap.o: ../common/snap.F90 $(MODELOBJ)
 fimex.o: ../common/fimex.f90
 	${F77} -c $(F77FLAGS) $(INCLUDES) $<
 allocateFields.o: ../common/allocateFields.f90 particleML.o snapparML.o snapfldML.o snapfilML.o snapgrdML.o release.o snapdimML.o
+	${F77} -c $(F77FLAGS) $(INCLUDES) $<
+array_utils.o: ../common/array_utils.f90
 	${F77} -c $(F77FLAGS) $(INCLUDES) $<
 snapdimML.o: ../common/snapdimML.f90
 	${F77} -c $(F77FLAGS) $(INCLUDES) $<
@@ -87,7 +89,7 @@ find_parameters.o: ../common/find_parameters.f90 snapmetML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 find_parameters_fi.o: ../common/find_parameters_fi.f90 snapfimexML.o snapmetML.o fimex.o readfield_fi.o utils.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-fldout_nc.o: ../common/fldout_nc.f90 snapfilML.o snapgrdML.o snapfldML.o snapparML.o snaptabML.o snapdebugML.o snapdimML.o readfield_nc.o ftest.o release.o milibML.o datetime.o utils.o
+fldout_nc.o: ../common/fldout_nc.f90 array_utils.o snapfilML.o snapgrdML.o snapfldML.o snapparML.o snaptabML.o snapdebugML.o snapdimML.o readfield_nc.o ftest.o release.o milibML.o datetime.o utils.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 forwrd.o: ../common/forwrd.F90 particleML.o snapgrdML.o snapfldML.o snapparML.o snaptabML.o snapdimML.o snapdebugML.o vgravtables.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
