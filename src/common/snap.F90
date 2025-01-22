@@ -65,7 +65,9 @@
 ! RELEASE.HEIGHTLOWER.M= 0  ,626,
 ! RELEASE.HEIGHTUPPER.M= 625,1275
 ! RELEASE.HEIGHTRADIUS.M= 0, 0
-! COMPONENT= Aerosol
+! COMPONENT= Aerosol1
+! * optional: move all Aerosol1 .. AerosolN classes into a common ouput using MERGE.NAME
+! MERGE.NAME= Aerosol
 ! DRY.DEP.ON
 ! DRY.DEP.OFF
 ! WET.DEP.ON
