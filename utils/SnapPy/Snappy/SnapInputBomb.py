@@ -414,6 +414,7 @@ RELEASE.MUSHROOM.STEM.RADIUS.M= {",".join(map(str, relstem))}
 
         lines.append("* PARTICLE CLASSES")
         pclass_tmpl = """COMPONENT= {classname}
+MERGE.NAME= {basename}
 DRY.DEP.ON
 WET.DEP.ON
 RADIOACTIVE.DECAY.{decay_mode}
@@ -439,6 +440,7 @@ FIELD.IDENTIFICATION={identification:03d}
                     radius=radius,
                     density=dens,
                     classname=self.component_name(i),
+                    basename=self.component_basename,
                     gravity=gravity,
                     decay_mode=decay_mode,
                     identification=i + 1,

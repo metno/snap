@@ -49,8 +49,8 @@ i.e. calculate the 6hour mean of the last six hours (running) (average also the 
     USE_2D = False
     FL = (200, 350, 550)
     PEAK_TO_MEAN_CALIBRATION = 1.
-    SNAP_ASH_CONC_PATTERN = re.compile(r"ASH_\d+_concentration_ml")
-    SNAP_ASH_COL_PATTERN = re.compile(r"ASH_\d+_column_concentration")
+    SNAP_ASH_CONC_PATTERN = re.compile(r"ASH(_\d+)?_concentration_ml")
+    SNAP_ASH_COL_PATTERN = re.compile(r"ASH(_\d+)?_column_concentration")
 
     @classmethod
     def detect_ash_model(cls, nc: netCDF4.Dataset) -> str:
