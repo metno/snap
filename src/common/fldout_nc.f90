@@ -1456,7 +1456,7 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
   ! Doses due to cloud immersion and deposition is neglected
   if (compute_aircraft_doserate) then
     block
-    ! use all running components separately since doses might be differnt
+    ! use all running components separately since doses might be different
     USE snapparML, only: ncomp, run_comp
 
     real, parameter :: regulatory_minimum_pressure = 750 ! hPa
