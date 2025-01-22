@@ -42,7 +42,7 @@ module allocateFieldsML
 subroutine allocateFields
   USE particleML, only: pdata
   USE snapdimML, only: nx, ny, nk, output_resolution_factor, ldata, maxsiz
-  USE snapparML, only: ncomp, iparnum
+  USE snapparML, only: ncomp, nocomp, iparnum
   USE releaseML, only: mplume, iplume, plume_release, mpart
 
   logical, save :: FirstCall = .TRUE.
@@ -157,31 +157,31 @@ subroutine allocateFields
   IF (AllocateStatus /= 0) ERROR STOP errmsg
   accprec = 0.0
 
-  ALLOCATE ( depdry(nxhr,nyhr,ncomp), STAT = AllocateStatus)
+  ALLOCATE ( depdry(nxhr,nyhr,nocomp), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
   depdry = 0.0
-  ALLOCATE ( depwet(nxhr,nyhr,ncomp), STAT = AllocateStatus)
+  ALLOCATE ( depwet(nxhr,nyhr,nocomp), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
   depwet = 0.0
-  ALLOCATE ( accdry(nxhr,nyhr,ncomp), STAT = AllocateStatus)
+  ALLOCATE ( accdry(nxhr,nyhr,nocomp), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
   accdry = 0.0
-  ALLOCATE ( accwet(nxhr,nyhr,ncomp), STAT = AllocateStatus)
+  ALLOCATE ( accwet(nxhr,nyhr,nocomp), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
   accwet = 0.0
-  ALLOCATE ( concen(nxhr,nyhr,ncomp), STAT = AllocateStatus)
+  ALLOCATE ( concen(nxhr,nyhr,nocomp), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
   concen = 0.0
-  ALLOCATE ( concacc(nxhr,nyhr,ncomp), STAT = AllocateStatus)
+  ALLOCATE ( concacc(nxhr,nyhr,nocomp), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
   concacc = 0.0
-  ALLOCATE ( avgbq1(nxhr,nyhr,ncomp), STAT = AllocateStatus)
+  ALLOCATE ( avgbq1(nxhr,nyhr,nocomp), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
-  ALLOCATE ( avgbq2(nxhr,nyhr,ncomp), STAT = AllocateStatus)
+  ALLOCATE ( avgbq2(nxhr,nyhr,nocomp), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
 
   if (imodlevel) then
-    ALLOCATE ( instmlbq(nxhr,nyhr,nk-1,ncomp), STAT = AllocateStatus)
+    ALLOCATE ( instmlbq(nxhr,nyhr,nk-1,nocomp), STAT = AllocateStatus)
     IF (AllocateStatus /= 0) ERROR STOP errmsg
   endif
 

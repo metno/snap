@@ -85,7 +85,7 @@ module fldout_ncML
     integer :: y
     integer :: k
     integer :: t
-    integer :: ncomp
+    integer :: nocomp
     integer :: maxcompname
   end type
 
@@ -105,6 +105,7 @@ module fldout_ncML
 subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     ierror)
   USE iso_fortran_env, only: int16
+  USE array_utils, only: is_in_array
   USE snapgrdML, only: imodlevel, imslp, precipitation_in_output, &
       itotcomp, compute_column_max_conc, compute_aircraft_doserate, &
       aircraft_doserate_threshold, output_column
@@ -116,7 +117,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       concacc, accprec, max_column_concentration, aircraft_doserate, &
       aircraft_doserate_threshold_height, &
       total_activity_released, total_activity_lost_domain, total_activity_lost_other
-  USE snapparML, only: time_profile, ncomp, run_comp, def_comp, &
+  USE snapparML, only: time_profile, nocomp, output_component, def_comp, &
     TIME_PROFILE_BOMB
   USE snapdebug, only: iulog, idebug
   USE ftestML, only: ftest
@@ -142,7 +143,8 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
   real(real64) :: bqtot1,bqtot2
   real(real64) :: dblscale
 
-  integer :: i,j,m,mm,n
+  integer :: i,j,m,n
+  integer(int16), pointer, dimension(:) :: mm
   logical :: compute_total_dry_deposition
   logical :: compute_total_wet_deposition
   real :: rt1,rt2,scale,average
@@ -153,8 +155,8 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
   type(Particle) :: part
   type(duration_t) :: dur
 
-  compute_total_dry_deposition = any(def_comp%kdrydep == 1) .and. ncomp > 1
-  compute_total_wet_deposition = any(def_comp%kwetdep == 1) .and. ncomp > 1
+  compute_total_dry_deposition = any(def_comp%kdrydep == 1) .and. nocomp > 1
+  compute_total_wet_deposition = any(def_comp%kwetdep == 1) .and. nocomp > 1
 
   ierror=0
 
@@ -251,10 +253,10 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
 
 !..parameters for each component......................................
 
-  all_components: do m=1,ncomp
+  all_components: do m=1,nocomp
 
-    mm = run_comp(m)%to_defined
-    write(iulog,*) ' component: ', def_comp(mm)%compnamemc
+    mm => output_component(m)%to_defined
+    write(iulog,*) ' component: ', output_component(m)%name !def_comp(mm)%compnamemc
 
   !..instant Bq in and above boundary layer
     field_hr1 = 0.0
@@ -266,7 +268,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
 
     do n=1,npart
       part = pdata(n)
-      if(part%icomp == mm) then
+      if (is_in_array(mm , part%icomp)) then
         i = hres_pos(part%x)
         j = hres_pos(part%y)
         if(part%z >= part%tbl) then
@@ -313,7 +315,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
         values=field_hr1), "set_acbl")
 
   !..dry deposition
-    if (def_comp(mm)%kdrydep == 1) then
+    if (output_component(m)%has_drydep) then
       field_hr1(:,:) = dscale*sngl(depdry(:,:,m)) / garea
       if(idebug == 1) call ftest('dry', field_hr1)
 
@@ -322,7 +324,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     end if
 
   !..accumulated dry deposition
-    if (def_comp(mm)%kdrydep == 1) then
+    if (output_component(m)%has_drydep) then
       accdry(:,:,m) = accdry(:,:,m) + depdry(:,:,m)
       field_hr1(:,:) = dscale*sngl(accdry(:,:,m))/garea
       if(idebug == 1) call ftest('adry', field_hr1)
@@ -332,7 +334,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     end if
 
   !..wet deposition
-    if (def_comp(mm)%kwetdep == 1) then
+    if (output_component(m)%has_wetdep) then
       field_hr1(:,:) = dscale*sngl(depwet(:,:,m))/garea
       if(idebug == 1) call ftest('wet', field_hr1)
 
@@ -341,7 +343,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     end if
 
   !..accumulated wet deposition
-    if (def_comp(mm)%kwetdep == 1) then
+    if (output_component(m)%has_wetdep) then
       accwet(:,:,m) = accwet(:,:,m) + depwet(:,:,m)
       field_hr1(:,:) = dscale*sngl(accwet(:,:,m))/garea
       if(idebug == 1) call ftest('awet', field_hr1)
@@ -384,10 +386,10 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     write(iulog,*) '   Bq,particles added      : ', total_activity_released(m)
     write(iulog,*) '   Bq,particles (domain)   : ', total_activity_lost_domain(m)
     write(iulog,*) '   Bq,particles lost (misc): ', total_activity_lost_other(m)
-    if (def_comp(mm)%kdrydep == 1) then
+    if (output_component(m)%has_drydep) then
     write(iulog,*) '   Bq,particles dry dep    : ', sum(accdry(:,:,m))
     endif
-    if (def_comp(mm)%kwetdep == 1) then
+    if (output_component(m)%has_wetdep) then
     write(iulog,*) '   Bq,particles wet dep    : ', sum(accwet(:,:,m))
     endif
     if (allocated(massbalance_file)) then
@@ -399,10 +401,10 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       write(massbalance_file,*) '   Bq,particles added      : ', total_activity_released(m)
       write(massbalance_file,*) '   Bq,particles (domain)   : ', total_activity_lost_domain(m)
       write(massbalance_file,*) '   Bq,particles lost (misc): ', total_activity_lost_other(m)
-      if (def_comp(mm)%kdrydep == 1) then
+      if (output_component(m)%has_drydep) then
       write(massbalance_file,*) '   Bq,particles dry dep    : ', sum(accdry(:,:,m))
       endif
-      if (def_comp(mm)%kwetdep == 1) then
+      if (output_component(m)%has_wetdep) then
       write(massbalance_file,*) '   Bq,particles wet dep    : ', sum(accwet(:,:,m))
       endif
     endif
@@ -412,7 +414,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
 
 !..total parameters (sum of all components).............................
 
-  if(ncomp > 1 .AND. itotcomp == 1) then
+  if(nocomp > 1 .AND. itotcomp == 1) then
 
   !..total instant Bq in and above boundary layer
     field_hr1(:,:) = 0.0
@@ -453,9 +455,8 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
   !..total dry deposition
     if(compute_total_dry_deposition) then
       field_hr1 = 0.0
-      do m=1,ncomp
-        mm = run_comp(m)%to_defined
-        if (def_comp(mm)%kdrydep == 1) then
+      do m=1,nocomp
+        if (output_component(m)%has_drydep) then
           field_hr1(:,:) = field_hr1 + depdry(:,:,m)
         end if
       end do
@@ -468,9 +469,8 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
   !..total wet deposition
     if(compute_total_wet_deposition) then
       field_hr1 = 0.0
-      do m=1,ncomp
-        mm = run_comp(m)%to_defined
-        if (def_comp(mm)%kwetdep == 1) then
+      do m=1,nocomp
+        if (output_component(m)%has_wetdep) then
           field_hr1(:,:) = field_hr1 + depwet(:,:,m)
         end if
       end do
@@ -483,9 +483,8 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
   !..total accumulated dry deposition
     if(compute_total_dry_deposition) then
       field_hr1 = 0.0
-      do m=1,ncomp
-        mm = run_comp(m)%to_defined
-        if (def_comp(mm)%kdrydep == 1) then
+      do m=1,nocomp
+        if (output_component(m)%has_drydep) then
           field_hr1(:,:) = field_hr1 + accdry(:,:,m)
         end if
       end do
@@ -498,9 +497,8 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
   !..total accumulated wet deposition
     if(compute_total_wet_deposition) then
       field_hr1 = 0.0
-      do m=1,ncomp
-        mm = run_comp(m)%to_defined
-        if (def_comp(mm)%kwetdep == 1) then
+      do m=1,nocomp
+        if (output_component(m)%has_wetdep) then
           field_hr1(:,:) = field_hr1 + accwet(:,:,m)
         end if
       end do
@@ -543,12 +541,11 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
   endif
 
 ! reset fields
-  do m=1,ncomp
-    mm = run_comp(m)%to_defined
-    if (def_comp(mm)%kdrydep == 1) then
+  do m=1,nocomp
+    if (output_component(m)%has_drydep) then
       depdry(:,:,m) = 0.0
     end if
-    if (def_comp(mm)%kwetdep == 1) then
+    if (output_component(m)%has_wetdep) then
       depwet(:,:,m) = 0.0
     end if
   end do
@@ -561,7 +558,7 @@ end subroutine fldout_nc
 subroutine write_ml_fields(iunit, varid, ipos_in, isize, rt1, rt2)
   USE releaseML, only: nplume, iplume
   USE particleML, only: pdata, Particle
-  USE snapparML, only: def_comp, ncomp
+  USE snapparML, only: def_comp, nocomp
   USE snapfldML, only: field_hr1, field_hr2, &
       hlayer1, hlayer2, garea, instmlbq
   USE ftestML, only: ftest
@@ -601,7 +598,7 @@ subroutine write_ml_fields(iunit, varid, ipos_in, isize, rt1, rt2)
       j = hres_pos(part%y)
       ivlvl = part%z*10000.
       k = ivlayer(ivlvl)
-      m = def_comp(part%icomp)%to_running
+      m = def_comp(part%icomp)%to_output
     !..in each sigma/eta (input model) layer
       if (modleveldump > 0) then
       !.. dump and remove old particles, don't touch  new ones
@@ -629,13 +626,13 @@ subroutine write_ml_fields(iunit, varid, ipos_in, isize, rt1, rt2)
         field_hr2(i,j) = dh*garea(i,j)
       end do
     end do
-    do m=1,ncomp
+    do m=1,nocomp
       instmlbq(:,:,k,m) = instmlbq(:,:,k,m)/field_hr2
     end do
   end do
 
 !..average concentration in each layer for each type
-  do m=1,ncomp
+  do m=1,nocomp
     do k=1,nk-1
       field_hr1(:,:) = cscale*instmlbq(:,:,k,m)
       if(idebug == 1) call ftest('instconcml', field_hr1)
@@ -647,8 +644,8 @@ subroutine write_ml_fields(iunit, varid, ipos_in, isize, rt1, rt2)
   end do
 
 !..total average concentration in each layer
-  if(ncomp > 1 .AND. itotcomp == 1) then
-    do m=2,ncomp
+  if(nocomp > 1 .AND. itotcomp == 1) then
+    do m=2,nocomp
       do k=1,nk-1
         instmlbq(:,:,k,1) = instmlbq(:,:,k,1) + instmlbq(:,:,k,m)
       end do
@@ -982,7 +979,7 @@ subroutine initialize_output(filename, itime, ierror)
       garea, &
       xm, ym, &
       nhfout
-  USE snapparML, only: ncomp, run_comp, def_comp
+  USE snapparML, only: nocomp, output_component, def_comp
   USE ftestML, only: ftest
   USE snapdimML, only: nx, ny, nk, output_resolution_factor
   USE particleML, only: Particle
@@ -1003,8 +1000,8 @@ subroutine initialize_output(filename, itime, ierror)
 
   ierror = 0
 
-  compute_total_dry_deposition = any(def_comp%kdrydep == 1) .and. ncomp > 1
-  compute_total_wet_deposition = any(def_comp%kwetdep == 1) .and. ncomp > 1
+  compute_total_dry_deposition = any(def_comp%kdrydep == 1) .and. nocomp > 1
+  compute_total_wet_deposition = any(def_comp%kwetdep == 1) .and. nocomp > 1
 
 
     call check(nf90_create(filename, ior(NF90_NETCDF4, NF90_CLOBBER), iunit), filename)
@@ -1013,7 +1010,7 @@ subroutine initialize_output(filename, itime, ierror)
     call check(nf90_def_dim(iunit, "x", nx*output_resolution_factor, dimid%x), "x-dim")
     call check(nf90_def_dim(iunit, "y", ny*output_resolution_factor, dimid%y), "y-dim")
     call check(nf90_def_dim(iunit, "k", nk-1, dimid%k), "k-dim")
-    call check(nf90_def_dim(iunit, "ncomp", ncomp, dimid%ncomp), "ncomp-dim")
+    call check(nf90_def_dim(iunit, "nocomp", nocomp, dimid%nocomp), "nocomp-dim")
     call check(nf90_def_dim(iunit, "compnamelenmax", len(def_comp(1)%compname), dimid%maxcompname), "maxcompname-dim")
 
     if (allocated(nctitle)) then
@@ -1090,53 +1087,52 @@ subroutine initialize_output(filename, itime, ierror)
       endif
     endif
 
-    call check(nf90_def_var(iunit, "components", NF90_CHAR, [dimid%maxcompname, dimid%ncomp], varid%components))
+    call check(nf90_def_var(iunit, "components", NF90_CHAR, [dimid%maxcompname, dimid%nocomp], varid%components))
 
-    do m=1,ncomp
-      mm= run_comp(m)%to_defined
+    do m=1,nocomp
       call check(nf90_put_var(iunit, varid%components, &
-        start=[1, m], count=[len_trim(def_comp(mm)%compnamemc), 1], &
-        values=trim(def_comp(mm)%compnamemc)))
+        start=[1, m], count=[len_trim(output_component(m)%name), 1], &
+        values=trim(output_component(m)%name)))
       call nc_declare(iunit, dimids3d, varid%comp(m)%ic, &
-        trim(def_comp(mm)%compnamemc)//"_concentration", &
+        trim(output_component(m)%name)//"_concentration", &
         units="Bq/m3", chunksize=chksz3d)
       call nc_declare(iunit, dimids3d, varid%comp(m)%icbl, &
-        trim(def_comp(mm)%compnamemc)//"_concentration_bl", &
+        trim(output_component(m)%name)//"_concentration_bl", &
         units="Bq/m3", chunksize=chksz3d)
       call nc_declare(iunit, dimids3d, varid%comp(m)%ac, &
-        trim(def_comp(mm)%compnamemc)//"_acc_concentration", &
+        trim(output_component(m)%name)//"_acc_concentration", &
         units="Bq*hr/m3", chunksize=chksz3d)
       call nc_declare(iunit, dimids3d, varid%comp(m)%acbl, &
-        trim(def_comp(mm)%compnamemc)//"_avg_concentration_bl", &
+        trim(output_component(m)%name)//"_avg_concentration_bl", &
         "Bq/m3", chunksize=chksz3d)
-      if (def_comp(mm)%kdrydep > 0) then
+      if (output_component(m)%has_drydep) then
         call nc_declare(iunit, dimids3d, varid%comp(m)%idd, &
-          trim(def_comp(mm)%compnamemc)//"_dry_deposition", &
+          trim(output_component(m)%name)//"_dry_deposition", &
           units="Bq/m2", chunksize=chksz3d)
         call nc_declare(iunit, dimids3d, varid%comp(m)%accdd, &
-          trim(def_comp(mm)%compnamemc)//"_acc_dry_deposition", &
+          trim(output_component(m)%name)//"_acc_dry_deposition", &
           units="Bq/m2", chunksize=chksz3d)
       end if
-      if (def_comp(mm)%kwetdep > 0) then
+      if (output_component(m)%has_wetdep) then
         call nc_declare(iunit, dimids3d, varid%comp(m)%iwd, &
-          trim(def_comp(mm)%compnamemc)//"_wet_deposition", &
+          trim(output_component(m)%name)//"_wet_deposition", &
             units="Bq/m2", chunksize=chksz3d)
         call nc_declare(iunit, dimids3d, varid%comp(m)%accwd, &
-          trim(def_comp(mm)%compnamemc)//"_acc_wet_deposition", &
+          trim(output_component(m)%name)//"_acc_wet_deposition", &
           units="Bq/m2", chunksize=chksz3d)
       end if
       if (imodlevel) then
         if (modleveldump > 0.) then
-          string = trim(def_comp(mm)%compnamemc)//"_concentration_dump_ml"
+          string = trim(output_component(m)%name)//"_concentration_dump_ml"
         else
-          string = trim(def_comp(mm)%compnamemc)//"_concentration_ml"
+          string = trim(output_component(m)%name)//"_concentration_ml"
         endif
         call nc_declare(iunit, dimids4d, varid%comp(m)%icml, &
           string, units="Bq/m3", chunksize=chksz4d)
       end if
       if (output_column) then
         call nc_declare(iunit, dimids3d, varid%comp(m)%conc_column, &
-          trim(def_comp(mm)%compnamemc)//"_column_concentration", &
+          trim(output_component(m)%name)//"_column_concentration", &
           units="Bq/m2", chunksize=chksz3d)
       endif
     end do
@@ -1191,13 +1187,13 @@ subroutine unload()
 end subroutine
 
 subroutine get_varids(iunit, varid, ierror)
-  USE snapparML, only: ncomp, run_comp, def_comp
+  USE snapparML, only: nocomp, output_component, def_comp
   USE snapgrdML, only: imodlevel, modleveldump
   integer, intent(in) :: iunit
   type(common_var), intent(out) :: varid
   integer, intent(out) :: ierror
 
-  integer :: m, mm
+  integer :: m
   character(len=64) :: varname
 
   ierror = 0
@@ -1246,53 +1242,52 @@ subroutine get_varids(iunit, varid, ierror)
   ierror = nf90_inq_varid(iunit, "aircraft_doserate_threshold_height", varid%aircraft_doserate_threshold_height)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
 
-  do m=1,ncomp
-    mm = run_comp(m)%to_defined
-    varname = trim(def_comp(mm)%compnamemc) // "_concentration"
+  do m=1,nocomp
+    varname = trim(output_component(m)%name) // "_concentration"
     ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%ic)
     if (ierror /= NF90_NOERR) return
 
-    varname = trim(def_comp(mm)%compnamemc) // "_concentration_bl"
+    varname = trim(output_component(m)%name) // "_concentration_bl"
     ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%icbl)
     if (ierror /= NF90_NOERR) return
 
-    varname = trim(def_comp(mm)%compnamemc) // "_acc_concentration"
+    varname = trim(output_component(m)%name) // "_acc_concentration"
     ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%ac)
     if (ierror /= NF90_NOERR) return
 
-    varname = trim(def_comp(mm)%compnamemc) // "_avg_concentration_bl"
+    varname = trim(output_component(m)%name) // "_avg_concentration_bl"
     ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%acbl)
     if (ierror /= NF90_NOERR) return
 
-    varname = trim(def_comp(mm)%compnamemc) // "_dry_deposition"
+    varname = trim(output_component(m)%name) // "_dry_deposition"
     ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%idd)
     if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
 
-    varname = trim(def_comp(mm)%compnamemc) // "_acc_dry_deposition"
+    varname = trim(output_component(m)%name) // "_acc_dry_deposition"
     ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%accdd)
     if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
 
-    varname = trim(def_comp(mm)%compnamemc) // "_wet_deposition"
+    varname = trim(output_component(m)%name) // "_wet_deposition"
     ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%iwd)
     if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
 
-    varname = trim(def_comp(mm)%compnamemc) // "_acc_wet_deposition"
+    varname = trim(output_component(m)%name) // "_acc_wet_deposition"
     ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%accwd)
     if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
 
     if (imodlevel) then
       if (modleveldump > 0.) then
-        varname = trim(def_comp(mm)%compnamemc) // "_concentration_dump_ml"
+        varname = trim(output_component(m)%name) // "_concentration_dump_ml"
         ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%icml)
         if (ierror /= NF90_NOERR) return
       else
-        varname = trim(def_comp(mm)%compnamemc) // "_concentration_ml"
+        varname = trim(output_component(m)%name) // "_concentration_ml"
         ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%icml)
         if (ierror /= NF90_NOERR) return
       endif
     endif
 
-    varname = trim(def_comp(mm)%compnamemc) // "_column_concentration"
+    varname = trim(output_component(m)%name) // "_column_concentration"
     ierror = nf90_inq_varid(iunit, varname, varid%comp(m)%conc_column)
     if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
   enddo
@@ -1313,7 +1308,7 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
       ps1, ps2, t1_abs, t2_abs, aircraft_doserate_scratch, aircraft_doserate, &
       aircraft_doserate_threshold_height
   USE snapdimml, only: nx, ny, nk, output_resolution_factor, hres_pos, lres_pos
-  USE snapparML, only: ncomp, def_comp, run_comp
+  USE snapparML, only: nocomp, def_comp, output_component
   USE ftestML, only: ftest
   USE releaseML, only: npart
   USE particleML, only: pdata, Particle
@@ -1368,7 +1363,7 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
     j = hres_pos(part%y)
   ! c     ivlvl=pdata(n)%z*10000.
   ! c     k=ivlevel(ivlvl)
-    m = def_comp(part%icomp)%to_running
+    m = def_comp(part%icomp)%to_output
     if(part%z >= part%tbl) then
     !..in boundary layer
       avgbq1(i,j,m) = avgbq1(i,j,m) + part%rad()
@@ -1393,7 +1388,7 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
       if (k==1) then
         i = hres_pos(part%x)
         j = hres_pos(part%y)
-        m = def_comp(part%icomp)%to_running
+        m = def_comp(part%icomp)%to_output
         concen(i,j,m) = concen(i,j,m) + dble(part%rad())
       endif
     enddo
@@ -1414,14 +1409,14 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
       i = hres_pos(part%x)
       j = hres_pos(part%y)
       if(part%z > sigma_level_of_surface_h(i,j)) then
-        m = def_comp(part%icomp)%to_running
+        m = def_comp(part%icomp)%to_output
         concen(i,j,m) = concen(i,j,m) + dble(part%rad())
       end if
     end do
     dh(:,:) = surface_height_m
   end if
 
-  do m=1,ncomp
+  do m=1,nocomp
     concen(:,:,m) = concen(:,:,m) / (dh * garea)
     concacc(:,:,m) = concacc(:,:,m) + concen(:,:,m)*hrstep
   end do
@@ -1461,6 +1456,9 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
   ! Doses due to cloud immersion and deposition is neglected
   if (compute_aircraft_doserate) then
     block
+    ! use all running components separately since doses might be differnt
+    USE snapparML, only: ncomp, run_comp
+
     real, parameter :: regulatory_minimum_pressure = 750 ! hPa
     real, parameter :: inside_temperature = 20 + 275.15
 

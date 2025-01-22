@@ -18,6 +18,7 @@
 
 !> Common for particles
 module snapparML
+  USE iso_fortran_env, only: int16
   use snapdimML, only: mcomp
   implicit none
 
@@ -34,7 +35,17 @@ module snapparML
 !> to the currenctly running component in ::run_comp
 !>
 !> should be 0 for components that are not running
+!> to_running is also the array index m plume and vgtable tables
     integer :: to_running = 0
+
+!> used when maping from component griven by e.g. particleml::particle::icomp
+!> to the actual output name in ::output_component
+!> should be 0 for components that are not running
+!> to_output is used in 3D and 4D output arrays and might be different from
+!> to_running when several binned variables are merged to the same output-variable
+!>   set by component MERGE.NAME=xxxx
+    integer :: to_output = 0
+
 !> gravity type:
 !>
 !> * 0=off
@@ -98,6 +109,10 @@ module snapparML
 !>   no. of components used in the run
   integer, save, public :: ncomp = 0
 
+!>   no. of output components used in the run
+  integer, save, public :: nocomp = 0
+
+
   integer, parameter, public :: TIME_PROFILE_CONSTANT = 1, &
                                 !> bomb (only one initial release)
                                 TIME_PROFILE_BOMB = 2, &
@@ -111,6 +126,20 @@ module snapparML
 
 !>  component name
   character(len=32), save, public :: component(mcomp)
+
+  type, public :: output_component_type
+    character(len=32) :: name
+    !> if any of the defined components has drydep
+    logical :: has_drydep = .false.
+    !> if any of the defined components has wetdep
+    logical :: has_wetdep = .false.
+    !> array of comp_defs ids
+    integer(int16), allocatable :: to_defined(:)
+  end type
+
+!> component name used in the output (different from component if MERGE.NAME is used)
+  type(output_component_type), save, allocatable, target, public :: output_component(:)
+
 
 !> Contains information which are applicable to active (running)
 !> components
