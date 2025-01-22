@@ -142,7 +142,7 @@ class SnapVolcanoTranslator:
 
         return (snap_start, all_lower, all_upper)
 
-    def run(self) -> int:
+    def run(self, snapnc: str="snap.nc") -> int:
         """
         The run method is a convenient method to actually run bsnap_naccident and
         snapAddToa on the results in the output-directory of volcano.xml.
@@ -166,6 +166,11 @@ class SnapVolcanoTranslator:
                 stderr=fh,
                 stdout=fh,
             )
+        if proc.returncode == 0:
+            if snapnc and snapnc != "snap.nc":
+                ifile = os.path.join(self.volcano.outputdir, "snap.nc")
+                ofile = os.path.join(self.volcano.outputdir, snapnc)
+                os.rename(ifile, ofile)
         return proc.returncode
 
 
@@ -187,6 +192,12 @@ def main() -> int:
         default=False,
     )
     parser.add_argument(
+        "--snapnc",
+        help="alternative name for snap.nc, in the same output-directory",
+        default="snap.nc"
+    )
+
+    parser.add_argument(
         "volcano_filepath",
         help="volcano.xml filepath, with volcano definition",
         nargs=1,
@@ -195,7 +206,7 @@ def main() -> int:
 
     svt = SnapVolcanoTranslator(args.volcano_filepath[0])
     if not args.translate_only:
-        exit(svt.run())
+        exit(svt.run(args.snapnc))
     exit(0)
 
 
