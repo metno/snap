@@ -256,7 +256,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
   all_components: do m=1,nocomp
 
     mm => output_component(m)%to_defined
-    write(iulog,*) ' component: ', output_component(m)%name !def_comp(mm)%compnamemc
+    write(iulog,*) ' component: ', output_component(m)%name
 
   !..instant Bq in and above boundary layer
     field_hr1 = 0.0
@@ -393,7 +393,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     write(iulog,*) '   Bq,particles wet dep    : ', sum(accwet(:,:,m))
     endif
     if (allocated(massbalance_file)) then
-      write(massbalance_file,*) ' component: ', def_comp(mm)%compnamemc
+      write(massbalance_file,*) ' component: ', output_component(m)%name
       write(massbalance_file,*) '   Bq,particles in    abl  : ',bqtot1,nptot1
       write(massbalance_file,*) '   Bq,particles above abl  : ',bqtot2,nptot2
       write(massbalance_file,*) '   Bq,particles            : ',bqtot1+bqtot2, &
