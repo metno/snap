@@ -46,7 +46,7 @@ test_array_utils: test_array_utils.o $(MODELOBJ)
 
 
 clean: clean_links
-	rm -f *.o *~ snap_batch_copy.F90 find_parameters_fi_test bsnap_naccident data/snap.nc data/snap_ecemep.nc data/snap.log testDateCalc
+	rm -f *.o *~ snap_batch_copy.F90 find_parameters_fi_test bsnap_naccident data/snap.nc data/snap_ecemep.nc data/snap.log testDateCalc test_array_utils
 	rm -rf __pycache__
 
 distclean: clean
@@ -55,7 +55,7 @@ distclean: clean
 find_parameters_fi_test.o: find_parameters_fi_test.f90 $(MODELOBJ)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 
-testDateCalc.o: testDateCalc.f90
+testDateCalc.o: testDateCalc.f90 $(MODELOBJ)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 
 test_array_utils.o: test_array_utils.f90 $(MODELOBJ)
