@@ -1333,6 +1333,7 @@ contains
       case ('merge.name')
         !..output component name if merged
         ! reuse compnamemc variable
+        if (.not. associated(d_comp)) goto 12
         d_comp%compnamemc = cinput(pname_start:pname_end)
       case ('dry.dep.on')
         !..dry.dep.on
