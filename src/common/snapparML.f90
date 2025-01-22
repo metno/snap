@@ -110,6 +110,8 @@ module snapparML
   integer, save, public :: ncomp = 0
 
 !>   no. of output components used in the run
+!>   This might be different from the number of running components ::ncomp
+!>   if variables are binned
   integer, save, public :: nocomp = 0
 
 
