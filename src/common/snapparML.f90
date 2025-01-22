@@ -82,8 +82,8 @@ module snapparML
 
 !> a component name
     character(len=32) :: compname = "Unknown"
-!> a component name (mixed case)
-    character(len=32) :: compnamemc = "Unknown"
+!> a component name in output, different from compname if merge.name is set
+    character(len=32) :: output_name = "Unknown"
 
 !> an identifier used in the field identification
 !>

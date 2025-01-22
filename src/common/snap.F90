@@ -333,15 +333,6 @@ PROGRAM bsnap
     ntprof = size(releases)
   end if
 
-! canonicalise names
-  call to_uppercase(srelnam)
-  do n = 1, nrelpos
-    call to_uppercase(release_positions(n)%name)
-  end do
-  do n=1,ncomp
-    call to_uppercase(component(n))
-  enddo
-
   allocate (run_comp(ncomp))
   run_comp%totalbq = 0
   run_comp%numtotal = 0
@@ -1328,13 +1319,11 @@ contains
         call push_down_dcomp(def_comp, top=d_comp)
 
         d_comp%compname = cinput(pname_start:pname_end)
-        d_comp%compnamemc = cinput(pname_start:pname_end)
-        call to_uppercase(d_comp%compname)
+        d_comp%output_name = d_comp%compname ! default
       case ('merge.name')
         !..output component name if merged
-        ! reuse compnamemc variable
         if (.not. associated(d_comp)) goto 12
-        d_comp%compnamemc = cinput(pname_start:pname_end)
+        d_comp%output_name = cinput(pname_start:pname_end)
       case ('dry.dep.on')
         !..dry.dep.on
         if (.not. associated(d_comp)) goto 12
@@ -1994,7 +1983,7 @@ contains
     do m = 1, ncomp
       k = 0
       do i = 1, size(output_component)
-        if (output_component(i)%name == def_comp(m)%compnamemc) k = i
+        if (output_component(i)%name == def_comp(m)%output_name) k = i
       end do
       if (k == 0) then
         ! initialize new output_component
@@ -2007,7 +1996,7 @@ contains
           output_component(:size(temp_comp)) = temp_comp(:)
         end block
         allocate(output_component(k)%to_defined(0))
-        output_component(k)%name = def_comp(m)%compnamemc
+        output_component(k)%name = def_comp(m)%output_name
       end if
       ! add m to the output-component(k) (might be new)
       block
