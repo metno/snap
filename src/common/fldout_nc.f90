@@ -590,10 +590,10 @@ subroutine write_ml_fields(iunit, varid, average, ipos_in, isize, rt1, rt2)
   total=0.
   maxage=0
 
-  ml_bq = 0.0
   if (modlevel_is_average) then
     avg = average
   else
+    ml_bq = 0.0
     avg = 1.0
     do npl = 1, nplume
       do n = iplume(npl)%start, iplume(npl)%end
