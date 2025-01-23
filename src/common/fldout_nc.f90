@@ -1143,9 +1143,9 @@ subroutine initialize_output(filename, itime, ierror)
         call nc_declare(iunit, dimids4d, varid%comp(m)%icml, &
           string, units="Bq/m3", chunksize=chksz4d)
         if (modlevel_is_average) then
-          call check(nf90_put_att(iunit, varid%comp(m)%icml, "cell_method", "time: mean"))
+          call check(nf90_put_att(iunit, varid%comp(m)%icml, "cell_methods", "time: mean"))
         else
-          call check(nf90_put_att(iunit, varid%comp(m)%icml, "cell_method", "time: point"))
+          call check(nf90_put_att(iunit, varid%comp(m)%icml, "cell_methods", "time: point"))
         end if
       end if
       if (output_column) then
