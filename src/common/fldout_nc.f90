@@ -595,17 +595,17 @@ subroutine write_ml_fields(iunit, varid, average, ipos_in, isize, rt1, rt2)
   else
     ml_bq = 0.0
     avg = 1.0
-    do npl = 1, nplume
-      do n = iplume(npl)%start, iplume(npl)%end
-        part = pdata(n)
-        i = hres_pos(part%x)
-        j = hres_pos(part%y)
-        ivlvl = part%z*10000.
-        k = ivlayer(ivlvl)
-        m = def_comp(part%icomp)%to_output
-      !..in each sigma/eta (input model) layer
-        if (modleveldump > 0) then
-        !.. dump and remove old particles, don't touch  new ones
+    if (modleveldump > 0) then
+      do npl = 1, nplume
+        do n = iplume(npl)%start, iplume(npl)%end
+          part = pdata(n)
+          i = hres_pos(part%x)
+          j = hres_pos(part%y)
+          ivlvl = part%z*10000.
+          k = ivlayer(ivlvl)
+          m = def_comp(part%icomp)%to_output
+          !..in each sigma/eta (input model) layer
+          !.. dump and remove old particles, don't touch  new ones
           if (iplume(npl)%ageInSteps >= nint(modleveldump)) then
             maxage = max(maxage, int(iplume(npl)%ageInSteps, kind(maxage)))
             ml_bq(i,j,k,m) = ml_bq(i,j,k,m) + part%rad()
@@ -614,14 +614,14 @@ subroutine write_ml_fields(iunit, varid, average, ipos_in, isize, rt1, rt2)
             inactivated_ =  part%inactivate()
             pdata(n) = part
           end if
-        else
-          ml_bq(i,j,k,m)=ml_bq(i,j,k,m)+pdata(n)%rad()
-        endif
+        end do
       end do
-    end do
-    if (modleveldump > 0) then
       write (error_unit,*) "dumped; maxage, total", maxage, total
-    endif
+    else
+      ! instant, accumulate once
+      call accumulate_ml_field()
+    end if
+
   endif
 
   do k=1,nk-1
@@ -1313,6 +1313,31 @@ subroutine get_varids(iunit, varid, ierror)
   ierror = NF90_NOERR
 end subroutine
 
+!> accumulate model level fields only
+subroutine accumulate_ml_field()
+  USE snapgrdML, only: imodlevel, modlevel_is_average, &
+      ivlayer
+  USE snapfldML, only: ml_bq
+  USE snapparML, only: def_comp
+  USE snapdimml, only: hres_pos
+  USE releaseML, only: npart
+  USE particleML, only: pdata
+  integer :: i, j, m, n, k
+  integer :: ivlvl
+
+  if(imodlevel) then
+    do n=1,npart
+      i = hres_pos(pdata(n)%x)
+      j = hres_pos(pdata(n)%y)
+      ivlvl = pdata(n)%z*10000.
+      k = ivlayer(ivlvl)
+      m = def_comp(pdata(n)%icomp)%to_output
+    !..in each sigma/eta (input model) layer
+      ml_bq(i,j,k,m) = ml_bq(i,j,k,m) + pdata(n)%rad()
+    end do
+  end if
+end subroutine accumulate_ml_field
+
 !> accumulation for average fields
 subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
   USE snapgrdML, only: imodlevel, modlevel_is_average, &
@@ -1446,16 +1471,7 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
   end block
 
   if(imodlevel .and. modlevel_is_average) then
-    do n=1,npart
-      part = pdata(n)
-      i = hres_pos(part%x)
-      j = hres_pos(part%y)
-      ivlvl = part%z*10000.
-      k = ivlayer(ivlvl)
-      m = def_comp(part%icomp)%to_running
-    !..in each sigma/eta (input model) layer
-      ml_bq(i,j,k,m) = ml_bq(i,j,k,m) + part%rad()
-    end do
+    call accumulate_ml_field()
   end if
 
   if (compute_column_max_conc) then
