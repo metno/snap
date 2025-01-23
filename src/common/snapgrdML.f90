@@ -40,6 +40,8 @@ module snapgrdML
     integer, save, public :: imslp = 0
 !> * output of concentrations in model levels
     logical, save, public :: imodlevel = .false.
+!> * output of concentrations in model levels average/instantaneous
+    logical, save, public :: modlevel_is_average = .false.
 !> remove particles from model after at least that many steps
     real, save, public :: modleveldump = 0.0
 !> * 0=not output of total of all components (e.g. when each component is released with a mass unit)
