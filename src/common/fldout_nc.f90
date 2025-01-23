@@ -106,7 +106,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     ierror)
   USE iso_fortran_env, only: int16
   USE array_utils, only: is_in_array
-  USE snapgrdML, only: imodlevel, imslp, precipitation_in_output, &
+  USE snapgrdML, only: imodlevel, modlevel_is_average, imslp, precipitation_in_output, &
       itotcomp, compute_column_max_conc, compute_aircraft_doserate, &
       aircraft_doserate_threshold, output_column
   USE snapfldML, only: field_hr1, field_hr2, field_hr3, hbl_hr, &
@@ -536,7 +536,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
 
 !..model level fields...................................................
   if (imodlevel) then
-    call write_ml_fields(iunit, varid, [1, 1, -1, ihrs_pos], &
+    call write_ml_fields(iunit, varid, average, [1, 1, -1, ihrs_pos], &
         [nx*output_resolution_factor, ny*output_resolution_factor, 1, 1], rt1, rt2)
   endif
 
@@ -555,19 +555,20 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
 end subroutine fldout_nc
 
 
-subroutine write_ml_fields(iunit, varid, ipos_in, isize, rt1, rt2)
+subroutine write_ml_fields(iunit, varid, average, ipos_in, isize, rt1, rt2)
   USE releaseML, only: nplume, iplume
   USE particleML, only: pdata, Particle
   USE snapparML, only: def_comp, nocomp
   USE snapfldML, only: field_hr1, field_hr2, &
-      hlayer1, hlayer2, garea, instmlbq
+      hlayer1, hlayer2, garea, ml_bq
   USE ftestML, only: ftest
   USE snapdebug, only: idebug
-  USE snapgrdML, only: itotcomp, modleveldump, ivlayer
+  USE snapgrdML, only: itotcomp, modlevel_is_average, modleveldump, ivlayer
   USE snapdimML, only: nx,ny,nk,output_resolution_factor, hres_pos
 
   integer, intent(in) :: iunit
   type(common_var), intent(in) :: varid
+  real, intent(in) :: average
   integer, intent(in) :: ipos_in(4)
   integer, intent(in) :: isize(4)
   real, intent(in) :: rt1, rt2
@@ -589,34 +590,38 @@ subroutine write_ml_fields(iunit, varid, ipos_in, isize, rt1, rt2)
   total=0.
   maxage=0
 
-  instmlbq = 0.0
+  ml_bq = 0.0
+  if (modlevel_is_average) then
+    avg = average
+  else
+    avg = 1.0
+    do npl = 1, nplume
+      do n = iplume(npl)%start, iplume(npl)%end
+        part = pdata(n)
+        i = hres_pos(part%x)
+        j = hres_pos(part%y)
+        ivlvl = part%z*10000.
+        k = ivlayer(ivlvl)
+        m = def_comp(part%icomp)%to_output
+      !..in each sigma/eta (input model) layer
+        if (modleveldump > 0) then
+        !.. dump and remove old particles, don't touch  new ones
+          if (iplume(npl)%ageInSteps >= nint(modleveldump)) then
+            maxage = max(maxage, int(iplume(npl)%ageInSteps, kind(maxage)))
+            ml_bq(i,j,k,m) = ml_bq(i,j,k,m) + part%rad()
+            total = total + part%rad()
 
-  do npl = 1, nplume
-    do n = iplume(npl)%start, iplume(npl)%end
-      part = pdata(n)
-      i = hres_pos(part%x)
-      j = hres_pos(part%y)
-      ivlvl = part%z*10000.
-      k = ivlayer(ivlvl)
-      m = def_comp(part%icomp)%to_output
-    !..in each sigma/eta (input model) layer
-      if (modleveldump > 0) then
-      !.. dump and remove old particles, don't touch  new ones
-        if (iplume(npl)%ageInSteps >= nint(modleveldump)) then
-          maxage = max(maxage, int(iplume(npl)%ageInSteps, kind(maxage)))
-          instmlbq(i,j,k,m) = instmlbq(i,j,k,m) + part%rad()
-          total = total + part%rad()
-
-          inactivated_ =  part%inactivate()
-          pdata(n) = part
-        end if
-      else
-        instmlbq(i,j,k,m)=instmlbq(i,j,k,m)+pdata(n)%rad()
-      endif
+            inactivated_ =  part%inactivate()
+            pdata(n) = part
+          end if
+        else
+          ml_bq(i,j,k,m)=ml_bq(i,j,k,m)+pdata(n)%rad()
+        endif
+      end do
     end do
-  end do
-  if (modleveldump > 0) then
-    write (error_unit,*) "dumped; maxage, total", maxage, total
+    if (modleveldump > 0) then
+      write (error_unit,*) "dumped; maxage, total", maxage, total
+    endif
   endif
 
   do k=1,nk-1
@@ -627,15 +632,19 @@ subroutine write_ml_fields(iunit, varid, ipos_in, isize, rt1, rt2)
       end do
     end do
     do m=1,nocomp
-      instmlbq(:,:,k,m) = instmlbq(:,:,k,m)/field_hr2
+      ml_bq(:,:,k,m) = ml_bq(:,:,k,m)/(field_hr2*avg)
     end do
   end do
 
-!..average concentration in each layer for each type
+!..concentration in each layer for each type
   do m=1,nocomp
     do k=1,nk-1
-      field_hr1(:,:) = cscale*instmlbq(:,:,k,m)
-      if(idebug == 1) call ftest('instconcml', field_hr1)
+      field_hr1(:,:) = cscale*ml_bq(:,:,k,m)
+      if (modlevel_is_average) then
+        if(idebug == 1) call ftest('tinstconcml', field_hr1)
+      else
+        if(idebug == 1) call ftest('tavgconcml', field_hr1)
+      end if
 
       ipos(3) = k
       call check(nf90_put_var(iunit, varid%comp(m)%icml, start=ipos, &
@@ -643,16 +652,20 @@ subroutine write_ml_fields(iunit, varid, ipos_in, isize, rt1, rt2)
     end do
   end do
 
-!..total average concentration in each layer
+!..total concentration in each layer
   if(nocomp > 1 .AND. itotcomp == 1) then
     do m=2,nocomp
       do k=1,nk-1
-        instmlbq(:,:,k,1) = instmlbq(:,:,k,1) + instmlbq(:,:,k,m)
+        ml_bq(:,:,k,1) = ml_bq(:,:,k,1) + ml_bq(:,:,k,m)
       end do
     end do
     do k=1,nk-1
-      field_hr1(:,:) = cscale*instmlbq(:,:,k,1)
-      if(idebug == 1) call ftest('tinstconcml', field_hr1)
+      field_hr1(:,:) = cscale*ml_bq(:,:,k,1)
+      if (modlevel_is_average) then
+        if(idebug == 1) call ftest('tinstconcml', field_hr1)
+      else
+        if(idebug == 1) call ftest('tavgconcml', field_hr1)
+      end if
     end do
   end if
 end subroutine
@@ -972,7 +985,7 @@ end subroutine nc_set_projection
 
 subroutine initialize_output(filename, itime, ierror)
   USE snapfilML, only: ncsummary, nctitle, simulation_start
-  USE snapgrdML, only: gparam, igtype, imodlevel, imslp, precipitation_in_output, &
+  USE snapgrdML, only: gparam, igtype, imodlevel, modlevel_is_average, imslp, precipitation_in_output, &
       itotcomp, modleveldump, compute_column_max_conc, compute_aircraft_doserate, &
       aircraft_doserate_threshold, output_column
   USE snapfldML, only:  &
@@ -1129,6 +1142,11 @@ subroutine initialize_output(filename, itime, ierror)
         endif
         call nc_declare(iunit, dimids4d, varid%comp(m)%icml, &
           string, units="Bq/m3", chunksize=chksz4d)
+        if (modlevel_is_average) then
+          call check(nf90_put_att(iunit, varid%comp(m)%icml, "cell_method", "time: mean"))
+        else
+          call check(nf90_put_att(iunit, varid%comp(m)%icml, "cell_method", "time: point"))
+        end if
       end if
       if (output_column) then
         call nc_declare(iunit, dimids3d, varid%comp(m)%conc_column, &
@@ -1297,13 +1315,13 @@ end subroutine
 
 !> accumulation for average fields
 subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
-  USE snapgrdML, only: imodlevel, &
+  USE snapgrdML, only: imodlevel, modlevel_is_average, &
       ivlayer, compute_column_max_conc, compute_aircraft_doserate, &
       alevel, blevel, aircraft_doserate_threshold
   USE snapfldML, only:  &
       avgbq1, avgbq2, hlayer1, hlayer2, hbl1, hbl2, &
       avgprec, concen, avghbl, &
-      concacc, precip, &
+      concacc, precip, ml_bq, &
       max_column_scratch, max_column_concentration, garea, &
       ps1, ps2, t1_abs, t2_abs, aircraft_doserate_scratch, aircraft_doserate, &
       aircraft_doserate_threshold_height
@@ -1331,6 +1349,10 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
 
     avgbq1 = 0.0
     avgbq2 = 0.0
+
+    if (imodlevel .and. modlevel_is_average) then
+      ml_bq = 0.0
+    end if
 
     if (compute_column_max_conc) then
       max_column_concentration = 0.0
@@ -1422,6 +1444,19 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
   end do
 
   end block
+
+  if(imodlevel .and. modlevel_is_average) then
+    do n=1,npart
+      part = pdata(n)
+      i = hres_pos(part%x)
+      j = hres_pos(part%y)
+      ivlvl = part%z*10000.
+      k = ivlayer(ivlvl)
+      m = def_comp(part%icomp)%to_running
+    !..in each sigma/eta (input model) layer
+      ml_bq(i,j,k,m) = ml_bq(i,j,k,m) + part%rad()
+    end do
+  end if
 
   if (compute_column_max_conc) then
     max_column_scratch = 0.0

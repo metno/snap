@@ -106,8 +106,8 @@
 ! *
 ! * default is 30 meters, can set specific value by setting the parameter
 ! SURFACE.LAYER.CONCENTRATION.AT.HEIGHT (= 30)
+! * MODEL.LEVEL.FIELDS can be ON/INST/AVG/OFF (where ON == INST)
 ! MODEL.LEVEL.FIELDS.ON
-! MODEL.LEVEL.FIELDS.OFF
 ! * only write particles to model-level, which are at least DUMPTIME in h
 ! * old. If DUMPTIME > 0, the dumped particles will be removed from model
 ! MODEL.LEVEL.FIELDS.DUMPTIME= 4.0
@@ -175,7 +175,7 @@ PROGRAM bsnap
   USE snapposML, only: irelpos, nrelpos, release_positions
   USE snapgrdML, only: modleveldump, ivcoor, &
                        klevel, imslp, itotcomp, gparam, &
-                       igtype, imodlevel, precipitation_in_output
+                       igtype, imodlevel, modlevel_is_average, precipitation_in_output
   USE snaptabML, only: tabcon
   USE particleML, only: pdata, extraParticle
   USE allocateFieldsML, only: allocateFields, deallocateFields
@@ -1515,6 +1515,14 @@ contains
       case ('model.level.fields.on')
         !..model.level.fields.on
         imodlevel = .true.
+      case ('model.level.fields.inst')
+        !..model.level.fields.off
+        imodlevel = .true.
+        modlevel_is_average = .false.
+      case ('model.level.fields.avg')
+        !..model.level.fields.off
+        imodlevel = .true.
+        modlevel_is_average = .true.
       case ('model.level.fields.off')
         !..model.level.fields.off
         imodlevel = .false.

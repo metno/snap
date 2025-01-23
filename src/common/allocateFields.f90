@@ -20,7 +20,7 @@ module allocateFieldsML
   USE snapparML, only: ncomp, iparnum
   USE snapfldML, only: u1, u2, v1, v2, w1, w2, bl1, bl2, t1, t2, &
       ps1, ps2, hbl1, hbl2, hlevel1, hlevel2, hlayer1, hlayer2, &
-      concacc, avgbq1, avgbq2, instmlbq, accwet, accdry, concen, &
+      concacc, avgbq1, avgbq2, ml_bq, accwet, accdry, concen, &
       depdry, depwet, accprec, avgprec, avghbl, precip, &
       pmsl1, pmsl2, field1, field2, field3, field4, field3d1, xm, ym, &
       garea, field_hr1, field_hr2, field_hr3, hbl_hr, &
@@ -181,7 +181,7 @@ subroutine allocateFields
   IF (AllocateStatus /= 0) ERROR STOP errmsg
 
   if (imodlevel) then
-    ALLOCATE ( instmlbq(nxhr,nyhr,nk-1,nocomp), STAT = AllocateStatus)
+    ALLOCATE ( ml_bq(nxhr,nyhr,nk-1,nocomp), STAT = AllocateStatus)
     IF (AllocateStatus /= 0) ERROR STOP errmsg
   endif
 
@@ -290,8 +290,8 @@ subroutine deAllocateFields
   DEALLOCATE ( avgbq1 )
   DEALLOCATE ( avgbq2 )
 
-  if (allocated(instmlbq)) then
-    deallocate(instmlbq)
+  if (allocated(ml_bq)) then
+    deallocate(ml_bq)
   endif
 
   if (allocated(max_column_concentration)) then
