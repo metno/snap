@@ -106,7 +106,7 @@ subroutine decayDeps(tstep)
 
   do m=1,nocomp
     mmo = output_component(m)%to_defined
-    ! decay-rates of merged components must be similar, otherwise, deday of output-fields
+    ! decay-rates of merged components must be similar, otherwise, decay of output-fields
     ! does not work well enough
     if(def_comp(mmo(1))%kdecay >= 1) then
       depdry(:,:,m) = depdry(:,:,m)*def_comp(mmo(1))%decayrate
