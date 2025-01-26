@@ -291,7 +291,7 @@ m=SNAP.current t=fimex format=netcdf f={self.lastOutputDir}/snap.nc
             return False
         return True
 
-    def get_bomb_release(self, qDict):
+    def get_bomb_release(self, qDict, offset_minutes: int):
         errors = ""
         try:
             yld = int(qDict["yield"])
@@ -303,9 +303,10 @@ m=SNAP.current t=fimex format=netcdf f={self.lastOutputDir}/snap.nc
             errors += f"unknown explosion_type: {ex}\n"
 
         sib = SnapInputBomb(yld, explosion_type)
+        sib.minutes = offset_minutes
         return (sib.snap_input(), errors)
 
-    def get_isotope_release(self, qDict, offset_minutes):
+    def get_isotope_release(self, qDict, offset_minutes: int):
         errors = ""
         for tag in ("releaseTime", "radius", "lowerHeight", "upperHeight"):
             if not re.search(r"\d+", qDict[tag]):
@@ -420,7 +421,7 @@ STEP.HOUR.OUTPUT.FIELDS= 3
         )
 
         if "isBomb" in qDict:
-            (term, errors) = self.get_bomb_release(qDict)
+            (term, errors) = self.get_bomb_release(qDict, offset_minutes)
         else:
             (term, errors) = self.get_isotope_release(qDict, offset_minutes)
         if len(errors) > 0:
