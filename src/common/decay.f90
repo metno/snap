@@ -50,13 +50,14 @@ end subroutine decay
 subroutine decayDeps(tstep)
   USE snapfldML, only: depdry, depwet, accdry, accwet, &
     total_activity_released, total_activity_lost_domain, total_activity_lost_other
-  USE snapparML, only: ncomp, run_comp, def_comp
+  USE snapparML, only: ncomp, nocomp, run_comp, def_comp, output_component
   USE iso_fortran_env, only: real64
   USE releaseML, only: tpos_bomb
 
   real, intent(in) :: tstep
 
   integer :: m, mm
+  integer, allocatable :: mmo(:)
   real :: bomb_decay_rate, current_state, next_state
   logical, save :: prepare = .TRUE.
   logical, save :: has_bomb_decay = .FALSE.
@@ -103,17 +104,19 @@ subroutine decayDeps(tstep)
     total_steps = total_steps + tstep
   end if
 
-  do m=1,ncomp
-    mm = run_comp(m)%to_defined
-    if(def_comp(mm)%kdecay >= 1) then
-      depdry(:,:,m) = depdry(:,:,m)*def_comp(mm)%decayrate
-      depwet(:,:,m) = depwet(:,:,m)*def_comp(mm)%decayrate
-      accdry(:,:,m) = accdry(:,:,m)*def_comp(mm)%decayrate
-      accwet(:,:,m) = accwet(:,:,m)*def_comp(mm)%decayrate
+  do m=1,nocomp
+    mmo = output_component(m)%to_defined
+    ! decay-rates of merged components must be similar, otherwise, deday of output-fields
+    ! does not work well enough
+    if(def_comp(mmo(1))%kdecay >= 1) then
+      depdry(:,:,m) = depdry(:,:,m)*def_comp(mmo(1))%decayrate
+      depwet(:,:,m) = depwet(:,:,m)*def_comp(mmo(1))%decayrate
+      accdry(:,:,m) = accdry(:,:,m)*def_comp(mmo(1))%decayrate
+      accwet(:,:,m) = accwet(:,:,m)*def_comp(mmo(1))%decayrate
 
-      total_activity_released(m) = total_activity_released(m)*def_comp(mm)%decayrate
-      total_activity_lost_domain(m) = total_activity_lost_domain(m)*def_comp(mm)%decayrate
-      total_activity_lost_other(m) = total_activity_lost_other(m)*def_comp(mm)%decayrate
+      total_activity_released(m) = total_activity_released(m)*def_comp(mmo(1))%decayrate
+      total_activity_lost_domain(m) = total_activity_lost_domain(m)*def_comp(mmo(1))%decayrate
+      total_activity_lost_other(m) = total_activity_lost_other(m)*def_comp(mmo(1))%decayrate
     endif
   enddo
   return

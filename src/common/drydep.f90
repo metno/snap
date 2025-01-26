@@ -48,7 +48,7 @@ subroutine drydep1(part)
       dep = part%scale_rad(1.0 - def_comp(m)%drydeprat)
       i = hres_pos(part%x)
       j = hres_pos(part%y)
-      mm = def_comp(m)%to_running
+      mm = def_comp(m)%to_output
     !$OMP atomic
       depdry(i,j,mm) = depdry(i,j,mm) + dble(dep)
     end if
@@ -98,7 +98,7 @@ subroutine drydep2(tstep, part)
     dep = part%scale_rad(1.0 - deprate)
     i = hres_pos(part%x)
     j = hres_pos(part%y)
-    mm = def_comp(m)%to_running
+    mm = def_comp(m)%to_output
   !$OMP atomic
     depdry(i,j,mm) = depdry(i,j,mm) + dble(dep)
   end if
