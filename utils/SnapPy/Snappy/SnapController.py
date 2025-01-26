@@ -36,7 +36,10 @@ from PyQt5.QtCore import (
 from Snappy.BrowserWidget import BrowserWidget
 from Snappy.EcMeteorologyCalculator import EcMeteorologyCalculator
 from Snappy.ICONMeteorologyCalculator import ICONMeteorologyCalculator
-from Snappy.MeteorologyCalculator import MeteoDataNotAvailableException, MeteorologyCalculator
+from Snappy.MeteorologyCalculator import (
+    MeteoDataNotAvailableException,
+    MeteorologyCalculator,
+)
 from Snappy.MailImages import sendPngsFromDir
 from Snappy.Resources import Resources, MetModel
 from Snappy.SnapInputBomb import SnapInputBomb, ExplosionType
@@ -107,9 +110,7 @@ class SnapRun:
             self.snap_controller.snapRunning = "running"
             debug("started: " + self.snap_controller.snapRunning)
         else:
-            self.snap_controller.write_log(
-                "starting bsnap_naccident snap.input failed"
-            )
+            self.snap_controller.write_log("starting bsnap_naccident snap.input failed")
 
 
 class SnapController:
@@ -125,7 +126,9 @@ class SnapController:
 
     def write_log(self, txt: str):
         debug(txt)
-        self.main.evaluate_javaScript("updateSnapLog({0});".format(json.dumps(html.escape(txt))))
+        self.main.evaluate_javaScript(
+            "updateSnapLog({0});".format(json.dumps(html.escape(txt)))
+        )
 
     def _snap_finished(self):
         debug("finished")
@@ -174,7 +177,7 @@ class SnapController:
                 self.res.getSnapInputMetDefinitions(
                     self.lastQDict["metmodel"],
                     self.metcalc.get_meteorology_files(),
-                    **metdefs
+                    **metdefs,
                 )
             )
         self._snap_model_run()
@@ -378,8 +381,10 @@ RELEASE.UPPER.M= {upperHeight}, {upperHeight}
         except ValueError as ve:
             latf = 0.0
             lonf = 0.0
-            errors += "Cannot interprete latitude/longitude: {lat}/{lon}: {ex}\n".format(
-                lat=lat, lon=lon, ex=ve
+            errors += (
+                "Cannot interprete latitude/longitude: {lat}/{lon}: {ex}\n".format(
+                    lat=lat, lon=lon, ex=ve
+                )
             )
 
         if len(errors) > 0:
@@ -465,12 +470,22 @@ STEP.HOUR.OUTPUT.FIELDS= 3
         elif qDict["metmodel"] == MetModel.EC0p1Global:
             try:
                 globalRes = EcMeteorologyCalculator.getGlobalMeteoResources()
-                files = [x[1] for x in sorted(MeteorologyCalculator.findAllGlobalData(globalRes), key=lambda x: x[0])]
+                files = [
+                    x[1]
+                    for x in sorted(
+                        MeteorologyCalculator.findAllGlobalData(globalRes),
+                        key=lambda x: x[0],
+                    )
+                ]
                 lat0 = MeteorologyCalculator.getLat0(latf, globalRes.domainHeight)
                 lon0 = MeteorologyCalculator.getLon0(lonf, globalRes.domainWidth)
                 with open(os.path.join(self.lastOutputDir, "snap.input"), "a") as fh:
                     interpol = f"FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|{lon0},{lon0+0.2},...,{lon0+globalRes.domainWidth}|{lat0},{lat0+0.2},...,{lat0+globalRes.domainHeight}|degree\n"
-                    fh.write(self.res.getSnapInputMetDefinitions(qDict["metmodel"], files, interpolation=interpol))
+                    fh.write(
+                        self.res.getSnapInputMetDefinitions(
+                            qDict["metmodel"], files, interpolation=interpol
+                        )
+                    )
                 self._snap_model_run()
             except MeteoDataNotAvailableException as e:
                 self.write_log("problems finding global EC-met: {}".format(e.args[0]))
@@ -502,7 +517,10 @@ STEP.HOUR.OUTPUT.FIELDS= 3
             with open(os.path.join(self.lastOutputDir, "snap.input"), "a") as fh:
                 fh.write(self.res.getSnapInputMetDefinitions(qDict["metmodel"], files))
             self._snap_model_run()
-        elif qDict["metmodel"] == MetModel.GfsGribFilter or qDict["metmodel"] == MetModel.EC0p1Europe:
+        elif (
+            qDict["metmodel"] == MetModel.GfsGribFilter
+            or qDict["metmodel"] == MetModel.EC0p1Europe
+        ):
             files = self.res.getMeteorologyFiles(
                 qDict["metmodel"], startDT, int(qDict["runTime"]), "best"
             )
