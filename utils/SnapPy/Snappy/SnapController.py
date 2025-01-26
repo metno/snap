@@ -305,26 +305,20 @@ m=SNAP.current t=fimex format=netcdf f={self.lastOutputDir}/snap.nc
         sib = SnapInputBomb(yld, explosion_type)
         return (sib.snap_input(), errors)
 
-    def get_isotope_release(self, qDict):
+    def get_isotope_release(self, qDict, offset_minutes):
         errors = ""
         for tag in ("releaseTime", "radius", "lowerHeight", "upperHeight"):
             if not re.search(r"\d+", qDict[tag]):
                 errors += "Cannot interprete {}: {}".format(tag, qDict[tag])
 
-        source_tmpl = """
+        source_term = f"""
 MAX.PARTICLES.PER.RELEASE= 2000
 TIME.RELEASE.PROFILE.STEPS
-RELEASE.HOUR= 0, {releaseTime}
-RELEASE.RADIUS.M= {radius}, {radius}
-RELEASE.LOWER.M= {lowerHeight}, {lowerHeight}
-RELEASE.UPPER.M= {upperHeight}, {upperHeight}
+RELEASE.HOUR= {offset_minutes/60:.2f}, {int(qDict["releaseTime"])+offset_minutes/60:.2f}
+RELEASE.RADIUS.M= {qDict["radius"]}, {qDict["radius"]}
+RELEASE.LOWER.M= {qDict["lowerHeight"]}, {qDict["lowerHeight"]}
+RELEASE.UPPER.M= {qDict["upperHeight"]}, {qDict["upperHeight"]}
 """
-        source_term = source_tmpl.format(
-            releaseTime=qDict["releaseTime"],
-            radius=qDict["radius"],
-            lowerHeight=qDict["lowerHeight"],
-            upperHeight=qDict["upperHeight"],
-        )
 
         isotopes = {"relI131": "I131", "relXE133": "Xe133", "relCS137": "Cs137"}
         for rel, iso in isotopes.items():
@@ -356,6 +350,11 @@ RELEASE.UPPER.M= {upperHeight}, {upperHeight}
         if match:
             startTime = "{0} {1} {2} {3}".format(*match.group(1, 2, 3, 4))
             startDT = datetime.datetime(*tuple(map(int, list(match.group(1, 2, 3, 4)))))
+            offset_minutes = 0
+            if match_min := re.search(
+                r"\d{4}-\d{2}-\d{2}[\+\s]+\d{1,2}:(\d{1,2})", qDict["startTime"]
+            ):
+                offset_minutes = int(match_min.group(1))
         else:
             errors += "Cannot interprete startTime: {0}\n".format(qDict["startTime"])
 
@@ -423,7 +422,7 @@ STEP.HOUR.OUTPUT.FIELDS= 3
         if "isBomb" in qDict:
             (term, errors) = self.get_bomb_release(qDict)
         else:
-            (term, errors) = self.get_isotope_release(qDict)
+            (term, errors) = self.get_isotope_release(qDict, offset_minutes)
         if len(errors) > 0:
             debug('updateSnapLog("{0}");'.format(json.dumps("ERRORS:\n\n" + errors)))
             self.write_log("ERRORS:\n\n{0}".format(errors))
