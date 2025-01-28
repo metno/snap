@@ -44,7 +44,7 @@ contains
 !> uses the precipitation at the particle position
     type(extraParticle), intent(in) :: pextra
 
-    integer :: m, i, j, mm
+    integer :: m, i, j, mm, mo
     real :: precint, deprate, dep, q
 
     m = part%icomp
@@ -63,10 +63,10 @@ contains
 
       i = hres_pos(part%x)
       j = hres_pos(part%y)
-      mm = def_comp(m)%to_running
+      mo = def_comp(m)%to_output
 
       !$OMP atomic
-      depwet(i, j, mm) = depwet(i, j, mm) + dble(dep)
+      depwet(i, j, mo) = depwet(i, j, mo) + dble(dep)
     end if
   end subroutine wetdep2
 
