@@ -48,6 +48,7 @@ end subroutine decay
 !>     param: tstep model timestep in seconds
 !>     NEEDS TO BE RUN BEFORE ::decay
 subroutine decayDeps(tstep)
+  USE iso_fortran_env, only: int16
   USE snapfldML, only: depdry, depwet, accdry, accwet, &
     total_activity_released, total_activity_lost_domain, total_activity_lost_other
   USE snapparML, only: ncomp, nocomp, run_comp, def_comp, output_component
@@ -57,7 +58,7 @@ subroutine decayDeps(tstep)
   real, intent(in) :: tstep
 
   integer :: m, mm
-  integer, allocatable :: mmo(:)
+  integer(kind=int16), pointer :: mmo(:)
   real :: bomb_decay_rate, current_state, next_state
   logical, save :: prepare = .TRUE.
   logical, save :: has_bomb_decay = .FALSE.
@@ -105,7 +106,7 @@ subroutine decayDeps(tstep)
   end if
 
   do m=1,nocomp
-    mmo = output_component(m)%to_defined
+    mmo => output_component(m)%to_defined
     ! decay-rates of merged components must be similar, otherwise, decay of output-fields
     ! does not work well enough
     if(def_comp(mmo(1))%kdecay >= 1) then
