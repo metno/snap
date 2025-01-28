@@ -384,31 +384,13 @@ class SnapInputBomb:
 
         lines.append(f"** Explosive yield {self.nuclear_yield}ktonnes")
         lines.append("TIME.RELEASE.PROFILE.BOMB")
-        relradius = []
-        rellower = []
-        relupper = []
-        relstem = []
-        activity = []
-        relmins = [0]
-        if self.minutes > 0:
-            relmins.append(self.minutes)
-            relradius.append(0)
-            rellower.append(0)
-            relupper.append(0)
-            relstem.append(0)
-            activity.append("0.")
-        relradius.append(self.cloud_radius)
-        rellower.append(self.cloud_bottom)
-        relupper.append(self.cloud_top)
-        relstem.append(self.stem_radius)
-
         lines.append(
             f"""
-RELEASE.MINUTE= {",".join(map(str, relmins))}
-RELEASE.RADIUS.M= {",".join(map(str, relradius))}
-RELEASE.LOWER.M= {",".join(map(str, rellower))}
-RELEASE.UPPER.M= {",".join(map(str, relupper))}
-RELEASE.MUSHROOM.STEM.RADIUS.M= {",".join(map(str, relstem))}
+RELEASE.MINUTE= {self.minutes}
+RELEASE.RADIUS.M= {self.cloud_radius}
+RELEASE.LOWER.M= {self.cloud_bottom}
+RELEASE.UPPER.M= {self.cloud_top}
+RELEASE.MUSHROOM.STEM.RADIUS.M= {self.stem_radius}
                      """
         )
 
@@ -448,9 +430,8 @@ FIELD.IDENTIFICATION={identification:03d}
             )
 
         for i, frac in enumerate(self.size_distribution):
-            size_activity = activity + [f"{self.activity_after_1hour*frac:.3E}"]
             lines.append(
-                f"RELEASE.BQ/STEP.COMP= {','.join(size_activity)} '{self.component_name(i)}'"
+                f"RELEASE.BQ/STEP.COMP= {self.activity_after_1hour*frac:.3E} '{self.component_name(i)}'"
             )
 
         return "\n".join(lines) + "\n"

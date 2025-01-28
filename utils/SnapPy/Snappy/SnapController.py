@@ -36,7 +36,10 @@ from PyQt5.QtCore import (
 from Snappy.BrowserWidget import BrowserWidget
 from Snappy.EcMeteorologyCalculator import EcMeteorologyCalculator
 from Snappy.ICONMeteorologyCalculator import ICONMeteorologyCalculator
-from Snappy.MeteorologyCalculator import MeteoDataNotAvailableException, MeteorologyCalculator
+from Snappy.MeteorologyCalculator import (
+    MeteoDataNotAvailableException,
+    MeteorologyCalculator,
+)
 from Snappy.MailImages import sendPngsFromDir
 from Snappy.Resources import Resources, MetModel
 from Snappy.SnapInputBomb import SnapInputBomb, ExplosionType
@@ -107,9 +110,7 @@ class SnapRun:
             self.snap_controller.snapRunning = "running"
             debug("started: " + self.snap_controller.snapRunning)
         else:
-            self.snap_controller.write_log(
-                "starting bsnap_naccident snap.input failed"
-            )
+            self.snap_controller.write_log("starting bsnap_naccident snap.input failed")
 
 
 class SnapController:
@@ -125,7 +126,9 @@ class SnapController:
 
     def write_log(self, txt: str):
         debug(txt)
-        self.main.evaluate_javaScript("updateSnapLog({0});".format(json.dumps(html.escape(txt))))
+        self.main.evaluate_javaScript(
+            "updateSnapLog({0});".format(json.dumps(html.escape(txt)))
+        )
 
     def _snap_finished(self):
         debug("finished")
@@ -174,7 +177,7 @@ class SnapController:
                 self.res.getSnapInputMetDefinitions(
                     self.lastQDict["metmodel"],
                     self.metcalc.get_meteorology_files(),
-                    **metdefs
+                    **metdefs,
                 )
             )
         self._snap_model_run()
@@ -288,7 +291,7 @@ m=SNAP.current t=fimex format=netcdf f={self.lastOutputDir}/snap.nc
             return False
         return True
 
-    def get_bomb_release(self, qDict):
+    def get_bomb_release(self, qDict, offset_minutes: int):
         errors = ""
         try:
             yld = int(qDict["yield"])
@@ -300,28 +303,23 @@ m=SNAP.current t=fimex format=netcdf f={self.lastOutputDir}/snap.nc
             errors += f"unknown explosion_type: {ex}\n"
 
         sib = SnapInputBomb(yld, explosion_type)
+        sib.minutes = offset_minutes
         return (sib.snap_input(), errors)
 
-    def get_isotope_release(self, qDict):
+    def get_isotope_release(self, qDict, offset_minutes: int):
         errors = ""
         for tag in ("releaseTime", "radius", "lowerHeight", "upperHeight"):
             if not re.search(r"\d+", qDict[tag]):
                 errors += "Cannot interprete {}: {}".format(tag, qDict[tag])
 
-        source_tmpl = """
+        source_term = f"""
 MAX.PARTICLES.PER.RELEASE= 2000
 TIME.RELEASE.PROFILE.STEPS
-RELEASE.HOUR= 0, {releaseTime}
-RELEASE.RADIUS.M= {radius}, {radius}
-RELEASE.LOWER.M= {lowerHeight}, {lowerHeight}
-RELEASE.UPPER.M= {upperHeight}, {upperHeight}
+RELEASE.HOUR= {offset_minutes/60:.2f}, {int(qDict["releaseTime"])+offset_minutes/60:.2f}
+RELEASE.RADIUS.M= {qDict["radius"]}, {qDict["radius"]}
+RELEASE.LOWER.M= {qDict["lowerHeight"]}, {qDict["lowerHeight"]}
+RELEASE.UPPER.M= {qDict["upperHeight"]}, {qDict["upperHeight"]}
 """
-        source_term = source_tmpl.format(
-            releaseTime=qDict["releaseTime"],
-            radius=qDict["radius"],
-            lowerHeight=qDict["lowerHeight"],
-            upperHeight=qDict["upperHeight"],
-        )
 
         isotopes = {"relI131": "I131", "relXE133": "Xe133", "relCS137": "Cs137"}
         for rel, iso in isotopes.items():
@@ -353,6 +351,11 @@ RELEASE.UPPER.M= {upperHeight}, {upperHeight}
         if match:
             startTime = "{0} {1} {2} {3}".format(*match.group(1, 2, 3, 4))
             startDT = datetime.datetime(*tuple(map(int, list(match.group(1, 2, 3, 4)))))
+            offset_minutes = 0
+            if match_min := re.search(
+                r"\d{4}-\d{2}-\d{2}[\+\s]+\d{1,2}:(\d{1,2})", qDict["startTime"]
+            ):
+                offset_minutes = int(match_min.group(1))
         else:
             errors += "Cannot interprete startTime: {0}\n".format(qDict["startTime"])
 
@@ -378,8 +381,10 @@ RELEASE.UPPER.M= {upperHeight}, {upperHeight}
         except ValueError as ve:
             latf = 0.0
             lonf = 0.0
-            errors += "Cannot interprete latitude/longitude: {lat}/{lon}: {ex}\n".format(
-                lat=lat, lon=lon, ex=ve
+            errors += (
+                "Cannot interprete latitude/longitude: {lat}/{lon}: {ex}\n".format(
+                    lat=lat, lon=lon, ex=ve
+                )
             )
 
         if len(errors) > 0:
@@ -416,9 +421,9 @@ STEP.HOUR.OUTPUT.FIELDS= 3
         )
 
         if "isBomb" in qDict:
-            (term, errors) = self.get_bomb_release(qDict)
+            (term, errors) = self.get_bomb_release(qDict, offset_minutes)
         else:
-            (term, errors) = self.get_isotope_release(qDict)
+            (term, errors) = self.get_isotope_release(qDict, offset_minutes)
         if len(errors) > 0:
             debug('updateSnapLog("{0}");'.format(json.dumps("ERRORS:\n\n" + errors)))
             self.write_log("ERRORS:\n\n{0}".format(errors))
@@ -465,12 +470,22 @@ STEP.HOUR.OUTPUT.FIELDS= 3
         elif qDict["metmodel"] == MetModel.EC0p1Global:
             try:
                 globalRes = EcMeteorologyCalculator.getGlobalMeteoResources()
-                files = [x[1] for x in sorted(MeteorologyCalculator.findAllGlobalData(globalRes), key=lambda x: x[0])]
+                files = [
+                    x[1]
+                    for x in sorted(
+                        MeteorologyCalculator.findAllGlobalData(globalRes),
+                        key=lambda x: x[0],
+                    )
+                ]
                 lat0 = MeteorologyCalculator.getLat0(latf, globalRes.domainHeight)
                 lon0 = MeteorologyCalculator.getLon0(lonf, globalRes.domainWidth)
                 with open(os.path.join(self.lastOutputDir, "snap.input"), "a") as fh:
                     interpol = f"FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|{lon0},{lon0+0.2},...,{lon0+globalRes.domainWidth}|{lat0},{lat0+0.2},...,{lat0+globalRes.domainHeight}|degree\n"
-                    fh.write(self.res.getSnapInputMetDefinitions(qDict["metmodel"], files, interpolation=interpol))
+                    fh.write(
+                        self.res.getSnapInputMetDefinitions(
+                            qDict["metmodel"], files, interpolation=interpol
+                        )
+                    )
                 self._snap_model_run()
             except MeteoDataNotAvailableException as e:
                 self.write_log("problems finding global EC-met: {}".format(e.args[0]))
@@ -502,7 +517,10 @@ STEP.HOUR.OUTPUT.FIELDS= 3
             with open(os.path.join(self.lastOutputDir, "snap.input"), "a") as fh:
                 fh.write(self.res.getSnapInputMetDefinitions(qDict["metmodel"], files))
             self._snap_model_run()
-        elif qDict["metmodel"] == MetModel.GfsGribFilter or qDict["metmodel"] == MetModel.EC0p1Europe:
+        elif (
+            qDict["metmodel"] == MetModel.GfsGribFilter
+            or qDict["metmodel"] == MetModel.EC0p1Europe
+        ):
             files = self.res.getMeteorologyFiles(
                 qDict["metmodel"], startDT, int(qDict["runTime"]), "best"
             )
