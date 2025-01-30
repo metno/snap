@@ -4,7 +4,7 @@
 #$ -N eemep_nuc
 #$ -l h_rt=01:30:00
 #$ -q ib-ucx1-17-a-r8.q
-#$ -pe ib-fn 96
+#$ -pe ib-fn 160
 #$ -l h_rss=3G,mem_free=3G,h_data=3G
 #$ -M beredskap-fou-kl@met.no
 #$ -P eemep
