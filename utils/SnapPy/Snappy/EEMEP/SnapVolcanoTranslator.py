@@ -39,7 +39,7 @@ class SnapVolcanoTranslator:
             logger.warning(f"no snap_model_setup in file: '{volcano_file}'")
             return
 
-        os.makedirs(name=self.volcano.outputdir, exist_ok=True)
+        os.makedirs(name=self.volcano.outputDir, exist_ok=True)
 
         defs = {}
         defs["volcano_name"] = self.volcano.name
@@ -55,7 +55,7 @@ class SnapVolcanoTranslator:
         (start, lower, upper) = self.eruptions_to_txt(
             self.volcano.eruptions,
             classes,
-            os.path.join(self.volcano.outputdir, "release.txt"),
+            os.path.join(self.volcano.outputDir, "release.txt"),
         )
 
         defs["start"] = start
@@ -70,7 +70,7 @@ class SnapVolcanoTranslator:
         defs["meteofiles"] = "\n".join([f"FIELD.INPUT= {x}" for x in files])
 
         snap_input = SnapAshResources.get_snap_input(metmodel)
-        with open(os.path.join(self.volcano.outputdir, "snap.input"), "wt") as fh:
+        with open(os.path.join(self.volcano.outputDir, "snap.input"), "wt") as fh:
             fh.write(snap_input.format(**defs))
 
     @staticmethod
@@ -150,26 +150,26 @@ class SnapVolcanoTranslator:
         return returncode of snapAddToa, return-code of bsnap is ignored since that might
             fail due to missing meteo, but still give a good beginning.
         """
-        with open(os.path.join(self.volcano.outputdir, "snap.outlog"), "w") as fh:
+        with open(os.path.join(self.volcano.outputDir, "snap.outlog"), "w") as fh:
             logger.info("Starting bsnap_naccident snap.input")
             proc = subprocess.run(
                 ["bsnap_naccident", "snap.input"],
-                cwd=self.volcano.outputdir,
+                cwd=self.volcano.outputDir,
                 stderr=fh,
                 stdout=fh,
             )
-        with open(os.path.join(self.volcano.outputdir, "snapAddToa.outlog"), "w") as fh:
+        with open(os.path.join(self.volcano.outputDir, "snapAddToa.outlog"), "w") as fh:
             logger.info("Starting snapAddToa snap.nc")
             proc = subprocess.run(
                 ["snapAddToa", "snap.nc"],
-                cwd=self.volcano.outputdir,
+                cwd=self.volcano.outputDir,
                 stderr=fh,
                 stdout=fh,
             )
         if proc.returncode == 0:
             if snapnc and snapnc != "snap.nc":
-                ifile = os.path.join(self.volcano.outputdir, "snap.nc")
-                ofile = os.path.join(self.volcano.outputdir, snapnc)
+                ifile = os.path.join(self.volcano.outputDir, "snap.nc")
+                ofile = os.path.join(self.volcano.outputDir, snapnc)
                 os.rename(ifile, ofile)
         return proc.returncode
 
