@@ -227,6 +227,22 @@ class VolcanoXML:
         return (self._defs["lat"], self._defs["lon"])
 
     @property
+    def latitude(self) -> float:
+        """the latitude location of the volcano
+
+        :returns: latitude
+        """
+        return self.latlon[0]
+
+    @property
+    def longitude(self) -> float:
+        """the longitude location of the volcano
+
+        :returns: longitude
+        """
+        return self.latlon[1]
+
+    @property
     def name(self) -> str:
         """the name of the volcano
 
