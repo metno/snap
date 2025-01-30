@@ -206,7 +206,7 @@ class VolcanoXML:
             return (self._defs["snap"]["reference_date"], self._defs["snap"]["model"])
 
     @property
-    def outputdir(self) -> str:
+    def outputDir(self) -> str:
         """Output directory"""
         return self._defs["outputDir"]
 
