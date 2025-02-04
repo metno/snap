@@ -987,7 +987,6 @@ end subroutine
     real, intent(in) :: alev(:), blev(:)
     real, intent(in) :: ptop
 
-    real :: p1, p2, dp, db
     integer :: k
 
     do k = 2, nk
