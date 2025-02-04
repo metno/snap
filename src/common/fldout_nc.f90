@@ -128,7 +128,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     ierror)
   USE iso_fortran_env, only: int16
   USE array_utils, only: is_in_array
-  USE snapgrdML, only: imodlevel, modlevel_is_average, imslp, precipitation_in_output, &
+  USE snapgrdML, only: imodlevel, imslp, precipitation_in_output, &
       itotcomp, compute_column_max_conc, compute_aircraft_doserate, &
       aircraft_doserate_threshold, output_column, &
       output_column, output_vd, output_vd_debug
@@ -164,7 +164,6 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
 
   integer :: nptot1,nptot2
   real(real64) :: bqtot1,bqtot2
-  real(real64) :: dblscale
 
   integer :: i,j,m,n
   integer(int16), pointer, dimension(:) :: mm
@@ -662,7 +661,7 @@ subroutine write_ml_fields(iunit, varid, average, ipos_in, isize, rt1, rt2)
   type(Particle) :: part
   real :: avg, total, dh
   integer :: ivlvl
-  integer :: i, j, k, loop, m, maxage, n, npl
+  integer :: i, j, k, m, maxage, n, npl
   integer :: ipos(4)
   logical :: inactivated_ ! dummy param
 
@@ -1098,7 +1097,7 @@ subroutine initialize_output(filename, itime, ierror)
   integer, intent(out) :: ierror
 
   integer :: iunit
-  integer :: m, mm
+  integer :: m
   character(len=256) :: string
   integer :: dimids2d(2), dimids3d(3), dimids4d(4)
   integer :: chksz3d(3), chksz4d(4)
@@ -1268,9 +1267,9 @@ subroutine initialize_output(filename, itime, ierror)
           units="Bq/m2", chunksize=chksz3d)
       endif
 
-      if (def_comp(mm)%kdrydep > 0 .and. output_vd) then
+      if (output_component(m)%has_drydep .and. output_vd) then
         call nc_declare(iunit, dimids3d, varid%comp(m)%vd, &
-          trim(def_comp(mm)%output_name)//"_dry_deposition_velocity", &
+          trim(output_component(m)%name)//"_dry_deposition_velocity", &
           units="m/s", chunksize=chksz3d)
       endif
 
@@ -1384,7 +1383,7 @@ subroutine unload()
 end subroutine
 
 subroutine get_varids(iunit, varid, ierror)
-  USE snapparML, only: nocomp, output_component, def_comp, nocomp
+  USE snapparML, only: nocomp, output_component, nocomp
   USE snapgrdML, only: imodlevel, modleveldump
   integer, intent(in) :: iunit
   type(common_var), intent(out) :: varid
@@ -1532,8 +1531,7 @@ end subroutine
 
 !> accumulate model level fields only
 subroutine accumulate_ml_field()
-  USE snapgrdML, only: imodlevel, modlevel_is_average, &
-      ivlayer
+  USE snapgrdML, only: imodlevel, ivlayer
   USE snapfldML, only: ml_bq
   USE snapparML, only: def_comp
   USE snapdimml, only: hres_pos
@@ -1568,7 +1566,7 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
       ps1, ps2, t1_abs, t2_abs, aircraft_doserate_scratch, aircraft_doserate, &
       aircraft_doserate_threshold_height
   USE snapdimml, only: nx, ny, nk, output_resolution_factor, hres_pos, lres_pos
-  USE snapparML, only: nocomp, def_comp, output_component
+  USE snapparML, only: nocomp, def_comp
   USE ftestML, only: ftest
   USE releaseML, only: npart
   USE particleML, only: pdata, Particle
