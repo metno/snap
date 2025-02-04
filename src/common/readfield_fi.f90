@@ -701,7 +701,7 @@ contains
     use iso_fortran_env, only: error_unit
     use snaptabML, only: g
     use snapfldML, only: ps2, precip3d, cw3d, cloud_cover, enspos, precip
-    use snapgrdML, only: ahalf, bhalf, kadd, klevel
+    use snapgrdML, only: ahalf, bhalf, klevel
     use snapdimML, only: nx, ny, nk
     use snapmetML, only: mass_fraction_units, cloud_fraction_units, met_params
 !> open netcdf file
@@ -728,7 +728,7 @@ contains
 
     normaliser(:,:) = 0.0
 
-    do k=nk-kadd,2,-1
+    do k=nk,2,-1
       ilevel = klevel(k)
 
       pdiff(:,:) = 100*( (ahalf(k-1) - ahalf(k)) + (bhalf(k-1) - bhalf(k))*ps2 )
@@ -751,7 +751,7 @@ contains
     use snapgrdML, only: ivlevel
     integer :: klimit
     klimit = ivlevel(nint(0.67*10000.0))
-    do k=nk-kadd,2,-1
+    do k=nk,2,-1
       do j=1,ny
         do i=1,nx
           if (normaliser(i,j) > 0.0) then
