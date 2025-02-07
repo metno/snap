@@ -3,7 +3,7 @@ Maintainer: Heiko Klein <heiko.klein@met.no>
 Section: science
 Priority: optional
 Standards-Version: 3.9.5
-Build-Depends: debhelper-compat (= 13), libnetcdff-dev, gfortran, libfimex-1.9-dev
+Build-Depends: debhelper-compat (= 13), pkg-config, libnetcdff-dev, gfortran, libfimex-1.9-dev
 
 Package: bsnap
 Architecture: amd64
