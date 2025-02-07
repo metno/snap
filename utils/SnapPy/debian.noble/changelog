@@ -1,3 +1,15 @@
+snap-py (2.4.9-1) noble; urgency=medium
+
+  * merge aerosol classes
+
+ -- Ubuntu <ubuntu@met.no>  Fri, 07 Feb 2025 13:14:59 +0000
+
+snap-py (2.4.7-2) noble; urgency=medium
+
+  * automatic snapash runs
+
+ -- Ubuntu <ubuntu@met.no>  Mon, 20 Jan 2025 08:38:01 +0000
+
 snap-py (2.4.3-1) noble; urgency=medium
 
   * fixing non-continuous releases; adding column-output
