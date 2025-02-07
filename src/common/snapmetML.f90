@@ -236,10 +236,14 @@ module snapmetML
       met_params%hflux = 'integral_of_surface_downward_sensible_heat_flux_wrt_time'
       met_params%leaf_area_index = 'leaf_area_index'
 
-      met_params%mass_fraction_cloud_condensed_water_in_air = "cloudwater"
-      met_params%mass_fraction_cloud_ice_in_air = "cloudice"
+      met_params%mass_fraction_rain_in_air = "mass_fraction_of_rain_in_air_ml"
+      met_params%mass_fraction_graupel_in_air = "mass_fraction_of_graupel_in_air_ml"
+      met_params%mass_fraction_snow_in_air = "mass_fraction_of_snow_in_air_ml"
 
-      met_params%cloud_fraction = "3D_cloudcover"
+      met_params%mass_fraction_cloud_condensed_water_in_air = "mass_fraction_of_cloud_condensed_water_in_air_ml"
+      met_params%mass_fraction_cloud_ice_in_air = "mass_fraction_of_cloud_ice_in_air_ml"
+
+      met_params%cloud_fraction = "cloud_area_fraction_ml"
 !..get grid parameters from field identification
     case('dmi_eps')
       met_params%has_dummy_dim = .true.
