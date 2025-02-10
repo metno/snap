@@ -657,8 +657,12 @@ contains
       ilevel = klevel(k)
       call fi_checkload(fio, met_params%mass_fraction_rain_in_air, mass_fraction_units, &
                         rain_in_air, nt=timepos, nz=ilevel, nr=nr)
-      call fi_checkload(fio, met_params%mass_fraction_graupel_in_air, mass_fraction_units, &
-                        graupel_in_air, nt=timepos, nz=ilevel, nr=nr)
+      if (met_params%mass_fraction_graupel_in_air /= "") then
+        call fi_checkload(fio, met_params%mass_fraction_graupel_in_air, mass_fraction_units, &
+                          graupel_in_air, nt=timepos, nz=ilevel, nr=nr)
+      else
+        graupel_in_air(:,:) = 0.0
+      endif
       call fi_checkload(fio, met_params%mass_fraction_snow_in_air, mass_fraction_units, &
                         snow_in_air, nt=timepos, nz=ilevel, nr=nr)
 
