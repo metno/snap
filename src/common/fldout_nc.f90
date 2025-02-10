@@ -225,8 +225,9 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
 
     if (allocated(precip3d)) then
       field1(:,:) = precip3d(:,:,2)
+      call hres_field(field1, field_hr1)
       call check(nf90_put_var(iunit, varid%instant_prc, start=ipos, count=isize, &
-          values=field1), "set_accum_prc")
+          values=field_hr1), "set_accum_prc")
     endif
   end if
 
