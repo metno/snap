@@ -516,7 +516,7 @@ subroutine drydep_nonconstant_vd(tstep, vd, part)
   m = part%icomp
   if (def_comp(m)%kdrydep == 1 .and. part%z > 0.996) then
 
-    mm = def_comp(m)%to_running
+    mm = def_comp(m)%to_output
 
     i = nint(part%x)
     j = nint(part%y)
