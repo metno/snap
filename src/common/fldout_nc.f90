@@ -224,7 +224,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
         values=field_hr1), "set_accum_prc")
 
     if (allocated(precip3d)) then
-      field1(:,:) = precip3d(:,:,2)
+      field1(:,:) = sum(precip3d, dim=3)
       call hres_field(field1, field_hr1)
       call check(nf90_put_var(iunit, varid%instant_prc, start=ipos, count=isize, &
           values=field_hr1), "set_accum_prc")
