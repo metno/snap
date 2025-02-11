@@ -195,7 +195,7 @@ contains
       precint = pextra%prc
       q = precint
 
-      mm = def_comp(m)%to_running
+      mm = def_comp(m)%to_output
 
       deprate = wet_deposition_rate(def_comp(m)%radiusmym, q, run_comp(mm)%depconst, tstep)
 
@@ -378,7 +378,7 @@ contains
     j = hres_pos(part%y)
     dep = part%scale_rad(deprate)
 
-    mm = def_comp(m)%to_running
+    mm = def_comp(m)%to_output
 
     !$OMP atomic
     depwet(i, j, mm) = depwet(i, j, mm) + dble(dep)
@@ -613,7 +613,7 @@ contains
     i = nint(part%x)
     j = nint(part%y)
 
-    mm = def_comp(part%icomp)%to_running
+    mm = def_comp(part%icomp)%to_output
 
     rkw = wscav(i,j,k,mm)
 
