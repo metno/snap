@@ -67,8 +67,6 @@ module snapparML
 !> radioactive decay (rate)
     real :: decayrate = -1.0
 
-!> wet deposition rate
-    real :: wetdeprat = -1.0
 !> for each component: 0=wet deposition off  1=wet dep. on
     integer :: kwetdep = -1
 

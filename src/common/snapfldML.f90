@@ -53,6 +53,16 @@ module snapfldML
 
 !> hourly precipitation intensity (mm/hour)
   real(kind=real32), allocatable, save, public :: precip(:,:)
+!> instant precipitation intensity in three dimensions (mm/hour)
+  real(kind=real32), allocatable, save, public :: precip3d(:,:,:)
+!> Cloud water content (mm)
+  real(kind=real32), allocatable, save, public :: cw3d(:,:,:)
+
+!> Cloud cover fraction
+  real(kind=real32), allocatable, save, public :: cloud_cover(:,:,:)
+
+!> wet scavenging rate
+  real(kind=real32), allocatable, save, public :: wscav(:,:,:,:)
 
 !> surface pressure (time step 1)
   real(kind=real32), allocatable, save, public :: ps1(:,:)
@@ -162,4 +172,9 @@ module snapfldML
   ! > Activity lost through exiting rmlimit, maxage
   real(kind=real64), allocatable, save, public :: total_activity_lost_other(:)
 
+  !> Deposition velocity on the grid per species
+  real, allocatable, save, public :: vd_dep(:, :, :)
+
+  real, allocatable, save, public :: xflux(:, :), yflux(:, :), hflux(:, :), z0(:, :), leaf_area_index(:, :), t2m(:, :)
+  real(real64), allocatable, save, public :: roa(:,:), ustar(:,:), monin_l(:,:), raero(:,:), vs(:,:), rs(:,:)
 end module snapfldML

@@ -45,6 +45,13 @@ module snapmetML
     character(len=80) :: precconvrt = ''
     character(len=80) :: total_column_rain = ''
 
+    character(len=80) :: t2m = ''
+    character(len=80) :: yflux = ''
+    character(len=80) :: xflux = ''
+    character(len=80) :: hflux = ''
+    character(len=80) :: z0 = ''
+    character(len=80) :: leaf_area_index = ''
+
     ! flags when reading the data
     logical :: temp_is_abs = .false.
     logical :: has_dummy_dim = .false.
@@ -54,6 +61,20 @@ module snapmetML
     !> Use lowest level in #xwindv/#ywindv in place of
     !> #xwind10mv/#ywind10mv
     logical :: use_model_wind_for_10m = .false.
+    !> Wet deposition: Use 3D precip
+    logical :: use_3d_precip = .false.
+    !> Wet deposition: Use cloud cover fraction
+    logical :: use_ccf = .false.
+
+    !> Cloud water (3D)
+    character(len=80) :: mass_fraction_rain_in_air = ''
+    character(len=80) :: mass_fraction_graupel_in_air = ''
+    character(len=80) :: mass_fraction_snow_in_air = ''
+    !> Precip (3D)
+    character(len=80) :: mass_fraction_cloud_condensed_water_in_air = ''
+    character(len=80) :: mass_fraction_cloud_ice_in_air = ''
+    !> Cloud fraction (3D)
+    character(len=80) :: cloud_fraction = ''
   end type
 
   type(met_params_t), save, public :: met_params = met_params_t()
@@ -70,8 +91,15 @@ module snapmetML
   character(len=*), parameter, public :: precip_units_fallback = 'mm'
   character(len=*), parameter, public :: temp_units = 'K'
 
+  character(len=*), parameter, public :: downward_momentum_flux_units = 'N/m^2'
+  character(len=*), parameter, public :: surface_roughness_length_units = 'm'
+  character(len=*), parameter, public :: surface_heat_flux_units = 'W s/m^2'
+  character(len=*), parameter, public :: leaf_area_index_units = '1'
 
-  public init_meteo_params, requires_precip_deaccumulation
+  character(len=*), parameter, public :: cloud_fraction_units = '%'
+  character(len=*), parameter, public :: mass_fraction_units = 'kg/kg'
+
+  public :: init_meteo_params, requires_precip_deaccumulation
 
   contains
 
@@ -178,6 +206,15 @@ module snapmetML
       met_params%precconvrt = ''
       met_params%precstratiaccumv = ''
       met_params%precconaccumv = ''
+
+      ! 3D precip parameters
+      met_params%mass_fraction_rain_in_air = "mass_fraction_of_liquid_precipitation_in_air_ml"
+      met_params%mass_fraction_snow_in_air = "mass_fraction_of_snow_in_air_ml"
+
+      met_params%mass_fraction_cloud_condensed_water_in_air = "mass_fraction_of_cloud_liquid_water_in_air_ml"
+      met_params%mass_fraction_cloud_ice_in_air = "mass_fraction_of_cloud_ice_in_air_ml"
+
+      met_params%cloud_fraction = "cloud_area_fraction_in_atmosphere_layer_ml"
 !..get grid parameters from field identification
     case('arome')
       met_params%manual_level_selection = .true.
@@ -200,6 +237,22 @@ module snapmetML
       met_params%precaccumv = 'precipitation_amount_acc'
       met_params%precstrativrt = ''
       met_params%precconvrt = ''
+
+      met_params%t2m = 'air_temperature_2m'
+      met_params%xflux = 'downward_northward_momentum_flux_in_air'
+      met_params%yflux = 'downward_eastward_momentum_flux_in_air'
+      met_params%z0 = 'surface_roughness_length'
+      met_params%hflux = 'integral_of_surface_downward_sensible_heat_flux_wrt_time'
+      met_params%leaf_area_index = 'leaf_area_index'
+
+      met_params%mass_fraction_rain_in_air = "mass_fraction_of_rain_in_air_ml"
+      met_params%mass_fraction_graupel_in_air = "mass_fraction_of_graupel_in_air_ml"
+      met_params%mass_fraction_snow_in_air = "mass_fraction_of_snow_in_air_ml"
+
+      met_params%mass_fraction_cloud_condensed_water_in_air = "mass_fraction_of_cloud_condensed_water_in_air_ml"
+      met_params%mass_fraction_cloud_ice_in_air = "mass_fraction_of_cloud_ice_in_air_ml"
+
+      met_params%cloud_fraction = "cloud_area_fraction_ml"
 !..get grid parameters from field identification
     case('dmi_eps')
       met_params%has_dummy_dim = .true.
@@ -262,6 +315,15 @@ module snapmetML
 !.. non accumulated precipitation rates in m/s
       met_params%precstrativrt = 'large_scale_precipitations'
       met_params%precconvrt = 'convective_precipitations'
+
+      met_params%mass_fraction_rain_in_air = "mass_fraction_of_rain_in_air_ml"
+      met_params%mass_fraction_graupel_in_air = "mass_fraction_of_graupel_in_air_ml"
+      met_params%mass_fraction_snow_in_air = "mass_fraction_of_snow_in_air_ml"
+
+      met_params%mass_fraction_cloud_condensed_water_in_air = "mass_fraction_of_cloud_condensed_water_in_air_ml"
+      met_params%mass_fraction_cloud_ice_in_air = "mass_fraction_of_cloud_ice_in_air_ml"
+
+      met_params%cloud_fraction = "cloud_area_fraction_ml"
 !..get grid parameters from field identification
 ! set as long as sortfield still is called
     case('gfs_grib_filter_fimex')

@@ -359,11 +359,13 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
 !..mean sea level pressure, not used in computations,
 !..(only for output to results file)
   if(imslp /= 0) then
-    if ( .NOT. met_params%mslpv == '') then
+    if (met_params%mslpv /= '') then
+      call nfcheckload(ncid, met_params%mslpv, start3d, count3d, pmsl2(:,:))
+    else if (met_params%psv /= '') then
+      call nfcheckload(ncid, met_params%psv, start3d, count3d, pmsl2(:,:))
+    else
       write(iulog,*) 'Mslp not found. Not important.'
       imslp=0
-    else
-      call nfcheckload(ncid, met_params%mslpv, start3d, count3d, pmsl2(:,:))
     end if
   end if
 
@@ -514,7 +516,7 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
     end do
   end if
 
-  return
+  call read_additional_drydep_fields()
 end subroutine readfield_nc
 
 !> Reads `units` attribute of the precipitation variable
@@ -899,7 +901,6 @@ subroutine nfcheckload3d(ncid, varname, start, length, field, return_status)
   end if
 end subroutine nfcheckload3d
 
-
 subroutine compute_vertical_coords(alev, blev, ptop)
   use iso_fortran_env, only: error_unit
   use snapgrdML, only: alevel, blevel, vlevel, ivcoor, klevel, &
@@ -968,4 +969,80 @@ subroutine compute_vertical_coords(alev, blev, ptop)
   vhalf(nk) = vlevel(nk)
 end subroutine
 
+subroutine read_additional_drydep_fields()
+  use drydepml, only: requires_extra_fields_to_be_read
+  if (requires_extra_fields_to_be_read()) then
+    error stop "Reading of extra dry deposition fields is not implemented for netCDF"
+  endif
+end subroutine
+
+  subroutine compute_vertical_levels(alev, blev, ptop)
+    use iso_fortran_env, only: error_unit
+    use snapgrdML, only: alevel, blevel, ahalf, bhalf, vlevel, vhalf, klevel, &
+                         ivcoor
+    use snapdimML, only: nk
+    use snapmetML, only: met_params
+    use snaptabML, only: standard_atmosphere
+
+    real, intent(in) :: alev(:), blev(:)
+    real, intent(in) :: ptop
+
+    integer :: k
+
+    do k = 2, nk
+      alevel(k) = alev(k)
+      blevel(k) = blev(k)
+    end do
+
+
+    if (ivcoor == 2) then
+      !..sigma levels (norlam)
+      do k = 2, nk
+        alevel(k) = ptop*(1.-blevel(k))
+      end do
+    end if
+
+    !..surface
+    alevel(1) = 0.
+    blevel(1) = 1.
+
+    if (ivcoor == 2) then
+      !..sigma levels ... vlevel=sigma
+      vlevel(:) = blevel
+    elseif (ivcoor == 10) then
+      !..eta (hybrid) levels ... vlevel=eta (eta as defined in Hirlam)
+      vlevel(:) = alevel / standard_atmosphere + blevel
+    else
+      write (error_unit, *) 'PROGRAM ERROR.  ivcoor= ', ivcoor
+      error stop 255
+    end if
+
+    !..half levels where height is found,
+    !..alevel and blevel are in the middle of each layer
+    ahalf(1) = alevel(1)
+    bhalf(1) = blevel(1)
+    vhalf(1) = vlevel(1)
+    !..check if subselection of levels
+    do k = 2, nk - 1
+      if (klevel(k + 1) /= klevel(k) - 1) then
+        met_params%manual_level_selection = .TRUE.
+      endif
+    end do
+    do k = 2, nk - 1
+      if (.NOT. met_params%manual_level_selection) then
+        ahalf(k) = alevel(k) + (alevel(k) - ahalf(k - 1))
+        bhalf(k) = blevel(k) + (blevel(k) - bhalf(k - 1))
+        vhalf(k) = ahalf(k)/standard_atmosphere + bhalf(k)
+      else
+        ahalf(k) = (alevel(k) + alevel(k + 1))*0.5
+        bhalf(k) = (blevel(k) + blevel(k + 1))*0.5
+        vhalf(k) = ahalf(k)/standard_atmosphere + bhalf(k)
+      end if
+    end do
+
+    ! Top half level is set to zero pressure
+    ahalf(nk) = 0.0
+    bhalf(nk) = 0.0
+    vhalf(nk) = 0.0
+  end subroutine
 end module readfield_ncML

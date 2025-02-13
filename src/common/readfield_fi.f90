@@ -32,11 +32,12 @@ module readfield_fiML
   implicit none
   private
 
-  public readfield_fi, fi_checkload, check, fimex_open
+  public :: readfield_fi, fi_checkload, check, fimex_open, read_largest_landfraction
 
   !> @brief load and check an array from a source
   interface fi_checkload
-    module procedure fi_checkload1d, fi_checkload2d, fi_checkload3d
+    module procedure :: fi_checkload1d, fi_checkload2d, fi_checkload3d, &
+                        fi_checkload2d_64, fi_checkload3d_64
   end interface
 
 contains
@@ -293,13 +294,19 @@ contains
 !..mean sea level pressure, not used in computations,
 !..(only for output to results file)
     if (imslp /= 0) then
-      if (.NOT. met_params%mslpv == '') then
+      if (met_params%mslpv /= '') then
+        call fi_checkload(fio, met_params%mslpv, pressure_units, pmsl2(:, :), nt=timepos, nr=nr, nz=1)
+      else if (met_params%psv /= '') then
+        call fi_checkload(fio, met_params%psv, pressure_units, pmsl2(:, :), nt=timepos, nr=nr, nz=1)
+      else
         write (iulog, *) 'Mslp not found. Not important.'
         imslp = 0
-      else
-        call fi_checkload(fio, met_params%mslpv, pressure_units, pmsl2(:, :), nt=timepos, nr=nr, nz=1)
-      end if
+      endif
     end if
+
+    if (first_time_read) then
+      call compute_vertical_coords(alev, blev, ptop)
+    endif
 
     if (met_params%need_precipitation) then
       call read_precipitation(fio, nhdiff_precip, timepos, timeposm1)
@@ -307,13 +314,13 @@ contains
       precip = 0.0
     endif
 
+    call read_drydep_required_fields(fio, timepos, timeposm1, nr)
+
     call check(fio%close(), "close fio")
 
 ! first time initialized data
     if (first_time_read) then
       first_time_read = .false.
-
-      call compute_vertical_coords(alev, blev, ptop)
 
       !..compute map ratio
       call mapfield(1, 0, igtype, gparam, nx, ny, xm, ym, &
@@ -448,10 +455,10 @@ contains
       end do
     end if
 
-    return
   end subroutine readfield_fi
 
-!> read precipitation
+!> read precipitation fields and precompute
+!> for wet deposition
   subroutine read_precipitation(fio, nhdiff, timepos, timeposm1)
     use iso_fortran_env, only: error_unit
     use snapdebug, only: iulog
@@ -459,6 +466,7 @@ contains
                          precip_rate_units, precip_units_ => precip_units, precip_units_fallback
     use snapfldML, only: field1, field2, field3, field4, precip, &
                          enspos, precip
+    use wetdepML, only: requires_extra_precip_fields, wetdep_precompute
 
 !> open netcdf file
     TYPE(FimexIO), intent(inout) :: fio
@@ -477,6 +485,7 @@ contains
 !.. get the correct ensemble/realization position, nr starting with 1, enspos starting with 0
     nr = enspos + 1
     if (enspos <= 0) nr = 1
+
 
     if (met_params%precaccumv /= '') then
       !..precipitation between input time 't1' and 't2'
@@ -534,8 +543,186 @@ contains
     where (precip < 0.0)
       precip = 0.0
     end where
+
+    if (requires_extra_precip_fields()) then
+      if ((met_params%mass_fraction_rain_in_air /= "") .and. &
+          (met_params%mass_fraction_cloud_condensed_water_in_air /= "")) then
+        call read_extra_precipitation_fields(fio, timepos)
+      else if (met_params%mass_fraction_cloud_condensed_water_in_air /= "") then
+        call read_extra_precipitation_fields_infer_3d_precip(fio, timepos)
+      else
+        error stop "Can not read extra 3D precipition for this meteorology"
+      endif
+    endif
+
+    call wetdep_precompute()
   end subroutine read_precipitation
 
+  subroutine read_extra_precipitation_fields(fio, timepos)
+    use iso_fortran_env, only: error_unit
+    use snaptabML, only: g
+    use snapfldML, only: ps2, precip3d, cw3d, cloud_cover, enspos
+    use snapgrdML, only: ahalf, bhalf, klevel
+    use snapdimML, only: nx, ny, nk
+    use snapmetML, only: mass_fraction_units, cloud_fraction_units, met_params
+!> open netcdf file
+    TYPE(FimexIO), intent(inout) :: fio
+!> timestep in file
+    integer, intent(in) :: timepos
+
+    real(real64), allocatable :: rain_in_air(:,:), graupel_in_air(:,:), snow_in_air(:,:)
+    real(real64), allocatable :: cloud_water(:,:), cloud_ice(:,:)
+    real(real64), allocatable :: pdiff(:,:)
+
+    integer :: ilevel, k, nr
+
+!.. get the correct ensemble/realization position, nr starting with 1, enspos starting with 0
+    nr = enspos + 1
+    if (enspos <= 0) nr = 1
+
+    allocate(rain_in_air(nx,ny),graupel_in_air(nx,ny),snow_in_air(nx,ny),pdiff(nx,ny))
+    allocate(cloud_water(nx,ny),cloud_ice(nx,ny))
+
+    precip3d(:,:,:) = 0.0
+    cw3d(:,:,:) = 0.0
+
+    do k=nk,2,-1
+      ilevel = klevel(k)
+      call fi_checkload(fio, met_params%mass_fraction_rain_in_air, mass_fraction_units, &
+                        rain_in_air, nt=timepos, nz=ilevel, nr=nr)
+      if (met_params%mass_fraction_graupel_in_air /= "") then
+        call fi_checkload(fio, met_params%mass_fraction_graupel_in_air, mass_fraction_units, &
+                          graupel_in_air, nt=timepos, nz=ilevel, nr=nr)
+      else
+        graupel_in_air(:,:) = 0.0
+      endif
+      call fi_checkload(fio, met_params%mass_fraction_snow_in_air, mass_fraction_units, &
+                        snow_in_air, nt=timepos, nz=ilevel, nr=nr)
+
+      where (rain_in_air < 0.0)
+        rain_in_air = 0.0
+      end where
+      where (graupel_in_air < 0.0)
+        graupel_in_air = 0.0
+      end where
+      where (snow_in_air < 0.0)
+        snow_in_air = 0.0
+      end where
+
+      pdiff(:,:) = 100*( (ahalf(k-1) - ahalf(k)) + (bhalf(k-1) - bhalf(k))*ps2 )
+
+      precip3d(:,:,k) = rain_in_air + graupel_in_air + snow_in_air
+      precip3d(:,:,k) = precip3d(:,:,k) * pdiff / g
+
+      call fi_checkload(fio, met_params%mass_fraction_cloud_condensed_water_in_air, mass_fraction_units, &
+                        cloud_water, nt=timepos, nz=ilevel, nr=nr)
+      call fi_checkload(fio, met_params%mass_fraction_cloud_ice_in_air, mass_fraction_units, &
+                        cloud_ice, nt=timepos, nz=ilevel, nr=nr)
+
+      where (cloud_water < 0.0)
+        cloud_water = 0.0
+      end where
+      where (cloud_ice < 0.0)
+        cloud_ice = 0.0
+      end where
+      cw3d(:,:,k) = cloud_water + cloud_ice
+      cw3d(:,:,k) = cw3d(:,:,k) * pdiff / g
+
+      call fi_checkload(fio, met_params%cloud_fraction, cloud_fraction_units, &
+                        cloud_cover(:,:,k), nt=timepos, nz=ilevel, nr=nr)
+    enddo
+  end subroutine
+
+  !> Read and convert fields from ecemep input to what we need for 3D precip
+  subroutine read_extra_precipitation_fields_infer_3d_precip(fio, timepos)
+    use iso_fortran_env, only: error_unit
+    use snaptabML, only: g
+    use snapfldML, only: ps2, precip3d, cw3d, cloud_cover, enspos, precip
+    use snapgrdML, only: ahalf, bhalf, klevel
+    use snapdimML, only: nx, ny, nk
+    use snapmetML, only: mass_fraction_units, cloud_fraction_units, met_params
+!> open netcdf file
+    TYPE(FimexIO), intent(inout) :: fio
+!> timestep in file
+    integer, intent(in) :: timepos
+
+    real(real64), allocatable :: normaliser(:,:)
+    real(real64), allocatable :: pdiff(:,:)
+    real(real64), allocatable :: cloud_water(:,:), cloud_ice(:,:)
+
+    integer :: ilevel, k, nr, i, j
+
+!.. get the correct ensemble/realization position, nr starting with 1, enspos starting with 0
+    nr = enspos + 1
+    if (enspos <= 0) nr = 1
+
+    allocate(pdiff(nx,ny))
+    allocate(normaliser(nx,ny))
+    allocate(cloud_water(nx,ny), cloud_ice(nx,ny))
+
+    precip3d(:,:,:) = 0.0
+    cw3d(:,:,:) = 0.0
+
+    normaliser(:,:) = 0.0
+
+    do k=nk,2,-1
+      ilevel = klevel(k)
+
+      pdiff(:,:) = 100*( (ahalf(k-1) - ahalf(k)) + (bhalf(k-1) - bhalf(k))*ps2 )
+      call fi_checkload(fio, met_params%mass_fraction_cloud_condensed_water_in_air, mass_fraction_units, &
+                        cloud_water(:,:), nt=timepos, nz=ilevel, nr=nr)
+      call fi_checkload(fio, met_params%mass_fraction_cloud_ice_in_air, mass_fraction_units, &
+                        cloud_ice(:,:), nt=timepos, nz=ilevel, nr=nr)
+
+      cw3d(:,:,k) = (abs(cloud_water(:,:)) + abs(cloud_ice(:,:))) * pdiff / g
+
+      ! Use cloud water to assign precipitation at model levels
+      normaliser(:,:) = normaliser + cw3d(:,:,k)
+      precip3d(:,:,k) = precip * cw3d(:,:,k)
+
+      call fi_checkload(fio, met_params%cloud_fraction, cloud_fraction_units, &
+                        cloud_cover(:,:,k), nt=timepos, nz=ilevel, nr=nr)
+    enddo
+
+    block
+    use snapgrdML, only: ivlevel
+    integer :: klimit
+    klimit = ivlevel(nint(0.67*10000.0))
+    do k=nk,2,-1
+      do j=1,ny
+        do i=1,nx
+          if (normaliser(i,j) > 0.0) then
+            precip3d(i,j,k) = precip3d(i,j,k) / normaliser(i,j)
+          elseif (k == klimit) then
+            ! Put all precip at level closest to 0.67, analoguous
+            ! with the old formulation of the precipitation
+            precip3d(i,j,k) = precip(i,j)
+          endif
+        enddo
+      enddo
+    enddo
+    end block
+
+    ! block ! Debug
+    !   use snapfldML, only: garea
+    !   real :: total_precip
+    !   real :: total_precip2
+    !   real, allocatable :: tmp(:,:)
+
+    !   allocate(tmp(nx,ny))
+
+    !   tmp(:,:) = precip * garea
+    !   total_precip = sum(tmp)
+    !   tmp(:,:) = sum(precip3d, dim=3)
+    !   tmp(:,:) = tmp * garea
+    !   total_precip2 = sum(tmp)
+
+    !   write(*,*) "PRECIP LOSS: ", total_precip2 - total_precip
+    !   write(*,*) "Precip from 2D fields: ", total_precip
+    !   write(*,*) "Precip from 3d fields: ", total_precip2
+    ! end block
+  end subroutine
+  
   subroutine check(status, errmsg)
     integer, intent(in) :: status
     character(len=*), intent(in), optional :: errmsg
@@ -591,6 +778,21 @@ contains
     deallocate(zfield)
   end subroutine fi_checkload2d
 
+  subroutine fi_checkload2d_64(fio, varname, units, field, nt, nz, nr, ierror)
+    TYPE(FimexIO), intent(inout) :: fio
+    character(len=*), intent(in) :: varname, units
+    integer, intent(in), optional :: nt, nz, nr
+    real(real64), intent(out) :: field(:, :)
+    integer, intent(out), optional :: ierror
+
+    real(kind=real64), dimension(:), allocatable, target :: zfield
+
+    call fi_checkload_intern(fio, varname, units, zfield, nt, nz, nr, ierror)
+
+    field(:,:) = reshape(zfield, shape(field))
+    deallocate(zfield)
+  end subroutine fi_checkload2d_64
+
   subroutine fi_checkload3d(fio, varname, units, field, nt, nz, nr, ierror)
     TYPE(FimexIO), intent(inout) :: fio
     character(len=*), intent(in) :: varname, units
@@ -605,6 +807,21 @@ contains
     field(:,:,:) = REAL(reshape(zfield, shape(field)), KIND=real32)
     deallocate(zfield)
   end subroutine fi_checkload3d
+
+  subroutine fi_checkload3d_64(fio, varname, units, field, nt, nz, nr, ierror)
+    TYPE(FimexIO), intent(inout) :: fio
+    character(len=*), intent(in) :: varname, units
+    integer, intent(in), optional :: nt, nz, nr
+    real(real64), intent(out) :: field(:, :, :)
+    integer, intent(out), optional :: ierror
+
+    real(kind=real64), dimension(:), allocatable, target :: zfield
+
+    call fi_checkload_intern(fio, varname, units, zfield, nt, nz, nr, ierror)
+
+    field(:,:,:) = reshape(zfield, shape(field))
+    deallocate(zfield)
+  end subroutine fi_checkload3d_64
 
   !> internal implementation, allocating the zfield
   subroutine fi_checkload_intern(fio, varname, units, zfield, nt, nz, nr, ierror)
@@ -688,5 +905,115 @@ contains
     end if
     write (iulog, *) "reading "//trim(varname)//", min, max: ", minval(zfield), maxval(zfield)
   end subroutine fi_checkload_intern
+
+  subroutine read_drydep_required_fields(fio, timepos, timeposm1, nr)
+    USE ieee_arithmetic, only: ieee_is_nan
+    USE iso_fortran_env, only: real64
+    USE snapmetML, only: met_params, &
+      temp_units, downward_momentum_flux_units, surface_roughness_length_units, &
+      surface_heat_flux_units, leaf_area_index_units
+    use drydepml, only: drydep_precompute, requires_extra_fields_to_be_read, classnr
+    use snapparML, only: ncomp, run_comp, def_comp
+    use snapfldML, only: ps2, vd_dep, xflux, yflux, hflux, z0, leaf_area_index, t2m, &
+      roa, ustar, monin_l, raero, vs, rs
+    type(FimexIO), intent(inout) :: fio
+    integer, intent(in) :: timepos, timeposm1
+    integer, intent(in) :: nr
+
+    real, allocatable :: tmp1(:, :), tmp2(:, :)
+    integer :: i, mm
+    real(real64) :: diam, dens
+
+    if (.not.requires_extra_fields_to_be_read()) then
+      return
+    endif
+
+    allocate(tmp1, tmp2, MOLD=ps2)
+
+
+    ! Fluxes are integrated: Deaccumulate
+    if (timepos == 1) then
+      call fi_checkload(fio, met_params%xflux, downward_momentum_flux_units, xflux(:, :), nt=timepos, nr=nr)
+      call fi_checkload(fio, met_params%yflux, downward_momentum_flux_units, yflux(:, :), nt=timepos, nr=nr)
+    else
+      call fi_checkload(fio, met_params%xflux, downward_momentum_flux_units, tmp1(:, :), nt=timeposm1, nr=nr)
+      call fi_checkload(fio, met_params%xflux, downward_momentum_flux_units, tmp2(:, :), nt=timepos, nr=nr)
+      xflux(:,:) = tmp2 - tmp1
+
+      call fi_checkload(fio, met_params%yflux, downward_momentum_flux_units, tmp1(:, :), nt=timeposm1, nr=nr)
+      call fi_checkload(fio, met_params%yflux, downward_momentum_flux_units, tmp2(:, :), nt=timepos, nr=nr)
+      yflux(:,:) = tmp2 - tmp1
+    endif
+    ! TODO: Normalise by difference between intervals
+    xflux(:,:) =  xflux / 3600
+    yflux(:,:) =  yflux / 3600
+
+    if (timepos == 1) then
+      call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, hflux(:, :), nt=timepos, nr=nr)
+    else if (timepos == 13) then
+      ! Weird AROME data is invalid at t=12
+      call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, tmp1(:, :), nt=timeposm1, nr=nr)
+      call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, tmp2(:, :), nt=timepos+1, nr=nr)
+      hflux(:,:) = (tmp2 - tmp1)/2
+    else if (timepos == 14) then
+      ! Weird AROME data is invalid at t=13
+      call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, tmp1(:, :), nt=timeposm1-1, nr=nr)
+      call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, tmp2(:, :), nt=timepos, nr=nr)
+      hflux(:,:) = (tmp2 - tmp1)/2
+    else
+      call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, tmp1(:, :), nt=timeposm1, nr=nr)
+      call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, tmp2(:, :), nt=timepos, nr=nr)
+      hflux(:,:) = tmp2 - tmp1
+    endif
+    ! TODO: Normalise by difference between intervals
+    hflux(:,:) = -hflux / 3600 ! Follow conventions for up/down
+
+
+    call fi_checkload(fio, met_params%z0, surface_roughness_length_units, z0(:, :), nt=timepos, nr=nr)
+    call fi_checkload(fio, met_params%leaf_area_index, leaf_area_index_units, leaf_area_index(:, :), nt=timepos, nr=nr)
+    where (ieee_is_nan(leaf_area_index))
+      leaf_area_index = 0.0
+    endwhere
+    call fi_checkload(fio, met_params%t2m, temp_units, t2m(:, :), nt=timepos, nr=nr)
+
+    do i=1,ncomp
+      mm = run_comp(i)%to_defined
+
+      if (def_comp(mm)%kdrydep == 1) then
+        diam = 2*def_comp(mm)%radiusmym*1e-6
+        dens = def_comp(mm)%densitygcm3*1e3
+        call drydep_precompute(ps2*100, t2m, yflux, xflux, z0, &
+            hflux, leaf_area_index, real(diam), real(dens), classnr, vd_dep(:, :, i), &
+            roa, ustar, monin_l, raero, vs, rs)
+      endif
+    end do
+  end subroutine
+
+  subroutine read_largest_landfraction(inputfile)
+    use snapdimML, only: nx, ny
+    use drydepml, only: preprocess_landfraction
+    use fimex, only: INTERPOL_NEAREST_NEIGHBOR
+    use ISO_C_BINDING, only: C_INT
+    character(len=*), intent(in) :: inputfile
+
+    type(fimexIO) :: fio, fio_intern
+
+    real(kind=real32), allocatable :: arr(:,:)
+
+    if (fint%method >= 0) then
+      call check(fio_intern%open(inputfile, "", "nc4"), &
+        "can't open largest landfraction file")
+      call check(fio%interpolate(fio_intern, INTERPOL_NEAREST_NEIGHBOR, fint%proj, fint%x_axis, &
+                                 fint%y_axis, fint%unit_is_degree), &
+                 "Can't interpolate largest landfraction file")
+    else
+      call check(fio%open(inputfile, "", "nc4"), "Can't open largest landraction file")
+    endif
+
+    allocate(arr(nx, ny))
+    call fi_checkload(fio, "Main_Nature_Cover", "1", arr)
+
+    call preprocess_landfraction(arr)
+  end subroutine
 
 end module readfield_fiML

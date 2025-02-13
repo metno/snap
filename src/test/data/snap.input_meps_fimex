@@ -110,8 +110,8 @@ FIELD_TIME.FORECAST
 ** OUTPUT FILES
 *
 FIELD.OUTTYPE=netcdf
-FIELD.OUTPUT= snap.nc
-LOG.FILE=     snap.log
+FIELD.OUTPUT= snap_meps_fimex.nc
+LOG.FILE=     snap_meps_fimex.log
 *
 * DEBUG.OFF
 DEBUG.ON
