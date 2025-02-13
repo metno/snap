@@ -1210,6 +1210,64 @@ subroutine initialize_output(filename, itime, ierror)
 
     call check(nf90_def_var(iunit, "components", NF90_CHAR, [dimid%maxcompname, dimid%nocomp], varid%components))
 
+    if (output_vd_debug) then
+      block
+        use snapmetml, only: downward_momentum_flux_units, surface_heat_flux_units, &
+          leaf_area_index_units, surface_roughness_length_units, temp_units
+      call nc_declare(iunit, dimids3d, varid%xflux, &
+        "xflux", units=downward_momentum_flux_units, &
+        chunksize=chksz3d)
+      call nc_declare(iunit, dimids3d, varid%yflux, &
+        "yflux", units=downward_momentum_flux_units, &
+        chunksize=chksz3d)
+      call nc_declare(iunit, dimids3d, varid%hflux, &
+        "hflux", units=surface_heat_flux_units, &
+        chunksize=chksz3d)
+      call nc_declare(iunit, dimids3d, varid%z0, &
+        "z0", units=surface_roughness_length_units, &
+        chunksize=chksz3d)
+      call nc_declare(iunit, dimids3d, varid%lai, &
+        "lai", units=leaf_area_index_units, &
+        chunksize=chksz3d)
+      call nc_declare(iunit, dimids3d, varid%t2m, &
+        "t2m", units=temp_units, &
+        chunksize=chksz3d)
+      call nc_declare(iunit, dimids3d, varid%roa, &
+        "roa", units="??", chunksize=chksz3d)
+      call nc_declare(iunit, dimids3d, varid%ustar, &
+        "ustar", units="??", chunksize=chksz3d)
+      call nc_declare(iunit, dimids3d, varid%monin_l, &
+        "monin_l", units="??", chunksize=chksz3d)
+      call nc_declare(iunit, dimids3d, varid%raero, &
+        "raero", units="??", chunksize=chksz3d)
+      call nc_declare(iunit, dimids3d, varid%vs, &
+        "vs", units="??", chunksize=chksz3d)
+      call nc_declare(iunit, dimids3d, varid%rs, &
+        "rs", units="??", chunksize=chksz3d)
+      call nc_declare(iunit, dimids3d, varid%ps_vd, &
+        "ps_vd", units="hPa", chunksize=chksz3d)
+      end block
+    endif
+
+    block
+      use iso_fortran_env, only: int8
+      use drydepml, only: largest_landfraction_file, classnr
+      integer(kind=int8), allocatable :: classnr_hr(:,:)
+      if (largest_landfraction_file /= "not set") then
+          call nc_declare(iunit, dimids2d, varid%landfraction, &
+            "largest_land_fraction", units="1", datatype=NF90_BYTE)
+          call hres_field(classnr, classnr_hr)
+          call check(nf90_put_var(iunit, varid%landfraction, start=[1, 1], count=shape(classnr_hr), &
+            values=classnr_hr), "Put landfraction")
+          call check(nf90_put_att(iunit, varid%landfraction, "flag_values", &
+            [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]))
+          call check(nf90_put_att(iunit, varid%landfraction, "flag_meanings", &
+            "sea inland_water tundra_and_desert ice_and_ice_sheets urban crops" // &
+            " grass wetlands evergreen_needleleaf deciduous_broadleaf" // &
+            " mixed_forest shrubs_and_interrupted_woodlands"))
+      endif
+    end block
+
     do m=1,nocomp
       call check(nf90_put_var(iunit, varid%components, &
         start=[1, m], count=[len_trim(output_component(m)%name), 1], &
@@ -1273,66 +1331,8 @@ subroutine initialize_output(filename, itime, ierror)
           trim(output_component(m)%name)//"_dry_deposition_velocity", &
           units="m/s", chunksize=chksz3d)
       endif
-
-      if (output_vd_debug) then
-        block
-          use snapmetml, only: downward_momentum_flux_units, surface_heat_flux_units, &
-            leaf_area_index_units, surface_roughness_length_units, temp_units
-        call nc_declare(iunit, dimids3d, varid%xflux, &
-          "xflux", units=downward_momentum_flux_units, &
-          chunksize=chksz3d)
-        call nc_declare(iunit, dimids3d, varid%yflux, &
-          "yflux", units=downward_momentum_flux_units, &
-          chunksize=chksz3d)
-        call nc_declare(iunit, dimids3d, varid%hflux, &
-          "hflux", units=surface_heat_flux_units, &
-          chunksize=chksz3d)
-        call nc_declare(iunit, dimids3d, varid%z0, &
-          "z0", units=surface_roughness_length_units, &
-          chunksize=chksz3d)
-        call nc_declare(iunit, dimids3d, varid%lai, &
-          "lai", units=leaf_area_index_units, &
-          chunksize=chksz3d)
-        call nc_declare(iunit, dimids3d, varid%t2m, &
-          "t2m", units=temp_units, &
-          chunksize=chksz3d)
-        call nc_declare(iunit, dimids3d, varid%roa, &
-          "roa", units="??", chunksize=chksz3d)
-        call nc_declare(iunit, dimids3d, varid%ustar, &
-          "ustar", units="??", chunksize=chksz3d)
-        call nc_declare(iunit, dimids3d, varid%monin_l, &
-          "monin_l", units="??", chunksize=chksz3d)
-        call nc_declare(iunit, dimids3d, varid%raero, &
-          "raero", units="??", chunksize=chksz3d)
-        call nc_declare(iunit, dimids3d, varid%vs, &
-          "vs", units="??", chunksize=chksz3d)
-        call nc_declare(iunit, dimids3d, varid%rs, &
-          "rs", units="??", chunksize=chksz3d)
-        call nc_declare(iunit, dimids3d, varid%ps_vd, &
-          "ps_vd", units="hPa", chunksize=chksz3d)
-        end block
-      endif
-
-      block
-        use iso_fortran_env, only: int8
-        use drydepml, only: largest_landfraction_file, classnr
-        integer(kind=int8), allocatable :: classnr_hr(:,:)
-        if (largest_landfraction_file /= "not set") then
-            call nc_declare(iunit, dimids2d, varid%landfraction, &
-              "largest_land_fraction", units="1", datatype=NF90_BYTE)
-            call hres_field(classnr, classnr_hr)
-            call check(nf90_put_var(iunit, varid%landfraction, start=[1, 1], count=shape(classnr_hr), &
-              values=classnr_hr), "Put landfraction")
-            call check(nf90_put_att(iunit, varid%landfraction, "flag_values", &
-              [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]))
-            call check(nf90_put_att(iunit, varid%landfraction, "flag_meanings", &
-              "sea inland_water tundra_and_desert ice_and_ice_sheets urban crops" // &
-              " grass wetlands evergreen_needleleaf deciduous_broadleaf" // &
-              " mixed_forest shrubs_and_interrupted_woodlands"))
-        endif
-    end block
-
     end do
+
     if (itotcomp == 1) then
       call nc_declare(iunit, dimids3d, varid%icblt, &
         "total_concentration_bl", units="Bq/m3", &
