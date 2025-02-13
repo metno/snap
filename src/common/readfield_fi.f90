@@ -990,6 +990,7 @@ contains
   end subroutine
 
   subroutine read_largest_landfraction(inputfile)
+    USE ieee_arithmetic, only: ieee_is_nan
     use snapdimML, only: nx, ny
     use drydepml, only: preprocess_landfraction
     use fimex, only: INTERPOL_NEAREST_NEIGHBOR
@@ -1007,11 +1008,15 @@ contains
                                  fint%y_axis, fint%unit_is_degree), &
                  "Can't interpolate largest landfraction file")
     else
-      call check(fio%open(inputfile, "", "nc4"), "Can't open largest landraction file")
+      call check(fio%open(inputfile, "", "nc4"), "Can't open largest landfraction file")
     endif
 
     allocate(arr(nx, ny))
     call fi_checkload(fio, "Main_Nature_Cover", "1", arr)
+
+    where (ieee_is_nan(arr))
+      arr = 11  ! Assume water where not defined
+    endwhere
 
     call preprocess_landfraction(arr)
   end subroutine
