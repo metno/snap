@@ -970,10 +970,31 @@ contains
 
 
     call fi_checkload(fio, met_params%z0, surface_roughness_length_units, z0(:, :), nt=timepos, nr=nr)
-    call fi_checkload(fio, met_params%leaf_area_index, leaf_area_index_units, leaf_area_index(:, :), nt=timepos, nr=nr)
+
+    if (met_params%leaf_area_index /= "") then
+      call fi_checkload(fio, met_params%leaf_area_index, leaf_area_index_units, leaf_area_index(:, :), nt=timepos, nr=nr)
+    else ! Leaf area index may be split into patches which must be combined
+      block
+        real, allocatable :: leaf_area_index_p1(:,:), leaf_area_index_p2(:,:)
+        allocate(leaf_area_index_p1, leaf_area_index_p2, mold=leaf_area_index)
+        call fi_checkload(fio, met_params%leaf_area_index_p1, leaf_area_index_units, leaf_area_index_p1(:,:), nt=timepos, nr=nr)
+        call fi_checkload(fio, met_params%leaf_area_index_p2, leaf_area_index_units, leaf_area_index_p2(:,:), nt=timepos, nr=nr)
+
+        where (.not.ieee_is_nan(leaf_area_index_p1) .and. .not.ieee_is_nan(leaf_area_index_p2))
+          leaf_area_index = max(leaf_area_index_p1, leaf_area_index_p2)
+        elsewhere (.not.ieee_is_nan(leaf_area_index_p1))
+          leaf_area_index = leaf_area_index_p1
+        elsewhere (.not.ieee_is_nan(leaf_area_index_p2))
+          leaf_area_index = leaf_area_index_p2
+        elsewhere
+          leaf_area_index = 0.0
+        endwhere
+      end block
+    endif
     where (ieee_is_nan(leaf_area_index))
       leaf_area_index = 0.0
     endwhere
+
     call fi_checkload(fio, met_params%t2m, temp_units, t2m(:, :), nt=timepos, nr=nr)
 
     do i=1,ncomp
