@@ -60,10 +60,15 @@ module snapdimML
 !> low_resolution input grid position
   public :: lres_pos
 
+!> translate a field in normal resolution to high output resolution
+  interface hres_field
+    module procedure :: hres_field_real32, hres_field_int8, hres_field_real64_real32
+  end interface
+
   contains
 
 !> translate a field in normal resolution to high output resolution
-  subroutine hres_field(field, field_hres, bilinear)
+  subroutine hres_field_real32(field, field_hres, bilinear)
     USE iso_fortran_env, only: real32
     real(kind=real32), intent(in) :: field(:,:)
     real(kind=real32), intent(inout) :: field_hres(:,:)
@@ -111,11 +116,85 @@ module snapdimML
         end do
       end do
     end if
-  end subroutine hres_field
+  end subroutine
+
+!> translate a field in normal resolution to high output resolution
+  subroutine hres_field_real64_real32(field, field_hres, bilinear)
+    USE iso_fortran_env, only: real32, real64
+    real(kind=real64), intent(in) :: field(:,:)
+    real(kind=real32), intent(inout) :: field_hres(:,:)
+    logical, optional, intent(in) :: bilinear
+    logical :: is_bilinear
+    integer :: i, j, k, l, or_2
+    real dd, dx, dy, c1, c2, c3, c4
+
+    is_bilinear = .false.
+    if (present(bilinear)) is_bilinear = bilinear
+    if (output_resolution_factor == 1) is_bilinear = .false.
+
+    ! nearest neighbor, even if bilinear, to fix the borders
+    do j = 1, ny
+      do l = 1, output_resolution_factor
+        do i = 1, nx
+          do k = 1, output_resolution_factor
+            field_hres(output_resolution_factor*(i-1)+k, output_resolution_factor*(j-1)+l) = field(i,j)
+          end do
+        end do
+      end do
+    end do
+
+    if (is_bilinear) then
+      or_2 = int(output_resolution_factor / 2.)
+      dd = 1./output_resolution_factor
+      do j = 1, ny-1
+        do l = 1, output_resolution_factor
+          do i = 1, nx-1
+            do k = 1, output_resolution_factor
+              ! this will partly extrapolate to left/bottom
+              ! but otherwise too many corner-cases needed
+              dx=(k-1-or_2)*dd
+              dy=(l-1-or_2)*dd
+              c1=(1.-dy)*(1.-dx)
+              c2=(1.-dy)*dx
+              c3=dy*(1.-dx)
+              c4=dy*dx
+              ! go here from -5 to 4 (for case resolution-factor 10)
+              field_hres(output_resolution_factor*i+k-or_2, output_resolution_factor*j+l-or_2) = &
+                c1 * field(i, j)   + c2 * field(i+1, j) + &
+                c3 * field(i, j+1) + c4 * field(i+1, j+1)
+            end do
+          end do
+        end do
+      end do
+    end if
+  end subroutine
+
+  subroutine hres_field_int8(field, field_hres)
+    USE iso_fortran_env, only: int8
+    integer(kind=int8), intent(in) :: field(:,:)
+    integer(kind=int8), allocatable, intent(out) :: field_hres(:,:)
+
+    integer :: newshape(2)
+
+    integer :: i, j, k, l
+
+    newshape(:) = shape(field)*output_resolution_factor
+    allocate(field_hres(newshape(1), newshape(2)))
+
+    do j = 1, ny
+      do l = 1, output_resolution_factor
+        do i = 1, nx
+          do k = 1, output_resolution_factor
+            field_hres(output_resolution_factor*(i-1)+k, output_resolution_factor*(j-1)+l) = field(i,j)
+          end do
+        end do
+      end do
+    end do
+  end subroutine
 
 !> translate a x or y position in the input-grid to the
 !> high_resolution output grid position
-  integer function hres_pos(lres_pos)
+  pure integer function hres_pos(lres_pos)
     USE iso_fortran_env, only: real64
     real(kind=real64), intent(in) :: lres_pos
     ! convert to 0.5-starting position (cell 1 from [0.5,1.5[, extend to new range, convert to 1-start
@@ -123,8 +202,8 @@ module snapdimML
   end function hres_pos
 
 !> translate a x or y position in the output-grid to the
-!> lwo_resolution input grid position
-  integer function lres_pos(hres_pos)
+!> low_resolution input grid position
+  pure integer function lres_pos(hres_pos)
     USE iso_fortran_env, only: real64
     integer, intent(in) :: hres_pos
     ! convert to 0-starting positions, extend to new range, convert to 1-start

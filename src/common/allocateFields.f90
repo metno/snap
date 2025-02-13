@@ -24,10 +24,14 @@ module allocateFieldsML
       depdry, depwet, accprec, avgprec, avghbl, precip, &
       pmsl1, pmsl2, field1, field2, field3, field4, field3d1, xm, ym, &
       garea, field_hr1, field_hr2, field_hr3, hbl_hr, &
+      precip3d, cw3d, &
       max_column_scratch, max_column_concentration, &
       aircraft_doserate, aircraft_doserate_scratch, t1_abs, t2_abs, &
-      aircraft_doserate_threshold_height, &
-      total_activity_released, total_activity_lost_domain, total_activity_lost_other
+      aircraft_doserate_threshold_height, vd_dep, &
+      xflux, yflux, hflux, t2m, z0, leaf_area_index, &
+      roa, ustar, monin_l, raero, vs, rs, &
+      total_activity_released, total_activity_lost_domain, total_activity_lost_other, &
+      wscav, cloud_cover
   USE snapfilML, only: idata, fdata
   USE snapgrdML, only: ahalf, bhalf, vhalf, alevel, blevel, vlevel, imodlevel, &
       compute_column_max_conc, compute_aircraft_doserate, aircraft_doserate_threshold
@@ -44,6 +48,7 @@ subroutine allocateFields
   USE snapdimML, only: nx, ny, nk, output_resolution_factor, ldata, maxsiz
   USE snapparML, only: ncomp, nocomp, iparnum
   USE releaseML, only: mplume, iplume, plume_release, mpart
+  USE snapmetML, only: met_params
 
   logical, save :: FirstCall = .TRUE.
   integer :: AllocateStatus
@@ -147,6 +152,14 @@ subroutine allocateFields
 
   ALLOCATE ( precip(nx,ny), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
+  if (met_params%use_3d_precip) then
+    ALLOCATE(precip3d(nx,ny,nk), cw3d(nx,ny,nk), STAT=AllocateStatus)
+    if (AllocateStatus /= 0) ERROR STOP errmsg
+    ALLOCATE(wscav(nx,ny,nk,ncomp),STAT=AllocateStatus)
+    if (AllocateStatus /= 0) ERROR STOP errmsg
+    wscav(:,:,:,:) = 0.0
+    allocate(cloud_cover(nx,ny,nk))
+  endif
 
 ! the calculation-fields
   ALLOCATE ( avghbl(nx,ny), STAT = AllocateStatus)
@@ -223,6 +236,18 @@ subroutine allocateFields
   total_activity_lost_domain(:) = 0.0
   total_activity_lost_other(:) = 0.0
 
+  ! Dry deposition fields
+  block
+    use drydepml, only: requires_extra_fields_to_be_read
+    if (requires_extra_fields_to_be_read()) then
+      allocate(vd_dep(nx,ny,ncomp), STAT=AllocateStatus)
+      if (AllocateStatus /= 0) ERROR STOP errmsg
+      allocate(xflux, yflux, hflux, t2m, z0, leaf_area_index, mold=ps2)
+      allocate(roa(nx, ny))
+      allocate(ustar, monin_l, raero, vs, rs, mold=roa)
+    endif
+  end block
+
 end subroutine allocateFields
 
 
@@ -276,6 +301,10 @@ subroutine deAllocateFields
   DEALLOCATE ( pmsl2)
 
   DEALLOCATE ( precip)
+  if (allocated(precip3d)) deallocate(precip3d)
+  if (allocated(cw3d)) deallocate(cw3d)
+  if (allocated(wscav)) deallocate(wscav)
+  if (allocated(cloud_cover)) deallocate(cloud_cover)
 
   DEALLOCATE ( avghbl )
   DEALLOCATE ( avgprec )
@@ -316,6 +345,11 @@ subroutine deAllocateFields
   DEALLOCATE ( plume_release )
 
   DEALLOCATE( total_activity_released, total_activity_lost_domain, total_activity_lost_other )
+  if (allocated(vd_dep)) then
+    deallocate(vd_dep)
+    deallocate(xflux, yflux, hflux, t2m, z0, leaf_area_index)
+    deallocate(roa, ustar, monin_l, raero, vs, rs)
+  endif
 
 end subroutine deAllocateFields
 end module allocateFieldsML

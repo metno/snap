@@ -32,10 +32,14 @@
 ! RANDOM.WALK.OFF
 ! BOUNDARY.LAYER.FULL.MIX.OFF
 ! BOUNDARY.LAYER.FULL.MIX.ON
-! DRY.DEPOSITION.OLD .......................... (default)
-! DRY.DEPOSITION.NEW
-! WET.DEPOSITION.OLD .......................... (default)
-! WET.DEPOSITION.NEW
+! DRY.DEPOSITION.OLD  * deprecated
+! DRY.DEPOSITION.NEW  * deprecated
+! DRY.DEPOSITION.SCHEME = emerson / new
+! DRY.DEPOSITION.SAVE
+! DRY.DEPOSITION.LARGEST_LANDFRACTION_FILE = "landclasses.nc"
+! WET.DEPOSITION.NEW ! deprecated
+! WET.DEPOSITION.SCHEME = Bartnicki ! (default) bartnicki-takemura
+! WET.DEPOSITION.SAVE  ! Outputs wet scavenging rate (for 3D output only)
 ! TIME.STEP= 900.
 ! TIME.RELEASE.PROFILE.CONSTANT
 ! TIME.RELEASE.PROFILE.BOMB
@@ -74,7 +78,6 @@
 ! WET.DEP.OFF
 ! DRY.DEP.HEIGHT= 44.
 ! DRY.DEP.RATIO=  0.1
-! WET.DEP.RATIO=  0.2
 ! RADIOACTIVE.DECAY.ON
 ! RADIOACTIVE.DECAY.BOMB
 ! RADIOACTIVE.DECAY.OFF
@@ -119,8 +122,7 @@
 ! GRID.GPARAM = 3,-46.400002,-36.400002,0.10800000,0.10800000, 0.0000000, 65.000000
 ! * emep 1x1 deg lat lon
 ! * GRID.GPARAM = 2, -179.,-89.5,1.,1., 0., 0.
-! GRID.RUN=   88,1814, 1,1,1
-! * Norlam (sigma levels)
+! GRID.RUN ! deprecated
 ! DATA.SIGMA.LEVELS
 ! * Hirlam (eta levels)
 ! DATA.ETA.LEVELS
@@ -129,7 +131,7 @@
 ! * wind.surface = wind.10m (one 0 level first in list)
 ! LEVELS.INPUT= 14, 0,31,30,29,28,27,26,25,23,21,17,13,7,1
 ! FIELD.TYPE=felt|netcdf
-! * number of steps to skip in the beginning of a file
+! * number of steps to skip in the beginning of a file (obs: step 0 is not special in case of prognosis)
 ! FIELD.SPINUPSTEPS= 1
 ! FIELD.INPUT= arklam.dat
 ! FIELD.INPUT= feltlam.dat
@@ -139,7 +141,7 @@
 ! * increase output-resolution to factor*input_resolution
 ! FIELD.OUTPUT_RESOLUTION_FACTOR= 1
 ! FIELD.OUTTYPE=netcdf
-! FIELD.DAILY.OUTPUT.ON
+! FIELD.DAILY.OUTPUT.ON ! Output a file per day
 ! FIELD.USE_MODEL_WIND_INSTEAD_OF_10M= [.false.]/.true
 ! OUTPUT.COLUMN_MAX_CONC.ENABLE
 ! OUTPUT.COLUMN_MAX_CONC.DISABLE
@@ -186,12 +188,26 @@ PROGRAM bsnap
   USE checkdomainML, only: check_in_domain
   USE rwalkML, only: rwalk, rwalk_init
   USE milibML, only: xyconvert
-  use snapfldML, only: depwet, total_activity_lost_domain
+  use snapfldML, only: total_activity_lost_domain
   USE forwrdML, only: forwrd, forwrd_init
-  USE wetdep, only: wetdep2, wetdep2_init
-  USE drydep, only: drydep1, drydep2
+  USE wetdepML, only: wetdep, wetdep_scheme, wetdep_scheme_t, &
+    WETDEP_SUBCLOUD_SCHEME_UNDEFINED, WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
+    WETDEP_INCLOUD_SCHEME_NONE, WETDEP_INCLOUD_SCHEME_TAKEMURA, &
+    WETDEP_INCLOUD_SCHEME_UNDEFINED, &
+    operator(==), operator(/=), &
+    wetdep_init => init, wetdep_deinit => deinit
+#if defined(SNAP_EXPERIMENTAL)
+  USE wetdepML, only: WETDEP_SUBCLOUD_SCHEME_CONVENTIONAL, &
+    wet_deposition_conventional_params => conventional_params, &
+    wet_deposition_RATM => RATM_params, &
+    WETDEP_INCLOUD_SCHEME_ROSELLE
+#endif
+  USE drydepml, only: drydep, drydep_scheme, &
+          DRYDEP_SCHEME_OLD, DRYDEP_SCHEME_NEW, DRYDEP_SCHEME_EMEP, &
+          DRYDEP_SCHEME_ZHANG, DRYDEP_SCHEME_EMERSON, DRYDEP_SCHEME_UNDEFINED, &
+          largest_landfraction_file,  drydep_unload => unload
   USE decayML, only: decay, decayDeps
-  USE posintML, only: posint, posint_init
+  USE posintML, only: posint
   USE bldpML, only: bldp
   USE releaseML, only: release, releases, tpos_bomb, nrelheight, mprel, &
                        mplume, nplume, iplume, npart, mpart, release_t
@@ -239,7 +255,7 @@ PROGRAM bsnap
   integer :: k, ierror, i, n
   integer, allocatable :: klevel_manual(:)
   integer :: ih
-  integer :: idrydep = 0, wetdep_version = 0, idecay
+  integer :: idecay
   integer :: ntimefo
   integer :: nsteph, nstep, nstepr
   integer :: ihread, isteph, lstepr, iendrel, istep, nhleft
@@ -247,6 +263,7 @@ PROGRAM bsnap
   integer :: ihdiff, ifldout, idailyout = 0, ihour, split_particle_after_step, split_particle_hours
   integer :: date_time(8)
   logical :: warning = .false.
+  integer :: npartmax
   !> tstep: timestep in seconds
   real :: tstep = 900
   real :: rmlimit = -1.0, rnhrel, tf1, tf2, tnow, tnext
@@ -256,13 +273,8 @@ PROGRAM bsnap
   integer :: ntprof
   type(duration_t) :: dur
   logical :: out_of_domain
-! ipcount(mdefcomp, nk)
-! integer, dimension(:,:), allocatable:: ipcount
-! npcount(nk)
-! integer, dimension(:), allocatable:: npcount
-! b_start
+
   real :: mhmin, mhmax  ! minimum and maximum of mixing height
-! b_end
 !> Information for reading from a releasefile
   type(release_t) :: release1
 
@@ -486,8 +498,11 @@ PROGRAM bsnap
     write (iulog, *) 'mprel:   ', mprel
     write (iulog, *) 'ifltim:  ', ifltim
     write (iulog, *) 'irwalk:  ', use_random_walk
-    write (iulog, *) 'idrydep: ', idrydep
-    write (iulog, *) 'wetdep_version: ', wetdep_version
+    write (iulog, *) 'drydep_scheme: ', drydep_scheme
+    write (iulog, *) 'wetdep_scheme: subcloud scheme:   ', wetdep_scheme%subcloud%description
+    write (iulog, *) 'wetdep_scheme: incloud  scheme:   ', wetdep_scheme%incloud%description
+    write (iulog, *) 'wetdep_scheme: use vertical:      ', wetdep_scheme%use_vertical
+    write (iulog, *) 'wetdep_scheme: use cloudfraction: ', wetdep_scheme%use_cloudfraction
     write (iulog, *) 'idecay:  ', idecay
     write (iulog, *) 'rmlimit: ', rmlimit
     write (iulog, *) 'ndefcomp:', size(def_comp)
@@ -508,7 +523,6 @@ PROGRAM bsnap
       write (iulog, *) '  drydephgt:  ', def_comp(m)%drydephgt
       write (iulog, *) '  drydeprat:  ', def_comp(m)%drydeprat
       write (iulog, *) '  kwetdep:    ', def_comp(m)%kwetdep
-      write (iulog, *) '  wetdeprat:  ', def_comp(m)%wetdeprat
       write (iulog, *) '  kdecay:     ', def_comp(m)%kdecay
       write (iulog, *) '  halftime:   ', def_comp(m)%halftime
       write (iulog, *) '  decayrate:  ', def_comp(m)%decayrate
@@ -559,6 +573,7 @@ PROGRAM bsnap
     mhmin = 10000.0
     mhmax = -10.0
     ! b_end
+
 
 ! reset readfield_nc (eventually, traj will rerun this loop)
     if (ftype == "netcdf") then
@@ -627,6 +642,7 @@ PROGRAM bsnap
 
     ! start time loop
     itimei = time_start
+    npartmax = 0
     time_loop: do istep = 0, nstep
       call timeloop_timer%start()
       write (iulog, *) 'istep,nplume,npart: ', istep, nplume, npart
@@ -683,6 +699,7 @@ PROGRAM bsnap
         !..release one plume of particles
 
         call release(istep, nsteph, tf1, tf2, tnow, ierror)
+        npartmax = max(npartmax, npart)
 
         if (ierror == 0) then
           lstepr = istep
@@ -701,9 +718,7 @@ PROGRAM bsnap
       if (idecay == 1) call decayDeps(tstep)
       ! prepare particle functions once before loop
       if (init) then
-        ! setting particle-number to 0 means init
-        call posint_init()
-        if (wetdep_version == 2) call wetdep2_init(tstep)
+        call wetdep_init(tstep)
         call forwrd_init()
         if (use_random_walk) call rwalk_init(tstep)
         init = .FALSE.
@@ -729,12 +744,11 @@ PROGRAM bsnap
         !..radioactive decay
         if (idecay == 1) call decay(pdata(np))
 
-        !..dry deposition (1=old, 2=new version)
-        if (idrydep == 1) call drydep1(pdata(np))
-        if (idrydep == 2) call drydep2(tstep, pdata(np))
+        !..dry deposition
+        call drydep(tstep, pdata(np))
 
-        !..wet deposition (1=old, 2=new version)
-        if (wetdep_version == 2) call wetdep2(depwet, tstep, pdata(np), pextra)
+        !..wet deposition
+        call wetdep(tstep, pdata(np), pextra)
 
         !..move all particles forward, save u and v to pextra
         call forwrd(tf1, tf2, tnow, tstep, pdata(np), pextra)
@@ -763,6 +777,7 @@ PROGRAM bsnap
       if (split_particle_after_step > 0) then
         call split_particles(split_particle_after_step)
       end if
+      npartmax = max(npartmax, npart)
 
       !$OMP PARALLEL DO REDUCTION(max : mhmax) REDUCTION(min : mhmin)
       do n = 1, npart
@@ -847,6 +862,8 @@ PROGRAM bsnap
 
     call snap_error_exit(iulog)
   end if
+  write(error_unit, *) 'npart: Used a maximum of ', npartmax, ' out of available ', mpart
+  write(output_unit, *) 'npart: Used a maximum of ', npartmax, ' out of available ', mpart
 
   ! b_240311
   write (error_unit, *)
@@ -866,6 +883,8 @@ PROGRAM bsnap
   call fldout_unload()
 
 ! deallocate all fields
+  call wetdep_deinit()
+  call drydep_unload()
   CALL deAllocateFields()
 
   close (iulog)
@@ -909,7 +928,7 @@ contains
                          TIME_PROFILE_UNDEFINED
     use snapfimexML, only: parse_interpolator
     use snapgrdml, only: compute_column_max_conc, compute_aircraft_doserate, aircraft_doserate_threshold, &
-    output_column
+    output_column, output_vd, output_vd_debug
     use init_random_seedML, only: extra_seed
     use fldout_ncML, only: surface_layer_is_lowest_level, surface_height_m
 
@@ -1109,34 +1128,200 @@ contains
         endif
       case ('dry.deposition.old')
         !..dry.deposition.old
-        if (idrydep /= 0 .AND. idrydep /= 1) goto 12
-        idrydep = 1
+        if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_OLD) goto 12
+        write(error_unit,*) "dry.deposition.old is deprecated, use dry.deposition.scheme=old"
+        warning = .true.
+        drydep_scheme = DRYDEP_SCHEME_OLD
       case ('dry.deposition.new')
         !..dry.deposition.new
-        if (idrydep /= 0 .AND. idrydep /= 2) goto 12
-        idrydep = 2
-      case ('wet.deposition.old')
-        write (error_unit, *) "This option is deprecated and removed"
-        goto 12
-      case ('wet.deposition.new')
-        !..wet.deposition.new
-        write (error_unit, *) "Deprecated, please use wet.deposition.version = 2"
+        if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_NEW) goto 12
+        write(error_unit,*) "dry.deposition.new is deprecated, use dry.deposition.scheme=new"
         warning = .true.
-        if (wetdep_version /= 0) then
-          write (error_unit, *) "already set"
+        drydep_scheme = DRYDEP_SCHEME_NEW
+      case ('dry.deposition.scheme')
+        if (.not. has_value) goto 12
+        call to_lowercase(cinput(pname_start:pname_end))
+        select case (cinput(pname_start:pname_end))
+        case ('old')
+          if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_OLD) goto 12
+          drydep_scheme = DRYDEP_SCHEME_OLD
+        case ('new')
+          if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_NEW) goto 12
+          drydep_scheme = DRYDEP_SCHEME_NEW
+#if defined(SNAP_EXPERIMENTAL)
+        case ('emep')
+          if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_EMEP) goto 12
+          drydep_scheme = DRYDEP_SCHEME_EMEP
+        case ('zhang')
+          if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_ZHANG) goto 12
+          drydep_scheme = DRYDEP_SCHEME_ZHANG
+#endif
+        case ('emerson')
+          if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_EMERSON) goto 12
+          drydep_scheme = DRYDEP_SCHEME_EMERSON
+        case default
+          write(error_unit, *) "Scheme ", cinput(pname_start:pname_end), " is unknown"
+          goto 12
+        end select
+      case ('dry.deposition.save')
+        if (drydep_scheme /= DRYDEP_SCHEME_EMEP .and. &
+            drydep_scheme /= DRYDEP_SCHEME_ZHANG .and. &
+            drydep_scheme /= DRYDEP_SCHEME_EMERSON) then
+          write(error_unit, *) "The drydep scheme is not set to a compatible value, ignoring"
+        else
+          output_vd = .true.
+        endif
+        if (has_value) goto 12
+      case ('dry.deposition.save.debug')
+        if (.not.output_vd) then
+          write(error_unit, *) "dry.deposition.save must be set"
           goto 12
         endif
-        wetdep_version = 2
+        warning = .true.
+        write(error_unit, *) "This option is a hack, only use for a single component"
+        output_vd_debug = .true.
+      case ('dry.deposition.largest_landfraction_file')
+        if (.not.has_value) goto 12
+        largest_landfraction_file = cinput(pname_start:pname_end)
+      case ('wet.deposition.new')
+        !..wet.deposition.new
+        write (error_unit, *) "Deprecated, please use wet.deposition.scheme = Bartnicki"
+        warning = .true.
+        if (wetdep_scheme%subcloud /= WETDEP_SUBCLOUD_SCHEME_UNDEFINED .or. &
+            wetdep_scheme%incloud /= WETDEP_INCLOUD_SCHEME_UNDEFINED) then
+          write (error_unit, *) "wet deposition already set"
+          goto 12
+        endif
+        wetdep_scheme = wetdep_scheme_t( &
+          WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
+          WETDEP_INCLOUD_SCHEME_NONE, &
+          .false., .false.)
       case ('wet.deposition.version')
-        if (wetdep_version /= 0) then
-          write (error_unit, *) "already set"
+        write (error_unit, *) "Deprecated, please use wet.deposition.scheme = Bartnicki"
+        warning = .true.
+        if (wetdep_scheme%subcloud /= WETDEP_SUBCLOUD_SCHEME_UNDEFINED .or. &
+            wetdep_scheme%incloud /= WETDEP_INCLOUD_SCHEME_UNDEFINED) then
+          write (error_unit, *) "wet deposition already set"
           goto 12
         endif
         if (.not. has_value) then
           write (error_unit, *) "expected a keyword"
           goto 12
         endif
-        read (cinput(pname_start:pname_end), *, err=12) wetdep_version
+        block
+          integer :: scheme_number
+          read (cinput(pname_start:pname_end), *, err=12) scheme_number
+          if (scheme_number /= 2) goto 12
+          wetdep_scheme = wetdep_scheme_t( &
+            WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
+            WETDEP_INCLOUD_SCHEME_NONE, &
+            .false., &
+            .false.)
+        end block
+#if defined(SNAP_EXPERIMENTAL)
+      case ('wet.deposition.conventional.a')
+        if (wet_deposition_conventional_params%A /= 0.0) then
+            write(error_unit,*) "wet deposition parameter already set"
+            goto 12
+        endif
+        if (.not.has_value) goto 12
+        read(cinput(pname_start:pname_end), *) wet_deposition_conventional_params%A
+      case ('wet.deposition.conventional.b')
+        if (wet_deposition_conventional_params%B /= 0.0) then
+            write(error_unit,*) "wet deposition parameter already set"
+            goto 12
+        endif
+        if (.not.has_value) goto 12
+        read(cinput(pname_start:pname_end), *) wet_deposition_conventional_params%B
+#endif
+      case ('wet.deposition.scheme')
+        if (.not.has_value) goto 12
+        if (wetdep_scheme%subcloud /= WETDEP_SUBCLOUD_SCHEME_UNDEFINED .or. &
+            wetdep_scheme%incloud /= WETDEP_INCLOUD_SCHEME_UNDEFINED) then
+          write (error_unit, *) "wet deposition already set"
+          goto 12
+        endif
+        call to_lowercase(cinput(pname_start:pname_end))
+        select case(cinput(pname_start:pname_end))
+          case("bartnicki")
+            wetdep_scheme = wetdep_scheme_t( &
+              WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
+              WETDEP_INCLOUD_SCHEME_NONE, &
+              .false., .false. &
+            )
+          case("bartnicki-takemura")
+            met_params%use_3d_precip = .true.
+            met_params%use_ccf = .true.
+            wetdep_scheme = wetdep_scheme_t( &
+              WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
+              WETDEP_INCLOUD_SCHEME_TAKEMURA, &
+              .true., .true. &
+            )
+          case("bartnicki-vertical")
+            met_params%use_3d_precip = .true.
+            met_params%use_ccf = .true.
+            wetdep_scheme = wetdep_scheme_t( &
+              WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
+              WETDEP_INCLOUD_SCHEME_NONE, &
+              .true., .true. &
+            )
+#if defined(SNAP_EXPERIMENTAL)
+          case("conventional")
+            wetdep_scheme = wetdep_scheme_t( &
+              WETDEP_SUBCLOUD_SCHEME_CONVENTIONAL, &
+              WETDEP_INCLOUD_SCHEME_NONE, &
+              .false., .false. &
+            )
+          case("bartnicki-roselle")
+            met_params%use_3d_precip = .true.
+            met_params%use_ccf = .true.
+            wetdep_scheme = wetdep_scheme_t( &
+              WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
+              WETDEP_INCLOUD_SCHEME_ROSELLE, &
+              .true., .true. &
+            )
+          case("ratm-roselle")
+            if (wet_deposition_conventional_params%A /= 0.0 .or. &
+                wet_deposition_conventional_params%B /= 0.0) then
+                write(error_unit,*) "wet deposition parameter already set"
+                goto 12
+            endif
+            wet_deposition_conventional_params = wet_deposition_RATM
+            met_params%use_3d_precip = .true.
+            met_params%use_ccf = .true.
+            wetdep_scheme = wetdep_scheme_t( &
+              WETDEP_SUBCLOUD_SCHEME_CONVENTIONAL, &
+              WETDEP_INCLOUD_SCHEME_ROSELLE, &
+              .true., .true. &
+            )
+          case("ratm-takemura")
+            if (wet_deposition_conventional_params%A /= 0.0 .or. &
+                wet_deposition_conventional_params%B /= 0.0) then
+                write(error_unit,*) "wet deposition parameter already set"
+                goto 12
+            endif
+            wet_deposition_conventional_params = wet_deposition_RATM
+            met_params%use_3d_precip = .true.
+            met_params%use_ccf = .true.
+            wetdep_scheme = wetdep_scheme_t( &
+              WETDEP_SUBCLOUD_SCHEME_CONVENTIONAL, &
+              WETDEP_INCLOUD_SCHEME_TAKEMURA, &
+              .true., .true. &
+            )
+#endif
+          case default
+            write(error_unit,*) "Unknown scheme ", cinput(pname_start:pname_end)
+            goto 12
+        end select
+      case ('wet.deposition.save')
+        if (has_value) goto 12
+        if (.not.wetdep_scheme%use_vertical) then
+          write(error_unit,*) "wet.depositon.save is only allowed when 3D wetdep scheme is used"
+        endif
+        block
+          use fldout_ncml, only: output_wetdeprate
+          output_wetdeprate = .true.
+        end block
       case ('time.step')
         !..time.step=<seconds>
         if (.not. has_value) goto 12
@@ -1357,11 +1542,8 @@ contains
         if (d_comp%drydeprat >= 0.) goto 12
         read (cinput(pname_start:pname_end), *, err=12) d_comp%drydeprat
       case ('wet.dep.ratio')
-        !..wet.dep.ratio=
-        if (.not. has_value) goto 12
-        if (.not. associated(d_comp)) goto 12
-        if (d_comp%wetdeprat >= 0.) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) d_comp%wetdeprat
+        write (error_unit, *) "wet.dep.ratio is no longer used"
+        warning = .true.
       case ('radioactive.decay.on')
         !..radioactive.decay.on
         if (.not. associated(d_comp)) goto 12
@@ -1806,10 +1988,11 @@ contains
     use find_parameter, only: detect_gridparams, get_klevel
 #if defined(FIMEX)
     use find_parameters_fi, only: detect_gridparams_fi
+    use readfield_fiML, only: read_largest_landfraction
 #endif
     integer, intent(out) :: ierror
 
-    integer :: i1, i2
+    integer :: i1
 
     logical :: error_release_profile
 
@@ -1944,10 +2127,6 @@ contains
       end if
 
       do m = 1, size(def_comp) - 1
-        if (def_comp(m)%idcomp < 1) then
-          write (error_unit, *) 'Component has no field identification: ', &
-            trim(def_comp(m)%compname)
-        end if
         do i = m + 1, size(def_comp)
           if (def_comp(m)%compname == def_comp(i)%compname) then
             write (error_unit, *) 'Component defined more than once: ', &
@@ -2035,22 +2214,25 @@ contains
       end if
     end do
 
-    if (idrydep == 0) idrydep = 1
-    if (wetdep_version == 0) then ! Set default wetdep version
-      wetdep_version = 2
+    if (drydep_scheme == DRYDEP_SCHEME_UNDEFINED) drydep_scheme = DRYDEP_SCHEME_OLD
+
+    ! Set default wetdep schemes
+    if (wetdep_scheme%subcloud == WETDEP_SUBCLOUD_SCHEME_UNDEFINED .and. &
+        wetdep_scheme%incloud == WETDEP_INCLOUD_SCHEME_UNDEFINED) then
+        wetdep_scheme = wetdep_scheme_t( &
+          WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
+          WETDEP_INCLOUD_SCHEME_NONE, &
+          .false., .false. &
+        )
     endif
-    if (wetdep_version /= 2) then
-      write (error_unit, *) "Unknown wet deposition version"
-      ierror = 1
-    endif
+
     i1 = 0
-    i2 = 0
     idecay = 0
 
     do n = 1, ncomp
       m = run_comp(n)%to_defined
       if (m == 0) cycle
-      if (idrydep == 1 .AND. def_comp(m)%kdrydep == 1) then
+      if (drydep_scheme == DRYDEP_SCHEME_OLD .AND. def_comp(m)%kdrydep == 1) then
         if (def_comp(m)%drydeprat > 0. .AND. def_comp(m)%drydephgt > 0.) then
           i1 = i1 + 1
         else
@@ -2058,7 +2240,7 @@ contains
             def_comp(m)%drydeprat, def_comp(m)%drydephgt
           ierror = 1
         end if
-      elseif (idrydep == 2 .AND. def_comp(m)%kdrydep == 1) then
+      elseif (drydep_scheme == DRYDEP_SCHEME_NEW .AND. def_comp(m)%kdrydep == 1) then
         if (def_comp(m)%grav_type == 1 .AND. def_comp(m)%gravityms > 0.) then
           i1 = i1 + 1
         elseif (def_comp(m)%grav_type == 2) then
@@ -2068,12 +2250,21 @@ contains
             def_comp(m)%gravityms
           ierror = 1
         end if
+      elseif (((drydep_scheme == DRYDEP_SCHEME_EMEP) .or. &
+               (drydep_scheme == DRYDEP_SCHEME_EMERSON) .or. &
+               (drydep_scheme == DRYDEP_SCHEME_ZHANG)) .and. &
+              def_comp(m)%kdrydep == 1) then
+        ! Check if component has the necessary definitions to compute
+        ! the dry deposition
+        if (.true.) then
+          i1 = i1 + 1
+        else
+          write (error_unit, *) 'Dry deposition error'
+        end if
       end if
 
-      if (wetdep_version == 2 .AND. def_comp(m)%kwetdep == 1) then
-        if (def_comp(m)%radiusmym > 0.) then
-          i2 = i2 + 1
-        else
+      if (wetdep_scheme%subcloud == WETDEP_SUBCLOUD_SCHEME_BARTNICKI .AND. def_comp(m)%kwetdep == 1) then
+        if (def_comp(m)%radiusmym <= 0.) then
           write (error_unit, *) 'Wet deposition error. radius: ', &
             def_comp(m)%radiusmym
           ierror = 1
@@ -2090,7 +2281,14 @@ contains
       end if
     end do
 
-    if (i1 == 0) idrydep = 0
+    if (i1 == 0) drydep_scheme = DRYDEP_SCHEME_UNDEFINED
+    if (drydep_scheme /= DRYDEP_SCHEME_UNDEFINED .and. largest_landfraction_file /= "not set") then
+#if defined(FIMEX)
+      call read_largest_landfraction(largest_landfraction_file)
+#else
+      error stop "Reading of largest landfraction requires fimex support"
+#endif
+    endif
 
     if (itotcomp == 1 .AND. ncomp == 1) itotcomp = 0
 
