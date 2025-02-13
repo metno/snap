@@ -79,8 +79,9 @@ end function
 !> by lookup into the vd_dep matrix
 pure subroutine drydep_precompute(surface_pressure, t2m, yflux, xflux, z0, &
     hflux, leaf_area_index, diam, density, classnr, vd_dep, &
-    roa, ustar, monin_obukhov_length, raero, vs, rs)
+    roa, ustar, monin_obukhov_length, raero, vs, rs, date)
   use iso_fortran_env, only: real64, int8
+  use datetime, only: datetime_t
   real, intent(in) :: surface_pressure(:,:) !> [hPa]
   real, intent(in) :: t2m(:,:)
   real, intent(in) :: yflux(:,:), xflux(:,:)
@@ -91,6 +92,7 @@ pure subroutine drydep_precompute(surface_pressure, t2m, yflux, xflux, z0, &
   integer(int8), intent(in) :: classnr(:,:)
   real, intent(out) :: vd_dep(:,:)
   real(real64), intent(out) :: roa(:,:), monin_obukhov_length(:,:), raero(:,:), vs(:,:), ustar(:,:), rs(:,:)
+  type(datetime_t), intent(in) :: date
 
   select case(drydep_scheme)
     case (DRYDEP_SCHEME_EMEP)
@@ -100,11 +102,11 @@ pure subroutine drydep_precompute(surface_pressure, t2m, yflux, xflux, z0, &
     case (DRYDEP_SCHEME_ZHANG)
       call drydep_zhang_vd(surface_pressure, t2m, yflux, xflux, z0, &
             hflux, real(diam, kind=real64), real(density, kind=real64), classnr, vd_dep, &
-            roa, ustar, monin_obukhov_length, raero, vs, rs)
+            roa, ustar, monin_obukhov_length, raero, vs, rs, date)
     case (DRYDEP_SCHEME_EMERSON)
       call drydep_emerson_vd(surface_pressure, t2m, yflux, xflux, z0, &
             hflux, real(diam, kind=real64), real(density, kind=real64), classnr, vd_dep, &
-            roa, ustar, monin_obukhov_length, raero, vs, rs)
+            roa, ustar, monin_obukhov_length, raero, vs, rs, date)
     case default
       error stop "Precomputation should not be called for this dry deposition scheme"
     end select
@@ -328,23 +330,54 @@ pure elemental subroutine drydep_emep_vd(surface_pressure, t2m, yflux, xflux, z0
   vd_dep = 1.0 / (rs + raero) + vs
 end subroutine
 
-pure real(kind=real64) function lookup_A(classnr)
+!> Table 3 for Zhang et. al 2001
+pure real(kind=real64) function lookup_A(classnr, seasonal_category)
   use ieee_arithmetic, only: ieee_value, IEEE_QUIET_NAN
   integer(int8), intent(in) :: classnr
+  integer, intent(in) :: seasonal_category
+
+  lookup_A = IEEE_VALUE(lookup_A, IEEE_QUIET_NAN)
 
   select case(classnr)
-  ! Sea, Inland_water, Tundra_and_desert, Ice_and_ice_sheets
-  case(11,12,13,14)
+  case (11) ! Sea -> Z14
     lookup_A = IEEE_VALUE(lookup_A, IEEE_QUIET_NAN)
-  ! Urban, Wetlands, Shurbs_and_interrupted_woodlands
-  case(15,18,22)
+  case (12) ! Inland water -> Z13
+    lookup_A = IEEE_VALUE(lookup_A, IEEE_QUIET_NAN)
+  case (13) ! Tundra/desert -> Z8,Z9
+    lookup_A = IEEE_VALUE(lookup_A, IEEE_QUIET_NAN)
+  case (14) ! Ice and ice sheets -> Z12
+    lookup_A = IEEE_VALUE(lookup_A, IEEE_QUIET_NAN)
+  case (15) ! Urban -> Z15
     lookup_A = 10.0
-  ! Crops, Grass, Evergreen_needleleaf
-  case(16,17,19)
+  case (16) ! Crops -> Z7
+    select case(seasonal_category)
+    case (1,2,5)
+      lookup_A = 2.0
+    case (3,4)
+      lookup_A = 5.0
+    end select
+  case (17) ! Grass -> Z6
+    select case(seasonal_category)
+    case (1,2,5)
+      lookup_A = 2.0
+    case (3,4)
+      lookup_A = 5.0
+    end select
+  case (18) ! Wetlands -> Z11
+    lookup_A = 10.0
+  case (19) ! Evergreen needleleaf -> Z1
     lookup_A = 2.0
-  ! Decidious_broadleaf, Mixed_forest
-  case(20,21)
+  case (20) ! Deciduous needleleaf -> Z3
+    select case(seasonal_category)
+    case (1,2,5)
+      lookup_A = 2.0
+    case (3,4)
+      lookup_A = 5.0
+    end select
+  case (21) ! Mixed forest -> Z5
     lookup_A = 5.0
+  case (22) ! Shrubs and interrupted woodlands -> Z10
+    lookup_A = 10.0
   case default
     lookup_A = IEEE_VALUE(lookup_A, IEEE_QUIET_NAN)
   end select
@@ -356,13 +389,15 @@ end function
 !> https://doi.org/10.1016/S1352-2310(00)00326-5
 pure elemental subroutine drydep_zhang_vd(surface_pressure, t2m, yflux, xflux, z0, &
     hflux, diam, density, classnr, vd_dep, &
-    roa, ustar, monin_obukhov_length, raero, vs, rs)
+    roa, ustar, monin_obukhov_length, raero, vs, rs, date)
   use ieee_arithmetic, only: ieee_is_nan
+  use datetime, only: datetime_t
   !> In hPa
   real, intent(in) :: surface_pressure
   real, intent(in) :: t2m
   real, intent(in) :: yflux, xflux
   real, intent(in) :: z0, hflux
+  type(datetime_t), intent(in) :: date
   real(real64), intent(in) :: diam
   real(real64), intent(in) :: density
   integer(int8), intent(in) :: classnr
@@ -399,7 +434,7 @@ pure elemental subroutine drydep_zhang_vd(surface_pressure, t2m, yflux, xflux, z
   ! A range og 0.5-0.58 dependening on the surface is given, 0.54=grass
   EB = sc ** (-0.54)
 
-  Apar = lookup_A(classnr)
+  Apar = lookup_A(classnr, date_to_seasonal_category(date))
   A = Apar * 1e-3
   ! Impaction
   if (.not. ieee_is_nan(A)) then
@@ -429,13 +464,15 @@ end subroutine
 !> https://doi.org/10.1073/pnas.2014761117
 pure elemental subroutine drydep_emerson_vd(surface_pressure, t2m, yflux, xflux, z0, &
     hflux, diam, density, classnr, vd_dep, &
-    roa, ustar, monin_obukhov_length, raero, vs, rs)
+    roa, ustar, monin_obukhov_length, raero, vs, rs, date)
   use ieee_arithmetic, only: ieee_is_nan
+  use datetime, only: datetime_t
   !> In hPa
   real, intent(in) :: surface_pressure
   real, intent(in) :: t2m
   real, intent(in) :: yflux, xflux
   real, intent(in) :: z0, hflux
+  type(datetime_t), intent(in) :: date
   real(real64), intent(in) :: diam
   real(real64), intent(in) :: density
   integer(int8), intent(in) :: classnr
@@ -471,7 +508,7 @@ pure elemental subroutine drydep_emerson_vd(surface_pressure, t2m, yflux, xflux,
   sc = ny / bdiff
   EB = 0.2 * sc ** (-2.0 / 3.0)
 
-  Apar = lookup_A(classnr)
+  Apar = lookup_A(classnr, date_to_seasonal_category(date))
   A = Apar * 1e-3
   ! Impaction
   if (.not. ieee_is_nan(A)) then
@@ -530,5 +567,31 @@ subroutine drydep_nonconstant_vd(tstep, vd, part)
     depdry(i,j,mm) = depdry(i,j,mm) + dble(dep)
   end if
 end subroutine
+
+
+!> Very simplified, should be adapted for latitude, but
+!> good enough for MEPS in Norway for now.
+!> Calibrated for lowland South Norway
+pure integer function date_to_seasonal_category(date)
+  use datetime, only: datetime_t
+  type(datetime_t), value :: date
+  integer, parameter :: dummy_year = 2024 ! Leap year
+
+  date%year = dummy_year
+
+  if (date <= datetime_t(dummy_year, 1, 11, 0)) then
+    date_to_seasonal_category = 3
+  elseif (date <= datetime_t(dummy_year, 3, 31, 0)) then
+    date_to_seasonal_category = 4
+  elseif (date <= datetime_t(dummy_year, 5, 15, 0)) then
+    date_to_seasonal_category = 5
+  elseif (date <= datetime_t(dummy_year, 8, 15, 0)) then
+    date_to_seasonal_category = 1
+  elseif (date <= datetime_t(dummy_year, 9, 15, 0)) then
+    date_to_seasonal_category = 2
+  else
+    date_to_seasonal_category = 3
+  endif
+end function
 
 end module drydepml

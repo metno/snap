@@ -314,7 +314,7 @@ contains
       precip = 0.0
     endif
 
-    call read_drydep_required_fields(fio, timepos, timeposm1, nr)
+    call read_drydep_required_fields(fio, timepos, timeposm1, nr, itimefi)
 
     call check(fio%close(), "close fio")
 
@@ -906,7 +906,7 @@ contains
     write (iulog, *) "reading "//trim(varname)//", min, max: ", minval(zfield), maxval(zfield)
   end subroutine fi_checkload_intern
 
-  subroutine read_drydep_required_fields(fio, timepos, timeposm1, nr)
+  subroutine read_drydep_required_fields(fio, timepos, timeposm1, nr, itimefi)
     USE ieee_arithmetic, only: ieee_is_nan
     USE iso_fortran_env, only: real64
     USE snapmetML, only: met_params, &
@@ -916,9 +916,11 @@ contains
     use snapparML, only: ncomp, run_comp, def_comp
     use snapfldML, only: ps2, vd_dep, xflux, yflux, hflux, z0, leaf_area_index, t2m, &
       roa, ustar, monin_l, raero, vs, rs
+    use datetime, only: datetime_t
     type(FimexIO), intent(inout) :: fio
     integer, intent(in) :: timepos, timeposm1
     integer, intent(in) :: nr
+    type(datetime_t), intent(in) :: itimefi
 
     real, allocatable :: tmp1(:, :), tmp2(:, :)
     integer :: i, mm
@@ -1005,7 +1007,7 @@ contains
         dens = def_comp(mm)%densitygcm3*1e3
         call drydep_precompute(ps2*100, t2m, yflux, xflux, z0, &
             hflux, leaf_area_index, real(diam), real(dens), classnr, vd_dep(:, :, i), &
-            roa, ustar, monin_l, raero, vs, rs)
+            roa, ustar, monin_l, raero, vs, rs, itimefi)
       endif
     end do
   end subroutine
