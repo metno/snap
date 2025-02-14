@@ -195,7 +195,7 @@ contains
       precint = pextra%prc
       q = precint
 
-      mm = def_comp(m)%to_output
+      mm = def_comp(m)%to_running
 
       deprate = wet_deposition_rate(def_comp(m)%radiusmym, q, run_comp(mm)%depconst, tstep)
 
@@ -364,7 +364,7 @@ contains
     type(Particle), intent(inout) :: part
     real, intent(in) :: tstep
 
-    integer :: m, i, j, mm
+    integer :: m, i, j, mo
     real :: dep, deprate
 
     m = part%icomp
@@ -378,10 +378,10 @@ contains
     j = hres_pos(part%y)
     dep = part%scale_rad(deprate)
 
-    mm = def_comp(m)%to_output
+    mo = def_comp(m)%to_output
 
     !$OMP atomic
-    depwet(i, j, mm) = depwet(i, j, mm) + dble(dep)
+    depwet(i, j, mo) = depwet(i, j, mo) + dble(dep)
   end subroutine
 
   !> Aerosol rainout process also known as GCM-type wet deposition process
@@ -606,14 +606,14 @@ contains
     real, intent(in) :: tstep
 
     real :: radlost, rkw
-    integer :: ivlvl, i, j, k, mm
+    integer :: ivlvl, i, j, k, mm, mo
 
     ivlvl = part%z * 10000.0
     k = ivlevel(ivlvl)
     i = nint(part%x)
     j = nint(part%y)
 
-    mm = def_comp(part%icomp)%to_output
+    mm = def_comp(part%icomp)%to_running
 
     rkw = wscav(i,j,k,mm)
 
@@ -621,8 +621,9 @@ contains
 
     i = hres_pos(part%x)
     j = hres_pos(part%y)
+    mo = def_comp(part%icomp)%to_output
     !$OMP atomic
-    dep(i, j, mm) = dep(i, j, mm) + real(radlost, kind=real64)
+    dep(i, j, mo) = dep(i, j, mo) + real(radlost, kind=real64)
   end subroutine
 
 
