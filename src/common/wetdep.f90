@@ -517,7 +517,7 @@ contains
     integer :: i
 
     do i=1,ncomp
-      if (.not.run_comp(i)%defined%kdrydep == 1) cycle
+      if (.not.run_comp(i)%defined%kwetdep == 1) cycle
       if (wetdep_scheme%use_vertical) then
         if (.not.(allocated(precip3d).and.allocated(cw3d).and.allocated(wscav))) then
           error stop "Some wetdep/precip fields not allocated"
