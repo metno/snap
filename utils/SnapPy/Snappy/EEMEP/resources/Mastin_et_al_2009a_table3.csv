@@ -1445,7 +1445,7 @@
 1701-02=,17,01,-02-,Reykjanes,Iceland-SW,Historical,63.88,N,*, 22.50,W,230,Crater rows,D3,M0
 1701-021,17,01,-021,Eldey,Iceland-SW,Historical,63.73,N,*, 23.00,W,70,Crater rows,D3,M0
 1701-03=,17,01,-03-,Krisuvik,Iceland-SW,Historical,63.93,N,*, 22.10,W,379,Crater rows,D6,M0
-1701-031,17,01,-031,Fagradalsfjall,Iceland-SW,Historical,63.88,N,*, 22.25,W,250,Crater rows,D6,M0
+1701-031,17,01,-031,Fagradalsfjall,Iceland-SW,Historical,63.88,N,*, 22.25,W,250,c,D6,M0
 1701-04=,17,01,-04-,Brennisteinsfjoll,Iceland-SW,Historical,63.92,N,*, 21.83,W,621,Crater rows,D6,S0
 1701-051,17,01,-051,Hromundartindur,Iceland-S,Holocene?,64.073,N,*, 21.202,W,540,Stratovolcano,?,S0
 1701-05=,17,01,-05-,Hengill,Iceland-SW,Historical,64.08,N,*, 21.32,W,803,Crater rows,D6,M0
@@ -1465,8 +1465,10 @@
 1703-03=,17,03,-03-,Bardarbunga,Iceland-NE,Historical,64.63,N,, 17.53,W,2009,Stratovolcano,D2,M0
 1703-04=,17,03,-04-,Tungnafellsjokull,Iceland-NE,Holocene,64.73,N,, 17.92,W,1535,Stratovolcano,U,M0
 1703-05=,17,03,-05-,Kverkfjoll,Iceland-NE,Historical,64.65,N,, 16.72,W,1929,Stratovolcano,D2,M0
+1703-051,17,03,-051,Snaefell,Iceland-NE,Historical,64.80,N,, 15.57,W,1833,Stratovolcano,D2,M0
 1703-06=,17,03,-06-,Askja,Iceland-NE,Historical,65.03,N,, 16.75,W,1516,Stratovolcano,D2,M0
 1703-07=,17,03,-07-,Fremrinamur,Iceland-NE,Tephrochronology,65.43,N,, 16.65,W,939,Stratovolcano,D7,M0
+1703-071,17,03,-071,Heidarspordar,Iceland-NE,Tephrochronology,65.58,N,, 16.82,W,490,Shield volcano,D7,M0
 1703-08=,17,03,-08-,Krafla,Iceland-NE,Historical,65.73,N,, 16.78,W,818,Caldera,D2,M1
 1703-09=,17,03,-09-,Theistareykjarbunga,Iceland-NE,Tephrochronology,65.88,N,, 16.83,W,564,Shield volcano,D7,M0
 1703-10=,17,03,-10-,Tjornes_Fracture_Zone,Iceland-N of,Historical,66.30,N,, 17.10,W,,Submarine volcano,D3,U0
