@@ -122,7 +122,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
   integer, intent(out) :: ierror
 
 !..local
-  integer :: ih,i,j,n,k,m,itab,nprel,nt,npar1,numradius,nrad
+  integer :: ih,i,j,n,k,m,itab,nprel,nt,npar1,numradius,nrad,mo
   integer, allocatable :: nrel(:), nrel2(:,:)
   real ::    x,y,dxgrid,dygrid,dx,dy,xrand,yrand,zrand,twodx,twody
   real ::    rt1,rt2,dxx,dyy,c1,c2,c3,c4,tstep
@@ -233,7 +233,10 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
       write(iulog,*) 'release comp,num,bq:',m,nrel(m),pbq(m)
     end do
 
-    total_activity_released(:) = total_activity_released + nrel*pbq
+    do m=1,ncomp
+      mo = run_comp(m)%defined%to_output
+      total_activity_released(mo) = total_activity_released(mo) + nrel(m)*pbq(m)
+    end do
   ! c	write(error_unit,*) 'nprel: ',nprel
     write(iulog,*) 'nprel: ',nprel
   !      end if
