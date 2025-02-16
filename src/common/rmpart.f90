@@ -37,7 +37,7 @@ subroutine rmpart(rmlimit)
   !> the particle will be removed and it's content redistributed
   real, intent(in) :: rmlimit
 
-  integer :: m,n,npl,i,i1,i2, mm
+  integer :: m,n,npl,i,i1,i2, mm, mo
   logical :: redistribute
 
   integer, allocatable, save :: npkeep(:)
@@ -117,7 +117,7 @@ subroutine rmpart(rmlimit)
           iparnum(n)=iparnum(i)
         end if
       else
-        m = def_comp(pdata(i)%icomp)%to_running
+        m = def_comp(pdata(i)%icomp)%to_output
         total_activity_lost_other(m) = total_activity_lost_other(m) + (-pdata(i)%rad())
       end if
     end do
@@ -137,7 +137,10 @@ subroutine rmpart(rmlimit)
 
 !..note: if pbqlost>0 we lost mass inside the grid area
 !..      (no later plumes to take the mass).
-  total_activity_lost_other(:) = total_activity_lost_other + pbqlost
+  do m=1,ncomp
+    mo = run_comp(m)%defined%to_output
+    total_activity_lost_other(mo) = total_activity_lost_other(mo) + pbqlost(mo)
+  end do
 
 end subroutine rmpart
 

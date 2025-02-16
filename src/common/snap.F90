@@ -761,7 +761,7 @@ PROGRAM bsnap
         !.. check domain (%active) after moving particle
         call check_in_domain(pdata(np), out_of_domain)
         if (out_of_domain) then
-          m = def_comp(pdata(np)%icomp)%to_running
+          m = def_comp(pdata(np)%icomp)%to_output
           total_activity_lost_domain(m) = &
             total_activity_lost_domain(m) + pdata(np)%get_set_rad(0.0)
         endif
