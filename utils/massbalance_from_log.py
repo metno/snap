@@ -27,14 +27,13 @@ def main(logfile: pathlib.Path):
             dt = datetime.datetime(
                 year=int(year), month=int(month), day=int(day), hour=int(hour)
             )
-            accprec = lines.popleft()
-            hbl = lines.popleft()
-            avghbl = lines.popleft()
-            prec = lines.popleft()
+            while len(lines) > 1 and not lines[0].strip().startswith("component"):
+                lines.popleft()
 
             while lines[0].strip().startswith("component"):
                 comp = lines.popleft()
                 _, comp = comp.split(": ")
+                comp = comp.strip()
                 try:
                     # Skip all ftest lines
                     while True:
@@ -106,7 +105,7 @@ def main(logfile: pathlib.Path):
         axs[0, i].stackplot(times, *plots, labels=labels)
         axs[0, i].plot(times, added, label="Total added", linewidth=4, color="k")
 
-        axs[0, i].set_title(f"{comp}")
+        axs[0, i].set_title(f"{k}")
         axs[0, i].legend()
         # axs[0, i].set_xlabel("Time")
         axs[0, i].set_ylabel("Activity [Bq]")
