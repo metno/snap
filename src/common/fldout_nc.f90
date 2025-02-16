@@ -127,7 +127,6 @@ module fldout_ncML
 subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     ierror)
   USE iso_fortran_env, only: int16
-  USE array_utils, only: is_in_array
   USE snapgrdML, only: imodlevel, imslp, precipitation_in_output, &
       itotcomp, compute_column_max_conc, compute_aircraft_doserate, &
       aircraft_doserate_threshold, output_column, &
@@ -165,8 +164,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
   integer :: nptot1,nptot2
   real(real64) :: bqtot1,bqtot2
 
-  integer :: i,j,m,n
-  integer(int16), pointer, dimension(:) :: mm
+  integer :: i,j,m,n,mo
   logical :: compute_total_dry_deposition
   logical :: compute_total_wet_deposition
   real :: rt1,rt2,scale,average
@@ -283,8 +281,6 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
 !..parameters for each component......................................
 
   all_components: do m=1,nocomp
-
-    mm => output_component(m)%to_defined
     write(iulog,*) ' component: ', output_component(m)%name
 
   !..instant Bq in and above boundary layer
@@ -297,7 +293,8 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
 
     do n=1,npart
       part = pdata(n)
-      if (is_in_array(mm , part%icomp)) then
+      mo = def_comp(part%icomp)%to_output
+      if (mo == m) then
         i = hres_pos(part%x)
         j = hres_pos(part%y)
         if(part%z >= part%tbl) then

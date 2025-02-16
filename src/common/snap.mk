@@ -89,7 +89,7 @@ find_parameters.o: ../common/find_parameters.f90 snapmetML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 find_parameters_fi.o: ../common/find_parameters_fi.f90 snapfimexML.o snapmetML.o fimex.o readfield_fi.o utils.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-fldout_nc.o: ../common/fldout_nc.f90 array_utils.o snapfilML.o snapgrdML.o snapfldML.o snapparML.o snaptabML.o snapdebugML.o snapdimML.o readfield_nc.o ftest.o release.o milibML.o datetime.o utils.o
+fldout_nc.o: ../common/fldout_nc.f90 snapfilML.o snapgrdML.o snapfldML.o snapparML.o snaptabML.o snapdebugML.o snapdimML.o readfield_nc.o ftest.o release.o milibML.o datetime.o utils.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 forwrd.o: ../common/forwrd.F90 particleML.o snapgrdML.o snapfldML.o snapparML.o snaptabML.o snapdimML.o snapdebugML.o vgravtables.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
