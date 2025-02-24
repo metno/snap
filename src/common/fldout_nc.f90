@@ -842,11 +842,19 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
   val, gparam2(6), gparam_hres(8)
   real(kind=real32) :: llparam(6) = [1.0, 1.0, 1.0, 1.0, 0.0, 0.0]
 
-  call check(nf90_def_var(iunit, "x", &
-      NF90_FLOAT, xdimid, x_varid))
-  call check(nf90_def_var(iunit, "y", &
-      NF90_FLOAT, ydimid, y_varid))
-  dimids = [xdimid, ydimid]
+  if (igtype == 2) then
+    call check(nf90_def_var(iunit, "lon", &
+        NF90_FLOAT, xdimid, x_varid))
+    call check(nf90_def_var(iunit, "lat", &
+        NF90_FLOAT, ydimid, y_varid))
+    dimids = [xdimid, ydimid]
+  else
+    call check(nf90_def_var(iunit, "x", &
+        NF90_FLOAT, xdimid, x_varid))
+    call check(nf90_def_var(iunit, "y", &
+        NF90_FLOAT, ydimid, y_varid))
+    dimids = [xdimid, ydimid]
+  endif
 
   call check(nf90_def_var(iunit, "projection", &
       NF90_SHORT, varid=proj_varid))
@@ -863,8 +871,12 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
   case(2) !..geographic
     call check(nf90_put_att(iunit,x_varid, "units", &
         TRIM("degrees_east")))
+    call check(nf90_put_att(iunit,x_varid, "standard_name", &
+        TRIM("longitude")))
     call check(nf90_put_att(iunit,y_varid, "units", &
         TRIM("degrees_north")))
+    call check(nf90_put_att(iunit,y_varid, "standard_name", &
+        TRIM("latitude")))
     call check(nf90_put_att(iunit,proj_varid, &
         "grid_mapping_name", TRIM("latitude_longitude")))
     gparam_hres(3) = gparam(3)/output_resolution_factor
@@ -991,6 +1003,7 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
   call check(nf90_put_var(iunit, y_varid, yvals))
   call check(nf90_sync(iunit))
 
+!.... create latitude/longitude variable-values
   call check(nf90_def_var(iunit, "longitude", &
       NF90_FLOAT, dimids, lon_varid))
   call check(NF90_DEF_VAR_DEFLATE(iunit, lon_varid, 1,1,1))
@@ -1002,11 +1015,9 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
       TRIM("degrees_east")))
   call check(nf90_put_att(iunit,lat_varid, "units", &
       TRIM("degrees_north")))
-
   call check(nf90_sync(iunit))
 
-!.... create latitude/longitude variable-values
-  if (igtype .eq. 2) then
+  if (igtype == 2) then
     ! exact
     do j=1,ny*output_resolution_factor
       do i=1,nx*output_resolution_factor
@@ -1113,8 +1124,13 @@ subroutine initialize_output(filename, itime, ierror)
     call check(nf90_create(filename, ior(NF90_NETCDF4, NF90_CLOBBER), iunit), filename)
     call check(nf90_def_dim(iunit, "time", NF90_UNLIMITED, dimid%t), &
         "t-dim")
-    call check(nf90_def_dim(iunit, "x", nx*output_resolution_factor, dimid%x), "x-dim")
-    call check(nf90_def_dim(iunit, "y", ny*output_resolution_factor, dimid%y), "y-dim")
+    if (igtype == 2) then
+      call check(nf90_def_dim(iunit, "lon", nx*output_resolution_factor, dimid%x), "x-dim")
+      call check(nf90_def_dim(iunit, "lat", ny*output_resolution_factor, dimid%y), "y-dim")
+    else
+      call check(nf90_def_dim(iunit, "x", nx*output_resolution_factor, dimid%x), "x-dim")
+      call check(nf90_def_dim(iunit, "y", ny*output_resolution_factor, dimid%y), "y-dim")
+    endif
     call check(nf90_def_dim(iunit, "k", nk-1, dimid%k), "k-dim")
     call check(nf90_def_dim(iunit, "nocomp", nocomp, dimid%nocomp), "nocomp-dim")
     call check(nf90_def_dim(iunit, "compnamelenmax", len(def_comp(1)%compname), dimid%maxcompname), "maxcompname-dim")
