@@ -233,6 +233,9 @@ contains
       endif
       ! No projection of longitude is required
       gparam(5) = atof(pval)
+      if (gparam(5) < 0.0) then
+        gparam(5) = gparam(5) + 360
+      endif
 
       pval = proj_arg(proj4, "o_lat_p")
       if (pval == "") then
