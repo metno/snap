@@ -27,7 +27,7 @@ module readfield_ncML
   private
 
   public :: readfield_nc, check, nfcheckload, calc_2d_start_length, find_index
-  public :: compute_vertical_coords
+  public :: compute_vertical_coords, read_largest_landfraction
 
   interface nfcheckload
     module procedure nfcheckload1d, nfcheckload2d, nfcheckload2d_r64, nfcheckload3d

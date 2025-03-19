@@ -1987,8 +1987,9 @@ contains
     use find_parameter, only: detect_gridparams, get_klevel
 #if defined(FIMEX)
     use find_parameters_fi, only: detect_gridparams_fi
-    use readfield_fiML, only: read_largest_landfraction
+    use readfield_fiML, only: read_largest_landfraction_fi => read_largest_landfraction
 #endif
+    use readfield_ncML, only: read_largest_landfraction
     integer, intent(out) :: ierror
 
     integer :: i1
@@ -2283,9 +2284,9 @@ contains
     if (i1 == 0) drydep_scheme = DRYDEP_SCHEME_UNDEFINED
     if (drydep_scheme /= DRYDEP_SCHEME_UNDEFINED .and. largest_landfraction_file /= "not set") then
 #if defined(FIMEX)
-      call read_largest_landfraction(largest_landfraction_file)
+      call read_largest_landfraction_fi(largest_landfraction_file)
 #else
-      error stop "Reading of largest landfraction requires fimex support"
+      call read_largest_landfraction(largest_landfraction_file)
 #endif
     endif
 
