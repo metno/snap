@@ -375,6 +375,8 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
     precip = 0.0
   endif
 
+  call read_drydep_required_fields(ncid, timepos, timeposm1, nk, itimefi, start4d, count4d)
+
 ! first time initialized data
   if (first_time_read) then
     first_time_read = .false.
@@ -1044,5 +1046,157 @@ end subroutine
     ahalf(nk) = 0.0
     bhalf(nk) = 0.0
     vhalf(nk) = 0.0
+  end subroutine
+
+  subroutine read_drydep_required_fields(ncid, timepos, timeposm1, nr, itimefi, start4d, count4d)
+    USE ieee_arithmetic, only: ieee_is_nan
+    USE iso_fortran_env, only: real64
+    use datetime, only: datetime_t
+    use snapmetML, only: met_params
+    use snapfldML, only: xflux, yflux, hflux, z0, leaf_area_index, t2m, vd_dep, roa, ustar, monin_l, &
+      ps2, rs, raero, vs
+    use drydepml, only: classnr, requires_extra_fields_to_be_read, drydep_precompute
+    use snapdimML, only: nx, ny
+    use snapparML, only: ncomp, run_comp, def_comp
+    
+    integer, intent(in) :: ncid
+    integer, intent(in) :: timepos
+    integer, intent(in) :: timeposm1
+    integer, intent(in) :: nr
+    type(datetime_t), intent(in) :: itimefi
+    integer, intent(in) :: start4d(4), count4d(4)
+
+    integer :: start(3), startm1(3)
+    integer :: count(3)
+    integer :: i, mm
+    real(real64) :: diam, dens
+
+    real, allocatable :: tmp1(:, :), tmp2(:, :)
+
+    if (.not.requires_extra_fields_to_be_read()) then
+      return
+    endif
+
+    count(:) = [1, ny, nx]
+    start(:) = [timepos, 1, 1]
+    startm1(:) = [timeposm1, 1, 1]
+
+    allocate(tmp1(nx,ny), tmp2(nx,ny))
+
+    ! Fluxes are integrated: Deaccumulate
+    if (timepos == 1) then
+      call nfcheckload(ncid, met_params%xflux, start, count, xflux(:,:))
+      call nfcheckload(ncid, met_params%yflux, start, count, yflux(:,:))
+    else
+      call nfcheckload(ncid, met_params%xflux, start, count, tmp1(:,:))
+      call nfcheckload(ncid, met_params%xflux, startm1, count, tmp2(:,:))
+      xflux(:,:) = tmp2 - tmp1
+      call nfcheckload(ncid, met_params%yflux, start, count, tmp1(:,:))
+      call nfcheckload(ncid, met_params%yflux, startm1, count, tmp2(:,:))
+      yflux(:,:) = tmp2 - tmp1
+    endif
+    ! TODO: Normalise by difference between intervals
+    xflux(:,:) =  xflux / 3600
+    yflux(:,:) =  yflux / 3600
+
+    if (timepos == 1) then
+      call nfcheckload(ncid, met_params%hflux, start, count, hflux(:,:))
+    else
+      call nfcheckload(ncid, met_params%hflux, start, count, tmp1(:,:))
+      call nfcheckload(ncid, met_params%hflux, start, count, tmp2(:,:))
+      hflux(:,:) = tmp2 - tmp1
+    endif
+    ! TODO: Normalise by difference between intervals
+    hflux(:,:) = -hflux / 3600 ! Follow conventions for up/down
+
+    call nfcheckload(ncid, met_params%z0, start, count, z0(:, :))
+
+    if (met_params%leaf_area_index /= "") then
+      call nfcheckload(ncid, met_params%leaf_area_index, start, count, leaf_area_index(:,:))
+    else ! Leaf area index may be split into patches which must be combined
+      block
+        real, allocatable :: leaf_area_index_p1(:,:), leaf_area_index_p2(:,:)
+        allocate(leaf_area_index_p1, leaf_area_index_p2, mold=leaf_area_index)
+        call nfcheckload(ncid, met_params%leaf_area_index_p1, start, count, leaf_area_index_p1(:,:))
+        call nfcheckload(ncid, met_params%leaf_area_index_p2, start, count, leaf_area_index_p2(:,:))
+
+        where (.not.ieee_is_nan(leaf_area_index_p1) .and. .not.ieee_is_nan(leaf_area_index_p2))
+          leaf_area_index = max(leaf_area_index_p1, leaf_area_index_p2)
+        elsewhere (.not.ieee_is_nan(leaf_area_index_p1))
+          leaf_area_index = leaf_area_index_p1
+        elsewhere (.not.ieee_is_nan(leaf_area_index_p2))
+          leaf_area_index = leaf_area_index_p2
+        elsewhere
+          leaf_area_index = 0.0
+        endwhere
+
+      end block
+    endif
+    where (ieee_is_nan(leaf_area_index))
+      leaf_area_index = 0.0
+    endwhere
+
+    call nfcheckload(ncid, met_params%t2m, start, count, t2m(:, :))
+
+    do i=1,ncomp
+      mm = run_comp(i)%to_defined
+
+      if (def_comp(mm)%kdrydep == 1) then
+        diam = 2*def_comp(mm)%radiusmym*1e-6
+        dens = def_comp(mm)%densitygcm3*1e3
+        call drydep_precompute(ps2*100, t2m, yflux, xflux, z0, &
+            hflux, leaf_area_index, real(diam), real(dens), classnr, vd_dep(:, :, i), &
+            roa, ustar, monin_l, raero, vs, rs, itimefi)
+      endif
+    end do
+  end subroutine
+
+  subroutine read_largest_landfraction(inputfile)
+    use ieee_arithmetic, only: ieee_is_nan
+    use iso_fortran_env, only: real32
+    use snapdimML, only: nx, ny
+    use drydepml, only: preprocess_landfraction
+    use ISO_C_BINDING, only: C_INT
+    character(len=*), intent(in) :: inputfile
+
+    ! type(fimexIO) :: fio, fio_intern
+    !
+    ! Assert some properties, e.g. nx and ny are matching the current grid
+    integer :: nx_i, ny_i, attlen
+    integer :: ncid, varid, dimids(2), ndims
+    character(len=:), allocatable :: flag_attr
+
+    real(kind=real32), allocatable :: arr(:,:)
+
+    call check(nf90_open(inputfile, NF90_NOWRITE, ncid), inputfile)
+    call check(nf90_inq_varid(ncid, "Main_Nature_Cover", varid), "Reading variable Main_Nature_cover")
+    call check(nf90_inquire_variable(ncid, varid, ndims=ndims))
+    if (ndims /= 2) then
+      error stop "read_largest_landfraction: Main_Nature_Cover must have two dimensions"
+    endif
+    call check(nf90_inquire_variable(ncid, varid, dimids=dimids(:)))
+    call check(nf90_inquire_dimension(ncid, dimids(1), len=nx_i))
+    if (nx_i /= nx) then
+      error stop "read_largest_landfraction: Mismatch in nx"
+    endif
+    call check(nf90_inquire_dimension(ncid, dimids(2), len=ny_i))
+    if (ny_i /= ny) then
+      error stop "read_largest_landfraction: Mismatch in ny"
+    endif
+
+    call check(nf90_inquire_attribute(ncid, varid, "flags", len=attlen), "Attribute length")
+    allocate(character(len=attlen)::flag_attr)
+    call check(nf90_get_att(ncid, varid, "flags", flag_attr))
+    if (flag_attr /= "..") then
+      error stop "Expected flags must be ..."
+    endif
+
+    call check(nf90_get_var(ncid, varid, arr, start=[1, 1], count=[ny, nx]), "read_var")
+
+    where (ieee_is_nan(arr))
+      arr = 11  ! Assume water where not defined
+    endwhere
+
+    call preprocess_landfraction(arr)
   end subroutine
 end module readfield_ncML
