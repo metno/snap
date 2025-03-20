@@ -490,7 +490,7 @@ GRAVITY.FIXED.M/S=0.0002
             )
 
         for f in files:
-            lines.append("FIELD.INPUT={}".format(f))
+            lines.append(f"FIELD.INPUT= {f}")
 
         lines.append("")
         lines.append(
