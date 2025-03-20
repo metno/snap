@@ -403,7 +403,6 @@ RADIOACTIVE.DECAY.{decay_mode}
 RADIUS.MICROMETER= {radius}
 DENSITY.G/CM3={density}
 {gravity}
-FIELD.IDENTIFICATION={identification:03d}
 """
         densities = self.densities
         for i, radius in enumerate(self.radius_sizes):
