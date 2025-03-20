@@ -93,7 +93,6 @@ def readEmepWriteSnap(infile, outfile, outsnap):
             ofh.write("DRY.DEP.ON\n")
             ofh.write("WET.DEP.ON\n")
             ofh.write("RADIOACTIVE.DECAY.OFF\n")
-            ofh.write(f"FIELD.IDENTIFICATION= {j+1:02d}\n")
             ofh.write(f"RADIUS.MICROMETER={radius:.2f}\n")
             ofh.write("* VAAC London Tephra Density: 2.3g/cm3 based on Sparks et al, 1997\n")
             ofh.write("DENSITY.G/CM3=2.3\n\n") # rephra between 0.4 and 1.5
