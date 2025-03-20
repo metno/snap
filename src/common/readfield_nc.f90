@@ -375,7 +375,7 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
     precip = 0.0
   endif
 
-  call read_drydep_required_fields(ncid, timepos, timeposm1, nk, itimefi, start4d, count4d)
+  call read_drydep_required_fields(ncid, timepos, timeposm1, nk, itimefi)
 
 ! first time initialized data
   if (first_time_read) then
@@ -1272,13 +1272,13 @@ end subroutine
     vhalf(nk) = 0.0
   end subroutine
 
-  subroutine read_drydep_required_fields(ncid, timepos, timeposm1, nr, itimefi, start4d, count4d)
+  subroutine read_drydep_required_fields(ncid, timepos, timeposm1, nr, itimefi)
     USE ieee_arithmetic, only: ieee_is_nan
     USE iso_fortran_env, only: real64
     use datetime, only: datetime_t
     use snapmetML, only: met_params
     use snapfldML, only: xflux, yflux, hflux, z0, leaf_area_index, t2m, vd_dep, roa, ustar, monin_l, &
-      ps2, rs, raero, vs
+      ps2, rs, raero, vs, enspos
     use drydepml, only: classnr, requires_extra_fields_to_be_read, drydep_precompute
     use snapdimML, only: nx, ny
     use snapparML, only: ncomp, run_comp, def_comp
@@ -1288,10 +1288,9 @@ end subroutine
     integer, intent(in) :: timeposm1
     integer, intent(in) :: nr
     type(datetime_t), intent(in) :: itimefi
-    integer, intent(in) :: start4d(4), count4d(4)
 
-    integer :: start(3), startm1(3)
-    integer :: count(3)
+    integer :: start(7), startm1(7)
+    integer :: count(7)
     integer :: i, mm
     real(real64) :: diam, dens
 
@@ -1301,9 +1300,10 @@ end subroutine
       return
     endif
 
-    count(:) = [1, ny, nx]
-    start(:) = [timepos, 1, 1]
-    startm1(:) = [timeposm1, 1, 1]
+    call calc_2d_start_length(start, count, nx, ny, -1, &
+          enspos, timepos, met_params%has_dummy_dim)
+    call calc_2d_start_length(startm1, count, nx, ny, -1, &
+          enspos, timeposm1, met_params%has_dummy_dim)
 
     allocate(tmp1(nx,ny), tmp2(nx,ny))
 

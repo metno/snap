@@ -1990,6 +1990,8 @@ contains
     use readfield_fiML, only: read_largest_landfraction_fi => read_largest_landfraction
 #endif
     use readfield_ncML, only: read_largest_landfraction
+    use drydepml, only:  requires_landfraction_file
+
     integer, intent(out) :: ierror
 
     integer :: i1
@@ -2282,7 +2284,10 @@ contains
     end do
 
     if (i1 == 0) drydep_scheme = DRYDEP_SCHEME_UNDEFINED
-    if (drydep_scheme /= DRYDEP_SCHEME_UNDEFINED .and. largest_landfraction_file /= "not set") then
+    if (requires_landfraction_file()) then
+      if (largest_landfraction_file == "not set") then
+        error stop "largest_landfraction is required for this dry deposition parametrisation"
+      endif
 #if defined(FIMEX)
       call read_largest_landfraction_fi(largest_landfraction_file)
 #else

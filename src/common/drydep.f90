@@ -21,7 +21,8 @@ module drydepml
   private
 
   public :: drydep, gravitational_settling, preprocess_landfraction, unload, &
-    requires_extra_fields_to_be_read, drydep_precompute
+    requires_extra_fields_to_be_read, drydep_precompute, &
+    requires_landfraction_file
 
   integer, parameter, public :: DRYDEP_SCHEME_UNDEFINED = 0
   integer, parameter, public :: DRYDEP_SCHEME_OLD = 1
@@ -66,6 +67,14 @@ subroutine drydep(tstep, part)
       drydep_scheme == DRYDEP_SCHEME_ZHANG .or. &
       drydep_scheme == DRYDEP_SCHEME_EMERSON) call drydep_nonconstant_vd(tstep, vd_dep, part)
 end subroutine
+
+pure logical function requires_landfraction_file()
+    requires_landfraction_file = ( &
+      (drydep_scheme == DRYDEP_SCHEME_ZHANG).or. &
+      (drydep_scheme == DRYDEP_SCHEME_EMERSON).or. &
+      (drydep_scheme == DRYDEP_SCHEME_EMEP) &
+    )
+end function
 
 pure logical function requires_extra_fields_to_be_read()
   requires_extra_fields_to_be_read = ( &
