@@ -10,18 +10,23 @@
 #$ -P eemep
 #$ -S /bin/bash
 #$ -m a
-#$ -o /lustre/storeA/project/fou/kl/eva/eemep/HPC/work/emep/eemep/tmp/eemep_single.log
-#$ -e /lustre/storeA/project/fou/kl/eva/eemep/HPC/work/emep/eemep/tmp/eemep_single.log
+#$ -cwd
 #$ -R y
 #$ -j y
 
 
 HDIR=/lustre/storeA/project/fou/kl/eva/eemep/HPC
 
-logfile=$HDIR/work/emep/eemep2/eemep_single.log
+logfile=$HDIR/work/emep/eemep/eemep_single.log
 rm -f $logfile
 
 exec 1>$logfile 2>&1
+
+# info about environment/nodes
+echo "PE:" $PE
+echo "PE_HOSTFILE:" $PE_HOSTFILE
+echo "NSLOTS:" $NSLOTS
+cat $PE_HOSTFILE | uniq
 
 set -x
 
