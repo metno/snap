@@ -230,8 +230,7 @@ class Resources(ResourcesCommon):
         WET.DEP.ON
         RADIUS.MICROMETER=0.55
         DENSITY.G/CM3=2.3
-        GRAVITY.FIXED.M/S=0.0002
-        FIELD.IDENTIFICATION=01"""
+        GRAVITY.FIXED.M/S=0.0002"""
         if add_DPUI:
             dosecoeff = self.getDoseCoefficients()
         else:
@@ -284,7 +283,6 @@ GRAVITY.FIXED.M/S=0.0002
                 )
             if DPUI is not None and DPUI >= 0.0:
                 snapinput += f"DPUI.Sv_per_Bq_M3 = {DPUI}\n"
-            snapinput += "FIELD.IDENTIFICATION= {:02d}\n".format(fieldId)
             snapinputs.append(snapinput)
 
         return "\n".join(snapinputs)
