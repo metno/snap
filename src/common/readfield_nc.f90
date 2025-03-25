@@ -375,7 +375,7 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
     precip = 0.0
   endif
 
-  call read_drydep_required_fields(ncid, timepos, timeposm1, nk, itimefi)
+  call read_drydep_required_fields(ncid, timepos, timeposm1, itimefi)
 
 ! first time initialized data
   if (first_time_read) then
@@ -518,7 +518,6 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
     end do
   end if
 
-  call read_additional_drydep_fields()
 end subroutine readfield_nc
 
 !> Reads `units` attribute of the precipitation variable
@@ -683,7 +682,7 @@ end subroutine
     use snapfldML, only: ps2, precip3d, cw3d, cloud_cover, enspos
     use snapgrdML, only: ahalf, bhalf, klevel
     use snapdimML, only: nx, ny, nk
-    use snapmetML, only: mass_fraction_units, cloud_fraction_units, met_params
+    use snapmetML, only: met_params
 !> open netcdf file
     integer, intent(in) :: ncid
 !> timestep in file
@@ -756,7 +755,7 @@ end subroutine
     use snapfldML, only: ps2, precip3d, cw3d, cloud_cover, enspos, precip
     use snapgrdML, only: ahalf, bhalf, klevel
     use snapdimML, only: nx, ny, nk
-    use snapmetML, only: mass_fraction_units, cloud_fraction_units, met_params
+    use snapmetML, only: met_params
 !> open netcdf file
     integer, intent(in) :: ncid
 !> timestep in file
@@ -1195,13 +1194,6 @@ subroutine compute_vertical_coords(alev, blev, ptop)
   vhalf(nk) = vlevel(nk)
 end subroutine
 
-subroutine read_additional_drydep_fields()
-  use drydepml, only: requires_extra_fields_to_be_read
-  if (requires_extra_fields_to_be_read()) then
-    error stop "Reading of extra dry deposition fields is not implemented for netCDF"
-  endif
-end subroutine
-
   subroutine compute_vertical_levels(alev, blev, ptop)
     use iso_fortran_env, only: error_unit
     use snapgrdML, only: alevel, blevel, ahalf, bhalf, vlevel, vhalf, klevel, &
@@ -1272,7 +1264,7 @@ end subroutine
     vhalf(nk) = 0.0
   end subroutine
 
-  subroutine read_drydep_required_fields(ncid, timepos, timeposm1, nr, itimefi)
+  subroutine read_drydep_required_fields(ncid, timepos, timeposm1, itimefi)
     USE ieee_arithmetic, only: ieee_is_nan
     USE iso_fortran_env, only: real64
     use datetime, only: datetime_t
@@ -1286,7 +1278,6 @@ end subroutine
     integer, intent(in) :: ncid
     integer, intent(in) :: timepos
     integer, intent(in) :: timeposm1
-    integer, intent(in) :: nr
     type(datetime_t), intent(in) :: itimefi
 
     integer :: start(7), startm1(7)
@@ -1389,6 +1380,10 @@ end subroutine
     integer :: nx_i, ny_i, attlen
     integer :: ncid, varid, dimids(2), ndims
     character(len=:), allocatable :: flag_attr
+    character(len=*), parameter :: flag_attr_expected = "11: Sea, 12: Inland water, 13: Tundra/desert, &
+      &14: Ice and ice sheets, 15: Urban, 16: Crops, 17: Grass, 18: Wetlands, &
+      &19: Evergreen needleleaf, 20: Deciduous broadleaf, 21: Mixed forest, &
+      &22: Shrubs and interrupted woodlands"
 
     real(kind=real32), allocatable :: arr(:,:)
 
@@ -1408,14 +1403,15 @@ end subroutine
       error stop "read_largest_landfraction: Mismatch in ny"
     endif
 
-    call check(nf90_inquire_attribute(ncid, varid, "flags", len=attlen), "Attribute length")
+    call check(nf90_inquire_attribute(ncid, varid, "comment", len=attlen), "length of 'comment' attribute")
     allocate(character(len=attlen)::flag_attr)
-    call check(nf90_get_att(ncid, varid, "flags", flag_attr))
-    if (flag_attr /= "..") then
-      error stop "Expected flags must be ..."
+    call check(nf90_get_att(ncid, varid, "comment", flag_attr))
+    if (flag_attr /= flag_attr_expected) then
+      error stop "Expected flags are not the same as actual"
     endif
 
-    call check(nf90_get_var(ncid, varid, arr, start=[1, 1], count=[ny, nx]), "read_var")
+    allocate(arr(nx, ny))
+    call check(nf90_get_var(ncid, varid, arr, start=[1, 1], count=[nx, ny]), "read_var")
 
     where (ieee_is_nan(arr))
       arr = 11  ! Assume water where not defined

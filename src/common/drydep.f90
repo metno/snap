@@ -126,21 +126,6 @@ subroutine preprocess_landfraction(values)
   use iso_fortran_env, only: real32, error_unit
   real(real32), intent(in) :: values(:,:)
 
-  write(error_unit,*) "We do not currently check the landclasses programatically"
-  write(error_unit,*) "The classes must be:"
-  write(error_unit,*) "    11: Sea"
-  write(error_unit,*) "    12: Inland water"
-  write(error_unit,*) "    13: Tundra/desert"
-  write(error_unit,*) "    14: Ice and ice sheets"
-  write(error_unit,*) "    15: Urban"
-  write(error_unit,*) "    16: Crops"
-  write(error_unit,*) "    17: Grass"
-  write(error_unit,*) "    18: Wetlands"
-  write(error_unit,*) "    19: Evergreen needleleaf"
-  write(error_unit,*) "    20: Deciduous broadleaf"
-  write(error_unit,*) "    21: Mixed forest"
-  write(error_unit,*) "    22: Shrubs and interrupted woodlands"
-
   if (allocated(classnr)) then
     error stop "preprocess_landfraction is to be called once only"
   endif
