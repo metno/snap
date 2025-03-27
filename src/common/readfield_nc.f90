@@ -30,7 +30,7 @@ module readfield_ncML
   public :: compute_vertical_coords, read_largest_landfraction
 
   interface nfcheckload
-    module procedure nfcheckload1d, nfcheckload2d, nfcheckload2d_r64, nfcheckload3d
+    module procedure nfcheckload1d, nfcheckload2d, nfcheckload3d
   end interface
 
   contains
@@ -677,7 +677,7 @@ end subroutine
 
 
   subroutine read_extra_precipitation_fields(ncid, timepos)
-    use iso_fortran_env, only: error_unit, real64
+    use iso_fortran_env, only: error_unit, real32
     use snaptabML, only: g
     use snapfldML, only: ps2, precip3d, cw3d, cloud_cover, enspos
     use snapgrdML, only: ahalf, bhalf, klevel
@@ -689,9 +689,9 @@ end subroutine
     integer, intent(in) :: timepos
     integer :: start(7), count(7)
 
-    real(real64), allocatable :: rain_in_air(:,:), graupel_in_air(:,:), snow_in_air(:,:)
-    real(real64), allocatable :: cloud_water(:,:), cloud_ice(:,:)
-    real(real64), allocatable :: pdiff(:,:)
+    real(real32), allocatable :: rain_in_air(:,:), graupel_in_air(:,:), snow_in_air(:,:)
+    real(real32), allocatable :: cloud_water(:,:), cloud_ice(:,:)
+    real(real32), allocatable :: pdiff(:,:)
 
     integer :: ilevel, k, nr
 
@@ -750,7 +750,7 @@ end subroutine
 
   !> Read and convert fields from ecemep input to what we need for 3D precip
   subroutine read_extra_precipitation_fields_infer_3d_precip(ncid, timepos)
-    use iso_fortran_env, only: error_unit, real64
+    use iso_fortran_env, only: error_unit, real32
     use snaptabML, only: g
     use snapfldML, only: ps2, precip3d, cw3d, cloud_cover, enspos, precip
     use snapgrdML, only: ahalf, bhalf, klevel
@@ -762,9 +762,9 @@ end subroutine
     integer, intent(in) :: timepos
     integer :: start(7), count(7)
 
-    real(real64), allocatable :: normaliser(:,:)
-    real(real64), allocatable :: pdiff(:,:)
-    real(real64), allocatable :: cloud_water(:,:), cloud_ice(:,:)
+    real(real32), allocatable :: normaliser(:,:)
+    real(real32), allocatable :: pdiff(:,:)
+    real(real32), allocatable :: cloud_water(:,:), cloud_ice(:,:)
 
     integer :: ilevel, k, nr, i, j
 
@@ -817,25 +817,6 @@ end subroutine
       enddo
     enddo
     end block
-
-    ! block ! Debug
-    !   use snapfldML, only: garea
-    !   real :: total_precip
-    !   real :: total_precip2
-    !   real, allocatable :: tmp(:,:)
-
-    !   allocate(tmp(nx,ny))
-
-    !   tmp(:,:) = precip * garea
-    !   total_precip = sum(tmp)
-    !   tmp(:,:) = sum(precip3d, dim=3)
-    !   tmp(:,:) = tmp * garea
-    !   total_precip2 = sum(tmp)
-
-    !   write(*,*) "PRECIP LOSS: ", total_precip2 - total_precip
-    !   write(*,*) "Precip from 2D fields: ", total_precip
-    !   write(*,*) "Precip from 3d fields: ", total_precip2
-    ! end block
   end subroutine
   
 
@@ -1034,51 +1015,6 @@ subroutine nfcheckload2d(ncid, varname, start, length, field, return_status)
   end if
 end subroutine nfcheckload2d
 
-subroutine nfcheckload2d_r64(ncid, varname, start, length, field, return_status)
-  use ieee_arithmetic, only: ieee_value, IEEE_QUIET_NAN
-  use iso_fortran_env, only: real32, real64
-
-  integer, intent(in) :: ncid, start(:), length(:)
-  character(len=*), intent(in) :: varname
-  real(real64), intent(out) :: field(:,:)
-  !> Return status instead of panic
-  integer, intent(out), optional :: return_status
-
-  real(real32) :: factor, offset, fillvalue
-  integer :: varid, status
-
-  if (present(return_status)) return_status = NF90_NOERR
-
-  status = nf90_inq_varid(ncid, varname, varid)
-  if (status /= NF90_NOERR .and. present(return_status)) then
-    return_status = status
-    return
-  endif
-  call check(status, varname)
-
-  write (iulog,*) "reading "//trim(varname)//", dims: ", "start(1):",start, " size:",length
-  status = nf90_get_var(ncid, varid, field, start=start, count=length)
-  if (status /= NF90_NOERR .and. present(return_status)) then
-    return_status = status
-    return
-  endif
-  call check(status, varname)
-
-  call fillscaleoffset(ncid, varid, fillvalue, factor, offset, status)
-  if (status /= NF90_NOERR .and. present(return_status)) then
-    return_status = status
-    return
-  endif
-  call check(status)
-
-  where (field == fillvalue)
-    field = IEEE_VALUE(fillvalue, IEEE_QUIET_NAN)
-  end where
-
-  if (factor /= 1. .OR. offset /= 0.) then
-    field = field*factor + offset
-  end if
-end subroutine nfcheckload2d_r64
 
 subroutine nfcheckload3d(ncid, varname, start, length, field, return_status)
   use ieee_arithmetic, only: ieee_value, IEEE_QUIET_NAN

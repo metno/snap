@@ -703,24 +703,6 @@ contains
     enddo
     end block
 
-    ! block ! Debug
-    !   use snapfldML, only: garea
-    !   real :: total_precip
-    !   real :: total_precip2
-    !   real, allocatable :: tmp(:,:)
-
-    !   allocate(tmp(nx,ny))
-
-    !   tmp(:,:) = precip * garea
-    !   total_precip = sum(tmp)
-    !   tmp(:,:) = sum(precip3d, dim=3)
-    !   tmp(:,:) = tmp * garea
-    !   total_precip2 = sum(tmp)
-
-    !   write(*,*) "PRECIP LOSS: ", total_precip2 - total_precip
-    !   write(*,*) "Precip from 2D fields: ", total_precip
-    !   write(*,*) "Precip from 3d fields: ", total_precip2
-    ! end block
   end subroutine
   
   subroutine check(status, errmsg)
