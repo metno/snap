@@ -703,24 +703,6 @@ contains
     enddo
     end block
 
-    ! block ! Debug
-    !   use snapfldML, only: garea
-    !   real :: total_precip
-    !   real :: total_precip2
-    !   real, allocatable :: tmp(:,:)
-
-    !   allocate(tmp(nx,ny))
-
-    !   tmp(:,:) = precip * garea
-    !   total_precip = sum(tmp)
-    !   tmp(:,:) = sum(precip3d, dim=3)
-    !   tmp(:,:) = tmp * garea
-    !   total_precip2 = sum(tmp)
-
-    !   write(*,*) "PRECIP LOSS: ", total_precip2 - total_precip
-    !   write(*,*) "Precip from 2D fields: ", total_precip
-    !   write(*,*) "Precip from 3d fields: ", total_precip2
-    ! end block
   end subroutine
   
   subroutine check(status, errmsg)
@@ -1033,6 +1015,22 @@ contains
     else
       call check(fio%open(inputfile, "", "nc4"), "Can't open largest landfraction file")
     endif
+
+
+    write(error_unit,*) "We do not currently check the landclasses programatically"
+    write(error_unit,*) "The classes must be:"
+    write(error_unit,*) "    11: Sea"
+    write(error_unit,*) "    12: Inland water"
+    write(error_unit,*) "    13: Tundra/desert"
+    write(error_unit,*) "    14: Ice and ice sheets"
+    write(error_unit,*) "    15: Urban"
+    write(error_unit,*) "    16: Crops"
+    write(error_unit,*) "    17: Grass"
+    write(error_unit,*) "    18: Wetlands"
+    write(error_unit,*) "    19: Evergreen needleleaf"
+    write(error_unit,*) "    20: Deciduous broadleaf"
+    write(error_unit,*) "    21: Mixed forest"
+    write(error_unit,*) "    22: Shrubs and interrupted woodlands"
 
     allocate(arr(nx, ny))
     call fi_checkload(fio, "Main_Nature_Cover", "1", arr)
