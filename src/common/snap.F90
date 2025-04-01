@@ -930,6 +930,7 @@ contains
     output_column, output_vd, output_vd_debug
     use init_random_seedML, only: extra_seed
     use fldout_ncML, only: surface_layer_is_lowest_level, surface_height_m
+    use rwalkML, only: diffusion_b => b, diffusion_a_in_bl => a_in_bl, diffusion_a_above_bl => a_above_bl
 
     !> Open file unit
     integer, intent(in) :: snapinput_unit
@@ -1110,6 +1111,13 @@ contains
       case ('random.walk.off')
         !..random.walk.off
         use_random_walk = .false.
+      case ('diffusion.b.value')
+        if (.not. has_value) goto 12
+        read(cinput(pname_start:pname_end),*) diffusion_b
+      case('diffusion.a.value')
+        if (.not. has_value) goto 12
+        read(cinput(pname_start:pname_end),*) diffusion_a_in_bl
+        diffusion_a_above_bl = diffusion_a_in_bl / 2
       case ('boundary.layer.full.mix.off')
         !..boundary.layer.full.mix.off
         blfullmix = .FALSE.

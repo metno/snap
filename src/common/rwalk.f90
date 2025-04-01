@@ -35,6 +35,10 @@ module rwalkML
   real(real64), parameter :: labove = 0.03 ! Standard l-eta above the mixing layer
   real(real64), parameter :: entrainment = 0.1 ! Entrainment zone = 10%*h
 
+  real(real64), save, public :: a_in_bl = 0.5
+  real(real64), save, public :: a_above_bl = 0.25
+  real(real64), save, public :: b = 0.875
+
   public rwalk, rwalk_init
 
   contains
@@ -83,8 +87,6 @@ subroutine rwalk(blfullmix,part,pextra)
   real(real64) :: rv, top_entrainment, bl_entrainment_thickness
 
   real(real64) :: a
-  real(real64), parameter :: b = 0.875
-
 
 ! the random_number function returns 3 (x,y,z) random real numbers between 0.0 and 1.0
   call random_number(rnd)
@@ -92,9 +94,9 @@ subroutine rwalk(blfullmix,part,pextra)
 
 ! horizontal diffusion
   if (part%z > part%tbl) then ! in boundary layer
-    a = 0.5
+    a = a_in_bl
   else ! above boundary layer
-    a = 0.25
+    a = a_above_bl
   endif
 
   vabs = hypot(pextra%u, pextra%v)
