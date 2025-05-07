@@ -57,9 +57,6 @@ class SnapUpdateThread(QThread):
         QThread.__init__(self)
         self.snap_controller = snapController
 
-    def __del__(self):
-        self.wait()
-
     def run(self):
         debug("run-status:" + self.snap_controller.snapRunning)
         try:
