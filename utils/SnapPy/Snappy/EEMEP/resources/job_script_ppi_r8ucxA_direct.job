@@ -10,17 +10,13 @@
 #$ -P eemep
 #$ -S /bin/bash
 #$ -m a
-#$ -cwd
+#$ -o {rundir}/{runtag}/
+#$ -e {rundir}/{runtag}/
 #$ -R y
 #$ -j y
 
 
 HDIR=/lustre/storeA/project/fou/kl/eva/eemep/HPC
-
-logfile=$HDIR/work/emep/eemep/eemep_single.log
-rm -f $logfile
-
-exec 1>$logfile 2>&1
 
 # info about environment/nodes
 echo "PE:" $PE
@@ -58,10 +54,6 @@ cd $RUNDIR && find . -mtime +2 -type f -delete
 
 cd $RUNTAG || exit 1
 
-# switch global to local logfile
-locallog=eemep_$YEAR-$MONTH-$DAY--$HOUR.log
-cp $logfile $locallog
-exec 1>$locallog 2>&1
 ls -l
 head -n 3 eemep_script.job
 
