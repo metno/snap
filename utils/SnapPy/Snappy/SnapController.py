@@ -57,9 +57,6 @@ class SnapUpdateThread(QThread):
         QThread.__init__(self)
         self.snap_controller = snapController
 
-    def __del__(self):
-        self.wait()
-
     def run(self):
         debug("run-status:" + self.snap_controller.snapRunning)
         try:
@@ -110,7 +107,8 @@ class SnapRun:
             self.snap_controller.snapRunning = "running"
             debug("started: " + self.snap_controller.snapRunning)
         else:
-            self.snap_controller.write_log("starting bsnap_naccident snap.input failed")
+            self.proc.terminate() # might be dead anyway?
+            self.snap_controller.write_log("couldn't start bsnap_naccident snap.input in 3s")
 
 
 class SnapController:
@@ -130,17 +128,17 @@ class SnapController:
             "updateSnapLog({0});".format(json.dumps(html.escape(txt)))
         )
 
-    def _snap_finished(self):
-        debug("finished")
+    def _snap_finished(self, exit_code, exit_status):
+        debug(f"finished with code {exit_code}, status {exit_status}")
         self.snapRunning = "finished"
         self.results_add_toa()
         self.plot_results()
         with open(os.path.join(self.lastOutputDir, "snap.log.out"), "a") as logFile:
+            if exit_code != 0:
+                logFile.write(f"bsnap finished with exit_code {exit_code}, status {exit_status}\n")
             logFile.write(
-                "All work finished. Please open diana to see results.\nResults in {}\n".format(
-                    self.lastOutputDir
+                f"All work finished. Please open diana to see results.\nResults in {self.lastOutputDir}\n"
                 )
-            )
         self.update_log()
 
     def _met_calculate_and_run(self):
