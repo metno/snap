@@ -494,7 +494,7 @@ GRAVITY.FIXED.M/S=0.0002
 
         lines.append("")
         lines.append(
-            self._getSnapInputTemplate(metmodel).format(interpolation=interpolation)
+            self._getSnapInputTemplate(metmodel).format(interpolation=interpolation, LUSTREDIR=self.getLustreDir())
         )
         return "\n".join(lines)
 
