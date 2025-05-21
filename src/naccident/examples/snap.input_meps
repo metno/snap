@@ -53,7 +53,7 @@ RANDOM.WALK.ON
 BOUNDARY.LAYER.FULL.MIX.OFF
 *
 DRY.DEPOSITION.SCHEME = emerson
-DRY.DEPOSITION.LARGEST_LANDFRACTION_FILE = /lustre/storeB/project/fou/kl/cerad/Meteorology/MEPSOP/LargestFraction_MEPS.nc
+DRY.DEPOSITION.LARGEST_LANDFRACTION_FILE = /lustre/storeB/project/fou/kl/snap/landfractions/LargestFraction_MEPS.nc
 *
 * WET.DEPOSITION.OLD
 WET.DEPOSITION.NEW
