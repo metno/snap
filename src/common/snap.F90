@@ -1994,7 +1994,7 @@ contains
 
     integer, intent(out) :: ierror
 
-    integer :: i1
+    integer :: i1, interval
 
     logical :: error_release_profile
 
@@ -2101,11 +2101,13 @@ contains
     if (time_profile /= TIME_PROFILE_BOMB) then
       ! bomb releases everything at once, so the following check does not apply
       do i = 1, ntprof - 1
-        if ((releases(i + 1)%frelhour - releases(i)%frelhour)*3600 < tstep) then
+        interval = nint((releases(i + 1)%frelhour - releases(i)%frelhour)*3600)
+        if (interval < tstep) then
           warning = .true.
-          write (error_unit, *) "WARNING: Release interval is shorter than timestep; ", &
-            "some releases may be skipped"
-          exit
+          write (error_unit, *) "WARNING: Release interval", i, &
+            " is shorter than timestep: \n", interval, " < ", tstep, &
+            " some releases may be skipped"
+          !exit
         endif
       enddo
     end if
