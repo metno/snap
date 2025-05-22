@@ -155,7 +155,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
   allocate( nrel(ncomp), nrel2(ncomp,2), relbq(ncomp), pbq(ncomp) )
 
   ! Release may occur first after simulation start
-  if (istep < releases(1)%frelhour*nsteph) then
+  if (istep < nint(releases(1)%frelhour*nsteph)) then
     return
   endif
 
@@ -163,7 +163,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
   !..single bomb release
     tstep=1.
   else
-    if (istep >= releases(size(releases))%frelhour*nsteph) then
+    if (istep >= nint(releases(size(releases))%frelhour*nsteph)) then
       return
     endif
     tstep=3600./float(nsteph)
@@ -172,7 +172,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
 
   nt=1
   do n=2,size(releases)
-    if(releases(n)%frelhour*nsteph <= istep) nt=n
+    if(nint(releases(n)%frelhour*nsteph) <= istep) nt=n
   end do
 
 
