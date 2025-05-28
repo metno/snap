@@ -188,7 +188,7 @@ subroutine drydep2(tstep, part)
 !> particle
   type(Particle), intent(inout) :: part
 
-  integer :: m,i,j,mm,mo
+  integer :: m,i,j,mo
   real :: deprate, dep
   real, parameter :: h = 30.0  ! [m]
   real, parameter :: vd_gas = 0.008  ! [m/s]
@@ -215,7 +215,7 @@ subroutine drydep2(tstep, part)
     i = hres_pos(part%x)
     j = hres_pos(part%y)
     mo = def_comp(m)%to_output
-  !$OMP atomic
+    !$OMP atomic
     depdry(i,j,mo) = depdry(i,j,mo) + dble(dep)
   end if
 end subroutine drydep2
@@ -548,7 +548,7 @@ subroutine drydep_nonconstant_vd(tstep, vd, part)
   if (def_comp(m)%kdrydep == 1 .and. part%z > 0.996) then
 
     mm = def_comp(m)%to_running
-    
+
     i = nint(part%x)
     j = nint(part%y)
 
