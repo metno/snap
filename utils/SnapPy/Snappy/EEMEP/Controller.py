@@ -93,7 +93,12 @@ class SnapVolcanoWorker(QThread):
         dtnow = datetime.datetime.now()
         with open(os.path.join(self.outputdir, "snapVolcano.log"), "w") as fh:
             process = subprocess.run(
-                ["snapVolcano", self.volcanofile, '--snapnc', f"snapash_{dtnow:%Y%m%dT%H%M%S}.nc"],
+                [
+                    "snapVolcano",
+                    self.volcanofile,
+                    "--snapnc",
+                    f"snapash_{dtnow:%Y%m%dT%H%M%S}.nc",
+                ],
                 stdout=fh,
                 stderr=fh,
                 cwd=self.outputdir,
@@ -271,24 +276,32 @@ class Controller:
         self.write_log("Running EEMEP query", clear_log=True)
         debug("run_eemep_query")
         for key, value in qDict.items():
-            print(str.format("{0} => {1}", key, value))
+            print(f"{key} => {value}")
         errors = ""
         match = re.search(
-            r"(\d{4})-(\d{2})-(\d{2})[\+\s]+(\d{1,2})", qDict["startTime"]
+            r"(\d{4})-(\d{2})-(\d{2})[\+\s]+(\d{1,2})(?::(\d{2}))?", qDict["startTime"]
         )
         if match:
-            startTime = "{0} {1} {2} {3}".format(*match.group(1, 2, 3, 4))
-            startDT = datetime.datetime(*tuple(map(int, list(match.group(1, 2, 3, 4)))))
+            if match.group(5):  # including minutes
+                startTime = f"{match.group(1, 2, 3, 4, 5)}"
+                startDT = datetime.datetime(
+                    *tuple(map(int, list(match.group(1, 2, 3, 4, 5))))
+                )
+            else:
+                startTime = f"{match.group(1, 2, 3, 4)}"
+                startDT = datetime.datetime(
+                    *tuple(map(int, list(match.group(1, 2, 3, 4))))
+                )
             modelStartDT = datetime.datetime(
                 startDT.year, startDT.month, startDT.day, 0, 0, 0
             )
         else:
-            errors += "Cannot interpret startTime: {0}\n".format(qDict["startTime"])
+            errors += f'Cannot interpret startTime: {qDict["startTime"]}\n'
 
         try:
             runTime = int(qDict["runTime"])
         except:
-            errors += "Cannot interpret runTime: {}\n".format(qDict["runTime"])
+            errors += f'Cannot interpret runTime: {qDict["runTime"]}\n'
 
         restart = "false"
         if "restart_file" in qDict and qDict["restart_file"].lower() == "true":
@@ -319,16 +332,12 @@ class Controller:
                 latf = 0.0
                 lonf = 0.0
                 altf = 0.0
-                errors += "Cannot interpret latitude/longitude/altitude: {0}/{1}/{2}\n".format(
-                    lat, lon, alt
+                errors += (
+                    f"Cannot interpret latitude/longitude/altitude: {lat}/{lon}/{alt}\n"
                 )
-            volcano = "{lat}N_{lon}E".format(lat=latf, lon=lonf)
+            volcano = f"{latf}N_{lonf}E"
 
-        debug(
-            "volcano: {0} {1:.2f} {2:.2f} {3} {4}".format(
-                volcano, latf, lonf, altf, type
-            )
-        )
+        debug(f"volcano: {volcano} {latf:.2f} {lonf:.2f} {altf} {type}")
 
         try:
             volctype = self.res.readVolcanoType(type)
@@ -349,9 +358,7 @@ class Controller:
             errors += str(ex) + "\n"
 
         self.write_log(
-            "working with {:s} (lat={:.2f}N lon={:.2f}E) starting at {:s}".format(
-                volcano, latf, lonf, startTime
-            )
+            f"working with {volcano:s} (lat={latf:.2f}N lon={lonf:.2f}E) starting at {startTime:s}"
         )
 
         # Get cloud height if supplied and calculate eruption rate
@@ -359,9 +366,7 @@ class Controller:
             try:
                 cheight = float(qDict["cloudheight"])
             except:
-                errors += "cannot interpret cloudheight (m): {0}\n".format(
-                    qDict["cloudheight"]
-                )
+                errors += f'cannot interpret cloudheight (m): {qDict["cloudheight"]}\n'
 
             if cheight % 1 != 0:
                 self.write_log(
@@ -372,9 +377,7 @@ class Controller:
                 # Interpret cloud height as above sea level
                 # - remove volcano vent altitude to get plume height
                 self.write_log(
-                    "Ash cloud height measured from mean sea level: {:.2f} km".format(
-                        cheight / 1000.0
-                    )
+                    f"Ash cloud height measured from mean sea level: {cheight / 1000.:.2f} km"
                 )
                 cheight = cheight - altf
 
@@ -383,9 +386,7 @@ class Controller:
                 pass
 
             else:
-                errors += "cannot interpret cloud height datum: {:s}".format(
-                    qDict["cloudheight_datum"]
-                )
+                errors += f'cannot interpret cloud height datum: {qDict["cloudheight_datum"]:s}'
 
             # rate in kg/s from Mastin et al. 2009, formular (1) and a volume (DRE) (m3) to
             # mass (kg) density of 2500kg/m3
@@ -396,19 +397,17 @@ class Controller:
 
         # Check negative ash cloud height
         if cheight <= 0:
-            errors += "Negative cloud height {:.2f}! Please check ash cloud.".format(
-                cheight / 1000.0
+            errors += (
+                f"Negative cloud height {cheight / 1000.:.2f}! Please check ash cloud."
             )
         self.write_log(
-            "Ash cloud height measured from volcano: {:.2f} km, rate: {:.0f} kg/s, volcano height: {:.2f} km.".format(
-                cheight / 1000.0, rate, altf / 1000.0
-            )
+            f"Ash cloud height measured from volcano: {cheight / 1000.0:.2f} km, rate: {rate:.0f} kg/s, volcano height: {latf:.2f} km."
         )
 
         # Abort if errors
         if len(errors) > 0:
             debug('updateLog("{0}");'.format(json.dumps("ERRORS:\n" + errors)))
-            self.write_log("ERRORS:\n{0}".format(errors))
+            self.write_log(f"ERRORS:\n{errors}")
             return
 
         # eEMEP runs up-to 23 km, so remove all ash above 23 km,
@@ -439,7 +438,7 @@ class Controller:
         )
 
         self.lastOutputDir = os.path.join(
-            self.res.getOutputDir(), "{0}_ondemand".format(volcano)
+            self.res.getOutputDir(), f"{volcano}_ondemand"
         )
         self.volcano_file = os.path.join(
             self.lastOutputDir, ModelRunner.VOLCANO_FILENAME
@@ -475,7 +474,7 @@ class Controller:
 </eruptions>
 
 </volcanic_eruption_run>"""
-        debug("output directory: {}".format(self.lastOutputDir))
+        debug(f"output directory: {self.lastOutputDir}")
         os.makedirs(self.lastOutputDir, exist_ok=True)
 
         self.volcano_logfile = os.path.join(self.lastOutputDir, "volcano.log")
@@ -485,7 +484,7 @@ class Controller:
             )
             os.rename(
                 self.volcano_logfile,
-                "{}_{}".format(self.volcano_logfile, logdate.strftime("%Y%m%dT%H%M%S")),
+                f'{self.volcano_logfile}_{logdate.strftime("%Y%m%dT%H%M%S")}',
             )
         try:
             # Mode x - open for exclusive creation, failing if the file already exists
@@ -495,10 +494,8 @@ class Controller:
             owner = "unknown"
             if os.path.exists(self.volcano_file):
                 owner, gecos = getFileOwner(self.volcano_file)
-            errmsg = "ERROR: Run ({:s}) already exists!\nCreated by user {:s} ({:s}).\nPlease try again later.".format(
-                self.volcano_file, owner, gecos
-            )
-            debug('updateLog("{0}");'.format(json.dumps(errmsg)))
+            errmsg = f"ERROR: Run ({self.volcano_file:s}) already exists!\nCreated by user {owner:s} ({gecos:s}).\nPlease try again later."
+            debug(f'updateLog("{json.dumps(errmsg)}");')
             self.write_log(errmsg)
             return
 
