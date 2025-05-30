@@ -142,7 +142,7 @@ class YieldParameters:
         # formula from 2^19Bq/kT(TNT) as of
         # Fission Products from Nuclear Weapons Explosions (Tovedal)
         # https://inis.iaea.org/collection/NCLCollectionStore/_Public/32/055/32055989.pdf
-        # updated to 1.6e19 in SSM report (selecting worst case bomb, U-235)
+        # updated to 1.6e19 in SSM report (2023)(selecting worst case bomb, U-235)
         # https://www.stralsakerhetsmyndigheten.se/contentassets/6a9a09c95ba14e3fbd78d911906ba2fa/202305e-radiological-consequences-of-fallout-from-nuclear-explosions.pdf
         return self._nuclear_yield * 1.6e19
 
@@ -190,6 +190,7 @@ class SnapInputBomb:
         type of explosion (defines size distributions)
     argos_operational : operational mode, i.e. non-decay H+1 run
     """
+    SIZE_INTERPOLATION = 5
 
     def __init__(
         self,
@@ -235,6 +236,7 @@ class SnapInputBomb:
 
         self.radius_sizes = self.explosion_type.radius_sizes
         self.size_distribution = self.explosion_type.size_distribution
+        self._interpolate_size_distribution(self.SIZE_INTERPOLATION)
         return None
 
     @property
@@ -337,10 +339,36 @@ class SnapInputBomb:
 
     @size_distribution.setter
     def size_distribution(self, size_distribution: list[float]) -> None:
-        if sum(size_distribution) > 1:
-            raise Exception(f"size_distribution > 1: {size_distribution}")
+        if abs(1 - sum(size_distribution)) > 0.01:
+            raise Exception(f"size_distribution {sum(size_distribution)} > 1: {size_distribution}")
         self._size_distribution = size_distribution
         return
+
+    def _interpolate_size_distribution(self, num: int) -> None:
+        """Interpolate radii of size distribution into
+        several sub-steps to simulate a more continuous distribution
+
+        :param num: number of substeps
+        """
+        if num <= 0:
+            raise Exception("interpolate_size_distribution needs positive number of steps")
+        sizes = []
+        distribution = []
+        for i in range(len(self.radius_sizes)):
+            if i == 0:
+                prev_r = 0
+            else:
+                prev_r = self.radius_sizes[i-1]
+            new_dist = self.size_distribution[i] / num
+            r_inc = (self.radius_sizes[i] - prev_r) / num
+            for j in range(num):
+                sizes.append(prev_r + (j+1)*r_inc)
+                distribution.append(new_dist) # step function
+
+        self.radius_sizes = sizes
+        self.size_distribution = distribution
+        return
+
 
     @property
     def default_density(self) -> float:
@@ -373,11 +401,6 @@ class SnapInputBomb:
                 else:
                     retlist.append(dens)
         return retlist
-
-    @densities.setter
-    def densities(self, densities: list[float]):
-        self._densities = densities
-        return
 
     def snap_input(self) -> str:
         """get the bomb-input as partial snap.input string"""
@@ -449,19 +472,18 @@ if __name__ == "__main__":
 
     sib = SnapInputBomb(nyield)
     assert nyield == sib.nuclear_yield
-    assert sib.radius_sizes[0] == 2.2
+    assert abs( 2.2 - (SnapInputBomb.SIZE_INTERPOLATION * sib.radius_sizes[0]) ) < 0.01
     print(sib.component_name(0))
-    assert sib.component_name(0) == "Aerosol_2.2mym"
+    assert sib.component_name(0) == "Aerosol_0.4mym"
     assert abs(1 - sum(sib.size_distribution)) <= 0.01
     sib.radius_sizes = [1, 2, 3, 4]
+    sib.size_distribution = [0.1, 0.2, 0.3, 0.4]
     assert abs(1 - sum(sib.size_distribution)) <= 0.01
     try:
         sib.size_distribution = [0.3, 0.4, 0.5, 0.6]
         assert False
     except:
         pass
-    sib.size_distribution = [0.3, 0.4, 0.2]
-    assert abs(sib.size_distribution[3] - 0.1) <= 0.01
     sib.minutes = 30
     print(sib.snap_input())
     # print(SnapInputBomb(.25).snap_input())
