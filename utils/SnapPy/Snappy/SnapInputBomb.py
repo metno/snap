@@ -142,7 +142,9 @@ class YieldParameters:
         # formula from 2^19Bq/kT(TNT) as of
         # Fission Products from Nuclear Weapons Explosions (Tovedal)
         # https://inis.iaea.org/collection/NCLCollectionStore/_Public/32/055/32055989.pdf
-        return self._nuclear_yield * 2e19
+        # updated to 1.6e19 in SSM report (selecting worst case bomb, U-235)
+        # https://www.stralsakerhetsmyndigheten.se/contentassets/6a9a09c95ba14e3fbd78d911906ba2fa/202305e-radiological-consequences-of-fallout-from-nuclear-explosions.pdf
+        return self._nuclear_yield * 1.6e19
 
     def cloud_bottom(self):
         """cloud bottom in m"""
