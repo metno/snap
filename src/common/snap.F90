@@ -515,9 +515,9 @@ PROGRAM bsnap
       write (iulog, *) 'component no:  ', n
       write (iulog, *) 'compname:   ', def_comp(m)%compname
       write (iulog, *) '  field id:   ', def_comp(m)%idcomp
+      write (iulog, *) '  output_id:  ', def_comp(m)%to_output
       write (iulog, *) '  output:     ', output_component(def_comp(m)%to_output)%name
       write (iulog, *) '  output-defs:', output_component(def_comp(m)%to_output)%to_defined
-      write (iulog, *) '  output_id:  ', def_comp(m)%to_output
       write (iulog, *) '  kdrydep:    ', def_comp(m)%kdrydep
       write (iulog, *) '  drydephgt:  ', def_comp(m)%drydephgt
       write (iulog, *) '  drydeprat:  ', def_comp(m)%drydeprat
@@ -2174,7 +2174,7 @@ contains
     do m = 1, ncomp
       k = 0
       do i = 1, size(output_component)
-        if (output_component(i)%name == def_comp(m)%output_name) k = i
+        if (output_component(i)%name == run_comp(m)%defined%output_name) k = i
       end do
       if (k == 0) then
         ! initialize new output_component
@@ -2187,7 +2187,7 @@ contains
           output_component(:size(temp_comp)) = temp_comp(:)
         end block
         allocate(output_component(k)%to_defined(0))
-        output_component(k)%name = def_comp(m)%output_name
+        output_component(k)%name = run_comp(m)%defined%output_name
       end if
       ! add m to the output-component(k) (might be new)
       block
@@ -2197,11 +2197,11 @@ contains
         call move_alloc(from=output_component(k)%to_defined, to=temp_defs)
         allocate(output_component(k)%to_defined(s+1))
         output_component(k)%to_defined(:s) = temp_defs
-        output_component(k)%to_defined(s+1) = m
+        output_component(k)%to_defined(s+1) = run_comp(m)%to_defined
       end block
       if (def_comp(m)%kwetdep > 0) output_component(k)%has_wetdep = .true.
       if (def_comp(m)%kdrydep > 0) output_component(k)%has_drydep = .true.
-      def_comp(m)%to_output = k
+      run_comp(m)%defined%to_output = k
     end do
     nocomp = size(output_component)
 
