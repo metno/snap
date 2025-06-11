@@ -16,7 +16,6 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 module vgravtablesML
-  use drydepml, only: drydep_scheme, DRYDEP_SCHEME_EMEP, DRYDEP_SCHEME_ZHANG, DRYDEP_SCHEME_EMERSON
   implicit none
   private
 
@@ -35,7 +34,7 @@ module vgravtablesML
   real, parameter, public :: pincrvg = 1200./float(numpresvg-1)
   real, parameter, public :: pbasevg = 0. - pincrvg
 
-  public :: vgravtables
+  public :: vgravtables, vgrav
 
   contains
 
@@ -44,7 +43,6 @@ module vgravtablesML
 subroutine vgravtables
   USE ISO_FORTRAN_ENV, only: real64
   USE snapparML, only: ncomp, run_comp, def_comp
-  USE drydepml, only: gravitational_settling
 
   real, parameter :: R = 287.05
   !> absolute temperature (K)
@@ -74,45 +72,26 @@ do_comp: do n=1,ncomp
       cycle do_comp
     endif
 
-    select case(drydep_scheme)
-    case (DRYDEP_SCHEME_EMEP,DRYDEP_SCHEME_ZHANG,DRYDEP_SCHEME_EMERSON)
-      ! expected kg/m3
-      rho_part = def_comp(m)%densitygcm3 * 1000.0
-      ! expected m
-      diam_part = 2 * def_comp(m)%radiusmym / 1e6
+    ! radius to diameter
+    diam_part = 2 * def_comp(m)%radiusmym
+    rho_part = def_comp(m)%densitygcm3
 
-      do ip=1,numpresvg
-        ! Expecting pascal
-        p = max(1.0, pbasevg + ip*pincrvg) * 100.0
-        do it=1,numtempvg
-          t = tbasevg + it*tincrvg
-          roa = p / (real(t, kind=real64) * R)
-          vgtable(it, ip, n) = gravitational_settling(roa, real(diam_part, kind=real64), real(rho_part, kind=real64))
-        end do
+    do ip=1,numpresvg
+
+      p= pbasevg + ip*pincrvg
+      if(p < 1.) p=1.
+
+      do it=1,numtempvg
+
+        t= tbasevg + it*tincrvg
+
+        vg=vgrav(diam_part,rho_part,p,t)
+        call iter(vgmod,vg,diam_part,rho_part,p,t)
+
+      !..table in unit m/s (cm/s computed)
+        vgtable(it,ip,n)= vgmod*0.01
       end do
-    case default
-      ! radius to diameter
-      diam_part = 2 * def_comp(m)%radiusmym
-      rho_part = def_comp(m)%densitygcm3
-
-      do ip=1,numpresvg
-
-        p= pbasevg + ip*pincrvg
-        if(p < 1.) p=1.
-
-        do it=1,numtempvg
-
-          t= tbasevg + it*tincrvg
-
-          vg=vgrav(diam_part,rho_part,p,t)
-          call iter(vgmod,vg,diam_part,rho_part,p,t)
-
-        !..table in unit m/s (cm/s computed)
-          vgtable(it,ip,n)= vgmod*0.01
-
-        end do
-      end do
-    end select
+    end do
   end do do_comp
 end subroutine vgravtables
 
@@ -187,7 +166,7 @@ end subroutine vgravtables
 !>
 !>  etha=etha(t)    - viscosity of the air (g cm-1 s-1)
 !>  c(dp)        - Cunningham factor for the small particles
-  pure real function vgrav(dp,rp,p,t)
+  pure elemental real function vgrav(dp,rp,p,t)
     real, intent(in) :: dp !< particle size in micro meters
     real, intent(in) :: rp !< density of particle (g/cm3)
     real, intent(in) :: p !< atmospheric presure (hPa)
