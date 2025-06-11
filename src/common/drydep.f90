@@ -17,10 +17,11 @@
 
 module drydepml
   use ISO_FORTRAN_ENV, only: real64, int8
+  use vgravtablesML, only: vgrav
   implicit none
   private
 
-  public :: drydep, gravitational_settling, preprocess_landfraction, unload, &
+  public :: drydep, preprocess_landfraction, unload, &
     requires_extra_fields_to_be_read, drydep_precompute, &
     requires_landfraction_file
 
@@ -241,26 +242,6 @@ pure function aerodynres(L, ustar, z0) result(raero)
   raero = (1 / (ka * ustar)) * (log(z/z0) - fi)
 end function
 
-pure elemental function gravitational_settling(roa, diam, ro_part) result(vs)
-    real(real64), intent(in) :: roa
-    !> Diameter in m
-    real(real64), intent(in) :: diam
-    !> Density in kg m-3
-    real(real64), intent(in) :: ro_part
-
-    real(real64) :: vs
-
-    real(real64) :: my ! Dynamic visocity of air [kg/(m s)]
-
-    real(real64) :: fac1, cslip
-
-    my = ny * roa
-    fac1 = -0.55 * diam / lambda
-    cslip = 1 + 2 * lambda / diam * ( 1.257 + 0.4 * exp(fac1) )
-
-    vs = ro_part * diam * diam * grav * cslip / (18*my)
-end function
-
 !> Dry deposition velocity given by
 !> Simpson et al. 2012, The EMEP MSC-W chemical transport model - technical description
 !> https://doi.org/10.5194/acp-12-7825-2012
@@ -295,7 +276,7 @@ pure elemental subroutine drydep_emep_vd(surface_pressure, t2m, yflux, xflux, z0
 
 
   roa = surface_pressure / (t2m * R)
-  vs = real(gravitational_settling(real(roa, real64), real(diam, real64), real(density, real64)))
+  vs = vgrav(diam * 1e6, density / 1000, surface_pressure / 100, t2m) / 1e2
 
   ustar = hypot(yflux, xflux) / sqrt(roa)
   monin_obukhov_length = - roa * CP * t2m * (ustar**3) / (k * grav * hflux)
@@ -407,7 +388,7 @@ pure elemental subroutine drydep_zhang_vd(surface_pressure, t2m, yflux, xflux, z
   real(real64) :: Apar
 
   roa = surface_pressure / (t2m * R)
-  vs = gravitational_settling(roa, diam, density)
+  vs = vgrav(real(diam * 1e6), real(density / 1000), surface_pressure / 100, t2m) / 1e2
 
   ustar = hypot(yflux, xflux) / sqrt(roa)
   monin_obukhov_length = - roa * CP * t2m * (ustar**3) / (k * grav * hflux)
@@ -482,7 +463,7 @@ pure elemental subroutine drydep_emerson_vd(surface_pressure, t2m, yflux, xflux,
   real(real64) :: Apar
 
   roa = surface_pressure / (t2m * R)
-  vs = gravitational_settling(roa, diam, density)
+  vs = vgrav(real(diam * 1e6), real(density / 1000), surface_pressure / 100, t2m) / 1e2
 
   ustar = hypot(yflux, xflux) / sqrt(roa)
   monin_obukhov_length = - roa * CP * t2m * (ustar**3) / (k * grav * hflux)
