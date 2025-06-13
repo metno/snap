@@ -139,12 +139,20 @@ class YieldParameters:
         """
         Get the total activity for relatively long-lived isotopes
         """
-        # formula from 2^19Bq/kT(TNT) as of
+        # formula from 2^19Bq/kT(TNT) from
+        #   Glasstone and Dolan (9.159): 530 gamma-megacuries per kiloton fission yield at 1 hour
+        #      -> 5.30E6 x 3.7E10 Bq = 1.96E+19 Bq/kt  # curie -> Bq conversion
+        #   ARGOS has a depo-gamma factor in operational mode coming from GD (9.150)
+        #      2,900 rads/hr per kt/mi2 = 7.5E7  Sv/h per kt/m2 = 2.08E4 Sv/s per kt/m2
+        #      2.08E4 Sv/s per kt/m2  / 2E19 Bq/kt = 1E-15 Sv/s per Bq/m2
+        #      depo-gamma factor = 1E-15 Sv/s/Bq/m2
+        #
         # Fission Products from Nuclear Weapons Explosions (Tovedal)
         # https://inis.iaea.org/collection/NCLCollectionStore/_Public/32/055/32055989.pdf
-        # updated to 1.6e19 in SSM report (2023)(selecting worst case bomb, U-235)
+        # and SSM report (2023)(selecting worst case bomb, U-235)
         # https://www.stralsakerhetsmyndigheten.se/contentassets/6a9a09c95ba14e3fbd78d911906ba2fa/202305e-radiological-consequences-of-fallout-from-nuclear-explosions.pdf
-        return self._nuclear_yield * 1.6e19
+        # use 1.6e19, but this requires dose calculations, so we stick to GD / H+1 and ARGOS factor
+        return self._nuclear_yield * 1.96e19
 
     def cloud_bottom(self):
         """cloud bottom in m"""
