@@ -23,17 +23,19 @@ class ExplosionType(Enum):
     # fmt: off
     # default snap
     MIXED = _ExplosionType("Mixed",
-                           [2.2, 4.4, 8.6, 14.6, 22.8, 36.1, 56.5, 92.3, 173.2, 250.0],
+                           # upper size, radius in µm
+                           [3.0, 6.5, 11.5, 18.5, 29., 45.0, 71.0, 120., 250.0, 1000.],
                            [ .1,  .1,  .1,   .1,   .1,   .1,   .1,   .1,    .1,    .1]
                            )
-    # Glasstone Dolan, lognormal ~(3.78, 0.68)
+    # Glasstone Dolan, lognormal ~(3.78, 0.68), + ~50-60% local = in final class
     SURFACE = _ExplosionType("Surface",
-                           [          8.6, 14.6, 22.8, 36.1, 56.5, 92.3, 173.2, 250.0],
-                           [          .02,  .08,  .17,  .25,  .24,  .17,   .06,   .01]
+                           [          11.5, 18.5, 29., 45.0, 71.0, 120., 250.0, 1000.],
+                           #[          .02,  .08,  .17,  .25,  .24,  .17,   .06,   .01], # ~(3.78, 0.68)
+                           [          .01,  .04,  .08,  .125,  .12,  .08,   .03,   .53], # ~(3.78, 0.68) + 50% in last
                            )
     # Glassstone Dolan, uniform below 20µm
     HIGH_ALTITUDE = _ExplosionType("High Altitude",
-                           [2.2, 4.4, 8.6, 14.6],
+                           [3.0, 6.5, 11.5, 18.5],
                            [.25, .25, .25,  .25]
                            )
     # fmt: on
