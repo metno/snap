@@ -502,7 +502,6 @@ class SnapInputBomb:
     def snap_input(self, releasefile="release.txt") -> str:
         """get the bomb-input as partial snap.input string"""
         lines = []
-        lines.append("MAX.PARTICLES.PER.RELEASE= 1000000\n")
 
         lines.append(f"** Explosive yield {self.nuclear_yield}ktonnes")
         lines.append("TIME.RELEASE.PROFILE.BOMB")
@@ -512,6 +511,7 @@ class SnapInputBomb:
         ):
             lines.append(
                 f"""
+    MAX.PARTICLES.PER.RELEASE= 1000000
     RELEASE.MINUTE= {self.minutes}
     RELEASE.RADIUS.M= {self.cloud_radius}
     RELEASE.LOWER.M= {self.cloud_bottom}
@@ -548,13 +548,15 @@ class SnapInputBomb:
             components = [
                 f"'{self.component_name(i)}'" for i, _ in enumerate(self.radius_sizes)
             ]
+            max_particles = 1000000 / len(lower)
             lines.append(
                 f"""
-RELEASE.FILE= {releasefile}
-RELEASE.HEIGHTLOWER.M = {','.join(lower)}
-RELEASE.HEIGHTUPPER.M = {','.join(upper)}
-RELEASE.HEIGHTRADIUS.M = {','.join(radii)}
-RELEASE.COMPONENTS= {', '.join(components)}
+    MAX.PARTICLES.PER.RELEASE= {max_particles:.0f}
+    RELEASE.FILE= {releasefile}
+    RELEASE.HEIGHTLOWER.M = {','.join(lower)}
+    RELEASE.HEIGHTUPPER.M = {','.join(upper)}
+    RELEASE.HEIGHTRADIUS.M = {','.join(radii)}
+    RELEASE.COMPONENTS= {', '.join(components)}
                 """
             )
         else:
