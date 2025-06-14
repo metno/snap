@@ -164,8 +164,12 @@ RELEASE.UPPER.M= {", ".join(uppervals)}
 
 def rimsterm2bomb_release(
     argosxml, offset_time: datetime.timedelta, argos_operational=False
-):
-    """create a release part of snap.input from rimsterm.xml and request.xml file for a nuclear bomb"""
+) -> tuple[str, str|None]:
+    """
+    create a release part of snap.input from rimsterm.xml and request.xml file for a nuclear bomb
+
+    :return: release-part of snap.input, optional release.txt content
+    """
     nuclear_yield = float(argosxml.find("NuclearYield").text)
     explosion_type = argosxml.find("ExplosionType").text
     no_of_detonations = int(argosxml.find("NoOfDetonations").text)
@@ -178,15 +182,18 @@ def rimsterm2bomb_release(
         nuclear_yield, ExplosionType.by_argosname(explosion_type), argos_operational
     )
     sib.minutes = offset_time.seconds // 60
-    return sib.snap_input()
+    return sib.snap_input(), sib.snap_release()
 
 
 def request_is_bomb(argosRoot):
     return argosRoot.find("NuclearYield") is not None
 
 
-def rimsterm2input(rimxml, argosxml, met_model, argos_operational):
-    """create a full snap.input sourceterm from a rimsterm.xml file using the met_model meteo"""
+def rimsterm2input(rimxml, argosxml, met_model, argos_operational) -> tuple[str, str | None]:
+    """create a full snap.input sourceterm from a rimsterm.xml file using the met_model meteo
+
+    :return: snap.input-content, and optional release.txt-content
+    """
 
     res = Resources()
     lat = rimxml.find("Header/Place/Location/[@Latitude]").attrib["Latitude"]
@@ -216,8 +223,9 @@ def rimsterm2input(rimxml, argosxml, met_model, argos_operational):
         minute=0, second=0, microsecond=0
     )  # snap requires hourly start
     offset_time = releaseStartTime - startDTime
+    snapReleaseTXT = None
     if is_bomb:
-        releaseTerm = rimsterm2bomb_release(argosxml, offset_time, argos_operational)
+        releaseTerm, snapReleaseTXT = rimsterm2bomb_release(argosxml, offset_time, argos_operational)
     else:  # npp
         releaseTerm = rimsterm2npp_release(
             rimxml, runTime, releaseStartTime, startDTime
@@ -310,7 +318,7 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
         met_model, files, interpolation=interpolation, **metdef
     )
 
-    return sourceTerm
+    return sourceTerm, snapReleaseTXT
 
 
 def snap4rimsterm(
@@ -337,11 +345,16 @@ def snap4rimsterm(
     if os.path.exists(snapNC):
         os.remove(snapNC)
 
-    snapInput = f"title={ident}\n" + rimsterm2input(
+    snapInput, snapReleaseTXT = rimsterm2input(
         root, argosRoot, met_model, argos_operational
     )
+    snapInput = f"title={ident}\n" + snapInput
     with open(os.path.join(basedir, "snap.input"), "w") as fh:
         fh.write(snapInput)
+    if snapReleaseTXT is not None:
+        with open(os.path.join(basedir, "release.txt"), "w") as fh:
+            fh.write(snapReleaseTXT)
+
 
     errlog = open(os.path.join(basedir, "snap.errlog"), "a")
     outlog = open(os.path.join(basedir, "snap.outlog"), "a")

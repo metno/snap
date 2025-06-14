@@ -15,7 +15,8 @@ class ActivityHeightDistribution(Enum):
 
 
 _ExplosionType = namedtuple(
-    "ExplosionType", ["name", "radius_sizes", "size_distribution", "g0_fraction", "height_distribution"]
+    "ExplosionType",
+    ["name", "radius_sizes", "size_distribution", "g0_fraction", "height_distribution"],
 )
 
 
@@ -481,14 +482,14 @@ class SnapInputBomb:
         ):
             return None
         ahd = ActivityHeightKdfoc3(zmax=self.cloud_top, part=Particles.SMALL)
-        release = ["runtime[h] lower[m] comp release[Bq/s]"]
+        release = ["*runtime[h] lower[m] comp release[Bq/s]"]
         for lower, upper in self.vertical_slices():
             for i, radius in enumerate(self.radius_sizes):
                 rel = (
                     self.activity_after_1hour
                     * self.size_distribution[i]
                     * ahd.area_fraction(lower, upper)
-                    * (1. - self.explosion_type.g0_fraction)
+                    * (1.0 - self.explosion_type.g0_fraction)
                 )
                 if lower == 0 and i == (len(self.radius_sizes) - 1):
                     # add all "local" g0 deposition to lowest layer and heaviest particles
@@ -519,13 +520,17 @@ class SnapInputBomb:
                         """
             )
             for i, frac in enumerate(self.size_distribution):
-                rel = self.activity_after_1hour * frac * (1-self.explosion_type.g0_fraction)
+                rel = (
+                    self.activity_after_1hour
+                    * frac
+                    * (1 - self.explosion_type.g0_fraction)
+                )
                 if i == len(self.size_distribution) - 1:
                     # g0 deposition in largest particle class
                     rel += self.activity_after_1hour * self.explosion_type.g0_fraction
                 lines.append(
                     f"RELEASE.BQ/STEP.COMP= {rel:.3E} '{self.component_name(i)}'"
-            )
+                )
         elif (
             self.explosion_type.height_distribution
             == ActivityHeightDistribution.TRIANGULAR
@@ -540,12 +545,16 @@ class SnapInputBomb:
                     radii.append(f"{self.cloud_radius:.0f}")
                 else:
                     radii.append(f"{self.stem_radius:.0f}")
+            components = [
+                f"'{self.component_name(i)}'" for i, _ in enumerate(self.radius_sizes)
+            ]
             lines.append(
                 f"""
 RELEASE.FILE= {releasefile}
 RELEASE.HEIGHTLOWER.M = {','.join(lower)}
 RELEASE.HEIGHTUPPER.M = {','.join(upper)}
 RELEASE.HEIGHTRADIUS.M = {','.join(radii)}
+RELEASE.COMPONENTS= {', '.join(components)}
                 """
             )
         else:
@@ -623,7 +632,9 @@ if __name__ == "__main__":
     assert rel is None
     assert "RADIOACTIVE.DECAY.OFF" in sib_op.snap_input()
 
-    sib_op_surf = SnapInputBomb(nyield, explosion_type=ExplosionType.SURFACE, argos_operational=True)
+    sib_op_surf = SnapInputBomb(
+        nyield, explosion_type=ExplosionType.SURFACE, argos_operational=True
+    )
     rel = sib_op_surf.snap_release()
     assert rel is not None
     assert "RELEASE.FILE" in sib_op_surf.snap_input()
