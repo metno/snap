@@ -9,6 +9,25 @@ class Particles(Enum):
 
 
 class ActivityHeightKdfoc3:
+    """
+    Assumptions:
+
+    zmax: max height of plume
+
+    zhat: height where triangular activity height distribution is at its max.
+        This is  2/3 zmax for light paricles and 1/10 zmax for heavy particles
+
+    z0: ground
+
+    zmin: -3/10 zmax
+
+    $f(zmax) = 0$
+
+    $f(zmin) = 0$
+
+    A = $\int_{z0}^{zmax} f(z) dz$ = 1
+    """
+
     def __init__(self, zmax: int, part: Particles):
         self.zmax = zmax
         self.part = part
