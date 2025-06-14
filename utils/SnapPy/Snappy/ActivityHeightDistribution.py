@@ -7,20 +7,24 @@ class Particles(Enum):
     SMALL = 0
     LARGE = 1
 
-class ActivityHeightKdfoc3():
+
+class ActivityHeightKdfoc3:
     def __init__(self, zmax: int, part: Particles):
         self.zmax = zmax
         self.part = part
         # maximum of activity at zmax
         if part == Particles.SMALL:
-            self.zhat = 2/3 * self.zmax
+            self.zhat = 2 / 3 * self.zmax
             self.fraction = 0.77
         else:
-            self.zhat = 1/10 * self.zmax
+            self.zhat = 1 / 10 * self.zmax
             self.fraction = 0.23
-        self.zmin = -3/10 * self.zmax
-        self.fzhat = 2 * (self.zhat - self.zmin)/ ((self.zhat * self.zmax)- self.zmin * (self.zmax + self.zhat))
-
+        self.zmin = -3 / 10 * self.zmax
+        self.fzhat = (
+            2
+            * (self.zhat - self.zmin)
+            / ((self.zhat * self.zmax) - self.zmin * (self.zmax + self.zhat))
+        )
 
     def _activity_height_func(self, z: float):
         if z < self.zmin:
@@ -52,6 +56,6 @@ class ActivityHeightKdfoc3():
         else:
             z2 = min(self.zmax, zt)
             z3 = max(self.zhat, zb)
-            AF2 = (z2 - z3) * (0.5*(z2 + z3) - self.zmax)/(self.zhat - self.zmax)
+            AF2 = (z2 - z3) * (0.5 * (z2 + z3) - self.zmax) / (self.zhat - self.zmax)
 
-        return self.fzhat* (AF1 + AF2)
+        return self.fzhat * (AF1 + AF2)
