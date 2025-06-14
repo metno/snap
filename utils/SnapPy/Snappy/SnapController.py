@@ -289,7 +289,13 @@ m=SNAP.current t=fimex format=netcdf f={self.lastOutputDir}/snap.nc
             return False
         return True
 
-    def get_bomb_release(self, qDict, offset_minutes: int):
+    def get_bomb_release(self, qDict, offset_minutes: int) -> tuple[str, str | None, str]:
+        """get the bomb-release terms in snap formats
+
+        :param qDict: qDict input parameters
+        :param offset_minutes: offset from full hour
+        :return: snap.input content, release.txt content, errors
+        """
         errors = ""
         try:
             yld = int(qDict["yield"])
@@ -302,7 +308,7 @@ m=SNAP.current t=fimex format=netcdf f={self.lastOutputDir}/snap.nc
 
         sib = SnapInputBomb(yld, explosion_type)
         sib.minutes = offset_minutes
-        return (sib.snap_input(), errors)
+        return (sib.snap_input(), sib.snap_release(), errors)
 
     def get_isotope_release(self, qDict, offset_minutes: int):
         errors = ""
@@ -400,6 +406,9 @@ RELEASE.UPPER.M= {qDict["upperHeight"]}, {qDict["upperHeight"]}
             self.res.getSnapOutputDir(),
             "{0}_{1}".format(tag, strftime("%Y-%m-%dT%H%M%S", curtime)),
         )
+        debug("output directory: {}".format(self.lastOutputDir))
+        os.mkdir(self.lastOutputDir)
+
         self.lastQDict = qDict
         sourceTerm = """
 TITLE={tag}
@@ -419,7 +428,10 @@ STEP.HOUR.OUTPUT.FIELDS= 3
         )
 
         if "isBomb" in qDict:
-            (term, errors) = self.get_bomb_release(qDict, offset_minutes)
+            (term, releaseTXT, errors) = self.get_bomb_release(qDict, offset_minutes)
+            if releaseTXT is not None:
+                with open(os.path.join(self.lastOutputDir, "release.txt"), "w") as fh:
+                    fh.write(releaseTXT)
         else:
             (term, errors) = self.get_isotope_release(qDict, offset_minutes)
         if len(errors) > 0:
@@ -430,9 +442,6 @@ STEP.HOUR.OUTPUT.FIELDS= 3
 
         if qDict.get("isAircraft", False):
             self.lastSourceTerm += "OUTPUT.AIRCRAFT_DOSERATE.ENABLE\n"
-
-        debug("output directory: {}".format(self.lastOutputDir))
-        os.mkdir(self.lastOutputDir)
 
         with open(os.path.join(self.lastOutputDir, "snap.input"), "w") as fh:
             fh.write(self.lastSourceTerm)
