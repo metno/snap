@@ -401,7 +401,7 @@ class Controller:
                 f"Negative cloud height {cheight / 1000.:.2f}! Please check ash cloud."
             )
         self.write_log(
-            f"Ash cloud height measured from volcano: {cheight / 1000.0:.2f} km, rate: {rate:.0f} kg/s, volcano height: {latf:.2f} km."
+            f"Ash cloud height measured from volcano: {cheight / 1000.0:.2f} km, rate: {rate:.0f} kg/s, volcano height: {altf / 1000.:.2f} km."
         )
 
         # Abort if errors
