@@ -54,8 +54,9 @@ def _parseLLNumber(llstr):
     if len(llstr) > 0 and llstr[0].upper() in "NSEW":
         character = llstr[0]
         num = llstr[1:].strip()
-        degrees = num[:2]
-        minutes = num[2:]
+        # e.g. Reventador PSN: S0004 W07739
+        degrees = num[:-2]
+        minutes = num[-2:]
 
         number = float(degrees) + float(minutes) / 60.0
         return number, character.upper()
