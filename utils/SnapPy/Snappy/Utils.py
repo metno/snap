@@ -54,7 +54,6 @@ def _parseLLNumber(llstr):
     if len(llstr) > 0 and llstr[0].upper() in "NSEW":
         character = llstr[0]
         num = llstr[1:].strip()
-        # e.g. Reventador PSN: S0004 W07739
         degrees = num[:-2]
         minutes = num[-2:]
 
@@ -133,6 +132,8 @@ class IsLatLonTests(unittest.TestCase):
         self.assertAlmostEqual(parseLat("60°5'5\"N"), 60.084722, msg="parseLat(\"60°5'5\"N\")", delta=1e-3)
         self.assertAlmostEqual(parseLat("8°20′2+″S+"), -8.333, msg="parseLat(\"8°20′27″S \")", delta=1e-3)
         self.assertAlmostEqual(parseLat("N6451"), 64.85, msg="parseLat(\"N6451 \")", delta=1e-3)
+        # Reventador PSN: S0004 W07739
+        self.assertAlmostEqual(parseLat("S0004"), -0.0666, msg="parseLat(\"S0004\")", delta=1e-3)
         self.assertRaises(ValueError, parseLat, "195")
 
     def testParseLon(self):
@@ -145,6 +146,8 @@ class IsLatLonTests(unittest.TestCase):
         self.assertAlmostEqual(parseLon("3 °5' 3\" W"), -3.0841, msg="parseLon(\"3 °5' 3\" W\")", delta=1e-3)
         self.assertAlmostEqual(parseLon("10°4'W"), -10.06666, msg="parseLon(\"10°4'W\")", delta=1e-3)
         self.assertAlmostEqual(parseLon("W01947"), -19.7833333, msg="parseLon(\"W01947\")", delta=1e-3)
+        # Reventador PSN: S0004 W07739
+        self.assertAlmostEqual(parseLon("W07739"), -77.65, msg="parseLon(\"W07739\")", delta=1e-3)
         self.assertRaises(ValueError, parseLon, "370")
 
 
