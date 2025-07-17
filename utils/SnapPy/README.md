@@ -27,7 +27,7 @@ status codes from status_exporter (alert-manager):
 |--- | --- |
 |501 | input directory missing | 
 |502 | upload directory missing |
-|503 | files hanging in upload (>10in) | 
+|503 | files hanging in upload (>10 min) | 
 |504 | strange files in upload |
 |505 | uploaded (100), but not queued/started after 10 min |
 |506 | queued (101), but not started after 10 min |
