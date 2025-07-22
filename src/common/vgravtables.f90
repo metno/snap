@@ -186,7 +186,7 @@ end subroutine vgravtables
 !>  iteration procedure for calculating vg
 subroutine iter(vg,u0,dp,rp,p,t)
   real, intent(out) :: vg !< computed gravitational settling velocity
-  real, intent(in) :: u0 !< vg according to Stokes low
+  real, intent(in) :: u0 !< vg according to Stokes law
   real, intent(in) :: dp !< particle size (diameter) in micro meters
   real, intent(in) :: rp !< particle density in g/cm3
   real, intent(in) :: p !< atmospheric pressure
