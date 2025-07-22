@@ -97,7 +97,9 @@ pure subroutine drydep_precompute(surface_pressure, t2m, yflux, xflux, z0, &
   real, intent(in) :: yflux(:,:), xflux(:,:)
   real, intent(in) :: z0(:,:), hflux(:,:)
   real, intent(in) :: leaf_area_index(:,:)
+  !> Diameter in m
   real, intent(in) :: diam
+  !> Density in kg/m3
   real, intent(in) :: density
   integer(int8), intent(in) :: classnr(:,:)
   real, intent(out) :: vd_dep(:,:)
