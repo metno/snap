@@ -24,8 +24,12 @@ module snapparML
 
   private
 
-  public push_down_dcomp
+  public :: push_down_dcomp
 
+  integer, parameter, public :: GRAV_TYPE_UNDEFINED = -1
+  integer, parameter, public :: GRAV_TYPE_OFF = 0
+  integer, parameter, public :: GRAV_TYPE_FIXED = 1
+  integer, parameter, public :: GRAV_TYPE_COMPUTED = 2
 
 !> Information defining a component
   type, public :: defined_component
@@ -47,11 +51,7 @@ module snapparML
     integer :: to_output = 0
 
 !> gravity type:
-!>
-!> * 0=off
-!> * 1=fixed
-!> * 2=computed
-    integer :: grav_type = -1
+    integer :: grav_type = GRAV_TYPE_UNDEFINED
 
 !> fixed gravity in unit m/s, used when \ref grav_type != 2
     real :: gravityms = 0.0
