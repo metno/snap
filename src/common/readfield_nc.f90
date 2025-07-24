@@ -116,7 +116,8 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
       t1_abs, t2_abs, field1
   USE snapgrdML, only: alevel, blevel, vlevel, ahalf, bhalf, vhalf, &
       gparam, klevel, ivlevel, imslp, igtype, ivlayer, ivcoor
-  USE snapmetML, only: met_params, requires_precip_deaccumulation, pressure_units
+  USE snapmetML, only: met_params, requires_precip_deaccumulation, &
+      pressure_units, xy_wind_units, temp_units
   USE snapdimML, only: nx, ny, nk, output_resolution_factor, hres_field, surface_index
   USE datetime, only: datetime_t, duration_t
 !> current timestep (always positive), negative istep means reset
@@ -271,17 +272,17 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
 
   !..u
   !     Get the varid of the data variable, based on its name.
-    call nfcheckload(ncid, met_params%xwindv, start4d, count4d, u2(:,:,k))
+    call nfcheckload(ncid, met_params%xwindv, start4d, count4d, u2(:,:,k), units=xy_wind_units)
 
   !..v
-    call nfcheckload(ncid, met_params%ywindv, start4d, count4d, v2(:,:,k))
+    call nfcheckload(ncid, met_params%ywindv, start4d, count4d, v2(:,:,k), units=xy_wind_units)
   ! bug in chernobyl borders from destaggering
     where (v2 >= 1e+30)
       v2 = 0.0
     end where
 
   !..pot.temp. or abs.temp.
-    call nfcheckload(ncid, met_params%pottempv, start4d, count4d, t2(:,:,k))
+    call nfcheckload(ncid, met_params%pottempv, start4d, count4d, t2(:,:,k), units=temp_units)
 
   !   TODO read ptop from file (only needed for sigma), but not in emep data
     ptop=0.0
@@ -294,7 +295,7 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
   !..alevel (here) only for eta levels
     if ( .NOT. met_params%apv == '') then
       call nfcheckload(ncid, met_params%apv, (/ilevel/), (/1/), alev(k:k), units=pressure_units)
-      call nfcheckload(ncid, met_params%bv, (/ilevel/), (/1/), blev(k:k))
+      call nfcheckload(ncid, met_params%bv, (/ilevel/), (/1/), blev(k:k), units="1")
       if (ivcoor /= 2 .AND. .NOT. met_params%ptopv == '') then
       !..p0 for hybrid loaded to ptop, ap is a * p0
         alev(k) = alev(k) * ptop
@@ -329,19 +330,19 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
 ! u10m
 ! v10m
   if (.not.met_params%use_model_wind_for_10m) then
-    call nfcheckload(ncid, met_params%xwind10mv, start3d, count3d, u2(:,:,1))
-    call nfcheckload(ncid, met_params%ywind10mv, start3d, count3d, v2(:,:,1))
+    call nfcheckload(ncid, met_params%xwind10mv, start3d, count3d, u2(:,:,1), units=xy_wind_units)
+    call nfcheckload(ncid, met_params%ywind10mv, start3d, count3d, v2(:,:,1), units=xy_wind_units)
   else
     if (enspos >= 0) then
       call nfcheckload(ncid, met_params%xwindv, [1, 1, enspos+1, surface_index, timepos], &
-          [nx, ny, 1, 1, 1], u2(:,:,1))
+          [nx, ny, 1, 1, 1], u2(:,:,1), units=xy_wind_units)
       call nfcheckload(ncid, met_params%ywindv, [1, 1, enspos+1, surface_index, timepos], &
-          [nx, ny, 1, 1, 1], v2(:,:,1))
+          [nx, ny, 1, 1, 1], v2(:,:,1), units=xy_wind_units)
     else
       call nfcheckload(ncid, met_params%xwindv, [1, 1, surface_index, timepos], &
-          [nx, ny, 1, 1], u2(:,:,1))
+          [nx, ny, 1, 1], u2(:,:,1), units=xy_wind_units)
       call nfcheckload(ncid, met_params%ywindv, [1, 1, surface_index, timepos], &
-          [nx, ny, 1, 1], v2(:,:,1))
+          [nx, ny, 1, 1], v2(:,:,1), units=xy_wind_units)
     endif
   endif
 
