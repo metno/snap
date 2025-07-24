@@ -919,6 +919,7 @@ subroutine fillscaleoffset(ncid, varid, fillvalue, scalefactor, offset, status)
 end subroutine fillscaleoffset
 
 real function conversion_factor(current_units, target_units)
+  USE iso_fortran_env, only: error_unit
   character(len=*), intent(in) :: current_units
   character(len=*), intent(in) :: target_units
 
@@ -927,7 +928,9 @@ real function conversion_factor(current_units, target_units)
   else if (current_units == "Pa" .and. target_units == "hPa") then
     conversion_factor = 0.01
   else
-    error stop "This conversion is not implemented"
+    write(error_unit, *) "Conversion ", current_units, " to ", target_units
+    write(error_unit, *) "Conversion is not supported"
+    error stop "Units conversion is not implemented"
   endif
 end function
 
