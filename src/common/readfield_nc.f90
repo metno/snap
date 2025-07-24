@@ -108,7 +108,7 @@ end function
 subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
     itimefi,ierror)
   USE iso_fortran_env, only: error_unit
-  USE snapfilML, only: nctype, iavail, filef
+  USE snapfilML, only: iavail, filef
   USE snapfldML, only: &
       xm, ym, u1, u2, v1, v2, w1, w2, t1, t2, ps1, ps2, pmsl1, pmsl2, &
       hbl1, hbl2, hlayer1, hlayer2, garea, hlevel1, hlevel2, &
@@ -116,7 +116,7 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
       t1_abs, t2_abs, field1
   USE snapgrdML, only: alevel, blevel, vlevel, ahalf, bhalf, vhalf, &
       gparam, klevel, ivlevel, imslp, igtype, ivlayer, ivcoor
-  USE snapmetML, only: met_params, requires_precip_deaccumulation
+  USE snapmetML, only: met_params, requires_precip_deaccumulation, pressure_units
   USE snapdimML, only: nx, ny, nk, output_resolution_factor, hres_field, surface_index
   USE datetime, only: datetime_t, duration_t
 !> current timestep (always positive), negative istep means reset
@@ -288,19 +288,17 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
   !       if(ivcoor.eq.2) ptop=idata(19)
   !..p0 for hybrid loaded to ptop, ap is a * p0
     if (ivcoor /= 2 .AND. .NOT. met_params%ptopv == '') then
-      call nfcheckload(ncid, met_params%ptopv, (/0/), (/1/), ptoptmp)
+      call nfcheckload(ncid, met_params%ptopv, (/0/), (/1/), ptoptmp, units=pressure_units)
       ptop = ptoptmp(1)
     end if
   !..alevel (here) only for eta levels
     if ( .NOT. met_params%apv == '') then
-      call nfcheckload(ncid, met_params%apv, (/ilevel/), (/1/), alev(k:k))
+      call nfcheckload(ncid, met_params%apv, (/ilevel/), (/1/), alev(k:k), units=pressure_units)
       call nfcheckload(ncid, met_params%bv, (/ilevel/), (/1/), blev(k:k))
       if (ivcoor /= 2 .AND. .NOT. met_params%ptopv == '') then
       !..p0 for hybrid loaded to ptop, ap is a * p0
         alev(k) = alev(k) * ptop
       end if
-    ! TODO: check unit (here Pa -> hPa
-      alev(k) = alev(k) / 100
     end if
     if ( .NOT. met_params%sigmav == '') then
     ! reusing blev(k) for sigma(k) later
@@ -326,15 +324,7 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
 
 
 ! ps
-  call nfcheckload(ncid, met_params%psv, start3d, count3d, ps2(:,:))
-!  input ps, must be hPa, otherwise:
-  if (nctype == 'arome' .OR. nctype == 'dmi_eps' .OR. &
-  nctype == 'ec_det' .OR. nctype == 'h12_grib' .OR. &
-  nctype == "SLIM" .OR. &
-  nctype == 'gfs_grib_filter_fimex') then
-    ps2 = ps2*0.01
-  endif
-
+  call nfcheckload(ncid, met_params%psv, start3d, count3d, ps2(:,:), units=pressure_units)
 
 ! u10m
 ! v10m
@@ -359,9 +349,9 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
 !..(only for output to results file)
   if(imslp /= 0) then
     if (met_params%mslpv /= '') then
-      call nfcheckload(ncid, met_params%mslpv, start3d, count3d, pmsl2(:,:))
+      call nfcheckload(ncid, met_params%mslpv, start3d, count3d, pmsl2(:,:), units=pressure_units)
     else if (met_params%psv /= '') then
-      call nfcheckload(ncid, met_params%psv, start3d, count3d, pmsl2(:,:))
+      call nfcheckload(ncid, met_params%psv, start3d, count3d, pmsl2(:,:), units=pressure_units)
     else
       write(iulog,*) 'Mslp not found. Not important.'
       imslp=0
@@ -927,7 +917,41 @@ subroutine fillscaleoffset(ncid, varid, fillvalue, scalefactor, offset, status)
   endif
 end subroutine fillscaleoffset
 
-subroutine nfcheckload1d(ncid, varname, start, length, field, return_status)
+real function conversion_factor(current_units, target_units)
+  character(len=*), intent(in) :: current_units
+  character(len=*), intent(in) :: target_units
+
+  if (current_units == target_units) then
+    conversion_factor = 1.0
+  else if (current_units == "Pa" .and. target_units == "hPa") then
+    conversion_factor = 0.01
+  else
+    error stop "This conversion is not implemented"
+  endif
+end function
+
+subroutine get_conversion_factor(ncid, varid, target_units, factor)
+  integer, intent(in) :: ncid
+  integer, intent(in) :: varid
+  character(len=*), intent(in) :: target_units
+  real, intent(out) :: factor
+
+  character(len=:), allocatable :: current_units
+  integer :: attr_len
+  integer :: nferr
+
+  factor = 1.0
+
+  nferr = nf90_inquire_attribute(ncid, varid, "units", len=attr_len)
+  if (nferr /= NF90_NOERR) return
+  allocate(character(len=attr_len) :: current_units)
+  nferr = nf90_get_att(ncid, varid, "units", current_units)
+  if (nferr /= NF90_NOERR) return
+
+  factor = conversion_factor(current_units, target_units)
+end subroutine
+
+subroutine nfcheckload1d(ncid, varname, start, length, field, return_status, units)
   use ieee_arithmetic, only: ieee_value, IEEE_QUIET_NAN
   use iso_fortran_env, only: real32
 
@@ -936,6 +960,7 @@ subroutine nfcheckload1d(ncid, varname, start, length, field, return_status)
   real(real32), intent(out) :: field(:)
   !> Return status instead of panic
   integer, intent(out), optional :: return_status
+  character(len=*), intent(in), optional :: units
 
   real(real32) :: factor, offset, fillvalue
   integer :: varid, status
@@ -971,9 +996,14 @@ subroutine nfcheckload1d(ncid, varname, start, length, field, return_status)
   if (factor /= 1. .OR. offset /= 0.) then
     field = field*factor + offset
   end if
+
+  if (present(units)) then
+    call get_conversion_factor(ncid, varid, units, factor)
+    field = field*factor
+  endif
 end subroutine nfcheckload1d
 
-subroutine nfcheckload2d(ncid, varname, start, length, field, return_status)
+subroutine nfcheckload2d(ncid, varname, start, length, field, return_status, units)
   use ieee_arithmetic, only: ieee_value, IEEE_QUIET_NAN
   use iso_fortran_env, only: real32
 
@@ -982,6 +1012,7 @@ subroutine nfcheckload2d(ncid, varname, start, length, field, return_status)
   real(real32), intent(out) :: field(:,:)
   !> Return status instead of panic
   integer, intent(out), optional :: return_status
+  character(len=*), intent(in), optional :: units
 
   real(real32) :: factor, offset, fillvalue
   integer :: varid, status
@@ -1017,10 +1048,15 @@ subroutine nfcheckload2d(ncid, varname, start, length, field, return_status)
   if (factor /= 1. .OR. offset /= 0.) then
     field = field*factor + offset
   end if
+
+  if (present(units)) then
+    call get_conversion_factor(ncid, varid, units, factor)
+    field = field*factor
+  endif
 end subroutine nfcheckload2d
 
 
-subroutine nfcheckload3d(ncid, varname, start, length, field, return_status)
+subroutine nfcheckload3d(ncid, varname, start, length, field, return_status, units)
   use ieee_arithmetic, only: ieee_value, IEEE_QUIET_NAN
   use iso_fortran_env, only: real32
 
@@ -1029,6 +1065,7 @@ subroutine nfcheckload3d(ncid, varname, start, length, field, return_status)
   real(real32), intent(out) :: field(:,:,:)
   !> Return status instead of panic
   integer, intent(out), optional :: return_status
+  character(len=*), intent(in), optional :: units
 
   real(real32) :: factor, offset, fillvalue
   integer :: varid, status
@@ -1064,6 +1101,11 @@ subroutine nfcheckload3d(ncid, varname, start, length, field, return_status)
   if (factor /= 1. .OR. offset /= 0.) then
     field = field*factor + offset
   end if
+
+  if (present(units)) then
+    call get_conversion_factor(ncid, varid, units, factor)
+    field = field*factor
+  endif
 end subroutine nfcheckload3d
 
 subroutine compute_vertical_coords(alev, blev, ptop)
