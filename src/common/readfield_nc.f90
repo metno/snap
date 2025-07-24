@@ -930,7 +930,8 @@ real function conversion_factor(current_units, target_units)
   else
     write(error_unit, *) "Conversion ", current_units, " to ", target_units
     write(error_unit, *) "Conversion is not supported"
-    error stop "Units conversion is not implemented"
+    write(error_unit, *) "Continuing as if the units are the same..."
+    conversion_factor = 1.0
   endif
 end function
 
