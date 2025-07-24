@@ -92,8 +92,8 @@ pure subroutine drydep_precompute(surface_pressure, t2m, yflux, xflux, z0, &
     roa, ustar, monin_obukhov_length, raero, vs, rs, date)
   use iso_fortran_env, only: real64, int8
   use datetime, only: datetime_t
-  real, intent(in) :: surface_pressure(:,:) !> [hPa]
-  real, intent(in) :: t2m(:,:)
+  real, intent(in) :: surface_pressure(:,:) !> [Pa]
+  real, intent(in) :: t2m(:,:) !> [K]
   real, intent(in) :: yflux(:,:), xflux(:,:)
   real, intent(in) :: z0(:,:), hflux(:,:)
   real, intent(in) :: leaf_area_index(:,:)
