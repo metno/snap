@@ -94,14 +94,16 @@ pure subroutine drydep_precompute(surface_pressure, t2m, yflux, xflux, z0, &
   use datetime, only: datetime_t
   real, intent(in) :: surface_pressure(:,:) !> [Pa]
   real, intent(in) :: t2m(:,:) !> [K]
-  real, intent(in) :: yflux(:,:), xflux(:,:)
-  real, intent(in) :: z0(:,:), hflux(:,:)
-  real, intent(in) :: leaf_area_index(:,:)
+  real, intent(in) :: yflux(:,:) !> [N/m^2]
+  real, intent(in) :: xflux(:,:) !> [N/m^2]
+  real, intent(in) :: z0(:,:) !> [m]
+  real, intent(in) :: hflux(:,:) !> [W s/m^2]
+  real, intent(in) :: leaf_area_index(:,:) !> Unitless
   !> Diameter in m
   real, intent(in) :: diam
   !> Density in kg/m3
   real, intent(in) :: density
-  integer(int8), intent(in) :: classnr(:,:)
+  integer(int8), intent(in) :: classnr(:,:) !> Speficic mapping to land use type, see subroutine `lookup_A`
   real, intent(out) :: vd_dep(:,:)
   real(real64), intent(out) :: roa(:,:), monin_obukhov_length(:,:), raero(:,:), vs(:,:), ustar(:,:), rs(:,:)
   type(datetime_t), intent(in) :: date
