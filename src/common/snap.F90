@@ -930,7 +930,7 @@ contains
     output_column, output_vd, output_vd_debug
     use init_random_seedML, only: extra_seed
     use fldout_ncML, only: surface_layer_is_lowest_level, surface_height_m
-    use snapparML, only: GRAV_TYPE_UNDEFINED, GRAV_TYPE_OFF, GRAV_TYPE_FIXED, GRAV_TYPE_COMPUTED
+    use snapparML, only: GRAV_TYPE_UNDEFINED, GRAV_TYPE_OFF, GRAV_TYPE_FIXED
     use rwalkML, only: diffusion_b => b, diffusion_a_in_bl => a_in_bl, diffusion_a_above_bl => a_above_bl
 
     !> Open file unit
@@ -1611,7 +1611,7 @@ contains
         !..gravity.fixed.cm/s
         if (.not. associated(d_comp)) goto 12
         if (d_comp%grav_type /= GRAV_TYPE_UNDEFINED) goto 12
-        d_comp%grav_type = GRAV_TYPE_COMPUTED
+        d_comp%grav_type = GRAV_TYPE_FIXED
         if (.not. has_value) goto 12
         read (cinput(pname_start:pname_end), *, err=12) d_comp%gravityms
         if (d_comp%gravityms <= 0.) goto 12
