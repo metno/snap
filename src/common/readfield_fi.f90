@@ -216,7 +216,7 @@ contains
     if (met_params%ptopv /= '') then
       call fi_checkload(fio, met_params%ptopv, pressure_units, ptop)
     else
-      ptop = 100. ! hPa
+      ptop = 0.0 ! hPa
     end if
     if (met_params%p0 /= '') then
       call fi_checkload(fio, met_params%p0, pressure_units, p0)

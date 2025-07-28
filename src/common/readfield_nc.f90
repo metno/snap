@@ -262,7 +262,7 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
   if (met_params%ptopv /= '') then
     call nfcheckload(ncid, met_params%ptopv, ptop, units=pressure_units)
   else
-    ptop= 100.0
+    ptop = 0.0
   end if
 
   if (met_params%p0 /= '') then
@@ -1177,6 +1177,7 @@ subroutine compute_vertical_coords(alev, blev, ptop)
   real, intent(in) :: ptop
 
   integer :: k
+  real :: p
 
   do k = 2, nk
     alevel(k) = alev(k)
@@ -1187,14 +1188,10 @@ subroutine compute_vertical_coords(alev, blev, ptop)
   alevel(1) = 0.0
   blevel(1) = 1.0
 
-  !..eta (hybrid) levels ... vlevel=eta (eta as defined in Hirlam)
-  vlevel(:) = alevel/standard_atmosphere + blevel
-
   !..half levels where height is found,
   !..alevel and blevel are in the middle of each layer
   ahalf(1) = alevel(1)
   bhalf(1) = blevel(1)
-  vhalf(1) = vlevel(1)
   !..check if subselection of levels
   do k = 2, nk - 1
     if (klevel(k + 1) /= klevel(k) - 1) then
@@ -1205,15 +1202,20 @@ subroutine compute_vertical_coords(alev, blev, ptop)
     if (.NOT. met_params%manual_level_selection) then
       ahalf(k) = alevel(k) + (alevel(k) - ahalf(k - 1))
       bhalf(k) = blevel(k) + (blevel(k) - bhalf(k - 1))
-      vhalf(k) = ahalf(k)/standard_atmosphere + bhalf(k)
     else
       ahalf(k) = (alevel(k) + alevel(k + 1))*0.5
       bhalf(k) = (blevel(k) + blevel(k + 1))*0.5
-      vhalf(k) = ahalf(k)/standard_atmosphere + bhalf(k)
     end if
   end do
-  ahalf(nk) = alevel(nk)
-  bhalf(nk) = blevel(nk)
+
+  do k=1,nk
+    p = alevel(k) + blevel(k) * standard_atmosphere
+    vlevel(k) = (p - ptop) / (standard_atmosphere - ptop)
+    p = ahalf(k) + bhalf(k) * standard_atmosphere
+    vhalf(k) = (p - ptop) / (standard_atmosphere - ptop)
+  end do
+
+  vhalf(1) = vlevel(1)
   vhalf(nk) = vlevel(nk)
 end subroutine
 
