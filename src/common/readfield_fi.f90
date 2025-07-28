@@ -37,7 +37,7 @@ module readfield_fiML
   !> @brief load and check an array from a source
   interface fi_checkload
     module procedure :: fi_checkload1d, fi_checkload2d, fi_checkload3d, &
-                        fi_checkload2d_64, fi_checkload3d_64
+                        fi_checkload2d_64, fi_checkload3d_64, fi_checkloadscalar
   end interface
 
 contains
@@ -105,7 +105,6 @@ contains
     real :: alev(nk), blev(nk), dxgrid, dygrid
     integer :: ifb, kfb
     real :: p, px, ptop, p0
-    real :: ptoptmp(1), p0tmp(1)
 
     integer :: timepos, timeposm1, nr
 
@@ -215,14 +214,12 @@ contains
     end if
 
     if (met_params%ptopv /= '') then
-      call fi_checkload(fio, met_params%ptopv, pressure_units, ptoptmp)
-      ptop = ptoptmp(1)
+      call fi_checkload(fio, met_params%ptopv, pressure_units, ptop)
     else
       ptop = 100. ! hPa
     end if
     if (met_params%p0 /= '') then
-      call fi_checkload(fio, met_params%p0, pressure_units, p0tmp)
-      p0 = p0tmp(1)
+      call fi_checkload(fio, met_params%p0, pressure_units, p0)
     else
       p0 = 1.0
     end if
@@ -723,6 +720,30 @@ contains
     endif
   end subroutine check
 
+  subroutine fi_checkloadscalar(fio, varname, units, output, nt, nz, nr, ierror)
+    !> the fimex io-object
+    TYPE(FimexIO), intent(inout) :: fio
+    !> variable name in file
+    character(len=*), intent(in) :: varname
+    !> the requested units, see snapdimML.f90
+    character(len=*), intent(in) :: units
+    !> optional position on t-axis, default all (1 is first element)
+    integer, intent(in), optional :: nz
+    !> optional position on z-axis, default all (1 is first element)
+    integer, intent(in), optional :: nt
+    !> optional position on realization/ensemble axis, default 1
+    integer, intent(in), optional :: nr
+    !> error code, 0 on success
+    integer, intent(out), optional :: ierror
+    !> scalar to read
+    real(real32), intent(out) :: output
+
+    real(real32) :: field(1)
+
+    call fi_checkload(fio, varname, units, field, nt, nz, nr, ierror)
+    output = field(1)
+  end subroutine
+  
   subroutine fi_checkload1d(fio, varname, units, field, nt, nz, nr, ierror)
     !> the fimex io-object
     TYPE(FimexIO), intent(inout) :: fio
