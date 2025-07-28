@@ -115,7 +115,7 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
       hlayer1, hlayer2, bl1, bl2, enspos, precip, &
       t1_abs, t2_abs, field1
   USE snapgrdML, only: alevel, blevel, vlevel, ahalf, bhalf, vhalf, &
-      gparam, klevel, ivlevel, imslp, igtype, ivlayer, ivcoor
+      gparam, klevel, ivlevel, imslp, igtype, ivlayer
   USE snapmetML, only: met_params, requires_precip_deaccumulation, &
       pressure_units, xy_wind_units, temp_units
   USE snapdimML, only: nx, ny, nk, output_resolution_factor, hres_field, surface_index
@@ -284,21 +284,21 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
   !..pot.temp. or abs.temp.
     call nfcheckload(ncid, met_params%pottempv, start4d, count4d, t2(:,:,k), units=temp_units)
 
-  !   TODO read ptop from file (only needed for sigma), but not in emep data
-    ptop=0.0
-  !       if(ivcoor.eq.2) ptop=idata(19)
-  !..p0 for hybrid loaded to ptop, ap is a * p0
-    if (ivcoor /= 2 .AND. .NOT. met_params%ptopv == '') then
+
+    if (met_params%ptopv /= '') then
       call nfcheckload(ncid, met_params%ptopv, (/0/), (/1/), ptoptmp, units=pressure_units)
       ptop = ptoptmp(1)
+    else
+      ptop=100.
     end if
   !..alevel (here) only for eta levels
-    if ( .NOT. met_params%apv == '') then
+    if (met_params%apv /= '') then
       call nfcheckload(ncid, met_params%apv, (/ilevel/), (/1/), alev(k:k), units=pressure_units)
       call nfcheckload(ncid, met_params%bv, (/ilevel/), (/1/), blev(k:k), units="1")
-      if (ivcoor /= 2 .AND. .NOT. met_params%ptopv == '') then
-      !..p0 for hybrid loaded to ptop, ap is a * p0
-        alev(k) = alev(k) * ptop
+      if (met_params%p0 /= '') then
+      !..p0 for hybrid, ap is a * p0
+        call nfcheckload(ncid, met_params%p0, [0], [1], ptoptmp, units=pressure_units)
+        alev(k) = alev(k) * ptoptmp(1)
       end if
     end if
     if ( .NOT. met_params%sigmav == '') then
@@ -1115,7 +1115,7 @@ end subroutine nfcheckload3d
 
 subroutine compute_vertical_coords(alev, blev, ptop)
   use iso_fortran_env, only: error_unit
-  use snapgrdML, only: alevel, blevel, vlevel, ivcoor, klevel, &
+  use snapgrdML, only: alevel, blevel, vlevel, klevel, &
                        ahalf, bhalf, vhalf
   use snapmetML, only: met_params
   use snapdimML, only: nk
@@ -1132,27 +1132,17 @@ subroutine compute_vertical_coords(alev, blev, ptop)
     blevel(k) = blev(k)
   end do
 
-  if (ivcoor == 2) then
-    !..sigma levels (norlam)
-    do k = 2, nk
-      alevel(k) = ptop*(1.-blevel(k))
-    end do
-  end if
+  !..sigma levels (norlam)
+  do k = 2, nk
+    alevel(k) = ptop*(1.-blevel(k))
+  end do
 
   !..surface
   alevel(1) = 0.0
   blevel(1) = 1.0
 
-  if (ivcoor == 2) then
-    !..sigma levels ... vlevel=sigma
-    vlevel(:) = blevel
-  elseif (ivcoor == 10) then
-    !..eta (hybrid) levels ... vlevel=eta (eta as defined in Hirlam)
-    vlevel(:) = alevel/standard_atmosphere + blevel
-  else
-    write (error_unit, *) 'PROGRAM ERROR.  ivcoor= ', ivcoor
-    error stop 255
-  end if
+  !..eta (hybrid) levels ... vlevel=eta (eta as defined in Hirlam)
+  vlevel(:) = alevel/standard_atmosphere + blevel
 
   !..half levels where height is found,
   !..alevel and blevel are in the middle of each layer
@@ -1180,76 +1170,6 @@ subroutine compute_vertical_coords(alev, blev, ptop)
   bhalf(nk) = blevel(nk)
   vhalf(nk) = vlevel(nk)
 end subroutine
-
-  subroutine compute_vertical_levels(alev, blev, ptop)
-    use iso_fortran_env, only: error_unit
-    use snapgrdML, only: alevel, blevel, ahalf, bhalf, vlevel, vhalf, klevel, &
-                         ivcoor
-    use snapdimML, only: nk
-    use snapmetML, only: met_params
-    use snaptabML, only: standard_atmosphere
-
-    real, intent(in) :: alev(:), blev(:)
-    real, intent(in) :: ptop
-
-    integer :: k
-
-    do k = 2, nk
-      alevel(k) = alev(k)
-      blevel(k) = blev(k)
-    end do
-
-
-    if (ivcoor == 2) then
-      !..sigma levels (norlam)
-      do k = 2, nk
-        alevel(k) = ptop*(1.-blevel(k))
-      end do
-    end if
-
-    !..surface
-    alevel(1) = 0.
-    blevel(1) = 1.
-
-    if (ivcoor == 2) then
-      !..sigma levels ... vlevel=sigma
-      vlevel(:) = blevel
-    elseif (ivcoor == 10) then
-      !..eta (hybrid) levels ... vlevel=eta (eta as defined in Hirlam)
-      vlevel(:) = alevel / standard_atmosphere + blevel
-    else
-      write (error_unit, *) 'PROGRAM ERROR.  ivcoor= ', ivcoor
-      error stop 255
-    end if
-
-    !..half levels where height is found,
-    !..alevel and blevel are in the middle of each layer
-    ahalf(1) = alevel(1)
-    bhalf(1) = blevel(1)
-    vhalf(1) = vlevel(1)
-    !..check if subselection of levels
-    do k = 2, nk - 1
-      if (klevel(k + 1) /= klevel(k) - 1) then
-        met_params%manual_level_selection = .TRUE.
-      endif
-    end do
-    do k = 2, nk - 1
-      if (.NOT. met_params%manual_level_selection) then
-        ahalf(k) = alevel(k) + (alevel(k) - ahalf(k - 1))
-        bhalf(k) = blevel(k) + (blevel(k) - bhalf(k - 1))
-        vhalf(k) = ahalf(k)/standard_atmosphere + bhalf(k)
-      else
-        ahalf(k) = (alevel(k) + alevel(k + 1))*0.5
-        bhalf(k) = (blevel(k) + blevel(k + 1))*0.5
-        vhalf(k) = ahalf(k)/standard_atmosphere + bhalf(k)
-      end if
-    end do
-
-    ! Top half level is set to zero pressure
-    ahalf(nk) = 0.0
-    bhalf(nk) = 0.0
-    vhalf(nk) = 0.0
-  end subroutine
 
   subroutine read_drydep_required_fields(ncid, timepos, timeposm1, itimefi)
     USE ieee_arithmetic, only: ieee_is_nan

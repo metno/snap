@@ -73,7 +73,7 @@ contains
       hlayer1, hlayer2, bl1, bl2, enspos, precip, t1_abs, t2_abs, &
       field1
     USE snapgrdML, only: alevel, blevel, vlevel, ahalf, bhalf, vhalf, &
-                         gparam, klevel, ivlevel, imslp, igtype, ivlayer, ivcoor
+                         gparam, klevel, ivlevel, imslp, igtype, ivlayer
     USE snapmetML, only: met_params, xy_wind_units, pressure_units, omega_units, &
                          sigmadot_units, temp_units, requires_precip_deaccumulation
     USE snapdimML, only: nx, ny, nk, output_resolution_factor, hres_field, surface_index
@@ -235,22 +235,22 @@ contains
       !..pot.temp. or abs.temp.
       call fi_checkload(fio, met_params%pottempv, temp_units, t2(:, :, k), nt=timepos, nz=ilevel, nr=nr)
 
-      !   TODO read ptop from file (only needed for sigma), but not in emep data
-      ptop = 100. ! hPa
-      !       if(ivcoor.eq.2) ptop=idata(19)
       !..p0 for hybrid loaded to ptop, ap is a * p0
-      if (ivcoor /= 2 .AND. .NOT. met_params%ptopv == '') then
+      if (met_params%ptopv /= '') then
         call fi_checkload(fio, met_params%ptopv, pressure_units, ptoptmp)
         ptop = ptoptmp(1)
         ap_units = ""
+      else
+        ptop = 100. ! hPa
       end if
       !..alevel (here) only for eta levels
-      if (.NOT. met_params%apv == '') then
+      if (met_params%apv /= '') then
         call fi_checkload(fio, met_params%apv, ap_units, alev(k:k), nz=ilevel)
         call fi_checkload(fio, met_params%bv, "", blev(k:k), nz=ilevel)
-        if (ivcoor /= 2 .AND. .NOT. met_params%ptopv == '') then
+        if (met_params%p0 /= '') then
           !..p0 for hybrid loaded to ptop, ap is a * p0
-          alev(k) = alev(k)*ptop
+          call fi_checkload(fio, met_params%p0, pressure_units, ptoptmp)
+          alev(k) = alev(k)*ptoptmp(1)
         end if
       end if
       if (.NOT. met_params%sigmav == '') then
