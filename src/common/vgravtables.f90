@@ -16,7 +16,6 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 module vgravtablesML
-  use drydepml, only: drydep_scheme, DRYDEP_SCHEME_EMEP, DRYDEP_SCHEME_ZHANG, DRYDEP_SCHEME_EMERSON
   implicit none
   private
 
@@ -35,7 +34,7 @@ module vgravtablesML
   real, parameter, public :: pincrvg = 1200./float(numpresvg-1)
   real, parameter, public :: pbasevg = 0. - pincrvg
 
-  public :: vgravtables
+  public :: vgravtables, vgrav
 
   contains
 
@@ -44,22 +43,19 @@ module vgravtablesML
 subroutine vgravtables
   USE ISO_FORTRAN_ENV, only: real64
   USE snapparML, only: ncomp, run_comp, def_comp
-  USE drydepml, only: gravitational_settling
 
-  real, parameter :: R = 287.05
   !> absolute temperature (K)
   real :: t
-  !> particle size
+  !> particle size (µm)
   real :: diam_part
-  !> particle density
+  !> particle density (g cm-3)
   real :: rho_part
   !> gravitational setling
   real :: vg
   !> gravitational setling after iteration
   real :: vgmod
-  !> atmospheric pressure
+  !> atmospheric pressure (hPa)
   real :: p
-  real(real64) :: roa
 
   integer :: n,m,ip,it
 !---------------------------------------
@@ -74,45 +70,26 @@ do_comp: do n=1,ncomp
       cycle do_comp
     endif
 
-    select case(drydep_scheme)
-    case (DRYDEP_SCHEME_EMEP,DRYDEP_SCHEME_ZHANG,DRYDEP_SCHEME_EMERSON)
-      ! expected kg/m3
-      rho_part = def_comp(m)%densitygcm3 / 1000.0
-      ! expected m
-      diam_part = 2 * def_comp(m)%radiusmym / 1e6
+    ! radius to diameter
+    diam_part = 2 * def_comp(m)%radiusmym
+    rho_part = def_comp(m)%densitygcm3
 
-      do ip=1,numpresvg
-        ! Expecting pascal
-        p = max(1.0, pbasevg + ip*pincrvg) / 100.0
-        do it=1,numtempvg
-          t = tbasevg + it*tincrvg
-          roa = p / (real(t, kind=real64) * R)
-          vgtable(it, ip, n) = gravitational_settling(roa, real(diam_part, kind=real64), real(rho_part, kind=real64))
-        end do
+    do ip=1,numpresvg
+
+      p= pbasevg + ip*pincrvg
+      if(p < 1.) p=1.
+
+      do it=1,numtempvg
+
+        t= tbasevg + it*tincrvg
+
+        vg=vgrav(diam_part,rho_part,p,t)
+        call iter(vgmod,vg,diam_part,rho_part,p,t)
+
+      !..table in unit m/s (cm/s computed)
+        vgtable(it,ip,n)= vgmod*0.01
       end do
-    case default
-      ! radius to diameter
-      diam_part = 2 * def_comp(m)%radiusmym
-      rho_part = def_comp(m)%densitygcm3
-
-      do ip=1,numpresvg
-
-        p= pbasevg + ip*pincrvg
-        if(p < 1.) p=1.
-
-        do it=1,numtempvg
-
-          t= tbasevg + it*tincrvg
-
-          vg=vgrav(diam_part,rho_part,p,t)
-          call iter(vgmod,vg,diam_part,rho_part,p,t)
-
-        !..table in unit m/s (cm/s computed)
-          vgtable(it,ip,n)= vgmod*0.01
-
-        end do
-      end do
-    end select
+    end do
   end do do_comp
 end subroutine vgravtables
 
@@ -187,7 +164,7 @@ end subroutine vgravtables
 !>
 !>  etha=etha(t)    - viscosity of the air (g cm-1 s-1)
 !>  c(dp)        - Cunningham factor for the small particles
-  pure real function vgrav(dp,rp,p,t)
+  pure elemental real function vgrav(dp,rp,p,t)
     real, intent(in) :: dp !< particle size in micro meters
     real, intent(in) :: rp !< density of particle (g/cm3)
     real, intent(in) :: p !< atmospheric presure (hPa)
@@ -195,7 +172,6 @@ end subroutine vgravtables
 
     real, parameter :: g = 981.0 ! acceleration of gravity
     real :: ra        ! density of the air
-!   real, parameter :: dp_fac = 1.0e-4 ! conversion factor micro meters -> cm
     real :: etha    ! viscosity of the air
 
     ra=roa(p,t)
@@ -206,18 +182,18 @@ end subroutine vgravtables
 
 !>  iteration procedure for calculating vg
 subroutine iter(vg,u0,dp,rp,p,t)
-  real, intent(out) :: vg !< computed gravitational settling velocity
-  real, intent(in) :: u0 !< vg according to Stokes low
+  real, intent(out) :: vg !< computed gravitational settling velocity in cm/s
+  real, intent(in) :: u0 !< vg according to Stokes law in cm/s
   real, intent(in) :: dp !< particle size (diameter) in micro meters
   real, intent(in) :: rp !< particle density in g/cm3
-  real, intent(in) :: p !< atmospheric pressure
-  real, intent(in) :: t !< temperature of the air
+  real, intent(in) :: p !< atmospheric pressure in hPa
+  real, intent(in) :: t !< temperature of the air in K
 
   real :: eps    ! accuracy of computed vg (0.1%)
   real :: x1,x2    ! boundary of the domain for fit
   real :: x        ! value from the fit domain
   real :: y,y1,y2    ! fit values during the iteration
-  integer :: it    ! itereation number
+  integer :: it    ! iteration number
 !---------------------------------------
   eps=0.001*u0
   x1=0.0
@@ -259,7 +235,7 @@ end subroutine iter
   pure real function roa(p,t)
     real, intent(in) :: t !< absolute temperature (K)
     real, intent(in) :: p !< presure (hPa)
-    real, parameter :: r = 287.04 ! gas constant
+    real, parameter :: r = 287.04 ! Specific gas constant (J kg-1 K-1)
 
     roa=0.001*p*100.0/(r*t)
 
