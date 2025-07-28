@@ -98,15 +98,14 @@ contains
     TYPE(FimexIO) :: fio
     integer, save :: ntav1, ntav2 = 0
     character(len=1024), save :: file_name = ""
-    character(len=1024), save :: ap_units = pressure_units
     logical, save :: first_time_read = .true.
 
     integer :: i, j, k, ilevel, i1, i2
     integer :: nhdiff, nhdiff_precip, prev_tstep_same_file
     real :: alev(nk), blev(nk), dxgrid, dygrid
     integer :: ifb, kfb
-    real :: p, px, ptop
-    real :: ptoptmp(1)
+    real :: p, px, ptop, p0
+    real :: ptoptmp(1), p0tmp(1)
 
     integer :: timepos, timeposm1, nr
 
@@ -215,7 +214,19 @@ contains
 
     end if
 
-    ptop = 100.0
+    if (met_params%ptopv /= '') then
+      call fi_checkload(fio, met_params%ptopv, pressure_units, ptoptmp)
+      ptop = ptoptmp(1)
+    else
+      ptop = 100. ! hPa
+    end if
+    if (met_params%p0 /= '') then
+      call fi_checkload(fio, met_params%p0, pressure_units, p0tmp)
+      p0 = p0tmp(1)
+    else
+      p0 = 1.0
+    end if
+
     do k = nk , 2, -1
 
       !..input model level no.
@@ -235,25 +246,18 @@ contains
       !..pot.temp. or abs.temp.
       call fi_checkload(fio, met_params%pottempv, temp_units, t2(:, :, k), nt=timepos, nz=ilevel, nr=nr)
 
-      !..p0 for hybrid loaded to ptop, ap is a * p0
-      if (met_params%ptopv /= '') then
-        call fi_checkload(fio, met_params%ptopv, pressure_units, ptoptmp)
-        ptop = ptoptmp(1)
-        ap_units = ""
-      else
-        ptop = 100. ! hPa
-      end if
-      !..alevel (here) only for eta levels
       if (met_params%apv /= '') then
-        call fi_checkload(fio, met_params%apv, ap_units, alev(k:k), nz=ilevel)
-        call fi_checkload(fio, met_params%bv, "", blev(k:k), nz=ilevel)
         if (met_params%p0 /= '') then
-          !..p0 for hybrid loaded to ptop, ap is a * p0
-          call fi_checkload(fio, met_params%p0, pressure_units, ptoptmp)
-          alev(k) = alev(k)*ptoptmp(1)
+          call fi_checkload(fio, met_params%apv, "1", alev(k:k), nz=ilevel)
+          alev(k) = alev(k)*p0
+        else
+          call fi_checkload(fio, met_params%apv, pressure_units, alev(k:k), nz=ilevel)
         end if
       end if
-      if (.NOT. met_params%sigmav == '') then
+      if (met_params%bv /= '') then
+        call fi_checkload(fio, met_params%bv, "", blev(k:k), nz=ilevel)
+      end if
+      if (met_params%sigmav /= '') then
         ! reusing blev(k) for sigma(k) later
         call fi_checkload(fio, met_params%sigmav, "", blev(k:k), nz=ilevel)
       end if

@@ -144,8 +144,8 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
   integer :: i, j, k, ilevel, i1, i2
   integer :: nhdiff, nhdiff_precip
   real :: alev(nk), blev(nk), dxgrid, dygrid
-  real :: p, px, ptop
-  real :: ptoptmp(1)
+  real :: p, px, ptop, p0
+  real :: ptoptmp(1), p0tmp(1)
   integer :: prev_tstep_same_file
 
   integer :: timepos, timeposm1
@@ -260,7 +260,20 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
 
   end if
 
-  ptop = 0.0
+  if (met_params%ptopv /= '') then
+    call nfcheckload(ncid, met_params%ptopv, (/0/), (/1/), ptoptmp, units=pressure_units)
+    ptop = ptoptmp(1)
+  else
+    ptop= 100.0
+  end if
+
+  if (met_params%p0 /= '') then
+    call nfcheckload(ncid, met_params%p0, (/0/), (/1/), p0tmp, units=pressure_units)
+    p0 = p0tmp(1)
+  else
+    p0 = 1.0
+  end if
+
   do k=nk,2,-1
 
   !..input model level no.
@@ -284,26 +297,20 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
   !..pot.temp. or abs.temp.
     call nfcheckload(ncid, met_params%pottempv, start4d, count4d, t2(:,:,k), units=temp_units)
 
-
-    if (met_params%ptopv /= '') then
-      call nfcheckload(ncid, met_params%ptopv, (/0/), (/1/), ptoptmp, units=pressure_units)
-      ptop = ptoptmp(1)
-    else
-      ptop=100.
-    end if
-  !..alevel (here) only for eta levels
     if (met_params%apv /= '') then
-      call nfcheckload(ncid, met_params%apv, (/ilevel/), (/1/), alev(k:k), units=pressure_units)
-      call nfcheckload(ncid, met_params%bv, (/ilevel/), (/1/), blev(k:k), units="1")
       if (met_params%p0 /= '') then
-      !..p0 for hybrid, ap is a * p0
-        call nfcheckload(ncid, met_params%p0, [0], [1], ptoptmp, units=pressure_units)
+        call nfcheckload(ncid, met_params%apv, [ilevel], [1], alev(k:k), units="1")
         alev(k) = alev(k) * ptoptmp(1)
+      else
+        call nfcheckload(ncid, met_params%apv, [ilevel], [1], alev(k:k), units=pressure_units)
       end if
     end if
-    if ( .NOT. met_params%sigmav == '') then
+    if (met_params%bv /= '') then
+      call nfcheckload(ncid, met_params%bv, [ilevel], [1], blev(k:k), units="1")
+    end if
+    if (met_params%sigmav /= '') then
     ! reusing blev(k) for sigma(k) later
-      call nfcheckload(ncid, met_params%sigmav, (/ilevel/), (/1/), blev(k:k))
+      call nfcheckload(ncid, met_params%sigmav, [ilevel], [1], blev(k:k))
     end if
 
   !..sigma_dot/eta_dot (0 at surface)
@@ -1130,11 +1137,6 @@ subroutine compute_vertical_coords(alev, blev, ptop)
   do k = 2, nk
     alevel(k) = alev(k)
     blevel(k) = blev(k)
-  end do
-
-  !..sigma levels (norlam)
-  do k = 2, nk
-    alevel(k) = ptop*(1.-blevel(k))
   end do
 
   !..surface
