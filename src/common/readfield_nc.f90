@@ -30,7 +30,7 @@ module readfield_ncML
   public :: compute_vertical_coords, read_largest_landfraction
 
   interface nfcheckload
-    module procedure nfcheckload1d, nfcheckload2d, nfcheckload3d
+    module procedure nfcheckloadscalar, nfcheckload1d, nfcheckload2d, nfcheckload3d
   end interface
 
   contains
@@ -145,7 +145,6 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
   integer :: nhdiff, nhdiff_precip
   real :: alev(nk), blev(nk), dxgrid, dygrid
   real :: p, px, ptop, p0
-  real :: ptoptmp(1), p0tmp(1)
   integer :: prev_tstep_same_file
 
   integer :: timepos, timeposm1
@@ -261,15 +260,13 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
   end if
 
   if (met_params%ptopv /= '') then
-    call nfcheckload(ncid, met_params%ptopv, (/0/), (/1/), ptoptmp, units=pressure_units)
-    ptop = ptoptmp(1)
+    call nfcheckload(ncid, met_params%ptopv, ptop, units=pressure_units)
   else
     ptop= 100.0
   end if
 
   if (met_params%p0 /= '') then
-    call nfcheckload(ncid, met_params%p0, (/0/), (/1/), p0tmp, units=pressure_units)
-    p0 = p0tmp(1)
+    call nfcheckload(ncid, met_params%p0, p0, units=pressure_units)
   else
     p0 = 1.0
   end if
@@ -300,7 +297,7 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
     if (met_params%apv /= '') then
       if (met_params%p0 /= '') then
         call nfcheckload(ncid, met_params%apv, [ilevel], [1], alev(k:k), units="1")
-        alev(k) = alev(k) * ptoptmp(1)
+        alev(k) = alev(k) * p0
       else
         call nfcheckload(ncid, met_params%apv, [ilevel], [1], alev(k:k), units=pressure_units)
       end if
@@ -956,6 +953,58 @@ subroutine get_conversion_factor(ncid, varid, target_units, factor)
   if (nferr /= NF90_NOERR) return
 
   factor = conversion_factor(current_units, target_units)
+end subroutine
+
+subroutine nfcheckloadscalar(ncid, varname, output, return_status, units)
+  use ieee_arithmetic, only: ieee_value, IEEE_QUIET_NAN
+  use iso_fortran_env, only: real32
+
+  integer, intent(in) :: ncid
+  character(len=*), intent(in) :: varname
+  real(real32), intent(out) :: output
+  !> Return status instead of panic
+  integer, intent(out), optional :: return_status
+  character(len=*), intent(in), optional :: units
+
+  real(real32) :: factor, offset, fillvalue
+  integer :: varid, status
+
+  if (present(return_status)) return_status = NF90_NOERR
+
+  status = nf90_inq_varid(ncid, varname, varid)
+  if (status /= NF90_NOERR .and. present(return_status)) then
+    return_status = status
+    return
+  endif
+  call check(status, varname)
+
+  write (iulog,*) "reading "//trim(varname)//", as scalar"
+  status = nf90_get_var(ncid, varid, output)
+  if (status /= NF90_NOERR .and. present(return_status)) then
+    return_status = status
+    return
+  endif
+  call check(status, varname)
+
+  call fillscaleoffset(ncid, varid, fillvalue, factor, offset, status)
+  if (status /= NF90_NOERR .and. present(return_status)) then
+    return_status = status
+    return
+  endif
+  call check(status)
+
+  if (output == fillvalue) then
+    output = IEEE_VALUE(fillvalue, IEEE_QUIET_NAN)
+  end if
+
+  if (factor /= 1. .OR. offset /= 0.) then
+    output = output*factor + offset
+  end if
+
+  if (present(units)) then
+    call get_conversion_factor(ncid, varid, units, factor)
+    output = output*factor
+  endif
 end subroutine
 
 subroutine nfcheckload1d(ncid, varname, start, length, field, return_status, units)
