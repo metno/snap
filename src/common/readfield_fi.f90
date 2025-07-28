@@ -72,7 +72,7 @@ contains
       hbl1, hbl2, hlayer1, hlayer2, garea, hlevel1, hlevel2, &
       hlayer1, hlayer2, bl1, bl2, enspos, precip, t1_abs, t2_abs, &
       field1
-    USE snapgrdML, only: alevel, blevel, vlevel, ahalf, bhalf, vhalf, &
+    USE snapgrdML, only: alevel, blevel, vlevel, ahalf, bhalf, vhalf, ptop, &
                          gparam, klevel, ivlevel, imslp, igtype, ivlayer
     USE snapmetML, only: met_params, xy_wind_units, pressure_units, omega_units, &
                          sigmadot_units, temp_units, requires_precip_deaccumulation
@@ -104,7 +104,7 @@ contains
     integer :: nhdiff, nhdiff_precip, prev_tstep_same_file
     real :: alev(nk), blev(nk), dxgrid, dygrid
     integer :: ifb, kfb
-    real :: p, px, ptop, p0
+    real :: p, px, p0
 
     integer :: timepos, timeposm1, nr
 
