@@ -106,6 +106,8 @@ module snapgrdML
 !> p = p_top + sigma * (ps - ptop)
     real, allocatable, save, public :: vlevel(:)
     real, allocatable, save, public :: vhalf(:)
+!> Pressure at the top of model
+    real, save, public :: ptop = 0.0
 
 !> grid type
 !> * 1=polarstereographic

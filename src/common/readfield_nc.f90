@@ -114,7 +114,7 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
       hbl1, hbl2, hlayer1, hlayer2, garea, hlevel1, hlevel2, &
       hlayer1, hlayer2, bl1, bl2, enspos, precip, &
       t1_abs, t2_abs, field1
-  USE snapgrdML, only: alevel, blevel, vlevel, ahalf, bhalf, vhalf, &
+  USE snapgrdML, only: alevel, blevel, vlevel, ahalf, bhalf, vhalf, ptop, &
       gparam, klevel, ivlevel, imslp, igtype, ivlayer
   USE snapmetML, only: met_params, requires_precip_deaccumulation, &
       pressure_units, xy_wind_units, temp_units
@@ -144,7 +144,7 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
   integer :: i, j, k, ilevel, i1, i2
   integer :: nhdiff, nhdiff_precip
   real :: alev(nk), blev(nk), dxgrid, dygrid
-  real :: p, px, ptop, p0
+  real :: p, px, p0
   integer :: prev_tstep_same_file
 
   integer :: timepos, timeposm1
