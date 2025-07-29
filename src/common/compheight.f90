@@ -31,7 +31,7 @@ module compheightML
 !>     defined by alevel and blevel
 !>   - lower model level is level 2
 subroutine compheight()
-  USE snapgrdML, only: ahalf, bhalf, alevel, blevel
+  USE snapgrdML, only: ahalf, bhalf
   USE snapfldML, only: ps2, hlayer2, hlevel2, t2
   USE snapfldML, only: hlayer => field3d1
   USE snaptabML, only: g, exner
@@ -57,7 +57,7 @@ subroutine compheight()
         p = ahalf(k) + bhalf(k)*ps2(i,j)
         pih = exner(p)
 
-        p = alevel(k) + blevel(k)*ps2(i,j)
+        p = ahalf(k-1) + bhalf(k-1)*ps2(i,j)
         pif = exner(p)
 
         h1 = hlev(i,j)
