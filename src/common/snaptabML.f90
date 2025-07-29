@@ -25,9 +25,9 @@ module snaptabML
     integer, parameter :: mpretab = 500
 
 !> multiply pressure by this value to get index in pitab
-    real, parameter, public :: pmult = 0.1
+    real, parameter :: pmult = 0.1
 !>  Exner function, pitab(0:130) for p=0,10,20,...1300 hPa
-    real, save, public :: pitab(0:130)
+    real, save :: pitab(0:130)
 
     real, parameter, public :: g=9.81, r=287.0, cp=1004.0
     real, parameter, public :: rcp = r/cp
@@ -46,6 +46,13 @@ module snaptabML
     public :: tabcon
     public :: exner
     public :: hypsometric_eq, hypsometric_eq_inv
+
+  !> Exner function
+  ! uses pre-calculated tables for efficiency
+  interface exner
+      module procedure :: exner_real32, exner_real64
+  end interface
+  
 
     contains
 
@@ -75,15 +82,32 @@ module snaptabML
         t2thetafac = t2thetafac_table(nint(p*10.0 + 0.5))
       end function
 
-  !> Exner function
-  ! uses pre-calculated tables for efficiency
-  elemental real function exner(p)
-    real, intent(in) :: p  !> [hPa]
+  elemental real function exner_real32(p) result(exner)
+    USE iso_fortran_env, only: real32
+    real(real32), intent(in) :: p  !> [hPa]
 
-    real :: rtab
+    real(real32) :: rtab
     integer :: itab
 
-    real :: e0, e1
+    real(real32) :: e0, e1
+
+    rtab = p * pmult
+    itab = rtab
+
+    e0 = pitab(itab)
+    e1 = pitab(itab + 1)
+
+    exner = e0 + (e1 - e0)*(rtab - itab)
+  end function
+
+  elemental real function exner_real64(p) result(exner)
+    USE iso_fortran_env, only: real64
+    real(real64), intent(in) :: p  !> [hPa]
+
+    real(real64) :: rtab
+    integer :: itab
+
+    real(real64) :: e0, e1
 
     rtab = p * pmult
     itab = rtab
