@@ -44,6 +44,7 @@ module snaptabML
 
     public :: t2thetafac
     public :: tabcon
+    public :: exner
     public :: hypsometric_eq, hypsometric_eq_inv
 
     contains
@@ -74,6 +75,25 @@ module snaptabML
         t2thetafac = t2thetafac_table(nint(p*10.0 + 0.5))
       end function
 
+  !> Exner function
+  ! uses pre-calculated tables for efficiency
+  elemental real function exner(p)
+    real, intent(in) :: p  !> [hPa]
+
+    real :: rtab
+    integer :: itab
+
+    real :: e0, e1
+
+    rtab = p * pmult
+    itab = rtab
+
+    e0 = pitab(itab)
+    e1 = pitab(itab + 1)
+
+    exner = e0 + (e1 - e0)*(rtab - itab)
+  end function
+
   pure elemental real function hypsometric_eq(p1, p2, T) result(h)
     !> Pressure
     real, intent(in) :: p1
@@ -93,4 +113,5 @@ module snaptabML
     real, intent(in) :: T
     p2 = p*exp(g*h/(R*T))
   end function
+
 end module snaptabML
