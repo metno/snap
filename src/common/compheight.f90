@@ -40,8 +40,8 @@ subroutine compheight()
 
   real, parameter :: ginv = 1.0/g
 
-  integer :: i,j,k,itab
-  real :: rtab,p,pih,pif,h1,h2
+  integer :: i,j,k
+  real :: p,pih,pif,h1,h2
   real :: pihl(nx,ny),hlev(nx,ny)
 
 !..compute height of model levels (in the model grid)
