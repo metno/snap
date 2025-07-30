@@ -228,6 +228,9 @@ subroutine allocateFields
       if (AllocateStatus /= 0) ERROR STOP errmsg
     endif
   endif
+  if (.true. .and. .not. allocated(t2_abs)) then
+      allocate(t2_abs(nxhr, nyhr, nk), t1_abs(nxhr, nyhr, nk))
+  endif
 
   allocate(total_activity_released(ncomp), total_activity_lost_domain(ncomp), &
     total_activity_lost_other(ncomp), stat=AllocateStatus)

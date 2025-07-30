@@ -589,7 +589,7 @@ PROGRAM bsnap
     end if
     if (ierror /= 0) call snap_error_exit(iulog)
     call compheight
-    call bldp
+    ! call bldp
 
     ! Initialise output
     if (idailyout == 1) then
@@ -677,7 +677,7 @@ PROGRAM bsnap
         !..compute model level heights
         call compheight
         !..calculate boundary layer (top and height)
-        call bldp
+        ! call bldp
 
         dur = time_file - itimei
         ihdiff = dur%hours

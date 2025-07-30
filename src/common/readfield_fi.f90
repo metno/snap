@@ -304,6 +304,9 @@ contains
       endif
     end if
 
+!..model boundary layer height
+    call fi_checkload(fio, 'ga_blh_1', '', hbl2(:, :), nt=timepos, nr=nr, nz=1)
+
     if (first_time_read) then
       call compute_vertical_coords(alev, blev, ptop)
     endif

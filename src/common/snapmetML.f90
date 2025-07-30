@@ -199,7 +199,7 @@ module snapmetML
       met_params%ptopv = ''  ! need ptopv to multiply ap=a*ptopv
       met_params%apv = 'ap'
       met_params%bv = 'b'
-      met_params%sigmadotv = 'omega_ml' !'lagrangian_tendency_of_atmosphere_sigma_coordinate_ml'
+      met_params%sigmadotv = '' !'lagrangian_tendency_of_atmosphere_sigma_coordinate_ml'
       met_params%sigmadot_is_omega = .true.
       met_params%psv = 'surface_air_pressure'
       met_params%mslpv = 'air_pressure_at_sea_level'

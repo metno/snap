@@ -46,6 +46,9 @@ subroutine bldp
 
 
   real ::    pih(nk),pif(nk),zh(nk),zf(nk),thh(nk)
+    !######################################################################
+    !	  if(mod(i,20).eq.0 .and. mod(j,20).eq.0) then
+
 
   integer :: kbltop,kblbot,nkk,i,j,k,itab,ktop
   real :: pbltop,pblbot,p,p1,p2,vbltop,vblbot
@@ -271,7 +274,7 @@ subroutine bldp
           +(zh(k+1)-zh(k))*(vhalf(k)-vbl)/(vhalf(k)-vhalf(k+1))
 
       bl2(i,j)=vbl
-      hbl2(i,j)=hbl
+      !hbl2(i,j)=hbl
 
     !..reset wind
       u2(i,j,1)=uhelp

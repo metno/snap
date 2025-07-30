@@ -259,7 +259,7 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
 
   end if
 
-  ptop = 100.0
+  ptop = 0.0
   do k=nk,2,-1
 
   !..input model level no.
@@ -283,9 +283,8 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
   !..pot.temp. or abs.temp.
     call nfcheckload(ncid, met_params%pottempv, start4d, count4d, t2(:,:,k))
 
-
   !   TODO read ptop from file (only needed for sigma), but not in emep data
-    ptop=100.
+    ptop=0.0
   !       if(ivcoor.eq.2) ptop=idata(19)
   !..p0 for hybrid loaded to ptop, ap is a * p0
     if (ivcoor /= 2 .AND. .NOT. met_params%ptopv == '') then
@@ -368,6 +367,9 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
       imslp=0
     end if
   end if
+  
+!.. Read in boundary layer height from meteo
+  call nfcheckload(ncid, 'ga_blh_1', start3d, count3d, hbl2(:, :))
 
   if (met_params%need_precipitation) then
     call read_precipitation(ncid, nhdiff_precip, timepos, timeposm1)
@@ -425,6 +427,8 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
       end do
     endif
   end if
+
+  call convert_hbl_to_vbl(hbl2, bl2)
 
   if (met_params%sigmadot_is_omega) then
   !..omega -> etadot, or rather etadot derived from continuity-equation (mean of both)
@@ -1355,4 +1359,92 @@ end subroutine
 
     call preprocess_landfraction(arr)
   end subroutine
+
+subroutine convert_hbl_to_vbl(hbl, vbl)
+  use snapfldML, only: ps2, t2_abs
+  use snapdimML, only: nx, ny, nk
+  use snapgrdML, only: ahalf, bhalf
+
+  real, intent(in) :: hbl(:, :)
+  real, intent(out) :: vbl(:, :)
+  real, parameter :: r=287, g=9.81
+
+  real, allocatable :: deltah(:, :, :)
+  real, allocatable :: pe(:, :)
+  real, allocatable :: pe2(:, :)
+  real, allocatable :: cum_heights(:, :, :)
+  integer, allocatable :: above_index(:, :)
+  integer, allocatable :: below_index(:, :)
+
+  integer :: i, j, k
+  real :: weight
+  real :: bl_top_pressure
+  real :: pressure_below, pressure_above
+
+  allocate(deltah(nx, ny, nk))
+  allocate(pe(nx, ny))
+  allocate(pe2(nx, ny))
+  allocate(cum_heights(nx, ny, nk))
+  allocate(above_index(nx, ny))
+  allocate(below_index(nx, ny))
+
+  do k = 1, nk
+    pe = ahalf(k) + bhalf(k) * ps2
+    write(*,*) k, ahalf(k), bhalf(k)
+    pe2 = ahalf(k+1) + bhalf(k+1) * ps2
+    deltah(:, :, k) = (r * t2_abs(:, :, k) / g) * log(pe/pe2)
+    deltah(:, :, k) = pe/pe2
+  end do
+  
+
+  ! SNAP arrays go from surface to top
+  !write(*, *) pe(100, 100)
+
+  !write(*,*) ahalf(:)
+  !write(*,*) t2_abs(100, 100, :)
+  !write(*,*) bhalf(:)
+  write(*,*) deltah(100, 100, :)
+
+  cum_heights(:, :, 1) = 0
+  do k = 2, nk
+    cum_heights(:, :, k) = cum_heights(:, :, k-1) + deltah(:, :, k)
+  end do
+
+  !write(*,*) cum_heights(100, 100, :)
+
+  above_index = nk
+  do k = 2, nk
+    associate(height_k => cum_heights(:, :, k))
+    where (hbl > height_k)
+      above_index = min(above_index, k)
+    endwhere
+    end associate
+  end do
+
+  below_index = above_index - 1
+
+  do i = 1, nx
+    do j = 1, ny
+
+      pressure_below = ahalf(below_index(i,j)) + bhalf(below_index(i,j)) * ps2(i,j)
+      pressure_above = ahalf(above_index(i,j)) + bhalf(above_index(i,j)) * ps2(i,j)
+
+      weight = (hbl(i, j) - cum_heights(i, j, below_index(i, j))) /  &
+      (cum_heights(i, j, above_index(i, j)) - cum_heights(i, j, below_index(i, j)))
+
+      bl_top_pressure = pressure_below + weight * (pressure_above - pressure_below)
+
+      vbl(i, j) = bl_top_pressure / ps2(i, j)
+
+    end do
+  end do
+  !write(*,*) ahalf(:)
+  !write(*,*) bhalf(:)
+  !write(*,*) vbl(100:109, 100:109)
+  error stop
+
+  end subroutine
+
 end module readfield_ncML
+
+
