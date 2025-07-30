@@ -101,20 +101,20 @@ module snapgrdML
 !> bhalf(nk) is top of atmosphere (p=0.0,b=0.0)
     real, allocatable, save, public :: bhalf(:)
 
-!> vertical level (sigma / eta / hybrid)
-!> sigma = p / p_sfc
+!> vertical level (sigma)
+!> sigma = (p - p_top) / (ps - ptop)
+!> p = p_top + sigma * (ps - ptop)
     real, allocatable, save, public :: vlevel(:)
     real, allocatable, save, public :: vhalf(:)
+!> Pressure at the top of model
+    real, save, public :: ptop = 0.0
 
 !> grid type
 !> * 1=polarstereographic
 !> * 2=geographic
 !> * 3=spherical (rotated)
     integer, save, public :: igtype
-! vertical coordinate
-!> * 2=sigma (Norlam)
-!> * 10=eta/hybrid   (Hirlam,...))
-    integer, save, public :: ivcoor = 0
+
 !> table of level numbers for interpolation
 !>
 !> (key is vlevel*10000)
