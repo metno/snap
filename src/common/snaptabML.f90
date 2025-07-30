@@ -18,6 +18,7 @@
 !> fixed tables, constants, and functions
 !> which are independent of input data
 module snaptabML
+    USE iso_fortran_env, only: real64, real32
     implicit none
     private
 
@@ -82,8 +83,7 @@ module snaptabML
         t2thetafac = t2thetafac_table(nint(p*10.0 + 0.5))
       end function
 
-  elemental real function exner_real32(p) result(exner)
-    USE iso_fortran_env, only: real32
+  elemental real(real32) function exner_real32(p) result(exner)
     real(real32), intent(in) :: p  !> [hPa]
 
     real(real32) :: rtab
@@ -100,8 +100,7 @@ module snaptabML
     exner = e0 + (e1 - e0)*(rtab - itab)
   end function
 
-  elemental real function exner_real64(p) result(exner)
-    USE iso_fortran_env, only: real64
+  elemental real(real64) function exner_real64(p) result(exner)
     real(real64), intent(in) :: p  !> [hPa]
 
     real(real64) :: rtab
