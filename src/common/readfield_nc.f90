@@ -245,7 +245,8 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
     v1(:,:,:) = v2
     w1(:,:,:) = w2
     t1(:,:,:) = t2
-    if (allocated(t2_abs)) t1_abs(:,:,:) = t2_abs
+    t1_abs(:,:,:) = t2_abs
+    t1_dew(:,:,:) = t2_dew
     hlevel1(:,:,:) = hlevel2
     hlayer1(:,:,:) = hlayer2
 
@@ -364,7 +365,13 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
   end if
   
 !.. Read in boundary layer height from meteo
-  call nfcheckload(ncid, 'ga_blh_1', start3d, count3d, hbl2(:, :))
+  call nfcheckload(ncid, met_params%blh, start3d, count3d, hbl2(:, :))
+
+!.. Read in 2m dew point
+ ! call nfcheckload(ncid, met_params%dewtemp2m, start3d, count3d, t2_dew(:, :))
+
+!.. Read in surface heat flux
+  !call nfcheckload(ncid, met_params%dewtemp2m, start3d, count3d, t2_dew(:, :))
 
   if (met_params%need_precipitation) then
     call read_precipitation(ncid, nhdiff_precip, timepos, timeposm1)
@@ -1402,29 +1409,16 @@ subroutine convert_hbl_to_vbl(hbl, vbl)
   allocate(above_index(nx, ny))
   allocate(below_index(nx, ny))
 
-  do k = 1, nk
-    pe = ahalf(k) + bhalf(k) * ps2
-    write(*,*) k, ahalf(k), bhalf(k)
-    pe2 = ahalf(k+1) + bhalf(k+1) * ps2
+  do k = 2, nk
+    pe = ahalf(k-1) + bhalf(k-1) * ps2
+    pe2 = ahalf(k) + bhalf(k) * ps2
     deltah(:, :, k) = (r * t2_abs(:, :, k) / g) * log(pe/pe2)
-    deltah(:, :, k) = pe/pe2
   end do
-  
-
-  ! SNAP arrays go from surface to top
-  !write(*, *) pe(100, 100)
-
-  !write(*,*) ahalf(:)
-  !write(*,*) t2_abs(100, 100, :)
-  !write(*,*) bhalf(:)
-  write(*,*) deltah(100, 100, :)
 
   cum_heights(:, :, 1) = 0
   do k = 2, nk
     cum_heights(:, :, k) = cum_heights(:, :, k-1) + deltah(:, :, k)
   end do
-
-  !write(*,*) cum_heights(100, 100, :)
 
   above_index = nk
   do k = 2, nk
@@ -1452,12 +1446,48 @@ subroutine convert_hbl_to_vbl(hbl, vbl)
 
     end do
   end do
-  !write(*,*) ahalf(:)
-  !write(*,*) bhalf(:)
-  !write(*,*) vbl(100:109, 100:109)
-  error stop
 
   end subroutine
+
+  ! subroutine obukhov()
+  !   use snapfldML, only: ps2, t2, t2_abs, t2_dew
+
+  !   real, parameter :: r=287, g=9.81, k=0.4, cpa=1004.6
+
+  !   real, allocatable :: ustar(:, :)
+  !   real, allocatable :: thetastar(:, :)
+  !   real, allocatable :: obukhov_l(:, :)
+
+  !   allocate(ustar(nx, ny))
+  !   allocate(thetastar(nx, ny))
+  !   allocate(obukhov_l(nx, ny))
+
+  !   ! Tetens Equation, vp is the vapour pressure
+  !   vp = 0.61078 * EXP(17.27 * (t2_dew - 273.15) / (t2_dew - 35.85))
+
+  !   ! Mixing ratio
+  !   w = (0.622 * vp) / (ps - vp)
+
+  !   ! Calculate virtual temeperature
+  !   tv = t2_abs * (0.608 * w)
+
+  !   ! Calculate air density
+  !   rho_a = ps2/(r*tv)
+
+  !   ! Calculate friction velocity
+  !   ustar = sqrt(abs(stress)/rho_a)
+    
+  !   ! Calculate buoyancy scale
+  !   thetastar = qs / (rho_a*cpa *ustar)
+
+  !   ! Calculate the obukhov length
+  !   if(abs(thetastar).gt.1.e-10) then ! Check for zero heat flux
+  !     obukhov_l = (t2*ustar**2)/(k*ga*thetastar)
+  !   else
+  !     obukhov_l = 9999   
+
+
+
 
 end module readfield_ncML
 

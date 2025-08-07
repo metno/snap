@@ -45,6 +45,8 @@ module snapmetML
     character(len=80) :: precstrativrt = ''
     character(len=80) :: precconvrt = ''
     character(len=80) :: total_column_rain = ''
+    character(len=80) :: dewtemp2m = ''
+    character(len=80) :: blh = ''
 
     character(len=80) :: t2m = ''
     character(len=80) :: yflux = ''
@@ -209,6 +211,8 @@ module snapmetML
       met_params%precconvrt = ''
       met_params%precstratiaccumv = ''
       met_params%precconaccumv = ''
+      met_params%dewtemp2m = 'dew_point_temperature_2m'
+      met_params%blh = 'ga_blh_1'
 
       ! 3D precip parameters
       met_params%mass_fraction_rain_in_air = "mass_fraction_of_liquid_precipitation_in_air_ml"

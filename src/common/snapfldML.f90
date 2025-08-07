@@ -46,6 +46,11 @@ module snapfldML
 !> absolute temperature
   real(kind=real32), allocatable, save, public :: t2_abs(:,:,:)
 
+!> absolute temperature
+  real(kind=real32), allocatable, save, public :: t1_dew(:,:,:)
+!> absolute temperature
+  real(kind=real32), allocatable, save, public :: t2_dew(:,:,:)
+
   real(kind=real32), allocatable, save, public :: hlevel1(:,:,:)
   real(kind=real32), allocatable, save, public :: hlevel2(:,:,:)
   real(kind=real32), allocatable, save, public :: hlayer1(:,:,:)
