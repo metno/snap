@@ -6,17 +6,18 @@ from collections import namedtuple
 from enum import Enum
 
 import numpy as np
-from Snappy.ActivityHeightDistribution import ActivityHeightKdfoc3, Particles
+from Snappy.ActivityHeightDistribution import ActivityHeightKdfoc3, ActivityHeightRolph, Particles
 
 
 class ActivityHeightDistribution(Enum):
     VOLUMETRIC = 0  # even distribution in cloud volume
     TRIANGULAR = 1  # kdfoc3 like
+    ROLPH = 2       # activity height distribution from Hysplit/Rolph 2014, e.g. 3 cap, 3 stem layers
 
 
 _ExplosionType = namedtuple(
     "ExplosionType",
-    ["name", "radius_sizes", "size_distribution", "g0_fraction", "height_distribution"],
+    ["name", "radius_sizes", "size_distribution", "g0_fraction", "nobel_gas_fraction", "height_distribution"],
 )
 
 
@@ -46,20 +47,32 @@ class ExplosionType(Enum):
         """
         return self.value.g0_fraction
 
+    @property
+    def nobel_gas_fraction(self) -> float:
+        """fraction of total activity which is transported as nobel-gases, i.e. without gravitational settling,
+        even if it later decays to a non-nobel-gas, the physical properties will be those
+        of an atomic (or very fine) particle.
+
+        :return: fraction to be used as nobel-gas
+        """
+        return self.value.nobel_gas_fraction
+
     # fmt: off
     # default snap
     MIXED = _ExplosionType("Mixed",
                            # upper size, radius in µm
                            [3.0, 6.5, 11.5, 18.5, 29., 45.0, 71.0, 120., 250.0, 1000.],
                            [ .1,  .1,  .1,   .1,   .1,   .1,   .1,   .1,    .1,    .1],
-                           0.3, # 30% deposition in ground-0
+                           0.0, # 30% deposition in ground-0
+                           0.83, # Rolph et al, 2014
                            ActivityHeightDistribution.VOLUMETRIC
                            )
     # Glasstone Dolan, lognormal ~(3.78, 0.68), + ~50-60% local = in final class
     SURFACE = _ExplosionType("Surface",
-                           [          11.5, 18.5, 29., 45.0, 71.0, 120., 250.0, 1000.],
-                           [          .02,  .08,  .17,  .25,  .24,  .17,   .06,   .01], # ~(3.78, 0.68)
-                           0.5, # 50% deposition in ground-0 (GD: 60%, kdfoc3 ~30%)
+                           [ 3.0,     11.5, 18.5, 29., 45.0, 71.0, 120., 250.0, 1000.],
+                           [ 0.01,     .019,  .08,  .17,  .25,  .24,  .17,   .06,   .01], # ~(3.78, 0.68)
+                           0.0, # 50% deposition in ground-0 (GD: 60%, kdfoc3 ~30%)
+                           0.83, # Rolph et al, 2014
                            ActivityHeightDistribution.TRIANGULAR
                            )
     # Glassstone Dolan, uniform below 20µm
@@ -67,6 +80,7 @@ class ExplosionType(Enum):
                            [3.0, 6.5, 11.5, 18.5],
                            [.25, .25, .25,  .25],
                            0.0, # 0% in ground-0
+                           0.83, # Rolph et al, 2014
                            ActivityHeightDistribution.VOLUMETRIC
                            )
     # fmt: on
@@ -118,6 +132,21 @@ class YieldParameters:
 30	6500	9500	3000
 """
 
+    _clouds_defs_rolph = """yield	bottom	top	thickness
+0	0	0	0
+0.5	1500	2250	750
+2.5	2000	3700	1222
+7.5	3700	6300	1444
+12.5	5100	8200	1667
+17.5	6200	9700	1889
+22.5	7000	10800	2111
+27.5	7300	11200	2333
+32.5	7500	11600	2556
+37.5	7700	11900	2778
+42.5	7900	12200	3000
+45.0	8000	12500	3000
+"""
+
     def __init__(
         self,
         nuclear_yield: float = 15,
@@ -125,7 +154,8 @@ class YieldParameters:
     ) -> None:
         self._nuclear_yield = nuclear_yield
         self._explosion_type = explosion_type
-        self._cloud_defs = self._parse_clouds(io.StringIO(self._cloud_defs1))
+        #self._cloud_defs = self._parse_clouds(io.StringIO(self._cloud_defs1))
+        self._cloud_defs = self._parse_clouds(io.StringIO(self._clouds_defs_rolph))
         return
 
     @property
@@ -452,11 +482,11 @@ class SnapInputBomb:
 
     def vertical_slices(self) -> list[tuple[int, int]]:
         """devide the column from ground to cloud_top into slices,
-        10 slices for the stem, 10 slices for the cloud-head
+        9 slices for the stem, 9 slices for the cloud-head
 
         :return: list of (lower, upper) pairs
         """
-        n = 10
+        n = 9
         lower = 0
         dist = self.cloud_bottom / n
         ret = []
@@ -481,23 +511,44 @@ class SnapInputBomb:
             == ActivityHeightDistribution.VOLUMETRIC
         ):
             return None
-        ahd = ActivityHeightKdfoc3(zmax=self.cloud_top, part=Particles.SMALL)
+        elif (
+            self.explosion_type.height_distribution
+            == ActivityHeightDistribution.TRIANGULAR
+        ):
+            ahd = ActivityHeightKdfoc3(zmax=self.cloud_top, part=Particles.SMALL)
+        elif (
+            self.explosion_type.height_distribution
+            == ActivityHeightDistribution.ROLPH
+        ):
+            ahd = ActivityHeightRolph(cap_top_height=self.cloud_top, cap_bottom_height=self.cloud_bottom)
+        else:
+            raise Exception(f"undefined height_distribution: {self.explosion_type.height_distribution}")
+
         release = ["*runtime[h] lower[m] comp release[Bq/s]"]
         for lower, upper in self.vertical_slices():
             for i, radius in enumerate(self.radius_sizes):
                 rel = (
                     self.activity_after_1hour
                     * self.size_distribution[i]
-                    * ahd.area_fraction(lower, upper)
-                    * (1.0 - self.explosion_type.g0_fraction)
+                    * ahd.layer_fraction(lower, upper)
+                    * (1.0 - (self.explosion_type.g0_fraction+self.explosion_type.nobel_gas_fraction))
                 )
                 if lower == 0 and i == (len(self.radius_sizes) - 1):
                     # add all "local" g0 deposition to lowest layer and heaviest particles
                     rel += self.explosion_type.g0_fraction * self.activity_after_1hour
+                if i == 0:
+                    # add noble-gases to lightest classes
+                    rel += (
+                        self.activity_after_1hour
+                        * self.explosion_type.nobel_gas_fraction
+                        * ahd.layer_fraction(lower, upper)
+                    )
                 release.append(
                     f"{self.minutes/60:.2f} {lower} {self.component_name(i)} {rel:.4E}"
                 )
         return "\n".join(release)
+
+
 
     def snap_input(self, releasefile="release.txt") -> str:
         """get the bomb-input as partial snap.input string"""
@@ -532,8 +583,8 @@ class SnapInputBomb:
                     f"RELEASE.BQ/STEP.COMP= {rel:.3E} '{self.component_name(i)}'"
                 )
         elif (
-            self.explosion_type.height_distribution
-            == ActivityHeightDistribution.TRIANGULAR
+            self.explosion_type.height_distribution in
+            (ActivityHeightDistribution.TRIANGULAR, ActivityHeightDistribution.ROLPH)
         ):
             lower = []
             upper = []
