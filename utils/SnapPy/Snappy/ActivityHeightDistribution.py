@@ -83,7 +83,7 @@ class ActivityHeightRolph(ActivityHeightDistribution):
 
 
 class ActivityHeightKdfoc3(ActivityHeightDistribution):
-    """
+    r"""
     Assumptions:
 
     zmax: max height of plume
