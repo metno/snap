@@ -22,7 +22,7 @@ import subprocess
 from logging import getLogger
 
 from Snappy.EEMEP.SnapAshResources import SnapAshResources
-from Snappy.EEMEP.VolcanoRun import VolcanoXML
+from Snappy.EEMEP.VolcanoRun import Eruption, VolcanoXML
 
 logger = getLogger(__name__)
 
@@ -74,7 +74,7 @@ class SnapVolcanoTranslator:
             fh.write(snap_input.format(**defs))
 
     @staticmethod
-    def eruptions_to_txt(eruptions, classes: dict[str, float], releasefile: str):
+    def eruptions_to_txt(eruptions: list[Eruption], classes: dict[str, float], releasefile: str):
         starttimes = {}
         endtimes = set()
         all_lower = set()
@@ -130,15 +130,37 @@ class SnapVolcanoTranslator:
         with open(releasefile, "wt") as fh:
             fh.write("*runtime[h] lower[m] comp release[g/s]\n")
             last_end = snap_start
-            for start, vals in sorted(starttimes.items()):
-                endtimes.add(vals["end"])
-                runtime = (start - snap_start).total_seconds() / 3600
+            for i, (estart, vals) in enumerate(sorted(starttimes.items())):
+                runtime = (estart - snap_start).total_seconds() / 3600
                 for lower, lowerVals in sorted(vals["lower"].items()):
                     all_lower.add(lower)
                     all_upper.add(lowerVals["upper"])
                     for pclass, frac in sorted(classes.items()):
                         rel = 1000 * frac * lowerVals["m63"] * lowerVals["release"]
                         fh.write(f"{runtime:.2f} {int(lower)} {pclass} {rel}\n")
+
+                if (start == estart) and (vals["end"]-estart) >= datetime.timedelta(hours=2):
+                    # hack for SO2: add 2 hours with SO2 emissions of 0.1Tg/h
+                    so2rel = 0.1e12/3600 # g/s
+                    for lower in all_lower:
+                        fh.write(f"{runtime:.2f} {int(lower)} SO2 {so2rel}\n")
+
+                    runtime += 2 # hours
+                    for lower in all_lower:
+                        # stop so2 after 2h
+                        fh.write(f"{runtime:.2f} {int(lower)} SO2 0\n")
+                    # repeat others after 2h
+                    for lower, lowerVals in sorted(vals["lower"].items()):
+                        all_lower.add(lower)
+                        all_upper.add(lowerVals["upper"])
+                        for pclass, frac in sorted(classes.items()):
+                            rel = 1000 * frac * lowerVals["m63"] * lowerVals["release"]
+                            fh.write(f"{runtime:.2f} {int(lower)} {pclass} {rel}\n")
+                else:
+                    for lower in all_lower:
+                        fh.write(f"{runtime:.2f} {int(lower)} SO2 0\n")
+
+
 
         return (snap_start, all_lower, all_upper)
 
