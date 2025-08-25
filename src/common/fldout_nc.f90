@@ -316,7 +316,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
         values=field_hr3), "output_column")
     endif
 
-  !..instant part of Bq in boundary layer
+  !..instant part of Bq in boundary layer, field_hr3 needed later
     scale = 100.
     where (field_hr1 + field_hr2 > 0.0)
       field_hr3 = scale*field_hr1 / (field_hr1 + field_hr2)
