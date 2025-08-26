@@ -1,3 +1,9 @@
+snap-py (2.5.3-1) noble; urgency=medium
+
+  * minute resolution for eemep
+
+ -- Ubuntu <ubuntu@met.no>  Tue, 26 Aug 2025 08:56:20 +0000
+
 snap-py (2.5.2-1) noble; urgency=medium
 
   * minute resolution for eemep
