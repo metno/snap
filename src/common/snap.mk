@@ -71,7 +71,7 @@ checkDomain.o: ../common/checkDomain.f90 snapgrdML.o snapdimML.o particleML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 dateCalc.o: ../common/dateCalc.f90
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-drydep.o: ../common/drydep.f90 particleML.o snapfldML.o snapparML.o snapgrdML.o
+drydep.o: ../common/drydep.f90 particleML.o snapfldML.o snapparML.o snapgrdML.o vgravtables.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 epinterp.o: ../common/epinterp.f90
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
@@ -113,7 +113,7 @@ split_particles.o: ../common/split_particles.f90 snapparML.o release.o snapdebug
 	${F77} -c ${F77FLAGS} $<
 utils.o: ../common/utils.f90
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-vgravtables.o: ../common/vgravtables.f90 snapparML.o snapdimML.o drydep.o
+vgravtables.o: ../common/vgravtables.f90 snapparML.o snapdimML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 wetdep.o: ../common/wetdep.f90 particleML.o snapgrdML.o snapfldML.o snapparML.o snaptabML.o snapdimML.o snapdebugML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<

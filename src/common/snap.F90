@@ -174,7 +174,7 @@ PROGRAM bsnap
                        ncomp, nocomp, def_comp, nparnum, &
                        time_profile, TIME_PROFILE_BOMB
   USE snapposML, only: irelpos, nrelpos, release_positions
-  USE snapgrdML, only: modleveldump, ivcoor, &
+  USE snapgrdML, only: modleveldump, &
                        klevel, imslp, itotcomp, gparam, &
                        igtype, imodlevel, modlevel_is_average, precipitation_in_output
   USE snaptabML, only: tabcon
@@ -930,6 +930,7 @@ contains
     output_column, output_vd, output_vd_debug
     use init_random_seedML, only: extra_seed
     use fldout_ncML, only: surface_layer_is_lowest_level, surface_height_m
+    use snapparML, only: GRAV_TYPE_UNDEFINED, GRAV_TYPE_OFF, GRAV_TYPE_FIXED
 
     !> Open file unit
     integer, intent(in) :: snapinput_unit
@@ -1588,21 +1589,21 @@ contains
       case ('gravity.off')
         !..gravity.off
         if (.not. associated(d_comp)) goto 12
-        if (d_comp%grav_type /= -1) goto 12
-        d_comp%grav_type = 0
+        if (d_comp%grav_type /= GRAV_TYPE_UNDEFINED) goto 12
+        d_comp%grav_type = GRAV_TYPE_OFF
       case ('gravity.fixed.m/s')
         !..gravity.fixed.m/s
         if (.not. associated(d_comp)) goto 12
-        if (d_comp%grav_type /= -1) goto 12
-        d_comp%grav_type = 1
+        if (d_comp%grav_type /= GRAV_TYPE_UNDEFINED) goto 12
+        d_comp%grav_type = GRAV_TYPE_FIXED
         if (.not. has_value) goto 12
         read (cinput(pname_start:pname_end), *, err=12) d_comp%gravityms
         if (d_comp%gravityms <= 0.) goto 12
       case ('gravity.fixed.cm/s')
         !..gravity.fixed.cm/s
         if (.not. associated(d_comp)) goto 12
-        if (d_comp%grav_type /= -1) goto 12
-        d_comp%grav_type = 1
+        if (d_comp%grav_type /= GRAV_TYPE_UNDEFINED) goto 12
+        d_comp%grav_type = GRAV_TYPE_FIXED
         if (.not. has_value) goto 12
         read (cinput(pname_start:pname_end), *, err=12) d_comp%gravityms
         if (d_comp%gravityms <= 0.) goto 12
@@ -1762,6 +1763,14 @@ contains
         end if
         call init_meteo_params(nctype, ierror)
         if (ierror /= 0) goto 12
+#if defined(SNAP_EXPERIMENTAL)
+      case ('grid.nctype.leaf_area_index')
+        if (.not. has_value) goto 12
+        read(cinput(pname_start:pname_end), *, err=12) met_params%leaf_area_index
+      case ('grid.nctype.z0')
+        if (.not. has_value) goto 12
+        read(cinput(pname_start:pname_end), *, err=12) met_params%z0
+#endif
       case ('grid.size')
         !..grid.size=<nx,ny>
         if (.not. has_value) goto 12
@@ -1776,11 +1785,11 @@ contains
       case ('ensemble_member.input')
         read (cinput(pname_start:pname_end), *, err=12) enspos
       case ('data.sigma.levels')
-        !..data.sigma.levels
-        ivcoor = 2
+        write(error_unit, *) "data.sigma.levels is no longer used"
+        warning = .true.
       case ('data.eta.levels')
-        !..data.eta.levels
-        ivcoor = 10
+        write(error_unit, *) "data.eta.levels is no longer used"
+        warning = .true.
       case ('levels.input')
         !..levels.input=<num_levels, 0,kk,k,k,k,....,1>
         !..levels.input=<num_levels, 0,kk,k,k,k,....,18>
@@ -1991,6 +2000,7 @@ contains
 #endif
     use readfield_ncML, only: read_largest_landfraction
     use drydepml, only:  requires_landfraction_file
+    use snapparML, only: GRAV_TYPE_FIXED, GRAV_TYPE_COMPUTED, GRAV_TYPE_UNDEFINED
 
     integer, intent(out) :: ierror
 
@@ -2044,10 +2054,6 @@ contains
       ierror = 1
     end if
 
-    if (ivcoor == 0) then
-      write (error_unit, *) 'Input model level type (sigma,eta) not specified'
-      ierror = 1
-    end if
     if (.not.allocated(klevel)) then
       write (error_unit, *) 'Input model levels not specified'
       ierror = 1
@@ -2209,8 +2215,8 @@ contains
     do n = 1, ncomp
       m = run_comp(n)%to_defined
       if (m == 0) cycle
-      if (def_comp(m)%grav_type < 0) def_comp(m)%grav_type = 2
-      if (def_comp(m)%grav_type == 2 .AND. &
+      if (def_comp(m)%grav_type == GRAV_TYPE_UNDEFINED) def_comp(m)%grav_type = GRAV_TYPE_COMPUTED
+      if (def_comp(m)%grav_type == GRAV_TYPE_COMPUTED .AND. &
           (def_comp(m)%radiusmym <= 0. .OR. def_comp(m)%densitygcm3 <= 0.)) then
         write (error_unit, *) 'Gravity error. radius,density: ', &
           def_comp(m)%radiusmym, def_comp(m)%densitygcm3
@@ -2245,9 +2251,9 @@ contains
           ierror = 1
         end if
       elseif (drydep_scheme == DRYDEP_SCHEME_NEW .AND. def_comp(m)%kdrydep == 1) then
-        if (def_comp(m)%grav_type == 1 .AND. def_comp(m)%gravityms > 0.) then
+        if (def_comp(m)%grav_type == GRAV_TYPE_FIXED .AND. def_comp(m)%gravityms > 0.) then
           i1 = i1 + 1
-        elseif (def_comp(m)%grav_type == 2) then
+        elseif (def_comp(m)%grav_type == GRAV_TYPE_COMPUTED) then
           i1 = i1 + 1
         else
           write (error_unit, *) 'Dry deposition error. gravity: ', &

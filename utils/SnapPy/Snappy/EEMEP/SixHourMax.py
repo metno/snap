@@ -51,6 +51,8 @@ i.e. calculate the 6hour mean of the last six hours (running) (average also the 
     PEAK_TO_MEAN_CALIBRATION = 1.
     SNAP_ASH_CONC_PATTERN = re.compile(r"ASH(_\d+)?_concentration_ml")
     SNAP_ASH_COL_PATTERN = re.compile(r"ASH(_\d+)?_column_concentration")
+    SNAP_SO2_CONC_PATTERN = re.compile(r"SO2_concentration_ml")
+    SNAP_SO2_COL_NAME = "SO2_column_concentration"
 
     @classmethod
     def detect_ash_model(cls, nc: netCDF4.Dataset) -> str:
@@ -155,6 +157,16 @@ i.e. calculate the 6hour mean of the last six hours (running) (average also the 
             self.nc.sync()
         return
 
+    def _snap_rename_total_so2_column(self) -> None:
+        if self.model != 'snap':
+            return
+        if self.SNAP_SO2_COL_NAME in self.nc.variables:
+            self.nc.renameVariable(self.SNAP_SO2_COL_NAME, "COLUMN_SO2_kmax")
+            self.nc["COLUMN_SO2_kmax"].units = self.nc["COLUMN_SO2_kmax"].units.replace('Bq', 'g')
+            self.nc.sync()
+        return
+
+
     def __init__(self, nc):
         '''Initialize with Dataset nc'''
         logger.info("Adding 6hour max to nc-file")
@@ -224,6 +236,7 @@ i.e. calculate the 6hour mean of the last six hours (running) (average also the 
             nc.sync()
 
         self._snap_add_total_ash_column()
+        self._snap_rename_total_so2_column()
         return
 
 if __name__ == '__main__':
