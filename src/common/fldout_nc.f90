@@ -317,14 +317,13 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
         values=field_hr3), "output_column")
     endif
 
-  !..instant part of Bq in boundary layer
+  !..instant part of Bq in boundary layer, field_hr3 needed later
     scale = 100.
     where (field_hr1 + field_hr2 > 0.0)
       field_hr3 = scale*field_hr1 / (field_hr1 + field_hr2)
     elsewhere
       field_hr3 = undef
     endwhere
-    if(idebug == 1) call ftest('pbq', field_hr3, contains_undef=.true.)
 
   !..instant concentration in boundary layer
     field_hr2(:,:) = cscale*field_hr1 / (hbl_hr*garea)
@@ -400,10 +399,10 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       end block
     endif
 
-  !..instant part of Bq in boundary layer
-    if(idebug == 1) call ftest('pbq', field_hr3, contains_undef=.true.)
+  !..instant part of Bq in boundary layer, in percent of total
+    if(idebug == 1) call ftest('pbq%', field_hr3, contains_undef=.true.)
 
-  !..average part of Bq in boundary layer
+  !..average part of Bq in boundary layer, in percent of total
     scale=100.
 
     do j=1,ny
@@ -415,7 +414,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
         endif
       end do
     end do
-    if(idebug == 1) call ftest('apbq', field_hr3, contains_undef=.true.)
+    if(idebug == 1) call ftest('apbq%', field_hr3, contains_undef=.true.)
 
   !..instant concentration in surface layer
     field_hr3(:,:) = concen(:,:,m)
