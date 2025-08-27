@@ -2,7 +2,7 @@
 
 set -e
 
-export VERSION=2.5.2
+export VERSION=2.5.3
 #VERSION_=`echo -n $VERSION | tr '.' '_'`
 
 # We do not have a way of cross-compiling,
