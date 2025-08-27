@@ -161,6 +161,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
   integer :: ipos(3), isize(3)
   integer, save :: ihrs, ihrs_pos
 
+  character(len=1024) :: fmt
   integer :: nptot1,nptot2
   real(real64) :: bqtot1,bqtot2
 
@@ -428,33 +429,37 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     call check(nf90_put_var(iunit, varid%comp(m)%ac, start=ipos, count=isize, &
         values=field_hr3), "set_ac(m)")
 
-    write(iulog,*) '   Bq,particles in    abl  : ',bqtot1,nptot1
-    write(iulog,*) '   Bq,particles above abl  : ',bqtot2,nptot2
-    write(iulog,*) '   Bq,particles            : ',bqtot1+bqtot2, &
+    fmt="(a,1x,es10.3e2,1x,i0)"
+    write(iulog,fmt=fmt) '   Bq,particles in    abl  : ',bqtot1,nptot1
+    write(iulog,fmt=fmt) '   Bq,particles above abl  : ',bqtot2,nptot2
+    write(iulog,fmt=fmt) '   Bq,particles            : ',bqtot1+bqtot2, &
         nptot1+nptot2
-    write(iulog,*) '   Bq,particles added      : ', total_activity_released(m)
-    write(iulog,*) '   Bq,particles (domain)   : ', total_activity_lost_domain(m)
-    write(iulog,*) '   Bq,particles lost (misc): ', total_activity_lost_other(m)
+    fmt="(a,1x,es10.3e2)"
+    write(iulog,fmt=fmt) '   Bq added      : ', total_activity_released(m)
+    write(iulog,fmt=fmt) '   Bq (domain)   : ', total_activity_lost_domain(m)
+    write(iulog,fmt=fmt) '   Bq lost (misc): ', total_activity_lost_other(m)
     if (output_component(m)%has_drydep) then
-    write(iulog,*) '   Bq,particles dry dep    : ', sum(accdry(:,:,m))
+    write(iulog,fmt=fmt) '   Bq dry dep    : ', sum(accdry(:,:,m))
     endif
     if (output_component(m)%has_wetdep) then
-    write(iulog,*) '   Bq,particles wet dep    : ', sum(accwet(:,:,m))
+    write(iulog,fmt=fmt) '   Bq wet dep    : ', sum(accwet(:,:,m))
     endif
     if (allocated(massbalance_file)) then
+      fmt="(a,1x,es10.3e2,1x,i0)"
       write(massbalance_file,*) ' component: ', output_component(m)%name
-      write(massbalance_file,*) '   Bq,particles in    abl  : ',bqtot1,nptot1
-      write(massbalance_file,*) '   Bq,particles above abl  : ',bqtot2,nptot2
-      write(massbalance_file,*) '   Bq,particles            : ',bqtot1+bqtot2, &
+      write(massbalance_file,fmt=fmt) '   Bq,particles in    abl  : ',bqtot1,nptot1
+      write(massbalance_file,fmt=fmt) '   Bq,particles above abl  : ',bqtot2,nptot2
+      write(massbalance_file,fmt=fmt) '   Bq,particles            : ',bqtot1+bqtot2, &
           nptot1+nptot2
-      write(massbalance_file,*) '   Bq,particles added      : ', total_activity_released(m)
-      write(massbalance_file,*) '   Bq,particles (domain)   : ', total_activity_lost_domain(m)
-      write(massbalance_file,*) '   Bq,particles lost (misc): ', total_activity_lost_other(m)
+      fmt="(a,1x,es10.3e2)"
+      write(massbalance_file,fmt=fmt) '   Bq,particles added      : ', total_activity_released(m)
+      write(massbalance_file,fmt=fmt) '   Bq,particles (domain)   : ', total_activity_lost_domain(m)
+      write(massbalance_file,fmt=fmt) '   Bq,particles lost (misc): ', total_activity_lost_other(m)
       if (output_component(m)%has_drydep) then
-      write(massbalance_file,*) '   Bq,particles dry dep    : ', sum(accdry(:,:,m))
+      write(massbalance_file,fmt=fmt) '   Bq,particles dry dep    : ', sum(accdry(:,:,m))
       endif
       if (output_component(m)%has_wetdep) then
-      write(massbalance_file,*) '   Bq,particles wet dep    : ', sum(accwet(:,:,m))
+      write(massbalance_file,fmt=fmt) '   Bq,particles wet dep    : ', sum(accwet(:,:,m))
       endif
     endif
 
