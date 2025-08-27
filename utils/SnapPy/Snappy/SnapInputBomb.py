@@ -1,13 +1,23 @@
-from enum import Enum
-from collections import namedtuple
 import csv
-import math
-import numpy
 import io
+import math
 import typing
+from collections import namedtuple
+from enum import Enum
+
+import numpy as np
+from Snappy.ActivityHeightDistribution import ActivityHeightKdfoc3, ActivityHeightRolph, Particles
+
+
+class ActivityHeightDistribution(Enum):
+    VOLUMETRIC = 0  # even distribution in cloud volume
+    TRIANGULAR = 1  # kdfoc3 like
+    ROLPH = 2       # activity height distribution from Hysplit/Rolph 2014, e.g. 3 cap, 3 stem layers
+
 
 _ExplosionType = namedtuple(
-    "ExplosionType", ["name", "radius_sizes", "size_distribution"]
+    "ExplosionType",
+    ["name", "radius_sizes", "size_distribution", "g0_fraction", "nobel_gas_fraction", "height_distribution"],
 )
 
 
@@ -20,21 +30,58 @@ class ExplosionType(Enum):
     def size_distribution(self):
         return self.value.size_distribution
 
+    @property
+    def height_distribution(self):
+        return self.value.height_distribution
+
+    @property
+    def g0_fraction(self) -> float:
+        """fraction of total activity which is deposited close to ground-zero, i.e. which is not
+        transported far. Usually everything above 200µm radius is not transported more than 30min,
+        so it is considered g0.
+
+        Glasstone Dolan: about 60% is deposited local
+        kdfoc3: 23% is in large particles, 30% is > 200µm
+
+        :return: fraction to be removed from transport
+        """
+        return self.value.g0_fraction
+
+    @property
+    def nobel_gas_fraction(self) -> float:
+        """fraction of total activity which is transported as nobel-gases, i.e. without gravitational settling,
+        even if it later decays to a non-nobel-gas, the physical properties will be those
+        of an atomic (or very fine) particle.
+
+        :return: fraction to be used as nobel-gas
+        """
+        return self.value.nobel_gas_fraction
+
     # fmt: off
     # default snap
     MIXED = _ExplosionType("Mixed",
-                           [2.2, 4.4, 8.6, 14.6, 22.8, 36.1, 56.5, 92.3, 173.2, 250.0],
-                           [ .1,  .1,  .1,   .1,   .1,   .1,   .1,   .1,    .1,    .1]
+                           # upper size, radius in µm
+                           [3.0, 6.5, 11.5, 18.5, 29., 45.0, 71.0, 120., 250.0, 1000.],
+                           [ .1,  .1,  .1,   .1,   .1,   .1,   .1,   .1,    .1,    .1],
+                           0.0, # 30% deposition in ground-0
+                           0.83, # Rolph et al, 2014
+                           ActivityHeightDistribution.VOLUMETRIC
                            )
-    # Glasstone Dolan, lognormal ~(3.78, 0.68)
+    # Glasstone Dolan, lognormal ~(3.78, 0.68), + ~50-60% local = in final class
     SURFACE = _ExplosionType("Surface",
-                           [          8.6, 14.6, 22.8, 36.1, 56.5, 92.3, 173.2, 250.0],
-                           [          .02,  .08,  .17,  .25,  .24,  .17,   .06,   .01]
+                           [ 3.0,     11.5, 18.5, 29., 45.0, 71.0, 120., 250.0, 1000.],
+                           [ 0.01,     .019,  .08,  .17,  .25,  .24,  .17,   .06,   .01], # ~(3.78, 0.68)
+                           0.0, # 50% deposition in ground-0 (GD: 60%, kdfoc3 ~30%)
+                           0.83, # Rolph et al, 2014
+                           ActivityHeightDistribution.TRIANGULAR
                            )
     # Glassstone Dolan, uniform below 20µm
     HIGH_ALTITUDE = _ExplosionType("High Altitude",
-                           [2.2, 4.4, 8.6, 14.6],
-                           [.25, .25, .25,  .25]
+                           [3.0, 6.5, 11.5, 18.5],
+                           [.25, .25, .25,  .25],
+                           0.0, # 0% in ground-0
+                           0.83, # Rolph et al, 2014
+                           ActivityHeightDistribution.VOLUMETRIC
                            )
     # fmt: on
 
@@ -85,6 +132,21 @@ class YieldParameters:
 30	6500	9500	3000
 """
 
+    _clouds_defs_rolph = """yield	bottom	top	thickness
+0	0	0	0
+0.5	1500	2250	750
+2.5	2000	3700	1222
+7.5	3700	6300	1444
+12.5	5100	8200	1667
+17.5	6200	9700	1889
+22.5	7000	10800	2111
+27.5	7300	11200	2333
+32.5	7500	11600	2556
+37.5	7700	11900	2778
+42.5	7900	12200	3000
+45.0	8000	12500	3000
+"""
+
     def __init__(
         self,
         nuclear_yield: float = 15,
@@ -92,7 +154,8 @@ class YieldParameters:
     ) -> None:
         self._nuclear_yield = nuclear_yield
         self._explosion_type = explosion_type
-        self._cloud_defs = self._parse_clouds(io.StringIO(self._cloud_defs1))
+        #self._cloud_defs = self._parse_clouds(io.StringIO(self._cloud_defs1))
+        self._cloud_defs = self._parse_clouds(io.StringIO(self._clouds_defs_rolph))
         return
 
     @property
@@ -111,13 +174,13 @@ class YieldParameters:
             for tag in retval.keys():
                 retval[tag].append(float(row[tag]))
         for tag in retval.keys():
-            retval[tag] = numpy.asarray(retval[tag])
+            retval[tag] = np.asarray(retval[tag])
         return retval
 
     def _get_linear_cloud_def(self, tag) -> dict:
         """get a dict of cloud bottom, top, and radius and stemradius depending on yield"""
         cloudyield = self._cloud_defs["yield"]
-        pos = numpy.argmin(numpy.abs(cloudyield - self._nuclear_yield))
+        pos = np.argmin(np.abs(cloudyield - self._nuclear_yield))
         # linear interpolation
         if cloudyield[pos] > self._nuclear_yield:
             pos1 = pos - 1
@@ -138,11 +201,22 @@ class YieldParameters:
     def activity_after_1hour(self) -> float:
         """
         Get the total activity for relatively long-lived isotopes
+
+        Formula for 2^19Bq/kT(TNT) from
+          Glasstone and Dolan (9.159): 530 gamma-megacuries per kiloton fission yield at 1 hour
+             -> 5.30E6 x 3.7E10 Bq = 1.96E+19 Bq/kt  # curie -> Bq conversion
+          ARGOS has a depo-gamma factor in operational mode coming from GD (9.150)
+             2,900 rads/hr per kt/mi2 = 7.5E7  Sv/h per kt/m2 = 2.08E4 Sv/s per kt/m2
+             2.08E4 Sv/s per kt/m2  / 2E19 Bq/kt = 1E-15 Sv/s per Bq/m2
+             depo-gamma factor = 1E-15 Sv/s/Bq/m2
+
+        Fission Products from Nuclear Weapons Explosions (Tovedal)
+        https://inis.iaea.org/collection/NCLCollectionStore/_Public/32/055/32055989.pdf
+        and SSM report (2023)(selecting worst case bomb, U-235)
+        https://www.stralsakerhetsmyndigheten.se/contentassets/6a9a09c95ba14e3fbd78d911906ba2fa/202305e-radiological-consequences-of-fallout-from-nuclear-explosions.pdf
+        use 1.6e19, but this requires dose calculations, so we stick to GD / H+1 and ARGOS factor
         """
-        # formula from 2^19Bq/kT(TNT) as of
-        # Fission Products from Nuclear Weapons Explosions (Tovedal)
-        # https://inis.iaea.org/collection/NCLCollectionStore/_Public/32/055/32055989.pdf
-        return self._nuclear_yield * 2e19
+        return self._nuclear_yield * 1.96e19
 
     def cloud_bottom(self):
         """cloud bottom in m"""
@@ -153,12 +227,14 @@ class YieldParameters:
         return self._get_linear_cloud_def("top")
 
     def cloud_radius(self):
-        """cloud radius in m"""
-        # Typical radius of mushroom cloud after ~ 10 - 15 min is 1-3 km seen from different studies (Kanarska et al., 2009, Arthur et al., 2021)
+        """cloud radius in m
+
+        Typical radius of mushroom cloud after ~ 10 - 15 min is 1-3 km seen from different studies (Kanarska et al., 2009, Arthur et al., 2021)
+        """
         return 2500.0
 
     def stem_radius(self):
-        """cloud radius in m"""
+        """stem radius in m"""
         if self.explosion_type == ExplosionType.HIGH_ALTITUDE:
             return 0.0
         else:
@@ -188,6 +264,8 @@ class SnapInputBomb:
         type of explosion (defines size distributions)
     argos_operational : operational mode, i.e. non-decay H+1 run
     """
+
+    SIZE_INTERPOLATION = 5
 
     def __init__(
         self,
@@ -233,6 +311,7 @@ class SnapInputBomb:
 
         self.radius_sizes = self.explosion_type.radius_sizes
         self.size_distribution = self.explosion_type.size_distribution
+        self._interpolate_size_distribution(self.SIZE_INTERPOLATION)
         return None
 
     @property
@@ -335,9 +414,38 @@ class SnapInputBomb:
 
     @size_distribution.setter
     def size_distribution(self, size_distribution: list[float]) -> None:
-        if sum(size_distribution) > 1:
-            raise Exception(f"size_distribution > 1: {size_distribution}")
+        if abs(1 - sum(size_distribution)) > 0.01:
+            raise Exception(
+                f"size_distribution {sum(size_distribution)} > 1: {size_distribution}"
+            )
         self._size_distribution = size_distribution
+        return
+
+    def _interpolate_size_distribution(self, num: int) -> None:
+        """Interpolate radii of size distribution into
+        several sub-steps to simulate a more continuous distribution
+
+        :param num: number of substeps
+        """
+        if num <= 0:
+            raise Exception(
+                "interpolate_size_distribution needs positive number of steps"
+            )
+        sizes = []
+        distribution = []
+        for i in range(len(self.radius_sizes)):
+            if i == 0:
+                prev_r = 0
+            else:
+                prev_r = self.radius_sizes[i - 1]
+            new_dist = self.size_distribution[i] / num
+            r_inc = (self.radius_sizes[i] - prev_r) / num
+            for j in range(num):
+                sizes.append(prev_r + (j + 1) * r_inc)
+                distribution.append(new_dist)  # step function
+
+        self.radius_sizes = sizes
+        self.size_distribution = distribution
         return
 
     @property
@@ -372,27 +480,140 @@ class SnapInputBomb:
                     retlist.append(dens)
         return retlist
 
-    @densities.setter
-    def densities(self, densities: list[float]):
-        self._densities = densities
-        return
+    def vertical_slices(self) -> list[tuple[int, int]]:
+        """devide the column from ground to cloud_top into slices,
+        9 slices for the stem, 9 slices for the cloud-head
 
-    def snap_input(self) -> str:
+        :return: list of (lower, upper) pairs
+        """
+        n = 9
+        lower = 0
+        dist = self.cloud_bottom / n
+        ret = []
+        for i in range(n):
+            upper = lower + dist
+            ret.append((round(lower), round(upper)))
+            lower = upper
+        dist = (self.cloud_top - lower) / n
+        for i in range(n):
+            upper = lower + dist
+            ret.append((round(lower), round(upper)))
+            lower = upper
+        return ret
+
+    def snap_release(self) -> str | None:
+        """get the string needed for the the snap release.txt file, e.g. emissions per layer and timestep
+
+        :return: str of release, or None
+        """
+        if (
+            self.explosion_type.height_distribution
+            == ActivityHeightDistribution.VOLUMETRIC
+        ):
+            return None
+        elif (
+            self.explosion_type.height_distribution
+            == ActivityHeightDistribution.TRIANGULAR
+        ):
+            ahd = ActivityHeightKdfoc3(zmax=self.cloud_top, part=Particles.SMALL)
+        elif (
+            self.explosion_type.height_distribution
+            == ActivityHeightDistribution.ROLPH
+        ):
+            ahd = ActivityHeightRolph(cap_top_height=self.cloud_top, cap_bottom_height=self.cloud_bottom)
+        else:
+            raise Exception(f"undefined height_distribution: {self.explosion_type.height_distribution}")
+
+        release = ["*runtime[h] lower[m] comp release[Bq/s]"]
+        for lower, upper in self.vertical_slices():
+            for i, radius in enumerate(self.radius_sizes):
+                rel = (
+                    self.activity_after_1hour
+                    * self.size_distribution[i]
+                    * ahd.layer_fraction(lower, upper)
+                    * (1.0 - (self.explosion_type.g0_fraction+self.explosion_type.nobel_gas_fraction))
+                )
+                if lower == 0 and i == (len(self.radius_sizes) - 1):
+                    # add all "local" g0 deposition to lowest layer and heaviest particles
+                    rel += self.explosion_type.g0_fraction * self.activity_after_1hour
+                if i == 0:
+                    # add noble-gases to lightest classes
+                    rel += (
+                        self.activity_after_1hour
+                        * self.explosion_type.nobel_gas_fraction
+                        * ahd.layer_fraction(lower, upper)
+                    )
+                release.append(
+                    f"{self.minutes/60:.2f} {lower} {self.component_name(i)} {rel:.4E}"
+                )
+        return "\n".join(release)
+
+
+
+    def snap_input(self, releasefile="release.txt") -> str:
         """get the bomb-input as partial snap.input string"""
         lines = []
-        lines.append("MAX.PARTICLES.PER.RELEASE= 1000000\n")
 
         lines.append(f"** Explosive yield {self.nuclear_yield}ktonnes")
         lines.append("TIME.RELEASE.PROFILE.BOMB")
-        lines.append(
-            f"""
-RELEASE.MINUTE= {self.minutes}
-RELEASE.RADIUS.M= {self.cloud_radius}
-RELEASE.LOWER.M= {self.cloud_bottom}
-RELEASE.UPPER.M= {self.cloud_top}
-RELEASE.MUSHROOM.STEM.RADIUS.M= {self.stem_radius}
-                     """
-        )
+        if (
+            self.explosion_type.height_distribution
+            == ActivityHeightDistribution.VOLUMETRIC
+        ):
+            lines.append(
+                f"""
+    MAX.PARTICLES.PER.RELEASE= 1000000
+    RELEASE.MINUTE= {self.minutes}
+    RELEASE.RADIUS.M= {self.cloud_radius}
+    RELEASE.LOWER.M= {self.cloud_bottom}
+    RELEASE.UPPER.M= {self.cloud_top}
+    RELEASE.MUSHROOM.STEM.RADIUS.M= {self.stem_radius}
+                        """
+            )
+            for i, frac in enumerate(self.size_distribution):
+                rel = (
+                    self.activity_after_1hour
+                    * frac
+                    * (1 - self.explosion_type.g0_fraction)
+                )
+                if i == len(self.size_distribution) - 1:
+                    # g0 deposition in largest particle class
+                    rel += self.activity_after_1hour * self.explosion_type.g0_fraction
+                lines.append(
+                    f"RELEASE.BQ/STEP.COMP= {rel:.3E} '{self.component_name(i)}'"
+                )
+        elif (
+            self.explosion_type.height_distribution in
+            (ActivityHeightDistribution.TRIANGULAR, ActivityHeightDistribution.ROLPH)
+        ):
+            lower = []
+            upper = []
+            radii = []
+            for l, u in self.vertical_slices():
+                lower.append(f"{l:.0f}")
+                upper.append(f"{u:.0f}")
+                if l > self.cloud_bottom:
+                    radii.append(f"{self.cloud_radius:.0f}")
+                else:
+                    radii.append(f"{self.stem_radius:.0f}")
+            components = [
+                f"'{self.component_name(i)}'" for i, _ in enumerate(self.radius_sizes)
+            ]
+            max_particles = 1000000 / len(lower)
+            lines.append(
+                f"""
+    MAX.PARTICLES.PER.RELEASE= {max_particles:.0f}
+    RELEASE.FILE= {releasefile}
+    RELEASE.HEIGHTLOWER.M = {','.join(lower)}
+    RELEASE.HEIGHTUPPER.M = {','.join(upper)}
+    RELEASE.HEIGHTRADIUS.M = {','.join(radii)}
+    RELEASE.COMPONENTS= {', '.join(components)}
+                """
+            )
+        else:
+            raise Exception(
+                f"unknown height-distribution: {self.explosion_type.height_distribution}"
+            )
 
         lines.append("* PARTICLE CLASSES")
         pclass_tmpl = """COMPONENT= {classname}
@@ -428,41 +649,45 @@ DENSITY.G/CM3={density}
                 )
             )
 
-        for i, frac in enumerate(self.size_distribution):
-            lines.append(
-                f"RELEASE.BQ/STEP.COMP= {self.activity_after_1hour*frac:.3E} '{self.component_name(i)}'"
-            )
-
         return "\n".join(lines) + "\n"
 
 
 if __name__ == "__main__":
     # unit test
-    nyield = 15
     yp = YieldParameters(0.25, ExplosionType.MIXED)
     assert abs(yp.cloud_bottom() - 750) < 0.1
     assert abs(yp.cloud_top() - 1125) < 0.1
     assert abs(yp.cloud_radius() - 2500) < 0.1
     assert abs(yp.stem_radius() - 559) < 0.1
 
+    nyield = 15
     sib = SnapInputBomb(nyield)
     assert nyield == sib.nuclear_yield
-    assert sib.radius_sizes[0] == 2.2
+    print(SnapInputBomb.SIZE_INTERPOLATION, sib.radius_sizes)
+    assert abs(3.0 - (SnapInputBomb.SIZE_INTERPOLATION * sib.radius_sizes[0])) < 0.01
     print(sib.component_name(0))
-    assert sib.component_name(0) == "Aerosol_2.2mym"
+    assert sib.component_name(0) == "Aerosol_0.6mym"
     assert abs(1 - sum(sib.size_distribution)) <= 0.01
     sib.radius_sizes = [1, 2, 3, 4]
+    sib.size_distribution = [0.1, 0.2, 0.3, 0.4]
     assert abs(1 - sum(sib.size_distribution)) <= 0.01
     try:
         sib.size_distribution = [0.3, 0.4, 0.5, 0.6]
         assert False
     except:
         pass
-    sib.size_distribution = [0.3, 0.4, 0.2]
-    assert abs(sib.size_distribution[3] - 0.1) <= 0.01
     sib.minutes = 30
-    print(sib.snap_input())
+    # print(sib.snap_input())
     # print(SnapInputBomb(.25).snap_input())
 
     sib_op = SnapInputBomb(nyield, argos_operational=True)
+    rel = sib_op.snap_release()
+    assert rel is None
     assert "RADIOACTIVE.DECAY.OFF" in sib_op.snap_input()
+
+    sib_op_surf = SnapInputBomb(
+        nyield, explosion_type=ExplosionType.SURFACE, argos_operational=True
+    )
+    rel = sib_op_surf.snap_release()
+    assert rel is not None
+    assert "RELEASE.FILE" in sib_op_surf.snap_input()

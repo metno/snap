@@ -206,7 +206,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
       stemradius = releases(nt)%relstemradius
       if (time_profile == TIME_PROFILE_BOMB) then
         ! complete release in one timestep
-        if(releases(nt)%frelhour*nsteph <= (istep-1)) then
+        if(nint(releases(nt)%frelhour*nsteph) <= (istep-1)) then
           ! already released in previous timestep
           return
         end if
