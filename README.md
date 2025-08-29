@@ -43,13 +43,11 @@ compilation
 
 ## Installation
 
-Create a file `current.mk` in the `src` directory. Use e.g the file
-[ubuntuXenial.mk](src/ubuntuXenial.mk)
-as a template. The most important parameters to modify are NCDIR and
-BINDIR, where the final files will be installed to.
-THE MIINC and MILIB should be uncommented.
+Create a file `current.mk` in the `src` directory. Use for example the file
+[gcc_pkgconfig.mk](src/gcc_pkgconfig.mk)
+as a template. The most important parameter to modify is `BINDIR`, but `FIMEXLIB` and `NETCDFLIB` might also have to be modified depending on your development setup.
 
-In the `src` directory run then:
+In the `src` directory run:
 
 ```sh
 make install
