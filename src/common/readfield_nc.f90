@@ -141,7 +141,7 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
   character(len=1024), save :: file_name = ""
   logical, save :: first_time_read = .true.
 
-  integer :: i, j, k, ilevel, i1, i2
+  integer :: i, k, ilevel, i1, i2
   integer :: nhdiff, nhdiff_precip
   real :: alev(nk), blev(nk), dxgrid, dygrid
   real :: p, px, ptop
@@ -396,23 +396,17 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
     if (allocated(t2_abs)) t2_abs(:,:,:) = t2
   !..abs.temp. -> pot.temp.
     do k=2,nk
-      do j = 1, ny
-        do i = 1, nx
-          p = alevel(k) + blevel(k)*ps2(i,j)
-          t2(i,j,k) = t2(i,j,k)*t2thetafac(p)
-        end do
-      end do
+      associate(p => alevel(k) + blevel(k)*ps2)
+        t2(:,:,k) = t2(:,:,k)*t2thetafac(p)
+      end associate
     end do
   else
     if (allocated(t2_abs)) then
       ! pot.temp -> abs.temp
       do k=2,nk
-        do j = 1, ny
-          do i = 1, nx
-            p = alevel(k) + blevel(k)*ps2(i,j)
-            t2_abs(i,j,k) = t2(i,j,k)/t2thetafac(p)
-          end do
-        end do
+        associate(p => alevel(k) + blevel(k)*ps2)
+          t2(:,:,k) = t2(:,:,k)/t2thetafac(p)
+        end associate
       end do
     endif
   end if
@@ -809,7 +803,7 @@ end subroutine
     enddo
     end block
   end subroutine
-  
+
 
 
 !> calculate the start and length paramters for slicing
@@ -1177,76 +1171,6 @@ subroutine compute_vertical_coords(alev, blev, ptop)
   vhalf(nk) = vlevel(nk)
 end subroutine
 
-  subroutine compute_vertical_levels(alev, blev, ptop)
-    use iso_fortran_env, only: error_unit
-    use snapgrdML, only: alevel, blevel, ahalf, bhalf, vlevel, vhalf, klevel, &
-                         ivcoor
-    use snapdimML, only: nk
-    use snapmetML, only: met_params
-    use snaptabML, only: standard_atmosphere
-
-    real, intent(in) :: alev(:), blev(:)
-    real, intent(in) :: ptop
-
-    integer :: k
-
-    do k = 2, nk
-      alevel(k) = alev(k)
-      blevel(k) = blev(k)
-    end do
-
-
-    if (ivcoor == 2) then
-      !..sigma levels (norlam)
-      do k = 2, nk
-        alevel(k) = ptop*(1.-blevel(k))
-      end do
-    end if
-
-    !..surface
-    alevel(1) = 0.
-    blevel(1) = 1.
-
-    if (ivcoor == 2) then
-      !..sigma levels ... vlevel=sigma
-      vlevel(:) = blevel
-    elseif (ivcoor == 10) then
-      !..eta (hybrid) levels ... vlevel=eta (eta as defined in Hirlam)
-      vlevel(:) = alevel / standard_atmosphere + blevel
-    else
-      write (error_unit, *) 'PROGRAM ERROR.  ivcoor= ', ivcoor
-      error stop 255
-    end if
-
-    !..half levels where height is found,
-    !..alevel and blevel are in the middle of each layer
-    ahalf(1) = alevel(1)
-    bhalf(1) = blevel(1)
-    vhalf(1) = vlevel(1)
-    !..check if subselection of levels
-    do k = 2, nk - 1
-      if (klevel(k + 1) /= klevel(k) - 1) then
-        met_params%manual_level_selection = .TRUE.
-      endif
-    end do
-    do k = 2, nk - 1
-      if (.NOT. met_params%manual_level_selection) then
-        ahalf(k) = alevel(k) + (alevel(k) - ahalf(k - 1))
-        bhalf(k) = blevel(k) + (blevel(k) - bhalf(k - 1))
-        vhalf(k) = ahalf(k)/standard_atmosphere + bhalf(k)
-      else
-        ahalf(k) = (alevel(k) + alevel(k + 1))*0.5
-        bhalf(k) = (blevel(k) + blevel(k + 1))*0.5
-        vhalf(k) = ahalf(k)/standard_atmosphere + bhalf(k)
-      end if
-    end do
-
-    ! Top half level is set to zero pressure
-    ahalf(nk) = 0.0
-    bhalf(nk) = 0.0
-    vhalf(nk) = 0.0
-  end subroutine
-
   subroutine read_drydep_required_fields(ncid, timepos, timeposm1, itimefi)
     USE ieee_arithmetic, only: ieee_is_nan
     USE iso_fortran_env, only: real64
@@ -1257,7 +1181,7 @@ end subroutine
     use drydepml, only: classnr, requires_extra_fields_to_be_read, drydep_precompute
     use snapdimML, only: nx, ny
     use snapparML, only: ncomp, run_comp, def_comp
-    
+
     integer, intent(in) :: ncid
     integer, intent(in) :: timepos
     integer, intent(in) :: timeposm1
