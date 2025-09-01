@@ -141,7 +141,7 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
   character(len=1024), save :: file_name = ""
   logical, save :: first_time_read = .true.
 
-  integer :: i, j, k, ilevel, i1, i2
+  integer :: i, k, ilevel, i1, i2
   integer :: nhdiff, nhdiff_precip
   real :: alev(nk), blev(nk), dxgrid, dygrid
   real :: p, px, ptop
