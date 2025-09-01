@@ -119,7 +119,7 @@ contains
         .not.wetdep_scheme%use_vertical) then
         call wetdep2_init(tstep)
     endif
-      
+
   end subroutine
 
   subroutine deinit()
@@ -138,7 +138,7 @@ contains
     USE particleML, only: particle, extraParticle
     use snapparML, only: def_comp
     use snapfldml, only: depwet
-  
+
     real, intent(in) :: tstep
     type(particle), intent(inout) :: part
     type(extraParticle), intent(in) :: pextra
@@ -262,6 +262,7 @@ contains
 
       if(vminprec < 0.) then
         p2 = 1000.
+        p1 = p2
         k = 1
         do while (p2 > plim .AND. k < nk)
           k = k+1
@@ -482,7 +483,7 @@ contains
     endif
   end subroutine
 
-  
+
   subroutine wet_deposition_rate_ratm(wscav, precip, ccf, use_ccf)
     real, intent(out) :: wscav(:,:)
     real, intent(in) :: precip(:,:)
@@ -495,7 +496,7 @@ contains
 
     nx = size(precip,1)
     ny = size(precip,2)
-    
+
     do j=1,ny
       do i=1,nx
         if (use_ccf .and. (ccf(i,j) > 0.0)) then
