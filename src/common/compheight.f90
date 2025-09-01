@@ -31,34 +31,43 @@ module compheightML
 !>     defined by alevel and blevel
 !>   - lower model level is level 2
 subroutine compheight()
-  USE snapgrdML, only: ahalf, bhalf
+  USE snapgrdML, only: ahalf, bhalf, alevel, blevel
   USE snapfldML, only: ps2, hlayer2, hlevel2, t2
   USE snapfldML, only: hlayer => field3d1
-  USE snaptabML, only: g, exner
+  USE snaptabML, only: pitab, g, pmult
   USE snapdimML, only: nx,ny,nk,hres_field
   USE ftestML, only: ftest
 
   real, parameter :: ginv = 1.0/g
 
-  integer :: i,j,k
-  real :: p,pih,pif,h1,h2
+  integer :: i,j,k,itab
+  real :: rtab,p,pih,pif,h1,h2
   real :: pihl(nx,ny),hlev(nx,ny)
 
 !..compute height of model levels (in the model grid)
-  hlev(:,:) = 0.0
+  hlev = 0.0
   hlayer(:,:,nk) = 9999.0
   hlevel2(:,:,1) = 0.0
-
-  pihl(:,:) = exner(ps2)
+  do j=1,ny
+    do i=1,nx
+      rtab = ps2(i,j)*pmult
+      itab = rtab
+      pihl(i,j) = pitab(itab) + (pitab(itab+1)-pitab(itab))*(rtab-itab)
+    end do
+  end do
 
   do k=2,nk
     do j=1,ny
       do i=1,nx
         p = ahalf(k) + bhalf(k)*ps2(i,j)
-        pih = exner(p)
+        rtab = p*pmult
+        itab = rtab
+        pih = pitab(itab) + (pitab(itab+1)-pitab(itab))*(rtab-itab)
 
-        p = ahalf(k-1) + bhalf(k-1)*ps2(i,j)
-        pif = exner(p)
+        p = alevel(k) + blevel(k)*ps2(i,j)
+        rtab = p*pmult
+        itab = rtab
+        pif = pitab(itab)+(pitab(itab+1)-pitab(itab))*(rtab-itab)
 
         h1 = hlev(i,j)
         h2 = h1 + t2(i,j,k)*(pihl(i,j)-pih)*ginv
