@@ -115,7 +115,7 @@ subroutine forwrd_dx(tf1, tf2, tnow, tstep, part, &
   USE snapgrdML, only: vlevel, vhalf, alevel, ahalf, blevel, bhalf, &
       ivlayer, ivlevel
   USE snapfldML, only: u1, u2, v1, v2, w1, w2, t1, t2, ps1, ps2
-  USE snaptabML, only: cp, g, r, surface_height_sigma, exner
+  USE snaptabML, only: cp, g, pmult, r, pitab, surface_height_sigma
   USE vgravtablesML, only: vgtable, pbasevg, tbasevg, pincrvg, tincrvg
   USE snapdimML, only: nk
   USE snapparML, only: def_comp
@@ -142,12 +142,12 @@ subroutine forwrd_dx(tf1, tf2, tnow, tstep, part, &
 !> wind-speed in y
   real(real64), intent(out) :: v
 
-  integer :: i,j,m,ilvl,k1,k2,kt1,kt2,ip,it
+  integer :: i,j,m,ilvl,k1,k2,itab,kt1,kt2,ip,it
   integer :: mrunning
   real(real64) :: dt,rt1,rt2,dx,dy,c1,c2,c3,c4,vlvl
   real(real64) :: dz1,dz2,uk1,uk2,vk1,vk2,wk1,wk2,w
   real(real64) :: th,tk1,tk2,ps,p,pi,t,gravity,grav1,grav2,pvg,tvg
-  real(real64) :: pi1,pi2,dz,deta,wg
+  real(real64) :: pi1,pi2,dz,deta,wg,rtab
 
   real(real64), parameter :: ginv = 1.0/g
   real(real64), parameter :: cpinv = 1.0/cp
@@ -238,9 +238,13 @@ subroutine forwrd_dx(tf1, tf2, tnow, tstep, part, &
 
     if(def_comp(m)%grav_type == 2) then
       p = alevel(k1) + blevel(k1)*ps
-      pi1 = exner(p)
+      rtab = p*pmult
+      itab = int(rtab)
+      pi1 = pitab(itab)+(pitab(itab+1)-pitab(itab))*(rtab-itab)
       p = alevel(k2) + blevel(k2)*ps
-      pi2 = exner(p)
+      rtab = p*pmult
+      itab = int(rtab)
+      pi2 = pitab(itab)+(pitab(itab+1)-pitab(itab))*(rtab-itab)
       pi = pi1*dz1+pi2*dz2
       t = th*pi*cpinv
       p = 1000.*(pi*cpinv)**rcpinv
@@ -284,9 +288,13 @@ subroutine forwrd_dx(tf1, tf2, tnow, tstep, part, &
     !.......................................???????????????????????????????
       k2 = k1 + 1
       p = ahalf(k1) + bhalf(k1)*ps
-      pi1 = exner(p)
+      rtab = p*pmult
+      itab = int(rtab)
+      pi1 = pitab(itab)+(pitab(itab+1)-pitab(itab))*(rtab-itab)
       p = ahalf(k2) + bhalf(k2)*ps
-      pi2 = exner(p)
+      rtab = p*pmult
+      itab = int(rtab)
+      pi2 = pitab(itab)+(pitab(itab+1)-pitab(itab))*(rtab-itab)
       dz = th*(pi1-pi2)*ginv
       deta = vhalf(k1)-vhalf(k2)
       wg = gravity*deta/dz

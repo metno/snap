@@ -38,7 +38,7 @@ module bldpML
 !>   - lower model level is level 2
 subroutine bldp
   USE snapdimML, only: nx,ny,nk
-  USE snaptabML, only: cp, g, exner
+  USE snaptabML, only: cp, g, pmult, pitab
   USE snapgrdML, only: ahalf, bhalf, vhalf, alevel, blevel
   USE snapfldML, only: u2, v2, ps2, t2, hbl2, bl2
   USE ftestML, only: ftest
@@ -47,12 +47,12 @@ subroutine bldp
 
   real ::    pih(nk),pif(nk),zh(nk),zf(nk),thh(nk)
 
-  integer :: kbltop,kblbot,nkk,i,j,k,ktop
+  integer :: kbltop,kblbot,nkk,i,j,k,itab,ktop
   real :: pbltop,pblbot,p,p1,p2,vbltop,vblbot
   real, parameter :: ginv = 1.0/g
   real, parameter :: ricfac = 1.8
   real, parameter :: psurf = 1000.0
-  real :: vbl,uhelp,vhelp,dz
+  real :: vbl,uhelp,vhelp,rtab,dz
   real :: dv2min,dv2,dth,ri,ric,riu,ricu,dri,driu,hbl
 
 ! test----------------------------------------------
@@ -150,9 +150,13 @@ subroutine bldp
 
       do k=1,2
         p=ahalf(k)+bhalf(k)*ps2(i,j)
-        pih(k)= exner(p)
+        rtab=p*pmult
+        itab=rtab
+        pih(k)=pitab(itab)+(pitab(itab+1)-pitab(itab))*(rtab-itab)
         p=alevel(k)+blevel(k)*ps2(i,j)
-        pif(k) = exner(p)
+        rtab=p*pmult
+        itab=rtab
+        pif(k)=pitab(itab)+(pitab(itab+1)-pitab(itab))*(rtab-itab)
       end do
 
       k=2
@@ -176,10 +180,16 @@ subroutine bldp
         k=k+1
 
         p=ahalf(k+1)+bhalf(k+1)*ps2(i,j)
-        pih(k+1)=  exner(p)
+        rtab=p*pmult
+        itab=rtab
+        pih(k+1)=  pitab(itab) &
+            +(pitab(itab+1)-pitab(itab))*(rtab-itab)
 
         p=alevel(k+1)+blevel(k+1)*ps2(i,j)
-        pif(k+1)=  exner(p)
+        rtab=p*pmult
+        itab=rtab
+        pif(k+1)=  pitab(itab) &
+            +(pitab(itab+1)-pitab(itab))*(rtab-itab)
 
         thh(k)=  t2(i,j,k) &
             +(t2(i,j,k+1)-t2(i,j,k))*(pif(k)-pih(k)) &

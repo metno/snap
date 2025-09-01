@@ -37,7 +37,7 @@ module readfield_fiML
   !> @brief load and check an array from a source
   interface fi_checkload
     module procedure :: fi_checkload1d, fi_checkload2d, fi_checkload3d, &
-                        fi_checkload2d_64, fi_checkload3d_64, fi_checkloadscalar
+                        fi_checkload2d_64, fi_checkload3d_64
   end interface
 
 contains
@@ -72,8 +72,8 @@ contains
       hbl1, hbl2, hlayer1, hlayer2, garea, hlevel1, hlevel2, &
       hlayer1, hlayer2, bl1, bl2, enspos, precip, t1_abs, t2_abs, &
       field1
-    USE snapgrdML, only: alevel, blevel, vlevel, ahalf, bhalf, vhalf, ptop, &
-                         gparam, klevel, ivlevel, imslp, igtype, ivlayer
+    USE snapgrdML, only: alevel, blevel, vlevel, ahalf, bhalf, vhalf, &
+                         gparam, klevel, ivlevel, imslp, igtype, ivlayer, ivcoor
     USE snapmetML, only: met_params, xy_wind_units, pressure_units, omega_units, &
                          sigmadot_units, temp_units, requires_precip_deaccumulation
     USE snapdimML, only: nx, ny, nk, output_resolution_factor, hres_field, surface_index
@@ -98,13 +98,15 @@ contains
     TYPE(FimexIO) :: fio
     integer, save :: ntav1, ntav2 = 0
     character(len=1024), save :: file_name = ""
+    character(len=1024), save :: ap_units = pressure_units
     logical, save :: first_time_read = .true.
 
     integer :: i, j, k, ilevel, i1, i2
     integer :: nhdiff, nhdiff_precip, prev_tstep_same_file
     real :: alev(nk), blev(nk), dxgrid, dygrid
     integer :: ifb, kfb
-    real :: p, px, p0
+    real :: p, px, ptop
+    real :: ptoptmp(1)
 
     integer :: timepos, timeposm1, nr
 
@@ -213,17 +215,7 @@ contains
 
     end if
 
-    if (met_params%ptopv /= '') then
-      call fi_checkload(fio, met_params%ptopv, pressure_units, ptop)
-    else
-      ptop = 0.0 ! hPa
-    end if
-    if (met_params%p0 /= '') then
-      call fi_checkload(fio, met_params%p0, pressure_units, p0)
-    else
-      p0 = 1.0
-    end if
-
+    ptop = 100.0
     do k = nk , 2, -1
 
       !..input model level no.
@@ -243,18 +235,25 @@ contains
       !..pot.temp. or abs.temp.
       call fi_checkload(fio, met_params%pottempv, temp_units, t2(:, :, k), nt=timepos, nz=ilevel, nr=nr)
 
-      if (met_params%apv /= '') then
-        if (met_params%p0 /= '') then
-          call fi_checkload(fio, met_params%apv, "1", alev(k:k), nz=ilevel)
-          alev(k) = alev(k)*p0
-        else
-          call fi_checkload(fio, met_params%apv, pressure_units, alev(k:k), nz=ilevel)
+      !   TODO read ptop from file (only needed for sigma), but not in emep data
+      ptop = 100. ! hPa
+      !       if(ivcoor.eq.2) ptop=idata(19)
+      !..p0 for hybrid loaded to ptop, ap is a * p0
+      if (ivcoor /= 2 .AND. .NOT. met_params%ptopv == '') then
+        call fi_checkload(fio, met_params%ptopv, pressure_units, ptoptmp)
+        ptop = ptoptmp(1)
+        ap_units = ""
+      end if
+      !..alevel (here) only for eta levels
+      if (.NOT. met_params%apv == '') then
+        call fi_checkload(fio, met_params%apv, ap_units, alev(k:k), nz=ilevel)
+        call fi_checkload(fio, met_params%bv, "", blev(k:k), nz=ilevel)
+        if (ivcoor /= 2 .AND. .NOT. met_params%ptopv == '') then
+          !..p0 for hybrid loaded to ptop, ap is a * p0
+          alev(k) = alev(k)*ptop
         end if
       end if
-      if (met_params%bv /= '') then
-        call fi_checkload(fio, met_params%bv, "", blev(k:k), nz=ilevel)
-      end if
-      if (met_params%sigmav /= '') then
+      if (.NOT. met_params%sigmav == '') then
         ! reusing blev(k) for sigma(k) later
         call fi_checkload(fio, met_params%sigmav, "", blev(k:k), nz=ilevel)
       end if
@@ -720,30 +719,6 @@ contains
     endif
   end subroutine check
 
-  subroutine fi_checkloadscalar(fio, varname, units, output, nt, nz, nr, ierror)
-    !> the fimex io-object
-    TYPE(FimexIO), intent(inout) :: fio
-    !> variable name in file
-    character(len=*), intent(in) :: varname
-    !> the requested units, see snapdimML.f90
-    character(len=*), intent(in) :: units
-    !> optional position on t-axis, default all (1 is first element)
-    integer, intent(in), optional :: nz
-    !> optional position on z-axis, default all (1 is first element)
-    integer, intent(in), optional :: nt
-    !> optional position on realization/ensemble axis, default 1
-    integer, intent(in), optional :: nr
-    !> error code, 0 on success
-    integer, intent(out), optional :: ierror
-    !> scalar to read
-    real(real32), intent(out) :: output
-
-    real(real32) :: field(1)
-
-    call fi_checkload(fio, varname, units, field, nt, nz, nr, ierror)
-    output = field(1)
-  end subroutine
-  
   subroutine fi_checkload1d(fio, varname, units, field, nt, nz, nr, ierror)
     !> the fimex io-object
     TYPE(FimexIO), intent(inout) :: fio
