@@ -25,9 +25,9 @@ module snaptabML
     integer, parameter :: mpretab = 500
 
 !> multiply pressure by this value to get index in pitab
-    real, parameter :: pmult = 0.1
-!>  Exner function, pitab(0:130) for p=0,10,20,...1300 hPa
-    real, save :: pitab(0:130)
+    real, parameter :: pmult = 1.
+!>  Exner function, pitab(0:1300) for p=0,1,2,...1300 hPa
+    real, save :: pitab(0:1300)
 
     real, parameter, public :: g=9.81, r=287.0, cp=1004.0
     real, parameter, public :: rcp = r/cp
@@ -52,7 +52,7 @@ module snaptabML
   interface exner
       module procedure :: exner_real32, exner_real64
   end interface
-  
+
 
     contains
 
