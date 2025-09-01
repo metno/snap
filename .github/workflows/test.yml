@@ -8,12 +8,12 @@ on:
       - master
 
 env:
-  FIMEX_VERSION: "2.1"
+  FIMEX_VERSION: "1.9"
 
 jobs:
   test:
     name: test
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout repository

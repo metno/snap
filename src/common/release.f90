@@ -113,7 +113,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
       iparnum, &
       TIME_PROFILE_BOMB, TIME_PROFILE_LINEAR
   USE snapposML, only: irelpos, release_positions
-  USE snaptabML, only: g, exner
+  USE snaptabML, only: g, pmult, pitab
   USE snapdimML, only: nx, ny, nk
   USE snapdebug, only: iulog
 
@@ -122,11 +122,11 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
   integer, intent(out) :: ierror
 
 !..local
-  integer :: ih,i,j,n,k,m,nprel,nt,npar1,numradius,nrad,mo
+  integer :: ih,i,j,n,k,m,itab,nprel,nt,npar1,numradius,nrad,mo
   integer, allocatable :: nrel(:), nrel2(:,:)
   real ::    x,y,dxgrid,dygrid,dx,dy,xrand,yrand,zrand,twodx,twody
   real ::    rt1,rt2,dxx,dyy,c1,c2,c3,c4,tstep
-  real :: ps,th,p,pihu,pih,pif,hhu,h1,h2,h,vlev
+  real :: ps,rtab,th,p,pihu,pih,pif,hhu,h1,h2,h,vlev
   real, parameter :: pi = 4*atan(1.0)
   real, parameter :: ginv =  1.0/g
   real ::    e,a,b,c,ecos,esin,s,gcos,gsin,rcos,smax,b2,en,en2
@@ -280,7 +280,9 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
     +rt2*(c1*ps2(i,j)  +c2*ps2(i+1,j) &
     +c3*ps2(i,j+1)+c4*ps2(i+1,j+1))
 
-    pihu=  exner(ps)
+    rtab=ps*pmult
+    itab=int(rtab)
+    pihu=  pitab(itab)+(pitab(itab+1)-pitab(itab))*(rtab-itab)
 
     hlevel(1)= 0.
     hhu= 0.
@@ -293,10 +295,14 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
       +c3*t2(i,j+1,k)+c4*t2(i+1,j+1,k))
 
       p=ahalf(k)+bhalf(k)*ps
-      pih= exner(p)
+      rtab=p*pmult
+      itab=int(rtab)
+      pih= pitab(itab)+(pitab(itab+1)-pitab(itab))*(rtab-itab)
 
       p=alevel(k)+blevel(k)*ps
-      pif= exner(p)
+      rtab=p*pmult
+      itab=int(rtab)
+      pif= pitab(itab)+(pitab(itab+1)-pitab(itab))*(rtab-itab)
 
       h1=hhu
       h2=h1 + th*(pihu-pih)*ginv

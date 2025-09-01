@@ -30,7 +30,7 @@ module readfield_ncML
   public :: compute_vertical_coords, read_largest_landfraction
 
   interface nfcheckload
-    module procedure nfcheckloadscalar, nfcheckload1d, nfcheckload2d, nfcheckload3d
+    module procedure nfcheckload1d, nfcheckload2d, nfcheckload3d
   end interface
 
   contains
@@ -114,8 +114,8 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
       hbl1, hbl2, hlayer1, hlayer2, garea, hlevel1, hlevel2, &
       hlayer1, hlayer2, bl1, bl2, enspos, precip, &
       t1_abs, t2_abs, field1
-  USE snapgrdML, only: alevel, blevel, vlevel, ahalf, bhalf, vhalf, ptop, &
-      gparam, klevel, ivlevel, imslp, igtype, ivlayer
+  USE snapgrdML, only: alevel, blevel, vlevel, ahalf, bhalf, vhalf, &
+      gparam, klevel, ivlevel, imslp, igtype, ivlayer, ivcoor
   USE snapmetML, only: met_params, requires_precip_deaccumulation, &
       pressure_units, xy_wind_units, temp_units
   USE snapdimML, only: nx, ny, nk, output_resolution_factor, hres_field, surface_index
@@ -141,10 +141,11 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
   character(len=1024), save :: file_name = ""
   logical, save :: first_time_read = .true.
 
-  integer :: i, k, ilevel, i1, i2
+  integer :: i, j, k, ilevel, i1, i2
   integer :: nhdiff, nhdiff_precip
   real :: alev(nk), blev(nk), dxgrid, dygrid
-  real :: p, px, p0
+  real :: p, px, ptop
+  real :: ptoptmp(1)
   integer :: prev_tstep_same_file
 
   integer :: timepos, timeposm1
@@ -259,18 +260,7 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
 
   end if
 
-  if (met_params%ptopv /= '') then
-    call nfcheckload(ncid, met_params%ptopv, ptop, units=pressure_units)
-  else
-    ptop = 0.0
-  end if
-
-  if (met_params%p0 /= '') then
-    call nfcheckload(ncid, met_params%p0, p0, units=pressure_units)
-  else
-    p0 = 1.0
-  end if
-
+  ptop = 100.0
   do k=nk,2,-1
 
   !..input model level no.
@@ -294,20 +284,27 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
   !..pot.temp. or abs.temp.
     call nfcheckload(ncid, met_params%pottempv, start4d, count4d, t2(:,:,k), units=temp_units)
 
-    if (met_params%apv /= '') then
-      if (met_params%p0 /= '') then
-        call nfcheckload(ncid, met_params%apv, [ilevel], [1], alev(k:k), units="1")
-        alev(k) = alev(k) * p0
-      else
-        call nfcheckload(ncid, met_params%apv, [ilevel], [1], alev(k:k), units=pressure_units)
+
+  !   TODO read ptop from file (only needed for sigma), but not in emep data
+    ptop=100.
+  !       if(ivcoor.eq.2) ptop=idata(19)
+  !..p0 for hybrid loaded to ptop, ap is a * p0
+    if (ivcoor /= 2 .AND. .NOT. met_params%ptopv == '') then
+      call nfcheckload(ncid, met_params%ptopv, (/0/), (/1/), ptoptmp, units=pressure_units)
+      ptop = ptoptmp(1)
+    end if
+  !..alevel (here) only for eta levels
+    if ( .NOT. met_params%apv == '') then
+      call nfcheckload(ncid, met_params%apv, (/ilevel/), (/1/), alev(k:k), units=pressure_units)
+      call nfcheckload(ncid, met_params%bv, (/ilevel/), (/1/), blev(k:k), units="1")
+      if (ivcoor /= 2 .AND. .NOT. met_params%ptopv == '') then
+      !..p0 for hybrid loaded to ptop, ap is a * p0
+        alev(k) = alev(k) * ptop
       end if
     end if
-    if (met_params%bv /= '') then
-      call nfcheckload(ncid, met_params%bv, [ilevel], [1], blev(k:k), units="1")
-    end if
-    if (met_params%sigmav /= '') then
+    if ( .NOT. met_params%sigmav == '') then
     ! reusing blev(k) for sigma(k) later
-      call nfcheckload(ncid, met_params%sigmav, [ilevel], [1], blev(k:k))
+      call nfcheckload(ncid, met_params%sigmav, (/ilevel/), (/1/), blev(k:k))
     end if
 
   !..sigma_dot/eta_dot (0 at surface)
@@ -399,17 +396,23 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
     if (allocated(t2_abs)) t2_abs(:,:,:) = t2
   !..abs.temp. -> pot.temp.
     do k=2,nk
-      associate(p => alevel(k) + blevel(k)*ps2)
-        t2(:,:,k) = t2(:,:,k)*t2thetafac(p)
-      end associate
+      do j = 1, ny
+        do i = 1, nx
+          p = alevel(k) + blevel(k)*ps2(i,j)
+          t2(i,j,k) = t2(i,j,k)*t2thetafac(p)
+        end do
+      end do
     end do
   else
     if (allocated(t2_abs)) then
       ! pot.temp -> abs.temp
       do k=2,nk
-        associate(p => alevel(k) + blevel(k)*ps2)
-          t2(:,:,k) = t2(:,:,k)/t2thetafac(p)
-        end associate
+        do j = 1, ny
+          do i = 1, nx
+            p = alevel(k) + blevel(k)*ps2(i,j)
+            t2_abs(i,j,k) = t2(i,j,k)/t2thetafac(p)
+          end do
+        end do
       end do
     endif
   end if
@@ -949,58 +952,6 @@ subroutine get_conversion_factor(ncid, varid, target_units, factor)
   factor = conversion_factor(current_units, target_units)
 end subroutine
 
-subroutine nfcheckloadscalar(ncid, varname, output, return_status, units)
-  use ieee_arithmetic, only: ieee_value, IEEE_QUIET_NAN
-  use iso_fortran_env, only: real32
-
-  integer, intent(in) :: ncid
-  character(len=*), intent(in) :: varname
-  real(real32), intent(out) :: output
-  !> Return status instead of panic
-  integer, intent(out), optional :: return_status
-  character(len=*), intent(in), optional :: units
-
-  real(real32) :: factor, offset, fillvalue
-  integer :: varid, status
-
-  if (present(return_status)) return_status = NF90_NOERR
-
-  status = nf90_inq_varid(ncid, varname, varid)
-  if (status /= NF90_NOERR .and. present(return_status)) then
-    return_status = status
-    return
-  endif
-  call check(status, varname)
-
-  write (iulog,*) "reading "//trim(varname)//", as scalar"
-  status = nf90_get_var(ncid, varid, output)
-  if (status /= NF90_NOERR .and. present(return_status)) then
-    return_status = status
-    return
-  endif
-  call check(status, varname)
-
-  call fillscaleoffset(ncid, varid, fillvalue, factor, offset, status)
-  if (status /= NF90_NOERR .and. present(return_status)) then
-    return_status = status
-    return
-  endif
-  call check(status)
-
-  if (output == fillvalue) then
-    output = IEEE_VALUE(fillvalue, IEEE_QUIET_NAN)
-  end if
-
-  if (factor /= 1. .OR. offset /= 0.) then
-    output = output*factor + offset
-  end if
-
-  if (present(units)) then
-    call get_conversion_factor(ncid, varid, units, factor)
-    output = output*factor
-  endif
-end subroutine
-
 subroutine nfcheckload1d(ncid, varname, start, length, field, return_status, units)
   use ieee_arithmetic, only: ieee_value, IEEE_QUIET_NAN
   use iso_fortran_env, only: real32
@@ -1160,7 +1111,7 @@ end subroutine nfcheckload3d
 
 subroutine compute_vertical_coords(alev, blev, ptop)
   use iso_fortran_env, only: error_unit
-  use snapgrdML, only: alevel, blevel, vlevel, klevel, &
+  use snapgrdML, only: alevel, blevel, vlevel, ivcoor, klevel, &
                        ahalf, bhalf, vhalf
   use snapmetML, only: met_params
   use snapdimML, only: nk
@@ -1171,21 +1122,39 @@ subroutine compute_vertical_coords(alev, blev, ptop)
   real, intent(in) :: ptop
 
   integer :: k
-  real :: p
 
   do k = 2, nk
     alevel(k) = alev(k)
     blevel(k) = blev(k)
   end do
 
+  if (ivcoor == 2) then
+    !..sigma levels (norlam)
+    do k = 2, nk
+      alevel(k) = ptop*(1.-blevel(k))
+    end do
+  end if
+
   !..surface
   alevel(1) = 0.0
   blevel(1) = 1.0
+
+  if (ivcoor == 2) then
+    !..sigma levels ... vlevel=sigma
+    vlevel(:) = blevel
+  elseif (ivcoor == 10) then
+    !..eta (hybrid) levels ... vlevel=eta (eta as defined in Hirlam)
+    vlevel(:) = alevel/standard_atmosphere + blevel
+  else
+    write (error_unit, *) 'PROGRAM ERROR.  ivcoor= ', ivcoor
+    error stop 255
+  end if
 
   !..half levels where height is found,
   !..alevel and blevel are in the middle of each layer
   ahalf(1) = alevel(1)
   bhalf(1) = blevel(1)
+  vhalf(1) = vlevel(1)
   !..check if subselection of levels
   do k = 2, nk - 1
     if (klevel(k + 1) /= klevel(k) - 1) then
@@ -1196,22 +1165,87 @@ subroutine compute_vertical_coords(alev, blev, ptop)
     if (.NOT. met_params%manual_level_selection) then
       ahalf(k) = alevel(k) + (alevel(k) - ahalf(k - 1))
       bhalf(k) = blevel(k) + (blevel(k) - bhalf(k - 1))
+      vhalf(k) = ahalf(k)/standard_atmosphere + bhalf(k)
     else
       ahalf(k) = (alevel(k) + alevel(k + 1))*0.5
       bhalf(k) = (blevel(k) + blevel(k + 1))*0.5
+      vhalf(k) = ahalf(k)/standard_atmosphere + bhalf(k)
     end if
   end do
-
-  do k=1,nk
-    p = alevel(k) + blevel(k) * standard_atmosphere
-    vlevel(k) = (p - ptop) / (standard_atmosphere - ptop)
-    p = ahalf(k) + bhalf(k) * standard_atmosphere
-    vhalf(k) = (p - ptop) / (standard_atmosphere - ptop)
-  end do
-
-  vhalf(1) = vlevel(1)
+  ahalf(nk) = alevel(nk)
+  bhalf(nk) = blevel(nk)
   vhalf(nk) = vlevel(nk)
 end subroutine
+
+  subroutine compute_vertical_levels(alev, blev, ptop)
+    use iso_fortran_env, only: error_unit
+    use snapgrdML, only: alevel, blevel, ahalf, bhalf, vlevel, vhalf, klevel, &
+                         ivcoor
+    use snapdimML, only: nk
+    use snapmetML, only: met_params
+    use snaptabML, only: standard_atmosphere
+
+    real, intent(in) :: alev(:), blev(:)
+    real, intent(in) :: ptop
+
+    integer :: k
+
+    do k = 2, nk
+      alevel(k) = alev(k)
+      blevel(k) = blev(k)
+    end do
+
+
+    if (ivcoor == 2) then
+      !..sigma levels (norlam)
+      do k = 2, nk
+        alevel(k) = ptop*(1.-blevel(k))
+      end do
+    end if
+
+    !..surface
+    alevel(1) = 0.
+    blevel(1) = 1.
+
+    if (ivcoor == 2) then
+      !..sigma levels ... vlevel=sigma
+      vlevel(:) = blevel
+    elseif (ivcoor == 10) then
+      !..eta (hybrid) levels ... vlevel=eta (eta as defined in Hirlam)
+      vlevel(:) = alevel / standard_atmosphere + blevel
+    else
+      write (error_unit, *) 'PROGRAM ERROR.  ivcoor= ', ivcoor
+      error stop 255
+    end if
+
+    !..half levels where height is found,
+    !..alevel and blevel are in the middle of each layer
+    ahalf(1) = alevel(1)
+    bhalf(1) = blevel(1)
+    vhalf(1) = vlevel(1)
+    !..check if subselection of levels
+    do k = 2, nk - 1
+      if (klevel(k + 1) /= klevel(k) - 1) then
+        met_params%manual_level_selection = .TRUE.
+      endif
+    end do
+    do k = 2, nk - 1
+      if (.NOT. met_params%manual_level_selection) then
+        ahalf(k) = alevel(k) + (alevel(k) - ahalf(k - 1))
+        bhalf(k) = blevel(k) + (blevel(k) - bhalf(k - 1))
+        vhalf(k) = ahalf(k)/standard_atmosphere + bhalf(k)
+      else
+        ahalf(k) = (alevel(k) + alevel(k + 1))*0.5
+        bhalf(k) = (blevel(k) + blevel(k + 1))*0.5
+        vhalf(k) = ahalf(k)/standard_atmosphere + bhalf(k)
+      end if
+    end do
+
+    ! Top half level is set to zero pressure
+    ahalf(nk) = 0.0
+    bhalf(nk) = 0.0
+    vhalf(nk) = 0.0
+  end subroutine
 
   subroutine read_drydep_required_fields(ncid, timepos, timeposm1, itimefi)
     USE ieee_arithmetic, only: ieee_is_nan
