@@ -33,7 +33,6 @@ module snapmetML
     character(len=80) :: pottempv = ''
     character(len=80) :: ptopv = ''
     character(len=80) :: sigmadotv = ''
-    character(len=80) :: p0 = ''
     character(len=80) :: apv = ''
     character(len=80) :: bv = ''
     character(len=80) :: sigmav = ''
@@ -197,7 +196,7 @@ module snapmetML
       met_params%pottempv = 'air_temperature_ml'
       met_params%temp_is_abs = .true.
       met_params%sigmav = ''
-      met_params%ptopv = ''
+      met_params%ptopv = ''  ! need ptopv to multiply ap=a*ptopv
       met_params%apv = 'ap'
       met_params%bv = 'b'
       met_params%sigmadotv = 'omega_ml' !'lagrangian_tendency_of_atmosphere_sigma_coordinate_ml'
@@ -310,8 +309,7 @@ module snapmetML
       met_params%ywind10mv = 'v10'
       met_params%pottempv = 'potential_temperature'
       met_params%sigmav = ''
-      met_params%ptopv = ''
-      met_params%p0 = 'P0'
+      met_params%ptopv = 'P0'
       met_params%apv = 'hyam'
       met_params%bv = 'hybm'
       met_params%sigmadotv = ''
