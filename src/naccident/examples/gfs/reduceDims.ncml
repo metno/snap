@@ -3,16 +3,16 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://www.unidata.ucar.edu/namespaces/netcdf/ncml-2.2 http://www.unidata.ucar.edu/schemas/netcdf/ncml-2.2.xsd">
 
-<variable name="surface_air_pressure" type="float"  shape="longitude latitude time" >
+<variable name="surface_air_pressure" type="float"  shape="time latitude longitude" >
 </variable>
 
-<variable name="precipitation_flux" type="float"  shape="longitude latitude time" >
+<variable name="precipitation_flux" type="float"  shape="time latitude longitude" >
 </variable>
 
-<variable name="x_wind_10m" type="float"  shape="longitude latitude time" >
+<variable name="x_wind_10m" type="float"  shape="time latitude longitude" >
 </variable>
 
-<variable name="y_wind_10m" type="float"  shape="longitude latitude time" >
+<variable name="y_wind_10m" type="float"  shape="time latitude longitude" >
 </variable>
 
 
