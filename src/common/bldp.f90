@@ -264,7 +264,7 @@ subroutine bldp
           +(zh(k+1)-zh(k))*(vhalf(k)-vbl)/(vhalf(k)-vhalf(k+1))
 
       bl2(i,j)=vbl
-      !hbl2(i,j)=hbl
+      hbl2(i,j)=hbl
 
     !..reset wind
       u2(i,j,1)=uhelp

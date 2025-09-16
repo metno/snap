@@ -46,15 +46,42 @@ module snapfldML
 !> absolute temperature
   real(kind=real32), allocatable, save, public :: t2_abs(:,:,:)
 
-!> absolute temperature
-  real(kind=real32), allocatable, save, public :: t1_dew(:,:,:)
-!> absolute temperature
-  real(kind=real32), allocatable, save, public :: t2_dew(:,:,:)
+!> 2m dew point temperature
+  real(kind=real32), allocatable, save, public :: t1_dew(:,:)
+!> 2m dew point temperature
+  real(kind=real32), allocatable, save, public :: t2_dew(:,:)
 
   real(kind=real32), allocatable, save, public :: hlevel1(:,:,:)
   real(kind=real32), allocatable, save, public :: hlevel2(:,:,:)
   real(kind=real32), allocatable, save, public :: hlayer1(:,:,:)
   real(kind=real32), allocatable, save, public :: hlayer2(:,:,:)
+
+!> Instataneous surface heat flux
+  real(kind=real32), allocatable, save, public :: ishf(:,:)
+
+!> Instataneous surface heat flux
+  real(kind=real32), allocatable, save, public :: xsurfstress(:,:)
+
+!> Instataneous surface heat flux
+  real(kind=real32), allocatable, save, public :: ysurfstress(:,:)
+
+!> specific humidity
+  real(kind=real32), allocatable, save, public :: spec_humid(:,:,:)
+
+!> density of air
+  real(kind=real32), allocatable, save, public :: rho(:,:,:)
+
+!> vertical gradients of air density
+  real(kind=real32), allocatable, save, public :: rhograd(:,:,:)
+
+!> MO length (diffusion)
+  real(kind=real32), allocatable, save, public :: obukhov_l(:,:)
+
+!> friction velocity
+  real(kind=real32), allocatable, save, public :: u_star(:,:)
+
+!> deardorff velocity
+  real(kind=real32), allocatable, save, public :: w_star(:,:)
 
 !> hourly precipitation intensity (mm/hour)
   real(kind=real32), allocatable, save, public :: precip(:,:)

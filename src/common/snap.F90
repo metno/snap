@@ -185,7 +185,7 @@ PROGRAM bsnap
   USE rmpartML, only: rmpart
   USE split_particlesML, only: split_particles
   USE checkdomainML, only: check_in_domain
-  USE rwalkML, only: rwalk, rwalk_init
+  USE rwalkML, only: rwalk, rwalk_init, diffusion_method, flexpart_diffusion
   USE milibML, only: xyconvert
   use snapfldML, only: total_activity_lost_domain
   USE forwrdML, only: forwrd, forwrd_init
@@ -210,7 +210,7 @@ PROGRAM bsnap
   USE bldpML, only: bldp
   USE releaseML, only: release, releases, tpos_bomb, nrelheight, mprel, &
                        mplume, nplume, iplume, npart, mpart, release_t
-  USE init_random_seedML, only: init_random_seed
+  USE init_random_seedML, only: init_random_seed, generate_normal_randoms
   USE compheightML, only: compheight
   USE readfield_ncML, only: readfield_nc
   USE snapfimexML, only: fimex_type => file_type, fimex_config => conf_file, fimex_interpolation => interpolation, fint
@@ -378,7 +378,6 @@ PROGRAM bsnap
 
 ! initialize random number generator for rwalk and release
   CALL init_random_seed()
-
 
 !..check input FELT files and make sorted lists of available data
 !..make main list based on x wind comp. (u) in upper used level
@@ -589,7 +588,11 @@ PROGRAM bsnap
     end if
     if (ierror /= 0) call snap_error_exit(iulog)
     call compheight
-    ! call bldp
+    if (diffusion_method /= 'get_bl_from_meteo') then
+      call bldp
+    endif
+
+
 
     ! Initialise output
     if (idailyout == 1) then
@@ -676,8 +679,9 @@ PROGRAM bsnap
 
         !..compute model level heights
         call compheight
-        !..calculate boundary layer (top and height)
-        ! call bldp
+        if (diffusion_method /= 'get_bl_from_meteo') then
+          call bldp
+        end if
 
         dur = time_file - itimei
         ihdiff = dur%hours
@@ -720,6 +724,7 @@ PROGRAM bsnap
         call wetdep_init(tstep)
         call forwrd_init()
         if (use_random_walk) call rwalk_init(tstep)
+        !if (use_random_walk) call flexpart_diffusion(pdata(np), pextra)
         init = .FALSE.
       end if
 
@@ -755,7 +760,8 @@ PROGRAM bsnap
         !..apply the random walk method (diffusion)
         ! diffusion is applied after deposition to mix
         ! before output (which computes surface concentrations)
-        if (use_random_walk) call rwalk(blfullmix, pdata(np), pextra)
+        !if (use_random_walk) call rwalk(blfullmix, pdata(np), pextra)
+        if (use_random_walk) call flexpart_diffusion(pdata(np), pextra)
 
         !.. check domain (%active) after moving particle
         call check_in_domain(pdata(np), out_of_domain)
@@ -928,10 +934,10 @@ contains
     use snapfimexML, only: parse_interpolator
     use snapgrdml, only: compute_column_max_conc, compute_aircraft_doserate, aircraft_doserate_threshold, &
     output_column, output_vd, output_vd_debug
-    use init_random_seedML, only: extra_seed
+    use init_random_seedML, only: extra_seed, generate_normal_randoms
     use fldout_ncML, only: surface_layer_is_lowest_level, surface_height_m
     use snapparML, only: GRAV_TYPE_UNDEFINED, GRAV_TYPE_OFF, GRAV_TYPE_FIXED
-    use rwalkML, only: diffusion_b => b, diffusion_a_in_bl => a_in_bl, diffusion_a_above_bl => a_above_bl
+    use rwalkML, only: diffusion_b => b, diffusion_a_in_bl => a_in_bl, diffusion_a_above_bl => a_above_bl, diffusion_method
 
     !> Open file unit
     integer, intent(in) :: snapinput_unit
@@ -1112,6 +1118,9 @@ contains
       case ('random.walk.off')
         !..random.walk.off
         use_random_walk = .false.
+      case ('diffusion.method')
+        if (.not. has_value) goto 12
+        read(cinput(pname_start:pname_end),*) diffusion_method
       case ('diffusion.b.value')
         if (.not. has_value) goto 12
         read(cinput(pname_start:pname_end),*) diffusion_b

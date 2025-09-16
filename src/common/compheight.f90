@@ -31,18 +31,27 @@ module compheightML
 !>     defined by alevel and blevel
 !>   - lower model level is level 2
 subroutine compheight()
-  USE snapgrdML, only: ahalf, bhalf
-  USE snapfldML, only: ps2, hlayer2, hlevel2, t2
+  USE snapgrdML, only: ahalf, bhalf, alevel, blevel
+  USE snapfldML, only: ps2, hlayer2, hlevel2, t2, t2_abs
   USE snapfldML, only: hlayer => field3d1
   USE snaptabML, only: g, exner
   USE snapdimML, only: nx,ny,nk,hres_field
   USE ftestML, only: ftest
 
   real, parameter :: ginv = 1.0/g
+  real, parameter :: r=287
 
   integer :: i,j,k
   real :: p,pih,pif,h1,h2
   real :: pihl(nx,ny),hlev(nx,ny)
+
+  real, allocatable :: pe(:, :)
+  real, allocatable :: pe2(:, :)
+  real, allocatable :: deltah(:, :, :)
+
+  allocate(pe(nx, ny))
+  allocate(pe2(nx, ny))
+  allocate(deltah(nx, ny, nk))
 
 !..compute height of model levels (in the model grid)
   hlev(:,:) = 0.0
@@ -50,6 +59,8 @@ subroutine compheight()
   hlevel2(:,:,1) = 0.0
 
   pihl(:,:) = exner(ps2)
+
+  ! There is a bug here. On k=2 pihl is the same as pif, leading to 0 height, which is incorrect
 
   do k=2,nk
     do j=1,ny
@@ -68,10 +79,26 @@ subroutine compheight()
             /(pihl(i,j)-pih)
 
         hlev(i,j) = h2
-        pihl(i,j) = pih
+        pihl(i,j) = pih   
       end do
     end do
   end do
+
+  ! Calculate thickness of levels in metres
+  deltah(:,:,nk) = 9999.0
+  do k = 2, nk
+    pe = alevel(k-1) + blevel(k-1) * ps2
+    pe2 = alevel(k) + blevel(k) * ps2
+    deltah(:, :, k-1) = (r * t2_abs(:, :, k) / g) * log(pe/pe2)
+  end do
+
+  ! Calculate cumulative height of levels in metres
+  hlevel2(:, :, 1) = 0.0
+  do k = 2, nk
+    hlevel2(:, :, k) = hlevel2(:, :, k-1) + deltah(:, :, k-1)
+  end do
+
+  hlayer = deltah
 
   call ftest('hlayer', hlayer, contains_undef=.true., reverse_third_dim=.true.)
   call ftest('hlevel', hlevel2, contains_undef=.true., reverse_third_dim=.true.)

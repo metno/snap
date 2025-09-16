@@ -112,14 +112,15 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
   USE snapfldML, only: &
       xm, ym, u1, u2, v1, v2, w1, w2, t1, t2, ps1, ps2, pmsl1, pmsl2, &
       hbl1, hbl2, hlayer1, hlayer2, garea, hlevel1, hlevel2, &
-      hlayer1, hlayer2, bl1, bl2, enspos, precip, &
-      t1_abs, t2_abs, field1
+      hlayer1, hlayer2, bl1, bl2, enspos, precip, t2m, &
+      t1_abs, t2_abs, t1_dew, t2_dew, ishf, xsurfstress, ysurfstress, field1
   USE snapgrdML, only: alevel, blevel, vlevel, ahalf, bhalf, vhalf, ptop, &
       gparam, klevel, ivlevel, imslp, igtype, ivlayer
   USE snapmetML, only: met_params, requires_precip_deaccumulation, &
       pressure_units, xy_wind_units, temp_units
   USE snapdimML, only: nx, ny, nk, output_resolution_factor, hres_field, surface_index
   USE datetime, only: datetime_t, duration_t
+  USE rwalkML, only: diffusion_method
 !> current timestep (always positive), negative istep means reset
   integer, intent(in) :: istep
 !> whether meteorology should be read backwards
@@ -245,14 +246,14 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
     v1(:,:,:) = v2
     w1(:,:,:) = w2
     t1(:,:,:) = t2
-    t1_abs(:,:,:) = t2_abs
-    t1_dew(:,:,:) = t2_dew
+    if (allocated(t2_abs)) t1_abs(:,:,:) = t2_abs
     hlevel1(:,:,:) = hlevel2
     hlayer1(:,:,:) = hlayer2
 
     ps1(:,:) = ps2
     bl1(:,:) = bl2
     hbl1(:,:) = hbl2
+    t1_dew(:,:) = t2_dew
 
     if(imslp /= 0) then
       pmsl1(:,:) = pmsl2
@@ -328,7 +329,6 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
   call calc_2d_start_length(start3d, count3d, nx, ny, -1, &
       enspos, timepos, met_params%has_dummy_dim)
 
-
 ! ps
   call nfcheckload(ncid, met_params%psv, start3d, count3d, ps2(:,:), units=pressure_units)
 
@@ -368,10 +368,17 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
   call nfcheckload(ncid, met_params%blh, start3d, count3d, hbl2(:, :))
 
 !.. Read in 2m dew point
- ! call nfcheckload(ncid, met_params%dewtemp2m, start3d, count3d, t2_dew(:, :))
+  call nfcheckload(ncid, met_params%dewtemp2m, start3d, count3d, t2_dew(:, :))
 
 !.. Read in surface heat flux
-  !call nfcheckload(ncid, met_params%dewtemp2m, start3d, count3d, t2_dew(:, :))
+  call nfcheckload(ncid, met_params%ishf, start3d, count3d, ishf(:, :))
+
+!.. Read in 2m air temperature
+  call nfcheckload(ncid, met_params%t2m, start3d, count3d, t2m(:, :))
+
+!.. Read in surface stress varaibles
+  call nfcheckload(ncid, met_params%xsurfstress, start3d, count3d, xsurfstress(:, :))
+  call nfcheckload(ncid, met_params%ysurfstress, start3d, count3d, ysurfstress(:, :))
 
   if (met_params%need_precipitation) then
     call read_precipitation(ncid, nhdiff_precip, timepos, timeposm1)
@@ -424,7 +431,11 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
     endif
   end if
 
-  call convert_hbl_to_vbl(hbl2, bl2)
+  if (diffusion_method == 'get_bl_from_meteo') then
+    call convert_hbl_to_vbl(hbl2, bl2)
+  endif
+
+  !call obukhov()
 
   if (met_params%sigmadot_is_omega) then
   !..omega -> etadot, or rather etadot derived from continuity-equation (mean of both)
@@ -1449,45 +1460,54 @@ subroutine convert_hbl_to_vbl(hbl, vbl)
 
   end subroutine
 
-  ! subroutine obukhov()
-  !   use snapfldML, only: ps2, t2, t2_abs, t2_dew
+  subroutine obukhov()
+    use snapfldML, only: ps2, t2m, t2_dew, ishf, xsurfstress, ysurfstress
+    use snapdimML, only: nx, ny, nk
 
-  !   real, parameter :: r=287, g=9.81, k=0.4, cpa=1004.6
+    real, parameter :: r=287, g=9.81, k=0.4, cpa=1004.6
 
-  !   real, allocatable :: ustar(:, :)
-  !   real, allocatable :: thetastar(:, :)
-  !   real, allocatable :: obukhov_l(:, :)
+    real, allocatable :: ustar(:, :)
+    real, allocatable :: thetastar(:, :)
+    real, allocatable :: obukhov_l(:, :)
+    real, allocatable :: stress(:, :)
+    real, allocatable :: rho_a(:, :)
+    real, allocatable :: tv(:, :)
+    real, allocatable :: vp(:, :)
+    real, allocatable :: w(:, :)
 
-  !   allocate(ustar(nx, ny))
-  !   allocate(thetastar(nx, ny))
-  !   allocate(obukhov_l(nx, ny))
+    allocate(ustar(nx, ny))
+    allocate(thetastar(nx, ny))
+    allocate(obukhov_l(nx, ny))
+    allocate(stress(nx, ny))
+    allocate(rho_a(nx, ny))
+    allocate(tv(nx, ny))
+    allocate(vp(nx, ny))
+    allocate(w(nx, ny))
 
-  !   ! Tetens Equation, vp is the vapour pressure
-  !   vp = 0.61078 * EXP(17.27 * (t2_dew - 273.15) / (t2_dew - 35.85))
+    ! Tetens Equation, vp is the vapour pressure in Pa
+    vp = 0.61078 * EXP(17.27 * (t2_dew - 273.15) / (t2_dew - 35.85)) * 1000
 
-  !   ! Mixing ratio
-  !   w = (0.622 * vp) / (ps - vp)
+    ! Mixing ratio, convert ps2 to Pa from hPa
+    w = (0.622 * vp) / ((ps2*100) - vp)
 
-  !   ! Calculate virtual temeperature
-  !   tv = t2_abs * (0.608 * w)
+    ! Calculate virtual potential temeperature
+    tv = (t2m * (100000/(ps2*100))**(r/cpa))  * (1 + 0.608 * w)
 
-  !   ! Calculate air density
-  !   rho_a = ps2/(r*tv)
+    ! Calculate air density
+    rho_a = (ps2*100)/(r*tv)
 
-  !   ! Calculate friction velocity
-  !   ustar = sqrt(abs(stress)/rho_a)
+    stress = HYPOT(xsurfstress, ysurfstress)
+
+    ! Calculate friction velocity
+    ustar = sqrt(stress/rho_a)
     
-  !   ! Calculate buoyancy scale
-  !   thetastar = qs / (rho_a*cpa *ustar)
-
-  !   ! Calculate the obukhov length
-  !   if(abs(thetastar).gt.1.e-10) then ! Check for zero heat flux
-  !     obukhov_l = (t2*ustar**2)/(k*ga*thetastar)
-  !   else
-  !     obukhov_l = 9999   
-
-
-
+    ! Calculate the obukhov length
+    !obukhov_l = -(tv*(ustar**3))/(k*g*ishf)
+    obukhov_l = - rho_a * cpa * t2m * (ustar**3)/(k*g*ishf)
+    write(*,*) obukhov_l(105:110, 105:110)
+    error stop
+    
+  end subroutine
 
 end module readfield_ncML
 

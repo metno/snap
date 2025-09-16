@@ -31,7 +31,8 @@ module allocateFieldsML
       xflux, yflux, hflux, t2m, z0, leaf_area_index, &
       roa, ustar, monin_l, raero, vs, rs, &
       total_activity_released, total_activity_lost_domain, total_activity_lost_other, &
-      wscav, cloud_cover
+      wscav, cloud_cover, ishf, xsurfstress, ysurfstress, t1_dew, t2_dew, spec_humid, & 
+      obukhov_l, w_star, u_star, rho, rhograd
   USE snapfilML, only: idata, fdata
   USE snapgrdML, only: ahalf, bhalf, vhalf, alevel, blevel, vlevel, imodlevel, &
       compute_column_max_conc, compute_aircraft_doserate, aircraft_doserate_threshold
@@ -144,6 +145,31 @@ subroutine allocateFields
   ALLOCATE ( field3d1(nx,ny,nk), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
 
+  ! Extra fields for atmospheric stability
+  ALLOCATE ( t1_dew(nx,ny), STAT = AllocateStatus)
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
+  ALLOCATE ( t2_dew(nx,ny), STAT = AllocateStatus)
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
+  ALLOCATE ( xsurfstress(nx,ny), STAT = AllocateStatus)
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
+  ALLOCATE ( ysurfstress(nx,ny), STAT = AllocateStatus)
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
+  ALLOCATE ( ishf(nx,ny), STAT = AllocateStatus)
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
+  ALLOCATE ( t2m(nx,ny), STAT = AllocateStatus)
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
+  ALLOCATE ( spec_humid(nx,ny,nk), STAT = AllocateStatus)
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
+  ALLOCATE ( w_star(nx,ny), STAT = AllocateStatus)
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
+  ALLOCATE ( u_star(nx,ny), STAT = AllocateStatus)
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
+  ALLOCATE ( obukhov_l(nx,ny), STAT = AllocateStatus)
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
+  ALLOCATE ( rho(nx,ny,nk), STAT = AllocateStatus)
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
+  ALLOCATE ( rhograd(nx,ny,nk), STAT = AllocateStatus)
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
 
   ALLOCATE ( pmsl1(nx,ny), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg

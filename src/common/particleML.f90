@@ -62,6 +62,18 @@ module particleML
         real(real64) :: rmy
         !> precipition intensity (mm/hour)
         real         :: prc
+        !> turbulent u velocity
+        real         :: turbvelu
+        !> turbulent v velocity
+        real         :: turbvelv
+        !> turbulent w velocity
+        real         :: turbvelw
+        !> height of particle in metres
+        real         :: zmetres
+        !> height of boundary layer top in metres
+        real         :: tblmetres
+        !> forbidden state flag
+        integer         :: icbt=1
     end type extraParticle
 
 !> the actual particle storage

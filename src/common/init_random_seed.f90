@@ -21,7 +21,7 @@ module init_random_seedML
 
   integer, public, save :: extra_seed = 0
 
-  public :: init_random_seed
+  public :: init_random_seed, generate_normal_randoms
 
   contains
 
@@ -36,4 +36,32 @@ module init_random_seedML
   CALL RANDOM_SEED(PUT = seed)
 
   END SUBROUTINE
+
+  SUBROUTINE generate_normal_randoms(x, n)
+
+  implicit none
+  integer, intent(in) :: n
+  real, intent(out) :: x(n)
+  integer :: i
+  real :: u1, u2, z
+  real, parameter :: pi = 3.141592653589793
+
+  call random_seed()  ! initialize RNG from system clock
+
+  i = 1
+  do while (i <= n)
+      call random_number(u1)
+      call random_number(u2)
+
+      ! Box–Muller transform for standard normal
+      z = sqrt(-2.0*log(u1)) * cos(2.0*pi*u2)
+
+      if (abs(z) <= 3.0) then
+        x(i) = z
+        i = i + 1
+      end if
+  end do
+
+  END SUBROUTINE
+
 end module init_random_seedML

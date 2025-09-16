@@ -71,14 +71,18 @@ contains
       xm, ym, u1, u2, v1, v2, w1, w2, t1, t2, ps1, ps2, pmsl1, pmsl2, &
       hbl1, hbl2, hlayer1, hlayer2, garea, hlevel1, hlevel2, &
       hlayer1, hlayer2, bl1, bl2, enspos, precip, t1_abs, t2_abs, &
-      field1
+      field1, t1_dew, t2_dew, ishf, xsurfstress, ysurfstress, t2m, spec_humid, &
+      u_star, w_star, obukhov_l, rho, rhograd
     USE snapgrdML, only: alevel, blevel, vlevel, ahalf, bhalf, vhalf, ptop, &
                          gparam, klevel, ivlevel, imslp, igtype, ivlayer
     USE snapmetML, only: met_params, xy_wind_units, pressure_units, omega_units, &
-                         sigmadot_units, temp_units, requires_precip_deaccumulation
+                         sigmadot_units, temp_units, requires_precip_deaccumulation, &
+                         downward_momentum_flux_units, instant_surface_heat_flux_units, &
+                         mass_fraction_units
     USE snapdimML, only: nx, ny, nk, output_resolution_factor, hres_field, surface_index
     USE datetime, only: datetime_t, duration_t
     USE readfield_ncML, only: find_index, compute_vertical_coords
+    USE rwalkML, only: diffusion_method, diffusion_fields, air_density
 !> current timestep (always positive), negative istep means reset
     integer, intent(in) :: istep
 !> whether meteorology should be read backwards
@@ -93,6 +97,8 @@ contains
     type(datetime_t), intent(out) :: itimefi
 !> error (output)
     integer, intent(out) :: ierror
+
+    real, allocatable :: cum_heights(:, :, :)
 
 ! local variables
     TYPE(FimexIO) :: fio
@@ -206,6 +212,7 @@ contains
       ps1(:, :) = ps2
       bl1(:, :) = bl2
       hbl1(:, :) = hbl2
+      t1_dew(:,:) = t2_dew
 
       if (imslp /= 0) then
         pmsl1(:, :) = pmsl2
@@ -239,6 +246,9 @@ contains
       where (v2 >= 1e+30)
       v2 = 0.0
       end where
+
+      !.. Read in specific humidity data
+      call fi_checkload(fio, met_params%spec_humid, mass_fraction_units, spec_humid(:, :, k), nt=timepos, nz=ilevel, nr=nr)
 
       !..pot.temp. or abs.temp.
       call fi_checkload(fio, met_params%pottempv, temp_units, t2(:, :, k), nt=timepos, nz=ilevel, nr=nr)
@@ -306,7 +316,24 @@ contains
     end if
 
 !..model boundary layer height
-    call fi_checkload(fio, 'ga_blh_1', '', hbl2(:, :), nt=timepos, nr=nr, nz=1)
+    call fi_checkload(fio, met_params%blh, '', hbl2(:, :), nt=timepos, nr=nr, nz=1)
+
+!.. Read in 2m dew point
+    call fi_checkload(fio, met_params%dewtemp2m, temp_units, t2_dew(:, :), nt=timepos, nr=nr, nz=1)
+
+!.. Read in surface heat flux
+    call fi_checkload(fio, met_params%ishf, instant_surface_heat_flux_units, ishf(:, :), nt=timepos, nr=nr, nz=1)
+
+!.. Read in 2m air temperature
+    call fi_checkload(fio, met_params%t2m, temp_units, t2m(:, :), nt=timepos, nr=nr)
+
+!.. Read in surface stress varaibles
+    call fi_checkload(fio, met_params%xsurfstress, downward_momentum_flux_units, xsurfstress(:, :), nt=timepos, nr=nr, nz=1)
+    call fi_checkload(fio, met_params%ysurfstress, downward_momentum_flux_units, ysurfstress(:, :), nt=timepos, nr=nr, nz=1)
+
+!.. Calculate fields required for flexpart diffusion
+    call diffusion_fields(u_star, w_star, obukhov_l)
+    call air_density(rho, rhograd)
 
     if (first_time_read) then
       call compute_vertical_coords(alev, blev, ptop)
@@ -369,6 +396,10 @@ contains
       endif
     end if
 
+    if (diffusion_method == 'get_bl_from_meteo') then
+      call convert_hbl_to_vbl(hbl2, bl2, cum_heights)
+    endif
+    
     if (met_params%sigmadot_is_omega) then
       !..omega -> etadot, or rather etadot derived from continuity-equation (mean of both)
       call om2edot
@@ -1068,6 +1099,81 @@ contains
     endwhere
 
     call preprocess_landfraction(arr)
+  end subroutine
+
+
+subroutine convert_hbl_to_vbl(hbl, vbl, cum_heights)
+  use snapfldML, only: ps2, t2_abs
+  use snapdimML, only: nx, ny, nk
+  use snapgrdML, only: ahalf, bhalf
+
+  real, intent(in) :: hbl(:, :)
+  real, intent(out) :: vbl(:, :)
+  real, intent(out), allocatable :: cum_heights(:, :, :)
+  real, parameter :: r=287, g=9.81
+
+  real, allocatable :: deltah(:, :, :)
+  real, allocatable :: pe(:, :)
+  real, allocatable :: pe2(:, :)
+  integer, allocatable :: above_index(:, :)
+  integer, allocatable :: below_index(:, :)
+
+  integer :: i, j, k
+  real :: weight
+  real :: bl_top_pressure
+  real :: pressure_below, pressure_above
+
+  allocate(deltah(nx, ny, nk))
+  allocate(pe(nx, ny))
+  allocate(pe2(nx, ny))
+  allocate(cum_heights(nx, ny, nk))
+  allocate(above_index(nx, ny))
+  allocate(below_index(nx, ny))
+
+  ! Calculate thickness of levels in metres
+  do k = 2, nk
+    pe = ahalf(k-1) + bhalf(k-1) * ps2
+    pe2 = ahalf(k) + bhalf(k) * ps2
+    deltah(:, :, k) = (r * t2_abs(:, :, k) / g) * log(pe/pe2)
+  end do
+
+  ! Calculate cumulative height of levels in metres
+  cum_heights(:, :, 1) = 0
+  do k = 2, nk
+    cum_heights(:, :, k) = cum_heights(:, :, k-1) + deltah(:, :, k)
+  end do
+
+  ! Find the height level corresponding to the one immediately above the boundary layer height
+  above_index = nk
+  do k = 2, nk
+    associate(height_k => cum_heights(:, :, k))
+    where (hbl > height_k)
+      above_index = min(above_index, k)
+    endwhere
+    end associate
+  end do
+
+  ! Get the index below the boundary layer height
+  below_index = above_index - 1
+
+  ! Linearly interpolate between the two indices to get the exact sigma level corresponding to the
+  ! top of the boundary layer
+  do i = 1, nx
+    do j = 1, ny
+
+      pressure_below = ahalf(below_index(i,j)) + bhalf(below_index(i,j)) * ps2(i,j)
+      pressure_above = ahalf(above_index(i,j)) + bhalf(above_index(i,j)) * ps2(i,j)
+
+      weight = (hbl(i, j) - cum_heights(i, j, below_index(i, j))) /  &
+      (cum_heights(i, j, above_index(i, j)) - cum_heights(i, j, below_index(i, j)))
+
+      bl_top_pressure = pressure_below + weight * (pressure_above - pressure_below)
+
+      vbl(i, j) = bl_top_pressure / ps2(i, j)
+
+    end do
+  end do
+
   end subroutine
 
 end module readfield_fiML

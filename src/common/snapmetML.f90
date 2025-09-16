@@ -47,6 +47,10 @@ module snapmetML
     character(len=80) :: total_column_rain = ''
     character(len=80) :: dewtemp2m = ''
     character(len=80) :: blh = ''
+    character(len=80) :: ishf = ''
+    character(len=80) :: xsurfstress = ''
+    character(len=80) :: ysurfstress = ''
+    character(len=80) :: spec_humid = ''
 
     character(len=80) :: t2m = ''
     character(len=80) :: yflux = ''
@@ -99,6 +103,7 @@ module snapmetML
   character(len=*), parameter, public :: downward_momentum_flux_units = 'N/m^2'
   character(len=*), parameter, public :: surface_roughness_length_units = 'm'
   character(len=*), parameter, public :: surface_heat_flux_units = 'W s/m^2'
+  character(len=*), parameter, public :: instant_surface_heat_flux_units = 'W/m^2'
   character(len=*), parameter, public :: leaf_area_index_units = '1'
 
   character(len=*), parameter, public :: cloud_fraction_units = '%'
@@ -212,7 +217,12 @@ module snapmetML
       met_params%precstratiaccumv = ''
       met_params%precconaccumv = ''
       met_params%dewtemp2m = 'dew_point_temperature_2m'
-      met_params%blh = 'ga_blh_1'
+      met_params%blh = 'boundary_layer_height'
+      met_params%ishf = 'ishf'
+      met_params%xsurfstress = 'instantaneous_eastward_turbulent_surface_stress'
+      met_params%ysurfstress = 'instantaneous_northward_turbulent_surface_stress'
+      met_params%t2m = 'air_temperature_2m'
+      met_params%spec_humid = 'specific_humidity_ml'
 
       ! 3D precip parameters
       met_params%mass_fraction_rain_in_air = "mass_fraction_of_liquid_precipitation_in_air_ml"
