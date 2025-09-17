@@ -49,6 +49,8 @@ if __name__ == "__main__":
     if args.bitmapCompress:
         bitmapCompress = True
     dirname = os.path.dirname(ncfile)
+    if not dirname:
+        dirname = "."
     snapNc_convert_to_grib(
         ncfile, dirname, ident, isotopes, bitmapCompress=bitmapCompress
     )
