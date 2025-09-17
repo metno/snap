@@ -81,7 +81,7 @@ def main():
 
     args = parser.parse_args()
     with netCDF4.Dataset(args.nc, "a") as nc:
-        snap_add_bomb_isotopes(nc)
+        snap_add_bomb_isotopes(nc, args.argos_operational)
 
 
 if __name__ == "__main__":
