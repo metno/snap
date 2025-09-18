@@ -84,7 +84,7 @@ def add_toa_to_nc(nc: netCDF4.Dataset, overwrite=False):
         if v.endswith("_acc_dry_deposition"):
             total = var[:]
             comp = v.replace("_acc_dry_deposition","")
-            wdepName = f"{comp}_acc_dry_deposition"
+            wdepName = f"{comp}_acc_wet_deposition"
             if wdepName in nc.variables:
                 total += nc.variables[wdepName][:]
             totalVarName = f"{comp}_acc_total_deposition"
