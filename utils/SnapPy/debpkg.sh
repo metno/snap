@@ -53,7 +53,7 @@ if [ ! -f "Snappy/resources/1-s2.0-S0146645313000110-mmc1.zip" ]; then
 fi
 
 HOST=$(lsb_release --codename --short)
-export VERSION=2.5.3
+export VERSION=2.5.5
 CHANGELOG="minute resolution for eemep"
 export DEBEMAIL=${USER}@met.no
 rm --force debian
