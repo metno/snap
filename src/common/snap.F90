@@ -2209,8 +2209,8 @@ contains
         output_component(k)%to_defined(:s) = temp_defs
         output_component(k)%to_defined(s+1) = run_comp(m)%to_defined
       end block
-      if (def_comp(m)%kwetdep > 0) output_component(k)%has_wetdep = .true.
-      if (def_comp(m)%kdrydep > 0) output_component(k)%has_drydep = .true.
+      if (run_comp(m)%defined%kwetdep > 0) output_component(k)%has_wetdep = .true.
+      if (run_comp(m)%defined%kdrydep > 0) output_component(k)%has_drydep = .true.
       run_comp(m)%defined%to_output = k
     end do
     nocomp = size(output_component)
