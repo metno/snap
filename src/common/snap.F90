@@ -185,7 +185,7 @@ PROGRAM bsnap
   USE rmpartML, only: rmpart
   USE split_particlesML, only: split_particles
   USE checkdomainML, only: check_in_domain
-  USE rwalkML, only: rwalk, rwalk_init, diffusion_method, flexpart_diffusion
+  USE rwalkML, only: rwalk, rwalk_init, flexpart_diffusion, diffusion_scheme, bl_definition
   USE milibML, only: xyconvert
   use snapfldML, only: total_activity_lost_domain
   USE forwrdML, only: forwrd, forwrd_init
@@ -587,8 +587,8 @@ PROGRAM bsnap
 #endif
     end if
     if (ierror /= 0) call snap_error_exit(iulog)
-    call compheight
-    if (diffusion_method /= 'get_bl_from_meteo') then
+    ! call compheight
+    if (bl_definition /= 'get_bl_from_meteo') then
       call bldp
     endif
 
@@ -679,7 +679,7 @@ PROGRAM bsnap
 
         !..compute model level heights
         call compheight
-        if (diffusion_method /= 'get_bl_from_meteo') then
+        if (bl_definition /= 'get_bl_from_meteo') then
           call bldp
         end if
 
@@ -724,7 +724,6 @@ PROGRAM bsnap
         call wetdep_init(tstep)
         call forwrd_init()
         if (use_random_walk) call rwalk_init(tstep)
-        !if (use_random_walk) call flexpart_diffusion(pdata(np), pextra)
         init = .FALSE.
       end if
 
@@ -760,8 +759,14 @@ PROGRAM bsnap
         !..apply the random walk method (diffusion)
         ! diffusion is applied after deposition to mix
         ! before output (which computes surface concentrations)
-        !if (use_random_walk) call rwalk(blfullmix, pdata(np), pextra)
-        if (use_random_walk) call flexpart_diffusion(pdata(np), pextra)
+
+        if (use_random_walk) then
+          if (diffusion_scheme == 'flexpart') then
+            call flexpart_diffusion(pdata(np), pextra)
+          else
+            call rwalk(blfullmix, pdata(np), pextra)
+          endif
+        endif
 
         !.. check domain (%active) after moving particle
         call check_in_domain(pdata(np), out_of_domain)
@@ -937,7 +942,8 @@ contains
     use init_random_seedML, only: extra_seed, generate_normal_randoms
     use fldout_ncML, only: surface_layer_is_lowest_level, surface_height_m
     use snapparML, only: GRAV_TYPE_UNDEFINED, GRAV_TYPE_OFF, GRAV_TYPE_FIXED
-    use rwalkML, only: diffusion_b => b, diffusion_a_in_bl => a_in_bl, diffusion_a_above_bl => a_above_bl, diffusion_method
+    use rwalkML, only: diffusion_b => b, diffusion_a_in_bl => a_in_bl, diffusion_a_above_bl => a_above_bl, &
+                       bl_definition, diffusion_scheme
 
     !> Open file unit
     integer, intent(in) :: snapinput_unit
@@ -1118,9 +1124,12 @@ contains
       case ('random.walk.off')
         !..random.walk.off
         use_random_walk = .false.
-      case ('diffusion.method')
+      case ('diffusion.scheme')
         if (.not. has_value) goto 12
-        read(cinput(pname_start:pname_end),*) diffusion_method
+        read(cinput(pname_start:pname_end),*) diffusion_scheme
+      case ('bl.definition')
+        if (.not. has_value) goto 12
+        read(cinput(pname_start:pname_end),*) bl_definition
       case ('diffusion.b.value')
         if (.not. has_value) goto 12
         read(cinput(pname_start:pname_end),*) diffusion_b

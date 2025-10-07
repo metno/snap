@@ -32,7 +32,7 @@ module allocateFieldsML
       roa, ustar, monin_l, raero, vs, rs, &
       total_activity_released, total_activity_lost_domain, total_activity_lost_other, &
       wscav, cloud_cover, ishf, xsurfstress, ysurfstress, t1_dew, t2_dew, spec_humid, & 
-      obukhov_l, w_star, u_star, rho, rhograd
+      obukhov_l, w_star, u_star, rho, rhograd, pressures
   USE snapfilML, only: idata, fdata
   USE snapgrdML, only: ahalf, bhalf, vhalf, alevel, blevel, vlevel, imodlevel, &
       compute_column_max_conc, compute_aircraft_doserate, aircraft_doserate_threshold
@@ -169,6 +169,8 @@ subroutine allocateFields
   ALLOCATE ( rho(nx,ny,nk), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( rhograd(nx,ny,nk), STAT = AllocateStatus)
+  IF (AllocateStatus /= 0) ERROR STOP errmsg
+  ALLOCATE ( pressures(nx,ny,nk), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
 
   ALLOCATE ( pmsl1(nx,ny), STAT = AllocateStatus)

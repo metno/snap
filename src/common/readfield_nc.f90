@@ -120,7 +120,6 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
       pressure_units, xy_wind_units, temp_units
   USE snapdimML, only: nx, ny, nk, output_resolution_factor, hres_field, surface_index
   USE datetime, only: datetime_t, duration_t
-  USE rwalkML, only: diffusion_method
 !> current timestep (always positive), negative istep means reset
   integer, intent(in) :: istep
 !> whether meteorology should be read backwards
@@ -159,6 +158,8 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
     ntav1 = 0
     ntav2 = 0
   end if
+
+  write(*,*) 'called'
 
 !..get time offset in hours (as iavail(n)%oHour)
   ntav1 = ntav2
@@ -431,9 +432,9 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
     endif
   end if
 
-  if (diffusion_method == 'get_bl_from_meteo') then
-    call convert_hbl_to_vbl(hbl2, bl2)
-  endif
+  ! if (diffusion_method == 'get_bl_from_meteo') then
+  !   call convert_hbl_to_vbl(hbl2, bl2)
+  ! endif
 
   !call obukhov()
 
@@ -1392,122 +1393,122 @@ end subroutine
     call preprocess_landfraction(arr)
   end subroutine
 
-subroutine convert_hbl_to_vbl(hbl, vbl)
-  use snapfldML, only: ps2, t2_abs
-  use snapdimML, only: nx, ny, nk
-  use snapgrdML, only: ahalf, bhalf
+! subroutine convert_hbl_to_vbl(hbl, vbl)
+!   use snapfldML, only: ps2, t2_abs
+!   use snapdimML, only: nx, ny, nk
+!   use snapgrdML, only: ahalf, bhalf
 
-  real, intent(in) :: hbl(:, :)
-  real, intent(out) :: vbl(:, :)
-  real, parameter :: r=287, g=9.81
+!   real, intent(in) :: hbl(:, :)
+!   real, intent(out) :: vbl(:, :)
+!   real, parameter :: r=287, g=9.81
 
-  real, allocatable :: deltah(:, :, :)
-  real, allocatable :: pe(:, :)
-  real, allocatable :: pe2(:, :)
-  real, allocatable :: cum_heights(:, :, :)
-  integer, allocatable :: above_index(:, :)
-  integer, allocatable :: below_index(:, :)
+!   real, allocatable :: deltah(:, :, :)
+!   real, allocatable :: pe(:, :)
+!   real, allocatable :: pe2(:, :)
+!   real, allocatable :: cum_heights(:, :, :)
+!   integer, allocatable :: above_index(:, :)
+!   integer, allocatable :: below_index(:, :)
 
-  integer :: i, j, k
-  real :: weight
-  real :: bl_top_pressure
-  real :: pressure_below, pressure_above
+!   integer :: i, j, k
+!   real :: weight
+!   real :: bl_top_pressure
+!   real :: pressure_below, pressure_above
 
-  allocate(deltah(nx, ny, nk))
-  allocate(pe(nx, ny))
-  allocate(pe2(nx, ny))
-  allocate(cum_heights(nx, ny, nk))
-  allocate(above_index(nx, ny))
-  allocate(below_index(nx, ny))
+!   allocate(deltah(nx, ny, nk))
+!   allocate(pe(nx, ny))
+!   allocate(pe2(nx, ny))
+!   allocate(cum_heights(nx, ny, nk))
+!   allocate(above_index(nx, ny))
+!   allocate(below_index(nx, ny))
 
-  do k = 2, nk
-    pe = ahalf(k-1) + bhalf(k-1) * ps2
-    pe2 = ahalf(k) + bhalf(k) * ps2
-    deltah(:, :, k) = (r * t2_abs(:, :, k) / g) * log(pe/pe2)
-  end do
+!   do k = 2, nk
+!     pe = ahalf(k-1) + bhalf(k-1) * ps2
+!     pe2 = ahalf(k) + bhalf(k) * ps2
+!     deltah(:, :, k) = (r * t2_abs(:, :, k) / g) * log(pe/pe2)
+!   end do
 
-  cum_heights(:, :, 1) = 0
-  do k = 2, nk
-    cum_heights(:, :, k) = cum_heights(:, :, k-1) + deltah(:, :, k)
-  end do
+!   cum_heights(:, :, 1) = 0
+!   do k = 2, nk
+!     cum_heights(:, :, k) = cum_heights(:, :, k-1) + deltah(:, :, k)
+!   end do
 
-  above_index = nk
-  do k = 2, nk
-    associate(height_k => cum_heights(:, :, k))
-    where (hbl > height_k)
-      above_index = min(above_index, k)
-    endwhere
-    end associate
-  end do
+!   above_index = nk
+!   do k = 2, nk
+!     associate(height_k => cum_heights(:, :, k))
+!     where (hbl > height_k)
+!       above_index = min(above_index, k)
+!     endwhere
+!     end associate
+!   end do
 
-  below_index = above_index - 1
+!   below_index = above_index - 1
 
-  do i = 1, nx
-    do j = 1, ny
+!   do i = 1, nx
+!     do j = 1, ny
 
-      pressure_below = ahalf(below_index(i,j)) + bhalf(below_index(i,j)) * ps2(i,j)
-      pressure_above = ahalf(above_index(i,j)) + bhalf(above_index(i,j)) * ps2(i,j)
+!       pressure_below = ahalf(below_index(i,j)) + bhalf(below_index(i,j)) * ps2(i,j)
+!       pressure_above = ahalf(above_index(i,j)) + bhalf(above_index(i,j)) * ps2(i,j)
 
-      weight = (hbl(i, j) - cum_heights(i, j, below_index(i, j))) /  &
-      (cum_heights(i, j, above_index(i, j)) - cum_heights(i, j, below_index(i, j)))
+!       weight = (hbl(i, j) - cum_heights(i, j, below_index(i, j))) /  &
+!       (cum_heights(i, j, above_index(i, j)) - cum_heights(i, j, below_index(i, j)))
 
-      bl_top_pressure = pressure_below + weight * (pressure_above - pressure_below)
+!       bl_top_pressure = pressure_below + weight * (pressure_above - pressure_below)
 
-      vbl(i, j) = bl_top_pressure / ps2(i, j)
+!       vbl(i, j) = bl_top_pressure / ps2(i, j)
 
-    end do
-  end do
+!     end do
+!   end do
 
-  end subroutine
+!   end subroutine
 
-  subroutine obukhov()
-    use snapfldML, only: ps2, t2m, t2_dew, ishf, xsurfstress, ysurfstress
-    use snapdimML, only: nx, ny, nk
+!   subroutine obukhov()
+!     use snapfldML, only: ps2, t2m, t2_dew, ishf, xsurfstress, ysurfstress
+!     use snapdimML, only: nx, ny, nk
 
-    real, parameter :: r=287, g=9.81, k=0.4, cpa=1004.6
+!     real, parameter :: r=287, g=9.81, k=0.4, cpa=1004.6
 
-    real, allocatable :: ustar(:, :)
-    real, allocatable :: thetastar(:, :)
-    real, allocatable :: obukhov_l(:, :)
-    real, allocatable :: stress(:, :)
-    real, allocatable :: rho_a(:, :)
-    real, allocatable :: tv(:, :)
-    real, allocatable :: vp(:, :)
-    real, allocatable :: w(:, :)
+!     real, allocatable :: ustar(:, :)
+!     real, allocatable :: thetastar(:, :)
+!     real, allocatable :: obukhov_l(:, :)
+!     real, allocatable :: stress(:, :)
+!     real, allocatable :: rho_a(:, :)
+!     real, allocatable :: tv(:, :)
+!     real, allocatable :: vp(:, :)
+!     real, allocatable :: w(:, :)
 
-    allocate(ustar(nx, ny))
-    allocate(thetastar(nx, ny))
-    allocate(obukhov_l(nx, ny))
-    allocate(stress(nx, ny))
-    allocate(rho_a(nx, ny))
-    allocate(tv(nx, ny))
-    allocate(vp(nx, ny))
-    allocate(w(nx, ny))
+!     allocate(ustar(nx, ny))
+!     allocate(thetastar(nx, ny))
+!     allocate(obukhov_l(nx, ny))
+!     allocate(stress(nx, ny))
+!     allocate(rho_a(nx, ny))
+!     allocate(tv(nx, ny))
+!     allocate(vp(nx, ny))
+!     allocate(w(nx, ny))
 
-    ! Tetens Equation, vp is the vapour pressure in Pa
-    vp = 0.61078 * EXP(17.27 * (t2_dew - 273.15) / (t2_dew - 35.85)) * 1000
+!     ! Tetens Equation, vp is the vapour pressure in Pa
+!     vp = 0.61078 * EXP(17.27 * (t2_dew - 273.15) / (t2_dew - 35.85)) * 1000
 
-    ! Mixing ratio, convert ps2 to Pa from hPa
-    w = (0.622 * vp) / ((ps2*100) - vp)
+!     ! Mixing ratio, convert ps2 to Pa from hPa
+!     w = (0.622 * vp) / ((ps2*100) - vp)
 
-    ! Calculate virtual potential temeperature
-    tv = (t2m * (100000/(ps2*100))**(r/cpa))  * (1 + 0.608 * w)
+!     ! Calculate virtual potential temeperature
+!     tv = (t2m * (100000/(ps2*100))**(r/cpa))  * (1 + 0.608 * w)
 
-    ! Calculate air density
-    rho_a = (ps2*100)/(r*tv)
+!     ! Calculate air density
+!     rho_a = (ps2*100)/(r*tv)
 
-    stress = HYPOT(xsurfstress, ysurfstress)
+!     stress = HYPOT(xsurfstress, ysurfstress)
 
-    ! Calculate friction velocity
-    ustar = sqrt(stress/rho_a)
+!     ! Calculate friction velocity
+!     ustar = sqrt(stress/rho_a)
     
-    ! Calculate the obukhov length
-    !obukhov_l = -(tv*(ustar**3))/(k*g*ishf)
-    obukhov_l = - rho_a * cpa * t2m * (ustar**3)/(k*g*ishf)
-    write(*,*) obukhov_l(105:110, 105:110)
-    error stop
+!     ! Calculate the obukhov length
+!     !obukhov_l = -(tv*(ustar**3))/(k*g*ishf)
+!     obukhov_l = - rho_a * cpa * t2m * (ustar**3)/(k*g*ishf)
+!     write(*,*) obukhov_l(105:110, 105:110)
+!     error stop
     
-  end subroutine
+!   end subroutine
 
 end module readfield_ncML
 

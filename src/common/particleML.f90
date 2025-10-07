@@ -73,7 +73,9 @@ module particleML
         !> height of boundary layer top in metres
         real         :: tblmetres
         !> forbidden state flag
-        integer         :: icbt=1
+        integer      :: icbt=1
+        !> vertical index
+        integer      :: k
     end type extraParticle
 
 !> the actual particle storage

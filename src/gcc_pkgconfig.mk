@@ -5,6 +5,7 @@ F77 = gfortran
 
 F77FPEFLAGS= -ffpe-trap=invalid,zero,overflow
 F77BOUNDFLAGS= -fbounds-check
+#F77FLAGS=-DVERSION=\"$(VERSION)\" -O0 -ftree-vectorize -fno-math-errno -g -pg -fno-inline -fno-pie -no-pie -mavx2 -mfma -Wall -Wextra -fimplicit-none -fmodule-private -Wno-conversion -Wno-compare-reals
 F77FLAGS=-DVERSION=\"$(VERSION)\" -O2 -ftree-vectorize -fno-math-errno -g -mavx2 -mfma -Wall -Wextra -fimplicit-none -fmodule-private -Wno-conversion -Wno-compare-reals
 ifdef SNAP_DEBUG_CHECKS
   F77FLAGS+=$(F77BOUNDFLAGS) $(F77FPEFLAGS)

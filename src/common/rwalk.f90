@@ -35,10 +35,16 @@ module rwalkML
   real(real64), parameter :: labove = 0.03 ! Standard l-eta above the mixing layer
   real(real64), parameter :: entrainment = 0.1 ! Entrainment zone = 10%*h
 
+  ! Values for random number generation
+  integer, parameter :: max_rands=6000000
+  integer :: nrand=1
+  real :: rands(max_rands) ! initialise array to store random numbers
+
   real(real64), save, public :: a_in_bl = 0.5
   real(real64), save, public :: a_above_bl = 0.25
   real(real64), save, public :: b = 0.875
-  character(len=64), save, public :: diffusion_method = ''
+  character(len=64), save, public :: diffusion_scheme = ''
+  character(len=64), save, public :: bl_definition = ''
 
   public rwalk, rwalk_init, flexpart_diffusion, diffusion_fields, air_density
 
@@ -46,6 +52,7 @@ module rwalkML
 
 !> Initialise constants needed for rwalk
 subroutine rwalk_init(timestep)
+  use init_random_seedML, only: generate_normal_randoms
 !> time step in seconds (trajectory calculations)
   real, intent(in) :: timestep
 
@@ -57,6 +64,11 @@ subroutine rwalk_init(timestep)
 
   ! l-eta above mixing height
   vrdbla = labove*tsqrtfactor_v
+
+  if (diffusion_scheme == 'flexpart') then 
+    call generate_normal_randoms(rands, max_rands)
+  endif
+
 end subroutine
 
 !>  Purpose:  Diffusion, in and above boudary layer.
@@ -102,8 +114,8 @@ subroutine rwalk(blfullmix,part,pextra)
 
   vabs = hypot(pextra%u, pextra%v)
   rl = 2*a*((vabs*tmix_h)**b) * tsqrtfactor_h ! sqrt error/sigma propagation
-  ! part%x = part%x + rl*rnd(1)*pextra%rmx
-  ! part%y = part%y + rl*rnd(2)*pextra%rmy
+  part%x = part%x + rl*rnd(1)*pextra%rmx
+  part%y = part%y + rl*rnd(2)*pextra%rmy
 
 
 ! vertical diffusion
@@ -140,10 +152,9 @@ end subroutine rwalk
 
 subroutine flexpart_diffusion(part,pextra)
   USE particleML, only: extraParticle, Particle
-  use init_random_seedML, only: generate_normal_randoms
-  USE snapfldML, only: hlevel2, hbl2, ps2, hlayer2
+  USE snapfldML, only: hlevel2, ps2
   USE snapgrdML, only: ivlayer, vlevel, alevel, blevel
-  use snapdimML, only: nx, ny, nk
+  use snapdimML, only: nk
 
   !> particle with information
   type(Particle), intent(inout)  :: part
@@ -151,21 +162,14 @@ subroutine flexpart_diffusion(part,pextra)
   type(extraParticle), intent(inout) :: pextra
   
   integer :: ivlvl
-  integer, parameter :: max_rands=4
-  integer :: nrand
   integer :: i, j, k
   integer :: above_index, below_index
-  real :: rands(max_rands)
   real :: above_layer, below_layer
   real :: pressure_above, pressure_below
   real :: weight
   real :: particle_pressure
   real :: height_k
   real :: height_init
-
-  call generate_normal_randoms(rands, max_rands)
-
-  nrand=1
 
   ! First time step, set to zero
   ! convert particle height to metres
@@ -201,13 +205,11 @@ subroutine flexpart_diffusion(part,pextra)
 
   pextra%tblmetres = below_layer + weight * (above_layer - below_layer)
 
-  !write(*,*) 'start diffusion call, position: ', part%x, part%y, part%z, pextra%zmetres
   height_init = part%z
 
   ! Check if particle within abl
   if (part%z.ge.part%tbl) then
-    !write(*,*) 'In BL', part%tbl, pextra%tblmetres
-    call diffusion_within_abl(part,pextra,nrand,max_rands,rands)
+    call flexpart_diffusion_within_abl(part,pextra,nrand,max_rands,rands)
 
     ! Get new particle position 
     i = part%x
@@ -225,7 +227,7 @@ subroutine flexpart_diffusion(part,pextra)
     below_index = above_index - 1
 
     pressure_below = alevel(below_index) + blevel(below_index) * ps2(i,j)
-    pressure_above = alevel(above_index) + blevel(above_index) * ps2(i,j)
+    pressure_above = alevel(above_index) + blevel(above_index) * ps2(i,j) 
 
     weight = (pextra%zmetres - hlevel2(i, j, below_index)) /  &
     (hlevel2(i, j, above_index) - hlevel2(i, j, below_index))
@@ -236,23 +238,29 @@ subroutine flexpart_diffusion(part,pextra)
 
     part%z = min(part%z, 1.0d0) ! set minimum height
 
+    ! open(unit=11, file="/lustre/storeB/users/chbou7748/ETEX_diffusion/model_runs/diffusion_schemes/output_files/ & 
+    ! turb_time_series_flex_withinbl.dat", status="unknown", position="append")
+
+    ! write(11,'(3F12.6)') pextra%turbvelu* tstep*pextra%rmx, pextra%turbvelv* tstep*pextra%rmy, part%z - height_init
+
+    ! close(11)
+
   else
-    !write(*,*) 'Above BL', part%tbl, pextra%tblmetres
-    call diffusion_above_abl(part, pextra, nrand, max_rands, rands)
+    call flexpart_diffusion_above_abl(part, pextra, nrand, max_rands, rands)
+
+    ! open(unit=11, file="/lustre/storeB/users/chbou7748/ETEX_diffusion/model_runs/diffusion_schemes/output_files/ & 
+    ! turb_time_series_flex_abovebl.dat", status="unknown", position="append")
+
+    ! write(11,'(3F12.6)') pextra%turbvelu* tstep*pextra%rmx, pextra%turbvelv* tstep*pextra%rmy, part%z - height_init
+
+    ! close(11)
   endif
 
-  !write(*,*) 'end diffusion call, position: ', part%x, part%y, part%z, pextra%zmetres
 
-  ! open(unit=11, file="/lustre/storeB/users/chbou7748/ETEX_diffusion/model_runs/diffusion_schemes/output_files/ & 
-  ! turb_time_series_flex.dat", status="unknown", position="append")
-
-  ! write(11,'(3F12.6)') pextra%turbvelu* tstep*pextra%rmx, pextra%turbvelv* tstep*pextra%rmy, part%z - height_init
-
-  ! close(11)
 
 end subroutine flexpart_diffusion
 
-subroutine diffusion_within_abl(part, pextra, nrand, max_rands, rands)
+subroutine flexpart_diffusion_within_abl(part, pextra, nrand, max_rands, rands)
   USE particleML, only: extraParticle, Particle
   use snapfldML, only: u_star, w_star, obukhov_l, rho, rhograd
   USE snapgrdML, only: ivlayer
@@ -278,6 +286,7 @@ subroutine diffusion_within_abl(part, pextra, nrand, max_rands, rands)
   real :: s1, s2
   integer :: part_vert_index
   real :: scaled_height
+  real :: ustar, wstar, ol
 
   ! Dimensionless height 
   scaled_height = pextra%zmetres/pextra%tblmetres
@@ -288,58 +297,63 @@ subroutine diffusion_within_abl(part, pextra, nrand, max_rands, rands)
   part_vert_index = part%z*10000
   k = ivlayer(part_vert_index) ! Vertical layer of particle
   k = max(k, 2) ! temp fix to avoid infinity in rhograd
+
+  ! get variables at particle position
+  ustar=u_star(i,j)
+  wstar=w_star(i,j)
+  ol=obukhov_l(i,j)
   
   ! Case 1, Neutral Conditions
-  if (pextra%tblmetres/ABS(obukhov_l(i,j)).lt.1.) then
-    u_star = max(1.e-4, u_star)
+  if (pextra%tblmetres/ABS(ol).lt.1.) then
+    ustar = max(1.e-4, ustar)
 
     ! Eq. 7.25 Hanna 1982: sigu/ust=2.0*exp(-3*f*z/ust),
     ! where f, the Coriolis parameter, is set to 1e-4
     ! Standard deviations of turbulent velocity fluctuations
-    sigu = 2.0 * u_star(i,j) * EXP(-3.e-4*pextra%zmetres/u_star(i,j))
+    sigu = 2.0 * ustar * EXP(-3.e-4*pextra%zmetres/ustar)
     sigu = MAX(sigu, 1.e-5)
 
 
     ! Eq. 7.26 Hanna 1982: sigv/ust=sigw/ust=1.3*exp(-2*f*z/ust),
     ! where f, the Coriolis parameter, is set to 1e-4
-    sigv = 1.3 * u_star(i,j) * EXP(-2.e-4*pextra%zmetres/u_star(i,j))
+    sigv = 1.3 * ustar * EXP(-2.e-4*pextra%zmetres/ustar)
     sigv=max(sigv,1.e-5)
     sigw=sigv
 
     ! Vertical gradient of sigw
-    dsigw2dz=-6.76e-4*u_star(i,j)*exp(-4.e-4*pextra%zmetres/u_star(i,j))
+    dsigw2dz=-6.76e-4*ustar*exp(-4.e-4*pextra%zmetres/ustar)
 
     ! Lagrangian timescales
-    tlu=0.5*pextra%zmetres/sigw/(1.+1.5e-3*pextra%zmetres/u_star(i,j))
+    tlu=0.5*pextra%zmetres/sigw/(1.+1.5e-3*pextra%zmetres/ustar)
     tlv=tlu
     tlw=tlu
   
   ! Case 2 , Unstable Conditions
-  elseif (obukhov_l(i,j).lt.0.) then
+  elseif (ol.lt.0.) then
     ! Eq. 4.15 Caughey 1982
-    sigu=u_star(i,j)*(12.-0.5*pextra%tblmetres/obukhov_l(i,j))**0.33333
+    sigu=ustar*(12.-0.5*pextra%tblmetres/ol)**0.33333
     sigu=MAX(sigu,1.e-6)
     sigv=sigu
 
     ! Eq. 7.15 Hanna 1982
     if (scaled_height.lt.0.03) then
-      sigw=0.96*w_star(i,j)*(3*scaled_height-obukhov_l(i,j)/pextra%tblmetres)**0.33333
-      dsigw2dz=1.8432*w_star(i,j)*w_star(i,j)/pextra%tblmetres*(3*scaled_height-obukhov_l(i,j)/pextra%tblmetres)**(-0.33333)
+      sigw=0.96*wstar*(3*scaled_height-ol/pextra%tblmetres)**0.33333
+      dsigw2dz=1.8432*wstar*wstar/pextra%tblmetres*(3*scaled_height-ol/pextra%tblmetres)**(-0.33333)
     else if (scaled_height.lt.0.4) then
-      s1=0.96*(3*scaled_height-obukhov_l(i,j)/pextra%tblmetres)**0.33333
+      s1=0.96*(3*scaled_height-ol/pextra%tblmetres)**0.33333
       s2=0.763*scaled_height**0.175
       if (s1.lt.s2) then
-        sigw=w_star(i,j)*s1
-        dsigw2dz=1.8432*w_star(i,j)*w_star(i,j)/pextra%tblmetres*(3*scaled_height-obukhov_l(i,j)/pextra%tblmetres)**(-0.33333)
+        sigw=wstar*s1
+        dsigw2dz=1.8432*wstar*wstar/pextra%tblmetres*(3*scaled_height-ol/pextra%tblmetres)**(-0.33333)
       else
-        sigw=w_star(i,j)*s2
-        dsigw2dz=0.203759*w_star(i,j)*w_star(i,j)/pextra%tblmetres*scaled_height**(-0.65)
+        sigw=wstar*s2
+        dsigw2dz=0.203759*wstar*wstar/pextra%tblmetres*scaled_height**(-0.65)
       endif
     else if (scaled_height.lt.0.96) then
-      sigw=0.722*w_star(i,j)*(1-scaled_height)**0.207
-      dsigw2dz=-.215812*w_star(i,j)*w_star(i,j)/pextra%tblmetres*(1-scaled_height)**(-0.586)
+      sigw=0.722*wstar*(1-scaled_height)**0.207
+      dsigw2dz=-.215812*wstar*wstar/pextra%tblmetres*(1-scaled_height)**(-0.586)
     else if (scaled_height.lt.1.00) then
-      sigw=0.37*w_star(i,j)
+      sigw=0.37*wstar
       dsigw2dz=0.
     endif
     sigw=max(sigw,1.e-6) 
@@ -349,8 +363,8 @@ subroutine diffusion_within_abl(part, pextra, nrand, max_rands, rands)
     ! Eq. 7.17 Hanna  1982
     tlu=0.15*pextra%tblmetres/sigu
     tlv=tlu
-    if (pextra%zmetres.lt.ABS(obukhov_l(i,j))) then
-      tlw=0.1*pextra%zmetres/(sigw*(0.55-0.38*ABS(pextra%zmetres/obukhov_l(i,j))))
+    if (pextra%zmetres.lt.ABS(ol)) then
+      tlw=0.1*pextra%zmetres/(sigw*(0.55-0.38*ABS(pextra%zmetres/ol)))
     else if (scaled_height.lt.0.1) then
       tlw=0.59*pextra%zmetres/sigw
     else
@@ -362,12 +376,12 @@ subroutine diffusion_within_abl(part, pextra, nrand, max_rands, rands)
   
   else
     ! Standard deviations of turbulent velocity fluctuations
-    sigu=2.*u_star(i,j)*(1.-scaled_height) !. 7.20, Hanna
-    sigv=1.3*u_star(i,j)*(1.-scaled_height) !. 7.19, Hanna
+    sigu=2.*ustar*(1.-scaled_height) !. 7.20, Hanna
+    sigv=1.3*ustar*(1.-scaled_height) !. 7.19, Hanna
     sigu=max(sigu,1.e-6)
     sigv=max(sigv,1.e-6)
     sigw=sigv !. 7.19, Hanna
-    dsigw2dz=3.38*u_star(i,j)*u_star(i,j)*(scaled_height-1.)/pextra%tblmetres
+    dsigw2dz=3.38*ustar*ustar*(scaled_height-1.)/pextra%tblmetres
 
     ! Lagrangian timescales
     tlu=0.15*pextra%tblmetres/sigu*(sqrt(scaled_height))
@@ -380,8 +394,6 @@ subroutine diffusion_within_abl(part, pextra, nrand, max_rands, rands)
   tlu=max(10.,tlu)
   tlv=max(10.,tlv)
   tlw=max(30.,tlw)
-
-  !write(*,*) 'Atmospheric Params: ', pextra%zmetres, pextra%tblmetres, w_star(i,j), obukhov_l(i, j)
 
   ! Calculate turbulent horizontal velocities
   if (nrand+1.gt.max_rands) nrand=1
@@ -409,13 +421,12 @@ subroutine diffusion_within_abl(part, pextra, nrand, max_rands, rands)
   ! ratio of time step to lagrangian timescale for autocorrelation
   dttlw = tstep/tlw
 
+  if (nrand+1.gt.max_rands) nrand=1
   ! Calculate turbulent vertical velocity
   rw=exp(-dttlw)
   pextra%turbvelw=(rw*pextra%turbvelw+rands(nrand)*sqrt(1.-rw**2)*sigw &
         +tlw*(1.-rw)*(dsigw2dz+rhoaux*sigw**2)) * pextra%icbt
   delz=pextra%turbvelw*tstep 
-
-  !write(*,*) 'Vertical Turbulence: ', rw, tlw, sigw, dsigw2dz, rhoaux, rands(nrand), pextra%turbvelw, delz
 
   ! Calculate new vertical position
   if (abs(delz).gt.pextra%tblmetres) delz=mod(delz,pextra%tblmetres)
@@ -431,11 +442,9 @@ subroutine diffusion_within_abl(part, pextra, nrand, max_rands, rands)
     pextra%icbt = 1
   endif
 
-  !write(*,*) 'Turbulent Displacements: ', pextra%turbvelu * tstep*pextra%rmx, pextra%turbvelv * tstep*pextra%rmy, delz
+end subroutine flexpart_diffusion_within_abl
 
-end subroutine diffusion_within_abl
-
-subroutine diffusion_above_abl(part, pextra, nrand, max_rands, rands)
+subroutine flexpart_diffusion_above_abl(part, pextra, nrand, max_rands, rands)
 
   USE particleML, only: extraParticle, Particle
 
@@ -465,7 +474,7 @@ subroutine diffusion_above_abl(part, pextra, nrand, max_rands, rands)
   part%x = part%x + pextra%turbvelu * tstep*pextra%rmx
   part%y = part%y + pextra%turbvelv * tstep*pextra%rmy
 
-end subroutine diffusion_above_abl
+end subroutine flexpart_diffusion_above_abl
 
 subroutine diffusion_fields(u_star, w_star, obukhov_l)
   use snapfldML, only: ps2, t2m, t2_dew, ishf, xsurfstress, ysurfstress, hbl2
@@ -477,17 +486,11 @@ subroutine diffusion_fields(u_star, w_star, obukhov_l)
 
   real, parameter :: r=287, g=9.81, k=0.4, cpa=1004.6
 
-  real, allocatable :: stress(:, :)
-  real, allocatable :: rho_a(:, :)
-  real, allocatable :: tv(:, :)
-  real, allocatable :: vp(:, :)
-  real, allocatable :: w(:, :)
-
-  allocate(stress(nx, ny))
-  allocate(rho_a(nx, ny))
-  allocate(tv(nx, ny))
-  allocate(vp(nx, ny))
-  allocate(w(nx, ny))
+  real :: stress(nx, ny)
+  real :: rho_a(nx, ny)
+  real :: tv(nx, ny)
+  real :: vp(nx, ny)
+  real :: w(nx, ny)
 
   ! Tetens Equation, vp is the vapour pressure in Pa
   vp = 0.61078 * EXP(17.27 * (t2_dew - 273.15) / (t2_dew - 35.85)) * 1000
@@ -512,25 +515,22 @@ subroutine diffusion_fields(u_star, w_star, obukhov_l)
   ! Calculate the convective velocity scale, p.622/118 stull
   w_star = ((g*hbl2*ishf)/(tv*cpa*rho_a))**0.333
   
-end subroutine
+end subroutine diffusion_fields
 
-subroutine air_density(rho, rhograd)
+subroutine air_density(rho, rhograd, pressures)
   use snapfldML, only: spec_humid, t2_abs, ps2, hlevel2
   use snapdimML, only: nx, ny, nk
-  use snapgrdML, only: alevel, blevel, ahalf, bhalf
+  use snapgrdML, only: alevel, blevel
 
   real, parameter :: r=287
 
   real, intent(out) :: rho(:, :, :)
   real, intent(out) :: rhograd(:, :, :)
+  real, intent(out) :: pressures(:, :, :)
 
-  real, allocatable :: tv(:, :, :)
-  real, allocatable :: pressures(:, :, :)
+  real :: tv(nx, ny, nk)
 
   integer :: i, j, k
-
-  allocate(tv(nx, ny, nk))
-  allocate(pressures(nx, ny, nk))
 
   tv = t2_abs * (0.608 * spec_humid + 1)
 
@@ -567,124 +567,5 @@ subroutine air_density(rho, rhograd)
   end do
 
 end subroutine
-
-
-subroutine diffusion_within_abl_horizontal(part, pextra, nrand, max_rands, rands)
-
-  USE particleML, only: extraParticle, Particle
-  use snapfldML, only: u_star, w_star, obukhov_l, rho, rhograd
-  USE snapgrdML, only: ivlayer
-  
-  !> particle with information
-  type(Particle), intent(inout)  :: part
-  !> extra information regarding the particle
-  type(extraParticle), intent(inout) :: pextra
-  ! Random numbers
-  integer, intent(inout) :: nrand
-  integer, intent(in) :: max_rands
-  real, intent(in) :: rands(:)
-
-
-  integer :: i, j, k
-  real :: sigu, sigv, sigw ! Turbulent velocity standard deviations
-  real :: tlu, tlv ! Lagrangian timescales
-  real :: ru, rv ! Lagrangian timescales
-  integer :: part_vert_index
-  real :: scaled_height
-
-  ! Dimensionless height 
-  scaled_height = pextra%zmetres/pextra%tblmetres
-
-  ! Get particle position
-  i = part%x
-  j = part%y
-  part_vert_index = part%z*10000
-  k = ivlayer(part_vert_index) ! Vertical layer of particle
-  k = max(k, 2) ! temp fix to avoid infinity in rhograd
-  
-  ! Case 1, Neutral Conditions
-  if (pextra%tblmetres/ABS(obukhov_l(i,j)).lt.1.) then
-    u_star = max(1.e-4, u_star)
-
-    ! Eq. 7.25 Hanna 1982: sigu/ust=2.0*exp(-3*f*z/ust),
-    ! where f, the Coriolis parameter, is set to 1e-4
-    ! Standard deviations of turbulent velocity fluctuations
-    sigu = 2.0 * u_star(i,j) * EXP(-3.e-4*pextra%zmetres/u_star(i,j))
-    sigu = MAX(sigu, 1.e-5)
-
-
-    ! Eq. 7.26 Hanna 1982: sigv/ust=sigw/ust=1.3*exp(-2*f*z/ust),
-    ! where f, the Coriolis parameter, is set to 1e-4
-    sigv = 1.3 * u_star(i,j) * EXP(-2.e-4*pextra%zmetres/u_star(i,j))
-    sigv=max(sigv,1.e-5)
-    sigw=sigv
-
-    ! Lagrangian timescales
-    tlu=0.5*pextra%zmetres/sigw/(1.+1.5e-3*pextra%zmetres/u_star(i,j))
-    tlv=tlu
-  
-  ! Case 2 , Unstable Conditions
-  elseif (obukhov_l(i,j).lt.0.) then
-    ! Eq. 4.15 Caughey 1982
-    sigu=u_star(i,j)*(12.-0.5*pextra%tblmetres/obukhov_l(i,j))**0.33333
-    sigu=MAX(sigu,1.e-6)
-    sigv=sigu
-
-
-    ! Determine average Lagrangian time scale
-    ! Eq. 7.17 Hanna  1982
-    tlu=0.15*pextra%tblmetres/sigu
-    tlv=tlu
-
-  ! Case 3, Stable Conditions 
-  
-  else
-    ! Standard deviations of turbulent velocity fluctuations
-    sigu=2.*u_star(i,j)*(1.-scaled_height) !. 7.20, Hanna
-    sigv=1.3*u_star(i,j)*(1.-scaled_height) !. 7.19, Hanna
-    sigu=max(sigu,1.e-6)
-    sigv=max(sigv,1.e-6)
-
-    ! Lagrangian timescales
-    tlu=0.15*pextra%tblmetres/sigu*(sqrt(scaled_height))
-    tlv=0.467*tlu
-
-  endif
-
-  ! Clamp lagrangian timescales
-  tlu=max(10.,tlu)
-  tlv=max(10.,tlv)
-
-  !write(*,*) 'Atmospheric Params: ', pextra%zmetres, pextra%tblmetres, w_star(i,j), obukhov_l(i, j)
-
-  ! Calculate turbulent horizontal velocities
-  if (nrand+1.gt.max_rands) nrand=1
-  if (tstep/tlu.lt..5) then
-    pextra%turbvelu=(1.-tstep/tlu)*pextra%turbvelu+rands(nrand)*sigu*sqrt(2.*tstep/tlu)
-  else
-    ru=exp(-tstep/tlu)
-    pextra%turbvelu=ru*pextra%turbvelu+rands(nrand)*sigu*sqrt(1.-ru**2)
-  endif
-  if (tstep/tlv.lt..5) then
-    pextra%turbvelv=(1.-tstep/tlv)*pextra%turbvelv+rands(nrand+1)*sigv*sqrt(2.*tstep/tlv)
-  else
-    rv=exp(-tstep/tlv)
-    pextra%turbvelv=rv*pextra%turbvelv+rands(nrand+1)*sigv*sqrt(1.-rv**2)
-  endif
-  nrand=nrand+2
-
-  ! open(unit=11, file="/lustre/storeB/users/chbou7748/ETEX_diffusion/model_runs/diffusion_schemes/output_files/ & 
-  ! turb_time_series_flex.dat", status="unknown", position="append")
-
-  ! write(11,'(2F12.6)') pextra%turbvelu* tstep*pextra%rmx, pextra%turbvelv* tstep*pextra%rmy
-
-  ! close(11)
-
-  ! Calculate new horizontal positions. Maybe should only update at the end?
-  part%x = part%x + pextra%turbvelu * tstep*pextra%rmx
-  part%y = part%y + pextra%turbvelv * tstep*pextra%rmy
-
-end subroutine diffusion_within_abl_horizontal
-
 
 end module rwalkML

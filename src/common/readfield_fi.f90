@@ -72,7 +72,7 @@ contains
       hbl1, hbl2, hlayer1, hlayer2, garea, hlevel1, hlevel2, &
       hlayer1, hlayer2, bl1, bl2, enspos, precip, t1_abs, t2_abs, &
       field1, t1_dew, t2_dew, ishf, xsurfstress, ysurfstress, t2m, spec_humid, &
-      u_star, w_star, obukhov_l, rho, rhograd
+      u_star, w_star, obukhov_l, rho, rhograd, pressures
     USE snapgrdML, only: alevel, blevel, vlevel, ahalf, bhalf, vhalf, ptop, &
                          gparam, klevel, ivlevel, imslp, igtype, ivlayer
     USE snapmetML, only: met_params, xy_wind_units, pressure_units, omega_units, &
@@ -82,7 +82,8 @@ contains
     USE snapdimML, only: nx, ny, nk, output_resolution_factor, hres_field, surface_index
     USE datetime, only: datetime_t, duration_t
     USE readfield_ncML, only: find_index, compute_vertical_coords
-    USE rwalkML, only: diffusion_method, diffusion_fields, air_density
+    USE rwalkML, only: bl_definition, diffusion_fields, air_density
+    USE compheightML, only: compheight
 !> current timestep (always positive), negative istep means reset
     integer, intent(in) :: istep
 !> whether meteorology should be read backwards
@@ -97,8 +98,6 @@ contains
     type(datetime_t), intent(out) :: itimefi
 !> error (output)
     integer, intent(out) :: ierror
-
-    real, allocatable :: cum_heights(:, :, :)
 
 ! local variables
     TYPE(FimexIO) :: fio
@@ -333,7 +332,7 @@ contains
 
 !.. Calculate fields required for flexpart diffusion
     call diffusion_fields(u_star, w_star, obukhov_l)
-    call air_density(rho, rhograd)
+    call air_density(rho, rhograd, pressures)
 
     if (first_time_read) then
       call compute_vertical_coords(alev, blev, ptop)
@@ -396,8 +395,10 @@ contains
       endif
     end if
 
-    if (diffusion_method == 'get_bl_from_meteo') then
-      call convert_hbl_to_vbl(hbl2, bl2, cum_heights)
+    call compheight
+    
+    if (bl_definition == 'get_bl_from_meteo') then
+      call convert_hbl_to_vbl(hbl2, bl2)
     endif
     
     if (met_params%sigmadot_is_omega) then
@@ -1102,51 +1103,31 @@ contains
   end subroutine
 
 
-subroutine convert_hbl_to_vbl(hbl, vbl, cum_heights)
-  use snapfldML, only: ps2, t2_abs
+subroutine convert_hbl_to_vbl(hbl, vbl)
+  use snapfldML, only: ps2, t2_abs, hlevel2
   use snapdimML, only: nx, ny, nk
-  use snapgrdML, only: ahalf, bhalf
+  use snapgrdML, only: alevel, blevel
 
   real, intent(in) :: hbl(:, :)
   real, intent(out) :: vbl(:, :)
-  real, intent(out), allocatable :: cum_heights(:, :, :)
+  
   real, parameter :: r=287, g=9.81
 
-  real, allocatable :: deltah(:, :, :)
-  real, allocatable :: pe(:, :)
-  real, allocatable :: pe2(:, :)
-  integer, allocatable :: above_index(:, :)
-  integer, allocatable :: below_index(:, :)
+  real :: deltah(nx, ny, nk)
+  real :: pe(nx, ny)
+  real :: pe2(nx, ny)
+  integer :: above_index(nx, ny)
+  integer :: below_index(nx, ny)
 
   integer :: i, j, k
   real :: weight
   real :: bl_top_pressure
   real :: pressure_below, pressure_above
 
-  allocate(deltah(nx, ny, nk))
-  allocate(pe(nx, ny))
-  allocate(pe2(nx, ny))
-  allocate(cum_heights(nx, ny, nk))
-  allocate(above_index(nx, ny))
-  allocate(below_index(nx, ny))
-
-  ! Calculate thickness of levels in metres
-  do k = 2, nk
-    pe = ahalf(k-1) + bhalf(k-1) * ps2
-    pe2 = ahalf(k) + bhalf(k) * ps2
-    deltah(:, :, k) = (r * t2_abs(:, :, k) / g) * log(pe/pe2)
-  end do
-
-  ! Calculate cumulative height of levels in metres
-  cum_heights(:, :, 1) = 0
-  do k = 2, nk
-    cum_heights(:, :, k) = cum_heights(:, :, k-1) + deltah(:, :, k)
-  end do
-
   ! Find the height level corresponding to the one immediately above the boundary layer height
   above_index = nk
   do k = 2, nk
-    associate(height_k => cum_heights(:, :, k))
+    associate(height_k => hlevel2(:, :, k))
     where (hbl > height_k)
       above_index = min(above_index, k)
     endwhere
@@ -1161,11 +1142,11 @@ subroutine convert_hbl_to_vbl(hbl, vbl, cum_heights)
   do i = 1, nx
     do j = 1, ny
 
-      pressure_below = ahalf(below_index(i,j)) + bhalf(below_index(i,j)) * ps2(i,j)
-      pressure_above = ahalf(above_index(i,j)) + bhalf(above_index(i,j)) * ps2(i,j)
+      pressure_below = alevel(below_index(i,j)) + blevel(below_index(i,j)) * ps2(i,j)
+      pressure_above = alevel(above_index(i,j)) + blevel(above_index(i,j)) * ps2(i,j)
 
-      weight = (hbl(i, j) - cum_heights(i, j, below_index(i, j))) /  &
-      (cum_heights(i, j, above_index(i, j)) - cum_heights(i, j, below_index(i, j)))
+      weight = (hbl(i, j) - hlevel2(i, j, below_index(i, j))) /  &
+      (hlevel2(i, j, above_index(i, j)) - hlevel2(i, j, below_index(i, j)))
 
       bl_top_pressure = pressure_below + weight * (pressure_above - pressure_below)
 

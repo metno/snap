@@ -74,6 +74,9 @@ module snapfldML
 !> vertical gradients of air density
   real(kind=real32), allocatable, save, public :: rhograd(:,:,:)
 
+!> pressure values
+  real(kind=real32), allocatable, save, public :: pressures(:,:,:)
+
 !> MO length (diffusion)
   real(kind=real32), allocatable, save, public :: obukhov_l(:,:)
 
