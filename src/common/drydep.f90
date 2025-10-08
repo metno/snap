@@ -91,7 +91,6 @@ end function
 pure subroutine drydep_precompute(surface_pressure, t2m, yflux, xflux, z0, &
     hflux, leaf_area_index, diam, density, classnr, vd_dep, &
     roa, ustar, monin_obukhov_length, raero, vs, rs, date)
-  use ieee_arithmetic, only: ieee_value, IEEE_QUIET_NAN
   use iso_fortran_env, only: real64, int8
   use datetime, only: datetime_t
   real, intent(in) :: surface_pressure(:,:) !> [Pa]
@@ -316,7 +315,7 @@ end subroutine
 pure real(kind=real64) function lookup_A(classnr, seasonal_category)
   integer(int8), intent(in) :: classnr
   integer, intent(in) :: seasonal_category
-
+  lookup_A = LOOKUP_NAN
   select case(classnr)
   case (11) ! Sea -> Z14
     lookup_A = LOOKUP_NAN
@@ -465,12 +464,6 @@ pure elemental subroutine drydep_emerson_vd(surface_pressure, t2m, yflux, xflux,
   real(real64) :: Apar
 
   roa = surface_pressure / (t2m * R)
-
-  ! dummy return block
-  rs = 1
-  vd_dep = 0.02
-  return
-
 
   ustar = hypot(yflux, xflux) / sqrt(roa)
   monin_obukhov_length = - roa * CP * t2m * (ustar**3) / (k * grav * hflux)
