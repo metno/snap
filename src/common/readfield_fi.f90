@@ -902,7 +902,7 @@ contains
     use snapfldML, only: ps2, vd_dep, xflux, yflux, hflux, z0, leaf_area_index, t2m, &
       roa, ustar, monin_l, raero, vs, rs
     use snaptimers, only: metcalc_timer
-    use vgravtablesML, only: vgrav
+    use vgravtablesML, only: vgrav, vgrav_zanetti
 
     use datetime, only: datetime_t
     type(FimexIO), intent(inout) :: fio
@@ -985,6 +985,8 @@ contains
         diam = 2*def_comp(mm)%radiusmym*1e-6
         dens = def_comp(mm)%densitygcm3*1e3
         vs(:,:) = vgrav(i, ps2(:,:), t2m(:,:))
+        !vs(:,:) = vgrav_zanetti(real(diam * 1e6), real(dens / 1000), ps2, t2m) / 1e2
+        !write(*,*) vs(1,1), "old vs new", vgrav(i, ps2(1,1), t2m(1,1))
         call drydep_precompute(ps2*100, t2m, yflux, xflux, z0, &
             hflux, leaf_area_index, real(diam), real(dens), classnr, vd_dep(:, :, i), &
             roa, ustar, monin_l, raero, vs, rs, itimefi)
