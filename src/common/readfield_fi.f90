@@ -77,6 +77,7 @@ contains
     USE snapmetML, only: met_params, xy_wind_units, pressure_units, omega_units, &
                          sigmadot_units, temp_units, requires_precip_deaccumulation
     USE snapdimML, only: nx, ny, nk, output_resolution_factor, hres_field, surface_index
+    USE snaptimers, only: metcalc_timer
     USE datetime, only: datetime_t, duration_t
     USE readfield_ncML, only: find_index, compute_vertical_coords
 !> current timestep (always positive), negative istep means reset
@@ -340,6 +341,7 @@ contains
       ! end initialization
     end if
 
+    call metcalc_timer%start()
     if (met_params%temp_is_abs) then
       if (allocated(t2_abs)) t2_abs(:,:,:) = t2
       !..abs.temp. -> pot.temp.
@@ -374,6 +376,7 @@ contains
       ! om2edot take means of omega (=0) and continuity-equation, -> use only continuity equation
       w2 = 2.0*w2
     end if
+    call metcalc_timer%stop_and_log()
 
 !..sigma_dot/eta_dot 0 at surface
     w2(:, :, 1) = 0.0
@@ -704,7 +707,7 @@ contains
     end block
 
   end subroutine
-  
+
   subroutine check(status, errmsg)
     integer, intent(in) :: status
     character(len=*), intent(in), optional :: errmsg

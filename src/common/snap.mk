@@ -3,7 +3,7 @@
 
 MODELOBJ = array_utils.o dateCalc.o utils.o particleML.o snapdimML.o snapfilML.o snapfimexML.o \
 snapfldML.o snapgrdML.o snapmetML.o snapparML.o \
-snapposML.o snaptabML.o snapdebugML.o posint.o decay.o \
+snapposML.o snaptabML.o snapdebugML.o snaptimersML.o posint.o decay.o \
 om2edot.o ftest.o readfield_nc.o rwalk.o epinterp.o \
 vgravtables.o forwrd.o wetdep.o drydep.o \
 bldp.o compheight.o checkDomain.o \
@@ -51,6 +51,8 @@ ftest.o: ../common/ftest.f90 snapdebugML.o
 	${F77} -c $(F77FLAGS) $(INCLUDES) $<
 snapdebugML.o: ../common/snapdebugML.F90
 	${F77} -c $(F77FLAGS) $(INCLUDES) $<
+snaptimersML.o: ../common/snaptimersML.f90 snapdebugML.o
+	${F77} -c $(F77FLAGS) $(INCLUDES) $<
 snapfilML.o: ../common/snapfilML.f90 snapdimML.o datetime.o
 	${F77} -c ${F77FLAGS} $<
 snapfimexML.o: ../common/snapfimexML.f90
@@ -79,7 +81,7 @@ om2edot.o: ../common/om2edot.f90 snapgrdML.o snapfldML.o snapdimML.o snapdebugML
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 readfield_nc.o: ../common/readfield_nc.f90 particleML.o snapfilML.o snapgrdML.o snapmetML.o snaptabML.o snapdebugML.o snapdimML.o om2edot.o ftest.o milibML.o snapfldML.o datetime.o drydep.o wetdep.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-readfield_fi.o: ../common/readfield_fi.f90 snapfimexML.o particleML.o snapfilML.o snapgrdML.o snapmetML.o snaptabML.o snapdebugML.o snapdimML.o om2edot.o ftest.o milibML.o fimex.o datetime.o readfield_nc.o utils.o drydep.o wetdep.o
+readfield_fi.o: ../common/readfield_fi.f90 snapfimexML.o particleML.o snapfilML.o snapgrdML.o snapmetML.o snaptabML.o snapdebugML.o snaptimersML.o snapdimML.o om2edot.o ftest.o milibML.o fimex.o datetime.o readfield_nc.o utils.o drydep.o wetdep.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 filesort_nc.o: ../common/filesort_nc.f90 dateCalc.o snapfilML.o snapdimML.o snapgrdML.o snapfldML.o snapmetML.o snapdebugML.o readfield_nc.o datetime.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<

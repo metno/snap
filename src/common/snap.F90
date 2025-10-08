@@ -164,7 +164,9 @@ PROGRAM bsnap
   USE iso_fortran_env, only: real64, output_unit, error_unit, IOSTAT_END
   USE DateCalc, only: epochToDate, timeGM
   USE datetime, only: datetime_t, duration_t
-  USE snapdebug, only: iulog, idebug, acc_timer => prefixed_accumulating_timer
+  USE snapdebug, only: iulog, idebug
+  USE snaptimers, only: timeloop_timer, output_timer, input_timer, metcalc_timer, &
+                        release_timer, other_timer, particleloop_timer, initialize_timers
   USE snapdimML, only: nx, ny, nk, output_resolution_factor, ldata, maxsiz, mcomp, surface_index
   USE snapfilML, only: filef, itimer, ncsummary, nctitle, nhfmax, nhfmin, &
                        nctype, nfilef, simulation_start, spinup_steps
@@ -287,12 +289,6 @@ PROGRAM bsnap
 !> name of selected release position
   character(len=40), save :: srelnam = "*"
 
-  !> Time spent in various components of SNAP
-  type(acc_timer) :: timeloop_timer
-  type(acc_timer) :: output_timer
-  type(acc_timer) :: input_timer
-  type(acc_timer) :: particleloop_timer
-
 #if defined(VERSION)
   character(len=*), parameter :: VERSION_ = VERSION
 #else
@@ -302,6 +298,7 @@ PROGRAM bsnap
 #if defined(FIMEX)
   call fimex_set_loglevel(FIMEX_LOGLEVEL_WARN)
 #endif
+  call initialize_timers()
 
   if (command_argument_count() < 1) then
     write (error_unit, *)
@@ -634,11 +631,6 @@ PROGRAM bsnap
       release_positions(irelpos)%grid_y = y(1)
     end block
 
-    timeloop_timer = acc_timer("time_loop:")
-    output_timer = acc_timer("output/accumulation:")
-    input_timer = acc_timer("Reading MET input:")
-    particleloop_timer = acc_timer("Particle loop:")
-
     ! start time loop
     itimei = time_start
     npartmax = 0
@@ -674,10 +666,12 @@ PROGRAM bsnap
 
         write (error_unit, fmt="('input data: ',i4,3i3.2)") time_file
 
+        call metcalc_timer%start()
         !..compute model level heights
         call compheight
         !..calculate boundary layer (top and height)
         call bldp
+        call metcalc_timer%stop_and_log()
 
         dur = time_file - itimei
         ihdiff = dur%hours
@@ -696,9 +690,10 @@ PROGRAM bsnap
       if (iendrel == 0 .AND. istep <= nstepr) then
 
         !..release one plume of particles
-
+        call release_timer%start()
         call release(istep, nsteph, tf1, tf2, tnow, ierror)
         npartmax = max(npartmax, npart)
+        call release_timer%stop_and_log()
 
         if (ierror == 0) then
           lstepr = istep
@@ -873,6 +868,9 @@ PROGRAM bsnap
   call timeloop_timer%print_accumulated()
   call output_timer%print_accumulated()
   call input_timer%print_accumulated()
+  call metcalc_timer%print_accumulated()
+  call release_timer%print_accumulated()
+  call other_timer%print_accumulated()
   call particleloop_timer%print_accumulated()
   ! b_end
   write (iulog, *) ' SNAP run finished'
