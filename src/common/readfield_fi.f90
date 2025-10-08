@@ -901,6 +901,9 @@ contains
     use snapparML, only: ncomp, run_comp, def_comp
     use snapfldML, only: ps2, vd_dep, xflux, yflux, hflux, z0, leaf_area_index, t2m, &
       roa, ustar, monin_l, raero, vs, rs
+    use snaptimers, only: metcalc_timer
+    use vgravtablesML, only: vgrav
+
     use datetime, only: datetime_t
     type(FimexIO), intent(inout) :: fio
     integer, intent(in) :: timepos, timeposm1
@@ -937,16 +940,6 @@ contains
 
     if (timepos == 1) then
       call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, hflux(:, :), nt=timepos, nr=nr)
-    else if (timepos == 13) then
-      ! Weird AROME data is invalid at t=12
-      call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, tmp1(:, :), nt=timeposm1, nr=nr)
-      call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, tmp2(:, :), nt=timepos+1, nr=nr)
-      hflux(:,:) = (tmp2 - tmp1)/2
-    else if (timepos == 14) then
-      ! Weird AROME data is invalid at t=13
-      call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, tmp1(:, :), nt=timeposm1-1, nr=nr)
-      call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, tmp2(:, :), nt=timepos, nr=nr)
-      hflux(:,:) = (tmp2 - tmp1)/2
     else
       call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, tmp1(:, :), nt=timeposm1, nr=nr)
       call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, tmp2(:, :), nt=timepos, nr=nr)
@@ -984,17 +977,20 @@ contains
 
     call fi_checkload(fio, met_params%t2m, temp_units, t2m(:, :), nt=timepos, nr=nr)
 
+    call metcalc_timer%start()
     do i=1,ncomp
       mm = run_comp(i)%to_defined
 
       if (def_comp(mm)%kdrydep == 1) then
         diam = 2*def_comp(mm)%radiusmym*1e-6
         dens = def_comp(mm)%densitygcm3*1e3
+        vs(:,:) = vgrav(i, ps2(:,:), t2m(:,:))
         call drydep_precompute(ps2*100, t2m, yflux, xflux, z0, &
             hflux, leaf_area_index, real(diam), real(dens), classnr, vd_dep(:, :, i), &
             roa, ustar, monin_l, raero, vs, rs, itimefi)
       endif
     end do
+    call metcalc_timer%stop_and_log()
   end subroutine
 
   subroutine read_largest_landfraction(inputfile)

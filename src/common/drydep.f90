@@ -17,7 +17,7 @@
 
 module drydepml
   use ISO_FORTRAN_ENV, only: real64, int8
-  use vgravtablesML, only: vgrav
+
   implicit none
   private
 
@@ -40,6 +40,7 @@ module drydepml
   real(real64), parameter :: grav = 9.8
   real(real64), parameter :: CP = 1005.0
   real(real64), parameter :: pi = 2.0*asin(1.0)
+  real(real64), parameter :: LOOKUP_NAN = -999.99 ! NaN value in zhang table, just something out of bounds
 
   !> Kinematic viscosity of air, m2 s-1 at +15 C
   real(real64), parameter :: ny = 1.5e-5
@@ -90,6 +91,7 @@ end function
 pure subroutine drydep_precompute(surface_pressure, t2m, yflux, xflux, z0, &
     hflux, leaf_area_index, diam, density, classnr, vd_dep, &
     roa, ustar, monin_obukhov_length, raero, vs, rs, date)
+  use ieee_arithmetic, only: ieee_value, IEEE_QUIET_NAN
   use iso_fortran_env, only: real64, int8
   use datetime, only: datetime_t
   real, intent(in) :: surface_pressure(:,:) !> [Pa]
@@ -105,9 +107,11 @@ pure subroutine drydep_precompute(surface_pressure, t2m, yflux, xflux, z0, &
   real, intent(in) :: density
   integer(int8), intent(in) :: classnr(:,:) !> Speficic mapping to land use type, see subroutine `lookup_A`
   real, intent(out) :: vd_dep(:,:)
-  real(real64), intent(out) :: roa(:,:), monin_obukhov_length(:,:), raero(:,:), vs(:,:), ustar(:,:), rs(:,:)
+  real(real64), intent(out) :: roa(:,:), monin_obukhov_length(:,:), raero(:,:), ustar(:,:), rs(:,:)
+  real(real64), intent(in) :: vs(:,:)
   type(datetime_t), intent(in) :: date
 
+  ! precompute NaN, later used in the lookup code
   select case(drydep_scheme)
     case (DRYDEP_SCHEME_EMEP)
       call drydep_emep_vd(surface_pressure, t2m, yflux, xflux, z0, &
@@ -126,7 +130,7 @@ pure subroutine drydep_precompute(surface_pressure, t2m, yflux, xflux, z0, &
     end select
 end subroutine
 
-!> Stoer landfraction values
+!> Store landfraction values
 subroutine preprocess_landfraction(values)
   use iso_fortran_env, only: real32, error_unit
   real(real32), intent(in) :: values(:,:)
@@ -273,14 +277,13 @@ pure elemental subroutine drydep_emep_vd(surface_pressure, t2m, yflux, xflux, z0
   real(real64) :: a1
   real(real64), parameter :: a2 = 300
   real(real64) :: a1sai
-  real(real64), intent(out) :: vs
+  real(real64), intent(in) :: vs
   real(real64), intent(out) :: raero
   real(real64), intent(out) :: rs
   real(real64) :: fac
 
 
   roa = surface_pressure / (t2m * R)
-  vs = vgrav(diam * 1e6, density / 1000, surface_pressure / 100, t2m) / 1e2
 
   ustar = hypot(yflux, xflux) / sqrt(roa)
   monin_obukhov_length = - roa * CP * t2m * (ustar**3) / (k * grav * hflux)
@@ -311,21 +314,18 @@ end subroutine
 
 !> Table 3 for Zhang et. al 2001
 pure real(kind=real64) function lookup_A(classnr, seasonal_category)
-  use ieee_arithmetic, only: ieee_value, IEEE_QUIET_NAN
   integer(int8), intent(in) :: classnr
   integer, intent(in) :: seasonal_category
 
-  lookup_A = IEEE_VALUE(lookup_A, IEEE_QUIET_NAN)
-
   select case(classnr)
   case (11) ! Sea -> Z14
-    lookup_A = IEEE_VALUE(lookup_A, IEEE_QUIET_NAN)
+    lookup_A = LOOKUP_NAN
   case (12) ! Inland water -> Z13
-    lookup_A = IEEE_VALUE(lookup_A, IEEE_QUIET_NAN)
+    lookup_A = LOOKUP_NAN
   case (13) ! Tundra/desert -> Z8,Z9
-    lookup_A = IEEE_VALUE(lookup_A, IEEE_QUIET_NAN)
+    lookup_A = LOOKUP_NAN
   case (14) ! Ice and ice sheets -> Z12
-    lookup_A = IEEE_VALUE(lookup_A, IEEE_QUIET_NAN)
+    lookup_A = LOOKUP_NAN
   case (15) ! Urban -> Z15
     lookup_A = 10.0
   case (16) ! Crops -> Z7
@@ -358,7 +358,7 @@ pure real(kind=real64) function lookup_A(classnr, seasonal_category)
   case (22) ! Shrubs and interrupted woodlands -> Z10
     lookup_A = 10.0
   case default
-    lookup_A = IEEE_VALUE(lookup_A, IEEE_QUIET_NAN)
+    lookup_A = LOOKUP_NAN
   end select
 
 end function
@@ -369,7 +369,6 @@ end function
 pure elemental subroutine drydep_zhang_vd(surface_pressure, t2m, yflux, xflux, z0, &
     hflux, diam, density, classnr, vd_dep, &
     roa, ustar, monin_obukhov_length, raero, vs, rs, date)
-  use ieee_arithmetic, only: ieee_is_nan
   use datetime, only: datetime_t
   !> In hPa
   real, intent(in) :: surface_pressure
@@ -378,10 +377,10 @@ pure elemental subroutine drydep_zhang_vd(surface_pressure, t2m, yflux, xflux, z
   real, intent(in) :: z0, hflux
   type(datetime_t), intent(in) :: date
   real(real64), intent(in) :: diam
-  real(real64), intent(in) :: density
+  real(real64), intent(in) :: density, vs
   integer(int8), intent(in) :: classnr
   real, intent(out) :: vd_dep
-  real(real64), intent(out) :: roa, monin_obukhov_length, raero, vs, ustar, rs
+  real(real64), intent(out) :: roa, monin_obukhov_length, raero, ustar, rs
 
   !> Aerial factor for interception (table 3 Zhang et al. (2001)), corresponding to evergreen
   !>  needleleaf trees (i.e. close to maximum deposition)
@@ -392,7 +391,6 @@ pure elemental subroutine drydep_zhang_vd(surface_pressure, t2m, yflux, xflux, z
   real(real64) :: Apar
 
   roa = surface_pressure / (t2m * R)
-  vs = vgrav(real(diam * 1e6), real(density / 1000), surface_pressure / 100, t2m) / 1e2
 
   ustar = hypot(yflux, xflux) / sqrt(roa)
   monin_obukhov_length = - roa * CP * t2m * (ustar**3) / (k * grav * hflux)
@@ -416,7 +414,7 @@ pure elemental subroutine drydep_zhang_vd(surface_pressure, t2m, yflux, xflux, z
   Apar = lookup_A(classnr, date_to_seasonal_category(date))
   A = Apar * 1e-3
   ! Impaction
-  if (.not. ieee_is_nan(A)) then
+  if (A .ne. LOOKUP_NAN) then
     ! Stokes number for vegetated surfaces (Zhang (2001)
     stokes = vs * ustar / (grav * A)
   else
@@ -426,11 +424,11 @@ pure elemental subroutine drydep_zhang_vd(surface_pressure, t2m, yflux, xflux, z
   EIM = (stokes / (0.8 + stokes)) ** 2
 
   ! Interception
-  if (ieee_is_nan(A)) then
+  if (A .ne. LOOKUP_NAN) then
+    EIN = 0.5 * (diam / A) ** 2
+  else
     ! No interception over water surfaces
     EIN = 0.0
-  else
-    EIN = 0.5 * (diam / A) ** 2
   endif
 
   rs = 1.0 / (3.0 * ustar * (EB + EIM + EIN))
@@ -444,7 +442,6 @@ end subroutine
 pure elemental subroutine drydep_emerson_vd(surface_pressure, t2m, yflux, xflux, z0, &
     hflux, diam, density, classnr, vd_dep, &
     roa, ustar, monin_obukhov_length, raero, vs, rs, date)
-  use ieee_arithmetic, only: ieee_is_nan
   use datetime, only: datetime_t
   !> In hPa
   real, intent(in) :: surface_pressure
@@ -454,9 +451,10 @@ pure elemental subroutine drydep_emerson_vd(surface_pressure, t2m, yflux, xflux,
   type(datetime_t), intent(in) :: date
   real(real64), intent(in) :: diam
   real(real64), intent(in) :: density
+  real(real64), intent(in) :: vs ! m/s
   integer(int8), intent(in) :: classnr
   real, intent(out) :: vd_dep
-  real(real64), intent(out) :: roa, monin_obukhov_length, raero, vs, ustar, rs
+  real(real64), intent(out) :: roa, monin_obukhov_length, raero, ustar, rs
 
   !> Aerial factor for interception (table 3 Zhang et al. (2001)), corresponding to evergreen
   !>  needleleaf trees (i.e. close to maximum deposition)
@@ -467,7 +465,12 @@ pure elemental subroutine drydep_emerson_vd(surface_pressure, t2m, yflux, xflux,
   real(real64) :: Apar
 
   roa = surface_pressure / (t2m * R)
-  vs = vgrav(real(diam * 1e6), real(density / 1000), surface_pressure / 100, t2m) / 1e2
+
+  ! dummy return block
+  rs = 1
+  vd_dep = 0.02
+  return
+
 
   ustar = hypot(yflux, xflux) / sqrt(roa)
   monin_obukhov_length = - roa * CP * t2m * (ustar**3) / (k * grav * hflux)
@@ -487,10 +490,11 @@ pure elemental subroutine drydep_emerson_vd(surface_pressure, t2m, yflux, xflux,
   sc = ny / bdiff
   EB = 0.2 * sc ** (-2.0 / 3.0)
 
+
   Apar = lookup_A(classnr, date_to_seasonal_category(date))
   A = Apar * 1e-3
   ! Impaction
-  if (.not. ieee_is_nan(A)) then
+  if (A .ne. LOOKUP_NAN) then
     ! Stokes number for vegetated surfaces (Zhang (2001)
     stokes = vs * ustar / (grav * A)
   else
@@ -499,11 +503,11 @@ pure elemental subroutine drydep_emerson_vd(surface_pressure, t2m, yflux, xflux,
   EIM = 0.4 * (stokes / (0.8 + stokes)) ** 1.7
 
   ! Interception
-  if (ieee_is_nan(A)) then
+  if (A .ne. LOOKUP_NAN) then
+    EIN = 2.5 * (diam / A) ** 0.8
+  else
     ! No interception over water surfaces
     EIN = 0.0
-  else
-    EIN = 2.5 * (diam / A) ** 0.8
   endif
 
   rs = 1.0 / (3.0 * ustar * (EB + EIM + EIN))
