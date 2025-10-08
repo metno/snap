@@ -242,9 +242,12 @@ subroutine allocateFields
     if (requires_extra_fields_to_be_read()) then
       allocate(vd_dep(nx,ny,ncomp), STAT=AllocateStatus)
       if (AllocateStatus /= 0) ERROR STOP errmsg
-      allocate(xflux, yflux, hflux, t2m, z0, leaf_area_index, mold=ps2)
-      allocate(roa(nx, ny))
-      allocate(ustar, monin_l, raero, vs, rs, mold=roa)
+      allocate(xflux, yflux, hflux, t2m, z0, leaf_area_index, mold=ps2, STAT=AllocateStatus)
+      if (AllocateStatus /= 0) ERROR STOP errmsg
+      allocate(roa(nx, ny), STAT=AllocateStatus)
+      if (AllocateStatus /= 0) ERROR STOP errmsg
+      allocate(ustar, monin_l, raero, vs, rs, mold=roa, STAT=AllocateStatus)
+      if (AllocateStatus /= 0) ERROR STOP errmsg
     endif
   end block
 
