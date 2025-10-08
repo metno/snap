@@ -20,9 +20,9 @@ module vgravtablesML
   private
 
 !> number of temperature levels in ::vgtable
-  integer, parameter, public :: numtempvg = 41
+  integer, parameter, public :: numtempvg = 41 ! 5deg incr
 !> number of pressure levels in ::vgtable
-  integer, parameter, public :: numpresvg = 25
+  integer, parameter, public :: numpresvg = 121 ! 10hPa
 
 !> table of gravity in m/s
 !>
@@ -34,7 +34,7 @@ module vgravtablesML
   real, parameter, private :: pincrvg = 1200./float(numpresvg-1)
   real, parameter, private :: pbasevg = 0. - pincrvg
 
-  public :: vgravtables_init, vgrav
+  public :: vgravtables_init, vgrav, vgrav_zanetti
 
   contains
 
@@ -119,12 +119,12 @@ subroutine vgravtables_init()
 
   write(iulog,*) 'Computing gravity tables...'
   call vgravtables()
-  write(iulog,*) 'Surface gravity (1000hPa, 300K):'
-  it = (300-tbasevg)/tincrvg
-  ip = (1000-pbasevg)/pincrvg
+  write(iulog,*) 'Surface gravity (1013hPa, 288K), direct and interpolated:'
+  it = (288-tbasevg)/tincrvg
+  ip = (1013-pbasevg)/pincrvg
   do i=1,ncomp
     m = run_comp(i)%to_defined
-    write(iulog,*) ' particle ', def_comp(m)%compname, ": ", vgtable(it,ip,i)
+    write(iulog,*) ' particle ', def_comp(m)%compname, ": ", vgtable(it,ip,i), vgrav(i,1000., 300.)
   end do
 end subroutine
 
@@ -137,7 +137,7 @@ end subroutine
 !>  etha         - viscosity of the air (g cm-1 s-1)
 !>
 !>  T             - absolute temperature (K)
-  pure real function visc(t)
+  elemental real function visc(t)
 ! c    real etha    ! viscosity of the air (g cm-1 s-1)
     real, intent(in) :: t !< absolute temperature (K)
 
@@ -161,7 +161,7 @@ end subroutine
 !>
 !>  a3=0.55        - constant
 !>
-  pure real function cun(dp)
+  pure elemental real function cun(dp)
     real, intent(in) :: dp !< particle size in micro meters
 ! c    real c        ! Cunningham factor
     real, parameter :: a1=1.257,a2=0.40,a3=0.55 ! constants
@@ -194,7 +194,7 @@ end subroutine
 
 !>  access gravitational velocity interpolated from precomputed lookup-tables
 !>  vgrav in m/s
-  pure elemental real function vgrav(run_comp, p,t)
+  elemental real function vgrav(run_comp, p,t)
     USE iso_fortran_env, only: real64
 
     integer, intent(in) :: run_comp !< running component number
@@ -202,7 +202,7 @@ end subroutine
     real, intent(in) :: t !< air absolute temperature (K)
 
     real(real64) :: grav1, grav2, pvg, tvg
-    integer :: ip, it, mrunning
+    integer :: ip, it
 
     ! old       gravity= vgrav(radiusmym(m),densitygcm3(m),p,t)
       ip = (p-pbasevg)/pincrvg
@@ -214,13 +214,12 @@ end subroutine
       it = min(size(vgtable,1)-1, it)
       tvg = tbasevg + it*tincrvg
 
-      mrunning = run_comp ! def_comp(m)%to_running
-      grav1 = vgtable(it,ip,mrunning) &
-          + (vgtable(it+1,ip,mrunning)-vgtable(it,ip,mrunning)) &
+      grav1 = vgtable(it,ip,run_comp) &
+          + (vgtable(it+1,ip,run_comp)-vgtable(it,ip,run_comp)) &
           *(t-tvg)/tincrvg
       ip = ip + 1
-      grav2 = vgtable(it,ip,mrunning) &
-          + (vgtable(it+1,ip,mrunning)-vgtable(it,ip,mrunning)) &
+      grav2 = vgtable(it,ip,run_comp) &
+          + (vgtable(it+1,ip,run_comp)-vgtable(it,ip,run_comp)) &
           *(t-tvg)/tincrvg
       vgrav = grav1 + (grav2-grav1) * (p-pvg)/pincrvg
 
@@ -235,19 +234,15 @@ end subroutine
 !>
 !>  etha=etha(t)    - viscosity of the air (g cm-1 s-1)
 !>  c(dp)        - Cunningham factor for the small particles
-  pure elemental real function vgrav_zanetti(dp,rp,p,t)
+  elemental real function vgrav_zanetti(dp,rp,p,t)
     real, intent(in) :: dp !< particle size in micro meters
     real, intent(in) :: rp !< density of particle (g/cm3)
     real, intent(in) :: p !< atmospheric presure (hPa)
     real, intent(in) :: t !< air absolute temperature (K)
 
     real, parameter :: g = 981.0 ! acceleration of gravity
-    real :: ra        ! density of the air
-    real :: etha    ! viscosity of the air
 
-    ra=roa(p,t)
-    etha=visc(t)
-    vgrav_zanetti=(dp*0.0001)**2*g*(rp-ra)*cun(dp)/(18.0*etha)
+    vgrav_zanetti=(dp*0.0001)**2*g*(rp-roa(p,t))*cun(dp)/(18.0*visc(t))
 
   end function vgrav_zanetti
 
@@ -303,7 +298,7 @@ end subroutine iter
 !>  ro(P,T) = P/(R*T)
 !>
 !>  ro         - density of the dry air (g/cm3)
-  pure real function roa(p,t)
+  elemental real function roa(p,t)
     real, intent(in) :: t !< absolute temperature (K)
     real, intent(in) :: p !< presure (hPa)
     real, parameter :: r = 287.04 ! Specific gas constant (J kg-1 K-1)
