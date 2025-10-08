@@ -411,24 +411,20 @@ pure elemental subroutine drydep_zhang_vd(surface_pressure, t2m, yflux, xflux, z
   EB = sc ** (-0.54)
 
   Apar = lookup_A(classnr, date_to_seasonal_category(date))
-  A = Apar * 1e-3
   ! Impaction
-  if (A .ne. LOOKUP_NAN) then
+  if (Apar .ne. LOOKUP_NAN) then
+    A = Apar * 1e-3
     ! Stokes number for vegetated surfaces (Zhang (2001)
     stokes = vs * ustar / (grav * A)
-  else
-    stokes = vs * ustar * ustar / (grav * ny)
-  endif
-
-  EIM = (stokes / (0.8 + stokes)) ** 2
-
-  ! Interception
-  if (A .ne. LOOKUP_NAN) then
+    ! Interception
     EIN = 0.5 * (diam / A) ** 2
   else
+    stokes = vs * ustar * ustar / (grav * ny)
     ! No interception over water surfaces
     EIN = 0.0
   endif
+
+  EIM = (stokes / (0.8 + stokes)) ** 2
 
   rs = 1.0 / (3.0 * ustar * (EB + EIM + EIN))
 
@@ -485,23 +481,19 @@ pure elemental subroutine drydep_emerson_vd(surface_pressure, t2m, yflux, xflux,
 
 
   Apar = lookup_A(classnr, date_to_seasonal_category(date))
-  A = Apar * 1e-3
   ! Impaction
-  if (A .ne. LOOKUP_NAN) then
+  if (Apar .ne. LOOKUP_NAN) then
+    A = Apar * 1e-3
     ! Stokes number for vegetated surfaces (Zhang (2001)
     stokes = vs * ustar / (grav * A)
-  else
-    stokes = vs * ustar * ustar / (grav * ny)
-  endif
-  EIM = 0.4 * (stokes / (0.8 + stokes)) ** 1.7
-
-  ! Interception
-  if (A .ne. LOOKUP_NAN) then
+    ! Interception
     EIN = 2.5 * (diam / A) ** 0.8
   else
+    stokes = vs * ustar * ustar / (grav * ny)
     ! No interception over water surfaces
     EIN = 0.0
   endif
+  EIM = 0.4 * (stokes / (0.8 + stokes)) ** 1.7
 
   rs = 1.0 / (3.0 * ustar * (EB + EIM + EIN))
   vd_dep = 1.0 / (raero + rs) + vs
