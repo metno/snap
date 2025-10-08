@@ -179,6 +179,7 @@ PROGRAM bsnap
   USE snapgrdML, only: modleveldump, ivcoor, &
                        klevel, imslp, itotcomp, gparam, &
                        igtype, imodlevel, modlevel_is_average, precipitation_in_output
+  USE vgravtablesML, only: vgravtables_init
   USE snaptabML, only: tabcon
   USE particleML, only: pdata, extraParticle
   USE allocateFieldsML, only: allocateFields, deallocateFields
@@ -190,7 +191,7 @@ PROGRAM bsnap
   USE rwalkML, only: rwalk, rwalk_init
   USE milibML, only: xyconvert
   use snapfldML, only: total_activity_lost_domain
-  USE forwrdML, only: forwrd, forwrd_init
+  USE forwrdML, only: forwrd
   USE wetdepML, only: wetdep, wetdep_scheme, wetdep_scheme_t, &
     WETDEP_SUBCLOUD_SCHEME_UNDEFINED, WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
     WETDEP_INCLOUD_SCHEME_NONE, WETDEP_INCLOUD_SCHEME_TAKEMURA, &
@@ -298,7 +299,6 @@ PROGRAM bsnap
 #if defined(FIMEX)
   call fimex_set_loglevel(FIMEX_LOGLEVEL_WARN)
 #endif
-  call initialize_timers()
 
   if (command_argument_count() < 1) then
     write (error_unit, *)
@@ -371,7 +371,9 @@ PROGRAM bsnap
   ntimefo = 0
 
 !..define fixed tables and constants (independant of input data)
-  call tabcon
+  call tabcon()
+  call vgravtables_init()
+  call initialize_timers()
 
 ! initialize random number generator for rwalk and release
   CALL init_random_seed()
@@ -713,7 +715,6 @@ PROGRAM bsnap
       ! prepare particle functions once before loop
       if (init) then
         call wetdep_init(tstep)
-        call forwrd_init()
         if (use_random_walk) call rwalk_init(tstep)
         init = .FALSE.
       end if
