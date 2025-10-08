@@ -34,7 +34,7 @@ module vgravtablesML
   real, parameter, private :: pincrvg = 1200./float(numpresvg-1)
   real, parameter, private :: pbasevg = 0. - pincrvg
 
-  public :: vgravtables_init, vgrav, vgrav_zanetti
+  public :: vgravtables_init, vgrav
 
   contains
 
