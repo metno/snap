@@ -19,7 +19,7 @@ module forwrdML
   implicit none
   private
 
-  public forwrd, forwrd_init
+  public forwrd
 
   contains
 
@@ -116,7 +116,7 @@ subroutine forwrd_dx(tf1, tf2, tnow, tstep, part, &
       ivlayer, ivlevel
   USE snapfldML, only: u1, u2, v1, v2, w1, w2, t1, t2, ps1, ps2
   USE snaptabML, only: cp, g, r, surface_height_sigma, exner
-  USE vgravtablesML, only: vgtable, pbasevg, tbasevg, pincrvg, tincrvg
+  USE vgravtablesML, only: vgrav
   USE snapdimML, only: nk
   USE snapparML, only: def_comp
 
@@ -146,7 +146,7 @@ subroutine forwrd_dx(tf1, tf2, tnow, tstep, part, &
   integer :: mrunning
   real(real64) :: dt,rt1,rt2,dx,dy,c1,c2,c3,c4,vlvl
   real(real64) :: dz1,dz2,uk1,uk2,vk1,vk2,wk1,wk2,w
-  real(real64) :: th,tk1,tk2,ps,p,pi,t,gravity,grav1,grav2,pvg,tvg
+  real(real64) :: th,tk1,tk2,ps,p,pi,t,gravity
   real(real64) :: pi1,pi2,dz,deta,wg
 
   real(real64), parameter :: ginv = 1.0/g
@@ -244,25 +244,8 @@ subroutine forwrd_dx(tf1, tf2, tnow, tstep, part, &
       pi = pi1*dz1+pi2*dz2
       t = th*pi*cpinv
       p = 1000.*(pi*cpinv)**rcpinv
-    ! old       gravity= vgrav(radiusmym(m),densitygcm3(m),p,t)
-      ip = (p-pbasevg)/pincrvg
-      ip = max(ip, 1)
-      ip = min(size(vgtable,2)-1, ip)
-      pvg = pbasevg + ip*pincrvg
-      it = (t-tbasevg)/tincrvg
-      it = max(it, 1)
-      it = min(size(vgtable,1)-1, it)
-      tvg = tbasevg + it*tincrvg
 
-      mrunning = def_comp(m)%to_running
-      grav1 = vgtable(it,ip,mrunning) &
-          + (vgtable(it+1,ip,mrunning)-vgtable(it,ip,mrunning)) &
-          *(t-tvg)/tincrvg
-      ip = ip + 1
-      grav2 = vgtable(it,ip,mrunning) &
-          + (vgtable(it+1,ip,mrunning)-vgtable(it,ip,mrunning)) &
-          *(t-tvg)/tincrvg
-      gravity = grav1 + (grav2-grav1) * (p-pvg)/pincrvg
+      gravity = vgrav(def_comp(m)%to_running, real(p), real(t))
     !######################################################################
     !     if(np.lt.21) write(error_unit,*) '  p,t,gravity: ',p,t,gravity
     !######################################################################
@@ -307,35 +290,4 @@ subroutine forwrd_dx(tf1, tf2, tnow, tstep, part, &
   return
 end subroutine forwrd_dx
 
-subroutine forwrd_init()
-  USE vgravtablesML, only: vgravtables, vgtable, pbasevg, tbasevg, pincrvg, tincrvg
-  USE snapparML, only: ncomp, run_comp, def_comp
-  USE snapdebug, only: iulog
-
-  integer :: i,m,ip,it
-  logical :: compute_grav_table
-
-  compute_grav_table = .false.
-  grav_do: do i=1,ncomp
-    m= run_comp(i)%to_defined
-    if(def_comp(m)%grav_type > 1) then
-      compute_grav_table = .true.
-      exit grav_do
-    endif
-  end do grav_do
-  if (.not.compute_grav_table) then
-    write(iulog,*) 'Computation of gravity tables not needed'
-    return
-  endif
-
-  write(iulog,*) 'Computing gravity tables...'
-  call vgravtables()
-  write(iulog,*) 'Surface gravity (1000hPa, 300K):'
-  it = (300-tbasevg)/tincrvg
-  ip = (1000-pbasevg)/pincrvg
-  do i=1,ncomp
-    m = run_comp(i)%to_defined
-    write(iulog,*) ' particle ', def_comp(m)%compname, ": ", vgtable(it,ip,i)
-  end do
-end subroutine
 end module forwrdML

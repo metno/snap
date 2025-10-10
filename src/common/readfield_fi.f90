@@ -77,6 +77,7 @@ contains
     USE snapmetML, only: met_params, xy_wind_units, pressure_units, omega_units, &
                          sigmadot_units, temp_units, requires_precip_deaccumulation
     USE snapdimML, only: nx, ny, nk, output_resolution_factor, hres_field, surface_index
+    USE snaptimers, only: metcalc_timer
     USE datetime, only: datetime_t, duration_t
     USE readfield_ncML, only: find_index, compute_vertical_coords
 !> current timestep (always positive), negative istep means reset
@@ -340,6 +341,7 @@ contains
       ! end initialization
     end if
 
+    call metcalc_timer%start()
     if (met_params%temp_is_abs) then
       if (allocated(t2_abs)) t2_abs(:,:,:) = t2
       !..abs.temp. -> pot.temp.
@@ -374,6 +376,7 @@ contains
       ! om2edot take means of omega (=0) and continuity-equation, -> use only continuity equation
       w2 = 2.0*w2
     end if
+    call metcalc_timer%stop_and_log()
 
 !..sigma_dot/eta_dot 0 at surface
     w2(:, :, 1) = 0.0
@@ -704,7 +707,7 @@ contains
     end block
 
   end subroutine
-  
+
   subroutine check(status, errmsg)
     integer, intent(in) :: status
     character(len=*), intent(in), optional :: errmsg
@@ -893,11 +896,14 @@ contains
     USE iso_fortran_env, only: real64
     USE snapmetML, only: met_params, &
       temp_units, downward_momentum_flux_units, surface_roughness_length_units, &
-      surface_heat_flux_units, leaf_area_index_units
-    use drydepml, only: drydep_precompute, requires_extra_fields_to_be_read, classnr
+      surface_heat_flux_units
+    use drydepml, only: drydep_precompute_meteo, drydep_precompute_particle, &
+      requires_extra_fields_to_be_read, classnr
     use snapparML, only: ncomp, run_comp, def_comp
-    use snapfldML, only: ps2, vd_dep, xflux, yflux, hflux, z0, leaf_area_index, t2m, &
-      roa, ustar, monin_l, raero, vs, rs
+    use snapfldML, only: ps2, vd_dep, xflux, yflux, hflux, z0, t2m, &
+      ustar, raero, my
+    use snaptimers, only: metcalc_timer
+
     use datetime, only: datetime_t
     type(FimexIO), intent(inout) :: fio
     integer, intent(in) :: timepos, timeposm1
@@ -906,7 +912,6 @@ contains
 
     real, allocatable :: tmp1(:, :), tmp2(:, :)
     integer :: i, mm
-    real(real64) :: diam, dens
 
     if (.not.requires_extra_fields_to_be_read()) then
       return
@@ -934,16 +939,6 @@ contains
 
     if (timepos == 1) then
       call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, hflux(:, :), nt=timepos, nr=nr)
-    else if (timepos == 13) then
-      ! Weird AROME data is invalid at t=12
-      call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, tmp1(:, :), nt=timeposm1, nr=nr)
-      call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, tmp2(:, :), nt=timepos+1, nr=nr)
-      hflux(:,:) = (tmp2 - tmp1)/2
-    else if (timepos == 14) then
-      ! Weird AROME data is invalid at t=13
-      call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, tmp1(:, :), nt=timeposm1-1, nr=nr)
-      call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, tmp2(:, :), nt=timepos, nr=nr)
-      hflux(:,:) = (tmp2 - tmp1)/2
     else
       call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, tmp1(:, :), nt=timeposm1, nr=nr)
       call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, tmp2(:, :), nt=timepos, nr=nr)
@@ -955,43 +950,23 @@ contains
 
     call fi_checkload(fio, met_params%z0, surface_roughness_length_units, z0(:, :), nt=timepos, nr=nr)
 
-    if (met_params%leaf_area_index /= "") then
-      call fi_checkload(fio, met_params%leaf_area_index, leaf_area_index_units, leaf_area_index(:, :), nt=timepos, nr=nr)
-    else ! Leaf area index may be split into patches which must be combined
-      block
-        real, allocatable :: leaf_area_index_p1(:,:), leaf_area_index_p2(:,:)
-        allocate(leaf_area_index_p1, leaf_area_index_p2, mold=leaf_area_index)
-        call fi_checkload(fio, met_params%leaf_area_index_p1, leaf_area_index_units, leaf_area_index_p1(:,:), nt=timepos, nr=nr)
-        call fi_checkload(fio, met_params%leaf_area_index_p2, leaf_area_index_units, leaf_area_index_p2(:,:), nt=timepos, nr=nr)
-
-        where (.not.ieee_is_nan(leaf_area_index_p1) .and. .not.ieee_is_nan(leaf_area_index_p2))
-          leaf_area_index = max(leaf_area_index_p1, leaf_area_index_p2)
-        elsewhere (.not.ieee_is_nan(leaf_area_index_p1))
-          leaf_area_index = leaf_area_index_p1
-        elsewhere (.not.ieee_is_nan(leaf_area_index_p2))
-          leaf_area_index = leaf_area_index_p2
-        elsewhere
-          leaf_area_index = 0.0
-        endwhere
-      end block
-    endif
-    where (ieee_is_nan(leaf_area_index))
-      leaf_area_index = 0.0
-    endwhere
-
     call fi_checkload(fio, met_params%t2m, temp_units, t2m(:, :), nt=timepos, nr=nr)
 
+    call metcalc_timer%start()
+    call drydep_precompute_meteo(ps2*100., t2m, yflux, xflux, z0, hflux, &
+      ustar, raero, my)
+    !$OMP PARALLEL DO PRIVATE(i,mm)
     do i=1,ncomp
       mm = run_comp(i)%to_defined
 
       if (def_comp(mm)%kdrydep == 1) then
-        diam = 2*def_comp(mm)%radiusmym*1e-6
-        dens = def_comp(mm)%densitygcm3*1e3
-        call drydep_precompute(ps2*100, t2m, yflux, xflux, z0, &
-            hflux, leaf_area_index, real(diam), real(dens), classnr, vd_dep(:, :, i), &
-            roa, ustar, monin_l, raero, vs, rs, itimefi)
+        call drydep_precompute_particle(ps2*100., t2m, &
+          ustar, raero, my, itimefi, &
+          def_comp(mm), classnr, vd_dep(:,:,i))
       endif
     end do
+    !$END PARALLEL DO
+    call metcalc_timer%stop_and_log()
   end subroutine
 
   subroutine read_largest_landfraction(inputfile)
