@@ -1179,7 +1179,7 @@ end subroutine
     use snapmetML, only: met_params
     use snapfldML, only: xflux, yflux, hflux, z0, leaf_area_index, t2m, vd_dep, roa, ustar, monin_l, &
       ps2, rs, raero, vs, enspos
-    use drydepml, only: classnr, requires_extra_fields_to_be_read, drydep_precompute
+    use drydepml, only: classnr, requires_extra_fields_to_be_read !, drydep_precompute_meteo, drydep_precompute_particle
     use snapdimML, only: nx, ny
     use snapparML, only: ncomp, run_comp, def_comp
     use vgravtablesML, only: vgrav
@@ -1268,10 +1268,11 @@ end subroutine
       if (def_comp(mm)%kdrydep == 1) then
         diam = 2*def_comp(mm)%radiusmym*1e-6
         dens = def_comp(mm)%densitygcm3*1e3
-        vs(:,:) = vgrav(i, ps2(:,:), t2m(:,:))
-        call drydep_precompute(ps2*100, t2m, yflux, xflux, z0, &
-            hflux, leaf_area_index, real(diam), real(dens), classnr, vd_dep(:, :, i), &
-            roa, ustar, monin_l, raero, vs, rs, itimefi)
+        ! TODO
+        ! vs(:,:) = vgrav(i, ps2(:,:), t2m(:,:))
+        ! call drydep_precompute(ps2*100, t2m, yflux, xflux, z0, &
+        !     hflux, leaf_area_index, real(diam), real(dens), classnr, vd_dep(:, :, i), &
+        !     roa, ustar, monin_l, raero, vs, rs, itimefi)
       endif
     end do
   end subroutine

@@ -74,14 +74,71 @@ pure logical function requires_extra_fields_to_be_read()
   requires_extra_fields_to_be_read = (drydep_scheme == DRYDEP_SCHEME_EMERSON)
 end function
 
+
+!> Precompute dry deposition meteorology
+!> returns roa, ustar, monin_obukhov_length, raero, my
+elemental subroutine drydep_precompute_meteo(surface_pressure, t2m, yflux, xflux, z0, hflux, &
+                                             roa, ustar, monin_obukhov_length, raero, my)
+  use iso_fortran_env, only: real64
+  use datetime, only: datetime_t
+  real, intent(in) :: surface_pressure !> [Pa]
+  real, intent(in) :: t2m !> [K]
+  real, intent(in) :: yflux !> [N/m^2]
+  real, intent(in) :: xflux !> [N/m^2]
+  real, intent(in) :: z0 !> [m]
+  real, intent(in) :: hflux !> [W s/m^2]
+  real(real64), intent(out) :: roa, monin_obukhov_length, raero, ustar, my
+
+  real(real64), parameter :: k = 0.4
+
+  roa = surface_pressure / (t2m * R)
+  ustar = hypot(yflux, xflux) / sqrt(roa)
+  monin_obukhov_length = - roa * CP * t2m * (ustar**3) / (k * grav * hflux)
+  raero = aerodynres(monin_obukhov_length, ustar, real(z0, real64))
+  my = ny * roa
+end subroutine
+
+
+elemental subroutine drydep_precompute_particle(surface_pressure, t2m, &
+    roa, ustar, monin_obukhov_length, raero, my, date, &
+    leaf_area_index, diam, density, classnr, vd_dep, &
+    vs, rs)
+  use iso_fortran_env, only: real64, int8
+  use datetime, only: datetime_t
+  real, intent(in) :: surface_pressure !> [Pa]
+  real, intent(in) :: t2m !> [K]
+  real(real64), intent(in) :: roa, monin_obukhov_length, raero, ustar, my
+  type(datetime_t), intent(in) :: date
+  real, intent(in) :: leaf_area_index !> Unitless
+  !> Diameter in m
+  real, intent(in) :: diam
+  !> Density in kg/m3
+  real, intent(in) :: density
+  integer(int8), intent(in) :: classnr !> Speficic mapping to land use type, see subroutine `lookup_A`
+  real, intent(out) :: vd_dep
+  real(real64), intent(out) :: rs
+  real(real64), intent(in) :: vs
+
+  select case(drydep_scheme)
+    case (DRYDEP_SCHEME_EMERSON)
+      call drydep_emerson_vd(surface_pressure, t2m, &
+            roa, ustar, monin_obukhov_length, raero, my, &
+            real(diam, kind=real64), real(density, kind=real64), classnr, vd_dep, &
+            vs, rs, date)
+    case default
+      error stop "Precomputation should not be called for this dry deposition scheme"
+  end select
+end subroutine
+
 !> Precompute dry deposition constants for (x, y)
 !> At every time step dry deposition is computed
 !> by lookup into the vd_dep matrix
-pure subroutine drydep_precompute(surface_pressure, t2m, yflux, xflux, z0, &
+subroutine drydep_precompute(surface_pressure, t2m, yflux, xflux, z0, &
     hflux, leaf_area_index, diam, density, classnr, vd_dep, &
     roa, ustar, monin_obukhov_length, raero, vs, rs, date)
   use iso_fortran_env, only: real64, int8
   use datetime, only: datetime_t
+  use snapfldML, only: my
   real, intent(in) :: surface_pressure(:,:) !> [Pa]
   real, intent(in) :: t2m(:,:) !> [K]
   real, intent(in) :: yflux(:,:) !> [N/m^2]
@@ -99,15 +156,12 @@ pure subroutine drydep_precompute(surface_pressure, t2m, yflux, xflux, z0, &
   real(real64), intent(in) :: vs(:,:)
   type(datetime_t), intent(in) :: date
 
-  ! precompute NaN, later used in the lookup code
-  select case(drydep_scheme)
-    case (DRYDEP_SCHEME_EMERSON)
-      call drydep_emerson_vd(surface_pressure, t2m, yflux, xflux, z0, &
-            hflux, real(diam, kind=real64), real(density, kind=real64), classnr, vd_dep, &
-            roa, ustar, monin_obukhov_length, raero, vs, rs, date)
-    case default
-      error stop "Precomputation should not be called for this dry deposition scheme"
-    end select
+  call drydep_precompute_meteo(surface_pressure, t2m, yflux, xflux, z0, hflux, &
+    roa, ustar, monin_obukhov_length, raero, my)
+  call drydep_precompute_particle(surface_pressure, t2m, &
+    roa, ustar, monin_obukhov_length, raero, my, date, &
+    leaf_area_index, diam, density, classnr, vd_dep, &
+    vs, rs)
 end subroutine
 
 !> Store landfraction values
@@ -346,38 +400,28 @@ end function
 !> Dry deposition velocites based on
 !> Emerson et al. 2020, Revisiting particle dry deposition and its role in radiative effect estimates
 !> https://doi.org/10.1073/pnas.2014761117
-pure elemental subroutine drydep_emerson_vd(surface_pressure, t2m, yflux, xflux, z0, &
-    hflux, diam, density, classnr, vd_dep, &
-    roa, ustar, monin_obukhov_length, raero, vs, rs, date)
+pure elemental subroutine drydep_emerson_vd(surface_pressure, t2m, roa, ustar, monin_obukhov_length, raero, my,&
+    diam, density, classnr, vd_dep, &
+    vs, rs, date)
   use datetime, only: datetime_t
   !> In hPa
   real, intent(in) :: surface_pressure
   real, intent(in) :: t2m
-  real, intent(in) :: yflux, xflux
-  real, intent(in) :: z0, hflux
+  real(real64), intent(in) :: roa, monin_obukhov_length, raero, ustar, my
   type(datetime_t), intent(in) :: date
   real(real64), intent(in) :: diam
   real(real64), intent(in) :: density
   real(real64), intent(in) :: vs ! m/s
   integer(int8), intent(in) :: classnr
   real, intent(out) :: vd_dep
-  real(real64), intent(out) :: roa, monin_obukhov_length, raero, ustar, rs
+  real(real64), intent(out) :: rs
 
   !> Aerial factor for interception (table 3 Zhang et al. (2001)), corresponding to evergreen
   !>  needleleaf trees (i.e. close to maximum deposition)
   real(real64) :: A
-  real(real64), parameter :: k = 0.4
 
-  real(real64) :: fac1, cslip, bdiff, my, sc, EB, EIM, EIN, stokes
+  real(real64) :: fac1, cslip, bdiff, sc, EB, EIM, EIN, stokes
   integer(int16) :: Apar
-
-  roa = surface_pressure / (t2m * R)
-
-  ustar = hypot(yflux, xflux) / sqrt(roa)
-  monin_obukhov_length = - roa * CP * t2m * (ustar**3) / (k * grav * hflux)
-  raero = aerodynres(monin_obukhov_length, ustar, real(z0, real64))
-
-  my = ny * roa
 
   fac1 = -0.55 * diam / lambda
   ! Cunningham slip factor
