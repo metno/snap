@@ -955,6 +955,7 @@ contains
     call metcalc_timer%start()
     call drydep_precompute_meteo(ps2*100., t2m, yflux, xflux, z0, hflux, &
       ustar, raero, my)
+    !$OMP PARALLEL DO PRIVATE(i,mm)
     do i=1,ncomp
       mm = run_comp(i)%to_defined
 
@@ -964,6 +965,7 @@ contains
           def_comp(mm), classnr, vd_dep(:,:,i))
       endif
     end do
+    !$END PARALLEL DO
     call metcalc_timer%stop_and_log()
   end subroutine
 
