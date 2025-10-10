@@ -16,7 +16,7 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 module drydepml
-  use ISO_FORTRAN_ENV, only: real64, int8
+  use ISO_FORTRAN_ENV, only: real64, int8, int16
 
   implicit none
   private
@@ -38,7 +38,7 @@ module drydepml
   real(real64), parameter :: grav = 9.8
   real(real64), parameter :: CP = 1005.0
   real(real64), parameter :: pi = 2.0*asin(1.0)
-  real(real64), parameter :: LOOKUP_NAN = -999.99 ! NaN value in zhang table, just something out of bounds
+  integer(int16), parameter :: LOOKUP_NAN = -32768 ! NaN value in zhang table, just something out of bounds
 
   !> Kinematic viscosity of air, m2 s-1 at +15 C
   real(real64), parameter :: ny = 1.5e-5
@@ -292,8 +292,8 @@ pure elemental subroutine drydep_emep_vd(surface_pressure, t2m, yflux, xflux, z0
   vd_dep = 1.0 / (rs + raero) + vs
 end subroutine
 
-!> Table 3 for Zhang et. al 2001
-pure real(kind=real64) function lookup_A(classnr, seasonal_category)
+!> Table 3 for Zhang et. al 2001 https://doi.org/10.1016/S1352-2310(00)00326-5
+elemental integer(int16) function lookup_A(classnr, seasonal_category)
   integer(int8), intent(in) :: classnr
   integer, intent(in) :: seasonal_category
   lookup_A = LOOKUP_NAN
@@ -307,36 +307,36 @@ pure real(kind=real64) function lookup_A(classnr, seasonal_category)
   case (14) ! Ice and ice sheets -> Z12
     lookup_A = LOOKUP_NAN
   case (15) ! Urban -> Z15
-    lookup_A = 10.0
+    lookup_A = 10
   case (16) ! Crops -> Z7
     select case(seasonal_category)
     case (1,2,5)
-      lookup_A = 2.0
+      lookup_A = 2
     case (3,4)
-      lookup_A = 5.0
+      lookup_A = 5
     end select
   case (17) ! Grass -> Z6
     select case(seasonal_category)
     case (1,2,5)
-      lookup_A = 2.0
+      lookup_A = 2
     case (3,4)
-      lookup_A = 5.0
+      lookup_A = 5
     end select
   case (18) ! Wetlands -> Z11
-    lookup_A = 10.0
+    lookup_A = 10
   case (19) ! Evergreen needleleaf -> Z1
-    lookup_A = 2.0
+    lookup_A = 2
   case (20) ! Deciduous needleleaf -> Z3
     select case(seasonal_category)
     case (1,2,5)
-      lookup_A = 2.0
+      lookup_A = 2
     case (3,4)
-      lookup_A = 5.0
+      lookup_A = 5
     end select
   case (21) ! Mixed forest -> Z5
-    lookup_A = 5.0
+    lookup_A = 5
   case (22) ! Shrubs and interrupted woodlands -> Z10
-    lookup_A = 10.0
+    lookup_A = 10
   case default
     lookup_A = LOOKUP_NAN
   end select
@@ -369,7 +369,7 @@ pure elemental subroutine drydep_emerson_vd(surface_pressure, t2m, yflux, xflux,
   real(real64), parameter :: k = 0.4
 
   real(real64) :: fac1, cslip, bdiff, my, sc, EB, EIM, EIN, stokes
-  real(real64) :: Apar
+  integer(int16) :: Apar
 
   roa = surface_pressure / (t2m * R)
 
