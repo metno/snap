@@ -50,9 +50,6 @@ module snapmetML
     character(len=80) :: xflux = ''
     character(len=80) :: hflux = ''
     character(len=80) :: z0 = ''
-    character(len=80) :: leaf_area_index = ''
-    character(len=80) :: leaf_area_index_p1 = ''
-    character(len=80) :: leaf_area_index_p2 = ''
 
     ! flags when reading the data
     logical :: temp_is_abs = .false.
@@ -96,7 +93,6 @@ module snapmetML
   character(len=*), parameter, public :: downward_momentum_flux_units = 'N/m^2'
   character(len=*), parameter, public :: surface_roughness_length_units = 'm'
   character(len=*), parameter, public :: surface_heat_flux_units = 'W s/m^2'
-  character(len=*), parameter, public :: leaf_area_index_units = '1'
 
   character(len=*), parameter, public :: cloud_fraction_units = '%'
   character(len=*), parameter, public :: mass_fraction_units = 'kg/kg'
@@ -246,9 +242,6 @@ module snapmetML
       ! met_params%z0 = 'surface_roughness_length'
       met_params%z0 = "SFX_Z0"
       met_params%hflux = 'integral_of_surface_downward_sensible_heat_flux_wrt_time'
-      ! met_params%leaf_area_index = 'leaf_area_index'
-      met_params%leaf_area_index_p1 = 'SFX_X001LAI'
-      met_params%leaf_area_index_p2 = 'SFX_X002LAI'
 
       met_params%mass_fraction_rain_in_air = "mass_fraction_of_rain_in_air_ml"
       met_params%mass_fraction_graupel_in_air = "mass_fraction_of_graupel_in_air_ml"

@@ -1753,9 +1753,6 @@ contains
         call init_meteo_params(nctype, ierror)
         if (ierror /= 0) goto 12
 #if defined(SNAP_EXPERIMENTAL)
-      case ('grid.nctype.leaf_area_index')
-        if (.not. has_value) goto 12
-        read(cinput(pname_start:pname_end), *, err=12) met_params%leaf_area_index
       case ('grid.nctype.z0')
         if (.not. has_value) goto 12
         read(cinput(pname_start:pname_end), *, err=12) met_params%z0

@@ -78,7 +78,7 @@ end function
 !> Precompute dry deposition meteorology
 !> returns roa, ustar, monin_obukhov_length, raero, my
 elemental subroutine drydep_precompute_meteo(surface_pressure, t2m, yflux, xflux, z0, hflux, &
-                                             roa, ustar, monin_obukhov_length, raero, my)
+                                             ustar, raero, my)
   use iso_fortran_env, only: real64
   use datetime, only: datetime_t
   real, intent(in) :: surface_pressure !> [Pa]
@@ -87,9 +87,11 @@ elemental subroutine drydep_precompute_meteo(surface_pressure, t2m, yflux, xflux
   real, intent(in) :: xflux !> [N/m^2]
   real, intent(in) :: z0 !> [m]
   real, intent(in) :: hflux !> [W s/m^2]
-  real(real64), intent(out) :: roa, monin_obukhov_length, raero, ustar, my
+  real(real64), intent(out) :: raero, ustar, my
 
   real(real64), parameter :: k = 0.4
+
+  real(real64) :: roa, monin_obukhov_length
 
   roa = surface_pressure / (t2m * R)
   ustar = hypot(yflux, xflux) / sqrt(roa)
@@ -100,65 +102,29 @@ end subroutine
 
 
 elemental subroutine drydep_precompute_particle(surface_pressure, t2m, &
-    roa, ustar, monin_obukhov_length, raero, my, date, &
-    leaf_area_index, component, classnr, vd_dep, &
-    vs, rs)
+    ustar, raero, my, date, &
+    component, classnr, vd_dep)
   use iso_fortran_env, only: real64, int8
   use datetime, only: datetime_t
   use snapparML, only: defined_component
   real, intent(in) :: surface_pressure !> [Pa]
   real, intent(in) :: t2m !> [K]
-  real(real64), intent(in) :: roa, monin_obukhov_length, raero, ustar, my
+  real(real64), intent(in) :: raero, ustar, my
   type(datetime_t), intent(in) :: date
-  real, intent(in) :: leaf_area_index !> Unitless
   type(defined_component), intent(in) :: component
   integer(int8), intent(in) :: classnr !> Speficic mapping to land use type, see subroutine `lookup_A`
   real, intent(out) :: vd_dep
-  real(real64), intent(out) :: rs
-  real(real64), intent(out) :: vs
 
   select case(drydep_scheme)
     case (DRYDEP_SCHEME_EMERSON)
       call drydep_emerson_vd(surface_pressure, t2m, &
-            roa, ustar, monin_obukhov_length, raero, my, &
-            component, classnr, vd_dep, &
-            vs, rs, date)
+            ustar, raero, my, date, &
+            component, classnr, vd_dep)
     case default
       error stop "Precomputation should not be called for this dry deposition scheme"
   end select
 end subroutine
 
-!> Precompute dry deposition constants for (x, y)
-!> At every time step dry deposition is computed
-!> by lookup into the vd_dep matrix
-subroutine drydep_precompute(surface_pressure, t2m, yflux, xflux, z0, &
-    hflux, leaf_area_index, component, classnr, vd_dep, &
-    roa, ustar, monin_obukhov_length, raero, vs, rs, date)
-  use iso_fortran_env, only: real64, int8
-  use datetime, only: datetime_t
-  use snapparML, only: defined_component
-  use snapfldML, only: my
-  real, intent(in) :: surface_pressure(:,:) !> [Pa]
-  real, intent(in) :: t2m(:,:) !> [K]
-  real, intent(in) :: yflux(:,:) !> [N/m^2]
-  real, intent(in) :: xflux(:,:) !> [N/m^2]
-  real, intent(in) :: z0(:,:) !> [m]
-  real, intent(in) :: hflux(:,:) !> [W s/m^2]
-  real, intent(in) :: leaf_area_index(:,:) !> Unitless
-  type(defined_component), intent(in) :: component
-  integer(int8), intent(in) :: classnr(:,:) !> Speficic mapping to land use type, see subroutine `lookup_A`
-  real, intent(out) :: vd_dep(:,:)
-  real(real64), intent(out) :: roa(:,:), monin_obukhov_length(:,:), raero(:,:), ustar(:,:), rs(:,:)
-  real(real64), intent(out) :: vs(:,:)
-  type(datetime_t), intent(in) :: date
-
-  call drydep_precompute_meteo(surface_pressure, t2m, yflux, xflux, z0, hflux, &
-    roa, ustar, monin_obukhov_length, raero, my)
-  call drydep_precompute_particle(surface_pressure, t2m, &
-    roa, ustar, monin_obukhov_length, raero, my, date, &
-    leaf_area_index, component, classnr, vd_dep, &
-    vs, rs)
-end subroutine
 
 !> Store landfraction values
 subroutine preprocess_landfraction(values)
@@ -335,30 +301,30 @@ end function
 !> Dry deposition velocites based on
 !> Emerson et al. 2020, Revisiting particle dry deposition and its role in radiative effect estimates
 !> https://doi.org/10.1073/pnas.2014761117
-pure elemental subroutine drydep_emerson_vd(surface_pressure, t2m, roa, ustar, monin_obukhov_length, raero, my,&
-    component, classnr, vd_dep, &
-    vs, rs, date)
+pure elemental subroutine drydep_emerson_vd(surface_pressure, t2m, ustar, raero, my,&
+    date, component, classnr, &
+    vd_dep)
   use datetime, only: datetime_t
   use snapparML, only: defined_component
   use vgravtablesML, only: vgrav
   !> In hPa
   real, intent(in) :: surface_pressure
   real, intent(in) :: t2m
-  real(real64), intent(in) :: roa, monin_obukhov_length, raero, ustar, my
+  real(real64), intent(in) :: raero, ustar, my
   type(datetime_t), intent(in) :: date
   type(defined_component), intent(in) :: component
-  real(real64), intent(out) :: vs ! m/s
   integer(int8), intent(in) :: classnr
   real, intent(out) :: vd_dep
-  real(real64), intent(out) :: rs
 
   !> Aerial factor for interception (table 3 Zhang et al. (2001)), corresponding to evergreen
   !>  needleleaf trees (i.e. close to maximum deposition)
-  real(real64) :: A
-  real :: diam
+  real(real64) :: A, rs
+  real :: diam, vs
 
   real(real64) :: fac1, cslip, bdiff, sc, EB, EIM, EIN, stokes
   integer(int16) :: Apar
+
+  vs = vgrav(component%to_running, surface_pressure/100., t2m)
 
   diam = 2*component%radiusmym*1e-6
   fac1 = -0.55 * diam / lambda
@@ -390,7 +356,6 @@ pure elemental subroutine drydep_emerson_vd(surface_pressure, t2m, roa, ustar, m
   EIM = 0.4 * (stokes / (0.8 + stokes)) ** 1.7
 
   rs = 1.0 / (3.0 * ustar * (EB + EIM + EIN))
-  vs = vgrav(component%to_running, surface_pressure/100., t2m)
   vd_dep = 1.0 / (raero + rs) + vs
 end subroutine
 
