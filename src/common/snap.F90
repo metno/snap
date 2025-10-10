@@ -205,8 +205,8 @@ PROGRAM bsnap
     WETDEP_INCLOUD_SCHEME_ROSELLE
 #endif
   USE drydepml, only: drydep, drydep_scheme, &
-          DRYDEP_SCHEME_OLD, DRYDEP_SCHEME_NEW, DRYDEP_SCHEME_EMEP, &
-          DRYDEP_SCHEME_ZHANG, DRYDEP_SCHEME_EMERSON, DRYDEP_SCHEME_UNDEFINED, &
+          DRYDEP_SCHEME_OLD, DRYDEP_SCHEME_NEW, &
+          DRYDEP_SCHEME_EMERSON, DRYDEP_SCHEME_UNDEFINED, &
           largest_landfraction_file,  drydep_unload => unload
   USE decayML, only: decay, decayDeps
   USE posintML, only: posint
@@ -1147,14 +1147,6 @@ contains
         case ('new')
           if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_NEW) goto 12
           drydep_scheme = DRYDEP_SCHEME_NEW
-#if defined(SNAP_EXPERIMENTAL)
-        case ('emep')
-          if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_EMEP) goto 12
-          drydep_scheme = DRYDEP_SCHEME_EMEP
-        case ('zhang')
-          if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_ZHANG) goto 12
-          drydep_scheme = DRYDEP_SCHEME_ZHANG
-#endif
         case ('emerson')
           if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_EMERSON) goto 12
           drydep_scheme = DRYDEP_SCHEME_EMERSON
@@ -1163,9 +1155,7 @@ contains
           goto 12
         end select
       case ('dry.deposition.save')
-        if (drydep_scheme /= DRYDEP_SCHEME_EMEP .and. &
-            drydep_scheme /= DRYDEP_SCHEME_ZHANG .and. &
-            drydep_scheme /= DRYDEP_SCHEME_EMERSON) then
+        if (drydep_scheme /= DRYDEP_SCHEME_EMERSON) then
           write(error_unit, *) "The drydep scheme is not set to a compatible value, ignoring"
         else
           output_vd = .true.
@@ -2263,9 +2253,7 @@ contains
             def_comp(m)%gravityms
           ierror = 1
         end if
-      elseif (((drydep_scheme == DRYDEP_SCHEME_EMEP) .or. &
-               (drydep_scheme == DRYDEP_SCHEME_EMERSON) .or. &
-               (drydep_scheme == DRYDEP_SCHEME_ZHANG)) .and. &
+      elseif (((drydep_scheme == DRYDEP_SCHEME_EMERSON)) .and. &
               def_comp(m)%kdrydep == 1) then
         ! Check if component has the necessary definitions to compute
         ! the dry deposition
