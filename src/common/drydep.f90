@@ -280,67 +280,6 @@ pure function aerodynres(L, ustar, z0) result(raero)
   raero = (1 / (ka * ustar)) * (log(z/z0) - fi)
 end function
 
-!> Dry deposition velocity given by
-!> Simpson et al. 2012, The EMEP MSC-W chemical transport model - technical description
-!> https://doi.org/10.5194/acp-12-7825-2012
-pure elemental subroutine drydep_emep_vd(surface_pressure, t2m, yflux, xflux, z0, &
-    hflux, leaf_area_index, diam, density, classnr, vd_dep, &
-    roa, ustar, monin_obukhov_length, raero, vs, rs)
-  !> In hPa
-  real, intent(in) :: surface_pressure
-  real, intent(in) :: t2m
-  real, intent(in) :: yflux, xflux
-  real, intent(in) :: z0, hflux
-  real, intent(in) :: leaf_area_index
-  real, intent(in) :: diam
-  real, intent(in) :: density
-  integer(int8), intent(in) :: classnr
-  real, intent(out) :: vd_dep
-
-  real(real64), intent(out) :: roa
-  real(real64), intent(out) :: ustar
-  real(real64), intent(out) :: monin_obukhov_length
-  real(real64) :: SAI
-
-  real(real64), parameter :: k = 0.4
-  ! real, parameter :: a1 = 0.002
-  real(real64) :: a1
-  real(real64), parameter :: a2 = 300
-  real(real64) :: a1sai
-  real(real64), intent(in) :: vs
-  real(real64), intent(out) :: raero
-  real(real64), intent(out) :: rs
-  real(real64) :: fac
-
-
-  roa = surface_pressure / (t2m * R)
-
-  ustar = hypot(yflux, xflux) / sqrt(roa)
-  monin_obukhov_length = - roa * CP * t2m * (ustar**3) / (k * grav * hflux)
-
-  SAI = leaf_area_index + 1
-  if (classnr >= 19 .and. classnr <= 21) then
-    a1sai = 0.008 * SAI / 10
-  else
-    a1sai = 0.0
-  endif
-
-  a1 = max(a1sai, 0.002)
-
-  raero = aerodynres(real(monin_obukhov_length, real64), real(ustar, real64), real(z0, real64))
-
-  if (monin_obukhov_length > -25.0 .and. monin_obukhov_length < 0.0) then
-    monin_obukhov_length = -25.0
-  endif
-  if (monin_obukhov_length > 0) then
-    rs = 1.0 / (ustar * a1)
-  else
-    fac = (-a2 / monin_obukhov_length) ** ( 2.0 / 3.0 )
-    rs = 1.0 / (ustar * a1 * (1 + fac))
-  endif
-
-  vd_dep = 1.0 / (rs + raero) + vs
-end subroutine
 
 !> Table 3 for Zhang et. al 2001 https://doi.org/10.1016/S1352-2310(00)00326-5
 elemental integer(int16) function lookup_A(classnr, seasonal_category)
