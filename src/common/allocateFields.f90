@@ -29,7 +29,7 @@ module allocateFieldsML
       aircraft_doserate, aircraft_doserate_scratch, t1_abs, t2_abs, &
       aircraft_doserate_threshold_height, vd_dep, &
       xflux, yflux, hflux, t2m, z0, leaf_area_index, &
-      roa, ustar, monin_l, raero, vs, rs, &
+      roa, ustar, monin_l, raero, vs, my, rs, &
       total_activity_released, total_activity_lost_domain, total_activity_lost_other, &
       wscav, cloud_cover
   USE snapfilML, only: idata, fdata
@@ -246,7 +246,7 @@ subroutine allocateFields
       if (AllocateStatus /= 0) ERROR STOP errmsg
       allocate(roa(nx, ny), STAT=AllocateStatus)
       if (AllocateStatus /= 0) ERROR STOP errmsg
-      allocate(ustar, monin_l, raero, vs, rs, mold=roa, STAT=AllocateStatus)
+      allocate(ustar, monin_l, raero, vs, my, rs, mold=roa, STAT=AllocateStatus)
       if (AllocateStatus /= 0) ERROR STOP errmsg
     endif
   end block
