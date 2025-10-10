@@ -897,10 +897,11 @@ contains
     USE snapmetML, only: met_params, &
       temp_units, downward_momentum_flux_units, surface_roughness_length_units, &
       surface_heat_flux_units, leaf_area_index_units
-    use drydepml, only: drydep_precompute, requires_extra_fields_to_be_read, classnr
+    use drydepml, only: drydep_precompute_meteo, drydep_precompute_particle, &
+      requires_extra_fields_to_be_read, classnr
     use snapparML, only: ncomp, run_comp, def_comp
     use snapfldML, only: ps2, vd_dep, xflux, yflux, hflux, z0, leaf_area_index, t2m, &
-      roa, ustar, monin_l, raero, vs, rs
+      roa, ustar, monin_l, raero, vs, rs, my
     use snaptimers, only: metcalc_timer
 
     use datetime, only: datetime_t
@@ -976,15 +977,16 @@ contains
     call fi_checkload(fio, met_params%t2m, temp_units, t2m(:, :), nt=timepos, nr=nr)
 
     call metcalc_timer%start()
+    call drydep_precompute_meteo(ps2*100., t2m, yflux, xflux, z0, hflux, &
+      roa, ustar, monin_l, raero, my)
     do i=1,ncomp
       mm = run_comp(i)%to_defined
 
       if (def_comp(mm)%kdrydep == 1) then
-        !vs(:,:) = vgrav_zanetti(real(diam * 1e6), real(dens / 1000), ps2, t2m) / 1e2
-        !write(*,*) vs(1,1), "old vs new", vgrav(i, ps2(1,1), t2m(1,1))
-        call drydep_precompute(ps2*100, t2m, yflux, xflux, z0, &
-            hflux, leaf_area_index, def_comp(mm), classnr, vd_dep(:, :, i), &
-            roa, ustar, monin_l, raero, vs, rs, itimefi)
+        call drydep_precompute_particle(ps2*100., t2m, &
+          roa, ustar, monin_l, raero, my, itimefi, &
+          leaf_area_index, def_comp(mm), classnr, vd_dep(:,:,i), &
+          vs, rs)
       endif
     end do
     call metcalc_timer%stop_and_log()
