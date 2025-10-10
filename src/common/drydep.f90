@@ -28,8 +28,6 @@ module drydepml
   integer, parameter, public :: DRYDEP_SCHEME_UNDEFINED = 0
   integer, parameter, public :: DRYDEP_SCHEME_OLD = 1
   integer, parameter, public :: DRYDEP_SCHEME_NEW = 2
-  integer, parameter, public :: DRYDEP_SCHEME_EMEP = 3
-  integer, parameter, public :: DRYDEP_SCHEME_ZHANG = 4
   integer, parameter, public :: DRYDEP_SCHEME_EMERSON = 5
 
   !> The active dry deposition scheme
@@ -65,24 +63,15 @@ subroutine drydep(tstep, part)
 
   if (drydep_scheme == DRYDEP_SCHEME_OLD) call drydep1(part)
   if (drydep_scheme == DRYDEP_SCHEME_NEW) call drydep2(tstep, part)
-  if (drydep_scheme == DRYDEP_SCHEME_EMEP .or. &
-      drydep_scheme == DRYDEP_SCHEME_ZHANG .or. &
-      drydep_scheme == DRYDEP_SCHEME_EMERSON) call drydep_nonconstant_vd(tstep, vd_dep, part)
+  if (drydep_scheme == DRYDEP_SCHEME_EMERSON) call drydep_nonconstant_vd(tstep, vd_dep, part)
 end subroutine
 
 pure logical function requires_landfraction_file()
-    requires_landfraction_file = ( &
-      (drydep_scheme == DRYDEP_SCHEME_ZHANG).or. &
-      (drydep_scheme == DRYDEP_SCHEME_EMERSON).or. &
-      (drydep_scheme == DRYDEP_SCHEME_EMEP) &
-    )
+    requires_landfraction_file = (drydep_scheme == DRYDEP_SCHEME_EMERSON)
 end function
 
 pure logical function requires_extra_fields_to_be_read()
-  requires_extra_fields_to_be_read = ( &
-    (drydep_scheme == DRYDEP_SCHEME_ZHANG).or. &
-    (drydep_scheme == DRYDEP_SCHEME_EMERSON).or. &
-    (drydep_scheme == DRYDEP_SCHEME_EMEP))
+  requires_extra_fields_to_be_read = (drydep_scheme == DRYDEP_SCHEME_EMERSON)
 end function
 
 !> Precompute dry deposition constants for (x, y)
@@ -112,14 +101,6 @@ pure subroutine drydep_precompute(surface_pressure, t2m, yflux, xflux, z0, &
 
   ! precompute NaN, later used in the lookup code
   select case(drydep_scheme)
-    case (DRYDEP_SCHEME_EMEP)
-      call drydep_emep_vd(surface_pressure, t2m, yflux, xflux, z0, &
-            hflux, leaf_area_index, diam, density, classnr, vd_dep, &
-            roa, ustar, monin_obukhov_length, raero, vs, rs)
-    case (DRYDEP_SCHEME_ZHANG)
-      call drydep_zhang_vd(surface_pressure, t2m, yflux, xflux, z0, &
-            hflux, real(diam, kind=real64), real(density, kind=real64), classnr, vd_dep, &
-            roa, ustar, monin_obukhov_length, raero, vs, rs, date)
     case (DRYDEP_SCHEME_EMERSON)
       call drydep_emerson_vd(surface_pressure, t2m, yflux, xflux, z0, &
             hflux, real(diam, kind=real64), real(density, kind=real64), classnr, vd_dep, &
@@ -361,75 +342,6 @@ pure real(kind=real64) function lookup_A(classnr, seasonal_category)
   end select
 
 end function
-
-!> Dry deposition velocites based on
-!> Zhang et al. 2001, A size-segregated particle dry deposition scheme for an atmospheric aerosol module
-!> https://doi.org/10.1016/S1352-2310(00)00326-5
-pure elemental subroutine drydep_zhang_vd(surface_pressure, t2m, yflux, xflux, z0, &
-    hflux, diam, density, classnr, vd_dep, &
-    roa, ustar, monin_obukhov_length, raero, vs, rs, date)
-  use datetime, only: datetime_t
-  !> In hPa
-  real, intent(in) :: surface_pressure
-  real, intent(in) :: t2m
-  real, intent(in) :: yflux, xflux
-  real, intent(in) :: z0, hflux
-  type(datetime_t), intent(in) :: date
-  real(real64), intent(in) :: diam
-  real(real64), intent(in) :: density, vs
-  integer(int8), intent(in) :: classnr
-  real, intent(out) :: vd_dep
-  real(real64), intent(out) :: roa, monin_obukhov_length, raero, ustar, rs
-
-  !> Aerial factor for interception (table 3 Zhang et al. (2001)), corresponding to evergreen
-  !>  needleleaf trees (i.e. close to maximum deposition)
-  real(real64) :: A
-  real(real64), parameter :: k = 0.4
-
-  real(real64) :: fac1, cslip, bdiff, my, sc, EB, EIM, EIN, stokes
-  real(real64) :: Apar
-
-  roa = surface_pressure / (t2m * R)
-
-  ustar = hypot(yflux, xflux) / sqrt(roa)
-  monin_obukhov_length = - roa * CP * t2m * (ustar**3) / (k * grav * hflux)
-  raero = aerodynres(monin_obukhov_length, ustar, real(z0, real64))
-
-  my = ny * roa
-
-  fac1 = -0.55 * diam / lambda
-  ! Cunningham slip factor
-  cslip = 1 + 2 * lambda / diam * (1.257 + 0.4*exp(fac1))
-
-  ! Brownian diffusion
-  ! Brownian diffusivity of air (see equation 19 of Giardiana and Buffa, 2018)
-  ! bdiff=2.83e-11 # Browian diffusion coefficient for 1 um particle (see Brereton, 2014)
-   bdiff = bolzc * t2m * cslip / (3 * pi * my * diam)
-
-  sc = ny / bdiff
-  ! A range og 0.5-0.58 dependening on the surface is given, 0.54=grass
-  EB = sc ** (-0.54)
-
-  Apar = lookup_A(classnr, date_to_seasonal_category(date))
-  if (Apar .ne. LOOKUP_NAN) then
-    A = Apar * 1e-3
-    ! Stokes number for vegetated surfaces (Zhang (2001) needed for impaction
-    stokes = vs * ustar / (grav * A)
-    ! Interception
-    EIN = 0.5 * (diam / A) ** 2
-  else
-    stokes = vs * ustar * ustar / (grav * ny)
-    ! No interception over water surfaces
-    EIN = 0.0
-  endif
-
-  ! Impaction
-  EIM = (stokes / (0.8 + stokes)) ** 2
-
-  rs = 1.0 / (3.0 * ustar * (EB + EIM + EIN))
-
-  vd_dep = 1.0 / (raero + rs) + vs
-end subroutine
 
 !> Dry deposition velocites based on
 !> Emerson et al. 2020, Revisiting particle dry deposition and its role in radiative effect estimates
