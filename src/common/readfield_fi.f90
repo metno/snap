@@ -896,12 +896,12 @@ contains
     USE iso_fortran_env, only: real64
     USE snapmetML, only: met_params, &
       temp_units, downward_momentum_flux_units, surface_roughness_length_units, &
-      surface_heat_flux_units, leaf_area_index_units
+      surface_heat_flux_units
     use drydepml, only: drydep_precompute_meteo, drydep_precompute_particle, &
       requires_extra_fields_to_be_read, classnr
     use snapparML, only: ncomp, run_comp, def_comp
-    use snapfldML, only: ps2, vd_dep, xflux, yflux, hflux, z0, leaf_area_index, t2m, &
-      roa, ustar, monin_l, raero, vs, rs, my
+    use snapfldML, only: ps2, vd_dep, xflux, yflux, hflux, z0, t2m, &
+      ustar, raero, my
     use snaptimers, only: metcalc_timer
 
     use datetime, only: datetime_t
@@ -950,43 +950,18 @@ contains
 
     call fi_checkload(fio, met_params%z0, surface_roughness_length_units, z0(:, :), nt=timepos, nr=nr)
 
-    if (met_params%leaf_area_index /= "") then
-      call fi_checkload(fio, met_params%leaf_area_index, leaf_area_index_units, leaf_area_index(:, :), nt=timepos, nr=nr)
-    else ! Leaf area index may be split into patches which must be combined
-      block
-        real, allocatable :: leaf_area_index_p1(:,:), leaf_area_index_p2(:,:)
-        allocate(leaf_area_index_p1, leaf_area_index_p2, mold=leaf_area_index)
-        call fi_checkload(fio, met_params%leaf_area_index_p1, leaf_area_index_units, leaf_area_index_p1(:,:), nt=timepos, nr=nr)
-        call fi_checkload(fio, met_params%leaf_area_index_p2, leaf_area_index_units, leaf_area_index_p2(:,:), nt=timepos, nr=nr)
-
-        where (.not.ieee_is_nan(leaf_area_index_p1) .and. .not.ieee_is_nan(leaf_area_index_p2))
-          leaf_area_index = max(leaf_area_index_p1, leaf_area_index_p2)
-        elsewhere (.not.ieee_is_nan(leaf_area_index_p1))
-          leaf_area_index = leaf_area_index_p1
-        elsewhere (.not.ieee_is_nan(leaf_area_index_p2))
-          leaf_area_index = leaf_area_index_p2
-        elsewhere
-          leaf_area_index = 0.0
-        endwhere
-      end block
-    endif
-    where (ieee_is_nan(leaf_area_index))
-      leaf_area_index = 0.0
-    endwhere
-
     call fi_checkload(fio, met_params%t2m, temp_units, t2m(:, :), nt=timepos, nr=nr)
 
     call metcalc_timer%start()
     call drydep_precompute_meteo(ps2*100., t2m, yflux, xflux, z0, hflux, &
-      roa, ustar, monin_l, raero, my)
+      ustar, raero, my)
     do i=1,ncomp
       mm = run_comp(i)%to_defined
 
       if (def_comp(mm)%kdrydep == 1) then
         call drydep_precompute_particle(ps2*100., t2m, &
-          roa, ustar, monin_l, raero, my, itimefi, &
-          leaf_area_index, def_comp(mm), classnr, vd_dep(:,:,i), &
-          vs, rs)
+          ustar, raero, my, itimefi, &
+          def_comp(mm), classnr, vd_dep(:,:,i))
       endif
     end do
     call metcalc_timer%stop_and_log()
