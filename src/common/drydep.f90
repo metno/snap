@@ -22,7 +22,7 @@ module drydepml
   private
 
   public :: drydep, preprocess_landfraction, unload, &
-    requires_extra_fields_to_be_read, drydep_precompute, &
+    requires_extra_fields_to_be_read, drydep_precompute_meteo, drydep_precompute_particle, &
     requires_landfraction_file
 
   integer, parameter, public :: DRYDEP_SCHEME_UNDEFINED = 0
