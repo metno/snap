@@ -298,6 +298,12 @@ elemental integer(int16) function lookup_A(classnr, seasonal_category)
 
 end function
 
+subroutine debug_print(message, val1, val2)
+  character(len=*), intent(in) :: message
+  real, intent(in) :: val1, val2
+  write(*,*) message, val1, val2
+end subroutine
+
 !> Dry deposition velocites based on
 !> Emerson et al. 2020, Revisiting particle dry deposition and its role in radiative effect estimates
 !> https://doi.org/10.1073/pnas.2014761117
@@ -306,7 +312,7 @@ pure elemental subroutine drydep_emerson_vd(surface_pressure, t2m, ustar, raero,
     vd_dep)
   use datetime, only: datetime_t
   use snapparML, only: defined_component
-  use vgravtablesML, only: vgrav
+  use vgravtablesML, only: vgrav, vgrav_zanetti
   !> In hPa
   real, intent(in) :: surface_pressure
   real, intent(in) :: t2m
@@ -324,9 +330,11 @@ pure elemental subroutine drydep_emerson_vd(surface_pressure, t2m, ustar, raero,
   real(real64) :: fac1, cslip, bdiff, sc, EB, EIM, EIN, stokes
   integer(int16) :: Apar
 
-  vs = vgrav(component%to_running, surface_pressure/100., t2m)
+  !vs = vgrav(component%to_running, surface_pressure/100., t2m)
 
   diam = 2*component%radiusmym*1e-6
+  vs = vgrav_zanetti(real(diam * 1e6), real(component%densitygcm3), surface_pressure / 100, t2m) / 1e2
+
   fac1 = -0.55 * diam / lambda
   ! Cunningham slip factor
   cslip = 1 + 2 * lambda / diam * (1.257 + 0.4*exp(fac1))
