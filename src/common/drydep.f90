@@ -298,12 +298,6 @@ elemental integer(int16) function lookup_A(classnr, seasonal_category)
 
 end function
 
-subroutine debug_print(message, val1, val2)
-  character(len=*), intent(in) :: message
-  real, intent(in) :: val1, val2
-  write(*,*) message, val1, val2
-end subroutine
-
 !> Dry deposition velocites based on
 !> Emerson et al. 2020, Revisiting particle dry deposition and its role in radiative effect estimates
 !> https://doi.org/10.1073/pnas.2014761117
