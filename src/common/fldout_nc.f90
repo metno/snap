@@ -596,8 +596,8 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
 
   if (output_vd_debug) then
     block
-      use snapfldml, only: t2m, xflux, yflux, z0, hflux, leaf_area_index, &
-        roa, ustar, monin_l, raero, vs, rs, ps2
+      use snapfldml, only: t2m, xflux, yflux, z0, hflux, &
+        ustar, raero, ps2
       call hres_field(ps2, field_hr1)
       call check(nf90_put_var(iunit, varid%ps_vd, start=ipos, count=isize, values=field_hr1))
       call hres_field(t2m, field_hr1)
@@ -610,20 +610,10 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       call check(nf90_put_var(iunit, varid%z0, start=ipos, count=isize, values=field_hr1))
       call hres_field(hflux, field_hr1)
       call check(nf90_put_var(iunit, varid%hflux, start=ipos, count=isize, values=field_hr1))
-      call hres_field(leaf_area_index, field_hr1)
-      call check(nf90_put_var(iunit, varid%lai, start=ipos, count=isize, values=field_hr1))
-      call hres_field(roa, field_hr1)
-      call check(nf90_put_var(iunit, varid%roa, start=ipos, count=isize, values=field_hr1))
       call hres_field(ustar, field_hr1)
       call check(nf90_put_var(iunit, varid%ustar, start=ipos, count=isize, values=field_hr1))
-      call hres_field(monin_l, field_hr1)
-      call check(nf90_put_var(iunit, varid%monin_l, start=ipos, count=isize, values=field_hr1))
       call hres_field(raero, field_hr1)
       call check(nf90_put_var(iunit, varid%raero, start=ipos, count=isize, values=field_hr1))
-      call hres_field(vs, field_hr1)
-      call check(nf90_put_var(iunit, varid%vs, start=ipos, count=isize, values=field_hr1))
-      call hres_field(rs, field_hr1)
-      call check(nf90_put_var(iunit, varid%rs, start=ipos, count=isize, values=field_hr1))
     end block
   endif
 
@@ -1214,7 +1204,7 @@ subroutine initialize_output(filename, itime, ierror)
     if (output_vd_debug) then
       block
         use snapmetml, only: downward_momentum_flux_units, surface_heat_flux_units, &
-          leaf_area_index_units, surface_roughness_length_units, temp_units
+          surface_roughness_length_units, temp_units
       call nc_declare(iunit, dimids3d, varid%xflux, &
         "xflux", units=downward_momentum_flux_units, &
         chunksize=chksz3d)
@@ -1227,24 +1217,13 @@ subroutine initialize_output(filename, itime, ierror)
       call nc_declare(iunit, dimids3d, varid%z0, &
         "z0", units=surface_roughness_length_units, &
         chunksize=chksz3d)
-      call nc_declare(iunit, dimids3d, varid%lai, &
-        "lai", units=leaf_area_index_units, &
-        chunksize=chksz3d)
       call nc_declare(iunit, dimids3d, varid%t2m, &
         "t2m", units=temp_units, &
         chunksize=chksz3d)
-      call nc_declare(iunit, dimids3d, varid%roa, &
-        "roa", units="??", chunksize=chksz3d)
       call nc_declare(iunit, dimids3d, varid%ustar, &
         "ustar", units="??", chunksize=chksz3d)
-      call nc_declare(iunit, dimids3d, varid%monin_l, &
-        "monin_l", units="??", chunksize=chksz3d)
       call nc_declare(iunit, dimids3d, varid%raero, &
         "raero", units="??", chunksize=chksz3d)
-      call nc_declare(iunit, dimids3d, varid%vs, &
-        "vs", units="??", chunksize=chksz3d)
-      call nc_declare(iunit, dimids3d, varid%rs, &
-        "rs", units="??", chunksize=chksz3d)
       call nc_declare(iunit, dimids3d, varid%ps_vd, &
         "ps_vd", units="hPa", chunksize=chksz3d)
       end block

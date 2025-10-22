@@ -164,7 +164,9 @@ PROGRAM bsnap
   USE iso_fortran_env, only: real64, output_unit, error_unit, IOSTAT_END
   USE DateCalc, only: epochToDate, timeGM
   USE datetime, only: datetime_t, duration_t
-  USE snapdebug, only: iulog, idebug, acc_timer => prefixed_accumulating_timer
+  USE snapdebug, only: iulog, idebug
+  USE snaptimers, only: timeloop_timer, output_timer, input_timer, metcalc_timer, &
+                        release_timer, other_timer, particleloop_timer, initialize_timers
   USE snapdimML, only: nx, ny, nk, output_resolution_factor, ldata, maxsiz, mcomp, surface_index
   USE snapfilML, only: filef, itimer, ncsummary, nctitle, nhfmax, nhfmin, &
                        nctype, nfilef, simulation_start, spinup_steps
@@ -177,6 +179,7 @@ PROGRAM bsnap
   USE snapgrdML, only: modleveldump, ivcoor, &
                        klevel, imslp, itotcomp, gparam, &
                        igtype, imodlevel, modlevel_is_average, precipitation_in_output
+  USE vgravtablesML, only: vgravtables_init
   USE snaptabML, only: tabcon
   USE particleML, only: pdata, extraParticle
   USE allocateFieldsML, only: allocateFields, deallocateFields
@@ -188,7 +191,7 @@ PROGRAM bsnap
   USE rwalkML, only: rwalk, rwalk_init
   USE milibML, only: xyconvert
   use snapfldML, only: total_activity_lost_domain
-  USE forwrdML, only: forwrd, forwrd_init
+  USE forwrdML, only: forwrd
   USE wetdepML, only: wetdep, wetdep_scheme, wetdep_scheme_t, &
     WETDEP_SUBCLOUD_SCHEME_UNDEFINED, WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
     WETDEP_INCLOUD_SCHEME_NONE, WETDEP_INCLOUD_SCHEME_TAKEMURA, &
@@ -202,8 +205,8 @@ PROGRAM bsnap
     WETDEP_INCLOUD_SCHEME_ROSELLE
 #endif
   USE drydepml, only: drydep, drydep_scheme, &
-          DRYDEP_SCHEME_OLD, DRYDEP_SCHEME_NEW, DRYDEP_SCHEME_EMEP, &
-          DRYDEP_SCHEME_ZHANG, DRYDEP_SCHEME_EMERSON, DRYDEP_SCHEME_UNDEFINED, &
+          DRYDEP_SCHEME_OLD, DRYDEP_SCHEME_NEW, &
+          DRYDEP_SCHEME_EMERSON, DRYDEP_SCHEME_UNDEFINED, &
           largest_landfraction_file,  drydep_unload => unload
   USE decayML, only: decay, decayDeps
   USE posintML, only: posint
@@ -287,12 +290,6 @@ PROGRAM bsnap
 !> name of selected release position
   character(len=40), save :: srelnam = "*"
 
-  !> Time spent in various components of SNAP
-  type(acc_timer) :: timeloop_timer
-  type(acc_timer) :: output_timer
-  type(acc_timer) :: input_timer
-  type(acc_timer) :: particleloop_timer
-
 #if defined(VERSION)
   character(len=*), parameter :: VERSION_ = VERSION
 #else
@@ -374,7 +371,9 @@ PROGRAM bsnap
   ntimefo = 0
 
 !..define fixed tables and constants (independant of input data)
-  call tabcon
+  call tabcon()
+  call vgravtables_init()
+  call initialize_timers()
 
 ! initialize random number generator for rwalk and release
   CALL init_random_seed()
@@ -575,6 +574,7 @@ PROGRAM bsnap
 
 
 ! reset readfield_nc (eventually, traj will rerun this loop)
+    call input_timer%start()
     if (ftype == "netcdf") then
       call readfield_nc(-1, nhrun < 0, time_start, nhfmin, nhfmax, &
                         time_file, ierror)
@@ -587,6 +587,8 @@ PROGRAM bsnap
         " in this build"
 #endif
     end if
+    call input_timer%stop_and_log()
+
     if (ierror /= 0) call snap_error_exit(iulog)
     call compheight
     call bldp
@@ -634,11 +636,6 @@ PROGRAM bsnap
       release_positions(irelpos)%grid_y = y(1)
     end block
 
-    timeloop_timer = acc_timer("time_loop:")
-    output_timer = acc_timer("output/accumulation:")
-    input_timer = acc_timer("Reading MET input:")
-    particleloop_timer = acc_timer("Particle loop:")
-
     ! start time loop
     itimei = time_start
     npartmax = 0
@@ -674,10 +671,12 @@ PROGRAM bsnap
 
         write (error_unit, fmt="('input data: ',i4,3i3.2)") time_file
 
+        call metcalc_timer%start()
         !..compute model level heights
         call compheight
         !..calculate boundary layer (top and height)
         call bldp
+        call metcalc_timer%stop_and_log()
 
         dur = time_file - itimei
         ihdiff = dur%hours
@@ -696,9 +695,10 @@ PROGRAM bsnap
       if (iendrel == 0 .AND. istep <= nstepr) then
 
         !..release one plume of particles
-
+        call release_timer%start()
         call release(istep, nsteph, tf1, tf2, tnow, ierror)
         npartmax = max(npartmax, npart)
+        call release_timer%stop_and_log()
 
         if (ierror == 0) then
           lstepr = istep
@@ -718,7 +718,6 @@ PROGRAM bsnap
       ! prepare particle functions once before loop
       if (init) then
         call wetdep_init(tstep)
-        call forwrd_init()
         if (use_random_walk) call rwalk_init(tstep)
         init = .FALSE.
       end if
@@ -873,6 +872,9 @@ PROGRAM bsnap
   call timeloop_timer%print_accumulated()
   call output_timer%print_accumulated()
   call input_timer%print_accumulated()
+  call metcalc_timer%print_accumulated()
+  call release_timer%print_accumulated()
+  call other_timer%print_accumulated()
   call particleloop_timer%print_accumulated()
   ! b_end
   write (iulog, *) ' SNAP run finished'
@@ -1148,14 +1150,6 @@ contains
         case ('new')
           if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_NEW) goto 12
           drydep_scheme = DRYDEP_SCHEME_NEW
-#if defined(SNAP_EXPERIMENTAL)
-        case ('emep')
-          if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_EMEP) goto 12
-          drydep_scheme = DRYDEP_SCHEME_EMEP
-        case ('zhang')
-          if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_ZHANG) goto 12
-          drydep_scheme = DRYDEP_SCHEME_ZHANG
-#endif
         case ('emerson')
           if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_EMERSON) goto 12
           drydep_scheme = DRYDEP_SCHEME_EMERSON
@@ -1164,9 +1158,7 @@ contains
           goto 12
         end select
       case ('dry.deposition.save')
-        if (drydep_scheme /= DRYDEP_SCHEME_EMEP .and. &
-            drydep_scheme /= DRYDEP_SCHEME_ZHANG .and. &
-            drydep_scheme /= DRYDEP_SCHEME_EMERSON) then
+        if (drydep_scheme /= DRYDEP_SCHEME_EMERSON) then
           write(error_unit, *) "The drydep scheme is not set to a compatible value, ignoring"
         else
           output_vd = .true.
@@ -1764,9 +1756,6 @@ contains
         call init_meteo_params(nctype, ierror)
         if (ierror /= 0) goto 12
 #if defined(SNAP_EXPERIMENTAL)
-      case ('grid.nctype.leaf_area_index')
-        if (.not. has_value) goto 12
-        read(cinput(pname_start:pname_end), *, err=12) met_params%leaf_area_index
       case ('grid.nctype.z0')
         if (.not. has_value) goto 12
         read(cinput(pname_start:pname_end), *, err=12) met_params%z0
@@ -2264,9 +2253,7 @@ contains
             def_comp(m)%gravityms
           ierror = 1
         end if
-      elseif (((drydep_scheme == DRYDEP_SCHEME_EMEP) .or. &
-               (drydep_scheme == DRYDEP_SCHEME_EMERSON) .or. &
-               (drydep_scheme == DRYDEP_SCHEME_ZHANG)) .and. &
+      elseif (((drydep_scheme == DRYDEP_SCHEME_EMERSON)) .and. &
               def_comp(m)%kdrydep == 1) then
         ! Check if component has the necessary definitions to compute
         ! the dry deposition

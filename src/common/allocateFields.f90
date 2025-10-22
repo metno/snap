@@ -28,8 +28,8 @@ module allocateFieldsML
       max_column_scratch, max_column_concentration, &
       aircraft_doserate, aircraft_doserate_scratch, t1_abs, t2_abs, &
       aircraft_doserate_threshold_height, vd_dep, &
-      xflux, yflux, hflux, t2m, z0, leaf_area_index, &
-      roa, ustar, monin_l, raero, vs, rs, &
+      xflux, yflux, hflux, t2m, z0, &
+      ustar, raero, my, &
       total_activity_released, total_activity_lost_domain, total_activity_lost_other, &
       wscav, cloud_cover
   USE snapfilML, only: idata, fdata
@@ -242,9 +242,12 @@ subroutine allocateFields
     if (requires_extra_fields_to_be_read()) then
       allocate(vd_dep(nx,ny,ncomp), STAT=AllocateStatus)
       if (AllocateStatus /= 0) ERROR STOP errmsg
-      allocate(xflux, yflux, hflux, t2m, z0, leaf_area_index, mold=ps2)
-      allocate(roa(nx, ny))
-      allocate(ustar, monin_l, raero, vs, rs, mold=roa)
+      allocate(xflux, yflux, hflux, t2m, z0, mold=ps2, STAT=AllocateStatus)
+      if (AllocateStatus /= 0) ERROR STOP errmsg
+      allocate(raero(nx, ny), STAT=AllocateStatus)
+      if (AllocateStatus /= 0) ERROR STOP errmsg
+      allocate(ustar, my, mold=raero, STAT=AllocateStatus)
+      if (AllocateStatus /= 0) ERROR STOP errmsg
     endif
   end block
 
@@ -347,8 +350,8 @@ subroutine deAllocateFields
   DEALLOCATE( total_activity_released, total_activity_lost_domain, total_activity_lost_other )
   if (allocated(vd_dep)) then
     deallocate(vd_dep)
-    deallocate(xflux, yflux, hflux, t2m, z0, leaf_area_index)
-    deallocate(roa, ustar, monin_l, raero, vs, rs)
+    deallocate(xflux, yflux, hflux, t2m, z0)
+    deallocate(ustar, raero)
   endif
 
 end subroutine deAllocateFields
