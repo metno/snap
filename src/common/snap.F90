@@ -574,6 +574,7 @@ PROGRAM bsnap
 
 
 ! reset readfield_nc (eventually, traj will rerun this loop)
+    call input_timer%start()
     if (ftype == "netcdf") then
       call readfield_nc(-1, nhrun < 0, time_start, nhfmin, nhfmax, &
                         time_file, ierror)
@@ -586,6 +587,8 @@ PROGRAM bsnap
         " in this build"
 #endif
     end if
+    call input_timer%stop_and_log()
+
     if (ierror /= 0) call snap_error_exit(iulog)
     call compheight
     call bldp
