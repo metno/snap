@@ -22,7 +22,7 @@ module vgravtablesML
 !> number of temperature levels in ::vgtable
   integer, parameter, public :: numtempvg = 41 ! 5deg incr
 !> number of pressure levels in ::vgtable
-  integer, parameter, public :: numpresvg = 121 ! 10hPa
+  integer, parameter, public :: numpresvg = 25 ! 200hPa
 
 !> table of gravity in m/s
 !>
