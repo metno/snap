@@ -119,6 +119,7 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
   USE snapmetML, only: met_params, requires_precip_deaccumulation, &
       pressure_units, xy_wind_units, temp_units
   USE snapdimML, only: nx, ny, nk, output_resolution_factor, hres_field, surface_index
+
   USE datetime, only: datetime_t, duration_t
 !> current timestep (always positive), negative istep means reset
   integer, intent(in) :: istep
@@ -1176,11 +1177,12 @@ end subroutine
     USE iso_fortran_env, only: real64
     use datetime, only: datetime_t
     use snapmetML, only: met_params
-    use snapfldML, only: xflux, yflux, hflux, z0, leaf_area_index, t2m, vd_dep, roa, ustar, monin_l, &
-      ps2, rs, raero, vs, enspos
-    use drydepml, only: classnr, requires_extra_fields_to_be_read, drydep_precompute
+    use snapfldML, only: xflux, yflux, hflux, z0, t2m, vd_dep, ustar, &
+      ps2, raero, my, enspos
+    use drydepml, only: classnr, requires_extra_fields_to_be_read, drydep_precompute_meteo, drydep_precompute_particle
     use snapdimML, only: nx, ny
     use snapparML, only: ncomp, run_comp, def_comp
+    use vgravtablesML, only: vgrav
 
     integer, intent(in) :: ncid
     integer, intent(in) :: timepos
@@ -1190,7 +1192,6 @@ end subroutine
     integer :: start(7), startm1(7)
     integer :: count(7)
     integer :: i, mm
-    real(real64) :: diam, dens
 
     real, allocatable :: tmp1(:, :), tmp2(:, :)
 
@@ -1233,42 +1234,17 @@ end subroutine
 
     call nfcheckload(ncid, met_params%z0, start, count, z0(:, :))
 
-    if (met_params%leaf_area_index /= "") then
-      call nfcheckload(ncid, met_params%leaf_area_index, start, count, leaf_area_index(:,:))
-    else ! Leaf area index may be split into patches which must be combined
-      block
-        real, allocatable :: leaf_area_index_p1(:,:), leaf_area_index_p2(:,:)
-        allocate(leaf_area_index_p1, leaf_area_index_p2, mold=leaf_area_index)
-        call nfcheckload(ncid, met_params%leaf_area_index_p1, start, count, leaf_area_index_p1(:,:))
-        call nfcheckload(ncid, met_params%leaf_area_index_p2, start, count, leaf_area_index_p2(:,:))
-
-        where (.not.ieee_is_nan(leaf_area_index_p1) .and. .not.ieee_is_nan(leaf_area_index_p2))
-          leaf_area_index = max(leaf_area_index_p1, leaf_area_index_p2)
-        elsewhere (.not.ieee_is_nan(leaf_area_index_p1))
-          leaf_area_index = leaf_area_index_p1
-        elsewhere (.not.ieee_is_nan(leaf_area_index_p2))
-          leaf_area_index = leaf_area_index_p2
-        elsewhere
-          leaf_area_index = 0.0
-        endwhere
-
-      end block
-    endif
-    where (ieee_is_nan(leaf_area_index))
-      leaf_area_index = 0.0
-    endwhere
-
     call nfcheckload(ncid, met_params%t2m, start, count, t2m(:, :))
 
+    call drydep_precompute_meteo(ps2*100., t2m, yflux, xflux, z0, hflux, &
+      ustar, raero, my)
     do i=1,ncomp
       mm = run_comp(i)%to_defined
 
       if (def_comp(mm)%kdrydep == 1) then
-        diam = 2*def_comp(mm)%radiusmym*1e-6
-        dens = def_comp(mm)%densitygcm3*1e3
-        call drydep_precompute(ps2*100, t2m, yflux, xflux, z0, &
-            hflux, leaf_area_index, real(diam), real(dens), classnr, vd_dep(:, :, i), &
-            roa, ustar, monin_l, raero, vs, rs, itimefi)
+        call drydep_precompute_particle(ps2*100., t2m, &
+          ustar, raero, my, itimefi, &
+          def_comp(mm), classnr, vd_dep(:,:,i))
       endif
     end do
   end subroutine
