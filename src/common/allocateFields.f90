@@ -28,7 +28,7 @@ module allocateFieldsML
       max_column_scratch, max_column_concentration, &
       aircraft_doserate, aircraft_doserate_scratch, t1_abs, t2_abs, &
       aircraft_doserate_threshold_height, vd_dep, &
-      surface_stress, xflux, yflux, hflux, t2m, z0, &
+      surface_stress, hflux, t2m, z0, &
       ustar, raero, my, &
       total_activity_released, total_activity_lost_domain, total_activity_lost_other, &
       wscav, cloud_cover
@@ -242,7 +242,7 @@ subroutine allocateFields
     if (requires_extra_fields_to_be_read()) then
       allocate(vd_dep(nx,ny,ncomp), STAT=AllocateStatus)
       if (AllocateStatus /= 0) ERROR STOP errmsg
-      allocate(surface_stress, xflux, yflux, hflux, t2m, z0, mold=ps2, STAT=AllocateStatus)
+      allocate(surface_stress, hflux, t2m, z0, mold=ps2, STAT=AllocateStatus)
       if (AllocateStatus /= 0) ERROR STOP errmsg
       allocate(raero(nx, ny), STAT=AllocateStatus)
       if (AllocateStatus /= 0) ERROR STOP errmsg
@@ -350,7 +350,7 @@ subroutine deAllocateFields
   DEALLOCATE( total_activity_released, total_activity_lost_domain, total_activity_lost_other )
   if (allocated(vd_dep)) then
     deallocate(vd_dep)
-    deallocate(surface_stress, xflux, yflux, hflux, t2m, z0)
+    deallocate(surface_stress, hflux, t2m, z0)
     deallocate(ustar, raero)
   endif
 
