@@ -597,7 +597,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
 
   if (output_vd_debug) then
     block
-      use snapfldml, only: t2m, surface_stress, xflux, yflux, z0, hflux, &
+      use snapfldml, only: t2m, surface_stress, z0, hflux, &
         ustar, raero, ps2
       call hres_field(ps2, field_hr1)
       call check(nf90_put_var(iunit, varid%ps_vd, start=ipos, count=isize, values=field_hr1))
@@ -605,10 +605,6 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
       call check(nf90_put_var(iunit, varid%t2m, start=ipos, count=isize, values=field_hr1))
       call hres_field(surface_stress, field_hr1)
       call check(nf90_put_var(iunit, varid%surface_stress, start=ipos, count=isize, values=field_hr1))
-      call hres_field(xflux, field_hr1)
-      call check(nf90_put_var(iunit, varid%xflux, start=ipos, count=isize, values=field_hr1))
-      call hres_field(yflux, field_hr1)
-      call check(nf90_put_var(iunit, varid%yflux, start=ipos, count=isize, values=field_hr1))
       call hres_field(z0, field_hr1)
       call check(nf90_put_var(iunit, varid%z0, start=ipos, count=isize, values=field_hr1))
       call hres_field(hflux, field_hr1)
@@ -1208,11 +1204,8 @@ subroutine initialize_output(filename, itime, ierror)
       block
         use snapmetml, only: downward_momentum_flux_units, surface_heat_flux_units, &
           surface_roughness_length_units, temp_units
-      call nc_declare(iunit, dimids3d, varid%xflux, &
-        "xflux", units=downward_momentum_flux_units, &
-        chunksize=chksz3d)
-      call nc_declare(iunit, dimids3d, varid%yflux, &
-        "yflux", units=downward_momentum_flux_units, &
+      call nc_declare(iunit, dimids3d, varid%surface_stress, &
+        "surface_stress", units=downward_momentum_flux_units, &
         chunksize=chksz3d)
       call nc_declare(iunit, dimids3d, varid%hflux, &
         "hflux", units=surface_heat_flux_units, &
@@ -1423,10 +1416,7 @@ subroutine get_varids(iunit, varid, ierror)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
   ierror = nf90_inq_varid(iunit, "aircraft_doserate_threshold_height", varid%aircraft_doserate_threshold_height)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
-
-  ierror = nf90_inq_varid(iunit, "xflux", varid%xflux)
-  if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
-  ierror = nf90_inq_varid(iunit, "yflux", varid%yflux)
+  ierror = nf90_inq_varid(iunit, "surface_stress", varid%surface_stress)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return
   ierror = nf90_inq_varid(iunit, "hflux", varid%hflux)
   if (ierror /= NF90_NOERR .and. .not. ierror == NF90_ENOTVAR) return

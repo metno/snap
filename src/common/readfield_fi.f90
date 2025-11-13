@@ -896,9 +896,9 @@ contains
     TYPE(FimexIO), intent(inout) :: fio
     character(len=*), intent(in) :: varname, units
     integer, intent(in) :: timepos, timeposm1, nr
-    real, allocatable :: tmp1(:, :), tmp2(:, :)
     real(real32), intent(out) :: field(:, :)
 
+    real, allocatable :: tmp1(:, :), tmp2(:, :)
     allocate(tmp1, tmp2, MOLD=field)
 
     if (timepos == 1) then
@@ -915,15 +915,13 @@ contains
 
   subroutine read_drydep_required_fields(fio, timepos, timeposm1, nr, itimefi)
     USE ieee_arithmetic, only: ieee_is_nan
-    USE iso_fortran_env, only: real64
     USE snapmetML, only: met_params, &
       temp_units, downward_momentum_flux_units, surface_roughness_length_units, &
       accum_surface_heat_flux_units, surface_heat_flux_units
     use drydepml, only: drydep_precompute_meteo, drydep_precompute_particle, &
       requires_extra_fields_to_be_read, classnr
     use snapparML, only: ncomp, run_comp, def_comp
-    ! TODO1: make xflux and yflux temporary variables in readfield
-    use snapfldML, only: ps2, vd_dep, surface_stress, xflux, yflux, hflux, z0, t2m, &
+    use snapfldML, only: ps2, vd_dep, surface_stress, hflux, z0, t2m, &
       ustar, raero, my
     use snaptimers, only: metcalc_timer
 
@@ -933,13 +931,13 @@ contains
     integer, intent(in) :: nr
     type(datetime_t), intent(in) :: itimefi
 
+    real, allocatable :: xflux(:, :), yflux(:, :)
     integer :: i, mm
 
     if (.not.requires_extra_fields_to_be_read()) then
       return
     endif
 
-    ! TODO: refactor
     if (met_params%surface_stress /= "") then
       ! Load surface_stress
       call fi_checkload(fio, met_params%surface_stress, downward_momentum_flux_units, surface_stress(:, :), nt=timepos, nr=nr)
@@ -947,6 +945,7 @@ contains
       ! Either surface_stress or xflux and yflux needs to be defined
       error stop "Assertion error: Either surface_stress or xflux and yflux needs to be defined in the meteorological parameters"
     else
+      allocate(xflux, yflux, MOLD=ps2)
       ! Load and combine surface stress/momentum flux components
       if (met_params%xflux_is_accumulated) then
         ! Note: Arome files have the wrong units for downward_momentum_flux_units, missing a unit of time
@@ -973,6 +972,7 @@ contains
     hflux(:,:) = -hflux ! Follow conventions for up/down
 
     if (met_params%z0 == "") then
+      ! TODO3: Load z0 from land use data if not defined here
       write(error_unit,*) "WARNING!!!! Surface roughness set to 1 in lieu of loaded value."
       z0(:,:) = 1
     else
