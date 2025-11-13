@@ -77,16 +77,15 @@ end function
 
 !> Precompute dry deposition meteorology
 !> returns roa, ustar, monin_obukhov_length, raero, my
-elemental subroutine drydep_precompute_meteo(surface_pressure, t2m, yflux, xflux, z0, hflux, &
+elemental subroutine drydep_precompute_meteo(surface_pressure, t2m, surface_stress, z0, hflux, &
                                              ustar, raero, my)
   use iso_fortran_env, only: real64
   use datetime, only: datetime_t
   real, intent(in) :: surface_pressure !> [Pa]
   real, intent(in) :: t2m !> [K]
-  real, intent(in) :: yflux !> [N/m^2]
-  real, intent(in) :: xflux !> [N/m^2]
+  real, intent(in) :: surface_stress !> [N/m^2]
   real, intent(in) :: z0 !> [m]
-  real, intent(in) :: hflux !> [W s/m^2]
+  real, intent(in) :: hflux !> [W/m^2]
   real(real64), intent(out) :: raero, ustar, my
 
   real(real64), parameter :: k = 0.4
@@ -94,7 +93,7 @@ elemental subroutine drydep_precompute_meteo(surface_pressure, t2m, yflux, xflux
   real(real64) :: roa, monin_obukhov_length
 
   roa = surface_pressure / (t2m * R)
-  ustar = hypot(yflux, xflux) / sqrt(roa)
+  ustar = surface_stress / sqrt(roa)
   monin_obukhov_length = - roa * CP * t2m * (ustar**3) / (k * grav * hflux)
   raero = aerodynres(monin_obukhov_length, ustar, real(z0, real64))
   my = ny * roa

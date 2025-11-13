@@ -82,6 +82,7 @@ module fldout_ncML
     integer :: aircraft_doserate_threshold_height
     integer :: components
     type(component_var) :: comp(mcomp)
+    integer :: surface_stress = -1
     integer :: xflux = -1
     integer :: yflux = -1
     integer :: hflux = -1
@@ -596,12 +597,14 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
 
   if (output_vd_debug) then
     block
-      use snapfldml, only: t2m, xflux, yflux, z0, hflux, &
+      use snapfldml, only: t2m, surface_stress, xflux, yflux, z0, hflux, &
         ustar, raero, ps2
       call hres_field(ps2, field_hr1)
       call check(nf90_put_var(iunit, varid%ps_vd, start=ipos, count=isize, values=field_hr1))
       call hres_field(t2m, field_hr1)
       call check(nf90_put_var(iunit, varid%t2m, start=ipos, count=isize, values=field_hr1))
+      call hres_field(surface_stress, field_hr1)
+      call check(nf90_put_var(iunit, varid%surface_stress, start=ipos, count=isize, values=field_hr1))
       call hres_field(xflux, field_hr1)
       call check(nf90_put_var(iunit, varid%xflux, start=ipos, count=isize, values=field_hr1))
       call hres_field(yflux, field_hr1)
