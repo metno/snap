@@ -250,7 +250,6 @@ end function
 !> Table 3 for Zhang et. al 2001 https://doi.org/10.1016/S1352-2310(00)00326-5
 elemental real(real64) function lookup_alpha(classnr)
   integer(int8), intent(in) :: classnr
-  lookup_alpha = LOOKUP_NAN
 
   select case(classnr)
   case (11) ! Sea -> Z14
@@ -278,7 +277,7 @@ elemental real(real64) function lookup_alpha(classnr)
   case (22) ! Shrubs and interrupted woodlands -> Z10
     lookup_alpha = 1.3
   case default
-    lookup_alpha = LOOKUP_NAN
+    error stop "Error: Invalid classnr value encountered, must be in range 11-22"
   end select
 
 end function
