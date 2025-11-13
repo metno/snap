@@ -97,7 +97,7 @@ module snapmetML
   character(len=*), parameter, public :: downward_momentum_flux_units = 'N/m^2'
   character(len=*), parameter, public :: surface_roughness_length_units = 'm'
   character(len=*), parameter, public :: surface_heat_flux_units = 'W/m^2'
-  character(len=*), parameter, public :: accumulated_surface_heat_flux_units = 'W s/m^2'
+  character(len=*), parameter, public :: accum_surface_heat_flux_units = 'W s/m^2'
 
   character(len=*), parameter, public :: cloud_fraction_units = '%'
   character(len=*), parameter, public :: mass_fraction_units = 'kg/kg'

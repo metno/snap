@@ -898,7 +898,7 @@ contains
     USE iso_fortran_env, only: real64
     USE snapmetML, only: met_params, &
       temp_units, downward_momentum_flux_units, surface_roughness_length_units, &
-      accumulated_surface_heat_flux_units, surface_heat_flux_units
+      accum_surface_heat_flux_units, surface_heat_flux_units
     use drydepml, only: drydep_precompute_meteo, drydep_precompute_particle, &
       requires_extra_fields_to_be_read, classnr
     use ftestML, only: ftest
