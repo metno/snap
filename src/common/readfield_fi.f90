@@ -898,14 +898,15 @@ contains
     USE iso_fortran_env, only: real64
     USE snapmetML, only: met_params, &
       temp_units, downward_momentum_flux_units, surface_roughness_length_units, &
-      surface_heat_flux_units
+      accumulated_surface_heat_flux_units, surface_heat_flux_units
     use drydepml, only: drydep_precompute_meteo, drydep_precompute_particle, &
       requires_extra_fields_to_be_read, classnr
     use ftestML, only: ftest
     use snapdebug, only: idebug
 
     use snapparML, only: ncomp, run_comp, def_comp
-    use snapfldML, only: ps2, vd_dep, xflux, yflux, hflux, z0, t2m, &
+    ! TODO1: make xflux and yflux temporary variables in readfield
+    use snapfldML, only: ps2, vd_dep, surface_stress, xflux, yflux, hflux, z0, t2m, &
       ustar, raero, my
     use snaptimers, only: metcalc_timer
 
@@ -924,41 +925,76 @@ contains
 
     allocate(tmp1, tmp2, MOLD=ps2)
 
-
-    ! Fluxes are integrated: Deaccumulate
-    if (timepos == 1) then
-      call fi_checkload(fio, met_params%xflux, downward_momentum_flux_units, xflux(:, :), nt=timepos, nr=nr)
-      call fi_checkload(fio, met_params%yflux, downward_momentum_flux_units, yflux(:, :), nt=timepos, nr=nr)
+    ! TODO: refactor
+    if (met_params%surface_stress /= "") then
+      ! Load surface_stress
+      call fi_checkload(fio, met_params%surface_stress, downward_momentum_flux_units, surface_stress(:, :), nt=timepos, nr=nr)
+    else if (met_params%xflux == "" .OR. met_params%yflux == "") then
+      ! Either surface_stress or xflux and yflux needs to be defined
+      error stop "Assertion error: Either surface_stress or xflux and yflux needs to be defined in the meteorological parameters"
     else
-      call fi_checkload(fio, met_params%xflux, downward_momentum_flux_units, tmp1(:, :), nt=timeposm1, nr=nr)
-      call fi_checkload(fio, met_params%xflux, downward_momentum_flux_units, tmp2(:, :), nt=timepos, nr=nr)
-      xflux(:,:) = tmp2 - tmp1
+      ! Load and combine surface stress/momentum flux components
+      if (met_params%xflux_is_accumulated) then
+        if (timepos == 1) then
+          ! Note: Arome files have the wrong units for downward_momentum_flux_units, missing a unit of time
+          call fi_checkload(fio, met_params%xflux, downward_momentum_flux_units, xflux(:, :), nt=timepos, nr=nr)
+        else
+          call fi_checkload(fio, met_params%xflux, downward_momentum_flux_units, tmp1(:, :), nt=timeposm1, nr=nr)
+          call fi_checkload(fio, met_params%xflux, downward_momentum_flux_units, tmp2(:, :), nt=timepos, nr=nr)
+          xflux(:,:) = tmp2 - tmp1
+        endif
+        ! TODO: Normalise by difference between intervals
+        xflux(:,:) =  xflux / 3600
+      else
+        call fi_checkload(fio, met_params%xflux, downward_momentum_flux_units, xflux(:, :), nt=timepos, nr=nr)
+      endif
 
-      call fi_checkload(fio, met_params%yflux, downward_momentum_flux_units, tmp1(:, :), nt=timeposm1, nr=nr)
-      call fi_checkload(fio, met_params%yflux, downward_momentum_flux_units, tmp2(:, :), nt=timepos, nr=nr)
-      yflux(:,:) = tmp2 - tmp1
+      if (met_params%yflux_is_accumulated) then
+        if (timepos == 1) then
+          call fi_checkload(fio, met_params%yflux, downward_momentum_flux_units, yflux(:, :), nt=timepos, nr=nr)
+        else
+          call fi_checkload(fio, met_params%yflux, downward_momentum_flux_units, tmp1(:, :), nt=timeposm1, nr=nr)
+          call fi_checkload(fio, met_params%yflux, downward_momentum_flux_units, tmp2(:, :), nt=timepos, nr=nr)
+          yflux(:,:) = tmp2 - tmp1
+        endif
+        ! TODO: Normalise by difference between intervals
+        yflux(:,:) =  yflux / 3600
+      else
+        call fi_checkload(fio, met_params%yflux, downward_momentum_flux_units, yflux(:, :), nt=timepos, nr=nr)
+      endif
+      surface_stress = hypot(yflux, xflux)
     endif
-    ! TODO: Normalise by difference between intervals
-    xflux(:,:) =  xflux / 3600
-    yflux(:,:) =  yflux / 3600
 
-    if (timepos == 1) then
+    if (met_params%hflux_is_accumulated) then
+      if (timepos == 1) then
+        call fi_checkload(fio, met_params%hflux, accum_surface_heat_flux_units, hflux(:, :), nt=timepos, nr=nr)
+      else
+        call fi_checkload(fio, met_params%hflux, accum_surface_heat_flux_units, tmp1(:, :), nt=timeposm1, nr=nr)
+        call fi_checkload(fio, met_params%hflux, accum_surface_heat_flux_units, tmp2(:, :), nt=timepos, nr=nr)
+        hflux(:,:) = tmp2 - tmp1
+      endif
+      ! TODO: Normalise by difference between intervals
+      hflux(:,:) = -hflux / 3600 ! Follow conventions for up/down
+    else
       call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, hflux(:, :), nt=timepos, nr=nr)
-    else
-      call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, tmp1(:, :), nt=timeposm1, nr=nr)
-      call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, tmp2(:, :), nt=timepos, nr=nr)
-      hflux(:,:) = tmp2 - tmp1
+      hflux(:,:) = -hflux ! Follow conventions for up/down
     endif
-    ! TODO: Normalise by difference between intervals
-    hflux(:,:) = -hflux / 3600 ! Follow conventions for up/down
 
 
-    call fi_checkload(fio, met_params%z0, surface_roughness_length_units, z0(:, :), nt=timepos, nr=nr)
+    deallocate(tmp1)
+    deallocate(tmp2)
+
+    if (met_params%z0 == "") then
+      write(error_unit,*) "WARNING!!!! Surface roughness set to 1 in liu of loaded value."
+      z0(:,:) = 1
+    else
+      call fi_checkload(fio, met_params%z0, surface_roughness_length_units, z0(:, :), nt=timepos, nr=nr)
+    endif
 
     call fi_checkload(fio, met_params%t2m, temp_units, t2m(:, :), nt=timepos, nr=nr)
 
     call metcalc_timer%start()
-    call drydep_precompute_meteo(ps2*100., t2m, yflux, xflux, z0, hflux, &
+    call drydep_precompute_meteo(ps2*100., t2m, surface_stress, z0, hflux, &
       ustar, raero, my)
     !$OMP PARALLEL DO PRIVATE(i,mm)
     do i=1,ncomp

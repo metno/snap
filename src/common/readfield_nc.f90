@@ -1179,7 +1179,9 @@ end subroutine
     USE iso_fortran_env, only: real64
     use datetime, only: datetime_t
     use snapmetML, only: met_params
-    use snapfldML, only: xflux, yflux, hflux, z0, t2m, vd_dep, ustar, &
+    ! TODO1: make xflux and yflux temporary variables in readfield
+    ! TODO2: apply changes in readfield_fi to readfield_nc
+    use snapfldML, only: surface_stress, xflux, yflux, hflux, z0, t2m, vd_dep, ustar, &
       ps2, raero, my, enspos
     use drydepml, only: drydep_precompute_meteo, drydep_precompute_particle, &
       requires_extra_fields_to_be_read, classnr
@@ -1227,6 +1229,7 @@ end subroutine
     ! TODO: Normalise by difference between intervals
     xflux(:,:) =  xflux / 3600
     yflux(:,:) =  yflux / 3600
+    surface_stress = hypot(yflux, xflux)
 
     if (timepos == 1) then
       call nfcheckload(ncid, met_params%hflux, start, count, hflux(:,:))
@@ -1242,7 +1245,7 @@ end subroutine
 
     call nfcheckload(ncid, met_params%t2m, start, count, t2m(:, :))
 
-    call drydep_precompute_meteo(ps2*100., t2m, yflux, xflux, z0, hflux, &
+    call drydep_precompute_meteo(ps2*100., t2m, surface_stress, z0, hflux, &
       ustar, raero, my)
     do i=1,ncomp
       mm = run_comp(i)%to_defined
