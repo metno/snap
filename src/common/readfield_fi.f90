@@ -891,6 +891,28 @@ contains
     write (iulog, *) "reading "//trim(varname)//", min, max: ", minval(zfield), maxval(zfield)
   end subroutine fi_checkload_intern
 
+
+  subroutine read_accumulated_field(fio, timepos, timeposm1, varname, units, field, nr)
+    TYPE(FimexIO), intent(inout) :: fio
+    character(len=*), intent(in) :: varname, units
+    integer, intent(in) :: timepos, timeposm1, nr
+    real, allocatable :: tmp1(:, :), tmp2(:, :)
+    real(real32), intent(out) :: field(:, :)
+
+    allocate(tmp1, tmp2, MOLD=field)
+
+    if (timepos == 1) then
+      call fi_checkload(fio, varname, units, field(:, :), nt=timepos, nr=nr)
+    else
+      call fi_checkload(fio, varname, units, tmp1(:, :), nt=timeposm1, nr=nr)
+      call fi_checkload(fio, varname, units, tmp2(:, :), nt=timepos, nr=nr)
+      field(:,:) = tmp2 - tmp1
+    endif
+    ! TODO: Normalise by difference between intervals
+    field(:,:) =  field / 3600
+  end subroutine read_accumulated_field
+
+
   subroutine read_drydep_required_fields(fio, timepos, timeposm1, nr, itimefi)
     USE ieee_arithmetic, only: ieee_is_nan
     USE iso_fortran_env, only: real64
@@ -911,14 +933,11 @@ contains
     integer, intent(in) :: nr
     type(datetime_t), intent(in) :: itimefi
 
-    real, allocatable :: tmp1(:, :), tmp2(:, :)
     integer :: i, mm
 
     if (.not.requires_extra_fields_to_be_read()) then
       return
     endif
-
-    allocate(tmp1, tmp2, MOLD=ps2)
 
     ! TODO: refactor
     if (met_params%surface_stress /= "") then
@@ -930,57 +949,31 @@ contains
     else
       ! Load and combine surface stress/momentum flux components
       if (met_params%xflux_is_accumulated) then
-        if (timepos == 1) then
-          ! Note: Arome files have the wrong units for downward_momentum_flux_units, missing a unit of time
-          call fi_checkload(fio, met_params%xflux, downward_momentum_flux_units, xflux(:, :), nt=timepos, nr=nr)
-        else
-          call fi_checkload(fio, met_params%xflux, downward_momentum_flux_units, tmp1(:, :), nt=timeposm1, nr=nr)
-          call fi_checkload(fio, met_params%xflux, downward_momentum_flux_units, tmp2(:, :), nt=timepos, nr=nr)
-          xflux(:,:) = tmp2 - tmp1
-        endif
-        ! TODO: Normalise by difference between intervals
-        xflux(:,:) =  xflux / 3600
+        ! Note: Arome files have the wrong units for downward_momentum_flux_units, missing a unit of time
+        call read_accumulated_field(fio, timepos, timeposm1, met_params%xflux, downward_momentum_flux_units, xflux(:, :),  nr=nr)
       else
         call fi_checkload(fio, met_params%xflux, downward_momentum_flux_units, xflux(:, :), nt=timepos, nr=nr)
       endif
 
       if (met_params%yflux_is_accumulated) then
-        if (timepos == 1) then
-          call fi_checkload(fio, met_params%yflux, downward_momentum_flux_units, yflux(:, :), nt=timepos, nr=nr)
-        else
-          call fi_checkload(fio, met_params%yflux, downward_momentum_flux_units, tmp1(:, :), nt=timeposm1, nr=nr)
-          call fi_checkload(fio, met_params%yflux, downward_momentum_flux_units, tmp2(:, :), nt=timepos, nr=nr)
-          yflux(:,:) = tmp2 - tmp1
-        endif
-        ! TODO: Normalise by difference between intervals
-        yflux(:,:) =  yflux / 3600
+        ! Note: Arome files have the wrong units for downward_momentum_flux_units, missing a unit of time
+        call read_accumulated_field(fio, timepos, timeposm1, met_params%yflux, downward_momentum_flux_units, yflux(:, :),  nr=nr)
       else
         call fi_checkload(fio, met_params%yflux, downward_momentum_flux_units, yflux(:, :), nt=timepos, nr=nr)
       endif
+
       surface_stress = hypot(yflux, xflux)
     endif
 
     if (met_params%hflux_is_accumulated) then
-      if (timepos == 1) then
-        call fi_checkload(fio, met_params%hflux, accum_surface_heat_flux_units, hflux(:, :), nt=timepos, nr=nr)
-      else
-        call fi_checkload(fio, met_params%hflux, accum_surface_heat_flux_units, tmp1(:, :), nt=timeposm1, nr=nr)
-        call fi_checkload(fio, met_params%hflux, accum_surface_heat_flux_units, tmp2(:, :), nt=timepos, nr=nr)
-        hflux(:,:) = tmp2 - tmp1
-      endif
-      ! TODO: Normalise by difference between intervals
-      hflux(:,:) = -hflux / 3600 ! Follow conventions for up/down
+      call read_accumulated_field(fio, timepos, timeposm1, met_params%hflux, accum_surface_heat_flux_units, hflux(:, :), nr=nr)
     else
       call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, hflux(:, :), nt=timepos, nr=nr)
-      hflux(:,:) = -hflux ! Follow conventions for up/down
     endif
-
-
-    deallocate(tmp1)
-    deallocate(tmp2)
+    hflux(:,:) = -hflux ! Follow conventions for up/down
 
     if (met_params%z0 == "") then
-      write(error_unit,*) "WARNING!!!! Surface roughness set to 1 in liu of loaded value."
+      write(error_unit,*) "WARNING!!!! Surface roughness set to 1 in lieu of loaded value."
       z0(:,:) = 1
     else
       call fi_checkload(fio, met_params%z0, surface_roughness_length_units, z0(:, :), nt=timepos, nr=nr)
