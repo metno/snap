@@ -10,6 +10,7 @@ program testGravSettling
 
   ! define 4 components 1,10,50,100 µm radius
   ncomp = 4
+  allocate (run_comp(ncomp))
   call push_down_dcomp(def_comp, top=d_comp)
   d_comp%compname = "Ra100"
   d_comp%output_name = d_comp%compname ! default
@@ -39,7 +40,6 @@ program testGravSettling
   d_comp%grav_type = GRAV_TYPE_COMPUTED
 
 
-  allocate (run_comp(ncomp))
   do i = 1, ncomp
     run_comp(i)%to_defined = i
     run_comp(i)%defined => def_comp(i)
