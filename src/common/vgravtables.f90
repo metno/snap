@@ -34,7 +34,7 @@ module vgravtablesML
   real, parameter, private :: pincrvg = 1200./float(numpresvg-1)
   real, parameter, private :: pbasevg = 0. - pincrvg
 
-  public :: vgravtables_init, vgrav, vgrav_zanetti
+  public :: vgravtables_init, vgrav, vgrav_iter ! vgrav_iter only exposed for testing
 
   contains
 
@@ -225,6 +225,19 @@ end subroutine
 
   end function vgrav
 
+!< computed and iterated gravitational settling velocity in m/s
+elemental real function  vgrav_iter(dp, rp, p, t)
+  real, intent(in) :: dp !< particle size (diameter) in micro meters
+  real, intent(in) :: rp !< particle density in g/cm3
+  real, intent(in) :: p !< atmospheric pressure in hPa
+  real, intent(in) :: t !< temperature of the air in K
+  real :: vg, u0 !< vg according to Stokes law in cm/s
+
+  u0 =  vgrav_zanetti(dp,rp,p,t)
+  call iter(vg,u0,dp,rp,p,t)
+  vgrav_iter=vg*0.01 ! cm/s -> m/s
+end function vgrav_iter
+
 !>  program for calculating gravitational setling velocity for particles
 !>  according to Zannetti (1990).
 !>
@@ -247,7 +260,7 @@ end subroutine
   end function vgrav_zanetti
 
 !>  iteration procedure for calculating vg
-subroutine iter(vg,u0,dp,rp,p,t)
+pure subroutine iter(vg,u0,dp,rp,p,t)
   real, intent(out) :: vg !< computed gravitational settling velocity in cm/s
   real, intent(in) :: u0 !< vg according to Stokes law in cm/s
   real, intent(in) :: dp !< particle size (diameter) in micro meters
@@ -291,6 +304,7 @@ subroutine iter(vg,u0,dp,rp,p,t)
 
   return
 end subroutine iter
+
 
 !>  function for calculating density of the air depending on
 !>  temperature and pressure. According to RAFF (1999).
