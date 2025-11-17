@@ -64,7 +64,7 @@ program testDryDep
     ustar, raero, my, itimefi, &
     def_comp(1), classnr, vd_dep)
   if (abs(vd_dep - 1.5790e-2) .gt. 1.0e-5) then
-    print *, "Error in dry-dep velocity for gas phase Cs137: ", vd_dep, abs(vd_dep - 2.5790e-2)
+    print *, "Error in dry-dep velocity for gas phase Cs137: ", vd_dep, abs(vd_dep - 1.5790e-2)
     stop 2
   end if
   ! iodine
