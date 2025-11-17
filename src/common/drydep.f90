@@ -306,7 +306,7 @@ pure elemental subroutine drydep_emerson_vd(surface_pressure, t2m, ustar, raero,
     vd_dep)
   use datetime, only: datetime_t
   use snapparML, only: defined_component
-  use vgravtablesML, only: vgrav, vgrav_zanetti
+  use vgravtablesML, only: vgrav
   !> In hPa
   real, intent(in) :: surface_pressure
   real, intent(in) :: t2m
@@ -324,10 +324,9 @@ pure elemental subroutine drydep_emerson_vd(surface_pressure, t2m, ustar, raero,
   real(real64) :: fac1, cslip, bdiff, sc, EB, EIM, EIN, stokes
   integer(int16) :: Apar
 
-  !vs = vgrav(component%to_running, surface_pressure/100., t2m)
 
   diam = 2*component%radiusmym*1e-6
-  vs = vgrav_zanetti(real(diam * 1e6), real(component%densitygcm3), surface_pressure / 100, t2m) / 1e2
+  vs = vgrav(component%to_running, surface_pressure/100., t2m)
 
   fac1 = -0.55 * diam / lambda
   ! Cunningham slip factor
