@@ -324,15 +324,13 @@ pure elemental subroutine drydep_emerson_vd(surface_pressure, t2m, ustar, raero,
   real(real64) :: fac1, cslip, bdiff, sc, EB, EIM, EIN, stokes
   integer(int16) :: Apar
 
-  diam = 2*component%radiusmym*1e-6
-  vs = vgrav(component%to_running, surface_pressure/100., t2m)
-
   if (component%radiusmym <= 0.05) then ! gas
-    vd_dep = vs + 0.008 ! [m/s] see drydep2
+    vd_dep = 0.008 ! [m/s] see drydep2
     return
   end if
 
-
+  diam = 2*component%radiusmym*1e-6
+  vs = vgrav(component%to_running, surface_pressure/100., t2m)
 
   fac1 = -0.55 * diam / lambda
   ! Cunningham slip factor
