@@ -194,15 +194,24 @@ end subroutine
 
 !>  access gravitational velocity interpolated from precomputed lookup-tables
 !>  vgrav in m/s
-  elemental real function vgrav(run_comp, p,t)
+  elemental real function vgrav(run_comp_idx, p,t)
     USE iso_fortran_env, only: real64
+    use snapparML, only: run_comp, def_comp, GRAV_TYPE_FIXED
+    implicit none
 
-    integer, intent(in) :: run_comp !< running component number
+    integer, intent(in) :: run_comp_idx !< running component number
     real, intent(in) :: p !< atmospheric presure (hPa)
     real, intent(in) :: t !< air absolute temperature (K)
 
     real(real64) :: grav1, grav2, pvg, tvg
-    integer :: ip, it
+    integer :: ip, it, m
+
+    ! return fixed gravity if set
+    m = run_comp(run_comp_idx)%to_defined
+    if (def_comp(m)%grav_type == GRAV_TYPE_FIXED) then
+      vgrav = def_comp(m)%gravityms
+      return
+    end if
 
     ! old       gravity= vgrav(radiusmym(m),densitygcm3(m),p,t)
       ip = (p-pbasevg)/pincrvg
@@ -214,12 +223,12 @@ end subroutine
       it = min(size(vgtable,1)-1, it)
       tvg = tbasevg + it*tincrvg
 
-      grav1 = vgtable(it,ip,run_comp) &
-          + (vgtable(it+1,ip,run_comp)-vgtable(it,ip,run_comp)) &
+      grav1 = vgtable(it,ip,run_comp_idx) &
+          + (vgtable(it+1,ip,run_comp_idx)-vgtable(it,ip,run_comp_idx)) &
           *(t-tvg)/tincrvg
       ip = ip + 1
-      grav2 = vgtable(it,ip,run_comp) &
-          + (vgtable(it+1,ip,run_comp)-vgtable(it,ip,run_comp)) &
+      grav2 = vgtable(it,ip,run_comp_idx) &
+          + (vgtable(it+1,ip,run_comp_idx)-vgtable(it,ip,run_comp_idx)) &
           *(t-tvg)/tincrvg
       vgrav = grav1 + (grav2-grav1) * (p-pvg)/pincrvg
 
