@@ -392,11 +392,12 @@ subroutine drydep_nonconstant_vd(tstep, vd, part)
     j = nint(part%y)
 
     deprate_m1 = 1 - exp(-tstep*vd(i,j,mm)/h)
+    dep = part%scale_rad(1 - deprate_m1)
 
+    ! add to output field
+    mo = def_comp(m)%to_output
     i = hres_pos(part%x)
     j = hres_pos(part%y)
-    dep = part%scale_rad(1 - deprate_m1)
-    mo = def_comp(m)%to_output
     !$OMP atomic
     depdry(i,j,mo) = depdry(i,j,mo) + dble(dep)
   end if
