@@ -1180,9 +1180,12 @@ end subroutine
     use snapfldML, only: xflux, yflux, hflux, z0, t2m, vd_dep, ustar, &
       ps2, raero, my, enspos
     use drydepml, only: classnr, requires_extra_fields_to_be_read, drydep_precompute_meteo, drydep_precompute_particle
+    use ftestML, only: ftest
+    use snapdebug, only: idebug
     use snapdimML, only: nx, ny
     use snapparML, only: ncomp, run_comp, def_comp
     use vgravtablesML, only: vgrav
+
 
     integer, intent(in) :: ncid
     integer, intent(in) :: timepos
@@ -1245,7 +1248,10 @@ end subroutine
         call drydep_precompute_particle(ps2*100., t2m, &
           ustar, raero, my, itimefi, &
           def_comp(mm), classnr, vd_dep(:,:,i))
-      endif
+        if (idebug == 1) then
+          call ftest('vd_dep for '//trim(def_comp(mm)%compname), vd_dep(:,:,i))
+        endif
+      end if
     end do
   end subroutine
 
