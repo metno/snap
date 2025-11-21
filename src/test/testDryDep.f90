@@ -53,9 +53,9 @@ program testDryDep
 
   ps2 = 1013.25 ! hPa
   t2m = 280.0 ! K
-  yflux = 1.0 ! N /m2/hr
-  xflux = 1.0 ! N /m2/hr
-  surface_stress = HYPOT(yflux, xflux)
+  yflux = 1.0 ! N /m2
+  xflux = 1.0 ! N /m2
+  surface_stress = HYPOT(yflux, xflux) ! N /m2
   z0 = 0.1 ! m
   hflux = 100.0 ! W hr/m2
   classnr = 21 ! class number 11=sea, 21=mixed forest
