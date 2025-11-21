@@ -247,37 +247,36 @@ end function
 
 
 !> Table 3 for Zhang et. al 2001 https://doi.org/10.1016/S1352-2310(00)00326-5
-elemental real(real64) function lookup_alpha(classnr)
+elemental real(real64) function alpha(classnr)
   integer(int8), intent(in) :: classnr
-  lookup_alpha = LOOKUP_NAN
 
   select case(classnr)
   case (11) ! Sea -> Z14
-    lookup_alpha = 100.0
+    alpha = 100.0
   case (12) ! Inland water -> Z13
-    lookup_alpha = 100.0
+    alpha = 100.0
   case (13) ! Tundra/desert -> Z8,Z9
-    lookup_alpha = 50.0
+    alpha = 50.0
   case (14) ! Ice and ice sheets -> Z12
-    lookup_alpha = 50.0
+    alpha = 50.0
   case (15) ! Urban -> Z15
-    lookup_alpha = 1.5
+    alpha = 1.5
   case (16) ! Crops -> Z7
-    lookup_alpha = 1.2
+    alpha = 1.2
   case (17) ! Grass -> Z6
-    lookup_alpha = 1.3
+    alpha = 1.3
   case (18) ! Wetlands -> Z11
-    lookup_alpha = 1.0
+    alpha = 1.0
   case (19) ! Evergreen needleleaf -> Z1
-    lookup_alpha = 0.8
+    alpha = 0.8
   case (20) ! Deciduous needleleaf -> Z3
-    lookup_alpha = 0.8
+    alpha = 0.8
   case (21) ! Mixed forest -> Z5
-    lookup_alpha = 0.8
+    alpha = 0.8
   case (22) ! Shrubs and interrupted woodlands -> Z10
-    lookup_alpha = 1.3
+    alpha = 1.3
   case default
-    lookup_alpha = LOOKUP_NAN
+    error stop "Error: Invalid classnr value encountered, must be in range 11-22"
   end select
 
 end function
@@ -359,7 +358,6 @@ pure elemental subroutine drydep_emerson_vd(surface_pressure, t2m, ustar, raero,
 
   real(real64) :: fac1, cslip, bdiff, sc, EB, EIM, EIN, stokes
   integer(int16) :: Apar
-  real(real64) :: alpha
 
   if (component%radiusmym <= 0.05) then ! gas
     vd_dep = 0.008 ! [m/s] see drydep2
@@ -383,7 +381,6 @@ pure elemental subroutine drydep_emerson_vd(surface_pressure, t2m, ustar, raero,
 
 
   Apar = lookup_A(classnr, date_to_seasonal_category(date))
-  alpha = lookup_alpha(classnr)
   if (Apar .ne. LOOKUP_NAN) then
     A = Apar * 1e-3
     ! Stokes number for vegetated surfaces (Zhang (2001) needed for impaction
@@ -396,7 +393,7 @@ pure elemental subroutine drydep_emerson_vd(surface_pressure, t2m, ustar, raero,
     EIN = 0.0
   endif
   ! Impaction
-  EIM = 0.4 * (stokes / (alpha + stokes)) ** 1.7
+  EIM = 0.4 * (stokes / (alpha(classnr) + stokes)) ** 1.7
 
   rs = 1.0 / (3.0 * ustar * (EB + EIM + EIN))
   vd_dep = 1.0 / (raero + rs) + vs
