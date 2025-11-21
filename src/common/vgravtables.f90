@@ -34,7 +34,7 @@ module vgravtablesML
   real, parameter, private :: pincrvg = 1200./float(numpresvg-1)
   real, parameter, private :: pbasevg = 0. - pincrvg
 
-  public :: vgravtables_init, vgrav, vgrav_zanetti
+  public :: vgravtables_init, vgrav, vgrav_iter ! vgrav_iter only exposed for testing
 
   contains
 
@@ -194,15 +194,24 @@ end subroutine
 
 !>  access gravitational velocity interpolated from precomputed lookup-tables
 !>  vgrav in m/s
-  elemental real function vgrav(run_comp, p,t)
+  elemental real function vgrav(run_comp_idx, p,t)
     USE iso_fortran_env, only: real64
+    use snapparML, only: run_comp, def_comp, GRAV_TYPE_FIXED
+    implicit none
 
-    integer, intent(in) :: run_comp !< running component number
+    integer, intent(in) :: run_comp_idx !< running component number
     real, intent(in) :: p !< atmospheric presure (hPa)
     real, intent(in) :: t !< air absolute temperature (K)
 
     real(real64) :: grav1, grav2, pvg, tvg
-    integer :: ip, it
+    integer :: ip, it, m
+
+    ! return fixed gravity if set
+    m = run_comp(run_comp_idx)%to_defined
+    if (def_comp(m)%grav_type == GRAV_TYPE_FIXED) then
+      vgrav = def_comp(m)%gravityms
+      return
+    end if
 
     ! old       gravity= vgrav(radiusmym(m),densitygcm3(m),p,t)
       ip = (p-pbasevg)/pincrvg
@@ -214,16 +223,29 @@ end subroutine
       it = min(size(vgtable,1)-1, it)
       tvg = tbasevg + it*tincrvg
 
-      grav1 = vgtable(it,ip,run_comp) &
-          + (vgtable(it+1,ip,run_comp)-vgtable(it,ip,run_comp)) &
+      grav1 = vgtable(it,ip,run_comp_idx) &
+          + (vgtable(it+1,ip,run_comp_idx)-vgtable(it,ip,run_comp_idx)) &
           *(t-tvg)/tincrvg
       ip = ip + 1
-      grav2 = vgtable(it,ip,run_comp) &
-          + (vgtable(it+1,ip,run_comp)-vgtable(it,ip,run_comp)) &
+      grav2 = vgtable(it,ip,run_comp_idx) &
+          + (vgtable(it+1,ip,run_comp_idx)-vgtable(it,ip,run_comp_idx)) &
           *(t-tvg)/tincrvg
       vgrav = grav1 + (grav2-grav1) * (p-pvg)/pincrvg
 
   end function vgrav
+
+!< computed and iterated gravitational settling velocity in m/s
+elemental real function  vgrav_iter(dp, rp, p, t)
+  real, intent(in) :: dp !< particle size (diameter) in micro meters
+  real, intent(in) :: rp !< particle density in g/cm3
+  real, intent(in) :: p !< atmospheric pressure in hPa
+  real, intent(in) :: t !< temperature of the air in K
+  real :: vg, u0 !< vg according to Stokes law in cm/s
+
+  u0 =  vgrav_zanetti(dp,rp,p,t)
+  call iter(vg,u0,dp,rp,p,t)
+  vgrav_iter=vg*0.01 ! cm/s -> m/s
+end function vgrav_iter
 
 !>  program for calculating gravitational setling velocity for particles
 !>  according to Zannetti (1990).
@@ -247,7 +269,7 @@ end subroutine
   end function vgrav_zanetti
 
 !>  iteration procedure for calculating vg
-subroutine iter(vg,u0,dp,rp,p,t)
+pure subroutine iter(vg,u0,dp,rp,p,t)
   real, intent(out) :: vg !< computed gravitational settling velocity in cm/s
   real, intent(in) :: u0 !< vg according to Stokes law in cm/s
   real, intent(in) :: dp !< particle size (diameter) in micro meters
@@ -291,6 +313,7 @@ subroutine iter(vg,u0,dp,rp,p,t)
 
   return
 end subroutine iter
+
 
 !>  function for calculating density of the air depending on
 !>  temperature and pressure. According to RAFF (1999).

@@ -112,7 +112,7 @@ elemental subroutine drydep_precompute_particle(surface_pressure, t2m, &
   type(datetime_t), intent(in) :: date
   type(defined_component), intent(in) :: component
   integer(int8), intent(in) :: classnr !> Speficic mapping to land use type, see subroutine `lookup_A`
-  real, intent(out) :: vd_dep
+  real, intent(out) :: vd_dep ! m/s
 
   select case(drydep_scheme)
     case (DRYDEP_SCHEME_EMERSON)
@@ -342,7 +342,7 @@ pure elemental subroutine drydep_emerson_vd(surface_pressure, t2m, ustar, raero,
     vd_dep)
   use datetime, only: datetime_t
   use snapparML, only: defined_component
-  use vgravtablesML, only: vgrav, vgrav_zanetti
+  use vgravtablesML, only: vgrav
   !> In hPa
   real, intent(in) :: surface_pressure
   real, intent(in) :: t2m
@@ -361,10 +361,13 @@ pure elemental subroutine drydep_emerson_vd(surface_pressure, t2m, ustar, raero,
   integer(int16) :: Apar
   real(real64) :: alpha
 
-  !vs = vgrav(component%to_running, surface_pressure/100., t2m)
+  if (component%radiusmym <= 0.05) then ! gas
+    vd_dep = 0.008 ! [m/s] see drydep2
+    return
+  end if
 
   diam = 2*component%radiusmym*1e-6
-  vs = vgrav_zanetti(real(diam * 1e6), real(component%densitygcm3), surface_pressure / 100, t2m) / 1e2
+  vs = vgrav(component%to_running, surface_pressure/100., t2m)
 
   fac1 = -0.55 * diam / lambda
   ! Cunningham slip factor
@@ -426,12 +429,13 @@ subroutine drydep_nonconstant_vd(tstep, vd, part)
     i = nint(part%x)
     j = nint(part%y)
 
-    deprate_m1 = exp(-tstep*vd(i,j,mm)/h)
+    deprate_m1 = 1 - exp(-tstep*vd(i,j,mm)/h)
+    dep = part%scale_rad(1 - deprate_m1)
 
+    ! add to output field
+    mo = def_comp(m)%to_output
     i = hres_pos(part%x)
     j = hres_pos(part%y)
-    dep = part%scale_rad(deprate_m1)
-    mo = def_comp(m)%to_output
     !$OMP atomic
     depdry(i,j,mo) = depdry(i,j,mo) + dble(dep)
   end if

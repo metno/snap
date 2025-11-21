@@ -920,6 +920,9 @@ contains
       accum_surface_heat_flux_units, surface_heat_flux_units
     use drydepml, only: drydep_precompute_meteo, drydep_precompute_particle, &
       requires_extra_fields_to_be_read, classnr
+    use ftestML, only: ftest
+    use snapdebug, only: idebug
+
     use snapparML, only: ncomp, run_comp, def_comp
     use snapfldML, only: ps2, vd_dep, surface_stress, hflux, z0, t2m, &
       ustar, raero, my
@@ -992,6 +995,9 @@ contains
         call drydep_precompute_particle(ps2*100., t2m, &
           ustar, raero, my, itimefi, &
           def_comp(mm), classnr, vd_dep(:,:,i))
+        if (idebug == 1) then
+          call ftest('vd_'//trim(def_comp(mm)%compname), vd_dep(:,:,i))
+        endif
       endif
     end do
     !$END PARALLEL DO
