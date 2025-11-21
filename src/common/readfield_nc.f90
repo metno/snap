@@ -147,6 +147,7 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
   real :: alev(nk), blev(nk), dxgrid, dygrid
   real :: p, px, ptop
   real :: ptoptmp(1)
+  real :: dummy_fc(1,1)
   integer :: prev_tstep_same_file
 
   integer :: timepos, timeposm1
@@ -376,8 +377,9 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
     call compute_vertical_coords(alev, blev, ptop)
 
   !..compute map ratio
+    dummy_fc(1,1) = 0.0
     call mapfield(1,0,igtype,gparam,nx,ny,xm,ym,&
-        xm, & ! Ignored when icori = 0
+        dummy_fc, & ! Ignored when icori = 0
         dxgrid,dygrid,ierror)
     if(ierror /= 0) then
       write(iulog,*) 'MAPFIELD ERROR. ierror= ',ierror
