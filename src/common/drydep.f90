@@ -248,6 +248,42 @@ end function
 
 
 !> Table 3 for Zhang et. al 2001 https://doi.org/10.1016/S1352-2310(00)00326-5
+elemental real(real64) function alpha(classnr)
+  integer(int8), intent(in) :: classnr
+
+  select case(classnr)
+  case (11) ! Sea -> Z14
+    alpha = 100.0
+  case (12) ! Inland water -> Z13
+    alpha = 100.0
+  case (13) ! Tundra/desert -> Z8,Z9
+    alpha = 50.0
+  case (14) ! Ice and ice sheets -> Z12
+    alpha = 50.0
+  case (15) ! Urban -> Z15
+    alpha = 1.5
+  case (16) ! Crops -> Z7
+    alpha = 1.2
+  case (17) ! Grass -> Z6
+    alpha = 1.3
+  case (18) ! Wetlands -> Z11
+    alpha = 1.0
+  case (19) ! Evergreen needleleaf -> Z1
+    alpha = 0.8
+  case (20) ! Deciduous needleleaf -> Z3
+    alpha = 0.8
+  case (21) ! Mixed forest -> Z5
+    alpha = 0.8
+  case (22) ! Shrubs and interrupted woodlands -> Z10
+    alpha = 1.3
+  case default
+    error stop "Error: Invalid classnr value encountered, must be in range 11-22"
+  end select
+
+end function
+
+
+!> Table 3 for Zhang et. al 2001 https://doi.org/10.1016/S1352-2310(00)00326-5
 elemental integer(int16) function lookup_A(classnr, seasonal_category)
   integer(int8), intent(in) :: classnr
   integer, intent(in) :: seasonal_category
@@ -358,7 +394,7 @@ pure elemental subroutine drydep_emerson_vd(surface_pressure, t2m, ustar, raero,
     EIN = 0.0
   endif
   ! Impaction
-  EIM = 0.4 * (stokes / (0.8 + stokes)) ** 1.7
+  EIM = 0.4 * (stokes / (alpha(classnr) + stokes)) ** 1.7
 
   rs = 1.0 / (3.0 * ustar * (EB + EIM + EIN))
   vd_dep = 1.0 / (raero + rs) + vs
