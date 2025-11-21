@@ -108,6 +108,7 @@ contains
     integer :: ifb, kfb
     real :: p, px, ptop
     real :: ptoptmp(1)
+    real :: dummy_fc(1,1)
 
     integer :: timepos, timeposm1, nr
 
@@ -324,8 +325,9 @@ contains
       first_time_read = .false.
 
       !..compute map ratio
+      dummy_fc(1,1) = 0.0
       call mapfield(1, 0, igtype, gparam, nx, ny, xm, ym, &
-                    xm, & ! Ignored when icori = 0
+                    dummy_fc, & ! Ignored when icori = 0
                     dxgrid, dygrid, ierror)
       if (ierror /= 0) then
         write (iulog, *) 'MAPFIELD ERROR. ierror= ', ierror
