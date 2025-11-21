@@ -13,7 +13,7 @@ program testDryDep
   type(datetime_t) :: itimefi
   integer :: i
   integer(kind=1) :: classnr
-  real(4) :: ps2, t2m, yflux, xflux, z0, hflux, &
+  real(4) :: ps2, t2m, yflux, xflux, surface_stress, z0, hflux, &
         vd_dep
   real(kind=real64) :: ustar, raero, my
 
@@ -55,10 +55,11 @@ program testDryDep
   t2m = 280.0 ! K
   yflux = 1.0 ! N /m2/hr
   xflux = 1.0 ! N /m2/hr
+  surface_stress = HYPOT(yflux, xflux)
   z0 = 0.1 ! m
   hflux = 100.0 ! W hr/m2
   classnr = 21 ! class number 11=sea, 21=mixed forest
-  call drydep_precompute_meteo(ps2*100., t2m, yflux, xflux, z0, hflux, &
+  call drydep_precompute_meteo(ps2*100., t2m, surface_stress, z0, hflux, &
     ustar, raero, my)
   ! Test dry-dep velocity for Cs137
   call drydep_precompute_particle(ps2*100., t2m, &
