@@ -142,8 +142,7 @@ subroutine forwrd_dx(tf1, tf2, tnow, tstep, part, &
 !> wind-speed in y
   real(real64), intent(out) :: v
 
-  integer :: i,j,m,ilvl,k1,k2,kt1,kt2,ip,it
-  integer :: mrunning
+  integer :: i,j,m,ilvl,k1,k2,kt1,kt2
   real(real64) :: dt,rt1,rt2,dx,dy,c1,c2,c3,c4,vlvl
   real(real64) :: dz1,dz2,uk1,uk2,vk1,vk2,wk1,wk2,w
   real(real64) :: th,tk1,tk2,ps,p,pi,t,gravity
