@@ -33,8 +33,6 @@ class SnapEcEMEPForwardTestCase(SnapTestCase):
             cwd=self.datadir,
             env=env,
             check=True,
-            stderr=subprocess.DEVNULL,
-            stdout=subprocess.DEVNULL,
         )
 
         outfile = self.get_nc_filename(os.path.join(self.datadir, self.input))
@@ -62,8 +60,6 @@ class SnapEcEMEPForwardTestCase(SnapTestCase):
             cwd=self.datadir,
             env=env,
             check=True,
-            stderr=subprocess.DEVNULL,
-            stdout=subprocess.DEVNULL,
         )
 
         outfile = self.get_nc_filename(os.path.join(self.datadir, self.input))
@@ -174,8 +170,6 @@ class ReleaseTests(unittest.TestCase):
                 [self.snap.resolve().as_posix(), "snap.input"],
                 cwd=tmp.resolve().as_posix(),
                 check=True,
-                stderr=subprocess.DEVNULL,
-                stdout=subprocess.DEVNULL,
             )
         except Exception as e:
             print(tmp)
@@ -223,8 +217,6 @@ class ReleaseTests(unittest.TestCase):
                 [self.snap.resolve().as_posix(), "snap.input"],
                 cwd=tmp.resolve().as_posix(),
                 check=True,
-                stderr=subprocess.DEVNULL,
-                stdout=subprocess.DEVNULL,
             )
         except Exception as e:
             print(tmp)
@@ -281,8 +273,6 @@ class ReleaseTests(unittest.TestCase):
                 [self.snap.resolve().as_posix(), "snap.input"],
                 cwd=tmp.resolve().as_posix(),
                 check=True,
-                stderr=subprocess.DEVNULL,
-                stdout=subprocess.DEVNULL,
             )
         except Exception as e:
             print(tmp)
