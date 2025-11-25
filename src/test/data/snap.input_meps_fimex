@@ -74,7 +74,7 @@ MODEL.LEVEL.FIELDS.OFF
 *
 ** INPUT FIELD FILES
 FIELD.TYPE=fimex
-FIELD.INPUT= ../snap_testdata/meps_det_2_5km_20251125T06_ringhals.nc
+FIELD.INPUT= ../snap_testdata/meps_det_2_5km_20251125T06Z_ringhals.nc
 ** USE FIMEX
 FIMEX.FILE_TYPE= netcdf
 *FIMEX.CONFIG=
