@@ -27,7 +27,7 @@ test: testDateCalc test_array_utils find_parameters_fi_test  testGravSettling te
 	./testDateCalc && \
 	./test_array_utils && \
 	./find_parameters_fi_test snap_testdata/meteo20200415_00_ringhals.nc u_wind && \
-	./find_parameters_fi_test snap_testdata/meps_det_2_5km_20200316T00Z_ringhals.nc x_wind_ml && \
+	./find_parameters_fi_test snap_testdata/meps_det_2_5km_20251125T06Z_ringhals.nc x_wind_ml && \
 	./testGravSettling && \
 	./testDryDep && \
 	python3 -m unittest snap_forward_test.py
