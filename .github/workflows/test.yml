@@ -27,6 +27,8 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          lfs: true
 
       - name: Get machine info
         run: |
