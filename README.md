@@ -37,8 +37,9 @@ compilation
  * NetCDF (netcdf > 4.1.1)
  * NetCDF-fortran
  * Python3 (optional)
- * git (optional)
  * fimex (optional)
+
+To work with this repository, please have `git-lfs` installed.
 
 
 ## Installation

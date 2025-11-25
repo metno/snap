@@ -460,6 +460,7 @@ GRAVITY.FIXED.M/S=0.0002
         """Get the definitions for the metmodel, including met-files and domain (unless default).
         This should be written to the snap.input file, in addition to the source-term. files may be empty
         """
+        largest_landfraction_file = "ERROR: no largest land cover defined for metmodel {metmodel}"
         lines = []
         if metmodel == MetModel.NrpaEC0p1:
             # no setup needed, autdetection in snap
@@ -474,8 +475,7 @@ GRAVITY.FIXED.M/S=0.0002
             # no setup needed, autdetection in snap
             pass
         elif metmodel == MetModel.Meps2p5:
-            # no setup needed, autdetection in snap
-            pass
+            largest_landfraction_file = os.path.join(self.directory, "largestLandFraction_MEPS_byte.nc")
         elif metmodel == MetModel.Icon0p25Global:
             # no setup needed, autdetection in snap
             pass
@@ -494,7 +494,9 @@ GRAVITY.FIXED.M/S=0.0002
 
         lines.append("")
         lines.append(
-            self._getSnapInputTemplate(metmodel).format(interpolation=interpolation, LUSTREDIR=self.getLustreDir())
+            self._getSnapInputTemplate(metmodel).format(interpolation=interpolation,
+                                                        LUSTREDIR=self.getLustreDir(),
+                                                        largest_landfraction_file=largest_landfraction_file)
         )
         return "\n".join(lines)
 
