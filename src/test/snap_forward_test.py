@@ -33,8 +33,6 @@ class SnapEcEMEPForwardTestCase(SnapTestCase):
             cwd=self.datadir,
             env=env,
             check=True,
-            stderr=subprocess.DEVNULL,
-            stdout=subprocess.DEVNULL,
         )
 
         outfile = self.get_nc_filename(os.path.join(self.datadir, self.input))
@@ -62,8 +60,6 @@ class SnapEcEMEPForwardTestCase(SnapTestCase):
             cwd=self.datadir,
             env=env,
             check=True,
-            stderr=subprocess.DEVNULL,
-            stdout=subprocess.DEVNULL,
         )
 
         outfile = self.get_nc_filename(os.path.join(self.datadir, self.input))
@@ -87,7 +83,7 @@ class SnapMEPSForwardTestCase(SnapTestCase):
     snap = "../bsnap_naccident"
     datadir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 
-    snapExpected = "snap_testdata/snap_meps_interpolated_expected4.nc"
+    snapExpected = "snap_testdata/snap_meps_interpolated_expected_20251125.nc"
 
     def setUp(self):
         pass
@@ -104,8 +100,6 @@ class SnapMEPSForwardTestCase(SnapTestCase):
             cwd=self.datadir,
             env=env,
             check=True,
-            stderr=subprocess.DEVNULL,
-            stdout=subprocess.DEVNULL,
         )
 
         outfile = self.get_nc_filename(os.path.join(self.datadir, self.input))
@@ -133,8 +127,6 @@ class SnapMEPSForwardTestCase(SnapTestCase):
             cwd=self.datadir,
             env=env,
             check=True,
-            stderr=subprocess.DEVNULL,
-            stdout=subprocess.DEVNULL,
         )
         self.assertEqual(proc.returncode, 0)
 
@@ -178,8 +170,6 @@ class ReleaseTests(unittest.TestCase):
                 [self.snap.resolve().as_posix(), "snap.input"],
                 cwd=tmp.resolve().as_posix(),
                 check=True,
-                stderr=subprocess.DEVNULL,
-                stdout=subprocess.DEVNULL,
             )
         except Exception as e:
             print(tmp)
@@ -227,8 +217,6 @@ class ReleaseTests(unittest.TestCase):
                 [self.snap.resolve().as_posix(), "snap.input"],
                 cwd=tmp.resolve().as_posix(),
                 check=True,
-                stderr=subprocess.DEVNULL,
-                stdout=subprocess.DEVNULL,
             )
         except Exception as e:
             print(tmp)
@@ -285,8 +273,6 @@ class ReleaseTests(unittest.TestCase):
                 [self.snap.resolve().as_posix(), "snap.input"],
                 cwd=tmp.resolve().as_posix(),
                 check=True,
-                stderr=subprocess.DEVNULL,
-                stdout=subprocess.DEVNULL,
             )
         except Exception as e:
             print(tmp)
