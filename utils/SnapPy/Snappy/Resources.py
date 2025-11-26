@@ -460,7 +460,7 @@ GRAVITY.FIXED.M/S=0.0002
         """Get the definitions for the metmodel, including met-files and domain (unless default).
         This should be written to the snap.input file, in addition to the source-term. files may be empty
         """
-        largest_landfraction_file = "ERROR: no largest land cover defined for metmodel {metmodel}"
+        largest_landfraction_file = f"ERROR: no largest land cover defined for metmodel {metmodel}"
         lines = []
         if metmodel == MetModel.NrpaEC0p1:
             # no setup needed, autdetection in snap
