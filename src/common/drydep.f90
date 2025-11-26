@@ -111,7 +111,7 @@ elemental subroutine drydep_precompute_particle(surface_pressure, t2m, &
   real(real64), intent(in) :: raero, ustar, my
   type(datetime_t), intent(in) :: date
   type(defined_component), intent(in) :: component
-  integer(int8), intent(in) :: classnr !> Speficic mapping to land use type, see subroutine `lookup_A`
+  integer(int8), intent(in) :: classnr !> Specific mapping to land use type, see subroutine `lookup_A`
   real, intent(out) :: vd_dep ! m/s
 
   select case(drydep_scheme)
