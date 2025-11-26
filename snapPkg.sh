@@ -2,7 +2,7 @@
 
 set -e
 
-export VERSION=2.5.6
+export VERSION=2.5.7
 #VERSION_=`echo -n $VERSION | tr '.' '_'`
 
 # We do not have a way of cross-compiling,
@@ -32,7 +32,7 @@ mv debian.${PLATFORM} debian
 
 export DEBEMAIL=${USER}@met.no
 FULLVERSION=${VERSION}-1
-dch --package bsnap --newversion ${FULLVERSION} "Options for enabling new deposition schemes"
+dch --package bsnap --newversion ${FULLVERSION} "Fix NaN in iodine ddep"
 dch --release ""
 export DEB_BUILD_OPTIONS='nostrip'
 export BINDIR="../debian/bsnap/usr/bin/"
