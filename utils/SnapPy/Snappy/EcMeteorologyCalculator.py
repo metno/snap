@@ -117,9 +117,7 @@ source /etc/profile.d/modules.sh
 release=$(lsb_release --codename --short)
 if [[ "$release" == "Ootpa" ]]; then
     module use /modules/MET/rhel8/user-modules/ /modules/MET/rhel8/user-modules/fou-modules
-    module load ecdis4cwf/1.6.1
-elsif [[ "$release" == "bionic" ]]; then
-    module load ecdis4cwf/1.2.6
+    module load ecdis4cwfAtomAsh/1.10.0
 else
     echo "ERROR: unknown OS release $release, don't know how to load ecdis4cwf"
     exit 1
