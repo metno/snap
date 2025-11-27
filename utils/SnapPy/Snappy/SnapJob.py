@@ -23,7 +23,7 @@ Created on Mar 8, 2018
 
 import os
 import re
-
+from Snappy.Resources import MetModel
 
 class UnknownModelException(Exception):
     """Exception when wrong model/prefix-name is send to SnapJob"""
@@ -74,15 +74,15 @@ class SnapJob:
         else:
             raise UnknownModelException("unknown model:" + self.task.model)
         if task_model == "":
-            metmodel = "nrpa_ec_0p1"
+            metmodel = MetModel.NrpaEC0p1
         elif task_model == "GLOBAL":
-            metmodel = "nrpa_ec_0p1_global"
+            metmodel = MetModel.EC0p1Global
         elif task_model == "NORDIC":
-            metmodel = "meps_2_5km"
+            metmodel = MetModel.Meps2p5
         elif task_model == "ICONGLOBAL":
-            metmodel = "icon_0p25_global"
+            metmodel = MetModel.Icon0p25Global
         elif task_model == "ERA5":
-            metmodel = "era5_nancy"
+            metmodel = MetModel.Era5Nancy
         else:
             raise UnknownModelException("unknown model:" + self.task.model)
 
@@ -168,7 +168,7 @@ exit 0;
             xmlfile=xmlfile,
             argosrequest=argosrequest,
             argos_operational=argos_operational,
-            metmodel=metmodel,
+            metmodel=metmodel.value,
             zipreturnfile=self.get_return_filename(),
             model=self.task.model,
             statusfile=self.task.status_filename(),
