@@ -133,7 +133,9 @@ function send_msg()
 module load {module_to_load}
 
 ulimit -c 0
-export OMP_NUM_THREADS=1
+# run might have many particles, use two hyper-threads
+export OMP_NUM_THREADS=2
+export OMP_THREAD_LIMIT=2
 
 cd {rundir}
 send_msg 102 "Starting run for {model} (timeout: 2h)"
