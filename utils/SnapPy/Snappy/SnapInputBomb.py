@@ -119,8 +119,12 @@ class ExplosionType(Enum):
                                                (0.25, ParticleDistribution.BOMB)])
     SPRIGGS_R6 = _ExplosionType("Spriggs R6", [(0.75, ParticleDistribution.SURFACE),
                                                (0.25, ParticleDistribution.BOMB)])
+    SPRIGGS_R5_5 = _ExplosionType("Spriggs R5.5", [(0.5, ParticleDistribution.SURFACE),
+                                                   (0.5, ParticleDistribution.BOMB)])
     SPRIGGS_R5 = _ExplosionType("Spriggs R5", [(0.25, ParticleDistribution.SURFACE),
                                                (0.75, ParticleDistribution.BOMB)])
+    SPRIGGS_R4_5 = _ExplosionType("Spriggs R4.5", [(0.13, ParticleDistribution.SURFACE),
+                                                   (0.87, ParticleDistribution.BOMB)])
     SPRIGGS_R4 = _ExplosionType("Spriggs R4", [(0.05, ParticleDistribution.SURFACE),
                                                (0.95, ParticleDistribution.BOMB)])
     MIXED = _ExplosionType("Mixed",           [(1.0, ParticleDistribution.MIXED)])
@@ -138,12 +142,18 @@ class ExplosionType(Enum):
             return ExplosionType.HIGH
         elif name == "spriggs r4":
             return ExplosionType.SPRIGGS_R4
+        elif name == "spriggs r4.5":
+            return ExplosionType.SPRIGGS_R4_5
         elif name == "spriggs r5":
             return ExplosionType.SPRIGGS_R5
+        elif name == "spriggs r5.5":
+            return ExplosionType.SPRIGGS_R5_5
         elif name == "spriggs r6":
             return ExplosionType.SPRIGGS_R6
-        else:
+        elif name == "mixed":
             return ExplosionType.MIXED
+        else:
+            raise Exception(f"unknown explosion type name: {name}")
 
 
 def _lin_interpol(a0, a, b, x, y):
