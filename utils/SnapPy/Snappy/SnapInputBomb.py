@@ -6,8 +6,7 @@ from collections import namedtuple
 from enum import Enum
 
 import numpy as np
-from Snappy.ActivityHeightDistribution import ActivityHeightDistribution, ActivityHeightKdfoc3, ActivityHeightRolph, Particles
-from utils.SnapPy.build.lib.Snappy.SnapInputBomb import ExplosionType
+from Snappy.ActivityHeightDistribution import ActivityHeightDistribution, ActivityHeightKdfoc3, ActivityHeightRolph, ActivityHeightVolumentric, Particles
 
 
 class ActivityHeightType(Enum):
@@ -31,7 +30,7 @@ class ParticleDistribution(Enum):
         else:
             return self._interpolate_size_distribution(num)[0]
 
-    def size_distribution(self, num: int=1):
+    def size_distribution(self, num: int=1) -> tuple[float]:
         if num == 1:
             return self.value.radius_sizes
         else:
@@ -56,7 +55,7 @@ class ParticleDistribution(Enum):
                 prev_r = 0
             else:
                 prev_r = self.value.radius_sizes[i - 1]
-            new_dist = self..value.size_distribution[i] / num
+            new_dist = self.value.size_distribution[i] / num
             r_inc = (self.value.radius_sizes[i] - prev_r) / num
             for j in range(num):
                 sizes.append(prev_r + (j + 1) * r_inc)
@@ -80,15 +79,15 @@ class ParticleDistribution(Enum):
 
     MIXED = _ParticleDistribution("Mixed",
                            # upper size, radius in µm
-                           [3.0, 6.5, 11.5, 18.5, 29., 45.0, 71.0, 120., 250.0, 1000.],
+                           [3.0, 6.5, 11.5, 18.5, 29., 45.0, 71.0, 120., 250.0, 500.],
                            [ .1,  .1,  .1,   .1,   .1,   .1,   .1,   .1,    .1,    .1],
                            0.0, # 30% deposition in ground-0
                            ActivityHeightType.VOLUMETRIC
                            )
     # Glasstone Dolan, lognormal ~(3.78, 0.68), + ~50-60% local = in final class
     SURFACE = _ParticleDistribution("Surface",
-                           [ 3.0,     11.5, 18.5, 29., 45.0, 71.0, 120., 250.0, 1000.],
-                           [ 0.01,     .019,  .08,  .17,  .25,  .24,  .17,   .06,   .01], # ~(3.78, 0.68)
+                           [ 3.0, 6.5, 11.5, 18.5, 29., 45.0, 71.0, 120., 250.0, 500.],
+                           [ 0.01,0.01,.018,  .08,  .17,  .25,  .24,  .17,   .06,   .01], # ~(3.78, 0.68)
                            0.00, # 5% deposition in GZ
 #                           0.25, # global fallout (<3µm) # nancy best with 90%, harry/smoky: 75%, sunbeam/trinity: 25% (for wdep)
                            ActivityHeightType.TRIANGULAR
@@ -96,7 +95,7 @@ class ParticleDistribution(Enum):
 
     # Glassstone Dolan: below 20µm, using distribution µ=1, σ=0.8
     BOMB = _ParticleDistribution("Bomb",
-                           [3.0, 6.5, 11.5, 18.5, 29., 45.0, 71.0, 120., 250.0, 1000.],
+                           [3.0, 6.5, 11.5, 18.5, 29., 45.0, 71.0, 120., 250.0, 500.],
                            [.55, .31, .10,  .04,   .0,   .0,   .0,   .0,    .0,    .0],
                            0.0, # 0% in ground-0
                            ActivityHeightType.VOLUMETRIC_NO_STEM
@@ -115,6 +114,9 @@ class ExplosionType(Enum):
 
     # fmt: off
     # default snap
+    # surface == spriggs r6
+    SURFACE  = _ExplosionType("Surface",      [(0.75, ParticleDistribution.SURFACE),
+                                               (0.25, ParticleDistribution.BOMB)])
     SPRIGGS_R6 = _ExplosionType("Spriggs R6", [(0.75, ParticleDistribution.SURFACE),
                                                (0.25, ParticleDistribution.BOMB)])
     SPRIGGS_R5 = _ExplosionType("Spriggs R5", [(0.25, ParticleDistribution.SURFACE),
@@ -283,7 +285,7 @@ class YieldParameters:
 
     def stem_radius(self):
         """stem radius in m"""
-        if self.explosion_type == ExplosionType.HIGH_ALTITUDE:
+        if self.explosion_type == ExplosionType.HIGH:
             return 0.0
         else:
             # Glasstone-Dolan 9.61: the mushroom head from a contact land-surface burst initially contains about 90 percent with the remainder residing in the stem.
@@ -361,15 +363,20 @@ class SnapInputBomb:
         dist = None
         for (frac, pd) in self.explosion_type.particle_distributions:
             if radius_sizes is None:
-                radius_sizes = pd.radius_sizes(SIZE_INTERPOLATION)
-                dist = (x*frac for x in pd.size_distribution(SIZE_INTERPOLATION))
+                radius_sizes = pd.radius_sizes(self.SIZE_INTERPOLATION)
+                dist = [x*frac for x in pd.size_distribution(self.SIZE_INTERPOLATION)]
             else:
-                assert radius_sizes == pd.radius_sizes(SIZE_INTERPOLATION)
-                for i, d in enumerate(pd.)
+                try:
+                    assert np.allclose(radius_sizes, pd.radius_sizes(self.SIZE_INTERPOLATION), atol=1e-5)
+                except Exception as ex:
+                    raise AssertionError(f"size distributions do not match in explosion_type: {radius_sizes}, {pd.radius_sizes(self.SIZE_INTERPOLATION)}, {ex}")
+                for i, d in enumerate(pd.size_distribution(self.SIZE_INTERPOLATION)):
+                    dist[i] += d * frac
 
-        self.radius_sizes = self.explosion_type.radius_sizes
-        self.size_distribution = self.explosion_type.size_distribution
-        self._interpolate_size_distribution(self.SIZE_INTERPOLATION)
+        assert sum(dist) > 0.98 and sum(dist) < 1.02, f"size_distribution does not sum to 1 != {sum(dist)}: {dist}"
+
+        self.radius_sizes = radius_sizes
+        self.size_distribution = dist
         return None
 
     @property
@@ -467,7 +474,7 @@ class SnapInputBomb:
 
     @size_distribution.setter
     def size_distribution(self, size_distribution: list[float]) -> None:
-        if abs(1 - sum(size_distribution)) > 0.01:
+        if abs(1 - sum(size_distribution)) > 0.02:
             raise Exception(
                 f"size_distribution {sum(size_distribution)} > 1: {size_distribution}"
             )
@@ -530,9 +537,9 @@ class SnapInputBomb:
     def _height_type_name_to_ahd(self, ahd: ActivityHeightType) -> ActivityHeightDistribution:
         """convert height distribution enum to ActivityHeightDistribution instance"""
         if ahd == ActivityHeightType.VOLUMETRIC:
-            return ActivityHeightVolume(top=self.cloud_top, bottom=self.cloud_bottom, stem=0.0)
+            return ActivityHeightVolumentric(cap_top_height=self.cloud_top, cap_bottom_height=self.cloud_bottom, cap_radius=self.cloud_radius, stem_radiusn=self.stem_radius)
         elif ahd == ActivityHeightType.VOLUMETRIC_NO_STEM:
-            return ActivityHeightVolume(top=self.cloud_top, bottom=self.cloud_bottom, stem=0.0)
+            return ActivityHeightVolumentric(cap_top_height=self.cloud_top, cap_bottom_height=self.cloud_bottom, cap_radius=self.cloud_radius, stem_radius=0.0)
         elif ahd == ActivityHeightType.TRIANGULAR:
             return ActivityHeightKdfoc3(zmax=self.cloud_top, part=Particles.SMALL)
         elif ahd == ActivityHeightType.ROLPH:
@@ -545,28 +552,46 @@ class SnapInputBomb:
 
         :return: str of release, or None
         """
+        if (
+            len(self.explosion_type.particle_distributions) == 1 and
+            (self.explosion_type.particle_distributions[0][1].height_distribution
+            == ActivityHeightType.VOLUMETRIC or
+            self.explosion_type.particle_distributions[0][1].height_distribution
+            == ActivityHeightType.VOLUMETRIC_NO_STEM)
+        ):
+            # in this case, release is defined in snap.input file
+            return None
 
         release = ["*runtime[h] lower[m] comp release[Bq/s]"]
+        release_particle_distribution = [0.0 for _ in self.explosion_type.particle_distributions]
+        total_release = 0.0
         for lower, upper in self.vertical_slices():
             for i, radius in enumerate(self.radius_sizes):
                 ahd_frac_sum = 0.0
                 rel = 0.0
-                for ahd_frac, pd in self.explosion_type.particle_distributions:
+                for pdi, (ahd_frac, pd) in enumerate(self.explosion_type.particle_distributions):
                     ahd = self._height_type_name_to_ahd(pd.height_distribution)
                     ahd_frac_sum += ahd_frac
-                    rel += ahd_frac * (
+                    relpd = ahd_frac * (
                         self.activity_after_1hour
-                        * pd.size_distribution[i]
+                        * pd.size_distribution(self.SIZE_INTERPOLATION)[i]
                         * ahd.layer_fraction(lower, upper)
                         * (1.0 - (pd.g0_fraction))
                     )
                     if lower == 0 and i == (len(self.radius_sizes) - 1):
                         # add all "local" g0 deposition to lowest layer and heaviest particles
-                        rel += ahd_frac * pd.g0_fraction * self.activity_after_1hour
+                        relpd += ahd_frac * pd.g0_fraction * self.activity_after_1hour
+                    release_particle_distribution[pdi] += relpd
+                    rel += relpd
+                total_release += rel
                 assert abs(ahd_frac_sum - 1.0) < 0.01, f"sum of activity height fractions != 1: {ahd_frac_sum}"
                 release.append(
                     f"{self.minutes/60:.2f} {lower} {self.component_name(i)} {rel:.4E}"
                 )
+        assert np.isclose(total_release, self.activity_after_1hour, rtol=0.05), f"total release {total_release} != activity_after_1hour {self.activity_after_1hour}"
+        for pdi, (ahd_frac, pd) in enumerate(self.explosion_type.particle_distributions):
+            frac = release_particle_distribution[pdi] / self.activity_after_1hour
+            assert np.isclose(frac, ahd_frac, atol=0.05), f"total release fraction for particle distribution {pd.name} {frac} != expected {ahd_frac}"
         return "\n".join(release)
 
 
@@ -607,10 +632,7 @@ class SnapInputBomb:
                 lines.append(
                     f"RELEASE.BQ/STEP.COMP= {rel:.3E} '{self.component_name(i)}'"
                 )
-        elif (
-            self.explosion_type.height_distribution in
-            (ActivityHeightType.TRIANGULAR, ActivityHeightType.ROLPH)
-        ):
+        else:
             lower = []
             upper = []
             radii = []
@@ -634,10 +656,6 @@ class SnapInputBomb:
     RELEASE.HEIGHTRADIUS.M = {','.join(radii)}
     RELEASE.COMPONENTS= {', '.join(components)}
                 """
-            )
-        else:
-            raise Exception(
-                f"unknown height-distribution: {self.explosion_type.height_distribution}"
             )
 
         lines.append("* PARTICLE CLASSES")
