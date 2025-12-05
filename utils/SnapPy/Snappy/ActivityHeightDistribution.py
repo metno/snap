@@ -11,7 +11,7 @@ class Particles(Enum):
 
 class ActivityHeightDistribution(abc.ABC):
     @abc.abstractmethod
-    def layer_fraction(self, zb: float, zt: float):
+    def layer_fraction(self, zb: float, zt: float) -> float:
         """Fraction of activity released between zb and zt
 
         The maximum layer_fraction between 0m and max cloud height will be 1.
@@ -42,7 +42,7 @@ class ActivityHeightRolph(ActivityHeightDistribution):
                               self.cap_bottom_height + 2 * cap_layer,
                               self.cap_top_height)
 
-    def layer_fraction(self, zb, zt):
+    def layer_fraction(self, zb, zt) -> float:
         if zb > self.cap_top_height:
             return 0
         if zt > self.cap_top_height:
@@ -80,6 +80,40 @@ class ActivityHeightRolph(ActivityHeightDistribution):
 
         return frac
 
+class ActivityHeightVolumentric(ActivityHeightDistribution):
+    def __init__(self, cap_top_height: float, cap_bottom_height: float, cap_radius: float = 1.0, stem_radius: float = 0.0):
+        if cap_top_height < cap_bottom_height:
+            raise RuntimeError(f"top {cap_top_height} must be > bottom f{cap_bottom_height}")
+        self.cap_top_height = cap_top_height
+        self.cap_bottom_height = cap_bottom_height
+        self.cap_radius = cap_radius
+        self.stem_radius = stem_radius
+        self.cap_height = self.cap_top_height - self.cap_bottom_height
+        self.cap_volume = np.pi * (self.cap_radius**2) * self.cap_height
+        self.stem_volume = np.pi * (self.stem_radius**2) * self.cap_bottom_height
+        self.total_volume = self.cap_volume + self.stem_volume
+
+    def layer_fraction(self, zb, zt) -> float:
+        if zb > self.cap_top_height:
+            return 0
+        if zt > self.cap_top_height:
+            zt = self.cap_top_height
+        if zt <= zb:
+            return 0
+
+        def volume_up_to_height(z):
+            if z <= self.cap_bottom_height:
+                return np.pi * (self.stem_radius**2) * z
+            else:
+                h_cap = z - self.cap_bottom_height
+                vol_stem = np.pi * (self.stem_radius**2) * self.cap_bottom_height
+                vol_cap = np.pi * (self.cap_radius**2) * h_cap
+                return vol_stem + vol_cap
+
+        vol_zb = volume_up_to_height(zb)
+        vol_zt = volume_up_to_height(zt)
+
+        return (vol_zt - vol_zb) / self.total_volume
 
 
 class ActivityHeightKdfoc3(ActivityHeightDistribution):
@@ -153,7 +187,7 @@ class ActivityHeightKdfoc3(ActivityHeightDistribution):
 
         return self.fzhat * (AF1 + AF2)
 
-    def layer_fraction(self, zb, zt):
+    def layer_fraction(self, zb, zt) -> float:
         return self.area_fraction(zb, zt)
 
 
