@@ -102,7 +102,7 @@ class ActivityHeightKdfoc3(ActivityHeightDistribution):
     A = $\int_{z0}^{zmax} f(z) dz$ = 1
     """
 
-    def __init__(self, zmax: int, part: Particles):
+    def __init__(self, zmax: float, part: Particles):
         self.zmax = zmax
         self.part = part
         # maximum of activity at zmax
