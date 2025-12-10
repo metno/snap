@@ -159,13 +159,12 @@ class VolcanoXML:
             # round down to latest 3 hour multiple (meteo every 3 hours)
             hour = self._defs["eemep"]["model_start_time"].hour
             if hour % 3 != 0:
-                offset
+                offset = hour % 3
                 self._defs["eemep"]["model_start_time"] = self._defs["eemep"][
                     "model_start_time"
                 ].replace(hour=hour - offset)
                 # increase run-time accordingly
                 self._defs["runTimeHours"] += offset
-
 
             # restart-file
             model_run = root.find("model_setup[@use_restart_file]")
