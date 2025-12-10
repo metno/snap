@@ -152,15 +152,21 @@ class VolcanoXML:
             self._defs["eemep"]["model_start_time"] = datetime.datetime.strptime(
                 weather.attrib["model_start_time"], "%Y-%m-%dT%H:%M:%SZ"
             )
+            # round down to full hours
+            self._defs["eemep"]["model_start_time"] = self._defs["eemep"][
+                "model_start_time"
+            ].replace(minute=0, second=0, microsecond=0)
             # restart-file
             model_run = root.find("model_setup[@use_restart_file]")
             self._defs["eemep"]["use_restart_file"] = False
             if model_run.attrib["use_restart_file"] == "restart":
                 self._defs["eemep"]["use_restart_file"] = True
-                if weather.attrib["model_start_time"].hour != 0:
+                if self._defs["eemep"]["model_start_time"].hour != 0:
                     # model has to start at midnight for restart runs
-                    offset = weather.attrib["model_start_time"].hour
-                    weather.attrib["model_start_time"] -= datetime.timedelta(hours=offset)
+                    offset = self._defs["eemep"]["model_start_time"].hour
+                    self._defs["eemep"]["model_start_time"] -= datetime.timedelta(
+                        hours=offset
+                    )
                     # increase run-time accordingly
                     self._defs["runTimeHours"] += offset
         if (snap := root.find("snap_model_setup/weather_forecast")) is not None:
