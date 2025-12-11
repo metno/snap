@@ -37,10 +37,10 @@ DAY={day}
 HOUR={hour}
 RUNTIME={runhour}
 # always start at midnight (eemep requirement, and for restart)
-STARTDATE=$(date -d "$YEAR-$MONTH-$DAY $HOUR" +%Y,%m,%d,000000)
-ENDDATE=$(date -d "$YEAR-$MONTH-$DAY $HOUR +{runhour}hours" +%Y,%m,%d,%H0000)
+STARTDATE=$(date -d "$YEAR-$MONTH-$DAY $HOUR" +%Y,%m,%d,%H)
+ENDDATE=$(date -d "$YEAR-$MONTH-$DAY $HOUR +{runhour}hours" +%Y,%m,%d,%H)
 # restart at midnight the next day
-RESTARTDATE=$(date -d "$YEAR-$MONTH-$DAY $HOUR +1days" +%Y,%m,%d,000000)
+RESTARTDATE=$(date -d "$YEAR-$MONTH-$DAY $HOUR +1days" +%Y,%m,%d,00)
 
 if [ "$RUNDIR" == "" ]; then
     echo "no rundir"
