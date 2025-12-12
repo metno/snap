@@ -19,29 +19,29 @@ set -e
 #     (you need a properly configured .dupload.conf in your home directory, copy this from https://gitlab.met.no/it/sd/klient/linux/internrepo/-/raw/master/.dupload.conf)
 #
 #     Check first that it looks plausible:
-#     $ dupload --no --to jammy dist/snap-py_<version>-1_amd64.changes
+#     $ dupload --no --to noble dist/snap-py_<version>-1_amd64.changes
 #     then remove --no option
 #
 #     Wait for confirmation email that package has been accepted
 #
 # 3 - Check that it works on one machine
-#     $ ssh -X ppi-vglserver-b1.met.no
+#     $ ssh -X ppi-vglserver-b3.met.no
 #     $ sudo apt-get update
 #     $ sudo apt-get install snap-py
 #     $ snapPy
 #     If something goes wrong, downgrade to last version again using
 #     $ sudo apt-get install snap-py=<version-number>
 #
-# 4 - Roll out to all machines with ansible (jammy/noble)
+# 4 - Roll out to all machines with ansible
 #     # Setup
 #     $ git clone git@gitlab.met.no:met/mapp/desktop/vgl-ansible.git
 #     $ sudo apt-get install ansible
 #     # Rollout
 #     $ cd vgl-ansible
 #     #Roll out to selected host
-#     $ ansible-playbook -i hosts --tags snap --limit ppi-vglserver-b1.met.no install.yml
+#     $ ansible-playbook -i hosts --tags snap --limit ppi-vglserver-b3.met.no install-emergencymodels.yml
 #     #Roll out to all hosts
-#     $ ansible-playbook -i hosts --tags snap install.yml
+#     $ ansible-playbook -i hosts --tags snap install-emergencymodels.yml
 #
 #     It may take a bit of time before the package is available for ansible (10 minutes)
 #
