@@ -23,6 +23,7 @@ import re
 import sys
 from time import gmtime, strftime
 import traceback
+import urllib.parse
 
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtCore import (
@@ -573,7 +574,7 @@ STEP.HOUR.OUTPUT.FIELDS= 3
             # mapping from QList<QPair> to simple dictionary
             qDict = dict()
             for key, value in queryDict:
-                qDict[key] = value
+                qDict[key] = urllib.parse.unquote_plus(value)
             # calling the correct handler depending on the module
             try:
                 options[qDict["action"]](qDict)
