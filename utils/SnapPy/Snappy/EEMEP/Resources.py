@@ -302,7 +302,7 @@ class Resources(ResourcesCommon):
             for d in range(0, 1 + math.ceil(float(run_hours) / 24.0)):
                 startday = dtime + timedelta(days=d)
                 relevant_dates = []
-                for offset in range(0, 3):
+                for offset in range(0, 4):
                     # lowest offset is best, but earlier forecasts will do
                     curday = startday + timedelta(days=-1 * offset)
                     day_files = []
@@ -363,14 +363,13 @@ class Resources(ResourcesCommon):
                 else:
                     # TODO: currently working only with 00-UTC run
                     dates.append((filename, 8))
-
         return dates
 
 
 if __name__ == "__main__":
     res = Resources()
     print(res.getStartScreen())
-    print(res.getECMeteorologyFiles(datetime.combine(date.today(), time(0)), 48))
+    print(res.getECMeteorologyFiles(datetime.combine(date.today(), time(0)), 63))
     print(
         res.getECMeteorologyFiles(
             datetime.combine(date.today() - timedelta(days=1), time(0)), 48
