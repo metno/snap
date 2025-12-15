@@ -363,14 +363,13 @@ class Resources(ResourcesCommon):
                 else:
                     # TODO: currently working only with 00-UTC run
                     dates.append((filename, 8))
-
         return dates
 
 
 if __name__ == "__main__":
     res = Resources()
     print(res.getStartScreen())
-    print(res.getECMeteorologyFiles(datetime.combine(date.today(), time(0)), 48))
+    print(res.getECMeteorologyFiles(datetime.combine(date.today(), time(0)), 63))
     print(
         res.getECMeteorologyFiles(
             datetime.combine(date.today() - timedelta(days=1), time(0)), 48
