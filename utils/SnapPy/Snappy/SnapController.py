@@ -332,11 +332,9 @@ RELEASE.UPPER.M= {qDict["upperHeight"]}, {qDict["upperHeight"]}
             try:
                 emis = float(qDict[rel])
             except Exception:
-                pass
+                errors += f"problems interpreting emission value for {iso}: {qDict[rel]} <-> {emis}\n"
             if emis > 0.0:
-                source_term += "RELEASE.BQ/SEC.COMP= {rel}, 0, '{iso}'\n".format(
-                    rel=qDict[rel], iso=iso
-                )
+                source_term += f"RELEASE.BQ/SEC.COMP= {qDict[rel]}, 0, '{iso}'\n"
 
         # add Cs137, I131 and Xe133
         source_term += self.res.isotopes2snapinput([169, 158, 148])
@@ -574,7 +572,9 @@ STEP.HOUR.OUTPUT.FIELDS= 3
             # mapping from QList<QPair> to simple dictionary
             qDict = dict()
             for key, value in queryDict:
-                qDict[key] = urllib.parse.unquote_plus(value)
+                if key == "explosion_type":
+                    value = urllib.parse.unquote_plus(value)
+                qDict[key] = value
             # calling the correct handler depending on the module
             try:
                 options[qDict["action"]](qDict)
