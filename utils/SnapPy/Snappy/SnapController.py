@@ -330,7 +330,10 @@ RELEASE.UPPER.M= {qDict["upperHeight"]}, {qDict["upperHeight"]}
         for rel, iso in isotopes.items():
             emis = 0.0
             try:
-                emis = float(qDict[rel])
+                if qDict[rel] is None or qDict[rel].strip() == "":
+                    emis = 0.0
+                else:
+                    emis = float(qDict[rel])
             except Exception:
                 errors += f"problems interpreting emission value for {iso}: {qDict[rel]} <-> {emis}\n"
             if emis > 0.0:
