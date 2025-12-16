@@ -12,6 +12,7 @@ fi
 set -e
 
 #INSTRUCTIONS
+# 0 - ensure you have git-lfs installed and have pulled the repository with `git lfs pull`
 # 1 - Update version, changelog, etc. in this script
 #     Then run this script with -y option (you have to have devscripts installed)
 #
