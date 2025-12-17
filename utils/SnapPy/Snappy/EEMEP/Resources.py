@@ -349,7 +349,7 @@ class Resources(ResourcesCommon):
             assert isinstance(
                 startday, datetime
             ), "getECMeteorology: fixed_run must be 'best' or YYYY-MM-DD_HH"
-            for offset in range(0, math.ceil(run_hours / 24.0)):
+            for offset in range(4):
                 file = self.EC_FILE_PATTERN.format(
                     dayoffset=offset,
                     UTC=startday.hour,
