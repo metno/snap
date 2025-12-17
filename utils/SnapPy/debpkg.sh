@@ -12,7 +12,6 @@ fi
 set -e
 
 #INSTRUCTIONS
-# 0 - ensure you have git-lfs installed and have pulled the repository with `git lfs pull`
 # 1 - Update version, changelog, etc. in this script
 #     Then run this script with -y option (you have to have devscripts installed)
 #
@@ -57,6 +56,34 @@ HOST=$(lsb_release --codename --short)
 export VERSION=2.5.12
 CHANGELOG="fix bug qt browser input parsing and handle better case with no release"
 export DEBEMAIL=${USER}@met.no
+
+check_git_lfs() {
+    if ! command -v git &> /dev/null; then
+        echo "git could not be found, please install git and git-lfs" >/dev/stderr
+        exit 2
+    fi
+
+    if ! git lfs ls-files &> /dev/null; then
+        echo "git-lfs could not be found, please install git-lfs" >/dev/stderr
+        exit 2
+    fi
+
+    LFS_FILES_COUNT=$(git lfs ls-files | wc -l)
+    if [ "$LFS_FILES_COUNT" -eq 0 ]; then
+        echo "No git-lfs files found, please run 'git lfs pull' in the repository" >/dev/stderr
+        exit 2
+    fi
+
+    git lfs ls-files | while read hash file; do
+        if [ -f "$file" ] && head -n 1 "$file" | grep -q "^version https://git-lfs.github.com"; then
+            echo "Pointer (not fetched): $file"
+            echo "Please run 'git lfs pull' in the repository to fetch git-lfs files" >/dev/stderr
+            exit 2
+        fi
+    done
+}
+check_git_lfs
+
 rm --force debian
 ln --symbolic debian.$HOST debian
 dch --package snap-py --newversion ${VERSION}-1 --upstream "$CHANGELOG"
