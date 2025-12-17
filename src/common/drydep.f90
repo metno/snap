@@ -23,7 +23,7 @@ module drydepml
 
   public :: drydep, preprocess_landfraction, unload, &
     requires_extra_fields_to_be_read, drydep_precompute_meteo, drydep_precompute_particle, &
-    requires_landfraction_file
+    requires_landfraction_file, lookup_z0
 
   integer, parameter, public :: DRYDEP_SCHEME_UNDEFINED = 0
   integer, parameter, public :: DRYDEP_SCHEME_OLD = 1
@@ -279,6 +279,51 @@ elemental real(real64) function alpha(classnr)
     error stop "Error: Invalid classnr value encountered, must be in range 11-22"
   end select
 
+end function
+
+
+! charnock formula used for roughness length of water
+elemental real(real64) function charnock_z0(ustar)
+  real(real64), intent(in) :: ustar
+  real(real64), parameter :: alpha_ch = 0.018  ! charnock coefficient
+  real(real64), parameter :: alpha_m = 0.11  ! momentum transfer coefficient
+
+  charnock_z0 = alpha_m*ny/ustar + alpha_ch*ustar*ustar/grav
+end function
+
+
+elemental real(real64) function lookup_z0(classnr, ustar)
+  integer(int8), intent(in) :: classnr
+  real(real64), intent(in) :: ustar
+
+  select case(classnr)
+  case (11) ! Sea -> Z14
+    lookup_z0 = charnock_z0(ustar)
+  case (12) ! Inland water -> Z13
+    lookup_z0 = 0.00001
+  case (13) ! Tundra/desert -> Z8,Z9
+    lookup_z0 = 0.005
+  case (14) ! Ice and ice sheets -> Z12
+    lookup_z0 = 0.005
+  case (15) ! Urban -> Z15
+    lookup_z0 = 1.0
+  case (16) ! Crops -> Z7
+    lookup_z0 = 0.2
+  case (17) ! Grass -> Z6
+    lookup_z0 = 0.05
+  case (18) ! Wetlands -> Z11
+    lookup_z0 = 0.1
+  case (19) ! Evergreen needleleaf -> Z1
+    lookup_z0 = 1.5
+  case (20) ! Deciduous needleleaf -> Z3
+    lookup_z0 = 1.0
+  case (21) ! Mixed forest -> Z5
+    lookup_z0 = 1.0
+  case (22) ! Shrubs and interrupted woodlands -> Z10
+    lookup_z0 = 0.5
+  case default
+    error stop "Error: Invalid classnr value encountered, must be in range 11-22"
+  end select
 end function
 
 

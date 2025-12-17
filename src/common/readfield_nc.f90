@@ -1205,7 +1205,7 @@ end subroutine
     use snapfldML, only: surface_stress, hflux, z0, t2m, vd_dep, ustar, &
       ps2, raero, my, enspos
     use drydepml, only: drydep_precompute_meteo, drydep_precompute_particle, &
-      requires_extra_fields_to_be_read, classnr
+      requires_extra_fields_to_be_read, classnr, lookup_z0
     use ftestML, only: ftest
     use snapdebug, only: idebug
     use snapdimML, only: nx, ny
@@ -1264,9 +1264,9 @@ end subroutine
     hflux(:,:) = -hflux ! Follow conventions for up/down
 
     if (met_params%z0 == "") then
-      ! TODO3: Load z0 from land use data if not defined here
-      write(error_unit,*) "WARNING!!!! Surface roughness set to 1 in lieu of loaded value."
-      z0(:,:) = 1
+      ! Load z0 from land use data if not defined in meteorology
+      write(error_unit,*) "Surface roughness not defined in meteorology, reading from lookup table instead."
+      z0(:,:) = lookup_z0(classnr, ustar)
     else
       call nfcheckload(ncid, met_params%z0, start, count, z0(:, :))
     endif
