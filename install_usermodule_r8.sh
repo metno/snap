@@ -121,6 +121,31 @@ prepend-path    PKG_CONFIG_PATH         \$rootenv/lib/pkgconfig
 EOF
 }
 
+check_git_lfs() {
+    if ! command -v git &> /dev/null; then
+        echo "git could not be found, please install git and git-lfs" >/dev/stderr
+        exit 2
+    fi
+
+    if ! git lfs ls-files &> /dev/null; then
+        echo "git-lfs could not be found, please install git-lfs" >/dev/stderr
+        exit 2
+    fi
+
+    LFS_FILES_COUNT=$(git lfs ls-files | wc -l)
+    if [ "$LFS_FILES_COUNT" -eq 0 ]; then
+        echo "No git-lfs files found, please run 'git lfs pull' in the repository" >/dev/stderr
+        exit 2
+    fi
+
+    git lfs ls-files | while read hash file; do
+        if [ -f "$file" ] && head -n 1 "$file" | grep -q "^version https://git-lfs.github.com"; then
+            echo "Pointer (not fetched): $file"
+            echo "Please run 'git lfs pull' in the repository to fetch git-lfs files" >/dev/stderr
+            exit 2
+        fi
+    done
+}
 
 install_snap() {
     MODULE_VERSION="$1"
@@ -173,6 +198,7 @@ setenv          SNAP_MODULE             \$ModulesCurrentModulefile
 EOF
 }
 
+check_git_lfs
 FIXED_BASEENV=conda202305
 case "${1:-help}" in
   install_baseenv)
