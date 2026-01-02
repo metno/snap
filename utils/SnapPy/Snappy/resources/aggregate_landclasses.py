@@ -83,7 +83,6 @@ def aggregate_land_classes(ds, agg_factor, var_name="lccs_class"):
     fractions_da = fractions_da.assign_coords({"lat": center_lat,
                                                "lon": center_lon,
                                                var_name: lccs_classes})
-    fractions_da.attrs['Conventions'] = 'CF-1.4'
     fractions_da[var_name].attrs = ds[var_name].attrs
 
     fractions_da["lat"].attrs['standard_name'] = "latitude"
