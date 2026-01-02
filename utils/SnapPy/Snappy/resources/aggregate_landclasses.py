@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 import xarray as xr
 from dask.diagnostics import ProgressBar
+import sys
 
 
 def _assert_coordinate_resolution_equals(ds, target_res, name="target"):
@@ -94,19 +95,31 @@ def aggregate_land_classes(ds, agg_factor, var_name="lccs_class"):
 def get_args():
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input_path", default="/lustre/storeB/users/hasut7515/C3S-LC-L4-LCCS-Map-300m-P1Y-2022-v2.1.1.nc")
-    parser.add_argument("--output_path", default="LandCoverFractions_EsaCCI_ecemep.nc")
-    parser.add_argument("--template_path", default = "/lustre/storeB/users/hasut7515/ec_meteo/meteo20251214_03.nc",
+    parser.add_argument("--input_path",
+                        default="/lustre/storeB/project/fou/kl/cerad/Meteorology/Landuse/C3S-LC-L4-LCCS-Map-300m-P1Y-2022-v2.1.1.nc",
+                        type=pathlib.Path)
+    parser.add_argument("--output_path",
+                        default="LandCoverFractions_EsaCCI_ecemep.nc",
+                        type=pathlib.Path)
+    parser.add_argument("--template_path",
+                        default="/lustre/storeB/project/fou/kl/cerad/Meteorology/Landuse/meteo_template/meteo20251214_03.nc",
+                        type=pathlib.Path,
                         help="Dataset with the lat lon grid used for the output")
     parser.add_argument("--input_res", type=float, default = 1 / 360,
                         help="Input resolution in degrees. Default is 1/360 degrees = 10 arcseconds.")
     parser.add_argument("--output_res", type=float, default = 0.1,
                         help="Output resolution in degrees. Default is 0.1 degrees.")
+    parser.add_argument("--overwrite", action='store_true',
+                        help="Overwrite existing output file.")
     return parser.parse_args()
 
 
 def main():
     args = get_args()
+    if args.output_path.exists() and not args.overwrite:
+        print(f"Error, output file {args.output_path} exists. Use --overwrite to overwrite")
+        sys.exit(1)
+
     agg_factor = args.output_res / args.input_res
     if not np.isclose(agg_factor % 2, 0):
         raise ValueError("Ratio of input and output resolutions must be divisible by 2, got {agg_factor=}")
