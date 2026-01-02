@@ -83,9 +83,18 @@ def aggregate_land_classes(ds, agg_factor, var_name="lccs_class"):
     fractions_da = fractions_da.assign_coords({"lat": center_lat,
                                                "lon": center_lon,
                                                var_name: lccs_classes})
+    fractions_da.attrs['Conventions'] = 'CF-1.4'
     fractions_da[var_name].attrs = ds[var_name].attrs
-    # fractions_da['lat'].attrs = ds_template['lat'].attrs
-    # fractions_da['lon'].attrs = ds_template['lon'].attrs
+
+    fractions_da["lat"].attrs['standard_name'] = "latitude"
+    fractions_da["lat"].attrs['long_name'] = "latitude"
+    fractions_da["lat"].attrs['units'] = "degree_north"
+
+    fractions_da["lon"].attrs['standard_name'] = "longitude"
+    fractions_da["lon"].attrs['long_name'] = "longitude"
+    fractions_da["lon"].attrs['units'] = "degree_east"
+
+    fractions_da = fractions_da.reindex(lat=fractions_da.lat[::-1])
 
     print("Calculating grid cell fractions")
     with ProgressBar():
@@ -131,7 +140,7 @@ def main():
                         output_res=args.output_res)
     fractions_da = aggregate_land_classes(ds=sub, agg_factor=agg_factor, var_name="lccs_class")
 
-    print(f"Saving data aggregated from {args.input_path} to {args.output_path}.")
+    print(f"Saving data aggregated from {args.input_path} to {args.output_path}")
     fractions_da.to_netcdf(args.output_path)
     print("Done")
 
