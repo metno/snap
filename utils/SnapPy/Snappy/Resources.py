@@ -35,6 +35,8 @@ from time import gmtime, strftime
 from Snappy import read_dosecoefficients_icrp
 from Snappy.ResourcesCommon import ResourcesCommon
 
+def debug(*objs):
+    print("DEBUG: ", *objs, file=sys.stderr)
 
 @enum.unique
 class MetModel(enum.Enum):
@@ -585,6 +587,7 @@ GRAVITY.FIXED.M/S=0.0002
         latitude -- float of latitude position
         longitude -- float of longitude position
         """
+        debug("Getting met files")
         relevant_dates = []
 
         if metmodel not in self.MET_FILENAME_PATTERN:
@@ -643,6 +646,7 @@ GRAVITY.FIXED.M/S=0.0002
         run_hours -- run length in hours, possibly negative
         fixed_run -- string of form YYYY-MM-DD_HH giving a specific model-run
         """
+        debug("getting EC files")
         relevant_dates = []
         if not pattern:
             pattern = Resources.EC_FILE_PATTERN
@@ -650,27 +654,82 @@ GRAVITY.FIXED.M/S=0.0002
         if fixed_run == "best":
             if run_hours < 0:
                 start = dtime + timedelta(hours=run_hours)
+                finish = dtime
             else:
                 start = dtime
-
-            start -= timedelta(hours=72)  # go 72 hours (forecast-length) back
+                finish = start + timedelta(hours=run_hours)
 
             today = datetime.combine(date.today(), time(0, 0, 0))
             tomorrow = today + timedelta(days=1)
-            days = []
-            if (tomorrow - start).days > 1000:
+            
+            debug((f"today {today}"))           
+            debug((f"tomorrow {tomorrow}"))
+            debug((f"finish {finish}")) 
+            debug((f"start {start}"))
+            
+            n_days=(tomorrow-start).days
+            debug(f"n_days, {n_days}")
+            if abs(n_days) > 1000:
                 raise Exception(
                     "too long timespan: " + str(start) + " to " + str(tomorrow)
                 )
-            while start < tomorrow:
-                days.append(start)
-                start += timedelta(days=1)
+
+            if n_days<0:
+                debug("days Less than 0")
+                # start -= timedelta(days=-n_days) #not at all efficient
+                days=[start-timedelta(days=-n_days),]
+                # tmp=start
+                # while tmp < tomorrow:
+                #     days.append(tmp)
+                #     tmp += timedelta(days=1)
+
+            else: 
+                debug("positive days")
+                days=[]
+                tmp=start
+                while tmp < min(finish + timedelta(days=1),tomorrow):
+                    days.append(tmp)
+                    tmp += timedelta(days=1)
+                if len(days) ==0:
+                    days.append(today)
+                debug(f"last day {days[-1]}")
+           
+ 
+            # start -= timedelta(hours=72)  # go 72 hours (forecast-length) back
+
+            # days = []
+            # while start < tomorrow:
+            #     days.append(start)
+            #     start += timedelta(days=1)
+
             # loop needs to have latest model runs/hindcast runs last
-            for offset in [3, 2, 1, 0]:
+            debug(f" len days {len(days)}")
+            
+            maxoffset=(finish-today).days if (finish-today).days> 0 else 0
+            debug(f"max offset {maxoffset}")
+            for offset in range(1,maxoffset + 1):
+                debug("offset", offset)
+                for utc in [0,6,12,18]:
+                    file = pattern.format(
+                        dayoffset=offset,
+                        UTC=utc,
+                        year=today.year,
+                        month=today.month,
+                        day=today.day,
+                    )
+                    filename = self._findFileInPathes(file, self.getECInputDirs())
+                    if filename is not None:
+                        relevant_dates.append(filename)  
+                    else:
+                        debug(f"File {file} doesnt exist") 
+            debug(f"{len(relevant_dates)}")
+
+            if start <= tomorrow:
                 for day in days:
-                    for utc in [0, 6, 12, 18]:
+                    debug(f"day {day}")
+                    for utc in [0,6,12,18]:
                         file = pattern.format(
-                            dayoffset=offset,
+                            dayoffset=0,
                             UTC=utc,
                             year=day.year,
                             month=day.month,
@@ -678,7 +737,25 @@ GRAVITY.FIXED.M/S=0.0002
                         )
                         filename = self._findFileInPathes(file, self.getECInputDirs())
                         if filename is not None:
-                            relevant_dates.append(filename)
+                            relevant_dates.append(filename)  
+                        else:
+                            debug(f"File {file} doesnt exist")                  
+                debug(f"{len(relevant_dates)}")
+
+
+            # for offset in [3, 2, 1, 0]:
+            #     for day in days:
+            #         for utc in [0, 6, 12, 18]:
+            #             file = pattern.format(
+            #                 dayoffset=offset,
+            #                 UTC=utc,
+            #                 year=day.year,
+            #                 month=day.month,
+            #                 day=day.day,
+            #             )
+            #             filename = self._findFileInPathes(file, self.getECInputDirs())
+            #             if filename is not None:
+            #                 relevant_dates.append(filename)
         else:
             match = re.match(r"(\d{4})-(\d{2})-(\d{2})_(\d{2})", fixed_run)
             if match:
@@ -690,7 +767,7 @@ GRAVITY.FIXED.M/S=0.0002
                     filename = self._findFileInPathes(file, self.getECInputDirs())
                     if filename is not None:
                         relevant_dates.append(filename)
-
+        debug(f"{len(relevant_dates)}")
         return relevant_dates
 
     def getDoseCoefficients(self):
