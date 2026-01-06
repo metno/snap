@@ -11,7 +11,7 @@ class Particles(Enum):
 
 class ActivityHeightDistribution(abc.ABC):
     @abc.abstractmethod
-    def layer_fraction(self, zb: float, zt: float):
+    def layer_fraction(self, zb: float, zt: float) -> float:
         """Fraction of activity released between zb and zt
 
         The maximum layer_fraction between 0m and max cloud height will be 1.
@@ -21,6 +21,7 @@ class ActivityHeightDistribution(abc.ABC):
         """
         ...
 
+
 class ActivityHeightRolph(ActivityHeightDistribution):
     """Simple 6 layer distribution, 3 equal metric layers in stem, 3 equal metric layers in top,
     from top to bottom
@@ -29,20 +30,27 @@ class ActivityHeightRolph(ActivityHeightDistribution):
     for more, see Rolph et al., 2014: https://doi.org/10.1016/j.jenvrad.2014.05.006
 
     """
+
     def __init__(self, cap_top_height, cap_bottom_height):
         if cap_top_height < cap_bottom_height:
-            raise RuntimeError(f"top {cap_top_height} must be > bottom f{cap_bottom_height}")
+            raise RuntimeError(
+                f"top {cap_top_height} must be > bottom f{cap_bottom_height}"
+            )
         self.cap_top_height = cap_top_height
         self.cap_bottom_height = cap_bottom_height
         self.layer_fractions = (0.02, 0.05, 0.15, 0.30, 0.30, 0.18)
         stem_layer = self.cap_bottom_height / 3
         cap_layer = (self.cap_top_height - self.cap_bottom_height) / 3
-        self.layer_heights = (stem_layer, 2 * stem_layer, self.cap_bottom_height,
-                              self.cap_bottom_height + cap_layer,
-                              self.cap_bottom_height + 2 * cap_layer,
-                              self.cap_top_height)
+        self.layer_heights = (
+            stem_layer,
+            2 * stem_layer,
+            self.cap_bottom_height,
+            self.cap_bottom_height + cap_layer,
+            self.cap_bottom_height + 2 * cap_layer,
+            self.cap_top_height,
+        )
 
-    def layer_fraction(self, zb, zt):
+    def layer_fraction(self, zb, zt) -> float:
         if zb > self.cap_top_height:
             return 0
         if zt > self.cap_top_height:
@@ -59,27 +67,82 @@ class ActivityHeightRolph(ActivityHeightDistribution):
                 max_layer = i
             last_height = height
         # print(zb, zt, min_layer, max_layer)
-        assert(max_layer != -1)
-        assert(min_layer != len(self.layer_heights))
+        assert max_layer != -1
+        assert min_layer != len(self.layer_heights)
 
         frac = 0
-        for i in range(min_layer+1, max_layer):
+        for i in range(min_layer + 1, max_layer):
             frac += self.layer_fractions[i]
         if min_layer == 0:
             min_height = 0
         else:
-            min_height = self.layer_heights[min_layer-1]
+            min_height = self.layer_heights[min_layer - 1]
         if max_layer == min_layer:
             # zb and zt are in same layer, area_fraction of zt-zb of this layer-fraction
-            frac += self.layer_fractions[min_layer] * (zt-zb) / (self.layer_heights[min_layer]-min_height)
+            frac += (
+                self.layer_fractions[min_layer]
+                * (zt - zb)
+                / (self.layer_heights[min_layer] - min_height)
+            )
         else:
             # area fraction of zb in min_layer
-            frac += self.layer_fractions[min_layer] * (self.layer_heights[min_layer]-zb) / (self.layer_heights[min_layer]-min_height)
+            frac += (
+                self.layer_fractions[min_layer]
+                * (self.layer_heights[min_layer] - zb)
+                / (self.layer_heights[min_layer] - min_height)
+            )
             # area fraction of zt in max_layer-1
-            frac += self.layer_fractions[max_layer] * (zt - self.layer_heights[max_layer-1]) / (self.layer_heights[max_layer]-self.layer_heights[max_layer-1])
+            frac += (
+                self.layer_fractions[max_layer]
+                * (zt - self.layer_heights[max_layer - 1])
+                / (self.layer_heights[max_layer] - self.layer_heights[max_layer - 1])
+            )
 
         return frac
 
+
+class ActivityHeightVolumentric(ActivityHeightDistribution):
+    def __init__(
+        self,
+        cap_top_height: float,
+        cap_bottom_height: float,
+        cap_radius: float = 1.0,
+        stem_radius: float = 0.0,
+    ):
+        if cap_top_height < cap_bottom_height:
+            raise RuntimeError(
+                f"top {cap_top_height} must be > bottom f{cap_bottom_height}"
+            )
+        self.cap_top_height = cap_top_height
+        self.cap_bottom_height = cap_bottom_height
+        self.cap_radius = cap_radius
+        self.stem_radius = stem_radius
+        self.cap_height = self.cap_top_height - self.cap_bottom_height
+        self.cap_volume = np.pi * (self.cap_radius**2) * self.cap_height
+        self.stem_volume = np.pi * (self.stem_radius**2) * self.cap_bottom_height
+        self.total_volume = self.cap_volume + self.stem_volume
+
+    def layer_fraction(self, zb, zt) -> float:
+        if zb > self.cap_top_height:
+            return 0
+        if zt > self.cap_top_height:
+            zt = self.cap_top_height
+        if zt <= zb:
+            return 0
+
+        def volume_up_to_height(z):
+            if z <= self.cap_bottom_height:
+                return np.pi * (self.stem_radius**2) * z
+            else:
+                h_cap = z - self.cap_bottom_height
+                vol_stem = np.pi * (self.stem_radius**2) * self.cap_bottom_height
+                vol_cap = np.pi * (self.cap_radius**2) * h_cap
+                return vol_stem + vol_cap
+
+        vol_zb = volume_up_to_height(zb)
+        vol_zt = volume_up_to_height(zt)
+
+        return (vol_zt - vol_zb) / self.total_volume
 
 
 class ActivityHeightKdfoc3(ActivityHeightDistribution):
@@ -102,7 +165,7 @@ class ActivityHeightKdfoc3(ActivityHeightDistribution):
     A = $\int_{z0}^{zmax} f(z) dz$ = 1
     """
 
-    def __init__(self, zmax: int, part: Particles):
+    def __init__(self, zmax: float, part: Particles):
         self.zmax = zmax
         self.part = part
         # maximum of activity at zmax
@@ -153,7 +216,7 @@ class ActivityHeightKdfoc3(ActivityHeightDistribution):
 
         return self.fzhat * (AF1 + AF2)
 
-    def layer_fraction(self, zb, zt):
+    def layer_fraction(self, zb, zt) -> float:
         return self.area_fraction(zb, zt)
 
 
@@ -162,9 +225,9 @@ if __name__ == "__main__":
     ahd = ActivityHeightRolph(12000, 9000)
 
     assert ahd.layer_fraction(0, 12000) == 1
-    #print(ahd.layer_fraction(0,9000))
+    # print(ahd.layer_fraction(0,9000))
     assert ahd.layer_fraction(0, 9000) == 0.22
-    #print(ahd.layer_fraction(1000, 2000))
-    assert abs(ahd.layer_fraction(1000, 2000) - 0.02/3) < 1e-3
-    #print(ahd.layer_fraction(1000, 11500))
+    # print(ahd.layer_fraction(1000, 2000))
+    assert abs(ahd.layer_fraction(1000, 2000) - 0.02 / 3) < 1e-3
+    # print(ahd.layer_fraction(1000, 11500))
     assert ahd.layer_fraction(1000, 11500) > 0.9

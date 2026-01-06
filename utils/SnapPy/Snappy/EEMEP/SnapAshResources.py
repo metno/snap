@@ -1,7 +1,8 @@
 import datetime as dt
 import os
 
-from Snappy.Resources import Resources, MetModel
+from Snappy.Resources import MetModel
+from Snappy.EEMEP.Resources import Resources
 
 
 class SnapAshResources:

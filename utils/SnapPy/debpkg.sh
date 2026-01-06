@@ -19,29 +19,29 @@ set -e
 #     (you need a properly configured .dupload.conf in your home directory, copy this from https://gitlab.met.no/it/sd/klient/linux/internrepo/-/raw/master/.dupload.conf)
 #
 #     Check first that it looks plausible:
-#     $ dupload --no --to jammy dist/snap-py_<version>-1_amd64.changes
+#     $ dupload --no --to noble dist/snap-py_<version>-1_amd64.changes
 #     then remove --no option
 #
 #     Wait for confirmation email that package has been accepted
 #
 # 3 - Check that it works on one machine
-#     $ ssh -X ppi-vglserver-b1.met.no
+#     $ ssh -X ppi-vglserver-b3.met.no
 #     $ sudo apt-get update
 #     $ sudo apt-get install snap-py
 #     $ snapPy
 #     If something goes wrong, downgrade to last version again using
 #     $ sudo apt-get install snap-py=<version-number>
 #
-# 4 - Roll out to all machines with ansible (jammy/noble)
+# 4 - Roll out to all machines with ansible
 #     # Setup
 #     $ git clone git@gitlab.met.no:met/mapp/desktop/vgl-ansible.git
 #     $ sudo apt-get install ansible
 #     # Rollout
 #     $ cd vgl-ansible
 #     #Roll out to selected host
-#     $ ansible-playbook -i hosts --tags snap --limit ppi-vglserver-b1.met.no install.yml
+#     $ ansible-playbook -i hosts --tags snap --limit ppi-vglserver-b3.met.no install-emergencymodels.yml
 #     #Roll out to all hosts
-#     $ ansible-playbook -i hosts --tags snap install.yml
+#     $ ansible-playbook -i hosts --tags snap install-emergencymodels.yml
 #
 #     It may take a bit of time before the package is available for ansible (10 minutes)
 #
@@ -53,9 +53,37 @@ if [ ! -f "Snappy/resources/1-s2.0-S0146645313000110-mmc1.zip" ]; then
 fi
 
 HOST=$(lsb_release --codename --short)
-export VERSION=2.5.6
-CHANGELOG="minute resolution for eemep"
+export VERSION=2.5.12
+CHANGELOG="fix bug qt browser input parsing and handle better case with no release"
 export DEBEMAIL=${USER}@met.no
+
+check_git_lfs() {
+    if ! command -v git &> /dev/null; then
+        echo "git could not be found, please install git and git-lfs" >/dev/stderr
+        exit 2
+    fi
+
+    if ! git lfs ls-files &> /dev/null; then
+        echo "git-lfs could not be found, please install git-lfs" >/dev/stderr
+        exit 2
+    fi
+
+    LFS_FILES_COUNT=$(git lfs ls-files | wc -l)
+    if [ "$LFS_FILES_COUNT" -eq 0 ]; then
+        echo "No git-lfs files found, please run 'git lfs pull' in the repository" >/dev/stderr
+        exit 2
+    fi
+
+    git lfs ls-files | while read hash file; do
+        if [ -f "$file" ] && head -n 1 "$file" | grep -q "^version https://git-lfs.github.com"; then
+            echo "Pointer (not fetched): $file"
+            echo "Please run 'git lfs pull' in the repository to fetch git-lfs files" >/dev/stderr
+            exit 2
+        fi
+    done
+}
+check_git_lfs
+
 rm --force debian
 ln --symbolic debian.$HOST debian
 dch --package snap-py --newversion ${VERSION}-1 --upstream "$CHANGELOG"

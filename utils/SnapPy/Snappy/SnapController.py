@@ -23,6 +23,7 @@ import re
 import sys
 from time import gmtime, strftime
 import traceback
+import urllib.parse
 
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtCore import (
@@ -329,13 +330,14 @@ RELEASE.UPPER.M= {qDict["upperHeight"]}, {qDict["upperHeight"]}
         for rel, iso in isotopes.items():
             emis = 0.0
             try:
-                emis = float(qDict[rel])
+                if qDict[rel] is None or qDict[rel].strip() == "":
+                    emis = 0.0
+                else:
+                    emis = float(qDict[rel])
             except Exception:
-                pass
+                errors += f"problems interpreting emission value for {iso}: {qDict[rel]} <-> {emis}\n"
             if emis > 0.0:
-                source_term += "RELEASE.BQ/SEC.COMP= {rel}, 0, '{iso}'\n".format(
-                    rel=qDict[rel], iso=iso
-                )
+                source_term += f"RELEASE.BQ/SEC.COMP= {qDict[rel]}, 0, '{iso}'\n"
 
         # add Cs137, I131 and Xe133
         source_term += self.res.isotopes2snapinput([169, 158, 148])
@@ -487,7 +489,7 @@ STEP.HOUR.OUTPUT.FIELDS= 3
                 lat0 = MeteorologyCalculator.getLat0(latf, globalRes.domainHeight)
                 lon0 = MeteorologyCalculator.getLon0(lonf, globalRes.domainWidth)
                 with open(os.path.join(self.lastOutputDir, "snap.input"), "a") as fh:
-                    interpol = f"FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|{lon0},{lon0+0.2},...,{lon0+globalRes.domainWidth}|{lat0},{lat0+0.2},...,{lat0+globalRes.domainHeight}|degree\n"
+                    interpol = f"FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|{lon0},{lon0+0.1},...,{lon0+globalRes.domainWidth}|{lat0},{lat0+0.1},...,{lat0+globalRes.domainHeight}|degree\n"
                     fh.write(
                         self.res.getSnapInputMetDefinitions(
                             qDict["metmodel"], files, interpolation=interpol
@@ -573,6 +575,8 @@ STEP.HOUR.OUTPUT.FIELDS= 3
             # mapping from QList<QPair> to simple dictionary
             qDict = dict()
             for key, value in queryDict:
+                if key == "explosion_type":
+                    value = urllib.parse.unquote_plus(value)
                 qDict[key] = value
             # calling the correct handler depending on the module
             try:
