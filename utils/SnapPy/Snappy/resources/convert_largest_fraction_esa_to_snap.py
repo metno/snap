@@ -111,7 +111,7 @@ def get_args():
                         type=pathlib.Path)
     parser.add_argument("--lookup_table", default="esa_to_snap.csv",
                         type=pathlib.Path)
-    parser.add_argument("--output_path", default="LargestFractionEC.nc",
+    parser.add_argument("--output_path", default="largestLandFraction_EC.nc",
                         type=pathlib.Path)
     parser.add_argument("--overwrite", action='store_true',
                         help="Overwrite existing output file.")
