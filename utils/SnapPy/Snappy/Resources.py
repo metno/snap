@@ -676,12 +676,7 @@ GRAVITY.FIXED.M/S=0.0002
 
             if n_days<0:
                 debug("days Less than 0")
-                # start -= timedelta(days=-n_days) #not at all efficient
                 days=[start-timedelta(days=-n_days),]
-                # tmp=start
-                # while tmp < tomorrow:
-                #     days.append(tmp)
-                #     tmp += timedelta(days=1)
 
             else: 
                 debug("positive days")
@@ -692,15 +687,7 @@ GRAVITY.FIXED.M/S=0.0002
                     tmp += timedelta(days=1)
                 if len(days) ==0:
                     days.append(today)
-                debug(f"last day {days[-1]}")
-           
- 
-            # start -= timedelta(hours=72)  # go 72 hours (forecast-length) back
-
-            # days = []
-            # while start < tomorrow:
-            #     days.append(start)
-            #     start += timedelta(days=1)
+                debug(f"last day {days[-1]}")                
 
             # loop needs to have latest model runs/hindcast runs last
             debug(f" len days {len(days)}")
@@ -738,24 +725,37 @@ GRAVITY.FIXED.M/S=0.0002
                         filename = self._findFileInPathes(file, self.getECInputDirs())
                         if filename is not None:
                             relevant_dates.append(filename)  
+                        elif utc == 0:
+                            debug(f"File {file} doesnt exist")
+                            dayoffset=1
+                            utc_list= [18, 12, 6, 0]
+                            i=0
+                            
+                            while filename is None:
+                                dayoffset=i//len(utc_list) + 1
+                                utc_ind = i % len(utc_list)
+
+                                if dayoffset>5:
+                                    #raise error
+                                    debug("File still doesn't exist - problem?")
+                                    break
+
+                                file = pattern.format(
+                                    dayoffset=dayoffset,
+                                    UTC=utc_list[utc_ind],
+                                    year=(day- timedelta(days=dayoffset)).year,
+                                    month=(day- timedelta(days=dayoffset)).month,
+                                    day=(day- timedelta(days=dayoffset)).day,
+                                )
+                                filename = self._findFileInPathes(file, self.getECInputDirs())
+                                i+=1
+                            relevant_dates.append(filename)  
+                            debug(f"Took {file} instead")
                         else:
-                            debug(f"File {file} doesnt exist")                  
+                            debug(f"File {file} doesnt exist")
+                                
                 debug(f"{len(relevant_dates)}")
 
-
-            # for offset in [3, 2, 1, 0]:
-            #     for day in days:
-            #         for utc in [0, 6, 12, 18]:
-            #             file = pattern.format(
-            #                 dayoffset=offset,
-            #                 UTC=utc,
-            #                 year=day.year,
-            #                 month=day.month,
-            #                 day=day.day,
-            #             )
-            #             filename = self._findFileInPathes(file, self.getECInputDirs())
-            #             if filename is not None:
-            #                 relevant_dates.append(filename)
         else:
             match = re.match(r"(\d{4})-(\d{2})-(\d{2})_(\d{2})", fixed_run)
             if match:
