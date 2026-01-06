@@ -16,9 +16,12 @@ def _assert_coordinate_resolution_equals(ds, target_res, name="target"):
     assert np.allclose(target_res, np.diff(np.sort(ds.lon.values))), _msg
 
 
-def open_datasets(input_path, template_path, input_res, output_res):
+def open_datasets(input_path, template_path, input_res, output_res,
+                  global=False):
     ds = xr.open_dataset(input_path, chunks={"time": 1})
     ds = ds.isel(time=0)
+
+
 
     ds_template = xr.open_dataset(template_path)
 
@@ -26,11 +29,11 @@ def open_datasets(input_path, template_path, input_res, output_res):
     _assert_coordinate_resolution_equals(ds, input_res, "input")
     _assert_coordinate_resolution_equals(ds_template, output_res, "output")
 
-    return subset_dataset(ds, ds_template, output_res)
+    return ds, ds_template
 
 
 def subset_dataset(ds, ds_template, output_res):
-    "Subset dataset ds using template dataset lat lon grid."
+    "Subset dataset or dataarray using template dataset lat lon grid."
 
     # Template coordinates are assumed to be at grid cell centers, so we add
     # half a grid cell in all directions to include the entire grid cells
@@ -44,6 +47,39 @@ def subset_dataset(ds, ds_template, output_res):
                   lon=(ds.lon >= min_lon) & (ds.lon < max_lon))
 
 
+def roll_and_pad_coordinates(ds, input_res, output_res):
+    """Roll longitude and pad latitude to ensure region centers are correct
+    during aggregation of a global file."""
+    agg_factor = calc_agg_factor(input_res, output_res)
+    agg_half = agg_factor // 2
+    arr = ds['lccs_class'].roll({"lon": agg_factor//2}, roll_coords=True)
+
+    lon = arr['lon'].values
+    lon[:agg_factor//2] -= 360
+
+    arr = arr.assign_coords({"lon": lon})
+
+    arr = arr.pad({"lat": (agg_half, agg_half)}, mode='symmetric')
+
+    lat = arr.lat.values
+    lat[:agg_half] = ds.lat.values[0] + input_res * np.arange(1, agg_half+1)[::-1]
+    lat[-agg_half:] = ds.lat.values[-1] - input_res * np.arange(1, agg_half+1)
+    arr = arr.assign_coords({"lat": lat})
+
+    # Check that values are as expected
+    lon = arr.lon.values
+    lon_regions = lon.reshape(lon.size//agg_factor, -1)
+    lon_means = lon_regions.mean(axis=1)
+    lon_means_expected = np.arange(-180, 180, output_res)
+    assert np.allclose(lon_means, lon_means_expected)
+
+    lat = arr.lat.values
+    lat_regions = lat.reshape(lat.size//agg_factor, -1)
+    lat_means = lat_regions.mean(axis=1)
+    lat_means_expected = np.arange(90, - 90 - output_res, -output_res)
+
+    assert np.allclose(lat_means, lat_means_expected)
+
 def _count_values(array, lccs_classes):
     """
     Count all integer values of an array.
@@ -53,10 +89,9 @@ def _count_values(array, lccs_classes):
     return np.array([counts[v] for v in lccs_classes])
 
 
-def aggregate_land_classes(ds, agg_factor, var_name="lccs_class"):
+def aggregate_land_classes(da, agg_factor, var_name="lccs_class"):
     """Aggregates dataset by reducing grid size by a factor agg_factor in each
     dimension"""
-    da = ds[var_name]
 
     lccs_classes = da.flag_values
     # Coarsen grid, keeping coarse and fine dimensions
@@ -119,28 +154,44 @@ def get_args():
                         help="Output resolution in degrees. Default is 0.1 degrees.")
     parser.add_argument("--overwrite", action='store_true',
                         help="Overwrite existing output file.")
+    parser.add_argument("--global", action='store_true',
+                        help="Assume global input with periodic longitude and output latitude bounds at +- 90°.")
     return parser.parse_args()
+
+
+def calc_agg_factor(input_res, output_res):
+    """Calculate agg factor with check"""
+    agg_factor = output_res / input_res
+    if not np.isclose(agg_factor % 2, 0):
+        raise ValueError("Ratio of input and output resolutions must be divisible by 2, got {agg_factor=}")
+    return int(np.round(agg_factor))
 
 
 def main():
     args = get_args()
+    agg_factor = calc_agg_factor(args.input_res, args.output_res)
+
     if args.output_path.exists() and not args.overwrite:
         print(f"Error, output file {args.output_path} exists. Use --overwrite to overwrite")
         sys.exit(1)
 
-    agg_factor = args.output_res / args.input_res
-    if not np.isclose(agg_factor % 2, 0):
-        raise ValueError("Ratio of input and output resolutions must be divisible by 2, got {agg_factor=}")
-    agg_factor = int(np.round(agg_factor))
-
-    sub = open_datasets(input_path=args.input_path,
+    ds, ds_template = open_datasets(input_path=args.input_path,
                         template_path=args.template_path,
                         input_res=args.input_res,
                         output_res=args.output_res)
-    fractions_da = aggregate_land_classes(ds=sub, agg_factor=agg_factor, var_name="lccs_class")
+    var_name="lccs_class"
+    da = sub[var_name]
+    if args.global:
+        da = roll_and_pad_coordinates(ds)
+    else:
+        da = subset_dataset(da, ds_template, args.output_res)
+
+    fractions_da = aggregate_land_classes(da=da, agg_factor=agg_factor,
+                                          var_name=var_name)
 
     print(f"Saving data aggregated from {args.input_path} to {args.output_path}")
     fractions_da.to_netcdf(args.output_path)
+    # TODO: Add coordinate check against template file
     print("Done")
 
 
