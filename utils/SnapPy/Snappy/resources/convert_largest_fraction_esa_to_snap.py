@@ -144,16 +144,31 @@ def convert_esa_to_snap(input_path, output_path, lookup_table="esa_to_snap.csv")
 def get_args():
     import argparse
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--input_path", default="LandCoverFractions_EsaCCI_ecemep.nc", type=pathlib.Path
-    )
-    parser.add_argument("--lookup_table", default="esa_to_snap.csv", type=pathlib.Path)
-    parser.add_argument(
-        "--output_path", default="largestLandFraction_EC.nc", type=pathlib.Path
+    parser = argparse.ArgumentParser(
+        description="This script processes land cover data to determine the largest fractional land cover type for a given grid cell. The script reads an input NetCDF file containing land cover fractions, applies a mapping from ESA CCI (European Space Agency Climate Change Initiative) land cover classes to SNAP classes using a lookup table, and calculates the largest fractional land cover type along with its corresponding main category. The transformed data is saved to an output NetCDF file."
     )
     parser.add_argument(
-        "--overwrite", action="store_true", help="Overwrite existing output file."
+        "--input_path",
+        default="./LandCoverFractions_EsaCCI_ecemep.nc",
+        type=pathlib.Path,
+        help="Path to the input NetCDF file containing land cover fractions (default: ./LandCoverFractions_EsaCCI_ecemep.nc).",
+    )
+    parser.add_argument(
+        "--lookup_table",
+        default="./esa_to_snap.csv",
+        type=pathlib.Path,
+        help="Path to the CSV lookup table that maps ESA land cover classes to SNAP classes (default: ./esa_to_snap.csv).",
+    )
+    parser.add_argument(
+        "--output_path",
+        default="./largestLandFraction_EC.nc",
+        type=pathlib.Path,
+        help="Path to the output NetCDF file where the processed data will be saved (default: ./largestLandFraction_EC.nc).",
+    )
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Overwrite the existing output file if it already exists.",
     )
     return parser.parse_args()
 
