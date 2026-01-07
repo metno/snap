@@ -25,6 +25,7 @@ from Snappy.SnapControllerInverse import SnapControllerInverse
 from Snappy.BrowserWidget import BrowserWidget
 import Snappy.EEMEP.Resources
 import Snappy.EEMEP.Controller
+import logging
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
@@ -39,6 +40,7 @@ if __name__ == "__main__":
     tabs.setWindowTitle('SNAPpy')
     tabs.setWindowIcon(QtGui.QIcon(snap.res.getIconPath()))
     tabs.show()
+    logging.basicConfig(level=logging.INFO)
 
 
     sys.exit(app.exec_())
