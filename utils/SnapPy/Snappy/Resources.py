@@ -735,9 +735,10 @@ GRAVITY.FIXED.M/S=0.0002
                                 dayoffset=i//len(utc_list) + 1
                                 utc_ind = i % len(utc_list)
 
-                                if dayoffset>5:
+                                if dayoffset>3:
                                     #raise error
-                                    debug("File still doesn't exist - problem?")
+                                    debug("No alternative file exists")
+                                    file = "No File"
                                     break
 
                                 file = pattern.format(
