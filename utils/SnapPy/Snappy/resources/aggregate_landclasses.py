@@ -15,6 +15,11 @@ def _assert_coordinate_resolution_equals(ds, target_res, name="target"):
     assert np.allclose(target_res, np.diff(np.sort(ds.lon.values))), _msg
 
 
+def _assert_equal_grids(ds, ds_template):
+    assert np.allclose(ds.lat.values, ds_template.lat.values)
+    assert np.allclose(ds.lon.values, ds_template.lon.values)
+
+
 def open_datasets(input_path, template_path, input_res, output_res):
     ds = xr.open_dataset(input_path, chunks={"time": 1})
     ds = ds.isel(time=0)
@@ -25,7 +30,7 @@ def open_datasets(input_path, template_path, input_res, output_res):
     _assert_coordinate_resolution_equals(ds, input_res, "input")
     _assert_coordinate_resolution_equals(ds_template, output_res, "output")
 
-    return subset_dataset(ds, ds_template, output_res)
+    return subset_dataset(ds, ds_template, output_res), ds_template
 
 
 def subset_dataset(ds, ds_template, output_res):
@@ -96,7 +101,7 @@ def aggregate_land_classes(
     fractions_da["lon"].attrs["long_name"] = "longitude"
     fractions_da["lon"].attrs["units"] = "degree_east"
 
-    fractions_da = fractions_da.reindex(lat=fractions_da.lat[::-1])
+    fractions_da = fractions_da.reindex(lat=np.sort(fractions_da.lat))
 
     print("Calculating grid cell fractions")
     return fractions_da
@@ -165,7 +170,7 @@ def main():
         )
     agg_factor = int(np.round(agg_factor))
 
-    sub = open_datasets(
+    sub, ds_template = open_datasets(
         input_path=args.input_path,
         template_path=args.template_path,
         input_res=args.input_res,
@@ -175,6 +180,9 @@ def main():
     fractions_da = aggregate_land_classes(
         da=sub[var_name], agg_factor=agg_factor, var_name=var_name
     )
+
+    # check that output grid is correct
+    _assert_equal_grids(fractions_da, ds_template)
 
     print(f"Saving data aggregated from {args.input_path} to {args.output_path}")
     with ProgressBar():
