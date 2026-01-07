@@ -91,7 +91,7 @@ writing of most of older code which was written before python 3.5.
 
 ### Logging
 
-For logging and in particular debugging, the `logging` module should be used.
+For logging and in particular debugging, the [logging](https://docs.python.org/3/library/logging.html) module should be used.
 Unfortunately, some older code still does not.
 
 
