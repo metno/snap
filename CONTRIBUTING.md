@@ -14,8 +14,12 @@ Here are some important resources:
 
 ## Testing
 
-TBD
+SNAP runs a couple of unit-test on github CI. To run those manually:
 
+```bash
+    cd src && ln -s gcc_pkgconfig.mk current.mk
+    env SNAP_FIMEX_VERSION=2.1 SNAP_BOUND_CHECKS=1 make test
+```
 ## Submitting changes
 
 Please send a [GitHub Pull Request to SNAP](https://github.com/metno/snap/pull/new/main) with a clear list of what you've done (read more about [pull requests](http://help.github.com/pull-requests/)). When you send a pull request, you may add yourself to the [AUTHORS](https://github.com/metno/snap/blob/main/AUTHORS). We can always use more test coverage. Please follow our [coding conventions](#fortran-code-formatting) and make sure all of your commits are atomic (one feature per commit) if possible.
@@ -25,6 +29,9 @@ Always write a clear log message for your commits. One-line messages are fine fo
     $ git commit -m "A brief summary of the commit
     >
     > A paragraph describing what changed and its impact."
+
+Python code will be formatted using `pre-commit` and `ruff`. First commit might fail if formatting
+needed changes. Please review changes and commit again.
 
 
 ## Fortran code formatting
@@ -61,8 +68,46 @@ Ctrl-Shift-P  configureLanguageBasedSettings
         "editor.tabSize": 2
     }
 
-#### Black
+## Python code formatting
 
-Linter for python, https://github.com/psf/black
+For python code, `ruff` is automatically run before any commit. Older code might still
+be badly formatted, so it might change when a file is touched. When committing a change to an
+old file, please review also those formatting changes. Parts which should not be formatted should
+be surrounded by `# fmt: off` and `# fmt: on`, e.g.
 
-Use with ```black file.py```
+```python
+
+# fmt: off
+    animals = ["dog",  "cat",  "mouse"]
+    moods   = ["like", "like", "don't like"]
+# fmt: on
+
+```
+
+### Typing
+
+Typing information for function arguments is encouraged, even if it has not been available during
+writing of most of older code which was written before python 3.5.
+
+### Logging
+
+For logging and in particular debugging, the [logging](https://docs.python.org/3/library/logging.html) module should be used.
+Unfortunately, some older code still does not.
+
+
+### Documentation
+
+Please use reST (PEP 287) (=shpinx) for docstrings, e.g.
+
+```
+    """
+This is a reST style.
+
+:param param1: this is a first param
+:param param2: this is a second param
+:returns: this is a description of what is returned
+:raises keyError: raises an exception
+"""
+```
+
+For VS-code users, the [autoDocstring](https://marketplace.visualstudio.com/items?itemName=njpwerner.autodocstring) extension with `sphinx-notypes` docstring-Format is useful.

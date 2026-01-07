@@ -39,7 +39,8 @@ compilation
  * Python3 (optional)
  * fimex (optional)
 
-To work with this repository, please have `git-lfs` installed.
+To work with this repository, please have `git-lfs` installed. In addition `pre-commit` is used
+when git-commiting for `ruff` python-code linting and formatting.
 
 
 ## Installation
