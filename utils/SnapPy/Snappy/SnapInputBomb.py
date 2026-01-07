@@ -83,6 +83,7 @@ class ParticleDistribution(Enum):
         """
         return self.value.g0_fraction
 
+    # fmt: off
     MIXED = _ParticleDistribution(
         "Mixed",
         # upper size, radius in µm
@@ -141,7 +142,7 @@ class ExplosionType(Enum):
                                                (0.95, ParticleDistribution.BOMB)])
     MIXED = _ExplosionType("Mixed",           [(1.0, ParticleDistribution.MIXED)])
     HIGH = _ExplosionType("High Altitude",    [(1.0, ParticleDistribution.BOMB)])
-
+    # fmt: on
 
     @classmethod
     def by_argosname(cls, name: str):
@@ -383,7 +384,7 @@ class SnapInputBomb:
 
         radius_sizes = None
         dist = None
-        for (frac, pd) in self.explosion_type.particle_distributions:
+        for frac, pd in self.explosion_type.particle_distributions:
             if radius_sizes is None:
                 radius_sizes = pd.radius_sizes(self.SIZE_INTERPOLATION)
                 dist = [x * frac for x in pd.size_distribution(self.SIZE_INTERPOLATION)]
@@ -401,9 +402,9 @@ class SnapInputBomb:
                 for i, d in enumerate(pd.size_distribution(self.SIZE_INTERPOLATION)):
                     dist[i] += d * frac
 
-        assert (
-            sum(dist) > 0.98 and sum(dist) < 1.02
-        ), f"size_distribution does not sum to 1 != {sum(dist)}: {dist}"
+        assert sum(dist) > 0.98 and sum(dist) < 1.02, (
+            f"size_distribution does not sum to 1 != {sum(dist)}: {dist}"
+        )
 
         self.radius_sizes = radius_sizes
         self.size_distribution = dist
@@ -480,8 +481,8 @@ class SnapInputBomb:
         """
         sum_dist = 0
         size_dist = []
-        l = min(len(self.radius_sizes), len(self._size_distribution))
-        for i in range(l):
+        min_length = min(len(self.radius_sizes), len(self._size_distribution))
+        for i in range(min_length):
             nextsum = sum_dist + self._size_distribution[i]
             if nextsum <= 1:
                 size_dist.append(self._size_distribution[i])
@@ -631,22 +632,22 @@ class SnapInputBomb:
                     release_particle_distribution[pdi] += relpd
                     rel += relpd
                 total_release += rel
-                assert (
-                    abs(ahd_frac_sum - 1.0) < 0.01
-                ), f"sum of activity height fractions != 1: {ahd_frac_sum}"
-                release.append(
-                    f"{self.minutes/60:.2f} {lower} {self.component_name(i)} {rel:.4E}"
+                assert abs(ahd_frac_sum - 1.0) < 0.01, (
+                    f"sum of activity height fractions != 1: {ahd_frac_sum}"
                 )
-        assert np.isclose(
-            total_release, self.activity_after_1hour, rtol=0.05
-        ), f"total release {total_release} != activity_after_1hour {self.activity_after_1hour}"
+                release.append(
+                    f"{self.minutes / 60:.2f} {lower} {self.component_name(i)} {rel:.4E}"
+                )
+        assert np.isclose(total_release, self.activity_after_1hour, rtol=0.05), (
+            f"total release {total_release} != activity_after_1hour {self.activity_after_1hour}"
+        )
         for pdi, (ahd_frac, pd) in enumerate(
             self.explosion_type.particle_distributions
         ):
             frac = release_particle_distribution[pdi] / self.activity_after_1hour
-            assert np.isclose(
-                frac, ahd_frac, atol=0.05
-            ), f"total release fraction for particle distribution {pd.name} {frac} != expected {ahd_frac}"
+            assert np.isclose(frac, ahd_frac, atol=0.05), (
+                f"total release fraction for particle distribution {pd.name} {frac} != expected {ahd_frac}"
+            )
         return "\n".join(release)
 
     def snap_input(self, releasefile="release.txt") -> str:
@@ -684,10 +685,10 @@ class SnapInputBomb:
             lower = []
             upper = []
             radii = []
-            for l, u in self.vertical_slices():
-                lower.append(f"{l:.0f}")
-                upper.append(f"{u:.0f}")
-                if l > self.cloud_bottom:
+            for lo, up in self.vertical_slices():
+                lower.append(f"{lo:.0f}")
+                upper.append(f"{up:.0f}")
+                if lo > self.cloud_bottom:
                     radii.append(f"{self.cloud_radius:.0f}")
                 else:
                     radii.append(f"{self.stem_radius:.0f}")
@@ -699,10 +700,10 @@ class SnapInputBomb:
                 f"""
     MAX.PARTICLES.PER.RELEASE= {max_particles:.0f}
     RELEASE.FILE= {releasefile}
-    RELEASE.HEIGHTLOWER.M = {','.join(lower)}
-    RELEASE.HEIGHTUPPER.M = {','.join(upper)}
-    RELEASE.HEIGHTRADIUS.M = {','.join(radii)}
-    RELEASE.COMPONENTS= {', '.join(components)}
+    RELEASE.HEIGHTLOWER.M = {",".join(lower)}
+    RELEASE.HEIGHTUPPER.M = {",".join(upper)}
+    RELEASE.HEIGHTRADIUS.M = {",".join(radii)}
+    RELEASE.COMPONENTS= {", ".join(components)}
                 """
             )
 
@@ -765,7 +766,7 @@ if __name__ == "__main__":
     try:
         sib.size_distribution = [0.3, 0.4, 0.5, 0.6]
         assert False
-    except:
+    except Exception:
         pass
     sib.minutes = 30
     # print(sib.snap_input())
