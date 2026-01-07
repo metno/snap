@@ -35,10 +35,7 @@ from time import gmtime, strftime
 from Snappy import read_dosecoefficients_icrp
 from Snappy.ResourcesCommon import ResourcesCommon
 import logging
-
-def debug(*objs):
-    print("DEBUG: ", *objs, file=sys.stderr)
-
+logger = logging.getLogger(__name__)
 
 @enum.unique
 class MetModel(enum.Enum):
@@ -596,7 +593,6 @@ GRAVITY.FIXED.M/S=0.0002
         latitude -- float of latitude position
         longitude -- float of longitude position
         """
-        debug("Getting met files")
         relevant_dates = []
 
         if metmodel not in self.MET_FILENAME_PATTERN:
@@ -655,7 +651,6 @@ GRAVITY.FIXED.M/S=0.0002
         run_hours -- run length in hours, possibly negative
         fixed_run -- string of form YYYY-MM-DD_HH giving a specific model-run
         """
-        debug("getting EC files")
         relevant_dates = []
         if not pattern:
             pattern = Resources.EC_FILE_PATTERN
@@ -671,10 +666,10 @@ GRAVITY.FIXED.M/S=0.0002
             today = datetime.combine(date.today(), time(0, 0, 0))
             tomorrow = today + timedelta(days=1)
 
-            logging.info((f"today {today}"))
-            logging.info((f"finish {finish}"))
-            logging.info((f"start {start}"))
-            logging.info((f"tomorrow {tomorrow}"))
+            logger.info((f"today {today}"))
+            logger.info((f"finish {finish}"))
+            logger.info((f"start {start}"))
+            logger.info((f"tomorrow {tomorrow}"))
 
             n_days = (tomorrow - start).days
 
@@ -714,7 +709,7 @@ GRAVITY.FIXED.M/S=0.0002
                     if filename is not None:
                         relevant_dates.append(filename)
                     elif utc == 0 and offset==1:                                #Only matters if no data for today at all
-                        logging.info(f"File {file} doesnt exist")
+                        logger.info(f"File {file} doesnt exist")
                         utc_list = [18, 12, 6, 0]
                         i = 0
                         for i in range(self.maxFileOffset * len(utc_list)-1):  # Max dayoffset is 2
@@ -733,14 +728,14 @@ GRAVITY.FIXED.M/S=0.0002
                             )
 
                             if filename is not None:
-                                logging.info(f"Took {file} instead")
+                                logger.info(f"Took {file} instead")
                                 relevant_dates.append(filename)
                                 break
                         if filename is None:
-                            logging.warning("No alternative file exists")
+                            logger.warning("No alternative file exists")
 
                     else:
-                        logging.info(f"File {file} doesnt exist")
+                        logger.info(f"File {file} doesnt exist")
 
             if start <= tomorrow:
                 for day in days:
@@ -756,7 +751,7 @@ GRAVITY.FIXED.M/S=0.0002
                         if filename is not None:
                             relevant_dates.append(filename)
                         elif utc == 0:                          
-                            logging.info(f"File {file} doesnt exist")
+                            logger.info(f"File {file} doesnt exist")
                             utc_list = [18, 12, 6, 0]
                             i = 0
                             for i in range(
@@ -777,14 +772,14 @@ GRAVITY.FIXED.M/S=0.0002
                                 )
 
                                 if filename is not None:
-                                    logging.info(f"Took {file} instead")
+                                    logger.info(f"Took {file} instead")
                                     relevant_dates.append(filename)
                                     break
                             if filename is None:
-                                logging.warning("No alternative file exists")
+                                logger.warning("No alternative file exists")
 
                         else:
-                            logging.info(f"File {file} doesnt exist")
+                            logger.info(f"File {file} doesnt exist")
 
 
         else:
