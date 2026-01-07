@@ -2,7 +2,6 @@
 # coding: utf-8
 
 import pathlib
-import pandas as pd
 import numpy as np
 import xarray as xr
 from dask.diagnostics import ProgressBar
@@ -46,36 +45,37 @@ def subset_dataset(ds, ds_template, output_res):
     )
 
 
-def _count_values(array, lccs_classes):
+def _count_values(array, possible_values):
     """
-    Count all integer values of an array.
+    Count all unique values of an array for a predefined set of possible values. Equal to np.unique(arr, return_counts=True) when all values are present.
     """
-    n = np.max(lccs_classes) + 1
+    n = np.max(possible_values) + 1
+    # Faster than np.unique when n is not too large
     counts = np.bincount(array.ravel(), minlength=n)
-    return np.array([counts[v] for v in lccs_classes])
+    return np.array([counts[v] for v in possible_values])
 
 
-def aggregate_land_classes(ds, agg_factor, var_name="lccs_class"):
-    """Aggregates dataset by reducing grid size by a factor agg_factor in each
-    dimension"""
-    da = ds[var_name]
+def aggregate_land_classes(
+    da: xr.DataArray, agg_factor: int, var_name: str = "lccs_class"
+):
+    """Aggregates land class values by dividing lat-lon grid into regions of size agg_factor² and counting values in each region."""
 
-    lccs_classes = da.flag_values
-    # Coarsen grid, keeping coarse and fine dimensions
+    land_class_values = da.flag_values
+    # Coarsen grid, subdividing into regions of shape (agg_factor, agg_factor) with a fine sub-dimension
     coarse = da.coarsen(lon=agg_factor, lat=agg_factor, boundary="exact")
     regions = coarse.construct(lon=("lon", "x_fine"), lat=("lat", "y_fine"))
 
-    # Aggregate regions over fine dimension, leaving coarse dimension
+    # Counts land_class values in each regions by reducing over the fine dimensions. Counts are given along a new output dimension named by var_name.
     counts_da = xr.apply_ufunc(
         _count_values,
         regions,
         input_core_dims=[["x_fine", "y_fine"]],
         output_core_dims=[[var_name]],
-        dask_gufunc_kwargs=dict(output_sizes={var_name: len(lccs_classes)}),
+        dask_gufunc_kwargs=dict(output_sizes={var_name: len(land_class_values)}),
         vectorize=True,
         dask="parallelized",
         output_dtypes=[float],
-        kwargs=dict(lccs_classes=lccs_classes),
+        kwargs=dict(possible_values=land_class_values),
     )
     fractions_da = counts_da / agg_factor**2
 
@@ -83,9 +83,10 @@ def aggregate_land_classes(ds, agg_factor, var_name="lccs_class"):
     center_lat = regions.lat.mean(dim="y_fine")
     center_lon = regions.lon.mean(dim="x_fine")
     fractions_da = fractions_da.assign_coords(
-        {"lat": center_lat, "lon": center_lon, var_name: lccs_classes}
+        {"lat": center_lat, "lon": center_lon, var_name: land_class_values}
     )
-    fractions_da[var_name].attrs = ds[var_name].attrs
+
+    fractions_da[var_name].attrs = da.attrs
 
     fractions_da["lat"].attrs["standard_name"] = "latitude"
     fractions_da["lat"].attrs["long_name"] = "latitude"
@@ -98,41 +99,50 @@ def aggregate_land_classes(ds, agg_factor, var_name="lccs_class"):
     fractions_da = fractions_da.reindex(lat=fractions_da.lat[::-1])
 
     print("Calculating grid cell fractions")
-    with ProgressBar():
-        return fractions_da.compute()
+    return fractions_da
 
 
 def get_args():
     import argparse
 
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description="Aggregates high-resolution land class data onto a lower-resolution grid by calculating land class fractions. The input latitude-longitude grid is divided into regions centered around each point of the output grid, and in each region we count the occurance of each land class and calculate fractional land classes. The input grid must be commensurate with the output grid, and is defined by a template file."
+    )
     parser.add_argument(
         "--input_path",
         default="/lustre/storeB/project/fou/kl/cerad/Meteorology/Landuse/C3S-LC-L4-LCCS-Map-300m-P1Y-2022-v2.1.1.nc",
+        help="Input netcdf file. Lat lon grid must conform to CF conventions.",
         type=pathlib.Path,
+    )
+    parser.add_argument(
+        "--land_class_variable",
+        default="lccs_class",
+        help="Variable of land class data in the input netcdf file. Must follow CF convention for flag values.",
+        type=str,
     )
     parser.add_argument(
         "--output_path",
         default="LandCoverFractions_EsaCCI_ecemep.nc",
+        help="Output netcdf file.",
         type=pathlib.Path,
     )
     parser.add_argument(
         "--template_path",
         default="/lustre/storeB/project/fou/kl/cerad/Meteorology/Landuse/meteo_template/meteo20251214_03.nc",
         type=pathlib.Path,
-        help="Dataset with the lat lon grid used for the output",
+        help="Dataset defining the lat lon grid used for the output. Note that lat lon grid must be commensurate with the input grid.",
     )
     parser.add_argument(
         "--input_res",
         type=float,
         default=1 / 360,
-        help="Input resolution in degrees. Default is 1/360 degrees = 10 arcseconds.",
+        help="Input resolution in degrees. Must equal input grid resolution. Default 1/360 degrees = 10 arcseconds. ",
     )
     parser.add_argument(
         "--output_res",
         type=float,
         default=0.1,
-        help="Output resolution in degrees. Default is 0.1 degrees.",
+        help="Output resolution in degrees. Must equal template grid resolution. Default 0.1 degrees.",
     )
     parser.add_argument(
         "--overwrite", action="store_true", help="Overwrite existing output file."
@@ -161,12 +171,14 @@ def main():
         input_res=args.input_res,
         output_res=args.output_res,
     )
+    var_name = args.land_class_variable
     fractions_da = aggregate_land_classes(
-        ds=sub, agg_factor=agg_factor, var_name="lccs_class"
+        da=sub[var_name], agg_factor=agg_factor, var_name=var_name
     )
 
     print(f"Saving data aggregated from {args.input_path} to {args.output_path}")
-    fractions_da.to_netcdf(args.output_path)
+    with ProgressBar():
+        fractions_da.to_netcdf(args.output_path)
     print("Done")
 
 
