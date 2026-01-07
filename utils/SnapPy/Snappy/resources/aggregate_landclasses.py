@@ -40,8 +40,10 @@ def subset_dataset(ds, ds_template, output_res):
     max_lon = ds_template.lon.max() + output_res / 2
 
     # Get mapping from land class value to land class index
-    return ds.sel(lat=(ds.lat >= min_lat) & (ds.lat < max_lat),
-                  lon=(ds.lon >= min_lon) & (ds.lon < max_lon))
+    return ds.sel(
+        lat=(ds.lat >= min_lat) & (ds.lat < max_lat),
+        lon=(ds.lon >= min_lon) & (ds.lon < max_lon),
+    )
 
 
 def _count_values(array, lccs_classes):
@@ -73,25 +75,25 @@ def aggregate_land_classes(ds, agg_factor, var_name="lccs_class"):
         vectorize=True,
         dask="parallelized",
         output_dtypes=[float],
-        kwargs=dict(lccs_classes=lccs_classes)
+        kwargs=dict(lccs_classes=lccs_classes),
     )
     fractions_da = counts_da / agg_factor**2
 
     # Assign grid coords as center of grid lat/lon
     center_lat = regions.lat.mean(dim="y_fine")
     center_lon = regions.lon.mean(dim="x_fine")
-    fractions_da = fractions_da.assign_coords({"lat": center_lat,
-                                               "lon": center_lon,
-                                               var_name: lccs_classes})
+    fractions_da = fractions_da.assign_coords(
+        {"lat": center_lat, "lon": center_lon, var_name: lccs_classes}
+    )
     fractions_da[var_name].attrs = ds[var_name].attrs
 
-    fractions_da["lat"].attrs['standard_name'] = "latitude"
-    fractions_da["lat"].attrs['long_name'] = "latitude"
-    fractions_da["lat"].attrs['units'] = "degree_north"
+    fractions_da["lat"].attrs["standard_name"] = "latitude"
+    fractions_da["lat"].attrs["long_name"] = "latitude"
+    fractions_da["lat"].attrs["units"] = "degree_north"
 
-    fractions_da["lon"].attrs['standard_name'] = "longitude"
-    fractions_da["lon"].attrs['long_name'] = "longitude"
-    fractions_da["lon"].attrs['units'] = "degree_east"
+    fractions_da["lon"].attrs["standard_name"] = "longitude"
+    fractions_da["lon"].attrs["long_name"] = "longitude"
+    fractions_da["lon"].attrs["units"] = "degree_east"
 
     fractions_da = fractions_da.reindex(lat=fractions_da.lat[::-1])
 
@@ -102,42 +104,66 @@ def aggregate_land_classes(ds, agg_factor, var_name="lccs_class"):
 
 def get_args():
     import argparse
+
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input_path",
-                        default="/lustre/storeB/project/fou/kl/cerad/Meteorology/Landuse/C3S-LC-L4-LCCS-Map-300m-P1Y-2022-v2.1.1.nc",
-                        type=pathlib.Path)
-    parser.add_argument("--output_path",
-                        default="LandCoverFractions_EsaCCI_ecemep.nc",
-                        type=pathlib.Path)
-    parser.add_argument("--template_path",
-                        default="/lustre/storeB/project/fou/kl/cerad/Meteorology/Landuse/meteo_template/meteo20251214_03.nc",
-                        type=pathlib.Path,
-                        help="Dataset with the lat lon grid used for the output")
-    parser.add_argument("--input_res", type=float, default = 1 / 360,
-                        help="Input resolution in degrees. Default is 1/360 degrees = 10 arcseconds.")
-    parser.add_argument("--output_res", type=float, default = 0.1,
-                        help="Output resolution in degrees. Default is 0.1 degrees.")
-    parser.add_argument("--overwrite", action='store_true',
-                        help="Overwrite existing output file.")
+    parser.add_argument(
+        "--input_path",
+        default="/lustre/storeB/project/fou/kl/cerad/Meteorology/Landuse/C3S-LC-L4-LCCS-Map-300m-P1Y-2022-v2.1.1.nc",
+        type=pathlib.Path,
+    )
+    parser.add_argument(
+        "--output_path",
+        default="LandCoverFractions_EsaCCI_ecemep.nc",
+        type=pathlib.Path,
+    )
+    parser.add_argument(
+        "--template_path",
+        default="/lustre/storeB/project/fou/kl/cerad/Meteorology/Landuse/meteo_template/meteo20251214_03.nc",
+        type=pathlib.Path,
+        help="Dataset with the lat lon grid used for the output",
+    )
+    parser.add_argument(
+        "--input_res",
+        type=float,
+        default=1 / 360,
+        help="Input resolution in degrees. Default is 1/360 degrees = 10 arcseconds.",
+    )
+    parser.add_argument(
+        "--output_res",
+        type=float,
+        default=0.1,
+        help="Output resolution in degrees. Default is 0.1 degrees.",
+    )
+    parser.add_argument(
+        "--overwrite", action="store_true", help="Overwrite existing output file."
+    )
     return parser.parse_args()
 
 
 def main():
     args = get_args()
     if args.output_path.exists() and not args.overwrite:
-        print(f"Error, output file {args.output_path} exists. Use --overwrite to overwrite")
+        print(
+            f"Error, output file {args.output_path} exists. Use --overwrite to overwrite"
+        )
         sys.exit(1)
 
     agg_factor = args.output_res / args.input_res
     if not np.isclose(agg_factor % 2, 0):
-        raise ValueError("Ratio of input and output resolutions must be divisible by 2, got {agg_factor=}")
+        raise ValueError(
+            "Ratio of input and output resolutions must be divisible by 2, got {agg_factor=}"
+        )
     agg_factor = int(np.round(agg_factor))
 
-    sub = open_datasets(input_path=args.input_path,
-                        template_path=args.template_path,
-                        input_res=args.input_res,
-                        output_res=args.output_res)
-    fractions_da = aggregate_land_classes(ds=sub, agg_factor=agg_factor, var_name="lccs_class")
+    sub = open_datasets(
+        input_path=args.input_path,
+        template_path=args.template_path,
+        input_res=args.input_res,
+        output_res=args.output_res,
+    )
+    fractions_da = aggregate_land_classes(
+        ds=sub, agg_factor=agg_factor, var_name="lccs_class"
+    )
 
     print(f"Saving data aggregated from {args.input_path} to {args.output_path}")
     fractions_da.to_netcdf(args.output_path)
