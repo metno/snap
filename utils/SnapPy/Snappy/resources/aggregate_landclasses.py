@@ -50,6 +50,41 @@ def subset_dataset(ds, ds_template, output_res):
     )
 
 
+def roll_and_pad_coordinates(ds, input_res, output_res):
+    """Roll longitude and pad latitude to ensure region centers are correct at
+    the boundaries, i.e. that the boundary grid points have grid centers at
+    longitudes [-180 + resolution, 180] and latitudes [-90, 90]."""
+    agg_factor = calc_agg_factor(input_res, output_res)
+    agg_half = agg_factor // 2
+    arr = ds["lccs_class"].roll({"lon": agg_factor // 2}, roll_coords=True)
+
+    lon = arr["lon"].values
+    lon[: agg_factor // 2] -= 360
+
+    arr = arr.assign_coords({"lon": lon})
+
+    arr = arr.pad({"lat": (agg_half, agg_half)}, mode="symmetric")
+
+    lat = arr.lat.values
+    lat[:agg_half] = ds.lat.values[0] + input_res * np.arange(1, agg_half + 1)[::-1]
+    lat[-agg_half:] = ds.lat.values[-1] - input_res * np.arange(1, agg_half + 1)
+    arr = arr.assign_coords({"lat": lat})
+
+    # Check that values are as expected
+    lon = arr.lon.values
+    lon_regions = lon.reshape(lon.size // agg_factor, -1)
+    lon_means = lon_regions.mean(axis=1)
+    lon_means_expected = np.arange(-180, 180, output_res)
+    assert np.allclose(lon_means, lon_means_expected)
+
+    lat = arr.lat.values
+    lat_regions = lat.reshape(lat.size // agg_factor, -1)
+    lat_means = lat_regions.mean(axis=1)
+    lat_means_expected = np.arange(90, -90 - output_res, -output_res)
+
+    assert np.allclose(lat_means, lat_means_expected)
+
+
 def _count_values(array, possible_values):
     """
     Count all unique values of an array for a predefined set of possible values. Equal to np.unique(arr, return_counts=True) when all values are present.
@@ -106,6 +141,8 @@ def aggregate_land_classes(
     print("Calculating grid cell fractions")
     return fractions_da
 
+    # res.pathglob = "ec_atmo_0_1deg_????????T??????Z_3h.nc"
+
 
 def get_args():
     import argparse
@@ -152,33 +189,49 @@ def get_args():
     parser.add_argument(
         "--overwrite", action="store_true", help="Overwrite existing output file."
     )
+    parser.add_argument(
+        "--global_input",
+        action="store_true",
+        help="Assume global input with periodic longitude and output latitude bounds at +- 90°.",
+    )
     return parser.parse_args()
+
+
+def calc_agg_factor(input_res, output_res):
+    """Calculate agg factor with check"""
+    agg_factor = output_res / input_res
+    if not np.isclose(agg_factor % 2, 0):
+        raise ValueError(
+            "Ratio of input and output resolutions must be divisible by 2, got {agg_factor=}"
+        )
+    return int(np.round(agg_factor))
 
 
 def main():
     args = get_args()
+    agg_factor = calc_agg_factor(args.input_res, args.output_res)
+
     if args.output_path.exists() and not args.overwrite:
         print(
             f"Error, output file {args.output_path} exists. Use --overwrite to overwrite"
         )
         sys.exit(1)
 
-    agg_factor = args.output_res / args.input_res
-    if not np.isclose(agg_factor % 2, 0):
-        raise ValueError(
-            "Ratio of input and output resolutions must be divisible by 2, got {agg_factor=}"
-        )
-    agg_factor = int(np.round(agg_factor))
-
-    sub, ds_template = open_datasets(
+    ds, ds_template = open_datasets(
         input_path=args.input_path,
         template_path=args.template_path,
         input_res=args.input_res,
         output_res=args.output_res,
     )
     var_name = args.land_class_variable
+    da = ds[var_name]
+    if args.global_input:
+        da = roll_and_pad_coordinates(da, args.input_res, args.output_res)
+    else:
+        da = subset_dataset(da, ds_template, args.output_res)
+
     fractions_da = aggregate_land_classes(
-        da=sub[var_name], agg_factor=agg_factor, var_name=var_name
+        da=da, agg_factor=agg_factor, var_name=var_name
     )
 
     # check that output grid is correct
