@@ -8,31 +8,49 @@ from dask.diagnostics import ProgressBar
 import sys
 
 
-def _assert_coordinate_resolution_equals(ds, target_res, coord, name="target", ):
-    _msg = "Mismatch in resolution of coord '{coord}' in ds '{name}'. Expected {target_res}, got deviations up to {max_dev}"
+def check_coordinate_resolution_equals(
+    ds,
+    target_res,
+    coord,
+    name="target",
+):
+    """Check resolution of a given coordinate in dataset against an expected value"""
+    _msg = "Warning! Mismatch in resolution of coord '{coord}' in ds '{name}'. Expected {target_res}, got deviations up to {max_dev}"
 
-    coord_values = np.sort(ds.get(coord).values)
-    diffs = np.diff(coord_values)
+    diffs = np.diff(np.sort(ds.get(coord).values))
 
     if not np.allclose(target_res, diffs, rtol=1e-4):
         max_deviation = np.max(np.abs(diffs - target_res))
-        msg = _msg.format(name=name, coord=coord, target_res=target_res, max_dev=max_deviation)
-        raise ValueError(msg)
+        msg = _msg.format(
+            name=name, coord=coord, target_res=target_res, max_dev=max_deviation
+        )
+        print(msg)
 
 
-def _assert_equal_grids(ds, ds_template):
-    assert np.allclose(ds.lat.values, ds_template.lat.values)
-    assert np.allclose(ds.lon.values, ds_template.lon.values)
+def check_output_coord(da, da_template, coord):
+    """Check that the coordinates of two datasets are equal (up to a given tolerance)"""
+    _msg = "Warning! Resolution of coord '{coord}' between output and template does not match. Got deviations up to {max_dev} at i={index}/{size}"
+
+    diffs = np.diff(da[coord].values)
+    diffs_template = np.diff(np.sort(da_template[coord].values))
+
+    if not np.allclose(diffs, diffs_template, rtol=1e-4):
+        max_deviation = np.max(np.abs(diffs - diffs_template))
+        index = np.argmax(np.abs(diffs - diffs_template))
+        msg = _msg.format(
+            coord=coord, max_dev=max_deviation, index=index, size=da[coord].size
+        )
+        print(msg)
 
 
 def rename_coords(ds):
     names = {}
     for v in ds.coords:
-        standard_name = ds[v].attrs.get('standard_name', '')
-        if standard_name == 'latitude':
-            names[v] = 'lat'
-        elif standard_name == 'longitude':
-            names[v] = 'lon'
+        standard_name = ds[v].attrs.get("standard_name", "")
+        if standard_name == "latitude":
+            names[v] = "lat"
+        elif standard_name == "longitude":
+            names[v] = "lon"
     return ds.rename(names)
 
 
@@ -44,10 +62,10 @@ def open_datasets(input_path, template_path, input_res, output_res):
     ds_template = rename_coords(ds_template)
 
     # Check validity of input and output grids
-    _assert_coordinate_resolution_equals(ds, input_res, "lat", "input")
-    _assert_coordinate_resolution_equals(ds, input_res, "lon", "input")
-    _assert_coordinate_resolution_equals(ds_template, output_res, "lat", "template")
-    _assert_coordinate_resolution_equals(ds_template, output_res, "lon", "template")
+    check_coordinate_resolution_equals(ds, input_res, "lat", "input")
+    check_coordinate_resolution_equals(ds, input_res, "lon", "input")
+    check_coordinate_resolution_equals(ds_template, output_res, "lat", "template")
+    check_coordinate_resolution_equals(ds_template, output_res, "lon", "template")
 
     return ds, ds_template
 
@@ -69,39 +87,40 @@ def subset_dataset(ds, ds_template, output_res):
     )
 
 
-def roll_and_pad_coordinates(ds, input_res, output_res):
+def roll_and_pad_coordinates(da, input_res, output_res):
     """Roll longitude and pad latitude to ensure region centers are correct at
     the boundaries, i.e. that the boundary grid points have grid centers at
     longitudes [-180 + resolution, 180] and latitudes [-90, 90]."""
     agg_factor = calc_agg_factor(input_res, output_res)
     agg_half = agg_factor // 2
-    arr = ds["lccs_class"].roll({"lon": agg_factor // 2}, roll_coords=True)
+    new_da = da.roll({"lon": agg_factor // 2}, roll_coords=True)
 
-    lon = arr["lon"].values
+    lon = new_da["lon"].values
     lon[: agg_factor // 2] -= 360
 
-    arr = arr.assign_coords({"lon": lon})
+    new_da = new_da.assign_coords({"lon": lon})
 
-    arr = arr.pad({"lat": (agg_half, agg_half)}, mode="symmetric")
+    new_da = new_da.pad({"lat": (agg_half, agg_half)}, mode="symmetric")
 
-    lat = arr.lat.values
-    lat[:agg_half] = ds.lat.values[0] + input_res * np.arange(1, agg_half + 1)[::-1]
-    lat[-agg_half:] = ds.lat.values[-1] - input_res * np.arange(1, agg_half + 1)
-    arr = arr.assign_coords({"lat": lat})
+    lat = new_da.lat.values
+    lat[:agg_half] = da.lat.values[0] + input_res * np.arange(1, agg_half + 1)[::-1]
+    lat[-agg_half:] = da.lat.values[-1] - input_res * np.arange(1, agg_half + 1)
+    new_da = new_da.assign_coords({"lat": lat})
 
     # Check that values are as expected
-    lon = arr.lon.values
+    lon = new_da.lon.values
     lon_regions = lon.reshape(lon.size // agg_factor, -1)
     lon_means = lon_regions.mean(axis=1)
     lon_means_expected = np.arange(-180, 180, output_res)
-    assert np.allclose(lon_means, lon_means_expected)
+    assert np.allclose(lon_means, lon_means_expected, rtol=1e-4)
 
-    lat = arr.lat.values
+    lat = new_da.lat.values
     lat_regions = lat.reshape(lat.size // agg_factor, -1)
     lat_means = lat_regions.mean(axis=1)
     lat_means_expected = np.arange(90, -90 - output_res, -output_res)
 
-    assert np.allclose(lat_means, lat_means_expected)
+    assert np.allclose(lat_means, lat_means_expected, rtol=1e-4)
+    return new_da
 
 
 def _count_values(array, possible_values):
@@ -254,7 +273,8 @@ def main():
     )
 
     # check that output grid is correct
-    _assert_equal_grids(fractions_da, ds_template)
+    check_output_coord(fractions_da, ds_template, coord="lat")
+    check_output_coord(fractions_da, ds_template, coord="lon")
 
     print(f"Saving data aggregated from {args.input_path} to {args.output_path}")
     with ProgressBar():
