@@ -15,7 +15,7 @@ def check_coordinate_resolution_equals(
     name="target",
 ):
     """Check resolution of a given coordinate in dataset against an expected value"""
-    _msg = "Warning! Mismatch in resolution of coord '{coord}' in ds '{name}'. Expected {target_res}, got deviations up to {max_dev}"
+    _msg = "Mismatch in resolution of coord '{coord}' in ds '{name}'. Expected {target_res}, got deviations up to {max_dev}"
 
     diffs = np.diff(np.sort(ds.get(coord).values))
 
@@ -24,12 +24,12 @@ def check_coordinate_resolution_equals(
         msg = _msg.format(
             name=name, coord=coord, target_res=target_res, max_dev=max_deviation
         )
-        print(msg)
+        raise ValueError(msg)
 
 
 def check_output_coord(da, da_template, coord):
     """Check that the coordinates of two datasets are equal (up to a given tolerance)"""
-    _msg = "Warning! Resolution of coord '{coord}' between output and template does not match. Got deviations up to {max_dev} at i={index}/{size}"
+    _msg = "Resolution of coord '{coord}' between output and template does not match. Got deviations up to {max_dev} at i={index}/{size}"
 
     diffs = np.diff(da[coord].values)
     diffs_template = np.diff(np.sort(da_template[coord].values))
@@ -40,16 +40,17 @@ def check_output_coord(da, da_template, coord):
         msg = _msg.format(
             coord=coord, max_dev=max_deviation, index=index, size=da[coord].size
         )
-        print(msg)
+        raise ValueError(msg)
 
 
 def rename_coords(ds):
     names = {}
     for v in ds.coords:
-        standard_name = ds[v].attrs.get("standard_name", "")
-        if standard_name == "latitude":
+        coord = ds[v].attrs
+        name = coord.get("standard_name", v)
+        if name == "latitude":
             names[v] = "lat"
-        elif standard_name == "longitude":
+        elif name == "longitude":
             names[v] = "lon"
     return ds.rename(names)
 
