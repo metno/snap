@@ -20,11 +20,23 @@ def _assert_equal_grids(ds, ds_template):
     assert np.allclose(ds.lon.values, ds_template.lon.values)
 
 
+def rename_coords(ds):
+    names = {}
+    for v in ds.coords:
+        standard_name = ds[v].attrs.get('standard_name', '')
+        if standard_name == 'latitude':
+            names[v] = 'lat'
+        elif standard_name == 'longitude':
+            names[v] = 'lon'
+    return ds.rename(names)
+
+
 def open_datasets(input_path, template_path, input_res, output_res):
     ds = xr.open_dataset(input_path, chunks={"time": 1})
     ds = ds.isel(time=0)
 
     ds_template = xr.open_dataset(template_path)
+    ds_template = rename_coords(ds_template)
 
     # Check validity of input and output grids
     _assert_coordinate_resolution_equals(ds, input_res, "input")
