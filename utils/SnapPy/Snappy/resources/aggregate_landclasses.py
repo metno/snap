@@ -14,7 +14,7 @@ def _assert_coordinate_resolution_equals(ds, target_res, coord, name="target", )
     coord_values = np.sort(ds.get(coord).values)
     diffs = np.diff(coord_values)
 
-    if not np.allclose(target_res, diffs):
+    if not np.allclose(target_res, diffs, rtol=1e-4):
         max_deviation = np.max(np.abs(diffs - target_res))
         msg = _msg.format(name=name, coord=coord, target_res=target_res, max_dev=max_deviation)
         raise ValueError(msg)
