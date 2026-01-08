@@ -49,7 +49,7 @@ def open_datasets(input_path, template_path, input_res, output_res):
     _assert_coordinate_resolution_equals(ds_template, output_res, "lat", "template")
     _assert_coordinate_resolution_equals(ds_template, output_res, "lon", "template")
 
-    return subset_dataset(ds, ds_template, output_res), ds_template
+    return ds, ds_template
 
 
 def subset_dataset(ds, ds_template, output_res):
