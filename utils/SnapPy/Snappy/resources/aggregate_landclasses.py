@@ -228,6 +228,9 @@ def get_args():
         "--overwrite", action="store_true", help="Overwrite existing output file."
     )
     parser.add_argument(
+        "--dry_run", action="store_true", help="Do not produce output file."
+    )
+    parser.add_argument(
         "--global_input",
         action="store_true",
         help="Assume global input with periodic longitude and output latitude bounds at +- 90°.",
@@ -249,7 +252,7 @@ def main():
     args = get_args()
     agg_factor = calc_agg_factor(args.input_res, args.output_res)
 
-    if args.output_path.exists() and not args.overwrite:
+    if args.output_path.exists() and not (args.overwrite or args.dry_run):
         print(
             f"Error, output file {args.output_path} exists. Use --overwrite to overwrite"
         )
@@ -276,10 +279,11 @@ def main():
     check_output_coord(fractions_da, ds_template, coord="lat")
     check_output_coord(fractions_da, ds_template, coord="lon")
 
-    print(f"Saving data aggregated from {args.input_path} to {args.output_path}")
-    with ProgressBar():
-        fractions_da.to_netcdf(args.output_path)
-    print("Done")
+    if not args.dry_run:
+        print(f"Saving data aggregated from {args.input_path} to {args.output_path}")
+        with ProgressBar():
+            fractions_da.to_netcdf(args.output_path)
+        print("Done")
 
 
 if __name__ == "__main__":
