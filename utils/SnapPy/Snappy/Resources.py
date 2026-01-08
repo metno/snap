@@ -35,7 +35,7 @@ from time import gmtime, strftime
 from Snappy import read_dosecoefficients_icrp
 from Snappy.ResourcesCommon import ResourcesCommon
 import logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("collect files")
 
 @enum.unique
 class MetModel(enum.Enum):
@@ -63,8 +63,8 @@ class Resources(ResourcesCommon):
     # OUTPUTDIR = "/disk1/tmp"
     _OUTPUTDIR = "{LUSTREDIR}/project/fou/kl/snap/runs"
     _OUTPUTDIR_AUTOMATED = "{LUSTREDIR}/project/fou/kl/snap/automated_runs"
-    # _ECINPUTDIRS = ["{LUSTREDIR}/project/metproduction/products/cwf-input/"]
-    _ECINPUTDIRS = ["/lustre/storeB/users/geche8548/"]
+    _ECINPUTDIRS = ["{LUSTREDIR}/project/metproduction/products/cwf-input/"]
+    # _ECINPUTDIRS = ["/lustre/storeB/users/geche8548/"]
     # ECINPUTDIRS = ["/lustre/storeB/users/heikok/Meteorology/ecdis2cwf/"]
     EC_FILENAME_PATTERN = "meteo{year:04d}{month:02d}{day:02d}_{dayoffset:02d}.nc"
     EC_FILE_PATTERN = os.path.join("NRPA_EUROPE_0_1_{UTC:02d}", EC_FILENAME_PATTERN)
@@ -666,10 +666,8 @@ GRAVITY.FIXED.M/S=0.0002
             today = datetime.combine(date.today(), time(0, 0, 0))
             tomorrow = today + timedelta(days=1)
 
-            logger.info((f"today {today}"))
-            logger.info((f"finish {finish}"))
-            logger.info((f"start {start}"))
-            logger.info((f"tomorrow {tomorrow}"))
+            logger.debug((f"start {start}"))
+            logger.debug((f"finish {finish}"))
 
             n_days = (tomorrow - start).days
 
@@ -709,7 +707,7 @@ GRAVITY.FIXED.M/S=0.0002
                     if filename is not None:
                         relevant_dates.append(filename)
                     elif utc == 0 and offset==1:                                #Only matters if no data for today at all
-                        logger.info(f"File {file} doesnt exist")
+                        logger.debug(f"File {file} doesnt exist")
                         utc_list = [18, 12, 6, 0]
                         i = 0
                         for i in range(self.maxFileOffset * len(utc_list)-1):  # Max dayoffset is 2
@@ -728,14 +726,14 @@ GRAVITY.FIXED.M/S=0.0002
                             )
 
                             if filename is not None:
-                                logger.info(f"Took {file} instead")
+                                logger.debug(f"Took {file} instead")
                                 relevant_dates.append(filename)
                                 break
                         if filename is None:
-                            logger.warning("No alternative file exists")
+                            logger.debug("No alternative file exists")
 
                     else:
-                        logger.info(f"File {file} doesnt exist")
+                        logger.debug(f"File {file} doesnt exist")
 
             if start <= tomorrow:
                 for day in days:
@@ -751,7 +749,7 @@ GRAVITY.FIXED.M/S=0.0002
                         if filename is not None:
                             relevant_dates.append(filename)
                         elif utc == 0:                          
-                            logger.info(f"File {file} doesnt exist")
+                            logger.debug(f"File {file} doesnt exist")
                             utc_list = [18, 12, 6, 0]
                             i = 0
                             for i in range(
@@ -772,14 +770,14 @@ GRAVITY.FIXED.M/S=0.0002
                                 )
 
                                 if filename is not None:
-                                    logger.info(f"Took {file} instead")
+                                    logger.debug(f"Took {file} instead")
                                     relevant_dates.append(filename)
                                     break
                             if filename is None:
-                                logger.warning("No alternative file exists")
+                                logger.debug("No alternative file exists")
 
                         else:
-                            logger.info(f"File {file} doesnt exist")
+                            logger.debug(f"File {file} doesnt exist")
 
 
         else:
