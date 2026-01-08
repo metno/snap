@@ -8,11 +8,16 @@ from dask.diagnostics import ProgressBar
 import sys
 
 
-def _assert_coordinate_resolution_equals(ds, target_res, name="target"):
-    _msg = f"resolution of {name} latitudes not equal to expected resolution of {target_res}"
-    assert np.allclose(target_res, np.diff(np.sort(ds.lat.values))), _msg
-    _msg = f"resolution of {name} longitudes not equal to expected resolution of {target_res}"
-    assert np.allclose(target_res, np.diff(np.sort(ds.lon.values))), _msg
+def _assert_coordinate_resolution_equals(ds, target_res, coord, name="target", ):
+    _msg = "Mismatch in resolution of coord '{coord}' in ds '{name}'. Expected {target_res}, got deviations up to {max_dev}"
+
+    coord_values = np.sort(ds.get(coord).values)
+    diffs = np.diff(coord_values)
+
+    if not np.allclose(target_res, diffs):
+        max_deviation = np.max(np.abs(diffs - target_res))
+        msg = _msg.format(name=name, coord=coord, target_res=target_res, max_dev=max_deviation)
+        raise ValueError(msg)
 
 
 def _assert_equal_grids(ds, ds_template):
@@ -39,8 +44,10 @@ def open_datasets(input_path, template_path, input_res, output_res):
     ds_template = rename_coords(ds_template)
 
     # Check validity of input and output grids
-    _assert_coordinate_resolution_equals(ds, input_res, "input")
-    _assert_coordinate_resolution_equals(ds_template, output_res, "output")
+    _assert_coordinate_resolution_equals(ds, input_res, "lat", "input")
+    _assert_coordinate_resolution_equals(ds, input_res, "lon", "input")
+    _assert_coordinate_resolution_equals(ds_template, output_res, "lat", "template")
+    _assert_coordinate_resolution_equals(ds_template, output_res, "lon", "template")
 
     return subset_dataset(ds, ds_template, output_res), ds_template
 
