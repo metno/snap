@@ -91,7 +91,7 @@ class Resources(ResourcesCommon):
         self.ecDomainRes = 0.1
         self.ecDefaultDomainStartX = -50.0
         self.ecDefaultDomainStartY = 25.0
-        self.maxFileOffset = 3
+        self.ecMaxFileOffset = 3
 
         startScreenFH = open(
             os.path.join(self.directory, "startScreen.html"), mode="r", encoding="UTF-8"
@@ -697,7 +697,7 @@ GRAVITY.FIXED.M/S=0.0002
                         utc_list = [18, 12, 6, 0]
                         i = 0
                         for i in range(
-                            self.maxFileOffset * len(utc_list) - 1
+                            self.ecMaxFileOffset * len(utc_list) - 1
                         ):  # Max dayoffset is 2
                             dayoffset = i // len(utc_list) + 1
                             utc_ind = i % len(utc_list)
@@ -740,7 +740,7 @@ GRAVITY.FIXED.M/S=0.0002
                             logger.debug(f"File {file} doesnt exist")
                             utc_list = [18, 12, 6, 0]
                             i = 0
-                            for i in range(self.maxFileOffset * len(utc_list)):
+                            for i in range(self.ecMaxFileOffset * len(utc_list)):
                                 dayoffset = i // len(utc_list) + 1
                                 utc_ind = i % len(utc_list)
 
