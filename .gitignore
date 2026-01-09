@@ -28,6 +28,8 @@ Snappy.egg-info
 /.csettings
 /.dep
 /.vscode
+/.venv
+.ipynb_checkpoints
 
 # /
 /bsnap_1.*
