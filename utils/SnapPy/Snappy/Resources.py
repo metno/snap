@@ -1,20 +1,3 @@
-# SNAP: Servere Nuclear Accident Programme
-# Copyright (C) 1992-2020   Norwegian Meteorological Institute
-#
-# This file is part of SNAP. SNAP is free software: you can
-# redistribute it and/or modify it under the terms of the
-# GNU General Public License as published by the
-# Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
 """
 Created on Apr 13, 2016
 
@@ -35,7 +18,9 @@ from time import gmtime, strftime
 from Snappy import read_dosecoefficients_icrp
 from Snappy.ResourcesCommon import ResourcesCommon
 import logging
+
 logger = logging.getLogger("collect files")
+
 
 @enum.unique
 class MetModel(enum.Enum):
@@ -64,7 +49,6 @@ class Resources(ResourcesCommon):
     _OUTPUTDIR = "{LUSTREDIR}/project/fou/kl/snap/runs"
     _OUTPUTDIR_AUTOMATED = "{LUSTREDIR}/project/fou/kl/snap/automated_runs"
     _ECINPUTDIRS = ["{LUSTREDIR}/project/metproduction/products/cwf-input/"]
-    # _ECINPUTDIRS = ["/lustre/storeB/users/geche8548/"]
     # ECINPUTDIRS = ["/lustre/storeB/users/heikok/Meteorology/ecdis2cwf/"]
     EC_FILENAME_PATTERN = "meteo{year:04d}{month:02d}{day:02d}_{dayoffset:02d}.nc"
     EC_FILE_PATTERN = os.path.join("NRPA_EUROPE_0_1_{UTC:02d}", EC_FILENAME_PATTERN)
@@ -107,7 +91,7 @@ class Resources(ResourcesCommon):
         self.ecDomainRes = 0.1
         self.ecDefaultDomainStartX = -50.0
         self.ecDefaultDomainStartY = 25.0
-        self.maxFileOffset=3
+        self.maxFileOffset = 3
 
         startScreenFH = open(
             os.path.join(self.directory, "startScreen.html"), mode="r", encoding="UTF-8"
@@ -706,11 +690,15 @@ GRAVITY.FIXED.M/S=0.0002
                     filename = self._findFileInPathes(file, self.getECInputDirs())
                     if filename is not None:
                         relevant_dates.append(filename)
-                    elif utc == 0 and offset==1:                                #Only matters if no data for today at all
+                    elif (
+                        utc == 0 and offset == 1
+                    ):  # Only matters if no data for today at all
                         logger.debug(f"File {file} doesnt exist")
                         utc_list = [18, 12, 6, 0]
                         i = 0
-                        for i in range(self.maxFileOffset * len(utc_list)-1):  # Max dayoffset is 2
+                        for i in range(
+                            self.maxFileOffset * len(utc_list) - 1
+                        ):  # Max dayoffset is 2
                             dayoffset = i // len(utc_list) + 1
                             utc_ind = i % len(utc_list)
 
@@ -748,13 +736,11 @@ GRAVITY.FIXED.M/S=0.0002
                         filename = self._findFileInPathes(file, self.getECInputDirs())
                         if filename is not None:
                             relevant_dates.append(filename)
-                        elif utc == 0:                          
+                        elif utc == 0:
                             logger.debug(f"File {file} doesnt exist")
                             utc_list = [18, 12, 6, 0]
                             i = 0
-                            for i in range(
-                                self.maxFileOffset * len(utc_list)
-                            ):
+                            for i in range(self.maxFileOffset * len(utc_list)):
                                 dayoffset = i // len(utc_list) + 1
                                 utc_ind = i % len(utc_list)
 
@@ -778,7 +764,6 @@ GRAVITY.FIXED.M/S=0.0002
 
                         else:
                             logger.debug(f"File {file} doesnt exist")
-
 
         else:
             match = re.match(r"(\d{4})-(\d{2})-(\d{2})_(\d{2})", fixed_run)

@@ -9,6 +9,10 @@ sys.path.append("../")
 from Snappy import Resources as R
 
 """"
+Created on Jan 09, 2025
+
+@author: geche8548
+
 Test data date range: 30-12-2025 to 05-01-2025
 Throughout script "Today" refers to final day in date range (final date with 0 offset forecast)
 Tests included:
@@ -20,16 +24,10 @@ Tests included:
 5. Missing specific files:
     a) missing 00 file
     b) missing whole day (not today)
-    c) missing whole today
-    d) missing two days?
-7. Blank folder
+    c) missing todays data
+    d) missing two days of data
+    e) missing all data
 """
-
-
-def print_section(i):
-    print("")
-    print(f"Test {i}")
-    print("")
 
 
 Res = R.Resources()
@@ -37,9 +35,6 @@ Res = R.Resources()
 # Create Tmp directory
 
 Dir = tempfile.TemporaryDirectory()
-
-print("Temporary directory: ", Dir.name)
-
 
 # Code for creating files
 
@@ -78,14 +73,12 @@ subprocess.run("mkdir ./Tests1-4", shell=True, cwd=Dir.name)
 
 subprocess.run(["bash ../make-files-2.sh"], shell=True, cwd=f"{Dir.name}/Tests1-4")
 
-print("Files created")
 
 Res._ECINPUTDIRS = [f"{Dir.name}/Tests1-4"]
 
 
 # Test 1: Future forecast 48 hours
 
-print_section(1)
 
 start = datetime.fromisoformat("2026-01-05T13:00:00")
 duration = 48
@@ -109,7 +102,6 @@ def func1(ans):
 
 
 # Test 2: Hindcast 48 hours
-print_section(2)
 
 start = datetime.fromisoformat("2026-01-02T13:00:00")
 duration = 48
@@ -138,7 +130,6 @@ def func2(ans):
 
 
 # Test 3 Long forecast 96 hours
-print_section(3)
 
 start = datetime.fromisoformat("2025-12-30T13:00:00")
 duration = 96
@@ -175,7 +166,6 @@ def func3(ans):
 
 
 # Test 4 Long forecast -96 hours
-print_section(4)
 
 start = datetime.fromisoformat("2026-01-02T13:00:00")
 duration = -96
@@ -214,7 +204,6 @@ subprocess.run("cp -r ./Tests1-4 ./Test5", shell=True, cwd=Dir.name)
 Res._ECINPUTDIRS = [f"{Dir.name}/Test5"]
 
 # Part a: missing 00 files
-print_section("5a")
 
 subprocess.run("rm -r ./Test5/NRPA_EUROPE_0_1_00/", shell=True, cwd=Dir.name)
 
@@ -242,7 +231,7 @@ def func5a(ans):
 
 
 # Part b: missing whole day
-print_section("5b")
+
 subprocess.run("cp -r ./Tests1-4/* ./Test5", shell=True, cwd=Dir.name)
 
 for utc in ["00", "06", "12", "18"]:
@@ -301,7 +290,6 @@ def func5b2(ans):
 
 
 # Part c: missing all data from today
-print_section("5c")
 
 subprocess.run("cp -r ./Tests1-4/* ./Test5", shell=True, cwd=Dir.name)
 
@@ -331,7 +319,6 @@ def func5c(ans):
 
 
 # Part d: missing data for two days
-print_section("5d")
 
 for utc in ["00", "06", "12", "18"]:
     subprocess.run(
@@ -362,7 +349,6 @@ def func5d(ans):
 
 
 # Part e: missing all data
-print_section("5e")
 
 for utc in ["00", "06", "12", "18"]:
     subprocess.run(f"rm  ./Test5/NRPA_EUROPE_0_1_{utc}/*", shell=True, cwd=Dir.name)
