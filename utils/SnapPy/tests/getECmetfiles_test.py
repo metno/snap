@@ -1,9 +1,5 @@
 import sys
 from datetime import datetime
-import subprocess
-import tempfile
-import os
-import stat
 import pytest
 
 sys.path.append("../")
@@ -42,10 +38,10 @@ def make_files(tmp_path):
         for offset in ["00", "01", "02", "03"]:
             for day in range(1,6):
                 p = d/f"meteo2026010{day}_{offset}.nc"
-                p.write_text("")
+                p.touch()
             for day in range(30,32):
                 p = d/f"meteo202512{day}_{offset}.nc"
-                p.write_text("")
+                p.touch()
     return tmp_path
 
 class TestClass:
@@ -53,6 +49,8 @@ class TestClass:
 
     def test_Forecast48(self,make_files):
         # Test 1: Future forecast 48 hours
+        
+        # str-handling required in Resources
         tmpdir = str(make_files)
         Res._ECINPUTDIRS = [tmpdir]
         start = datetime.fromisoformat("2026-01-05T13:00:00")
