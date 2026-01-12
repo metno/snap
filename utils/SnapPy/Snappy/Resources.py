@@ -19,7 +19,7 @@ from Snappy import read_dosecoefficients_icrp
 from Snappy.ResourcesCommon import ResourcesCommon
 import logging
 
-logger = logging.getLogger("collect files")
+logger = logging.getLogger(__name__)
 
 
 @enum.unique
