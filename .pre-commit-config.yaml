@@ -6,7 +6,9 @@ repos:
     # Run the linter.
     - id: ruff-check
       types_or: [ python, pyi ]
-      args: [ --fix ]
+      files: ^(.*\.py|.*\.pyi)$|snapPy$
+      args: [ --fix, --extend-select=F, --extend-select=I ]
     # Run the formatter.
     - id: ruff-format
       types_or: [ python, pyi ]
+      files: ^(.*\.py|.*\.pyi)$||/snapPy$
