@@ -1,20 +1,3 @@
-# SNAP: Servere Nuclear Accident Programme
-# Copyright (C) 1992-2020   Norwegian Meteorological Institute
-#
-# This file is part of SNAP. SNAP is free software: you can
-# redistribute it and/or modify it under the terms of the
-# GNU General Public License as published by the
-# Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
 """
 Created on Apr 13, 2016
 
@@ -34,6 +17,9 @@ from time import gmtime, strftime
 
 from Snappy import read_dosecoefficients_icrp
 from Snappy.ResourcesCommon import ResourcesCommon
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 @enum.unique
@@ -69,7 +55,6 @@ class Resources(ResourcesCommon):
     EC_GLOBAL_PATTERN = (
         "ec_atmo_0_1deg_{year:04d}{month:02d}{day:02d}T{dayoffset:02d}0000Z_3h.nc"
     )
-
     _MET_GLOBAL_INPUTDIRS = {
         MetModel.NrpaEC0p1Global: [
             "{LUSTREDIR}/project/metproduction/products/ecmwf/nc/"
@@ -98,7 +83,7 @@ class Resources(ResourcesCommon):
 
     def __init__(self):
         """
-        initialize
+        initialize the resources
         """
         self.directory = os.path.join(os.path.dirname(__file__), "resources")
         self.ecDomainWidth = 125.0
@@ -106,6 +91,7 @@ class Resources(ResourcesCommon):
         self.ecDomainRes = 0.1
         self.ecDefaultDomainStartX = -50.0
         self.ecDefaultDomainStartY = 25.0
+        self.ecMaxFileOffset = 3
 
         startScreenFH = open(
             os.path.join(self.directory, "startScreen.html"), mode="r", encoding="UTF-8"
@@ -277,9 +263,7 @@ GRAVITY.FIXED.M/S=0.0002
                     DPUI = dosecoeff.DPUI(iso["isotope"], "particulate")
             else:
                 raise Exception(
-                    "Error, unknown type '{1}' for isotope '{2}'".format(
-                        iso["type"], iso["isotope"]
-                    )
+                    f"Error, unknown type '{iso['type']}' for isotope '{iso['isotope']}'"
                 )
             if DPUI is not None and DPUI >= 0.0:
                 snapinput += f"DPUI.Sv_per_Bq_M3 = {DPUI}\n"
@@ -460,7 +444,9 @@ GRAVITY.FIXED.M/S=0.0002
         """Get the definitions for the metmodel, including met-files and domain (unless default).
         This should be written to the snap.input file, in addition to the source-term. files may be empty
         """
-        largest_landfraction_file = f"ERROR: no largest land cover defined for metmodel {metmodel}"
+        largest_landfraction_file = (
+            f"ERROR: no largest land cover defined for metmodel {metmodel}"
+        )
         lines = []
         if metmodel == MetModel.NrpaEC0p1:
             # no setup needed, autdetection in snap
@@ -475,7 +461,9 @@ GRAVITY.FIXED.M/S=0.0002
             # no setup needed, autdetection in snap
             pass
         elif metmodel == MetModel.Meps2p5:
-            largest_landfraction_file = os.path.join(self.directory, "largestLandFraction_MEPS_byte.nc")
+            largest_landfraction_file = os.path.join(
+                self.directory, "largestLandFraction_MEPS_byte.nc"
+            )
         elif metmodel == MetModel.Icon0p25Global:
             # no setup needed, autdetection in snap
             pass
@@ -494,9 +482,11 @@ GRAVITY.FIXED.M/S=0.0002
 
         lines.append("")
         lines.append(
-            self._getSnapInputTemplate(metmodel).format(interpolation=interpolation,
-                                                        LUSTREDIR=self.getLustreDir(),
-                                                        largest_landfraction_file=largest_landfraction_file)
+            self._getSnapInputTemplate(metmodel).format(
+                interpolation=interpolation,
+                LUSTREDIR=self.getLustreDir(),
+                largest_landfraction_file=largest_landfraction_file,
+            )
         )
         return "\n".join(lines)
 
@@ -650,27 +640,92 @@ GRAVITY.FIXED.M/S=0.0002
         if fixed_run == "best":
             if run_hours < 0:
                 start = dtime + timedelta(hours=run_hours)
+                finish = dtime
             else:
                 start = dtime
-
-            start -= timedelta(hours=72)  # go 72 hours (forecast-length) back
+                finish = start + timedelta(hours=run_hours)
 
             today = datetime.combine(date.today(), time(0, 0, 0))
             tomorrow = today + timedelta(days=1)
-            days = []
-            if (tomorrow - start).days > 1000:
+
+            logger.debug((f"start {start}"))
+            logger.debug((f"finish {finish}"))
+
+            n_days = (tomorrow - start).days
+
+            if abs(n_days) > 1000:
                 raise Exception(
                     "too long timespan: " + str(start) + " to " + str(tomorrow)
                 )
-            while start < tomorrow:
-                days.append(start)
-                start += timedelta(days=1)
+
+            if n_days < 0:
+                days = [
+                    start - timedelta(days=-n_days),
+                ]
+
+            else:
+                days = []
+                tmp = start
+                while tmp < min(finish + timedelta(days=1), tomorrow):
+                    days.append(tmp)
+                    tmp += timedelta(days=1)
+                if len(days) == 0:
+                    days.append(today)
+
             # loop needs to have latest model runs/hindcast runs last
-            for offset in [3, 2, 1, 0]:
+
+            maxoffset = (finish - today).days if (finish - today).days > 0 else 0
+
+            for offset in range(1, maxoffset + 1):
+                for utc in [0, 6, 12, 18]:
+                    file = pattern.format(
+                        dayoffset=offset,
+                        UTC=utc,
+                        year=today.year,
+                        month=today.month,
+                        day=today.day,
+                    )
+                    filename = self._findFileInPathes(file, self.getECInputDirs())
+                    if filename is not None:
+                        relevant_dates.append(filename)
+                    elif (
+                        utc == 0 and offset == 1
+                    ):  # Only matters if no data for today at all
+                        logger.debug(f"File {file} doesnt exist")
+                        utc_list = [18, 12, 6, 0]
+                        i = 0
+                        for i in range(
+                            self.ecMaxFileOffset * len(utc_list) - 1
+                        ):  # Max dayoffset is 2
+                            dayoffset = i // len(utc_list) + 1
+                            utc_ind = i % len(utc_list)
+
+                            file = pattern.format(
+                                dayoffset=dayoffset + offset,
+                                UTC=utc_list[utc_ind],
+                                year=(today - timedelta(days=dayoffset)).year,
+                                month=(today - timedelta(days=dayoffset)).month,
+                                day=(today - timedelta(days=dayoffset)).day,
+                            )
+                            filename = self._findFileInPathes(
+                                file, self.getECInputDirs()
+                            )
+
+                            if filename is not None:
+                                logger.debug(f"Took {file} instead")
+                                relevant_dates.append(filename)
+                                break
+                        if filename is None:
+                            logger.debug("No alternative file exists")
+
+                    else:
+                        logger.debug(f"File {file} doesnt exist")
+
+            if start <= tomorrow:
                 for day in days:
                     for utc in [0, 6, 12, 18]:
                         file = pattern.format(
-                            dayoffset=offset,
+                            dayoffset=0,
                             UTC=utc,
                             year=day.year,
                             month=day.month,
@@ -679,6 +734,35 @@ GRAVITY.FIXED.M/S=0.0002
                         filename = self._findFileInPathes(file, self.getECInputDirs())
                         if filename is not None:
                             relevant_dates.append(filename)
+                        elif utc == 0:
+                            logger.debug(f"File {file} doesnt exist")
+                            utc_list = [18, 12, 6, 0]
+                            i = 0
+                            for i in range(self.ecMaxFileOffset * len(utc_list)):
+                                dayoffset = i // len(utc_list) + 1
+                                utc_ind = i % len(utc_list)
+
+                                file = pattern.format(
+                                    dayoffset=dayoffset,
+                                    UTC=utc_list[utc_ind],
+                                    year=(day - timedelta(days=dayoffset)).year,
+                                    month=(day - timedelta(days=dayoffset)).month,
+                                    day=(day - timedelta(days=dayoffset)).day,
+                                )
+                                filename = self._findFileInPathes(
+                                    file, self.getECInputDirs()
+                                )
+
+                                if filename is not None:
+                                    logger.debug(f"Took {file} instead")
+                                    relevant_dates.append(filename)
+                                    break
+                            if filename is None:
+                                logger.debug("No alternative file exists")
+
+                        else:
+                            logger.debug(f"File {file} doesnt exist")
+
         else:
             match = re.match(r"(\d{4})-(\d{2})-(\d{2})_(\d{2})", fixed_run)
             if match:
@@ -690,7 +774,6 @@ GRAVITY.FIXED.M/S=0.0002
                     filename = self._findFileInPathes(file, self.getECInputDirs())
                     if filename is not None:
                         relevant_dates.append(filename)
-
         return relevant_dates
 
     def getDoseCoefficients(self):
@@ -698,7 +781,7 @@ GRAVITY.FIXED.M/S=0.0002
             dosecoeffs = read_dosecoefficients_icrp.DoseCoefficientsICRP(
                 os.path.join(self.directory, "1-s2.0-S0146645313000110-mmc1.zip")
             )
-        except Exception as e:
+        except Exception:
             dosecoeffs = None
         return dosecoeffs
 
@@ -767,7 +850,7 @@ def snapNc_convert_to_grib(snapNc, basedir, ident, isotopes, bitmapCompress=Fals
                     )
                 else:
                     # append tmp-file to final grib-file
-                    with (open(basetempfile, "rb")) as th:
+                    with open(basetempfile, "rb") as th:
                         while True:
                             data = th.read(16 * 1024 * 1024)  # read max 16M blocks
                             if data:
