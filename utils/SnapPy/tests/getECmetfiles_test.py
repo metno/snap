@@ -4,6 +4,7 @@ import subprocess
 import tempfile
 import os
 import stat
+import pytest
 
 sys.path.append("../")
 from Snappy import Resources as R
@@ -32,286 +33,262 @@ Tests included:
 
 Res = R.Resources()
 
-# Create Tmp directory
 
-Dir = tempfile.TemporaryDirectory()
-
-# Code for creating files
-
-with open(Dir.name + "/make-files-2.sh", "w") as rsh:
-    rsh.write("""\
-#! /bin/bash -x
-for utc in 00 06 12 18; do
-mkdir ./NRPA_EUROPE_0_1_${utc}
-    for day in {1..5}; do
-        for offset in 00 01 02 03; do
-            echo "" > ./NRPA_EUROPE_0_1_${utc}/meteo2026010${day}_${offset}.nc
-        done
-    done
-done
-for utc in 00 06 12 18; do
-    for day in {30..31}; do
-        for offset in 00 01 02 03; do
-            echo "" > ./NRPA_EUROPE_0_1_${utc}/meteo202512${day}_${offset}.nc
-        done
-    done
-done
-              
-              """)
-
-
-os.chmod(Dir.name + "/make-files-2.sh", stat.S_IRWXU)
-
-
-####    TESTS 1-4    #####
-
-# Create files
-
-subprocess.run("mkdir ./Tests1-4", shell=True, cwd=Dir.name)
-
-subprocess.run(["bash ../make-files-2.sh"], shell=True, cwd=f"{Dir.name}/Tests1-4")
-
-subprocess.run("cp -r ./Tests1-4/ ./Test5a", shell=True, cwd=Dir.name)
-subprocess.run("rm -r ./Test5a/NRPA_EUROPE_0_1_00/", shell=True, cwd=Dir.name)
-
-subprocess.run("cp -r ./Tests1-4/ ./Test5b", shell=True, cwd=Dir.name)
-
-for utc in ["00", "06", "12", "18"]:
-    subprocess.run(
-        f"rm  ./Test5b/NRPA_EUROPE_0_1_{utc}/meteo20260102_*.nc",
-        shell=True,
-        cwd=Dir.name,
-    )
-
-subprocess.run("cp -r ./Tests1-4/ ./Test5c", shell=True, cwd=Dir.name)
-
-for utc in ["00", "06", "12", "18"]:
-    subprocess.run(
-        f"rm  ./Test5c/NRPA_EUROPE_0_1_{utc}/meteo20260105_*.nc",
-        shell=True,
-        cwd=Dir.name,
-    )
-
-
-subprocess.run("cp -r ./Test5c/ ./Test5d", shell=True, cwd=Dir.name)
-
-for utc in ["00", "06", "12", "18"]:
-    subprocess.run(
-        f"rm  ./Test5d/NRPA_EUROPE_0_1_{utc}/meteo20260104_*.nc",
-        shell=True,
-        cwd=Dir.name,
-    )
-
-subprocess.run("cp -r ./Test5d/ ./Test5e", shell=True, cwd=Dir.name)
-
-for utc in ["00", "06", "12", "18"]:
-    subprocess.run(f"rm  ./Test5e/NRPA_EUROPE_0_1_{utc}/*", shell=True, cwd=Dir.name)
-
+@pytest.fixture
+def make_files(tmp_path):
+    for utc in ["00", "06", "12", "18"]:
+        d = tmp_path/f"NRPA_EUROPE_0_1_{utc}"
+        d.mkdir()
+        for offset in ["00", "01", "02", "03"]:
+            for day in range(1,6):
+                p = d/f"meteo2026010{day}_{offset}.nc"
+                p.write_text("")
+            for day in range(30,32):
+                p = d/f"meteo202512{day}_{offset}.nc"
+                p.write_text("")
+    return tmp_path
 
 class TestClass:
-    def test_Forecast48(self):
+                         
+
+    def test_Forecast48(self,make_files):
         # Test 1: Future forecast 48 hours
-        Res._ECINPUTDIRS = [f"{Dir.name}/Tests1-4"]
+        tmpdir = str(make_files)
+        Res._ECINPUTDIRS = [tmpdir]
         start = datetime.fromisoformat("2026-01-05T13:00:00")
         duration = 48
 
         expected = [
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_00/meteo20260105_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_06/meteo20260105_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_12/meteo20260105_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_18/meteo20260105_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_18/meteo20260105_01.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_18/meteo20260105_02.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo20260105_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20260105_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20260105_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260105_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260105_01.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260105_02.nc",
         ]
     
         assert Res.getECMeteorologyFiles(start, duration) == expected
 
-    def test_Hindcast48(self):
+    def test_Hindcast48(self,make_files):
         # Test 2: Hindcast 48 hours
-        Res._ECINPUTDIRS = [f"{Dir.name}/Tests1-4"]
+        tmpdir = str(make_files)
+        Res._ECINPUTDIRS = [tmpdir]
 
         start = datetime.fromisoformat("2026-01-02T13:00:00")
         duration = 48
 
         expected = [
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_00/meteo20260102_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_06/meteo20260102_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_12/meteo20260102_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_18/meteo20260102_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_00/meteo20260103_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_06/meteo20260103_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_12/meteo20260103_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_18/meteo20260103_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_00/meteo20260104_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_06/meteo20260104_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_12/meteo20260104_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_18/meteo20260104_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo20260102_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20260102_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20260102_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260102_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo20260103_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20260103_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20260103_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260103_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo20260104_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20260104_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20260104_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260104_00.nc",
     ]
 
         assert Res.getECMeteorologyFiles(start, duration) == expected
 
-    def test_Forecast96(self):
+    def test_Forecast96(self,make_files):
         # Test 3 Long forecast 96 hours
-        Res._ECINPUTDIRS = [f"{Dir.name}/Tests1-4"]
+        tmpdir = str(make_files)
+        Res._ECINPUTDIRS = [tmpdir]
 
         start = datetime.fromisoformat("2025-12-30T13:00:00")
         duration = 96
 
         expected = [
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_00/meteo20251230_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_06/meteo20251230_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_12/meteo20251230_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_18/meteo20251230_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_00/meteo20251231_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_06/meteo20251231_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_12/meteo20251231_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_18/meteo20251231_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_00/meteo20260101_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_06/meteo20260101_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_12/meteo20260101_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_18/meteo20260101_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_00/meteo20260102_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_06/meteo20260102_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_12/meteo20260102_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_18/meteo20260102_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_00/meteo20260103_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_06/meteo20260103_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_12/meteo20260103_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_18/meteo20260103_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo20251230_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20251230_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20251230_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20251230_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo20251231_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20251231_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20251231_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20251231_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo20260101_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20260101_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20260101_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260101_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo20260102_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20260102_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20260102_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260102_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo20260103_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20260103_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20260103_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260103_00.nc",
     ]
 
         assert Res.getECMeteorologyFiles(start, duration) == expected
 
-    def test_BackwardsForecast96(self):
+    def test_BackwardsForecast96(self,make_files):
         # Test 4 Long forecast -96 hours
-        Res._ECINPUTDIRS = [f"{Dir.name}/Tests1-4"]
+        tmpdir = str(make_files)
+        Res._ECINPUTDIRS = [tmpdir]
         
         start = datetime.fromisoformat("2026-01-02T13:00:00")
         duration = -96
 
         expected = [
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_00/meteo20251230_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_06/meteo20251230_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_12/meteo20251230_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_18/meteo20251230_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_00/meteo20251231_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_06/meteo20251231_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_12/meteo20251231_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_18/meteo20251231_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_00/meteo20260101_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_06/meteo20260101_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_12/meteo20260101_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_18/meteo20260101_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_00/meteo20260102_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_06/meteo20260102_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_12/meteo20260102_00.nc",
-        f"{Dir.name}/Tests1-4/NRPA_EUROPE_0_1_18/meteo20260102_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo20251230_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20251230_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20251230_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20251230_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo20251231_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20251231_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20251231_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20251231_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo20260101_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20260101_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20260101_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260101_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo20260102_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20260102_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20260102_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260102_00.nc",
     ]
 
         assert Res.getECMeteorologyFiles(start, duration) == expected
     ####    Test 5    ####
-    def test_Missing00Files(self):
+    def test_Missing00Files(self,make_files):
         # Part a: missing 00 files
+        for file in (make_files/"NRPA_EUROPE_0_1_00/").glob("*"):
+            file.unlink(missing_ok=True)
+        tmpdir = str(make_files)
+
     
-        Res._ECINPUTDIRS = [f"{Dir.name}/Test5a"]
+        Res._ECINPUTDIRS = [tmpdir]
 
         start = datetime.fromisoformat("2026-01-04T13:00:00")
         duration = 48
 
         expected = [
-        f"{Dir.name}/Test5a/NRPA_EUROPE_0_1_18/meteo20260103_01.nc",
-        f"{Dir.name}/Test5a/NRPA_EUROPE_0_1_06/meteo20260104_00.nc",
-        f"{Dir.name}/Test5a/NRPA_EUROPE_0_1_12/meteo20260104_00.nc",
-        f"{Dir.name}/Test5a/NRPA_EUROPE_0_1_18/meteo20260104_00.nc",
-        f"{Dir.name}/Test5a/NRPA_EUROPE_0_1_18/meteo20260104_01.nc",
-        f"{Dir.name}/Test5a/NRPA_EUROPE_0_1_06/meteo20260105_00.nc",
-        f"{Dir.name}/Test5a/NRPA_EUROPE_0_1_12/meteo20260105_00.nc",
-        f"{Dir.name}/Test5a/NRPA_EUROPE_0_1_18/meteo20260105_00.nc",
-        f"{Dir.name}/Test5a/NRPA_EUROPE_0_1_18/meteo20260105_01.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260103_01.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20260104_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20260104_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260104_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260104_01.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20260105_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20260105_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260105_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260105_01.nc",
     ]
 
         assert Res.getECMeteorologyFiles(start, duration) == expected
 
-    def test_MissingWholeDay1(self):
+    def test_MissingWholeDay1(self,make_files):
         # Part b: missing whole day starting from day before missing day
-        Res._ECINPUTDIRS = [f"{Dir.name}/Test5b"]
+        for utc in ["00", "06", "12", "18"]:
+            for file in (make_files/f"NRPA_EUROPE_0_1_{utc}/").glob("meteo20260102_*"):
+                file.unlink(missing_ok=True)
+        tmpdir = str(make_files)
+
+        Res._ECINPUTDIRS = [tmpdir]
 
         start = datetime.fromisoformat("2026-01-01T13:00:00") 
         duration = 48
 
 
         expected = [
-        f"{Dir.name}/Test5b/NRPA_EUROPE_0_1_00/meteo20260101_00.nc",
-        f"{Dir.name}/Test5b/NRPA_EUROPE_0_1_06/meteo20260101_00.nc",
-        f"{Dir.name}/Test5b/NRPA_EUROPE_0_1_12/meteo20260101_00.nc",
-        f"{Dir.name}/Test5b/NRPA_EUROPE_0_1_18/meteo20260101_00.nc",
-        f"{Dir.name}/Test5b/NRPA_EUROPE_0_1_18/meteo20260101_01.nc",
-        f"{Dir.name}/Test5b/NRPA_EUROPE_0_1_00/meteo20260103_00.nc",
-        f"{Dir.name}/Test5b/NRPA_EUROPE_0_1_06/meteo20260103_00.nc",
-        f"{Dir.name}/Test5b/NRPA_EUROPE_0_1_12/meteo20260103_00.nc",
-        f"{Dir.name}/Test5b/NRPA_EUROPE_0_1_18/meteo20260103_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo20260101_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20260101_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20260101_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260101_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260101_01.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo20260103_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20260103_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20260103_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260103_00.nc",
     ]
 
         assert Res.getECMeteorologyFiles(start, duration) == expected
 
-    def test_MissingWholeDay2(self):
+    def test_MissingWholeDay2(self,make_files):
         # Part b: missing whole day starting on missing day
-        Res._ECINPUTDIRS = [f"{Dir.name}/Test5b"]
+        for utc in ["00", "06", "12", "18"]:
+            for file in (make_files/f"NRPA_EUROPE_0_1_{utc}/").glob("meteo20260102_*"):
+                file.unlink(missing_ok=True)
+        tmpdir = str(make_files)
+
+        Res._ECINPUTDIRS = [tmpdir]
 
         start = datetime.fromisoformat("2026-01-02T13:00:00")
         duration = 48
 
         expected = [
-        f"{Dir.name}/Test5b/NRPA_EUROPE_0_1_18/meteo20260101_01.nc",
-        f"{Dir.name}/Test5b/NRPA_EUROPE_0_1_00/meteo20260103_00.nc",
-        f"{Dir.name}/Test5b/NRPA_EUROPE_0_1_06/meteo20260103_00.nc",
-        f"{Dir.name}/Test5b/NRPA_EUROPE_0_1_12/meteo20260103_00.nc",
-        f"{Dir.name}/Test5b/NRPA_EUROPE_0_1_18/meteo20260103_00.nc",
-        f"{Dir.name}/Test5b/NRPA_EUROPE_0_1_00/meteo20260104_00.nc",
-        f"{Dir.name}/Test5b/NRPA_EUROPE_0_1_06/meteo20260104_00.nc",
-        f"{Dir.name}/Test5b/NRPA_EUROPE_0_1_12/meteo20260104_00.nc",
-        f"{Dir.name}/Test5b/NRPA_EUROPE_0_1_18/meteo20260104_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260101_01.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo20260103_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20260103_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20260103_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260103_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo20260104_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20260104_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20260104_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260104_00.nc",
     ]
         
         assert Res.getECMeteorologyFiles(start, duration) == expected
 
-    def test_MissingToday(self):
+    def test_MissingToday(self,make_files):
         # Part c: missing all data from today
-        Res._ECINPUTDIRS = [f"{Dir.name}/Test5c"]
+        for utc in ["00", "06", "12", "18"]:
+            for file in (make_files/f"NRPA_EUROPE_0_1_{utc}/").glob("meteo20260105_*"):
+                file.unlink(missing_ok=True)
+        tmpdir = str(make_files)
+
+        Res._ECINPUTDIRS = [tmpdir]
 
         start = datetime.fromisoformat("2026-01-05T13:00:00")  # starting on missing day
         duration = 48
 
         expected = [
-        f"{Dir.name}/Test5c/NRPA_EUROPE_0_1_18/meteo20260104_01.nc",
-        f"{Dir.name}/Test5c/NRPA_EUROPE_0_1_18/meteo20260104_02.nc",
-        f"{Dir.name}/Test5c/NRPA_EUROPE_0_1_18/meteo20260104_03.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260104_01.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260104_02.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260104_03.nc",
     ]
 
         assert Res.getECMeteorologyFiles(start, duration) == expected
     
 
-    def test_MissingTwoDays(self):
+    def test_MissingTwoDays(self,make_files):
         # Part d: missing data for two days
-        Res._ECINPUTDIRS = [f"{Dir.name}/Test5d"]
+        for utc in ["00", "06", "12", "18"]:
+            for file in (make_files/f"NRPA_EUROPE_0_1_{utc}/").glob("meteo20260105_*"):
+                file.unlink(missing_ok=True)
+            for file in (make_files/f"NRPA_EUROPE_0_1_{utc}/").glob("meteo20260104_*"):
+                file.unlink(missing_ok=True)            
+        tmpdir = str(make_files)
+
+        Res._ECINPUTDIRS = [tmpdir]
         
         start = datetime.fromisoformat("2026-01-03T13:00:00")  # starting on missing day
         duration = 48
 
         expected = [
-        f"{Dir.name}/Test5d/NRPA_EUROPE_0_1_00/meteo20260103_00.nc",
-        f"{Dir.name}/Test5d/NRPA_EUROPE_0_1_06/meteo20260103_00.nc",
-        f"{Dir.name}/Test5d/NRPA_EUROPE_0_1_12/meteo20260103_00.nc",
-        f"{Dir.name}/Test5d/NRPA_EUROPE_0_1_18/meteo20260103_00.nc",
-        f"{Dir.name}/Test5d/NRPA_EUROPE_0_1_18/meteo20260103_01.nc",
-        f"{Dir.name}/Test5d/NRPA_EUROPE_0_1_18/meteo20260103_02.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo20260103_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20260103_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20260103_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260103_00.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260103_01.nc",
+        f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260103_02.nc",
     ]
 
         assert Res.getECMeteorologyFiles(start, duration) == expected
 
-    def test_MissingAll(self):
+    def test_MissingAll(self,make_files):
         # Part e: missing all data
-        Res._ECINPUTDIRS = [f"{Dir.name}/Test5e"]
+        for utc in ["00", "06", "12", "18"]:
+            for file in (make_files/f"NRPA_EUROPE_0_1_{utc}/").glob("*"):
+                file.unlink(missing_ok=True)
+        
+        tmpdir = str(make_files)
+        Res._ECINPUTDIRS = [tmpdir]
 
         start = datetime.fromisoformat("2026-01-03T13:00:00")  # starting on missing day
         duration = 48
