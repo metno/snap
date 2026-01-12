@@ -18,8 +18,9 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-from setuptools import setup
 import os
+
+from setuptools import setup
 
 version = os.getenv("VERSION", "0.5")
 
