@@ -83,7 +83,7 @@ class Resources(ResourcesCommon):
 
     def __init__(self):
         """
-        initialize
+        initialize the resources
         """
         self.directory = os.path.join(os.path.dirname(__file__), "resources")
         self.ecDomainWidth = 125.0
@@ -263,9 +263,7 @@ GRAVITY.FIXED.M/S=0.0002
                     DPUI = dosecoeff.DPUI(iso["isotope"], "particulate")
             else:
                 raise Exception(
-                    "Error, unknown type '{1}' for isotope '{2}'".format(
-                        iso["type"], iso["isotope"]
-                    )
+                    f"Error, unknown type '{iso['type']}' for isotope '{iso['isotope']}'"
                 )
             if DPUI is not None and DPUI >= 0.0:
                 snapinput += f"DPUI.Sv_per_Bq_M3 = {DPUI}\n"
@@ -783,7 +781,7 @@ GRAVITY.FIXED.M/S=0.0002
             dosecoeffs = read_dosecoefficients_icrp.DoseCoefficientsICRP(
                 os.path.join(self.directory, "1-s2.0-S0146645313000110-mmc1.zip")
             )
-        except Exception as e:
+        except Exception:
             dosecoeffs = None
         return dosecoeffs
 
