@@ -5,6 +5,7 @@ Created on Apr 13, 2016
 """
 
 import enum
+import logging
 import math
 import os
 import re
@@ -17,7 +18,6 @@ from time import gmtime, strftime
 
 from Snappy import read_dosecoefficients_icrp
 from Snappy.ResourcesCommon import ResourcesCommon
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -762,6 +762,27 @@ GRAVITY.FIXED.M/S=0.0002
 
                         else:
                             logger.debug(f"File {file} doesnt exist")
+            if start.hour < 3:
+                logger.debug("Start hour less than 3")
+                utc_list = [18, 12, 6, 0]
+                i = 0
+                for i in range(self.ecMaxFileOffset * len(utc_list)):
+                    dayoffset = i // len(utc_list)
+                    utc_ind = i % len(utc_list)
+
+                    file = pattern.format(
+                        dayoffset=dayoffset,
+                        UTC=utc_list[utc_ind],
+                        year=(start - timedelta(days=dayoffset + 1)).year,
+                        month=(start - timedelta(days=dayoffset + 1)).month,
+                        day=(start - timedelta(days=dayoffset + 1)).day,
+                    )
+                    filename = self._findFileInPathes(file, self.getECInputDirs())
+
+                    if filename is not None:
+                        logger.debug(f"Added {file}")
+                        relevant_dates.append(filename)
+                        break
 
         else:
             match = re.match(r"(\d{4})-(\d{2})-(\d{2})_(\d{2})", fixed_run)
