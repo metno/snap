@@ -17,6 +17,10 @@
 **/__pycache__/
 **/*.py[cod]
 **/*__genmod.f90
+**/.tox/
+build/
+dist/
+*.egg-info/
 Snappy.egg-info
 
 # editor stuff
@@ -28,6 +32,8 @@ Snappy.egg-info
 /.csettings
 /.dep
 /.vscode
+/.venv
+.ipynb_checkpoints
 
 # /
 /bsnap_1.*

@@ -18,8 +18,9 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-from setuptools import setup
 import os
+
+from setuptools import setup
 
 version = os.getenv("VERSION", "0.5")
 
@@ -33,6 +34,10 @@ setup(
     packages=["Snappy", "Snappy.EEMEP", "METNO"],
     package_dir={"Snappy": "Snappy", "Snappy.EEMEP": "Snappy/EEMEP"},
     package_data={"Snappy": ["resources/*"], "Snappy.EEMEP": ["resources/*"]},
+    install_requires=[
+        "numpy",
+        "netCDF4",
+    ],
     scripts=[
         "snapPy",
         "snap4rimsterm",
@@ -42,13 +47,14 @@ setup(
         "snapRunnerNpp",
         "eemepModelRunner",
         "snapRemoteRunner.py",
-        "snapEnsAshPlot.py"
+        "snapEnsAshPlot.py",
     ],
     entry_points={
-        'console_scripts': [
-            'snapAddBombIsotopes = Snappy.AddBombIsotopes:main',
-            'snapVolcano = Snappy.EEMEP.SnapVolcanoTranslator:main',
-            'snapAddToa = Snappy.AddToa:main'
+        "console_scripts": [
+            "snapAddBombIsotopes = Snappy.AddBombIsotopes:main",
+            "snapVolcano = Snappy.EEMEP.SnapVolcanoTranslator:main",
+            "snapAddToa = Snappy.AddToa:main",
         ]
-    }
+    },
+    extras_require={"test": ["pytest>=7.0"], "gui": ["PyQt5>=5.15"]},
 )
