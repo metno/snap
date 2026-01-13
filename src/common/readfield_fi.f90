@@ -316,6 +316,7 @@ contains
       precip = 0.0
     endif
 
+    ! nhdiff_precip is timestep for accumulated fields, using it in case fluxes are accumulated
     call read_drydep_required_fields(fio, nhdiff_precip, timepos, timeposm1, nr, itimefi)
 
     call check(fio%close(), "close fio")
