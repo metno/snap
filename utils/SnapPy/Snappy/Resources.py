@@ -1,9 +1,3 @@
-"""
-Created on Apr 13, 2016
-
-@author: heikok
-"""
-
 import enum
 import logging
 import math
