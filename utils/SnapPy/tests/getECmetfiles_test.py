@@ -24,6 +24,9 @@ Tests included:
     c) missing todays data
     d) missing two days of data
     e) missing all data
+6. Starting at 00:00
+    a) Starting at 00:00, full data
+    b) Missing 18 file
 """
 
 
@@ -306,5 +309,49 @@ class TestClass:
         duration = 48
 
         expected = []
+
+        assert Res.getECMeteorologyFiles(start, duration) == expected
+
+    def test_00start(self, tmp_path_with_meteo_files):
+        # Test 6a: Starting at 00:00
+        tmpdir = str(tmp_path_with_meteo_files)
+        Res._ECINPUTDIRS = [tmpdir]
+        start = datetime.fromisoformat("2026-01-03T00:00:00")  # starting on missing day
+        duration = 12
+
+        expected = [
+            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260102_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo20260103_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20260103_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20260103_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260103_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo20260104_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20260104_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20260104_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260104_00.nc",
+        ]
+
+        assert Res.getECMeteorologyFiles(start, duration) == expected
+
+    def test_00start_missing18(self, tmp_path_with_meteo_files):
+        # Test 6b: Starting at 00:00, missing 18:00 files
+        for file in (tmp_path_with_meteo_files / "NRPA_EUROPE_0_1_18/").glob("*"):
+            file.unlink(missing_ok=True)
+        tmpdir = str(tmp_path_with_meteo_files)
+
+        Res._ECINPUTDIRS = [tmpdir]
+
+        start = datetime.fromisoformat("2026-01-03T00:00:00")  # starting on missing day
+        duration = 12
+
+        expected = [
+            f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20260102_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo20260103_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20260103_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20260103_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo20260104_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20260104_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20260104_00.nc",
+        ]
 
         assert Res.getECMeteorologyFiles(start, duration) == expected
