@@ -32,8 +32,6 @@ class SnapEcEMEPEmersonForwardTestCase(SnapTestCase):
             cwd=self.datadir,
             env=env,
             check=True,
-            stderr=subprocess.DEVNULL,
-            stdout=subprocess.DEVNULL,
         )
 
         outfile = self.get_nc_filename(os.path.join(self.datadir, self.input))
