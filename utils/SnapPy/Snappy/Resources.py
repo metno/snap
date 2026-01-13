@@ -721,12 +721,14 @@ GRAVITY.FIXED.M/S=0.0002
                     else:
                         logger.debug(f"File {file} doesnt exist")
 
-            if start.hour < 3:
+            if (
+                start.hour < 3
+            ):  # Special case for start times of less than 3am. Then previous days files are needed.
                 logger.debug("Start hour less than 3")
                 utc_list = [18, 12, 6, 0]
                 i = 0
                 for i in range(self.ecMaxFileOffset * len(utc_list)):
-                    dayoffset = i // len(utc_list)
+                    dayoffset = (i + 1) // len(utc_list)
                     utc_ind = i % len(utc_list)
 
                     file = pattern.format(
