@@ -368,7 +368,7 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
     precip = 0.0
   endif
 
-  call read_drydep_required_fields(ncid, timepos, timeposm1, itimefi)
+  call read_drydep_required_fields(ncid, nhdiff_precip, timepos, timeposm1, itimefi)
 
 ! first time initialized data
   if (first_time_read) then
@@ -1175,9 +1175,11 @@ subroutine compute_vertical_coords(alev, blev, ptop)
 end subroutine
 
 
-  subroutine read_accumulated_field(ncid, varname, timepos, start, startm1, count, field)
+  subroutine read_accumulated_field(ncid, nhdiff, varname, timepos, start, startm1, count, field)
     use iso_fortran_env, only: real32
     integer, intent(in) :: ncid, timepos, start(7), startm1(7), count(7)
+!> time difference in hours between two fields
+    integer, intent(in) :: nhdiff
     character(len=*), intent(in) :: varname
     real(real32), intent(out) :: field(:, :)
 
@@ -1191,11 +1193,10 @@ end subroutine
       call nfcheckload(ncid, varname, startm1, count, tmp2(:, :))
       field(:,:) = tmp2 - tmp1
     endif
-    ! TODO: Normalise by difference between intervals
-    field(:,:) =  field / 3600
+    field(:,:) =  field / (3600 * nhdiff)
   end subroutine read_accumulated_field
 
-  subroutine read_drydep_required_fields(ncid, timepos, timeposm1, itimefi)
+  subroutine read_drydep_required_fields(ncid, nhdiff, timepos, timeposm1, itimefi)
     USE ieee_arithmetic, only: ieee_is_nan
     USE iso_fortran_env, only: real64, error_unit
     use datetime, only: datetime_t
@@ -1214,6 +1215,8 @@ end subroutine
 
 
     integer, intent(in) :: ncid
+!> time difference in hours between two fields
+    integer, intent(in) :: nhdiff
     integer, intent(in) :: timepos, timeposm1
     type(datetime_t), intent(in) :: itimefi
 
@@ -1242,13 +1245,13 @@ end subroutine
       allocate(xflux, yflux, MOLD=ps2)
       ! Load and combine surface stress/momentum flux components
       if (met_params%xflux_is_accumulated) then
-        call read_accumulated_field(ncid, met_params%xflux, timepos, start, startm1, count, xflux(:,:))
+        call read_accumulated_field(ncid, nhdiff, met_params%xflux, timepos, start, startm1, count, xflux(:,:))
       else
         call nfcheckload(ncid, met_params%xflux, start, count, xflux(:,:))
       endif
 
       if (met_params%yflux_is_accumulated) then
-        call read_accumulated_field(ncid, met_params%yflux, timepos, start, startm1, count, yflux(:,:))
+        call read_accumulated_field(ncid, nhdiff, met_params%yflux, timepos, start, startm1, count, yflux(:,:))
       else
         call nfcheckload(ncid, met_params%yflux, start, count, yflux(:,:))
       endif
@@ -1257,7 +1260,7 @@ end subroutine
     endif
 
     if (met_params%hflux_is_accumulated) then
-      call read_accumulated_field(ncid, met_params%hflux, timepos, start, startm1, count, hflux(:,:))
+      call read_accumulated_field(ncid, nhdiff, met_params%hflux, timepos, start, startm1, count, hflux(:,:))
     else
       call nfcheckload(ncid, met_params%hflux, start, count, hflux(:,:))
     endif
