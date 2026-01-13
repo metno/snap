@@ -75,7 +75,6 @@ MODEL.LEVEL.FIELDS.OFF
 ** INPUT FIELD FILES
 FIELD.TYPE=fimex
 FIELD.INPUT= ../snap_testdata/meteo20260113_00_sellafield.nc
-FIELD.INPUT= ../snap_testdata/meteo20260113_01_sellafield.nc
 ** USE FIMEX
 FIMEX.FILE_TYPE= netcdf
 FIMEX.CONFIG=ecemep_fixunit.ncml
