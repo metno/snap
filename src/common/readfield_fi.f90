@@ -316,7 +316,7 @@ contains
       precip = 0.0
     endif
 
-    call read_drydep_required_fields(fio, timepos, timeposm1, nr, itimefi)
+    call read_drydep_required_fields(fio, nhdiff_precip, timepos, timeposm1, nr, itimefi)
 
     call check(fio%close(), "close fio")
 
@@ -894,8 +894,10 @@ contains
   end subroutine fi_checkload_intern
 
 
-  subroutine read_accumulated_field(fio, timepos, timeposm1, varname, units, field, nr)
+  subroutine read_accumulated_field(fio, nhdiff, timepos, timeposm1, varname, units, field, nr)
     TYPE(FimexIO), intent(inout) :: fio
+!> time difference in hours between two fields
+    integer, intent(in) :: nhdiff
     character(len=*), intent(in) :: varname, units
     integer, intent(in) :: timepos, timeposm1, nr
     real(real32), intent(out) :: field(:, :)
@@ -910,12 +912,11 @@ contains
       call fi_checkload(fio, varname, units, tmp2(:, :), nt=timepos, nr=nr)
       field(:,:) = tmp2 - tmp1
     endif
-    ! TODO: Normalise by difference between intervals
-    field(:,:) =  field / 3600
+    field(:,:) =  field / (3600 * nhdiff)
   end subroutine read_accumulated_field
 
 
-  subroutine read_drydep_required_fields(fio, timepos, timeposm1, nr, itimefi)
+  subroutine read_drydep_required_fields(fio, nhdiff, timepos, timeposm1, nr, itimefi)
     USE ieee_arithmetic, only: ieee_is_nan
     USE snapmetML, only: met_params, &
       temp_units, downward_momentum_flux_units, surface_roughness_length_units, &
@@ -932,6 +933,8 @@ contains
 
     use datetime, only: datetime_t
     type(FimexIO), intent(inout) :: fio
+!> time difference in hours between two fields
+    integer, intent(in) :: nhdiff
     integer, intent(in) :: timepos, timeposm1
     integer, intent(in) :: nr
     type(datetime_t), intent(in) :: itimefi
@@ -954,14 +957,17 @@ contains
       ! Load and combine surface stress/momentum flux components
       if (met_params%xflux_is_accumulated) then
         ! Note: Arome files have the wrong units for downward_momentum_flux_units, missing a unit of time
-        call read_accumulated_field(fio, timepos, timeposm1, met_params%xflux, downward_momentum_flux_units, xflux(:, :),  nr=nr)
+        call read_accumulated_field(fio, nhdiff, timepos, timeposm1, met_params%xflux, downward_momentum_flux_units, xflux(:, :), &
+          nr=nr)
       else
-        call fi_checkload(fio, met_params%xflux, downward_momentum_flux_units, xflux(:, :), nt=timepos, nr=nr)
+        call fi_checkload(fio, met_params%xflux, downward_momentum_flux_units, xflux(:, :), nt=timepos, &
+          nr=nr)
       endif
 
       if (met_params%yflux_is_accumulated) then
         ! Note: Arome files have the wrong units for downward_momentum_flux_units, missing a unit of time
-        call read_accumulated_field(fio, timepos, timeposm1, met_params%yflux, downward_momentum_flux_units, yflux(:, :),  nr=nr)
+        call read_accumulated_field(fio, nhdiff, timepos, timeposm1, met_params%yflux, downward_momentum_flux_units, yflux(:, :), &
+          nr=nr)
       else
         call fi_checkload(fio, met_params%yflux, downward_momentum_flux_units, yflux(:, :), nt=timepos, nr=nr)
       endif
@@ -970,7 +976,8 @@ contains
     endif
 
     if (met_params%hflux_is_accumulated) then
-      call read_accumulated_field(fio, timepos, timeposm1, met_params%hflux, accum_surface_heat_flux_units, hflux(:, :), nr=nr)
+      call read_accumulated_field(fio, nhdiff, timepos, timeposm1, met_params%hflux, accum_surface_heat_flux_units, hflux(:, :), &
+        nr=nr)
     else
       call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, hflux(:, :), nt=timepos, nr=nr)
     endif
