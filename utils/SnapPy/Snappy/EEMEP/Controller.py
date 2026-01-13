@@ -38,7 +38,11 @@ class _UpdateThread(QThread):
         self.controller = controller
 
     def __del__(self):
-        self.wait()
+        try:
+            if self.isRunning():
+                self.wait()
+        except RuntimeError:
+            pass  # C++ object already deleted
 
     def run(self):
         debug("run-status:" + self.controller.eemepRunning)
@@ -64,7 +68,7 @@ class SnapVolcanoWorker(QThread):
 
         dtnow = datetime.datetime.now()
         with open(os.path.join(self.outputdir, "snapVolcano.log"), "w") as fh:
-            subprocess.run(
+            subprocess.Popen(
                 [
                     "snapVolcano",
                     self.volcanofile,
@@ -74,6 +78,7 @@ class SnapVolcanoWorker(QThread):
                 stdout=fh,
                 stderr=fh,
                 cwd=self.outputdir,
+                start_new_session=True,  # Detach from parent process
             )
         self.finished.emit()
 
