@@ -368,6 +368,7 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
     precip = 0.0
   endif
 
+  ! nhdiff_precip is timestep for accumulated fields, using it in case fluxes are accumulated
   call read_drydep_required_fields(ncid, nhdiff_precip, timepos, timeposm1, itimefi)
 
 ! first time initialized data
