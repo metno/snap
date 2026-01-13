@@ -11,6 +11,47 @@ import unittest
 from snapunittest import SnapTestCase
 
 
+class SnapEcEMEPEmersonForwardTestCase(SnapTestCase):
+    input = "snap.input_ecemep_emerson_fimex"
+    snap = "../bsnap_naccident"
+    datadir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
+
+    snapExpected = "snap_testdata/snap_ecemep_emerson_expected.nc"
+
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        pass
+
+    def test_runfimex(self):
+        env = os.environ.copy()
+        env["OMP_NUM_THREADS"] = "1"
+        proc = subprocess.run(
+            [os.path.join(self.datadir, self.snap), self.input],
+            cwd=self.datadir,
+            env=env,
+            check=True,
+            # stderr=subprocess.DEVNULL,
+            # stdout=subprocess.DEVNULL,
+        )
+
+        outfile = self.get_nc_filename(os.path.join(self.datadir, self.input))
+        self.compare_nc(
+            self.snapExpected,
+            os.path.join(self.datadir, outfile),
+            [
+                "instant_height_boundary_layer",
+                "precipitation_amount_acc",
+                "Cs137_concentration",
+                "Cs137_concentration_bl",
+                "Cs137_acc_concentration",
+                "Cs137_acc_dry_deposition",
+                "Cs137_acc_wet_deposition",
+            ],
+        )
+
+
 class SnapEcEMEPForwardTestCase(SnapTestCase):
     input = "snap.input_ecemep_fimex"
     snap = "../bsnap_naccident"
