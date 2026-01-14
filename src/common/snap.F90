@@ -204,7 +204,7 @@ PROGRAM bsnap
     wet_deposition_RATM => RATM_params, &
     WETDEP_INCLOUD_SCHEME_ROSELLE
 #endif
-  USE drydepml, only: drydep, drydep_scheme, &
+  USE drydepml, only: drydep, drydep_scheme, requires_landfraction_file, &
           DRYDEP_SCHEME_OLD, DRYDEP_SCHEME_NEW, &
           DRYDEP_SCHEME_EMERSON, DRYDEP_SCHEME_UNDEFINED, &
           largest_landfraction_file,  drydep_unload => unload
@@ -399,6 +399,13 @@ PROGRAM bsnap
     write (error_unit, *) time_start
     call snap_error_exit(iulog)
   end if
+  if (requires_landfraction_file()) then
+    if (met_params%z0 == "") then
+      write(iulog,*) "Surface roughness not defined in meteorology, using land cover and lookup table."
+      write(error_unit,*) "Surface roughness not defined in meteorology, using land cover and lookup table."
+    endif
+  end if
+
 
   block
   logical :: is_time_before_run, is_time_after_run
@@ -2292,8 +2299,7 @@ contains
 #else
       call read_largest_landfraction(largest_landfraction_file)
 #endif
-    endif
-
+    end if
     if (itotcomp == 1 .AND. ncomp == 1) itotcomp = 0
 
     if (rmlimit < 0.0) rmlimit = 0.0001
