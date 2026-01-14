@@ -1269,7 +1269,6 @@ end subroutine
 
     if (met_params%z0 == "") then
       ! Load z0 from land use data if not defined in meteorology
-      write(error_unit,*) "Surface roughness not defined in meteorology, reading from lookup table instead."
       z0(:,:) = lookup_z0(classnr, ustar)
     else
       call nfcheckload(ncid, met_params%z0, start, count, z0(:, :))

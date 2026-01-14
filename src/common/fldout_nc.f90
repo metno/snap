@@ -761,8 +761,8 @@ subroutine nc_declare(iunit, dimids, varid, varname, units, stdname, chunksize, 
 
   integer :: datatype_internal
 
-  write(iulog,"('declaring ' (a) ' ' (a) )",advance="NO") varname, units
-  if (present(stdname)) write(iulog, "(' ' (a))",advance="NO") trim(stdname)
+  write(iulog,"('declaring ', (a), ' ', (a))",advance="NO") varname, units
+  if (present(stdname)) write(iulog, "(' ', (a))",advance="NO") trim(stdname)
   write(iulog,'()',advance="YES")
 
   if (present(datatype)) then
