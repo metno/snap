@@ -53,8 +53,8 @@ if [ ! -f "Snappy/resources/1-s2.0-S0146645313000110-mmc1.zip" ]; then
 fi
 
 HOST=$(lsb_release --codename --short)
-export VERSION=2.5.12
-CHANGELOG="fix bug qt browser input parsing and handle better case with no release"
+export VERSION=2.5.13
+CHANGELOG="emerson dry-dep with nrpa ec0.1 met data"
 export DEBEMAIL=${USER}@met.no
 
 check_git_lfs() {
