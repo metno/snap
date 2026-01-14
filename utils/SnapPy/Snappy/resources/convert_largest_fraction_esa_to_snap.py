@@ -161,9 +161,9 @@ def get_args():
     )
     parser.add_argument(
         "--output_path",
-        default="./largestLandFraction_EC.nc",
+        default="./largestLandFraction_NrpaEC0p1.nc",
         type=pathlib.Path,
-        help="Path to the output NetCDF file where the processed data will be saved (default: ./largestLandFraction_EC.nc).",
+        help="Path to the output NetCDF file where the processed data will be saved (default: ./largestLandFraction_NrpaEC0p1.nc).",
     )
     parser.add_argument(
         "--overwrite",
