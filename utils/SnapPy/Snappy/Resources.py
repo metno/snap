@@ -1,9 +1,3 @@
-"""
-Created on Apr 13, 2016
-
-@author: heikok
-"""
-
 import enum
 import logging
 import math
@@ -625,13 +619,15 @@ GRAVITY.FIXED.M/S=0.0002
 
     def getECMeteorologyFiles(
         self, dtime: datetime, run_hours: int, fixed_run="best", pattern=""
-    ):
+    ) -> list[str]:
         """Get available meteorology files for the last few days around dtime and run_hours.
 
-        Keyword arguments:
-        dtime -- start time of model run
-        run_hours -- run length in hours, possibly negative
-        fixed_run -- string of form YYYY-MM-DD_HH giving a specific model-run
+        :param dtime: start time of model run
+        :param run_hours: run length in hours, possibly negative
+        :param fixed_run: string of form YYYY-MM-DD_HH giving a specific model-run, defaults to "best"
+        :param pattern: pattern to match files, defaults to ""
+        :raises Exception: if the timespan is too long
+        :return: list of relevant meteorology files
         """
         relevant_dates = []
         if not pattern:
