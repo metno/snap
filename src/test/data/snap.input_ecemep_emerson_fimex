@@ -50,7 +50,7 @@ RANDOM.WALK.ON
 BOUNDARY.LAYER.FULL.MIX.OFF
 *
 DRY.DEPOSITION.SCHEME = emerson
-DRY.DEPOSITION.LARGEST_LANDFRACTION_FILE = ../../../utils/SnapPy/Snappy/resources/largestLandFraction_EC.nc
+DRY.DEPOSITION.LARGEST_LANDFRACTION_FILE = ../../../utils/SnapPy/Snappy/resources/largestLandFraction_NrpaEC0p1.nc
 *
 WET.DEPOSITION.SCHEME=bartnicki
 *

@@ -443,8 +443,9 @@ GRAVITY.FIXED.M/S=0.0002
         )
         lines = []
         if metmodel == MetModel.NrpaEC0p1:
-            # no setup needed, autdetection in snap
-            pass
+            largest_landfraction_file = os.path.join(
+                self.directory, "largestLandFraction_NrpaEC0p1.nc"
+            )
         elif metmodel == MetModel.NrpaEC0p1Global:
             # no setup needed, autdetection in snap
             pass
