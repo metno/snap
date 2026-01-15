@@ -64,6 +64,7 @@ install_snappy() {
         # Pip install messes up shebang: https://github.com/pypa/setuptools/issues/494
         # pip install ./utils/SnapPy/
         cd utils/SnapPy || exit 2
+        rm -rf build/ Snappy.egg-info/
         python3 setup.py install
     )
 }
