@@ -1,3 +1,9 @@
+snap-py (2.5.14-1) noble; urgency=medium
+
+  * fix first timestep
+
+ -- Ubuntu <ubuntu@met.no>  Thu, 15 Jan 2026 10:29:03 +0000
+
 snap-py (2.5.13-1) noble; urgency=medium
 
   * emerson dry-dep with nrpa ec0.1 met data
