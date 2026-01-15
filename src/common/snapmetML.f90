@@ -324,8 +324,9 @@ module snapmetML
 
       met_params%t2m = 'temperature_2m'
       met_params%surface_stress = 'surface_stress'
-      ! met_params%z0 = 'surface_roughness_length'
+      ! z0/surface_roughness not available, estimating from land use data
       met_params%z0 = ''
+
       met_params%hflux = 'surface_flux_sensible_heat'
 
       met_params%mass_fraction_rain_in_air = "mass_fraction_of_rain_in_air_ml"

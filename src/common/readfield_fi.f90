@@ -986,7 +986,6 @@ contains
 
     if (met_params%z0 == "") then
       ! Load z0 from land use data if not defined in meteorology
-      write(error_unit,*) "Surface roughness not defined in meteorology, using land cover and lookup table."
       z0(:,:) = lookup_z0(classnr, ustar)
     else
       call fi_checkload(fio, met_params%z0, surface_roughness_length_units, z0(:, :), nt=timepos, nr=nr)
