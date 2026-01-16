@@ -691,7 +691,7 @@ GRAVITY.FIXED.M/S=0.0002
                         logger.debug(f"else: File {file} doesnt exist")
                         utc_list = [18, 12, 6, 0]
                         for i in range(
-                            (self.ecMaxFileOffset + offset - 1) * len(utc_list) - 1
+                            (self.ecMaxFileOffset + 1) * len(utc_list) - 1
                         ):  # Max dayoffset is 3
                             dayoffset = i // len(utc_list) + 1
                             utc_ind = i % len(utc_list)
