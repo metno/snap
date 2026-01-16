@@ -673,7 +673,9 @@ GRAVITY.FIXED.M/S=0.0002
 
             maxoffset = (finish - today).days if (finish - today).days > 0 else 0
 
-            for offset in range(1, maxoffset + 1):
+            for offset in range(
+                1, maxoffset + 1
+            ):  # Loops through forecasts on latest model run
                 for utc in [0, 6, 12, 18]:
                     file = pattern.format(
                         dayoffset=offset,
@@ -685,15 +687,12 @@ GRAVITY.FIXED.M/S=0.0002
                     filename = self._findFileInPathes(file, self.getECInputDirs())
                     if filename is not None:
                         relevant_dates.append(filename)
-                    elif (
-                        utc == 0 and offset == 1
-                    ):  # Only matters if no data for today at all
-                        logger.debug(f"File {file} doesnt exist")
+                    elif utc == 0:  # Only matters if no data for today at all
+                        logger.debug(f"else: File {file} doesnt exist")
                         utc_list = [18, 12, 6, 0]
-                        i = 0
                         for i in range(
-                            self.ecMaxFileOffset * len(utc_list) - 1
-                        ):  # Max dayoffset is 2
+                            (self.ecMaxFileOffset + offset - 1) * len(utc_list) - 1
+                        ):  # Max dayoffset is 3
                             dayoffset = i // len(utc_list) + 1
                             utc_ind = i % len(utc_list)
 
@@ -707,7 +706,7 @@ GRAVITY.FIXED.M/S=0.0002
                             filename = self._findFileInPathes(
                                 file, self.getECInputDirs()
                             )
-
+                            logger.debug(f"Trying {file}")
                             if filename is not None:
                                 logger.debug(f"Took {file} instead")
                                 relevant_dates.append(filename)
