@@ -661,7 +661,7 @@ GRAVITY.FIXED.M/S=0.0002
                 # Loop through forecasts on latest model run. Collects all utcs in case of missing data
                 for offset in range(1, future_days + 1):
                     for utc in [0, 6, 12, 18]:
-                        file = pattern.forma(
+                        file = pattern.format(
                             dayoffset=offset,
                             UTC=utc,
                             year=today.year,
