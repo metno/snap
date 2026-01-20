@@ -43,6 +43,7 @@ class Resources(ResourcesCommon):
     _OUTPUTDIR = "{LUSTREDIR}/project/fou/kl/snap/runs"
     _OUTPUTDIR_AUTOMATED = "{LUSTREDIR}/project/fou/kl/snap/automated_runs"
     _ECINPUTDIRS = ["{LUSTREDIR}/project/metproduction/products/cwf-input/"]
+
     # ECINPUTDIRS = ["/lustre/storeB/users/heikok/Meteorology/ecdis2cwf/"]
     EC_FILENAME_PATTERN = "meteo{year:04d}{month:02d}{day:02d}_{dayoffset:02d}.nc"
     EC_FILE_PATTERN = os.path.join("NRPA_EUROPE_0_1_{UTC:02d}", EC_FILENAME_PATTERN)
@@ -635,12 +636,17 @@ GRAVITY.FIXED.M/S=0.0002
             pattern = Resources.EC_FILE_PATTERN
 
         if fixed_run == "best":
-            if run_hours < 0:
+            if run_hours < 0:  # start and finish flipped to collect time range
                 start = dtime + timedelta(hours=run_hours)
-                finish = dtime
+                finish = dtime  # start < finish always
             else:
-                start = dtime
+                start = dtime  # start < finish always
                 finish = start + timedelta(hours=run_hours)
+
+            if (
+                start.hour < 3
+            ):  # accounts for special case where start before 3am. Then previous days files are needed.
+                start -= timedelta(hours=3)
 
             today = datetime.combine(date.today(), time(0, 0, 0))
             tomorrow = today + timedelta(days=1)
@@ -648,101 +654,79 @@ GRAVITY.FIXED.M/S=0.0002
             logger.debug((f"start {start}"))
             logger.debug((f"finish {finish}"))
 
-            n_days = (tomorrow - start).days
+            # Case 1: Collect future files first
 
-            if abs(n_days) > 1000:
-                raise Exception(
-                    "too long timespan: " + str(start) + " to " + str(tomorrow)
-                )
+            if finish >= tomorrow:
+                future_days = (finish - today).days
+                # Loop through forecasts on latest model run. Collects all utcs in case of missing data
+                for offset in range(1, future_days + 1):
+                    for utc in [0, 6, 12, 18]:
+                        file = pattern.format(
+                            dayoffset=offset,
+                            UTC=utc,
+                            year=today.year,
+                            month=today.month,
+                            day=today.day,
+                        )
+                        filename = self._findFileInPathes(file, self.getECInputDirs())
+                        if filename is not None:
+                            relevant_dates.append(filename)
+                        elif utc == 0:  # Accounts for no complete dataset for today
+                            logger.debug(f"else: File {file} doesnt exist")
+                            utc_list = [18, 12, 6, 0]
+                            cases = [
+                                (u, d)
+                                for d in range(1, self.ecMaxFileOffset + 1)
+                                for u in utc_list
+                            ]
+                            # Index loops through day offsets (max of ecMaxFileOffset) and utc list (last index of len(utc_list))
+                            for new_utc, dayoffset in cases:
+                                logger.debug("Still going...")
+                                file = pattern.format(
+                                    dayoffset=dayoffset + offset,
+                                    UTC=new_utc,
+                                    year=(today - timedelta(days=dayoffset)).year,
+                                    month=(today - timedelta(days=dayoffset)).month,
+                                    day=(today - timedelta(days=dayoffset)).day,
+                                )
+                                filename = self._findFileInPathes(
+                                    file, self.getECInputDirs()
+                                )
+                                logger.debug(f"Trying {file}")
+                                if filename is not None:
+                                    logger.debug(f"Took {file} instead")
+                                    relevant_dates.append(filename)
+                                    logger.debug("break")
+                                    break
+                            if filename is None:
+                                logger.debug("No alternative file exists")
 
-            if n_days < 0:
-                days = [
-                    start - timedelta(days=-n_days),
-                ]
+                        else:
+                            logger.debug(f"File {file} doesnt exist")
 
-            else:
-                days = []
-                tmp = start
-                while tmp < min(finish + timedelta(days=1), tomorrow):
-                    days.append(tmp)
-                    tmp += timedelta(days=1)
-                if len(days) == 0:
-                    days.append(today)
-
-            # loop needs to have latest model runs/hindcast runs last
-
-            maxoffset = (finish - today).days if (finish - today).days > 0 else 0
-
-            for offset in range(
-                1, maxoffset + 1
-            ):  # Loops through forecasts on latest model run
-                for utc in [0, 6, 12, 18]:
-                    file = pattern.format(
-                        dayoffset=offset,
-                        UTC=utc,
-                        year=today.year,
-                        month=today.month,
-                        day=today.day,
-                    )
-                    filename = self._findFileInPathes(file, self.getECInputDirs())
-                    if filename is not None:
-                        relevant_dates.append(filename)
-                    elif utc == 0:  # Only matters if no data for today at all
-                        logger.debug(f"else: File {file} doesnt exist")
-                        utc_list = [18, 12, 6, 0]
-                        for i in range(
-                            (self.ecMaxFileOffset + 1) * len(utc_list) - 1
-                        ):  # Max dayoffset is 3
-                            dayoffset = i // len(utc_list) + 1
-                            utc_ind = i % len(utc_list)
-
-                            file = pattern.format(
-                                dayoffset=dayoffset + offset,
-                                UTC=utc_list[utc_ind],
-                                year=(today - timedelta(days=dayoffset)).year,
-                                month=(today - timedelta(days=dayoffset)).month,
-                                day=(today - timedelta(days=dayoffset)).day,
-                            )
-                            filename = self._findFileInPathes(
-                                file, self.getECInputDirs()
-                            )
-                            logger.debug(f"Trying {file}")
-                            if filename is not None:
-                                logger.debug(f"Took {file} instead")
-                                relevant_dates.append(filename)
-                                break
-                        if filename is None:
-                            logger.debug("No alternative file exists")
-
-                    else:
-                        logger.debug(f"File {file} doesnt exist")
-
-            if (
-                start.hour < 3
-            ):  # Special case for start times of less than 3am. Then previous days files are needed.
-                logger.debug("Start hour less than 3")
-                utc_list = [18, 12, 6, 0]
-                i = 0
-                for i in range(self.ecMaxFileOffset * len(utc_list)):
-                    dayoffset = (i + 1) // len(utc_list)
-                    utc_ind = i % len(utc_list)
-
-                    file = pattern.format(
-                        dayoffset=dayoffset,
-                        UTC=utc_list[utc_ind],
-                        year=(start - timedelta(days=dayoffset + 1)).year,
-                        month=(start - timedelta(days=dayoffset + 1)).month,
-                        day=(start - timedelta(days=dayoffset + 1)).day,
-                    )
-                    filename = self._findFileInPathes(file, self.getECInputDirs())
-
-                    if filename is not None:
-                        logger.debug(f"Added {file}")
-                        relevant_dates.append(filename)
-                        break
+            # Case 2: Collect hindcasts
 
             if start <= tomorrow:
-                for day in days:
+                n_days = (today - start).days
+
+                if abs(n_days) > 1000:  # accounts for stored data period
+                    raise Exception(
+                        "too long timespan: " + str(start) + " to " + str(tomorrow)
+                    )
+
+                elif n_days < 0:  # accounts for future-only forecasts
+                    days = [
+                        today,
+                    ]
+
+                else:
+                    days = []
+                    tmp = start
+                    while tmp < min(finish + timedelta(days=1), tomorrow):
+                        days.append(tmp)
+                        tmp += timedelta(days=1)
+
+                for day in days:  # Loops through past dates needed
                     for utc in [0, 6, 12, 18]:
                         file = pattern.format(
                             dayoffset=0,
@@ -757,14 +741,16 @@ GRAVITY.FIXED.M/S=0.0002
                         elif utc == 0:
                             logger.debug(f"File {file} doesnt exist")
                             utc_list = [18, 12, 6, 0]
-                            i = 0
-                            for i in range(self.ecMaxFileOffset * len(utc_list)):
-                                dayoffset = i // len(utc_list) + 1
-                                utc_ind = i % len(utc_list)
 
+                            cases = [
+                                (u, d)
+                                for d in range(1, self.ecMaxFileOffset + 1)
+                                for u in utc_list
+                            ]
+                            for new_utc, dayoffset in cases:
                                 file = pattern.format(
                                     dayoffset=dayoffset,
-                                    UTC=utc_list[utc_ind],
+                                    UTC=new_utc,
                                     year=(day - timedelta(days=dayoffset)).year,
                                     month=(day - timedelta(days=dayoffset)).month,
                                     day=(day - timedelta(days=dayoffset)).day,
