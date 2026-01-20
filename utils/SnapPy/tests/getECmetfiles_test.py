@@ -31,12 +31,40 @@ Tests included:
 7. Using data from the actual "today"
     a) 48 hour run from yesterday
     b) Missing todays data. 48 hour run from today
+
+
+Realtime:
+1. Forecast 48 hours
+2. Run from yesterday 48 hours
+3. Backwards run -72 hours
+4. missing 00 file start today
+5. Missing todays data start today
+6. 
+    a) start at 00 today
+    b) missing 18 data start 00 today
+
+   
+Specific period:
+7. Hindcast 48 hours
+8. Long run 96 hours over date periodicities
+9. Missing specific files:
+    a) missing 00 file
+    b) missing whole day
+    c) missing two days of data
+    d) missing end days
+    e) missing all data
+10. Starting at 00:00
+    a) Starting at 00:00, full data
+    b) Missing 18 file
+    c) Missing day
+
 """
 
 
 Res = R.Resources()
 
 today = datetime.combine(date.today(), time(5, 0, 0))
+yesterday = today - timedelta(days=1)
 
 
 @pytest.fixture
@@ -60,7 +88,7 @@ def tmp_path_with_meteo_files(tmp_path: pathlib.Path) -> pathlib.Path:
 
 
 @pytest.fixture
-def tmp_path_with_today_meteo_files(tmp_path: pathlib.Path) -> pathlib.Path:
+def tmp_path_with_realtime_meteo_files(tmp_path: pathlib.Path) -> pathlib.Path:
     """Create temporary directory with meteo-files, extending pytests build-in `tmp_path`.
 
     :param tmp_path: pytest build-in fixture tmp_pat
@@ -79,28 +107,189 @@ def tmp_path_with_today_meteo_files(tmp_path: pathlib.Path) -> pathlib.Path:
 
 
 class TestClass:
-    def test_Forecast48(self, tmp_path_with_meteo_files):
+    def test_Forecast48(self, tmp_path_with_realtime_meteo_files):
         # Test 1: Future forecast 48 hours
 
         # str-handling required in Resources
-        tmpdir = str(tmp_path_with_meteo_files)
+        tmpdir = str(tmp_path_with_realtime_meteo_files)
         Res._ECINPUTDIRS = [tmpdir]
-        start = datetime.fromisoformat("2026-01-05T13:00:00")
+        start = today
         duration = 48
 
         expected = [
-            f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo20260105_00.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20260105_00.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20260105_00.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260105_00.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260105_01.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260105_02.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo{today.year}{today.month:02d}{today.day:02d}_01.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo{today.year}{today.month:02d}{today.day:02d}_01.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo{today.year}{today.month:02d}{today.day:02d}_01.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo{today.year}{today.month:02d}{today.day:02d}_01.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo{today.year}{today.month:02d}{today.day:02d}_02.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo{today.year}{today.month:02d}{today.day:02d}_02.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo{today.year}{today.month:02d}{today.day:02d}_02.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo{today.year}{today.month:02d}{today.day:02d}_02.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo{today.year}{today.month:02d}{today.day:02d}_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo{today.year}{today.month:02d}{today.day:02d}_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo{today.year}{today.month:02d}{today.day:02d}_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo{today.year}{today.month:02d}{today.day:02d}_00.nc",
         ]
 
         assert Res.getECMeteorologyFiles(start, duration) == expected
 
+    def test_StartYesterday(self, tmp_path_with_realtime_meteo_files):
+        # Test 2: Starting yesterday. Tests both cases (past and future) in code.
+
+        tmpdir = str(tmp_path_with_realtime_meteo_files)
+        Res._ECINPUTDIRS = [tmpdir]
+        start = yesterday
+        duration = 48
+
+        expected = [
+            f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo{today.year}{today.month:02d}{today.day:02d}_01.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo{today.year}{today.month:02d}{today.day:02d}_01.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo{today.year}{today.month:02d}{today.day:02d}_01.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo{today.year}{today.month:02d}{today.day:02d}_01.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo{yesterday.year}{yesterday.month:02d}{yesterday.day:02d}_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo{yesterday.year}{yesterday.month:02d}{yesterday.day:02d}_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo{yesterday.year}{yesterday.month:02d}{yesterday.day:02d}_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo{yesterday.year}{yesterday.month:02d}{yesterday.day:02d}_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo{today.year}{today.month:02d}{today.day:02d}_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo{today.year}{today.month:02d}{today.day:02d}_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo{today.year}{today.month:02d}{today.day:02d}_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo{today.year}{today.month:02d}{today.day:02d}_00.nc",
+        ]
+
+        assert Res.getECMeteorologyFiles(start, duration) == expected
+
+    def test_BackwardsForecast72(self, tmp_path_with_realtime_meteo_files):
+        # Part 3: Backwards forecast across future and past data.
+
+        tmpdir = str(tmp_path_with_realtime_meteo_files)
+        Res._ECINPUTDIRS = [tmpdir]
+        start = today + timedelta(days=2)  # starting day after tomorrow
+        duration = -72
+
+        yesterday = today - timedelta(days=1)
+
+        expected = [
+            f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo{today.year}{today.month:02d}{today.day:02d}_01.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo{today.year}{today.month:02d}{today.day:02d}_01.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo{today.year}{today.month:02d}{today.day:02d}_01.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo{today.year}{today.month:02d}{today.day:02d}_01.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo{today.year}{today.month:02d}{today.day:02d}_02.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo{today.year}{today.month:02d}{today.day:02d}_02.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo{today.year}{today.month:02d}{today.day:02d}_02.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo{today.year}{today.month:02d}{today.day:02d}_02.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo{yesterday.year}{yesterday.month:02d}{yesterday.day:02d}_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo{yesterday.year}{yesterday.month:02d}{yesterday.day:02d}_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo{yesterday.year}{yesterday.month:02d}{yesterday.day:02d}_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo{yesterday.year}{yesterday.month:02d}{yesterday.day:02d}_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo{today.year}{today.month:02d}{today.day:02d}_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo{today.year}{today.month:02d}{today.day:02d}_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo{today.year}{today.month:02d}{today.day:02d}_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo{today.year}{today.month:02d}{today.day:02d}_00.nc",
+        ]
+
+        assert Res.getECMeteorologyFiles(start, duration) == expected
+
+    def test_Missing00StartToday(self, tmp_path_with_realtime_meteo_files):
+        # Part 4: starting today with missing 00 files
+        for file in (tmp_path_with_realtime_meteo_files / "NRPA_EUROPE_0_1_00/").glob(
+            "*"
+        ):
+            file.unlink(missing_ok=True)
+        tmpdir = str(tmp_path_with_realtime_meteo_files)
+
+        Res._ECINPUTDIRS = [tmpdir]
+
+        start = today
+        duration = 48
+
+        expected = [
+            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo{yesterday.year}{yesterday.month:02d}{yesterday.day:02d}_02.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo{today.year}{today.month:02d}{today.day:02d}_01.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo{today.year}{today.month:02d}{today.day:02d}_01.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo{today.year}{today.month:02d}{today.day:02d}_01.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo{yesterday.year}{yesterday.month:02d}{yesterday.day:02d}_03.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo{today.year}{today.month:02d}{today.day:02d}_02.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo{today.year}{today.month:02d}{today.day:02d}_02.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo{today.year}{today.month:02d}{today.day:02d}_02.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo{yesterday.year}{yesterday.month:02d}{yesterday.day:02d}_01.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo{today.year}{today.month:02d}{today.day:02d}_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo{today.year}{today.month:02d}{today.day:02d}_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo{today.year}{today.month:02d}{today.day:02d}_00.nc",
+        ]
+
+        assert Res.getECMeteorologyFiles(start, duration) == expected
+
+    def test_MissingToday(self, tmp_path_with_realtime_meteo_files):
+        # Test 5: missing all data from today
+        for utc in ["00", "06", "12", "18"]:
+            for file in (
+                tmp_path_with_realtime_meteo_files / f"NRPA_EUROPE_0_1_{utc}/"
+            ).glob(f"meteo{today.year}{today.month:02d}{today.day:02d}_*"):
+                file.unlink(missing_ok=True)
+        tmpdir = str(tmp_path_with_realtime_meteo_files)
+        Res._ECINPUTDIRS = [tmpdir]
+        start = today  # starting on missing day
+        duration = 48
+
+        yesterday = today - timedelta(days=1)
+
+        expected = [
+            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo{yesterday.year}{yesterday.month:02d}{yesterday.day:02d}_02.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo{yesterday.year}{yesterday.month:02d}{yesterday.day:02d}_03.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo{yesterday.year}{yesterday.month:02d}{yesterday.day:02d}_01.nc",
+        ]
+
+        assert Res.getECMeteorologyFiles(start, duration) == expected
+
+    def test_Today00start(self, tmp_path_with_realtime_meteo_files):
+        # Test 6a: Starting at 00:00
+        tmpdir = str(tmp_path_with_realtime_meteo_files)
+        Res._ECINPUTDIRS = [tmpdir]
+        start = today - timedelta(hours=5)
+        duration = 12
+
+        expected = [
+            f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo{yesterday.year}{yesterday.month:02d}{yesterday.day:02d}_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo{yesterday.year}{yesterday.month:02d}{yesterday.day:02d}_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo{yesterday.year}{yesterday.month:02d}{yesterday.day:02d}_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo{yesterday.year}{yesterday.month:02d}{yesterday.day:02d}_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo{today.year}{today.month:02d}{today.day:02d}_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo{today.year}{today.month:02d}{today.day:02d}_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo{today.year}{today.month:02d}{today.day:02d}_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo{today.year}{today.month:02d}{today.day:02d}_00.nc",
+        ]
+
+        assert Res.getECMeteorologyFiles(start, duration) == expected
+
+    def test_Today00start_missing18(self, tmp_path_with_realtime_meteo_files):
+        # Test 6b: Starting at 00:00, missing 18:00 files
+        for file in (tmp_path_with_realtime_meteo_files / "NRPA_EUROPE_0_1_18/").glob(
+            "*"
+        ):
+            file.unlink(missing_ok=True)
+        tmpdir = str(tmp_path_with_realtime_meteo_files)
+
+        Res._ECINPUTDIRS = [tmpdir]
+
+        start = today - timedelta(hours=5)
+        duration = 12
+
+        expected = [
+            f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo{yesterday.year}{yesterday.month:02d}{yesterday.day:02d}_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo{yesterday.year}{yesterday.month:02d}{yesterday.day:02d}_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo{yesterday.year}{yesterday.month:02d}{yesterday.day:02d}_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo{today.year}{today.month:02d}{today.day:02d}_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo{today.year}{today.month:02d}{today.day:02d}_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo{today.year}{today.month:02d}{today.day:02d}_00.nc",
+        ]
+
+        assert Res.getECMeteorologyFiles(start, duration) == expected
+
+    ################# Specific period of data                        #################
+    ################# Test data date range: 30-12-2025 to 05-01-2026 #################
+
     def test_Hindcast48(self, tmp_path_with_meteo_files):
-        # Test 2: Hindcast 48 hours
+        # Test 7: Hindcast 48 hours
         tmpdir = str(tmp_path_with_meteo_files)
         Res._ECINPUTDIRS = [tmpdir]
 
@@ -125,7 +314,7 @@ class TestClass:
         assert Res.getECMeteorologyFiles(start, duration) == expected
 
     def test_Forecast96(self, tmp_path_with_meteo_files):
-        # Test 3 Long forecast 96 hours
+        # Test 8: Long forecast 96 hours
         tmpdir = str(tmp_path_with_meteo_files)
         Res._ECINPUTDIRS = [tmpdir]
 
@@ -157,36 +346,7 @@ class TestClass:
 
         assert Res.getECMeteorologyFiles(start, duration) == expected
 
-    def test_BackwardsForecast96(self, tmp_path_with_meteo_files):
-        # Test 4 Long forecast -96 hours
-        tmpdir = str(tmp_path_with_meteo_files)
-        Res._ECINPUTDIRS = [tmpdir]
-
-        start = datetime.fromisoformat("2026-01-02T13:00:00")
-        duration = -96
-
-        expected = [
-            f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo20251230_00.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20251230_00.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20251230_00.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20251230_00.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo20251231_00.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20251231_00.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20251231_00.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20251231_00.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo20260101_00.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20260101_00.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20260101_00.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260101_00.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo20260102_00.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20260102_00.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20260102_00.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260102_00.nc",
-        ]
-
-        assert Res.getECMeteorologyFiles(start, duration) == expected
-
-    ####    Test 5    ####
+    ####    Test 9    ####
     def test_Missing00Files(self, tmp_path_with_meteo_files):
         # Part a: missing 00 files
         for file in (tmp_path_with_meteo_files / "NRPA_EUROPE_0_1_00/").glob("*"):
@@ -212,7 +372,7 @@ class TestClass:
 
         assert Res.getECMeteorologyFiles(start, duration) == expected
 
-    def test_MissingWholeDay1(self, tmp_path_with_meteo_files):
+    def test_MissingWholeDay(self, tmp_path_with_meteo_files):
         # Part b: missing whole day starting from day before missing day
         for utc in ["00", "06", "12", "18"]:
             for file in (tmp_path_with_meteo_files / f"NRPA_EUROPE_0_1_{utc}/").glob(
@@ -240,58 +400,8 @@ class TestClass:
 
         assert Res.getECMeteorologyFiles(start, duration) == expected
 
-    def test_MissingWholeDay2(self, tmp_path_with_meteo_files):
-        # Part b: missing whole day starting on missing day
-        for utc in ["00", "06", "12", "18"]:
-            for file in (tmp_path_with_meteo_files / f"NRPA_EUROPE_0_1_{utc}/").glob(
-                "meteo20260102_*"
-            ):
-                file.unlink(missing_ok=True)
-        tmpdir = str(tmp_path_with_meteo_files)
-
-        Res._ECINPUTDIRS = [tmpdir]
-
-        start = datetime.fromisoformat("2026-01-02T13:00:00")
-        duration = 48
-
-        expected = [
-            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260101_01.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo20260103_00.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20260103_00.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20260103_00.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260103_00.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo20260104_00.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20260104_00.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20260104_00.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260104_00.nc",
-        ]
-
-        assert Res.getECMeteorologyFiles(start, duration) == expected
-
-    def test_MissingToday(self, tmp_path_with_meteo_files):
-        # Part c: missing all data from today
-        for utc in ["00", "06", "12", "18"]:
-            for file in (tmp_path_with_meteo_files / f"NRPA_EUROPE_0_1_{utc}/").glob(
-                "meteo20260105_*"
-            ):
-                file.unlink(missing_ok=True)
-        tmpdir = str(tmp_path_with_meteo_files)
-
-        Res._ECINPUTDIRS = [tmpdir]
-
-        start = datetime.fromisoformat("2026-01-05T13:00:00")  # starting on missing day
-        duration = 48
-
-        expected = [
-            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260104_01.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260104_02.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260104_03.nc",
-        ]
-
-        assert Res.getECMeteorologyFiles(start, duration) == expected
-
     def test_MissingTwoDays(self, tmp_path_with_meteo_files):
-        # Part d: missing data for two days
+        # Part c: missing data for two days
         for utc in ["00", "06", "12", "18"]:
             for file in (tmp_path_with_meteo_files / f"NRPA_EUROPE_0_1_{utc}/").glob(
                 "meteo20260105_*"
@@ -319,6 +429,28 @@ class TestClass:
 
         assert Res.getECMeteorologyFiles(start, duration) == expected
 
+    def test_MissingEndDays(self, tmp_path_with_meteo_files):
+        # Part d: missing all data from last day in run
+        for utc in ["00", "06", "12", "18"]:
+            for file in (tmp_path_with_meteo_files / f"NRPA_EUROPE_0_1_{utc}/").glob(
+                "meteo20260105_*"
+            ):
+                file.unlink(missing_ok=True)
+        tmpdir = str(tmp_path_with_meteo_files)
+
+        Res._ECINPUTDIRS = [tmpdir]
+
+        start = datetime.fromisoformat("2026-01-05T13:00:00")  # starting on missing day
+        duration = 48
+
+        expected = [
+            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260104_01.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260104_02.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260104_03.nc",
+        ]
+
+        assert Res.getECMeteorologyFiles(start, duration) == expected
+
     def test_MissingAll(self, tmp_path_with_meteo_files):
         # Part e: missing all data
         for utc in ["00", "06", "12", "18"]:
@@ -330,100 +462,75 @@ class TestClass:
         tmpdir = str(tmp_path_with_meteo_files)
         Res._ECINPUTDIRS = [tmpdir]
 
-        start = datetime.fromisoformat("2026-01-03T13:00:00")  # starting on missing day
+        start = datetime.fromisoformat("2026-01-03T13:00:00")
         duration = 48
 
         expected = []
 
         assert Res.getECMeteorologyFiles(start, duration) == expected
 
+    #### Test 10 ####
     def test_00start(self, tmp_path_with_meteo_files):
-        # Test 6a: Starting at 00:00
+        # Part a: Starting at 00:00
         tmpdir = str(tmp_path_with_meteo_files)
         Res._ECINPUTDIRS = [tmpdir]
-        start = datetime.fromisoformat("2026-01-03T00:00:00")  # starting on missing day
+        start = datetime.fromisoformat("2026-01-03T00:00:00")
         duration = 12
 
         expected = [
+            f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo20260102_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20260102_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20260102_00.nc",
             f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260102_00.nc",
             f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo20260103_00.nc",
             f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20260103_00.nc",
             f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20260103_00.nc",
             f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260103_00.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo20260104_00.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20260104_00.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20260104_00.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260104_00.nc",
         ]
 
         assert Res.getECMeteorologyFiles(start, duration) == expected
 
     def test_00start_missing18(self, tmp_path_with_meteo_files):
-        # Test 6b: Starting at 00:00, missing 18:00 files
+        # Part b: Starting at 00:00, missing 18:00 files
         for file in (tmp_path_with_meteo_files / "NRPA_EUROPE_0_1_18/").glob("*"):
             file.unlink(missing_ok=True)
         tmpdir = str(tmp_path_with_meteo_files)
 
         Res._ECINPUTDIRS = [tmpdir]
 
-        start = datetime.fromisoformat("2026-01-03T00:00:00")  # starting on missing day
+        start = datetime.fromisoformat("2026-01-03T00:00:00")
         duration = 12
 
         expected = [
+            f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo20260102_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20260102_00.nc",
             f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20260102_00.nc",
             f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo20260103_00.nc",
             f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20260103_00.nc",
             f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20260103_00.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo20260104_00.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20260104_00.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20260104_00.nc",
         ]
 
         assert Res.getECMeteorologyFiles(start, duration) == expected
 
-    def test_TodayActual(self, tmp_path_with_today_meteo_files):
-        # Part 7a: using data from the actual "today". This behaves differently in the code.
-
-        tmpdir = str(tmp_path_with_today_meteo_files)
-        Res._ECINPUTDIRS = [tmpdir]
-        start = today - timedelta(days=1)  # starting yesterday
-        duration = 48
-
-        expected = [
-            f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo20260116_01.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20260116_01.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20260116_01.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260116_01.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo20260115_00.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20260115_00.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20260115_00.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260115_00.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo20260116_00.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20260116_00.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20260116_00.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260116_00.nc",
-        ]
-
-        assert Res.getECMeteorologyFiles(start, duration) == expected
-
-    def test_MissingTodayActual(self, tmp_path_with_today_meteo_files):
-        # Part 7b: missing all data from the actual "today". This behaves differently in the code.
+    def test_Missingday00start(self, tmp_path_with_meteo_files):
+        # Part c: missing all data from today
         for utc in ["00", "06", "12", "18"]:
-            for file in (
-                tmp_path_with_today_meteo_files / f"NRPA_EUROPE_0_1_{utc}/"
-            ).glob(f"meteo{today.year}{today.month:02d}{today.day:02d}_*"):
+            for file in (tmp_path_with_meteo_files / f"NRPA_EUROPE_0_1_{utc}/").glob(
+                "meteo20260102_*"
+            ):
                 file.unlink(missing_ok=True)
-        tmpdir = str(tmp_path_with_today_meteo_files)
-        Res._ECINPUTDIRS = [tmpdir]
-        start = today  # starting on missing day
-        duration = 48
+        tmpdir = str(tmp_path_with_meteo_files)
 
-        yesterday = today - timedelta(days=1)
+        Res._ECINPUTDIRS = [tmpdir]
+        start = datetime.fromisoformat("2026-01-03T00:00:00")
+        duration = 12
 
         expected = [
-            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo{yesterday.year}{yesterday.month:02d}{yesterday.day:02d}_02.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo{yesterday.year}{yesterday.month:02d}{yesterday.day:02d}_03.nc",
-            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo{yesterday.year}{yesterday.month:02d}{yesterday.day:02d}_01.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260101_01.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_00/meteo20260103_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_06/meteo20260103_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_12/meteo20260103_00.nc",
+            f"{tmpdir}/NRPA_EUROPE_0_1_18/meteo20260103_00.nc",
         ]
 
         assert Res.getECMeteorologyFiles(start, duration) == expected
