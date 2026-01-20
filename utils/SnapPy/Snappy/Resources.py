@@ -42,8 +42,8 @@ class Resources(ResourcesCommon):
     # OUTPUTDIR = "/disk1/tmp"
     _OUTPUTDIR = "{LUSTREDIR}/project/fou/kl/snap/runs"
     _OUTPUTDIR_AUTOMATED = "{LUSTREDIR}/project/fou/kl/snap/automated_runs"
-    # _ECINPUTDIRS = ["{LUSTREDIR}/project/metproduction/products/cwf-input/"]
-    _ECINPUTDIRS = ["{LUSTREDIR}/users/geche8548"]
+    _ECINPUTDIRS = ["{LUSTREDIR}/project/metproduction/products/cwf-input/"]
+
     # ECINPUTDIRS = ["/lustre/storeB/users/heikok/Meteorology/ecdis2cwf/"]
     EC_FILENAME_PATTERN = "meteo{year:04d}{month:02d}{day:02d}_{dayoffset:02d}.nc"
     EC_FILE_PATTERN = os.path.join("NRPA_EUROPE_0_1_{UTC:02d}", EC_FILENAME_PATTERN)
@@ -654,14 +654,14 @@ GRAVITY.FIXED.M/S=0.0002
             logger.debug((f"start {start}"))
             logger.debug((f"finish {finish}"))
 
-            ### Collect future files first
+            # Case 1: Collect future files first
 
             if finish >= tomorrow:
-                FutureDays = (finish - today).days
+                future_days = (finish - today).days
                 # Loop through forecasts on latest model run. Collects all utcs in case of missing data
-                for offset in range(1, FutureDays + 1):
+                for offset in range(1, future_days + 1):
                     for utc in [0, 6, 12, 18]:
-                        file = pattern.format(
+                        file = pattern.forma(
                             dayoffset=offset,
                             UTC=utc,
                             year=today.year,
@@ -671,7 +671,7 @@ GRAVITY.FIXED.M/S=0.0002
                         filename = self._findFileInPathes(file, self.getECInputDirs())
                         if filename is not None:
                             relevant_dates.append(filename)
-                        elif utc == 0:  # Accounts for no data for today at all
+                        elif utc == 0:  # Accounts for no complete dataset for today
                             logger.debug(f"else: File {file} doesnt exist")
                             utc_list = [18, 12, 6, 0]
                             cases = [
@@ -704,7 +704,7 @@ GRAVITY.FIXED.M/S=0.0002
                         else:
                             logger.debug(f"File {file} doesnt exist")
 
-            ### Now collect hindcasts
+            # Case 2: Collect hindcasts
 
             if start <= tomorrow:
                 n_days = (today - start).days
