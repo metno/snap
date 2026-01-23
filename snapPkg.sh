@@ -2,7 +2,8 @@
 
 set -e
 
-export VERSION=2.5.7
+export VERSION=2.5.13
+export CHANGE_LOG="emerson drydep with nrpa ec0.1 and ecemep met data"
 #VERSION_=`echo -n $VERSION | tr '.' '_'`
 
 # We do not have a way of cross-compiling,
@@ -32,7 +33,7 @@ mv debian.${PLATFORM} debian
 
 export DEBEMAIL=${USER}@met.no
 FULLVERSION=${VERSION}-1
-dch --package bsnap --newversion ${FULLVERSION} "Fix NaN in iodine ddep"
+dch --package bsnap --newversion ${FULLVERSION} "$CHANGE_LOG"
 dch --release ""
 export DEB_BUILD_OPTIONS='nostrip'
 export BINDIR="../debian/bsnap/usr/bin/"

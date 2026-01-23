@@ -48,10 +48,14 @@ module snapmetML
     character(len=80) :: t2m = ''
     character(len=80) :: yflux = ''
     character(len=80) :: xflux = ''
+    character(len=80) :: surface_stress = ''
     character(len=80) :: hflux = ''
     character(len=80) :: z0 = ''
 
     ! flags when reading the data
+    logical :: xflux_is_accumulated = .false.
+    logical :: yflux_is_accumulated = .false.
+    logical :: hflux_is_accumulated = .false.
     logical :: temp_is_abs = .false.
     logical :: has_dummy_dim = .false.
     logical :: manual_level_selection = .false.
@@ -92,7 +96,8 @@ module snapmetML
 
   character(len=*), parameter, public :: downward_momentum_flux_units = 'N/m^2'
   character(len=*), parameter, public :: surface_roughness_length_units = 'm'
-  character(len=*), parameter, public :: surface_heat_flux_units = 'W s/m^2'
+  character(len=*), parameter, public :: surface_heat_flux_units = 'W/m^2'
+  character(len=*), parameter, public :: accum_surface_heat_flux_units = 'W s/m^2'
 
   character(len=*), parameter, public :: cloud_fraction_units = '%'
   character(len=*), parameter, public :: mass_fraction_units = 'kg/kg'
@@ -238,10 +243,13 @@ module snapmetML
 
       met_params%t2m = 'air_temperature_2m'
       met_params%xflux = 'downward_northward_momentum_flux_in_air'
+      met_params%xflux_is_accumulated = .true.
       met_params%yflux = 'downward_eastward_momentum_flux_in_air'
+      met_params%yflux_is_accumulated = .true.
       ! met_params%z0 = 'surface_roughness_length'
       met_params%z0 = "SFX_Z0"
       met_params%hflux = 'integral_of_surface_downward_sensible_heat_flux_wrt_time'
+      met_params%hflux_is_accumulated = .true.
 
       met_params%mass_fraction_rain_in_air = "mass_fraction_of_rain_in_air_ml"
       met_params%mass_fraction_graupel_in_air = "mass_fraction_of_graupel_in_air_ml"
@@ -313,6 +321,13 @@ module snapmetML
 !.. non accumulated precipitation rates in m/s
       met_params%precstrativrt = 'large_scale_precipitations'
       met_params%precconvrt = 'convective_precipitations'
+
+      met_params%t2m = 'temperature_2m'
+      met_params%surface_stress = 'surface_stress'
+      ! z0/surface_roughness not available, estimating from land use data
+      met_params%z0 = ''
+
+      met_params%hflux = 'surface_flux_sensible_heat'
 
       met_params%mass_fraction_rain_in_air = "mass_fraction_of_rain_in_air_ml"
       met_params%mass_fraction_graupel_in_air = "mass_fraction_of_graupel_in_air_ml"

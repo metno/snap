@@ -1,3 +1,36 @@
+snap-py (2.5.14-1) noble; urgency=medium
+
+  * fix first timestep
+
+ -- Ubuntu <ubuntu@met.no>  Thu, 15 Jan 2026 10:29:03 +0000
+
+snap-py (2.5.13-1) noble; urgency=medium
+
+  * emerson dry-dep with nrpa ec0.1 met data
+
+ -- Ubuntu <ubuntu@met.no>  Thu, 15 Jan 2026 09:36:08 +0000
+
+snap-py (2.5.12-2) noble; urgency=medium
+
+  * fix bug qt browser input parsing and handle better case with no
+    release
+
+ -- Ubuntu <ubuntu@met.no>  Tue, 16 Dec 2025 15:45:54 +0000
+
+snap-py (2.5.12-1) noble; urgency=medium
+
+  * fix bug qt browser input parsing and handle better case with no
+    release
+
+ -- Ubuntu <ubuntu@met.no>  Tue, 16 Dec 2025 15:43:37 +0000
+
+snap-py (2.5.12-1) noble; urgency=medium
+
+  * fix bug qt browser input parsing and handle better case with no
+    release
+
+ -- Ubuntu <ubuntu@met.no>  Tue, 16 Dec 2025 15:38:51 +0000
+
 snap-py (2.5.11-1) noble; urgency=medium
 
   * fix bug qt browser input parsing and handle better case with no

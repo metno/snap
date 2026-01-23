@@ -23,7 +23,7 @@ module drydepml
 
   public :: drydep, preprocess_landfraction, unload, &
     requires_extra_fields_to_be_read, drydep_precompute_meteo, drydep_precompute_particle, &
-    requires_landfraction_file
+    requires_landfraction_file, lookup_z0
 
   integer, parameter, public :: DRYDEP_SCHEME_UNDEFINED = 0
   integer, parameter, public :: DRYDEP_SCHEME_OLD = 1
@@ -77,16 +77,15 @@ end function
 
 !> Precompute dry deposition meteorology
 !> returns roa, ustar, monin_obukhov_length, raero, my
-elemental subroutine drydep_precompute_meteo(surface_pressure, t2m, yflux, xflux, z0, hflux, &
+elemental subroutine drydep_precompute_meteo(surface_pressure, t2m, surface_stress, z0, hflux, &
                                              ustar, raero, my)
   use iso_fortran_env, only: real64
   use datetime, only: datetime_t
   real, intent(in) :: surface_pressure !> [Pa]
   real, intent(in) :: t2m !> [K]
-  real, intent(in) :: yflux !> [N/m^2]
-  real, intent(in) :: xflux !> [N/m^2]
+  real, intent(in) :: surface_stress !> [N/m^2]
   real, intent(in) :: z0 !> [m]
-  real, intent(in) :: hflux !> [W s/m^2]
+  real, intent(in) :: hflux !> [W/m^2]
   real(real64), intent(out) :: raero, ustar, my
 
   real(real64), parameter :: k = 0.4
@@ -94,7 +93,7 @@ elemental subroutine drydep_precompute_meteo(surface_pressure, t2m, yflux, xflux
   real(real64) :: roa, monin_obukhov_length
 
   roa = surface_pressure / (t2m * R)
-  ustar = hypot(yflux, xflux) / sqrt(roa)
+  ustar = surface_stress / sqrt(roa)
   monin_obukhov_length = - roa * CP * t2m * (ustar**3) / (k * grav * hflux)
   raero = aerodynres(monin_obukhov_length, ustar, real(z0, real64))
   my = ny * roa
@@ -112,7 +111,7 @@ elemental subroutine drydep_precompute_particle(surface_pressure, t2m, &
   real(real64), intent(in) :: raero, ustar, my
   type(datetime_t), intent(in) :: date
   type(defined_component), intent(in) :: component
-  integer(int8), intent(in) :: classnr !> Speficic mapping to land use type, see subroutine `lookup_A`
+  integer(int8), intent(in) :: classnr !> Specific mapping to land use type, see subroutine `lookup_A`
   real, intent(out) :: vd_dep ! m/s
 
   select case(drydep_scheme)
@@ -280,6 +279,51 @@ elemental real(real64) function alpha(classnr)
     error stop "Error: Invalid classnr value encountered, must be in range 11-22"
   end select
 
+end function
+
+
+! charnock formula used for roughness length of water
+elemental real(real64) function charnock_z0(ustar)
+  real(real64), intent(in) :: ustar
+  real(real64), parameter :: alpha_ch = 0.018  ! charnock coefficient
+  real(real64), parameter :: alpha_m = 0.11  ! momentum transfer coefficient
+
+  charnock_z0 = alpha_m*ny/ustar + alpha_ch*ustar*ustar/grav
+end function
+
+
+elemental real(real64) function lookup_z0(classnr, ustar)
+  integer(int8), intent(in) :: classnr
+  real(real64), intent(in) :: ustar
+
+  select case(classnr)
+  case (11) ! Sea -> Z14
+    lookup_z0 = charnock_z0(ustar)
+  case (12) ! Inland water -> Z13
+    lookup_z0 = 0.00001
+  case (13) ! Tundra/desert -> Z8,Z9
+    lookup_z0 = 0.005
+  case (14) ! Ice and ice sheets -> Z12
+    lookup_z0 = 0.005
+  case (15) ! Urban -> Z15
+    lookup_z0 = 1.0
+  case (16) ! Crops -> Z7
+    lookup_z0 = 0.2
+  case (17) ! Grass -> Z6
+    lookup_z0 = 0.05
+  case (18) ! Wetlands -> Z11
+    lookup_z0 = 0.1
+  case (19) ! Evergreen needleleaf -> Z1
+    lookup_z0 = 1.5
+  case (20) ! Deciduous needleleaf -> Z3
+    lookup_z0 = 1.0
+  case (21) ! Mixed forest -> Z5
+    lookup_z0 = 1.0
+  case (22) ! Shrubs and interrupted woodlands -> Z10
+    lookup_z0 = 0.5
+  case default
+    error stop "Error: Invalid classnr value encountered, must be in range 11-22"
+  end select
 end function
 
 

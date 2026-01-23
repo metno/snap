@@ -1,52 +1,24 @@
-# SNAP: Servere Nuclear Accident Programme
-# Copyright (C) 1992-2017   Norwegian Meteorological Institute
-#
-# This file is part of SNAP. SNAP is free software: you can
-# redistribute it and/or modify it under the terms of the
-# GNU General Public License as published by the
-# Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-"""
-Created on Aug 9, 2016
-
-@author: heikok
-"""
-
-import subprocess
-from PyQt5 import QtWidgets
-from collections import deque
 import datetime
 import getpass
 import json
 import os
-import time
 import pwd
 import re
+import subprocess
 import sys
-from time import gmtime, strftime
+import time
 import traceback
 
+from PyQt5 import QtWidgets
 from PyQt5.QtCore import (
-    QProcess,
-    QProcessEnvironment,
     QThread,
-    QIODevice,
-    QThreadPool,
     pyqtSignal,
 )
-from Snappy.BrowserWidget import BrowserWidget
-from Snappy.EEMEP.Resources import Resources
-from Snappy.EEMEP.ModelRunner import ModelRunner
+
 import Snappy.Utils
+from Snappy.BrowserWidget import BrowserWidget
+from Snappy.EEMEP.ModelRunner import ModelRunner
+from Snappy.EEMEP.Resources import Resources
 
 
 def getFileOwner(filename):
@@ -62,11 +34,15 @@ class _UpdateThread(QThread):
     update_log_signal = pyqtSignal()
 
     def __init__(self, controller):
-        QThread.__init__(self)
+        super().__init__()
         self.controller = controller
 
     def __del__(self):
-        self.wait()
+        try:
+            if self.isRunning():
+                self.wait()
+        except RuntimeError:
+            pass  # C++ object already deleted
 
     def run(self):
         debug("run-status:" + self.controller.eemepRunning)
@@ -75,7 +51,7 @@ class _UpdateThread(QThread):
                 debug("running")
                 self.update_log_signal.emit()
                 self.sleep(3)
-        except:
+        except Exception:
             traceback.print_exc()
 
 
@@ -92,7 +68,7 @@ class SnapVolcanoWorker(QThread):
 
         dtnow = datetime.datetime.now()
         with open(os.path.join(self.outputdir, "snapVolcano.log"), "w") as fh:
-            process = subprocess.run(
+            subprocess.Popen(
                 [
                     "snapVolcano",
                     self.volcanofile,
@@ -102,8 +78,8 @@ class SnapVolcanoWorker(QThread):
                 stdout=fh,
                 stderr=fh,
                 cwd=self.outputdir,
+                start_new_session=True,  # Detach from parent process
             )
-            process.wait()
         self.finished.emit()
 
 
@@ -139,7 +115,6 @@ class Controller:
         # Write at most 30 lines to screen
         if len(self.lastLog) > max_lines:
             self.lastLog = self.lastLog[-max_lines:]
-        lines = None
 
         self.main.evaluate_javaScript(
             "updateEemepLog({0});".format(json.dumps("\n".join(self.lastLog)))
@@ -200,7 +175,7 @@ class Controller:
                         with open(os.path.join(dirpath, abortLogFile), "wt") as lh:
                             lh.write("aborted by {}".format(getpass.getuser()))
                         os.remove(os.path.join(dirpath, file))
-                    except:
+                    except Exception:
                         traceback.print_exc()
                         self.write_log("aborting {} failed!".format(dirpath))
         pass
@@ -296,12 +271,12 @@ class Controller:
                 startDT.year, startDT.month, startDT.day, 0, 0, 0
             )
         else:
-            errors += f'Cannot interpret startTime: {qDict["startTime"]}\n'
+            errors += f"Cannot interpret startTime: {qDict['startTime']}\n"
 
         try:
             runTime = int(qDict["runTime"])
-        except:
-            errors += f'Cannot interpret runTime: {qDict["runTime"]}\n'
+        except Exception:
+            errors += f"Cannot interpret runTime: {qDict['runTime']}\n"
 
         restart = "false"
         if "restart_file" in qDict and qDict["restart_file"].lower() == "true":
@@ -313,7 +288,6 @@ class Controller:
             type = qDict["volcanotype"]
         volcanoes = self.res.readVolcanoes()
         if qDict["volcano"] and volcanoes[qDict["volcano"]]:
-            tag = qDict["volcano"]
             volcano = re.sub(r"[^\w.-_]", "_", volcanoes[qDict["volcano"]]["NAME"])
             latf = volcanoes[qDict["volcano"]]["LATITUDE"]
             lonf = volcanoes[qDict["volcano"]]["LONGITUDE"]
@@ -328,7 +302,7 @@ class Controller:
                 latf = Snappy.Utils.parseLat(lat)
                 lonf = Snappy.Utils.parseLon(lon)
                 altf = float(alt)
-            except:
+            except Exception:
                 latf = 0.0
                 lonf = 0.0
                 altf = 0.0
@@ -365,8 +339,8 @@ class Controller:
         if qDict["cloudheight"]:
             try:
                 cheight = float(qDict["cloudheight"])
-            except:
-                errors += f'cannot interpret cloudheight (m): {qDict["cloudheight"]}\n'
+            except Exception:
+                errors += f"cannot interpret cloudheight (m): {qDict['cloudheight']}\n"
 
             if cheight % 1 != 0:
                 self.write_log(
@@ -377,7 +351,7 @@ class Controller:
                 # Interpret cloud height as above sea level
                 # - remove volcano vent altitude to get plume height
                 self.write_log(
-                    f"Ash cloud height measured from mean sea level: {cheight / 1000.:.2f} km"
+                    f"Ash cloud height measured from mean sea level: {cheight / 1000.0:.2f} km"
                 )
                 cheight = cheight - altf
 
@@ -386,7 +360,7 @@ class Controller:
                 pass
 
             else:
-                errors += f'cannot interpret cloud height datum: {qDict["cloudheight_datum"]:s}'
+                errors += f"cannot interpret cloud height datum: {qDict['cloudheight_datum']:s}"
 
             # rate in kg/s from Mastin et al. 2009, formular (1) and a volume (DRE) (m3) to
             # mass (kg) density of 2500kg/m3
@@ -398,10 +372,10 @@ class Controller:
         # Check negative ash cloud height
         if cheight <= 0:
             errors += (
-                f"Negative cloud height {cheight / 1000.:.2f}! Please check ash cloud."
+                f"Negative cloud height {cheight / 1000.0:.2f}! Please check ash cloud."
             )
         self.write_log(
-            f"Ash cloud height measured from volcano: {cheight / 1000.0:.2f} km, rate: {rate:.0f} kg/s, volcano height: {altf / 1000.:.2f} km."
+            f"Ash cloud height measured from volcano: {cheight / 1000.0:.2f} km, rate: {rate:.0f} kg/s, volcano height: {altf / 1000.0:.2f} km."
         )
 
         # Abort if errors
@@ -484,13 +458,13 @@ class Controller:
             )
             os.rename(
                 self.volcano_logfile,
-                f'{self.volcano_logfile}_{logdate.strftime("%Y%m%dT%H%M%S")}',
+                f"{self.volcano_logfile}_{logdate.strftime('%Y%m%dT%H%M%S')}",
             )
         try:
             # Mode x - open for exclusive creation, failing if the file already exists
             with open(self.volcano_file, "x") as fh:
                 fh.write(self.lastSourceTerm)
-        except FileExistsError as e:
+        except FileExistsError:
             owner = "unknown"
             if os.path.exists(self.volcano_file):
                 owner, gecos = getFileOwner(self.volcano_file)
