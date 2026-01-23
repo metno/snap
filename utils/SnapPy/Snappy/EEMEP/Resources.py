@@ -1,31 +1,8 @@
-# SNAP: Servere Nuclear Accident Programme
-# Copyright (C) 1992-2017   Norwegian Meteorological Institute
-#
-# This file is part of SNAP. SNAP is free software: you can
-# redistribute it and/or modify it under the terms of the
-# GNU General Public License as published by the
-# Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-"""
-Created on Aug 04, 2016
-
-@author: heikok
-"""
-
-from datetime import datetime, time, date, timedelta
 import math
 import os
 import re
 import sys
+from datetime import date, datetime, time, timedelta
 from time import gmtime, strftime
 
 from Snappy.ResourcesCommon import ResourcesCommon
@@ -178,7 +155,7 @@ class Resources(ResourcesCommon):
                     volcano["LONGITUDE"] *= -1
                 try:
                     volcano["ELEV"] = float(volcano["ELEV"])
-                except:
+                except Exception:
                     volcano["ELEV"] = 0.0
                 if volcano["NAME"] == "Unnamed":
                     volcano["NAME"] = "_"
@@ -279,19 +256,19 @@ class Resources(ResourcesCommon):
             vlevels = fh.read()
         return vlevels
 
-    def getECMeteorologyFiles(self, dtime: datetime, run_hours: int, fixed_run="best"):
+    def getECMeteorologyFiles(
+        self, dtime: datetime, run_hours: int, fixed_run="best"
+    ) -> list[list[tuple[str, int]]]:
         """Get available meteorology files starting with date of dtime, only full days
 
-        Keyword arguments:
-        dtime -- start time of model run
-        run_hours -- run length in hours, possibly negative
-        fixed_run -- string of form YYYY-MM-DD_HH giving a specific model-run
-
-        Returns: list with file-objects from day 0 to day+run_hours
-                 each file-object contains of a list of (subfiles, run-steps-per-day) tuples, e.g.
-                 [ [(file_day1, 3), (file_day1, 6), (file_day1, 8)],
-                   [(file_day2, 8)]
-                   [(file_day3, 8)]
+        :param dtime: start time of model run
+        :param run_hours: run length in hours, possibly negative
+        :param fixed_run: string of form YYYY-MM-DD_HH giving a specific model-run
+        :returns: list with file-objects from day 0 to day+run_hours.
+                  Each file-object contains of a list of (subfiles, run-steps-per-day) tuples, e.g.
+                  [ [(file_day1, 3), (file_day1, 6), (file_day1, 8)],
+                    [(file_day2, 8)],
+                    [(file_day3, 8)] ]
         """
         dates = []
 
@@ -310,7 +287,7 @@ class Resources(ResourcesCommon):
                     if offset == 0:
                         # limited hours for day 0
                         utc_hours = [(18, 3), (12, 5), (6, 7), (0, 8)]
-                    for (utc, hours) in utc_hours:
+                    for utc, hours in utc_hours:
                         file = self.EC_FILE_PATTERN.format(
                             dayoffset=offset,
                             UTC=utc,
@@ -325,7 +302,7 @@ class Resources(ResourcesCommon):
                         # check previous days 1 day offset forecast, in case complete data not available for today (i.e. 00 run missing)
                         last_day = curday + timedelta(days=-1)
                         utc_hours = [(18, 8), (12, 8), (6, 8), (0, 8)]
-                        for (utc, hours) in utc_hours:
+                        for utc, hours in utc_hours:
                             file = self.EC_FILE_PATTERN.format(
                                 dayoffset=1,
                                 UTC=utc,
@@ -346,9 +323,9 @@ class Resources(ResourcesCommon):
                     dates.append(relevant_dates[0])
         else:
             startday = datetime.strptime(fixed_run, "%Y-%m-%d_%H")
-            assert isinstance(
-                startday, datetime
-            ), "getECMeteorology: fixed_run must be 'best' or YYYY-MM-DD_HH"
+            assert isinstance(startday, datetime), (
+                "getECMeteorology: fixed_run must be 'best' or YYYY-MM-DD_HH"
+            )
             for offset in range(4):
                 file = self.EC_FILE_PATTERN.format(
                     dayoffset=offset,

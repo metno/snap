@@ -368,7 +368,8 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
     precip = 0.0
   endif
 
-  call read_drydep_required_fields(ncid, timepos, timeposm1, itimefi)
+  ! nhdiff_precip is timestep for accumulated fields, using it in case fluxes are accumulated
+  call read_drydep_required_fields(ncid, nhdiff_precip, timepos, timeposm1, itimefi)
 
 ! first time initialized data
   if (first_time_read) then
@@ -1174,15 +1175,39 @@ subroutine compute_vertical_coords(alev, blev, ptop)
   vhalf(nk) = vlevel(nk)
 end subroutine
 
-  subroutine read_drydep_required_fields(ncid, timepos, timeposm1, itimefi)
+
+  subroutine read_accumulated_field(ncid, nhdiff, varname, timepos, start, startm1, count, field)
+    use iso_fortran_env, only: real32
+    integer, intent(in) :: ncid, timepos, start(7), startm1(7), count(7)
+!> time difference in hours between two fields
+    integer, intent(in) :: nhdiff
+    character(len=*), intent(in) :: varname
+    real(real32), intent(out) :: field(:, :)
+
+    real, allocatable :: tmp1(:, :), tmp2(:, :)
+    allocate(tmp1, tmp2, MOLD=field)
+
+    if (timepos == 1) then
+      call nfcheckload(ncid, varname, start, count, field(:, :))
+    else
+      call nfcheckload(ncid, varname, start, count, tmp1(:, :))
+      call nfcheckload(ncid, varname, startm1, count, tmp2(:, :))
+      field(:,:) = tmp2 - tmp1
+    endif
+    field(:,:) =  field / (3600 * nhdiff)
+  end subroutine read_accumulated_field
+
+  subroutine read_drydep_required_fields(ncid, nhdiff, timepos, timeposm1, itimefi)
     USE ieee_arithmetic, only: ieee_is_nan
-    USE iso_fortran_env, only: real64
+    USE iso_fortran_env, only: real64, error_unit
     use datetime, only: datetime_t
     use snapmetML, only: met_params
-    use snapfldML, only: xflux, yflux, hflux, z0, t2m, vd_dep, ustar, &
+    ! TODO1: make xflux and yflux temporary variables in readfield
+    ! TODO2: apply changes in readfield_fi to readfield_nc
+    use snapfldML, only: surface_stress, hflux, z0, t2m, vd_dep, ustar, &
       ps2, raero, my, enspos
     use drydepml, only: drydep_precompute_meteo, drydep_precompute_particle, &
-      requires_extra_fields_to_be_read, classnr
+      requires_extra_fields_to_be_read, classnr, lookup_z0
     use ftestML, only: ftest
     use snapdebug, only: idebug
     use snapdimML, only: nx, ny
@@ -1191,15 +1216,15 @@ end subroutine
 
 
     integer, intent(in) :: ncid
-    integer, intent(in) :: timepos
-    integer, intent(in) :: timeposm1
+!> time difference in hours between two fields
+    integer, intent(in) :: nhdiff
+    integer, intent(in) :: timepos, timeposm1
     type(datetime_t), intent(in) :: itimefi
 
     integer :: start(7), startm1(7)
     integer :: count(7)
+    real, allocatable :: xflux(:, :), yflux(:, :)
     integer :: i, mm
-
-    real, allocatable :: tmp1(:, :), tmp2(:, :)
 
     if (.not.requires_extra_fields_to_be_read()) then
       return
@@ -1210,39 +1235,48 @@ end subroutine
     call calc_2d_start_length(startm1, count, nx, ny, -1, &
           enspos, timeposm1, met_params%has_dummy_dim)
 
-    allocate(tmp1(nx,ny), tmp2(nx,ny))
 
-    ! Fluxes are integrated: Deaccumulate
-    if (timepos == 1) then
-      call nfcheckload(ncid, met_params%xflux, start, count, xflux(:,:))
-      call nfcheckload(ncid, met_params%yflux, start, count, yflux(:,:))
+    if (met_params%surface_stress /= "") then
+      ! Load surface_stress
+      call nfcheckload(ncid, met_params%surface_stress, start, count, surface_stress(:, :))
+    else if (met_params%xflux == "" .OR. met_params%yflux == "") then
+      ! Either surface_stress or xflux and yflux needs to be defined
+      error stop "Assertion error: Either surface_stress or xflux and yflux needs to be defined in the meteorological parameters"
     else
-      call nfcheckload(ncid, met_params%xflux, start, count, tmp1(:,:))
-      call nfcheckload(ncid, met_params%xflux, startm1, count, tmp2(:,:))
-      xflux(:,:) = tmp2 - tmp1
-      call nfcheckload(ncid, met_params%yflux, start, count, tmp1(:,:))
-      call nfcheckload(ncid, met_params%yflux, startm1, count, tmp2(:,:))
-      yflux(:,:) = tmp2 - tmp1
-    endif
-    ! TODO: Normalise by difference between intervals
-    xflux(:,:) =  xflux / 3600
-    yflux(:,:) =  yflux / 3600
+      allocate(xflux, yflux, MOLD=ps2)
+      ! Load and combine surface stress/momentum flux components
+      if (met_params%xflux_is_accumulated) then
+        call read_accumulated_field(ncid, nhdiff, met_params%xflux, timepos, start, startm1, count, xflux(:,:))
+      else
+        call nfcheckload(ncid, met_params%xflux, start, count, xflux(:,:))
+      endif
 
-    if (timepos == 1) then
+      if (met_params%yflux_is_accumulated) then
+        call read_accumulated_field(ncid, nhdiff, met_params%yflux, timepos, start, startm1, count, yflux(:,:))
+      else
+        call nfcheckload(ncid, met_params%yflux, start, count, yflux(:,:))
+      endif
+
+      surface_stress = hypot(yflux, xflux)
+    endif
+
+    if (met_params%hflux_is_accumulated) then
+      call read_accumulated_field(ncid, nhdiff, met_params%hflux, timepos, start, startm1, count, hflux(:,:))
+    else
       call nfcheckload(ncid, met_params%hflux, start, count, hflux(:,:))
-    else
-      call nfcheckload(ncid, met_params%hflux, start, count, tmp1(:,:))
-      call nfcheckload(ncid, met_params%hflux, start, count, tmp2(:,:))
-      hflux(:,:) = tmp2 - tmp1
     endif
-    ! TODO: Normalise by difference between intervals
-    hflux(:,:) = -hflux / 3600 ! Follow conventions for up/down
+    hflux(:,:) = -hflux ! Follow conventions for up/down
 
-    call nfcheckload(ncid, met_params%z0, start, count, z0(:, :))
+    if (met_params%z0 == "") then
+      ! Load z0 from land use data if not defined in meteorology
+      z0(:,:) = lookup_z0(classnr, ustar)
+    else
+      call nfcheckload(ncid, met_params%z0, start, count, z0(:, :))
+    endif
 
     call nfcheckload(ncid, met_params%t2m, start, count, t2m(:, :))
 
-    call drydep_precompute_meteo(ps2*100., t2m, yflux, xflux, z0, hflux, &
+    call drydep_precompute_meteo(ps2*100., t2m, surface_stress, z0, hflux, &
       ustar, raero, my)
     do i=1,ncomp
       mm = run_comp(i)%to_defined

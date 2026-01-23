@@ -316,7 +316,8 @@ contains
       precip = 0.0
     endif
 
-    call read_drydep_required_fields(fio, timepos, timeposm1, nr, itimefi)
+    ! nhdiff_precip is timestep for accumulated fields, using it in case fluxes are accumulated
+    call read_drydep_required_fields(fio, nhdiff_precip, timepos, timeposm1, nr, itimefi)
 
     call check(fio%close(), "close fio")
 
@@ -893,72 +894,107 @@ contains
     write (iulog, *) "reading "//trim(varname)//", min, max: ", minval(zfield), maxval(zfield)
   end subroutine fi_checkload_intern
 
-  subroutine read_drydep_required_fields(fio, timepos, timeposm1, nr, itimefi)
+
+  subroutine read_accumulated_field(fio, nhdiff, timepos, timeposm1, varname, units, field, nr)
+    TYPE(FimexIO), intent(inout) :: fio
+!> time difference in hours between two fields
+    integer, intent(in) :: nhdiff
+    character(len=*), intent(in) :: varname, units
+    integer, intent(in) :: timepos, timeposm1, nr
+    real(real32), intent(out) :: field(:, :)
+
+    real, allocatable :: tmp1(:, :), tmp2(:, :)
+    allocate(tmp1, tmp2, MOLD=field)
+
+    if (timepos == 1) then
+      call fi_checkload(fio, varname, units, field(:, :), nt=timepos, nr=nr)
+    else
+      call fi_checkload(fio, varname, units, tmp1(:, :), nt=timeposm1, nr=nr)
+      call fi_checkload(fio, varname, units, tmp2(:, :), nt=timepos, nr=nr)
+      field(:,:) = tmp2 - tmp1
+    endif
+    field(:,:) =  field / (3600 * nhdiff)
+  end subroutine read_accumulated_field
+
+
+  subroutine read_drydep_required_fields(fio, nhdiff, timepos, timeposm1, nr, itimefi)
     USE ieee_arithmetic, only: ieee_is_nan
-    USE iso_fortran_env, only: real64
     USE snapmetML, only: met_params, &
       temp_units, downward_momentum_flux_units, surface_roughness_length_units, &
-      surface_heat_flux_units
+      accum_surface_heat_flux_units, surface_heat_flux_units
     use drydepml, only: drydep_precompute_meteo, drydep_precompute_particle, &
-      requires_extra_fields_to_be_read, classnr
+      requires_extra_fields_to_be_read, classnr, lookup_z0
     use ftestML, only: ftest
     use snapdebug, only: idebug
 
     use snapparML, only: ncomp, run_comp, def_comp
-    use snapfldML, only: ps2, vd_dep, xflux, yflux, hflux, z0, t2m, &
+    use snapfldML, only: ps2, vd_dep, surface_stress, hflux, z0, t2m, &
       ustar, raero, my
     use snaptimers, only: metcalc_timer
 
     use datetime, only: datetime_t
     type(FimexIO), intent(inout) :: fio
+!> time difference in hours between two fields
+    integer, intent(in) :: nhdiff
     integer, intent(in) :: timepos, timeposm1
     integer, intent(in) :: nr
     type(datetime_t), intent(in) :: itimefi
 
-    real, allocatable :: tmp1(:, :), tmp2(:, :)
+    real, allocatable :: xflux(:, :), yflux(:, :)
     integer :: i, mm
 
     if (.not.requires_extra_fields_to_be_read()) then
       return
     endif
 
-    allocate(tmp1, tmp2, MOLD=ps2)
-
-
-    ! Fluxes are integrated: Deaccumulate
-    if (timepos == 1) then
-      call fi_checkload(fio, met_params%xflux, downward_momentum_flux_units, xflux(:, :), nt=timepos, nr=nr)
-      call fi_checkload(fio, met_params%yflux, downward_momentum_flux_units, yflux(:, :), nt=timepos, nr=nr)
+    if (met_params%surface_stress /= "") then
+      ! Load surface_stress
+      call fi_checkload(fio, met_params%surface_stress, downward_momentum_flux_units, surface_stress(:, :), nt=timepos, nr=nr)
+    else if (met_params%xflux == "" .OR. met_params%yflux == "") then
+      ! Either surface_stress or xflux and yflux needs to be defined
+      error stop "Assertion error: Either surface_stress or xflux and yflux needs to be defined in the meteorological parameters"
     else
-      call fi_checkload(fio, met_params%xflux, downward_momentum_flux_units, tmp1(:, :), nt=timeposm1, nr=nr)
-      call fi_checkload(fio, met_params%xflux, downward_momentum_flux_units, tmp2(:, :), nt=timepos, nr=nr)
-      xflux(:,:) = tmp2 - tmp1
+      allocate(xflux, yflux, MOLD=ps2)
+      ! Load and combine surface stress/momentum flux components
+      if (met_params%xflux_is_accumulated) then
+        ! Note: Arome files have the wrong units for downward_momentum_flux_units, missing a unit of time
+        call read_accumulated_field(fio, nhdiff, timepos, timeposm1, met_params%xflux, downward_momentum_flux_units, xflux(:, :), &
+          nr=nr)
+      else
+        call fi_checkload(fio, met_params%xflux, downward_momentum_flux_units, xflux(:, :), nt=timepos, &
+          nr=nr)
+      endif
 
-      call fi_checkload(fio, met_params%yflux, downward_momentum_flux_units, tmp1(:, :), nt=timeposm1, nr=nr)
-      call fi_checkload(fio, met_params%yflux, downward_momentum_flux_units, tmp2(:, :), nt=timepos, nr=nr)
-      yflux(:,:) = tmp2 - tmp1
+      if (met_params%yflux_is_accumulated) then
+        ! Note: Arome files have the wrong units for downward_momentum_flux_units, missing a unit of time
+        call read_accumulated_field(fio, nhdiff, timepos, timeposm1, met_params%yflux, downward_momentum_flux_units, yflux(:, :), &
+          nr=nr)
+      else
+        call fi_checkload(fio, met_params%yflux, downward_momentum_flux_units, yflux(:, :), nt=timepos, nr=nr)
+      endif
+
+      surface_stress = hypot(yflux, xflux)
     endif
-    ! TODO: Normalise by difference between intervals
-    xflux(:,:) =  xflux / 3600
-    yflux(:,:) =  yflux / 3600
 
-    if (timepos == 1) then
+    if (met_params%hflux_is_accumulated) then
+      call read_accumulated_field(fio, nhdiff, timepos, timeposm1, met_params%hflux, accum_surface_heat_flux_units, hflux(:, :), &
+        nr=nr)
+    else
       call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, hflux(:, :), nt=timepos, nr=nr)
-    else
-      call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, tmp1(:, :), nt=timeposm1, nr=nr)
-      call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, tmp2(:, :), nt=timepos, nr=nr)
-      hflux(:,:) = tmp2 - tmp1
     endif
-    ! TODO: Normalise by difference between intervals
-    hflux(:,:) = -hflux / 3600 ! Follow conventions for up/down
+    hflux(:,:) = -hflux ! Follow conventions for up/down
 
-
-    call fi_checkload(fio, met_params%z0, surface_roughness_length_units, z0(:, :), nt=timepos, nr=nr)
+    if (met_params%z0 == "") then
+      ! Load z0 from land use data if not defined in meteorology
+      z0(:,:) = lookup_z0(classnr, ustar)
+    else
+      call fi_checkload(fio, met_params%z0, surface_roughness_length_units, z0(:, :), nt=timepos, nr=nr)
+    endif
 
     call fi_checkload(fio, met_params%t2m, temp_units, t2m(:, :), nt=timepos, nr=nr)
 
     call metcalc_timer%start()
-    call drydep_precompute_meteo(ps2*100., t2m, yflux, xflux, z0, hflux, &
+    call drydep_precompute_meteo(ps2*100., t2m, surface_stress, z0, hflux, &
       ustar, raero, my)
     !$OMP PARALLEL DO PRIVATE(i,mm)
     do i=1,ncomp

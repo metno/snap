@@ -11,10 +11,12 @@ include ../common/snap.mk
 .EXPORT_ALL_VARIABLES:
 
 TESTFILES = snap_testdata/meteo20200415_00_ringhals.nc \
-	    snap_testdata/meteo20200415_01_ringhals.nc \
-		snap_testdata/meps_det_2_5km_20251125T06Z_ringhals.nc \
-	    snap_testdata/snap_ecemep_expected5.nc \
-	    snap_testdata/snap_meps_interpolated_expected_20251125.nc
+	snap_testdata/meteo20200415_01_ringhals.nc \
+	snap_testdata/meteo20260113_00_sellafield.nc \
+	snap_testdata/meps_det_2_5km_20251125T06Z_ringhals.nc \
+	snap_testdata/snap_ecemep_expected5.nc \
+	snap_testdata/snap_meps_interpolated_expected_20251125.nc \
+	snap_testdata/snap_ecemep_emerson_expected.nc
 
 install:
 
