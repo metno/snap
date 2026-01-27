@@ -1,7 +1,7 @@
 # Configuring SNAP with ECMWF ERA5 meteorological data
+## Nuclear accident/detonation
 
-This is a rough setup to use SNAP with freely available meteorological data from ECMWF.
- *The authors are not working operationally with Era5 data, so this is rather a proof of concept than a full operational setup. In particularly precipitation and vertical levels have not been tuned to provide best results for the region of interest.*
+This is a rough setup to use SNAP with freely available meteorological data from ECMWF. This documentation pertains to both nuclear power plant accidents and nuclear detonations.
 
 ## Prerequisites
 
@@ -11,7 +11,7 @@ This guide uses fimex: https://github.com/metno/fimex for conversion of grib to 
 
 All input files can be found in the snap repository under [src/naccident/examples/era5/](./)
 
-## Downloading data via grib-filter
+## Downloading data via CDS
 
 The CDS servers allow downloading data for regional subsets, which reduces the download amount largely. Using `cdsapi`, you can download data from the [complete era5 global atmospheric reanalysis](https://cds.climate.copernicus.eu/datasets/reanalysis-era5-complete?tab=d_download).
 
@@ -88,7 +88,7 @@ cat *.grib > all.grib
 
 ```
 
-*It is currently not possible to download a region at the datum-border 180deg to -180deg in the pacific ocean. This requires downloading the complete globe and re-interpolation of the region.*
+Note: it is currently not possible to run a polar region in Snap
 
 ### Requesting other parameters
 Some parameters are only available as analysis data (`"type": "an"` above, see [the parameters list](https://confluence.ecmwf.int/display/CKB/ERA5%3A+data+documentation#ERA5:datadocumentation-Table12) ). This data is stored individually by hour, and therefore `"step"` in the api requests is replaced with a list of hours in `"time"`. For the example above, this would become `"time": "06/07/08/09/10/11/12/13/14/15/16/17/18/19"`or `"time": "06/to/19/by/1"`for short.
@@ -103,15 +103,17 @@ fimex --input.file=all.grib --input.config=cdmGribReaderConfigEC_Era5.xml --outp
 
 ## Run the snap-model
 
-The files [snap.input.bomb](./snap.input.bomb) for bomb detonation and [snap.input.NPP](./snap.input.NPP) for nuclear accidents have been provided to test the freshly downloaded data in `era5_${DATE}T${HOUR}Z.nc`. Copy the relevant file to `snap.input` and change the `FIELD.INPUT=`, `TIME.START=` and `SET_RELEASE.POS= P=` to your needs, then run the model:
+The files [snap_bomb.input](./snap_bomb.input) for bomb detonation and [snap.input.NPP](./snap_NPP.input) for nuclear accidents have been provided to test the freshly downloaded data in `era5_${DATE}T${HOUR}Z.nc`. In the relevant file, change the `FIELD.INPUT=`, `TIME.START=` and `SET_RELEASE.POS= P=` to your needs, then run the model:
 
 ```sh
-bsnap_naccident snap.input
+bsnap_naccident snap_[TYPE].input
 ```
 
 In approximately 5min, the snap.nc file is generated and can be seen with your preferred netcdf-viewer.
 
 *It is possible to declare several meteorological input file (here allVInt.nc) with the same area/resolution in the snap.input file. SNAP will automatically use the newest timesteps available.*
+
+The nuclear detonation parameters for cloud height and particles size distribution are for a stabilized cloud after 10min of roughly for a 10 kT detonation.  The listed Bq are just H+1 model particles, with 2^19 particles emitted per kT, conversion to doserates can be achieve by a factor of `0.000000012 mr/hr/Bq` equivalent to kdfoc3 `950mR/hr/miles^2`. No particle decay has been added to these runs, please add `t^-1.2` if decay should be considered.
 
 
 ## Run whole procedure
