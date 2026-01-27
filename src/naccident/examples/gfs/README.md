@@ -4,7 +4,7 @@ This is a rough setup to use SNAP with freely available meteorological data from
 
 ## Prerequisites
 
-This guide uses fimex: https://github.com/metno/fimex for conversion of grib to netcdf and for the conversion of pressure-levels to sigma-hybrid pressure-levesl.
+This guide uses fimex: https://github.com/metno/fimex for conversion of grib to netcdf and for the conversion of pressure-levels to sigma-hybrid pressure-levels.
 
 All input files can be found in the snap repository und [src/naccident/examples/gfs/](./)
 
@@ -12,7 +12,7 @@ All input files can be found in the snap repository und [src/naccident/examples/
 
 The NOMADS servers allow downloading data for regional subsets, which reduces the download amount largely: https://nomads.ncep.noaa.gov/ Select the grib_filter option of the desired dataset and then the desired model-run, i.e. 2019-12-02 00UTC https://nomads.ncep.noaa.gov/cgi-bin/filter_gfs_0p25.pl?dir=%2Fgfs.20191202%2F00
 
-To download the first 16 timesteps of this model and ar region from [-10,50] longitude and [50,80] latitude, use a script like:
+To download the first 16 timesteps of this model and a region from [-10,50] longitude and [50,80] latitude, use a script like:
 
 ```sh
 # timesteps
