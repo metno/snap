@@ -15,7 +15,7 @@ program testDryDep
   integer(kind=1) :: classnr
   real(4) :: ps2, t2m, yflux, xflux, surface_stress, z0, hflux, &
         vd_dep
-  real(kind=real64) :: ustar, raero, my
+  real(kind=real64) :: ustar, raero, my, nu
 
   ncomp = 2
   allocate(run_comp(ncomp))
@@ -60,10 +60,10 @@ program testDryDep
   hflux = 100.0 ! W hr/m2
   classnr = 21 ! class number 11=sea, 21=mixed forest
   call drydep_precompute_meteo(ps2*100., t2m, surface_stress, z0, hflux, &
-    ustar, raero, my)
+    ustar, raero, my, nu)
   ! Test dry-dep velocity for Cs137
   call drydep_precompute_particle(ps2*100., t2m, &
-    ustar, raero, my, itimefi, &
+    ustar, raero, my, nu, itimefi, &
     def_comp(1), classnr, vd_dep)
   if (abs(vd_dep - 1.5790e-2) .gt. 1.0e-5) then
     print *, "Error in dry-dep velocity for gas phase Cs137: ", vd_dep, abs(vd_dep - 1.5790e-2)
@@ -71,7 +71,7 @@ program testDryDep
   end if
   ! iodine
   call drydep_precompute_particle(ps2*100., t2m, &
-    ustar, raero, my, itimefi, &
+    ustar, raero, my, nu, itimefi, &
     def_comp(2), classnr, vd_dep)
   if (abs(vd_dep - 0.008) .gt. 1.0e-4) then
     print *, "Error in dry-dep velocity for gas phase I131: ", vd_dep
