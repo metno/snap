@@ -34,7 +34,7 @@ module vgravtablesML
   real, parameter, private :: pincrvg = 1200./float(numpresvg-1)
   real, parameter, private :: pbasevg = 0. - pincrvg
 
-  public :: vgravtables_init, vgrav, vgrav_iter ! vgrav_iter only exposed for testing
+  public :: vgravtables_init, vgrav, vgrav_iter, visc, cun ! vgrav_iter only exposed for testing
 
   contains
 
@@ -132,7 +132,7 @@ end subroutine
 !>  function for calculating viscosity of the air depending on
 !>  temperature. According to RAFF (1999), Kyle (1991).
 !>
-!>  etha(T) = 1.72e-2*(393/(T+120))*(T/273)**1.5
+!>  etha(T) = 1.72e-4*(393/(T+120))*(T/273)**1.5
 !>
 !>  etha         - viscosity of the air (g cm-1 s-1)
 !>
@@ -166,7 +166,7 @@ end subroutine
 ! c    real c        ! Cunningham factor
     real, parameter :: a1=1.257,a2=0.40,a3=0.55 ! constants
 ! real :: dp_fac    ! conversion factor micro meters -> cm
-    real, parameter :: l=0.0653        ! free path of air molecules
+    real, parameter :: l=0.0653        ! free path of air molecules [micro meters]
 
     cun=1.0+(2.0*l/dp)*(a1+a2*exp(-a3*dp/l))
   end function cun
