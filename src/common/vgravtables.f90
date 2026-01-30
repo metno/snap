@@ -262,9 +262,9 @@ end function vgrav_iter
     real, intent(in) :: p !< atmospheric presure (hPa)
     real, intent(in) :: t !< air absolute temperature (K)
 
-    real, parameter :: g = 981.0 ! acceleration of gravity
+    real, parameter :: g = 981.0 ! acceleration of gravity (cm/s)
 
-    vgrav_zanetti=(dp*0.0001)**2*g*(rp-roa(p,t))*cun(dp)/(18.0*visc(t))
+    vgrav_zanetti=(dp*0.0001)**2*g*(rp-roa(p,t))*cun(dp)/(18.0*visc(t))  ! (cm/s)
 
   end function vgrav_zanetti
 
