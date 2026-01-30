@@ -176,5 +176,5 @@ module snapfldML
   real, allocatable, save, public :: vd_dep(:, :, :)
 
   real, allocatable, save, public :: surface_stress(:, :), hflux(:, :), z0(:, :), t2m(:, :)
-  real(real64), allocatable, save, public :: ustar(:,:), raero(:,:), my(:,:)
+  real(real64), allocatable, save, public :: ustar(:,:), raero(:,:), my(:,:), nu(:,:)
 end module snapfldML

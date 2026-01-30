@@ -1205,7 +1205,7 @@ end subroutine
     ! TODO1: make xflux and yflux temporary variables in readfield
     ! TODO2: apply changes in readfield_fi to readfield_nc
     use snapfldML, only: surface_stress, hflux, z0, t2m, vd_dep, ustar, &
-      ps2, raero, my, enspos
+      ps2, raero, my, nu, enspos
     use drydepml, only: drydep_precompute_meteo, drydep_precompute_particle, &
       requires_extra_fields_to_be_read, classnr, lookup_z0
     use ftestML, only: ftest
@@ -1269,7 +1269,7 @@ end subroutine
 
     if (met_params%z0 == "") then
       ! Load z0 from land use data if not defined in meteorology
-      z0(:,:) = lookup_z0(classnr, ustar)
+      z0(:,:) = lookup_z0(classnr, ustar, nu)
     else
       call nfcheckload(ncid, met_params%z0, start, count, z0(:, :))
     endif
@@ -1277,13 +1277,13 @@ end subroutine
     call nfcheckload(ncid, met_params%t2m, start, count, t2m(:, :))
 
     call drydep_precompute_meteo(ps2*100., t2m, surface_stress, z0, hflux, &
-      ustar, raero, my)
+      ustar, raero, my, nu)
     do i=1,ncomp
       mm = run_comp(i)%to_defined
 
       if (def_comp(mm)%kdrydep == 1) then
         call drydep_precompute_particle(ps2*100., t2m, &
-          ustar, raero, my, itimefi, &
+          ustar, raero, my, nu, itimefi, &
           def_comp(mm), classnr, vd_dep(:,:,i))
         if (idebug == 1) then
           call ftest('vd_'//trim(def_comp(mm)%compname), vd_dep(:,:,i))
