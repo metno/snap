@@ -12,10 +12,10 @@ from PyQt5.QtCore import (
     QThreadPool,
 )
 
-import Snappy.Utils
 from Snappy.BrowserWidget import BrowserWidget
 from Snappy.Resources import Resources
 from Snappy.SnapController import SnapRun, SnapUpdateThread
+from Snappy.Utils import parseLat, parseLon
 
 
 def debug(*objs):
@@ -137,8 +137,8 @@ class SnapControllerInverse:
             lat = qDict[f"lat{i}"]
             lon = qDict[f"lon{i}"]
             try:
-                latf = Snappy.Utils.parseLat(lat)
-                lonf = Snappy.Utils.parseLon(lon)
+                latf = parseLat(lat)
+                lonf = parseLon(lon)
             except ValueError as ve:
                 latf = 0.0
                 lonf = 0.0
