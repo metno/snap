@@ -1,54 +1,37 @@
-# SNAP: Servere Nuclear Accident Programme
-# Copyright (C) 1992-2017   Norwegian Meteorological Institute
-#
-# This file is part of SNAP. SNAP is free software: you can
-# redistribute it and/or modify it under the terms of the
-# GNU General Public License as published by the
-# Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
 import datetime
 import html
 import json
+import logging
 import os
 import re
 import sys
-from time import gmtime, strftime
 import traceback
 import urllib.parse
+from time import gmtime, strftime
 
-from PyQt5 import QtWidgets, QtGui
+from PyQt5 import QtWidgets
 from PyQt5.QtCore import (
+    QIODevice,
     QProcess,
     QProcessEnvironment,
     QThread,
-    QIODevice,
     QThreadPool,
     pyqtSignal,
 )
+
+import Snappy.Utils
 from Snappy.BrowserWidget import BrowserWidget
 from Snappy.EcMeteorologyCalculator import EcMeteorologyCalculator
 from Snappy.ICONMeteorologyCalculator import ICONMeteorologyCalculator
+from Snappy.MailImages import sendPngsFromDir
 from Snappy.MeteorologyCalculator import (
     MeteoDataNotAvailableException,
     MeteorologyCalculator,
 )
-from Snappy.MailImages import sendPngsFromDir
-from Snappy.Resources import Resources, MetModel
-from Snappy.SnapInputBomb import SnapInputBomb, ExplosionType
-import Snappy.Utils
+from Snappy.Resources import MetModel, Resources
+from Snappy.SnapInputBomb import ExplosionType, SnapInputBomb
 
-
-def debug(*objs):
-    print("DEBUG: ", *objs, file=sys.stderr)
+logger = logging.getLogger(__name__)
 
 
 class SnapUpdateThread(QThread):
@@ -59,11 +42,11 @@ class SnapUpdateThread(QThread):
         self.snap_controller = snapController
 
     def run(self):
-        debug("run-status:" + self.snap_controller.snapRunning)
+        logger.info("run-status:" + self.snap_controller.snapRunning)
         try:
             while self.snap_controller.snapRunning == "running":
-                debug("running")
-                debug(
+                logger.info("running")
+                logger.info(
                     tail(
                         os.path.join(
                             self.snap_controller.lastOutputDir, "snap.log.out"
@@ -92,7 +75,7 @@ class SnapRun:
             QIODevice.Append,
         )
         env = QProcessEnvironment.systemEnvironment()
-        env.insert("OMP_NUM_THREADS", "1")
+        env.insert("OMP_NUM_THREADS", "4")
         proc.setProcessEnvironment(env)
         return proc
 
@@ -101,15 +84,17 @@ class SnapRun:
         self.proc = SnapRun.getQProcess(snap_controller)
 
     def start(self):
-        debug("outputdir: " + self.snap_controller.lastOutputDir)
+        logger.info("outputdir: " + self.snap_controller.lastOutputDir)
         #         self.proc.start('/home/heikok/sleepLong.sh', ['snap.input'])
         self.proc.start("bsnap_naccident", ["snap.input"])
         if self.proc.waitForStarted(3000):
             self.snap_controller.snapRunning = "running"
-            debug("started: " + self.snap_controller.snapRunning)
+            logger.info("started: " + self.snap_controller.snapRunning)
         else:
-            self.proc.terminate() # might be dead anyway?
-            self.snap_controller.write_log("couldn't start bsnap_naccident snap.input in 3s")
+            self.proc.terminate()  # might be dead anyway?
+            self.snap_controller.write_log(
+                "couldn't start bsnap_naccident snap.input in 3s"
+            )
 
 
 class SnapController:
@@ -124,22 +109,22 @@ class SnapController:
         self.lastQDict = {}
 
     def write_log(self, txt: str):
-        debug(txt)
-        self.main.evaluate_javaScript(
-            "updateSnapLog({0});".format(json.dumps(html.escape(txt)))
-        )
+        logger.info(txt)
+        self.main.evaluate_javaScript(f"updateSnapLog({json.dumps(html.escape(txt))});")
 
     def _snap_finished(self, exit_code, exit_status):
-        debug(f"finished with code {exit_code}, status {exit_status}")
+        logger.info(f"finished with code {exit_code}, status {exit_status}")
         self.snapRunning = "finished"
         self.results_add_toa()
         self.plot_results()
         with open(os.path.join(self.lastOutputDir, "snap.log.out"), "a") as logFile:
             if exit_code != 0:
-                logFile.write(f"bsnap finished with exit_code {exit_code}, status {exit_status}\n")
+                logFile.write(
+                    f"bsnap finished with exit_code {exit_code}, status {exit_status}\n"
+                )
             logFile.write(
                 f"All work finished. Please open diana to see results.\nResults in {self.lastOutputDir}\n"
-                )
+            )
         self.update_log()
 
     def _met_calculate_and_run(self):
@@ -157,14 +142,12 @@ class SnapController:
             self._met_finished_run_snap()
 
     def _met_finished_run_snap(self):
-        debug("ec_finished")
+        logger.info("ec_finished")
         self.snapRunning = "finished"  # quit update-thread
         if self.metcalc.must_calc():
             with open(os.path.join(self.lastOutputDir, "snap.log.out"), "a") as logFile:
                 logFile.write(
-                    "Meteorology not generated.\nErrors in {}\n".format(
-                        self.lastOutputDir
-                    )
+                    f"Meteorology not generated.\nErrors in {self.lastOutputDir}\n"
                 )
             self.update_log()
             return
@@ -189,7 +172,7 @@ class SnapController:
     def plot_results(self):
         match = re.search(r"(\d*\.\d+)", self.lastQDict["dianaversion"])
         if match:
-            diVersion = "-{}".format(match.group(1))
+            diVersion = f"-{match.group(1)}"
         else:
             diVersion = ""
 
@@ -222,7 +205,7 @@ m=SNAP.current t=fimex format=netcdf f={self.lastOutputDir}/snap.nc
 
             hours = ",".join(
                 [
-                    "{x} | {y}".format(x=x, y=x + 3)
+                    f"{x} | {x + 3}"
                     for x in range(0, abs(int(self.lastQDict["runTime"])), 3)
                 ]
             )
@@ -250,18 +233,14 @@ m=SNAP.current t=fimex format=netcdf f={self.lastOutputDir}/snap.nc
             proc.setStandardErrorFile(
                 os.path.join(self.lastOutputDir, "snap.log.out"), QIODevice.Append
             )
-            proc.start(
-                "bdiana{}".format(diVersion), ["-i", dianaIn, "-s", "diana.setup"]
-            )
+            proc.start(f"bdiana{diVersion}", ["-i", dianaIn, "-s", "diana.setup"])
             proc.waitForFinished(-1)
             with open(os.path.join(self.lastOutputDir, "snap.log.out"), "a") as lfh:
                 lfh.write("plotting finished\n")
 
             sendPngsFromDir(
-                "SNAP calculation: {}".format(self.lastTag),
-                "Finished in {wdir}. See attached file(s).\n SourceTerm: \n{sourceTerm}".format(
-                    wdir=self.lastOutputDir, sourceTerm=self.lastSourceTerm
-                ),
+                f"SNAP calculation: {self.lastTag}",
+                f"Finished in {self.lastOutputDir}. See attached file(s).\n SourceTerm: \n{self.lastSourceTerm}",
                 prod_dir,
             )
 
@@ -273,24 +252,20 @@ m=SNAP.current t=fimex format=netcdf f={self.lastOutputDir}/snap.nc
             or lonf >= self.res.ecDefaultDomainStartX + self.res.ecDomainWidth
         ):
             self.write_log(
-                "(lat,lon) = ({lat},{lon}) outside domain.\nTry global EC meteorology under advanced.".format(
-                    lat=latf, lon=lonf
-                )
+                f"(lat,lon) = ({latf},{lonf}) outside domain.\nTry global EC meteorology under advanced."
             )
             return False
         return True
 
     def _meps25DomainCheck(self, lonf, latf):
         if latf <= 53.0 or latf >= 72.0 or lonf <= 0.0 or lonf >= 36.0:
-            self.write_log(
-                "(lat,lon) = ({lat},{lon}) outside domain for meps.\n".format(
-                    lat=latf, lon=lonf
-                )
-            )
+            self.write_log(f"(lat,lon) = ({latf},{lonf}) outside domain for meps.\n")
             return False
         return True
 
-    def get_bomb_release(self, qDict, offset_minutes: int) -> tuple[str, str | None, str]:
+    def get_bomb_release(
+        self, qDict, offset_minutes: int
+    ) -> tuple[str, str | None, str]:
         """get the bomb-release terms in snap formats
 
         :param qDict: qDict input parameters
@@ -315,12 +290,12 @@ m=SNAP.current t=fimex format=netcdf f={self.lastOutputDir}/snap.nc
         errors = ""
         for tag in ("releaseTime", "radius", "lowerHeight", "upperHeight"):
             if not re.search(r"\d+", qDict[tag]):
-                errors += "Cannot interprete {}: {}".format(tag, qDict[tag])
+                errors += f"Cannot interprete {tag}: {qDict[tag]}\n"
 
         source_term = f"""
 MAX.PARTICLES.PER.RELEASE= 2000
 TIME.RELEASE.PROFILE.STEPS
-RELEASE.HOUR= {offset_minutes/60:.2f}, {int(qDict["releaseTime"])+offset_minutes/60:.2f}
+RELEASE.HOUR= {offset_minutes / 60:.2f}, {int(qDict["releaseTime"]) + offset_minutes / 60:.2f}
 RELEASE.RADIUS.M= {qDict["radius"]}, {qDict["radius"]}
 RELEASE.LOWER.M= {qDict["lowerHeight"]}, {qDict["lowerHeight"]}
 RELEASE.UPPER.M= {qDict["upperHeight"]}, {qDict["upperHeight"]}
@@ -347,9 +322,9 @@ RELEASE.UPPER.M= {qDict["upperHeight"]}, {qDict["upperHeight"]}
     def run_snap_query(self, qDict):
         # make sure all files are rw for everybody (for later deletion)
         os.umask(0)
-        debug("run_snap_query")
+        logger.info("run_snap_query")
         for key, value in qDict.items():
-            print(str.format("{0} => {1}", key, value))
+            print(f"{key} => {value}")
         errors = ""
         match = re.search(
             r"(\d{4})-(\d{2})-(\d{2})[\+\s]+(\d{1,2})", qDict["startTime"]
@@ -363,10 +338,10 @@ RELEASE.UPPER.M= {qDict["upperHeight"]}, {qDict["upperHeight"]}
             ):
                 offset_minutes = int(match_min.group(1))
         else:
-            errors += "Cannot interprete startTime: {0}\n".format(qDict["startTime"])
+            errors += f"Cannot interprete startTime: {qDict['startTime']}\n"
 
         if not re.search(r"-?\d+(.\d+)?", qDict["runTime"]):
-            errors += "Cannot interprete runTime: {}\n".format(qDict["runTime"])
+            errors += f"Cannot interprete runTime: {qDict['runTime']}\n"
 
         lat = qDict["latitude"]
         lon = qDict["longitude"]
@@ -378,8 +353,8 @@ RELEASE.UPPER.M= {qDict["upperHeight"]}, {qDict["upperHeight"]}
             npp = nPPs[qDict["npp"]]["site"]
             lat = nPPs[qDict["npp"]]["lat"]
             lon = nPPs[qDict["npp"]]["lon"]
-            debug("NPP: {0} {1} {2}".format(npp, lat, lon))
-        self.lastTag = "{0} {1}".format(tag, startTime)
+            logger.info(f"NPP: {npp} {lat} {lon}")
+        self.lastTag = f"{tag} {startTime}"
 
         try:
             latf = Snappy.Utils.parseLat(lat)
@@ -387,47 +362,31 @@ RELEASE.UPPER.M= {qDict["upperHeight"]}, {qDict["upperHeight"]}
         except ValueError as ve:
             latf = 0.0
             lonf = 0.0
-            errors += (
-                "Cannot interprete latitude/longitude: {lat}/{lon}: {ex}\n".format(
-                    lat=lat, lon=lon, ex=ve
-                )
-            )
+            errors += f"Cannot interprete latitude/longitude: {lat}/{lon}: {ve}\n"
 
         if len(errors) > 0:
-            debug('updateSnapLog("{0}");'.format(json.dumps("ERRORS:\n\n" + errors)))
-            self.write_log("ERRORS:\n\n{0}".format(errors))
+            logger.info(f'updateSnapLog("{json.dumps("ERRORS:\n\n" + errors)}");')
+            self.write_log(f"ERRORS:\n\n{errors}")
             return
-        self.write_log(
-            "working with lat/lon=({0}/{1}) starting at {2}".format(
-                latf, lonf, startTime
-            )
-        )
+        self.write_log(f"working with lat/lon=({latf}/{lonf}) starting at {startTime}")
 
         curtime = gmtime()
         self.lastOutputDir = os.path.join(
             self.res.getSnapOutputDir(),
-            "{0}_{1}".format(tag, strftime("%Y-%m-%dT%H%M%S", curtime)),
+            f"{tag}_{strftime('%Y-%m-%dT%H%M%S', curtime)}",
         )
-        debug("output directory: {}".format(self.lastOutputDir))
+        logger.info(f"output directory: {self.lastOutputDir}")
         os.mkdir(self.lastOutputDir)
 
         self.lastQDict = qDict
-        sourceTerm = """
-TITLE={tag}
-SIMULATION.START.DATE={simStart}
-SET_RELEASE.POS= P=   {lat},   {lon}
+        self.lastSourceTerm = f"""
+TITLE={self.lastTag}
+SIMULATION.START.DATE={strftime("%Y-%m-%d_%H:%M:%S", curtime)}
+SET_RELEASE.POS= P=   {latf},   {lonf}
 TIME.START= {startTime}
-TIME.RUN = {runTime}h
+TIME.RUN = {qDict["runTime"]}h
 STEP.HOUR.OUTPUT.FIELDS= 3
 """
-        self.lastSourceTerm = sourceTerm.format(
-            tag=self.lastTag,
-            simStart=strftime("%Y-%m-%d_%H:%M:%S", curtime),
-            lat=latf,
-            lon=lonf,
-            startTime=startTime,
-            runTime=qDict["runTime"],
-        )
 
         if "isBomb" in qDict:
             (term, releaseTXT, errors) = self.get_bomb_release(qDict, offset_minutes)
@@ -437,8 +396,8 @@ STEP.HOUR.OUTPUT.FIELDS= 3
         else:
             (term, errors) = self.get_isotope_release(qDict, offset_minutes)
         if len(errors) > 0:
-            debug('updateSnapLog("{0}");'.format(json.dumps("ERRORS:\n\n" + errors)))
-            self.write_log("ERRORS:\n\n{0}".format(errors))
+            logger.info(f'updateSnapLog("{json.dumps("ERRORS:\n\n" + errors)}");')
+            self.write_log(f"ERRORS:\n\n{errors}")
             return
         self.lastSourceTerm += term
 
@@ -454,9 +413,7 @@ STEP.HOUR.OUTPUT.FIELDS= 3
             )
             if len(files) == 0:
                 self.write_log(
-                    "no EC met-files found for {}, runtime {}".format(
-                        startDT, qDict["runTime"]
-                    )
+                    f"no EC met-files found for {startDT}, runtime {qDict['runTime']}"
                 )
                 return
             if not self._defaultDomainCheck(lonf, latf):
@@ -475,7 +432,7 @@ STEP.HOUR.OUTPUT.FIELDS= 3
                 )
                 self._met_calculate_and_run()
             except MeteoDataNotAvailableException as e:
-                self.write_log("problems creating EC-met: {}".format(e.args[0]))
+                self.write_log(f"problems creating EC-met: {e.args[0]}")
         elif qDict["metmodel"] == MetModel.EC0p1Global:
             try:
                 globalRes = EcMeteorologyCalculator.getGlobalMeteoResources()
@@ -489,7 +446,7 @@ STEP.HOUR.OUTPUT.FIELDS= 3
                 lat0 = MeteorologyCalculator.getLat0(latf, globalRes.domainHeight)
                 lon0 = MeteorologyCalculator.getLon0(lonf, globalRes.domainWidth)
                 with open(os.path.join(self.lastOutputDir, "snap.input"), "a") as fh:
-                    interpol = f"FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|{lon0},{lon0+0.1},...,{lon0+globalRes.domainWidth}|{lat0},{lat0+0.1},...,{lat0+globalRes.domainHeight}|degree\n"
+                    interpol = f"FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|{lon0},{lon0 + 0.1},...,{lon0 + globalRes.domainWidth}|{lat0},{lat0 + 0.1},...,{lat0 + globalRes.domainHeight}|degree\n"
                     fh.write(
                         self.res.getSnapInputMetDefinitions(
                             qDict["metmodel"], files, interpolation=interpol
@@ -497,7 +454,7 @@ STEP.HOUR.OUTPUT.FIELDS= 3
                     )
                 self._snap_model_run()
             except MeteoDataNotAvailableException as e:
-                self.write_log("problems finding global EC-met: {}".format(e.args[0]))
+                self.write_log(f"problems finding global EC-met: {e.args[0]}")
         elif qDict["metmodel"] == MetModel.Icon0p25Global:
             try:
                 self.write_log("extracting meteorology from ICON for domain")
@@ -509,16 +466,14 @@ STEP.HOUR.OUTPUT.FIELDS= 3
                 )
                 self._met_calculate_and_run()
             except MeteoDataNotAvailableException as e:
-                self.write_log("problems creating ICON-met: {}".format(e.args[0]))
+                self.write_log(f"problems creating ICON-met: {e.args[0]}")
         elif qDict["metmodel"] == "meps_2_5km":
             files = self.res.getMEPS25MeteorologyFiles(
                 startDT, int(qDict["runTime"]), "best"
             )
             if len(files) == 0:
                 self.write_log(
-                    "no MEPS2_5 met-files found for {}, runtime {}".format(
-                        startDT, qDict["runTime"]
-                    )
+                    f"no MEPS2_5 met-files found for {startDT}, runtime {qDict['runTime']}"
                 )
                 return
             if not self._meps25DomainCheck(lonf, latf):
@@ -561,7 +516,7 @@ STEP.HOUR.OUTPUT.FIELDS= 3
         self.write_log("updating...")
         if os.path.isfile(os.path.join(self.lastOutputDir, "snap.log.out")):
             lfh = open(os.path.join(self.lastOutputDir, "snap.log.out"))
-            debug(tail(os.path.join(self.lastOutputDir, "snap.log.out"), 30))
+            logger.info(tail(os.path.join(self.lastOutputDir, "snap.log.out"), 30))
             self.write_log(tail(os.path.join(self.lastOutputDir, "snap.log.out"), 30))
             lfh.close()
 
@@ -582,14 +537,12 @@ STEP.HOUR.OUTPUT.FIELDS= 3
             try:
                 options[qDict["action"]](qDict)
             except TypeError as ex:
-                self.write_log("type-error: {}".format(ex))
+                self.write_log(f"type-error: {ex}")
             except ValueError as ex:
-                self.write_log("value-error: {}".format(ex))
+                self.write_log(f"value-error: {ex}")
             except Exception:
                 self.write_log(
-                    "Unexpected error on {0}: {1}".format(
-                        qDict["action"], sys.exc_info()[0]
-                    )
+                    f"Unexpected error on {qDict['action']}: {sys.exc_info()[0]}"
                 )
                 raise
 
@@ -611,7 +564,7 @@ def tail(f, n):
 
 
 if __name__ == "__main__":
-    debug("threads: {}".format(QThreadPool.globalInstance().maxThreadCount()))
+    logger.info(f"threads: {QThreadPool.globalInstance().maxThreadCount()}")
     app = QtWidgets.QApplication(sys.argv)
     ctr = SnapController()
     sys.exit(app.exec_())
