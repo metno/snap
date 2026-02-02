@@ -1,6 +1,7 @@
 import datetime
 import html
 import json
+import logging
 import os
 import re
 import sys
@@ -30,9 +31,7 @@ from Snappy.MeteorologyCalculator import (
 from Snappy.Resources import MetModel, Resources
 from Snappy.SnapInputBomb import ExplosionType, SnapInputBomb
 
-
-def debug(*objs):
-    print("DEBUG: ", *objs, file=sys.stderr)
+logger = logging.getLogger(__name__)
 
 
 class SnapUpdateThread(QThread):
@@ -43,11 +42,11 @@ class SnapUpdateThread(QThread):
         self.snap_controller = snapController
 
     def run(self):
-        debug("run-status:" + self.snap_controller.snapRunning)
+        logger.info("run-status:" + self.snap_controller.snapRunning)
         try:
             while self.snap_controller.snapRunning == "running":
-                debug("running")
-                debug(
+                logger.info("running")
+                logger.info(
                     tail(
                         os.path.join(
                             self.snap_controller.lastOutputDir, "snap.log.out"
@@ -85,12 +84,12 @@ class SnapRun:
         self.proc = SnapRun.getQProcess(snap_controller)
 
     def start(self):
-        debug("outputdir: " + self.snap_controller.lastOutputDir)
+        logger.info("outputdir: " + self.snap_controller.lastOutputDir)
         #         self.proc.start('/home/heikok/sleepLong.sh', ['snap.input'])
         self.proc.start("bsnap_naccident", ["snap.input"])
         if self.proc.waitForStarted(3000):
             self.snap_controller.snapRunning = "running"
-            debug("started: " + self.snap_controller.snapRunning)
+            logger.info("started: " + self.snap_controller.snapRunning)
         else:
             self.proc.terminate()  # might be dead anyway?
             self.snap_controller.write_log(
@@ -110,11 +109,11 @@ class SnapController:
         self.lastQDict = {}
 
     def write_log(self, txt: str):
-        debug(txt)
+        logger.info(txt)
         self.main.evaluate_javaScript(f"updateSnapLog({json.dumps(html.escape(txt))});")
 
     def _snap_finished(self, exit_code, exit_status):
-        debug(f"finished with code {exit_code}, status {exit_status}")
+        logger.info(f"finished with code {exit_code}, status {exit_status}")
         self.snapRunning = "finished"
         self.results_add_toa()
         self.plot_results()
@@ -143,7 +142,7 @@ class SnapController:
             self._met_finished_run_snap()
 
     def _met_finished_run_snap(self):
-        debug("ec_finished")
+        logger.info("ec_finished")
         self.snapRunning = "finished"  # quit update-thread
         if self.metcalc.must_calc():
             with open(os.path.join(self.lastOutputDir, "snap.log.out"), "a") as logFile:
@@ -323,7 +322,7 @@ RELEASE.UPPER.M= {qDict["upperHeight"]}, {qDict["upperHeight"]}
     def run_snap_query(self, qDict):
         # make sure all files are rw for everybody (for later deletion)
         os.umask(0)
-        debug("run_snap_query")
+        logger.info("run_snap_query")
         for key, value in qDict.items():
             print(f"{key} => {value}")
         errors = ""
@@ -354,7 +353,7 @@ RELEASE.UPPER.M= {qDict["upperHeight"]}, {qDict["upperHeight"]}
             npp = nPPs[qDict["npp"]]["site"]
             lat = nPPs[qDict["npp"]]["lat"]
             lon = nPPs[qDict["npp"]]["lon"]
-            debug(f"NPP: {npp} {lat} {lon}")
+            logger.info(f"NPP: {npp} {lat} {lon}")
         self.lastTag = f"{tag} {startTime}"
 
         try:
@@ -366,7 +365,7 @@ RELEASE.UPPER.M= {qDict["upperHeight"]}, {qDict["upperHeight"]}
             errors += f"Cannot interprete latitude/longitude: {lat}/{lon}: {ve}\n"
 
         if len(errors) > 0:
-            debug(f'updateSnapLog("{json.dumps("ERRORS:\n\n" + errors)}");')
+            logger.info(f'updateSnapLog("{json.dumps("ERRORS:\n\n" + errors)}");')
             self.write_log(f"ERRORS:\n\n{errors}")
             return
         self.write_log(f"working with lat/lon=({latf}/{lonf}) starting at {startTime}")
@@ -376,7 +375,7 @@ RELEASE.UPPER.M= {qDict["upperHeight"]}, {qDict["upperHeight"]}
             self.res.getSnapOutputDir(),
             f"{tag}_{strftime('%Y-%m-%dT%H%M%S', curtime)}",
         )
-        debug(f"output directory: {self.lastOutputDir}")
+        logger.info(f"output directory: {self.lastOutputDir}")
         os.mkdir(self.lastOutputDir)
 
         self.lastQDict = qDict
@@ -397,7 +396,7 @@ STEP.HOUR.OUTPUT.FIELDS= 3
         else:
             (term, errors) = self.get_isotope_release(qDict, offset_minutes)
         if len(errors) > 0:
-            debug(f'updateSnapLog("{json.dumps("ERRORS:\n\n" + errors)}");')
+            logger.info(f'updateSnapLog("{json.dumps("ERRORS:\n\n" + errors)}");')
             self.write_log(f"ERRORS:\n\n{errors}")
             return
         self.lastSourceTerm += term
@@ -517,7 +516,7 @@ STEP.HOUR.OUTPUT.FIELDS= 3
         self.write_log("updating...")
         if os.path.isfile(os.path.join(self.lastOutputDir, "snap.log.out")):
             lfh = open(os.path.join(self.lastOutputDir, "snap.log.out"))
-            debug(tail(os.path.join(self.lastOutputDir, "snap.log.out"), 30))
+            logger.info(tail(os.path.join(self.lastOutputDir, "snap.log.out"), 30))
             self.write_log(tail(os.path.join(self.lastOutputDir, "snap.log.out"), 30))
             lfh.close()
 
@@ -565,7 +564,7 @@ def tail(f, n):
 
 
 if __name__ == "__main__":
-    debug(f"threads: {QThreadPool.globalInstance().maxThreadCount()}")
+    logger.info(f"threads: {QThreadPool.globalInstance().maxThreadCount()}")
     app = QtWidgets.QApplication(sys.argv)
     ctr = SnapController()
     sys.exit(app.exec_())

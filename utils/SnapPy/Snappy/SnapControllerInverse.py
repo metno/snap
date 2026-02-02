@@ -1,5 +1,6 @@
 import datetime
 import json
+import logging
 import math
 import os
 import re
@@ -17,19 +18,19 @@ from Snappy.Resources import Resources
 from Snappy.SnapController import SnapRun, SnapUpdateThread
 from Snappy.Utils import parseLat, parseLon
 
-
-def debug(*objs):
-    print("DEBUG: ", *objs, file=sys.stderr)
+logger = logging.getLogger(__name__)
 
 
 class SnapRunInverse(SnapRun):
     def start(self, snapscript):
-        debug("outputdir: " + self.snap_controller.lastOutputDir)
+        logger.info("outputdir: " + self.snap_controller.lastOutputDir)
         #         self.proc.start('/home/heikok/sleepLong.sh', ['snap.input'])
         self.proc.start(snapscript)
         if self.proc.waitForStarted(3000):
             self.snap_controller.snapRunning = "running"
-            debug("started  " + snapscript + " " + self.snap_controller.snapRunning)
+            logger.info(
+                "started  " + snapscript + " " + self.snap_controller.snapRunning
+            )
         else:
             self.snap_controller.write_log(f"starting {snapscript} failed")
 
@@ -61,11 +62,11 @@ class SnapControllerInverse:
         self.lastQDict = {}
 
     def write_log(self, txt: str):
-        debug(txt)
+        logger.info(txt)
         self.main.evaluate_javaScript(f"updateSnapLog({json.dumps(txt)});")
 
     def _snap_finished(self):
-        debug("finished")
+        logger.info("finished")
         self.snapRunning = "finished"
         # self.plot_results()
         with open(os.path.join(self.lastOutputDir, "snap.log.out"), "a") as logFile:
@@ -90,7 +91,7 @@ class SnapControllerInverse:
     def run_snap_query(self, qDict):
         # make sure all files are rw for everybody (for later deletion)
         os.umask(0)
-        debug("run_snap_query inverse")
+        logger.info("run_snap_query inverse")
         for key, value in qDict.items():
             print(f"{key} => {value}")
         runTime = -96
@@ -148,7 +149,7 @@ class SnapControllerInverse:
                     Measurement(i, name, lonf, latf, startDT, endDT)
                 )
 
-        debug(f"output directory: {self.lastOutputDir}")
+        logger.info(f"output directory: {self.lastOutputDir}")
         if not os.path.isdir(self.lastOutputDir):
             try:
                 os.mkdir(self.lastOutputDir)
@@ -158,7 +159,7 @@ class SnapControllerInverse:
             errors += f"cowardly refusing to write into existing directory: {self.lastOutputDir}"
 
         if len(errors) > 0:
-            debug(f'updateSnapLog("{json.dumps("ERRORS:\n\n" + errors)}");')
+            logger.info(f'updateSnapLog("{json.dumps("ERRORS:\n\n" + errors)}");')
             self.write_log(f"ERRORS:\n\n{errors}")
             return
 
@@ -284,7 +285,7 @@ m=combined t=fimex format=netcdf f={self.lastOutputDir}/snapCombined.nc
         self.write_log("updating...")
         if os.path.isfile(os.path.join(self.lastOutputDir, "snap.log.out")):
             lfh = open(os.path.join(self.lastOutputDir, "snap.log.out"))
-            debug(tail(os.path.join(self.lastOutputDir, "snap.log.out"), 30))
+            logger.info(tail(os.path.join(self.lastOutputDir, "snap.log.out"), 30))
             self.write_log(tail(os.path.join(self.lastOutputDir, "snap.log.out"), 30))
             lfh.close()
 
@@ -330,7 +331,7 @@ def tail(f, n):
 
 
 if __name__ == "__main__":
-    debug(f"threads: {QThreadPool.globalInstance().maxThreadCount()}")
+    logger.info(f"threads: {QThreadPool.globalInstance().maxThreadCount()}")
     app = QtWidgets.QApplication(sys.argv)
     ctr = SnapControllerInverse()
     sys.exit(app.exec_())
