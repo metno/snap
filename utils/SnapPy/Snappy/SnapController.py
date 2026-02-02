@@ -4,30 +4,31 @@ import json
 import os
 import re
 import sys
-from time import gmtime, strftime
 import traceback
 import urllib.parse
+from time import gmtime, strftime
 
-from PyQt5 import QtWidgets, QtGui
+from PyQt5 import QtWidgets
 from PyQt5.QtCore import (
+    QIODevice,
     QProcess,
     QProcessEnvironment,
     QThread,
-    QIODevice,
     QThreadPool,
     pyqtSignal,
 )
+
+import Snappy.Utils
 from Snappy.BrowserWidget import BrowserWidget
 from Snappy.EcMeteorologyCalculator import EcMeteorologyCalculator
 from Snappy.ICONMeteorologyCalculator import ICONMeteorologyCalculator
+from Snappy.MailImages import sendPngsFromDir
 from Snappy.MeteorologyCalculator import (
     MeteoDataNotAvailableException,
     MeteorologyCalculator,
 )
-from Snappy.MailImages import sendPngsFromDir
-from Snappy.Resources import Resources, MetModel
-from Snappy.SnapInputBomb import SnapInputBomb, ExplosionType
-import Snappy.Utils
+from Snappy.Resources import MetModel, Resources
+from Snappy.SnapInputBomb import ExplosionType, SnapInputBomb
 
 
 def debug(*objs):
@@ -91,8 +92,10 @@ class SnapRun:
             self.snap_controller.snapRunning = "running"
             debug("started: " + self.snap_controller.snapRunning)
         else:
-            self.proc.terminate() # might be dead anyway?
-            self.snap_controller.write_log("couldn't start bsnap_naccident snap.input in 3s")
+            self.proc.terminate()  # might be dead anyway?
+            self.snap_controller.write_log(
+                "couldn't start bsnap_naccident snap.input in 3s"
+            )
 
 
 class SnapController:
@@ -119,10 +122,12 @@ class SnapController:
         self.plot_results()
         with open(os.path.join(self.lastOutputDir, "snap.log.out"), "a") as logFile:
             if exit_code != 0:
-                logFile.write(f"bsnap finished with exit_code {exit_code}, status {exit_status}\n")
+                logFile.write(
+                    f"bsnap finished with exit_code {exit_code}, status {exit_status}\n"
+                )
             logFile.write(
                 f"All work finished. Please open diana to see results.\nResults in {self.lastOutputDir}\n"
-                )
+            )
         self.update_log()
 
     def _met_calculate_and_run(self):
@@ -273,7 +278,9 @@ m=SNAP.current t=fimex format=netcdf f={self.lastOutputDir}/snap.nc
             return False
         return True
 
-    def get_bomb_release(self, qDict, offset_minutes: int) -> tuple[str, str | None, str]:
+    def get_bomb_release(
+        self, qDict, offset_minutes: int
+    ) -> tuple[str, str | None, str]:
         """get the bomb-release terms in snap formats
 
         :param qDict: qDict input parameters
@@ -303,7 +310,7 @@ m=SNAP.current t=fimex format=netcdf f={self.lastOutputDir}/snap.nc
         source_term = f"""
 MAX.PARTICLES.PER.RELEASE= 2000
 TIME.RELEASE.PROFILE.STEPS
-RELEASE.HOUR= {offset_minutes/60:.2f}, {int(qDict["releaseTime"])+offset_minutes/60:.2f}
+RELEASE.HOUR= {offset_minutes / 60:.2f}, {int(qDict["releaseTime"]) + offset_minutes / 60:.2f}
 RELEASE.RADIUS.M= {qDict["radius"]}, {qDict["radius"]}
 RELEASE.LOWER.M= {qDict["lowerHeight"]}, {qDict["lowerHeight"]}
 RELEASE.UPPER.M= {qDict["upperHeight"]}, {qDict["upperHeight"]}
@@ -472,7 +479,7 @@ STEP.HOUR.OUTPUT.FIELDS= 3
                 lat0 = MeteorologyCalculator.getLat0(latf, globalRes.domainHeight)
                 lon0 = MeteorologyCalculator.getLon0(lonf, globalRes.domainWidth)
                 with open(os.path.join(self.lastOutputDir, "snap.input"), "a") as fh:
-                    interpol = f"FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|{lon0},{lon0+0.1},...,{lon0+globalRes.domainWidth}|{lat0},{lat0+0.1},...,{lat0+globalRes.domainHeight}|degree\n"
+                    interpol = f"FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|{lon0},{lon0 + 0.1},...,{lon0 + globalRes.domainWidth}|{lat0},{lat0 + 0.1},...,{lat0 + globalRes.domainHeight}|degree\n"
                     fh.write(
                         self.res.getSnapInputMetDefinitions(
                             qDict["metmodel"], files, interpolation=interpol
