@@ -1,20 +1,3 @@
-# SNAP: Servere Nuclear Accident Programme
-# Copyright (C) 1992-2025   Norwegian Meteorological Institute
-#
-# This file is part of SNAP. SNAP is free software: you can
-# redistribute it and/or modify it under the terms of the
-# GNU General Public License as published by the
-# Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
 import copy
 import datetime
 import os
@@ -49,7 +32,7 @@ class SnapVolcanoTranslator:
         defs["latitude"] = self.volcano.latlon[0]
         defs["longitude"] = self.volcano.latlon[1]
         classes = {
-            f"ASH_{i+1}": x * 1e-2
+            f"ASH_{i + 1}": x * 1e-2
             for i, x in enumerate([0.1, 0.5, 5.0, 20.0, 70.0, 4.4])
         }
         (start, lower, upper) = self.eruptions_to_txt(
@@ -74,14 +57,16 @@ class SnapVolcanoTranslator:
             fh.write(snap_input.format(**defs))
 
     @staticmethod
-    def eruptions_to_txt(eruptions: list[Eruption], classes: dict[str, float], releasefile: str):
+    def eruptions_to_txt(
+        eruptions: list[Eruption], classes: dict[str, float], releasefile: str
+    ):
         starttimes = {}
         endtimes = set()
         all_lower = set()
         all_upper = set()
         for erupt in eruptions:
             endtimes.add(erupt.end)
-            if not erupt.start in starttimes:
+            if erupt.start not in starttimes:
                 starttimes[erupt.start] = {
                     "end": erupt.end,
                     "lower": {
@@ -129,7 +114,6 @@ class SnapVolcanoTranslator:
 
         with open(releasefile, "wt") as fh:
             fh.write("*runtime[h] lower[m] comp release[g/s]\n")
-            last_end = snap_start
             for i, (estart, vals) in enumerate(sorted(starttimes.items())):
                 runtime = (estart - snap_start).total_seconds() / 3600
                 for lower, lowerVals in sorted(vals["lower"].items()):
@@ -139,13 +123,15 @@ class SnapVolcanoTranslator:
                         rel = 1000 * frac * lowerVals["m63"] * lowerVals["release"]
                         fh.write(f"{runtime:.2f} {int(lower)} {pclass} {rel}\n")
 
-                if (start == estart) and (vals["end"]-estart) >= datetime.timedelta(hours=2):
+                if (start == estart) and (vals["end"] - estart) >= datetime.timedelta(
+                    hours=2
+                ):
                     # hack for SO2: add 2 hours with SO2 emissions of 0.1Tg/h
-                    so2rel = 0.1e12/3600 # g/s
+                    so2rel = 0.1e12 / 3600  # g/s
                     for lower in all_lower:
                         fh.write(f"{runtime:.2f} {int(lower)} SO2 {so2rel}\n")
 
-                    runtime += 2 # hours
+                    runtime += 2  # hours
                     for lower in all_lower:
                         # stop so2 after 2h
                         fh.write(f"{runtime:.2f} {int(lower)} SO2 0\n")
@@ -160,11 +146,9 @@ class SnapVolcanoTranslator:
                     for lower in all_lower:
                         fh.write(f"{runtime:.2f} {int(lower)} SO2 0\n")
 
-
-
         return (snap_start, all_lower, all_upper)
 
-    def run(self, snapnc: str="snap.nc") -> int:
+    def run(self, snapnc: str = "snap.nc") -> int:
         """
         The run method is a convenient method to actually run bsnap_naccident and
         snapAddToa on the results in the output-directory of volcano.xml.
@@ -174,11 +158,14 @@ class SnapVolcanoTranslator:
         """
         with open(os.path.join(self.volcano.outputDir, "snap.outlog"), "w") as fh:
             logger.info("Starting bsnap_naccident snap.input")
+            myenv = os.environ.copy()
+            myenv["OMP_NUM_THREADS"] = "4"
             proc = subprocess.run(
                 ["bsnap_naccident", "snap.input"],
                 cwd=self.volcano.outputDir,
                 stderr=fh,
                 stdout=fh,
+                env=myenv,
             )
         with open(os.path.join(self.volcano.outputDir, "snapAddToa.outlog"), "w") as fh:
             logger.info("Starting snapAddToa snap.nc")
@@ -216,7 +203,7 @@ def main() -> int:
     parser.add_argument(
         "--snapnc",
         help="alternative name for snap.nc, in the same output-directory",
-        default="snap.nc"
+        default="snap.nc",
     )
 
     parser.add_argument(
