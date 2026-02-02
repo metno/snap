@@ -1,20 +1,3 @@
-# SNAP: Servere Nuclear Accident Programme
-# Copyright (C) 1992-2017   Norwegian Meteorological Institute
-# 
-# This file is part of SNAP. SNAP is free software: you can 
-# redistribute it and/or modify it under the terms of the 
-# GNU General Public License as published by the 
-# Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-# 
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-# 
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
 import datetime
 import json
 import math
@@ -53,7 +36,7 @@ class Measurement:
         self.lat = lat
         self.start = start
         self.end = end
-        
+
 
 class SnapControllerInverse:
     def __init__(self):
@@ -155,11 +138,11 @@ class SnapControllerInverse:
         curtime = gmtime()
         self.lastQDict = qDict
         self.write_log("working with {number} measurements in {dir}".format(number=len(self.measurements), dir=self.lastOutputDir))
-        
+
 
         # write snap.input files
         for mes in self.measurements:
-            print("{id} {name}".format(id=mes.id,name=mes.name)) 
+            print("{id} {name}".format(id=mes.id,name=mes.name))
             releaseDT = mes.end - mes.start
             releaseH = releaseDT.days * 24 + math.ceil(releaseDT.seconds/3600)
             sourceTerm = """
@@ -202,21 +185,22 @@ RELEASE.BQ/SEC.COMP= 1e12, 1e12, 'Cs137'
                         self.write_log("no EC met-files found for {}, runtime {}".format(startDT, runTime))
                         return
                 if (not self._defaultDomainCheck(lonf,latf)):
-                    return                
+                    return
                 snapIn = self.res.getSnapInputMetDefinitions(metmodel, files)
                 snapIn = snapIn.replace("snap.", "snap{}.".format(mes.id)) # replace snap.nc and snap.log to snap1.nc snap1.log
                 with open(os.path.join(self.lastOutputDir, "snap.input{}".format(mes.id)),'a') as fh:
                     fh.write(snapIn)
-        
+
         snapscript = os.path.join(self.lastOutputDir, "snap.sh")
         with open(snapscript,'a') as fh:
             fh.write("#! /bin/bash\n")
+            fh.write("export OMP_NUM_THREADS=4\n")
             fh.write("cd {}\n".format(self.lastOutputDir))
             ids = " ".join([str(x.id) for x in self.measurements])
             fh.write(r'parallel -i -j 4 bsnap_naccident snap.input{} -- ' +ids + "\n")
-            joinIds = " ".join(["-i snap{}.nc".format(x.id) for x in self.measurements]) 
+            joinIds = " ".join(["-i snap{}.nc".format(x.id) for x in self.measurements])
             fh.write("snapCombineInverse -I Cs137 -o snapCombined.nc {}\n".format(joinIds))
-        
+
         # create diana.setup
         with open(os.path.join(self.lastOutputDir, "diana.setup"), 'w') as fh:
             fh.write('''
