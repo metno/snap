@@ -6,27 +6,33 @@ import re
 import sys
 from time import gmtime, strftime
 
-from PyQt5 import QtWidgets, QtGui
-from PyQt5.QtCore import QProcess, QProcessEnvironment, QThread, QIODevice, QThreadPool, pyqtSignal
+from PyQt5 import QtWidgets
+from PyQt5.QtCore import (
+    QThread,
+    QThreadPool,
+)
+
+import Snappy.Utils
 from Snappy.BrowserWidget import BrowserWidget
 from Snappy.Resources import Resources
 from Snappy.SnapController import SnapRun, SnapUpdateThread
-import Snappy.Utils
+
 
 def debug(*objs):
     print("DEBUG: ", *objs, file=sys.stderr)
 
-class SnapRunInverse(SnapRun):
 
+class SnapRunInverse(SnapRun):
     def start(self, snapscript):
-        debug("outputdir: "+self.snap_controller.lastOutputDir)
-#         self.proc.start('/home/heikok/sleepLong.sh', ['snap.input'])
+        debug("outputdir: " + self.snap_controller.lastOutputDir)
+        #         self.proc.start('/home/heikok/sleepLong.sh', ['snap.input'])
         self.proc.start(snapscript)
-        if (self.proc.waitForStarted(3000)) :
+        if self.proc.waitForStarted(3000):
             self.snap_controller.snapRunning = "running"
-            debug("started  " + snapscript + " "+ self.snap_controller.snapRunning)
+            debug("started  " + snapscript + " " + self.snap_controller.snapRunning)
         else:
-            self.snap_controller.write_log("starting {} failed".format(snapscript))
+            self.snap_controller.write_log(f"starting {snapscript} failed")
+
 
 class Measurement:
     def __init__(self, id, name, lon, lat, start, end):
@@ -41,32 +47,43 @@ class Measurement:
 class SnapControllerInverse:
     def __init__(self):
         self.res = Resources()
-        self.lastOutputDir = os.path.join(self.res.getSnapOutputDir(), "{0}_{1}".format("backtrack", strftime("%Y-%m-%dT%H%M%S", gmtime())))
+        self.lastOutputDir = os.path.join(
+            self.res.getSnapOutputDir(),
+            f"backtrack_{strftime('%Y-%m-%dT%H%M%S', gmtime())}",
+        )
         self.main = BrowserWidget()
-        self.main.set_html(self.res.getStartScreenInverse().replace("OUTPUTDIR", self.lastOutputDir))
+        self.main.set_html(
+            self.res.getStartScreenInverse().replace("OUTPUTDIR", self.lastOutputDir)
+        )
         self.main.set_form_handler(self._create_snap_form_handler())
         self.main.show()
         self.snapRunning = "inactive"
         self.lastQDict = {}
 
-    def write_log(self, txt:str):
+    def write_log(self, txt: str):
         debug(txt)
-        self.main.evaluate_javaScript('updateSnapLog({0});'.format(json.dumps(txt)))
+        self.main.evaluate_javaScript(f"updateSnapLog({json.dumps(txt)});")
 
     def _snap_finished(self):
         debug("finished")
         self.snapRunning = "finished"
-        #self.plot_results()
-        with open(os.path.join(self.lastOutputDir,"snap.log.out"), "a") as logFile:
-            logFile.write("All work finished. Please open 'vgl-launch diana -s {dir}/diana.setup' to see results.\n".format(dir=self.lastOutputDir))
+        # self.plot_results()
+        with open(os.path.join(self.lastOutputDir, "snap.log.out"), "a") as logFile:
+            logFile.write(
+                f"All work finished. Please open 'vgl-launch diana -s {self.lastOutputDir}/diana.setup' to see results.\n"
+            )
         self.update_log()
 
     def _defaultDomainCheck(self, lonf, latf):
-        if (latf <= self.res.ecDefaultDomainStartY or
-            latf >= (self.res.ecDefaultDomainStartY + self.res.ecDomainHeight) or
-            lonf <= self.res.ecDefaultDomainStartX or
-            lonf >= self.res.ecDefaultDomainStartX + self.res.ecDomainWidth):
-            self.write_log("(lat,lon) = ({lat},{lon}) outside domain.\nTry global EC meteorology under advanced.".format(lat=latf, lon=lonf))
+        if (
+            latf <= self.res.ecDefaultDomainStartY
+            or latf >= (self.res.ecDefaultDomainStartY + self.res.ecDomainHeight)
+            or lonf <= self.res.ecDefaultDomainStartX
+            or lonf >= self.res.ecDefaultDomainStartX + self.res.ecDomainWidth
+        ):
+            self.write_log(
+                f"(lat,lon) = ({latf},{lonf}) outside domain.\nTry global EC meteorology under advanced."
+            )
             return False
         return True
 
@@ -75,7 +92,7 @@ class SnapControllerInverse:
         os.umask(0)
         debug("run_snap_query inverse")
         for key, value in qDict.items():
-            print(str.format("{0} => {1}", key, value))
+            print(f"{key} => {value}")
         runTime = -96
         if "runTime" in qDict:
             runTime = int(qDict["runTime"])
@@ -85,125 +102,142 @@ class SnapControllerInverse:
         errors = ""
         self.measurements = []
         # measurementX, latX, lonX, startX, encX
-        for i in range(1,100):
-            if 'measurement{}'.format(i) not in qDict:
+        for i in range(1, 100):
+            if f"measurement{i}" not in qDict:
                 continue
-            name = qDict['measurement{}'.format(i)]
-            for tag in ('lat{}', 'lon{}', 'start{}', 'end{}'):
-                if tag.format(i) not in qDict:
-                    errors += "No tag " + tag.format(i) + " for "  + name + "\n"
+            name = qDict[f"measurement{i}"]
+            for tag in (f"lat{i}", f"lon{i}", f"start{i}", f"end{i}"):
+                if tag not in qDict:
+                    errors += f"No tag {tag} for {name}\n"
             if len(errors) > 0:
                 continue
-            match = re.search(r'(\d{4})-(\d{2})-(\d{2})[\+\s]+(\d{1,2})', qDict['start{}'.format(i)])
+            match = re.search(
+                r"(\d{4})-(\d{2})-(\d{2})[\+\s]+(\d{1,2})", qDict[f"start{i}"]
+            )
             if match:
-                startDT = datetime.datetime(*tuple(map(int, list(match.group(1,2,3,4)))))
+                startDT = datetime.datetime(
+                    *tuple(map(int, list(match.group(1, 2, 3, 4))))
+                )
             else:
-                errors += "Cannot interprete startTime: {0}\n".format(qDict['start{}'.format(i)])
-            match = re.search(r'(\d{4})-(\d{2})-(\d{2})[\+\s]+(\d{1,2}):(\d{1,2})', qDict['end{}'.format(i)])
+                errors += f"Cannot interprete startTime: {qDict[f'start{i}']}\n"
+            match = re.search(
+                r"(\d{4})-(\d{2})-(\d{2})[\+\s]+(\d{1,2}):(\d{1,2})",
+                qDict[f"end{i}"],
+            )
             if match:
-                endDT = datetime.datetime(*tuple(map(int, list(match.group(1,2,3,4)))))
+                endDT = datetime.datetime(
+                    *tuple(map(int, list(match.group(1, 2, 3, 4))))
+                )
                 if int(match.group(5)) > 0:
                     endDT = endDT + datetime.timedelta(hours=1)
             else:
-                errors += "Cannot interprete endTime: {0}\n".format(qDict['end{}'.format(i)])
+                errors += f"Cannot interprete endTime: {qDict[f'end{i}']}\n"
             if startDT >= endDT:
-                errors += "Start must be before end for {}\n".format(name)
-            lat = qDict['lat{}'.format(i)]
-            lon = qDict['lon{}'.format(i)]
+                errors += f"Start must be before end for {name}\n"
+            lat = qDict[f"lat{i}"]
+            lon = qDict[f"lon{i}"]
             try:
                 latf = Snappy.Utils.parseLat(lat)
                 lonf = Snappy.Utils.parseLon(lon)
             except ValueError as ve:
-                latf = 0.
-                lonf = 0.
-                errors += "Cannot interprete latitude/longitude: {lat}/{lon}: {ex}\n".format(lat=lat,lon=lon,ex=ve);
+                latf = 0.0
+                lonf = 0.0
+                errors += f"Cannot interprete latitude/longitude: {lat}/{lon}: {ve}\n"
             if len(errors) == 0:
-                self.measurements.append(Measurement(i,name,lonf, latf, startDT, endDT))
+                self.measurements.append(
+                    Measurement(i, name, lonf, latf, startDT, endDT)
+                )
 
-
-        debug("output directory: {}".format(self.lastOutputDir))
+        debug(f"output directory: {self.lastOutputDir}")
         if not os.path.isdir(self.lastOutputDir):
             try:
                 os.mkdir(self.lastOutputDir)
-            except:
-                errors += "cannot create directory: {}".format(self.lastOutputDir)
+            except Exception:
+                errors += f"cannot create directory: {self.lastOutputDir}"
         else:
-            errors += "cowardly refusing to write into existing directory: {}".format(self.lastOutputDir)
+            errors += f"cowardly refusing to write into existing directory: {self.lastOutputDir}"
 
-        if (len(errors) > 0):
-            debug('updateSnapLog("{0}");'.format(json.dumps("ERRORS:\n\n"+errors)))
-            self.write_log("ERRORS:\n\n{0}".format(errors))
+        if len(errors) > 0:
+            debug(f'updateSnapLog("{json.dumps("ERRORS:\n\n" + errors)}");')
+            self.write_log(f"ERRORS:\n\n{errors}")
             return
 
         curtime = gmtime()
         self.lastQDict = qDict
-        self.write_log("working with {number} measurements in {dir}".format(number=len(self.measurements), dir=self.lastOutputDir))
-
+        self.write_log(
+            f"working with {len(self.measurements)} measurements in {self.lastOutputDir}"
+        )
 
         # write snap.input files
         for mes in self.measurements:
-            print("{id} {name}".format(id=mes.id,name=mes.name))
+            print(f"{mes.id} {mes.name}")
             releaseDT = mes.end - mes.start
-            releaseH = releaseDT.days * 24 + math.ceil(releaseDT.seconds/3600)
-            sourceTerm = """
-SIMULATION.START.DATE={simStart}
-SET_RELEASE.POS= P=   {lat},   {lon}
-TIME.START= {startTime}
+            releaseH = releaseDT.days * 24 + math.ceil(releaseDT.seconds / 3600)
+            self.lastSourceTerm = f"""
+SIMULATION.START.DATE={strftime("%Y-%m-%d_%H:%M:%S", curtime)}
+SET_RELEASE.POS= P=   {mes.lat},   {mes.lon}
+TIME.START= {mes.end:%Y %m %d %H}
 TIME.RUN = {runTime}h
 MAX.PARTICLES.PER.RELEASE= 4000
 TIME.RELEASE.PROFILE.STEPS
 STEP.HOUR.OUTPUT.FIELDS= 1
-RELEASE.HOUR= 0, {releaseTime}
-RELEASE.RADIUS.M= {radius}, {radius}
-RELEASE.LOWER.M= {lowerHeight}, {lowerHeight}
-RELEASE.UPPER.M= {upperHeight}, {upperHeight}
+RELEASE.HOUR= 0, {releaseH}
+RELEASE.RADIUS.M= 500, 500
+RELEASE.LOWER.M= 0, 0
+RELEASE.UPPER.M= 250, 250
 RELEASE.BQ/SEC.COMP= 1e12, 1e12, 'Cs137'
 """
-            self.lastSourceTerm = sourceTerm.format(simStart=strftime("%Y-%m-%d_%H:%M:%S",curtime),
-                                                lat=mes.lat, lon=mes.lon, startTime=mes.end.strftime("%Y %m %d %H"),
-                                                runTime=runTime,
-                                                releaseTime=releaseH,
-                                                radius=500,
-                                                lowerHeight=0, upperHeight=250)
 
-
-            with open(os.path.join(self.lastOutputDir, "snap.input{}".format(mes.id)),'w') as fh:
+            with open(
+                os.path.join(self.lastOutputDir, f"snap.input{mes.id}"), "w"
+            ) as fh:
                 fh.write(self.lastSourceTerm)
                 # add Cs137 definition
                 fh.write(self.res.isotopes2snapinput([169]))
 
-            metmodel = 'nrpa_ec_0p1'
-            if (metmodel == 'nrpa_ec_0p1'):
-                if ('metpattern' in qDict):
-                    files = self.res.getECMeteorologyFiles(startDT, runTime, pattern=qDict['metpattern'])
-                    if (len(files) == 0):
-                        self.write_log("no EC met-files found for {}, runtime {} with pattern {}".format(startDT, runTime, qDict['metpattern']))
+            metmodel = "nrpa_ec_0p1"
+            if metmodel == "nrpa_ec_0p1":
+                if "metpattern" in qDict:
+                    files = self.res.getECMeteorologyFiles(
+                        startDT, runTime, pattern=qDict["metpattern"]
+                    )
+                    if len(files) == 0:
+                        self.write_log(
+                            f"no EC met-files found for {startDT}, runtime {runTime} with pattern {qDict['metpattern']}"
+                        )
                         return
                 else:
                     files = self.res.getECMeteorologyFiles(startDT, runTime)
-                    if (len(files) == 0):
-                        self.write_log("no EC met-files found for {}, runtime {}".format(startDT, runTime))
+                    if len(files) == 0:
+                        self.write_log(
+                            f"no EC met-files found for {startDT}, runtime {runTime}"
+                        )
                         return
-                if (not self._defaultDomainCheck(lonf,latf)):
+                if not self._defaultDomainCheck(lonf, latf):
                     return
                 snapIn = self.res.getSnapInputMetDefinitions(metmodel, files)
-                snapIn = snapIn.replace("snap.", "snap{}.".format(mes.id)) # replace snap.nc and snap.log to snap1.nc snap1.log
-                with open(os.path.join(self.lastOutputDir, "snap.input{}".format(mes.id)),'a') as fh:
+                snapIn = snapIn.replace(
+                    "snap.", f"snap{mes.id}."
+                )  # replace snap.nc and snap.log to snap1.nc snap1.log
+                with open(
+                    os.path.join(self.lastOutputDir, f"snap.input{mes.id}"), "a"
+                ) as fh:
                     fh.write(snapIn)
 
         snapscript = os.path.join(self.lastOutputDir, "snap.sh")
-        with open(snapscript,'a') as fh:
+        with open(snapscript, "a") as fh:
             fh.write("#! /bin/bash\n")
             fh.write("export OMP_NUM_THREADS=4\n")
-            fh.write("cd {}\n".format(self.lastOutputDir))
+            fh.write(f"cd {self.lastOutputDir}\n")
             ids = " ".join([str(x.id) for x in self.measurements])
-            fh.write(r'parallel -i -j 4 bsnap_naccident snap.input{} -- ' +ids + "\n")
-            joinIds = " ".join(["-i snap{}.nc".format(x.id) for x in self.measurements])
-            fh.write("snapCombineInverse -I Cs137 -o snapCombined.nc {}\n".format(joinIds))
+            fh.write(r"parallel -i -j 4 bsnap_naccident snap.input{} -- " + ids + "\n")
+            joinIds = " ".join([f"-i snap{x.id}.nc" for x in self.measurements])
+            fh.write(f"snapCombineInverse -I Cs137 -o snapCombined.nc {joinIds}\n")
 
         # create diana.setup
-        with open(os.path.join(self.lastOutputDir, "diana.setup"), 'w') as fh:
-            fh.write('''
+        with open(os.path.join(self.lastOutputDir, "diana.setup"), "w") as fh:
+            fh.write(
+                f"""
 %include /etc/diana/setup/diana.setup-COMMON
 <FIELD_PLOT>
 field=source_probability
@@ -225,10 +259,13 @@ end.field
 
 <FIELD_FILES>
 filegroup=snapBacktrack
-m=combined t=fimex format=netcdf f={dir}/snapCombined.nc
-            '''.format(dir=self.lastOutputDir))
+m=combined t=fimex format=netcdf f={self.lastOutputDir}/snapCombined.nc
+            """
+            )
             for m in self.measurements:
-                fh.write("m={name} t=fimex format=netcdf f={dir}/snap{id}.nc\n".format(name=m.name, dir=self.lastOutputDir, id=m.id))
+                fh.write(
+                    f"m={m.name} t=fimex format=netcdf f={self.lastOutputDir}/snap{m.id}.nc\n"
+                )
             fh.write("</FIELD_FILES>\n")
         os.chmod(snapscript, 0o755)
         self._snap_model_run(snapscript)
@@ -242,14 +279,13 @@ m=combined t=fimex format=netcdf f={dir}/snapCombined.nc
         self.snap_update.update_log_signal.connect(self.update_log)
         self.snap_update.start(QThread.LowPriority)
 
-
     def update_log_query(self, qDict):
-        #MainBrowserWindow._default_form_handler(qDict)
+        # MainBrowserWindow._default_form_handler(qDict)
         self.write_log("updating...")
-        if os.path.isfile(os.path.join(self.lastOutputDir,"snap.log.out")) :
-            lfh = open(os.path.join(self.lastOutputDir,"snap.log.out"))
-            debug(tail(os.path.join(self.lastOutputDir,"snap.log.out"),30))
-            self.write_log(tail(os.path.join(self.lastOutputDir,"snap.log.out"), 30))
+        if os.path.isfile(os.path.join(self.lastOutputDir, "snap.log.out")):
+            lfh = open(os.path.join(self.lastOutputDir, "snap.log.out"))
+            debug(tail(os.path.join(self.lastOutputDir, "snap.log.out"), 30))
+            self.write_log(tail(os.path.join(self.lastOutputDir, "snap.log.out"), 30))
             lfh.close()
 
     def update_log(self):
@@ -258,25 +294,25 @@ m=combined t=fimex format=netcdf f={dir}/snapCombined.nc
     def _create_snap_form_handler(self):
         def handler(queryDict):
             """a form-handler with closure for self"""
-            options = { 'Run' : self.run_snap_query,
-                        'Update' : self.update_log_query
-            }
+            options = {"Run": self.run_snap_query, "Update": self.update_log_query}
             # mapping from QList<QPair> to simple dictionary
             qDict = dict()
             for key, value in queryDict:
                 qDict[key] = value
             # calling the correct handler depending on the module
             try:
-                options[qDict['action']](qDict)
+                options[qDict["action"]](qDict)
             except TypeError as ex:
-                self.write_log("type-error: {}".format(ex))
+                self.write_log(f"type-error: {ex}")
             except ValueError as ex:
-                self.write_log("value-error: {}".format(ex))
+                self.write_log(f"value-error: {ex}")
             except:
-                self.write_log("Unexpected error on {0}: {1}".format(qDict['action'],sys.exc_info()[0]))
+                self.write_log(
+                    f"Unexpected error on {qDict['action']}: {sys.exc_info()[0]}"
+                )
                 raise
-        return handler
 
+        return handler
 
 
 def tail(f, n):
@@ -284,17 +320,17 @@ def tail(f, n):
     lines = []
     while 1:
         line = fh.readline()
-        if (line):
+        if line:
             lines.append(line)
             if len(lines) > n:
-                lines = lines[len(lines)-n:]
+                lines = lines[len(lines) - n :]
         else:
             break
     return "".join(lines)
 
+
 if __name__ == "__main__":
-    debug("threads: {}".format(QThreadPool.globalInstance().maxThreadCount()))
+    debug(f"threads: {QThreadPool.globalInstance().maxThreadCount()}")
     app = QtWidgets.QApplication(sys.argv)
     ctr = SnapControllerInverse()
     sys.exit(app.exec_())
-
