@@ -200,18 +200,24 @@ RELEASE.BQ/SEC.COMP= 1e12, 1e12, 'Cs137'
             if metmodel == "nrpa_ec_0p1":
                 if "metpattern" in qDict:
                     files = self.res.getECMeteorologyFiles(
-                        startDT, runTime, pattern=qDict["metpattern"]
+                        startDT,
+                        runTime,
+                        pattern=qDict[
+                            "metpattern"
+                        ],  ### TO FIX: startDT should be changed to endDT
                     )
                     if len(files) == 0:
                         self.write_log(
-                            f"no EC met-files found for {startDT}, runtime {runTime} with pattern {qDict['metpattern']}"
+                            f"no EC met-files found for {startDT}, runtime {runTime} with pattern {qDict['metpattern']}"  ### TO FIX: startDT should be changed to endDT
                         )
                         return
                 else:
-                    files = self.res.getECMeteorologyFiles(startDT, runTime)
+                    files = self.res.getECMeteorologyFiles(
+                        startDT, runTime
+                    )  ### TO FIX: startDT should be changed to endDT
                     if len(files) == 0:
                         self.write_log(
-                            f"no EC met-files found for {startDT}, runtime {runTime}"
+                            f"no EC met-files found for {startDT}, runtime {runTime}"  ### TO FIX: startDT should be changed to endDT
                         )
                         return
                 if not self._defaultDomainCheck(lonf, latf):
