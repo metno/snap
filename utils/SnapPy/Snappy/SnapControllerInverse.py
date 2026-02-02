@@ -1,4 +1,4 @@
-import datetime 
+import datetime
 import json
 import math
 import os
@@ -16,7 +16,7 @@ import Snappy.Utils
 def debug(*objs):
     print("DEBUG: ", *objs, file=sys.stderr)
 
-class SnapRunInverse(SnapRun):
+class SnapRunInverse( SnapRun):
 
     def start(self, snapscript):
         debug("outputdir: "+self.snap_controller.lastOutputDir)
