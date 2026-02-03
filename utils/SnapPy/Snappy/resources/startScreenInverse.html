@@ -75,6 +75,7 @@ function addFields() {
     nameBox.setAttribute("name", "lat"+currentIndex);
     nameBox.setAttribute("size","8");
     nameBox.setAttribute("maxlength","10");
+    nameBox.setAttribute("title", "60.15, 60:5:3N, 60°5\'S");
     currentCell.appendChild(nameBox);
     
     currentCell = currentRow.insertCell(-1);
@@ -83,6 +84,7 @@ function addFields() {
     nameBox.setAttribute("name", "lon"+currentIndex);
     nameBox.setAttribute("size","8");
     nameBox.setAttribute("maxlength","10");
+    nameBox.setAttribute("title", "10.15, 10:5:3E, 10°5\'W");
     currentCell.appendChild(nameBox);
     
     currentCell = currentRow.insertCell(-1);
@@ -147,14 +149,15 @@ function deleteRow(btn) {
      <legend>Case-Setup</legend>
         <table id="run">
         <tr><th>output-dir</th><td><input type="text" size="80" maxlength="1024" name="outputDir" value="OUTPUTDIR" /></td></tr>
-        <tr><th>run-time</th><td><input type="text" size="4" maxlength="4" name="runTime" value="-96" /></td></tr>
+        <tr><th>run-time </th><td><input type="text" size="4" maxlength="4" name="runTime" value="-96" /></td></tr>
         </table>
+        Note: the durations of the meausrements defined by Starttime and Endtime below can differ from the run-time of the simulation. Simulations will run [run-time] hours from the Endtime of each measurement.
      </fieldset>
      <fieldset>
        <legend>Measurements</legend>
        <table id="measurements">
         <tr><th>Name</th><th>Latitude</th><th>Longitude</th><th>Starttime</th><th>Endtime</th><tr>
-        <tr><th></th><td><span title="60.15, 60:5:3N, 60°5'S">e.g. 60:10N</span></td><td><span title="10.15, 10:5:3E, 10°5'W">e.g. 10:5E</span></td><th>[YYYY-MM-DD HH:MM]</th><th>[YYYY-MM-DD HH:MM]</th><tr>
+        <tr><th></th><td><span title="60.15, 60:5:3N, 60°5'S">e.g. 60:10N</span ></td><td><span title="10.15, 10:5:3E, 10°5'W">e.g. 10:5E</span></td><th>[YYYY-MM-DD HH:MM]</th><th>[YYYY-MM-DD HH:MM]</th><tr>
        </table>
        <input type="button" class="button" value="Add another line" onclick="addFields();"/>
        
