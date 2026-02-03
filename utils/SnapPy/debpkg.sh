@@ -22,7 +22,7 @@ set -e
 #     $ dupload --no --to noble dist/snap-py_<version>-1_amd64.changes
 #     then remove --no option
 #
-#     Wait for confirmation email that package has been accepted
+#     Wait for confirmation google message on "IT- package repositories" that package has been added
 #
 # 3 - Check that it works on one machine
 #     $ ssh -X ppi-vglserver-b3.met.no
