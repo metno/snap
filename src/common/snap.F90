@@ -1308,7 +1308,7 @@ contains
               .true., .true. &
             )
 #endif
-          case default
+          case default                                                            !GEORGE: This implied no default scheme, instead raises error?
             write(error_unit,*) "Unknown scheme ", cinput(pname_start:pname_end)
             goto 12
         end select
