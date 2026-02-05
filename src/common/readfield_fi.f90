@@ -929,7 +929,7 @@ contains
 
     use snapparML, only: ncomp, run_comp, def_comp
     use snapfldML, only: ps2, vd_dep, surface_stress, hflux, z0, t2m, &
-      ustar, raero, my
+      ustar, raero, my, nu
     use snaptimers, only: metcalc_timer
 
     use datetime, only: datetime_t
@@ -986,7 +986,7 @@ contains
 
     if (met_params%z0 == "") then
       ! Load z0 from land use data if not defined in meteorology
-      z0(:,:) = lookup_z0(classnr, ustar)
+      z0(:,:) = lookup_z0(classnr, ustar, nu)
     else
       call fi_checkload(fio, met_params%z0, surface_roughness_length_units, z0(:, :), nt=timepos, nr=nr)
     endif
@@ -995,14 +995,14 @@ contains
 
     call metcalc_timer%start()
     call drydep_precompute_meteo(ps2*100., t2m, surface_stress, z0, hflux, &
-      ustar, raero, my)
+      ustar, raero, my, nu)
     !$OMP PARALLEL DO PRIVATE(i,mm)
     do i=1,ncomp
       mm = run_comp(i)%to_defined
 
       if (def_comp(mm)%kdrydep == 1) then
         call drydep_precompute_particle(ps2*100., t2m, &
-          ustar, raero, my, itimefi, &
+          ustar, raero, my, nu, itimefi, &
           def_comp(mm), classnr, vd_dep(:,:,i))
         if (idebug == 1) then
           call ftest('vd_'//trim(def_comp(mm)%compname), vd_dep(:,:,i))
