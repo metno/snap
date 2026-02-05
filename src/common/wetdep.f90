@@ -1,19 +1,4 @@
-! SNAP: Servere Nuclear Accident Programme
-! Copyright (C) 1992-2017   Norwegian Meteorological Institute
-
-! This file is part of SNAP. SNAP is free software: you can
-! redistribute it and/or modify it under the terms of the
-! GNU General Public License as published by the
-! Free Software Foundation, either version 3 of the License, or
-! (at your option) any later version.
-
-! This program is distributed in the hope that it will be useful,
-! but WITHOUT ANY WARRANTY; without even the implied warranty of
-! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-! GNU General Public License for more details.
-
-! You should have received a copy of the GNU General Public License
-! along with this program.  If not, see <https://www.gnu.org/licenses/>.
+!> Wet deposition of radionuclides. Method: Combination of J.Bartnicki 2003 and Takemura et al. 2000
 
 module wetdepml
   use iso_fortran_env, only: real64
@@ -78,7 +63,7 @@ module wetdepml
     real(real64) :: B
   end type
 
-  type(conventional_params_t), save, public :: conventional_params = conventional_params_t(0.0, 0.0)
+  type(conventional_params_t), save, public :: conventional_params = conventional_params_t(0.0, 0.0)  !> conventional does nothing??
   type(conventional_params_t), parameter, public :: RATM_params = conventional_params_t(2.98e-5, 0.75)
   real(real64), allocatable, save, public :: conventional_deprate_m1(:,:)
 
@@ -110,7 +95,7 @@ contains
   subroutine init(tstep)
     use snapdimML, only: nx, ny
     real, intent(in) :: tstep
-    if (wetdep_scheme%subcloud == WETDEP_SUBCLOUD_SCHEME_CONVENTIONAL .and. &
+    if (wetdep_scheme%subcloud == WETDEP_SUBCLOUD_SCHEME_CONVENTIONAL .and. &     !> GEORGE: What about conventional when not vertical? Not allocated, but used later on
         wetdep_scheme%use_vertical) then
         allocate(conventional_deprate_m1(nx,ny))
     endif
@@ -143,7 +128,7 @@ contains
     type(particle), intent(inout) :: part
     type(extraParticle), intent(in) :: pextra
 
-    if (def_comp(part%icomp)%kwetdep == 1) then
+    if (def_comp(part%icomp)%kwetdep == 1) then       !> If wet deposition on for each component
       if (wetdep_scheme%use_vertical) then
         block
           use snapfldML, only: wscav, depwet
@@ -172,7 +157,7 @@ contains
     USE snapparML, only: def_comp, run_comp
     USE snapdimML, only: hres_pos
 
-!> Field which ret deposition gets added to
+!> Field which wet deposition gets added to
     real(real64), intent(inout) :: depwet(:, :, :)
 !> Timestep of the simulation, affects the deposition rate
     real, intent(in) :: tstep
@@ -292,7 +277,9 @@ contains
     depconst = b0 + b1*rm + b2*rm*rm + b3*rm*rm*rm
   end function
 
-  pure elemental real function wet_deposition_rate_bartnicki_imm(radius, q, depconst, no_use_convective_rain) result(rkw)
+
+    !> Bartnicki scheme without cloud fraction adjustments
+  pure elemental real function wet_deposition_rate_bartnicki_imm(radius, q, depconst, no_use_convective_rain) result(rkw) !> GEORGE: depcosntant only relies on raddius - take out of inputs?
     !> radius in micrometer
     real, intent(in) :: radius
     !> precipitation intensity in mm/h
@@ -306,14 +293,14 @@ contains
     real, parameter :: a2 = -3.618e-6
     logical :: use_convective
 
-    if (present(no_use_convective_rain)) then
+    if (present(no_use_convective_rain)) then   !> GEORGE: confusing - can  we not just use use_convective as an input?
       use_convective = .not.no_use_convective_rain
     else
       use_convective = .true.
     endif
 
     rkw = 0
-    if (radius > 0.05 .AND. radius <= 1.4) then
+    if (radius > 0.05 .AND. radius <= 1.4) then   !> GEORGE: All these if statements do not need to be separate. Can use elif.
       rkw = a0*q**0.79
     endif
     if (radius > 1.4 .AND. radius <= 10.0) then
@@ -330,7 +317,7 @@ contains
     endif
   end function
 
-  pure elemental real function wet_deposition_rate(radius, q, depconst, tstep) result(deprate)
+  pure elemental real function wet_deposition_rate(radius, q, depconst, tstep) result(deprate)  !> depconst also not needed here?
     !> radius in micrometer
     real, intent(in) :: radius
     !> precipitation intensity in mm/h
@@ -359,7 +346,7 @@ contains
     USE snapparML, only: def_comp
     USE snapdimML, only: hres_pos
 
-!> Field which ret deposition gets added to
+!> Field which wet deposition gets added to
     real(real64), intent(inout) :: depwet(:, :, :)
 !> particle
     type(Particle), intent(inout) :: part
@@ -388,9 +375,9 @@ contains
   !> Aerosol rainout process also known as GCM-type wet deposition process
   subroutine wetdep_incloud_takemura(lambda, q, cloud_water, cloud_fraction)
     real, intent(out) :: lambda(:,:)
-    !> vertical flux of hydrometeors
+    !> vertical flux of hydrometeors [GEORGE: units?]
     real, intent(in) :: q(:,:)
-    !> Fraction of aerosol mass in cloud water to total aerosol mass in the grid
+    !> Fraction of aerosol mass in cloud water to total aerosol mass in the grid [GEORGE: units??]
     !> or the absorbtion coefficient
     !> Usually very high
     real, parameter :: f_inc = 1.0
@@ -451,10 +438,10 @@ contains
 
     depconst = wet_deposition_constant(radius)
     if (.not.use_ccf) then
-      wscav(:,:) = wet_deposition_rate_bartnicki_imm(radius, precip, depconst, no_use_convective_rain=.true.)
+      wscav(:,:) = wet_deposition_rate_bartnicki_imm(radius, precip, depconst, no_use_convective_rain=.true.)  !> no convective rain used. Way of including if needed?
     else
       block
-        integer :: i, j
+        integer :: i, j   !> GEORGE: is block neccessary? integers don't take much memory...
         real :: precip_scaled
 
         do j=1,ny
@@ -468,10 +455,10 @@ contains
               ! Scale up precip intensity
               precip_scaled = precip(i,j) / ccf(i,j)
             else
-              precip_scaled = precip(i,j)
+              precip_scaled = precip(i,j)               !> GEORGE: if ccf = 0 the surely no precipitation? Otherwise, could use mask to make ccf_{=0} = 1 for no for loops?
             endif
 
-            wscav(i,j) = wet_deposition_rate_bartnicki_imm(radius, precip_scaled, depconst, no_use_convective_rain=.true.)
+            wscav(i,j) = wet_deposition_rate_bartnicki_imm(radius, precip_scaled, depconst, no_use_convective_rain=.true.) !> Convective rain cannot be used here due to the precip scaling
 
             if (ccf(i,j) > 0.0) then
               ! Scale down efficiency
@@ -525,7 +512,7 @@ contains
         endif
         call prepare_wetdep_3d(wscav(:,:,:,i), run_comp(i)%defined%radiusmym, precip3d, cw3d, cloud_cover)
       else if (wetdep_scheme%subcloud == WETDEP_SUBCLOUD_SCHEME_CONVENTIONAL) then
-        call wetdep_conventional_compute(precip)
+        call wetdep_conventional_compute(precip)                                    !> GEORGE: conventional_deprate_m1 may not be allocated
       endif
     enddo
   end subroutine
@@ -609,7 +596,7 @@ contains
     real :: radlost, rkw
     integer :: ivlvl, i, j, k, mm, mo
 
-    ivlvl = part%z * 10000.0
+    ivlvl = nint(part%z * 10000.0)
     k = ivlevel(ivlvl)
     i = nint(part%x)
     j = nint(part%y)
