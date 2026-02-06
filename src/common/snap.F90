@@ -38,7 +38,7 @@
 ! DRY.DEPOSITION.SAVE
 ! DRY.DEPOSITION.LARGEST_LANDFRACTION_FILE = "landclasses.nc"
 ! WET.DEPOSITION.NEW ! deprecated
-! WET.DEPOSITION.SCHEME = Bartnicki ! (default) bartnicki-takemura
+! WET.DEPOSITION.SCHEME = Bartnicki ! (default) bartnicki-takemura      !GEORGE: confusion over default
 ! WET.DEPOSITION.SAVE  ! Outputs wet scavenging rate (for 3D output only)
 ! TIME.STEP= 900.
 ! TIME.RELEASE.PROFILE.CONSTANT
@@ -1308,7 +1308,7 @@ contains
               .true., .true. &
             )
 #endif
-          case default
+          case default                                                            !GEORGE: This implied no default scheme, instead raises error?
             write(error_unit,*) "Unknown scheme ", cinput(pname_start:pname_end)
             goto 12
         end select
@@ -2226,7 +2226,7 @@ contains
 
     if (drydep_scheme == DRYDEP_SCHEME_UNDEFINED) drydep_scheme = DRYDEP_SCHEME_OLD
 
-    ! Set default wetdep schemes
+    ! Set default wetdep schemes                                              !!GEORGE: default wetdep is still Bartnicki
     if (wetdep_scheme%subcloud == WETDEP_SUBCLOUD_SCHEME_UNDEFINED .and. &
         wetdep_scheme%incloud == WETDEP_INCLOUD_SCHEME_UNDEFINED) then
         wetdep_scheme = wetdep_scheme_t( &
