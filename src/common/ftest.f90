@@ -26,7 +26,7 @@ module ftestML
 
 !> Purpose: Test field, print min,mean,max values.
   interface ftest
-    module procedure ftest_2d_orig, ftest_3d_orig, ftest_2d, ftest_3d
+    module procedure ftest_2d, ftest_3d
   end interface
 
   contains
@@ -39,6 +39,7 @@ subroutine slice_stats(field, fmin, fmax, fsum, fmean, contains_undef)
   real(real64), intent(out) :: fsum
   logical, intent(in) :: contains_undef
 
+  logical, allocatable :: mask(:,:)
   integer :: nx, ny, i, j, ndef
 
   nx = size(field, 1)
@@ -53,17 +54,11 @@ subroutine slice_stats(field, fmin, fmax, fsum, fmean, contains_undef)
     fsum = sum(field)
     ndef = size(field)
   else
-    ndef=0
-    do j=1,ny
-      do i=1,nx
-        if(field(i,j) < ud) then
-          fmin = min(fmin,field(i,j))
-          fmax = max(fmax,field(i,j))
-          fsum = fsum+field(i,j)
-          ndef = ndef+1
-        end if
-      end do
-    end do
+    mask = field < ud
+    ndef = count(mask)
+    fmin = minval(field, mask=mask)
+    fmax = maxval(field, mask=mask)
+    fsum = sum(field, mask=mask)
   end if
 
   if(ndef > 0) then
@@ -151,130 +146,4 @@ subroutine ftest_3d(name, field, contains_undef, reverse_third_dim)
   return
 end subroutine ftest_3d
 
-subroutine ftest_2d_orig(name,k1,k2,nx,ny,nk,field,iundef)
-  use iso_fortran_env, only: real64, error_unit
-  USE snapdebug, only: iulog
-
-  integer, value :: k1, k2
-  integer, intent(in) :: nx, ny, nk, iundef
-  real, intent(in) :: field(nx,ny)
-  character(len=*), intent(in) :: name
-
-  integer :: i,j,k,ndef
-  real :: fmin,fmax,fmean
-  real, parameter :: undef = 1.0e35
-  real, parameter :: ud = undef*0.9
-
-  real(real64) :: fsum
-
-  if (.false.) write (error_unit,*) nk ! Silence compiler warning
-
-  fmin = huge(fmin)
-  fmax = -huge(fmax)
-  fsum=0.
-  if(iundef == 0) then
-    fmin = minval(field)
-    fmax = maxval(field)
-    fsum = sum(field)
-    ndef=nx*ny
-  else
-    ndef=0
-    do j=1,ny
-      do i=1,nx
-        if(field(i,j) < ud) then
-          fmin=min(fmin,field(i,j))
-          fmax=max(fmax,field(i,j))
-          fsum=fsum+field(i,j)
-          ndef=ndef+1
-        end if
-      end do
-    end do
-  end if
-
-  if(ndef > 0) then
-    fmean=fsum/dble(ndef)
-  else
-    fmin=0.
-    fmax=0.
-    fmean=0.
-  end if
-  if(k1 /= k2) then
-    write(iulog,fmt='(5x,a8,1x,i3,3(1x,e13.5))') &
-      name,k,fmin,fmean,fmax
-  else
-    write(iulog,fmt='(5x,a8,1x,3x,3(1x,e13.5))') &
-      name,  fmin,fmean,fmax
-  end if
-
-  flush(iulog)
-end subroutine ftest_2d_orig
-
-subroutine ftest_3d_orig(name,k1,k2,nx,ny,nk,field,iundef)
-  use iso_fortran_env, only: real64
-  USE snapdebug, only: iulog
-
-  implicit none
-
-  integer, value :: k1, k2
-  integer, intent(in) :: nx, ny, nk, iundef
-  real, intent(in) :: field(nx,ny,nk)
-  character(len=*), intent(in) :: name
-
-  integer :: kstep,i,j,k,ndef
-  real :: fmin,fmax,fmean
-  real, parameter :: undef = 1.0e35
-  real, parameter :: ud = undef*0.9
-
-  real(real64) :: fsum
-
-  if(k1 < 1 .OR. k1 > nk) k1=1
-  if(k2 < 1 .OR. k2 > nk) k2=nk
-  kstep=+1
-  if(k1 > k2) kstep=-1
-
-  do k=k1,k2,kstep
-    fmin = huge(fmin)
-    fmax = -huge(fmax)
-    fsum=0.
-    if(iundef == 0) then
-      fmin = minval(field(:,:,k))
-      fmax = maxval(field(:,:,k))
-      fsum = sum(field(:,:,k))
-      ndef=nx*ny
-    else
-      ndef=0
-    !$OMP PARALLEL DO PRIVATE(j,i) REDUCTION(max : fmax) &
-    !$OMP             REDUCTION(min : fmin) REDUCTION( + : fsum, ndef) &
-    !$OMP             COLLAPSE(2)
-      do j=1,ny
-        do i=1,nx
-          if(field(i,j,k) < ud) then
-            fmin=min(fmin,field(i,j,k))
-            fmax=max(fmax,field(i,j,k))
-            fsum=fsum+field(i,j,k)
-            ndef=ndef+1
-          end if
-        end do
-      end do
-    !$OMP END PARALLEL DO
-    end if
-    if(ndef > 0) then
-      fmean=fsum/dble(ndef)
-    else
-      fmin=0.
-      fmax=0.
-      fmean=0.
-    end if
-    if(k1 /= k2) then
-      write(iulog,fmt='(5x,a8,1x,i3,3(1x,e13.5))') &
-      name,k,fmin,fmean,fmax
-    else
-      write(iulog,fmt='(5x,a8,1x,3x,3(1x,e13.5))') &
-      name,  fmin,fmean,fmax
-    end if
-  end do
-  flush(iulog)
-
-  return
-end subroutine ftest_3d_orig
 end module ftestML
