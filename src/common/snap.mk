@@ -37,7 +37,7 @@ snap.o: ../common/snap.F90 $(MODELOBJ)
 
 fimex.o: ../common/fimex.f90
 	${F77} -c $(F77FLAGS) $(INCLUDES) -fno-module-private $<
-allocateFields.o: ../common/allocateFields.f90 particleML.o snapparML.o snapfldML.o snapfilML.o snapgrdML.o release.o snapdimML.o snapmetML.o
+allocateFields.o: ../common/allocateFields.f90 particleML.o snapparML.o snapfldML.o snapfilML.o snapgrdML.o release.o snapdimML.o snapmetML.o drydep.o
 	${F77} -c $(F77FLAGS) $(INCLUDES) $<
 array_utils.o: ../common/array_utils.f90
 	${F77} -c $(F77FLAGS) $(INCLUDES) $<
