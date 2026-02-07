@@ -51,7 +51,6 @@ module particleML
 
 !> storage for extra particle data
     type, public :: extraParticle
-        sequence
         !> u-speed
         real         :: u
         !> v-speed
