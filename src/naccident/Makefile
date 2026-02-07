@@ -10,10 +10,10 @@ bsnap_naccident: $(BOBJ) $(MODELOBJ)
 
 
 clean: clean_links
-	rm -f *.o *~ *__genmod.*
+	rm -f *.o *~ *__genmod.* *.modmic *.mod *.mod.* bsnap_naccident
 
 distclean: clean
-	rm -f bsnap_naccident create_naccident_input create_naccident_output
+	rm -f bsnap_naccident
 
 install: bsnap_naccident
 	install bsnap_naccident $(BINDIR)/
