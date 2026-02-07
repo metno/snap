@@ -1,19 +1,6 @@
 ! SNAP: Servere Nuclear Accident Programme
-! Copyright (C) 1992-2021   Norwegian Meteorological Institute
-
-! This file is part of SNAP. SNAP is free software: you can
-! redistribute it and/or modify it under the terms of the
-! GNU General Public License as published by the
-! Free Software Foundation, either version 3 of the License, or
-! (at your option) any later version.
-
-! This program is distributed in the hope that it will be useful,
-! but WITHOUT ANY WARRANTY; without even the implied warranty of
-! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-! GNU General Public License for more details.
-
-! You should have received a copy of the GNU General Public License
-! along with this program.  If not, see <https://www.gnu.org/licenses/>.
+! Copyright (C) 1992-2026   Norwegian Meteorological Institute
+! License: GNU GPL v3 or later
 
 ! SNAP - Severe Nuclear Accident Program
 
@@ -730,15 +717,13 @@ PROGRAM bsnap
       end if
 
       ! plume loop, increase age of all plumes/particles
-      !$OMP PARALLEL DO SCHEDULE(guided) !npl is private by default
       do npl = 1, nplume
         iplume(npl)%ageInSteps = iplume(npl)%ageInSteps + 1
       end do
-      !$OMP END PARALLEL DO
 
       call particleloop_timer%start()
       ! particle loop
-      !$OMP PARALLEL DO PRIVATE(pextra,np,m,out_of_domain) SCHEDULE(guided) REDUCTION(+:total_activity_lost_domain)
+      !$OMP PARALLEL DO PRIVATE(pextra,np,m,out_of_domain) SCHEDULE(guided,1000) REDUCTION(+:total_activity_lost_domain)
       part_do: do np = 1, npart
         if (.not.pdata(np)%is_active()) cycle part_do
 
@@ -784,12 +769,10 @@ PROGRAM bsnap
       end if
       npartmax = max(npartmax, npart)
 
-      !$OMP PARALLEL DO REDUCTION(max : mhmax) REDUCTION(min : mhmin)
       do n = 1, npart
         if (pdata(n)%hbl > mhmax) mhmax = pdata(n)%hbl
         if (pdata(n)%hbl < mhmin) mhmin = pdata(n)%hbl
       enddo
-      !$OMP END PARALLEL DO
 
       !..fields
       ifldout = 0
