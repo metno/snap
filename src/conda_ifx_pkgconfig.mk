@@ -1,12 +1,13 @@
 # link this to current.mk and it will be used in the Makefiles in subdirectories
 # includefile contains Compiler definitions etc.
 
-F77 = gfortran
+F77 = ifx
 
 F77FPEFLAGS= -ffpe-trap=invalid,zero,overflow -fno-openmp
 F77BOUNDFLAGS= -fbounds-check -fno-openmp
-F77FLAGS=-DVERSION=\"$(VERSION)\" -O2 -ftree-vectorize -fno-math-errno -fopenmp -g -mavx2 -mfma -Wall -Wextra -fimplicit-none -fmodule-private -Wno-conversion -Wno-compare-reals
-# -flto gives only 2-4% speedup, not using since more difficult debug and optimize steps
+#F77FLAGS=-DVERSION=\"$(VERSION)\" -O2 -ftree-vectorize -fno-math-errno -fopenmp -g -mavx2 -mfma -Wall -Wextra -fimplicit-none -fmodule-private -Wno-conversion -Wno-compare-reals
+F77FLAGS=-DVERSION=\"$(VERSION)\" -O2 -fopenmp -fiopenmp -xCORE-AVX2 -ipo $(MILIB_FLAGS) # -ipo is much faster but difficult to optimize
+ # -fopenmp-targets=spir64 # for GPU offloading, but not yet working
 ifdef SNAP_DEBUG_CHECKS
   F77FLAGS+=$(F77BOUNDFLAGS) $(F77FPEFLAGS)
 endif
@@ -29,7 +30,7 @@ FIMEXINC =
 NETCDFLIB = $(shell nf-config --flibs)
 NETCDFINC = $(shell nf-config --fflags)
 
-MILIB_FLAGS = -fno-implicit-none -fno-module-private -Wno-all -Wno-extra
+MILIB_FLAGS = #-fno-implicit-none -fno-module-private -Wno-all -Wno-extra
 
 BINDIR?=../../bin/
 
