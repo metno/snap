@@ -183,23 +183,32 @@ subroutine forwrd_dx(tf1, tf2, tnow, tstep, part, &
 !..interpolation
   block
     integer, parameter :: iuk1=1, ivk1=2, iwk1=3, iuk2=4, ivk2=5, iwk2=6, tk1=7, tk2=8, ips=9
-    real(real64) :: vars(4, 9), temp_results(9)
+    real(real64) :: vars(8, 9), temp_results(9)
 
-    vars(:, iuk1) = [u1(i,j,k1), u1(i+1,j,k1), u1(i,j+1,k1), u1(i+1,j+1,k1)]
-    vars(:, ivk1) = [v1(i,j,k1), v1(i+1,j,k1), v1(i,j+1,k1), v1(i+1,j+1,k1)]
-    vars(:, iwk1) = [w1(i,j,k1), w1(i+1,j,k1), w1(i,j+1,k1), w1(i+1,j+1,k1)]
-    vars(:, iuk2) = [u2(i,j,k1), u2(i+1,j,k1), u2(i,j+1,k1), u2(i+1,j+1,k1)]
-    vars(:, ivk2) = [v2(i,j,k1), v2(i+1,j,k1), v2(i,j+1,k1), v2(i+1,j+1,k1)]
-    vars(:, iwk2) = [w2(i,j,k1), w2(i+1,j,k1), w2(i,j+1,k1), w2(i+1,j+1,k1)]
-    vars(:, tk1) = [t1(i,j,k1), t1(i+1,j,k1), t1(i,j+1,k1), t1(i+1,j+1,k1)]
-    vars(:, tk2) = [t2(i,j,k1), t2(i+1,j,k1), t2(i,j+1,k1), t2(i+1,j+1,k1)]
-    vars(:, ips) = [ps1(i,j), ps1(i+1,j), ps1(i,j+1), ps1(i+1,j+1)]
+    vars(:, iuk1) = [u1(i,j,k1), u1(i+1,j,k1), u1(i,j+1,k1), u1(i+1,j+1,k1), &
+                    u2(i,j,k1), u2(i+1,j,k1), u2(i,j+1,k1), u2(i+1,j+1,k1)]
+    vars(:, ivk1) = [v1(i,j,k1), v1(i+1,j,k1), v1(i,j+1,k1), v1(i+1,j+1,k1), &
+                    v2(i,j,k1), v2(i+1,j,k1), v2(i,j+1,k1), v2(i+1,j+1,k1)]
+    vars(:, iwk1) = [w1(i,j,k1), w1(i+1,j,k1), w1(i,j+1,k1), w1(i+1,j+1,k1), &
+                    w2(i,j,k1), w2(i+1,j,k1), w2(i,j+1,k1), w2(i+1,j+1,k1)]
+    vars(:, iuk2) = [u2(i,j,k2), u2(i+1,j,k2), u2(i,j+1,k2), u2(i+1,j+1,k2), &
+                    u2(i,j,k2+1), u2(i+1,j,k2+1), u2(i,j+1,k2+1), u2(i+1,j+1,k2+1)]
+    vars(:, ivk2) = [v1(i,j,k2), v1(i+1,j,k2), v1(i,j+1,k2), v1(i+1,j+1,k2), &
+                    v2(i,j,k2), v2(i+1,j,k2), v2(i,j+1,k2), v2(i+1,j+1,k2)]
+    vars(:, iwk2) = [w2(i,j,k2), w2(i+1,j,k2), w2(i,j+1,k2), w2(i+1,j+1,k2), &
+                    w2(i,j,k2+1), w2(i+1,j,k2+1), w2(i,j+1,k2+1), w2(i+1,j+1,k2+1)]
+    vars(:, tk1)  = [t1(i,j,k1), t1(i+1,j,k1), t1(i,j+1,k1), t1(i+1,j+1,k1), &
+                    t2(i,j,k1), t2(i+1,j,k1), t2(i,j+1,k1), t2(i+1,j+1,k1)]
+    vars(:, tk2)  = [t1(i,j,k2), t1(i+1,j,k2), t1(i,j+1,k2), t1(i+1,j+1,k2), &
+                    t2(i,j,k2+1), t2(i+1,j,k2+1), t2(i,j+1,k2+1), t2(i+1,j+1,k2+1)]
+    vars(:, ips)  = [ps1(i,j), ps1(i+1,j), ps1(i,j+1), ps1(i+1,j+1), &
+                    ps2(i,j), ps2(i+1,j), ps2(i,j+1), ps2(i+1,j+1)]
 
     ! vectorized 2d interpolation for u, v, w, t, ps
-    temp_results = rt1*(  c1*vars(iuk1, 1) + c2*vars(iuk1, 2) &
-                        + c3*vars(iuk1, 3) + c4*vars(iuk1, 4)) &
-                  +rt2*(  c1*vars(iuk2, 1)  +c2*vars(iuk2, 2) &
-                        + c3*vars(iuk2, 3) + c4*vars(iuk2, 4))
+    temp_results = rt1*(  c1*vars(1, iuk1) + c2*vars(2, iuk1) &
+                        + c3*vars(3, iuk1) + c4*vars(4, iuk1)) &
+                  +rt2*(  c1*vars(5, iuk2)  +c2*vars(6, iuk2) &
+                        + c3*vars(7, iuk2) + c4*vars(8, iuk2))
 
     u = temp_results(iuk1)*dz1 + temp_results(iuk2)*dz2
     v = temp_results(ivk1)*dz1 + temp_results(ivk2)*dz2
