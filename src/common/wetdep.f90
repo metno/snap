@@ -96,8 +96,6 @@ contains
     if (wetdep_scheme%subcloud == WETDEP_SUBCLOUD_SCHEME_BARTNICKI.and. &
       .not.wetdep_scheme%use_vertical) then
 
-      error stop "Test error: in wrong place"
-
       call wetdep2_init(tstep)
     endif
   end subroutine
