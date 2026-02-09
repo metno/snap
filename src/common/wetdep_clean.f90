@@ -2,7 +2,7 @@
 !> This module considers two different regimes where wet deposition can be calculated: incloud (in model levels) and subcloud (at surface level).
 ! [TODO: Discuss more]
 
-module wetdepml
+module wetdepmlclean
   use iso_fortran_env, only: real64
   implicit none
   private
@@ -95,6 +95,7 @@ contains
 
     if (wetdep_scheme%subcloud == WETDEP_SUBCLOUD_SCHEME_BARTNICKI.and. &
       .not.wetdep_scheme%use_vertical) then
+
       call wetdep2_init(tstep)
     endif
   end subroutine
@@ -360,10 +361,32 @@ contains
     endif
   end subroutine
 
+      !> Aerosol rainout process also known as GCM-type wet deposition process
+  subroutine wetdep_incloud_takemura(lambda, q, cloud_water, cloud_fraction)
+    real, intent(out) :: lambda(:,:)
+    !> vertical flux of hydrometeors [GEORGE: units?]
+    real, intent(in) :: q(:,:)
+    !> Fraction of aerosol mass in cloud water to total aerosol mass in the grid [GEORGE: units??]
+    !> or the absorbtion coefficient
+    !> Usually very high
+    real, parameter :: f_inc = 1.0
+    !> cloud water
+    real, intent(in) :: cloud_water(:,:)
+    !> Cloud fraction
+    real, intent(in) :: cloud_fraction(:,:)
+
+
+    where (q > 0.0)
+      lambda = q/(q + cloud_water) * f_inc * cloud_fraction / 3600.0
+    elsewhere
+      lambda = 0.0
+    end where
+  end subroutine
+
   !> Should be called every input timestep tomprepare the scavenging rates
   subroutine wetdep_precompute()
     use snapparML, only: ncomp, run_comp
-    use snapfldML, only: wscav, cw3d, precip3d, cloud_cover, precip
+    use snapfldML, only: wscav, cw3d, precip3d, cloud_cover
 
     integer :: i
 
@@ -417,7 +440,7 @@ contains
       ! Subcloud
       select case (wetdep_scheme%subcloud%scheme)
         case (WETDEP_SUBCLOUD_SCHEME_BARTNICKI%scheme)
-          call wet_subcloud_bartnicki(wscav(:,:,k), radius, accum_precip(:,:), &
+          call wet_subcloud_bartnicki_ccf(wscav(:,:,k), radius, accum_precip(:,:), &
            accum_ccf(:,:), use_ccf=wetdep_scheme%use_cloudfraction)
         case (WETDEP_SUBCLOUD_SCHEME_NONE%scheme)
           wscav(:,:,k) = 0.0
@@ -470,4 +493,4 @@ contains
     dep(i, j, mo) = dep(i, j, mo) + real(radlost, kind=real64)
   end subroutine
 
-end module wetdepml
+end module wetdepmlclean
