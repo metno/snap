@@ -105,6 +105,10 @@ src/test/data/snap_ecemep.nc
 src/test/data/snap_meps_fimex.nc
 src/test/data/snap_meps_fimex.log
 
+src/naccident/examples/bench/meteo20260206_00.nc
+src/naccident/examples/bench/snap.log
+src/naccident/examples/bench/snap.nc
+
 docs/html
 docs/latex
 
