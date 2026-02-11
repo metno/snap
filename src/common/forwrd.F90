@@ -1,19 +1,7 @@
 ! SNAP: Servere Nuclear Accident Programme
-! Copyright (C) 1992-2017   Norwegian Meteorological Institute
+! Copyright (C) 1992-2026   Norwegian Meteorological Institute
+! License: GNU GPL v3 or later
 
-! This file is part of SNAP. SNAP is free software: you can
-! redistribute it and/or modify it under the terms of the
-! GNU General Public License as published by the
-! Free Software Foundation, either version 3 of the License, or
-! (at your option) any later version.
-
-! This program is distributed in the hope that it will be useful,
-! but WITHOUT ANY WARRANTY; without even the implied warranty of
-! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-! GNU General Public License for more details.
-
-! You should have received a copy of the GNU General Public License
-! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 module forwrdML
   implicit none
@@ -51,7 +39,8 @@ subroutine forwrd(tf1, tf2, tnow, tstep, part, pextra)
 !> extra information for the particle (u, v, rm{x,y})
   type(extraParticle), intent(inout) :: pextra
 
-  real(real64) :: dx1, dy1, dz1, u, v
+  real(real64) :: dx1, dy1, dz1
+  real u, v
 #if defined(PETTERSEN)
   type(particle) :: nparticle
   real(real64) :: dx2, dy2, dz2
@@ -138,19 +127,19 @@ subroutine forwrd_dx(tf1, tf2, tnow, tstep, part, &
 !> delz: offset in z
   real(real64), intent(out) :: delz
 !> wind-speed in x
-  real(real64), intent(out) :: u
+  real, intent(out) :: u
 !> wind-speed in y
-  real(real64), intent(out) :: v
+  real, intent(out) :: v
 
   integer :: i,j,m,ilvl,k1,k2,kt1,kt2
-  real(real64) :: dt,rt1,rt2,dx,dy,c1,c2,c3,c4,vlvl
-  real(real64) :: dz1,dz2,uk1,uk2,vk1,vk2,wk1,wk2,w
-  real(real64) :: th,tk1,tk2,ps,p,pi,t,gravity
-  real(real64) :: pi1,pi2,dz,deta,wg
+  real :: dt,rt1,rt2,dx,dy,c1,c2,c3,c4,vlvl
+  real :: dz1,dz2,uk1,uk2,vk1,vk2,wk1,wk2,w
+  real :: th,tk1,tk2,ps,p,pi,t,gravity
+  real :: pi1,pi2,dz,deta,wg
 
-  real(real64), parameter :: ginv = 1.0/g
-  real(real64), parameter :: cpinv = 1.0/cp
-  real(real64), parameter :: rcpinv = cp/r
+  real, parameter :: ginv = 1.0/g
+  real, parameter :: cpinv = 1.0/cp
+  real, parameter :: rcpinv = cp/r
 
 
   dt = tstep
