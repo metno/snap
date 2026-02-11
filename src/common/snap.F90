@@ -256,6 +256,11 @@ PROGRAM bsnap
   !> tstep: timestep in seconds
   real :: tstep = 900
   real :: rmlimit = -1.0, rnhrel, tf1, tf2, tnow, tnext
+  !> fractions from last timestep
+  real ::    rt1
+  !> fractions to next timestep
+  real :: rt2
+
   real ::    x(1), y(1)
   type(extraParticle) :: pextra
   real ::    rscale
@@ -685,6 +690,9 @@ PROGRAM bsnap
       end if
 
       tnext = tnow + tstep
+    !..for linear interpolation in time
+      rt1=(tf2-tnow)/(tf2-tf1)
+      rt2=(tnow-tf1)/(tf2-tf1)
 
       if (iendrel == 0 .AND. istep <= nstepr) then
 
@@ -728,8 +736,8 @@ PROGRAM bsnap
         if (.not.pdata(np)%is_active()) cycle part_do
 
         !..interpolation of boundary layer top, height, precipitation etc.
-        !  creates and save temporary data to pextra%prc, pextra%
-        call posint(pdata(np), tf1, tf2, tnow, pextra)
+        !  creates and save temporary data to pextra%prc, pextra%rmx, pextra%rmy
+        call posint(pdata(np), rt1, rt2, pextra)
 
         !..radioactive decay
         if (idecay == 1) call decay(pdata(np))
