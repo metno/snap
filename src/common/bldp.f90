@@ -1,19 +1,6 @@
 ! SNAP: Servere Nuclear Accident Programme
-! Copyright (C) 1992-2017   Norwegian Meteorological Institute
-
-! This file is part of SNAP. SNAP is free software: you can
-! redistribute it and/or modify it under the terms of the
-! GNU General Public License as published by the
-! Free Software Foundation, either version 3 of the License, or
-! (at your option) any later version.
-
-! This program is distributed in the hope that it will be useful,
-! but WITHOUT ANY WARRANTY; without even the implied warranty of
-! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-! GNU General Public License for more details.
-
-! You should have received a copy of the GNU General Public License
-! along with this program.  If not, see <https://www.gnu.org/licenses/>.
+! Copyright (C) 1992-2026   Norwegian Meteorological Institute
+! License: GNU General Public License v3.0 or later
 
 module bldpML
   implicit none
@@ -40,7 +27,7 @@ subroutine bldp
   USE snapdimML, only: nx,ny,nk
   USE snaptabML, only: cp, g, exner
   USE snapgrdML, only: ahalf, bhalf, vhalf, alevel, blevel
-  USE snapfldML, only: u2, v2, ps2, t2, hbl2, bl2
+  USE snapfldML, only: u_io, v_io, ps_io, t_io, hbl_io, bl_io
   USE ftestML, only: ftest
   USE snapdebug, only: iulog
 
@@ -137,10 +124,10 @@ subroutine bldp
     !######################################################################
 
     !..set u=v=0 at surface (not using 10m wind)
-      uhelp=u2(i,j,1)
-      vhelp=v2(i,j,1)
-      u2(i,j,1)=0.
-      v2(i,j,1)=0.
+      uhelp=u_io(i,j,1)
+      vhelp=v_io(i,j,1)
+      u_io(i,j,1)=0.
+      v_io(i,j,1)=0.
 
     !..pih: exner function in half (sigma1) levels
     !..pif: exner function in full (sigma2) levels (u,v,th levels)
@@ -149,16 +136,16 @@ subroutine bldp
     !..thh: pot.temp. in half levels (linear interp. in exner func.)
 
       do k=1,2
-        p=ahalf(k)+bhalf(k)*ps2(i,j)
+        p=ahalf(k)+bhalf(k)*ps_io(i,j)
         pih(k)= exner(p)
-        p=alevel(k)+blevel(k)*ps2(i,j)
+        p=alevel(k)+blevel(k)*ps_io(i,j)
         pif(k) = exner(p)
       end do
 
       k=2
       zh(k-1)=0.
       zf(k-1)=0.
-      zh(k)=zh(k-1)+t2(i,j,k)*(pih(k-1)-pih(k))*ginv
+      zh(k)=zh(k-1)+t_io(i,j,k)*(pih(k-1)-pih(k))*ginv
       zf(k)=  zh(k-1) &
           +(zh(k)-zh(k-1))*(pih(k-1)-pif(k))/(pih(k-1)-pih(k))
 
@@ -175,17 +162,17 @@ subroutine bldp
 
         k=k+1
 
-        p=ahalf(k+1)+bhalf(k+1)*ps2(i,j)
+        p=ahalf(k+1)+bhalf(k+1)*ps_io(i,j)
         pih(k+1)=  exner(p)
 
-        p=alevel(k+1)+blevel(k+1)*ps2(i,j)
+        p=alevel(k+1)+blevel(k+1)*ps_io(i,j)
         pif(k+1)=  exner(p)
 
-        thh(k)=  t2(i,j,k) &
-            +(t2(i,j,k+1)-t2(i,j,k))*(pif(k)-pih(k)) &
+        thh(k)=  t_io(i,j,k) &
+            +(t_io(i,j,k+1)-t_io(i,j,k))*(pif(k)-pih(k)) &
             /(pif(k)-pif(k+1))
 
-        zh(k+1)=zh(k)+t2(i,j,k+1)*(pih(k)-pih(k+1))*ginv
+        zh(k+1)=zh(k)+t_io(i,j,k+1)*(pih(k)-pih(k+1))*ginv
 
         zf(k+1)=  zh(k) &
         +(zh(k+1)-zh(k))*(pih(k)-pif(k+1)) &
@@ -195,10 +182,10 @@ subroutine bldp
 
           dz=zf(k+1)-zf(k)
           dv2min=1.e-5*dz*dz
-          dv2= (u2(i,j,k+1)-u2(i,j,k))*(u2(i,j,k+1)-u2(i,j,k)) &
-              +(v2(i,j,k+1)-v2(i,j,k))*(v2(i,j,k+1)-v2(i,j,k))
+          dv2= (u_io(i,j,k+1)-u_io(i,j,k))*(u_io(i,j,k+1)-u_io(i,j,k)) &
+              +(v_io(i,j,k+1)-v_io(i,j,k))*(v_io(i,j,k+1)-v_io(i,j,k))
           if(dv2 < dv2min) dv2=dv2min
-          dth=t2(i,j,k+1)-t2(i,j,k)
+          dth=t_io(i,j,k+1)-t_io(i,j,k)
         !..Richardson no.
         !............ ri=g*dth*dz/(thh(k)*dv2) ................. in NORLAM
           ri=cp*g*dth*dz/(thh(k)*pih(k)*dv2)
@@ -260,12 +247,12 @@ subroutine bldp
       hbl=  zh(k) &
           +(zh(k+1)-zh(k))*(vhalf(k)-vbl)/(vhalf(k)-vhalf(k+1))
 
-      bl2(i,j)=vbl
-      hbl2(i,j)=hbl
+      bl_io(i,j)=vbl
+      hbl_io(i,j)=hbl
 
     !..reset wind
-      u2(i,j,1)=uhelp
-      v2(i,j,1)=vhelp
+      u_io(i,j,1)=uhelp
+      v_io(i,j,1)=vhelp
     !######################################################################
     !	  if(mod(i,20).eq.0 .and. mod(j,20).eq.0) then
     !	    write(iulog,*) '---------- I,J: ',i,j
@@ -284,8 +271,8 @@ subroutine bldp
 
 ! test----------------------------------------------
   write(iulog,*) '*BLDP*'
-  call ftest('bl ', bl2)
-  call ftest('hbl', hbl2)
+  call ftest('bl ', bl_io)
+  call ftest('hbl', hbl_io)
 ! test----------------------------------------------
 
 ! test----------------------------------------------

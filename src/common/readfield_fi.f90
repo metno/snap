@@ -68,9 +68,8 @@ contains
     USE iso_fortran_env, only: error_unit
     USE snapfilML, only: iavail, filef
     USE snapfldML, only: &
-      xm, ym, u1, u2, v1, v2, w1, w2, t1, t2, ps1, ps2, pmsl1, pmsl2, &
-      hbl1, hbl2, hlayer1, hlayer2, garea, hlevel1, hlevel2, &
-      hlayer1, hlayer2, bl1, bl2, enspos, precip, t1_abs, t2_abs, &
+      xm, ym, u_io, v_io, w_io, t_io, ps_io, pmsl_io, &
+      garea, enspos, precip_io, t_abs_io, t2_abs,&
       field1
     USE snapgrdML, only: alevel, blevel, vlevel, ahalf, bhalf, vhalf, &
                          gparam, klevel, ivlevel, imslp, igtype, ivlayer, ivcoor
@@ -196,27 +195,6 @@ contains
         itimefi, ', prev. position=', timeposm1, ', hours:', nhdiff
     end if
 
-    if (.TRUE.) then
-      !..move data from input time step 2 to 1
-
-      u1(:, :, :) = u2
-      v1(:, :, :) = v2
-      w1(:, :, :) = w2
-      t1(:, :, :) = t2
-      if (allocated(t2_abs)) t1_abs(:,:,:) = t2_abs
-      hlevel1(:, :, :) = hlevel2
-      hlayer1(:, :, :) = hlayer2
-
-      ps1(:, :) = ps2
-      bl1(:, :) = bl2
-      hbl1(:, :) = hbl2
-
-      if (imslp /= 0) then
-        pmsl1(:, :) = pmsl2
-      end if
-
-    end if
-
     ptop = 100.0
     do k = nk , 2, -1
 
@@ -225,17 +203,17 @@ contains
 
       !..u
       !     Get the varid of the data variable, based on its name.
-      call fi_checkload(fio, met_params%xwindv, xy_wind_units, u2(:, :, k), nt=timepos, nz=ilevel, nr=nr)
+      call fi_checkload(fio, met_params%xwindv, xy_wind_units, u_io(:, :, k), nt=timepos, nz=ilevel, nr=nr)
 
       !..v
-      call fi_checkload(fio, met_params%ywindv, xy_wind_units, v2(:, :, k), nt=timepos, nz=ilevel, nr=nr)
+      call fi_checkload(fio, met_params%ywindv, xy_wind_units, v_io(:, :, k), nt=timepos, nz=ilevel, nr=nr)
       ! bug in chernobyl borders from destaggering
-      where (v2 >= 1e+30)
-      v2 = 0.0
+      where (v_io >= 1e+30)
+      v_io = 0.0
       end where
 
       !..pot.temp. or abs.temp.
-      call fi_checkload(fio, met_params%pottempv, temp_units, t2(:, :, k), nt=timepos, nz=ilevel, nr=nr)
+      call fi_checkload(fio, met_params%pottempv, temp_units, t_io(:, :, k), nt=timepos, nz=ilevel, nr=nr)
 
       !   TODO read ptop from file (only needed for sigma), but not in emep data
       ptop = 100. ! hPa
@@ -263,12 +241,12 @@ contains
       !..sigma_dot/eta_dot (0 at surface)
       !..eta: eta_dot (or omega) stored in the same levels as u,v,th.
       if (met_params%sigmadotv == '') then
-        w2 = 0
+        w_io = 0
       else
         if (met_params%sigmadot_is_omega) then
-          call fi_checkload(fio, met_params%sigmadotv, omega_units, w2(:, :, k), nt=timepos, nz=ilevel, nr=nr)
+          call fi_checkload(fio, met_params%sigmadotv, omega_units, w_io(:, :, k), nt=timepos, nz=ilevel, nr=nr)
         else
-          call fi_checkload(fio, met_params%sigmadotv, sigmadot_units, w2(:, :, k), nt=timepos, nz=ilevel, nr=nr)
+          call fi_checkload(fio, met_params%sigmadotv, sigmadot_units, w_io(:, :, k), nt=timepos, nz=ilevel, nr=nr)
         end if
       end if
 
@@ -278,28 +256,28 @@ contains
 !..precipitation
 
 ! ps
-    call fi_checkload(fio, met_params%psv, pressure_units, ps2(:, :), nt=timepos, nr=nr)
+    call fi_checkload(fio, met_params%psv, pressure_units, ps_io(:, :), nt=timepos, nr=nr)
 
 ! u10m
 ! v10m
     if (.not. met_params%use_model_wind_for_10m) then
-      call fi_checkload(fio, met_params%xwind10mv, xy_wind_units, u2(:, :, 1), nt=timepos, nr=nr, nz=1)
-      call fi_checkload(fio, met_params%ywind10mv, xy_wind_units, v2(:, :, 1), nt=timepos, nr=nr, nz=1)
+      call fi_checkload(fio, met_params%xwind10mv, xy_wind_units, u_io(:, :, 1), nt=timepos, nr=nr, nz=1)
+      call fi_checkload(fio, met_params%ywind10mv, xy_wind_units, v_io(:, :, 1), nt=timepos, nr=nr, nz=1)
     else
       if (surface_index <= 0) then
         error stop "Surface index is invalid"
       endif
-      call fi_checkload(fio, met_params%xwindv, xy_wind_units, u2(:, :, 1), nt=timepos, nr=nr, nz=surface_index)
-      call fi_checkload(fio, met_params%ywindv, xy_wind_units, v2(:, :, 1), nt=timepos, nr=nr, nz=surface_index)
+      call fi_checkload(fio, met_params%xwindv, xy_wind_units, u_io(:, :, 1), nt=timepos, nr=nr, nz=surface_index)
+      call fi_checkload(fio, met_params%ywindv, xy_wind_units, v_io(:, :, 1), nt=timepos, nr=nr, nz=surface_index)
     endif
 
 !..mean sea level pressure, not used in computations,
 !..(only for output to results file)
     if (imslp /= 0) then
       if (met_params%mslpv /= '') then
-        call fi_checkload(fio, met_params%mslpv, pressure_units, pmsl2(:, :), nt=timepos, nr=nr, nz=1)
+        call fi_checkload(fio, met_params%mslpv, pressure_units, pmsl_io(:, :), nt=timepos, nr=nr, nz=1)
       else if (met_params%psv /= '') then
-        call fi_checkload(fio, met_params%psv, pressure_units, pmsl2(:, :), nt=timepos, nr=nr, nz=1)
+        call fi_checkload(fio, met_params%psv, pressure_units, pmsl_io(:, :), nt=timepos, nr=nr, nz=1)
       else
         write (iulog, *) 'Mslp not found. Not important.'
         imslp = 0
@@ -313,7 +291,7 @@ contains
     if (met_params%need_precipitation) then
       call read_precipitation(fio, nhdiff_precip, timepos, timeposm1)
     else
-      precip = 0.0
+      precip_io = 0.0
     endif
 
     ! nhdiff_precip is timestep for accumulated fields, using it in case fluxes are accumulated
@@ -346,13 +324,13 @@ contains
 
     call metcalc_timer%start()
     if (met_params%temp_is_abs) then
-      if (allocated(t2_abs)) t2_abs(:,:,:) = t2
+      if (allocated(t2_abs)) t_abs_io(:,:,:) = t_io
       !..abs.temp. -> pot.temp.
       do k = 2, nk
         do j = 1, ny
           do i = 1, nx
-            p = alevel(k) + blevel(k)*ps2(i,j)
-            t2(i,j,k) = t2(i,j,k)*t2thetafac(p)
+            p = alevel(k) + blevel(k)*ps_io(i,j)
+            t_io(i,j,k) = t_io(i,j,k)*t2thetafac(p)
           end do
         end do
       end do
@@ -362,8 +340,8 @@ contains
         do k=2,nk
           do j = 1, ny
             do i = 1, nx
-              p = alevel(k) + blevel(k)*ps2(i,j)
-              t2_abs(i,j,k) = t2(i,j,k)/t2thetafac(p)
+              p = alevel(k) + blevel(k)*ps_io(i,j)
+              t_abs_io(i,j,k) = t_io(i,j,k)/t2thetafac(p)
             end do
           end do
         end do
@@ -377,21 +355,21 @@ contains
       !..omega -> etadot, or rather etadot derived from continuity-equation
       call om2edot
       ! om2edot take means of omega (=0) and continuity-equation, -> use only continuity equation
-      w2 = 2.0*w2
+      w_io = 2.0*w_io
     end if
     call metcalc_timer%stop_and_log()
 
 !..sigma_dot/eta_dot 0 at surface
-    w2(:, :, 1) = 0.0
+    w_io(:, :, 1) = 0.0
 
 !..no temperature at or near surface (not used, yet)
-    t2(:, :, 1) = -999.0
+    t_io(:, :, 1) = -999.0
 
     if (backward) then
       ! backward-calculation, switch sign of winds
-      u2 = -u2
-      v2 = -v2
-      w2 = -w2
+      u_io = -u_io
+      v_io = -v_io
+      w_io = -w_io
     end if
 
 ! test---------------------------------------------------------------
@@ -407,13 +385,13 @@ contains
 ! test---------------------------------------------------------------
 
     if (idebug == 1) then
-      call ftest('u  ', u2, reverse_third_dim=.true.)
-      call ftest('v  ', v2, reverse_third_dim=.true.)
-      call ftest('w  ', w2, reverse_third_dim=.true.)
-      call ftest('t  ', t2, reverse_third_dim=.true.)
-      call ftest('ps ', ps2)
+      call ftest('u  ', u_io, reverse_third_dim=.true.)
+      call ftest('v  ', v_io, reverse_third_dim=.true.)
+      call ftest('w  ', w_io, reverse_third_dim=.true.)
+      call ftest('t  ', t_io, reverse_third_dim=.true.)
+      call ftest('ps ', ps_io)
       if (istep > 0) &
-        call ftest('pre', precip(:, :))
+        call ftest('pre', precip_io(:, :))
     end if
 
     if (istep == 0) then
@@ -470,8 +448,8 @@ contains
     use snapdebug, only: iulog
     use snapmetML, only: met_params, &
                          precip_rate_units, precip_units_ => precip_units, precip_units_fallback
-    use snapfldML, only: field1, field2, field3, field4, precip, &
-                         enspos, precip
+    use snapfldML, only: field1, field2, field3, field4, precip_io, &
+                         enspos
     use wetdepML, only: requires_extra_precip_fields, wetdep_precompute
 
 !> open netcdf file
@@ -502,7 +480,7 @@ contains
       endif
       call fi_checkload(fio, met_params%precaccumv, precip_units, field2(:, :), nt=timepos, nr=nr, nz=1)
 
-      precip(:,:) = (field2 - field1)/nhdiff
+      precip_io(:,:) = (field2 - field1)/nhdiff
     else if (met_params%precstratiaccumv /= '') then
       ! accumulated stratiform and convective precipitation
       !..precipitation between input time 't1' and 't2'
@@ -528,11 +506,11 @@ contains
         endif
       endif
 
-      precip(:,:) = ((field3 + field4) - (field1 + field2))/nhdiff
+      precip_io(:,:) = ((field3 + field4) - (field1 + field2))/nhdiff
 
     else if (met_params%total_column_rain /= '') then
       call fi_checkload(fio, met_params%total_column_rain, precip_units, field3(:, :), nt=timepos, nr=nr, nz=1)
-      precip(:,:) = field3
+      precip_io(:,:) = field3
       write (error_unit, *) "Check precipation correctness"
     else
       !..non-accumulated emissions in stratiform an convective
@@ -543,11 +521,11 @@ contains
         field2 = 0.
       endif
 
-      precip(:,:) = field1 + field2
+      precip_io(:,:) = field1 + field2
     end if
 
-    where (precip < 0.0)
-      precip = 0.0
+    where (precip_io < 0.0)
+      precip_io = 0.0
     end where
 
     if (requires_extra_precip_fields()) then
@@ -567,7 +545,7 @@ contains
   subroutine read_extra_precipitation_fields(fio, timepos)
     use iso_fortran_env, only: error_unit
     use snaptabML, only: g
-    use snapfldML, only: ps2, precip3d, cw3d, cloud_cover, enspos
+    use snapfldML, only: ps_io, precip3d, cw3d, cloud_cover, enspos
     use snapgrdML, only: ahalf, bhalf, klevel
     use snapdimML, only: nx, ny, nk
     use snapmetML, only: mass_fraction_units, cloud_fraction_units, met_params
@@ -615,7 +593,7 @@ contains
         snow_in_air = 0.0
       end where
 
-      pdiff(:,:) = 100*( (ahalf(k-1) - ahalf(k)) + (bhalf(k-1) - bhalf(k))*ps2 )
+      pdiff(:,:) = 100*( (ahalf(k-1) - ahalf(k)) + (bhalf(k-1) - bhalf(k))*ps_io )
 
       precip3d(:,:,k) = rain_in_air + graupel_in_air + snow_in_air
       precip3d(:,:,k) = precip3d(:,:,k) * pdiff / g
@@ -643,7 +621,7 @@ contains
   subroutine read_extra_precipitation_fields_infer_3d_precip(fio, timepos)
     use iso_fortran_env, only: error_unit
     use snaptabML, only: g
-    use snapfldML, only: ps2, precip3d, cw3d, cloud_cover, enspos, precip
+    use snapfldML, only: ps_io, precip3d, cw3d, cloud_cover, enspos, precip_io
     use snapgrdML, only: ahalf, bhalf, klevel
     use snapdimML, only: nx, ny, nk
     use snapmetML, only: mass_fraction_units, cloud_fraction_units, met_params
@@ -674,7 +652,7 @@ contains
     do k=nk,2,-1
       ilevel = klevel(k)
 
-      pdiff(:,:) = 100*( (ahalf(k-1) - ahalf(k)) + (bhalf(k-1) - bhalf(k))*ps2 )
+      pdiff(:,:) = 100*( (ahalf(k-1) - ahalf(k)) + (bhalf(k-1) - bhalf(k))*ps_io )
       call fi_checkload(fio, met_params%mass_fraction_cloud_condensed_water_in_air, mass_fraction_units, &
                         cloud_water(:,:), nt=timepos, nz=ilevel, nr=nr)
       call fi_checkload(fio, met_params%mass_fraction_cloud_ice_in_air, mass_fraction_units, &
@@ -684,7 +662,7 @@ contains
 
       ! Use cloud water to assign precipitation at model levels
       normaliser(:,:) = normaliser + cw3d(:,:,k)
-      precip3d(:,:,k) = precip * cw3d(:,:,k)
+      precip3d(:,:,k) = precip_io * cw3d(:,:,k)
 
       call fi_checkload(fio, met_params%cloud_fraction, cloud_fraction_units, &
                         cloud_cover(:,:,k), nt=timepos, nz=ilevel, nr=nr)
@@ -702,7 +680,7 @@ contains
           elseif (k == klimit) then
             ! Put all precip at level closest to 0.67, analoguous
             ! with the old formulation of the precipitation
-            precip3d(i,j,k) = precip(i,j)
+            precip3d(i,j,k) = precip_io(i,j)
           endif
         enddo
       enddo
@@ -928,7 +906,7 @@ contains
     use snapdebug, only: idebug
 
     use snapparML, only: ncomp, run_comp, def_comp
-    use snapfldML, only: ps2, vd_dep, surface_stress, hflux, z0, t2m, &
+    use snapfldML, only: ps_io, vd_dep_io, surface_stress, hflux, z0, t2m, &
       ustar, raero, my, nu
     use snaptimers, only: metcalc_timer
 
@@ -954,7 +932,7 @@ contains
       ! Either surface_stress or xflux and yflux needs to be defined
       error stop "Assertion error: Either surface_stress or xflux and yflux needs to be defined in the meteorological parameters"
     else
-      allocate(xflux, yflux, MOLD=ps2)
+      allocate(xflux, yflux, MOLD=ps_io)
       ! Load and combine surface stress/momentum flux components
       if (met_params%xflux_is_accumulated) then
         ! Note: Arome files have the wrong units for downward_momentum_flux_units, missing a unit of time
@@ -994,18 +972,18 @@ contains
     call fi_checkload(fio, met_params%t2m, temp_units, t2m(:, :), nt=timepos, nr=nr)
 
     call metcalc_timer%start()
-    call drydep_precompute_meteo(ps2*100., t2m, surface_stress, z0, hflux, &
+    call drydep_precompute_meteo(ps_io*100., t2m, surface_stress, z0, hflux, &
       ustar, raero, my, nu)
     !$OMP PARALLEL DO PRIVATE(i,mm)
     do i=1,ncomp
       mm = run_comp(i)%to_defined
 
       if (def_comp(mm)%kdrydep == 1) then
-        call drydep_precompute_particle(ps2*100., t2m, &
+        call drydep_precompute_particle(ps_io*100., t2m, &
           ustar, raero, my, nu, itimefi, &
-          def_comp(mm), classnr, vd_dep(:,:,i))
+          def_comp(mm), classnr, vd_dep_io(:,:,i))
         if (idebug == 1) then
-          call ftest('vd_'//trim(def_comp(mm)%compname), vd_dep(:,:,i))
+          call ftest('vd_'//trim(def_comp(mm)%compname), vd_dep_io(:,:,i))
         endif
       endif
     end do
