@@ -198,12 +198,6 @@ PROGRAM bsnap
     WETDEP_INCLOUD_SCHEME_UNDEFINED, &
     operator(==), operator(/=), &
     wetdep_init => init
-#if defined(SNAP_EXPERIMENTAL)
-  USE wetdepML, only: WETDEP_SUBCLOUD_SCHEME_CONVENTIONAL, &
-    wet_deposition_conventional_params => conventional_params, &
-    wet_deposition_RATM => RATM_params, &
-    WETDEP_INCLOUD_SCHEME_ROSELLE
-#endif
   USE drydepml, only: drydep, drydep_scheme, requires_landfraction_file, &
           DRYDEP_SCHEME_OLD, DRYDEP_SCHEME_NEW, &
           DRYDEP_SCHEME_EMERSON, DRYDEP_SCHEME_UNDEFINED, &
