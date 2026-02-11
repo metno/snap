@@ -20,7 +20,7 @@ module posintML
 
 !> Purpose:  Interpolation of boundary layer top and height
 !>           and precipitation intensity to particle positions
-subroutine posint(part,tf1,tf2,tnow,pextra)
+subroutine posint(part,rt1,rt2,pextra)
   USE particleML, only: Particle, extraParticle
   USE snapgrdML, only: gparam
   USE snapfldML, only: xm, ym, bl1, bl2, hbl1, hbl2, precip
@@ -28,28 +28,22 @@ subroutine posint(part,tf1,tf2,tnow,pextra)
 !> particle
 !> (with all particles at the same horizontal position)
   type(Particle), intent(inout) :: part
-!> time in seconds for field set 1 (e.g. 0.)
-  real, intent(in) ::    tf1
-!> time in seconds for field set 2 (e.g. 21600, if 6 hours)
-  real, intent(in) :: tf2
-!> time in seconds for current paricle positions
-  real, intent(in) :: tnow
+!> fractions from last timestep
+  real, intent(in) ::    rt1
+!> fractions to next timestep
+  real, intent(in) :: rt2
 !> extra information interpolated to the particle
 !> position, mainly rmx/rmy/prc
   type(extraParticle), intent(out) :: pextra
 
   integer :: i,j
-  real :: rt1,rt2,dxgrid,dygrid,dx,dy,c1,c2,c3,c4,bl,hbl,rmx,rmy
+  real :: dxgrid,dygrid,dx,dy,c1,c2,c3,c4,bl,hbl,rmx,rmy
   real :: pr
 
   if (.not.part%is_active()) then
     ! No need to compute any properties on the particle
     return
   endif
-
-!..for linear interpolation in time
-  rt1=(tf2-tnow)/(tf2-tf1)
-  rt2=(tnow-tf1)/(tf2-tf1)
 
   dxgrid=gparam(7)
   dygrid=gparam(8)
