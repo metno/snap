@@ -66,9 +66,12 @@ The follwing will give cache misses:
 time OMP_NUM_THREADS=1 perf stat -e cycles,instructions,cache-references,cache-misses   -e mem_load_retired.l3_miss,mem_load_retired.l3_hit  ../../bsnap_naccident snap_particles.input
 ```
 
+SNAP has around 55% of cache-misses, which is caused by non-linear access in `posint` and `forward`, making those mostly memory bound.
+(sorting of particles to x/y/z does not seem to help.)
+
 ## Parallelization
 
-SNAP scales ok to up to 4 CPU. Ensure that hyperthreads are not used with OMP_PLACES=cores.
+SNAP scales ok to up to 4 CPU on a laptop. Ensure that hyperthreads are not used with OMP_PLACES=cores.
 Thread affinity doesn't help (OMP_PROC_BIND=close)
 
 Test with:
