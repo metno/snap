@@ -157,7 +157,8 @@ PROGRAM bsnap
   USE snapdimML, only: nx, ny, nk, output_resolution_factor, ldata, maxsiz, mcomp, surface_index
   USE snapfilML, only: filef, itimer, ncsummary, nctitle, nhfmax, nhfmin, &
                        nctype, nfilef, simulation_start, spinup_steps
-  USE snapfldML, only: nhfout, enspos
+  USE snapfldML, only: nhfout, enspos, use_async_io, &
+                       swap_fields_before_reading, swap_fields_after_reading
   USE snapmetML, only: init_meteo_params, met_params
   USE snapparML, only: component, run_comp, output_component, &
                        ncomp, nocomp, def_comp, nparnum, &
@@ -591,6 +592,7 @@ PROGRAM bsnap
     if (ierror /= 0) call snap_error_exit(iulog)
     call compheight
     call bldp
+    call swap_fields_after_reading() ! only for async io, but does not hurt otherwise
 
     ! Initialise output
     if (idailyout == 1) then
@@ -653,6 +655,10 @@ PROGRAM bsnap
       if (next_input_step == istep .and. nhleft > 0) then
         itimei = time_file
         call input_timer%start()
+        if (.not. use_async_io) then
+          ! move all u2, v2, etc fields to u1, v1, etc before reading new fields to u2, v2, etc
+          call swap_fields_before_reading()
+        end if
         if (ftype == "netcdf") then
           call readfield_nc(istep, nhrun < 0, itimei, nhfmin, nhfmax, &
                             time_file, ierror)
@@ -675,6 +681,10 @@ PROGRAM bsnap
         call compheight
         !..calculate boundary layer (top and height)
         call bldp
+        if (use_async_io) then
+          ! move all u2 to u1, u3 to u2, etc after reading new fields to u3, v3, etc
+          call swap_fields_after_reading()
+        end if
         call metcalc_timer%stop_and_log()
 
         dur = time_file - itimei
