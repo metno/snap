@@ -11,12 +11,6 @@ module forwrdML
 
   contains
 
-!> Interpolation in 2D
-  pure real function interp(a00, a10, a01, a11, c1, c2, c3, c4)
-    real, intent(in) :: a00, a10, a01, a11, c1, c2, c3, c4
-    interp = c1*a00 + c2*a10 + c3*a01 + c4*a11
-  end function interp
-
 !> Purpose:  Move all particles one timestep forward
 !>
 !> Notes:
@@ -92,6 +86,13 @@ subroutine forwrd(tf1, tf2, tnow, tstep, part, pextra)
 end subroutine forwrd
 
 
+!> Interpolation in 2D
+!> private, inlined only for better readability
+  pure real function interp(a00, a10, a01, a11, c1, c2, c3, c4)
+    real, intent(in) :: a00, a10, a01, a11, c1, c2, c3, c4
+    interp = c1*a00 + c2*a10 + c3*a01 + c4*a11
+  end function interp
+
 !> Purpose:  calculate dx,dy,dz forward movement of particle at pos np
 !>
 !> Notes:
@@ -139,7 +140,7 @@ subroutine forwrd_dx(tf1, tf2, tnow, tstep, part, &
 
   integer :: i,j,m,ilvl,k1,k2,kt1,kt2
   real :: dt,rt1,rt2,dx,dy,c1,c2,c3,c4,vlvl
-  real :: dz1,dz2,ut1,ut2,vt1,vt2,wt1,wt2,w, ux
+  real :: dz1,dz2,ut1,ut2,vt1,vt2,wt1,wt2,w
   real :: th,tt1,tt2,ps,p,pi,t,gravity
   real :: pi1,pi2,dz,deta,wg
 
