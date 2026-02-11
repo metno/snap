@@ -62,6 +62,7 @@ subroutine slice_stats(field, fmin, fmax, fsum, fmean, contains_undef)
         end if
       end do
     end do
+    !$OMP END PARALLEL DO SIMD
   end if
 
   if(ndef > 0) then
