@@ -75,7 +75,8 @@ class SnapRun:
             QIODevice.Append,
         )
         env = QProcessEnvironment.systemEnvironment()
-        env.insert("OMP_NUM_THREADS", "4")
+        env.insert("OMP_NUM_THREADS", "2")
+        env.insert("OMP_PLACES", "cores")
         proc.setProcessEnvironment(env)
         return proc
 

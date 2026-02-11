@@ -230,7 +230,8 @@ RELEASE.BQ/SEC.COMP= 1e12, 1e12, 'Cs137'
         snapscript = os.path.join(self.lastOutputDir, "snap.sh")
         with open(snapscript, "a") as fh:
             fh.write("#! /bin/bash\n")
-            fh.write("export OMP_NUM_THREADS=4\n")
+            fh.write("export OMP_NUM_THREADS=2\n")
+            fh.write("export OMP_PLACES=cores\n")
             fh.write(f"cd {self.lastOutputDir}\n")
             ids = " ".join([str(x.id) for x in self.measurements])
             fh.write(r"parallel -i -j 4 bsnap_naccident snap.input{} -- " + ids + "\n")

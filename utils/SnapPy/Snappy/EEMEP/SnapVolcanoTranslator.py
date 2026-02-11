@@ -159,7 +159,8 @@ class SnapVolcanoTranslator:
         with open(os.path.join(self.volcano.outputDir, "snap.outlog"), "w") as fh:
             logger.info("Starting bsnap_naccident snap.input")
             myenv = os.environ.copy()
-            myenv["OMP_NUM_THREADS"] = "4"
+            myenv["OMP_NUM_THREADS"] = "2"
+            myenv["OMP_PLACES"] = "cores"
             proc = subprocess.run(
                 ["bsnap_naccident", "snap.input"],
                 cwd=self.volcano.outputDir,
