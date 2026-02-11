@@ -18,7 +18,7 @@ module ftestML
 
   contains
 
-pure subroutine slice_stats(field, fmin, fmax, fsum, fmean, contains_undef)
+subroutine slice_stats(field, fmin, fmax, fsum, fmean, contains_undef)
   use iso_fortran_env, only: real64
 
   real, intent(in) :: field(:, :)
@@ -26,23 +26,42 @@ pure subroutine slice_stats(field, fmin, fmax, fsum, fmean, contains_undef)
   real(real64), intent(out) :: fsum
   logical, intent(in) :: contains_undef
 
-  logical, allocatable :: mask(:,:)
-  integer :: ndef
+  integer :: ndef, i, j, nx, ny
+
+  nx = size(field, 1)
+  ny = size(field, 2)
 
   fmin = huge(fmin)
   fmax = -huge(fmax)
   fsum = 0.0
+  ndef = 0
   if(.not.contains_undef) then
-    fmin = minval(field)
-    fmax = maxval(field)
-    fsum = sum(field)
-    ndef = size(field)
+    !$OMP PARALLEL DO SIMD PRIVATE(j,i) REDUCTION(max : fmax) &
+    !$OMP             REDUCTION(min : fmin) REDUCTION( + : fsum, ndef) &
+    !$OMP             COLLAPSE(2)
+    do j=1,ny
+      do i=1,nx
+        fmin=min(fmin,field(i,j))
+        fmax=max(fmax,field(i,j))
+        fsum=fsum+field(i,j)
+        ndef=ndef+1
+      end do
+    end do
+    !$OMP END PARALLEL DO SIMD
   else
-    mask = field < ud
-    ndef = count(mask)
-    fmin = minval(field, mask=mask)
-    fmax = maxval(field, mask=mask)
-    fsum = sum(field, mask=mask)
+    !$OMP PARALLEL DO SIMD PRIVATE(j,i) REDUCTION(max : fmax) &
+    !$OMP             REDUCTION(min : fmin) REDUCTION( + : fsum, ndef) &
+    !$OMP             COLLAPSE(2)
+    do j=1,ny
+      do i=1,nx
+        if (field(i,j) < ud) then
+          fmin=min(fmin,field(i,j))
+          fmax=max(fmax,field(i,j))
+          fsum=fsum+field(i,j)
+          ndef=ndef+1
+        end if
+      end do
+    end do
   end if
 
   if(ndef > 0) then
