@@ -64,7 +64,7 @@ elemental subroutine drydep_precompute_meteo(surface_pressure, t2m, surface_stre
                                              ustar, raero, my, nu)
   use iso_fortran_env, only: real64
   use datetime, only: datetime_t
-  use vgravtablesML, only: visc 
+  use vgravtablesML, only: visc
   real, intent(in) :: surface_pressure !> [Pa]
   real, intent(in) :: t2m !> [K]
   real, intent(in) :: surface_stress !> [N/m^2]
@@ -387,7 +387,7 @@ pure elemental subroutine drydep_emerson_vd(surface_pressure, t2m, ustar, raero,
   real(real64) :: A, rs
   real :: diam, vs
 
-  real(real64) :: fac1, cslip, bdiff, sc, EB, EIM, EIN, stokes
+  real(real64) :: cslip, bdiff, sc, EB, EIM, EIN, stokes
   integer(int16) :: Apar
 
   if (component%radiusmym <= 0.05) then ! gas
