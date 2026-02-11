@@ -731,7 +731,7 @@ PROGRAM bsnap
 
       call particleloop_timer%start()
       ! particle loop
-      !$OMP PARALLEL DO PRIVATE(pextra,np,m,out_of_domain) SCHEDULE(guided,1000) &
+      !$OMP PARALLEL DO PRIVATE(pextra,np,m,out_of_domain) SCHEDULE(auto) &
       !$OMP REDUCTION(+:total_activity_lost_domain) REDUCTION(MAX:mhmax) REDUCTION(MIN:mhmin)
       part_do: do np = 1, npart
         if (.not.pdata(np)%is_active()) cycle part_do
