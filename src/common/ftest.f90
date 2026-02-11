@@ -26,8 +26,7 @@ subroutine slice_stats(field, fmin, fmax, fsum, fmean, contains_undef)
   real(real64), intent(out) :: fsum
   logical, intent(in) :: contains_undef
 
-  logical, allocatable :: mask(:,:)
-  integer :: nx, ny, i, j, ndef
+  integer :: ndef, i, j, nx, ny
 
   nx = size(field, 1)
   ny = size(field, 2)
@@ -35,17 +34,35 @@ subroutine slice_stats(field, fmin, fmax, fsum, fmean, contains_undef)
   fmin = huge(fmin)
   fmax = -huge(fmax)
   fsum = 0.0
+  ndef = 0
   if(.not.contains_undef) then
-    fmin = minval(field)
-    fmax = maxval(field)
-    fsum = sum(field)
-    ndef = size(field)
+    !$OMP PARALLEL DO SIMD PRIVATE(j,i) REDUCTION(max : fmax) &
+    !$OMP             REDUCTION(min : fmin) REDUCTION( + : fsum, ndef) &
+    !$OMP             COLLAPSE(2)
+    do j=1,ny
+      do i=1,nx
+        fmin=min(fmin,field(i,j))
+        fmax=max(fmax,field(i,j))
+        fsum=fsum+field(i,j)
+        ndef=ndef+1
+      end do
+    end do
+    !$OMP END PARALLEL DO SIMD
   else
-    mask = field < ud
-    ndef = count(mask)
-    fmin = minval(field, mask=mask)
-    fmax = maxval(field, mask=mask)
-    fsum = sum(field, mask=mask)
+    !$OMP PARALLEL DO SIMD PRIVATE(j,i) REDUCTION(max : fmax) &
+    !$OMP             REDUCTION(min : fmin) REDUCTION( + : fsum, ndef) &
+    !$OMP             COLLAPSE(2)
+    do j=1,ny
+      do i=1,nx
+        if (field(i,j) < ud) then
+          fmin=min(fmin,field(i,j))
+          fmax=max(fmax,field(i,j))
+          fsum=fsum+field(i,j)
+          ndef=ndef+1
+        end if
+      end do
+    end do
+    !$OMP END PARALLEL DO SIMD
   end if
 
   if(ndef > 0) then
@@ -62,7 +79,7 @@ subroutine ftest_2d(name, field, contains_undef)
   USE snapdebug, only: iulog
 
   character(len=*), intent(in) :: name
-  real, intent(in) :: field(:,:)
+  real,intent(in) :: field(:,:)
   logical, optional, intent(in) :: contains_undef
 
   real :: fmin, fmax, fmean
@@ -91,7 +108,7 @@ subroutine ftest_3d(name, field, contains_undef, reverse_third_dim)
   logical, optional, intent(in) :: contains_undef
   logical, optional, intent(in) :: reverse_third_dim
 
-  integer :: nx, ny, nk
+  integer :: nk
 
   integer :: k, kbot, ktop, kstep
   real :: fmin,fmax,fmean
@@ -103,10 +120,7 @@ subroutine ftest_3d(name, field, contains_undef, reverse_third_dim)
     has_undef = contains_undef
   endif
 
-  nx = size(field, 1)
-  ny = size(field, 2)
   nk = size(field, 3)
-
   kbot = 1
   kstep = 1
   ktop = nk

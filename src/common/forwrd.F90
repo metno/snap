@@ -1,19 +1,7 @@
 ! SNAP: Servere Nuclear Accident Programme
-! Copyright (C) 1992-2017   Norwegian Meteorological Institute
+! Copyright (C) 1992-2026   Norwegian Meteorological Institute
+! License: GNU GPL v3 or later
 
-! This file is part of SNAP. SNAP is free software: you can
-! redistribute it and/or modify it under the terms of the
-! GNU General Public License as published by the
-! Free Software Foundation, either version 3 of the License, or
-! (at your option) any later version.
-
-! This program is distributed in the hope that it will be useful,
-! but WITHOUT ANY WARRANTY; without even the implied warranty of
-! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-! GNU General Public License for more details.
-
-! You should have received a copy of the GNU General Public License
-! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 module forwrdML
   implicit none
@@ -51,7 +39,8 @@ subroutine forwrd(tf1, tf2, tnow, tstep, part, pextra)
 !> extra information for the particle (u, v, rm{x,y})
   type(extraParticle), intent(inout) :: pextra
 
-  real(real64) :: dx1, dy1, dz1, u, v
+  real(real64) :: dx1, dy1, dz1
+  real u, v
 #if defined(PETTERSEN)
   type(particle) :: nparticle
   real(real64) :: dx2, dy2, dz2
@@ -97,6 +86,13 @@ subroutine forwrd(tf1, tf2, tnow, tstep, part, pextra)
 end subroutine forwrd
 
 
+!> Interpolation in 2D
+!> private, inlined only for better readability
+  pure real function interp(a00, a10, a01, a11, c1, c2, c3, c4)
+    real, intent(in) :: a00, a10, a01, a11, c1, c2, c3, c4
+    interp = c1*a00 + c2*a10 + c3*a01 + c4*a11
+  end function interp
+
 !> Purpose:  calculate dx,dy,dz forward movement of particle at pos np
 !>
 !> Notes:
@@ -138,19 +134,19 @@ subroutine forwrd_dx(tf1, tf2, tnow, tstep, part, &
 !> delz: offset in z
   real(real64), intent(out) :: delz
 !> wind-speed in x
-  real(real64), intent(out) :: u
+  real, intent(out) :: u
 !> wind-speed in y
-  real(real64), intent(out) :: v
+  real, intent(out) :: v
 
   integer :: i,j,m,ilvl,k1,k2,kt1,kt2
-  real(real64) :: dt,rt1,rt2,dx,dy,c1,c2,c3,c4,vlvl
-  real(real64) :: dz1,dz2,uk1,uk2,vk1,vk2,wk1,wk2,w
-  real(real64) :: th,tk1,tk2,ps,p,pi,t,gravity
-  real(real64) :: pi1,pi2,dz,deta,wg
+  real :: dt,rt1,rt2,dx,dy,c1,c2,c3,c4,vlvl
+  real :: dz1,dz2,ut1,ut2,vt1,vt2,wt1,wt2,w
+  real :: th,tt1,tt2,ps,p,pi,t,gravity
+  real :: pi1,pi2,dz,deta,wg
 
-  real(real64), parameter :: ginv = 1.0/g
-  real(real64), parameter :: cpinv = 1.0/cp
-  real(real64), parameter :: rcpinv = cp/r
+  real, parameter :: ginv = 1.0/g
+  real, parameter :: cpinv = 1.0/cp
+  real, parameter :: rcpinv = cp/r
 
 
   dt = tstep
@@ -182,35 +178,24 @@ subroutine forwrd_dx(tf1, tf2, tnow, tstep, part, &
 !..interpolation
 
 !..u
-  uk1 = rt1*(c1*u1(i,j,k1)  +c2*u1(i+1,j,k1) &
-      +c3*u1(i,j+1,k1)+c4*u1(i+1,j+1,k1)) &
-      +rt2*(c1*u2(i,j,k1)  +c2*u2(i+1,j,k1) &
-      +c3*u2(i,j+1,k1)+c4*u2(i+1,j+1,k1))
-  uk2 = rt1*(c1*u1(i,j,k2)  +c2*u1(i+1,j,k2) &
-      +c3*u1(i,j+1,k2)+c4*u1(i+1,j+1,k2)) &
-      +rt2*(c1*u2(i,j,k2)  +c2*u2(i+1,j,k2) &
-      +c3*u2(i,j+1,k2)+c4*u2(i+1,j+1,k2))
-  u = uk1*dz1 + uk2*dz2
-!..v
-  vk1 = rt1*(c1*v1(i,j,k1)  +c2*v1(i+1,j,k1) &
-      +c3*v1(i,j+1,k1)+c4*v1(i+1,j+1,k1)) &
-      +rt2*(c1*v2(i,j,k1)  +c2*v2(i+1,j,k1) &
-      +c3*v2(i,j+1,k1)+c4*v2(i+1,j+1,k1))
-  vk2 = rt1*(c1*v1(i,j,k2)  +c2*v1(i+1,j,k2) &
-      +c3*v1(i,j+1,k2)+c4*v1(i+1,j+1,k2)) &
-      +rt2*(c1*v2(i,j,k2)  +c2*v2(i+1,j,k2) &
-      +c3*v2(i,j+1,k2)+c4*v2(i+1,j+1,k2))
-  v = vk1*dz1 + vk2*dz2
+  ut1 = dz1*(interp(u1(i,j,k1), u1(i+1,j,k1), u1(i,j+1,k1), u1(i+1,j+1,k1), c1, c2, c3, c4)) &
+      +dz2*(interp(u1(i,j,k2), u1(i+1,j,k2), u1(i,j+1,k2), u1(i+1,j+1,k2), c1, c2, c3, c4))
+  ut2 = dz1*(interp(u2(i,j,k1), u2(i+1,j,k1), u2(i,j+1,k1), u2(i+1,j+1,k1), c1, c2, c3, c4))&
+      +dz2*(interp(u2(i,j,k2), u2(i+1,j,k2), u2(i,j+1,k2), u2(i+1,j+1,k2), c1, c2, c3, c4))
+  u = ut1*rt1 + ut2*rt2
+
+  !..v
+  vt1 = dz1*(interp(v1(i,j,k1), v1(i+1,j,k1), v1(i,j+1,k1), v1(i+1,j+1,k1), c1, c2, c3, c4)) &
+      +dz2*(interp(v1(i,j,k2), v1(i+1,j,k2), v1(i,j+1,k2), v1(i+1,j+1,k2), c1, c2, c3, c4))
+  vt2 = dz1*(interp(v2(i,j,k1), v2(i+1,j,k1), v2(i,j+1,k1), v2(i+1,j+1,k1), c1, c2, c3, c4)) &
+      +dz2*(interp(v2(i,j,k2), v2(i+1,j,k2), v2(i,j+1,k2), v2(i+1,j+1,k2), c1, c2, c3, c4))
+  v = vt1*rt1 + vt2*rt2
 !..w
-  wk1 = rt1*(c1*w1(i,j,k1)  +c2*w1(i+1,j,k1) &
-      +c3*w1(i,j+1,k1)+c4*w1(i+1,j+1,k1)) &
-      +rt2*(c1*w2(i,j,k1)  +c2*w2(i+1,j,k1) &
-      +c3*w2(i,j+1,k1)+c4*w2(i+1,j+1,k1))
-  wk2 = rt1*(c1*w1(i,j,k2)  +c2*w1(i+1,j,k2) &
-      +c3*w1(i,j+1,k2)+c4*w1(i+1,j+1,k2)) &
-      +rt2*(c1*w2(i,j,k2)  +c2*w2(i+1,j,k2) &
-      +c3*w2(i,j+1,k2)+c4*w2(i+1,j+1,k2))
-  w = wk1*dz1 + wk2*dz2
+  wt1 = dz1*(interp(w1(i,j,k1), w1(i+1,j,k1), w1(i,j+1,k1), w1(i+1,j+1,k1), c1, c2, c3, c4)) &
+      +dz2*(interp(w1(i,j,k2), w1(i+1,j,k2), w1(i,j+1,k2), w1(i+1,j+1,k2), c1, c2, c3, c4))
+  wt2 = dz1*(interp(w2(i,j,k1), w2(i+1,j,k1), w2(i,j+1,k1), w2(i+1,j+1,k1), c1, c2, c3, c4)) &
+      +dz2*(interp(w2(i,j,k2), w2(i+1,j,k2), w2(i,j+1,k2), w2(i+1,j+1,k2), c1, c2, c3, c4))
+  w = wt1*rt1 + wt2*rt2
 
   m = part%icomp
 
@@ -219,21 +204,15 @@ subroutine forwrd_dx(tf1, tf2, tnow, tstep, part, &
   !..potential temperature (no pot.temp. at surface...)
     kt1 = max(k1, 2)
     kt2 = kt1 + 1
-    tk1 = rt1*(c1*t1(i,j,  kt1)+c2*t1(i+1,j,  kt1) &
-        +c3*t1(i,j+1,kt1)+c4*t1(i+1,j+1,kt1)) &
-        +rt2*(c1*t2(i,j,  kt1)+c2*t2(i+1,j,  kt1) &
-        +c3*t2(i,j+1,kt1)+c4*t2(i+1,j+1,kt1))
-    tk2 = rt1*(c1*t1(i,j,  kt2)+c2*t1(i+1,j,  kt2) &
-        +c3*t1(i,j+1,kt2)+c4*t1(i+1,j+1,kt2)) &
-        +rt2*(c1*t2(i,j,  kt2)+c2*t2(i+1,j,  kt2) &
-        +c3*t2(i,j+1,kt2)+c4*t2(i+1,j+1,kt2))
-    th = tk1*dz1 + tk2*dz2
+    tt1 = dz1*(interp(t1(i,j,  kt1), t1(i+1,j,  kt1), t1(i,j+1,kt1), t1(i+1,j+1,kt1), c1, c2, c3, c4)) &
+        +dz2*(interp(t2(i,j,  kt1), t2(i+1,j,  kt1), t2(i,j+1,kt1), t2(i+1,j+1,kt1), c1, c2, c3, c4))
+    tt2 = dz1*(interp(t1(i,j,  kt2), t1(i+1,j,  kt2), t1(i,j+1,kt2), t1(i+1,j+1,kt2), c1, c2, c3, c4)) &
+        +dz2*(interp(t2(i,j,  kt2), t2(i+1,j,  kt2), t2(i,j+1,kt2), t2(i+1,j+1,kt2), c1, c2, c3, c4))
+    th = tt1*rt1 + tt2*rt2
 
   !..pressure
-    ps = rt1*(c1*ps1(i,j)  +c2*ps1(i+1,j) &
-        +c3*ps1(i,j+1)+c4*ps1(i+1,j+1)) &
-        +rt2*(c1*ps2(i,j)  +c2*ps2(i+1,j) &
-        +c3*ps2(i,j+1)+c4*ps2(i+1,j+1))
+    ps = rt1*(interp(ps1(i,j), ps1(i+1,j), ps1(i,j+1), ps1(i+1,j+1), c1, c2, c3, c4)) &
+        +rt2*(interp(ps2(i,j), ps2(i+1,j), ps2(i,j+1), ps2(i+1,j+1), c1, c2, c3, c4))
 
     if(def_comp(m)%grav_type == 2) then
       p = alevel(k1) + blevel(k1)*ps

@@ -256,6 +256,11 @@ PROGRAM bsnap
   !> tstep: timestep in seconds
   real :: tstep = 900
   real :: rmlimit = -1.0, rnhrel, tf1, tf2, tnow, tnext
+  !> fractions from last timestep
+  real ::    rt1
+  !> fractions to next timestep
+  real :: rt2
+
   real ::    x(1), y(1)
   type(extraParticle) :: pextra
   real ::    rscale
@@ -685,6 +690,9 @@ PROGRAM bsnap
       end if
 
       tnext = tnow + tstep
+    !..for linear interpolation in time
+      rt1=(tf2-tnow)/(tf2-tf1)
+      rt2=(tnow-tf1)/(tf2-tf1)
 
       if (iendrel == 0 .AND. istep <= nstepr) then
 
@@ -723,13 +731,14 @@ PROGRAM bsnap
 
       call particleloop_timer%start()
       ! particle loop
-      !$OMP PARALLEL DO PRIVATE(pextra,np,m,out_of_domain) SCHEDULE(guided,1000) REDUCTION(+:total_activity_lost_domain)
+      !$OMP PARALLEL DO PRIVATE(pextra,np,m,out_of_domain) SCHEDULE(auto) &
+      !$OMP REDUCTION(+:total_activity_lost_domain) REDUCTION(MAX:mhmax) REDUCTION(MIN:mhmin)
       part_do: do np = 1, npart
         if (.not.pdata(np)%is_active()) cycle part_do
 
         !..interpolation of boundary layer top, height, precipitation etc.
-        !  creates and save temporary data to pextra%prc, pextra%
-        call posint(pdata(np), tf1, tf2, tnow, pextra)
+        !  creates and save temporary data to pextra%prc, pextra%rmx, pextra%rmy
+        call posint(pdata(np), rt1, rt2, pextra)
 
         !..radioactive decay
         if (idecay == 1) call decay(pdata(np))
@@ -756,6 +765,10 @@ PROGRAM bsnap
             total_activity_lost_domain(m) + pdata(np)%get_set_rad(0.0)
         endif
 
+        if (pdata(np)%is_active()) then
+          if (pdata(np)%hbl > mhmax) mhmax = pdata(np)%hbl
+          if (pdata(np)%hbl < mhmin) mhmin = pdata(np)%hbl
+        end if
       end do part_do
       !$OMP END PARALLEL DO
       call particleloop_timer%stop_and_log()
@@ -768,11 +781,6 @@ PROGRAM bsnap
         call split_particles(split_particle_after_step)
       end if
       npartmax = max(npartmax, npart)
-
-      do n = 1, npart
-        if (pdata(n)%hbl > mhmax) mhmax = pdata(n)%hbl
-        if (pdata(n)%hbl < mhmin) mhmin = pdata(n)%hbl
-      enddo
 
       !..fields
       ifldout = 0
