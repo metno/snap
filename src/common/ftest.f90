@@ -18,7 +18,7 @@ module ftestML
 
   contains
 
-subroutine slice_stats(field, fmin, fmax, fsum, fmean, contains_undef)
+pure subroutine slice_stats(field, fmin, fmax, fsum, fmean, contains_undef)
   use iso_fortran_env, only: real64
 
   real, intent(in) :: field(:, :)
@@ -27,10 +27,7 @@ subroutine slice_stats(field, fmin, fmax, fsum, fmean, contains_undef)
   logical, intent(in) :: contains_undef
 
   logical, allocatable :: mask(:,:)
-  integer :: nx, ny, i, j, ndef
-
-  nx = size(field, 1)
-  ny = size(field, 2)
+  integer :: ndef
 
   fmin = huge(fmin)
   fmax = -huge(fmax)
@@ -62,7 +59,7 @@ subroutine ftest_2d(name, field, contains_undef)
   USE snapdebug, only: iulog
 
   character(len=*), intent(in) :: name
-  real, intent(in) :: field(:,:)
+  real,intent(in) :: field(:,:)
   logical, optional, intent(in) :: contains_undef
 
   real :: fmin, fmax, fmean
@@ -91,7 +88,7 @@ subroutine ftest_3d(name, field, contains_undef, reverse_third_dim)
   logical, optional, intent(in) :: contains_undef
   logical, optional, intent(in) :: reverse_third_dim
 
-  integer :: nx, ny, nk
+  integer :: nk
 
   integer :: k, kbot, ktop, kstep
   real :: fmin,fmax,fmean
@@ -103,10 +100,7 @@ subroutine ftest_3d(name, field, contains_undef, reverse_third_dim)
     has_undef = contains_undef
   endif
 
-  nx = size(field, 1)
-  ny = size(field, 2)
   nk = size(field, 3)
-
   kbot = 1
   kstep = 1
   ktop = nk
