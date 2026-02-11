@@ -731,7 +731,8 @@ PROGRAM bsnap
 
       call particleloop_timer%start()
       ! particle loop
-      !$OMP PARALLEL DO PRIVATE(pextra,np,m,out_of_domain) SCHEDULE(guided,1000) REDUCTION(+:total_activity_lost_domain)
+      !$OMP PARALLEL DO PRIVATE(pextra,np,m,out_of_domain) SCHEDULE(guided,1000) &
+      !$OMP REDUCTION(+:total_activity_lost_domain) REDUCTION(MAX:mhmax) REDUCTION(MIN:mhmin)
       part_do: do np = 1, npart
         if (.not.pdata(np)%is_active()) cycle part_do
 
@@ -764,6 +765,10 @@ PROGRAM bsnap
             total_activity_lost_domain(m) + pdata(np)%get_set_rad(0.0)
         endif
 
+        if (pdata(np)%is_active()) then
+          if (pdata(np)%hbl > mhmax) mhmax = pdata(np)%hbl
+          if (pdata(np)%hbl < mhmin) mhmin = pdata(np)%hbl
+        end if
       end do part_do
       !$OMP END PARALLEL DO
       call particleloop_timer%stop_and_log()
@@ -776,11 +781,6 @@ PROGRAM bsnap
         call split_particles(split_particle_after_step)
       end if
       npartmax = max(npartmax, npart)
-
-      do n = 1, npart
-        if (pdata(n)%hbl > mhmax) mhmax = pdata(n)%hbl
-        if (pdata(n)%hbl < mhmin) mhmin = pdata(n)%hbl
-      enddo
 
       !..fields
       ifldout = 0
