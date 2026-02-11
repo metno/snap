@@ -51,3 +51,53 @@ timer: Total: Particle loop:         0:00:05.028 (wall)   0:00:05.028 (cpu)
 ```
 this is 12s for io and 5s for the particles. It should be noted that the user-timer from time gives 21s i.e. 4s extra than the total time_loop.
 
+## Useful Analyzation tools
+
+### perf
+
+CPU-usage per function:
+```
+time OMP_NUM_THREADS=1 perf record ../../bsnap_naccident snap_particles.input
+perf report
+```
+
+The follwing will give cache misses:
+```
+time OMP_NUM_THREADS=1 perf stat -e cycles,instructions,cache-references,cache-misses   -e mem_load_retired.l3_miss,mem_load_retired.l3_hit  ../../bsnap_naccident snap_particles.input
+```
+
+## Parallelization
+
+SNAP scales ok to up to 4 CPU. Ensure that hyperthreads are not used with OMP_PLACES=cores.
+Thread affinity doesn't help (OMP_PROC_BIND=close)
+
+Test with:
+```
+for t in 1 2 4 8; do
+    echo "=== Threads: $t ===";
+    time OMP_PLACES=cores OMP_NUM_THREADS=$t ../../bsnap_naccident snap_particles.input;
+done
+```
+which gives something like:
+```
+=== Threads: 1 ===
+
+real    0m37.820s
+user    0m36.671s
+sys     0m1.147s
+=== Threads: 2 ===
+
+real    0m28.703s
+user    0m43.855s
+sys     0m1.133s
+=== Threads: 4 ===
+
+real    0m25.620s
+user    0m56.317s
+sys     0m1.234s
+=== Threads: 8 ===
+
+real    0m25.333s
+user    1m23.136s
+sys     0m1.208s
+```
