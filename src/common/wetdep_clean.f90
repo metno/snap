@@ -100,10 +100,9 @@ contains
     endif
   end subroutine
 
-!> Initialisation routine for ::wetdep2
-  !> Setting vminprec
+!> Initialisation routine for :: Bartnicki.takemura
   !> Output diagnostics
-  subroutine wetdep2_init(tstep) ![TODO]: Check can move to here
+  subroutine wetdep2_init(tstep)
 
     USE snapdebug, only: iulog
     USE snapparML, only: ncomp
@@ -140,20 +139,20 @@ contains
 1010  format(1x, f5.1, ':', 12f7.4)
     end do
     write (iulog, *) '-------------------------------------------------'
+    
+    if(vminprec < 0.) then                        !!Setting vminprecip - [TODO]: Need to understand what this is
+      block
+        USE snapgrdML, only: alevel, blevel, vlevel
+        USE snapdimML, only: nk
 
-    block
-      USE snapgrdML, only: alevel, blevel, vlevel
-      USE snapdimML, only: nk
-      USE snapdebug, only: iulog
+        integer :: k
+        real :: p1,p2
+        real, parameter :: plim = 550.0
 
-      integer :: k
-      real :: p1,p2
-      real, parameter :: plim = 550.0
-
-      if(vminprec < 0.) then
         p2 = 1000.
         p1 = p2
         k = 1
+
         do while (p2 > plim .AND. k < nk)
           k = k+1
           p1 = p2
@@ -162,16 +161,17 @@ contains
         if(k > 1) then
           vminprec = vlevel(k-1) &
               + (vlevel(k)-vlevel(k-1))*(p1-plim)/(p1-p2)
-        else
+        else                               
           vminprec = vlevel(nk)
         end if
         write(iulog,*) 'POSINT. precmin,vminprec: ',precmin,vminprec
-      end if
-    end block
+      end block
+    end if
+    
   end subroutine
 
   !> Flag for data from model layers
-  pure logical function requires_extra_precip_fields() ![TODO]: write in different way? Check out where and when and how used.
+  pure logical function requires_extra_precip_fields()
     requires_extra_precip_fields = wetdep_scheme%use_vertical
   end function
 
@@ -235,8 +235,8 @@ contains
 
     !..reset precipitation to zero if pressure less than approx. 550 hPa.  ![TODO]: understand these comments and rewrite
     !..and if less than a minimum precipitation intensity (mm/hour)
-    if (def_comp(m)%kwetdep == 1 .AND. pextra%prc > precmin &   ![TODO: kwetdep not needed here? alread done?]
-        .AND. part%z > 0.67 .AND. part%z > vminprec) then
+    if (pextra%prc > precmin &
+        .AND. part%z > 0.67 .AND. part%z > vminprec) then  ![TODO]: vminprec can be combined with 0.67 - vminprec = max(vminprec, 0.67)
       !..find particles with wet deposition and
       !..reset precipitation to zero if not wet deposition
       q = pextra%prc
@@ -389,17 +389,16 @@ contains
     use snapfldML, only: wscav, cw3d, precip3d, cloud_cover
 
     integer :: i
-
-    do i=1,ncomp
-      if (.not.run_comp(i)%defined%kwetdep == 1) cycle  ! skip precomputation if WET.DEP = off
+    if (wetdep_scheme%use_vertical) then   !skip precomputation if no vertical scheme
+      do i=1,ncomp
+        if (.not.run_comp(i)%defined%kwetdep == 1) cycle  ! skip precomputation if WET.DEP = off for specific component
       
-      if (wetdep_scheme%use_vertical) then              ![TODO]: Change order of if statements here
         if (.not.(allocated(precip3d).and.allocated(cw3d).and.allocated(wscav))) then
           error stop "Some wetdep/precip fields not allocated"
         endif
         call prepare_wetdep_3d(wscav(:,:,:,i), run_comp(i)%defined%radiusmym, precip3d, cw3d, cloud_cover)
-      endif
-    enddo
+      enddo
+    endif 
   end subroutine
 
     !> Precompute wet scavenging coefficients
