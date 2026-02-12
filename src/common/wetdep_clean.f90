@@ -2,7 +2,7 @@
 !> This module considers two different regimes where wet deposition can be calculated: incloud (in model levels) and subcloud (at surface level).
 ! [TODO: Discuss more]
 
-module wetdepml
+module wetdepmlclean
   use iso_fortran_env, only: real64
   implicit none
   private
@@ -389,7 +389,7 @@ contains
     use snapfldML, only: wscav, cw3d, precip3d, cloud_cover
 
     integer :: i
-    if (wetdep_scheme%use_vertical) then   
+    if (wetdep_scheme%use_vertical) then   !skip precomputation if no vertical scheme
       do i=1,ncomp
         if (.not.run_comp(i)%defined%kwetdep == 1) cycle  ! skip precomputation if WET.DEP = off for specific component
       
@@ -492,4 +492,4 @@ contains
     dep(i, j, mo) = dep(i, j, mo) + real(radlost, kind=real64)
   end subroutine
 
-end module wetdepml
+end module wetdepmlclean

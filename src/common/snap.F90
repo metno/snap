@@ -25,7 +25,7 @@
 ! DRY.DEPOSITION.SAVE
 ! DRY.DEPOSITION.LARGEST_LANDFRACTION_FILE = "landclasses.nc"
 ! WET.DEPOSITION.NEW ! deprecated
-! WET.DEPOSITION.SCHEME = Bartnicki ! (default) bartnicki-takemura
+! WET.DEPOSITION.SCHEME = Bartnicki / Bartnicki-Takemura ! Default: Undefined
 ! WET.DEPOSITION.SAVE  ! Outputs wet scavenging rate (for 3D output only)
 ! TIME.STEP= 900.
 ! TIME.RELEASE.PROFILE.CONSTANT
@@ -184,13 +184,7 @@ PROGRAM bsnap
     WETDEP_INCLOUD_SCHEME_NONE, WETDEP_INCLOUD_SCHEME_TAKEMURA, &
     WETDEP_INCLOUD_SCHEME_UNDEFINED, &
     operator(==), operator(/=), &
-    wetdep_init => init, wetdep_deinit => deinit
-#if defined(SNAP_EXPERIMENTAL)
-  USE wetdepML, only: WETDEP_SUBCLOUD_SCHEME_CONVENTIONAL, &
-    wet_deposition_conventional_params => conventional_params, &
-    wet_deposition_RATM => RATM_params, &
-    WETDEP_INCLOUD_SCHEME_ROSELLE
-#endif
+    wetdep_init => init
   USE drydepml, only: drydep, drydep_scheme, requires_landfraction_file, &
           DRYDEP_SCHEME_OLD, DRYDEP_SCHEME_NEW, &
           DRYDEP_SCHEME_EMERSON, DRYDEP_SCHEME_UNDEFINED, &
@@ -882,7 +876,6 @@ PROGRAM bsnap
   call fldout_unload()
 
 ! deallocate all fields
-  call wetdep_deinit()
   call drydep_unload()
   CALL deAllocateFields()
 
@@ -1187,7 +1180,7 @@ contains
           WETDEP_INCLOUD_SCHEME_NONE, &
           .false., .false.)
       case ('wet.deposition.version')
-        write (error_unit, *) "Deprecated, please use wet.deposition.scheme = Bartnicki"
+        write (error_unit, *) "Deprecated, please use wet.deposition.scheme = Bartnicki"   !! GEORGE: can get rid of everything else after error? just "goto 12" instead?
         warning = .true.
         if (wetdep_scheme%subcloud /= WETDEP_SUBCLOUD_SCHEME_UNDEFINED .or. &
             wetdep_scheme%incloud /= WETDEP_INCLOUD_SCHEME_UNDEFINED) then
@@ -1208,22 +1201,7 @@ contains
             .false., &
             .false.)
         end block
-#if defined(SNAP_EXPERIMENTAL)
-      case ('wet.deposition.conventional.a')
-        if (wet_deposition_conventional_params%A /= 0.0) then
-            write(error_unit,*) "wet deposition parameter already set"
-            goto 12
-        endif
-        if (.not.has_value) goto 12
-        read(cinput(pname_start:pname_end), *) wet_deposition_conventional_params%A
-      case ('wet.deposition.conventional.b')
-        if (wet_deposition_conventional_params%B /= 0.0) then
-            write(error_unit,*) "wet deposition parameter already set"
-            goto 12
-        endif
-        if (.not.has_value) goto 12
-        read(cinput(pname_start:pname_end), *) wet_deposition_conventional_params%B
-#endif
+
       case ('wet.deposition.scheme')
         if (.not.has_value) goto 12
         if (wetdep_scheme%subcloud /= WETDEP_SUBCLOUD_SCHEME_UNDEFINED .or. &
@@ -1247,7 +1225,7 @@ contains
               WETDEP_INCLOUD_SCHEME_TAKEMURA, &
               .true., .true. &
             )
-          case("bartnicki-vertical")
+          case("bartnicki-vertical")              !GEORGE: want to keep barnicki vertical?
             met_params%use_3d_precip = .true.
             met_params%use_ccf = .true.
             wetdep_scheme = wetdep_scheme_t( &
@@ -1255,51 +1233,8 @@ contains
               WETDEP_INCLOUD_SCHEME_NONE, &
               .true., .true. &
             )
-#if defined(SNAP_EXPERIMENTAL)
-          case("conventional")
-            wetdep_scheme = wetdep_scheme_t( &
-              WETDEP_SUBCLOUD_SCHEME_CONVENTIONAL, &
-              WETDEP_INCLOUD_SCHEME_NONE, &
-              .false., .false. &
-            )
-          case("bartnicki-roselle")
-            met_params%use_3d_precip = .true.
-            met_params%use_ccf = .true.
-            wetdep_scheme = wetdep_scheme_t( &
-              WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
-              WETDEP_INCLOUD_SCHEME_ROSELLE, &
-              .true., .true. &
-            )
-          case("ratm-roselle")
-            if (wet_deposition_conventional_params%A /= 0.0 .or. &
-                wet_deposition_conventional_params%B /= 0.0) then
-                write(error_unit,*) "wet deposition parameter already set"
-                goto 12
-            endif
-            wet_deposition_conventional_params = wet_deposition_RATM
-            met_params%use_3d_precip = .true.
-            met_params%use_ccf = .true.
-            wetdep_scheme = wetdep_scheme_t( &
-              WETDEP_SUBCLOUD_SCHEME_CONVENTIONAL, &
-              WETDEP_INCLOUD_SCHEME_ROSELLE, &
-              .true., .true. &
-            )
-          case("ratm-takemura")
-            if (wet_deposition_conventional_params%A /= 0.0 .or. &
-                wet_deposition_conventional_params%B /= 0.0) then
-                write(error_unit,*) "wet deposition parameter already set"
-                goto 12
-            endif
-            wet_deposition_conventional_params = wet_deposition_RATM
-            met_params%use_3d_precip = .true.
-            met_params%use_ccf = .true.
-            wetdep_scheme = wetdep_scheme_t( &
-              WETDEP_SUBCLOUD_SCHEME_CONVENTIONAL, &
-              WETDEP_INCLOUD_SCHEME_TAKEMURA, &
-              .true., .true. &
-            )
-#endif
-          case default
+
+          case default                                                            !> No default - should always have scheme in input
             write(error_unit,*) "Unknown scheme ", cinput(pname_start:pname_end)
             goto 12
         end select
@@ -2217,15 +2152,15 @@ contains
 
     if (drydep_scheme == DRYDEP_SCHEME_UNDEFINED) drydep_scheme = DRYDEP_SCHEME_OLD
 
-    ! Set default wetdep schemes
-    if (wetdep_scheme%subcloud == WETDEP_SUBCLOUD_SCHEME_UNDEFINED .and. &
-        wetdep_scheme%incloud == WETDEP_INCLOUD_SCHEME_UNDEFINED) then
-        wetdep_scheme = wetdep_scheme_t( &
-          WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
-          WETDEP_INCLOUD_SCHEME_NONE, &
-          .false., .false. &
-        )
-    endif
+    ! ! Set default wetdep schemes                                              !!GEORGE: default wetdep is still Bartnicki
+    ! if (wetdep_scheme%subcloud == WETDEP_SUBCLOUD_SCHEME_UNDEFINED .and. &
+    !     wetdep_scheme%incloud == WETDEP_INCLOUD_SCHEME_UNDEFINED) then
+    !     wetdep_scheme = wetdep_scheme_t( &
+    !       WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
+    !       WETDEP_INCLOUD_SCHEME_NONE, &
+    !       .false., .false. &
+    !     )
+    ! endif
 
     i1 = 0
     idecay = 0
