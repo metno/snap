@@ -14,38 +14,50 @@ module wetdepml
       wetdep_precompute
 
 
-  public :: operator(==), operator(/=)  ! [TODO]: Try different way of writing
+  ! public :: operator(==), operator(/=)  ! [TODO]: Try different way of writing
 
-  !> Define subcloud scheme types (at surface level)
-  type, public :: wetdep_subcloud_scheme_t
-    integer, private :: scheme
-    character(len=32), public :: description
-  end type
+  ! !> Define subcloud scheme types (at surface level)
+  ! type, public :: wetdep_subcloud_scheme_t
+  !   integer, private :: scheme
+  !   character(len=32), public :: description
+  ! end type
 
-  type(wetdep_subcloud_scheme_t), parameter, public :: WETDEP_SUBCLOUD_SCHEME_UNDEFINED = &
-      wetdep_subcloud_scheme_t(0, "Not defined")
-  type(wetdep_subcloud_scheme_t), parameter, public :: WETDEP_SUBCLOUD_SCHEME_NONE = & 
-      wetdep_subcloud_scheme_t(1, "No scheme (skip)")
-  type(wetdep_subcloud_scheme_t), parameter, public :: WETDEP_SUBCLOUD_SCHEME_BARTNICKI = & 
-      wetdep_subcloud_scheme_t(2, "Bartnicki")
+  ! type(wetdep_subcloud_scheme_t), parameter, public :: WETDEP_SUBCLOUD_SCHEME_UNDEFINED = &
+  !     wetdep_subcloud_scheme_t(0, "Not defined")
+  ! type(wetdep_subcloud_scheme_t), parameter, public :: WETDEP_SUBCLOUD_SCHEME_NONE = & 
+  !     wetdep_subcloud_scheme_t(1, "No scheme (skip)")
+  ! type(wetdep_subcloud_scheme_t), parameter, public :: WETDEP_SUBCLOUD_SCHEME_BARTNICKI = & 
+  !     wetdep_subcloud_scheme_t(2, "Bartnicki")
 
-  !> Define incloud scheme types (in model levels)
-  type, public :: wetdep_incloud_scheme_t
-    integer, private :: scheme
-    character(len=32), public :: description
-  end type
+  integer, parameter, public :: WETDEP_SUBCLOUD_SCHEME_UNDEFINED = 0 
+  integer, parameter, public :: WETDEP_SUBCLOUD_SCHEME_NONE = 1 
+  integer, parameter, public :: WETDEP_SUBCLOUD_SCHEME_BARTNICKI = 2
+  
+  
 
-  type(wetdep_incloud_scheme_t), parameter, public :: WETDEP_INCLOUD_SCHEME_UNDEFINED = &
-      wetdep_incloud_scheme_t(0, "Not defined")
-  type(wetdep_incloud_scheme_t), parameter, public :: WETDEP_INCLOUD_SCHEME_NONE = &
-      wetdep_incloud_scheme_t(1, "No scheme (skip)")
-  type(wetdep_incloud_scheme_t), parameter, public :: WETDEP_INCLOUD_SCHEME_TAKEMURA = &
-      wetdep_incloud_scheme_t(2, "Takemura")  
+  ! !> Define incloud scheme types (in model levels)
+  ! type, public :: wetdep_incloud_scheme_t
+  !   integer, private :: scheme
+  !   character(len=32), public :: description
+  ! end type
+
+  ! type(wetdep_incloud_scheme_t), parameter, public :: WETDEP_INCLOUD_SCHEME_UNDEFINED = &
+  !     wetdep_incloud_scheme_t(0, "Not defined")
+  ! type(wetdep_incloud_scheme_t), parameter, public :: WETDEP_INCLOUD_SCHEME_NONE = &
+  !     wetdep_incloud_scheme_t(1, "No scheme (skip)")
+  ! type(wetdep_incloud_scheme_t), parameter, public :: WETDEP_INCLOUD_SCHEME_TAKEMURA = &
+  !     wetdep_incloud_scheme_t(2, "Takemura") 
+      
+  integer, parameter, public :: WETDEP_INCLOUD_SCHEME_UNDEFINED = 0 
+  integer, parameter, public :: WETDEP_INCLOUD_SCHEME_NONE = 1 
+  integer, parameter, public :: WETDEP_INCLOUD_SCHEME_TAKEMURA = 3
 
   !> Combine the two regimes into one scheme
   type, public :: wetdep_scheme_t
-    type(wetdep_subcloud_scheme_t) :: subcloud
-    type(wetdep_incloud_scheme_t) :: incloud
+    integer :: subcloud
+    integer :: incloud
+    ! type(wetdep_subcloud_scheme_t) :: subcloud
+    ! type(wetdep_incloud_scheme_t) :: incloud
     !> Use 3D precip and precomputed parameters
     logical :: use_vertical
     !> Whether to use cloud fraction correction for subcloud schemes
@@ -57,37 +69,37 @@ module wetdepml
       wetdep_scheme_t(WETDEP_SUBCLOUD_SCHEME_UNDEFINED, WETDEP_INCLOUD_SCHEME_UNDEFINED, .false., .false.)
 
 
-  interface operator (==)                                    ![TODO]: Write differently
-    module procedure :: equal_subcloud_scheme, equal_incloud_scheme
-  end interface
+  ! interface operator (==)                                    ![TODO]: Write differently
+  !   module procedure :: equal_subcloud_scheme, equal_incloud_scheme
+  ! end interface
 
-  interface operator (/=)
-    module procedure :: not_equal_subcloud_scheme, not_equal_incloud_scheme
-  end interface
+  ! interface operator (/=)
+  !   module procedure :: not_equal_subcloud_scheme, not_equal_incloud_scheme
+  ! end interface
 
 
 contains
 
-  !> Functions for checking input scheme. Used to define operator for scheme type.
-  logical pure function equal_subcloud_scheme(this, other) result(eq)  ![TODO] Change
-    type(wetdep_subcloud_scheme_t), intent(in) :: this, other
-    eq = this%scheme == other%scheme
-  end function
-  !> Functions for checking input scheme. Used to define operator for scheme type.
-  logical pure function not_equal_subcloud_scheme(this, other) result(eq)
-    type(wetdep_subcloud_scheme_t), intent(in) :: this, other
-    eq = .not. (this == other)
-  end function
-  !> Functions for checking input scheme. Used to define operator for scheme type.
-  logical pure function equal_incloud_scheme(this, other) result(eq)
-    type(wetdep_incloud_scheme_t), intent(in) :: this, other
-    eq = this%scheme == other%scheme
-  end function
-  !> Functions for checking input scheme. Used to define operator for scheme type.
-  logical pure function not_equal_incloud_scheme(this, other) result(eq)
-    type(wetdep_incloud_scheme_t), intent(in) :: this, other
-    eq = .not. (this == other)
-  end function
+  ! !> Functions for checking input scheme. Used to define operator for scheme type.
+  ! logical pure function equal_subcloud_scheme(this, other) result(eq)  ![TODO] Change
+  !   type(wetdep_subcloud_scheme_t), intent(in) :: this, other
+  !   eq = this%scheme == other%scheme
+  ! end function
+  ! !> Functions for checking input scheme. Used to define operator for scheme type.
+  ! logical pure function not_equal_subcloud_scheme(this, other) result(eq)
+  !   type(wetdep_subcloud_scheme_t), intent(in) :: this, other
+  !   eq = .not. (this == other)
+  ! end function
+  ! !> Functions for checking input scheme. Used to define operator for scheme type.
+  ! logical pure function equal_incloud_scheme(this, other) result(eq)
+  !   type(wetdep_incloud_scheme_t), intent(in) :: this, other
+  !   eq = this%scheme == other%scheme
+  ! end function
+  ! !> Functions for checking input scheme. Used to define operator for scheme type.
+  ! logical pure function not_equal_incloud_scheme(this, other) result(eq)
+  !   type(wetdep_incloud_scheme_t), intent(in) :: this, other
+  !   eq = .not. (this == other)
+  ! end function
 
   !> Initialise for surface bartnicki scheme
   subroutine init(tstep) ![TODO]: combine with wetdep2_init  only thing happening
@@ -389,7 +401,7 @@ contains
     use snapfldML, only: wscav, cw3d, precip3d, cloud_cover
 
     integer :: i
-    if (wetdep_scheme%use_vertical) then   
+    if (wetdep_scheme%use_vertical) then   !skip precomputation if no vertical scheme
       do i=1,ncomp
         if (.not.run_comp(i)%defined%kwetdep == 1) cycle  ! skip precomputation if WET.DEP = off for specific component
       
@@ -437,24 +449,44 @@ contains
       endwhere
 
       ! Subcloud
-      select case (wetdep_scheme%subcloud%scheme)
-        case (WETDEP_SUBCLOUD_SCHEME_BARTNICKI%scheme)
+      ! select case (wetdep_scheme%subcloud%scheme)
+      !   case (WETDEP_SUBCLOUD_SCHEME_BARTNICKI%scheme)
+      !     call wet_subcloud_bartnicki_ccf(wscav(:,:,k), radius, accum_precip(:,:), &
+      !      accum_ccf(:,:), use_ccf=wetdep_scheme%use_cloudfraction)
+      !   case (WETDEP_SUBCLOUD_SCHEME_NONE%scheme)
+      !     wscav(:,:,k) = 0.0
+      !   case default
+      !     error stop wetdep_scheme%subcloud%description
+      ! end select
+
+      ! ! Incloud
+      ! select case (wetdep_scheme%incloud%scheme)
+      !   case (WETDEP_INCLOUD_SCHEME_NONE%scheme)
+      !     wscav_tmp(:,:,k) = 0.0
+      !   case (WETDEP_INCLOUD_SCHEME_TAKEMURA%scheme)
+      !     call wetdep_incloud_takemura(wscav_tmp(:,:,k), precip(:,:,k), cw(:,:,k), ccf(:,:,k))
+      !   case default
+      !     error stop wetdep_scheme%incloud%description
+      ! end select
+
+      select case (wetdep_scheme%subcloud)
+        case (WETDEP_SUBCLOUD_SCHEME_BARTNICKI)
           call wet_subcloud_bartnicki_ccf(wscav(:,:,k), radius, accum_precip(:,:), &
            accum_ccf(:,:), use_ccf=wetdep_scheme%use_cloudfraction)
-        case (WETDEP_SUBCLOUD_SCHEME_NONE%scheme)
+        case (WETDEP_SUBCLOUD_SCHEME_NONE)
           wscav(:,:,k) = 0.0
         case default
-          error stop wetdep_scheme%subcloud%description
+          error stop "Subcloud scheme undefined"
       end select
 
       ! Incloud
-      select case (wetdep_scheme%incloud%scheme)
-        case (WETDEP_INCLOUD_SCHEME_NONE%scheme)
+      select case (wetdep_scheme%incloud)
+        case (WETDEP_INCLOUD_SCHEME_NONE)
           wscav_tmp(:,:,k) = 0.0
-        case (WETDEP_INCLOUD_SCHEME_TAKEMURA%scheme)
+        case (WETDEP_INCLOUD_SCHEME_TAKEMURA)
           call wetdep_incloud_takemura(wscav_tmp(:,:,k), precip(:,:,k), cw(:,:,k), ccf(:,:,k))
         case default
-          error stop wetdep_scheme%incloud%description
+          error stop "Incloud scheme undefined"
       end select
       wscav(:,:,k) = max(wscav(:,:,k), wscav_tmp(:,:,k))
     end do
