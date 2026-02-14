@@ -903,7 +903,7 @@ contains
     use drydepml, only: drydep_precompute_meteo, drydep_precompute_particle, &
       requires_extra_fields_to_be_read, classnr, lookup_z0
     use ftestML, only: ftest
-    use snapdebug, only: idebug
+    use snapdebug, only: idebug, iulog
 
     use snapparML, only: ncomp, run_comp, def_comp
     use snapfldML, only: ps_io, vd_dep_io, surface_stress, hflux, z0, t2m, &
@@ -922,6 +922,7 @@ contains
     integer :: i, mm
 
     if (.not.requires_extra_fields_to_be_read()) then
+      write (iulog, *) "No extra drydep fields required to be read for dry deposition, skipping"
       return
     endif
 
@@ -952,6 +953,10 @@ contains
       endif
 
       surface_stress = hypot(yflux, xflux)
+    endif
+    ! count where surface stress is zero, to check if we read the fields correctly
+    if (idebug == 1) then
+      write (iulog, *) "number of points with zero surface stress: ", count(surface_stress == 0.0)
     endif
 
     if (met_params%hflux_is_accumulated) then
