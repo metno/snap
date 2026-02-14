@@ -272,7 +272,7 @@ module snapfldML
   subroutine swap_2_fields_2d(field1, field2)
     real(kind=real32), allocatable,intent(inout) :: field1(:,:), field2(:,:)
     integer :: stat
-    
+
     call move_alloc(from=field2, to=field1)
     if (allocated(field1)) then
       allocate(field2, mold=field1, stat=stat)
@@ -312,40 +312,65 @@ module snapfldML
   subroutine swap_fields_after_reading()
     if (use_async_io) then
       call swap_3_fields_3d(u1, u2, u3)
+      u_io => u3
       call swap_3_fields_3d(v1, v2, v3)
+      v_io => v3
       call swap_3_fields_3d(w1, w2, w3)
+      w_io => w3
       call swap_3_fields_3d(t1, t2, t3)
+      t_io => t3
       call swap_3_fields_3d(t1_abs, t2_abs, t3_abs)
+      t_abs_io => t3_abs
       call swap_3_fields_3d(hlevel1, hlevel2, hlevel3)
+      hlevel_io => hlevel3
       call swap_3_fields_3d(hlayer1, hlayer2, hlayer3)
+      hlayer_io => hlayer3
 
       call swap_2_fields_2d(precip, precip_x)
+      precip_io => precip_x
       call swap_2_fields_4d(wscav, wscav_x)
+      wscav_io => wscav_x
       call swap_2_fields_3d(vd_dep, vd_dep_x)
+      vd_dep_io => vd_dep_x
 
       call swap_3_fields_2d(ps1, ps2, ps3)
+      ps_io => ps3
       call swap_3_fields_2d(pmsl1, pmsl2, pmsl3)
+      pmsl_io => pmsl3
       call swap_3_fields_2d(bl1, bl2, bl3)
+      bl_io => bl3
       call swap_3_fields_2d(hbl1, hbl2, hbl3)
+      hbl_io => hbl3
     end if
   end subroutine swap_fields_after_reading
 
   subroutine swap_fields_before_reading()
     if (.not. use_async_io) then
       call swap_2_fields_3d(u1, u2)
+      u_io => u2
       call swap_2_fields_3d(v1, v2)
+      v_io => v2
       call swap_2_fields_3d(w1, w2)
+      w_io => w2
       call swap_2_fields_3d(t1, t2)
+      t_io => t2
       call swap_2_fields_3d(t1_abs, t2_abs)
+      t_abs_io => t2_abs
       call swap_2_fields_3d(hlevel1, hlevel2)
+      hlevel_io => hlevel2
       call swap_2_fields_3d(hlayer1, hlayer2)
+      hlayer_io => hlayer2
 
       ! no need to swap precip, wscav and vd_dep, they get just overwritten
 
       call swap_2_fields_2d(ps1, ps2)
+      ps_io => ps2
       call swap_2_fields_2d(pmsl1, pmsl2)
+      pmsl_io => pmsl2
       call swap_2_fields_2d(bl1, bl2)
+      bl_io => bl2
       call swap_2_fields_2d(hbl1, hbl2)
+      hbl_io => hbl2
     end if
   end subroutine swap_fields_before_reading
 

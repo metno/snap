@@ -314,12 +314,20 @@ subroutine allocateFields
     if (requires_extra_fields_to_be_read()) then
       allocate(vd_dep(nx,ny,ncomp), STAT=AllocateStatus)
       if (AllocateStatus /= 0) ERROR STOP errmsg
+      if (use_async_io) then
+        allocate(vd_dep_x(nx,ny,ncomp), STAT=AllocateStatus)
+        if (AllocateStatus /= 0) ERROR STOP errmsg
+        vd_dep_io => vd_dep_x
+      else
+        vd_dep_io => vd_dep
+      endif
       allocate(surface_stress, hflux, t2m, z0, mold=ps2, STAT=AllocateStatus)
       if (AllocateStatus /= 0) ERROR STOP errmsg
       allocate(raero(nx, ny), STAT=AllocateStatus)
       if (AllocateStatus /= 0) ERROR STOP errmsg
       allocate(ustar, my, nu, mold=raero, STAT=AllocateStatus)
       if (AllocateStatus /= 0) ERROR STOP errmsg
+      ustar = 0.000001 ! to avoid division by zero in dry deposition calculations, see issue #238
     endif
   end block
 
@@ -356,6 +364,19 @@ subroutine deAllocateFields
   DEALLOCATE ( hlevel2)
   DEALLOCATE ( hlayer2)
 
+  if (allocated(u3)) then
+    DEALLOCATE ( u3)
+    DEALLOCATE ( v3)
+    DEALLOCATE ( w3)
+    DEALLOCATE ( t3)
+    DEALLOCATE ( ps3)
+    DEALLOCATE ( bl3)
+    DEALLOCATE ( hbl3)
+    DEALLOCATE ( hlevel3)
+    DEALLOCATE ( hlayer3)
+  end if
+
+
   DEALLOCATE ( idata )
   DEALLOCATE ( fdata )
 
@@ -374,11 +395,14 @@ subroutine deAllocateFields
 
   DEALLOCATE ( pmsl1)
   DEALLOCATE ( pmsl2)
+  if (allocated(pmsl3)) DEALLOCATE ( pmsl3)
 
   DEALLOCATE ( precip)
+  if (allocated(precip_x)) deallocate(precip_x)
   if (allocated(precip3d)) deallocate(precip3d)
   if (allocated(cw3d)) deallocate(cw3d)
   if (allocated(wscav)) deallocate(wscav)
+  if (allocated(wscav_x)) deallocate(wscav_x)
   if (allocated(cloud_cover)) deallocate(cloud_cover)
 
   DEALLOCATE ( avghbl )
@@ -424,6 +448,9 @@ subroutine deAllocateFields
     deallocate(vd_dep)
     deallocate(surface_stress, hflux, t2m, z0)
     deallocate(ustar, raero)
+  endif
+  if (allocated(vd_dep_x)) then
+    deallocate(vd_dep_x)
   endif
 
 end subroutine deAllocateFields

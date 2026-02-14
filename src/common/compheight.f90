@@ -33,7 +33,7 @@ subroutine compheight()
 
 !..compute height of model levels (in the model grid)
   hlev(:,:) = 0.0
-  hlayer_io(:,:,nk) = 9999.0
+  hlayer(:,:,nk) = 9999.0
   hlevel_io(:,:,1) = 0.0
 
   pihl(:,:) = exner(ps_io)
@@ -50,7 +50,7 @@ subroutine compheight()
         h1 = hlev(i,j)
         h2 = h1 + t_io(i,j,k)*(pihl(i,j)-pih)*ginv
 
-        hlayer_io(i,j,k-1) = h2-h1
+        hlayer(i,j,k-1) = h2-h1
         hlevel_io(i,j,k) = h1 + (h2-h1)*(pihl(i,j)-pif) &
             /(pihl(i,j)-pih)
 
