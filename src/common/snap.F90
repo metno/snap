@@ -583,6 +583,7 @@ PROGRAM bsnap
 #endif
     call readfield_and_compute(ftype, -1, nhrun < 0, time_start, nhfmin, nhfmax, &
                    time_file, ierror)
+    write (error_unit, fmt="('input data: ',i4,3i3.2)") time_file
     call input_timer%stop_and_log()
     call swap_fields_after_reading() ! only for async io, but does not hurt otherwise
 
@@ -646,7 +647,6 @@ PROGRAM bsnap
       !..read fields
       nhleft = abs((nstep - istep + 1)/nsteph)
 
-
       if (.not. use_async_io .or. istep == 0) then
         if (next_input_step == istep .and. nhleft > 0) then
           itimei = time_file
@@ -657,6 +657,7 @@ PROGRAM bsnap
           end if
           call readfield_and_compute(ftype, istep, nhrun < 0, itimei, nhfmin, nhfmax, &
                               time_file, ierror)
+          write (error_unit, fmt="('input data: ',i4,3i3.2)") time_file
           call input_timer%stop_and_log()
 
           dur = time_file - itimei
@@ -674,12 +675,13 @@ PROGRAM bsnap
       ! Sync before we need the data from previous async read
       if (use_async_io) then
         if (next_input_step == istep .or. istep == 0) then
-          ! this is a IO step
-          if (istep > 0) then
-            !$OMP TASKWAIT
-          end if
+          !$OMP TASKWAIT
           ! move all u2 to u1, u3 to u2, etc after reading new fields to u3, v3, etc
           call swap_fields_after_reading()
+          if (istep > 0) then
+            ! otherwise already written in syncronous read above
+            write (error_unit, fmt="('input data: ',i4,3i3.2)") time_file
+          end if
           dur = time_file - itimei
           ihdiff = dur%hours
           tf1 = 0.
@@ -687,21 +689,24 @@ PROGRAM bsnap
           if (nhrun < 0) tf2 = -tf2
           tnow = 0.
           next_input_step = istep + nsteph*abs(ihdiff)
-          ! start reading the next fields early, while computations for current fields are still running
-          ! the tasks sets time_file and the new fields, to be swapped after the taskwait above
-           ! Don't let child threads inherit
-           !$OMP TASK FINAL(.false.) &
-           !$OMP SHARED(time_file) &
-           !$OMP FIRSTPRIVATE(idebug,iulog,next_input_step,nhrun,nhfmin,nhfmax,nsteph) &
-           !$OMP PRIVATE(itimei, ierror)
-            itimei = time_file
-            write (*,*) "Starting async read for step ", next_input_step, " at time ", itimei
+          itimei = time_file
+          if (nstep >= next_input_step) then ! still data needed
+            ! start reading the next fields early, while computations for current fields are still running
+            ! the tasks sets time_file and the new fields, to be swapped after the taskwait above
+            ! Don't let child threads inherit
+            !$OMP TASK FINAL(.false.) &
+            !$OMP SHARED(time_file) &
+            !$OMP FIRSTPRIVATE(idebug,iulog,itimei, next_input_step,nhrun,nhfmin,nhfmax,nsteph) &
+            !$OMP PRIVATE(ierror)
+            if (idebug >= 1) then
+              write(*, *) "Starting async read task for step ", next_input_step, itimei, time_file
+            end if
             call input_timer%start()
             call readfield_and_compute(ftype, next_input_step, nhrun < 0, itimei, nhfmin, nhfmax, &
                               time_file, ierror)
             call input_timer%stop_and_log()
-            write (*,*) "Ending async read for step ", next_input_step, " at time ", itimei
             !$OMP END TASK
+          end if
         else
           ! this is not an IO step
           tnow = tnow + tstep

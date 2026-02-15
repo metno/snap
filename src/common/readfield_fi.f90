@@ -56,8 +56,7 @@ contains
     USE snapfilML, only: iavail, filef
     USE snapfldML, only: &
       xm, ym, u_io, v_io, w_io, t_io, ps_io, pmsl_io, &
-      garea, enspos, precip_io, t_abs_io, t2_abs,&
-      field1
+      garea, enspos, precip_io, t_abs_io, t2_abs
     USE snapgrdML, only: alevel, blevel, vlevel, ahalf, bhalf, vhalf, &
                          gparam, klevel, ivlevel, imslp, igtype, ivlayer, ivcoor
     USE snapmetML, only: met_params, xy_wind_units, pressure_units, omega_units, &
@@ -80,6 +79,7 @@ contains
     type(datetime_t), intent(out) :: itimefi
 !> error (output)
     integer, intent(out) :: ierror
+    real, allocatable :: field1(:,:)
 
 ! local variables
     TYPE(FimexIO) :: fio
@@ -435,8 +435,7 @@ contains
     use snapdebug, only: iulog
     use snapmetML, only: met_params, &
                          precip_rate_units, precip_units_ => precip_units, precip_units_fallback
-    use snapfldML, only: field1, field2, field3, field4, precip_io, &
-                         enspos
+    use snapfldML, only: precip_io, enspos
     use wetdepML, only: requires_extra_precip_fields, wetdep_precompute
 
 !> open netcdf file
@@ -452,11 +451,18 @@ contains
     real :: totalprec
     character(len=10), save :: precip_units = precip_units_
     integer :: ierror
+    real, allocatable :: field1(:,:), field2(:,:), field3(:,:), field4(:,:)
 
 !.. get the correct ensemble/realization position, nr starting with 1, enspos starting with 0
     nr = enspos + 1
     if (enspos <= 0) nr = 1
 
+    allocate(field1, field2, field3, field4, mold=precip_io, stat=ierror)
+    if (ierror /= 0) then
+      write (iulog, *) 'Error allocating fields for precipitation'
+      write (error_unit, *) 'Error allocating fields for precipitation'
+      error stop 255
+    end if
 
     if (met_params%precaccumv /= '') then
       !..precipitation between input time 't1' and 't2'
