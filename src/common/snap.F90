@@ -694,7 +694,7 @@ PROGRAM bsnap
             ! start reading the next fields early, while computations for current fields are still running
             ! the tasks sets time_file and the new fields, to be swapped after the taskwait above
             ! Don't let child threads inherit
-            !$OMP TASK FINAL(.false.) &
+            !$OMP TASK &
             !$OMP SHARED(time_file) &
             !$OMP FIRSTPRIVATE(idebug,iulog,itimei, next_input_step,nhrun,nhfmin,nhfmax,nsteph) &
             !$OMP PRIVATE(ierror)
