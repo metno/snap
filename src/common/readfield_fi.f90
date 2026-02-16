@@ -114,21 +114,23 @@ contains
     ntav1 = ntav2
     ntav2 = find_index(istep < 0, backward, itimei, ihr1, ihr2)
 
-    if (ntav2 < 1) then
-      write (iulog, *) '*READFIELD* No model level data available'
-      write (error_unit, *) '*READFIELD* No model level data available'
-      ierror = 1
-      return
+    if (idebug == 1) then
+      write(iulog, *) 'MODEL LEVEL SEARCH LIST.   ntav2=', ntav2
+      write(iulog, *) 'nx,ny,nk: ', nx, ny, nk
+      write(iulog, *) 'istep: ', istep
+      write(iulog, *) 'itimei, ihr1, ihr2:', itimei, ihr1, ihr2
+      write(iulog, *) 'kfb,ifb:', kfb, ifb
+      if (ntav2 > 0) write(iulog, fmt='(7(1x,i4),1x,i6,2i5)') (iavail(ntav2))
+      flush(iulog)
     end if
 
-    if (idebug == 1) then
-      write (iulog, *) 'MODEL LEVEL SEARCH LIST.   ntav2=', ntav2
-      write (iulog, *) 'nx,ny,nk: ', nx, ny, nk
-      write (iulog, *) 'istep: ', istep
-      write (iulog, *) 'itimei, ihr1, ihr2:', itimei, ihr1, ihr2
-      write (iulog, *) 'kfb,ifb:', kfb, ifb
-      write (iulog, fmt='(7(1x,i4),1x,i6,2i5)') (iavail(ntav2))
-      flush (iulog)
+    if (ntav2 < 1) then
+      write(iulog, *) '*READFIELD* No model level data available'
+      write(error_unit, *) '*READFIELD* No model level data available'
+      flush(iulog)
+      flush(error_unit)
+      ierror = 1
+      return
     end if
 
 ! time between two inputs
@@ -217,7 +219,7 @@ contains
         call fi_checkload(fio, met_params%bv, "", blev(k:k), nz=ilevel)
         if (ivcoor /= 2 .AND. .NOT. met_params%ptopv == '') then
           !..p0 for hybrid loaded to ptop, ap is a * p0
-          alev(k) = alev(k)*ptop
+          alev(k) = alev(k) * ptop
         end if
       end if
       if (.NOT. met_params%sigmav == '') then
@@ -379,7 +381,7 @@ contains
       call ftest('ps ', ps_io)
       if (istep > 0) &
         call ftest('pre', precip_io(:, :))
-    end if
+      end if
 
     if (istep == 0) then
       ! test---------------------------------------------------------------
@@ -473,7 +475,7 @@ contains
       endif
       call fi_checkload(fio, met_params%precaccumv, precip_units, field2(:, :), nt=timepos, nr=nr, nz=1)
 
-      precip_io(:,:) = (field2 - field1)/nhdiff
+      precip_io(:, :) = (field2 - field1)/nhdiff
     else if (met_params%precstratiaccumv /= '') then
       ! accumulated stratiform and convective precipitation
       !..precipitation between input time 't1' and 't2'
@@ -506,7 +508,7 @@ contains
       precip_io(:,:) = field3
       write (error_unit, *) "Check precipation correctness"
     else
-      !..non-accumulated emissions in stratiform an convective
+      !..non-accumulated emissions in stratiform and convective
       call fi_checkload(fio, met_params%precstrativrt, precip_rate_units, field1(:, :), nt=timepos, nr=nr, nz=1)
       if (met_params%precconvrt /= '') then
         call fi_checkload(fio, met_params%precstrativrt, precip_rate_units, field2(:, :), nt=timepos, nr=nr, nz=1)
