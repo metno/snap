@@ -32,8 +32,10 @@ module readfieldML
 
     if (ftype == 'netcdf') then
       call readfield_nc(istep, backward, itimei, ihr1, ihr2, itimefi, ierror)
+#if defined(FIMEX)
     else if (ftype == 'fimex') then
       call readfield_fi(istep, backward, itimei, ihr1, ihr2, itimefi, ierror)
+#endif
     else
       write(*,'(A)') "Error: unknown file type in readfield"
       ierror = 1
