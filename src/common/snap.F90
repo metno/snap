@@ -204,14 +204,12 @@ PROGRAM bsnap
   USE releaseML, only: release, releases, tpos_bomb, nrelheight, mprel, &
                        mplume, nplume, iplume, npart, mpart, release_t
   USE init_random_seedML, only: init_random_seed
-  USE readfield_ncML, only: readfield_nc
   USE snapfimexML, only: fimex_type => file_type, fimex_config => conf_file, fimex_interpolation => interpolation, fint
 #if defined(FIMEX)
-  USE readfield_fiML, only: readfield_fi
   USE filesort_fiML, only: filesort_fi
   use Fimex, only: fimex_set_loglevel => set_default_log_level, FIMEX_LOGLEVEL_WARN => LOGLEVEL_WARN
 #endif
-  USE readfieldML, only: readfield, readfield_and_compute
+  USE readfieldML, only: readfield_and_compute
   USE releasefileML, only: releasefile
   USE filesort_ncML, only: filesort_nc
   USE utils, only: to_uppercase, to_lowercase
@@ -584,6 +582,7 @@ PROGRAM bsnap
     call readfield_and_compute(ftype, -1, nhrun < 0, time_start, nhfmin, nhfmax, &
                    time_file, ierror)
     write (error_unit, fmt="('input data: ',i4,3i3.2)") time_file
+    flush(output_unit)
     call input_timer%stop_and_log()
     call swap_fields_after_reading() ! only for async io, but does not hurt otherwise
 
@@ -674,14 +673,16 @@ PROGRAM bsnap
       end if
       ! Sync before we need the data from previous async read
       if (use_async_io) then
-        if (next_input_step == istep .or. istep == 0) then
+        if ((next_input_step == istep .and. nhleft > 0) .or. istep == 0) then
           !$OMP TASKWAIT
           ! move all u2 to u1, u3 to u2, etc after reading new fields to u3, v3, etc
-          call swap_fields_after_reading()
+          ! not needed for last step, no further fields needed
           if (istep > 0) then
             ! otherwise already written in syncronous read above
             write (error_unit, fmt="('input data: ',i4,3i3.2)") time_file
           end if
+          ! just keep reading from the last timestep, no interpolation needed
+          call swap_fields_after_reading()
           dur = time_file - itimei
           ihdiff = dur%hours
           tf1 = 0.
@@ -689,8 +690,9 @@ PROGRAM bsnap
           if (nhrun < 0) tf2 = -tf2
           tnow = 0.
           next_input_step = istep + nsteph*abs(ihdiff)
+
           itimei = time_file
-          if (nstep >= next_input_step) then ! still data needed
+          if (next_input_step < nstep) then ! still data needed
             ! start reading the next fields early, while computations for current fields are still running
             ! the tasks sets time_file and the new fields, to be swapped after the taskwait above
             ! Don't let child threads inherit
@@ -699,7 +701,8 @@ PROGRAM bsnap
             !$OMP FIRSTPRIVATE(idebug,iulog,itimei, next_input_step,nhrun,nhfmin,nhfmax,nsteph) &
             !$OMP PRIVATE(ierror)
             if (idebug >= 1) then
-              write(*, *) "Starting async read task for step ", next_input_step, itimei, time_file
+              write(*, *) "Starting async read task for step ", next_input_step, nstep, itimei
+              flush(output_unit)
             end if
             call input_timer%start()
             call readfield_and_compute(ftype, next_input_step, nhrun < 0, itimei, nhfmin, nhfmax, &
