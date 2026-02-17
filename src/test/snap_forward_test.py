@@ -14,7 +14,6 @@ class SnapEcEMEPEmersonForwardTestCase(SnapTestCase):
     datadir = pathlib.Path(__file__).resolve().parent / "data"
     input = "snap.input_ecemep_emerson_fimex"
     snap = datadir / "../bsnap_naccident"
-    testdata = (datadir / "../snap_testdata").resolve()
 
     snapExpected = "snap_testdata/snap_ecemep_emerson_expected.nc"
 
@@ -64,7 +63,7 @@ class SnapEcEMEPEmersonForwardTestCase(SnapTestCase):
             # replace path to datafields ommitting = surrounded by optional spaces
             snapinput = re.sub(
                 rf"({field}\s*=\s*)(\S+)",
-                lambda m: f"{m.group(1)}{str((self.testdata / m.group(2)).resolve())}",
+                lambda m: f"{m.group(1)}{str((self.datadir / m.group(2)).resolve())}",
                 snapinput,
             )
         with (tmp / "snap.input").open("w") as f:
