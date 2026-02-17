@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 import os
 import pathlib
+import re
 import shutil
 import subprocess
 import tempfile
@@ -55,7 +56,17 @@ class SnapEcEMEPEmersonForwardTestCase(SnapTestCase):
         with (self.datadir / self.input).open("r") as f:
             snapinput = f.read()
         snapinput += "\nASYNC_IO.ON\n"
-        snapinput = snapinput.replace("../snap_testdata", str(self.testdata))
+        for field in [
+            "FIMEX.CONFIG",
+            "FIELD.INPUT",
+            "DRY.DEPOSITION.LARGEST_LANDFRACTION_FILE",
+        ]:
+            # replace path to datafields ommitting = surrounded by optional spaces
+            snapinput = re.sub(
+                rf"({field}\s*=\s*)(\S+)",
+                lambda m: f"{m.group(1)}{str((self.testdata / m.group(2)).resolve())}",
+                snapinput,
+            )
         with (tmp / "snap.input").open("w") as f:
             f.write(snapinput)
         env = os.environ.copy()
