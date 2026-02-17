@@ -8,16 +8,51 @@ from dask.diagnostics import ProgressBar
 import sys
 
 
-def _assert_coordinate_resolution_equals(ds, target_res, name="target"):
-    _msg = f"resolution of {name} latitudes not equal to expected resolution of {target_res}"
-    assert np.allclose(target_res, np.diff(np.sort(ds.lat.values))), _msg
-    _msg = f"resolution of {name} longitudes not equal to expected resolution of {target_res}"
-    assert np.allclose(target_res, np.diff(np.sort(ds.lon.values))), _msg
+def check_coordinate_resolution_equals(
+    ds,
+    target_res,
+    coord,
+    name="target",
+):
+    """Check resolution of a given coordinate in dataset against an expected value"""
+    _msg = "Mismatch in resolution of coord '{coord}' in ds '{name}'. Expected {target_res}, got deviations up to {max_dev}"
+
+    diffs = np.diff(np.sort(ds.get(coord).values))
+
+    if not np.allclose(target_res, diffs, rtol=1e-4):
+        max_deviation = np.max(np.abs(diffs - target_res))
+        msg = _msg.format(
+            name=name, coord=coord, target_res=target_res, max_dev=max_deviation
+        )
+        raise ValueError(msg)
 
 
-def _assert_equal_grids(ds, ds_template):
-    assert np.allclose(ds.lat.values, ds_template.lat.values)
-    assert np.allclose(ds.lon.values, ds_template.lon.values)
+def check_output_coord(da, da_template, coord):
+    """Check that the coordinates of two datasets are equal (up to a given tolerance)"""
+    _msg = "Resolution of coord '{coord}' between output and template does not match. Got deviations up to {max_dev} at i={index}/{size}"
+
+    diffs = np.diff(da[coord].values)
+    diffs_template = np.diff(np.sort(da_template[coord].values))
+
+    if not np.allclose(diffs, diffs_template, rtol=1e-4):
+        max_deviation = np.max(np.abs(diffs - diffs_template))
+        index = np.argmax(np.abs(diffs - diffs_template))
+        msg = _msg.format(
+            coord=coord, max_dev=max_deviation, index=index, size=da[coord].size
+        )
+        raise ValueError(msg)
+
+
+def rename_coords(ds):
+    names = {}
+    for v in ds.coords:
+        coord = ds[v].attrs
+        name = coord.get("standard_name", v)
+        if name == "latitude":
+            names[v] = "lat"
+        elif name == "longitude":
+            names[v] = "lon"
+    return ds.rename(names)
 
 
 def open_datasets(input_path, template_path, input_res, output_res):
@@ -25,12 +60,15 @@ def open_datasets(input_path, template_path, input_res, output_res):
     ds = ds.isel(time=0)
 
     ds_template = xr.open_dataset(template_path)
+    ds_template = rename_coords(ds_template)
 
     # Check validity of input and output grids
-    _assert_coordinate_resolution_equals(ds, input_res, "input")
-    _assert_coordinate_resolution_equals(ds_template, output_res, "output")
+    check_coordinate_resolution_equals(ds, input_res, "lat", "input")
+    check_coordinate_resolution_equals(ds, input_res, "lon", "input")
+    check_coordinate_resolution_equals(ds_template, output_res, "lat", "template")
+    check_coordinate_resolution_equals(ds_template, output_res, "lon", "template")
 
-    return subset_dataset(ds, ds_template, output_res), ds_template
+    return ds, ds_template
 
 
 def subset_dataset(ds, ds_template, output_res):
@@ -48,6 +86,42 @@ def subset_dataset(ds, ds_template, output_res):
         lat=(ds.lat >= min_lat) & (ds.lat < max_lat),
         lon=(ds.lon >= min_lon) & (ds.lon < max_lon),
     )
+
+
+def roll_and_pad_coordinates(da, input_res, output_res):
+    """Roll longitude and pad latitude to ensure region centers are correct at
+    the boundaries, i.e. that the boundary grid points have grid centers at
+    longitudes [-180 + resolution, 180] and latitudes [-90, 90]."""
+    agg_factor = calc_agg_factor(input_res, output_res)
+    agg_half = agg_factor // 2
+    new_da = da.roll({"lon": agg_factor // 2}, roll_coords=True)
+
+    lon = new_da["lon"].values
+    lon[: agg_factor // 2] -= 360
+
+    new_da = new_da.assign_coords({"lon": lon})
+
+    new_da = new_da.pad({"lat": (agg_half, agg_half)}, mode="symmetric")
+
+    lat = new_da.lat.values
+    lat[:agg_half] = da.lat.values[0] + input_res * np.arange(1, agg_half + 1)[::-1]
+    lat[-agg_half:] = da.lat.values[-1] - input_res * np.arange(1, agg_half + 1)
+    new_da = new_da.assign_coords({"lat": lat})
+
+    # Check that values are as expected
+    lon = new_da.lon.values
+    lon_regions = lon.reshape(lon.size // agg_factor, -1)
+    lon_means = lon_regions.mean(axis=1)
+    lon_means_expected = np.arange(-180, 180, output_res)
+    assert np.allclose(lon_means, lon_means_expected, rtol=1e-4)
+
+    lat = new_da.lat.values
+    lat_regions = lat.reshape(lat.size // agg_factor, -1)
+    lat_means = lat_regions.mean(axis=1)
+    lat_means_expected = np.arange(90, -90 - output_res, -output_res)
+
+    assert np.allclose(lat_means, lat_means_expected, rtol=1e-4)
+    return new_da
 
 
 def _count_values(array, possible_values):
@@ -106,6 +180,8 @@ def aggregate_land_classes(
     print("Calculating grid cell fractions")
     return fractions_da
 
+    # res.pathglob = "ec_atmo_0_1deg_????????T??????Z_3h.nc"
+
 
 def get_args():
     import argparse
@@ -152,42 +228,63 @@ def get_args():
     parser.add_argument(
         "--overwrite", action="store_true", help="Overwrite existing output file."
     )
+    parser.add_argument(
+        "--dry_run", action="store_true", help="Do not produce output file."
+    )
+    parser.add_argument(
+        "--global_input",
+        action="store_true",
+        help="Assume global input with periodic longitude and output latitude bounds at +- 90°.",
+    )
     return parser.parse_args()
+
+
+def calc_agg_factor(input_res, output_res):
+    """Calculate agg factor with check"""
+    agg_factor = output_res / input_res
+    if not np.isclose(agg_factor % 2, 0):
+        raise ValueError(
+            "Ratio of input and output resolutions must be divisible by 2, got {agg_factor=}"
+        )
+    return int(np.round(agg_factor))
 
 
 def main():
     args = get_args()
-    if args.output_path.exists() and not args.overwrite:
+    agg_factor = calc_agg_factor(args.input_res, args.output_res)
+
+    if args.output_path.exists() and not (args.overwrite or args.dry_run):
         print(
             f"Error, output file {args.output_path} exists. Use --overwrite to overwrite"
         )
         sys.exit(1)
 
-    agg_factor = args.output_res / args.input_res
-    if not np.isclose(agg_factor % 2, 0):
-        raise ValueError(
-            "Ratio of input and output resolutions must be divisible by 2, got {agg_factor=}"
-        )
-    agg_factor = int(np.round(agg_factor))
-
-    sub, ds_template = open_datasets(
+    ds, ds_template = open_datasets(
         input_path=args.input_path,
         template_path=args.template_path,
         input_res=args.input_res,
         output_res=args.output_res,
     )
     var_name = args.land_class_variable
+    da = ds[var_name]
+    if args.global_input:
+        da = roll_and_pad_coordinates(da, args.input_res, args.output_res)
+    else:
+        da = subset_dataset(da, ds_template, args.output_res)
+
     fractions_da = aggregate_land_classes(
-        da=sub[var_name], agg_factor=agg_factor, var_name=var_name
+        da=da, agg_factor=agg_factor, var_name=var_name
     )
 
     # check that output grid is correct
-    _assert_equal_grids(fractions_da, ds_template)
+    check_output_coord(fractions_da, ds_template, coord="lat")
+    check_output_coord(fractions_da, ds_template, coord="lon")
 
-    print(f"Saving data aggregated from {args.input_path} to {args.output_path}")
-    with ProgressBar():
-        fractions_da.to_netcdf(args.output_path)
-    print("Done")
+    if not args.dry_run:
+        print(f"Saving data aggregated from {args.input_path} to {args.output_path}")
+        with ProgressBar():
+            fractions_da.to_netcdf(args.output_path)
+        print("Done")
 
 
 if __name__ == "__main__":
