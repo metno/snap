@@ -151,6 +151,10 @@
 !> SNAP - Severe Nuclear Accident Program
 PROGRAM bsnap
   USE iso_fortran_env, only: real64, output_unit, error_unit, IOSTAT_END
+#ifdef _OPENMP
+  USE omp_lib, only: omp_set_max_active_levels
+#endif
+
   USE DateCalc, only: epochToDate, timeGM
   USE datetime, only: datetime_t, duration_t
   USE snapdebug, only: iulog, idebug
@@ -632,6 +636,10 @@ PROGRAM bsnap
     ! start time loop
     itimei = time_start
     npartmax = 0
+#ifdef _OPENMP
+    ! both task and inner parallel do loops, so need 2 levels of parallelism
+    call omp_set_max_active_levels(2)
+#endif
     !$OMP PARALLEL
     !$OMP SINGLE
     time_loop: do istep = 0, nstep

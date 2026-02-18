@@ -36,8 +36,7 @@ This benchmark reflects a case with few particles, e.g. for operational run duri
 
 Running
 ```
-time OMP_NUM_THREADS=1 ../../bsnap_na
-ccident snap_io.input
+time OMP_NUM_THREADS=1 ../../bsnap_naccident snap_io.input
 ```
 Gives output in snap.log like:
 ```
@@ -78,7 +77,7 @@ Test with:
 ```
 for t in 1 2 4 8; do
     echo "=== Threads: $t ===";
-    time OMP_PLACES=cores OMP_NUM_THREADS=$t ../../bsnap_naccident snap_particles.input;
+    time OMP_PLACES=cores OMP_NUM_THREADS=$t ../../bsnap_naccident snap_particles.input 2> /dev/null;
 done
 ```
 which gives something like:
