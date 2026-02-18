@@ -1206,7 +1206,7 @@ end subroutine
     ! TODO2: apply changes in readfield_fi to readfield_nc
     use snapfldML, only: surface_stress, hflux, z0, t2m, vd_dep, ustar, &
       ps2, raero, my, nu, enspos
-    use drydepml, only: drydep_precompute_meteo, drydep_precompute_particle, &
+    use drydepml, only: drydep_precompute_meteo, drydep_precompute_raero, drydep_precompute_particle, &
       requires_extra_fields_to_be_read, classnr, lookup_z0
     use ftestML, only: ftest
     use snapdebug, only: idebug
@@ -1267,17 +1267,22 @@ end subroutine
     endif
     hflux(:,:) = -hflux ! Follow conventions for up/down
 
-    if (met_params%z0 == "") then
-      ! Load z0 from land use data if not defined in meteorology
-      z0(:,:) = lookup_z0(classnr, ustar, nu)
-    else
+    call nfcheckload(ncid, met_params%t2m, start, count, t2m(:, :))
+
+    if (met_params%z0 /= "") then  ! Other case handled below
       call nfcheckload(ncid, met_params%z0, start, count, z0(:, :))
     endif
 
-    call nfcheckload(ncid, met_params%t2m, start, count, t2m(:, :))
+    call drydep_precompute_meteo(ps2*100., t2m, surface_stress, ustar, my, nu)
 
-    call drydep_precompute_meteo(ps2*100., t2m, surface_stress, z0, hflux, &
-      ustar, raero, my, nu)
+    if (met_params%z0 == "") then
+      ! Load z0 from land use data if not defined in meteorology
+      z0(:,:) = lookup_z0(classnr, ustar, nu)
+    endif
+
+    call drydep_precompute_raero(ps2*100., t2m, z0, hflux, ustar, raero)
+
+
     do i=1,ncomp
       mm = run_comp(i)%to_defined
 

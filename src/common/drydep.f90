@@ -7,7 +7,7 @@ module drydepml
   private
 
   public :: drydep, preprocess_landfraction, unload, &
-    requires_extra_fields_to_be_read, drydep_precompute_meteo, drydep_precompute_particle, &
+    requires_extra_fields_to_be_read, drydep_precompute_meteo, drydep_precompute_raero, drydep_precompute_particle, &
     requires_landfraction_file, lookup_z0
 
   integer, parameter, public :: DRYDEP_SCHEME_UNDEFINED = 0
@@ -58,28 +58,44 @@ pure logical function requires_extra_fields_to_be_read()
 end function
 
 
-!> Precompute dry deposition meteorology
-!> returns roa, ustar, monin_obukhov_length, raero, my
-elemental subroutine drydep_precompute_meteo(surface_pressure, t2m, surface_stress, z0, hflux, &
-                                             ustar, raero, my, nu)
+!> Precompute dry deposition meteorology, except raero
+!> returns roa, ustar, monin_obukhov_length, my
+elemental subroutine drydep_precompute_meteo(surface_pressure, t2m, surface_stress, &
+                                             ustar, my, nu)
   use iso_fortran_env, only: real64
-  use datetime, only: datetime_t
   use vgravtablesML, only: visc
   real, intent(in) :: surface_pressure !> [Pa]
   real, intent(in) :: t2m !> [K]
   real, intent(in) :: surface_stress !> [N/m^2]
+  real(real64), intent(out) :: ustar, my, nu
+
+  real(real64) :: roa
+
+  roa = surface_pressure / (t2m * R) !> [kg/m^3]
+  my = visc(t2m)/10 !>  Dynamic viscosity of air [kg/(m s)]  !Or visc(288)/10 - decide
+  nu = my / roa !> Kinematic viscosity of air [m^2/s]   !Or ny = 1.5e-5 defined above
+  ustar = surface_stress / sqrt(roa)
+end subroutine
+
+
+!> Precompute dry deposition meteorology parameter raero
+elemental subroutine drydep_precompute_raero(surface_pressure, t2m, z0, hflux, &
+                                             ustar, raero)
+  use iso_fortran_env, only: real64
+  use vgravtablesML, only: visc
+  real, intent(in) :: surface_pressure !> [Pa]
+  real, intent(in) :: t2m !> [K]
   real, intent(in) :: z0 !> [m]
   real, intent(in) :: hflux !> [W/m^2]
-  real(real64), intent(out) :: raero, ustar, my, nu
+  real(real64), intent(in) :: ustar
+
+  real(real64), intent(out) :: raero
 
   real(real64), parameter :: k = 0.4
 
   real(real64) :: roa, monin_obukhov_length
 
   roa = surface_pressure / (t2m * R) !> [kg/m^3]
-  my = visc(t2m)/10 !>  Dynamic viscosity of air [kg/(m s)]  !Or visc(288)/10 - decide
-  nu = my / roa !> Kinematic viscosity of air [m^2/s]   !Or ny = 1.5e-5 defined above
-  ustar = surface_stress / sqrt(roa)
   monin_obukhov_length = - roa * CP * t2m * (ustar**3) / (k * grav * hflux)
   raero = aerodynres(monin_obukhov_length, ustar, real(z0, real64))
 

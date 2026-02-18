@@ -922,7 +922,7 @@ contains
     USE snapmetML, only: met_params, &
       temp_units, downward_momentum_flux_units, surface_roughness_length_units, &
       accum_surface_heat_flux_units, surface_heat_flux_units
-    use drydepml, only: drydep_precompute_meteo, drydep_precompute_particle, &
+    use drydepml, only: drydep_precompute_meteo, drydep_precompute_raero, drydep_precompute_particle, &
       requires_extra_fields_to_be_read, classnr, lookup_z0
     use ftestML, only: ftest
     use snapdebug, only: idebug
@@ -984,18 +984,22 @@ contains
     endif
     hflux(:,:) = -hflux ! Follow conventions for up/down
 
-    if (met_params%z0 == "") then
-      ! Load z0 from land use data if not defined in meteorology
-      z0(:,:) = lookup_z0(classnr, ustar, nu)
-    else
+    if (met_params%z0 /= "") then  ! Other case handled below
       call fi_checkload(fio, met_params%z0, surface_roughness_length_units, z0(:, :), nt=timepos, nr=nr)
     endif
 
     call fi_checkload(fio, met_params%t2m, temp_units, t2m(:, :), nt=timepos, nr=nr)
 
     call metcalc_timer%start()
-    call drydep_precompute_meteo(ps2*100., t2m, surface_stress, z0, hflux, &
-      ustar, raero, my, nu)
+    call drydep_precompute_meteo(ps2*100., t2m, surface_stress, ustar, my, nu)
+
+    ! lookup_z0 uses ustar and must be calculated after meteorology
+    if (met_params%z0 == "") then
+      ! Load z0 from land use data if not defined in meteorology
+      z0(:,:) = lookup_z0(classnr, ustar, nu)
+    endif
+
+    call drydep_precompute_raero(ps2*100., t2m, z0, hflux, ustar, raero)
     !$OMP PARALLEL DO PRIVATE(i,mm)
     do i=1,ncomp
       mm = run_comp(i)%to_defined

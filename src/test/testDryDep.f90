@@ -3,7 +3,7 @@ program testDryDep
        GRAV_TYPE_COMPUTED, GRAV_TYPE_FIXED
   use particleML, only: Particle
   use vgravtablesML, only : vgravtables_init
-  use drydepML, only: drydep_precompute_meteo, drydep_precompute_particle, drydep_scheme, &
+  use drydepML, only: drydep_precompute_meteo, drydep_precompute_raero, drydep_precompute_particle, drydep_scheme, &
        DRYDEP_SCHEME_EMERSON
   use datetime, only: datetime_t
   use iso_fortran_env, only: real64
@@ -59,8 +59,10 @@ program testDryDep
   z0 = 0.1 ! m
   hflux = 100.0 ! W hr/m2
   classnr = 21 ! class number 11=sea, 21=mixed forest
-  call drydep_precompute_meteo(ps2*100., t2m, surface_stress, z0, hflux, &
-    ustar, raero, my, nu)
+  call drydep_precompute_meteo(ps2*100., t2m, surface_stress, ustar, my, nu)
+  call drydep_precompute_raero(ps2*100., t2m, z0, hflux, ustar, raero)
+
+
   ! Test dry-dep velocity for Cs137
   call drydep_precompute_particle(ps2*100., t2m, &
     ustar, raero, my, nu, itimefi, &
