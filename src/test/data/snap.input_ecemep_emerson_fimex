@@ -78,6 +78,7 @@ FIELD.INPUT= ../snap_testdata/meteo20260113_00_sellafield.nc
 ** USE FIMEX
 FIMEX.FILE_TYPE= netcdf
 FIMEX.CONFIG=ecemep_fixunit.ncml
+FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|-5,-4.9,...,5|53,53.1,...,59|degree
 
 ** GRID INPUT AND RUN, MODEL LEVELS INPUT (0,KS,KS-1,........1)
 GRID.NCTYPE = ecemep
