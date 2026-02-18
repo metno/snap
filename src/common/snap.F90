@@ -163,7 +163,7 @@ PROGRAM bsnap
   USE snapdimML, only: nx, ny, nk, output_resolution_factor, ldata, maxsiz, mcomp, surface_index
   USE snapfilML, only: filef, itimer, ncsummary, nctitle, nhfmax, nhfmin, &
                        nctype, nfilef, simulation_start, spinup_steps
-  USE snapfldML, only: nhfout, enspos, use_async_io, &
+  USE snapfldML, only: nhfout, enspos, use_async_io, total_activity_lost_domain, &
                        swap_fields_before_reading, swap_fields_after_reading
   USE snapmetML, only: init_meteo_params, met_params
   USE snapparML, only: component, run_comp, output_component, &
@@ -184,7 +184,6 @@ PROGRAM bsnap
   USE checkdomainML, only: check_in_domain
   USE rwalkML, only: rwalk, rwalk_init
   USE milibML, only: xyconvert
-  use snapfldML, only: total_activity_lost_domain
   USE forwrdML, only: forwrd
   USE wetdepML, only: wetdep, wetdep_scheme, wetdep_scheme_t, &
     WETDEP_SUBCLOUD_SCHEME_UNDEFINED, WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
@@ -204,7 +203,6 @@ PROGRAM bsnap
           largest_landfraction_file,  drydep_unload => unload
   USE decayML, only: decay, decayDeps
   USE posintML, only: posint
-  USE bldpML, only: bldp
   USE releaseML, only: release, releases, tpos_bomb, nrelheight, mprel, &
                        mplume, nplume, iplume, npart, mpart, release_t
   USE init_random_seedML, only: init_random_seed
