@@ -16,7 +16,7 @@ class SnapEcEMEPEmersonForwardTestCase(SnapTestCase):
     snap = "../bsnap_naccident"
     datadir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 
-    snapExpected = "snap_testdata/snap_ecemep_emerson_expected.nc"
+    snapExpected = "snap_testdata/snap_ecemep_emerson_expected_20260218.nc"
 
     def setUp(self):
         pass
