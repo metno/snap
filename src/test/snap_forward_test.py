@@ -1,6 +1,4 @@
 #! /usr/bin/env python3
-import math
-import netCDF4
 import os
 import pathlib
 import shutil
@@ -41,7 +39,7 @@ class SnapEcEMEPEmersonForwardTestCase(SnapTestCase):
             [
                 "instant_height_boundary_layer",
                 "precipitation_amount_acc",
-                #"Cs137_concentration", # too variable between RNGs
+                # "Cs137_concentration", # too variable between RNGs
                 "Cs137_concentration_bl",
                 "Cs137_acc_concentration",
                 "Cs137_acc_dry_deposition",
@@ -81,7 +79,7 @@ class SnapEcEMEPForwardTestCase(SnapTestCase):
             [
                 "instant_height_boundary_layer",
                 "precipitation_amount_acc",
-                #"Cs137_concentration", # too variable between RNGs
+                # "Cs137_concentration", # too variable between RNGs
                 "Cs137_concentration_bl",
                 "Cs137_acc_concentration",
                 "Cs137_acc_dry_deposition",
@@ -198,7 +196,9 @@ class ReleaseTests(unittest.TestCase):
         with self.input.open("r") as f:
             snapinput = f.read()
 
-        snapinput = snapinput.replace("../snap_testdata", self.testdata.resolve().as_posix())
+        snapinput = snapinput.replace(
+            "../snap_testdata", self.testdata.resolve().as_posix()
+        )
         snapinput = snapinput.replace("RELEASE.HOUR= XX", "RELEASE.HOUR= 0.5, 1.0")
 
         with tmp.joinpath("snap.input").open("w") as f:
@@ -245,7 +245,9 @@ class ReleaseTests(unittest.TestCase):
         with self.input.open("r") as f:
             snapinput = f.read()
 
-        snapinput = snapinput.replace("../snap_testdata", self.testdata.resolve().as_posix())
+        snapinput = snapinput.replace(
+            "../snap_testdata", self.testdata.resolve().as_posix()
+        )
         snapinput = snapinput.replace("RELEASE.HOUR= XX", "RELEASE.HOUR= 0.0, 1.45")
 
         with tmp.joinpath("snap.input").open("w") as f:
@@ -287,7 +289,9 @@ class ReleaseTests(unittest.TestCase):
         with self.input.open("r") as f:
             snapinput = f.read()
 
-        snapinput = snapinput.replace("../snap_testdata", self.testdata.resolve().as_posix())
+        snapinput = snapinput.replace(
+            "../snap_testdata", self.testdata.resolve().as_posix()
+        )
         snapinput = snapinput.replace(
             "RELEASE.HOUR= XX", "RELEASE.HOUR= 0.0, 0.5, 1.25, 3.0"
         )
