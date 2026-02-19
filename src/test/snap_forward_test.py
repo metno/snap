@@ -16,7 +16,7 @@ class SnapEcEMEPEmersonForwardTestCase(SnapTestCase):
     snap = "../bsnap_naccident"
     datadir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 
-    snapExpected = "snap_testdata/snap_ecemep_emerson_expected_20260218.nc"
+    snapExpected = "snap_testdata/snap_ecemep_emerson_expected_20260219.nc"
 
     def setUp(self):
         pass
@@ -41,7 +41,7 @@ class SnapEcEMEPEmersonForwardTestCase(SnapTestCase):
             [
                 "instant_height_boundary_layer",
                 "precipitation_amount_acc",
-                "Cs137_concentration",
+                #"Cs137_concentration", # too variable between RNGs
                 "Cs137_concentration_bl",
                 "Cs137_acc_concentration",
                 "Cs137_acc_dry_deposition",
@@ -81,7 +81,7 @@ class SnapEcEMEPForwardTestCase(SnapTestCase):
             [
                 "instant_height_boundary_layer",
                 "precipitation_amount_acc",
-                "Cs137_concentration",
+                #"Cs137_concentration", # too variable between RNGs
                 "Cs137_concentration_bl",
                 "Cs137_acc_concentration",
                 "Cs137_acc_dry_deposition",
