@@ -196,7 +196,6 @@ PROGRAM bsnap
     WETDEP_SUBCLOUD_SCHEME_UNDEFINED, WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
     WETDEP_INCLOUD_SCHEME_NONE, WETDEP_INCLOUD_SCHEME_TAKEMURA, &
     WETDEP_INCLOUD_SCHEME_UNDEFINED, &
-    operator(==), operator(/=), &
     wetdep_init => init
   USE drydepml, only: drydep, drydep_scheme, requires_landfraction_file, &
           DRYDEP_SCHEME_OLD, DRYDEP_SCHEME_NEW, &
@@ -498,8 +497,8 @@ PROGRAM bsnap
     write (iulog, *) 'ifltim:  ', ifltim
     write (iulog, *) 'irwalk:  ', use_random_walk
     write (iulog, *) 'drydep_scheme: ', drydep_scheme
-    write (iulog, *) 'wetdep_scheme: subcloud scheme:   ', wetdep_scheme%subcloud%description
-    write (iulog, *) 'wetdep_scheme: incloud  scheme:   ', wetdep_scheme%incloud%description
+    write (iulog, *) 'wetdep_scheme: subcloud scheme:   ', wetdep_scheme%subcloud !%description
+    write (iulog, *) 'wetdep_scheme: incloud  scheme:   ', wetdep_scheme%incloud !%description
     write (iulog, *) 'wetdep_scheme: use vertical:      ', wetdep_scheme%use_vertical
     write (iulog, *) 'wetdep_scheme: use cloudfraction: ', wetdep_scheme%use_cloudfraction
     write (iulog, *) 'idecay:  ', idecay
@@ -2206,7 +2205,7 @@ contains
         end if
       end if
 
-      if (wetdep_scheme%subcloud == WETDEP_SUBCLOUD_SCHEME_BARTNICKI .AND. def_comp(m)%kwetdep == 1) then
+      if (wetdep_scheme%subcloud == WETDEP_SUBCLOUD_SCHEME_BARTNICKI .AND. def_comp(m)%kwetdep == 1) then   ![TODO]: should just be not undefined, right? a radius smaller than 0 is always going to be a problem... What about incloud?
         if (def_comp(m)%radiusmym <= 0.) then
           write (error_unit, *) 'Wet deposition error. radius: ', &
             def_comp(m)%radiusmym

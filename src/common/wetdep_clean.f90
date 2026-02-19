@@ -6,9 +6,11 @@ module wetdepmlclean
   use iso_fortran_env, only: real64
   implicit none
   private
-
-  real, save :: vminprec = -1.      ! [TODO]: define
-  real, parameter :: precmin = 0.01 !> minimum precipitation intensity (mm/hour)
+  
+  !> Minimum sigma value for [Bartnicki] scavenging (i.e., approxmiately maximum pressure altitude)
+  real, save :: vminprec = -1.      
+  !> minimum precipitation intensity (mm/hour)
+  real, parameter :: precmin = 0.01
 
   public :: wetdep, init, requires_extra_precip_fields, &
       wetdep_precompute
@@ -109,6 +111,7 @@ contains
       .not.wetdep_scheme%use_vertical) then
 
       call wetdep2_init(tstep)
+
     endif
   end subroutine
 
@@ -152,7 +155,7 @@ contains
     end do
     write (iulog, *) '-------------------------------------------------'
     
-    if(vminprec < 0.) then                        !!Setting vminprecip - [TODO]: Need to understand what this is
+    if(vminprec < 0.) then                        !!Setting minimum sigma level (maximum pressure level)
       block
         USE snapgrdML, only: alevel, blevel, vlevel
         USE snapdimML, only: nk
@@ -177,6 +180,7 @@ contains
           vminprec = vlevel(nk)
         end if
         write(iulog,*) 'POSINT. precmin,vminprec: ',precmin,vminprec
+        vminprec = max(vminprec, 0.67)
       end block
     end if
     
@@ -245,10 +249,10 @@ contains
 
     m = part%icomp
 
-    !..reset precipitation to zero if pressure less than approx. 550 hPa.  ![TODO]: understand these comments and rewrite
+    !..assumens no precipitation if pressure less than approx. 650 hPa.
     !..and if less than a minimum precipitation intensity (mm/hour)
     if (pextra%prc > precmin &
-        .AND. part%z > 0.67 .AND. part%z > vminprec) then  ![TODO]: vminprec can be combined with 0.67 - vminprec = max(vminprec, 0.67)
+        .AND. part%z > vminprec) then
       !..find particles with wet deposition and
       !..reset precipitation to zero if not wet deposition
       q = pextra%prc
@@ -288,7 +292,7 @@ contains
 
 
 
-!> Bartnicki scheme without cloud fraction adjustments
+!> Bartnicki scheme without cloud fraction adjustments [1/s]
   pure elemental real function wet_subcloud_bartnicki(radius, q, depconst, use_convective) result(rkw)  ![TODO]: inputs of all uses should use opposite use_convective now
     !> radius in micrometer
     real, intent(in) :: radius
@@ -320,14 +324,16 @@ contains
     if (convect .and. q > 7.0) then ! convective   ![TODO]: Is this just for a specific radius? Or not? Should be first in if statement otherwise
       rkw = 3.36e-4*q**0.79
     endif
-    if (radius <= 0.1) then ! gas               ![TODO]: Figure out how to fix overlap here
+    if (radius <= 0.1) then ! gas               ![TODO]: Figure out how to fix overlap here  !!!Where is this from? Not in baklanov paper...
       rkw = 1.12e-4*q**0.79
     endif
   end function
 
   !> Scales the precip intensity according to cloud fraction for bartnicki scheme as wished
   subroutine wet_subcloud_bartnicki_ccf(wscav, radius, precip, ccf, use_ccf)
+    !> Scavenging rate [1/s]
     real, intent(out) :: wscav(:,:)
+    !> Precipitation intensity [mm/h]    !!![GEORGE]: Why is this accumulated eventually?
     real, intent(in) :: precip(:,:)
     real, intent(in) :: radius
     real, intent(in) :: ccf(:,:)
@@ -341,7 +347,7 @@ contains
 
     depconst = wet_deposition_constant(radius)
     if (.not.use_ccf) then
-      wscav(:,:) = wet_subcloud_bartnicki(radius, precip, depconst, use_convective=.False.)  !> no convective rain used. Way of including if needed?
+      wscav(:,:) = wet_subcloud_bartnicki(radius, precip, depconst, use_convective=.False.) 
     else
       block
         integer :: i, j   !> GEORGE: is block neccessary? integers don't take much memory...
@@ -376,11 +382,11 @@ contains
       !> Aerosol rainout process also known as GCM-type wet deposition process
   subroutine wetdep_incloud_takemura(lambda, q, cloud_water, cloud_fraction)
     real, intent(out) :: lambda(:,:)
-    !> vertical flux of hydrometeors [GEORGE: units?]
+    !> vertical flux of hydrometeors [GEORGE: units?/translate??]
     real, intent(in) :: q(:,:)
-    !> Fraction of aerosol mass in cloud water to total aerosol mass in the grid [GEORGE: units??]
+    !> Fraction of aerosol mass in cloud water to total aerosol mass in the grid
     !> or the absorbtion coefficient
-    !> Usually very high
+    !> Usually very high     !! [GEORGE]: Does this mean 1.0 is not physical?? - book suggests this should be lower
     real, parameter :: f_inc = 1.0
     !> cloud water
     real, intent(in) :: cloud_water(:,:)
@@ -389,13 +395,13 @@ contains
 
 
     where (q > 0.0)
-      lambda = q/(q + cloud_water) * f_inc * cloud_fraction / 3600.0
+      lambda = q/(q + cloud_water) * f_inc * cloud_fraction / 3600.0  ! Converting to [1/s]
     elsewhere
       lambda = 0.0
     end where
   end subroutine
 
-  !> Should be called every input timestep tomprepare the scavenging rates
+  !> Should be called every input timestep to prepare the scavenging rates
   subroutine wetdep_precompute()
     use snapparML, only: ncomp, run_comp
     use snapfldML, only: wscav, cw3d, precip3d, cloud_cover
@@ -417,7 +423,7 @@ contains
   subroutine prepare_wetdep_3d(wscav, radius, precip, cw, ccf)
     !> Wet scavenging coefficient [1/s]
     real, intent(out) :: wscav(:,:,:)
-    !> Precipitation intensity
+    !> Precipitation intensity [mm/h]
     real, intent(in) :: precip(:,:,:)
     !> Radius of particle
     real, intent(in) :: radius
