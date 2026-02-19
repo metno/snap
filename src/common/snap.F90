@@ -140,6 +140,8 @@
 ! * timestamp which will also be written to netcdf-files, default: now
 ! SIMULATION.START.DATE=2010-01-01_10:00:00
 ! LOG.FILE=     snap.log
+! ASYNC_IO.OFF ..................................... (default)
+! ASYNC_IO.ON
 ! DEBUG.OFF ..................................... (default)
 ! DEBUG.ON
 ! DEBUG.MASSBALANCE.FILE = "massbalance.txt"
@@ -149,6 +151,10 @@
 !> SNAP - Severe Nuclear Accident Program
 PROGRAM bsnap
   USE iso_fortran_env, only: real64, output_unit, error_unit, IOSTAT_END
+#ifdef _OPENMP
+  USE omp_lib, only: omp_set_max_active_levels
+#endif
+
   USE DateCalc, only: epochToDate, timeGM
   USE datetime, only: datetime_t, duration_t
   USE snapdebug, only: iulog, idebug
@@ -157,7 +163,8 @@ PROGRAM bsnap
   USE snapdimML, only: nx, ny, nk, output_resolution_factor, ldata, maxsiz, mcomp, surface_index
   USE snapfilML, only: filef, itimer, ncsummary, nctitle, nhfmax, nhfmin, &
                        nctype, nfilef, simulation_start, spinup_steps
-  USE snapfldML, only: nhfout, enspos
+  USE snapfldML, only: nhfout, enspos, use_async_io, total_activity_lost_domain, &
+                       swap_fields_before_reading, swap_fields_after_reading
   USE snapmetML, only: init_meteo_params, met_params
   USE snapparML, only: component, run_comp, output_component, &
                        ncomp, nocomp, def_comp, nparnum, &
@@ -177,7 +184,6 @@ PROGRAM bsnap
   USE checkdomainML, only: check_in_domain
   USE rwalkML, only: rwalk, rwalk_init
   USE milibML, only: xyconvert
-  use snapfldML, only: total_activity_lost_domain
   USE forwrdML, only: forwrd
   USE wetdepML, only: wetdep, wetdep_scheme, wetdep_scheme_t, &
     WETDEP_SUBCLOUD_SCHEME_UNDEFINED, WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
@@ -197,18 +203,15 @@ PROGRAM bsnap
           largest_landfraction_file,  drydep_unload => unload
   USE decayML, only: decay, decayDeps
   USE posintML, only: posint
-  USE bldpML, only: bldp
   USE releaseML, only: release, releases, tpos_bomb, nrelheight, mprel, &
                        mplume, nplume, iplume, npart, mpart, release_t
   USE init_random_seedML, only: init_random_seed
-  USE compheightML, only: compheight
-  USE readfield_ncML, only: readfield_nc
   USE snapfimexML, only: fimex_type => file_type, fimex_config => conf_file, fimex_interpolation => interpolation, fint
 #if defined(FIMEX)
-  USE readfield_fiML, only: readfield_fi
   USE filesort_fiML, only: filesort_fi
   use Fimex, only: fimex_set_loglevel => set_default_log_level, FIMEX_LOGLEVEL_WARN => LOGLEVEL_WARN
 #endif
+  USE readfieldML, only: readfield_and_compute
   USE releasefileML, only: releasefile
   USE filesort_ncML, only: filesort_nc
   USE utils, only: to_uppercase, to_lowercase
@@ -574,23 +577,16 @@ PROGRAM bsnap
 
 ! reset readfield_nc (eventually, traj will rerun this loop)
     call input_timer%start()
-    if (ftype == "netcdf") then
-      call readfield_nc(-1, nhrun < 0, time_start, nhfmin, nhfmax, &
-                        time_file, ierror)
-    else if (ftype == "fimex") then
-#if defined(FIMEX)
-      call readfield_fi(-1, nhrun < 0, time_start, nhfmin, nhfmax, &
-                        time_file, ierror)
-#else
+#if ! defined(FIMEX)
       error stop "A fimex read was requested, but fimex support is not included"// &
         " in this build"
 #endif
-    end if
+    call readfield_and_compute(ftype, -1, nhrun < 0, time_start, nhfmin, nhfmax, &
+                   time_file, ierror)
+    write (error_unit, fmt="('input data: ',i4,3i3.2)") time_file
+    flush(output_unit)
     call input_timer%stop_and_log()
-
-    if (ierror /= 0) call snap_error_exit(iulog)
-    call compheight
-    call bldp
+    call swap_fields_after_reading() ! only for async io, but does not hurt otherwise
 
     ! Initialise output
     if (idailyout == 1) then
@@ -638,6 +634,12 @@ PROGRAM bsnap
     ! start time loop
     itimei = time_start
     npartmax = 0
+#ifdef _OPENMP
+    ! both task and inner parallel do loops, so need 2 levels of parallelism
+    call omp_set_max_active_levels(2)
+#endif
+    !$OMP PARALLEL
+    !$OMP SINGLE
     time_loop: do istep = 0, nstep
       call timeloop_timer%start()
       write (iulog, *) 'istep,nplume,npart: ', istep, nplume, npart
@@ -650,43 +652,74 @@ PROGRAM bsnap
       !..read fields
       nhleft = abs((nstep - istep + 1)/nsteph)
 
-      if (next_input_step == istep .and. nhleft > 0) then
-        itimei = time_file
-        call input_timer%start()
-        if (ftype == "netcdf") then
-          call readfield_nc(istep, nhrun < 0, itimei, nhfmin, nhfmax, &
-                            time_file, ierror)
-#if defined(FIMEX)
-        elseif (ftype == "fimex") then
-          call readfield_fi(istep, nhrun < 0, itimei, nhfmin, nhfmax, &
-                            time_file, ierror)
-#endif
+      if (.not. use_async_io .or. istep == 0) then
+        if (next_input_step == istep .and. nhleft > 0) then
+          itimei = time_file
+          call input_timer%start()
+          if (.not. use_async_io) then
+            ! move all u2, v2, etc fields to u1, v1, etc before reading new fields to u2, v2, etc
+            call swap_fields_before_reading()
+          end if
+          call readfield_and_compute(ftype, istep, nhrun < 0, itimei, nhfmin, nhfmax, &
+                              time_file, ierror)
+          write (error_unit, fmt="('input data: ',i4,3i3.2)") time_file
+          call input_timer%stop_and_log()
+
+          dur = time_file - itimei
+          ihdiff = dur%hours
+          tf1 = 0.
+          tf2 = 3600.*ihdiff
+          if (nhrun < 0) tf2 = -tf2
+          next_input_step = istep + nsteph*abs(ihdiff)
+
+          tnow = 0.
+        else
+          tnow = tnow + tstep
         end if
-        if (idebug >= 1) then
-          write (iulog, *) "igtype, gparam(8): ", igtype, gparam
+      end if
+      ! Sync before we need the data from previous async read
+      if (use_async_io) then
+        if ((next_input_step == istep .and. nhleft > 0) .or. istep == 0) then
+          !$OMP TASKWAIT
+          ! move all u2 to u1, u3 to u2, etc after reading new fields to u3, v3, etc
+          ! not needed for last step, no further fields needed
+          if (istep > 0) then
+            ! otherwise already written in syncronous read above
+            write (error_unit, fmt="('input data: ',i4,3i3.2)") time_file
+          end if
+          ! just keep reading from the last timestep, no interpolation needed
+          call swap_fields_after_reading()
+          dur = time_file - itimei
+          ihdiff = dur%hours
+          tf1 = 0.
+          tf2 = 3600.*ihdiff
+          if (nhrun < 0) tf2 = -tf2
+          tnow = 0.
+          next_input_step = istep + nsteph*abs(ihdiff)
+
+          itimei = time_file
+          if (next_input_step < nstep) then ! still data needed
+            ! start reading the next fields early, while computations for current fields are still running
+            ! the tasks sets time_file and the new fields, to be swapped after the taskwait above
+            ! Don't let child threads inherit
+            !$OMP TASK &
+            !$OMP SHARED(time_file) &
+            !$OMP FIRSTPRIVATE(idebug,iulog,itimei, next_input_step,nhrun,nhfmin,nhfmax,nsteph) &
+            !$OMP PRIVATE(ierror)
+            if (idebug >= 1) then
+              write(*, *) "Starting async read task for step ", next_input_step, nstep, itimei
+              flush(output_unit)
+            end if
+            call input_timer%start()
+            call readfield_and_compute(ftype, next_input_step, nhrun < 0, itimei, nhfmin, nhfmax, &
+                              time_file, ierror)
+            call input_timer%stop_and_log()
+            !$OMP END TASK
+          end if
+        else
+          ! this is not an IO step
+          tnow = tnow + tstep
         end if
-        if (ierror /= 0) call snap_error_exit(iulog)
-        call input_timer%stop_and_log()
-
-        write (error_unit, fmt="('input data: ',i4,3i3.2)") time_file
-
-        call metcalc_timer%start()
-        !..compute model level heights
-        call compheight
-        !..calculate boundary layer (top and height)
-        call bldp
-        call metcalc_timer%stop_and_log()
-
-        dur = time_file - itimei
-        ihdiff = dur%hours
-        tf1 = 0.
-        tf2 = 3600.*ihdiff
-        if (nhrun < 0) tf2 = -tf2
-        next_input_step = istep + nsteph*abs(ihdiff)
-
-        tnow = 0.
-      else
-        tnow = tnow + tstep
       end if
 
       tnext = tnow + tstep
@@ -825,17 +858,20 @@ PROGRAM bsnap
         if (fldfilX /= fldfilN) then
           fldfilX = fldfilN
           if (fldtype == "netcdf") then
+            !$OMP TASKWAIT
             call initialize_output(fldfilX, itime, ierror)
             if (ierror /= 0) call snap_error_exit(iulog)
           endif
         end if
         if (fldtype == "netcdf" .and. ifldout == 1) then
+          !$OMP TASKWAIT
           call fldout_nc(fldfilX, itimeo, tf1, tf2, tnext, &
                          ierror)
         endif
         if (ierror /= 0) call snap_error_exit(iulog)
       else
         if (fldtype == "netcdf" .and. ifldout == 1) then
+          !$OMP TASKWAIT
           call fldout_nc(fldfilX, itimeo, tf1, tf2, tnext, &
                          ierror)
         endif
@@ -845,6 +881,8 @@ PROGRAM bsnap
 
       call timeloop_timer%stop_and_log()
     end do time_loop
+    !$OMP END SINGLE
+    !$OMP END PARALLEL
 
   if (lstepr < nstep .AND. lstepr < nstepr) then
     write (iulog, *) 'ERROR: Due to space problems the release period was'
@@ -1889,6 +1927,10 @@ contains
         !..log.file= <'log_file_name'>
         if (.not. has_value) goto 12
         logfile = cinput(pname_start:pname_end)
+      case ('async_io.on')
+        use_async_io = .true.
+      case ('async_io.off')
+        use_async_io = .false.
       case ('debug.off')
         !..debug.off
         idebug = 0

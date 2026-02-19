@@ -18,20 +18,22 @@
 module allocateFieldsML
   USE particleML, only: pdata
   USE snapparML, only: ncomp, iparnum
-  USE snapfldML, only: u1, u2, v1, v2, w1, w2, bl1, bl2, t1, t2, &
-      ps1, ps2, hbl1, hbl2, hlevel1, hlevel2, hlayer1, hlayer2, &
+  USE snapfldML, only: u1, u2, u3, u_io, v1, v2, v3, v_io, w1, w2, w3, w_io, &
+      bl1, bl2, bl3, bl_io, t1, t2, t3, t_io, &
+      ps1, ps2, ps3, ps_io, hbl1, hbl2, hbl3, hbl_io, &
+      hlevel1, hlevel2, hlevel3, hlevel_io, hlayer1, hlayer2, hlayer3, hlayer_io, &
       concacc, avgbq1, avgbq2, ml_bq, accwet, accdry, concen, &
-      depdry, depwet, accprec, avgprec, avghbl, precip, &
-      pmsl1, pmsl2, field1, field2, field3, field4, field3d1, xm, ym, &
+      depdry, depwet, accprec, avgprec, avghbl, precip, precip_x, precip_io, &
+      pmsl1, pmsl2, pmsl3, pmsl_io,field1, field2, field3, field4, field3d1, xm, ym, &
       garea, field_hr1, field_hr2, field_hr3, hbl_hr, &
       precip3d, cw3d, &
       max_column_scratch, max_column_concentration, &
-      aircraft_doserate, aircraft_doserate_scratch, t1_abs, t2_abs, &
-      aircraft_doserate_threshold_height, vd_dep, &
+      aircraft_doserate, aircraft_doserate_scratch, t1_abs, t2_abs, t3_abs, t_abs_io, &
+      aircraft_doserate_threshold_height, vd_dep, vd_dep_x, vd_dep_io, &
       surface_stress, hflux, t2m, z0, &
       ustar, raero, my, nu, &
       total_activity_released, total_activity_lost_domain, total_activity_lost_other, &
-      wscav, cloud_cover
+      wscav, wscav_x, wscav_io, cloud_cover, use_async_io
   USE snapfilML, only: idata, fdata
   USE snapgrdML, only: ahalf, bhalf, vhalf, alevel, blevel, vlevel, imodlevel, &
       compute_column_max_conc, compute_aircraft_doserate, aircraft_doserate_threshold
@@ -114,6 +116,47 @@ subroutine allocateFields
   IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( hlayer2(nxhr,nyhr,nk), STAT = AllocateStatus)
 
+  IF (use_async_io) then
+    ALLOCATE ( u3(nx,ny,nk), STAT = AllocateStatus)
+    IF (AllocateStatus /= 0) ERROR STOP errmsg
+    u_io => u3
+    ALLOCATE ( v3(nx,ny,nk), STAT = AllocateStatus)
+    IF (AllocateStatus /= 0) ERROR STOP errmsg
+    v_io => v3
+    ALLOCATE ( w3(nx,ny,nk), STAT = AllocateStatus)
+    IF (AllocateStatus /= 0) ERROR STOP errmsg
+    w_io => w3
+    ALLOCATE ( t3(nx,ny,nk), STAT = AllocateStatus)
+    IF (AllocateStatus /= 0) ERROR STOP errmsg
+    t_io => t3
+    ALLOCATE ( ps3(nx,ny), STAT = AllocateStatus)
+    IF (AllocateStatus /= 0) ERROR STOP errmsg
+    ps_io => ps3
+    ALLOCATE ( bl3(nx,ny), STAT = AllocateStatus)
+    IF (AllocateStatus /= 0) ERROR STOP errmsg
+    bl_io => bl3
+    ALLOCATE ( hbl3(nx,ny), STAT = AllocateStatus)
+    IF (AllocateStatus /= 0) ERROR STOP errmsg
+    hbl_io => hbl3
+    ALLOCATE ( hlevel3(nx,ny,nk), STAT = AllocateStatus)
+    ! hlayer calculated and only needed for output
+    IF (AllocateStatus /= 0) ERROR STOP errmsg
+    hlevel_io => hlevel3
+    ALLOCATE ( hlayer3(nxhr,nyhr,nk), STAT = AllocateStatus)
+    IF (AllocateStatus /= 0) ERROR STOP errmsg
+    hlayer_io => hlayer3
+  ELSE
+    u_io => u2
+    v_io => v2
+    w_io => w2
+    t_io => t2
+    ps_io => ps2
+    bl_io => bl2
+    hbl_io => hbl2
+    hlevel_io => hlevel2
+    hlayer_io => hlayer2
+  END IF
+
   ALLOCATE ( idata(ldata), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( fdata(maxsiz), STAT = AllocateStatus)
@@ -149,16 +192,38 @@ subroutine allocateFields
   IF (AllocateStatus /= 0) ERROR STOP errmsg
   ALLOCATE ( pmsl2(nx,ny), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
+  IF (use_async_io) then
+    ALLOCATE ( pmsl3(nx,ny), STAT = AllocateStatus)
+    IF (AllocateStatus /= 0) ERROR STOP errmsg
+    pmsl_io => pmsl3
+  ELSE
+    pmsl_io => pmsl2
+  END IF
 
   ALLOCATE ( precip(nx,ny), STAT = AllocateStatus)
   IF (AllocateStatus /= 0) ERROR STOP errmsg
+  IF (use_async_io) then
+    ALLOCATE(precip_x(nx,ny), STAT = AllocateStatus)
+    IF (AllocateStatus /= 0) ERROR STOP errmsg
+    precip_io => precip_x
+  ELSE
+    precip_io => precip
+  END IF
   if (met_params%use_3d_precip) then
     ALLOCATE(precip3d(nx,ny,nk), cw3d(nx,ny,nk), STAT=AllocateStatus)
     if (AllocateStatus /= 0) ERROR STOP errmsg
     ALLOCATE(wscav(nx,ny,nk,ncomp),STAT=AllocateStatus)
     if (AllocateStatus /= 0) ERROR STOP errmsg
     wscav(:,:,:,:) = 0.0
-    allocate(cloud_cover(nx,ny,nk))
+    if (use_async_io) then
+      ALLOCATE(wscav_x(nx,ny,nk,ncomp), STAT=AllocateStatus)
+      if (AllocateStatus /= 0) ERROR STOP errmsg
+      wscav_io => wscav_x
+    ELSE
+      wscav_io => wscav
+    END IF
+    allocate(cloud_cover(nx,ny,nk), STAT=AllocateStatus)
+    if (AllocateStatus /= 0) ERROR STOP errmsg
   endif
 
 ! the calculation-fields
@@ -223,6 +288,13 @@ subroutine allocateFields
       t1_abs(nxhr,nyhr,nk), t2_abs(nxhr,nyhr,nk), &
       STAT=AllocateStatus)
     if (AllocateStatus /= 0) ERROR STOP errmsg
+    if (use_async_io) then
+      allocate(t3_abs(nxhr,nyhr,nk),STAT=AllocateStatus)
+      if (AllocateStatus /= 0) ERROR STOP errmsg
+      t_abs_io => t3_abs
+    ELSE
+      t_abs_io => t2_abs
+    endif
     if (aircraft_doserate_threshold > 0.0) then
       allocate(aircraft_doserate_threshold_height(nxhr,nyhr), STAT=allocatestatus)
       if (AllocateStatus /= 0) ERROR STOP errmsg
@@ -242,12 +314,20 @@ subroutine allocateFields
     if (requires_extra_fields_to_be_read()) then
       allocate(vd_dep(nx,ny,ncomp), STAT=AllocateStatus)
       if (AllocateStatus /= 0) ERROR STOP errmsg
+      if (use_async_io) then
+        allocate(vd_dep_x(nx,ny,ncomp), STAT=AllocateStatus)
+        if (AllocateStatus /= 0) ERROR STOP errmsg
+        vd_dep_io => vd_dep_x
+      else
+        vd_dep_io => vd_dep
+      endif
       allocate(surface_stress, hflux, t2m, z0, mold=ps2, STAT=AllocateStatus)
       if (AllocateStatus /= 0) ERROR STOP errmsg
       allocate(raero(nx, ny), STAT=AllocateStatus)
       if (AllocateStatus /= 0) ERROR STOP errmsg
       allocate(ustar, my, nu, mold=raero, STAT=AllocateStatus)
       if (AllocateStatus /= 0) ERROR STOP errmsg
+      ustar = 0.000001 ! to avoid division by zero in dry deposition calculations, see issue #238
     endif
   end block
 
@@ -284,6 +364,19 @@ subroutine deAllocateFields
   DEALLOCATE ( hlevel2)
   DEALLOCATE ( hlayer2)
 
+  if (allocated(u3)) then
+    DEALLOCATE ( u3)
+    DEALLOCATE ( v3)
+    DEALLOCATE ( w3)
+    DEALLOCATE ( t3)
+    DEALLOCATE ( ps3)
+    DEALLOCATE ( bl3)
+    DEALLOCATE ( hbl3)
+    DEALLOCATE ( hlevel3)
+    DEALLOCATE ( hlayer3)
+  end if
+
+
   DEALLOCATE ( idata )
   DEALLOCATE ( fdata )
 
@@ -302,11 +395,14 @@ subroutine deAllocateFields
 
   DEALLOCATE ( pmsl1)
   DEALLOCATE ( pmsl2)
+  if (allocated(pmsl3)) DEALLOCATE ( pmsl3)
 
   DEALLOCATE ( precip)
+  if (allocated(precip_x)) deallocate(precip_x)
   if (allocated(precip3d)) deallocate(precip3d)
   if (allocated(cw3d)) deallocate(cw3d)
   if (allocated(wscav)) deallocate(wscav)
+  if (allocated(wscav_x)) deallocate(wscav_x)
   if (allocated(cloud_cover)) deallocate(cloud_cover)
 
   DEALLOCATE ( avghbl )
@@ -352,6 +448,9 @@ subroutine deAllocateFields
     deallocate(vd_dep)
     deallocate(surface_stress, hflux, t2m, z0)
     deallocate(ustar, raero)
+  endif
+  if (allocated(vd_dep_x)) then
+    deallocate(vd_dep_x)
   endif
 
 end subroutine deAllocateFields

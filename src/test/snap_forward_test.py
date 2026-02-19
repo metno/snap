@@ -1,8 +1,7 @@
 #! /usr/bin/env python3
-import math
-import netCDF4
 import os
 import pathlib
+import re
 import shutil
 import subprocess
 import tempfile
@@ -12,9 +11,9 @@ from snapunittest import SnapTestCase
 
 
 class SnapEcEMEPEmersonForwardTestCase(SnapTestCase):
+    datadir = pathlib.Path(__file__).resolve().parent / "data"
     input = "snap.input_ecemep_emerson_fimex"
-    snap = "../bsnap_naccident"
-    datadir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
+    snap = datadir / "../bsnap_naccident"
 
     snapExpected = "snap_testdata/snap_ecemep_emerson_expected.nc"
 
@@ -27,9 +26,9 @@ class SnapEcEMEPEmersonForwardTestCase(SnapTestCase):
     def test_runfimex(self):
         env = os.environ.copy()
         env["OMP_NUM_THREADS"] = "1"
-        proc = subprocess.run(
-            [os.path.join(self.datadir, self.snap), self.input],
-            cwd=self.datadir,
+        subprocess.run(
+            [str(self.snap.resolve()), self.input],
+            cwd=str(self.datadir.resolve()),
             env=env,
             check=True,
         )
@@ -38,6 +37,54 @@ class SnapEcEMEPEmersonForwardTestCase(SnapTestCase):
         self.compare_nc(
             self.snapExpected,
             os.path.join(self.datadir, outfile),
+            [
+                "instant_height_boundary_layer",
+                "precipitation_amount_acc",
+                "Cs137_concentration",
+                "Cs137_concentration_bl",
+                "Cs137_acc_concentration",
+                "Cs137_acc_dry_deposition",
+                "Cs137_acc_wet_deposition",
+            ],
+        )
+
+    def test_runfimex_async(self):
+        d = tempfile.mkdtemp()
+        tmp = pathlib.Path(d)
+
+        with (self.datadir / self.input).open("r") as f:
+            snapinput = f.read()
+        snapinput += "\nASYNC_IO.ON\n"
+        for field in [
+            "FIMEX.CONFIG",
+            "FIELD.INPUT",
+            "DRY.DEPOSITION.LARGEST_LANDFRACTION_FILE",
+        ]:
+            # replace path to datafields ommitting = surrounded by optional spaces
+            snapinput = re.sub(
+                rf"({field}\s*=\s*)(\S+)",
+                lambda m: f"{m.group(1)}{str((self.datadir / m.group(2)).resolve())}",
+                snapinput,
+            )
+        with (tmp / "snap.input").open("w") as f:
+            f.write(snapinput)
+        env = os.environ.copy()
+        env["OMP_NUM_THREADS"] = "1"
+        try:
+            subprocess.run(
+                [str(self.snap.resolve()), "snap.input"],
+                cwd=str(tmp.resolve()),
+                env=env,
+                check=True,
+            )
+        except Exception as e:
+            print(tmp)
+            raise e
+
+        outfile = self.get_nc_filename(str(tmp / "snap.input"))
+        self.compare_nc(
+            self.snapExpected,
+            (tmp / outfile).resolve().as_posix(),
             [
                 "instant_height_boundary_layer",
                 "precipitation_amount_acc",
@@ -67,7 +114,7 @@ class SnapEcEMEPForwardTestCase(SnapTestCase):
     def test_runfimex(self):
         env = os.environ.copy()
         env["OMP_NUM_THREADS"] = "1"
-        proc = subprocess.run(
+        subprocess.run(
             [os.path.join(self.datadir, self.snap), self.input],
             cwd=self.datadir,
             env=env,
@@ -94,7 +141,7 @@ class SnapEcEMEPForwardTestCase(SnapTestCase):
         # TBD create input-file with FILE.TYPE=netcdf instead of fimex
         env = os.environ.copy()
         env["OMP_NUM_THREADS"] = "1"
-        proc = subprocess.run(
+        subprocess.run(
             [os.path.join(self.datadir, self.snap), self.input],
             cwd=self.datadir,
             env=env,
@@ -134,7 +181,7 @@ class SnapMEPSForwardTestCase(SnapTestCase):
     def test_runfimex(self):
         env = os.environ.copy()
         env["OMP_NUM_THREADS"] = "1"
-        proc = subprocess.run(
+        subprocess.run(
             [os.path.join(self.datadir, self.snap), self.input],
             cwd=self.datadir,
             env=env,
@@ -161,13 +208,12 @@ class SnapMEPSForwardTestCase(SnapTestCase):
         # TBD create input-file with FILE.TYPE=netcdf instead of fimex
         env = os.environ.copy()
         env["OMP_NUM_THREADS"] = "1"
-        proc = subprocess.run(
+        subprocess.run(
             [os.path.join(self.datadir, self.snap), self.input],
             cwd=self.datadir,
             env=env,
             check=True,
         )
-        self.assertEqual(proc.returncode, 0)
 
         outfile = self.get_nc_filename(os.path.join(self.datadir, self.input))
         self.compare_nc(
@@ -198,24 +244,26 @@ class ReleaseTests(unittest.TestCase):
         with self.input.open("r") as f:
             snapinput = f.read()
 
-        snapinput = snapinput.replace("../snap_testdata", self.testdata.resolve().as_posix())
+        snapinput = snapinput.replace(
+            "../snap_testdata", self.testdata.resolve().as_posix()
+        )
         snapinput = snapinput.replace("RELEASE.HOUR= XX", "RELEASE.HOUR= 0.5, 1.0")
 
         with tmp.joinpath("snap.input").open("w") as f:
             f.write(snapinput)
-
+        env = os.environ.copy()
+        env["OMP_NUM_THREADS"] = "1"
         try:
             subprocess.run(
                 [self.snap.resolve().as_posix(), "snap.input"],
                 cwd=tmp.resolve().as_posix(),
+                env=env,
                 check=True,
             )
         except Exception as e:
             print(tmp)
             raise e
 
-        dt = 60
-        releases = 0
         istep = -1
         logfile = tmp.joinpath("snap.log")
         with logfile.open("r") as logfile:
@@ -245,23 +293,27 @@ class ReleaseTests(unittest.TestCase):
         with self.input.open("r") as f:
             snapinput = f.read()
 
-        snapinput = snapinput.replace("../snap_testdata", self.testdata.resolve().as_posix())
+        snapinput = snapinput.replace(
+            "../snap_testdata", self.testdata.resolve().as_posix()
+        )
         snapinput = snapinput.replace("RELEASE.HOUR= XX", "RELEASE.HOUR= 0.0, 1.45")
 
         with tmp.joinpath("snap.input").open("w") as f:
             f.write(snapinput)
 
+        env = os.environ.copy()
+        env["OMP_NUM_THREADS"] = "1"
         try:
             subprocess.run(
                 [self.snap.resolve().as_posix(), "snap.input"],
                 cwd=tmp.resolve().as_posix(),
+                env=env,
                 check=True,
             )
         except Exception as e:
             print(tmp)
             raise e
 
-        dt = 60
         releases = 0
         logfile = tmp.joinpath("snap.log")
         with logfile.open("r") as logfile:
@@ -287,7 +339,9 @@ class ReleaseTests(unittest.TestCase):
         with self.input.open("r") as f:
             snapinput = f.read()
 
-        snapinput = snapinput.replace("../snap_testdata", self.testdata.resolve().as_posix())
+        snapinput = snapinput.replace(
+            "../snap_testdata", self.testdata.resolve().as_posix()
+        )
         snapinput = snapinput.replace(
             "RELEASE.HOUR= XX", "RELEASE.HOUR= 0.0, 0.5, 1.25, 3.0"
         )
@@ -306,19 +360,19 @@ class ReleaseTests(unittest.TestCase):
 
         with tmp.joinpath("snap.input").open("w") as f:
             f.write(snapinput)
-
+        env = os.environ.copy()
+        env["OMP_NUM_THREADS"] = "1"
         try:
             subprocess.run(
                 [self.snap.resolve().as_posix(), "snap.input"],
                 cwd=tmp.resolve().as_posix(),
+                env=env,
                 check=True,
             )
         except Exception as e:
             print(tmp)
             raise e
 
-        dt = 60
-        releases = 0
         istep = -1
         logfile = tmp.joinpath("snap.log")
         with logfile.open("r") as logfile:

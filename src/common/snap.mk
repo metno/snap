@@ -4,7 +4,7 @@
 MODELOBJ = array_utils.o dateCalc.o utils.o particleML.o snapdimML.o snapfilML.o snapfimexML.o \
 snapfldML.o snapgrdML.o snapmetML.o snapparML.o \
 snapposML.o snaptabML.o snapdebugML.o snaptimersML.o posint.o decay.o \
-om2edot.o ftest.o readfield_nc.o rwalk.o epinterp.o \
+om2edot.o ftest.o readfield_nc.o readfield.o rwalk.o epinterp.o \
 vgravtables.o forwrd.o wetdep.o drydep.o \
 bldp.o compheight.o checkDomain.o \
 filesort_nc.o fldout_nc.o \
@@ -15,11 +15,14 @@ find_parameters.o datetime.o
 # old milib files
 MODELOBJ += gridpar.o  mapfield.o  xyconvert.o \
      earthr.o pol2sph.o sph2rot.o lam2sph.o mer2sph.o milibML.o
+READFIELDOBJ = readfield_nc.o
+
 
 ifdef FIMEXLIB
   ifneq "${FIMEXLIB}" ""
     F77FLAGS += -DFIMEX
     MODELOBJ += readfield_fi.o filesort_fi.o find_parameters_fi.o fimex.o
+	READFIELDOBJ += readfield_fi.o
   endif
 endif
 
@@ -82,6 +85,8 @@ om2edot.o: ../common/om2edot.f90 snapgrdML.o snapfldML.o snapdimML.o snapdebugML
 readfield_nc.o: ../common/readfield_nc.f90 particleML.o snapfilML.o snapgrdML.o snapmetML.o snaptabML.o snapdebugML.o snapdimML.o om2edot.o ftest.o milibML.o snapfldML.o datetime.o drydep.o wetdep.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 readfield_fi.o: ../common/readfield_fi.f90 snapfimexML.o particleML.o snapfilML.o snapgrdML.o snapmetML.o snaptabML.o snapdebugML.o snaptimersML.o snapdimML.o om2edot.o ftest.o milibML.o fimex.o datetime.o readfield_nc.o utils.o drydep.o wetdep.o
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+readfield.o: ../common/readfield.F90 $(READFIELDOBJ) snapgrdML.o datetime.o snapdebugML.o bldp.o compheight.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 filesort_nc.o: ../common/filesort_nc.f90 dateCalc.o snapfilML.o snapdimML.o snapgrdML.o snapfldML.o snapmetML.o snapdebugML.o readfield_nc.o datetime.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
