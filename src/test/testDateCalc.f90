@@ -92,12 +92,16 @@ program testDateCalc
     call exit(1)
   end if
 
-  if (timeUnitOffset("days since 1900-1-1 00:00:00.0 +00:00") .ne. -613608*3600) then
-    error stop "Error reading timeunitoffset"
+  if (timeUnitScale("days since 1900-1-1 00:00:00.0 +00:00") .ne. 86400) then
+    write(*,*) "Error reading timeunitscale(days): ", &
+                timeUnitScale("days since 1900-1-1 00:00:00.0 +00:00")
+    call exit(1)
   end if
 
-  if (timeUnitOffset("days since 1900-01-01T00:00:00+00:00") .ne. -613608*3600) then
-    error stop "Error reading timeunitoffset"
+  if (timeUnitOffset("days since 1900-01-01T00:00:00+00:00") .ne. -613608_8*3600) then
+    write(*,*) "Error reading timeunitoffset(days): ", &
+                timeUnitOffset("days since 1900-01-01T00:00:00+00:00")
+    call exit(1)
   end if
 
 end program testDateCalc

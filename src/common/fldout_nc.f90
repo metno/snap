@@ -1229,7 +1229,7 @@ subroutine initialize_output(filename, itime, ierror)
       use iso_fortran_env, only: int8
       use drydepml, only: largest_landfraction_file, classnr
       integer(kind=int8), allocatable :: classnr_hr(:,:)
-      if (largest_landfraction_file /= "not set" .and. output_vd_debug .and. allocated(classnr_hr)) then
+      if (largest_landfraction_file /= "not set" .and. output_vd_debug) then
           call nc_declare(iunit, dimids2d, varid%landfraction, &
             "largest_land_fraction", units="1", datatype=NF90_BYTE)
           call hres_field(classnr, classnr_hr)

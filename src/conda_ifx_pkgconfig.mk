@@ -6,8 +6,8 @@ F77 = ifx
 F77FPEFLAGS= -ffpe-trap=invalid,zero,overflow -fno-openmp
 F77BOUNDFLAGS= -fbounds-check -fno-openmp
 #F77FLAGS=-DVERSION=\"$(VERSION)\" -O2 -ftree-vectorize -fno-math-errno -fopenmp -g -mavx2 -mfma -Wall -Wextra -fimplicit-none -fmodule-private -Wno-conversion -Wno-compare-reals
-F77FLAGS=-DVERSION=\"$(VERSION)\" -O2 -fopenmp -fiopenmp -xCORE-AVX2 -ipo $(MILIB_FLAGS) # -ipo is much faster but difficult to optimize
- # -fopenmp-targets=spir64 # for GPU offloading, but not yet working
+F77FLAGS=-DVERSION=\"$(VERSION)\" -O2 $(MILIB_FLAGS) # -ipo is much faster but difficult to optimize
+ # -fopenmp -fiopenmp -fopenmp-targets=spir64 # for GPU offloading, but not yet working; openmp/iopenmp mixing causes errors
 ifdef SNAP_DEBUG_CHECKS
   F77FLAGS+=$(F77BOUNDFLAGS) $(F77FPEFLAGS)
 endif
