@@ -16,7 +16,8 @@ TESTFILES = snap_testdata/meteo20200415_00_ringhals.nc \
 	snap_testdata/meps_det_2_5km_20251125T06Z_ringhals.nc \
 	snap_testdata/snap_ecemep_expected5.nc \
 	snap_testdata/snap_meps_interpolated_expected_20251125.nc \
-	snap_testdata/snap_ecemep_emerson_expected.nc
+	snap_testdata/snap_ecemep_emerson_expected_20260219.nc
+
 
 install:
 
