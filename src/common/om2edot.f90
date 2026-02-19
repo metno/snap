@@ -56,7 +56,7 @@ module om2edotML
 !>                 level are required.
 subroutine om2edot
   USE snapgrdML, only: ahalf, bhalf, vhalf, klevel, gparam
-  USE snapfldML, only: xm, ym, ps2, u2, v2, w2, field1, field2, field3, field4
+  USE snapfldML, only: xm, ym, ps_io, u_io, v_io, w_io
   USE snapdimML, only: nx,ny,nk
   USE snapdebug, only: iulog
 
@@ -73,10 +73,10 @@ subroutine om2edot
 
     do j=1,ny
       do i=1,nx
-        omega=w2(i,j,k)
-        p1=ahalf(k)+bhalf(k)*ps2(i,j)
-        p2=ahalf(k-1)+bhalf(k-1)*ps2(i,j)
-        w2(i,j,k)=omega*deta/(p2-p1)
+        omega=w_io(i,j,k)
+        p1=ahalf(k)+bhalf(k)*ps_io(i,j)
+        p2=ahalf(k-1)+bhalf(k-1)*ps_io(i,j)
+        w_io(i,j,k)=omega*deta/(p2-p1)
       end do
     end do
 
@@ -103,23 +103,23 @@ subroutine om2edot
     write(iulog,*) 'OM2EDOT call EDCOMP'
 
     k=2
-    call edcomp(nx,ny,kk,u2(:,:,k),v2(:,:,k),w2(:,:,k),ps2(:,:), &
-        xmd2h,ymd2h,ahalf(:),bhalf(:),vhalf(:), &
-        field1,field2,field3,field4)
+    call edcomp(nx,ny,kk,u_io(:,:,k),v_io(:,:,k),w_io(:,:,k),ps_io(:,:), &
+        xmd2h,ymd2h,ahalf(:),bhalf(:),vhalf(:))
 
   end if
 end subroutine om2edot
 
 !> compute etadot (in full levels) from u,v and ps
 subroutine edcomp(nx,ny,nz,u,v,edot,ps,xmd2h,ymd2h, &
-    ahalf,bhalf,vhalf, &
-    uu,vv,dpsdt,edoth)
+    ahalf,bhalf,vhalf)
+!    uu,vv,dpsdt,edoth) no longer needed as output, but used as temporary arrays
 
-  integer :: nx,ny,nz
-  real ::    u(nx,ny,nz),v(nx,ny,nz),edot(nx,ny,nz)
-  real ::    ps(nx,ny),xmd2h(nx,ny),ymd2h(nx,ny)
-  real ::    ahalf(nz+1),bhalf(nz+1),vhalf(nz+1)
-  real ::    uu(nx,ny),vv(nx,ny),dpsdt(nx,ny),edoth(nx,ny)
+  integer, intent(in) :: nx,ny,nz
+  real, intent(in) ::    u(nx,ny,nz),v(nx,ny,nz)
+  real, intent(inout) :: edot(nx,ny,nz)
+  real, intent(in) ::    ps(nx,ny),xmd2h(nx,ny),ymd2h(nx,ny)
+  real, intent(in) ::    ahalf(nz+1),bhalf(nz+1),vhalf(nz+1)
+  real :: uu(nx,ny),vv(nx,ny),dpsdt(nx,ny), edoth(nx,ny)
 
   integer :: i,j,k
   real ::    da,db,dp,deta,div,edothu,etadot
