@@ -1,45 +1,27 @@
 # SNAP: Servere Nuclear Accident Programme
-# Copyright (C) 1992-2017   Norwegian Meteorological Institute
-#
-# This file is part of SNAP. SNAP is free software: you can
-# redistribute it and/or modify it under the terms of the
-# GNU General Public License as published by the
-# Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-from Snappy.EcMeteorologyCalculator import EcMeteorologyCalculator
+# Copyright (C) 1992-2026   Norwegian Meteorological Institute
+# License: GNU General Public License Version 3 (GNU GPL-3.0)
 
-"""
-Created on Sep 2, 2016
-
-@author: heikok
-"""
-from METNO.HPC import HPC, StatusFile, QJobStatus
 import datetime
-from netCDF4 import Dataset, num2date
-import os
 import glob
+import logging
+import os
 import re
 import subprocess
 import sys
-from time import sleep, gmtime
-import unittest
-import logging
 import tempfile
+import unittest
+from time import gmtime, sleep
 
-from Snappy.EEMEP.Resources import Resources
-from Snappy.EEMEP.PostProcess import PostProcess
-from Snappy.EEMEP.VolcanoRun import VolcanoRun
-from Snappy.EEMEP.NppRun import NppRun
+from METNO.HPC import HPC, QJobStatus, StatusFile
+from netCDF4 import Dataset, num2date
+
 import Snappy.Resources
+from Snappy.EcMeteorologyCalculator import EcMeteorologyCalculator
+from Snappy.EEMEP.NppRun import NppRun
+from Snappy.EEMEP.PostProcess import PostProcess
+from Snappy.EEMEP.Resources import Resources
+from Snappy.EEMEP.VolcanoRun import VolcanoRun
 
 
 class AbortFile:
@@ -81,12 +63,11 @@ class AbortFile:
         if self.filename and os.path.exists(self.filename):
             try:
                 os.remove(self.filename)
-            except:
+            except Exception:
                 pass
 
 
 class ModelRunner:
-
     VOLCANO_FILENAME = "volcano.xml"
     NPP_FILENAME = "npp.xml"
     ABORT_FILENAME = "deleteToRequestAbort"
@@ -200,7 +181,7 @@ class ModelRunner:
             # find the number of steps needed for which file (latest date first)
             timesteps_in_file = 0
             use_steps = []
-            for (file, tsteps) in date_files:
+            for file, tsteps in date_files:
                 newsteps = tsteps - timesteps_in_file
                 if newsteps <= 0:
                     continue
@@ -214,7 +195,7 @@ class ModelRunner:
             steps = []
             files = []
             pos = 0
-            for (file, use_steps, skip_steps) in reversed(use_steps):
+            for file, use_steps, skip_steps in reversed(use_steps):
                 for i in range(0, use_steps):
                     steps.append(pos)
                     pos = pos + 1
@@ -498,28 +479,29 @@ class ModelRunner:
             self.logger.error(
                 "File {} does not exist on {}".format(file, self.hpcMachine)
             )
-            return
-        if age / datetime.timedelta(minutes=1) > 120:
+        elif age / datetime.timedelta(minutes=1) > 120:
             self.logger.error("File {} too old on {}".format(file, self.hpcMachine))
-            return
-        self.logger.debug(
-            "downloading {}:{} to {}".format(file, self.hpcMachine, self.path)
-        )
-        try:
-            self.hpc.get_files([os.path.join(self.hpc_outdir, file)], self.path, 1200)
-        except Exception as ex:
-            # not dangerous if it fail, but remove file
-            self.logger.debug(
-                "couldn't download '{}', ignoring: {}".format(file, ex.args)
-            )
-            filename = os.path.join(self.path, file)
-            if os.path.lexists(filename):
-                os.unlink(filename)
         else:
-            os.rename(
-                os.path.join(self.path, file),
-                os.path.join(self.path, "EMEP_IN_{}.nc".format(tomorrow)),
+            self.logger.debug(
+                "downloading {}:{} to {}".format(file, self.hpcMachine, self.path)
             )
+            try:
+                self.hpc.get_files(
+                    [os.path.join(self.hpc_outdir, file)], self.path, 1200
+                )
+            except Exception as ex:
+                # not dangerous if it fail, but remove file
+                self.logger.debug(
+                    "couldn't download '{}', ignoring: {}".format(file, ex.args)
+                )
+                filename = os.path.join(self.path, file)
+                if os.path.lexists(filename):
+                    os.unlink(filename)
+            else:
+                os.rename(
+                    os.path.join(self.path, file),
+                    os.path.join(self.path, "EMEP_IN_{}.nc".format(tomorrow)),
+                )
 
         # Postprocess
         pp = PostProcess(self.path, self.timestamp, logger=self)
@@ -568,7 +550,7 @@ class TestModelRunner(unittest.TestCase):
 
         volcanoFile = os.path.join(self.indir, "volcano.xml")
         self.logger.debug("Input volcano file: {:s}".format(volcanoFile))
-        volc = VolcanoRun(volcanoFile)
+        VolcanoRun(volcanoFile)
 
         self.dir = tempfile.TemporaryDirectory(prefix="volcano_download_")
         self.logger.debug("Download directory: {:s}".format(self.dir.name))
@@ -626,7 +608,7 @@ class TestModelRunner(unittest.TestCase):
             )
             self.assertTrue(file_ages[filename] / datetime.timedelta(minutes=1) < 15)
 
-        if self.doRun == False:
+        if not self.doRun:
             self.logger.debug("Skipping remainder of test - not doRun is false")
         else:
             # Test running.
@@ -687,7 +669,7 @@ class TestModelRunner(unittest.TestCase):
                 filename = os.path.join(mr.hpc_outdir, filename)
                 self.assertFalse(filename in file_ages.keys(), " ")
 
-    @unittest.skipIf(doRun == False, "Do run is false")
+    @unittest.skipIf(not doRun, "Do run is false")
     def testWork(self):
         # Create model runner and test
         mr = ModelRunner(self.dir.name, TestModelRunner.hpcMachine)
@@ -720,7 +702,7 @@ if __name__ == "__main__":
 
     # Do not sort tests
 
-    self.logger.warning("This test takes 1-2 hours to complete")
+    logging.warning("This test takes 1-2 hours to complete")
 
     unittest.TestLoader.sortTestMethodsUsing = None
     unittest.main(verbosity=2, failfast=True)
