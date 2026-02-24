@@ -15,40 +15,9 @@ module wetdepmlclean
   public :: wetdep, init, requires_extra_precip_fields, &
       wetdep_precompute
 
-
-  ! public :: operator(==), operator(/=)  ! [TODO]: Try different way of writing
-
-  ! !> Define subcloud scheme types (at surface level)
-  ! type, public :: wetdep_subcloud_scheme_t
-  !   integer, private :: scheme
-  !   character(len=32), public :: description
-  ! end type
-
-  ! type(wetdep_subcloud_scheme_t), parameter, public :: WETDEP_SUBCLOUD_SCHEME_UNDEFINED = &
-  !     wetdep_subcloud_scheme_t(0, "Not defined")
-  ! type(wetdep_subcloud_scheme_t), parameter, public :: WETDEP_SUBCLOUD_SCHEME_NONE = & 
-  !     wetdep_subcloud_scheme_t(1, "No scheme (skip)")
-  ! type(wetdep_subcloud_scheme_t), parameter, public :: WETDEP_SUBCLOUD_SCHEME_BARTNICKI = & 
-  !     wetdep_subcloud_scheme_t(2, "Bartnicki")
-
   integer, parameter, public :: WETDEP_SUBCLOUD_SCHEME_UNDEFINED = 0 
   integer, parameter, public :: WETDEP_SUBCLOUD_SCHEME_NONE = 1 
   integer, parameter, public :: WETDEP_SUBCLOUD_SCHEME_BARTNICKI = 2
-  
-  
-
-  ! !> Define incloud scheme types (in model levels)
-  ! type, public :: wetdep_incloud_scheme_t
-  !   integer, private :: scheme
-  !   character(len=32), public :: description
-  ! end type
-
-  ! type(wetdep_incloud_scheme_t), parameter, public :: WETDEP_INCLOUD_SCHEME_UNDEFINED = &
-  !     wetdep_incloud_scheme_t(0, "Not defined")
-  ! type(wetdep_incloud_scheme_t), parameter, public :: WETDEP_INCLOUD_SCHEME_NONE = &
-  !     wetdep_incloud_scheme_t(1, "No scheme (skip)")
-  ! type(wetdep_incloud_scheme_t), parameter, public :: WETDEP_INCLOUD_SCHEME_TAKEMURA = &
-  !     wetdep_incloud_scheme_t(2, "Takemura") 
       
   integer, parameter, public :: WETDEP_INCLOUD_SCHEME_UNDEFINED = 0 
   integer, parameter, public :: WETDEP_INCLOUD_SCHEME_NONE = 1 
@@ -58,8 +27,6 @@ module wetdepmlclean
   type, public :: wetdep_scheme_t
     integer :: subcloud
     integer :: incloud
-    ! type(wetdep_subcloud_scheme_t) :: subcloud
-    ! type(wetdep_incloud_scheme_t) :: incloud
     !> Use 3D precip and precomputed parameters
     logical :: use_vertical
     !> Whether to use cloud fraction correction for subcloud schemes
@@ -70,41 +37,10 @@ module wetdepmlclean
   type(wetdep_scheme_t), save, public :: wetdep_scheme = &
       wetdep_scheme_t(WETDEP_SUBCLOUD_SCHEME_UNDEFINED, WETDEP_INCLOUD_SCHEME_UNDEFINED, .false., .false.)
 
-
-  ! interface operator (==)                                    ![TODO]: Write differently
-  !   module procedure :: equal_subcloud_scheme, equal_incloud_scheme
-  ! end interface
-
-  ! interface operator (/=)
-  !   module procedure :: not_equal_subcloud_scheme, not_equal_incloud_scheme
-  ! end interface
-
-
 contains
 
-  ! !> Functions for checking input scheme. Used to define operator for scheme type.
-  ! logical pure function equal_subcloud_scheme(this, other) result(eq)  ![TODO] Change
-  !   type(wetdep_subcloud_scheme_t), intent(in) :: this, other
-  !   eq = this%scheme == other%scheme
-  ! end function
-  ! !> Functions for checking input scheme. Used to define operator for scheme type.
-  ! logical pure function not_equal_subcloud_scheme(this, other) result(eq)
-  !   type(wetdep_subcloud_scheme_t), intent(in) :: this, other
-  !   eq = .not. (this == other)
-  ! end function
-  ! !> Functions for checking input scheme. Used to define operator for scheme type.
-  ! logical pure function equal_incloud_scheme(this, other) result(eq)
-  !   type(wetdep_incloud_scheme_t), intent(in) :: this, other
-  !   eq = this%scheme == other%scheme
-  ! end function
-  ! !> Functions for checking input scheme. Used to define operator for scheme type.
-  ! logical pure function not_equal_incloud_scheme(this, other) result(eq)
-  !   type(wetdep_incloud_scheme_t), intent(in) :: this, other
-  !   eq = .not. (this == other)
-  ! end function
-
-  !> Initialise for surface bartnicki scheme
-  subroutine init(tstep) ![TODO]: combine with wetdep2_init  only thing happening
+  !> Initialise wet deposition
+  subroutine init(tstep)
     real, intent(in) :: tstep
 
     if (wetdep_scheme%subcloud == WETDEP_SUBCLOUD_SCHEME_BARTNICKI.and. &
@@ -115,8 +51,7 @@ contains
     endif
   end subroutine
 
-!> Initialisation routine for :: Bartnicki.takemura
-  !> Output diagnostics
+!> Initialisation routine for subcloud bartnicki
   subroutine wetdep2_init(tstep)
 
     USE snapdebug, only: iulog
@@ -155,7 +90,8 @@ contains
     end do
     write (iulog, *) '-------------------------------------------------'
     
-    if(vminprec < 0.) then                        !!Setting minimum sigma level (maximum pressure level)
+    if(vminprec < 0.) then                        
+    ! Set minimum sigma level (maximum pressure level)
       block
         USE snapgrdML, only: alevel, blevel, vlevel
         USE snapdimML, only: nk
@@ -314,19 +250,27 @@ contains
     endif
 
     rkw = 0
-    if (radius > 0.05 .AND. radius <= 1.4) then   ![TODO]: All these if statements do not need to be separate. Can use elif.
-      rkw = a0*q**0.79
-    else if (radius > 1.4 .AND. radius <= 10.0) then
-      rkw = depconst*(a1*q + a2*q*q)
-    else if (radius > 10.0) then
-      rkw = a1*q + a2*q*q
+    if (radius <= 0.1) then
+    ! Gas scavenging [TODO: Source?]
+      rkw = 1.12e-4*q**0.79 
+    else
+    ! Particle scavenging [Baklanov 2000]
+      if (convect .and. q > 7.0) then               
+      ! Convective scavenging [eq. 21]
+        rkw = 3.36e-4*q**0.79
+      else 
+      ! Stratiform scavenging [eq. 16]
+        if (radius > 0.1 .AND. radius <= 1.4) then    
+          rkw = a0*q**0.79
+        else if (radius > 1.4 .AND. radius <= 10.0) then   
+          rkw = depconst*(a1*q + a2*q*q)
+        else if (radius > 10.0) then          
+          rkw = a1*q + a2*q*q
+        end if
+      end if
     end if
-    if (convect .and. q > 7.0) then ! convective   ![TODO]: Is this just for a specific radius? Or not? Should be first in if statement otherwise
-      rkw = 3.36e-4*q**0.79
-    endif
-    if (radius <= 0.1) then ! gas               ![TODO]: Figure out how to fix overlap here  !!!Where is this from? Not in baklanov paper...
-      rkw = 1.12e-4*q**0.79
-    endif
+
+
   end function
 
   !> Scales the precip intensity according to cloud fraction for bartnicki scheme as wished
