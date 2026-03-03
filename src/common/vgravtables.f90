@@ -43,6 +43,7 @@ module vgravtablesML
 subroutine vgravtables
   USE ISO_FORTRAN_ENV, only: real64
   USE snapparML, only: ncomp, run_comp, def_comp
+  USE snapdebug, only: iulog
 
   !> absolute temperature (K)
   real :: t
@@ -84,7 +85,19 @@ subroutine vgravtables
         t= tbasevg + it*tincrvg
 
         vg=vgrav_zanetti(diam_part,rho_part,p,t)
+        if (vg < 0.0) then
+          write(iulog,*) 'ERROR: Negative settling velocity in gravity table generation'
+          write(iulog,*) ' component=', trim(def_comp(m)%compname), ' dp[um]=', diam_part, ' rho[g/cm3]=', rho_part
+          write(iulog,*) ' p[hPa]=', p, ' t[K]=', t, ' rho_air[g/cm3]=', roa(p,t), ' vg[cm/s]=', vg
+          error stop 'Negative settling velocity in vgravtables'
+        endif
         call iter(vgmod,vg,diam_part,rho_part,p,t)
+        if (vgmod < 0.0) then
+          write(iulog,*) 'ERROR: Negative settling velocity in gravity table generation after iteration'
+          write(iulog,*) ' component=', trim(def_comp(m)%compname), ' dp[um]=', diam_part, ' rho[g/cm3]=', rho_part
+          write(iulog,*) ' p[hPa]=', p, ' t[K]=', t, ' rho_air[g/cm3]=', roa(p,t), ' vg[cm/s]=', vgmod
+          error stop 'Negative settling velocity in vgravtables'
+        endif
 
       !..table in unit m/s (cm/s computed)
         vgtable(it,ip,n)= vgmod*0.01
