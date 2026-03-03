@@ -229,6 +229,9 @@ pure function aerodynres(L, ustar, z0) result(raero)
   endif
 
   raero = (1 / (ka * ustar)) * (log(z/z0) - fi)
+  ! raero can become negative if L < 0 and z0 is large (seen with 2.8m)
+  ! using a minimum value of 1s/m to avoid negative deposition velocities, which are unphysical
+  if (raero < 1.0) raero = 1.0
 end function
 
 
