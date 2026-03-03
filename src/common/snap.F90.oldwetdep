@@ -1,7 +1,21 @@
 ! SNAP: Servere Nuclear Accident Programme
-! Copyright (C) 1992-2026   Norwegian Meteorological Institute
+! Copyright (C) 1992-2021   Norwegian Meteorological Institute
 
-! License: GNU General Public License Version 3 (GNU GPL-3.0)
+! This file is part of SNAP. SNAP is free software: you can
+! redistribute it and/or modify it under the terms of the
+! GNU General Public License as published by the
+! Free Software Foundation, either version 3 of the License, or
+! (at your option) any later version.
+
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+! GNU General Public License for more details.
+
+! You should have received a copy of the GNU General Public License
+! along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+! SNAP - Severe Nuclear Accident Program
 
 !-----------------------
 ! Options in snap.input:
@@ -483,8 +497,8 @@ PROGRAM bsnap
     write (iulog, *) 'ifltim:  ', ifltim
     write (iulog, *) 'irwalk:  ', use_random_walk
     write (iulog, *) 'drydep_scheme: ', drydep_scheme
-    write (iulog, *) 'wetdep_scheme: subcloud scheme:   ', wetdep_scheme%subcloud
-    write (iulog, *) 'wetdep_scheme: incloud  scheme:   ', wetdep_scheme%incloud
+    write (iulog, *) 'wetdep_scheme: subcloud scheme:   ', wetdep_scheme%subcloud !%description
+    write (iulog, *) 'wetdep_scheme: incloud  scheme:   ', wetdep_scheme%incloud !%description
     write (iulog, *) 'wetdep_scheme: use vertical:      ', wetdep_scheme%use_vertical
     write (iulog, *) 'wetdep_scheme: use cloudfraction: ', wetdep_scheme%use_cloudfraction
     write (iulog, *) 'idecay:  ', idecay
@@ -703,7 +717,7 @@ PROGRAM bsnap
       if (idecay == 1) call decayDeps(tstep)
       ! prepare particle functions once before loop
       if (init) then
-        call wetdep_init()
+        call wetdep_init(tstep)
         if (use_random_walk) call rwalk_init(tstep)
         init = .FALSE.
       end if

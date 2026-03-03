@@ -46,8 +46,6 @@ module snapfldML
 
 !> wet scavenging rate
   real(kind=real32), allocatable, save, public :: wscav(:,:,:,:)
-!> Accumulated precipiation and cloud cover
-  real(kind=real32), allocatable, save, public :: accum_precip(:,:,:), accum_ccf(:,:,:)
 !> surface pressure (time step 1)
   real(kind=real32), allocatable, save, public :: ps1(:,:)
 !> surface pressure (time step 2)
