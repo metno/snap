@@ -40,56 +40,33 @@ module wetdepmlclean
 contains
 
   !> Initialise wet deposition
-  subroutine init(tstep)
-    real, intent(in) :: tstep
+  subroutine init()
 
     if (wetdep_scheme%subcloud == WETDEP_SUBCLOUD_SCHEME_BARTNICKI.and. &
       .not.wetdep_scheme%use_vertical) then
 
-      call wetdep2_init(tstep)
+      call wetdep2_init()
 
     endif
   end subroutine
 
 !> Initialisation routine for subcloud bartnicki
-  subroutine wetdep2_init(tstep)
+  subroutine wetdep2_init()
 
     USE snapdebug, only: iulog
     USE snapparML, only: ncomp
     USE snapparML, only: run_comp, def_comp
 
-    !> Timestep in seconds
-    real, intent(in) :: tstep
-
-    integer :: m, n, mm
-    real :: q
-
-    real, allocatable :: ratdep(:)
+    integer :: m, mm
     real :: rm
 
-    allocate (ratdep(ncomp))
-
+    !> Define
     do m = 1, ncomp
       mm = run_comp(m)%to_defined
       rm = def_comp(mm)%radiusmym
       run_comp(m)%depconst = wet_deposition_constant(rm)
-      write (iulog, *) 'WETDEP2 m,r,depconst(m): ', m, rm, run_comp(m)%depconst  ![TODO]: get rid of if not important... or implement everywhere else too.
     end do
 
-    write (iulog, *) '-------------------------------------------------'
-    write (iulog, *) 'WETDEP2 PREPARE .... q,deprate(1:ncomp):'
-
-    do n = 1, 200
-      q = float(n)*0.1
-      do m = 1, ncomp
-        mm = run_comp(m)%to_defined
-        ratdep(m) = wet_deposition_rate(def_comp(mm)%radiusmym, q, run_comp(m)%depconst, tstep)
-      end do
-      write (iulog, 1010) q, (ratdep(m), m=1, ncomp)
-1010  format(1x, f5.1, ':', 12f7.4)
-    end do
-    write (iulog, *) '-------------------------------------------------'
-    
     if(vminprec < 0.) then                        
     ! Set minimum sigma level (maximum pressure level)
       block
@@ -115,7 +92,6 @@ contains
         else                               
           vminprec = vlevel(nk)
         end if
-        write(iulog,*) 'POSINT. precmin,vminprec: ',precmin,vminprec
         vminprec = max(vminprec, 0.67)
       end block
     end if
@@ -185,7 +161,7 @@ contains
 
     m = part%icomp
 
-    !..assumens no precipitation if pressure less than approx. 650 hPa.
+    !..assumes no precipitation if pressure less than approx. 650 hPa.
     !..and if less than a minimum precipitation intensity (mm/hour)
     if (pextra%prc > precmin &
         .AND. part%z > vminprec) then
@@ -251,7 +227,7 @@ contains
 
     rkw = 0
     if (radius <= 0.1) then
-    ! Gas scavenging [TODO: Source?]
+    ! Gas scavenging [Aligns with NAME parameters for SO2 and ammonia]
       rkw = 1.12e-4*q**0.79 
     else
     ! Particle scavenging [Baklanov 2000]
@@ -291,7 +267,7 @@ contains
 
     depconst = wet_deposition_constant(radius)
     if (.not.use_ccf) then
-      wscav(:,:) = wet_subcloud_bartnicki(radius, precip, depconst, use_convective=.False.) 
+      wscav(:,:) = wet_subcloud_bartnicki(radius, precip, depconst, use_convective=.False.)    !!! [GEORGE:] Does not use this currently
     else
       block
         integer :: i, j   !> GEORGE: is block neccessary? integers don't take much memory...
@@ -363,11 +339,11 @@ contains
     endif 
   end subroutine
 
-    !> Precompute wet scavenging coefficients
+    !> Precompute wet scavenging coefficients per component
   subroutine prepare_wetdep_3d(wscav, radius, precip, cw, ccf)
-    !> Wet scavenging coefficient [1/s]
+    !> Wet scavenging coefficient [1/s] of specific component
     real, intent(out) :: wscav(:,:,:)
-    !> Precipitation intensity [mm/h]
+    !> Precipitation intensity [mm/h], 3D
     real, intent(in) :: precip(:,:,:)
     !> Radius of particle
     real, intent(in) :: radius
@@ -386,7 +362,7 @@ contains
     nk = size(wscav,3)
 
     allocate(wscav_tmp, mold=wscav)
-    allocate(accum_precip(nx,ny), accum_ccf(nx,ny))
+    allocate(accum_precip(nx,ny), accum_ccf(nx,ny))   ![GEORGE]: Accumulated values only needed in subcloud... for some reason
 
     accum_precip(:,:) = 0.0
     accum_ccf(:,:) = 0.0
@@ -397,27 +373,6 @@ contains
       where (accum_ccf >= 1.0)
         accum_ccf = 1.0
       endwhere
-
-      ! Subcloud
-      ! select case (wetdep_scheme%subcloud%scheme)
-      !   case (WETDEP_SUBCLOUD_SCHEME_BARTNICKI%scheme)
-      !     call wet_subcloud_bartnicki_ccf(wscav(:,:,k), radius, accum_precip(:,:), &
-      !      accum_ccf(:,:), use_ccf=wetdep_scheme%use_cloudfraction)
-      !   case (WETDEP_SUBCLOUD_SCHEME_NONE%scheme)
-      !     wscav(:,:,k) = 0.0
-      !   case default
-      !     error stop wetdep_scheme%subcloud%description
-      ! end select
-
-      ! ! Incloud
-      ! select case (wetdep_scheme%incloud%scheme)
-      !   case (WETDEP_INCLOUD_SCHEME_NONE%scheme)
-      !     wscav_tmp(:,:,k) = 0.0
-      !   case (WETDEP_INCLOUD_SCHEME_TAKEMURA%scheme)
-      !     call wetdep_incloud_takemura(wscav_tmp(:,:,k), precip(:,:,k), cw(:,:,k), ccf(:,:,k))
-      !   case default
-      !     error stop wetdep_scheme%incloud%description
-      ! end select
 
       select case (wetdep_scheme%subcloud)
         case (WETDEP_SUBCLOUD_SCHEME_BARTNICKI)
