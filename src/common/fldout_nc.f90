@@ -832,7 +832,8 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
   yvals(ny*output_resolution_factor), &
   lon(nx,ny), &
   lat(nx,ny), &
-  val, gparam2(6), gparam_hres(8)
+  val, gparam2(6), gparam_hres(8), &
+  rearth
   real(kind=real32) :: llparam(6) = [1.0, 1.0, 1.0, 1.0, 0.0, 0.0]
 
   call check(nf90_def_var(iunit, "x", &
@@ -850,6 +851,12 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
 ! a reference-time, same as in WRF
   call check(nf90_put_att(iunit, NF90_GLOBAL, &
       "SIMULATION_START_DATE", trim(simulation_start)))
+
+
+! datum and projection
+  ! get radius from milib
+  call earthr(rearth)
+  call check(nf90_put_att(iunit,proj_varid, "earth_radius", rearth))
 
   gparam_hres(:) = gparam(:)
   select case(igtype)
