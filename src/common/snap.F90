@@ -621,17 +621,14 @@ PROGRAM bsnap
         call snap_error_exit(iulog)
       end if
       write (iulog, *) 'release   x,y:    ', x, y
-      if (x(1) < 1.01 .OR. x(1) > nx - 0.01 .OR. &
-          y(1) < 1.01 .OR. y(1) > ny - 0.01) then
+      if (x(1) < 1.01 .OR. x(1) > (nx - 0.01) .OR. &
+          y(1) < 1.01 .OR. y(1) > (ny - 0.01)) then
         write (iulog, *) 'ERROR: Release position outside field area'
         write (error_unit, *) 'ERROR: Release position outside field area'
         call snap_error_exit(iulog)
       end if
-      ! Snap grids-positions are from [i, i+1[, first cell starting at 1
-      ! while xyconvert gives distance to center of first grid cell (+1 for fortran counting),
-      ! so need to shift by 0.5
-      release_positions(irelpos)%grid_x = x(1) - 0.5
-      release_positions(irelpos)%grid_y = y(1) - 0.5
+      release_positions(irelpos)%grid_x = x(1)
+      release_positions(irelpos)%grid_y = y(1)
     end block
 
     ! start time loop

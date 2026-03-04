@@ -963,11 +963,6 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
 
     xvals(1) = (xvals(1)-1)*gparam(7)
     yvals(1) = (yvals(1)-1)*gparam(8)
-    ! xvals is currently the lower left corner in plane-coordinates
-    ! but must be in m from center
-    ! first cell center, not left edge. must be moved
-    xvals(1) = xvals(1) - .5 * (output_resolution_factor-1) * gparam_hres(7)
-    yvals(2) = yvals(2) - .5 * (output_resolution_factor-1) * gparam_hres(8)
 
     do i=2,nx*output_resolution_factor
       xvals(i) = xvals(1) + (i-1)*gparam_hres(7)
