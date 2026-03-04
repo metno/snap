@@ -153,9 +153,9 @@ contains
       if (pextra%prc > precmin &
         .AND. part%z > vminprec) then  ! [GEORGE]: I would argue precmin should apply for all schemes? Or is this not true for in cloud, as you can have absorption before precipitation?
         !depends on the precipitation and altitude at the place of the particle.
-          rkw = wet_subcloud_bartnicki(def_comp(m)%radiusmym, pextra%prc, run_comp(mm)%depconst)
-          radlost = part%scale_rad(exp(-tstep*rkw))
-        end if
+        rkw = wet_subcloud_bartnicki(def_comp(m)%radiusmym, pextra%prc, run_comp(mm)%depconst)
+        radlost = part%scale_rad(exp(-tstep*rkw))
+      end if
     end if
   
     i = hres_pos(part%x)
@@ -317,7 +317,7 @@ contains
               ! Scale up precip intensity
               precip_scaled = precip(i,j) / ccf(i,j)
             else
-              precip_scaled = precip(i,j)               !! [GEORGE]: if ccf = 0 then surely no pincloud scavenging? Otherwise, could use mask to make ccf_{=0} = 1 for no for loops?
+              precip_scaled = precip(i,j)               !! [GEORGE]: if ccf = 0 then surely no incloud scavenging? Otherwise, could use mask to make ccf_{=0} = 1 for no for loops?
             endif
 
             wscav(i,j) = wet_subcloud_bartnicki(radius, precip_scaled, depconst, use_convective=.False.) !> Convective rain cannot be used here due to the precip scaling
@@ -359,13 +359,14 @@ contains
   subroutine wetdep_precompute()
     use snapfldML, only: cw3d, precip3d, cloud_cover, accum_precip, accum_ccf
 
-    if (.not.(allocated(precip3d).and.allocated(cw3d).and.allocated(cloud_cover) &
-    .and.allocated(accum_precip).and.allocated(accum_ccf))) then
-      error stop "Some wetdep/precip fields not allocated"
-    endif
-
     if (wetdep_scheme%use_vertical) then   
       !skip precomputation if no vertical scheme
+
+      if (.not.(allocated(precip3d).and.allocated(cw3d).and.allocated(cloud_cover) &
+    .and.allocated(accum_precip).and.allocated(accum_ccf))) then
+        error stop "Some wetdep/precip fields not allocated"
+      endif
+
       call calc_accum_precip(accum_precip,accum_ccf,precip3d,cloud_cover)
     endif 
   end subroutine
