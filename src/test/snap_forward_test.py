@@ -15,7 +15,7 @@ class SnapEcEMEPEmersonForwardTestCase(SnapTestCase):
     input = "snap.input_ecemep_emerson_fimex"
     snap = datadir / "../bsnap_naccident"
 
-    snapExpected = "snap_testdata/snap_ecemep_emerson_expected_20260219.nc"
+    snapExpected = "snap_testdata/snap_ecemep_emerson_expected_20260304.nc"
 
     def setUp(self):
         pass
