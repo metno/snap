@@ -344,6 +344,8 @@ contains
 
   !> determine gparam for polar_stereographic grids
   subroutine polar_stereographic_grid(fio, proj4, nx, ny, xdim, ydim, igtype, gparam, stat)
+    USE milibML, only : EARTH_RADIUS
+
     !> open fimex file
     TYPE(FimexIO), intent(inout) :: fio
     !> proj4 string
@@ -363,7 +365,6 @@ contains
     !> error code (0 for success)
     integer, intent(out) :: stat
 
-    real :: rearth
     real(kind=real64) :: pi
     real(kind=real64) :: lat0, incr, startX, startY
     real(kind=real64), allocatable, target :: dims(:)
@@ -430,11 +431,8 @@ contains
     gparam(1) = 1 - startX/incr
     gparam(2) = 1 - startY/incr
 
-    ! earth radius from milib
-    call earthr(rearth)
-
     ! gparam(3) is number of grid-cells between equator and northpole
-    gparam(3) = rearth * (1 + sin(PI/180.*gparam(5)))/incr
+    gparam(3) = EARTH_RADIUS * (1 + sin(PI/180.*gparam(5)))/incr
 
   end subroutine polar_stereographic_grid
 
