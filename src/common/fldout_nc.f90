@@ -818,6 +818,7 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
     simulation_start)
   USE snapdimML, only : nx, ny, output_resolution_factor, hres_field
   USE snapfldML, only : field_hr1, field_hr2
+  USE milibML, only : EARTH_RADIUS
   INTEGER, INTENT(IN) :: iunit, xdimid, ydimid, igtype
   REAL(real32), INTENT(IN):: gparam(8)
   REAL(real32), INTENT(IN), DIMENSION(nx*output_resolution_factor,ny*output_resolution_factor) :: garea
@@ -832,8 +833,7 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
   yvals(ny*output_resolution_factor), &
   lon(nx,ny), &
   lat(nx,ny), &
-  val, gparam2(6), gparam_hres(8), &
-  rearth
+  val, gparam2(6), gparam_hres(8)
   real(kind=real32) :: llparam(6) = [1.0, 1.0, 1.0, 1.0, 0.0, 0.0]
 
   call check(nf90_def_var(iunit, "x", &
@@ -854,9 +854,7 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
 
 
 ! datum and projection
-  ! get radius from milib
-  call earthr(rearth)
-  call check(nf90_put_att(iunit,proj_varid, "earth_radius", rearth))
+  call check(nf90_put_att(iunit,proj_varid, "earth_radius", EARTH_RADIUS))
 
   gparam_hres(:) = gparam(:)
   select case(igtype)

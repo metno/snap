@@ -40,13 +40,14 @@ c   DNMI/FoU  15.05.1996  Anstein Foss
 c met.no/FoU  22.06.2006  Anstein Foss ... double precision computations
 c---------------------------------------------------------------------
 c
+      use milibML, only : EARTH_RADIUS
       implicit none
 c
       integer icall, n, ierror
       real    x(n), y(n), xw, ys, dx, dy, yc
 c
       integer ieq, j
-      real    rearth, ypos
+      real    ypos
       double precision zxw, zys, zdx, zdy, zyc, zpih, zrcos,
      +                 zxmerc, zymerc, xsph, ysph, xmer, ymer
 c
@@ -58,10 +59,8 @@ c
       zdy= dy
       zyc= yc
 c
-      call earthr(rearth)
-c
       zpih   = asin(1.0d0)
-      zrcos  = rearth*cos(zyc)
+      zrcos  = EARTH_RADIUS*cos(zyc)
       zxmerc = zrcos*zxw - zdx
       zymerc = zrcos*log((1.+sin(zys))/cos(zys)) - zdy
 c
