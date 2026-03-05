@@ -1,6 +1,7 @@
 module milibML
   implicit none
   public
+  real, parameter :: EARTH_RADIUS = 6371000.0 ! in m
 
   interface
     subroutine xyconvert(npos, x, y, igtypa, ga, igtypr, gr, ierror)
