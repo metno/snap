@@ -621,8 +621,8 @@ PROGRAM bsnap
         call snap_error_exit(iulog)
       end if
       write (iulog, *) 'release   x,y:    ', x, y
-      if (x(1) < 1.01 .OR. x(1) > nx - 0.01 .OR. &
-          y(1) < 1.01 .OR. y(1) > ny - 0.01) then
+      if (x(1) < 1.01 .OR. x(1) > (nx - 0.01) .OR. &
+          y(1) < 1.01 .OR. y(1) > (ny - 0.01)) then
         write (iulog, *) 'ERROR: Release position outside field area'
         write (error_unit, *) 'ERROR: Release position outside field area'
         call snap_error_exit(iulog)
