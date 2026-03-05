@@ -28,8 +28,12 @@ module particleML
 !> a simple particle to be stored
     type, public :: particle
         !> x position in grid
+        !> grid-cells start from 1 and the position is in grid-cells, so 1.5 means center of
+        !> cell 1
         real(real64)   :: x
         !> y position in grid
+        !> grid-cells start from 1 and the position is in grid-cells, so 1.5 means center of
+        !> cell 1
         real(real64)   :: y
         !> sigma/eta position (vertical)
         real(real64)   :: z
