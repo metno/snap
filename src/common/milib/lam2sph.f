@@ -27,7 +27,6 @@ c  License along with this library; if not, write to the Free Software
 c  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 c
       subroutine lam2sph(icall,n,x,y,xw,ys,dx,dy,x0,y1,y2,ierror)
-c
 c  conversion between Lambert (non-oblique) and spherical
 c  coordinates. Lambert coordinates are given in real
 c  numbers, where (xlam,ylam)=(1.0,1.0) in lower left corner of
@@ -39,13 +38,13 @@ c---------------------------------------------------------------------
 c met.no/FoU  13.11.2008  Ole Vignes ... double precision computations
 c---------------------------------------------------------------------
 c
+      use milibML, only : EARTH_RADIUS
       implicit none
 c
       integer icall, n, ierror
       real    x(n), y(n), xw, ys, dx, dy, x0, y1, y2
 c
       integer j
-      real    rearth
       double precision zxw, zys, zdx, zdy, zx0, zy1, zy2, yy, ftan, zpi,
      +                 zpiq, zn, zninv, zF, zR0, zRe, zR, ztheta, ztn,
      +                 zxlam0, zylam0, xsph, ysph, xlam, ylam, ztwopi
@@ -60,8 +59,7 @@ c pi
 c
       ierror = 0
 c
-      call earthr(rearth)
-      zRe = rearth
+      zRe = EARTH_RADIUS
       zxw = xw
       zys = ys
       zdx = dx

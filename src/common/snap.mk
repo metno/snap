@@ -14,7 +14,7 @@ find_parameters.o datetime.o
 
 # old milib files
 MODELOBJ += gridpar.o  mapfield.o  xyconvert.o \
-     earthr.o pol2sph.o sph2rot.o lam2sph.o mer2sph.o milibML.o
+     pol2sph.o sph2rot.o lam2sph.o mer2sph.o milibML.o
 READFIELDOBJ = readfield_nc.o
 
 
@@ -94,7 +94,7 @@ filesort_fi.o: ../common/filesort_fi.f90 snapfimexML.o dateCalc.o snapfilML.o sn
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 find_parameters.o: ../common/find_parameters.f90 snapmetML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-find_parameters_fi.o: ../common/find_parameters_fi.f90 snapfimexML.o snapmetML.o fimex.o readfield_fi.o utils.o
+find_parameters_fi.o: ../common/find_parameters_fi.f90 snapfimexML.o snapmetML.o fimex.o readfield_fi.o utils.o milibML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 fldout_nc.o: ../common/fldout_nc.f90 snapfilML.o snapgrdML.o snapfldML.o snapparML.o snaptabML.o snapdebugML.o snapdimML.o readfield_nc.o ftest.o release.o milibML.o datetime.o utils.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
@@ -133,21 +133,19 @@ milibML.o: ../common/milibML.f90
 # libmi
 gridpar.o: ../common/milib/gridpar.f
 	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
-mapfield.o: ../common/milib/mapfield.f
+mapfield.o: ../common/milib/mapfield.f milibML.o
 	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 rmfile.o: ../common/milib/rmfile.f
 	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
-xyconvert.o: ../common/milib/xyconvert.f
-	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
-earthr.o: ../common/milib/earthr.f
+xyconvert.o: ../common/milib/xyconvert.f milibML.o
 	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 pol2sph.o: ../common/milib/pol2sph.f
 	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 sph2rot.o: ../common/milib/sph2rot.f
 	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
-lam2sph.o: ../common/milib/lam2sph.f
+lam2sph.o: ../common/milib/lam2sph.f milibML.o
 	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
-mer2sph.o: ../common/milib/mer2sph.f
+mer2sph.o: ../common/milib/mer2sph.f milibML.o
 	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 #---------------------------------------------------------
 

@@ -818,6 +818,7 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
     simulation_start)
   USE snapdimML, only : nx, ny, output_resolution_factor, hres_field
   USE snapfldML, only : field_hr1, field_hr2
+  USE milibML, only : EARTH_RADIUS
   INTEGER, INTENT(IN) :: iunit, xdimid, ydimid, igtype
   REAL(real32), INTENT(IN):: gparam(8)
   REAL(real32), INTENT(IN), DIMENSION(nx*output_resolution_factor,ny*output_resolution_factor) :: garea
@@ -850,6 +851,10 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
 ! a reference-time, same as in WRF
   call check(nf90_put_att(iunit, NF90_GLOBAL, &
       "SIMULATION_START_DATE", trim(simulation_start)))
+
+
+! datum and projection
+  call check(nf90_put_att(iunit,proj_varid, "earth_radius", EARTH_RADIUS))
 
   gparam_hres(:) = gparam(:)
   select case(igtype)

@@ -42,20 +42,18 @@ c   DNMI/FoU  23.05.1997  Anstein Foss ...... southern hemisphere
 c met.no/FoU  22.06.2006  Anstein Foss ...... double precision computations
 c----------------------------------------------------------------------
 c
+      use milibML, only : EARTH_RADIUS
       implicit none
 c
       integer icall, n, ierror
       real    x(n), y(n), fpol, xp, yp, an, fi
 c
       integer j
-      real    za
       double precision zfpol, zxp, zyp, zan, zfi, zpi, ztwopi, zns,
      +                 zpihal, xpol, ypol, zdx, zdy, zr, xsph, ysph,
      +                 alfa, beta, xr, yr
 c
       ierror = 0
-c
-      call earthr(za)
 c
       zfpol= fpol
       zxp=   xp
