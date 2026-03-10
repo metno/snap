@@ -54,6 +54,10 @@ testGravSettling: testGravSettling.o $(MODELOBJ)
 testDryDep: testDryDep.o $(MODELOBJ)
 	${F77} $(F77FLAGS) $(MODELOBJ) $< $(BLIBS) -o $@
 
+
+testWetDep: testWetDep.o $(MODELOBJ)
+	${F77} $(F77FLAGS) $(MODELOBJ) $< $(BLIBS) -o $@
+
 clean: clean_links
 	rm -f *.o *~ snap_batch_copy.F90 find_parameters_fi_test bsnap_naccident data/snap.nc data/snap_ecemep.nc data/snap.log testDateCalc test_array_utils
 	rm -rf __pycache__
@@ -74,6 +78,9 @@ testGravSettling.o: testGravSettling.f90 $(MODELOBJ)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 
 testDryDep.o: testDryDep.f90 $(MODELOBJ)
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+
+testWetDep.o: testWetDep.f90 $(MODELOBJ)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 
 .PHONY: clean distclean test install
