@@ -143,8 +143,8 @@ subroutine allocateFields
   if (met_params%use_3d_precip) then
     ALLOCATE(precip3d(nx,ny,nk), cw3d(nx,ny,nk), STAT=AllocateStatus)
     if (AllocateStatus /= 0) ERROR STOP errmsg
-    ALLOCATE(accum_ccf(nx,ny,nk),accum_precip(nx,ny,nk), STAT=AllocateStatus)
-    if (AllocateStatus /= 0) ERROR STOP errmsg
+    ! ALLOCATE(accum_ccf(nx,ny,nk),accum_precip(nx,ny,nk), STAT=AllocateStatus)
+    ! if (AllocateStatus /= 0) ERROR STOP errmsg
     ! ALLOCATE(wscav(nx,ny,nk,ncomp),STAT=AllocateStatus)
     ! if (AllocateStatus /= 0) ERROR STOP errmsg
     ! wscav(:,:,:,:) = 0.0
