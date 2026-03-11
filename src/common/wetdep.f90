@@ -1,3 +1,8 @@
+! SNAP: Servere Nuclear Accident Programme
+! Copyright (C) 1992-2026   Norwegian Meteorological Institute
+
+! License: GNU General Public License Version 3 (GNU GPL-3.0)
+
 !> Wet deposition of radionuclides.
 !> Method: Combination of J.Bartnicki 2003 and Takemura et al. 2000.
 !> This module considers two different regimes where wet deposition 
@@ -139,7 +144,7 @@ contains
     type(Particle), intent(inout) :: part
     !> uses the precipitation at the particle position
     type(extraParticle), intent(in) :: pextra
-    integer :: i,j,m,mm,mo,k
+    integer :: i,j,m,mm,mo
     real :: radlost, rkw
     
     m = part%icomp
@@ -148,7 +153,7 @@ contains
     !! Figure out this bit
     if (wetdep_scheme%use_vertical) then
       !! in 3D case for bartnicki-takemura.
-      call wetdep_3D(rkw,k, part,def_comp(m)%radiusmym)
+      call wetdep_3D(rkw, part,def_comp(m)%radiusmym)
       radlost = part%scale_rad(exp(-tstep*rkw))
     else if  (wetdep_scheme%subcloud == WETDEP_SUBCLOUD_SCHEME_BARTNICKI) then
       !! in 2D case just bartnicki
@@ -168,7 +173,7 @@ contains
   end subroutine
 
 
-  subroutine wetdep_3D(rkw, k, part, radius)
+  subroutine wetdep_3D(rkw, part, radius)
     
     use iso_fortran_env, only: real64
     use particleml, only: particle 
@@ -177,14 +182,13 @@ contains
     
     !> Wet scavenging coefficient [1/s] of specific component
     real, intent(out) :: rkw
-    integer, intent(out) :: k
     !> Particle
     type(particle), intent(in) :: part
     !> Radius of particle
     real, intent(in) :: radius
 
     real :: rkw_tmp, mlprecip, mlccf
-    integer :: ivlvl, i, j, nx, ny
+    integer :: ivlvl, i, j,k, nx, ny
     
     nx = size(precip3d,1)
     ny = size(precip3d,2)
