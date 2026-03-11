@@ -168,7 +168,7 @@ program testWetDep
         radlost_t= part%scale_rad(exp(-tstep*rkw_t))
     
     
-        call wetdep_3D(rkw_3d,k,part,def_comp(part%icomp)%radiusmym)
+        call wetdep_3D(rkw_3d,part,def_comp(part%icomp)%radiusmym)
         rad = part%set_rad(1.) ! reset initial activity 1 Bq
         radlost_3d= part%scale_rad(exp(-tstep*rkw_3d))      
       
@@ -293,7 +293,7 @@ program testWetDep
         radlost_t= part%scale_rad(exp(-tstep*rkw_t))
     
     
-        call wetdep_3D(rkw_3d,k,part,def_comp(part%icomp)%radiusmym)
+        call wetdep_3D(rkw_3d,part,def_comp(part%icomp)%radiusmym)
         rad = part%set_rad(1.) ! reset initial activity 1 Bq
         radlost_3d= part%scale_rad(exp(-tstep*rkw_3d))      
       
