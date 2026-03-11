@@ -21,13 +21,14 @@ program testWetDep
   type(defined_component), pointer :: d_comp
   type(datetime_t) :: itimefi
   type(wetdep_scheme_t) :: wetdep_scheme_1, wetdep_scheme_2
-  integer :: i, mo, j, k, ivlvl, c
-  real :: rad,  t1,t2, mlprecip, mlccf, rkw, tstep, radlost_b, &
+  integer :: i, mo, j, k, ivlvl, c, scheme
+  real :: rad,  t1,t2, mlprecip, mlccf, tstep, radlost_b, &
           radlost_t, radlost_3d, radlost_b3d, rkw_b, rkw_3d, rkw_b3d, rkw_t
   type(Particle) :: part
   type(extraParticle) :: pextra
   real(real64) :: dep
   logical :: CREATE_MOD = .false.
+  character(:), allocatable :: name
 
   if (CREATE_MOD) then
     call createTestFile
@@ -41,7 +42,7 @@ program testWetDep
     ! Define two components with dry deposition rates
     call push_down_dcomp(def_comp, top=d_comp)
     d_comp%compname = "Cs137"
-    d_comp%output_name = d_comp%compname ! default
+    d_comp%output_name = d_comp%compname ! defaults
     d_comp%radiusmym = 1.0
     d_comp%densitygcm3 = 2.3
     d_comp%grav_type = GRAV_TYPE_COMPUTED
@@ -95,106 +96,147 @@ program testWetDep
                 WETDEP_INCLOUD_SCHEME_TAKEMURA, &
                 .true., .true. &
               )
-  
-    wetdep_scheme = wetdep_scheme_2
-  
     itimefi%year = 2020
     itimefi%month = 4
     itimefi%day = 15
     itimefi%hour = 12
-    print *, "2. Testing wetdep subroutine"
-
-    call fetchTestData(precip3d,cw3d,cloud_cover,precip)
-  
-    call wetdep_precompute()
-    print *, "Precompute passed"
-    vminprec = 0.1
-    call init()
-    print *, "Initialisation passed"
-
-
     part%x = 201.0
     part%y = 589.0
     part%z = 0.7
     tstep=90
     
-    i = nint(part%x)
-    j = nint(part%y) 
-    ivlvl = nint(part%z * 10000.0)
-    ivlevel(ivlvl)= 33
-    k = ivlevel(ivlvl)
-    print *, "Grid point i, j, k:", i, j, k
+    print *, "2. Testing wetdep subroutine"
+    allocate(depwet(nint(part%x),nint(part%y),ncomp))
+    call fetchTestData(precip3d,cw3d,cloud_cover,precip)
+    do scheme = 1,2
 
-    allocate(depwet(i,j,ncomp))
-    do c =1,ncomp
-      print *, "----------------------------------------------------"
-      print *, "COMPONENT: ", def_comp(c)%compname
-      part%icomp = c
-      mo = def_comp(part%icomp)%to_output
-    
-    
-      pextra%prc = precip(i,j)
-
-      print *, "Testing schemes..."
-      rkw_b = wet_subcloud_bartnicki(def_comp(part%icomp)%radiusmym,pextra%prc, run_comp(part%icomp)%depconst)
-      rad = part%set_rad(1.) ! initial activity 1 Bq
-      radlost_b= part%scale_rad(exp(-tstep*rkw_b))
-
-    
-      call calc_ml_var(k,precip3d(i,j,:),mlprecip)
-      call calc_ml_var(k,cloud_cover(i,j,:),mlccf)  
-      print *, "mlprecip, mlccf", mlprecip, mlccf
-      call wet_subcloud_bartnicki_ccf(rkw_b3d,def_comp(part%icomp)%radiusmym,mlprecip,mlccf,wetdep_scheme%use_cloudfraction)
-      rad = part%set_rad(1.) ! reset initial activity 1 Bq
-      radlost_b3d= part%scale_rad(exp(-tstep*rkw_b3d))
-  
-      call wetdep_incloud_takemura(rkw_t,precip3d(i,j,k),cw3d(i,j,k),cloud_cover(i,j,k))
-      
-      rad = part%set_rad(1.) ! reset initial activity 1 Bq
-      radlost_t= part%scale_rad(exp(-tstep*rkw_t))
-  
-  
-      call wetdep_3D(rkw_3d,k,part,def_comp(part%icomp)%radiusmym)
-      rad = part%set_rad(1.) ! reset initial activity 1 Bq
-      radlost_3d= part%scale_rad(exp(-tstep*rkw_3d))      
-    
-      print *, "----------------------------------------------------"
-      write (*,10) "Scheme", "Scavenging rate [1/s]", "Deposited radiation"
-      write (*,11) "Bartnicki", rkw_b, radlost_b
-      write (*,11) "Bart. ccf", rkw_b3d, radlost_b3d
-      write (*,11) "Takemura", rkw_t, radlost_t
-      write (*,11) "Wetdep 3D", rkw_3d, radlost_3d
-      print *, "----------------------------------------------------"    
-      
-      10 FORMAT(5x,A9, 3x, A21, A21)
-      11 FORMAT(5x,A9, 3x, ES21.8, ES21.8)
-      
-  
-  
-      print *, "Computing from wetdep subroutine..."
-      rad = part%set_rad(1.) ! reset initial activity 1 Bq
-      call CPU_TIME( t1)
-      call wetdep(tstep,part,pextra)
-      call CPU_TIME(t2)
-      print *, "Completed calculations!"
-      print *, 'Time for computation', t2-t1
-      i = hres_pos(part%x)
-      j = hres_pos(part%y) 
-  
-      dep = depwet(i,j,mo)
-      print*, "Deposition: ", dep
-      
-      if (i == 1) then
-        if (wetdep_scheme%incloud == wetdep_scheme_2%incloud .and. abs(dep - 1.86965466e-2) > 1.0e-5) then
-          print *, "Test failed: Calculated deposition for bartnicki-takemura scheme does not match expected value:", dep
-          stop 2
-        else if (.not.wetdep_scheme%use_vertical .and. abs(dep - 1.28421783e-2) > 1.0e-5) then
-          print *, "Test failed: Calculated deposition for 2D bartnicki scheme does not match expected value:", dep
-          stop 2      
-        end if 
+      if (scheme == 2) then
+        wetdep_scheme = wetdep_scheme_2
+        name = "Bartnicki-Takemura"
+      else if (scheme == 1) then
+        wetdep_scheme = wetdep_scheme_1
+        name = "Bartnicki"
+      else 
+        stop "Scheme undefined"
       end if
+    
+      print *, "                  _____________________________"
+      print *, "                  WETDEP SCHEME: ", name
+      print *, "                  _____________________________"
+    
+      call wetdep_precompute()
+      print *, "Precompute passed"
+      vminprec = 0.1
+      call init()
+      print *, "Initialisation passed"
+  
+  
+      do c =1,ncomp
+        print *, "----------------------------------------------------"
+        print *, "COMPONENT: ", def_comp(c)%compname
+        part%icomp = c
+        mo = def_comp(part%icomp)%to_output
+  
+        i = nint(part%x)
+        j = nint(part%y) 
+        ivlvl = nint(part%z * 10000.0)
+        ivlevel(ivlvl)= 33
+        k = ivlevel(ivlvl)
+        print *, "Grid point i, j, k:", i, j, k
+      
+      
+        pextra%prc = precip(i,j)
+  
+        print *, "Testing schemes..."
+        rkw_b = wet_subcloud_bartnicki(def_comp(part%icomp)%radiusmym,& 
+                             pextra%prc, run_comp(part%icomp)%depconst)
+        rad = part%set_rad(1.) ! initial activity 1 Bq
+        radlost_b= part%scale_rad(exp(-tstep*rkw_b))
+  
+      
+        call calc_ml_var(k,precip3d(i,j,:),mlprecip)
+        call calc_ml_var(k,cloud_cover(i,j,:),mlccf)  
+        print *, "mlprecip, mlccf", mlprecip, mlccf
+        call wet_subcloud_bartnicki_ccf(rkw_b3d,def_comp(part%icomp)%radiusmym,&
+                                  mlprecip,mlccf,wetdep_scheme%use_cloudfraction)
+        rad = part%set_rad(1.) ! reset initial activity 1 Bq
+        radlost_b3d= part%scale_rad(exp(-tstep*rkw_b3d))
+    
+        call wetdep_incloud_takemura(rkw_t,precip3d(i,j,k),cw3d(i,j,k),cloud_cover(i,j,k))
+        
+        rad = part%set_rad(1.) ! reset initial activity 1 Bq
+        radlost_t= part%scale_rad(exp(-tstep*rkw_t))
+    
+    
+        call wetdep_3D(rkw_3d,k,part,def_comp(part%icomp)%radiusmym)
+        rad = part%set_rad(1.) ! reset initial activity 1 Bq
+        radlost_3d= part%scale_rad(exp(-tstep*rkw_3d))      
+      
+        ! print *, "----------------------------------------------------"
+        write (*,10) "Scheme", "Scavenging rate [1/s]", "Deposited radiation"
+        write (*,11) "Bartnicki", rkw_b, radlost_b
+        write (*,11) "Bart. ccf", rkw_b3d, radlost_b3d
+        write (*,11) "Takemura", rkw_t, radlost_t
+        write (*,11) "Wetdep 3D", rkw_3d, radlost_3d
+        ! print *, "----------------------------------------------------"    
+        
+        10 FORMAT(5x,A9, 3x, A21, A21)
+        11 FORMAT(5x,A9, 3x, ES21.8, ES21.8)
+        
+        i = hres_pos(part%x)
+        j = hres_pos(part%y) 
+    
+        depwet(i,j,mo) = 0.0
+        print *, "Computing from wetdep subroutine..."
+        rad = part%set_rad(1.) ! reset initial activity 1 Bq
+        call CPU_TIME(t1)
+        call wetdep(tstep,part,pextra)
+        call CPU_TIME(t2)
+        print *, "Completed calculations!"
+        print *, 'Time for computation', t2-t1
+
+    
+        dep = depwet(i,j,mo)
+        print*, "Deposition: ", dep
+
+        select case (name)
+        case ("Bartnicki-Takemura")
+          if (abs(dep - radlost_b3d) > 1.0e-5 .and. abs(dep - radlost_t) > 1.0e-5) &
+            stop "Test failed: calculated deposition does not match expected &
+                                      &bartnicki ccf or takemura deposition "
+
+          select case (def_comp(c)%compname)
+          case ("Cs137")
+            if (abs(dep - 1.86965466e-2) > 1.0e-5) &
+              stop "Test failed: calculated deposition for bartnicki-takemura &
+                                         &scheme does not match expected value"
+            
+          case ("I131")
+            if (abs(dep - 2.48507261e-02) > 1.0e-5) &
+              stop "Test failed: calculated deposition for bartnicki-takemura &
+                                        &scheme does not match expected value"
+          
+          end select
+
+        case ("Bartnicki")
+          if (abs(dep - radlost_b) > 1.0e-5) &
+            stop "Test failed: calculated deposition does not match expected &
+                                                       &bartnicki deposition"
+         
+          select case (def_comp(c)%compname)
+          case ("Cs137")
+            if (abs(dep - 1.28421783e-2) > 1.0e-5) &
+              stop "Test failed: calculated deposition for Bartnicki scheme &
+                                               &does not match expected value"
+          case ("I131")
+            if (abs(dep - 1.70861483e-02) > 1.0e-5) &
+              stop "Test failed: calculated deposition for Bartnicki scheme &
+                                              &does not match expected value"
+          end select
+        end select
+      end do
     end do
-  print *, "Tests passed"
+    print *, "All tests passed"
   end if
    
   contains
@@ -287,12 +329,15 @@ program testWetDep
 
   subroutine createTestFile
     use netcdf
-    integer :: id, status, varid, id_new,nk, nx, ny, nt, xdimid,ydimid,kdimid,precipvarid,cw3dvarid, ccvarid, prvarid
+    integer :: id, status, varid, id_new,nk, nx, ny, nt, xdimid,ydimid,kdimid, &
+               precipvarid,cw3dvarid, ccvarid, prvarid
     real, allocatable ::  tmpvar(:,:,:), tmpvar2d(:,:)
     real, allocatable :: precip3d(:,:,:), cw3d(:,:,:), cloud_cover(:,:,:), pr(:,:)
     integer, dimension(nf90_max_var_dims) :: dimIDs 
     
-    status = nf90_open(path = "/lustre/storeB/immutable/archive/projects/metproduction/MEPS/2026/02/08/meps_det_2_5km_20260208T00Z.nc", mode = nf90_nowrite, ncid= id)
+    status = nf90_open(path = &
+    "/lustre/storeB/immutable/archive/projects/metproduction/MEPS/2026/02/08/meps_det_2_5km_20260208T00Z.nc",&
+                      mode = nf90_nowrite, ncid= id)
     if (status /= nf90_noerr) then 
       print *, "Error in opening file "
       stop 2
@@ -370,7 +415,8 @@ program testWetDep
     end if 
 
     allocate(tmpvar(nx,ny,nk))
-    status = nf90_get_var(id, varid, tmpvar, start=(/1,1,1,nt/), count=(/nx,ny,nk,1/))
+    status = nf90_get_var(id, varid, tmpvar, start=(/1,1,1,nt/), &
+                                              count=(/nx,ny,nk,1/))
     if (status /= nf90_noerr) then 
       print *, "Error on reading cloud water"
       stop 2
@@ -388,7 +434,8 @@ program testWetDep
     end if
     
     allocate(tmpvar(nx,ny,nk))
-    status = nf90_get_var(id, varid, tmpvar, start=(/1,1,1,nt/), count=(/nx,ny,nk,1/))
+    status = nf90_get_var(id, varid, tmpvar, start=(/1,1,1,nt/),&
+                                             count=(/nx,ny,nk,1/))
     if (status /= nf90_noerr) then 
       print *, "Error on reading cloud ice"
       stop 2
@@ -406,7 +453,8 @@ program testWetDep
     end if
     
     allocate(tmpvar(nx,ny,nk))
-    status = nf90_get_var(id, varid, tmpvar, start=(/1,1,1,nt/), count=(/nx,ny,nk,1/))
+    status = nf90_get_var(id, varid, tmpvar, start=(/1,1,1,nt/), &
+                                             count=(/nx,ny,nk,1/))
     if (status /= nf90_noerr) then 
       print *, "Error on reading cloud cover"
       stop 2
@@ -425,7 +473,8 @@ program testWetDep
     end if
 
     allocate(tmpvar2d(nx,ny))
-    status = nf90_get_var(id, varid, tmpvar2d, start=(/1,1,1,nt/), count=(/nx,ny,1,1/))
+    status = nf90_get_var(id, varid, tmpvar2d, start=(/1,1,1,nt/),&
+                                                count=(/nx,ny,1,1/))
     if (status /= nf90_noerr) then 
       print *, "Error on reading acc precip"
       stop 2
@@ -435,7 +484,8 @@ program testWetDep
     
     pr(:,:) = tmpvar2d(:,:)
 
-    status = nf90_get_var(id, varid, tmpvar2d, start=(/1,1,1,nt-1/), count=(/nx,ny,1,1/))
+    status = nf90_get_var(id, varid, tmpvar2d, start=(/1,1,1,nt-1/),&
+                                                  count=(/nx,ny,1,1/))
     if (status /= nf90_noerr) then 
       print *, "Error on reading acc precip"
       stop 2
@@ -458,7 +508,8 @@ program testWetDep
 
     print *, "successfully closed!"
 
-    status = nf90_create(path = "./snap_testdata/wetdeptest.nc", cmode = nf90_clobber, ncid= id_new)
+    status = nf90_create(path = "./snap_testdata/wetdeptest.nc", &
+                            cmode = nf90_clobber, ncid= id_new)
     if (status /= nf90_noerr) then 
       print *, "Error on creating new file"
       stop 2
