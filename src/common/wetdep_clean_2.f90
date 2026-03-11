@@ -1,3 +1,8 @@
+! SNAP: Servere Nuclear Accident Programme
+! Copyright (C) 1992-2026   Norwegian Meteorological Institute
+
+! License: GNU General Public License Version 3 (GNU GPL-3.0)
+
 !> Wet deposition of radionuclides.
 !> Method: Combination of J.Bartnicki 2003 and Takemura et al. 2000.
 !> This module considers two different regimes where wet deposition 
@@ -16,7 +21,9 @@ module wetdepmlclean2
   real, parameter :: precmin = 0.01
 
   public :: wetdep, init, requires_extra_precip_fields, &
-      wetdep_precompute, wet_deposition_constant, wetdep_incloud_takemura
+      wetdep_precompute, wet_deposition_constant, &
+      wet_subcloud_bartnicki_ccf, vminprec, wet_subcloud_bartnicki,&
+      wetdep_3D, calc_ml_var, wetdep_incloud_takemura
 
   integer, parameter, public :: WETDEP_SUBCLOUD_SCHEME_UNDEFINED = 0 
   integer, parameter, public :: WETDEP_SUBCLOUD_SCHEME_NONE = 1 
@@ -110,15 +117,12 @@ contains
     USE particleML, only: particle, extraParticle
     use snapparML, only: def_comp
     use snapfldml, only: depwet
-    USE snapdimML, only: hres_pos
 
     real, intent(in) :: tstep
     type(particle), intent(inout) :: part
     type(extraParticle), intent(in) :: pextra
-    integer :: i, j, mo, m
-    m = part%icomp
-    if (def_comp(m)%kwetdep == 1) then 
-      
+
+    if (def_comp(part%icomp)%kwetdep == 1) then       
       ! If wet deposition applied to the component
       call calc_dep(depwet,tstep, part, pextra)
     endif
@@ -130,16 +134,17 @@ contains
     USE iso_fortran_env, only: real64
     USE particleML, only: Particle, extraParticle
     USE snapparML, only: def_comp, run_comp
+    USE snapdimML, only: hres_pos
 
     !> Field which wet deposition gets added to
-    real(real64), intent(inout) :: dep
+    real(real64), intent(inout) :: dep(:,:,:)
     !> Timestep of the simulation, affects the deposition rate
     real, intent(in) :: tstep
     !> Particle description
     type(Particle), intent(inout) :: part
     !> uses the precipitation at the particle position
     type(extraParticle), intent(in) :: pextra
-    integer :: m,mm
+    integer :: i,j,m,mm,mo
     real :: radlost, rkw
     
     m = part%icomp
@@ -160,7 +165,10 @@ contains
       end if
     end if
   
-    dep = dep + dble(radlost)
+    i = hres_pos(part%x)
+    j = hres_pos(part%y) 
+    mo = def_comp(m)%to_output
+    dep(i,j,mo) = dep(i,j,mo) + dble(radlost)
 
   end subroutine
 
