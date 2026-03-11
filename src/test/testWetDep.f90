@@ -236,6 +236,106 @@ program testWetDep
         end select
       end do
     end do
+
+    
+    print *, "                  _____________________________"
+    print *, "               HIGHER ALTITUDE (in-cloud dominance):"
+    print *, "                  _____________________________"
+
+
+    part%z = 0.5
+
+    scheme = 2
+
+    wetdep_scheme = wetdep_scheme_2
+    name = "Bartnicki-Takemura"
+    
+    call wetdep_precompute()
+    print *, "Precompute passed"
+    vminprec = 0.1
+    call init()
+    print *, "Initialisation passed" 
+
+    do c =1,ncomp
+        print *, "----------------------------------------------------"
+        print *, "COMPONENT: ", def_comp(c)%compname
+        part%icomp = c
+        mo = def_comp(part%icomp)%to_output
+  
+        i = nint(part%x)
+        j = nint(part%y) 
+        ivlvl = nint(part%z * 10000.0)
+        ivlevel(ivlvl)= 42
+        k = ivlevel(ivlvl)
+        print *, "Grid point i, j, k:", i, j, k
+      
+      
+        pextra%prc = precip(i,j)
+  
+        print *, "Testing schemes..."
+        rkw_b = wet_subcloud_bartnicki(def_comp(part%icomp)%radiusmym,& 
+                             pextra%prc, run_comp(part%icomp)%depconst)
+        rad = part%set_rad(1.) ! initial activity 1 Bq
+        radlost_b= part%scale_rad(exp(-tstep*rkw_b))
+  
+      
+        call calc_ml_var(k,precip3d(i,j,:),mlprecip)
+        call calc_ml_var(k,cloud_cover(i,j,:),mlccf)  
+        print *, "mlprecip, mlccf", mlprecip, mlccf
+        call wet_subcloud_bartnicki_ccf(rkw_b3d,def_comp(part%icomp)%radiusmym,&
+                                  mlprecip,mlccf,wetdep_scheme%use_cloudfraction)
+        rad = part%set_rad(1.) ! reset initial activity 1 Bq
+        radlost_b3d= part%scale_rad(exp(-tstep*rkw_b3d))
+    
+        call wetdep_incloud_takemura(rkw_t,precip3d(i,j,k),cw3d(i,j,k),cloud_cover(i,j,k))
+        
+        rad = part%set_rad(1.) ! reset initial activity 1 Bq
+        radlost_t= part%scale_rad(exp(-tstep*rkw_t))
+    
+    
+        call wetdep_3D(rkw_3d,k,part,def_comp(part%icomp)%radiusmym)
+        rad = part%set_rad(1.) ! reset initial activity 1 Bq
+        radlost_3d= part%scale_rad(exp(-tstep*rkw_3d))      
+      
+        write (*,10) "Scheme", "Scavenging rate [1/s]", "Deposited radiation"
+        write (*,11) "Bartnicki", rkw_b, radlost_b
+        write (*,11) "Bart. ccf", rkw_b3d, radlost_b3d
+        write (*,11) "Takemura", rkw_t, radlost_t
+        write (*,11) "Wetdep 3D", rkw_3d, radlost_3d    
+        
+        i = hres_pos(part%x)
+        j = hres_pos(part%y) 
+    
+        depwet(i,j,mo) = 0.0
+        print *, "Computing from wetdep subroutine..."
+        rad = part%set_rad(1.) ! reset initial activity 1 Bq
+        call CPU_TIME(t1)
+        call wetdep(tstep,part,pextra)
+        call CPU_TIME(t2)
+        print *, "Completed calculations!"
+        print *, 'Time for computation', t2-t1
+
+    
+        dep = depwet(i,j,mo)
+        print*, "Deposition: ", dep
+
+        if (abs(dep - radlost_b3d) > 1.0e-5 .and. abs(dep - radlost_t) > 1.0e-5) &
+          stop "Test failed: calculated deposition does not match expected &
+                                      &bartnicki ccf or takemura deposition "
+
+        select case (def_comp(c)%compname)
+        case ("Cs137")
+          if (abs(dep - 2.27106214E-02) > 1.0e-5) &
+            stop "Test failed: calculated deposition for bartnicki-takemura &
+                                         &scheme does not match expected value"
+            
+        case ("I131")
+          if (abs(dep - 2.27106214E-02) > 1.0e-5) &
+            stop "Test failed: calculated deposition for bartnicki-takemura &
+                                        &scheme does not match expected value"
+          
+        end select
+    end do
     print *, "All tests passed"
   end if
    
@@ -246,7 +346,7 @@ program testWetDep
     real, allocatable, intent(inout) :: prec(:,:,:), cw(:,:,:), cf(:,:,:), pr(:,:)
     integer :: varid, id, status, nx, ny, nk
     integer, dimension(nf90_max_var_dims) :: dimIDs 
-    status = nf90_open(path = "./snap_testdata/wetdeptest.nc", mode = nf90_nowrite, ncid= id)
+    status = nf90_open(path = "./data/wetdeptest.nc", mode = nf90_nowrite, ncid= id)
     if (status /= nf90_noerr) then 
       print *, "Error in opening file "
       stop 2
