@@ -4,7 +4,7 @@
 MODELOBJ = array_utils.o dateCalc.o utils.o particleML.o snapdimML.o snapfilML.o snapfimexML.o \
 snapfldML.o snapgrdML.o snapmetML.o snapparML.o \
 snapposML.o snaptabML.o snapdebugML.o snaptimersML.o posint.o decay.o \
-om2edot.o ftest.o readfield_nc.o rwalk.o epinterp.o \
+om2edot.o ftest.o readfield_nc.o readfield.o rwalk.o epinterp.o \
 vgravtables.o forwrd.o wetdep.o drydep.o \
 bldp.o compheight.o checkDomain.o \
 filesort_nc.o fldout_nc.o \
@@ -14,12 +14,15 @@ find_parameters.o datetime.o
 
 # old milib files
 MODELOBJ += gridpar.o  mapfield.o  xyconvert.o \
-     earthr.o pol2sph.o sph2rot.o lam2sph.o mer2sph.o milibML.o
+     pol2sph.o sph2rot.o lam2sph.o mer2sph.o milibML.o
+READFIELDOBJ = readfield_nc.o
+
 
 ifdef FIMEXLIB
   ifneq "${FIMEXLIB}" ""
     F77FLAGS += -DFIMEX
     MODELOBJ += readfield_fi.o filesort_fi.o find_parameters_fi.o fimex.o
+	READFIELDOBJ += readfield_fi.o
   endif
 endif
 
@@ -37,7 +40,7 @@ snap.o: ../common/snap.F90 $(MODELOBJ)
 
 fimex.o: ../common/fimex.f90
 	${F77} -c $(F77FLAGS) $(INCLUDES) -fno-module-private $<
-allocateFields.o: ../common/allocateFields.f90 particleML.o snapparML.o snapfldML.o snapfilML.o snapgrdML.o release.o snapdimML.o snapmetML.o
+allocateFields.o: ../common/allocateFields.f90 particleML.o snapparML.o snapfldML.o snapfilML.o snapgrdML.o release.o snapdimML.o snapmetML.o drydep.o
 	${F77} -c $(F77FLAGS) $(INCLUDES) $<
 array_utils.o: ../common/array_utils.f90
 	${F77} -c $(F77FLAGS) $(INCLUDES) $<
@@ -83,13 +86,15 @@ readfield_nc.o: ../common/readfield_nc.f90 particleML.o snapfilML.o snapgrdML.o 
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 readfield_fi.o: ../common/readfield_fi.f90 snapfimexML.o particleML.o snapfilML.o snapgrdML.o snapmetML.o snaptabML.o snapdebugML.o snaptimersML.o snapdimML.o om2edot.o ftest.o milibML.o fimex.o datetime.o readfield_nc.o utils.o drydep.o wetdep.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+readfield.o: ../common/readfield.F90 $(READFIELDOBJ) snapgrdML.o datetime.o snapdebugML.o bldp.o compheight.o
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 filesort_nc.o: ../common/filesort_nc.f90 dateCalc.o snapfilML.o snapdimML.o snapgrdML.o snapfldML.o snapmetML.o snapdebugML.o readfield_nc.o datetime.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 filesort_fi.o: ../common/filesort_fi.f90 snapfimexML.o dateCalc.o snapfilML.o snapdimML.o snapgrdML.o snapfldML.o snapmetML.o snapdebugML.o readfield_fi.o datetime.o utils.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 find_parameters.o: ../common/find_parameters.f90 snapmetML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-find_parameters_fi.o: ../common/find_parameters_fi.f90 snapfimexML.o snapmetML.o fimex.o readfield_fi.o utils.o
+find_parameters_fi.o: ../common/find_parameters_fi.f90 snapfimexML.o snapmetML.o fimex.o readfield_fi.o utils.o milibML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 fldout_nc.o: ../common/fldout_nc.f90 snapfilML.o snapgrdML.o snapfldML.o snapparML.o snaptabML.o snapdebugML.o snapdimML.o readfield_nc.o ftest.o release.o milibML.o datetime.o utils.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
@@ -128,21 +133,19 @@ milibML.o: ../common/milibML.f90
 # libmi
 gridpar.o: ../common/milib/gridpar.f
 	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
-mapfield.o: ../common/milib/mapfield.f
+mapfield.o: ../common/milib/mapfield.f milibML.o
 	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 rmfile.o: ../common/milib/rmfile.f
 	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
-xyconvert.o: ../common/milib/xyconvert.f
-	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
-earthr.o: ../common/milib/earthr.f
+xyconvert.o: ../common/milib/xyconvert.f milibML.o
 	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 pol2sph.o: ../common/milib/pol2sph.f
 	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 sph2rot.o: ../common/milib/sph2rot.f
 	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
-lam2sph.o: ../common/milib/lam2sph.f
+lam2sph.o: ../common/milib/lam2sph.f milibML.o
 	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
-mer2sph.o: ../common/milib/mer2sph.f
+mer2sph.o: ../common/milib/mer2sph.f milibML.o
 	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 #---------------------------------------------------------
 

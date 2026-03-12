@@ -41,7 +41,6 @@ module snapfilML
 !> analysis/forecast reference time
 !> \see iavail
     type, public :: fileInfo
-        sequence
         integer(kind=int16) :: AYEAR
         integer(kind=int16) :: AMONTH
         integer(kind=int16) :: ADAY
