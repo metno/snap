@@ -13,7 +13,9 @@ module wetdepmlclean
   real, parameter :: precmin = 0.01
 
   public :: wetdep, init, requires_extra_precip_fields, &
-      wetdep_precompute
+      wetdep_precompute, wet_deposition_constant, &
+      wet_subcloud_bartnicki_ccf, vminprec, wet_subcloud_bartnicki,&
+      wetdep_incloud_takemura, wetdep2, wetdep_using_precomputed_wscav
 
   integer, parameter, public :: WETDEP_SUBCLOUD_SCHEME_UNDEFINED = 0 
   integer, parameter, public :: WETDEP_SUBCLOUD_SCHEME_NONE = 1 
@@ -53,7 +55,6 @@ contains
 !> Initialisation routine for subcloud bartnicki
   subroutine wetdep2_init()
 
-    USE snapdebug, only: iulog
     USE snapparML, only: ncomp
     USE snapparML, only: run_comp, def_comp
 
@@ -253,7 +254,7 @@ contains
   subroutine wet_subcloud_bartnicki_ccf(wscav, radius, precip, ccf, use_ccf)
     !> Scavenging rate [1/s]
     real, intent(out) :: wscav(:,:)
-    !> Precipitation intensity [mm/h]    !!![GEORGE]: Why is this accumulated eventually?
+    !> Precipitation intensity [mm/h]
     real, intent(in) :: precip(:,:)
     real, intent(in) :: radius
     real, intent(in) :: ccf(:,:)
@@ -284,7 +285,8 @@ contains
               ! Scale up precip intensity
               precip_scaled = precip(i,j) / ccf(i,j)
             else
-              precip_scaled = precip(i,j)               !> GEORGE: if ccf = 0 the surely no precipitation? Otherwise, could use mask to make ccf_{=0} = 1 for no for loops?
+              !! Accounts for no instantaneous cloud fraction
+              precip_scaled = precip(i,j)              
             endif
 
             wscav(i,j) = wet_subcloud_bartnicki(radius, precip_scaled, depconst, use_convective=.False.) !> Convective rain cannot be used here due to the precip scaling
@@ -302,13 +304,13 @@ contains
       !> Aerosol rainout process also known as GCM-type wet deposition process
   subroutine wetdep_incloud_takemura(lambda, q, cloud_water, cloud_fraction)
     real, intent(out) :: lambda(:,:)
-    !> vertical flux of hydrometeors [GEORGE: units?/translate??]
+    !> Mass fraction of precipitation in model layer
     real, intent(in) :: q(:,:)
     !> Fraction of aerosol mass in cloud water to total aerosol mass in the grid
     !> or the absorbtion coefficient
-    !> Usually very high     !! [GEORGE]: Does this mean 1.0 is not physical?? - book suggests this should be lower
+    !> Usually very high                                       !! [GEORGE]: Does this mean 1.0 is not physical?? - book suggests this should be lower
     real, parameter :: f_inc = 1.0
-    !> cloud water
+    !> mass fraction of cloud water
     real, intent(in) :: cloud_water(:,:)
     !> Cloud fraction
     real, intent(in) :: cloud_fraction(:,:)
@@ -362,12 +364,13 @@ contains
     nk = size(wscav,3)
 
     allocate(wscav_tmp, mold=wscav)
-    allocate(accum_precip(nx,ny), accum_ccf(nx,ny))   ![GEORGE]: Accumulated values only needed in subcloud... for some reason
+    allocate(accum_precip(nx,ny), accum_ccf(nx,ny))
 
     accum_precip(:,:) = 0.0
     accum_ccf(:,:) = 0.0
     do k=nk,1,-1
-      ! Accumulated precipitation in the column
+      ! Accumulated instantaneous precipitation in the column
+      ! To calculate precipitation rate at model layer         !![GEORGE]: Change to cloud layers instead of every model layer
       accum_precip(:,:) = accum_precip(:,:) + precip(:,:,k)
       accum_ccf(:,:) = accum_ccf(:,:) + ccf(:,:,k)
       where (accum_ccf >= 1.0)

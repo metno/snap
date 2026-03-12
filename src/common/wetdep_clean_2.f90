@@ -9,7 +9,7 @@
 !>can be calculated: incloud (in model levels) and subcloud (at surface level).
 !! [GEORGE]: Describe more
 
-module wetdepmlclean2
+module wetdepml
   use iso_fortran_env, only: real64
   implicit none
   private
@@ -201,8 +201,8 @@ contains
 
     select case (wetdep_scheme%subcloud)
       case (WETDEP_SUBCLOUD_SCHEME_BARTNICKI)
-        call calc_ml_var(k,precip3d(i,j,:),mlprecip)
-        call calc_ml_var(k,cloud_cover(i,j,:),mlccf)
+        call calc_ml_var(k,precip3d(i,j,:),mlprecip,.false.)
+        call calc_ml_var(k,cloud_cover(i,j,:),mlccf,.true.)
         call wet_subcloud_bartnicki_ccf(rkw, radius, mlprecip, &
           mlccf, use_ccf=wetdep_scheme%use_cloudfraction)
         ! call wet_subcloud_bartnicki_ccf(rkw, radius, accum_precip(i,j,k), &
@@ -402,23 +402,26 @@ contains
   !> Integrates instantaneous measurements of precipitation 
   !> or cloud fraction at model levels upwards
   !> output: intensities for each level
-  recursive subroutine calc_ml_var(k,var, accum_var)
+  recursive subroutine calc_ml_var(k,var, accum_var, cloud)
     !> model level
     integer, intent(in) :: k
     !>Instantaneous variable at model level
     real, intent(in) :: var(:)
+    logical, intent(in) :: cloud
     !> Output of accumulation -> rate or intenity
     real, intent(out) :: accum_var
     integer :: nk
 
     nk = size(var)
-    if (k .eq. nk) then
+    if (cloud .and. accum_var >= 1.0) then
+      accum_var = 1.0
+    else if (k .eq. nk) then
       accum_var = var(k)
     else
-      call calc_ml_var(k+1,var,accum_var)
-      accum_var = accum_var + var(k+1)
+      call calc_ml_var(k+1,var,accum_var,cloud)
+      accum_var = accum_var + var(k)
     end if
-
+    if (cloud .and. accum_var >= 1.0) accum_var = 1.0
   end subroutine
 
-end module wetdepmlclean2
+end module wetdepml
