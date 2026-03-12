@@ -818,6 +818,7 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
     simulation_start)
   USE snapdimML, only : nx, ny, output_resolution_factor, hres_field
   USE snapfldML, only : field_hr1, field_hr2
+  USE milibML, only : EARTH_RADIUS
   INTEGER, INTENT(IN) :: iunit, xdimid, ydimid, igtype
   REAL(real32), INTENT(IN):: gparam(8)
   REAL(real32), INTENT(IN), DIMENSION(nx*output_resolution_factor,ny*output_resolution_factor) :: garea
@@ -850,6 +851,10 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
 ! a reference-time, same as in WRF
   call check(nf90_put_att(iunit, NF90_GLOBAL, &
       "SIMULATION_START_DATE", trim(simulation_start)))
+
+
+! datum and projection
+  call check(nf90_put_att(iunit,proj_varid, "earth_radius", EARTH_RADIUS))
 
   gparam_hres(:) = gparam(:)
   select case(igtype)
@@ -963,11 +968,6 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
 
     xvals(1) = (xvals(1)-1)*gparam(7)
     yvals(1) = (yvals(1)-1)*gparam(8)
-    ! xvals is currently the lowerd left corner in plane-coordinates
-    ! but must be in m from center
-    ! first cell center, not left edge. must be moved
-    xvals(1) = xvals(1) - .5 * (output_resolution_factor-1) * gparam_hres(7)
-    yvals(2) = yvals(2) - .5 * (output_resolution_factor-1) * gparam_hres(8)
 
     do i=2,nx*output_resolution_factor
       xvals(i) = xvals(1) + (i-1)*gparam_hres(7)
@@ -984,18 +984,20 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
   call check(nf90_put_var(iunit, y_varid, yvals))
   call check(nf90_sync(iunit))
 
-  call check(nf90_def_var(iunit, "longitude", &
-      NF90_FLOAT, dimids, lon_varid))
-  call check(NF90_DEF_VAR_DEFLATE(iunit, lon_varid, 1,1,1))
-  call check(nf90_sync(iunit))
-  call check(nf90_def_var(iunit, "latitude", &
-      NF90_FLOAT, dimids, lat_varid))
-  call check(nf90_sync(iunit))
-  call check(nf90_put_att(iunit,lon_varid, "units", &
-      TRIM("degrees_east")))
-  call check(nf90_put_att(iunit,lat_varid, "units", &
-      TRIM("degrees_north")))
-
+  if (output_resolution_factor == 1) then
+    ! hires lon-lats might be slightly wrong due to interpolation to hires,
+    ! so not outputting them in that case
+    call check(nf90_def_var(iunit, "longitude", &
+        NF90_FLOAT, dimids, lon_varid))
+    call check(NF90_DEF_VAR_DEFLATE(iunit, lon_varid, 1,1,1))
+    call check(nf90_sync(iunit))
+    call check(nf90_def_var(iunit, "latitude", &
+        NF90_FLOAT, dimids, lat_varid))
+    call check(nf90_put_att(iunit,lon_varid, "units", &
+        TRIM("degrees_east")))
+    call check(nf90_put_att(iunit,lat_varid, "units", &
+        TRIM("degrees_north")))
+  endif
   call check(nf90_sync(iunit))
 
 !.... create latitude/longitude variable-values
@@ -1026,8 +1028,11 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
     call hres_field(lon, field_hr1, .true.)
     call hres_field(lat, field_hr2, .true.)
   endif
-  call check(nf90_put_var(iunit, lon_varid, field_hr1))
-  call check(nf90_put_var(iunit, lat_varid, field_hr2))
+  if (output_resolution_factor == 1) then
+    ! hires lon-lats might be slightly wrong due to interpolation, so not outputting them in this case
+    call check(nf90_put_var(iunit, lon_varid, field_hr1))
+    call check(nf90_put_var(iunit, lat_varid, field_hr2))
+  end if
 
 !.... create cell_area
   call check(nf90_def_var(iunit, "cell_area", &
@@ -1047,8 +1052,11 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
   call check(nf90_put_att(iunit,mapx_varid, "units", "1"))
   call check(nf90_put_att(iunit,mapx_varid, "grid_mapping", &
       TRIM("projection")))
-  call check(nf90_put_att(iunit,mapx_varid, "coordinates", &
-      TRIM("longitude latitude")))
+
+  if (output_resolution_factor == 1) then
+    call check(nf90_put_att(iunit,mapx_varid, "coordinates", &
+        TRIM("longitude latitude")))
+  end if
 
   call hres_field(xm, field_hr1, .true.)
   call check(nf90_put_var(iunit, mapx_varid, field_hr1))
@@ -1058,8 +1066,10 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
   call check(nf90_put_att(iunit,mapy_varid, "units", "1"))
   call check(nf90_put_att(iunit,mapy_varid, "grid_mapping", &
       TRIM("projection")))
-  call check(nf90_put_att(iunit,mapy_varid, "coordinates", &
-      TRIM("longitude latitude")))
+  if (output_resolution_factor == 1) then
+    call check(nf90_put_att(iunit,mapy_varid, "coordinates", &
+        TRIM("longitude latitude")))
+  end if
 
   call hres_field(ym, field_hr1, .true.)
   call check(nf90_put_var(iunit, mapy_varid, field_hr1))
@@ -1229,7 +1239,7 @@ subroutine initialize_output(filename, itime, ierror)
       use iso_fortran_env, only: int8
       use drydepml, only: largest_landfraction_file, classnr
       integer(kind=int8), allocatable :: classnr_hr(:,:)
-      if (largest_landfraction_file /= "not set" .and. output_vd_debug .and. allocated(classnr_hr)) then
+      if (largest_landfraction_file /= "not set" .and. output_vd_debug) then
           call nc_declare(iunit, dimids2d, varid%landfraction, &
             "largest_land_fraction", units="1", datatype=NF90_BYTE)
           call hres_field(classnr, classnr_hr)

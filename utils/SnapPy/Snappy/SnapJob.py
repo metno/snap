@@ -23,7 +23,9 @@ Created on Mar 8, 2018
 
 import os
 import re
+
 from Snappy.Resources import MetModel
+
 
 class UnknownModelException(Exception):
     """Exception when wrong model/prefix-name is send to SnapJob"""
@@ -135,6 +137,7 @@ module load {module_to_load}
 ulimit -c 0
 # run might have many particles, use two hyper-threads
 export OMP_NUM_THREADS=2
+export OMP_PLACES=cores
 export OMP_THREAD_LIMIT=2
 
 cd {rundir}
