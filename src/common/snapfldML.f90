@@ -1,3 +1,8 @@
+! SNAP: Servere Nuclear Accident Programme
+! Copyright (C) 1992-2026   Norwegian Meteorological Institute
+
+! License: GNU General Public License Version 3 (GNU GPL-3.0)
+
 module snapfldML
   USE iso_fortran_env, only: real32, real64
   implicit none
