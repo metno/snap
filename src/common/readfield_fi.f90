@@ -540,7 +540,7 @@ contains
   subroutine read_extra_precipitation_fields(fio, timepos)
     use iso_fortran_env, only: error_unit
     use snaptabML, only: g
-    use snapfldML, only: ps_io, precip3d, cw3d, cloud_cover, enspos
+    use snapfldML, only: ps_io, precip3d_io, cw3d_io, cloud_cover_io, enspos
     use snapgrdML, only: ahalf, bhalf, klevel
     use snapdimML, only: nx, ny, nk
     use snapmetML, only: mass_fraction_units, cloud_fraction_units, met_params
@@ -562,8 +562,8 @@ contains
     allocate(rain_in_air(nx,ny),graupel_in_air(nx,ny),snow_in_air(nx,ny),pdiff(nx,ny))
     allocate(cloud_water(nx,ny),cloud_ice(nx,ny))
 
-    precip3d(:,:,:) = 0.0
-    cw3d(:,:,:) = 0.0
+    precip3d_io(:,:,:) = 0.0
+    cw3d_io(:,:,:) = 0.0
 
     do k=nk,2,-1
       ilevel = klevel(k)
@@ -590,8 +590,8 @@ contains
 
       pdiff(:,:) = 100*( (ahalf(k-1) - ahalf(k)) + (bhalf(k-1) - bhalf(k))*ps_io )
 
-      precip3d(:,:,k) = rain_in_air + graupel_in_air + snow_in_air
-      precip3d(:,:,k) = precip3d(:,:,k) * pdiff / g
+      precip3d_io(:,:,k) = rain_in_air + graupel_in_air + snow_in_air
+      precip3d_io(:,:,k) = precip3d_io(:,:,k) * pdiff / g
 
       call fi_checkload(fio, met_params%mass_fraction_cloud_condensed_water_in_air, mass_fraction_units, &
                         cloud_water, nt=timepos, nz=ilevel, nr=nr)
@@ -604,11 +604,11 @@ contains
       where (cloud_ice < 0.0)
         cloud_ice = 0.0
       end where
-      cw3d(:,:,k) = cloud_water + cloud_ice
-      cw3d(:,:,k) = cw3d(:,:,k) * pdiff / g
+      cw3d_io(:,:,k) = cloud_water + cloud_ice
+      cw3d_io(:,:,k) = cw3d_io(:,:,k) * pdiff / g
 
       call fi_checkload(fio, met_params%cloud_fraction, cloud_fraction_units, &
-                        cloud_cover(:,:,k), nt=timepos, nz=ilevel, nr=nr)
+                        cloud_cover_io(:,:,k), nt=timepos, nz=ilevel, nr=nr)
     enddo
   end subroutine
 
