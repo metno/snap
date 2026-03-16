@@ -72,22 +72,19 @@ module snapfldML
 
 !> instant precipitation intensity in three dimensions (mm/hour)
 !> only temporarily used during reading of 3D precipitation from met-data
-  real(kind=real32), allocatable, save, public :: precip3d(:,:,:)
+  real(kind=real32), allocatable, target, save, public :: precip3d(:,:,:)
 
 !> Cloud water content (mm)
 !> only temporarily used during reading of 3D precipitation from met-data
-  real(kind=real32), allocatable, save, public :: cw3d(:,:,:)
+  real(kind=real32), allocatable, target, save, public :: cw3d(:,:,:)
 
 !> Cloud cover fraction
 !> only temporarily used during reading of 3D precipitation from met-data
-  real(kind=real32), allocatable, save, public :: cloud_cover(:,:,:)
-
-!> Accumulated precipiation and cloud cover
-  real(kind=real32), allocatable, save, public :: accum_precip(:,:,:), accum_ccf(:,:,:)
+  real(kind=real32), allocatable, target, save, public :: cloud_cover(:,:,:)
 !> wet scavenging rate
   real(kind=real32), allocatable, target, save, public :: wscav(:,:,:,:)
-  real(kind=real32), allocatable, target, save, public :: wscav_x(:,:,:,:)
-  real(kind=real32), pointer , public :: wscav_io(:,:,:,:)
+  real(kind=real32), allocatable, target, save, public :: wscav_x(:,:,:,:), cw3d_x(:,:,:),cloud_cover_x(:,:,:),precip3d_x(:,:,:)
+  real(kind=real32), pointer , public :: wscav_io(:,:,:,:), cw3d_io(:,:,:),cloud_cover_io(:,:,:),precip3d_io(:,:,:)
 
 !> surface pressure (time step 1)
   real(kind=real32), allocatable, target, save, public :: ps1(:,:)
@@ -317,8 +314,14 @@ module snapfldML
 
       call swap_2_fields_2d(precip, precip_x)
       precip_io => precip_x
-      call swap_2_fields_4d(wscav, wscav_x)
-      wscav_io => wscav_x
+      ! call swap_2_fields_4d(wscav, wscav_x)
+      ! wscav_io => wscav_x
+      call swap_2_fields_3d(precip3d, precip3d_x)
+      precip3d_io => precip3d_x
+      call swap_2_fields_3d(cw3d, cw3d_x)
+      cw3d_io => cw3d_x
+      call swap_2_fields_3d(cloud_cover, cloud_cover_x)
+      cloud_cover_io => cloud_cover_x      
       call swap_2_fields_3d(vd_dep, vd_dep_x)
       vd_dep_io => vd_dep_x
 

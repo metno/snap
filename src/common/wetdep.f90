@@ -176,9 +176,9 @@ contains
   subroutine wetdep_3D(rkw, part, radius)
     
     use iso_fortran_env, only: real64
-    use particleml, only: particle 
+    use particleml, only: particle, extraParticle
     use snapgrdML, only: ivlevel 
-    use snapfldML, only: precip3d, cw3d, cloud_cover !accum_precip,accum_ccf,
+    use snapfldML, only: precip3d, cw3d, cloud_cover
     
     !> Wet scavenging coefficient [1/s] of specific component
     real, intent(out) :: rkw
@@ -188,10 +188,11 @@ contains
     real, intent(in) :: radius
 
     real :: rkw_tmp, mlprecip, mlccf
-    integer :: ivlvl, i, j,k, nx, ny
+    integer :: ivlvl, i, j, k, nx, ny, nk
     
     nx = size(precip3d,1)
     ny = size(precip3d,2)
+    nk = size(precip3d,3)
 
 
     ivlvl = nint(part%z * 10000.0)
@@ -201,12 +202,11 @@ contains
 
     select case (wetdep_scheme%subcloud)
       case (WETDEP_SUBCLOUD_SCHEME_BARTNICKI)
-        call calc_ml_var(k,precip3d(i,j,:),mlprecip)
-        call calc_ml_var(k,cloud_cover(i,j,:),mlccf)
-        call wet_subcloud_bartnicki_ccf(rkw, radius, mlprecip, &
-          mlccf, use_ccf=wetdep_scheme%use_cloudfraction)
-        ! call wet_subcloud_bartnicki_ccf(rkw, radius, accum_precip(i,j,k), &
-        !   accum_ccf(i,j,k), use_ccf=wetdep_scheme%use_cloudfraction)
+        mlccf=sum(cloud_cover(i,j,k:nk))
+        mlprecip= sum(precip3d(i,j,k:nk))
+        if (mlccf >= 1.0) mlccf = 1.0
+         call wet_subcloud_bartnicki_ccf(rkw, radius, mlprecip, &
+           mlccf, use_ccf=wetdep_scheme%use_cloudfraction)
     case (WETDEP_SUBCLOUD_SCHEME_NONE)
         rkw = 0.0
       case default
@@ -263,7 +263,7 @@ contains
     endif
 
     rkw = 0
-    if (radius <= 0.1) then
+    if (radius <= 0.05) then
     ! Gas scavenging [Aligns with NAME parameters for SO2 and ammonia]
       rkw = 1.12e-4*q**0.79 
     else
@@ -273,7 +273,7 @@ contains
         rkw = 3.36e-4*q**0.79
       else 
       ! Stratiform scavenging [eq. 16]
-        if (radius > 0.1 .AND. radius <= 1.4) then    
+        if (radius > 0.05 .AND. radius <= 1.4) then    
           rkw = a0*q**0.79
         else if (radius > 1.4 .AND. radius <= 10.0) then   
           rkw = depconst*(a1*q + a2*q*q)
@@ -354,70 +354,48 @@ contains
 
   !> Should be called every input timestep to prepare the scavenging rates
   subroutine wetdep_precompute()
-    use snapfldML, only: cw3d, precip3d, cloud_cover !, accum_precip, accum_ccf
+    use snapfldML, only: cw3d, precip3d, cloud_cover
 
     if (wetdep_scheme%use_vertical) then   
       !skip precomputation if no vertical scheme
 
       if (.not.(allocated(precip3d).and.allocated(cw3d).and.allocated(cloud_cover) &
-    )) then  !.and.allocated(accum_precip).and.allocated(accum_ccf)
+    )) then
         error stop "Some wetdep/precip fields not allocated"
       endif
-
-      ! call calc_accum_precip(accum_precip,accum_ccf,precip3d,cloud_cover)
     endif 
   end subroutine
   
   !> Calculates the accumulated precipitation and cloud cover downwards
   !> For the subcloud bartnicki scheme
-  !> Precalculated because otherwise the calculation is repeated ncomp times unnecessarily.
-  ![GEORGE]: why accumulated??
-  ! subroutine calc_accum_precip(accum_precip,accum_ccf, precip, ccf) 
-
-  !   real, intent(out) :: accum_precip(:,:,:), accum_ccf(:,:,:)
-  !   !> Precipitation intensity [mm/h], 3D
-  !   real, intent(in) :: precip(:,:,:)
-  !   !> Cloud cover fraction
-  !   real, intent(in) :: ccf(:,:,:)
-
-  !   integer :: nk, k
-
-  !   nk = size(precip,3)
-
-  !   accum_precip(:,:,nk) = precip(:,:,nk)
-  !   accum_ccf(:,:,nk) = ccf(:,:,nk)
-
-  !   do k=nk-1,1,-1
-  !     ! Accumulated precipitation in the column
-  !     accum_precip(:,:,k) = accum_precip(:,:,k+1) + precip(:,:,k)
-  !     accum_ccf(:,:,k) = accum_ccf(:,:,k+1) + ccf(:,:,k)
-  !   end do
-
-  !   where (accum_ccf >= 1.0)
-  !     accum_ccf = 1.0
-  !   endwhere
-    
-  ! end subroutine
 
   !> Integrates instantaneous measurements of precipitation 
   !> or cloud fraction at model levels upwards
   !> output: intensities for each level
-  recursive subroutine calc_ml_var(k,var, accum_var)
+  ! recursive subroutine calc_ml_var(k,var, accum_var, cloud)
+  subroutine calc_ml_var(k,var, accum_var, cloud)
     !> model level
     integer, intent(in) :: k
     !>Instantaneous variable at model level
     real, intent(in) :: var(:)
+    logical, intent(in) :: cloud
     !> Output of accumulation -> rate or intenity
     real, intent(out) :: accum_var
     integer :: nk
 
     nk = size(var)
-    if (k .eq. nk) then
-      accum_var = var(k)
-    else
-      call calc_ml_var(k+1,var,accum_var)
-      accum_var = accum_var + var(k+1)
-    end if
+    ! if (cloud .and. accum_var >= 1.0) then
+    !   accum_var = 1.0
+    ! else if (k .eq. nk) then
+    !   accum_var = var(k)
+    ! else
+    !   call calc_ml_var(k+1,var,accum_var,cloud)
+    !   accum_var = accum_var + var(k)
+    ! end if
+    ! if (cloud .and. accum_var >= 1.0) accum_var = 1.0
+
+    accum_var=sum(var(k:nk))
+    if (cloud .and. accum_var >= 1.0) accum_var = 1.0
 
   end subroutine
 

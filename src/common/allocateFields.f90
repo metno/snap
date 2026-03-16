@@ -21,7 +21,8 @@ module allocateFieldsML
       surface_stress, hflux, t2m, z0, &
       ustar, raero, my, nu, &
       total_activity_released, total_activity_lost_domain, total_activity_lost_other, &
-      wscav, cloud_cover, accum_ccf, accum_precip, wscav_x, wscav_io, use_async_io
+      wscav, cloud_cover, wscav_x, wscav_io, use_async_io, &
+      precip3d_x, precip3d_io, cloud_cover_io, cloud_cover_x, cw3d_x, cw3d_io
   USE snapfilML, only: idata, fdata
   USE snapgrdML, only: ahalf, bhalf, vhalf, alevel, blevel, vlevel, imodlevel, &
       compute_column_max_conc, compute_aircraft_doserate, aircraft_doserate_threshold
@@ -200,20 +201,34 @@ subroutine allocateFields
   if (met_params%use_3d_precip) then
     ALLOCATE(precip3d(nx,ny,nk), cw3d(nx,ny,nk), STAT=AllocateStatus)
     if (AllocateStatus /= 0) ERROR STOP errmsg
-    ! ALLOCATE(accum_ccf(nx,ny,nk),accum_precip(nx,ny,nk), STAT=AllocateStatus)
-    ! if (AllocateStatus /= 0) ERROR STOP errmsg
+    allocate(cloud_cover(nx,ny,nk), STAT=AllocateStatus)
+    if (AllocateStatus /= 0) ERROR STOP errmsg
     ! ALLOCATE(wscav(nx,ny,nk,ncomp),STAT=AllocateStatus)
     ! if (AllocateStatus /= 0) ERROR STOP errmsg
     ! wscav(:,:,:,:) = 0.0
     ! if (use_async_io) then
     !  ALLOCATE(wscav_x(nx,ny,nk,ncomp), STAT=AllocateStatus)
-     ! if (AllocateStatus /= 0) ERROR STOP errmsg
-     ! wscav_io => wscav_x
-    ! ELSE
+    !  if (AllocateStatus /= 0) ERROR STOP errmsg
+    !  wscav_io => wscav_x
+    !  ELSE
     !  wscav_io => wscav
-    ! END IF
-    allocate(cloud_cover(nx,ny,nk), STAT=AllocateStatus)
-    if (AllocateStatus /= 0) ERROR STOP errmsg
+    !  END IF
+    if (use_async_io) then
+      ALLOCATE(precip3d_x(nx,ny,nk), STAT=AllocateStatus)
+      if (AllocateStatus /= 0) ERROR STOP errmsg
+      precip3d_io => precip3d_x
+      ALLOCATE(cw3d_x(nx,ny,nk), STAT=AllocateStatus)
+      if (AllocateStatus /= 0) ERROR STOP errmsg
+      cw3d_io => cw3d_x   
+      ALLOCATE(cloud_cover_x(nx,ny,nk), STAT=AllocateStatus)
+      if (AllocateStatus /= 0) ERROR STOP errmsg
+      cloud_cover_io => cloud_cover_x     
+    ELSE
+     precip3d(:,:,:) = 0.0
+     precip3d_io => precip3d
+     cw3d_io => cw3d
+     cloud_cover_io => cloud_cover
+    END IF
   endif
 
 ! the calculation-fields
@@ -392,9 +407,10 @@ subroutine deAllocateFields
   if (allocated(precip3d)) deallocate(precip3d)
   if (allocated(cw3d)) deallocate(cw3d)
   if (allocated(wscav)) deallocate(wscav)
-  if (allocated(accum_precip)) deallocate(accum_precip)
-  if (allocated(accum_ccf)) deallocate(accum_ccf) 
   if (allocated(wscav_x)) deallocate(wscav_x)
+  if (allocated(precip3d_x)) deallocate(precip3d_x)
+  if (allocated(cw3d_x)) deallocate(cw3d_x)
+  if (allocated(cloud_cover_x)) deallocate(cloud_cover_x)
   if (allocated(cloud_cover)) deallocate(cloud_cover)
 
   DEALLOCATE ( avghbl )
