@@ -9,6 +9,8 @@ module snapfldML
 
 !> number of hourly steps between output of fields
   integer, save, public :: nhfout = 3
+  !> Cut off radius for gas particles
+  real, save, public :: gas_cutoff = 0.05001
 
 !> async io flag, must be set before allocation of fields
   logical, save, public :: use_async_io = .false.

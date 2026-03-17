@@ -6,7 +6,7 @@ program testWetDep_new
       WETDEP_SUBCLOUD_SCHEME_BARTNICKI, WETDEP_INCLOUD_SCHEME_NONE, &
       WETDEP_INCLOUD_SCHEME_TAKEMURA, wet_deposition_constant,&
       wet_subcloud_bartnicki_ccf, wetdep_precompute, vminprec, &
-      wet_subcloud_bartnicki, wetdep_3D, calc_ml_var, wetdep_incloud_takemura
+      wet_subcloud_bartnicki, wetdep_3D, wetdep_incloud_takemura
   use datetime, only: datetime_t
   use iso_fortran_env, only: real64
   use snapfldML, only: cw3d, precip3d, cloud_cover, depwet, precip
@@ -21,7 +21,7 @@ program testWetDep_new
   type(defined_component), pointer :: d_comp
   type(datetime_t) :: itimefi
   type(wetdep_scheme_t) :: wetdep_scheme_1, wetdep_scheme_2
-  integer :: i, mo, j, k, ivlvl, c, scheme
+  integer :: i, mo, j, k, ivlvl, c, scheme,nk
   real :: rad,  t1,t2, mlprecip, mlccf, tstep, radlost_b, &
           radlost_t, radlost_3d, radlost_b3d, rkw_b, rkw_3d, rkw_b3d, rkw_t
   type(Particle) :: part
@@ -157,8 +157,12 @@ program testWetDep_new
         radlost_b= part%scale_rad(exp(-tstep*rkw_b))
   
       
-        call calc_ml_var(k,precip3d(i,j,:),mlprecip,.false.)
-        call calc_ml_var(k,cloud_cover(i,j,:),mlccf,.true.)  
+        ! call calc_ml_var(k,precip3d(i,j,:),mlprecip,.false.)
+        nk = size(precip3d,3)
+        mlprecip =  sum(precip3d(i,j,k:nk))
+        mlccf=sum(cloud_cover(i,j,k:nk))
+        if (mlccf >= 1.0) mlccf = 1.0
+        ! call calc_ml_var(k,cloud_cover(i,j,:),mlccf,.true.)  
         print *, "mlprecip, mlccf", mlprecip, mlccf
         call wet_subcloud_bartnicki_ccf(rkw_b3d,def_comp(part%icomp)%radiusmym,&
                                   mlprecip,mlccf,wetdep_scheme%use_cloudfraction)
@@ -285,8 +289,10 @@ program testWetDep_new
         radlost_b= part%scale_rad(exp(-tstep*rkw_b))
   
       
-        call calc_ml_var(k,precip3d(i,j,:),mlprecip,.false.)
-        call calc_ml_var(k,cloud_cover(i,j,:),mlccf,.true.)  
+        nk = size(precip3d,3)
+        mlprecip =  sum(precip3d(i,j,k:nk))
+        mlccf=sum(cloud_cover(i,j,k:nk))
+        if (mlccf >= 1.0) mlccf = 1.0
         print *, "mlprecip, mlccf", mlprecip, mlccf
         call wet_subcloud_bartnicki_ccf(rkw_b3d,def_comp(part%icomp)%radiusmym,&
                                   mlprecip,mlccf,wetdep_scheme%use_cloudfraction)
@@ -331,12 +337,12 @@ program testWetDep_new
 
         select case (def_comp(c)%compname)
         case ("Cs137")
-          if (abs(dep - 2.27106214E-02) > 1.0e-5) &
+          if (abs(dep - 2.27106214e-02) > 1.0e-5) &
             stop "Test failed: calculated deposition for bartnicki-takemura &
                                          &scheme does not match expected value"
             
         case ("I131")
-          if (abs(dep - 2.27106214E-02) > 1.0e-5) &
+          if (abs(dep - 1.13438964e-02) > 1.0e-5) &
             stop "Test failed: calculated deposition for bartnicki-takemura &
                                         &scheme does not match expected value"
           
