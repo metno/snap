@@ -23,7 +23,7 @@ module wetdepml
   public :: wetdep, init, requires_extra_precip_fields, &
       wetdep_precompute, wet_deposition_constant, &
       wet_subcloud_bartnicki_ccf, vminprec, wet_subcloud_bartnicki,&
-      wetdep_3D, calc_ml_var, wetdep_incloud_takemura
+      wetdep_3D, wetdep_incloud_takemura
 
   integer, parameter, public :: WETDEP_SUBCLOUD_SCHEME_UNDEFINED = 0 
   integer, parameter, public :: WETDEP_SUBCLOUD_SCHEME_NONE = 1 
@@ -158,7 +158,7 @@ contains
     else if  (wetdep_scheme%subcloud == WETDEP_SUBCLOUD_SCHEME_BARTNICKI) then
       !! in 2D case just bartnicki
       if (pextra%prc > precmin &
-        .AND. part%z > vminprec) then  ! [GEORGE]: I would argue precmin should apply for all schemes? Or is this not true for in cloud, as you can have absorption before precipitation?
+        .AND. part%z > vminprec) then 
         !depends on the precipitation and altitude at the place of the particle.
         rkw = wet_subcloud_bartnicki(def_comp(m)%radiusmym, pextra%prc, run_comp(mm)%depconst)
         radlost = part%scale_rad(exp(-tstep*rkw))
@@ -178,7 +178,7 @@ contains
     use iso_fortran_env, only: real64
     use particleml, only: particle, extraParticle
     use snapgrdML, only: ivlevel 
-    use snapfldML, only: precip3d, cw3d, cloud_cover
+    use snapfldML, only: precip3d, cw3d, cloud_cover, gas_cutoff
     
     !> Wet scavenging coefficient [1/s] of specific component
     real, intent(out) :: rkw
@@ -205,9 +205,9 @@ contains
         mlccf=sum(cloud_cover(i,j,k:nk))
         mlprecip= sum(precip3d(i,j,k:nk))
         if (mlccf >= 1.0) mlccf = 1.0
-         call wet_subcloud_bartnicki_ccf(rkw, radius, mlprecip, &
-           mlccf, use_ccf=wetdep_scheme%use_cloudfraction)
-    case (WETDEP_SUBCLOUD_SCHEME_NONE)
+        call wet_subcloud_bartnicki_ccf(rkw, radius, mlprecip, &
+          mlccf, use_ccf=wetdep_scheme%use_cloudfraction)
+      case (WETDEP_SUBCLOUD_SCHEME_NONE)
         rkw = 0.0
       case default
         error stop "Subcloud scheme undefined"    
@@ -219,7 +219,11 @@ contains
       case (WETDEP_INCLOUD_SCHEME_NONE)
         rkw_tmp = 0.0
       case (WETDEP_INCLOUD_SCHEME_TAKEMURA)
-        call wetdep_incloud_takemura(rkw_tmp, precip3d(i,j,k), cw3d(i,j,k), cloud_cover(i,j,k))
+        if (radius > gas_cutoff) then
+          call wetdep_incloud_takemura(rkw_tmp, precip3d(i,j,k), cw3d(i,j,k), cloud_cover(i,j,k))
+        else 
+          rkw_tmp = 0.0
+        end if
       case default
         error stop "Incloud scheme undefined"
     end select
@@ -243,6 +247,7 @@ contains
 !> without cloud fraction adjustments [1/s]
   pure elemental real function wet_subcloud_bartnicki(radius, q, depconst, &
    use_convective) result(rkw)
+    use snapfldML, only: gas_cutoff
     !> radius in micrometer
     real, intent(in) :: radius
     !> precipitation intensity in mm/h
@@ -263,7 +268,7 @@ contains
     endif
 
     rkw = 0
-    if (radius <= 0.05) then
+    if (radius <= gas_cutoff) then
     ! Gas scavenging [Aligns with NAME parameters for SO2 and ammonia]
       rkw = 1.12e-4*q**0.79 
     else
@@ -273,7 +278,7 @@ contains
         rkw = 3.36e-4*q**0.79
       else 
       ! Stratiform scavenging [eq. 16]
-        if (radius > 0.05 .AND. radius <= 1.4) then    
+        if (radius > gas_cutoff .AND. radius <= 1.4) then    
           rkw = a0*q**0.79
         else if (radius > 1.4 .AND. radius <= 10.0) then   
           rkw = depconst*(a1*q + a2*q*q)
@@ -318,7 +323,7 @@ contains
             precip_scaled = precip           
           endif
 
-          wscav = wet_subcloud_bartnicki(radius, precip_scaled, depconst, use_convective=.False.) !> Convective rain cannot be used here due to the precip scaling
+          wscav = wet_subcloud_bartnicki(radius, precip_scaled, depconst, use_convective=.False.)
 
           if (ccf > 0.0) then
             ! Scale down efficiency
@@ -360,43 +365,10 @@ contains
       !skip precomputation if no vertical scheme
 
       if (.not.(allocated(precip3d).and.allocated(cw3d).and.allocated(cloud_cover) &
-    )) then
+    )) then 
         error stop "Some wetdep/precip fields not allocated"
       endif
+
     endif 
   end subroutine
-  
-  !> Calculates the accumulated precipitation and cloud cover downwards
-  !> For the subcloud bartnicki scheme
-
-  !> Integrates instantaneous measurements of precipitation 
-  !> or cloud fraction at model levels upwards
-  !> output: intensities for each level
-  ! recursive subroutine calc_ml_var(k,var, accum_var, cloud)
-  subroutine calc_ml_var(k,var, accum_var, cloud)
-    !> model level
-    integer, intent(in) :: k
-    !>Instantaneous variable at model level
-    real, intent(in) :: var(:)
-    logical, intent(in) :: cloud
-    !> Output of accumulation -> rate or intenity
-    real, intent(out) :: accum_var
-    integer :: nk
-
-    nk = size(var)
-    ! if (cloud .and. accum_var >= 1.0) then
-    !   accum_var = 1.0
-    ! else if (k .eq. nk) then
-    !   accum_var = var(k)
-    ! else
-    !   call calc_ml_var(k+1,var,accum_var,cloud)
-    !   accum_var = accum_var + var(k)
-    ! end if
-    ! if (cloud .and. accum_var >= 1.0) accum_var = 1.0
-
-    accum_var=sum(var(k:nk))
-    if (cloud .and. accum_var >= 1.0) accum_var = 1.0
-
-  end subroutine
-
 end module wetdepml
