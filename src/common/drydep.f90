@@ -1,5 +1,8 @@
-!> Module for Dry deposition of radionuclides. Method: combination of J.Saltbones 1994 and J.Bartnicki 2003
+! SNAP: Servere Nuclear Accident Programme
+! Copyright (C) 1992-2026   Norwegian Meteorological Institute
+! License: GNU General Public License Version 3 (GNU GPL-3.0)
 
+!> Module for Dry deposition of radionuclides. Method: combination of J.Saltbones 1994 and J.Bartnicki 2003
 module drydepml
   use ISO_FORTRAN_ENV, only: real64, int8, int16
 
