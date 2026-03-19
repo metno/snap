@@ -203,33 +203,39 @@ subroutine allocateFields
     if (AllocateStatus /= 0) ERROR STOP errmsg
     allocate(cloud_cover(nx,ny,nk), STAT=AllocateStatus)
     if (AllocateStatus /= 0) ERROR STOP errmsg
-    ! ALLOCATE(wscav(nx,ny,nk,ncomp),STAT=AllocateStatus)
-    ! if (AllocateStatus /= 0) ERROR STOP errmsg
-    ! wscav(:,:,:,:) = 0.0
-    ! if (use_async_io) then
-    !  ALLOCATE(wscav_x(nx,ny,nk,ncomp), STAT=AllocateStatus)
-    !  if (AllocateStatus /= 0) ERROR STOP errmsg
-    !  wscav_io => wscav_x
-    !  ELSE
-    !  wscav_io => wscav
-    !  END IF
-    if (use_async_io) then
-      ALLOCATE(precip3d_x(nx,ny,nk), STAT=AllocateStatus)
+    
+    if (met_params%precompute_wetdep) then
+      ALLOCATE(wscav(nx,ny,nk,ncomp),STAT=AllocateStatus)
       if (AllocateStatus /= 0) ERROR STOP errmsg
-      precip3d_io => precip3d_x
-      ALLOCATE(cw3d_x(nx,ny,nk), STAT=AllocateStatus)
-      if (AllocateStatus /= 0) ERROR STOP errmsg
-      cw3d_io => cw3d_x   
-      ALLOCATE(cloud_cover_x(nx,ny,nk), STAT=AllocateStatus)
-      if (AllocateStatus /= 0) ERROR STOP errmsg
-      cloud_cover_io => cloud_cover_x     
-    ELSE
-     precip3d(:,:,:) = 0.0
-     precip3d_io => precip3d
-     cw3d_io => cw3d
-     cloud_cover_io => cloud_cover
-    END IF
-  endif
+      wscav(:,:,:,:) = 0.0
+      if (use_async_io) then
+        ALLOCATE(wscav_x(nx,ny,nk,ncomp), STAT=AllocateStatus)
+        if (AllocateStatus /= 0) ERROR STOP errmsg
+        wscav_io => wscav_x
+        precip3d_io => precip3d
+        cw3d_io=>cw3d
+        cloud_cover_io=>cloud_cover
+      else
+        wscav_io => wscav
+      end if
+    else
+      if (use_async_io) then
+        ALLOCATE(precip3d_x(nx,ny,nk), STAT=AllocateStatus)
+        if (AllocateStatus /= 0) ERROR STOP errmsg
+        precip3d_io => precip3d_x
+        ALLOCATE(cw3d_x(nx,ny,nk), STAT=AllocateStatus)
+        if (AllocateStatus /= 0) ERROR STOP errmsg
+        cw3d_io => cw3d_x   
+        ALLOCATE(cloud_cover_x(nx,ny,nk), STAT=AllocateStatus)
+        if (AllocateStatus /= 0) ERROR STOP errmsg
+        cloud_cover_io => cloud_cover_x     
+      else
+        precip3d_io => precip3d
+        cw3d_io => cw3d
+        cloud_cover_io => cloud_cover
+      end if
+    end if
+  end if
 
 ! the calculation-fields
   ALLOCATE ( avghbl(nx,ny), STAT = AllocateStatus)

@@ -9,7 +9,7 @@ program testWetDep_new
       wet_subcloud_bartnicki, wetdep_3D, wetdep_incloud_takemura
   use datetime, only: datetime_t
   use iso_fortran_env, only: real64
-  use snapfldML, only: cw3d, precip3d, cloud_cover, depwet, precip
+  use snapfldML, only: cw3d, precip3d, cloud_cover, depwet, precip,wscav,wscav_io
   use particleml, only: particle, extraParticle
   USE iso_fortran_env, only: real64
   USE snapdimML, only: hres_pos
@@ -20,10 +20,10 @@ program testWetDep_new
 
   type(defined_component), pointer :: d_comp
   type(datetime_t) :: itimefi
-  type(wetdep_scheme_t) :: wetdep_scheme_1, wetdep_scheme_2
-  integer :: i, mo, j, k, ivlvl, c, scheme,nk
+  type(wetdep_scheme_t) :: wetdep_scheme_1, wetdep_scheme_2, wetdep_scheme_3
+  integer :: i, mo, j, k, ivlvl, c, scheme,nk, mm
   real :: rad,  t1,t2, mlprecip, mlccf, tstep, radlost_b, &
-          radlost_t, radlost_3d, radlost_b3d, rkw_b, rkw_3d, rkw_b3d, rkw_t
+          radlost_t, radlost_3d, radlost_b3d, rkw_b, rkw_3d, rkw_b3d, rkw_t, radlost_precomp
   type(Particle) :: part
   type(extraParticle) :: pextra
   real(real64) :: dep
@@ -89,13 +89,18 @@ program testWetDep_new
     wetdep_scheme_1 = wetdep_scheme_t( &
                 WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
                 WETDEP_INCLOUD_SCHEME_NONE, &
-                .false., .false. &
+                .false., .false.,.false. &
               )
     wetdep_scheme_2 = wetdep_scheme_t( &
                 WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
                 WETDEP_INCLOUD_SCHEME_TAKEMURA, &
-                .true., .true. &
+                .true., .true.,.false. &
               )
+    wetdep_scheme_3 = wetdep_scheme_t( &
+                WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
+                WETDEP_INCLOUD_SCHEME_TAKEMURA, &
+                .true., .true.,.true. &
+              )    
     itimefi%year = 2020
     itimefi%month = 4
     itimefi%day = 15
@@ -107,8 +112,8 @@ program testWetDep_new
     
     print *, "2. Testing wetdep subroutine"
     allocate(depwet(nint(part%x),nint(part%y),ncomp))
-    call fetchTestData(precip3d,cw3d,cloud_cover,precip)
-    do scheme = 1,2
+    call fetchTestData(precip3d,cw3d,cloud_cover,precip,wscav)
+    do scheme = 1,3
 
       if (scheme == 2) then
         wetdep_scheme = wetdep_scheme_2
@@ -116,6 +121,9 @@ program testWetDep_new
       else if (scheme == 1) then
         wetdep_scheme = wetdep_scheme_1
         name = "Bartnicki"
+      else if (scheme == 3) then
+        wetdep_scheme = wetdep_scheme_3
+        name = "B-T-precompute"
       else 
         stop "Scheme undefined"
       end if
@@ -123,7 +131,7 @@ program testWetDep_new
       print *, "                  _____________________________"
       print *, "                  WETDEP SCHEME: ", name
       print *, "                  _____________________________"
-      
+      wscav_io => wscav
       call CPU_TIME(t1)
       call wetdep_precompute()  
       call CPU_TIME(t2)
@@ -139,7 +147,7 @@ program testWetDep_new
         print *, "COMPONENT: ", def_comp(c)%compname
         part%icomp = c
         mo = def_comp(part%icomp)%to_output
-  
+        mm = def_comp(part%icomp)%to_running
         i = nint(part%x)
         j = nint(part%y) 
         ivlvl = nint(part%z * 10000.0)
@@ -178,12 +186,15 @@ program testWetDep_new
         call wetdep_3D(rkw_3d,part,def_comp(part%icomp)%radiusmym)
         rad = part%set_rad(1.) ! reset initial activity 1 Bq
         radlost_3d= part%scale_rad(exp(-tstep*rkw_3d))      
-      
+        
+        rad = part%set_rad(1.) ! reset initial activity 1 Bq
+        radlost_precomp= part%scale_rad(exp(-tstep*wscav(i,j,k,mm)))        
         ! print *, "----------------------------------------------------"
         write (*,10) "Scheme", "Scavenging rate [1/s]", "Deposited radiation"
         write (*,11) "Bartnicki", rkw_b, radlost_b
         write (*,11) "Bart. ccf", rkw_b3d, radlost_b3d
         write (*,11) "Takemura", rkw_t, radlost_t
+        write (*,11) "Precomp.", wscav(i,j,k,mm), radlost_precomp
         write (*,11) "Wetdep 3D", rkw_3d, radlost_3d
         ! print *, "----------------------------------------------------"    
         
@@ -353,9 +364,9 @@ program testWetDep_new
    
   contains
 
-  subroutine fetchTestData(prec,cw,cf,pr)
+  subroutine fetchTestData(prec,cw,cf,pr,ws)
     use netcdf
-    real, allocatable, intent(inout) :: prec(:,:,:), cw(:,:,:), cf(:,:,:), pr(:,:)
+    real, allocatable, intent(inout) :: prec(:,:,:), cw(:,:,:), cf(:,:,:), pr(:,:),ws(:,:,:,:)
     integer :: varid, id, status, nx, ny, nk
     integer, dimension(nf90_max_var_dims) :: dimIDs 
     status = nf90_open(path = "./data/wetdeptest.nc", mode = nf90_nowrite, ncid= id)
@@ -433,6 +444,8 @@ program testWetDep_new
       print *, "Error closing file"
       stop 2
     end if  
+
+    allocate(ws(nx,ny,nk,2))
 
   end subroutine
 

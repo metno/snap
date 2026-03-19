@@ -578,7 +578,7 @@ PROGRAM bsnap
     write (error_unit, fmt="('input data: ',i4,3i3.2)") time_file
     flush(output_unit)
     call input_timer%stop_and_log()
-    call swap_fields_after_reading() ! only for async io, but does not hurt otherwise
+    call swap_fields_after_reading(met_params%precompute_wetdep) ! only for async io, but does not hurt otherwise
 
     ! Initialise output
     if (idailyout == 1) then
@@ -680,7 +680,7 @@ PROGRAM bsnap
             write (error_unit, fmt="('input data: ',i4,3i3.2)") time_file
           end if
           ! just keep reading from the last timestep, no interpolation needed
-          call swap_fields_after_reading()
+          call swap_fields_after_reading(met_params%precompute_wetdep)
           dur = time_file - itimei
           ihdiff = dur%hours
           tf1 = 0.
@@ -1214,7 +1214,7 @@ contains
         wetdep_scheme = wetdep_scheme_t( &
           WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
           WETDEP_INCLOUD_SCHEME_NONE, &
-          .false., .false.)
+          .false., .false.,.false.)
       case ('wet.deposition.version')
         write (error_unit, *) "Deprecated, please use wet.deposition.scheme = Bartnicki"   !! GEORGE: can get rid of everything else after error? just "goto 12" instead?
         warning = .true.
@@ -1235,7 +1235,7 @@ contains
             WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
             WETDEP_INCLOUD_SCHEME_NONE, &
             .false., &
-            .false.)
+            .false.,.false.)
         end block
 
       case ('wet.deposition.scheme')
@@ -1251,7 +1251,7 @@ contains
             wetdep_scheme = wetdep_scheme_t( &
               WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
               WETDEP_INCLOUD_SCHEME_NONE, &
-              .false., .false. &
+              .false., .false.,.false. &
             )
           case("bartnicki-takemura")
             met_params%use_3d_precip = .true.
@@ -1259,15 +1259,16 @@ contains
             wetdep_scheme = wetdep_scheme_t( &
               WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
               WETDEP_INCLOUD_SCHEME_TAKEMURA, &
-              .true., .true. &
+              .true., .true.,.false. &
             )
-          case("bartnicki-vertical")              !GEORGE: want to keep barnicki vertical?
+          case("bartnicki-takemura-precompute")
             met_params%use_3d_precip = .true.
             met_params%use_ccf = .true.
+            met_params%precompute_wetdep = .true.
             wetdep_scheme = wetdep_scheme_t( &
               WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
-              WETDEP_INCLOUD_SCHEME_NONE, &
-              .true., .true. &
+              WETDEP_INCLOUD_SCHEME_TAKEMURA, &
+              .true., .true.,.true. &
             )
 
           case default                                                            !> No default - should always have scheme in input
