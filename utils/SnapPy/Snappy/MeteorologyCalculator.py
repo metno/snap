@@ -1,5 +1,4 @@
 import abc
-import math
 import os
 import time
 from datetime import datetime, timedelta
@@ -106,19 +105,21 @@ class MeteorologyCalculator(abc.ABC):
         """retrieve the GlobalMeteoResources from internal resources"""
         pass
 
-    def getLat0(latCenter, domainHeight):
+    @staticmethod
+    def getLat0(latCenter, domainHeight) -> int:
         # get a domain starting every 10th degree
         lat0 = round((latCenter - (domainHeight / 2.0)) / 10.0) * 10
         if lat0 < -80:
             lat0 = -89
         if lat0 + domainHeight > 89:
             lat0 = 89 - domainHeight
-        return lat0
+        return int(lat0)
 
-    def getLon0(lonCenter, domainWidth):
+    @staticmethod
+    def getLon0(lonCenter, domainWidth) -> int:
         # get a domain starting every 10th degree
         lon0 = round((lonCenter - (domainWidth / 2.0)) / 10.0) * 10
-        return lon0
+        return int(lon0)
 
     def __init__(
         self, res: GlobalMeteoResource, dtime: datetime, domainCenterX, domainCenterY
@@ -142,15 +143,9 @@ class MeteorologyCalculator(abc.ABC):
         self.globalfile = lastDateFile[1]
         utc = lastDateFile[0].hour
         # domain every 10th degree
-        lat0 = math.floor((domainCenterY - (res.domainHeight / 2.0)) / 10.0) * 10
-        if lat0 < -80:
-            lat0 = -89
-        if lat0 + res.domainHeight > 89:
-            lat0 = 89 - res.domainHeight
+        self.lat0 = self.getLat0(domainCenterY, res.domainHeight)
         # snap can only cross date-line when both start and position are negative or positive
-        lon0 = math.floor((domainCenterX - (res.domainWidth / 2.0)) / 10.0) * 10
-        self.lat0 = int(lat0)
-        self.lon0 = int(lon0)
+        self.lon0 = self.getLon0(domainCenterX, res.domainWidth)
         self._set_outputdir(res, self.dir_template, self.lon0, self.lat0, utc)
         self.add_expected_files(lastDateFile[0])
 
