@@ -1868,8 +1868,9 @@ contains
             write (error_unit, *) 'interpolation input wrong:', trim(fimex_interpolation)
             ierror = 1
           else
-            write(error_unit,*) "interpolation enabled:", fint%method, trim(fint%proj), trim(fint%x_axis), &
-              trim(fint%y_axis), fint%unit_is_degree
+            write(error_unit,*) "interpolation enabled:", fint%method, trim(fint%proj), &
+              trim(fint%x_axis), "|", &
+              trim(fint%y_axis), "|", fint%unit_is_degree
           end if
         else
           write(error_unit,*) "fimex.interpolation ignored when field.type not fimex: ", trim(ftype)
