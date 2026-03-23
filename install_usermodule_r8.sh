@@ -13,6 +13,7 @@ matplotlib
 nco
 openssh
 openssl
+requests
 netcdf-fortran
 gfortran
 pytest
