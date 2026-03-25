@@ -201,6 +201,7 @@ PROGRAM bsnap
           DRYDEP_SCHEME_OLD, DRYDEP_SCHEME_NEW, &
           DRYDEP_SCHEME_EMERSON, DRYDEP_SCHEME_UNDEFINED, &
           largest_landfraction_file,  drydep_unload => unload
+  USE gaussian_smoothingML, only: build_age_gaussian_kernel_3x3
   USE decayML, only: decay, decayDeps
   USE posintML, only: posint
   USE releaseML, only: release, releases, tpos_bomb, nrelheight, mprel, &
@@ -270,6 +271,8 @@ PROGRAM bsnap
   integer :: ntprof
   type(duration_t) :: dur
   logical :: out_of_domain
+  real ::lost_activity, smoothing_kernel(3,3)
+  integer :: last_age_hr = -1, age_hr = -1
 
   real :: mhmin, mhmax  ! minimum and maximum of mixing height
 !> Information for reading from a releasefile
@@ -764,45 +767,61 @@ PROGRAM bsnap
 
       call particleloop_timer%start()
       ! particle loop
-      !$OMP PARALLEL DO PRIVATE(pextra,np,m,out_of_domain) SCHEDULE(auto) &
+      !$OMP PARALLEL DO &
+      !$OMP PRIVATE(pextra,np,npl,m,out_of_domain, lost_activity, age_hr, smoothing_kernel) &
+      !$OMP FIRSTPRIVATE(last_age_hr) &
+      !$OMP SCHEDULE(auto) &
       !$OMP REDUCTION(+:total_activity_lost_domain) REDUCTION(MAX:mhmax) REDUCTION(MIN:mhmin)
-      part_do: do np = 1, npart
-        if (.not.pdata(np)%is_active()) cycle part_do
-
-        !..interpolation of boundary layer top, height, precipitation etc.
-        !  creates and save temporary data to pextra%prc, pextra%rmx, pextra%rmy
-        call posint(pdata(np), rt1, rt2, pextra)
-
-        !..radioactive decay
-        if (idecay == 1) call decay(pdata(np))
-
-        !..dry deposition
-        call drydep(tstep, pdata(np))
-
-        !..wet deposition
-        call wetdep(tstep, pdata(np), pextra)
-
-        !..move all particles forward, save u and v to pextra
-        call forwrd(tf1, tf2, tnow, tstep, pdata(np), pextra)
-
-        !..apply the random walk method (diffusion)
-        ! diffusion is applied after deposition to mix
-        ! before output (which computes surface concentrations)
-        if (use_random_walk) call rwalk(blfullmix, pdata(np), pextra)
-
-        !.. check domain (%active) after moving particle
-        call check_in_domain(pdata(np), out_of_domain)
-        if (out_of_domain) then
-          m = def_comp(pdata(np)%icomp)%to_output
-          total_activity_lost_domain(m) = &
-            total_activity_lost_domain(m) + pdata(np)%get_set_rad(0.0)
-        endif
-
-        if (pdata(np)%is_active()) then
-          if (pdata(np)%hbl > mhmax) mhmax = pdata(np)%hbl
-          if (pdata(np)%hbl < mhmin) mhmin = pdata(np)%hbl
+      plume_do: do npl = 1, nplume
+        age_hr = iplume(npl)%ageInSteps / nsteph
+        if (age_hr > last_age_hr) then
+          last_age_hr = age_hr
+          call build_age_gaussian_kernel_3x3(age_hr, smoothing_kernel)
         end if
-      end do part_do
+        part_do:  do np = iplume(npl)%start, iplume(npl)%end
+          lost_activity = 0.0
+          if (.not.pdata(np)%is_active()) cycle part_do
+
+          !..interpolation of boundary layer top, height, precipitation etc.
+          !  creates and save temporary data to pextra%prc, pextra%rmx, pextra%rmy
+          call posint(pdata(np), rt1, rt2, pextra)
+
+          !..radioactive decay
+          if (idecay == 1) call decay(pdata(np))
+
+          !..dry deposition
+          call drydep(tstep, pdata(np), smoothing_kernel, lost_activity)
+
+          !..wet deposition
+          call wetdep(tstep, pdata(np), pextra)
+
+          !..move all particles forward, save u and v to pextra
+          call forwrd(tf1, tf2, tnow, tstep, pdata(np), pextra)
+
+          !..apply the random walk method (diffusion)
+          ! diffusion is applied after deposition to mix
+          ! before output (which computes surface concentrations)
+          if (use_random_walk) call rwalk(blfullmix, pdata(np), pextra)
+
+          !.. check domain (%active) after moving particle
+          call check_in_domain(pdata(np), out_of_domain)
+          if (out_of_domain) then
+            m = def_comp(pdata(np)%icomp)%to_output
+            total_activity_lost_domain(m) = &
+              total_activity_lost_domain(m) + pdata(np)%get_set_rad(0.0)
+          endif
+          if (lost_activity > 0.0) then
+            m = def_comp(pdata(np)%icomp)%to_output
+            total_activity_lost_domain(m) = &
+              total_activity_lost_domain(m) + lost_activity
+          end if
+
+          if (pdata(np)%is_active()) then
+            if (pdata(np)%hbl > mhmax) mhmax = pdata(np)%hbl
+            if (pdata(np)%hbl < mhmin) mhmin = pdata(np)%hbl
+          end if
+        end do part_do
+      end do plume_do
       !$OMP END PARALLEL DO
       call particleloop_timer%stop_and_log()
 
