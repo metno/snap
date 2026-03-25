@@ -8,6 +8,7 @@ om2edot.o ftest.o readfield_nc.o readfield.o rwalk.o epinterp.o \
 vgravtables.o forwrd.o wetdep.o drydep.o \
 bldp.o compheight.o checkDomain.o \
 filesort_nc.o fldout_nc.o \
+gaussian_smoothingML.o \
 init_random_seed.o\
 release.o releasefile.o rmpart.o split_particles.o allocateFields.o \
 find_parameters.o datetime.o
@@ -76,7 +77,9 @@ checkDomain.o: ../common/checkDomain.f90 snapgrdML.o snapdimML.o particleML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 dateCalc.o: ../common/dateCalc.f90
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-drydep.o: ../common/drydep.f90 particleML.o snapfldML.o snapparML.o snapgrdML.o vgravtables.o
+gaussian_smoothingML.o: ../common/gaussian_smoothingML.f90
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+drydep.o: ../common/drydep.f90 gaussian_smoothingML.o particleML.o snapfldML.o snapparML.o snapgrdML.o vgravtables.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 epinterp.o: ../common/epinterp.f90
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
