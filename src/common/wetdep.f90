@@ -101,7 +101,7 @@ contains
       run_comp(m)%depconst = wet_deposition_constant(rm)
     end do
 
-    if(.not.wetdep_scheme%use_vertical .and. vminprec < 0.) then                        
+    if(vminprec < 0.) then                        
     ! Set minimum sigma level (maximum pressure level)
       block
         USE snapgrdML, only: alevel, blevel, vlevel
@@ -177,35 +177,34 @@ contains
     m = part%icomp
     mm = def_comp(m)%to_running
     radlost = 0.0
-    !! Figure out this bit
-    if (wetdep_scheme%use_vertical) then
-      !! in 3D case for bartnicki-takemura.
-      if (wetdep_scheme%precompute) then
-        block
-          use snapfldML, only: wscav
-          use snapgrdML, only: ivlevel 
-          integer :: ivlvl, k
-
-          ivlvl = nint(part%z * 10000.0)
-          k = ivlevel(ivlvl)
-          i = nint(part%x)
-          j = nint(part%y)  
-          rkw = wscav(i,j,k,mm)
-        end block
-      else
-        call wetdep_3D(rkw, part,def_comp(m)%radiusmym)
-      end if
-      radlost = part%scale_rad(exp(-tstep*rkw))
-    else if  (wetdep_scheme%subcloud == WETDEP_SUBCLOUD_SCHEME_BARTNICKI) then
-      !! in 2D case just bartnicki
-      if (pextra%prc > precmin &
+    if (pextra%prc > precmin &
         .AND. part%z > vminprec) then 
-        !depends on the precipitation and altitude at the place of the particle.
+    !! Figure out this bit
+      if (wetdep_scheme%use_vertical) then
+        !! in 3D case for bartnicki-takemura.
+        if (wetdep_scheme%precompute) then
+          block
+            use snapfldML, only: wscav
+            use snapgrdML, only: ivlevel 
+            integer :: ivlvl, k
+  
+            ivlvl = nint(part%z * 10000.0)
+            k = ivlevel(ivlvl)
+            i = nint(part%x)
+            j = nint(part%y)  
+            rkw = wscav(i,j,k,mm)
+          end block
+        else
+          call wetdep_3D(rkw, part,def_comp(m)%radiusmym)
+        end if
+        radlost = part%scale_rad(exp(-tstep*rkw))
+      else if  (wetdep_scheme%subcloud == WETDEP_SUBCLOUD_SCHEME_BARTNICKI) then
+        !! in 2D case just bartnicki 
+          !depends on the precipitation and altitude at the place of the particle.
         rkw = wet_subcloud_bartnicki(def_comp(m)%radiusmym, pextra%prc, run_comp(mm)%depconst)
         radlost = part%scale_rad(exp(-tstep*rkw))
       end if
     end if
-  
     i = hres_pos(part%x)
     j = hres_pos(part%y) 
     mo = def_comp(m)%to_output
