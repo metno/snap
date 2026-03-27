@@ -42,7 +42,7 @@ class Resources(ResourcesCommon):
     # OUTPUTDIR = "/disk1/tmp"
     _OUTPUTDIR = "{LUSTREDIR}/project/fou/kl/snap/runs"
     _OUTPUTDIR_AUTOMATED = "{LUSTREDIR}/project/fou/kl/snap/automated_runs"
-    _ECINPUTDIRS = ["{LUSTREDIR}/project/metproduction/products/cwf-input/"]
+    _ECINPUTDIRS = ["{LF_PROD_DIR}/atom/Meteorology/EC2CWF/"]
 
     # ECINPUTDIRS = ["/lustre/storeB/users/heikok/Meteorology/ecdis2cwf/"]
     EC_FILENAME_PATTERN = "meteo{year:04d}{month:02d}{day:02d}_{dayoffset:02d}.nc"
@@ -51,21 +51,17 @@ class Resources(ResourcesCommon):
         "ec_atmo_0_1deg_{year:04d}{month:02d}{day:02d}T{dayoffset:02d}0000Z_3h.nc"
     )
     _MET_GLOBAL_INPUTDIRS = {
-        MetModel.NrpaEC0p1Global: [
-            "{LUSTREDIR}/project/metproduction/products/ecmwf/nc/"
-        ],
-        MetModel.EC0p1Global: ["{LUSTREDIR}/project/metproduction/products/ecmwf/nc/"],
-        MetModel.Icon0p25Global: ["{LUSTREDIR}/project/metproduction/products/icon/"],
+        MetModel.NrpaEC0p1Global: ["{MET_PRODUCTION_DIR}/products/ecmwf/nc/"],
+        MetModel.EC0p1Global: ["{MET_PRODUCTION_DIR}/products/ecmwf/nc/"],
+        MetModel.Icon0p25Global: ["{MET_PRODUCTION_DIR}/products/icon/"],
     }
 
     _MET_INPUTDIRS = {
-        MetModel.Meps2p5: [
-            "{LUSTREDIR}/immutable/archive/projects/metproduction/MEPS/"
-        ],
+        MetModel.Meps2p5: ["{MET_ARCHIVE_DIR}/projects/metproduction/MEPS/"],
         MetModel.EC0p1Europe: ["{LUSTREDIR}/project/fou/kl/snap/meteo/ec_europe/"],
         MetModel.GfsGribFilter: ["{LUSTREDIR}/project/fou/kl/snap/meteo/gfs_europe/"],
         MetModel.Era5Nancy: [
-            "{LUSTREDIR}/project/fou/kl/cerad//Meteorology/EC/Era5/Nancy/"
+            "{LUSTREDIR}/project/fou/kl/cerad/Meteorology/EC/Era5/Nancy/"
         ],
     }
     MET_FILENAME_PATTERN = {
@@ -480,7 +476,6 @@ GRAVITY.FIXED.M/S=0.0002
         lines.append(
             self._getSnapInputTemplate(metmodel).format(
                 interpolation=interpolation,
-                LUSTREDIR=self.getLustreDir(),
                 largest_landfraction_file=largest_landfraction_file,
             )
         )
@@ -500,7 +495,7 @@ GRAVITY.FIXED.M/S=0.0002
 
         :return: path as directory, adapted for LUSTREDIR
         """
-        return self._OUTPUTDIR.format(LUSTREDIR=self.getLustreDir())
+        return self.formatLustreDirs(self._OUTPUTDIR)
 
     def getSnapOutputDirAutomated(self):
         """Output directory of SNAP-runs for automated runs, e.g. run through cron.
@@ -508,7 +503,7 @@ GRAVITY.FIXED.M/S=0.0002
 
         :return: path as directory, adapted for LUSTREDIR
         """
-        return self._OUTPUTDIR_AUTOMATED.format(LUSTREDIR=self.getLustreDir())
+        return self.formatLustreDirs(self._OUTPUTDIR_AUTOMATED)
 
     def _findFileInPathes(self, file, pathes):
         for path in pathes:
@@ -517,17 +512,14 @@ GRAVITY.FIXED.M/S=0.0002
                 return filename
         return None
 
-    def _lustreTemplateDirs(self, dirs):
-        return [x.format(LUSTREDIR=self.getLustreDir()) for x in dirs]
-
     def getMetGlobalInputDirs(self, metmodel):
-        return self._lustreTemplateDirs(self._MET_GLOBAL_INPUTDIRS[metmodel])
+        return self.lustreTemplateDirs(self._MET_GLOBAL_INPUTDIRS[metmodel])
 
     def getMetInputDirs(self, metmodel):
-        return self._lustreTemplateDirs(self._MET_INPUTDIRS[metmodel])
+        return self.lustreTemplateDirs(self._MET_INPUTDIRS[metmodel])
 
     def getECInputDirs(self):
-        return self._lustreTemplateDirs(self._ECINPUTDIRS)
+        return self.lustreTemplateDirs(self._ECINPUTDIRS)
 
     def getECRuns(self):
         """Find ec-runs with at least 2 days of forecast"""
