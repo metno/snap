@@ -201,7 +201,7 @@ PROGRAM bsnap
           DRYDEP_SCHEME_OLD, DRYDEP_SCHEME_NEW, &
           DRYDEP_SCHEME_EMERSON, DRYDEP_SCHEME_UNDEFINED, &
           largest_landfraction_file,  drydep_unload => unload
-  USE gaussian_smoothingML, only: build_age_gaussian_kernel_3x3
+  USE gaussian_smoothingML, only: build_age_gaussian_kernel, initialize_gaussian_smoothing
   USE decayML, only: decay, decayDeps
   USE posintML, only: posint
   USE releaseML, only: release, releases, tpos_bomb, nrelheight, mprel, &
@@ -271,7 +271,8 @@ PROGRAM bsnap
   integer :: ntprof
   type(duration_t) :: dur
   logical :: out_of_domain
-  real ::lost_activity, smoothing_kernel(3,3)
+  real ::lost_activity
+  real, allocatable :: smoothing_kernel(:,:)
   integer :: last_age_hr = -1, age_hr = -1
 
   real :: mhmin, mhmax  ! minimum and maximum of mixing height
@@ -376,6 +377,8 @@ PROGRAM bsnap
 ! initialize random number generator for rwalk and release
   CALL init_random_seed()
 
+! initialize gaussian smoothing
+  call initialize_gaussian_smoothing(kernel_size_in=3, max_age_hr_in=24)
 
 !..check input FELT files and make sorted lists of available data
 !..make main list based on x wind comp. (u) in upper used level
@@ -773,10 +776,11 @@ PROGRAM bsnap
       !$OMP SCHEDULE(auto) &
       !$OMP REDUCTION(+:total_activity_lost_domain) REDUCTION(MAX:mhmax) REDUCTION(MIN:mhmin)
       plume_do: do npl = 1, nplume
-        age_hr = iplume(npl)%ageInSteps / nsteph
-        if (age_hr > last_age_hr) then
+        age_hr = nint(1.0 * iplume(npl)%ageInSteps / nsteph)
+        if (age_hr /= last_age_hr) then
           last_age_hr = age_hr
-          call build_age_gaussian_kernel_3x3(age_hr, smoothing_kernel)
+          if (allocated(smoothing_kernel)) deallocate(smoothing_kernel)
+          call build_age_gaussian_kernel(last_age_hr, smoothing_kernel)
         end if
         part_do:  do np = iplume(npl)%start, iplume(npl)%end
           lost_activity = 0.0
