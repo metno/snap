@@ -42,7 +42,7 @@ subroutine drydep(tstep, part, kernel, lost_activity)
   use particleML, only: Particle
   real, intent(in) :: tstep
   type(particle), intent(inout) :: part
-  real, intent(in) :: kernel(3,3)
+  real, allocatable, intent(in) :: kernel(:, :)
   real, intent(out) :: lost_activity
 
   if (drydep_scheme == DRYDEP_SCHEME_OLD) call drydep1(part)
@@ -180,7 +180,7 @@ subroutine drydep2(tstep, part, kernel, lost_activity)
 !> particle
   type(Particle), intent(inout) :: part
 !> kernel for distributing deposition to surrounding grid points
-  real, intent(in) :: kernel(3,3)
+  real, allocatable, intent(in) :: kernel(:,:)
 !> lost activity due to deposition outside of domain, e.g. near boundaries
   real, intent(out) :: lost_activity
 
@@ -453,7 +453,7 @@ subroutine drydep_nonconstant_vd(tstep, vd, part, kernel, lost_activity)
   type(Particle), intent(inout) :: part
   !> Deposition velocity
   real, intent(in) :: vd(:,:, :)
-  real, intent(in) :: kernel(3,3)
+  real, allocatable, intent(in) :: kernel(:, :)
   real, intent(out) :: lost_activity
   real, parameter :: h = 30.0
 
