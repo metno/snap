@@ -3,10 +3,10 @@ module gaussian_smoothingML
   implicit none
   private
 
-  integer, save :: kernel_size = 3
+  integer, save :: kernel_size = 1 ! must be uneven, kernel_size=1 disables smoothing
   integer, save :: start_end_ = 1 ! kernel_size / 2
   integer, save :: max_age_hr = 24
-  logical, save :: use_gaussian_smoothing = .true.
+  logical, save :: use_gaussian_smoothing = .false.
   real, save :: max_sigma = 1.5 ! kernel_size / 2.
   real, parameter :: min_sigma = 0.1
 
@@ -33,6 +33,7 @@ subroutine initialize_gaussian_smoothing(kernel_size_in, max_age_hr_in)
     use_gaussian_smoothing = .false.
     return
   end if
+  use_gaussian_smoothing = .true.
   kernel_size = kernel_size_in
   start_end_ = int(kernel_size / 2.0)
   max_sigma = real(kernel_size) / 2.0
