@@ -26,13 +26,14 @@ snap_testdata/%.nc :
 	mkdir -p snap_testdata
 	curl --fail https://thredds.met.no/thredds/fileServer/metusers/heikok/$@ -o $@
 
-test: testDateCalc test_array_utils find_parameters_fi_test  testGravSettling testDryDep bsnap_naccident $(TESTFILES)
+test: testDateCalc test_array_utils find_parameters_fi_test  testGravSettling testDryDep testGaussianSmoothing bsnap_naccident $(TESTFILES)
 	./testDateCalc && \
 	./test_array_utils && \
 	./find_parameters_fi_test snap_testdata/meteo20200415_00_ringhals.nc u_wind && \
 	./find_parameters_fi_test snap_testdata/meps_det_2_5km_20251125T06Z_ringhals.nc x_wind_ml && \
 	./testGravSettling && \
 	./testDryDep && \
+	./testGaussianSmoothing && \
 	python3 -m unittest snap_forward_test.py
 
 
@@ -55,6 +56,9 @@ testGravSettling: testGravSettling.o $(MODELOBJ)
 testDryDep: testDryDep.o $(MODELOBJ)
 	${F77} $(F77FLAGS) $(MODELOBJ) $< $(BLIBS) -o $@
 
+testGaussianSmoothing: testGaussianSmoothing.o $(MODELOBJ)
+	${F77} $(F77FLAGS) $(MODELOBJ) $< $(BLIBS) -o $@
+
 clean: clean_links
 	rm -f *.o *~ snap_batch_copy.F90 find_parameters_fi_test bsnap_naccident data/snap.nc data/snap_ecemep.nc data/snap.log testDateCalc test_array_utils
 	rm -rf __pycache__
@@ -75,6 +79,9 @@ testGravSettling.o: testGravSettling.f90 $(MODELOBJ)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 
 testDryDep.o: testDryDep.f90 $(MODELOBJ)
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+
+testGaussianSmoothing.o: testGaussianSmoothing.f90 $(MODELOBJ)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 
 .PHONY: clean distclean test install
