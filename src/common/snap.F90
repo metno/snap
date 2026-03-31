@@ -378,7 +378,7 @@ PROGRAM bsnap
   CALL init_random_seed()
 
 ! initialize gaussian smoothing
-  call initialize_gaussian_smoothing(kernel_size_in=3, max_age_hr_in=24)
+  call initialize_gaussian_smoothing(kernel_size_in=3, max_age_hr_in=48)
 
 !..check input FELT files and make sorted lists of available data
 !..make main list based on x wind comp. (u) in upper used level
