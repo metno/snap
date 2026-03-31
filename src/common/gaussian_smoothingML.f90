@@ -35,14 +35,41 @@ subroutine initialize_gaussian_smoothing(kernel_size_in, max_age_hr_in)
   max_age_hr = max_age_hr_in
 end subroutine
 
+function gaussian_cdf(mu, sigma, x)
+  real, intent(in) :: mu, sigma, x
+  real :: gaussian_cdf
+  gaussian_cdf = 0.5 * (1 + erf((x - mu) / (sigma * sqrt(2.0))))
+end function gaussian_cdf
+
+!> Function to compute the 2D Gaussian area using the erf function
+real function gaussian_2d_area(a_x, b_x, a_y, b_y, mu_x, mu_y, sigma_x, sigma_y)
+    real, intent(in) :: a_x, b_x, a_y, b_y
+    real, intent(in) :: mu_x, mu_y, sigma_x, sigma_y
+    real :: cdf_x1, cdf_x2, cdf_y1, cdf_y2
+
+    ! Compute the 1D CDF values in the x-direction
+    cdf_x1 = gaussian_cdf(mu_x, sigma_x, a_x)
+    cdf_x2 = gaussian_cdf(mu_x, sigma_x, b_x)
+
+    ! Compute the 1D CDF values in the y-direction
+    cdf_y1 = gaussian_cdf(mu_y, sigma_y, a_y)
+    cdf_y2 = gaussian_cdf(mu_y, sigma_y, b_y)
+
+    ! Compute the area as the product of the CDF differences
+    gaussian_2d_area = (cdf_x2 - cdf_x1) * (cdf_y2 - cdf_y1)
+end function gaussian_2d_area
+
+
 subroutine build_age_gaussian_kernel(age_hr, kernel)
   integer, intent(in) :: age_hr
   real, allocatable,intent(out) :: kernel(:,:)
 
   integer :: ii, jj
-  real :: sigma, sum_kernel
+  real :: sigma, sum_kernel, kernel_max
+  real :: a_x, b_x, a_y, b_y, area
   integer :: stat
   character(len=100) :: msg
+  real, parameter :: mu = 0.0
 
   if (.not. use_gaussian_smoothing) then
     return
@@ -56,10 +83,22 @@ subroutine build_age_gaussian_kernel(age_hr, kernel)
   sigma = min_sigma + (max_sigma - min_sigma) * (1 - exp(-1. * age_hr / max_age_hr))
 
   sum_kernel = 0.0
+
+  kernel_max = gaussian_2d_area(-0.5, 0.5, -0.5, 0.5, mu, mu, sigma, sigma)
   do jj = -1*start_end_, start_end_
+    a_y = real(jj) - 0.5
+    b_y = real(jj) + 0.5
     do ii = -1*start_end_, start_end_
-      kernel(ii+start_end_+1, jj+start_end_+1) = exp(-0.5 * ((ii/sigma)**2 + (jj/sigma)**2))
-      sum_kernel = sum_kernel + kernel(ii+start_end_+1, jj+start_end_+1)
+      a_x = real(ii) - 0.5
+      b_x = real(ii) + 0.5
+      area = gaussian_2d_area(a_x, b_x, a_y, b_y, mu, mu, sigma, sigma)
+      if (10*area > kernel_max) then
+        ! avoid dithering effects by setting very small values to zero
+        kernel(ii+start_end_+1, jj+start_end_+1) = area
+        sum_kernel = sum_kernel + area
+      else
+        kernel(ii+start_end_+1, jj+start_end_+1) = 0.0
+      end if
     end do
   end do
   kernel = kernel / sum_kernel
@@ -94,11 +133,14 @@ subroutine add_to_field_with_kernel(field, i, j, value, kernel, lost_activity)
     jg = j + jj
     do ii = -1*start_end_, start_end_
       ig = i + ii
-      if (ig < i_min .or. ig > i_max .or. jg < j_min .or. jg > j_max) then
-        lost_activity = lost_activity + value * kernel(ii+start_end_+1, jj+start_end_+1)
-      else
-        !$OMP atomic
-        field(ig,jg) = field(ig,jg) + dble(value * kernel(ii+start_end_+1, jj+start_end_+1))
+      if (kernel(ii+start_end_+1, jj+start_end_+1) > 0.0) then
+        ! only update the field if the kernel value is non-zero to avoid unnecessary atomic operations
+        if (ig < i_min .or. ig > i_max .or. jg < j_min .or. jg > j_max) then
+          lost_activity = lost_activity + value * kernel(ii+start_end_+1, jj+start_end_+1)
+        else
+          !$OMP atomic
+          field(ig,jg) = field(ig,jg) + dble(value * kernel(ii+start_end_+1, jj+start_end_+1))
+        end if
       end if
     end do
   end do
