@@ -133,6 +133,10 @@
 ! OUTPUT.COLUMN_MAX_CONC.DISABLE
 ! * Output column concentration (height independent)
 ! OUTPUT.COLUMN.ON
+! * Output gaussian smoothing parameters for dry-dep and concs
+! * the kernel-size (1=off, 3,5,7,...) determines max-distance of smoothing
+! * the maxHR determines the age-factor, e.g. 48h will give max-smoothing at ~ 5*48h
+! OUTPUT.GAUSSIAN_SMOOTHING.MAXHR,SIZE= <hours>, <kernel-size>
 ! * Computing dosimetry for occupants of aircraft flying through plumes
 ! OUTPUT.AIRCRAFT_DOSERATE.ENABLE
 ! OUTPUT.AIRCRAFT_DOSERATE.DISABLE * default
@@ -245,6 +249,8 @@ PROGRAM bsnap
   logical :: autodetect_grid_params = .false.
   integer :: m, np, npl, nlevel, ifltim = 0
   logical :: synoptic_output = .false.
+  integer :: gaussian_smoothing_max_age_hr = 48
+  integer :: gaussian_smoothing_kernel_size = 1 ! one means off
   integer :: k, ierror, i, n
   integer, allocatable :: klevel_manual(:)
   integer :: ih
@@ -378,7 +384,10 @@ PROGRAM bsnap
   CALL init_random_seed()
 
 ! initialize gaussian smoothing
-  call initialize_gaussian_smoothing(kernel_size_in=3, max_age_hr_in=48)
+  write (iulog, "(a,i2,a,i3,a)") "Initializing Gaussian smoothing with kernel size ", gaussian_smoothing_kernel_size, &
+    " and max age ", gaussian_smoothing_max_age_hr, " hours."
+  call initialize_gaussian_smoothing(kernel_size_in=gaussian_smoothing_kernel_size, &
+                                     max_age_hr_in=gaussian_smoothing_max_age_hr)
 
 !..check input FELT files and make sorted lists of available data
 !..make main list based on x wind comp. (u) in upper used level
@@ -1725,6 +1734,12 @@ contains
       case ('asynoptic.output')
         !..asynoptic.output ... output at fixed intervals after start
         synoptic_output = .false.
+      case ('output.gaussian_smoothing.maxhr,size')
+        !..output.gaussian_smoothing.maxHR,SIZE=<hours>, kernel-size
+        if (.not. has_value) goto 12
+        !.. read two integer values, first maxHr, second kernel size
+        read (cinput(pname_start:pname_end), *, err=12) gaussian_smoothing_max_age_hr, &
+          gaussian_smoothing_kernel_size
       case ('total.components.off')
         !..total.components.off
         itotcomp = 0
