@@ -129,7 +129,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, nsteph, &
     ierror)
   USE iso_fortran_env, only: int16
   USE gaussian_smoothingML, only: build_age_gaussian_kernel, add_to_field_with_kernel
-  USE releaseML, only: nplume, iplume
+  USE releaseML, only: nplume, iplume, npart
   USE snapgrdML, only: imodlevel, imslp, precipitation_in_output, &
       itotcomp, compute_column_max_conc, compute_aircraft_doserate, &
       aircraft_doserate_threshold, output_column, &
@@ -147,7 +147,6 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, nsteph, &
   USE snapdebug, only: iulog, idebug
   USE ftestML, only: ftest
   USE snapdimML, only: nx, ny, output_resolution_factor, hres_field, hres_pos
-  USE releaseML, only: npart
   USE particleML, only: pdata, Particle
 
   !> File which have been prefilled by initialize_output
@@ -606,7 +605,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, nsteph, &
 !..model level fields...................................................
   if (imodlevel) then
     call write_ml_fields(iunit, varid, average, [1, 1, -1, ihrs_pos], &
-        [nx*output_resolution_factor, ny*output_resolution_factor, 1, 1], rt1, rt2)
+        [nx*output_resolution_factor, ny*output_resolution_factor, 1, 1], rt1, rt2, nsteph)
   endif
 
   if (output_vd_debug) then
@@ -645,7 +644,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, nsteph, &
 end subroutine fldout_nc
 
 
-subroutine write_ml_fields(iunit, varid, average, ipos_in, isize, rt1, rt2)
+subroutine write_ml_fields(iunit, varid, average, ipos_in, isize, rt1, rt2, nsteph)
   USE releaseML, only: nplume, iplume
   USE particleML, only: pdata, Particle
   USE snapparML, only: def_comp, nocomp
@@ -662,6 +661,7 @@ subroutine write_ml_fields(iunit, varid, average, ipos_in, isize, rt1, rt2)
   integer, intent(in) :: ipos_in(4)
   integer, intent(in) :: isize(4)
   real, intent(in) :: rt1, rt2
+  integer, intent(in) :: nsteph
 
   type(Particle) :: part
   real :: avg, total, dh
@@ -709,7 +709,7 @@ subroutine write_ml_fields(iunit, varid, average, ipos_in, isize, rt1, rt2)
       write (error_unit,*) "dumped; maxage, total", maxage, total
     else
       ! instant, accumulate once
-      call accumulate_ml_field()
+      call accumulate_ml_field(nsteph)
     end if
 
   endif
@@ -1528,25 +1528,39 @@ subroutine get_varids(iunit, varid, ierror)
 end subroutine
 
 !> accumulate model level fields only
-subroutine accumulate_ml_field()
+subroutine accumulate_ml_field(nsteph)
+  USE gaussian_smoothingML, only: build_age_gaussian_kernel, add_to_field_with_kernel
+
   USE snapgrdML, only: imodlevel, ivlayer
   USE snapfldML, only: ml_bq
   USE snapparML, only: def_comp
   USE snapdimml, only: hres_pos
-  USE releaseML, only: npart
+  USE releaseML, only: nplume, iplume
   USE particleML, only: pdata
-  integer :: i, j, m, n, k
+  integer, intent(in) :: nsteph
+  integer :: i, j, m, n, npl, k
   integer :: ivlvl
+  real, allocatable :: smoothing_kernel(:,:)
+  integer :: age_hr, last_age_hr = -1
+  real :: dummy = 0.0
 
   if(imodlevel) then
-    do n=1,npart
-      i = hres_pos(pdata(n)%x)
-      j = hres_pos(pdata(n)%y)
-      ivlvl = pdata(n)%z*10000.
-      k = ivlayer(ivlvl)
-      m = def_comp(pdata(n)%icomp)%to_output
-    !..in each sigma/eta (input model) layer
-      ml_bq(i,j,k,m) = ml_bq(i,j,k,m) + pdata(n)%rad()
+    do npl = 1, nplume
+        age_hr = nint(1.0 * iplume(npl)%ageInSteps / nsteph)
+      if (age_hr /= last_age_hr) then
+        last_age_hr = age_hr
+        if (allocated(smoothing_kernel)) deallocate(smoothing_kernel)
+        call build_age_gaussian_kernel(last_age_hr, smoothing_kernel)
+      end if
+      do n = iplume(npl)%start, iplume(npl)%end
+        i = hres_pos(pdata(n)%x)
+        j = hres_pos(pdata(n)%y)
+        ivlvl = pdata(n)%z*10000.
+        k = ivlayer(ivlvl)
+        m = def_comp(pdata(n)%icomp)%to_output
+        !..in each sigma/eta (input model) layer
+        call add_to_field_with_kernel(ml_bq(:,:,k, m), i, j,  pdata(n)%rad(), smoothing_kernel, dummy)
+      end do
     end do
   end if
 end subroutine accumulate_ml_field
@@ -1716,7 +1730,7 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
   end block
 
   if(imodlevel .and. modlevel_is_average) then
-    call accumulate_ml_field()
+    call accumulate_ml_field(nsteph)
   end if
 
   if (compute_column_max_conc) then
