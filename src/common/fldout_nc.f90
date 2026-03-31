@@ -125,9 +125,11 @@ module fldout_ncML
 
   contains
 
-subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
+subroutine fldout_nc(filename, itime,tf1,tf2,tnow, nsteph, &
     ierror)
   USE iso_fortran_env, only: int16
+  USE gaussian_smoothingML, only: build_age_gaussian_kernel, add_to_field_with_kernel
+  USE releaseML, only: nplume, iplume
   USE snapgrdML, only: imodlevel, imslp, precipitation_in_output, &
       itotcomp, compute_column_max_conc, compute_aircraft_doserate, &
       aircraft_doserate_threshold, output_column, &
@@ -156,6 +158,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
   real, intent(in) :: tf1
   real, intent(in) :: tf2
   real, intent(in) :: tnow
+  integer, intent(in) :: nsteph
   integer, intent(out) :: ierror
 
   integer :: iunit
@@ -166,10 +169,12 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
   integer :: nptot1,nptot2
   real(real64) :: bqtot1,bqtot2
 
-  integer :: i,j,m,n,mo
+  integer :: i,j,m,n,mo, npl
+  integer :: age_hr, last_age_hr=-1
   logical :: compute_total_dry_deposition
   logical :: compute_total_wet_deposition
-  real :: rt1,rt2,scale,average
+  real :: rt1,rt2,scale,average, dummy
+  real, allocatable :: smoothing_kernel(:,:)
   type(common_var) :: varid
 
   real, parameter :: undef = NF90_FILL_FLOAT
@@ -293,22 +298,31 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, &
     nptot1 = 0
     nptot2 = 0
 
-    do n=1,npart
-      part = pdata(n)
-      mo = def_comp(part%icomp)%to_output
-      if (mo == m) then
-        i = hres_pos(part%x)
-        j = hres_pos(part%y)
-        if(part%z >= part%tbl) then
-          field_hr1(i,j) = field_hr1(i,j) + part%rad()
-          bqtot1 = bqtot1 + dble(part%rad())
-          nptot1 = nptot1 + 1
-        else
-          field_hr2(i,j) = field_hr2(i,j) + part%rad()
-          bqtot2 = bqtot2 + dble(part%rad())
-          nptot2 = nptot2 + 1
-        end if
+    last_age_hr = -1
+    do npl = 1, nplume
+      age_hr = nint(1.0 * iplume(npl)%ageInSteps / nsteph)
+      if (age_hr /= last_age_hr) then
+        last_age_hr = age_hr
+        if (allocated(smoothing_kernel)) deallocate(smoothing_kernel)
+        call build_age_gaussian_kernel(last_age_hr, smoothing_kernel)
       end if
+      do n = iplume(npl)%start, iplume(npl)%end
+        part = pdata(n)
+        mo = def_comp(part%icomp)%to_output
+        if (mo == m) then
+          i = hres_pos(part%x)
+          j = hres_pos(part%y)
+          if(part%z >= part%tbl) then
+            call add_to_field_with_kernel(field_hr1, i, j, part%rad(), smoothing_kernel, dummy)
+            bqtot1 = bqtot1 + dble(part%rad())
+            nptot1 = nptot1 + 1
+          else
+            call add_to_field_with_kernel(field_hr2, i, j, part%rad(), smoothing_kernel, dummy)
+            bqtot2 = bqtot2 + dble(part%rad())
+            nptot2 = nptot2 + 1
+          end if
+        end if
+      end do
     end do
 
     if (output_column) then
@@ -1549,6 +1563,8 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
       max_column_scratch, max_column_concentration, garea, &
       ps1, ps2, t1_abs, t2_abs, aircraft_doserate_scratch, aircraft_doserate, &
       aircraft_doserate_threshold_height
+  USE releaseML, only: nplume, iplume
+  USE gaussian_smoothingML, only: build_age_gaussian_kernel, add_to_field_with_kernel
   USE snapdimml, only: nx, ny, nk, output_resolution_factor, hres_pos, lres_pos
   USE snapparML, only: nocomp, def_comp
   USE ftestML, only: ftest
@@ -1562,10 +1578,13 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
   real :: outside_pressure, outside_temperature, inside_pressure
   real :: pressure, pressure_altitude, doserate
   real :: scale
-  integer :: i, j, m, n, k, ii, ji
+  integer :: i, j, m, n, npl, k, ii, ji
   integer :: ivlvl
   type(Particle) :: part
   real :: hrstep
+  real, allocatable :: smoothing_kernel(:,:)
+  integer :: age_hr, last_age_hr = -1
+  real :: dummy = 0.0
 
   if(naverage == 0) then
     avghbl = 0.0
@@ -1603,23 +1622,32 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
   scale=tstep/3600.
   avgprec(:,:) = avgprec + scale*precip(:,:)
 
-  do n=1,npart
-    part = pdata(n)
-    i = hres_pos(part%x)
-    j = hres_pos(part%y)
-  ! c     ivlvl=pdata(n)%z*10000.
-  ! c     k=ivlevel(ivlvl)
-    m = def_comp(part%icomp)%to_output
-    if(part%z >= part%tbl) then
-    !..in boundary layer
-      avgbq1(i,j,m) = avgbq1(i,j,m) + part%rad()
-    else
-    !..above boundary layer
-      avgbq2(i,j,m) = avgbq2(i,j,m) + part%rad()
+  last_age_hr = -1
+  do npl = 1, nplume
+    age_hr = nint(1.0 * iplume(npl)%ageInSteps / nsteph)
+    if (age_hr /= last_age_hr) then
+      last_age_hr = age_hr
+      if (allocated(smoothing_kernel)) deallocate(smoothing_kernel)
+      call build_age_gaussian_kernel(last_age_hr, smoothing_kernel)
     end if
-  end do
+    do n = iplume(npl)%start, iplume(npl)%end
+      part = pdata(n)
+      i = hres_pos(part%x)
+      j = hres_pos(part%y)
+    ! c     ivlvl=pdata(n)%z*10000.
+    ! c     k=ivlevel(ivlvl)
+      m = def_comp(part%icomp)%to_output
+      if(part%z >= part%tbl) then
+      !..in boundary layer
+        call add_to_field_with_kernel(avgbq1(:,:,m), i, j,  part%rad(), smoothing_kernel, dummy)
+      else
+      !..above boundary layer
+        call add_to_field_with_kernel(avgbq2(:,:,m), i, j,  part%rad(), smoothing_kernel, dummy)
+      end if
+    end do ! particles in plume
+  end do ! plumes
 
-!..accumulated/integrated concentration
+  !..accumulated/integrated concentration
   block
   use snapfldML, only: sigma_level_of_surface_h => field1, surface_temp => field2, &
                        surface_pressure =>field3, dh=>field_hr3, t1, t2
@@ -1627,17 +1655,26 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
   integer :: ilvl
 
   if (surface_layer_is_lowest_level) then
-    do n=1,npart
-      part = pdata(n)
-      ilvl = part%z*10000.0
-      k = ivlayer(ilvl)
-      if (k==1) then
-        i = hres_pos(part%x)
-        j = hres_pos(part%y)
-        m = def_comp(part%icomp)%to_output
-        concen(i,j,m) = concen(i,j,m) + dble(part%rad())
-      endif
-    enddo
+    last_age_hr = -1
+    do npl = 1, nplume
+      age_hr = nint(1.0 * iplume(npl)%ageInSteps / nsteph)
+      if (age_hr /= last_age_hr) then
+        last_age_hr = age_hr
+        if (allocated(smoothing_kernel)) deallocate(smoothing_kernel)
+        call build_age_gaussian_kernel(last_age_hr, smoothing_kernel)
+      end if
+      do n = iplume(npl)%start, iplume(npl)%end
+        part = pdata(n)
+        ilvl = part%z*10000.0
+        k = ivlayer(ilvl)
+        if (k==1) then
+          i = hres_pos(part%x)
+          j = hres_pos(part%y)
+          m = def_comp(part%icomp)%to_output
+          call add_to_field_with_kernel(concen(:,:,m), i, j,  part%rad(), smoothing_kernel, dummy)
+        endif
+      enddo
+    end do
     dh(:,:) = rt1*hlayer1(:,:,1) + rt2*hlayer2(:,:,1)
   else
     ! Use a predetermined height as the surface layer
@@ -1649,15 +1686,24 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
     sigma_level_of_surface_h(:,:) = sigma_level_of_surface_h / surface_pressure
 
     concen = 0.0
-    do n=1,npart
-      part = pdata(n)
-
-      i = hres_pos(part%x)
-      j = hres_pos(part%y)
-      if(part%z > sigma_level_of_surface_h(i,j)) then
-        m = def_comp(part%icomp)%to_output
-        concen(i,j,m) = concen(i,j,m) + dble(part%rad())
+    last_age_hr = -1
+    do npl = 1, nplume
+      age_hr = nint(1.0 * iplume(npl)%ageInSteps / nsteph)
+      if (age_hr /= last_age_hr) then
+        last_age_hr = age_hr
+        if (allocated(smoothing_kernel)) deallocate(smoothing_kernel)
+        call build_age_gaussian_kernel(last_age_hr, smoothing_kernel)
       end if
+      do n = iplume(npl)%start, iplume(npl)%end
+        part = pdata(n)
+
+        i = hres_pos(part%x)
+        j = hres_pos(part%y)
+        if(part%z > sigma_level_of_surface_h(i,j)) then
+          m = def_comp(part%icomp)%to_output
+          call add_to_field_with_kernel(concen(:,:,m), i, j,  part%rad(), smoothing_kernel, dummy)
+        end if
+      end do
     end do
     dh(:,:) = surface_height_m
   end if
@@ -1675,14 +1721,23 @@ subroutine accumulate_fields(tf1, tf2, tnow, tstep, nsteph)
 
   if (compute_column_max_conc) then
     max_column_scratch = 0.0
-    do n=1,npart
-      part = pdata(n)
-      i = hres_pos(part%x)
-      j = hres_pos(part%y)
-      ivlvl = part%z*10000.
-      k = ivlayer(ivlvl)
-    !..in each sigma/eta (input model) layer
-      max_column_scratch(i,j,k) = max_column_scratch(i,j,k) + part%rad()
+    last_age_hr = -1
+    do npl = 1, nplume
+      age_hr = nint(1.0 * iplume(npl)%ageInSteps / nsteph)
+      if (age_hr /= last_age_hr) then
+        last_age_hr = age_hr
+        if (allocated(smoothing_kernel)) deallocate(smoothing_kernel)
+        call build_age_gaussian_kernel(last_age_hr, smoothing_kernel)
+      end if
+      do n = iplume(npl)%start, iplume(npl)%end
+        part = pdata(n)
+        i = hres_pos(part%x)
+        j = hres_pos(part%y)
+        ivlvl = part%z*10000.
+        k = ivlayer(ivlvl)
+        !..in each sigma/eta (input model) layer
+        call add_to_field_with_kernel(max_column_scratch(:,:,k), i, j,  part%rad(), smoothing_kernel, dummy)
+      end do
     end do
 
     do k=1,nk-1

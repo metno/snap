@@ -897,14 +897,14 @@ PROGRAM bsnap
         end if
         if (fldtype == "netcdf" .and. ifldout == 1) then
           !$OMP TASKWAIT
-          call fldout_nc(fldfilX, itimeo, tf1, tf2, tnext, &
+          call fldout_nc(fldfilX, itimeo, tf1, tf2, tnext, nsteph, &
                          ierror)
         endif
         if (ierror /= 0) call snap_error_exit(iulog)
       else
         if (fldtype == "netcdf" .and. ifldout == 1) then
           !$OMP TASKWAIT
-          call fldout_nc(fldfilX, itimeo, tf1, tf2, tnext, &
+          call fldout_nc(fldfilX, itimeo, tf1, tf2, tnext, nsteph, &
                          ierror)
         endif
         if (ierror /= 0) call snap_error_exit(iulog)
