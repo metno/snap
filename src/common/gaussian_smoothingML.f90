@@ -12,6 +12,10 @@ module gaussian_smoothingML
 
   public :: build_age_gaussian_kernel, add_to_field_with_kernel, initialize_gaussian_smoothing
 
+  interface add_to_field_with_kernel
+    module procedure add_to_field_with_kernel_r8
+    module procedure add_to_field_with_kernel_r4
+  end interface
 
 contains
 
@@ -104,7 +108,7 @@ subroutine build_age_gaussian_kernel(age_hr, kernel)
   kernel = kernel / sum_kernel
 end subroutine
 
-subroutine add_to_field_with_kernel(field, i, j, value, kernel, lost_activity)
+subroutine add_to_field_with_kernel_r8(field, i, j, value, kernel, lost_activity)
   use iso_fortran_env, only: real64
   real(kind=real64), intent(inout) :: field(:,:)
   integer, intent(in) :: i, j
@@ -140,6 +144,48 @@ subroutine add_to_field_with_kernel(field, i, j, value, kernel, lost_activity)
         else
           !$OMP atomic
           field(ig,jg) = field(ig,jg) + dble(value * kernel(ii+start_end_+1, jj+start_end_+1))
+        end if
+      end if
+    end do
+  end do
+end subroutine
+
+subroutine add_to_field_with_kernel_r4(field, i, j, value, kernel, lost_activity)
+  use iso_fortran_env, only: real32
+  real(kind=real32), intent(inout) :: field(:,:)
+  integer, intent(in) :: i, j
+  real, intent(in) :: value
+  real, allocatable, intent(in) :: kernel(:,:)
+  real, intent(out) :: lost_activity
+
+  integer :: ii, jj
+  integer :: ig, jg
+  integer :: i_min, i_max, j_min, j_max
+
+  lost_activity = 0.0
+
+  if (.not. use_gaussian_smoothing) then
+    !$OMP atomic
+    field(i,j) = field(i,j) + real(value, real32)
+    return
+  end if
+
+  i_min = lbound(field, 1)
+  i_max = ubound(field, 1)
+  j_min = lbound(field, 2)
+  j_max = ubound(field, 2)
+
+  do jj = -1*start_end_, start_end_
+    jg = j + jj
+    do ii = -1*start_end_, start_end_
+      ig = i + ii
+      if (kernel(ii+start_end_+1, jj+start_end_+1) > 0.0) then
+        ! only update the field if the kernel value is non-zero to avoid unnecessary atomic operations
+        if (ig < i_min .or. ig > i_max .or. jg < j_min .or. jg > j_max) then
+          lost_activity = lost_activity + value * kernel(ii+start_end_+1, jj+start_end_+1)
+        else
+          !$OMP atomic
+          field(ig,jg) = field(ig,jg) + real(value * kernel(ii+start_end_+1, jj+start_end_+1), real32)
         end if
       end if
     end do
