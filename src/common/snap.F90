@@ -722,8 +722,8 @@ PROGRAM bsnap
             !$OMP FIRSTPRIVATE(idebug,iulog,itimei, next_input_step,nhrun,nhfmin,nhfmax,nsteph) &
             !$OMP PRIVATE(ierror)
             if (idebug >= 1) then
-              write(*, *) "Starting async read task for step ", next_input_step, nstep, itimei
-              flush(output_unit)
+              write(error_unit, *) "Starting async read task for step ", next_input_step, nstep, itimei
+              flush(error_unit)
             end if
             call input_timer%start()
             call readfield_and_compute(ftype, next_input_step, nhrun < 0, itimei, nhfmin, nhfmax, &
@@ -1191,7 +1191,7 @@ contains
         if (has_value) then
           read(cinput(pname_start:pname_end),*) surface_height_m
           if (surface_height_m <= 0.0) then
-            write(*,*) "surface.layer.concentration.at.height must be positive"
+            write(error_unit,*) "surface.layer.concentration.at.height must be positive"
             goto 12
           endif
         endif
