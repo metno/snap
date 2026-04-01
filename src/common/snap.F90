@@ -599,7 +599,7 @@ PROGRAM bsnap
     call readfield_and_compute(ftype, -1, nhrun < 0, time_start, nhfmin, nhfmax, &
                    time_file, ierror)
     write (error_unit, fmt="('input data: ',i4,3i3.2)") time_file
-    flush(output_unit)
+    flush(error_unit)
     call input_timer%stop_and_log()
     call swap_fields_after_reading() ! only for async io, but does not hurt otherwise
 
@@ -928,7 +928,6 @@ PROGRAM bsnap
     call snap_error_exit(iulog)
   end if
   write(error_unit, *) 'npart: Used a maximum of ', npartmax, ' out of available ', mpart
-  write(output_unit, *) 'npart: Used a maximum of ', npartmax, ' out of available ', mpart
 
   ! b_240311
   write (error_unit, *)
