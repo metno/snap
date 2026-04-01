@@ -788,7 +788,6 @@ PROGRAM bsnap
         age_hr = nint(1.0 * iplume(npl)%ageInSteps / nsteph)
         if (age_hr /= last_age_hr) then
           last_age_hr = age_hr
-          if (allocated(smoothing_kernel)) deallocate(smoothing_kernel)
           call build_age_gaussian_kernel(last_age_hr, smoothing_kernel)
         end if
         part_do:  do np = iplume(npl)%start, iplume(npl)%end
