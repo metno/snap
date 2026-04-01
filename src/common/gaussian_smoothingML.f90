@@ -40,63 +40,49 @@ subroutine initialize_gaussian_smoothing(kernel_size_in, max_age_hr_in)
   max_age_hr = max_age_hr_in
 end subroutine
 
-function gaussian_cdf(mu, sigma, x)
-  real, intent(in) :: mu, sigma, x
-  real :: gaussian_cdf
-  gaussian_cdf = 0.5 * (1 + erf((x - mu) / (sigma * sqrt(2.0))))
-end function gaussian_cdf
-
-!> Function to compute the 2D Gaussian area using the erf function
-real function gaussian_2d_area(a_x, b_x, a_y, b_y, mu_x, mu_y, sigma_x, sigma_y)
-    real, intent(in) :: a_x, b_x, a_y, b_y
-    real, intent(in) :: mu_x, mu_y, sigma_x, sigma_y
-    real :: cdf_x1, cdf_x2, cdf_y1, cdf_y2
-
-    ! Compute the 1D CDF values in the x-direction
-    cdf_x1 = gaussian_cdf(mu_x, sigma_x, a_x)
-    cdf_x2 = gaussian_cdf(mu_x, sigma_x, b_x)
-
-    ! Compute the 1D CDF values in the y-direction
-    cdf_y1 = gaussian_cdf(mu_y, sigma_y, a_y)
-    cdf_y2 = gaussian_cdf(mu_y, sigma_y, b_y)
-
-    ! Compute the area as the product of the CDF differences
-    gaussian_2d_area = (cdf_x2 - cdf_x1) * (cdf_y2 - cdf_y1)
-end function gaussian_2d_area
-
-
 subroutine build_age_gaussian_kernel(age_hr, kernel)
+  !> age in hours of the particle
   integer, intent(in) :: age_hr
-  real, allocatable,intent(out) :: kernel(:,:)
+  !> gaussian kernel. Will be allocated if it is not already allocated. Must be of size kernel_size x kernel_size
+  real, allocatable,intent(inout) :: kernel(:,:)
 
-  integer :: ii, jj
+  integer :: ii, jj, k
   real :: sigma, sum_kernel, kernel_max
-  real :: a_x, b_x, a_y, b_y, area
+  real :: dcdf_x, dcdf_y, area
+  real :: cdf_vals(0:kernel_size)
   integer :: stat
   character(len=100) :: msg
-  real, parameter :: mu = 0.0
+  real, parameter :: sqrt2 = sqrt(2.0)
 
   if (.not. use_gaussian_smoothing) then
     return
   end if
 
-  allocate(kernel(kernel_size, kernel_size), stat=stat)
-  if (stat /= 0)  then
-    write(msg,'(A,I0,A,I0)') "Error allocating kernel of size ", kernel_size, "x", kernel_size
-    stop trim(msg)
+  if (.not. allocated(kernel)) then
+    allocate(kernel(kernel_size, kernel_size), stat=stat)
+    if (stat /= 0)  then
+      write(msg,'(A,I0,A,I0)') "Error allocating kernel of size ", kernel_size, "x", kernel_size
+      stop trim(msg)
+    end if
+  else if (size(kernel,1) /= kernel_size .or. size(kernel,2) /= kernel_size) then
+    deallocate(kernel)
   end if
+
   sigma = min_sigma + (max_sigma - min_sigma) * (1 - exp(-1. * age_hr / max_age_hr))
 
-  sum_kernel = 0.0
+  ! Precompute CDF at each cell boundary: position(k) = k - start_end_ - 0.5
+  do k = 0, kernel_size
+    cdf_vals(k) = 0.5 * (1.0 + erf((real(k - start_end_) - 0.5) / (sigma * sqrt2)))
+  end do
 
-  kernel_max = gaussian_2d_area(-0.5, 0.5, -0.5, 0.5, mu, mu, sigma, sigma)
+  sum_kernel = 0.0
+  kernel_max = (cdf_vals(start_end_+1) - cdf_vals(start_end_))**2
+
   do jj = -1*start_end_, start_end_
-    a_y = real(jj) - 0.5
-    b_y = real(jj) + 0.5
+    dcdf_y = cdf_vals(jj+start_end_+1) - cdf_vals(jj+start_end_)
     do ii = -1*start_end_, start_end_
-      a_x = real(ii) - 0.5
-      b_x = real(ii) + 0.5
-      area = gaussian_2d_area(a_x, b_x, a_y, b_y, mu, mu, sigma, sigma)
+      dcdf_x = cdf_vals(ii+start_end_+1) - cdf_vals(ii+start_end_)
+      area = dcdf_x * dcdf_y
       if (10*area > kernel_max) then
         ! avoid dithering effects by setting very small values to zero
         kernel(ii+start_end_+1, jj+start_end_+1) = area

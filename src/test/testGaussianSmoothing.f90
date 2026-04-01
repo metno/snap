@@ -10,7 +10,6 @@ program testGaussianSmoothing
   real(kind=real32), allocatable :: field_r4(:,:)
   real :: centre_young
 
-  integer :: i, j
   real :: tol
 
   tol = 1e-5
