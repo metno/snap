@@ -24,6 +24,12 @@ class ResourcesCommon:
     """
 
     def initLustreDirs(self):
+        """
+        Initialize the lustre directories, either from environment variable, from
+        lustredir_serviceenv.sh/kepler or default value. The result is cached in self._lustredir
+        for later use.
+        :raises: ValueError if any of the directories does not exist or is not a directory
+        """
         if not hasattr(self, "_lustredir"):
             lustredir = "/lustre/storeB"
             store = os.getenv("STORE", None)
@@ -57,7 +63,10 @@ class ResourcesCommon:
                 if lustredir.endswith("A"):
                     store = "storeA"
                     archivedir = "/lustre/storeA/immutable/archive"
-                    lfprod_dir = "/lustre/metproductionA"
+                    if os.path.isdir("/lustre/metproductionA"):
+                        lfprod_dir = "/lustre/metproductionA"
+                    else:
+                        lfprod_dir = "/lustre/metproduction"
                 else:
                     store = "storeB"
                     archivedir = "/lustre/arkivB"
@@ -70,6 +79,12 @@ class ResourcesCommon:
                 LustreDir.MET_ARCHIVE_DIR: archivedir,
                 LustreDir.LF_PROD_DIR: lfprod_dir,
             }
+            # test if all _lustredir are directories or links to directories, if not, raise ValueError
+            for dir_type, dir_path in self._lustredir.items():
+                if not os.path.isdir(dir_path):
+                    raise ValueError(
+                        f"{dir_type.value} directory {dir_path} does not exist or is not a directory"
+                    )
             return
 
     def _getLustreDir(self, dir_type: LustreDir = LustreDir.LUSTREDIR) -> str:
