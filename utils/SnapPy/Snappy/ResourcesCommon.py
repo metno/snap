@@ -81,7 +81,7 @@ class ResourcesCommon:
             }
             # test if all _lustredir are directories or links to directories, if not, raise ValueError
             for dir_type, dir_path in self._lustredir.items():
-                if not os.path.isdir(dir_path):
+                if dir_type.name.endswith("DIR") and not os.path.isdir(dir_path):
                     raise ValueError(
                         f"{dir_type.value} directory {dir_path} does not exist or is not a directory"
                     )

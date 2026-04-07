@@ -1,9 +1,11 @@
 # import sys
+import os
 import pathlib
 from datetime import date, datetime, time, timedelta
 
 import pytest
 from Snappy.Resources import Resources
+from Snappy.ResourcesCommon import LustreDir
 
 """"
 Created on Jan 09, 2025
@@ -39,11 +41,11 @@ Realtime:
 3. Backwards run -72 hours
 4. missing 00 file start today
 5. Missing todays data start today
-6. 
+6.
     a) start at 00 today
     b) missing 18 data start 00 today
 
-   
+
 Specific period:
 7. Hindcast 48 hours
 8. Long run 96 hours over date periodicities
@@ -67,6 +69,12 @@ today = datetime.combine(date.today(), time(5, 0, 0))
 yesterday = today - timedelta(days=1)
 
 
+def setup_environment(path: pathlib.Path):
+    # set env variables to point to non-existing directories, so that we are sure that the test data is used
+    for dir_type in LustreDir:
+        os.environ[dir_type.name] = str(path)
+
+
 @pytest.fixture
 def tmp_path_with_meteo_files(tmp_path: pathlib.Path) -> pathlib.Path:
     """Create temporary directory with meteo-files, extending pytests build-in `tmp_path`.
@@ -84,6 +92,7 @@ def tmp_path_with_meteo_files(tmp_path: pathlib.Path) -> pathlib.Path:
             for day in range(30, 32):
                 p = d / f"meteo202512{day}_{offset}.nc"
                 p.touch()
+    setup_environment(tmp_path)
     return tmp_path
 
 
@@ -103,6 +112,7 @@ def tmp_path_with_realtime_meteo_files(tmp_path: pathlib.Path) -> pathlib.Path:
                 dat = today + timedelta(days=-n_days)
                 p = d / f"meteo{dat.year}{dat.month:02d}{dat.day:02d}_{offset}.nc"
                 p.touch()
+    setup_environment(tmp_path)
     return tmp_path
 
 
