@@ -495,7 +495,7 @@ GRAVITY.FIXED.M/S=0.0002
 
         :return: path as directory, adapted for LUSTREDIR
         """
-        return self.formatLustreDirs(self._OUTPUTDIR)
+        return self.formatWithLustreDirs(self._OUTPUTDIR)
 
     def getSnapOutputDirAutomated(self):
         """Output directory of SNAP-runs for automated runs, e.g. run through cron.
@@ -503,7 +503,7 @@ GRAVITY.FIXED.M/S=0.0002
 
         :return: path as directory, adapted for LUSTREDIR
         """
-        return self.formatLustreDirs(self._OUTPUTDIR_AUTOMATED)
+        return self.formatWithLustreDirs(self._OUTPUTDIR_AUTOMATED)
 
     def _findFileInPathes(self, file, pathes):
         for path in pathes:
