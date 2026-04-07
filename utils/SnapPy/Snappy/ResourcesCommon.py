@@ -37,7 +37,9 @@ class ResourcesCommon:
             lfprod_dir = os.getenv("LF_PROD_DIR", None)
             archivedir = os.getenv("ARCHIVEDIR", None)
             if store:
-                lustredir = os.path.join(os.sep, "lustre", store)
+                lustredir = os.getenv(
+                    "LUSTREDIR", os.path.join(os.sep, "lustre", store)
+                )
                 if not metproductiondir:
                     raise ValueError(
                         "MET_PRODUCTION_DIR environment variable is required when STORE is set"
