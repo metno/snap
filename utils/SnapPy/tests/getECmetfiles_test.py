@@ -1,6 +1,7 @@
 # import sys
 import os
 import pathlib
+import sys
 from datetime import date, datetime, time, timedelta
 
 import pytest
@@ -73,6 +74,7 @@ def setup_environment(path: pathlib.Path):
     # set env variables to point to non-existing directories, so that we are sure that the test data is used
     for dir_type in LustreDir:
         os.environ[dir_type.name] = str(path)
+        print(f"Set environment variable {dir_type.name} to {path}", file=sys.stderr)
 
 
 @pytest.fixture
