@@ -12,8 +12,8 @@ class LustreDir(enum.Enum):
     LUSTREDIR = "/lustre/storeX"
     STORE = "storeX"
     MET_PRODUCTION_DIR = "/lustre/metproductionX"
-    MET_ARCHIVE_DIR = "/lustre/arkivX"
-    LF_PROD_DIR = "/lustre/metproductionX"  # for transition, to be removed when all metprodction-data is actually on metproductionX
+    ARCHIVEDIR = "/lustre/arkivX"
+    LF_PROD_DIR = "/lustre/metproductionLF"  # for transition, to be removed when all metprodction-data is actually on metproductionX
 
 
 class ResourcesCommon:
@@ -78,7 +78,7 @@ class ResourcesCommon:
                 LustreDir.LUSTREDIR: lustredir,
                 LustreDir.STORE: store,
                 LustreDir.MET_PRODUCTION_DIR: metproductiondir,
-                LustreDir.MET_ARCHIVE_DIR: archivedir,
+                LustreDir.ARCHIVEDIR: archivedir,
                 LustreDir.LF_PROD_DIR: lfprod_dir,
             }
             # test if all _lustredir are directories or links to directories, if not, raise ValueError
@@ -110,7 +110,7 @@ class ResourcesCommon:
         return template.format(
             LUSTREDIR=self._getLustreDir(LustreDir.LUSTREDIR),
             MET_PRODUCTION_DIR=self._getLustreDir(LustreDir.MET_PRODUCTION_DIR),
-            ARCHIVEDIR=self._getLustreDir(LustreDir.MET_ARCHIVE_DIR),
+            ARCHIVEDIR=self._getLustreDir(LustreDir.ARCHIVEDIR),
             LF_PROD_DIR=self._getLustreDir(LustreDir.LF_PROD_DIR),
         )
 

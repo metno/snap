@@ -1,7 +1,6 @@
 # import sys
 import os
 import pathlib
-import sys
 from datetime import date, datetime, time, timedelta
 
 import pytest
@@ -63,9 +62,6 @@ Specific period:
 
 """
 
-
-res = Resources()
-
 today = datetime.combine(date.today(), time(5, 0, 0))
 yesterday = today - timedelta(days=1)
 
@@ -74,7 +70,6 @@ def setup_environment(path: pathlib.Path):
     # set env variables to point to non-existing directories, so that we are sure that the test data is used
     for dir_type in LustreDir:
         os.environ[dir_type.name] = str(path)
-        print(f"Set environment variable {dir_type.name} to {path}", file=sys.stderr)
 
 
 @pytest.fixture
@@ -124,6 +119,7 @@ class TestClass:
 
         # str-handling required in Resources
         tmpdir = str(tmp_path_with_realtime_meteo_files)
+        res = Resources()
         res._ECINPUTDIRS = [tmpdir]
         start = today
         duration = 48
@@ -149,6 +145,7 @@ class TestClass:
         # Test 2: Starting yesterday. Tests both cases (past and future) in code.
 
         tmpdir = str(tmp_path_with_realtime_meteo_files)
+        res = Resources()
         res._ECINPUTDIRS = [tmpdir]
         start = yesterday
         duration = 48
@@ -174,6 +171,7 @@ class TestClass:
         # Part 3: Backwards forecast across future and past data.
 
         tmpdir = str(tmp_path_with_realtime_meteo_files)
+        res = Resources()
         res._ECINPUTDIRS = [tmpdir]
         start = today + timedelta(days=2)  # starting day after tomorrow
         duration = -72
@@ -208,7 +206,7 @@ class TestClass:
         ):
             file.unlink(missing_ok=True)
         tmpdir = str(tmp_path_with_realtime_meteo_files)
-
+        res = Resources()
         res._ECINPUTDIRS = [tmpdir]
 
         start = today
@@ -239,6 +237,7 @@ class TestClass:
             ).glob(f"meteo{today.year}{today.month:02d}{today.day:02d}_*"):
                 file.unlink(missing_ok=True)
         tmpdir = str(tmp_path_with_realtime_meteo_files)
+        res = Resources()
         res._ECINPUTDIRS = [tmpdir]
         start = today  # starting on missing day
         duration = 48
@@ -256,6 +255,7 @@ class TestClass:
     def test_today_00_start(self, tmp_path_with_realtime_meteo_files):
         # Test 6a: Starting at 00:00
         tmpdir = str(tmp_path_with_realtime_meteo_files)
+        res = Resources()
         res._ECINPUTDIRS = [tmpdir]
         start = today - timedelta(hours=5)
         duration = 12
@@ -280,7 +280,7 @@ class TestClass:
         ):
             file.unlink(missing_ok=True)
         tmpdir = str(tmp_path_with_realtime_meteo_files)
-
+        res = Resources()
         res._ECINPUTDIRS = [tmpdir]
 
         start = today - timedelta(hours=5)
@@ -303,6 +303,7 @@ class TestClass:
     def test_hindcast48(self, tmp_path_with_meteo_files):
         # Test 7: Hindcast 48 hours
         tmpdir = str(tmp_path_with_meteo_files)
+        res = Resources()
         res._ECINPUTDIRS = [tmpdir]
 
         start = datetime.fromisoformat("2026-01-02T13:00:00")
@@ -328,6 +329,7 @@ class TestClass:
     def test_forecast96(self, tmp_path_with_meteo_files):
         # Test 8: Long forecast 96 hours
         tmpdir = str(tmp_path_with_meteo_files)
+        res = Resources()
         res._ECINPUTDIRS = [tmpdir]
 
         start = datetime.fromisoformat("2025-12-30T13:00:00")
@@ -365,6 +367,7 @@ class TestClass:
             file.unlink(missing_ok=True)
         tmpdir = str(tmp_path_with_meteo_files)
 
+        res = Resources()
         res._ECINPUTDIRS = [tmpdir]
 
         start = datetime.fromisoformat("2026-01-04T13:00:00")
@@ -393,6 +396,7 @@ class TestClass:
                 file.unlink(missing_ok=True)
         tmpdir = str(tmp_path_with_meteo_files)
 
+        res = Resources()
         res._ECINPUTDIRS = [tmpdir]
 
         start = datetime.fromisoformat("2026-01-01T13:00:00")
@@ -425,6 +429,7 @@ class TestClass:
                 file.unlink(missing_ok=True)
         tmpdir = str(tmp_path_with_meteo_files)
 
+        res = Resources()
         res._ECINPUTDIRS = [tmpdir]
 
         start = datetime.fromisoformat("2026-01-03T13:00:00")  # starting on missing day
@@ -449,7 +454,7 @@ class TestClass:
             ):
                 file.unlink(missing_ok=True)
         tmpdir = str(tmp_path_with_meteo_files)
-
+        res = Resources()
         res._ECINPUTDIRS = [tmpdir]
 
         start = datetime.fromisoformat("2026-01-05T13:00:00")  # starting on missing day
@@ -472,6 +477,7 @@ class TestClass:
                 file.unlink(missing_ok=True)
 
         tmpdir = str(tmp_path_with_meteo_files)
+        res = Resources()
         res._ECINPUTDIRS = [tmpdir]
 
         start = datetime.fromisoformat("2026-01-03T13:00:00")
@@ -485,6 +491,7 @@ class TestClass:
     def test_00_start(self, tmp_path_with_meteo_files):
         # Part a: Starting at 00:00
         tmpdir = str(tmp_path_with_meteo_files)
+        res = Resources()
         res._ECINPUTDIRS = [tmpdir]
         start = datetime.fromisoformat("2026-01-03T00:00:00")
         duration = 12
@@ -507,7 +514,7 @@ class TestClass:
         for file in (tmp_path_with_meteo_files / "NRPA_EUROPE_0_1_18/").glob("*"):
             file.unlink(missing_ok=True)
         tmpdir = str(tmp_path_with_meteo_files)
-
+        res = Resources()
         res._ECINPUTDIRS = [tmpdir]
 
         start = datetime.fromisoformat("2026-01-03T00:00:00")
@@ -532,7 +539,7 @@ class TestClass:
             ):
                 file.unlink(missing_ok=True)
         tmpdir = str(tmp_path_with_meteo_files)
-
+        res = Resources()
         res._ECINPUTDIRS = [tmpdir]
         start = datetime.fromisoformat("2026-01-03T00:00:00")
         duration = 12
