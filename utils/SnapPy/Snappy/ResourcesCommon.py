@@ -12,7 +12,7 @@ class LustreDir(enum.Enum):
     LUSTREDIR = "/lustre/storeX"
     STORE = "storeX"
     MET_PRODUCTION_DIR = "/lustre/metproductionX"
-    ARCHIVEDIR = "/lustre/arkivX"
+    MET_ARCHIVE_DIR = "/lustre/arkivX"
     LF_PROD_DIR = "/lustre/metproductionLF"  # for transition, to be removed when all metprodction-data is actually on metproductionX
 
 
@@ -35,7 +35,7 @@ class ResourcesCommon:
             store = os.getenv("STORE", None)
             metproductiondir = os.getenv("MET_PRODUCTION_DIR", None)
             lfprod_dir = os.getenv("LF_PROD_DIR", None)
-            archivedir = os.getenv("ARCHIVEDIR", None)
+            archivedir = os.getenv("MET_ARCHIVE_DIR", None)
             if store:
                 lustredir = os.getenv(
                     "LUSTREDIR", os.path.join(os.sep, "lustre", store)
@@ -50,7 +50,7 @@ class ResourcesCommon:
                     )
                 if not archivedir:
                     raise ValueError(
-                        "ARCHIVEDIR environment variable is required when STORE is set"
+                        "MET_ARCHIVE_DIR environment variable is required when STORE is set"
                     )
             else:
                 lustredirenv = self._getLustreMappEnv()
@@ -78,7 +78,7 @@ class ResourcesCommon:
                 LustreDir.LUSTREDIR: lustredir,
                 LustreDir.STORE: store,
                 LustreDir.MET_PRODUCTION_DIR: metproductiondir,
-                LustreDir.ARCHIVEDIR: archivedir,
+                LustreDir.MET_ARCHIVE_DIR: archivedir,
                 LustreDir.LF_PROD_DIR: lfprod_dir,
             }
             # test if all _lustredir are directories or links to directories, if not, raise ValueError
@@ -102,7 +102,7 @@ class ResourcesCommon:
 
     def formatWithLustreDirs(self, template: str) -> str:
         """Format the given template string with the lustre directories, replacing
-        {LUSTREDIR}, {MET_PRODUCTION_DIR}, {ARCHIVEDIR} and {LF_PROD_DIR}.
+        {LUSTREDIR}, {MET_PRODUCTION_DIR}, {MET_ARCHIVE_DIR} and {LF_PROD_DIR}.
 
         :param template: string with placeholders for lustre directories
         :return: formatted string with lustre directories
@@ -110,7 +110,7 @@ class ResourcesCommon:
         return template.format(
             LUSTREDIR=self._getLustreDir(LustreDir.LUSTREDIR),
             MET_PRODUCTION_DIR=self._getLustreDir(LustreDir.MET_PRODUCTION_DIR),
-            ARCHIVEDIR=self._getLustreDir(LustreDir.ARCHIVEDIR),
+            MET_ARCHIVE_DIR=self._getLustreDir(LustreDir.MET_ARCHIVE_DIR),
             LF_PROD_DIR=self._getLustreDir(LustreDir.LF_PROD_DIR),
         )
 
