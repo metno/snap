@@ -14,9 +14,14 @@
 *.a
 *.so
 *.mod
+*.modmic
 **/__pycache__/
 **/*.py[cod]
 **/*__genmod.f90
+**/.tox/
+build/
+dist/
+*.egg-info/
 Snappy.egg-info
 
 # editor stuff
@@ -28,6 +33,8 @@ Snappy.egg-info
 /.csettings
 /.dep
 /.vscode
+/.venv
+.ipynb_checkpoints
 
 # /
 /bsnap_1.*
@@ -97,6 +104,10 @@ src/test/data/snap.nc
 src/test/data/snap_ecemep.nc
 src/test/data/snap_meps_fimex.nc
 src/test/data/snap_meps_fimex.log
+
+src/naccident/examples/bench/meteo20260206_00.nc
+src/naccident/examples/bench/snap.log
+src/naccident/examples/bench/snap.nc
 
 docs/html
 docs/latex

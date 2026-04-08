@@ -1,27 +1,5 @@
-# SNAP: Servere Nuclear Accident Programme
-# Copyright (C) 1992-2020   Norwegian Meteorological Institute
-#
-# This file is part of SNAP. SNAP is free software: you can
-# redistribute it and/or modify it under the terms of the
-# GNU General Public License as published by the
-# Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-"""
-Created on Apr 13, 2016
-
-@author: heikok
-"""
-
 import enum
+import logging
 import math
 import os
 import re
@@ -34,6 +12,8 @@ from time import gmtime, strftime
 
 from Snappy import read_dosecoefficients_icrp
 from Snappy.ResourcesCommon import ResourcesCommon
+
+logger = logging.getLogger(__name__)
 
 
 @enum.unique
@@ -62,30 +42,26 @@ class Resources(ResourcesCommon):
     # OUTPUTDIR = "/disk1/tmp"
     _OUTPUTDIR = "{LUSTREDIR}/project/fou/kl/snap/runs"
     _OUTPUTDIR_AUTOMATED = "{LUSTREDIR}/project/fou/kl/snap/automated_runs"
-    _ECINPUTDIRS = ["{LUSTREDIR}/project/metproduction/products/cwf-input/"]
+    _ECINPUTDIRS = ["{LF_PROD_DIR}/atom/Meteorology/EC2CWF/"]
+
     # ECINPUTDIRS = ["/lustre/storeB/users/heikok/Meteorology/ecdis2cwf/"]
     EC_FILENAME_PATTERN = "meteo{year:04d}{month:02d}{day:02d}_{dayoffset:02d}.nc"
     EC_FILE_PATTERN = os.path.join("NRPA_EUROPE_0_1_{UTC:02d}", EC_FILENAME_PATTERN)
     EC_GLOBAL_PATTERN = (
         "ec_atmo_0_1deg_{year:04d}{month:02d}{day:02d}T{dayoffset:02d}0000Z_3h.nc"
     )
-
     _MET_GLOBAL_INPUTDIRS = {
-        MetModel.NrpaEC0p1Global: [
-            "{LUSTREDIR}/project/metproduction/products/ecmwf/nc/"
-        ],
-        MetModel.EC0p1Global: ["{LUSTREDIR}/project/metproduction/products/ecmwf/nc/"],
-        MetModel.Icon0p25Global: ["{LUSTREDIR}/project/metproduction/products/icon/"],
+        MetModel.NrpaEC0p1Global: ["{MET_PRODUCTION_DIR}/products/ecmwf/nc/"],
+        MetModel.EC0p1Global: ["{MET_PRODUCTION_DIR}/products/ecmwf/nc/"],
+        MetModel.Icon0p25Global: ["{MET_PRODUCTION_DIR}/products/icon/"],
     }
 
     _MET_INPUTDIRS = {
-        MetModel.Meps2p5: [
-            "{LUSTREDIR}/immutable/archive/projects/metproduction/MEPS/"
-        ],
+        MetModel.Meps2p5: ["{MET_ARCHIVE_DIR}/projects/metproduction/MEPS/"],
         MetModel.EC0p1Europe: ["{LUSTREDIR}/project/fou/kl/snap/meteo/ec_europe/"],
         MetModel.GfsGribFilter: ["{LUSTREDIR}/project/fou/kl/snap/meteo/gfs_europe/"],
         MetModel.Era5Nancy: [
-            "{LUSTREDIR}/project/fou/kl/cerad//Meteorology/EC/Era5/Nancy/"
+            "{LUSTREDIR}/project/fou/kl/cerad/Meteorology/EC/Era5/Nancy/"
         ],
     }
     MET_FILENAME_PATTERN = {
@@ -98,7 +74,7 @@ class Resources(ResourcesCommon):
 
     def __init__(self):
         """
-        initialize
+        initialize the resources
         """
         self.directory = os.path.join(os.path.dirname(__file__), "resources")
         self.ecDomainWidth = 125.0
@@ -106,13 +82,14 @@ class Resources(ResourcesCommon):
         self.ecDomainRes = 0.1
         self.ecDefaultDomainStartX = -50.0
         self.ecDefaultDomainStartY = 25.0
+        self.ecMaxFileOffset = 3
 
         startScreenFH = open(
             os.path.join(self.directory, "startScreen.html"), mode="r", encoding="UTF-8"
         )
         self.startScreen = startScreenFH.read()
         startScreenFH.close()
-        plantBB = {"west": -60, "east": 70, "north": 85, "south": 26}
+        plantBB = {"west": -60, "east": 70, "north": 85, "south": 23}
         npps = self.readNPPs(plantBB)
         npps.update(self.readRadnett())
         nppStrings = []
@@ -277,9 +254,7 @@ GRAVITY.FIXED.M/S=0.0002
                     DPUI = dosecoeff.DPUI(iso["isotope"], "particulate")
             else:
                 raise Exception(
-                    "Error, unknown type '{1}' for isotope '{2}'".format(
-                        iso["type"], iso["isotope"]
-                    )
+                    f"Error, unknown type '{iso['type']}' for isotope '{iso['isotope']}'"
                 )
             if DPUI is not None and DPUI >= 0.0:
                 snapinput += f"DPUI.Sv_per_Bq_M3 = {DPUI}\n"
@@ -460,11 +435,14 @@ GRAVITY.FIXED.M/S=0.0002
         """Get the definitions for the metmodel, including met-files and domain (unless default).
         This should be written to the snap.input file, in addition to the source-term. files may be empty
         """
-        largest_landfraction_file = f"ERROR: no largest land cover defined for metmodel {metmodel}"
+        largest_landfraction_file = (
+            f"ERROR: no largest land cover defined for metmodel {metmodel}"
+        )
         lines = []
         if metmodel == MetModel.NrpaEC0p1:
-            # no setup needed, autdetection in snap
-            pass
+            largest_landfraction_file = os.path.join(
+                self.directory, "largestLandFraction_NrpaEC0p1.nc"
+            )
         elif metmodel == MetModel.NrpaEC0p1Global:
             # no setup needed, autdetection in snap
             pass
@@ -475,7 +453,9 @@ GRAVITY.FIXED.M/S=0.0002
             # no setup needed, autdetection in snap
             pass
         elif metmodel == MetModel.Meps2p5:
-            largest_landfraction_file = os.path.join(self.directory, "largestLandFraction_MEPS_byte.nc")
+            largest_landfraction_file = os.path.join(
+                self.directory, "largestLandFraction_MEPS_byte.nc"
+            )
         elif metmodel == MetModel.Icon0p25Global:
             # no setup needed, autdetection in snap
             pass
@@ -494,9 +474,10 @@ GRAVITY.FIXED.M/S=0.0002
 
         lines.append("")
         lines.append(
-            self._getSnapInputTemplate(metmodel).format(interpolation=interpolation,
-                                                        LUSTREDIR=self.getLustreDir(),
-                                                        largest_landfraction_file=largest_landfraction_file)
+            self._getSnapInputTemplate(metmodel).format(
+                interpolation=interpolation,
+                largest_landfraction_file=largest_landfraction_file,
+            )
         )
         return "\n".join(lines)
 
@@ -514,7 +495,7 @@ GRAVITY.FIXED.M/S=0.0002
 
         :return: path as directory, adapted for LUSTREDIR
         """
-        return self._OUTPUTDIR.format(LUSTREDIR=self.getLustreDir())
+        return self.formatWithLustreDirs(self._OUTPUTDIR)
 
     def getSnapOutputDirAutomated(self):
         """Output directory of SNAP-runs for automated runs, e.g. run through cron.
@@ -522,7 +503,7 @@ GRAVITY.FIXED.M/S=0.0002
 
         :return: path as directory, adapted for LUSTREDIR
         """
-        return self._OUTPUTDIR_AUTOMATED.format(LUSTREDIR=self.getLustreDir())
+        return self.formatWithLustreDirs(self._OUTPUTDIR_AUTOMATED)
 
     def _findFileInPathes(self, file, pathes):
         for path in pathes:
@@ -531,17 +512,14 @@ GRAVITY.FIXED.M/S=0.0002
                 return filename
         return None
 
-    def _lustreTemplateDirs(self, dirs):
-        return [x.format(LUSTREDIR=self.getLustreDir()) for x in dirs]
-
     def getMetGlobalInputDirs(self, metmodel):
-        return self._lustreTemplateDirs(self._MET_GLOBAL_INPUTDIRS[metmodel])
+        return self.lustreTemplateDirs(self._MET_GLOBAL_INPUTDIRS[metmodel])
 
     def getMetInputDirs(self, metmodel):
-        return self._lustreTemplateDirs(self._MET_INPUTDIRS[metmodel])
+        return self.lustreTemplateDirs(self._MET_INPUTDIRS[metmodel])
 
     def getECInputDirs(self):
-        return self._lustreTemplateDirs(self._ECINPUTDIRS)
+        return self.lustreTemplateDirs(self._ECINPUTDIRS)
 
     def getECRuns(self):
         """Find ec-runs with at least 2 days of forecast"""
@@ -635,42 +613,115 @@ GRAVITY.FIXED.M/S=0.0002
 
     def getECMeteorologyFiles(
         self, dtime: datetime, run_hours: int, fixed_run="best", pattern=""
-    ):
+    ) -> list[str]:
         """Get available meteorology files for the last few days around dtime and run_hours.
 
-        Keyword arguments:
-        dtime -- start time of model run
-        run_hours -- run length in hours, possibly negative
-        fixed_run -- string of form YYYY-MM-DD_HH giving a specific model-run
+        :param dtime: start time of model run
+        :param run_hours: run length in hours, possibly negative
+        :param fixed_run: string of form YYYY-MM-DD_HH giving a specific model-run, defaults to "best"
+        :param pattern: pattern to match files, defaults to ""
+        :raises Exception: if the timespan is too long
+        :return: list of relevant meteorology files
         """
         relevant_dates = []
         if not pattern:
             pattern = Resources.EC_FILE_PATTERN
 
         if fixed_run == "best":
-            if run_hours < 0:
+            if run_hours < 0:  # start and finish flipped to collect time range
                 start = dtime + timedelta(hours=run_hours)
+                finish = dtime  # start < finish always
             else:
-                start = dtime
+                start = dtime  # start < finish always
+                finish = start + timedelta(hours=run_hours)
 
-            start -= timedelta(hours=72)  # go 72 hours (forecast-length) back
+            if (
+                start.hour < 3
+            ):  # accounts for special case where start before 3am. Then previous days files are needed.
+                start -= timedelta(hours=3)
 
             today = datetime.combine(date.today(), time(0, 0, 0))
             tomorrow = today + timedelta(days=1)
-            days = []
-            if (tomorrow - start).days > 1000:
-                raise Exception(
-                    "too long timespan: " + str(start) + " to " + str(tomorrow)
-                )
-            while start < tomorrow:
-                days.append(start)
-                start += timedelta(days=1)
-            # loop needs to have latest model runs/hindcast runs last
-            for offset in [3, 2, 1, 0]:
-                for day in days:
+
+            logger.debug((f"start {start}"))
+            logger.debug((f"finish {finish}"))
+
+            # Case 1: Collect future files first
+
+            if finish >= tomorrow:
+                future_days = (finish - today).days
+                # Loop through forecasts on latest model run. Collects all utcs in case of missing data
+                for offset in range(1, future_days + 1):
                     for utc in [0, 6, 12, 18]:
                         file = pattern.format(
                             dayoffset=offset,
+                            UTC=utc,
+                            year=today.year,
+                            month=today.month,
+                            day=today.day,
+                        )
+                        filename = self._findFileInPathes(file, self.getECInputDirs())
+                        if filename is not None:
+                            relevant_dates.append(filename)
+                        elif utc == 0:  # Accounts for no complete dataset for today
+                            logger.debug(f"else: File {file} doesnt exist")
+                            utc_list = [18, 12, 6, 0]
+                            cases = [
+                                (u, d)
+                                for d in range(1, self.ecMaxFileOffset + 1)
+                                for u in utc_list
+                            ]
+                            # Index loops through day offsets (max of ecMaxFileOffset) and utc list (last index of len(utc_list))
+                            for new_utc, dayoffset in cases:
+                                logger.debug("Still going...")
+                                file = pattern.format(
+                                    dayoffset=dayoffset + offset,
+                                    UTC=new_utc,
+                                    year=(today - timedelta(days=dayoffset)).year,
+                                    month=(today - timedelta(days=dayoffset)).month,
+                                    day=(today - timedelta(days=dayoffset)).day,
+                                )
+                                filename = self._findFileInPathes(
+                                    file, self.getECInputDirs()
+                                )
+                                logger.debug(f"Trying {file}")
+                                if filename is not None:
+                                    logger.debug(f"Took {file} instead")
+                                    relevant_dates.append(filename)
+                                    logger.debug("break")
+                                    break
+                            if filename is None:
+                                logger.debug("No alternative file exists")
+
+                        else:
+                            logger.debug(f"File {file} doesnt exist")
+
+            # Case 2: Collect hindcasts
+
+            if start <= tomorrow:
+                n_days = (today - start).days
+
+                if abs(n_days) > 1000:  # accounts for stored data period
+                    raise Exception(
+                        "too long timespan: " + str(start) + " to " + str(tomorrow)
+                    )
+
+                elif n_days < 0:  # accounts for future-only forecasts
+                    days = [
+                        today,
+                    ]
+
+                else:
+                    days = []
+                    tmp = start
+                    while tmp < min(finish + timedelta(days=1), tomorrow):
+                        days.append(tmp)
+                        tmp += timedelta(days=1)
+
+                for day in days:  # Loops through past dates needed
+                    for utc in [0, 6, 12, 18]:
+                        file = pattern.format(
+                            dayoffset=0,
                             UTC=utc,
                             year=day.year,
                             month=day.month,
@@ -679,6 +730,37 @@ GRAVITY.FIXED.M/S=0.0002
                         filename = self._findFileInPathes(file, self.getECInputDirs())
                         if filename is not None:
                             relevant_dates.append(filename)
+                        elif utc == 0:
+                            logger.debug(f"File {file} doesnt exist")
+                            utc_list = [18, 12, 6, 0]
+
+                            cases = [
+                                (u, d)
+                                for d in range(1, self.ecMaxFileOffset + 1)
+                                for u in utc_list
+                            ]
+                            for new_utc, dayoffset in cases:
+                                file = pattern.format(
+                                    dayoffset=dayoffset,
+                                    UTC=new_utc,
+                                    year=(day - timedelta(days=dayoffset)).year,
+                                    month=(day - timedelta(days=dayoffset)).month,
+                                    day=(day - timedelta(days=dayoffset)).day,
+                                )
+                                filename = self._findFileInPathes(
+                                    file, self.getECInputDirs()
+                                )
+
+                                if filename is not None:
+                                    logger.debug(f"Took {file} instead")
+                                    relevant_dates.append(filename)
+                                    break
+                            if filename is None:
+                                logger.debug("No alternative file exists")
+
+                        else:
+                            logger.debug(f"File {file} doesnt exist")
+
         else:
             match = re.match(r"(\d{4})-(\d{2})-(\d{2})_(\d{2})", fixed_run)
             if match:
@@ -690,7 +772,6 @@ GRAVITY.FIXED.M/S=0.0002
                     filename = self._findFileInPathes(file, self.getECInputDirs())
                     if filename is not None:
                         relevant_dates.append(filename)
-
         return relevant_dates
 
     def getDoseCoefficients(self):
@@ -698,7 +779,7 @@ GRAVITY.FIXED.M/S=0.0002
             dosecoeffs = read_dosecoefficients_icrp.DoseCoefficientsICRP(
                 os.path.join(self.directory, "1-s2.0-S0146645313000110-mmc1.zip")
             )
-        except Exception as e:
+        except Exception:
             dosecoeffs = None
         return dosecoeffs
 
@@ -767,7 +848,7 @@ def snapNc_convert_to_grib(snapNc, basedir, ident, isotopes, bitmapCompress=Fals
                     )
                 else:
                     # append tmp-file to final grib-file
-                    with (open(basetempfile, "rb")) as th:
+                    with open(basetempfile, "rb") as th:
                         while True:
                             data = th.read(16 * 1024 * 1024)  # read max 16M blocks
                             if data:

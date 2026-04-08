@@ -22,7 +22,7 @@ set -e
 #     $ dupload --no --to noble dist/snap-py_<version>-1_amd64.changes
 #     then remove --no option
 #
-#     Wait for confirmation email that package has been accepted
+#     Wait for confirmation google message on "IT- package repositories" that package has been added
 #
 # 3 - Check that it works on one machine
 #     $ ssh -X ppi-vglserver-b3.met.no
@@ -53,8 +53,8 @@ if [ ! -f "Snappy/resources/1-s2.0-S0146645313000110-mmc1.zip" ]; then
 fi
 
 HOST=$(lsb_release --codename --short)
-export VERSION=2.5.12
-CHANGELOG="fix bug qt browser input parsing and handle better case with no release"
+export VERSION=2.5.14
+CHANGELOG="fix first timestep"
 export DEBEMAIL=${USER}@met.no
 
 check_git_lfs() {

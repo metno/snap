@@ -1,6 +1,6 @@
 c
 c  milib
-c  
+c
 c  $Id$
 c
 c  Copyright (C) 2006 met.no
@@ -11,7 +11,7 @@ c  Box 43 Blindern
 c  0313 OSLO
 c  NORWAY
 c  email: diana@met.no
-c  
+c
 c  This library is free software; you can redistribute it and/or
 c  modify it under the terms of the GNU Lesser General Public
 c  License as published by the Free Software Foundation; either
@@ -21,7 +21,7 @@ c  This library is distributed in the hope that it will be useful,
 c  but WITHOUT ANY WARRANTY; without even the implied warranty of
 c  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 c  Lesser General Public License for more details.
-c  
+c
 c  You should have received a copy of the GNU Lesser General Public
 c  License along with this library; if not, write to the Free Software
 c  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
@@ -121,7 +121,7 @@ c         rotated grids:
 c         The minimum value is computed 1/100 grid unit from the pole.
 c         Correct value is infinite at the pole.
 c     Example of map ratio usage, xm,ym computed with imapr=1:
-c        x_gradient = xm(i,j)*(field(i+1,j)-field(i-1,j))/(hx*2.) 
+c        x_gradient = xm(i,j)*(field(i+1,j)-field(i-1,j))/(hx*2.)
 c        y_gradient = ym(i,j)*(field(i,j+1)-field(i,j-1))/(hy*2.)
 c     Example of map ratio usage, xm,ym computed with imapr=3:
 c        x_gradient = xm(i,j)*(field(i+1,j)-field(i-1,j))
@@ -135,27 +135,33 @@ c met.no/FoU 03.05.2005  Anstein Foss ... float() -> real()
 c met.no/FoU 17.11.2008  Ole Vignes ..... lambert (tangent, non-oblique)
 c-----------------------------------------------------------------------
 c
+      use milibML, only : EARTH_RADIUS
+      implicit none
+
       integer imapr,icori,igtype,nx,ny,ierror
       real    grid(6),xm(nx,ny),ym(nx,ny),fc(nx,ny),hx,hy
 c
-      parameter (nmax=1000)
+      integer, parameter :: nmax=1000
       real      flon(nmax),flat(nmax)
-c
+      real    zpi, zpir18, zfc, xp, yp, an, fi, fp, fq, dh
+      real    an2, xm1, rpol2, fc00, s
+      real    west, south, dlon, dlat, xcen, ycen, hlon, hlat
+      real    sx, sy, clat90, slat00, clat, slat
+      real    xw, ys, dx, dy, xc, yc
+      integer i, j, i0, i1, i2
+
       ierror=0
 c
       if((igtype.eq.1 .or. igtype.eq.4) .and.
      +   (grid(3).eq.0. .or. grid(5).eq.0.)) ierror=1
-      if((igtype.eq.2 .or. igtype.eq.3) .and. 
+      if((igtype.eq.2 .or. igtype.eq.3) .and.
      +   (grid(3).eq.0. .or. grid(4).eq.0.)) ierror=1
-      if(igtype.eq.5 .and. 
+      if(igtype.eq.5 .and.
      +   (grid(3).eq.0. .or. grid(4).eq.0.)) ierror=1
       if(igtype.eq.5 .and. grid(6).ne.0.) ierror=1
 c
       if(ierror.ne.0) return
 c
-c..earth radius (m)
-ccc   rearth = 6.371e+6
-      call earthr(rearth)
 c
       zpi    = 2.0*asin(1.0)
       zpir18 = zpi/180.
@@ -172,7 +178,7 @@ c
         fp=grid(5)
         fq=1.0+sin(fp*zpir18)
 c..resolution
-        dh=rearth*fq/an
+        dh=EARTH_RADIUS*fq/an
         an2=an*an
         xm1=fq*0.5/an2
 c..avoiding problems in calling routines (1/fc), coriolis at equator
@@ -216,8 +222,8 @@ c
         dlat =grid(4)*zpir18
         xcen =grid(5)*zpir18
         ycen =grid(6)*zpir18
-        hlon =rearth*dlon
-        hlat =rearth*dlat
+        hlon =EARTH_RADIUS*dlon
+        hlat =EARTH_RADIUS*dlat
         sx=1.
         sy=1.
         if(imapr.gt.1) then

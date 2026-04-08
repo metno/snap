@@ -1,19 +1,4 @@
-! SNAP: Servere Nuclear Accident Programme
-! Copyright (C) 1992-2017   Norwegian Meteorological Institute
-
-! This file is part of SNAP. SNAP is free software: you can
-! redistribute it and/or modify it under the terms of the
-! GNU General Public License as published by the
-! Free Software Foundation, either version 3 of the License, or
-! (at your option) any later version.
-
-! This program is distributed in the hope that it will be useful,
-! but WITHOUT ANY WARRANTY; without even the implied warranty of
-! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-! GNU General Public License for more details.
-
-! You should have received a copy of the GNU General Public License
-! along with this program.  If not, see <https://www.gnu.org/licenses/>.
+!> Module for Dry deposition of radionuclides. Method: combination of J.Saltbones 1994 and J.Bartnicki 2003
 
 module drydepml
   use ISO_FORTRAN_ENV, only: real64, int8, int16
@@ -23,7 +8,7 @@ module drydepml
 
   public :: drydep, preprocess_landfraction, unload, &
     requires_extra_fields_to_be_read, drydep_precompute_meteo, drydep_precompute_particle, &
-    requires_landfraction_file
+    requires_landfraction_file, lookup_z0
 
   integer, parameter, public :: DRYDEP_SCHEME_UNDEFINED = 0
   integer, parameter, public :: DRYDEP_SCHEME_OLD = 1
@@ -40,10 +25,8 @@ module drydepml
   real(real64), parameter :: pi = 2.0*asin(1.0)
   integer(int16), parameter :: LOOKUP_NAN = -32768 ! NaN value in zhang table, just something out of bounds
 
-  !> Kinematic viscosity of air, m2 s-1 at +15 C
-  real(real64), parameter :: ny = 1.5e-5
-  !> Mean free path of air molecules [m]
-  real(real64), parameter :: lambda = 0.065e-6
+  !> Kinematic viscosity of air, m2 s-1 at +15 C (288 K) and 1013.25 hPa. Same as using visc(288)/density from vgrav.
+  !> real(real64), parameter :: ny = 1.5e-5
 
   !> Boltzmanns constant, J K-1
   real(real64), parameter :: bolzc = 1.380649e-23
@@ -77,48 +60,50 @@ end function
 
 !> Precompute dry deposition meteorology
 !> returns roa, ustar, monin_obukhov_length, raero, my
-elemental subroutine drydep_precompute_meteo(surface_pressure, t2m, yflux, xflux, z0, hflux, &
-                                             ustar, raero, my)
+elemental subroutine drydep_precompute_meteo(surface_pressure, t2m, surface_stress, z0, hflux, &
+                                             ustar, raero, my, nu)
   use iso_fortran_env, only: real64
   use datetime, only: datetime_t
+  use vgravtablesML, only: visc
   real, intent(in) :: surface_pressure !> [Pa]
   real, intent(in) :: t2m !> [K]
-  real, intent(in) :: yflux !> [N/m^2]
-  real, intent(in) :: xflux !> [N/m^2]
+  real, intent(in) :: surface_stress !> [N/m^2]
   real, intent(in) :: z0 !> [m]
-  real, intent(in) :: hflux !> [W s/m^2]
-  real(real64), intent(out) :: raero, ustar, my
+  real, intent(in) :: hflux !> [W/m^2]
+  real(real64), intent(out) :: raero, ustar, my, nu
 
   real(real64), parameter :: k = 0.4
 
   real(real64) :: roa, monin_obukhov_length
 
-  roa = surface_pressure / (t2m * R)
-  ustar = hypot(yflux, xflux) / sqrt(roa)
+  roa = surface_pressure / (t2m * R) !> [kg/m^3]
+  my = visc(t2m)/10 !>  Dynamic viscosity of air [kg/(m s)]  !Or visc(288)/10 - decide
+  nu = my / roa !> Kinematic viscosity of air [m^2/s]   !Or ny = 1.5e-5 defined above
+  ustar = surface_stress / sqrt(roa)
   monin_obukhov_length = - roa * CP * t2m * (ustar**3) / (k * grav * hflux)
   raero = aerodynres(monin_obukhov_length, ustar, real(z0, real64))
-  my = ny * roa
+
 end subroutine
 
 
 elemental subroutine drydep_precompute_particle(surface_pressure, t2m, &
-    ustar, raero, my, date, &
+    ustar, raero, my, nu, date, &
     component, classnr, vd_dep)
   use iso_fortran_env, only: real64, int8
   use datetime, only: datetime_t
   use snapparML, only: defined_component
   real, intent(in) :: surface_pressure !> [Pa]
   real, intent(in) :: t2m !> [K]
-  real(real64), intent(in) :: raero, ustar, my
+  real(real64), intent(in) :: raero, ustar, my, nu
   type(datetime_t), intent(in) :: date
   type(defined_component), intent(in) :: component
-  integer(int8), intent(in) :: classnr !> Speficic mapping to land use type, see subroutine `lookup_A`
+  integer(int8), intent(in) :: classnr !> Specific mapping to land use type, see subroutine `lookup_A`
   real, intent(out) :: vd_dep ! m/s
 
   select case(drydep_scheme)
     case (DRYDEP_SCHEME_EMERSON)
       call drydep_emerson_vd(surface_pressure, t2m, &
-            ustar, raero, my, date, &
+            ustar, raero, my, nu, date, &
             component, classnr, vd_dep)
     case default
       error stop "Precomputation should not be called for this dry deposition scheme"
@@ -244,6 +229,9 @@ pure function aerodynres(L, ustar, z0) result(raero)
   endif
 
   raero = (1 / (ka * ustar)) * (log(z/z0) - fi)
+  ! raero can become negative if L < 0 and z0 is large (seen with 2.8m)
+  ! using a minimum value of 1s/m to avoid negative deposition velocities, which are unphysical
+  if (raero < 1.0) raero = 1.0
 end function
 
 
@@ -280,6 +268,51 @@ elemental real(real64) function alpha(classnr)
     error stop "Error: Invalid classnr value encountered, must be in range 11-22"
   end select
 
+end function
+
+
+! charnock formula used for roughness length of water
+elemental real(real64) function charnock_z0(ustar,nu)
+  real(real64), intent(in) :: ustar, nu
+  real(real64), parameter :: alpha_ch = 0.018  ! charnock coefficient
+  real(real64), parameter :: alpha_m = 0.11  ! momentum transfer coefficient
+
+  charnock_z0 = alpha_m*nu/ustar + alpha_ch*ustar*ustar/grav
+end function
+
+
+elemental real(real64) function lookup_z0(classnr, ustar, nu)
+  integer(int8), intent(in) :: classnr
+  real(real64), intent(in) :: ustar, nu
+
+  select case(classnr)
+  case (11) ! Sea -> Z14
+    lookup_z0 = charnock_z0(ustar,nu)
+  case (12) ! Inland water -> Z13
+    lookup_z0 = 0.00001
+  case (13) ! Tundra/desert -> Z8,Z9
+    lookup_z0 = 0.005
+  case (14) ! Ice and ice sheets -> Z12
+    lookup_z0 = 0.005
+  case (15) ! Urban -> Z15
+    lookup_z0 = 1.0
+  case (16) ! Crops -> Z7
+    lookup_z0 = 0.2
+  case (17) ! Grass -> Z6
+    lookup_z0 = 0.05
+  case (18) ! Wetlands -> Z11
+    lookup_z0 = 0.1
+  case (19) ! Evergreen needleleaf -> Z1
+    lookup_z0 = 1.5
+  case (20) ! Deciduous needleleaf -> Z3
+    lookup_z0 = 1.0
+  case (21) ! Mixed forest -> Z5
+    lookup_z0 = 1.0
+  case (22) ! Shrubs and interrupted woodlands -> Z10
+    lookup_z0 = 0.5
+  case default
+    error stop "Error: Invalid classnr value encountered, must be in range 11-22"
+  end select
 end function
 
 
@@ -337,16 +370,16 @@ end function
 !> Dry deposition velocites based on
 !> Emerson et al. 2020, Revisiting particle dry deposition and its role in radiative effect estimates
 !> https://doi.org/10.1073/pnas.2014761117
-pure elemental subroutine drydep_emerson_vd(surface_pressure, t2m, ustar, raero, my,&
+pure elemental subroutine drydep_emerson_vd(surface_pressure, t2m, ustar, raero, my, nu, &
     date, component, classnr, &
     vd_dep)
   use datetime, only: datetime_t
   use snapparML, only: defined_component
-  use vgravtablesML, only: vgrav
+  use vgravtablesML, only: vgrav, cun
   !> In hPa
-  real, intent(in) :: surface_pressure
-  real, intent(in) :: t2m
-  real(real64), intent(in) :: raero, ustar, my
+  real, intent(in) :: surface_pressure !> [Pa]
+  real, intent(in) :: t2m !> [K]
+  real(real64), intent(in) :: raero, ustar, my, nu
   type(datetime_t), intent(in) :: date
   type(defined_component), intent(in) :: component
   integer(int8), intent(in) :: classnr
@@ -357,7 +390,7 @@ pure elemental subroutine drydep_emerson_vd(surface_pressure, t2m, ustar, raero,
   real(real64) :: A, rs
   real :: diam, vs
 
-  real(real64) :: fac1, cslip, bdiff, sc, EB, EIM, EIN, stokes
+  real(real64) :: cslip, bdiff, sc, EB, EIM, EIN, stokes
   integer(int16) :: Apar
 
   if (component%radiusmym <= 0.05) then ! gas
@@ -366,18 +399,17 @@ pure elemental subroutine drydep_emerson_vd(surface_pressure, t2m, ustar, raero,
   end if
 
   diam = 2*component%radiusmym*1e-6
-  vs = vgrav(component%to_running, surface_pressure/100., t2m)
+  vs = vgrav(component%to_running, surface_pressure/100., t2m) ![m/s]
 
-  fac1 = -0.55 * diam / lambda
   ! Cunningham slip factor
-  cslip = 1 + 2 * lambda / diam * (1.257 + 0.4*exp(fac1))
+  cslip = cun(diam*1e6) !1 + 2 * lambda / diam * (1.257 + 0.4*exp(fac1))
 
   ! Brownian diffusion
   ! Brownian diffusivity of air (see equation 19 of Giardiana and Buffa, 2018)
   ! bdiff=2.83e-11 # Browian diffusion coefficient for 1 um particle (see Brereton, 2014)
    bdiff = bolzc * t2m * cslip / (3 * pi * my * diam)
 
-  sc = ny / bdiff
+  sc = nu / bdiff             ! Schmidt number (Giardiana and Buffa, 2018)
   EB = 0.2 * sc ** (-2.0 / 3.0)
 
 
@@ -389,7 +421,7 @@ pure elemental subroutine drydep_emerson_vd(surface_pressure, t2m, ustar, raero,
     ! Interception
     EIN = 2.5 * (diam / A) ** 0.8
   else
-    stokes = vs * ustar * ustar / (grav * ny)
+    stokes = vs * ustar * ustar / (grav * nu)
     ! No interception over water surfaces
     EIN = 0.0
   endif

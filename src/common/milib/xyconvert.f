@@ -1,6 +1,6 @@
 c
 c  milib
-c  
+c
 c  $Id: xyconvert.f 2308 2009-01-08 10:19:22Z olev $
 c
 c  Copyright (C) 2006 met.no
@@ -11,7 +11,7 @@ c  Box 43 Blindern
 c  0313 OSLO
 c  NORWAY
 c  email: diana@met.no
-c  
+c
 c  This library is free software; you can redistribute it and/or
 c  modify it under the terms of the GNU Lesser General Public
 c  License as published by the Free Software Foundation; either
@@ -21,7 +21,7 @@ c  This library is distributed in the hope that it will be useful,
 c  but WITHOUT ANY WARRANTY; without even the implied warranty of
 c  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 c  Lesser General Public License for more details.
-c  
+c
 c  You should have received a copy of the GNU Lesser General Public
 c  License along with this library; if not, write to the Free Software
 c  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
@@ -112,13 +112,14 @@ c     o. vignes met.no   17.11.2008 ... lambert (tangent,non-oblique)
 c
 c****************************************************************
 c
+      use milibML, only : EARTH_RADIUS
       implicit none
 c
       integer npos, igtypa, igtypr, ierror
       real    x(npos), y(npos), ga(6), gr(6)
 c
       integer j, iconv2
-      real    zpir18, rearth,
+      real    zpir18,
      +        xwa, ysa, dxa, dya, xca, yca,
      +        xwr, ysr, dxr, dyr, xcr, ycr,
      +        xpa, ypa, ana, fia, fpa,
@@ -126,7 +127,6 @@ c
      +        xa, ya, zcrot, zsrot, zx1, zx2, zx3, zy1, zy2, zy3
 c
       zpir18 = 2.0*asin(1.0)/180.
-      call earthr(rearth)
 c
       ierror = 0
       iconv2 = 1

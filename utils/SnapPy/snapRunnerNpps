@@ -175,7 +175,7 @@ def runsnap(npps, outdir):
     nppdir = {}
     runparams = []
     res = Resources()
-    res.getLustreDir()  # set lustredir within res before parallelization - mapp-services.sh not parallelizable yet
+    res.initLustreDirs()  # set lustredirs within res before parallelization - mapp-services.sh not parallelizable yet
     nPPs = res.readNPPs()
     for i, npp_tag in enumerate(npps):
         tag = get_tag_NPP(npp_tag)
