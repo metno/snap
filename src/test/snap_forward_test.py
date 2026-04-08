@@ -10,6 +10,25 @@ import unittest
 from snapunittest import SnapTestCase
 
 
+def run_snap(snap, input_file, cwd):
+    env = os.environ.copy()
+    env["OMP_NUM_THREADS"] = "1"
+    try:
+        out = subprocess.run(
+            [snap, input_file],
+            cwd=cwd,
+            env=env,
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
+    except Exception as e:
+        print(tmp)
+        raise e
+    print(out.stdout)
+
+
 class SnapEcEMEPForwardTestCase(SnapTestCase):
     input: str = "snap.input_ecemep_fimex"
     snapExpected: str = "snap_testdata/snap_ecemep_expected5.nc"
@@ -28,15 +47,8 @@ class SnapEcEMEPForwardTestCase(SnapTestCase):
 
     @unittest.skipIf(os.getenv("FIMEXLIB") is None, "fimex not supported in this build")
     def test_runfimex(self):
-        """The main test case for this class and its subclasses, runs SNAP with FIMEX and compares the output netcdf file to the expected one"""
-        env = os.environ.copy()
-        env["OMP_NUM_THREADS"] = "1"
-        subprocess.run(
-            [str(self.snap.resolve()), self.input],
-            cwd=str(self.datadir.resolve()),
-            env=env,
-            check=True,
-        )
+
+        run_snap(str(self.snap.resolve()), self.input, str(self.datadir.resolve()))
 
         outfile = self.get_nc_filename(os.path.join(self.datadir, self.input))
         self.compare_nc(
@@ -48,21 +60,8 @@ class SnapEcEMEPForwardTestCase(SnapTestCase):
     @unittest.skip("test not implemented properly yet")
     def test_runnclib(self):
         # TBD create input-file with FILE.TYPE=netcdf instead of fimex
-        env = os.environ.copy()
-        env["OMP_NUM_THREADS"] = "1"
-        subprocess.run(
-            [os.path.join(self.datadir, self.snap), self.input],
-            cwd=self.datadir,
-            env=env,
-            check=True,
-        )
+        pass
 
-        outfile = self.get_nc_filename(os.path.join(self.datadir, self.input))
-        self.compare_nc(
-            self.snapExpected,
-            os.path.join(self.datadir, outfile),
-            self.variables,
-        )
 
 
 class SnapEcEMEPEmersonForwardTestCase(SnapEcEMEPForwardTestCase):
@@ -89,18 +88,8 @@ class SnapEcEMEPEmersonForwardTestCase(SnapEcEMEPForwardTestCase):
             )
         with (tmp / "snap.input").open("w") as f:
             f.write(snapinput)
-        env = os.environ.copy()
-        env["OMP_NUM_THREADS"] = "1"
-        try:
-            subprocess.run(
-                [str(self.snap), "snap.input"],
-                cwd=str(tmp.resolve()),
-                env=env,
-                check=True,
-            )
-        except Exception as e:
-            print(tmp)
-            raise e
+
+        run_snap(str(self.snap), "snap.input", cwd=str(tmp.resolve()))
 
         outfile = self.get_nc_filename(str(tmp / "snap.input"))
         self.compare_nc(
@@ -144,18 +133,8 @@ class ReleaseTests(unittest.TestCase):
 
         with tmp.joinpath("snap.input").open("w") as f:
             f.write(snapinput)
-        env = os.environ.copy()
-        env["OMP_NUM_THREADS"] = "1"
-        try:
-            subprocess.run(
-                [self.snap.resolve().as_posix(), "snap.input"],
-                cwd=tmp.resolve().as_posix(),
-                env=env,
-                check=True,
-            )
-        except Exception as e:
-            print(tmp)
-            raise e
+
+        run_snap(self.snap.resolve().as_posix(), "snap.input", cwd=tmp.resolve().as_posix(),)
 
         istep = -1
         logfile = tmp.joinpath("snap.log")
@@ -194,18 +173,7 @@ class ReleaseTests(unittest.TestCase):
         with tmp.joinpath("snap.input").open("w") as f:
             f.write(snapinput)
 
-        env = os.environ.copy()
-        env["OMP_NUM_THREADS"] = "1"
-        try:
-            subprocess.run(
-                [self.snap.resolve().as_posix(), "snap.input"],
-                cwd=tmp.resolve().as_posix(),
-                env=env,
-                check=True,
-            )
-        except Exception as e:
-            print(tmp)
-            raise e
+        run_snap(self.snap.resolve().as_posix(), "snap.input", cwd=tmp.resolve().as_posix())
 
         releases = 0
         logfile = tmp.joinpath("snap.log")
@@ -253,18 +221,8 @@ class ReleaseTests(unittest.TestCase):
 
         with tmp.joinpath("snap.input").open("w") as f:
             f.write(snapinput)
-        env = os.environ.copy()
-        env["OMP_NUM_THREADS"] = "1"
-        try:
-            subprocess.run(
-                [self.snap.resolve().as_posix(), "snap.input"],
-                cwd=tmp.resolve().as_posix(),
-                env=env,
-                check=True,
-            )
-        except Exception as e:
-            print(tmp)
-            raise e
+
+        run_snap(self.snap.resolve().as_posix(), "snap.input", cwd=tmp.resolve().as_posix())
 
         istep = -1
         logfile = tmp.joinpath("snap.log")
