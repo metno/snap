@@ -10,20 +10,25 @@ import unittest
 from snapunittest import SnapTestCase
 
 
-class SnapEcEMEPEmersonForwardTestCase(SnapTestCase):
-    datadir = pathlib.Path(__file__).resolve().parent / "data"
-    input = "snap.input_ecemep_emerson_fimex"
-    snap = datadir / "../bsnap_naccident"
+class SnapEcEMEPForwardTestCase(SnapTestCase):
+    input: str = "snap.input_ecemep_fimex"
+    snapExpected: str = "snap_testdata/snap_ecemep_expected5.nc"
 
-    snapExpected = "snap_testdata/snap_ecemep_emerson_expected_20260304.nc"
+    datadir: pathlib.Path = (pathlib.Path(__file__).parent / "data").resolve()
+    snap: pathlib.Path = (datadir / "../bsnap_naccident").resolve()
+    variables: list[str] = [
+        "instant_height_boundary_layer",
+        "precipitation_amount_acc",
+        # "Cs137_concentration", # too variable between RNGs
+        "Cs137_concentration_bl",
+        "Cs137_acc_concentration",
+        "Cs137_acc_dry_deposition",
+        "Cs137_acc_wet_deposition",
+    ]
 
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
+    @unittest.skipIf(os.getenv("FIMEXLIB") is None, "fimex not supported in this build")
     def test_runfimex(self):
+        """The main test case for this class and its subclasses, runs SNAP with FIMEX and compares the output netcdf file to the expected one"""
         env = os.environ.copy()
         env["OMP_NUM_THREADS"] = "1"
         subprocess.run(
@@ -37,16 +42,32 @@ class SnapEcEMEPEmersonForwardTestCase(SnapTestCase):
         self.compare_nc(
             self.snapExpected,
             os.path.join(self.datadir, outfile),
-            [
-                "instant_height_boundary_layer",
-                "precipitation_amount_acc",
-                # "Cs137_concentration", # too variable between RNGs
-                "Cs137_concentration_bl",
-                "Cs137_acc_concentration",
-                "Cs137_acc_dry_deposition",
-                "Cs137_acc_wet_deposition",
-            ],
+            self.variables,
         )
+
+    @unittest.skip("test not implemented properly yet")
+    def test_runnclib(self):
+        # TBD create input-file with FILE.TYPE=netcdf instead of fimex
+        env = os.environ.copy()
+        env["OMP_NUM_THREADS"] = "1"
+        subprocess.run(
+            [os.path.join(self.datadir, self.snap), self.input],
+            cwd=self.datadir,
+            env=env,
+            check=True,
+        )
+
+        outfile = self.get_nc_filename(os.path.join(self.datadir, self.input))
+        self.compare_nc(
+            self.snapExpected,
+            os.path.join(self.datadir, outfile),
+            self.variables,
+        )
+
+
+class SnapEcEMEPEmersonForwardTestCase(SnapEcEMEPForwardTestCase):
+    input: str = "snap.input_ecemep_emerson_fimex"
+    snapExpected: str = "snap_testdata/snap_ecemep_emerson_expected_20260304.nc"
 
     def test_runfimex_async(self):
         d = tempfile.mkdtemp()
@@ -72,7 +93,7 @@ class SnapEcEMEPEmersonForwardTestCase(SnapTestCase):
         env["OMP_NUM_THREADS"] = "1"
         try:
             subprocess.run(
-                [str(self.snap.resolve()), "snap.input"],
+                [str(self.snap), "snap.input"],
                 cwd=str(tmp.resolve()),
                 env=env,
                 check=True,
@@ -85,150 +106,22 @@ class SnapEcEMEPEmersonForwardTestCase(SnapTestCase):
         self.compare_nc(
             self.snapExpected,
             (tmp / outfile).resolve().as_posix(),
-            [
-                "instant_height_boundary_layer",
-                "precipitation_amount_acc",
-                "Cs137_concentration",
-                "Cs137_concentration_bl",
-                "Cs137_acc_concentration",
-                "Cs137_acc_dry_deposition",
-                "Cs137_acc_wet_deposition",
-            ],
+            self.variables,
         )
 
 
-class SnapEcEMEPForwardTestCase(SnapTestCase):
-    input = "snap.input_ecemep_fimex"
-    snap = "../bsnap_naccident"
-    datadir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
-
-    snapExpected = "snap_testdata/snap_ecemep_expected5.nc"
-
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
-    @unittest.skipIf(os.getenv("FIMEXLIB") is None, "fimex not supported in this build")
-    def test_runfimex(self):
-        env = os.environ.copy()
-        env["OMP_NUM_THREADS"] = "1"
-        subprocess.run(
-            [os.path.join(self.datadir, self.snap), self.input],
-            cwd=self.datadir,
-            env=env,
-            check=True,
-        )
-
-        outfile = self.get_nc_filename(os.path.join(self.datadir, self.input))
-        self.compare_nc(
-            self.snapExpected,
-            os.path.join(self.datadir, outfile),
-            [
-                "instant_height_boundary_layer",
-                "precipitation_amount_acc",
-                # "Cs137_concentration", # too variable between RNGs
-                "Cs137_concentration_bl",
-                "Cs137_acc_concentration",
-                "Cs137_acc_dry_deposition",
-                "Cs137_acc_wet_deposition",
-            ],
-        )
-
-    @unittest.skip("test not implemented properly yet")
-    def test_runnclib(self):
-        # TBD create input-file with FILE.TYPE=netcdf instead of fimex
-        env = os.environ.copy()
-        env["OMP_NUM_THREADS"] = "1"
-        subprocess.run(
-            [os.path.join(self.datadir, self.snap), self.input],
-            cwd=self.datadir,
-            env=env,
-            check=True,
-        )
-
-        outfile = self.get_nc_filename(os.path.join(self.datadir, self.input))
-        self.compare_nc(
-            self.snapExpected,
-            os.path.join(self.datadir, outfile),
-            [
-                "instant_height_boundary_layer",
-                "precipitation_amount_acc",
-                "Cs137_concentration",
-                "Cs137_concentration_bl",
-                "Cs137_acc_concentration",
-                "Cs137_acc_dry_deposition",
-                "Cs137_acc_wet_deposition",
-            ],
-        )
-
-
-class SnapMEPSForwardTestCase(SnapTestCase):
-    input = "snap.input_meps_fimex"
-    snap = "../bsnap_naccident"
-    datadir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
-
-    snapExpected = "snap_testdata/snap_meps_interpolated_expected_20251125.nc"
-
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
-    @unittest.skipIf(os.getenv("FIMEXLIB") is None, "fimex not supported in this build")
-    def test_runfimex(self):
-        env = os.environ.copy()
-        env["OMP_NUM_THREADS"] = "1"
-        subprocess.run(
-            [os.path.join(self.datadir, self.snap), self.input],
-            cwd=self.datadir,
-            env=env,
-            check=True,
-        )
-
-        outfile = self.get_nc_filename(os.path.join(self.datadir, self.input))
-        self.compare_nc(
-            self.snapExpected,
-            os.path.join(self.datadir, outfile),
-            [
-                "instant_height_boundary_layer",
-                "precipitation_amount_acc",
-                "Cs137_concentration",
-                "Cs137_concentration_bl",
-                "Cs137_acc_concentration",
-                "Cs137_dry_deposition",
-                "Cs137_wet_deposition",
-            ],
-        )
-
-    @unittest.skip("test not implemented properly yet")
-    def test_runnclib(self):
-        # TBD create input-file with FILE.TYPE=netcdf instead of fimex
-        env = os.environ.copy()
-        env["OMP_NUM_THREADS"] = "1"
-        subprocess.run(
-            [os.path.join(self.datadir, self.snap), self.input],
-            cwd=self.datadir,
-            env=env,
-            check=True,
-        )
-
-        outfile = self.get_nc_filename(os.path.join(self.datadir, self.input))
-        self.compare_nc(
-            self.snapExpected,
-            os.path.join(self.datadir, outfile),
-            [
-                "instant_height_boundary_layer",
-                "precipitation_amount_acc",
-                "Cs137_concentration",
-                "Cs137_concentration_bl",
-                "Cs137_acc_concentration",
-                "Cs137_dry_deposition",
-                "Cs137_wet_deposition",
-            ],
-        )
+class SnapMEPSForwardTestCase(SnapEcEMEPForwardTestCase):
+    input: str = "snap.input_meps_fimex"
+    snapExpected: str = "snap_testdata/snap_meps_interpolated_expected_20251125.nc"
+    variables: list[str] = [
+        "instant_height_boundary_layer",
+        "precipitation_amount_acc",
+        "Cs137_concentration",
+        "Cs137_concentration_bl",
+        "Cs137_acc_concentration",
+        "Cs137_dry_deposition",
+        "Cs137_wet_deposition",
+    ]
 
 
 class ReleaseTests(unittest.TestCase):
