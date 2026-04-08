@@ -1,1 +1,1 @@
-../../../../utils/SnapPy/Snappy/resources/largestLandFraction_NrpaEC0p1.nc
+../../../../utils/SnapPy/Snappy/resources/landfractions/largestLandFraction_NrpaEC0p1.nc

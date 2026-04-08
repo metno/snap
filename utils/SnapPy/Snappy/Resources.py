@@ -142,7 +142,7 @@ class Resources(ResourcesCommon):
 
     def getStartScreenInverse(self):
         with open(
-            os.path.join(self.directory, "startScreenInverse.html"),
+            os.path.join(self.directory, startScreenInverse.html"),
             mode="r",
             encoding="UTF-8",
         ) as sfh:
@@ -441,7 +441,7 @@ GRAVITY.FIXED.M/S=0.0002
         lines = []
         if metmodel == MetModel.NrpaEC0p1:
             largest_landfraction_file = os.path.join(
-                self.directory, "largestLandFraction_NrpaEC0p1.nc"
+                self.directory, "landfractions", "largestLandFraction_NrpaEC0p1.nc"
             )
         elif metmodel == MetModel.NrpaEC0p1Global:
             # no setup needed, autdetection in snap
@@ -454,7 +454,7 @@ GRAVITY.FIXED.M/S=0.0002
             pass
         elif metmodel == MetModel.Meps2p5:
             largest_landfraction_file = os.path.join(
-                self.directory, "largestLandFraction_MEPS_byte.nc"
+                self.directory, "landfractions", "largestLandFraction_MEPS_byte.nc"
             )
         elif metmodel == MetModel.Icon0p25Global:
             # no setup needed, autdetection in snap
