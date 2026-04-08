@@ -33,7 +33,7 @@ test: testDateCalc test_array_utils find_parameters_fi_test  testGravSettling te
 	./find_parameters_fi_test snap_testdata/meps_det_2_5km_20251125T06Z_ringhals.nc x_wind_ml && \
 	./testGravSettling && \
 	./testDryDep && \
-	python3 -m unittest snap_forward_test.py
+	python3 -m unittest -b -v snap_forward_test.py
 
 
 bsnap_naccident: $(BOBJ) $(MODELOBJ)
