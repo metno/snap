@@ -47,7 +47,6 @@ class SnapEcEMEPForwardTestCase(SnapTestCase):
 
     @unittest.skipIf(os.getenv("FIMEXLIB") is None, "fimex not supported in this build")
     def test_runfimex(self):
-
         run_snap(str(self.snap.resolve()), self.input, str(self.datadir.resolve()))
 
         outfile = self.get_nc_filename(os.path.join(self.datadir, self.input))
@@ -62,6 +61,28 @@ class SnapEcEMEPForwardTestCase(SnapTestCase):
         # TBD create input-file with FILE.TYPE=netcdf instead of fimex
         pass
 
+    def resolve_relative_paths(self, snapinput: str) -> str:
+        """resolve known relative paths in snapinput to absolute paths based on datadir"""
+
+        def replacement(match: re.Match) -> str:
+            prefix = match.group(1)
+            filename = match.group(2)
+            resolved_path = (self.datadir / filename).resolve()
+            return f"{prefix}{resolved_path}"
+
+        for field in [
+            "FIMEX.CONFIG",
+            "FIELD.INPUT",
+            "DRY.DEPOSITION.LARGEST_LANDFRACTION_FILE",
+        ]:
+            # replace path to datafields ommitting = surrounded by optional spaces
+
+            snapinput = re.sub(
+                rf"({field}\s*=\s*)(\S+)",
+                replacement,
+                snapinput,
+            )
+        return snapinput
 
 
 class SnapEcEMEPEmersonForwardTestCase(SnapEcEMEPForwardTestCase):
@@ -75,17 +96,9 @@ class SnapEcEMEPEmersonForwardTestCase(SnapEcEMEPForwardTestCase):
         with (self.datadir / self.input).open("r") as f:
             snapinput = f.read()
         snapinput += "\nASYNC_IO.ON\n"
-        for field in [
-            "FIMEX.CONFIG",
-            "FIELD.INPUT",
-            "DRY.DEPOSITION.LARGEST_LANDFRACTION_FILE",
-        ]:
-            # replace path to datafields ommitting = surrounded by optional spaces
-            snapinput = re.sub(
-                rf"({field}\s*=\s*)(\S+)",
-                lambda m: f"{m.group(1)}{str((self.datadir / m.group(2)).resolve())}",
-                snapinput,
-            )
+
+        snapinput = self.resolve_relative_paths(snapinput)
+
         with (tmp / "snap.input").open("w") as f:
             f.write(snapinput)
 
@@ -134,7 +147,11 @@ class ReleaseTests(unittest.TestCase):
         with tmp.joinpath("snap.input").open("w") as f:
             f.write(snapinput)
 
-        run_snap(self.snap.resolve().as_posix(), "snap.input", cwd=tmp.resolve().as_posix(),)
+        run_snap(
+            self.snap.resolve().as_posix(),
+            "snap.input",
+            cwd=tmp.resolve().as_posix(),
+        )
 
         istep = -1
         logfile = tmp.joinpath("snap.log")
@@ -173,7 +190,9 @@ class ReleaseTests(unittest.TestCase):
         with tmp.joinpath("snap.input").open("w") as f:
             f.write(snapinput)
 
-        run_snap(self.snap.resolve().as_posix(), "snap.input", cwd=tmp.resolve().as_posix())
+        run_snap(
+            self.snap.resolve().as_posix(), "snap.input", cwd=tmp.resolve().as_posix()
+        )
 
         releases = 0
         logfile = tmp.joinpath("snap.log")
@@ -222,7 +241,9 @@ class ReleaseTests(unittest.TestCase):
         with tmp.joinpath("snap.input").open("w") as f:
             f.write(snapinput)
 
-        run_snap(self.snap.resolve().as_posix(), "snap.input", cwd=tmp.resolve().as_posix())
+        run_snap(
+            self.snap.resolve().as_posix(), "snap.input", cwd=tmp.resolve().as_posix()
+        )
 
         istep = -1
         logfile = tmp.joinpath("snap.log")
