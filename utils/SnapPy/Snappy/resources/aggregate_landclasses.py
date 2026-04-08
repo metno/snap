@@ -9,10 +9,10 @@ import sys
 
 
 def check_coordinate_resolution_equals(
-    ds,
-    target_res,
-    coord,
-    name="target",
+    ds: xr.Dataset,
+    target_res: float,
+    coord: str,
+    name: str = "target",
 ):
     """Check resolution of a given coordinate in dataset against an expected value"""
     _msg = "Mismatch in resolution of coord '{coord}' in ds '{name}'. Expected {target_res}, got deviations up to {max_dev}"
@@ -27,7 +27,7 @@ def check_coordinate_resolution_equals(
         raise ValueError(msg)
 
 
-def check_output_coord(da, da_template, coord):
+def check_output_coord(da: xr.DataArray, da_template: xr.DataArray, coord: str):
     """Check that the coordinates of two datasets are equal (up to a given tolerance)"""
     _msg = "Resolution of coord '{coord}' between output and template does not match. Got deviations up to {max_dev} at i={index}/{size}"
 
@@ -43,7 +43,7 @@ def check_output_coord(da, da_template, coord):
         raise ValueError(msg)
 
 
-def rename_coords(ds):
+def rename_coords(ds: xr.Dataset) -> xr.Dataset:
     names = {}
     for v in ds.coords:
         coord = ds[v].attrs
@@ -55,7 +55,12 @@ def rename_coords(ds):
     return ds.rename(names)
 
 
-def open_datasets(input_path, template_path, input_res, output_res):
+def open_datasets(
+    input_path: pathlib.Path,
+    template_path: pathlib.Path,
+    input_res: float,
+    output_res: float,
+) -> tuple[xr.Dataset, xr.Dataset]:
     ds = xr.open_dataset(input_path, chunks={"time": 1})
     ds = ds.isel(time=0)
 
@@ -71,7 +76,9 @@ def open_datasets(input_path, template_path, input_res, output_res):
     return ds, ds_template
 
 
-def subset_dataset(ds, ds_template, output_res):
+def subset_dataset(
+    ds: xr.Dataset, ds_template: xr.Dataset, output_res: float
+) -> xr.Dataset:
     "Subset dataset ds using template dataset lat lon grid."
 
     # Template coordinates are assumed to be at grid cell centers, so we add
@@ -88,7 +95,9 @@ def subset_dataset(ds, ds_template, output_res):
     )
 
 
-def roll_and_pad_coordinates(da, input_res, output_res):
+def roll_and_pad_coordinates(
+    da: xr.DataArray, input_res: float, output_res: float
+) -> xr.DataArray:
     """Roll longitude and pad latitude to ensure region centers are correct at
     the boundaries, i.e. that the boundary grid points have grid centers at
     longitudes [-180 + resolution, 180] and latitudes [-90, 90]."""
@@ -124,9 +133,9 @@ def roll_and_pad_coordinates(da, input_res, output_res):
     return new_da
 
 
-def _count_values(array, possible_values):
+def _count_values(array: np.ndarray, possible_values: np.ndarray) -> np.ndarray:
     """
-    Count all unique values of an array for a predefined set of possible values. Equal to np.unique(arr, return_counts=True) when all values are present.
+    Count all occurances of values in array. Equal to np.unique(arr, return_counts=True) when all values are present.
     """
     n = np.max(possible_values) + 1
     # Faster than np.unique when n is not too large
@@ -136,7 +145,7 @@ def _count_values(array, possible_values):
 
 def aggregate_land_classes(
     da: xr.DataArray, agg_factor: int, var_name: str = "lccs_class"
-):
+) -> xr.DataArray:
     """Aggregates land class values by dividing lat-lon grid into regions of size agg_factor² and counting values in each region."""
 
     land_class_values = da.flag_values
@@ -183,7 +192,7 @@ def aggregate_land_classes(
     # res.pathglob = "ec_atmo_0_1deg_????????T??????Z_3h.nc"
 
 
-def get_args():
+def get_args() -> argparse.Namespace:
     import argparse
 
     parser = argparse.ArgumentParser(
@@ -266,7 +275,7 @@ def main():
         output_res=args.output_res,
     )
     var_name = args.land_class_variable
-    da = ds[var_name]
+    da: xr.DataArray = ds[var_name]
     if args.global_input:
         da = roll_and_pad_coordinates(da, args.input_res, args.output_res)
     else:
