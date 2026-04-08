@@ -3,8 +3,10 @@
 set -e
 
 install_conda_env() {
+    # curl/openssh/openssl needed to fix issues with RHEL8 mixed commands
     conda create --channel conda-forge --prefix "$1" --yes --file /dev/stdin <<EOF
 python=3.12
+curl
 cartopy
 scipy
 fimex=2.1
