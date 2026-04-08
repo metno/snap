@@ -447,8 +447,9 @@ GRAVITY.FIXED.M/S=0.0002
             # no setup needed, autdetection in snap
             pass
         elif metmodel == MetModel.EC0p1Global:
-            # no setup needed, autdetection in snap
-            pass
+            largest_landfraction_file = os.path.join(
+                self.directory, "landfractions", "largestLandFraction_EC0p1Global.nc"
+            )
         elif metmodel == MetModel.EC0p1Europe:
             # no setup needed, autdetection in snap
             pass
@@ -457,8 +458,9 @@ GRAVITY.FIXED.M/S=0.0002
                 self.directory, "landfractions", "largestLandFraction_MEPS_byte.nc"
             )
         elif metmodel == MetModel.Icon0p25Global:
-            # no setup needed, autdetection in snap
-            pass
+            largest_landfraction_file = os.path.join(
+                self.directory, "landfractions", "largestLandFraction_Icon0p25Global.nc"
+            )
         elif metmodel == MetModel.GfsGribFilter:
             # no setup needed, autdetection in snap
             pass
