@@ -869,22 +869,33 @@ contains
 
 
   subroutine read_accumulated_field(fio, nhdiff, timepos, timeposm1, varname, units, field, nr)
+    USE snapfilML, only: nctype
+
     TYPE(FimexIO), intent(inout) :: fio
 !> time difference in hours between two fields
     integer, intent(in) :: nhdiff
     character(len=*), intent(in) :: varname, units
+    character(len=20) :: units_
+
     integer, intent(in) :: timepos, timeposm1, nr
+
     real(real32), intent(out) :: field(:, :)
 
-    real, allocatable :: tmp1(:, :), tmp2(:, :)
-    allocate(tmp1, tmp2, MOLD=field)
+    real, allocatable :: tmp1(:, :)
+    allocate(tmp1, MOLD=field)
 
-    if (timepos == 1) then
-      call fi_checkload(fio, varname, units, field(:, :), nt=timepos, nr=nr)
+    ! Arome has the wrong units for accumulated momentum flux, missing a unit of time
+    if (nctype == "arome" .and. trim(units) ==  'N s/m^2') then
+      units_ = "N/m2"
     else
-      call fi_checkload(fio, varname, units, tmp1(:, :), nt=timeposm1, nr=nr)
-      call fi_checkload(fio, varname, units, tmp2(:, :), nt=timepos, nr=nr)
-      field(:,:) = tmp2 - tmp1
+      units_ = units
+    endif
+
+    call fi_checkload(fio, varname, units_, field(:, :), nt=timepos, nr=nr)
+
+    if (timepos /= 1) then
+      call fi_checkload(fio, varname, units_, tmp1(:, :), nt=timeposm1, nr=nr)
+      field(:,:) = field - tmp1
     endif
     field(:,:) =  field / (3600 * nhdiff)
   end subroutine read_accumulated_field
@@ -894,7 +905,7 @@ contains
     USE ieee_arithmetic, only: ieee_is_nan
     USE snapmetML, only: met_params, &
       temp_units, downward_momentum_flux_units, surface_roughness_length_units, &
-      accum_surface_heat_flux_units, surface_heat_flux_units
+      accum_surface_heat_flux_units, accum_downward_momentum_flux_units, surface_heat_flux_units
     use drydepml, only: drydep_precompute_meteo, drydep_precompute_particle, &
       requires_extra_fields_to_be_read, classnr, lookup_z0
     use ftestML, only: ftest
@@ -932,7 +943,7 @@ contains
       ! Load and combine surface stress/momentum flux components
       if (met_params%xflux_is_accumulated) then
         ! Note: Arome files have the wrong units for accumulated downward momentum flux, missing a unit of time
-        call read_accumulated_field(fio, nhdiff, timepos, timeposm1, met_params%xflux, downward_momentum_flux_units, xflux(:, :), &
+        call read_accumulated_field(fio, nhdiff, timepos, timeposm1, met_params%xflux, accum_downward_momentum_flux_units, xflux(:, :), &
           nr=nr)
       else
         call fi_checkload(fio, met_params%xflux, downward_momentum_flux_units, xflux(:, :), nt=timepos, &
@@ -941,7 +952,7 @@ contains
 
       if (met_params%yflux_is_accumulated) then
         ! Note: Arome files have the wrong units for accumulated downward momentum flux, missing a unit of time
-        call read_accumulated_field(fio, nhdiff, timepos, timeposm1, met_params%yflux, downward_momentum_flux_units, yflux(:, :), &
+        call read_accumulated_field(fio, nhdiff, timepos, timeposm1, met_params%yflux, accum_downward_momentum_flux_units, yflux(:, :), &
           nr=nr)
       else
         call fi_checkload(fio, met_params%yflux, downward_momentum_flux_units, yflux(:, :), nt=timepos, nr=nr)

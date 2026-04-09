@@ -97,6 +97,7 @@ module snapmetML
   character(len=*), parameter, public :: temp_units = 'K'
 
   character(len=*), parameter, public :: downward_momentum_flux_units = 'N/m^2'
+  character(len=*), parameter, public :: accum_downward_momentum_flux_units = 'N s/m^2'
   character(len=*), parameter, public :: surface_roughness_length_units = 'm'
   character(len=*), parameter, public :: surface_heat_flux_units = 'W/m^2'
   character(len=*), parameter, public :: accum_surface_heat_flux_units = 'W s/m^2'
@@ -257,6 +258,7 @@ module snapmetML
       met_params%xflux_is_accumulated = .true.
       met_params%yflux = 'downward_northward_momentum_flux_in_air'
       met_params%yflux_is_accumulated = .true.
+
       ! met_params%z0 = 'surface_roughness_length'
       met_params%z0 = "SFX_Z0"
       met_params%hflux = 'integral_of_surface_downward_sensible_heat_flux_wrt_time'
