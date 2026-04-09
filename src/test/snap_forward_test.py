@@ -24,7 +24,7 @@ def run_snap(snap, input_file, cwd):
             text=True,
         )
     except Exception as e:
-        print(tmp)
+        print(e.stdout)
         raise e
     print(out.stdout)
 
@@ -110,6 +110,12 @@ class SnapEcEMEPEmersonForwardTestCase(SnapEcEMEPForwardTestCase):
             (tmp / outfile).resolve().as_posix(),
             self.variables,
         )
+
+
+
+class SnapECGlobalForwardTestCase(SnapEcEMEPForwardTestCase):
+    input: str = "snap.input_ecglobal_emerson_fimex"
+    snapExpected: str = "snap_testdata/snap_meps_interpolated_expected_20251125.nc"
 
 
 class SnapMEPSForwardTestCase(SnapEcEMEPForwardTestCase):
