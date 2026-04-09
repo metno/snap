@@ -931,7 +931,7 @@ contains
       allocate(xflux, yflux, MOLD=ps_io)
       ! Load and combine surface stress/momentum flux components
       if (met_params%xflux_is_accumulated) then
-        ! Note: Arome files have the wrong units for downward_momentum_flux_units, missing a unit of time
+        ! Note: Arome files have the wrong units for accumulated downward momentum flux, missing a unit of time
         call read_accumulated_field(fio, nhdiff, timepos, timeposm1, met_params%xflux, downward_momentum_flux_units, xflux(:, :), &
           nr=nr)
       else
@@ -940,7 +940,7 @@ contains
       endif
 
       if (met_params%yflux_is_accumulated) then
-        ! Note: Arome files have the wrong units for downward_momentum_flux_units, missing a unit of time
+        ! Note: Arome files have the wrong units for accumulated downward momentum flux, missing a unit of time
         call read_accumulated_field(fio, nhdiff, timepos, timeposm1, met_params%yflux, downward_momentum_flux_units, yflux(:, :), &
           nr=nr)
       else
@@ -960,7 +960,11 @@ contains
     else
       call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, hflux(:, :), nt=timepos, nr=nr)
     endif
-    hflux(:,:) = -hflux ! Follow conventions for up/down
+
+    ! hflux should be positive upwards
+    if (met_params%hflux_is_downward) then
+      hflux(:,:) = -hflux
+    endif
 
     if (met_params%z0 == "") then
       ! Load z0 from land use data if not defined in meteorology
