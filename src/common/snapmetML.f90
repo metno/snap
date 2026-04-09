@@ -185,6 +185,14 @@ module snapmetML
       met_params%precconvrt = ''
       met_params%precstratiaccumv = 'lwe_thickness_of_stratiform_precipitation_amount_acc'
       met_params%precconaccumv = 'lwe_thickness_of_convective_precipitation_amount_acc'
+
+      met_params%xflux = 'eastward_surface_stress'
+      met_params%xflux_is_accumulated = .true.
+      met_params%yflux = 'northward_surface_stress'
+      met_params%yflux_is_accumulated = .true.
+      met_params%z0 = ""
+      met_params%hflux = 'surface_upward_sensible_heat_flux_acc'
+      met_params%hflux_is_accumulated = .true.
 !..get grid parameters from field identification
     case('era5')
       met_params%manual_level_selection = .true.
