@@ -189,6 +189,7 @@ module snapmetML
       met_params%precstratiaccumv = 'lwe_thickness_of_stratiform_precipitation_amount_acc'
       met_params%precconaccumv = 'lwe_thickness_of_convective_precipitation_amount_acc'
 
+      met_params%t2m = 'air_temperature_2m'
       met_params%xflux = 'eastward_surface_stress'
       met_params%xflux_is_accumulated = .true.
       met_params%yflux = 'northward_surface_stress'
