@@ -55,8 +55,10 @@ jobs:
 
       - name: Create and test binaries (with fimex)
         run: |
-          echo "::notice title=Build::Building with FIMEX; running tests"
-          cd src && make clean && env SNAP_FIMEX_VERSION=$FIMEX_VERSION SNAP_BOUND_CHECKS=1 make test
+          echo "::notice title=Build::Building with FIMEX-$FIMEX_VERSION; running tests"
+          cd src
+          env SNAP_FIMEX_VERSION=$FIMEX_VERSION make clean
+          env SNAP_FIMEX_VERSION=$FIMEX_VERSION SNAP_BOUND_CHECKS=1 make test
 
   test-snapy:
     name: Test SnapPy with tox
