@@ -142,7 +142,6 @@ class Resources(ResourcesCommon):
 
     def getStartScreenInverse(self):
         with open(
-            os.path.join(self.directory, startScreenInverse.html"),
             os.path.join(self.directory, "startScreenInverse.html"),
             mode="r",
             encoding="UTF-8",
