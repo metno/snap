@@ -29,6 +29,30 @@ def run_snap(snap, input_file, cwd):
     print(out.stdout)
 
 
+def _resolve_relative_paths(datadir: pathlib.Path, snapinput: str) -> str:
+    """resolve known relative paths in snapinput to absolute paths based on datadir"""
+
+    def replacement(match: re.Match) -> str:
+        prefix = match.group(1)
+        filename = match.group(2)
+        resolved_path = (datadir / filename).resolve()
+        return f"{prefix}{resolved_path}"
+
+    for field in [
+        "FIMEX.CONFIG",
+        "FIELD.INPUT",
+        "DRY.DEPOSITION.LARGEST_LANDFRACTION_FILE",
+    ]:
+        # replace path to datafields ommitting = surrounded by optional spaces
+
+        snapinput = re.sub(
+            rf"({field}\s*=\s*)(\S+)",
+            replacement,
+            snapinput,
+        )
+    return snapinput
+
+
 class SnapEcEMEPForwardTestCase(SnapTestCase):
     input: str = "snap.input_ecemep_fimex"
     snapExpected: str = "snap_testdata/snap_ecemep_expected5.nc"
@@ -61,30 +85,6 @@ class SnapEcEMEPForwardTestCase(SnapTestCase):
         # TBD create input-file with FILE.TYPE=netcdf instead of fimex
         pass
 
-    def resolve_relative_paths(self, snapinput: str) -> str:
-        """resolve known relative paths in snapinput to absolute paths based on datadir"""
-
-        def replacement(match: re.Match) -> str:
-            prefix = match.group(1)
-            filename = match.group(2)
-            resolved_path = (self.datadir / filename).resolve()
-            return f"{prefix}{resolved_path}"
-
-        for field in [
-            "FIMEX.CONFIG",
-            "FIELD.INPUT",
-            "DRY.DEPOSITION.LARGEST_LANDFRACTION_FILE",
-        ]:
-            # replace path to datafields ommitting = surrounded by optional spaces
-
-            snapinput = re.sub(
-                rf"({field}\s*=\s*)(\S+)",
-                replacement,
-                snapinput,
-            )
-        return snapinput
-
-
 class SnapEcEMEPEmersonForwardTestCase(SnapEcEMEPForwardTestCase):
     input: str = "snap.input_ecemep_emerson_fimex"
     snapExpected: str = "snap_testdata/snap_ecemep_emerson_expected_20260304.nc"
@@ -97,7 +97,7 @@ class SnapEcEMEPEmersonForwardTestCase(SnapEcEMEPForwardTestCase):
             snapinput = f.read()
         snapinput += "\nASYNC_IO.ON\n"
 
-        snapinput = self.resolve_relative_paths(snapinput)
+        snapinput = _resolve_relative_paths(self.datadir, snapinput)
 
         with (tmp / "snap.input").open("w") as f:
             f.write(snapinput)
