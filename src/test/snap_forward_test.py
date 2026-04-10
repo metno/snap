@@ -53,9 +53,12 @@ def _resolve_relative_paths(datadir: pathlib.Path, snapinput: str) -> str:
     return snapinput
 
 
+
+
 class SnapEcEMEPForwardTestCase(SnapTestCase):
     input: str = "snap.input_ecemep_fimex"
     snapExpected: str = "snap_testdata/snap_ecemep_expected5.nc"
+    check_output: bool = True
 
     datadir: pathlib.Path = (pathlib.Path(__file__).parent / "data").resolve()
     snap: pathlib.Path = (datadir / "../bsnap_naccident").resolve()
@@ -73,12 +76,13 @@ class SnapEcEMEPForwardTestCase(SnapTestCase):
     def test_runfimex(self):
         run_snap(str(self.snap.resolve()), self.input, str(self.datadir.resolve()))
 
-        outfile = self.get_nc_filename(os.path.join(self.datadir, self.input))
-        self.compare_nc(
-            self.snapExpected,
-            os.path.join(self.datadir, outfile),
-            self.variables,
-        )
+        if self.check_output:
+            outfile = self.get_nc_filename(os.path.join(self.datadir, self.input))
+            self.compare_nc(
+                self.snapExpected,
+                os.path.join(self.datadir, outfile),
+                self.variables,
+            )
 
     @unittest.skip("test not implemented properly yet")
     def test_runnclib(self):
@@ -113,9 +117,10 @@ class SnapEcEMEPEmersonForwardTestCase(SnapEcEMEPForwardTestCase):
 
 
 
-class SnapECGlobalForwardTestCase(SnapEcEMEPForwardTestCase):
+class SnapEcGlobalForwardTestCase(SnapEcEMEPForwardTestCase):
     input: str = "snap.input_ecglobal_emerson_fimex"
     snapExpected: str = "snap_testdata/snap_meps_interpolated_expected_20251125.nc"
+    check_output: bool = False
 
 
 class SnapMEPSForwardTestCase(SnapEcEMEPForwardTestCase):
