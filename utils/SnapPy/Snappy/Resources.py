@@ -456,7 +456,7 @@ GRAVITY.FIXED.M/S=0.0002
         elif metmodel == MetModel.Meps2p5:
             largest_landfraction_file = os.path.join(
                 self.directory, "landfractions", "largestLandFraction_Meps2p5.nc"
-
+            )
         elif metmodel == MetModel.Icon0p25Global:
             largest_landfraction_file = os.path.join(
                 self.directory, "landfractions", "largestLandFraction_Icon0p25Global.nc"
