@@ -35,7 +35,9 @@ module use /modules/MET/rhel8/user-modules/
 module load --silent singularity/3.11.3
 
 singularity exec \
-    --no-home --bind /lustre/\${STORE}:/lustre/\${STORE} \
+    --no-home \
+    --bind /lustre/\${STORE}:/lustre/\${STORE} \
+    --bind \${LF_PROD_DIR}:\${LF_PROD_DIR} \
     --bind $1:$1 \
     --cleanenv \
     --env QT_QPA_PLATFORMTHEME='' \
