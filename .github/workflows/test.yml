@@ -10,7 +10,7 @@ on:
       - main
 
 env:
-  FIMEX_VERSION: "2.1"
+  FIMEX_VERSION: "2.3"
 
 jobs:
   test:
@@ -43,7 +43,11 @@ jobs:
         run: sudo apt-get install python3-numpy python3-netcdf4
 
       - name: Create binaries (no fimex) (no tests without fimex)
-        run: cd src && env SNAP_BOUND_CHECKS=1 make -j2
+        run: |
+          set -euo pipefail
+          echo "::notice title=Build::Building without FIMEX; PKG_CONFIG warnings should be ignored; no tests"
+          cd src
+          env SNAP_BOUND_CHECKS=1 make -j2
 
       - name: Clean up
         run: cd src && make clean
@@ -52,7 +56,12 @@ jobs:
         run: sudo apt install libfimex-$FIMEX_VERSION-dev
 
       - name: Create and test binaries (with fimex)
-        run: cd src && make clean && env SNAP_FIMEX_VERSION=$FIMEX_VERSION SNAP_BOUND_CHECKS=1 make test
+        run: |
+          set -euo pipefail
+          echo "::notice title=Build::Building with FIMEX-$FIMEX_VERSION; running tests"
+          cd src
+          env SNAP_FIMEX_VERSION=$FIMEX_VERSION make clean
+          env SNAP_FIMEX_VERSION=$FIMEX_VERSION SNAP_BOUND_CHECKS=1 make test
 
   test-snapy:
     name: Test SnapPy with tox
