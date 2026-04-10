@@ -44,8 +44,10 @@ jobs:
 
       - name: Create binaries (no fimex) (no tests without fimex)
         run: |
+          set -euo pipefail
           echo "::notice title=Build::Building without FIMEX; PKG_CONFIG warnings should be ignored; no tests"
-          cd src && env SNAP_BOUND_CHECKS=1 make -j2
+          cd src
+          env SNAP_BOUND_CHECKS=1 make -j2
 
       - name: Clean up
         run: cd src && make clean
@@ -55,6 +57,7 @@ jobs:
 
       - name: Create and test binaries (with fimex)
         run: |
+          set -euo pipefail
           echo "::notice title=Build::Building with FIMEX-$FIMEX_VERSION; running tests"
           cd src
           env SNAP_FIMEX_VERSION=$FIMEX_VERSION make clean
