@@ -39,7 +39,7 @@ singularity exec \
     --bind /lustre:/lustre \
     --bind $1:$1 \
     --cleanenv \
-    --env XDG_RUNTIME_DIR="/tmp/runtime-${USER}" \
+    --env XDG_RUNTIME_DIR="/tmp/runtime-\${USER}" \
     --env QT_QPA_PLATFORMTHEME='' \
     --env QT_QPA_FONTDIR='/usr/share/fonts/truetype' \
     --env QT_QPA_PLATFORM='offscreen' \
