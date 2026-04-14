@@ -10,6 +10,15 @@ import sys
 from time import gmtime, strftime
 
 
+class ReturnCodes(enum.Enum):
+    OK = 0
+    INVALID_RELEASE = 10
+    BSNAP_FAILED = 20
+    ADDTOA_FAILED = 21
+    BDIANA_FAILED = 30
+    UNHANDLED_EXCEPTION = 99
+
+
 def get_tag_NPP(tag):
     return tag.split(":")[0]
 
@@ -71,6 +80,7 @@ RELEASE.UPPER.M= {upperHeight}
 
 
 def runsnapsingle(npp_tag, release_dt, tag_time, dirname, res):
+    ret_val = ReturnCodes.OK
     npp = get_tag_NPP(npp_tag)
     nPPs = res.readNPPs()
     reldict = {
@@ -89,7 +99,7 @@ def runsnapsingle(npp_tag, release_dt, tag_time, dirname, res):
     (term, errors) = get_isotope_release(res, reldict)
     if len(errors) > 0:
         print(errors, file=sys.stderr)
-        return False
+        return ReturnCodes.INVALID_RELEASE
     lat = float(nPPs[npp]["lat"])
     lon = float(nPPs[npp]["lon"])
     simStart = strftime("%Y-%m-%d_%H:%M:%S", tag_time)
@@ -111,16 +121,28 @@ STEP.HOUR.OUTPUT.FIELDS= 3
     with open(f"{dirname}/snap.stdout.log", "wt") as stdout:
         with open(f"{dirname}/snap.stderr.log", "wt") as stderr:
             os.environ["OMP_NUM_THREADS"] = "2"  # moderate thread usage
-            subprocess.run(
+            proc = subprocess.run(
                 ["bsnap_naccident", "snap.input"],
                 cwd=dirname,
                 stdout=stdout,
                 stderr=stderr,
             )
+            if proc.returncode != 0:
+                print(
+                    f"bsnap_naccident failed for {npp} with return code {proc.returncode}",
+                    file=sys.stderr,
+                )
+                retval = ReturnCodes.BSNAP_FAILED
             # add time of arrival
-            subprocess.run(
+            proc = subprocess.run(
                 ["snapAddToa", "snap.nc"], cwd=dirname, stdout=stdout, stderr=stderr
             )
+            if proc.returncode != 0:
+                print(
+                    f"snapAddToa failed for {npp} with return code {proc.returncode}",
+                    file=sys.stderr,
+                )
+                retval = ReturnCodes.ADDTOA_FAILED
     # and plot
     prod_dir = os.path.join(dirname, "prod")
     os.mkdir(prod_dir)
@@ -165,11 +187,20 @@ m=SNAP.current t=fimex format=netcdf f={dirname}/snap.nc
     os.environ["QT_QPA_PLATFORMTHEME"] = ""
     os.environ["QT_QPA_FONTDIR"] = "/usr/share/fonts/truetype"
     os.environ["QT_QPA_PLATFORM"] = "offscreen"
-    subprocess.run(["bdiana", "-i", "diana.in", "-s", "diana.setup"], cwd=prod_dir)
-    return True
+    proc = subprocess.run(
+        ["bdiana", "-i", "diana.in", "-s", "diana.setup"], cwd=prod_dir
+    )
+    if proc.returncode != 0:
+        print(
+            f"bdiana failed for {npp} with return code {proc.returncode}",
+            file=sys.stderr,
+        )
+        retval = ReturnCodes.BDIANA_FAILED
+    return retval
 
 
 def runsnap(npps, outdir):
+    retval = ReturnCodes.OK
     release_dt = datetime.datetime.now() + datetime.timedelta(hours=1)
 
     nppdir = {}
@@ -191,7 +222,11 @@ def runsnap(npps, outdir):
         runparams.append([npp_tag, release_dt, tag_time, nppdir[tag], res])
 
     with multiprocessing.Pool(4) as p:
-        print(p.starmap(runsnapsingle, runparams))
+        rcodes = p.starmap(runsnapsingle, runparams)
+    print("return codes:", rcodes)
+    if any(rc != ReturnCodes.OK for rc in rcodes):
+        print("some runs failed, check logs for details", file=sys.stderr)
+        retval += 1
 
     # montage
     opts = ["montage", "-mode", "concatenate", "-tile", f"4x{len(npps)}"]
@@ -202,7 +237,10 @@ def runsnap(npps, outdir):
             opts += [f"{nppdir[tag]}/prod/snap_{t}h.png"]
     opts.append(f"{outdir}/plots_{release_dt:%Y-%m-%dT%H}0000Z.png")
     print("running montage with:\n" + " ".join(opts))
-    subprocess.run(opts)
+    proc = subprocess.run(opts)
+    if proc.returncode != 0:
+        print(f"montage failed with return code {proc.returncode}", file=sys.stderr)
+        retval += 1
 
     # montage toa
     opts = ["montage", "-mode", "concatenate", "-tile", f"{len(npps)}x1"]
@@ -212,7 +250,14 @@ def runsnap(npps, outdir):
         opts += [f"{nppdir[tag]}/prod/snap_toa.png"]
     opts.append(f"{outdir}/plots_{release_dt:%Y-%m-%dT%H}0000Z_toa.png")
     print("running montage for toa with:\n" + " ".join(opts))
-    subprocess.run(opts)
+    proc = subprocess.run(opts)
+    if proc.returncode != 0:
+        print(
+            f"montage for toa failed with return code {proc.returncode}",
+            file=sys.stderr,
+        )
+        retval += 1
+    return retval
 
 
 if __name__ == "__main__":
@@ -240,4 +285,5 @@ if __name__ == "__main__":
 
     if args.store:
         os.environ["STORE"] = args.store
-    runsnap(args.NPP, args.dir)
+    status = runsnap(args.NPP, args.dir)
+    sys.exit(status)
