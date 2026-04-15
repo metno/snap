@@ -5,6 +5,7 @@ import datetime
 import enum
 import multiprocessing
 import subprocess
+import traceback
 from Snappy.Resources import Resources
 import os
 import sys
@@ -286,5 +287,10 @@ if __name__ == "__main__":
 
     if args.store:
         os.environ["STORE"] = args.store
-    status = runsnap(args.NPP, args.dir)
+    try:
+        status = runsnap(args.NPP, args.dir)
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
+        status = 1
     sys.exit(status)
