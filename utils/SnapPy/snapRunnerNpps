@@ -21,11 +21,11 @@ class ReturnCodes(enum.Enum):
     UNHANDLED_EXCEPTION = 99
 
 
-def get_tag_NPP(tag):
+def get_tag_NPP(tag) -> str:
     return tag.split(":")[0]
 
 
-def get_tag_relTerm(tag):
+def get_tag_relTerm(tag) -> dict[str, float]:
     """returns a dictionary with the releaseterms from a tag like
     NPP:relI131=1.0e13:relXE133=1.0e13:relCS137=1.0e13:relKR85=0
     """
@@ -37,7 +37,7 @@ def get_tag_relTerm(tag):
     return relTerm
 
 
-def get_isotope_release(res, reldict):
+def get_isotope_release(res, reldict) -> tuple[str, str]:
     errors = ""
     for tag in ("releaseTime", "radius", "lowerHeight", "upperHeight"):
         if not tag in reldict:
@@ -81,7 +81,7 @@ RELEASE.UPPER.M= {upperHeight}
     return (source_term, errors)
 
 
-def runsnapsingle(npp_tag, release_dt, tag_time, dirname, res):
+def runsnapsingle(npp_tag, release_dt, tag_time, dirname, res) -> ReturnCodes:
     retval = ReturnCodes.OK
     npp = get_tag_NPP(npp_tag)
     nPPs = res.readNPPs()
@@ -201,7 +201,7 @@ m=SNAP.current t=fimex format=netcdf f={dirname}/snap.nc
     return retval
 
 
-def runsnap(npps, outdir):
+def runsnap(npps, outdir) -> int:
     retval = ReturnCodes.OK.value
     release_dt = datetime.datetime.now() + datetime.timedelta(hours=1)
 
@@ -292,5 +292,5 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         traceback.print_exc(file=sys.stderr)
-        status = 100
+        status = ReturnCodes.UNHANDLED_EXCEPTION.value
     sys.exit(status)
