@@ -2,6 +2,7 @@
 
 import argparse
 import datetime
+import enum
 import cartopy
 import matplotlib
 
@@ -10,6 +11,7 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from matplotlib import pyplot as plt
 import netCDF4
 import subprocess
+import traceback
 import os
 import numpy
 import sys
@@ -20,6 +22,15 @@ from Snappy.ICONMeteorologyCalculator import ICONMeteorologyCalculator
 from Snappy.MeteorologyCalculator import MeteorologyCalculator
 from Snappy.Resources import MetModel, Resources
 from Snappy.Countries import get_country_list
+
+
+class ReturnCodes(enum.Enum):
+    OK = 0
+    INVALID_RELEASE = 10
+    BSNAP_FAILED = 20
+    ADDTOA_FAILED = 21
+    BDIANA_FAILED = 30
+    UNHANDLED_EXCEPTION = 99
 
 
 def rgbToColor(rgb):
@@ -208,6 +219,7 @@ def plotMap(
 
 # def runsnapsingle(npp, release_dt, tag_time, dirname, res):
 def runsnap(npp_tag, met_model, outdir, release_dt, runtime, plot_from_file=None):
+    retval = ReturnCodes.OK
     tag_time = gmtime()  # ensure a few secs difference for tags
     npp = get_tag_NPP(npp_tag)
     res = Resources()
@@ -219,7 +231,7 @@ def runsnap(npp_tag, met_model, outdir, release_dt, runtime, plot_from_file=None
     nPPs = res.readNPPs()
     if not npp in nPPs:
         print(f"unknown NPP: {npp}", file=sys.stderr)
-        sys.exit(1)
+        return ReturnCodes.INVALID_RELEASE
 
     if not plot_from_file:
         reldict = {
@@ -238,7 +250,7 @@ def runsnap(npp_tag, met_model, outdir, release_dt, runtime, plot_from_file=None
         (term, errors) = get_isotope_release(res, reldict)
         if len(errors) > 0:
             print(errors, file=sys.stderr)
-            return False
+            return ReturnCodes.INVALID_RELEASE
         lat = float(nPPs[npp]["lat"])
         lon = float(nPPs[npp]["lon"])
         simStart = strftime("%Y-%m-%d_%H:%M:%S", tag_time)
@@ -333,16 +345,28 @@ STEP.HOUR.OUTPUT.FIELDS= 3
 
         with open(f"{dirname}/snap.stdout.log", "wt") as stdout:
             with open(f"{dirname}/snap.stderr.log", "wt") as stderr:
-                subprocess.run(
+                proc = subprocess.run(
                     ["bsnap_naccident", "snap.input"],
                     cwd=dirname,
                     stdout=stdout,
                     stderr=stderr,
                 )
+                if proc.returncode != 0:
+                    print(
+                        f"bsnap_naccident failed for {npp} with return code {proc.returncode}",
+                        file=sys.stderr,
+                    )
+                    retval = ReturnCodes.BSNAP_FAILED
                 # add time of arrival
-                subprocess.run(
+                proc = subprocess.run(
                     ["snapAddToa", "snap.nc"], cwd=dirname, stdout=stdout, stderr=stderr
                 )
+                if proc.returncode != 0:
+                    print(
+                        f"snapAddToa failed for {npp} with return code {proc.returncode}",
+                        file=sys.stderr,
+                    )
+                    retval = ReturnCodes.ADDTOA_FAILED
         plot_from_file = os.path.join(dirname, "snap.nc")
 
     # and plot
@@ -475,7 +499,7 @@ STEP.HOUR.OUTPUT.FIELDS= 3
         f"plots_{now:%Y-%m-%dT%HZ}_{npp}_{release_dt:%Y-%m-%dT%H}Z+{runtime}h.png",
     )
     fig.savefig(file, bbox_inches="tight")
-    return True
+    return retval
 
 
 if __name__ == "__main__":
@@ -519,11 +543,19 @@ if __name__ == "__main__":
 
     if args.store:
         os.environ["STORE"] = args.store
-    runsnap(
-        outdir=args.outdir,
-        met_model=args.metmodel,
-        runtime=int(args.runtime),
-        npp_tag=args.npp,
-        release_dt=release_dt,
-        plot_from_file=plot_from_file,
-    )
+    try:
+        status = runsnap(
+            outdir=args.outdir,
+            met_model=args.metmodel,
+            runtime=int(args.runtime),
+            npp_tag=args.npp,
+            release_dt=release_dt,
+            plot_from_file=plot_from_file,
+        )
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
+        status = ReturnCodes.UNHANDLED_EXCEPTION
+    if isinstance(status, ReturnCodes):
+        status = status.value
+    sys.exit(status)
