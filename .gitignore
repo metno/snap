@@ -94,6 +94,7 @@ Snappy.egg-info
 /src/test/bsnap_naccident
 /src/test/testGaussianSmoothing
 /src/test/testGravSettling
+/src/test/testGaussianSmoothing
 /src/test/testDryDep
 /src/test/find_parameters_fi_test
 /src/test/snap_batch_copy.F90
