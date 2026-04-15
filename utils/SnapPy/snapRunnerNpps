@@ -18,7 +18,7 @@ class ReturnCodes(enum.Enum):
     BSNAP_FAILED = 20
     ADDTOA_FAILED = 21
     BDIANA_FAILED = 30
-    UNHANDLED_EXCEPTION = 99
+    UNHANDLED_EXCEPTION = 90
 
 
 def get_tag_NPP(tag) -> str:
