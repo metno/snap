@@ -81,7 +81,7 @@ RELEASE.UPPER.M= {upperHeight}
 
 
 def runsnapsingle(npp_tag, release_dt, tag_time, dirname, res):
-    ret_val = ReturnCodes.OK
+    retval = ReturnCodes.OK
     npp = get_tag_NPP(npp_tag)
     nPPs = res.readNPPs()
     reldict = {
