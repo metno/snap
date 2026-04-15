@@ -202,7 +202,7 @@ m=SNAP.current t=fimex format=netcdf f={dirname}/snap.nc
 
 
 def runsnap(npps, outdir):
-    retval = ReturnCodes.OK
+    retval = ReturnCodes.OK.value
     release_dt = datetime.datetime.now() + datetime.timedelta(hours=1)
 
     nppdir = {}
@@ -292,5 +292,5 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         traceback.print_exc(file=sys.stderr)
-        status = 1
+        status = 100
     sys.exit(status)
