@@ -944,7 +944,6 @@ contains
       allocate(xflux, yflux, MOLD=ps_io)
       ! Load and combine surface stress/momentum flux components
       if (met_params%xflux_is_accumulated) then
-        ! Note: Arome files have the wrong units for accumulated downward momentum flux, missing a unit of time
         call read_accumulated_field(fio, nhdiff, timepos, timeposm1, met_params%xflux, accum_downward_momentum_flux_units, &
           xflux(:, :), nr=nr)
       else
@@ -953,7 +952,6 @@ contains
       endif
 
       if (met_params%yflux_is_accumulated) then
-        ! Note: Arome files have the wrong units for accumulated downward momentum flux, missing a unit of time
         call read_accumulated_field(fio, nhdiff, timepos, timeposm1, met_params%yflux, accum_downward_momentum_flux_units, &
           yflux(:, :), nr=nr)
       else
