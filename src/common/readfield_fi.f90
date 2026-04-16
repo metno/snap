@@ -885,7 +885,9 @@ contains
     allocate(tmp1, MOLD=field)
 
     ! Arome has the wrong units for accumulated momentum flux, missing a unit of time
-    if (nctype == "arome" .and. trim(units) ==  'N s/m^2') then
+    if (nctype == "arome" .and. &
+        (varname == "downward_eastward_momentum_flux_in_air" .OR. &
+         varname == "downward_northward_momentum_flux_in_air")) then
       units_ = "N/m2"
     else
       units_ = units
