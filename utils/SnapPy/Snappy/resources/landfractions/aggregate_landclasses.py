@@ -190,7 +190,9 @@ def aggregate_land_classes(
     fractions_da["lon"].attrs["long_name"] = "longitude"
     fractions_da["lon"].attrs["units"] = "degree_east"
 
-    fractions_da = fractions_da.reindex_like(ds_template)
+    fractions_da = fractions_da.reindex(lat=ds_template.lat.values,
+                                        method='nearest',
+                                        tolerance=1e-4)
 
     print("Calculating grid cell fractions")
     return fractions_da
