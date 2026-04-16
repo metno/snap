@@ -201,38 +201,38 @@ def get_args() -> argparse.Namespace:
     parser.add_argument(
         "--input_path",
         default="/lustre/storeB/project/fou/kl/cerad/Meteorology/Landuse/C3S-LC-L4-LCCS-Map-300m-P1Y-2022-v2.1.1.nc",
-        help="Input netcdf file. Lat lon grid must conform to CF conventions.",
+        help="Input netcdf file. Lat lon grid must conform to CF conventions. Defaults to ESA CCI land cover data.",
         type=pathlib.Path,
     )
     parser.add_argument(
         "--land_class_variable",
         default="lccs_class",
-        help="Variable of land class data in the input netcdf file. Must follow CF convention for flag values.",
+        help="Variable of land class data in the input netcdf file. Must follow CF convention for flag values. Default: 'lccs_class' for ESA CCI land cover data.",
         type=str,
     )
     parser.add_argument(
         "--output_path",
         default="LandCoverFractions_EsaCCI_ecemep.nc",
-        help="Output netcdf file.",
+        help="Output netcdf file. Default: LandCoverFractions_EsaCCI_ecemep.nc.",
         type=pathlib.Path,
     )
     parser.add_argument(
         "--template_path",
         default="/lustre/storeB/project/fou/kl/cerad/Meteorology/Landuse/meteo_template/meteo20251214_03.nc",
         type=pathlib.Path,
-        help="Dataset defining the lat lon grid used for the output. Note that lat lon grid must be commensurate with the input grid.",
+        help="Dataset defining the lat lon grid used for the output. Note that lat lon grid must be commensurate with the input grid. Defaults to a meteorological file for the NRPA domain.",
     )
     parser.add_argument(
         "--input_res",
         type=float,
         default=1 / 360,
-        help="Input resolution in degrees. Must equal input grid resolution. Default 1/360 degrees = 10 arcseconds. ",
+        help="Input resolution in degrees. Must equal input grid resolution. Default: 1/360 degrees = 10 arcseconds. ",
     )
     parser.add_argument(
         "--output_res",
         type=float,
         default=0.1,
-        help="Output resolution in degrees. Must equal template grid resolution. Default 0.1 degrees.",
+        help="Output resolution in degrees. Must equal template grid resolution. Default: 0.1 degrees.",
     )
     parser.add_argument(
         "--overwrite", action="store_true", help="Overwrite existing output file."
