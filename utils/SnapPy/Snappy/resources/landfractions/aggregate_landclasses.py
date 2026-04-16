@@ -7,6 +7,8 @@ import xarray as xr
 from dask.diagnostics import ProgressBar
 import sys
 
+import argparse
+
 
 def check_coordinate_resolution_equals(
     ds: xr.Dataset,
@@ -193,8 +195,6 @@ def aggregate_land_classes(
 
 
 def get_args() -> argparse.Namespace:
-    import argparse
-
     parser = argparse.ArgumentParser(
         description="Aggregates high-resolution land class data onto a lower-resolution grid by calculating land class fractions. The input latitude-longitude grid is divided into regions centered around each point of the output grid, and in each region we count the occurance of each land class and calculate fractional land classes. The input grid must be commensurate with the output grid, and is defined by a template file."
     )
