@@ -148,19 +148,19 @@ def get_args():
         description="This script processes land cover data to determine the largest fractional land cover type for a given grid cell. The script reads an input NetCDF file containing land cover fractions, applies a mapping from ESA CCI (European Space Agency Climate Change Initiative) land cover classes to SNAP classes using a lookup table, and calculates the largest fractional land cover type along with its corresponding main category. The transformed data is saved to an output NetCDF file."
     )
     parser.add_argument(
-        "--input_path",
+        "--input-path",
         default="./LandCoverFractions_EsaCCI_ecemep.nc",
         type=pathlib.Path,
         help="Path to the input NetCDF file containing land cover fractions (default: ./LandCoverFractions_EsaCCI_ecemep.nc).",
     )
     parser.add_argument(
-        "--lookup_table",
+        "--lookup-table",
         default="./esa_to_snap.csv",
         type=pathlib.Path,
         help="Path to the CSV lookup table that maps ESA land cover classes to SNAP classes (default: ./esa_to_snap.csv).",
     )
     parser.add_argument(
-        "--output_path",
+        "--output-path",
         default="./largestLandFraction_NrpaEC0p1.nc",
         type=pathlib.Path,
         help="Path to the output NetCDF file where the processed data will be saved (default: ./largestLandFraction_NrpaEC0p1.nc).",
