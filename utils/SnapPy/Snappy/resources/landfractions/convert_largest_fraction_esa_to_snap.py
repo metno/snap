@@ -49,7 +49,7 @@ def convert_dtype(largest_fraction):
     return largest_fraction
 
 
-def calculate_largest_fraction(fractions):
+def calculate_largest_fraction(fractions) -> xr.Dataset:
     """Calculate largest class of the largest main category.
 
     Example: A grid cell with 35% grass, 25% forest and 40% water has largest
@@ -137,7 +137,11 @@ def convert_esa_to_snap(input_path, output_path, lookup_table="esa_to_snap.csv")
     largest_fraction_snap = convert_dtype(largest_fraction_snap)
 
     print(f"Saving data converted from {input_path} to {output_path}")
-    largest_fraction_snap.to_netcdf(output_path)
+
+    compression_encoding = {"zlib": True, "complevel": 5, "shuffle": True}
+    encoding = {var: compression_encoding for var in largest_fraction_snap.data_vars}
+
+    largest_fraction_snap.to_netcdf(output_path, encoding=encoding)
     print("Done")
 
 
