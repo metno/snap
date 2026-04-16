@@ -4,10 +4,13 @@
 import pathlib
 import numpy as np
 import xarray as xr
-from dask.diagnostics import ProgressBar
+from dask.diagnostics.progress import ProgressBar
 import sys
 
+from typing import TypeVar
 import argparse
+
+Data = TypeVar("Data", xr.Dataset, xr.DataArray)
 
 
 def check_coordinate_resolution_equals(
@@ -19,7 +22,7 @@ def check_coordinate_resolution_equals(
     """Check resolution of a given coordinate in dataset against an expected value"""
     _msg = "Mismatch in resolution of coord '{coord}' in ds '{name}'. Expected {target_res}, got deviations up to {max_dev}"
 
-    diffs = np.diff(np.sort(ds.get(coord).values))
+    diffs = np.diff(np.sort(ds[coord].values))
 
     if not np.allclose(target_res, diffs, rtol=1e-4):
         max_deviation = np.max(np.abs(diffs - target_res))
@@ -29,7 +32,7 @@ def check_coordinate_resolution_equals(
         raise ValueError(msg)
 
 
-def check_output_coord(da: xr.DataArray, da_template: xr.DataArray, coord: str):
+def check_output_coord(da: xr.DataArray, da_template: xr.Dataset, coord: str):
     """Check that the coordinates of two datasets are equal (up to a given tolerance)"""
     _msg = "Resolution of coord '{coord}' between output and template does not match. Got deviations up to {max_dev} at i={index}/{size}"
 
@@ -78,22 +81,20 @@ def open_datasets(
     return ds, ds_template
 
 
-def subset_dataset(
-    ds: xr.Dataset, ds_template: xr.Dataset, output_res: float
-) -> xr.Dataset:
-    "Subset dataset ds using template dataset lat lon grid."
+def subset_data(data: Data, data_template: Data, output_res: float) -> Data:
+    "Subset dataarray or dataset using template dataset lat lon grid."
 
     # Template coordinates are assumed to be at grid cell centers, so we add
     # half a grid cell in all directions to include the entire grid cells
-    min_lat = ds_template.lat.min() - output_res / 2
-    max_lat = ds_template.lat.max() + output_res / 2
-    min_lon = ds_template.lon.min() - output_res / 2
-    max_lon = ds_template.lon.max() + output_res / 2
+    min_lat = data_template.lat.min() - output_res / 2
+    max_lat = data_template.lat.max() + output_res / 2
+    min_lon = data_template.lon.min() - output_res / 2
+    max_lon = data_template.lon.max() + output_res / 2
 
     # Get mapping from land class value to land class index
-    return ds.sel(
-        lat=(ds.lat >= min_lat) & (ds.lat < max_lat),
-        lon=(ds.lon >= min_lon) & (ds.lon < max_lon),
+    return data.sel(
+        lat=(data.lat >= min_lat) & (data.lat < max_lat),
+        lon=(data.lon >= min_lon) & (data.lon < max_lon),
     )
 
 
@@ -279,7 +280,7 @@ def main():
     if args.global_input:
         da = roll_and_pad_coordinates(da, args.input_res, args.output_res)
     else:
-        da = subset_dataset(da, ds_template, args.output_res)
+        da = subset_data(da, ds_template, args.output_res)
 
     fractions_da = aggregate_land_classes(
         da=da, agg_factor=agg_factor, var_name=var_name
