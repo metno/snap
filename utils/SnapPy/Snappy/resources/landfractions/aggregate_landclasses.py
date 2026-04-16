@@ -34,18 +34,12 @@ def check_coordinate_resolution_equals(
 
 def check_output_coord(da: xr.DataArray, da_template: xr.Dataset, coord: str):
     """Check that the coordinates of two datasets are equal (up to a given tolerance)"""
-    _msg = "Resolution of coord '{coord}' between output and template does not match. Got deviations up to {max_dev} at i={index}/{size}"
 
-    diffs = np.diff(da[coord].values)
-    diffs_template = np.diff(np.sort(da_template[coord].values))
-
-    if not np.allclose(diffs, diffs_template, rtol=1e-4):
-        max_deviation = np.max(np.abs(diffs - diffs_template))
-        index = np.argmax(np.abs(diffs - diffs_template))
-        msg = _msg.format(
-            coord=coord, max_dev=max_deviation, index=index, size=da[coord].size
+    if not np.allclose(da[coord].values, da_template[coord].values, rtol=1e-4):
+        raise ValueError(
+            f"Output coordinate {coord} does not match template coordinate. Expected {da_template[coord].values}, got {da[coord].values}"
         )
-        raise ValueError(msg)
+
 
 
 def rename_coords(ds: xr.Dataset) -> xr.Dataset:
@@ -156,7 +150,7 @@ def _count_values(array: np.ndarray, possible_values: np.ndarray) -> np.ndarray:
 
 
 def aggregate_land_classes(
-    da: xr.DataArray, agg_factor: int, var_name: str = "lccs_class"
+    da: xr.DataArray, ds_template: xr.Dataset, agg_factor: int, var_name: str = "lccs_class"
 ) -> xr.DataArray:
     """Aggregates land class values by dividing lat-lon grid into regions of size agg_factor² and counting values in each region."""
 
@@ -196,7 +190,7 @@ def aggregate_land_classes(
     fractions_da["lon"].attrs["long_name"] = "longitude"
     fractions_da["lon"].attrs["units"] = "degree_east"
 
-    fractions_da = fractions_da.reindex(lat=np.sort(fractions_da.lat))
+    fractions_da = fractions_da.reindex_like(ds_template)
 
     print("Calculating grid cell fractions")
     return fractions_da
@@ -292,7 +286,7 @@ def main():
         da = subset_data(da, ds_template, args.output_res)
 
     fractions_da = aggregate_land_classes(
-        da=da, agg_factor=agg_factor, var_name=var_name
+        da=da, ds_template=ds_template, agg_factor=agg_factor, var_name=var_name
     )
 
     # check that output grid is correct
