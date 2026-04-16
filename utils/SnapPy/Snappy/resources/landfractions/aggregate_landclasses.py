@@ -106,33 +106,42 @@ def roll_and_pad_coordinates(
     longitudes [-180 + resolution, 180] and latitudes [-90, 90]."""
     agg_factor = calc_agg_factor(input_res, output_res)
     agg_half = agg_factor // 2
-    new_da = da.roll({"lon": agg_factor // 2}, roll_coords=True)
+    new_da = da.roll({"lon": -agg_half}, roll_coords=True)
 
-    lon = new_da["lon"].values
-    lon[: agg_factor // 2] -= 360
+    # Manually move the rolled longitude values around the periodic cut
+    new_lon = new_da.lon.values.copy()
+    new_lon[-agg_factor // 2:] += 360
 
-    new_da = new_da.assign_coords({"lon": lon})
+    new_da = new_da.assign_coords({"lon": new_lon})
 
     new_da = new_da.pad({"lat": (agg_half, agg_half)}, mode="symmetric")
 
-    lat = new_da.lat.values
-    lat[:agg_half] = da.lat.values[0] + input_res * np.arange(1, agg_half + 1)[::-1]
-    lat[-agg_half:] = da.lat.values[-1] - input_res * np.arange(1, agg_half + 1)
-    new_da = new_da.assign_coords({"lat": lat})
+    # Pad latitude at the poles such that the new latitudes are centered around
+    # the output grid points.
+    new_lat = new_da.lat.values.copy()
+    new_lat[:agg_half] = da.lat.values[0] + input_res * np.arange(1, agg_half + 1)[::-1]
+    new_lat[-agg_half:] = da.lat.values[-1] - input_res * np.arange(1, agg_half + 1)
+    new_da = new_da.assign_coords({"lat": new_lat})
 
     # Check that values are as expected
     lon = new_da.lon.values
     lon_regions = lon.reshape(lon.size // agg_factor, -1)
     lon_means = lon_regions.mean(axis=1)
-    lon_means_expected = np.arange(-180, 180, output_res)
-    assert np.allclose(lon_means, lon_means_expected, rtol=1e-4)
+    lon_means_expected = np.arange(-180 + output_res, 180 + output_res, output_res)
+    if not np.allclose(lon_means, lon_means_expected, rtol=1e-4):
+        raise ValueError(
+            f"Longitude values after rolling and padding do not match expected values. Expected {lon_means_expected}, got {lon_means}"
+        )
 
     lat = new_da.lat.values
     lat_regions = lat.reshape(lat.size // agg_factor, -1)
     lat_means = lat_regions.mean(axis=1)
     lat_means_expected = np.arange(90, -90 - output_res, -output_res)
 
-    assert np.allclose(lat_means, lat_means_expected, rtol=1e-4)
+    if not np.allclose(lat_means, lat_means_expected, rtol=1e-4):
+        raise ValueError(
+            f"Latitude values after rolling and padding do not match expected values. Expected {lat_means_expected}, got {lat_means}"
+        )
     return new_da
 
 
