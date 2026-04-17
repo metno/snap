@@ -3,12 +3,13 @@ import netCDF4
 import numpy
 import unittest
 
+import typing
 
 class SnapTestCase(unittest.TestCase):
     """extension of a unittest TestCase with methods useful for SNAP outputs"""
 
     @staticmethod
-    def get_nc_filename(snap_input):
+    def get_nc_filename(snap_input: str) -> str:
         """get the filename of the output netcdf file from a snap.input file"""
         with open(snap_input, "rt") as fh:
             for line in fh:
@@ -17,7 +18,8 @@ class SnapTestCase(unittest.TestCase):
                     return outfile
         assert False
 
-    def compare_fields(self, ex, new, msg):
+    @typing.no_type_check
+    def compare_fields(self, ex, new, msg) -> None:
         """compare two numpy fields to be almost equal"""
         self.assertSequenceEqual(ex.shape, new.shape)
         # allow 4% numerical difference
@@ -33,7 +35,8 @@ class SnapTestCase(unittest.TestCase):
             msg="{}: {} !~ {} within {}%".format(msg, exS, neS, rel),
         )
 
-    def compare_nc(self, expected, outfile, varNames=[]):
+    @typing.no_type_check
+    def compare_nc(self, expected, outfile, varNames=[]) -> None:
         """compare if the outfile is almost equal the expected file for the varNames variables"""
         with netCDF4.Dataset(expected, "r") as exNc:
             time = exNc["time"][:]

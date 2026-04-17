@@ -10,43 +10,88 @@ import unittest
 from snapunittest import SnapTestCase
 
 
-class SnapEcEMEPEmersonForwardTestCase(SnapTestCase):
-    datadir = pathlib.Path(__file__).resolve().parent / "data"
-    input = "snap.input_ecemep_emerson_fimex"
-    snap = datadir / "../bsnap_naccident"
-
-    snapExpected = "snap_testdata/snap_ecemep_emerson_expected_20260304.nc"
-
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
-    def test_runfimex(self):
-        env = os.environ.copy()
-        env["OMP_NUM_THREADS"] = "1"
-        subprocess.run(
-            [str(self.snap.resolve()), self.input],
-            cwd=str(self.datadir.resolve()),
+def run_snap(snap, input_file, cwd):
+    env = os.environ.copy()
+    env["OMP_NUM_THREADS"] = "1"
+    try:
+        out = subprocess.run(
+            [snap, input_file],
+            cwd=cwd,
             env=env,
             check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
         )
+    except Exception as e:
+        print(e.stdout)
+        raise e
+    print(out.stdout)
 
-        outfile = self.get_nc_filename(os.path.join(self.datadir, self.input))
-        self.compare_nc(
-            self.snapExpected,
-            os.path.join(self.datadir, outfile),
-            [
-                "instant_height_boundary_layer",
-                "precipitation_amount_acc",
-                # "Cs137_concentration", # too variable between RNGs
-                "Cs137_concentration_bl",
-                "Cs137_acc_concentration",
-                "Cs137_acc_dry_deposition",
-                "Cs137_acc_wet_deposition",
-            ],
+
+def _resolve_relative_paths(datadir: pathlib.Path, snapinput: str) -> str:
+    """resolve known relative paths in snapinput to absolute paths based on datadir"""
+
+    def replacement(match: re.Match) -> str:
+        prefix = match.group(1)
+        filename = match.group(2)
+        resolved_path = (datadir / filename).resolve()
+        return f"{prefix}{resolved_path}"
+
+    for field in [
+        "FIMEX.CONFIG",
+        "FIELD.INPUT",
+        "DRY.DEPOSITION.LARGEST_LANDFRACTION_FILE",
+    ]:
+        # replace path to datafields ommitting = surrounded by optional spaces
+
+        snapinput = re.sub(
+            rf"({field}\s*=\s*)(\S+)",
+            replacement,
+            snapinput,
         )
+    return snapinput
+
+
+
+
+class SnapEcEMEPForwardTestCase(SnapTestCase):
+    input: str = "snap.input_ecemep_fimex"
+    snapExpected: str = "snap_testdata/snap_ecemep_expected5.nc"
+    check_output: bool = True
+
+    datadir: pathlib.Path = (pathlib.Path(__file__).parent / "data").resolve()
+    snap: pathlib.Path = (datadir / "../bsnap_naccident").resolve()
+    variables: list[str] = [
+        "instant_height_boundary_layer",
+        "precipitation_amount_acc",
+        # "Cs137_concentration", # too variable between RNGs
+        "Cs137_concentration_bl",
+        "Cs137_acc_concentration",
+        "Cs137_acc_dry_deposition",
+        "Cs137_acc_wet_deposition",
+    ]
+
+    @unittest.skipIf(os.getenv("FIMEXLIB") is None, "fimex not supported in this build")
+    def test_runfimex(self):
+        run_snap(str(self.snap.resolve()), self.input, str(self.datadir.resolve()))
+
+        if self.check_output:
+            outfile = self.get_nc_filename(os.path.join(self.datadir, self.input))
+            self.compare_nc(
+                self.snapExpected,
+                os.path.join(self.datadir, outfile),
+                self.variables,
+            )
+
+    @unittest.skip("test not implemented properly yet")
+    def test_runnclib(self):
+        # TBD create input-file with FILE.TYPE=netcdf instead of fimex
+        pass
+
+class SnapEcEMEPEmersonForwardTestCase(SnapEcEMEPForwardTestCase):
+    input: str = "snap.input_ecemep_emerson_fimex"
+    snapExpected: str = "snap_testdata/snap_ecemep_emerson_expected_20260304.nc"
 
     def test_runfimex_async(self):
         d = tempfile.mkdtemp()
@@ -55,180 +100,41 @@ class SnapEcEMEPEmersonForwardTestCase(SnapTestCase):
         with (self.datadir / self.input).open("r") as f:
             snapinput = f.read()
         snapinput += "\nASYNC_IO.ON\n"
-        for field in [
-            "FIMEX.CONFIG",
-            "FIELD.INPUT",
-            "DRY.DEPOSITION.LARGEST_LANDFRACTION_FILE",
-        ]:
-            # replace path to datafields ommitting = surrounded by optional spaces
-            snapinput = re.sub(
-                rf"({field}\s*=\s*)(\S+)",
-                lambda m: f"{m.group(1)}{str((self.datadir / m.group(2)).resolve())}",
-                snapinput,
-            )
+
+        snapinput = _resolve_relative_paths(self.datadir, snapinput)
+
         with (tmp / "snap.input").open("w") as f:
             f.write(snapinput)
-        env = os.environ.copy()
-        env["OMP_NUM_THREADS"] = "1"
-        try:
-            subprocess.run(
-                [str(self.snap.resolve()), "snap.input"],
-                cwd=str(tmp.resolve()),
-                env=env,
-                check=True,
-            )
-        except Exception as e:
-            print(tmp)
-            raise e
+
+        run_snap(str(self.snap), "snap.input", cwd=str(tmp.resolve()))
 
         outfile = self.get_nc_filename(str(tmp / "snap.input"))
         self.compare_nc(
             self.snapExpected,
             (tmp / outfile).resolve().as_posix(),
-            [
-                "instant_height_boundary_layer",
-                "precipitation_amount_acc",
-                "Cs137_concentration",
-                "Cs137_concentration_bl",
-                "Cs137_acc_concentration",
-                "Cs137_acc_dry_deposition",
-                "Cs137_acc_wet_deposition",
-            ],
+            self.variables,
         )
 
 
-class SnapEcEMEPForwardTestCase(SnapTestCase):
-    input = "snap.input_ecemep_fimex"
-    snap = "../bsnap_naccident"
-    datadir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 
-    snapExpected = "snap_testdata/snap_ecemep_expected5.nc"
-
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
-    @unittest.skipIf(os.getenv("FIMEXLIB") is None, "fimex not supported in this build")
-    def test_runfimex(self):
-        env = os.environ.copy()
-        env["OMP_NUM_THREADS"] = "1"
-        subprocess.run(
-            [os.path.join(self.datadir, self.snap), self.input],
-            cwd=self.datadir,
-            env=env,
-            check=True,
-        )
-
-        outfile = self.get_nc_filename(os.path.join(self.datadir, self.input))
-        self.compare_nc(
-            self.snapExpected,
-            os.path.join(self.datadir, outfile),
-            [
-                "instant_height_boundary_layer",
-                "precipitation_amount_acc",
-                # "Cs137_concentration", # too variable between RNGs
-                "Cs137_concentration_bl",
-                "Cs137_acc_concentration",
-                "Cs137_acc_dry_deposition",
-                "Cs137_acc_wet_deposition",
-            ],
-        )
-
-    @unittest.skip("test not implemented properly yet")
-    def test_runnclib(self):
-        # TBD create input-file with FILE.TYPE=netcdf instead of fimex
-        env = os.environ.copy()
-        env["OMP_NUM_THREADS"] = "1"
-        subprocess.run(
-            [os.path.join(self.datadir, self.snap), self.input],
-            cwd=self.datadir,
-            env=env,
-            check=True,
-        )
-
-        outfile = self.get_nc_filename(os.path.join(self.datadir, self.input))
-        self.compare_nc(
-            self.snapExpected,
-            os.path.join(self.datadir, outfile),
-            [
-                "instant_height_boundary_layer",
-                "precipitation_amount_acc",
-                "Cs137_concentration",
-                "Cs137_concentration_bl",
-                "Cs137_acc_concentration",
-                "Cs137_acc_dry_deposition",
-                "Cs137_acc_wet_deposition",
-            ],
-        )
+class SnapEcGlobalForwardTestCase(SnapEcEMEPForwardTestCase):
+    input: str = "snap.input_ecglobal_emerson_fimex"
+    snapExpected: str = "snap_testdata/snap_meps_interpolated_expected_20251125.nc"
+    check_output: bool = False
 
 
-class SnapMEPSForwardTestCase(SnapTestCase):
-    input = "snap.input_meps_fimex"
-    snap = "../bsnap_naccident"
-    datadir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
-
-    snapExpected = "snap_testdata/snap_meps_interpolated_expected_20251125.nc"
-
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
-    @unittest.skipIf(os.getenv("FIMEXLIB") is None, "fimex not supported in this build")
-    def test_runfimex(self):
-        env = os.environ.copy()
-        env["OMP_NUM_THREADS"] = "1"
-        subprocess.run(
-            [os.path.join(self.datadir, self.snap), self.input],
-            cwd=self.datadir,
-            env=env,
-            check=True,
-        )
-
-        outfile = self.get_nc_filename(os.path.join(self.datadir, self.input))
-        self.compare_nc(
-            self.snapExpected,
-            os.path.join(self.datadir, outfile),
-            [
-                "instant_height_boundary_layer",
-                "precipitation_amount_acc",
-                "Cs137_concentration",
-                "Cs137_concentration_bl",
-                "Cs137_acc_concentration",
-                "Cs137_dry_deposition",
-                "Cs137_wet_deposition",
-            ],
-        )
-
-    @unittest.skip("test not implemented properly yet")
-    def test_runnclib(self):
-        # TBD create input-file with FILE.TYPE=netcdf instead of fimex
-        env = os.environ.copy()
-        env["OMP_NUM_THREADS"] = "1"
-        subprocess.run(
-            [os.path.join(self.datadir, self.snap), self.input],
-            cwd=self.datadir,
-            env=env,
-            check=True,
-        )
-
-        outfile = self.get_nc_filename(os.path.join(self.datadir, self.input))
-        self.compare_nc(
-            self.snapExpected,
-            os.path.join(self.datadir, outfile),
-            [
-                "instant_height_boundary_layer",
-                "precipitation_amount_acc",
-                "Cs137_concentration",
-                "Cs137_concentration_bl",
-                "Cs137_acc_concentration",
-                "Cs137_dry_deposition",
-                "Cs137_wet_deposition",
-            ],
-        )
+class SnapMEPSForwardTestCase(SnapEcEMEPForwardTestCase):
+    input: str = "snap.input_meps_fimex"
+    snapExpected: str = "snap_testdata/snap_meps_interpolated_expected_20251125.nc"
+    variables: list[str] = [
+        "instant_height_boundary_layer",
+        "precipitation_amount_acc",
+        "Cs137_concentration",
+        "Cs137_concentration_bl",
+        "Cs137_acc_concentration",
+        "Cs137_dry_deposition",
+        "Cs137_wet_deposition",
+    ]
 
 
 class ReleaseTests(unittest.TestCase):
@@ -251,18 +157,12 @@ class ReleaseTests(unittest.TestCase):
 
         with tmp.joinpath("snap.input").open("w") as f:
             f.write(snapinput)
-        env = os.environ.copy()
-        env["OMP_NUM_THREADS"] = "1"
-        try:
-            subprocess.run(
-                [self.snap.resolve().as_posix(), "snap.input"],
-                cwd=tmp.resolve().as_posix(),
-                env=env,
-                check=True,
-            )
-        except Exception as e:
-            print(tmp)
-            raise e
+
+        run_snap(
+            self.snap.resolve().as_posix(),
+            "snap.input",
+            cwd=tmp.resolve().as_posix(),
+        )
 
         istep = -1
         logfile = tmp.joinpath("snap.log")
@@ -301,18 +201,9 @@ class ReleaseTests(unittest.TestCase):
         with tmp.joinpath("snap.input").open("w") as f:
             f.write(snapinput)
 
-        env = os.environ.copy()
-        env["OMP_NUM_THREADS"] = "1"
-        try:
-            subprocess.run(
-                [self.snap.resolve().as_posix(), "snap.input"],
-                cwd=tmp.resolve().as_posix(),
-                env=env,
-                check=True,
-            )
-        except Exception as e:
-            print(tmp)
-            raise e
+        run_snap(
+            self.snap.resolve().as_posix(), "snap.input", cwd=tmp.resolve().as_posix()
+        )
 
         releases = 0
         logfile = tmp.joinpath("snap.log")
@@ -360,18 +251,10 @@ class ReleaseTests(unittest.TestCase):
 
         with tmp.joinpath("snap.input").open("w") as f:
             f.write(snapinput)
-        env = os.environ.copy()
-        env["OMP_NUM_THREADS"] = "1"
-        try:
-            subprocess.run(
-                [self.snap.resolve().as_posix(), "snap.input"],
-                cwd=tmp.resolve().as_posix(),
-                env=env,
-                check=True,
-            )
-        except Exception as e:
-            print(tmp)
-            raise e
+
+        run_snap(
+            self.snap.resolve().as_posix(), "snap.input", cwd=tmp.resolve().as_posix()
+        )
 
         istep = -1
         logfile = tmp.joinpath("snap.log")

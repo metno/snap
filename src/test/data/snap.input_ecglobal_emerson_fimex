@@ -4,13 +4,13 @@
 *** DNMI SNAP - Severe Nuclear Accident Program
 ***********************************************************************
 
-SET_RELEASE.POS= P=   57.25,   12.1
+SET_RELEASE.POS= P=   54.4205,   -3.4975
 POSITIONS.DECIMAL
-TIME.START= 2025 11 25 07
-TIME.RUN = 2h
+TIME.START= 2026 04 8 08
+TIME.RUN = 3h
 TIME.RELEASE.PROFILE.STEPS
-MAX.PARTICLES.PER.RELEASE= 1000
-MAX.TOTALPARTICLES= 2000000
+MAX.PARTICLES.PER.RELEASE= 2
+MAX.TOTALPARTICLES= 1000
 RELEASE.HOUR= 0, 1
 RELEASE.RADIUS.M= 50, 50
 RELEASE.LOWER.M= 15, 15
@@ -50,9 +50,9 @@ RANDOM.WALK.ON
 BOUNDARY.LAYER.FULL.MIX.OFF
 *
 DRY.DEPOSITION.SCHEME = emerson
-DRY.DEPOSITION.LARGEST_LANDFRACTION_FILE = ../../../utils/SnapPy/Snappy/resources/landfractions/largestLandFraction_Meps2p5.nc
-
-WET.DEPOSITION.SCHEME = bartnicki
+DRY.DEPOSITION.LARGEST_LANDFRACTION_FILE = ../../../utils/SnapPy/Snappy/resources/landfractions/largestLandFraction_NrpaEC0p1.nc
+*
+WET.DEPOSITION.SCHEME=bartnicki
 *
 REMOVE.RELATIVE.MASS.LIMIT= 0.
 *
@@ -74,18 +74,29 @@ MODEL.LEVEL.FIELDS.OFF
 *
 ** INPUT FIELD FILES
 FIELD.TYPE=fimex
-FIELD.INPUT= ../snap_testdata/meps_det_2_5km_20251125T06Z_ringhals.nc
+FIELD.INPUT= ../snap_testdata/meteo_ecglobal_20260408T060000_06_ringhals.nc
+* FIELD.INPUT= /lustre/storeB/project/metproduction/products/ecmwf/nc/ec_atmo_0_1deg_20260408T060000Z_3h.nc
 ** USE FIMEX
 FIMEX.FILE_TYPE= netcdf
-*FIMEX.CONFIG=
-FIMEX.INTERPOLATION=nearest|+proj=lcc +lat_0=63.3 +lon_0=15 +lat_1=63.3 +lat_2=63.3 +no_defs +R=6.371e+06|-260084.1,-257584.1,...,89915.9|-752518.2,-750018.2,...,-500018.2|m
+FIMEX.CONFIG=
+FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|-5,-4.9,...,-2.4|53,53.1,...,55.8|degree
 
 ** GRID INPUT AND RUN, MODEL LEVELS INPUT (0,KS,KS-1,........1)
-GRID.NCTYPE = arome
+GRID.NCTYPE = ec_det
 DATA.ETA.LEVELS
 ENSEMBLE_MEMBER.INPUT = 0
 
 GRID.AUTODETECT.FROM_INPUT
+*overwrite autodetection if desired
+*GRID.GPARAM = 6, 1.639, 52.041, 2.5, 2.5, 15, 63
+*GRID.SIZE = 949, 1069
+* use just a few layers
+LEVELS.INPUT=6,0,5,4,3,2,1
+
+*
+FORECAST.HOUR.MIN= +3
+FORECAST.HOUR.MAX= +9999
+*
 
 *
 ** IDENTIFY OUTPUT FIELDS WITH FORECAST LENGTH OR VALID TIME
@@ -96,8 +107,8 @@ FIELD_TIME.FORECAST
 ** OUTPUT FILES
 *
 FIELD.OUTTYPE=netcdf
-FIELD.OUTPUT= snap_meps_fimex.nc
-LOG.FILE=     snap_meps_fimex.log
+FIELD.OUTPUT= snap_ecglobal_emerson.nc
+LOG.FILE=     snap.log
 *
 * DEBUG.OFF
 DEBUG.ON
