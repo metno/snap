@@ -40,8 +40,8 @@ class Resources(ResourcesCommon):
     """
 
     # OUTPUTDIR = "/disk1/tmp"
-    _OUTPUTDIR = "{LUSTREDIR}/project/fou/kl/snap/runs"
-    _OUTPUTDIR_AUTOMATED = "{LUSTREDIR}/project/fou/kl/snap/automated_runs"
+    _OUTPUTDIR = "{LF_PROD_DIR}/atom/runs"
+    _OUTPUTDIR_AUTOMATED = "{LF_PROD_DIR}/atom/automated_runs"
     _ECINPUTDIRS = ["{LF_PROD_DIR}/atom/Meteorology/EC2CWF/"]
 
     # ECINPUTDIRS = ["/lustre/storeB/users/heikok/Meteorology/ecdis2cwf/"]
@@ -58,8 +58,9 @@ class Resources(ResourcesCommon):
 
     _MET_INPUTDIRS = {
         MetModel.Meps2p5: ["{MET_ARCHIVE_DIR}/projects/metproduction/MEPS/"],
-        MetModel.EC0p1Europe: ["{LUSTREDIR}/project/fou/kl/snap/meteo/ec_europe/"],
-        MetModel.GfsGribFilter: ["{LUSTREDIR}/project/fou/kl/snap/meteo/gfs_europe/"],
+        # input directories for manual download
+        MetModel.EC0p1Europe: ["{LF_PROD_DIR}/atom/Meteorology/ec_europe/"],
+        MetModel.GfsGribFilter: ["{LF_PROD_DIR}/atom/Meteorology/gfs_europe/"],
         MetModel.Era5Nancy: [
             "{LUSTREDIR}/project/fou/kl/cerad/Meteorology/EC/Era5/Nancy/"
         ],
