@@ -400,25 +400,26 @@ contains
   !> Should be called every input timestep to prepare the scavenging rates
   !> Is calculated when reading the files in, and therefore is part of asynchronous I/O
   subroutine wetdep_precompute()
-    use snapfldML, only: cw3d_io, precip3d_io, cloud_cover_io, precip3d, cw3d, cloud_cover, wscav
+    use snapfldML, only: precip3d, cw3d, cloud_cover, wscav
     integer :: i
 
     if (wetdep_scheme%use_vertical) then   
       !skip precomputation if no vertical scheme
 
-      if (.not.(allocated(precip3d).and.allocated(cw3d).and.allocated(cloud_cover) &
+      if (.not.(allocated(precip3d).and.allocated(cloud_cover) & !.and.allocated(cw3d)"
     )) then 
-        error stop "Some wetdep/precip fields not allocated"
+        error stop "Some wetdep/precip (precip) fields not allocated"
       endif
       if (wetdep_scheme%precompute) then
         block
           use snapparML, only: ncomp, run_comp
           use snapfldML, only: wscav_io
           if (.not.(allocated(wscav))) then 
-            error stop "Some wetdep/precip fields not allocated"
+            error stop "Some wetdep/precip fields (wscav) not allocated"
           endif
           do i = 1,ncomp
-            if (.not.run_comp(i)%defined%kwetdep == 1) cycle  ! skip precomputation if WET.DEP = off for specific component
+            ! skip precomputation if WET.DEP = off for specific component
+            if (.not.run_comp(i)%defined%kwetdep == 1) cycle  
             call prepare_wetdep_3d(wscav_io(:,:,:,i), run_comp(i)%defined%radiusmym, precip3d, cw3d, cloud_cover)
           end do
         end block

@@ -1270,6 +1270,15 @@ contains
               WETDEP_INCLOUD_SCHEME_TAKEMURA, &
               .true., .true.,.true. &
             )
+          case("bartnicki-vertical")            
+            met_params%use_3d_precip = .true.
+            met_params%use_ccf = .true.
+            met_params%precompute_wetdep = .false.
+            wetdep_scheme = wetdep_scheme_t( &
+              WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
+              WETDEP_INCLOUD_SCHEME_NONE, &
+              .true., .true., .false. &
+            )
 
           case default                                                            !> No default - should always have scheme in input
             write(error_unit,*) "Unknown scheme ", cinput(pname_start:pname_end)
