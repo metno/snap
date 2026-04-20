@@ -40,16 +40,17 @@ module drydepml
 
   contains
 
-subroutine drydep(tstep, part)
+subroutine drydep(tstep, part, kernel, lost_activity)
   use snapfldML, only: vd_dep
   use particleML, only: Particle
   real, intent(in) :: tstep
   type(particle), intent(inout) :: part
-
+  real, allocatable, intent(in) :: kernel(:, :)
+  real, intent(out) :: lost_activity
 
   if (drydep_scheme == DRYDEP_SCHEME_OLD) call drydep1(part)
-  if (drydep_scheme == DRYDEP_SCHEME_NEW) call drydep2(tstep, part)
-  if (drydep_scheme == DRYDEP_SCHEME_EMERSON) call drydep_nonconstant_vd(tstep, vd_dep, part)
+  if (drydep_scheme == DRYDEP_SCHEME_NEW) call drydep2(tstep, part, kernel, lost_activity)
+  if (drydep_scheme == DRYDEP_SCHEME_EMERSON) call drydep_nonconstant_vd(tstep, vd_dep, part, kernel, lost_activity)
 end subroutine
 
 pure logical function requires_landfraction_file()
@@ -167,19 +168,24 @@ end subroutine drydep1
 !>           and store depositions in nearest gridpoint in a field
 !>
 !> Method:   J.Bartnicki 2003
-subroutine drydep2(tstep, part)
+subroutine drydep2(tstep, part, kernel, lost_activity)
   USE particleML, only: Particle
   USE snapfldML, only: depdry
   USE snapdimML, only: hres_pos
   USE snapparML, only: def_comp
   USE snapgrdML, only: vlevel
   USE snaptabML, only: surface_height_sigma
+  USE gaussian_smoothingML, only: add_to_field_with_kernel
 
 ! ... 23.04.12 - gas, particle 0.1<d<10, particle d>10 - J. Bartnicki|
 !> timestep of the simulation, affects the deposition rate
   real, intent(in) :: tstep
 !> particle
   type(Particle), intent(inout) :: part
+!> kernel for distributing deposition to surrounding grid points
+  real, allocatable, intent(in) :: kernel(:,:)
+!> lost activity due to deposition outside of domain, e.g. near boundaries
+  real, intent(out) :: lost_activity
 
   integer :: m,i,j,mo
   real :: deprate, dep
@@ -187,6 +193,7 @@ subroutine drydep2(tstep, part)
   real, parameter :: vd_gas = 0.008  ! [m/s]
   real, parameter :: vd_particles = 0.002  ! [m/s]
 
+  lost_activity = 0.0
   m = part%icomp
 !#### 30m = surface-layer (deposition-layer); sigma(hybrid)=0.996 ~ 30m
   if (def_comp(m)%kdrydep == 1 .AND. part%z > surface_height_sigma) then
@@ -208,8 +215,8 @@ subroutine drydep2(tstep, part)
     i = hres_pos(part%x)
     j = hres_pos(part%y)
     mo = def_comp(m)%to_output
-    !$OMP atomic
-    depdry(i,j,mo) = depdry(i,j,mo) + dble(dep)
+
+    call add_to_field_with_kernel(depdry(:,:,mo), i, j, dep, kernel, lost_activity)
   end if
 end subroutine drydep2
 
@@ -436,11 +443,12 @@ pure elemental subroutine drydep_emerson_vd(surface_pressure, t2m, ustar, raero,
 end subroutine
 
 !> Apply precomputed dry deposition velocities
-subroutine drydep_nonconstant_vd(tstep, vd, part)
+subroutine drydep_nonconstant_vd(tstep, vd, part, kernel, lost_activity)
   use particleML, only: Particle
   use snapfldML, only: depdry
   use snapparML, only: def_comp
   use snapdimML, only: hres_pos
+  USE gaussian_smoothingML, only: add_to_field_with_kernel
 
   !> Timestep of the simulation in seconds
   real, intent(in) :: tstep
@@ -448,11 +456,14 @@ subroutine drydep_nonconstant_vd(tstep, vd, part)
   type(Particle), intent(inout) :: part
   !> Deposition velocity
   real, intent(in) :: vd(:,:, :)
-
+  real, allocatable, intent(in) :: kernel(:, :)
+  real, intent(out) :: lost_activity
   real, parameter :: h = 30.0
 
   integer :: m, mm, i, j, mo
   real :: dep, deprate_m1
+
+  lost_activity = 0.0
 
   m = part%icomp
   if (def_comp(m)%kdrydep == 1 .and. part%z > 0.996) then
@@ -469,8 +480,7 @@ subroutine drydep_nonconstant_vd(tstep, vd, part)
     mo = def_comp(m)%to_output
     i = hres_pos(part%x)
     j = hres_pos(part%y)
-    !$OMP atomic
-    depdry(i,j,mo) = depdry(i,j,mo) + dble(dep)
+    call add_to_field_with_kernel(depdry(:,:,mo), i, j, dep, kernel, lost_activity)
   end if
 end subroutine
 

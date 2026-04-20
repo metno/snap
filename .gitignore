@@ -92,7 +92,9 @@ Snappy.egg-info
 /src/test/testDateCalc
 /src/test/test_array_utils
 /src/test/bsnap_naccident
+/src/test/testGaussianSmoothing
 /src/test/testGravSettling
+/src/test/testGaussianSmoothing
 /src/test/testDryDep
 /src/test/testWetDep
 /src/test/find_parameters_fi_test
@@ -103,6 +105,7 @@ src/test/snap_testdata
 src/test/data/snap.log
 src/test/data/snap.nc
 src/test/data/snap_ecemep.nc
+src/test/data/snap_ecemep_emerson.nc
 src/test/data/snap_meps_fimex.nc
 src/test/data/snap_meps_fimex.log
 

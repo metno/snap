@@ -132,6 +132,10 @@
 ! OUTPUT.COLUMN_MAX_CONC.DISABLE
 ! * Output column concentration (height independent)
 ! OUTPUT.COLUMN.ON
+! * Output gaussian smoothing parameters for dry-dep and concs
+! * the kernel-size (1=off, 3,5,7,...) determines max-distance of smoothing
+! * the maxHR determines the age-factor, e.g. 48h will give max-smoothing at ~ 5*48h
+! OUTPUT.GAUSSIAN_SMOOTHING.MAXHR,SIZE= <hours>, <kernel-size>
 ! * Computing dosimetry for occupants of aircraft flying through plumes
 ! OUTPUT.AIRCRAFT_DOSERATE.ENABLE
 ! OUTPUT.AIRCRAFT_DOSERATE.DISABLE * default
@@ -193,6 +197,7 @@ PROGRAM bsnap
           DRYDEP_SCHEME_OLD, DRYDEP_SCHEME_NEW, &
           DRYDEP_SCHEME_EMERSON, DRYDEP_SCHEME_UNDEFINED, &
           largest_landfraction_file,  drydep_unload => unload
+  USE gaussian_smoothingML, only: build_age_gaussian_kernel, initialize_gaussian_smoothing
   USE decayML, only: decay, decayDeps
   USE posintML, only: posint
   USE releaseML, only: release, releases, tpos_bomb, nrelheight, mprel, &
@@ -236,6 +241,8 @@ PROGRAM bsnap
   logical :: autodetect_grid_params = .false.
   integer :: m, np, npl, nlevel, ifltim = 0
   logical :: synoptic_output = .false.
+  integer :: gaussian_smoothing_max_age_hr = 48
+  integer :: gaussian_smoothing_kernel_size = 1 ! one means off
   integer :: k, ierror, i, n
   integer, allocatable :: klevel_manual(:)
   integer :: ih
@@ -262,6 +269,9 @@ PROGRAM bsnap
   integer :: ntprof
   type(duration_t) :: dur
   logical :: out_of_domain
+  real ::lost_activity
+  real, allocatable :: smoothing_kernel(:,:)
+  integer :: last_age_hr = -1, age_hr = -1
 
   real :: mhmin, mhmax  ! minimum and maximum of mixing height
 !> Information for reading from a releasefile
@@ -365,6 +375,11 @@ PROGRAM bsnap
 ! initialize random number generator for rwalk and release
   CALL init_random_seed()
 
+! initialize gaussian smoothing
+  write (iulog, "(a,i2,a,i3,a)") "Initializing Gaussian smoothing with kernel size ", gaussian_smoothing_kernel_size, &
+    " and max age ", gaussian_smoothing_max_age_hr, " hours."
+  call initialize_gaussian_smoothing(kernel_size_in=gaussian_smoothing_kernel_size, &
+                                     max_age_hr_in=gaussian_smoothing_max_age_hr)
 
 !..check input FELT files and make sorted lists of available data
 !..make main list based on x wind comp. (u) in upper used level
@@ -576,7 +591,7 @@ PROGRAM bsnap
     call readfield_and_compute(ftype, -1, nhrun < 0, time_start, nhfmin, nhfmax, &
                    time_file, ierror)
     write (error_unit, fmt="('input data: ',i4,3i3.2)") time_file
-    flush(output_unit)
+    flush(error_unit)
     call input_timer%stop_and_log()
     call swap_fields_after_reading(met_params%precompute_wetdep) ! only for async io, but does not hurt otherwise
 
@@ -699,8 +714,8 @@ PROGRAM bsnap
             !$OMP FIRSTPRIVATE(idebug,iulog,itimei, next_input_step,nhrun,nhfmin,nhfmax,nsteph) &
             !$OMP PRIVATE(ierror)
             if (idebug >= 1) then
-              write(*, *) "Starting async read task for step ", next_input_step, nstep, itimei
-              flush(output_unit)
+              write(error_unit, *) "Starting async read task for step ", next_input_step, nstep, itimei
+              flush(error_unit)
             end if
             call input_timer%start()
             call readfield_and_compute(ftype, next_input_step, nhrun < 0, itimei, nhfmin, nhfmax, &
@@ -756,45 +771,61 @@ PROGRAM bsnap
 
       call particleloop_timer%start()
       ! particle loop
-      !$OMP PARALLEL DO PRIVATE(pextra,np,m,out_of_domain) SCHEDULE(auto) &
+      !$OMP PARALLEL DO &
+      !$OMP PRIVATE(pextra,np,npl,m,out_of_domain, lost_activity, age_hr, smoothing_kernel) &
+      !$OMP FIRSTPRIVATE(last_age_hr) &
+      !$OMP SCHEDULE(auto) &
       !$OMP REDUCTION(+:total_activity_lost_domain) REDUCTION(MAX:mhmax) REDUCTION(MIN:mhmin)
-      part_do: do np = 1, npart
-        if (.not.pdata(np)%is_active()) cycle part_do
-
-        !..interpolation of boundary layer top, height, precipitation etc.
-        !  creates and save temporary data to pextra%prc, pextra%rmx, pextra%rmy
-        call posint(pdata(np), rt1, rt2, pextra)
-
-        !..radioactive decay
-        if (idecay == 1) call decay(pdata(np))
-
-        !..dry deposition
-        call drydep(tstep, pdata(np))
-
-        !..wet deposition
-        call wetdep(tstep, pdata(np), pextra)
-
-        !..move all particles forward, save u and v to pextra
-        call forwrd(tf1, tf2, tnow, tstep, pdata(np), pextra)
-
-        !..apply the random walk method (diffusion)
-        ! diffusion is applied after deposition to mix
-        ! before output (which computes surface concentrations)
-        if (use_random_walk) call rwalk(blfullmix, pdata(np), pextra)
-
-        !.. check domain (%active) after moving particle
-        call check_in_domain(pdata(np), out_of_domain)
-        if (out_of_domain) then
-          m = def_comp(pdata(np)%icomp)%to_output
-          total_activity_lost_domain(m) = &
-            total_activity_lost_domain(m) + pdata(np)%get_set_rad(0.0)
-        endif
-
-        if (pdata(np)%is_active()) then
-          if (pdata(np)%hbl > mhmax) mhmax = pdata(np)%hbl
-          if (pdata(np)%hbl < mhmin) mhmin = pdata(np)%hbl
+      plume_do: do npl = 1, nplume
+        age_hr = nint(1.0 * iplume(npl)%ageInSteps / nsteph)
+        if (age_hr /= last_age_hr) then
+          last_age_hr = age_hr
+          call build_age_gaussian_kernel(last_age_hr, smoothing_kernel)
         end if
-      end do part_do
+        part_do:  do np = iplume(npl)%start, iplume(npl)%end
+          lost_activity = 0.0
+          if (.not.pdata(np)%is_active()) cycle part_do
+
+          !..interpolation of boundary layer top, height, precipitation etc.
+          !  creates and save temporary data to pextra%prc, pextra%rmx, pextra%rmy
+          call posint(pdata(np), rt1, rt2, pextra)
+
+          !..radioactive decay
+          if (idecay == 1) call decay(pdata(np))
+
+          !..dry deposition
+          call drydep(tstep, pdata(np), smoothing_kernel, lost_activity)
+
+          !..wet deposition
+          call wetdep(tstep, pdata(np), pextra)
+
+          !..move all particles forward, save u and v to pextra
+          call forwrd(tf1, tf2, tnow, tstep, pdata(np), pextra)
+
+          !..apply the random walk method (diffusion)
+          ! diffusion is applied after deposition to mix
+          ! before output (which computes surface concentrations)
+          if (use_random_walk) call rwalk(blfullmix, pdata(np), pextra)
+
+          !.. check domain (%active) after moving particle
+          call check_in_domain(pdata(np), out_of_domain)
+          if (out_of_domain) then
+            m = def_comp(pdata(np)%icomp)%to_output
+            total_activity_lost_domain(m) = &
+              total_activity_lost_domain(m) + pdata(np)%get_set_rad(0.0)
+          endif
+          if (lost_activity > 0.0) then
+            m = def_comp(pdata(np)%icomp)%to_output
+            total_activity_lost_domain(m) = &
+              total_activity_lost_domain(m) + lost_activity
+          end if
+
+          if (pdata(np)%is_active()) then
+            if (pdata(np)%hbl > mhmax) mhmax = pdata(np)%hbl
+            if (pdata(np)%hbl < mhmin) mhmin = pdata(np)%hbl
+          end if
+        end do part_do
+      end do plume_do
       !$OMP END PARALLEL DO
       call particleloop_timer%stop_and_log()
 
@@ -857,14 +888,14 @@ PROGRAM bsnap
         end if
         if (fldtype == "netcdf" .and. ifldout == 1) then
           !$OMP TASKWAIT
-          call fldout_nc(fldfilX, itimeo, tf1, tf2, tnext, &
+          call fldout_nc(fldfilX, itimeo, tf1, tf2, tnext, nsteph, &
                          ierror)
         endif
         if (ierror /= 0) call snap_error_exit(iulog)
       else
         if (fldtype == "netcdf" .and. ifldout == 1) then
           !$OMP TASKWAIT
-          call fldout_nc(fldfilX, itimeo, tf1, tf2, tnext, &
+          call fldout_nc(fldfilX, itimeo, tf1, tf2, tnext, nsteph, &
                          ierror)
         endif
         if (ierror /= 0) call snap_error_exit(iulog)
@@ -889,7 +920,6 @@ PROGRAM bsnap
     call snap_error_exit(iulog)
   end if
   write(error_unit, *) 'npart: Used a maximum of ', npartmax, ' out of available ', mpart
-  write(output_unit, *) 'npart: Used a maximum of ', npartmax, ' out of available ', mpart
 
   ! b_240311
   write (error_unit, *)
@@ -1151,7 +1181,7 @@ contains
         if (has_value) then
           read(cinput(pname_start:pname_end),*) surface_height_m
           if (surface_height_m <= 0.0) then
-            write(*,*) "surface.layer.concentration.at.height must be positive"
+            write(error_unit,*) "surface.layer.concentration.at.height must be positive"
             goto 12
           endif
         endif
@@ -1645,6 +1675,12 @@ contains
       case ('asynoptic.output')
         !..asynoptic.output ... output at fixed intervals after start
         synoptic_output = .false.
+      case ('output.gaussian_smoothing.maxhr,size')
+        !..output.gaussian_smoothing.maxHR,SIZE=<hours>, kernel-size
+        if (.not. has_value) goto 12
+        !.. read two integer values, first maxHr, second kernel size
+        read (cinput(pname_start:pname_end), *, err=12) gaussian_smoothing_max_age_hr, &
+          gaussian_smoothing_kernel_size
       case ('total.components.off')
         !..total.components.off
         itotcomp = 0
@@ -1811,8 +1847,9 @@ contains
             write (error_unit, *) 'interpolation input wrong:', trim(fimex_interpolation)
             ierror = 1
           else
-            write(error_unit,*) "interpolation enabled:", fint%method, trim(fint%proj), trim(fint%x_axis), &
-              trim(fint%y_axis), fint%unit_is_degree
+            write(error_unit,*) "interpolation enabled:", fint%method, trim(fint%proj), &
+              trim(fint%x_axis), "|", &
+              trim(fint%y_axis), "|", fint%unit_is_degree
           end if
         else
           write(error_unit,*) "fimex.interpolation ignored when field.type not fimex: ", trim(ftype)

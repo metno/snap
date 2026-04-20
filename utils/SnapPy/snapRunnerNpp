@@ -2,6 +2,7 @@
 
 import argparse
 import datetime
+import enum
 import cartopy
 import matplotlib
 
@@ -10,17 +11,26 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from matplotlib import pyplot as plt
 import netCDF4
 import subprocess
+import traceback
 import os
 import numpy
-from pyproj import Proj
 import sys
-from time import gmtime, strftime, strptime
+from time import gmtime, strftime
 
 from Snappy.EcMeteorologyCalculator import EcMeteorologyCalculator
 from Snappy.ICONMeteorologyCalculator import ICONMeteorologyCalculator
 from Snappy.MeteorologyCalculator import MeteorologyCalculator
 from Snappy.Resources import MetModel, Resources
 from Snappy.Countries import get_country_list
+
+
+class ReturnCodes(enum.Enum):
+    OK = 0
+    INVALID_RELEASE = 10
+    BSNAP_FAILED = 20
+    ADDTOA_FAILED = 21
+    BDIANA_FAILED = 30
+    UNHANDLED_EXCEPTION = 90
 
 
 def rgbToColor(rgb):
@@ -34,7 +44,7 @@ def get_tag_NPP(tag):
     return tag.split(":")[0]
 
 
-def get_tag_relTerm(tag):
+def get_tag_relTerm(tag) -> dict[str, float]:
     """returns a dictionary with the releaseterms from a tag like
     NPP:relI131=1.0e13:relXE133=1.0e13:relCS137=1.0e13:relKR85=0
     """
@@ -46,7 +56,7 @@ def get_tag_relTerm(tag):
     return relTerm
 
 
-def get_isotope_release(res, reldict):
+def get_isotope_release(res, reldict) -> tuple[str, str]:
     errors = ""
     for tag in ("releaseTime", "radius", "lowerHeight", "upperHeight"):
         if not tag in reldict:
@@ -90,7 +100,7 @@ RELEASE.UPPER.M= {upperHeight}
     return (source_term, errors)
 
 
-def does_overlap(bbox, bboxlist):
+def does_overlap(bbox, bboxlist) -> bool:
     """check if bbox overlaps with any bbox in bboxlist"""
     for b in bboxlist:
         if b.intersection(b, bbox):
@@ -98,7 +108,7 @@ def does_overlap(bbox, bboxlist):
     return False
 
 
-def get_country_plotlist(fig, ax, country_listname, extent=None):
+def get_country_plotlist(fig, ax, country_listname, extent=None) -> list:
     countries = []
     textboxes = []
     for country in get_country_list(country_listname):
@@ -143,8 +153,7 @@ def plotMap(
     clevs=[10, 100, 300, 1000, 3000, 10000, 30000, 100000, 300000, 10000000],
     colors=None,
     extend="max",
-):
-
+) -> matplotlib.contour.QuadContourSet:
     ax.add_feature(
         cartopy.feature.GSHHSFeature(
             scale="low", facecolor="none", edgecolor="whitesmoke", linewidth=0.2
@@ -209,7 +218,10 @@ def plotMap(
 
 
 # def runsnapsingle(npp, release_dt, tag_time, dirname, res):
-def runsnap(npp_tag, met_model, outdir, release_dt, runtime, plot_from_file=None):
+def runsnap(
+    npp_tag, met_model, outdir, release_dt, runtime, plot_from_file=None
+) -> ReturnCodes:
+    retval = ReturnCodes.OK
     tag_time = gmtime()  # ensure a few secs difference for tags
     npp = get_tag_NPP(npp_tag)
     res = Resources()
@@ -221,7 +233,7 @@ def runsnap(npp_tag, met_model, outdir, release_dt, runtime, plot_from_file=None
     nPPs = res.readNPPs()
     if not npp in nPPs:
         print(f"unknown NPP: {npp}", file=sys.stderr)
-        sys.exit(1)
+        return ReturnCodes.INVALID_RELEASE
 
     if not plot_from_file:
         reldict = {
@@ -240,7 +252,7 @@ def runsnap(npp_tag, met_model, outdir, release_dt, runtime, plot_from_file=None
         (term, errors) = get_isotope_release(res, reldict)
         if len(errors) > 0:
             print(errors, file=sys.stderr)
-            return False
+            return ReturnCodes.INVALID_RELEASE
         lat = float(nPPs[npp]["lat"])
         lon = float(nPPs[npp]["lon"])
         simStart = strftime("%Y-%m-%d_%H:%M:%S", tag_time)
@@ -294,7 +306,7 @@ STEP.HOUR.OUTPUT.FIELDS= 3
                 ]
                 lat0 = MeteorologyCalculator.getLat0(float(lat), globalRes.domainHeight)
                 lon0 = MeteorologyCalculator.getLon0(float(lon), globalRes.domainWidth)
-                interpolation = f"FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|{lon0},{lon0+0.1},...,{lon0+globalRes.domainWidth}|{lat0},{lat0+0.1},...,{lat0+globalRes.domainHeight}|degree\n"
+                interpolation = f"FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|{lon0},{lon0 + 0.1},...,{lon0 + globalRes.domainWidth}|{lat0},{lat0 + 0.1},...,{lat0 + globalRes.domainHeight}|degree\n"
             elif met_model == MetModel.Meps2p5:
                 files = res.getMeteorologyFiles(met_model, release_dt, runtime, "best")
                 if len(files) == 0:
@@ -335,17 +347,28 @@ STEP.HOUR.OUTPUT.FIELDS= 3
 
         with open(f"{dirname}/snap.stdout.log", "wt") as stdout:
             with open(f"{dirname}/snap.stderr.log", "wt") as stderr:
-                os.environ["OMP_NUM_THREADS"] = "1"  # no thread usage
-                subprocess.run(
+                proc = subprocess.run(
                     ["bsnap_naccident", "snap.input"],
                     cwd=dirname,
                     stdout=stdout,
                     stderr=stderr,
                 )
+                if proc.returncode != 0:
+                    print(
+                        f"bsnap_naccident failed for {npp} with return code {proc.returncode}",
+                        file=sys.stderr,
+                    )
+                    retval = ReturnCodes.BSNAP_FAILED
                 # add time of arrival
-                subprocess.run(
+                proc = subprocess.run(
                     ["snapAddToa", "snap.nc"], cwd=dirname, stdout=stdout, stderr=stderr
                 )
+                if proc.returncode != 0:
+                    print(
+                        f"snapAddToa failed for {npp} with return code {proc.returncode}",
+                        file=sys.stderr,
+                    )
+                    retval = ReturnCodes.ADDTOA_FAILED
         plot_from_file = os.path.join(dirname, "snap.nc")
 
     # and plot
@@ -395,7 +418,7 @@ STEP.HOUR.OUTPUT.FIELDS= 3
 
     fig = plt.figure(figsize=(24, 9))
     fig.suptitle(
-        f"{title} +{runtime}hours ({release_dt+datetime.timedelta(hours=runtime):%Y-%m-%d %H}:00Z).",
+        f"{title} +{runtime}hours ({release_dt + datetime.timedelta(hours=runtime):%Y-%m-%d %H}:00Z).",
         y=0.92,
     )
     colors = ("g", "y", "tab:orange", "r", "tab:red")
@@ -478,7 +501,7 @@ STEP.HOUR.OUTPUT.FIELDS= 3
         f"plots_{now:%Y-%m-%dT%HZ}_{npp}_{release_dt:%Y-%m-%dT%H}Z+{runtime}h.png",
     )
     fig.savefig(file, bbox_inches="tight")
-    return True
+    return retval
 
 
 if __name__ == "__main__":
@@ -522,11 +545,19 @@ if __name__ == "__main__":
 
     if args.store:
         os.environ["STORE"] = args.store
-    runsnap(
-        outdir=args.outdir,
-        met_model=args.metmodel,
-        runtime=int(args.runtime),
-        npp_tag=args.npp,
-        release_dt=release_dt,
-        plot_from_file=plot_from_file,
-    )
+    try:
+        status = runsnap(
+            outdir=args.outdir,
+            met_model=args.metmodel,
+            runtime=int(args.runtime),
+            npp_tag=args.npp,
+            release_dt=release_dt,
+            plot_from_file=plot_from_file,
+        )
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
+        status = ReturnCodes.UNHANDLED_EXCEPTION
+    if isinstance(status, ReturnCodes):
+        status = status.value
+    sys.exit(status)

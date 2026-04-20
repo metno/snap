@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<netcdf xmlns="http://www.unidata.ucar.edu/namespaces/netcdf/ncml-2.2"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.unidata.ucar.edu/namespaces/netcdf/ncml-2.2 http://www.unidata.ucar.edu/schemas/netcdf/ncml-2.2.xsd">
+
+<dimension name="x" length="949" />
+<dimension name="y" length="1069" />
+
+<attribute name="CDI" type="string" value="Climate Data Interface version ?? (http://mpimet.mpg.de/cdi)" />
+<attribute name="history" type="string" value="Last modified on Wed Nov  2 15:34:04 2022" />
+<attribute name="CDO" type="string" value="Climate Data Operators version 1.9.3 (http://mpimet.mpg.de/cdo)" />
+<attribute name="Conventions" type="string" value="CF-1.6" />
+
+<variable name="x" type="float" shape="x" />
+
+<variable name="y" type="float" shape="y" />
+
+<variable name="Main_Category" type="byte" shape="x y" >
+  <attribute name="_FillValue" type="byte" value="0" />
+  <!-- <attribute name="comment" type="string" value="1: Nature, 2: Inland water, 3: Sea, 4: Urban" /> -->
+</variable>
+
+<variable name="Main_Nature_Cover" type="byte" shape="x y" >
+  <attribute name="_FillValue" type="byte" value="0" />
+  <!-- <attribute name="comment" type="string" value="11: Sea, 12: Inland water, 13: Tundra/desert, 14: Ice and ice sheets, 15: Urban, 16: Crops, 17: Grass, 18: Wetlands, 19: Evergreen needleleaf, 20: Deciduous broadleaf, 21: Mixed forest, 22: Shrubs and interrupted woodlands" /> -->
+</variable>
+
+<remove type="variable" name="lon" />
+<remove type="variable" name="lat" />
+
+<!--
+<variable name="lon" type="float" shape="x y" >
+</variable>
+-->
+<!--
+<variable name="lat" type="float" shape="x y" >
+</variable>
+-->
+</netcdf>

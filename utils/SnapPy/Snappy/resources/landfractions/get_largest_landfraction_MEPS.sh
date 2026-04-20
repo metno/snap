@@ -14,7 +14,7 @@ fimex --input.file $INPUT --output.file $TMPOUTPUT --output.type nc4 \
   --interpolate.yAxisUnit m \
   --interpolate.method nearestneighbor
 
-OUTPUT=largestLandFraction_MEPS_byte.nc
+OUTPUT=largestLandFraction_Meps2p5.nc
 # create a very small version suitable to be put under version control
 fimex --input.file=$TMPOUTPUT  --ncml.config=shortify.ncml --output.file=$OUTPUT --output.type=nc4
 

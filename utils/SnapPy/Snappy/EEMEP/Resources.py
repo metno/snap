@@ -29,7 +29,7 @@ class Resources(ResourcesCommon):
         },
     }
 
-    _ECINPUTDIRS = ["{LUSTREDIR}/project/metproduction/products/cwf-input/"]
+    _ECINPUTDIRS = ["{LF_PROD_DIR}/atom/Meteorology/EC2CWF/"]
     ECVLEVELS = "Vertical_levels48.txt"
     EC_FILE_PATTERN = "NRPA_EUROPE_0_1_{UTC:02d}/meteo{year:04d}{month:02d}{day:02d}_{dayoffset:02d}.nc"
     _OUTPUTDIR = "{LUSTREDIR}/project/fou/kl/eva/eemep/runs/"
@@ -86,13 +86,10 @@ class Resources(ResourcesCommon):
         return self.HPC[hpcname]["RUNDIR"]
 
     def getOutputDir(self):
-        return self._OUTPUTDIR.format(LUSTREDIR=self.getLustreDir())
-
-    def _lustreTemplateDirs(self, dirs):
-        return [x.format(LUSTREDIR=self.getLustreDir()) for x in dirs]
+        return self.formatWithLustreDirs(self._OUTPUTDIR)
 
     def getECInputDirs(self):
-        return self._lustreTemplateDirs(self._ECINPUTDIRS)
+        return self.lustreTemplateDirs(self._ECINPUTDIRS)
 
     def getModelRunnerLogs(self):
         logfile = os.path.join(self.getOutputDir(), "eemepModelRunner_working")
