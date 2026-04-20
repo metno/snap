@@ -20,6 +20,8 @@ module readfield_fiML
   private
 
   public :: readfield_fi, fi_checkload, check, fimex_open, read_largest_landfraction
+  
+  logical :: inc_ice = .True., inc_cw3d = .True.
 
   !> @brief load and check an array from a source
   interface fi_checkload
@@ -560,8 +562,8 @@ contains
     if (enspos <= 0) nr = 1
 
     allocate(rain_in_air(nx,ny),graupel_in_air(nx,ny),snow_in_air(nx,ny),pdiff(nx,ny))
-    allocate(cloud_water(nx,ny),cloud_ice(nx,ny))
-
+    if (inc_cw3d) allocate(cloud_water(nx,ny)) !,cloud_ice(nx,ny)
+    if (inc_ice) allocate(cloud_ice(nx,ny)) 
     precip3d_io(:,:,:) = 0.0
     cw3d_io(:,:,:) = 0.0
 
@@ -592,19 +594,27 @@ contains
 
       precip3d_io(:,:,k) = rain_in_air + graupel_in_air + snow_in_air
       precip3d_io(:,:,k) = precip3d_io(:,:,k) * pdiff / g
-
-      call fi_checkload(fio, met_params%mass_fraction_cloud_condensed_water_in_air, mass_fraction_units, &
+      if (inc_cw3d) then
+        call fi_checkload(fio, met_params%mass_fraction_cloud_condensed_water_in_air, mass_fraction_units, &
                         cloud_water, nt=timepos, nz=ilevel, nr=nr)
-      call fi_checkload(fio, met_params%mass_fraction_cloud_ice_in_air, mass_fraction_units, &
-                        cloud_ice, nt=timepos, nz=ilevel, nr=nr)
+        if (inc_ice) then
+          call fi_checkload(fio, met_params%mass_fraction_cloud_ice_in_air, mass_fraction_units, &
+                          cloud_ice, nt=timepos, nz=ilevel, nr=nr)
+      
+          where (cloud_ice < 0.0)
+            cloud_ice = 0.0
+          end where
+        end if
 
-      where (cloud_water < 0.0)
-        cloud_water = 0.0
-      end where
-      where (cloud_ice < 0.0)
-        cloud_ice = 0.0
-      end where
-      cw3d_io(:,:,k) = cloud_water + cloud_ice
+        where (cloud_water < 0.0)
+          cloud_water = 0.0
+        end where
+      end if
+      if (inc_ice) then
+        cw3d_io(:,:,k) = cloud_water + cloud_ice
+      else if (inc_cw3d) then
+        cw3d_io(:,:,k) = cloud_water
+      end if
       cw3d_io(:,:,k) = cw3d_io(:,:,k) * pdiff / g
 
       call fi_checkload(fio, met_params%cloud_fraction, cloud_fraction_units, &
@@ -637,7 +647,8 @@ contains
 
     allocate(pdiff(nx,ny))
     allocate(normaliser(nx,ny))
-    allocate(cloud_water(nx,ny), cloud_ice(nx,ny))
+    allocate(cloud_water(nx,ny))
+    if (inc_ice) allocate(cloud_ice(nx,ny)) 
 
     precip3d(:,:,:) = 0.0
     cw3d(:,:,:) = 0.0
@@ -650,11 +661,16 @@ contains
       pdiff(:,:) = 100*( (ahalf(k-1) - ahalf(k)) + (bhalf(k-1) - bhalf(k))*ps_io )
       call fi_checkload(fio, met_params%mass_fraction_cloud_condensed_water_in_air, mass_fraction_units, &
                         cloud_water(:,:), nt=timepos, nz=ilevel, nr=nr)
-      call fi_checkload(fio, met_params%mass_fraction_cloud_ice_in_air, mass_fraction_units, &
-                        cloud_ice(:,:), nt=timepos, nz=ilevel, nr=nr)
+      if (inc_ice) then
+        call fi_checkload(fio, met_params%mass_fraction_cloud_ice_in_air, mass_fraction_units, &
+                          cloud_ice(:,:), nt=timepos, nz=ilevel, nr=nr)
+          
 
-      cw3d(:,:,k) = (abs(cloud_water(:,:)) + abs(cloud_ice(:,:))) * pdiff / g
-
+        cw3d(:,:,k) = (abs(cloud_water(:,:))) * pdiff / g + abs(cloud_ice(:,:))
+      else
+        cw3d(:,:,k) = (abs(cloud_water(:,:))) * pdiff / g
+      end if
+      
       ! Use cloud water to assign precipitation at model levels
       normaliser(:,:) = normaliser + cw3d(:,:,k)
       precip3d(:,:,k) = precip_io * cw3d(:,:,k)
