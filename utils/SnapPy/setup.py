@@ -33,7 +33,10 @@ setup(
     url="https://gitlab.met.no/emep/snap",
     packages=["Snappy", "Snappy.EEMEP", "METNO"],
     package_dir={"Snappy": "Snappy", "Snappy.EEMEP": "Snappy/EEMEP"},
-    package_data={"Snappy": ["resources/*"], "Snappy.EEMEP": ["resources/*"]},
+    package_data={
+        "Snappy": ["resources/*", "resources/landfractions/*"],
+        "Snappy.EEMEP": ["resources/*"],
+    },
     install_requires=[
         "numpy",
         "netCDF4",
