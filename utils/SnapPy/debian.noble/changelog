@@ -1,3 +1,45 @@
+snap-py (2.5.21-1) noble; urgency=medium
+
+  * write to new disks
+
+ -- Ubuntu <ubuntu@met.no>  Wed, 22 Apr 2026 07:10:24 +0000
+
+snap-py (2.5.20-1) noble; urgency=medium
+
+  * read from new disks
+
+ -- Ubuntu <ubuntu@met.no>  Tue, 07 Apr 2026 17:02:57 +0000
+
+snap-py (2.5.17-1) noble; urgency=medium
+
+  * Changes dry deposition viscosities to be temperature dependent
+
+ -- Ubuntu <ubuntu@met.no>  Tue, 10 Feb 2026 09:12:19 +0000
+
+snap-py (2.5.16-1) noble; urgency=medium
+
+  * Fixes snap-backtracking
+
+ -- Ubuntu <ubuntu@met.no>  Tue, 03 Feb 2026 13:30:26 +0000
+
+snap-py (2.5.15-1) noble; urgency=medium
+
+  * Speeds up data collection of NRPA_EC0.1 files
+
+ -- Ubuntu <ubuntu@met.no>  Tue, 20 Jan 2026 13:09:45 +0000
+
+snap-py (2.5.14-1) noble; urgency=medium
+
+  * fix first timestep
+
+ -- Ubuntu <ubuntu@met.no>  Tue, 20 Jan 2026 13:08:06 +0000
+
+snap-py (2.5.14-1) noble; urgency=medium
+
+  * fix first timestep
+
+ -- Ubuntu <ubuntu@met.no>  Tue, 20 Jan 2026 13:04:09 +0000
+
 snap-py (2.5.14-1) noble; urgency=medium
 
   * fix first timestep
