@@ -653,7 +653,7 @@ contains
                           cloud_ice(:,:), nt=timepos, nz=ilevel, nr=nr)
           
 
-        cw3d(:,:,k) = (abs(cloud_water(:,:))) * pdiff / g + abs(cloud_ice(:,:)) !Is this wrong?
+        cw3d(:,:,k) = (abs(cloud_water(:,:))+ abs(cloud_ice(:,:))) * pdiff / g
 
       ! Use cloud water to assign precipitation at model levels
       normaliser(:,:) = normaliser + cw3d(:,:,k)
