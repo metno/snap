@@ -618,7 +618,7 @@ contains
   subroutine read_extra_precipitation_fields_infer_3d_precip(fio, timepos)
     use iso_fortran_env, only: error_unit
     use snaptabML, only: g
-    use snapfldML, only: ps_io, precip3d, cw3d, cloud_cover, enspos, precip_io
+    use snapfldML, only: ps_io, precip3d_io, cw3d_io, cloud_cover_io, enspos, precip_io
     use snapgrdML, only: ahalf, bhalf, klevel
     use snapdimML, only: nx, ny, nk
     use snapmetML, only: mass_fraction_units, cloud_fraction_units, met_params
@@ -639,9 +639,10 @@ contains
 
     allocate(pdiff(nx,ny))
     allocate(normaliser(nx,ny))
-    allocate(cloud_water(nx,ny))
-    allocate(cloud_ice(nx,ny))
-    cw3d(:,:,:) = 0.0
+    allocate(cloud_water(nx,ny),cloud_ice(nx,ny))
+
+    precip3d_io(:,:,:) = 0.0
+    cw3d_io(:,:,:) = 0.0
 
     normaliser(:,:) = 0.0
 
@@ -655,14 +656,14 @@ contains
                           cloud_ice(:,:), nt=timepos, nz=ilevel, nr=nr)
           
 
-        cw3d(:,:,k) = (abs(cloud_water(:,:))+ abs(cloud_ice(:,:))) * pdiff / g
+      cw3d_io(:,:,k) = (abs(cloud_water(:,:))+ abs(cloud_ice(:,:))) * pdiff / g
 
       ! Use cloud water to assign precipitation at model levels
-      normaliser(:,:) = normaliser + cw3d(:,:,k)
-      precip3d(:,:,k) = precip_io * cw3d(:,:,k)
+      normaliser(:,:) = normaliser + cw3d_io(:,:,k)
+      precip3d_io(:,:,k) = precip_io * cw3d_io(:,:,k)
 
       call fi_checkload(fio, met_params%cloud_fraction, cloud_fraction_units, &
-                        cloud_cover(:,:,k), nt=timepos, nz=ilevel, nr=nr)
+                        cloud_cover_io(:,:,k), nt=timepos, nz=ilevel, nr=nr)
     enddo
 
     block
@@ -673,11 +674,11 @@ contains
       do j=1,ny
         do i=1,nx
           if (normaliser(i,j) > 0.0) then
-            precip3d(i,j,k) = precip3d(i,j,k) / normaliser(i,j)
+            precip3d_io(i,j,k) = precip3d_io(i,j,k) / normaliser(i,j)
           elseif (k == klimit) then
             ! Put all precip at level closest to 0.67, analoguous
             ! with the old formulation of the precipitation
-            precip3d(i,j,k) = precip_io(i,j)
+            precip3d_io(i,j,k) = precip_io(i,j)
           endif
         enddo
       enddo
