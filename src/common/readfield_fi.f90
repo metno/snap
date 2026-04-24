@@ -20,8 +20,6 @@ module readfield_fiML
   private
 
   public :: readfield_fi, fi_checkload, check, fimex_open, read_largest_landfraction
-  
-  ! logical :: inc_ice = .False., inc_cw3d = .False.
 
   !> @brief load and check an array from a source
   interface fi_checkload
@@ -563,6 +561,7 @@ contains
 
     allocate(rain_in_air(nx,ny),graupel_in_air(nx,ny),snow_in_air(nx,ny),pdiff(nx,ny))
     allocate(cloud_water(nx,ny),cloud_ice(nx,ny))
+    
     precip3d_io(:,:,:) = 0.0
     cw3d_io(:,:,:) = 0.0
 
@@ -593,12 +592,15 @@ contains
 
       precip3d_io(:,:,k) = rain_in_air + graupel_in_air + snow_in_air
       precip3d_io(:,:,k) = precip3d_io(:,:,k) * pdiff / g
+      
       call fi_checkload(fio, met_params%mass_fraction_cloud_condensed_water_in_air, mass_fraction_units, &
                       cloud_water, nt=timepos, nz=ilevel, nr=nr)
-
       call fi_checkload(fio, met_params%mass_fraction_cloud_ice_in_air, mass_fraction_units, &
                       cloud_ice, nt=timepos, nz=ilevel, nr=nr)
   
+      where (cloud_water < 0.0)
+        cloud_water = 0.0
+      end where
       where (cloud_ice < 0.0)
         cloud_ice = 0.0
       end where
