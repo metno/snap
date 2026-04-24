@@ -20,7 +20,8 @@ module readfield_fiML
   private
 
   public :: readfield_fi, fi_checkload, check, fimex_open, read_largest_landfraction
-
+  
+  ! logical :: inc_ice = .False., inc_cw3d = .False.
 
   !> @brief load and check an array from a source
   interface fi_checkload
@@ -561,7 +562,7 @@ contains
     if (enspos <= 0) nr = 1
 
     allocate(rain_in_air(nx,ny),graupel_in_air(nx,ny),snow_in_air(nx,ny),pdiff(nx,ny))
-
+    allocate(cloud_water(nx,ny),cloud_ice(nx,ny))
     precip3d_io(:,:,:) = 0.0
     cw3d_io(:,:,:) = 0.0
 
@@ -592,6 +593,19 @@ contains
 
       precip3d_io(:,:,k) = rain_in_air + graupel_in_air + snow_in_air
       precip3d_io(:,:,k) = precip3d_io(:,:,k) * pdiff / g
+      call fi_checkload(fio, met_params%mass_fraction_cloud_condensed_water_in_air, mass_fraction_units, &
+                      cloud_water, nt=timepos, nz=ilevel, nr=nr)
+
+      call fi_checkload(fio, met_params%mass_fraction_cloud_ice_in_air, mass_fraction_units, &
+                      cloud_ice, nt=timepos, nz=ilevel, nr=nr)
+  
+      where (cloud_ice < 0.0)
+        cloud_ice = 0.0
+      end where
+
+      cw3d_io(:,:,k) = cloud_water + cloud_ice
+
+      cw3d_io(:,:,k) = cw3d_io(:,:,k) * pdiff / g
 
       call fi_checkload(fio, met_params%cloud_fraction, cloud_fraction_units, &
                         cloud_cover_io(:,:,k), nt=timepos, nz=ilevel, nr=nr)
@@ -624,7 +638,7 @@ contains
     allocate(pdiff(nx,ny))
     allocate(normaliser(nx,ny))
     allocate(cloud_water(nx,ny))
-    !if (inc_ice) allocate(cloud_ice(nx,ny)) ls
+    allocate(cloud_ice(nx,ny))
     cw3d(:,:,:) = 0.0
 
     normaliser(:,:) = 0.0
@@ -635,16 +649,12 @@ contains
       pdiff(:,:) = 100*( (ahalf(k-1) - ahalf(k)) + (bhalf(k-1) - bhalf(k))*ps_io )
       call fi_checkload(fio, met_params%mass_fraction_cloud_condensed_water_in_air, mass_fraction_units, &
                         cloud_water(:,:), nt=timepos, nz=ilevel, nr=nr)
-      ! if (inc_ice) then
-      !   call fi_checkload(fio, met_params%mass_fraction_cloud_ice_in_air, mass_fraction_units, &
-      !                     cloud_ice(:,:), nt=timepos, nz=ilevel, nr=nr)
+      call fi_checkload(fio, met_params%mass_fraction_cloud_ice_in_air, mass_fraction_units, &
+                          cloud_ice(:,:), nt=timepos, nz=ilevel, nr=nr)
           
 
-      !   cw3d(:,:,k) = (abs(cloud_water(:,:))) * pdiff / g + abs(cloud_ice(:,:))
-      ! else
-      !   cw3d(:,:,k) = (abs(cloud_water(:,:))) * pdiff / g
-      ! end if
-      
+        cw3d(:,:,k) = (abs(cloud_water(:,:))) * pdiff / g + abs(cloud_ice(:,:)) !Is this wrong?
+
       ! Use cloud water to assign precipitation at model levels
       normaliser(:,:) = normaliser + cw3d(:,:,k)
       precip3d(:,:,k) = precip_io * cw3d(:,:,k)
@@ -859,35 +869,22 @@ contains
 
 
   subroutine read_accumulated_field(fio, nhdiff, timepos, timeposm1, varname, units, field, nr)
-    USE snapfilML, only: nctype
-
     TYPE(FimexIO), intent(inout) :: fio
 !> time difference in hours between two fields
     integer, intent(in) :: nhdiff
     character(len=*), intent(in) :: varname, units
-    character(len=20) :: units_
-
     integer, intent(in) :: timepos, timeposm1, nr
-
     real(real32), intent(out) :: field(:, :)
 
-    real, allocatable :: tmp1(:, :)
-    allocate(tmp1, MOLD=field)
+    real, allocatable :: tmp1(:, :), tmp2(:, :)
+    allocate(tmp1, tmp2, MOLD=field)
 
-    ! Arome has the wrong units for accumulated momentum flux, missing a unit of time
-    if (nctype == "arome" .and. &
-        (varname == "downward_eastward_momentum_flux_in_air" .OR. &
-         varname == "downward_northward_momentum_flux_in_air")) then
-      units_ = "N/m2"
+    if (timepos == 1) then
+      call fi_checkload(fio, varname, units, field(:, :), nt=timepos, nr=nr)
     else
-      units_ = units
-    endif
-
-    call fi_checkload(fio, varname, units_, field(:, :), nt=timepos, nr=nr)
-
-    if (timepos /= 1) then
-      call fi_checkload(fio, varname, units_, tmp1(:, :), nt=timeposm1, nr=nr)
-      field(:,:) = field - tmp1
+      call fi_checkload(fio, varname, units, tmp1(:, :), nt=timeposm1, nr=nr)
+      call fi_checkload(fio, varname, units, tmp2(:, :), nt=timepos, nr=nr)
+      field(:,:) = tmp2 - tmp1
     endif
     field(:,:) =  field / (3600 * nhdiff)
   end subroutine read_accumulated_field
@@ -897,7 +894,7 @@ contains
     USE ieee_arithmetic, only: ieee_is_nan
     USE snapmetML, only: met_params, &
       temp_units, downward_momentum_flux_units, surface_roughness_length_units, &
-      accum_surface_heat_flux_units, accum_downward_momentum_flux_units, surface_heat_flux_units
+      accum_surface_heat_flux_units, surface_heat_flux_units
     use drydepml, only: drydep_precompute_meteo, drydep_precompute_particle, &
       requires_extra_fields_to_be_read, classnr, lookup_z0
     use ftestML, only: ftest
@@ -934,16 +931,18 @@ contains
       allocate(xflux, yflux, MOLD=ps_io)
       ! Load and combine surface stress/momentum flux components
       if (met_params%xflux_is_accumulated) then
-        call read_accumulated_field(fio, nhdiff, timepos, timeposm1, met_params%xflux, accum_downward_momentum_flux_units, &
-          xflux(:, :), nr=nr)
+        ! Note: Arome files have the wrong units for downward_momentum_flux_units, missing a unit of time
+        call read_accumulated_field(fio, nhdiff, timepos, timeposm1, met_params%xflux, downward_momentum_flux_units, xflux(:, :), &
+          nr=nr)
       else
         call fi_checkload(fio, met_params%xflux, downward_momentum_flux_units, xflux(:, :), nt=timepos, &
           nr=nr)
       endif
 
       if (met_params%yflux_is_accumulated) then
-        call read_accumulated_field(fio, nhdiff, timepos, timeposm1, met_params%yflux, accum_downward_momentum_flux_units, &
-          yflux(:, :), nr=nr)
+        ! Note: Arome files have the wrong units for downward_momentum_flux_units, missing a unit of time
+        call read_accumulated_field(fio, nhdiff, timepos, timeposm1, met_params%yflux, downward_momentum_flux_units, yflux(:, :), &
+          nr=nr)
       else
         call fi_checkload(fio, met_params%yflux, downward_momentum_flux_units, yflux(:, :), nt=timepos, nr=nr)
       endif
@@ -961,11 +960,7 @@ contains
     else
       call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, hflux(:, :), nt=timepos, nr=nr)
     endif
-
-    ! hflux should be positive upwards
-    if (met_params%hflux_is_downward) then
-      hflux(:,:) = -hflux
-    endif
+    hflux(:,:) = -hflux ! Follow conventions for up/down
 
     if (met_params%z0 == "") then
       ! Load z0 from land use data if not defined in meteorology
