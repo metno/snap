@@ -871,7 +871,7 @@ contains
   end subroutine fi_checkload_intern
 
 
-   subroutine read_accumulated_field(fio, nhdiff, timepos, timeposm1, varname, units, field, nr)
+  subroutine read_accumulated_field(fio, nhdiff, timepos, timeposm1, varname, units, field, nr)
     USE snapfilML, only: nctype
 
     TYPE(FimexIO), intent(inout) :: fio
@@ -906,7 +906,7 @@ contains
   end subroutine read_accumulated_field
 
 
-subroutine read_drydep_required_fields(fio, nhdiff, timepos, timeposm1, nr, itimefi)
+  subroutine read_drydep_required_fields(fio, nhdiff, timepos, timeposm1, nr, itimefi)
     USE ieee_arithmetic, only: ieee_is_nan
     USE snapmetML, only: met_params, &
       temp_units, downward_momentum_flux_units, surface_roughness_length_units, &
@@ -932,13 +932,12 @@ subroutine read_drydep_required_fields(fio, nhdiff, timepos, timeposm1, nr, itim
     real, allocatable :: xflux(:, :), yflux(:, :)
     integer :: i, mm
 
-
     if (.not.requires_extra_fields_to_be_read()) then
       write (iulog, *) "No extra drydep fields required to be read for dry deposition, skipping"
       return
     endif
 
-  if (met_params%surface_stress /= "") then
+    if (met_params%surface_stress /= "") then
       ! Load surface_stress
       call fi_checkload(fio, met_params%surface_stress, downward_momentum_flux_units, surface_stress(:, :), nt=timepos, nr=nr)
     else if (met_params%xflux == "" .OR. met_params%yflux == "") then
