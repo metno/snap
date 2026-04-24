@@ -967,6 +967,13 @@ contains
     if (idebug == 1) then
       write (iulog, *) "number of points with zero surface stress: ", count(surface_stress == 0.0)
     endif
+    
+    if (met_params%hflux_is_accumulated) then
+      call read_accumulated_field(fio, nhdiff, timepos, timeposm1, met_params%hflux, accum_surface_heat_flux_units, hflux(:, :), &
+        nr=nr)
+    else
+      call fi_checkload(fio, met_params%hflux, surface_heat_flux_units, hflux(:, :), nt=timepos, nr=nr)
+    endif
 
     ! hflux should be positive upwards
     if (met_params%hflux_is_downward) then
