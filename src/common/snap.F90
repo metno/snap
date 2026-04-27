@@ -2240,7 +2240,7 @@ contains
 
     if (drydep_scheme == DRYDEP_SCHEME_UNDEFINED) drydep_scheme = DRYDEP_SCHEME_OLD
 
-    ! ! Set default wetdep schemes                                              !!GEORGE: default wetdep is still Bartnicki
+    ! ! Set default wetdep schemes         !!GEORGE: default wetdep is still Bartnicki
     ! if (wetdep_scheme%subcloud == WETDEP_SUBCLOUD_SCHEME_UNDEFINED .and. &
     !     wetdep_scheme%incloud == WETDEP_INCLOUD_SCHEME_UNDEFINED) then
     !     wetdep_scheme = wetdep_scheme_t( &
@@ -2285,10 +2285,10 @@ contains
         end if
       end if
 
-      if (wetdep_scheme%subcloud == WETDEP_SUBCLOUD_SCHEME_BARTNICKI .AND. def_comp(m)%kwetdep == 1) then   ![TODO]: should just be not undefined, right? a radius smaller than 0 is always going to be a problem... What about incloud?
+      if (wetdep_scheme%subcloud == WETDEP_SUBCLOUD_SCHEME_BARTNICKI .AND. def_comp(m)%kwetdep == 1) then
+        ! If any wetdep scheme chosen, then check radius of particle is above zero
         if (def_comp(m)%radiusmym <= 0.) then
-          write (error_unit, *) 'Wet deposition error. radius: ', &
-            def_comp(m)%radiusmym
+          write (error_unit, *) 'Wet deposition error. radius: ', def_comp(m)%radiusmym
           ierror = 1
         end if
       end if
