@@ -1310,7 +1310,8 @@ contains
               .true., .true., .false. &
             )
 
-          case default                                                            !> No default - should always have scheme in input
+          case default
+            !> No default - should always have scheme in input
             write(error_unit,*) "Unknown scheme ", cinput(pname_start:pname_end)
             goto 12
         end select

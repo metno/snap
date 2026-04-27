@@ -595,9 +595,13 @@ contains
       
       call fi_checkload(fio, met_params%mass_fraction_cloud_condensed_water_in_air, mass_fraction_units, &
                       cloud_water, nt=timepos, nz=ilevel, nr=nr)
-      call fi_checkload(fio, met_params%mass_fraction_cloud_ice_in_air, mass_fraction_units, &
-                      cloud_ice, nt=timepos, nz=ilevel, nr=nr)
-  
+      if (met_params%mass_fraction_cloud_ice_in_air /= '') then
+        call fi_checkload(fio, met_params%mass_fraction_cloud_ice_in_air, mass_fraction_units, &
+                        cloud_ice, nt=timepos, nz=ilevel, nr=nr)
+      else 
+        cloud_ice = 0.
+      end if 
+
       where (cloud_water < 0.0)
         cloud_water = 0.0
       end where
@@ -652,10 +656,14 @@ contains
       pdiff(:,:) = 100*( (ahalf(k-1) - ahalf(k)) + (bhalf(k-1) - bhalf(k))*ps_io )
       call fi_checkload(fio, met_params%mass_fraction_cloud_condensed_water_in_air, mass_fraction_units, &
                         cloud_water(:,:), nt=timepos, nz=ilevel, nr=nr)
-      call fi_checkload(fio, met_params%mass_fraction_cloud_ice_in_air, mass_fraction_units, &
+      if (met_params%mass_fraction_cloud_ice_in_air /= '') then
+        call fi_checkload(fio, met_params%mass_fraction_cloud_ice_in_air, mass_fraction_units, &
                           cloud_ice(:,:), nt=timepos, nz=ilevel, nr=nr)
+      else 
+        cloud_ice = 0.
           
-
+      end if 
+      
       cw3d_io(:,:,k) = (abs(cloud_water(:,:))+ abs(cloud_ice(:,:))) * pdiff / g
 
       ! Use cloud water to assign precipitation at model levels

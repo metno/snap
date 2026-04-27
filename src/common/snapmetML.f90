@@ -261,7 +261,7 @@ module snapmetML
       met_params%mass_fraction_snow_in_air = "mass_fraction_of_snow_in_air_ml"
 
       met_params%mass_fraction_cloud_condensed_water_in_air = "mass_fraction_of_cloud_condensed_water_in_air_ml"
-      met_params%mass_fraction_cloud_ice_in_air = "mass_fraction_of_cloud_ice_in_air_ml"
+      met_params%mass_fraction_cloud_ice_in_air = '' !"mass_fraction_of_cloud_ice_in_air_ml"
 
       met_params%cloud_fraction = "cloud_area_fraction_ml"
 !..get grid parameters from field identification
