@@ -179,9 +179,9 @@ contains
     radlost = 0.0
     if (pextra%prc > precmin &
         .AND. part%z > vminprec) then 
-    !! Figure out this bit
+      ! If enough precipitation, and below cut off altitude.
       if (wetdep_scheme%use_vertical) then
-        !! in 3D case for bartnicki-takemura.
+        ! in 3D case
         if (wetdep_scheme%precompute) then
           block
             use snapfldML, only: wscav
@@ -199,7 +199,7 @@ contains
         end if
         radlost = part%scale_rad(exp(-tstep*rkw))
       else if  (wetdep_scheme%subcloud == WETDEP_SUBCLOUD_SCHEME_BARTNICKI) then
-        !! in 2D case just bartnicki 
+        ! in 2D case just bartnicki 
           !depends on the precipitation and altitude at the place of the particle.
         rkw = wet_subcloud_bartnicki(def_comp(m)%radiusmym, pextra%prc, run_comp(mm)%depconst)
         radlost = part%scale_rad(exp(-tstep*rkw))
@@ -345,10 +345,10 @@ contains
     depconst = wet_deposition_constant(radius)
 
     if (.not.use_ccf) then
-      wscav = wet_subcloud_bartnicki(radius, precip, depconst, use_convective=.False.)    !!! [GEORGE:] Does not use this currently
+      wscav = wet_subcloud_bartnicki(radius, precip, depconst, use_convective=.False.)
     else
       block
-          !! [GEORGE]: is block neccessary? integers don't take much memory...
+        
         real :: precip_scaled
 
         if (precip <= 0.0) then
@@ -359,7 +359,7 @@ contains
             ! Scale up precip intensity
             precip_scaled = precip/ ccf
           else
-            !! Accounts for no instantaneous cloud fraction
+            ! Accounts for no instantaneous cloud fraction
             precip_scaled = precip           
           endif
 
@@ -370,6 +370,7 @@ contains
             wscav = wscav * ccf
           endif
         end if
+
       end block
     endif
   end subroutine
@@ -382,7 +383,7 @@ contains
     real, intent(in) :: q
     !> Fraction of aerosol mass in cloud water to total aerosol mass in the grid
     !> or the absorbtion coefficient
-    !> Usually very high                            !! [GEORGE]: Does this mean 1.0 is not physical?? - book suggests this should be lower
+    !> Usually very high                 
     real, parameter :: f_inc = 1.0
     !> Mass fraction of cloud water
     real, intent(in) :: cloud_water
