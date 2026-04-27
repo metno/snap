@@ -45,9 +45,10 @@ module wetdepml
   real, parameter :: precmin = 0.01
 
   public :: wetdep, init, requires_extra_precip_fields, &
-      wetdep_precompute, wet_deposition_constant, &
+      wetdep_precompute  !! For use in other modules
+  public::  wet_deposition_constant, &
       wet_subcloud_bartnicki_ccf, vminprec, wet_subcloud_bartnicki,&
-      wetdep_3D, wetdep_incloud_takemura
+      wetdep_3D, wetdep_incloud_takemura !! For test use only
 
   integer, parameter, public :: WETDEP_SUBCLOUD_SCHEME_UNDEFINED = 0 
   integer, parameter, public :: WETDEP_SUBCLOUD_SCHEME_NONE = 1 
@@ -383,7 +384,7 @@ contains
     real, intent(in) :: q
     !> Fraction of aerosol mass in cloud water to total aerosol mass in the grid
     !> or the absorbtion coefficient
-    !> Usually very high                 
+    !> Usually very close to 1                 
     real, parameter :: f_inc = 1.0
     !> Mass fraction of cloud water
     real, intent(in) :: cloud_water
