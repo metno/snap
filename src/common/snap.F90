@@ -1244,9 +1244,9 @@ contains
         wetdep_scheme = wetdep_scheme_t( &
           WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
           WETDEP_INCLOUD_SCHEME_NONE, &
-          .false., .false.,.false.)
+          .false., .false., .false.)
       case ('wet.deposition.version')
-        write (error_unit, *) "Deprecated, please use wet.deposition.scheme = Bartnicki"   !! GEORGE: can get rid of everything else after error? just "goto 12" instead?
+        write (error_unit, *) "Deprecated, please use wet.deposition.scheme = Bartnicki"
         warning = .true.
         if (wetdep_scheme%subcloud /= WETDEP_SUBCLOUD_SCHEME_UNDEFINED .or. &
             wetdep_scheme%incloud /= WETDEP_INCLOUD_SCHEME_UNDEFINED) then
@@ -1265,7 +1265,7 @@ contains
             WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
             WETDEP_INCLOUD_SCHEME_NONE, &
             .false., &
-            .false.,.false.)
+            .false., .false.)
         end block
 
       case ('wet.deposition.scheme')
@@ -1281,7 +1281,7 @@ contains
             wetdep_scheme = wetdep_scheme_t( &
               WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
               WETDEP_INCLOUD_SCHEME_NONE, &
-              .false., .false.,.false. &
+              .false., .false., .false. &
             )
           case("bartnicki-takemura")
             met_params%use_3d_precip = .true.
@@ -1289,7 +1289,7 @@ contains
             wetdep_scheme = wetdep_scheme_t( &
               WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
               WETDEP_INCLOUD_SCHEME_TAKEMURA, &
-              .true., .true.,.false. &
+              .true., .true., .false. &
             )
           case("bartnicki-takemura-precompute")
             met_params%use_3d_precip = .true.
@@ -1298,7 +1298,7 @@ contains
             wetdep_scheme = wetdep_scheme_t( &
               WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
               WETDEP_INCLOUD_SCHEME_TAKEMURA, &
-              .true., .true.,.true. &
+              .true., .true., .true. &
             )
           case("bartnicki-vertical")            
             met_params%use_3d_precip = .true.
@@ -2239,16 +2239,6 @@ contains
     end do
 
     if (drydep_scheme == DRYDEP_SCHEME_UNDEFINED) drydep_scheme = DRYDEP_SCHEME_OLD
-
-    ! ! Set default wetdep schemes         !!GEORGE: default wetdep is still Bartnicki
-    ! if (wetdep_scheme%subcloud == WETDEP_SUBCLOUD_SCHEME_UNDEFINED .and. &
-    !     wetdep_scheme%incloud == WETDEP_INCLOUD_SCHEME_UNDEFINED) then
-    !     wetdep_scheme = wetdep_scheme_t( &
-    !       WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
-    !       WETDEP_INCLOUD_SCHEME_NONE, &
-    !       .false., .false. &
-    !     )
-    ! endif
 
     i1 = 0
     idecay = 0
