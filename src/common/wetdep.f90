@@ -62,18 +62,15 @@ module wetdepml
   type, public :: wetdep_scheme_t
     integer :: subcloud
     integer :: incloud
-    !> Use 3D precip and precomputed parameters
+    !> Use 3D precip
     logical :: use_vertical
     !> Whether to use cloud fraction correction for subcloud schemes
     logical :: use_cloudfraction
-    !> Precomputation of scavenging coefficients 
-    !> (needed for long NPP runs, not possible for nuclear bomb runs)
-    logical :: precompute
   end type
 
   !> As default, the scheme is undefined
   type(wetdep_scheme_t), save, public :: wetdep_scheme = &
-      wetdep_scheme_t(WETDEP_SUBCLOUD_SCHEME_UNDEFINED, WETDEP_INCLOUD_SCHEME_UNDEFINED, .false., .false.,.false.)
+      wetdep_scheme_t(WETDEP_SUBCLOUD_SCHEME_UNDEFINED, WETDEP_INCLOUD_SCHEME_UNDEFINED, .false., .false.)
 
 contains
 
@@ -183,21 +180,7 @@ contains
       ! If enough precipitation, and below cut off altitude.
       if (wetdep_scheme%use_vertical) then
         ! in 3D case
-        if (wetdep_scheme%precompute) then
-          block
-            use snapfldML, only: wscav
-            use snapgrdML, only: ivlevel 
-            integer :: ivlvl, k
-  
-            ivlvl = nint(part%z * 10000.0)
-            k = ivlevel(ivlvl)
-            i = nint(part%x)
-            j = nint(part%y)  
-            rkw = wscav(i,j,k,mm)
-          end block
-        else
-          call wetdep_3D(rkw, part,def_comp(m)%radiusmym)
-        end if
+        call wetdep_3D(rkw, part,def_comp(m)%radiusmym)
         radlost = part%scale_rad(exp(-tstep*rkw))
       else if  (wetdep_scheme%subcloud == WETDEP_SUBCLOUD_SCHEME_BARTNICKI) then
         ! in 2D case just bartnicki 
@@ -412,80 +395,7 @@ contains
     )) then 
         error stop "Some wetdep/precip (precip) fields not allocated"
       endif
-      if (wetdep_scheme%precompute) then
-        block
-          use snapparML, only: ncomp, run_comp
-          use snapfldML, only: wscav_io
-          if (.not.(allocated(wscav))) then 
-            error stop "Some wetdep/precip fields (wscav) not allocated"
-          endif
-          do i = 1,ncomp
-            ! skip precomputation if WET.DEP = off for specific component
-            if (.not.run_comp(i)%defined%kwetdep == 1) cycle  
-            call prepare_wetdep_3d(wscav_io(:,:,:,i), run_comp(i)%defined%radiusmym, precip3d, cw3d, cloud_cover)
-          end do
-        end block
-      endif 
     end if
   end subroutine
 
-  !> Precompute wet scavenging coefficients per component
-  subroutine prepare_wetdep_3d(wscav, radius, precip, cw, ccf)
-    !> Wet scavenging coefficient [1/s] of specific component
-    real, intent(out) :: wscav(:,:,:)
-    !> Precipitation intensity [mm/h], 3D
-    real, intent(in) :: precip(:,:,:)
-    !> Radius of particle
-    real, intent(in) :: radius
-    !> Cloud water
-    real, intent(in) :: cw(:,:,:)
-    !> Cloud cover fraction
-    real, intent(in) :: ccf(:,:,:)
-
-    real, allocatable :: wscav_tmp(:,:,:)
-    real, allocatable :: accum_precip(:,:), accum_ccf(:,:)
-
-    integer :: nk, k, nx, ny
-
-    nx = size(wscav,1)
-    ny = size(wscav,2)
-    nk = size(wscav,3)
-
-    allocate(wscav_tmp, mold=wscav)
-    allocate(accum_precip(nx,ny), accum_ccf(nx,ny))
-
-    accum_precip(:,:) = 0.0
-    accum_ccf(:,:) = 0.0
-
-    do k=nk,1,-1
-      ! Accumulated instantaneous precipitation in the column
-      ! To calculate precipitation rate at model layer
-      accum_precip(:,:) = accum_precip(:,:) + precip(:,:,k)
-      accum_ccf(:,:) = accum_ccf(:,:) + ccf(:,:,k)
-      where (accum_ccf >= 1.0)
-        accum_ccf = 1.0
-      endwhere
-
-      select case (wetdep_scheme%subcloud)
-        case (WETDEP_SUBCLOUD_SCHEME_BARTNICKI)
-          call wet_subcloud_bartnicki_ccf(wscav(:,:,k), radius, accum_precip(:,:), &
-           accum_ccf(:,:), use_ccf=wetdep_scheme%use_cloudfraction)
-        case (WETDEP_SUBCLOUD_SCHEME_NONE)
-          wscav(:,:,k) = 0.0
-        case default
-          error stop "Subcloud scheme undefined"
-      end select
-
-      ! Incloud
-      select case (wetdep_scheme%incloud)
-        case (WETDEP_INCLOUD_SCHEME_NONE)
-          wscav_tmp(:,:,k) = 0.0
-        case (WETDEP_INCLOUD_SCHEME_TAKEMURA)
-          call wetdep_incloud_takemura(wscav_tmp(:,:,k), precip(:,:,k), cw(:,:,k), ccf(:,:,k))
-        case default
-          error stop "Incloud scheme undefined"
-      end select
-      wscav(:,:,k) = max(wscav(:,:,k), wscav_tmp(:,:,k))
-    end do
-  end subroutine
 end module wetdepml

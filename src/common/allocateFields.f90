@@ -21,7 +21,7 @@ module allocateFieldsML
       surface_stress, hflux, t2m, z0, &
       ustar, raero, my, nu, &
       total_activity_released, total_activity_lost_domain, total_activity_lost_other, &
-      wscav, cloud_cover, wscav_x, wscav_io, use_async_io, &
+      cloud_cover, use_async_io, &
       precip3d_x, precip3d_io, cloud_cover_io, cloud_cover_x, cw3d_x, cw3d_io
   USE snapfilML, only: idata, fdata
   USE snapgrdML, only: ahalf, bhalf, vhalf, alevel, blevel, vlevel, imodlevel, &
@@ -204,36 +204,21 @@ subroutine allocateFields
     allocate(cloud_cover(nx,ny,nk), STAT=AllocateStatus)
     if (AllocateStatus /= 0) ERROR STOP errmsg
     
-    if (met_params%precompute_wetdep) then
-      ALLOCATE(wscav(nx,ny,nk,ncomp),STAT=AllocateStatus)
+
+    if (use_async_io) then
+      ALLOCATE(precip3d_x(nx,ny,nk), STAT=AllocateStatus)
       if (AllocateStatus /= 0) ERROR STOP errmsg
-      wscav(:,:,:,:) = 0.0
-      if (use_async_io) then
-        ALLOCATE(wscav_x(nx,ny,nk,ncomp), STAT=AllocateStatus)
-        if (AllocateStatus /= 0) ERROR STOP errmsg
-        wscav_io => wscav_x
-        precip3d_io => precip3d
-        cw3d_io=>cw3d
-        cloud_cover_io=>cloud_cover
-      else
-        wscav_io => wscav
-      end if
+      precip3d_io => precip3d_x
+      ALLOCATE(cw3d_x(nx,ny,nk), STAT=AllocateStatus)
+      if (AllocateStatus /= 0) ERROR STOP errmsg
+      cw3d_io => cw3d_x   
+      ALLOCATE(cloud_cover_x(nx,ny,nk), STAT=AllocateStatus)
+      if (AllocateStatus /= 0) ERROR STOP errmsg
+      cloud_cover_io => cloud_cover_x     
     else
-      if (use_async_io) then
-        ALLOCATE(precip3d_x(nx,ny,nk), STAT=AllocateStatus)
-        if (AllocateStatus /= 0) ERROR STOP errmsg
-        precip3d_io => precip3d_x
-        ALLOCATE(cw3d_x(nx,ny,nk), STAT=AllocateStatus)
-        if (AllocateStatus /= 0) ERROR STOP errmsg
-        cw3d_io => cw3d_x   
-        ALLOCATE(cloud_cover_x(nx,ny,nk), STAT=AllocateStatus)
-        if (AllocateStatus /= 0) ERROR STOP errmsg
-        cloud_cover_io => cloud_cover_x     
-      else
-        precip3d_io => precip3d
-        cw3d_io => cw3d
-        cloud_cover_io => cloud_cover
-      end if
+      precip3d_io => precip3d
+      cw3d_io => cw3d
+      cloud_cover_io => cloud_cover
     end if
   end if
 
@@ -412,8 +397,6 @@ subroutine deAllocateFields
   if (allocated(precip_x)) deallocate(precip_x)
   if (allocated(precip3d)) deallocate(precip3d)
   if (allocated(cw3d)) deallocate(cw3d)
-  if (allocated(wscav)) deallocate(wscav)
-  if (allocated(wscav_x)) deallocate(wscav_x)
   if (allocated(precip3d_x)) deallocate(precip3d_x)
   if (allocated(cw3d_x)) deallocate(cw3d_x)
   if (allocated(cloud_cover_x)) deallocate(cloud_cover_x)

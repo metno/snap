@@ -89,18 +89,13 @@ program testWetDep_new
     wetdep_scheme_1 = wetdep_scheme_t( &
                 WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
                 WETDEP_INCLOUD_SCHEME_NONE, &
-                .false., .false.,.false. &
+                .false., .false. &
               )
     wetdep_scheme_2 = wetdep_scheme_t( &
                 WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
                 WETDEP_INCLOUD_SCHEME_TAKEMURA, &
-                .true., .true.,.false. &
-              )
-    wetdep_scheme_3 = wetdep_scheme_t( &
-                WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
-                WETDEP_INCLOUD_SCHEME_TAKEMURA, &
-                .true., .true.,.true. &
-              )    
+                .true., .true. &
+              )  
     itimefi%year = 2020
     itimefi%month = 4
     itimefi%day = 15
@@ -121,9 +116,6 @@ program testWetDep_new
       else if (scheme == 1) then
         wetdep_scheme = wetdep_scheme_1
         name = "Bartnicki"
-      else if (scheme == 3) then
-        wetdep_scheme = wetdep_scheme_3
-        name = "B-T-precompute"
       else 
         stop "Scheme undefined"
       end if

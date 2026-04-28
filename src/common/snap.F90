@@ -593,7 +593,7 @@ PROGRAM bsnap
     write (error_unit, fmt="('input data: ',i4,3i3.2)") time_file
     flush(error_unit)
     call input_timer%stop_and_log()
-    call swap_fields_after_reading(met_params%precompute_wetdep) ! only for async io, but does not hurt otherwise
+    call swap_fields_after_reading() ! only for async io, but does not hurt otherwise
 
     ! Initialise output
     if (idailyout == 1) then
@@ -695,7 +695,7 @@ PROGRAM bsnap
             write (error_unit, fmt="('input data: ',i4,3i3.2)") time_file
           end if
           ! just keep reading from the last timestep, no interpolation needed
-          call swap_fields_after_reading(met_params%precompute_wetdep)
+          call swap_fields_after_reading()
           dur = time_file - itimei
           ihdiff = dur%hours
           tf1 = 0.
@@ -1281,34 +1281,24 @@ contains
             wetdep_scheme = wetdep_scheme_t( &
               WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
               WETDEP_INCLOUD_SCHEME_NONE, &
-              .false., .false., .false. &
-            )
+              .false., .false. &
+              )
           case("bartnicki-takemura")
             met_params%use_3d_precip = .true.
             met_params%use_ccf = .true.
             wetdep_scheme = wetdep_scheme_t( &
               WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
               WETDEP_INCLOUD_SCHEME_TAKEMURA, &
-              .true., .true., .false. &
-            )
-          case("bartnicki-takemura-precompute")
-            met_params%use_3d_precip = .true.
-            met_params%use_ccf = .true.
-            met_params%precompute_wetdep = .true.
-            wetdep_scheme = wetdep_scheme_t( &
-              WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
-              WETDEP_INCLOUD_SCHEME_TAKEMURA, &
-              .true., .true., .true. &
-            )
+              .true., .true. &
+              )
           case("bartnicki-vertical")            
             met_params%use_3d_precip = .true.
             met_params%use_ccf = .true.
-            met_params%precompute_wetdep = .false.
             wetdep_scheme = wetdep_scheme_t( &
               WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
               WETDEP_INCLOUD_SCHEME_NONE, &
-              .true., .true., .false. &
-            )
+              .true., .true. &
+              )
 
           case default
             !> No default - should always have scheme in input

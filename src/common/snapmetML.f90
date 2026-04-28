@@ -58,8 +58,6 @@ module snapmetML
     logical :: use_3d_precip = .false.
     !> Wet deposition: Use cloud cover fraction
     logical :: use_ccf = .false.
-    !> Wet deposition: precomputation for bartnicki-takemura
-    logical :: precompute_wetdep = .false.
 
     !> Precip (3D)
     character(len=80) :: mass_fraction_rain_in_air = ''
