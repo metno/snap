@@ -452,8 +452,10 @@ GRAVITY.FIXED.M/S=0.0002
                 self.directory, "landfractions", "largestLandFraction_EC0p1Global.nc"
             )
         elif metmodel == MetModel.EC0p1Europe:
-            # no setup needed, autdetection in snap
-            pass
+            # uses the same as global, with interpolation
+            largest_landfraction_file = os.path.join(
+                self.directory, "landfractions", "largestLandFraction_EC0p1Global.nc"
+            )
         elif metmodel == MetModel.Meps2p5:
             largest_landfraction_file = os.path.join(
                 self.directory, "landfractions", "largestLandFraction_Meps2p5.nc"
