@@ -27,9 +27,11 @@ snap_testdata/%.nc :
 	mkdir -p snap_testdata
 	curl --fail https://thredds.met.no/thredds/fileServer/metusers/heikok/$@ -o $@
 
-test: testDateCalc test_array_utils find_parameters_fi_test  testGravSettling testDryDep testGaussianSmoothing bsnap_naccident $(TESTFILES)
+test: testDateCalc test_array_utils testGeoLatLonToGrid testHresLresPos find_parameters_fi_test  testGravSettling testDryDep testGaussianSmoothing bsnap_naccident $(TESTFILES)
 	./testDateCalc && \
 	./test_array_utils && \
+	./testGeoLatLonToGrid && \
+	./testHresLresPos && \
 	./find_parameters_fi_test snap_testdata/meteo20200415_00_ringhals.nc u_wind && \
 	./find_parameters_fi_test snap_testdata/meps_det_2_5km_20251125T06Z_ringhals.nc x_wind_ml && \
 	./testGravSettling && \
@@ -51,6 +53,12 @@ testDateCalc: testDateCalc.o $(MODELOBJ)
 test_array_utils: test_array_utils.o $(MODELOBJ)
 	${F77} $(F77FLAGS) $(MODELOBJ) $< $(BLIBS) -o $@
 
+testGeoLatLonToGrid: testGeoLatLonToGrid.o $(MODELOBJ)
+	${F77} $(F77FLAGS) $(MODELOBJ) $< $(BLIBS) -o $@
+
+testHresLresPos: testHresLresPos.o $(MODELOBJ)
+	${F77} $(F77FLAGS) $(MODELOBJ) $< $(BLIBS) -o $@
+
 testGravSettling: testGravSettling.o $(MODELOBJ)
 	${F77} $(F77FLAGS) $(MODELOBJ) $< $(BLIBS) -o $@
 
@@ -61,7 +69,7 @@ testGaussianSmoothing: testGaussianSmoothing.o $(MODELOBJ)
 	${F77} $(F77FLAGS) $(MODELOBJ) $< $(BLIBS) -o $@
 
 clean: clean_links
-	rm -f *.o *~ snap_batch_copy.F90 find_parameters_fi_test bsnap_naccident data/snap.nc data/snap_ecemep.nc data/snap.log testDateCalc test_array_utils
+	rm -f *.o *~ snap_batch_copy.F90 find_parameters_fi_test bsnap_naccident data/snap.nc data/snap_ecemep.nc data/snap.log testDateCalc test_array_utils testGeoLatLonToGrid testHresLresPos
 	rm -rf __pycache__
 
 distclean: clean
@@ -74,6 +82,12 @@ testDateCalc.o: testDateCalc.f90 $(MODELOBJ)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 
 test_array_utils.o: test_array_utils.f90 $(MODELOBJ)
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+
+testGeoLatLonToGrid.o: testGeoLatLonToGrid.f90 $(MODELOBJ)
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+
+testHresLresPos.o: testHresLresPos.f90 $(MODELOBJ)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 
 testGravSettling.o: testGravSettling.f90 $(MODELOBJ)

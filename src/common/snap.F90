@@ -187,7 +187,7 @@ PROGRAM bsnap
   USE split_particlesML, only: split_particles
   USE checkdomainML, only: check_in_domain
   USE rwalkML, only: rwalk, rwalk_init
-  USE milibML, only: xyconvert
+  USE milibML, only: xyconvert, GEO_PARAMS
   USE forwrdML, only: forwrd
   USE wetdepML, only: wetdep, wetdep_scheme, wetdep_scheme_t, &
     WETDEP_SUBCLOUD_SCHEME_UNDEFINED, WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
@@ -239,9 +239,6 @@ PROGRAM bsnap
   type(datetime_t) :: itime2
   type(datetime_t) :: itime, itimei, itimeo
   type(datetime_t) :: time_file
-
-!..used in xyconvert (longitude,latitude -> x,y)
-  real, save :: geoparam(6) = [1.0, 1.0, 1.0, 1.0, 0.0, 0.0]
 
   integer :: snapinput_unit, ios
   integer :: nhrun = 0, nhrel = 0
@@ -625,7 +622,7 @@ PROGRAM bsnap
       y = release_positions(irelpos)%geo_latitude
       x = release_positions(irelpos)%geo_longitude
       write (iulog, *) 'release lat,long: ', y, x
-      call xyconvert(1, x, y, 2, geoparam, igtype, gparam, ierror)
+      call xyconvert(1, x, y, 2, GEO_PARAMS, igtype, gparam, ierror)
       if (ierror /= 0) then
         write (iulog, *) 'ERROR: xyconvert'
         write (iulog, *) '   igtype: ', igtype
@@ -635,9 +632,14 @@ PROGRAM bsnap
         write (error_unit, *) '   gparam: ', gparam
         call snap_error_exit(iulog)
       end if
+      ! gparam stores cell centers; shift to cell-corner convention (1=corner, 1.5=center)
+      ! i.e. xyconvert gives values [0.5,1,5[ for first grid-cell (as meteo) while we SNAP expects [1,2[
+      ! SNAP needs that convention for interpolation to grid
+      x(1) = x(1) + 0.5
+      y(1) = y(1) + 0.5
       write (iulog, *) 'release   x,y:    ', x, y
-      if (x(1) < 1.01 .OR. x(1) > (nx - 0.01) .OR. &
-          y(1) < 1.01 .OR. y(1) > (ny - 0.01)) then
+      if (x(1) < 1.01 .OR. x(1) > (nx + 0.49) .OR. &
+          y(1) < 1.01 .OR. y(1) > (ny + 0.49)) then
         write (iulog, *) 'ERROR: Release position outside field area'
         write (error_unit, *) 'ERROR: Release position outside field area'
         call snap_error_exit(iulog)
