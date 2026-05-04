@@ -1244,7 +1244,7 @@ contains
         wetdep_scheme = wetdep_scheme_t( &
           WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
           WETDEP_INCLOUD_SCHEME_NONE, &
-          .false., .false., .false.)
+          .false., .false.)
       case ('wet.deposition.version')
         write (error_unit, *) "Deprecated, please use wet.deposition.scheme = Bartnicki"
         warning = .true.
@@ -1265,7 +1265,7 @@ contains
             WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
             WETDEP_INCLOUD_SCHEME_NONE, &
             .false., &
-            .false., .false.)
+            .false.)
         end block
 
       case ('wet.deposition.scheme')
@@ -1289,14 +1289,6 @@ contains
             wetdep_scheme = wetdep_scheme_t( &
               WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
               WETDEP_INCLOUD_SCHEME_TAKEMURA, &
-              .true., .true. &
-              )
-          case("bartnicki-vertical")            
-            met_params%use_3d_precip = .true.
-            met_params%use_ccf = .true.
-            wetdep_scheme = wetdep_scheme_t( &
-              WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
-              WETDEP_INCLOUD_SCHEME_NONE, &
               .true., .true. &
               )
 

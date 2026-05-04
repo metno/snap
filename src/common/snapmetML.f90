@@ -187,6 +187,10 @@ module snapmetML
       met_params%hflux_is_accumulated = .true.
       met_params%hflux_is_downward = .true.  ! netcdf name in ecmwf database is upward, but data follows database convention and is downward... See codes.ecmwf.int/grib/param-db/146
 !..get grid parameters from field identification
+      met_params%mass_fraction_cloud_condensed_water_in_air = "cloudwater"
+      met_params%mass_fraction_cloud_ice_in_air = ""
+
+      met_params%cloud_fraction = "3D_cloudcover"
     case('era5')
       met_params%manual_level_selection = .true.
       met_params%has_dummy_dim = .false.
@@ -254,9 +258,9 @@ module snapmetML
       met_params%hflux_is_accumulated = .true.
       met_params%hflux_is_downward = .true.
 
-      met_params%mass_fraction_rain_in_air = "mass_fraction_of_rain_in_air_ml"
-      met_params%mass_fraction_graupel_in_air = "mass_fraction_of_graupel_in_air_ml"
-      met_params%mass_fraction_snow_in_air = "mass_fraction_of_snow_in_air_ml"
+      met_params%mass_fraction_rain_in_air = "" !"mass_fraction_of_rain_in_air_ml"
+      met_params%mass_fraction_graupel_in_air = "" !"mass_fraction_of_graupel_in_air_ml"
+      met_params%mass_fraction_snow_in_air = "" !"mass_fraction_of_snow_in_air_ml"
 
       met_params%mass_fraction_cloud_condensed_water_in_air = "mass_fraction_of_cloud_condensed_water_in_air_ml"
       met_params%mass_fraction_cloud_ice_in_air = '' ! Negligible cloud ice in AROME data. 
@@ -334,15 +338,15 @@ module snapmetML
       met_params%hflux = 'surface_flux_sensible_heat'
       met_params%hflux_is_accumulated = .false.
       met_params%hflux_is_downward = .true.
+      
+      met_params%mass_fraction_rain_in_air = ""
+      met_params%mass_fraction_graupel_in_air = ""
+      met_params%mass_fraction_snow_in_air = ""
 
-      met_params%mass_fraction_rain_in_air = "mass_fraction_of_rain_in_air_ml"
-      met_params%mass_fraction_graupel_in_air = "mass_fraction_of_graupel_in_air_ml"
-      met_params%mass_fraction_snow_in_air = "mass_fraction_of_snow_in_air_ml"
+      met_params%mass_fraction_cloud_condensed_water_in_air = "cloudwater"
+      met_params%mass_fraction_cloud_ice_in_air = ""
 
-      met_params%mass_fraction_cloud_condensed_water_in_air = "mass_fraction_of_cloud_condensed_water_in_air_ml"
-      met_params%mass_fraction_cloud_ice_in_air = "mass_fraction_of_cloud_ice_in_air_ml"
-
-      met_params%cloud_fraction = "cloud_area_fraction_ml"
+      met_params%cloud_fraction = "3D_cloudcover"
 !..get grid parameters from field identification
 ! set as long as sortfield still is called
     case('gfs_grib_filter_fimex')
