@@ -7,6 +7,8 @@ import subprocess
 import tempfile
 import unittest
 
+import netCDF4
+import numpy as np
 from snapunittest import SnapTestCase
 
 
@@ -53,8 +55,6 @@ def _resolve_relative_paths(datadir: pathlib.Path, snapinput: str) -> str:
     return snapinput
 
 
-
-
 class SnapEcEMEPForwardTestCase(SnapTestCase):
     input: str = "snap.input_ecemep_fimex"
     snapExpected: str = "snap_testdata/snap_ecemep_expected5.nc"
@@ -89,6 +89,7 @@ class SnapEcEMEPForwardTestCase(SnapTestCase):
         # TBD create input-file with FILE.TYPE=netcdf instead of fimex
         pass
 
+
 class SnapEcEMEPEmersonForwardTestCase(SnapEcEMEPForwardTestCase):
     input: str = "snap.input_ecemep_emerson_fimex"
     snapExpected: str = "snap_testdata/snap_ecemep_emerson_expected_20260304.nc"
@@ -114,7 +115,6 @@ class SnapEcEMEPEmersonForwardTestCase(SnapEcEMEPForwardTestCase):
             (tmp / outfile).resolve().as_posix(),
             self.variables,
         )
-
 
 
 class SnapEcGlobalForwardTestCase(SnapEcEMEPForwardTestCase):
@@ -282,5 +282,102 @@ class ReleaseTests(unittest.TestCase):
         shutil.rmtree(tmp.as_posix())
 
 
+class ReleaseDepositionTests(unittest.TestCase):
+    datadir = pathlib.Path(os.path.dirname(os.path.realpath(__file__))).joinpath("data")
+    snap = datadir.joinpath("../bsnap_naccident")
+    testdata = datadir.joinpath("../snap_testdata")
+
+    @unittest.skipIf(os.getenv("FIMEXLIB") is None, "fimex not supported in this build")
+    def test_deposition_ecemerson(self):
+        d = tempfile.mkdtemp()
+        tmp = pathlib.Path(d)
+
+        input_snap = self.datadir.joinpath("snap.input_ecemep_fimex_pos")
+        input_ncml = self.datadir.joinpath("ecemep_fixunit.ncml")
+
+        shutil.copy(input_ncml, tmp.joinpath("ecemep_fixunit.ncml"))
+
+        for factor in [1, 3, 5, 10]:
+            with input_snap.open("r") as f:
+                snapinput = f.read()
+            snapinput = snapinput.replace(
+                "../snap_testdata", self.testdata.resolve().as_posix()
+            )
+            snapinput = snapinput + "\n" + f"FIELD.OUTPUT_RESOLUTION_FACTOR={factor}"
+            with tmp.joinpath("snap.input").open("w") as f:
+                f.write(snapinput)
+
+            run_snap(
+                self.snap.resolve().as_posix(),
+                "snap.input",
+                cwd=tmp.resolve().as_posix(),
+            )
+
+            outfile = tmp / "snap.nc"
+            with netCDF4.Dataset(str(outfile), "r") as nc:
+                self.assertIn("Cs137_acc_dry_deposition", nc.variables)
+                ddep = nc.variables["Cs137_acc_dry_deposition"][-1, :, :]
+                self.assertTrue((ddep >= 0).all())
+                # deposition at 1, 1 (starting from 0)
+                pos = factor * 1 + factor // 2
+                self.assertGreater(ddep[pos, pos], 0)
+                if factor % 2 == 0:
+                    # for even factors, the center of the cell is between two grid points, so deposition is split between them
+                    self.assertAlmostEqual(
+                        np.sum(ddep[pos - 1 : pos + 1, pos - 1 : pos + 1]),
+                        np.sum(ddep),
+                        places=1,
+                    )
+                else:
+                    self.assertAlmostEqual(ddep[pos, pos], np.sum(ddep), places=1)
+
+        shutil.rmtree(tmp.as_posix())
+        pass
+
+    @unittest.skipIf(os.getenv("FIMEXLIB") is None, "fimex not supported in this build")
+    def test_deposition_meps(self):
+        d = tempfile.mkdtemp()
+        tmp = pathlib.Path(d)
+
+        input_snap = self.datadir.joinpath("snap.input_meps_fimex_pos")
+
+        for factor in [5, 10]:
+            with input_snap.open("r") as f:
+                snapinput = f.read()
+            snapinput = snapinput.replace(
+                "../snap_testdata", self.testdata.resolve().as_posix()
+            )
+            snapinput = snapinput + "\n" + f"FIELD.OUTPUT_RESOLUTION_FACTOR={factor}"
+            with tmp.joinpath("snap.input").open("w") as f:
+                f.write(snapinput)
+
+            run_snap(
+                self.snap.resolve().as_posix(),
+                "snap.input",
+                cwd=tmp.resolve().as_posix(),
+            )
+
+            outfile = tmp / "snap.nc"
+            with netCDF4.Dataset(str(outfile), "r") as nc:
+                self.assertIn("Cs137_acc_dry_deposition", nc.variables)
+                ddep = nc.variables["Cs137_acc_dry_deposition"][-1, :, :]
+                self.assertTrue((ddep >= 0).all())
+                # deposition at 1, 1 (starting from 0)
+                pos = factor * 1 + factor // 2
+                self.assertGreater(ddep[pos, pos], 0)
+                if factor % 2 == 0:
+                    # for even factors, the center of the cell is between two grid points, so deposition is split between them
+                    self.assertAlmostEqual(
+                        np.sum(ddep[pos - 1 : pos + 1, pos - 1 : pos + 1]),
+                        np.sum(ddep),
+                        places=1,
+                    )
+                else:
+                    self.assertAlmostEqual(ddep[pos, pos], np.sum(ddep), places=1)
+
+        shutil.rmtree(tmp.as_posix())
+        pass
+
+
 if __name__ == "__main__":
-    unittest.main()
+    unittest.main(verbosity=2)

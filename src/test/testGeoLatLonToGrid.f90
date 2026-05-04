@@ -89,8 +89,6 @@ program testGeoLatLonToGrid
   x_lcc = [-1060084, -1057584, -1060084, 1309916]
   y_lcc = [-1332518, -1332518, -1330018, 1337482]
 
-  ! these are the values of xyconvert! SNAP uses internally shifted grid coordinates with lower left = (1,1)
-  ! and not center = 1,1
   expected_x_lcc = [1.0, 2.0, 1.0, real(nx_lcc)]
   expected_y_lcc = [1.0, 1.0, 2.0, real(ny_lcc)]
 

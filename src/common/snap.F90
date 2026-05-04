@@ -15,8 +15,10 @@
 ! TIME.RELEASE=      12h
 ! TITLE=  This is a optional title
 ! SET_RELEASE.POS=   P.1
-! RANDOM.WALK.ON
+! RANDOM.WALK.ON (default)
 ! RANDOM.WALK.OFF
+! FORWARD.ON (default)
+! FORWARD.OFF
 ! BOUNDARY.LAYER.FULL.MIX.OFF
 ! BOUNDARY.LAYER.FULL.MIX.ON
 ! DRY.DEPOSITION.OLD  * deprecated
@@ -243,6 +245,7 @@ PROGRAM bsnap
   integer :: snapinput_unit, ios
   integer :: nhrun = 0, nhrel = 0
   logical :: use_random_walk = .true.
+  logical :: use_forwrd = .true.
   logical :: autodetect_grid_params = .false.
   integer :: m, np, npl, nlevel, ifltim = 0
   logical :: synoptic_output = .false.
@@ -510,6 +513,7 @@ PROGRAM bsnap
     write (iulog, *) 'mprel:   ', mprel
     write (iulog, *) 'ifltim:  ', ifltim
     write (iulog, *) 'irwalk:  ', use_random_walk
+    write (iulog, *) 'iforwd:  ', use_forwrd
     write (iulog, *) 'drydep_scheme: ', drydep_scheme
     write (iulog, *) 'wetdep_scheme: subcloud scheme:   ', wetdep_scheme%subcloud%description
     write (iulog, *) 'wetdep_scheme: incloud  scheme:   ', wetdep_scheme%incloud%description
@@ -632,14 +636,10 @@ PROGRAM bsnap
         write (error_unit, *) '   gparam: ', gparam
         call snap_error_exit(iulog)
       end if
-      ! gparam stores cell centers; shift to cell-corner convention (1=corner, 1.5=center)
-      ! i.e. xyconvert gives values [0.5,1,5[ for first grid-cell (as meteo) while we SNAP expects [1,2[
-      ! SNAP needs that convention for interpolation to grid
-      x(1) = x(1) + 0.5
-      y(1) = y(1) + 0.5
+      ! gparam stores cell centers; (1=center, 0.5 left/lower corner, 1.5= right/upper corner)
       write (iulog, *) 'release   x,y:    ', x, y
-      if (x(1) < 1.01 .OR. x(1) > (nx + 0.49) .OR. &
-          y(1) < 1.01 .OR. y(1) > (ny + 0.49)) then
+      if (x(1) < 1. .OR. x(1) >= nx  .OR. &
+          y(1) < 1. .OR. y(1) >= ny) then
         write (iulog, *) 'ERROR: Release position outside field area'
         write (error_unit, *) 'ERROR: Release position outside field area'
         call snap_error_exit(iulog)
@@ -810,7 +810,7 @@ PROGRAM bsnap
           call wetdep(tstep, pdata(np), pextra)
 
           !..move all particles forward, save u and v to pextra
-          call forwrd(tf1, tf2, tnow, tstep, pdata(np), pextra)
+          if (use_forwrd) call forwrd(tf1, tf2, tnow, tstep, pdata(np), pextra)
 
           !..apply the random walk method (diffusion)
           ! diffusion is applied after deposition to mix
@@ -1181,6 +1181,10 @@ contains
       case ('random.walk.off')
         !..random.walk.off
         use_random_walk = .false.
+      case ('forward.on')
+        use_forwrd = .true.
+      case ('forward.off')
+        use_forwrd = .false.
       case ('boundary.layer.full.mix.off')
         !..boundary.layer.full.mix.off
         blfullmix = .FALSE.

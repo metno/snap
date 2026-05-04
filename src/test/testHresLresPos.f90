@@ -26,9 +26,10 @@ contains
   subroutine test_factor_one_identity()
     output_resolution_factor = 1
 
-    call assert_int_eq(hres_pos(1.0_real64), 1, "hres_pos factor=1 at 1.0")
-    call assert_int_eq(hres_pos(1.5_real64), 1, "hres_pos factor=1 at 1.5")
-    call assert_int_eq(hres_pos(2.0_real64), 2, "hres_pos factor=1 at 2.0")
+    call assert_int_eq(hres_pos(0.51_real64), 1, "hres_pos factor=1 at 0.51")
+    call assert_int_eq(hres_pos(1.49_real64), 1, "hres_pos factor=1 at 1.49")
+    call assert_int_eq(hres_pos(1.51_real64), 2, "hres_pos factor=1 at 1.51")
+    call assert_int_eq(hres_pos(2.49_real64), 2, "hres_pos factor=1 at 2.49")
 
     call assert_int_eq(lres_pos(1), 1, "lres_pos factor=1 at 1")
     call assert_int_eq(lres_pos(2), 2, "lres_pos factor=1 at 2")
@@ -38,23 +39,23 @@ contains
   subroutine test_hres_pos_factor_five()
     output_resolution_factor = 5
 
-    call assert_int_eq(hres_pos(1.0_real64), 1, "hres_pos factor=5 at 1.0")
-    call assert_int_eq(hres_pos(1.19_real64), 1, "hres_pos factor=5 at 1.19")
-    call assert_int_eq(hres_pos(1.21_real64), 2, "hres_pos factor=5 at 1.21")
-    call assert_int_eq(hres_pos(1.59_real64), 3, "hres_pos factor=5 at 1.59")
-    call assert_int_eq(hres_pos(1.81_real64), 5, "hres_pos factor=5 at 1.81")
-    call assert_int_eq(hres_pos(2.19_real64), 6, "hres_pos factor=5 at 2.19")
+    call assert_int_eq(hres_pos(0.54_real64), 1, "hres_pos factor=5 at 0.54")
+    call assert_int_eq(hres_pos(0.74_real64), 2, "hres_pos factor=5 at 0.74")
+    call assert_int_eq(hres_pos(0.94_real64), 3, "hres_pos factor=5 at 0.94")
+    call assert_int_eq(hres_pos(1.14_real64), 4, "hres_pos factor=5 at 1.14")
+    call assert_int_eq(hres_pos(1.34_real64), 5, "hres_pos factor=5 at 1.34")
+    call assert_int_eq(hres_pos(1.54_real64), 6, "hres_pos factor=5 at 1.54")
   end subroutine test_hres_pos_factor_five
 
   subroutine test_hres_pos_factor_ten()
     output_resolution_factor = 10
 
-    call assert_int_eq(hres_pos(1.0_real64), 1, "hres_pos factor=10 at 1.0")
-    call assert_int_eq(hres_pos(1.04_real64), 1, "hres_pos factor=10 at 1.04")
-    call assert_int_eq(hres_pos(1.16_real64), 2, "hres_pos factor=10 at 1.16")
-    call assert_int_eq(hres_pos(1.54_real64), 6, "hres_pos factor=10 at 1.54")
-    call assert_int_eq(hres_pos(1.94_real64), 10, "hres_pos factor=10 at 1.94")
-    call assert_int_eq(hres_pos(2.04_real64), 11, "hres_pos factor=10 at 2.04")
+    call assert_int_eq(hres_pos(0.54_real64), 1, "hres_pos factor=10 at 0.54")
+    call assert_int_eq(hres_pos(0.66_real64), 2, "hres_pos factor=10 at 0.66")
+    call assert_int_eq(hres_pos(1.04_real64), 6, "hres_pos factor=10 at 1.04")
+    call assert_int_eq(hres_pos(1.44_real64), 10, "hres_pos factor=10 at 1.44")
+    call assert_int_eq(hres_pos(1.56_real64), 11, "hres_pos factor=10 at 1.56")
+    call assert_int_eq(hres_pos(2.04_real64), 16, "hres_pos factor=10 at 2.04")
   end subroutine test_hres_pos_factor_ten
 
   subroutine test_lres_pos_factor_five()
@@ -76,11 +77,11 @@ contains
   subroutine test_even_factor_behavior()
     output_resolution_factor = 4
 
-    call assert_int_eq(hres_pos(1.0_real64), 1, "hres_pos factor=4 at 1.0")
-    call assert_int_eq(hres_pos(1.25_real64), 2, "hres_pos factor=4 at 1.25")
-    call assert_int_eq(hres_pos(1.5_real64), 3, "hres_pos factor=4 at 1.5")
-    call assert_int_eq(hres_pos(1.75_real64), 4, "hres_pos factor=4 at 1.75")
-    call assert_int_eq(hres_pos(2.0_real64), 5, "hres_pos factor=4 at 2.0")
+    call assert_int_eq(hres_pos(0.56_real64), 1, "hres_pos factor=4 at 0.56")
+    call assert_int_eq(hres_pos(0.81_real64), 2, "hres_pos factor=4 at 0.81")
+    call assert_int_eq(hres_pos(1.06_real64), 3, "hres_pos factor=4 at 1.06")
+    call assert_int_eq(hres_pos(1.31_real64), 4, "hres_pos factor=4 at 1.31")
+    call assert_int_eq(hres_pos(1.56_real64), 5, "hres_pos factor=4 at 1.56")
 
     call assert_int_eq(lres_pos(1), 1, "lres_pos factor=4 at 1")
     call assert_int_eq(lres_pos(4), 1, "lres_pos factor=4 at 4")
@@ -95,7 +96,7 @@ contains
     do f = 2, 6
       output_resolution_factor = f
       do k = 1, 4
-        x = real(k, kind=real64) + 0.5_real64
+        x = real(k, kind=real64) + 0.13_real64
         h = hres_pos(x)
         lr = lres_pos(h)
 
