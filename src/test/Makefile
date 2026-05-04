@@ -17,7 +17,8 @@ TESTFILES = snap_testdata/meteo20200415_00_ringhals.nc \
 	snap_testdata/snap_ecemep_expected5.nc \
 	snap_testdata/snap_meps_interpolated_expected_20251125.nc \
 	snap_testdata/snap_ecemep_emerson_expected_20260304.nc \
-	snap_testdata/meteo_ecglobal_20260408T060000_06_ringhals.nc
+	snap_testdata/meteo_ecglobal_20260408T060000_06_ringhals.nc \
+	snap_testdata/wetdeptest-small_20260503.nc
 
 
 install:
@@ -27,7 +28,7 @@ snap_testdata/%.nc :
 	mkdir -p snap_testdata
 	curl --fail https://thredds.met.no/thredds/fileServer/metusers/heikok/$@ -o $@
 
-test: testDateCalc test_array_utils find_parameters_fi_test  testGravSettling testDryDep testGaussianSmoothing bsnap_naccident $(TESTFILES)
+test: testDateCalc test_array_utils find_parameters_fi_test  testGravSettling testDryDep testGaussianSmoothing testWetDep bsnap_naccident $(TESTFILES)
 	./testDateCalc && \
 	./test_array_utils && \
 	./find_parameters_fi_test snap_testdata/meteo20200415_00_ringhals.nc u_wind && \
@@ -35,6 +36,7 @@ test: testDateCalc test_array_utils find_parameters_fi_test  testGravSettling te
 	./testGravSettling && \
 	./testDryDep && \
 	./testGaussianSmoothing && \
+	./testWetDep && \
 	python3 -m unittest -b -v snap_forward_test.py
 
 

@@ -334,7 +334,7 @@ program testWetDep_new
     real, allocatable, intent(inout) :: prec(:,:,:), cw(:,:,:), cf(:,:,:), pr(:,:)
     integer :: varid, id, status, nx, ny, nk
     integer, dimension(nf90_max_var_dims) :: dimIDs 
-    status = nf90_open(path = "/lustre/storeB/users/geche8548/wet-deposition/wetdeptest-small.nc", mode = nf90_nowrite, ncid= id)
+    status = nf90_open(path = "snap_testdata/wetdeptest-small_20260503.nc", mode = nf90_nowrite, ncid= id) !"/lustre/storeB/users/geche8548/wet-deposition/wetdeptest-small.nc"
     if (status /= nf90_noerr) then 
       print *, "Error in opening file "
       stop 2

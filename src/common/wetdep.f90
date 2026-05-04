@@ -386,7 +386,6 @@ contains
   !> Is calculated when reading the files in, and therefore is part of asynchronous I/O
   subroutine wetdep_precompute()
     use snapfldML, only: precip3d, cw3d, cloud_cover
-    integer :: i
 
     if (wetdep_scheme%use_vertical) then   
       !skip precomputation if no vertical scheme
