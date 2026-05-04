@@ -283,20 +283,6 @@ module snapfldML
     end if
   end subroutine swap_2_fields_3d
 
-  subroutine swap_2_fields_4d(field1, field2)
-    real(kind=real32), allocatable, intent(inout) :: field1(:,:,:,:), field2(:,:,:,:)
-    integer :: stat
-
-    call move_alloc(from=field2, to=field1)
-    if (allocated(field1)) then
-      allocate(field2, mold=field1, stat=stat)
-      if (stat /= 0) then
-        stop 'Error allocating field2 in swap_2_fields_4d'
-      end if
-    end if
-  end subroutine swap_2_fields_4d
-
-
   subroutine swap_fields_after_reading()
     if (use_async_io) then
       call swap_3_fields_3d(u1, u2, u3)

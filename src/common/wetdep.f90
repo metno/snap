@@ -385,13 +385,13 @@ contains
   !> Should be called every input timestep to prepare the scavenging rates
   !> Is calculated when reading the files in, and therefore is part of asynchronous I/O
   subroutine wetdep_precompute()
-    use snapfldML, only: precip3d, cw3d, cloud_cover, wscav
+    use snapfldML, only: precip3d, cw3d, cloud_cover
     integer :: i
 
     if (wetdep_scheme%use_vertical) then   
       !skip precomputation if no vertical scheme
 
-      if (.not.(allocated(precip3d).and.allocated(cloud_cover) & !.and.allocated(cw3d)"
+      if (.not.(allocated(precip3d).and.allocated(cloud_cover) .and.allocated(cw3d) &
     )) then 
         error stop "Some wetdep/precip (precip) fields not allocated"
       endif
