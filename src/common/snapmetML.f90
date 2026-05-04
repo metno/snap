@@ -258,9 +258,9 @@ module snapmetML
       met_params%hflux_is_accumulated = .true.
       met_params%hflux_is_downward = .true.
 
-      met_params%mass_fraction_rain_in_air = "" !"mass_fraction_of_rain_in_air_ml"
-      met_params%mass_fraction_graupel_in_air = "" !"mass_fraction_of_graupel_in_air_ml"
-      met_params%mass_fraction_snow_in_air = "" !"mass_fraction_of_snow_in_air_ml"
+      met_params%mass_fraction_rain_in_air = "mass_fraction_of_rain_in_air_ml"
+      met_params%mass_fraction_graupel_in_air = "mass_fraction_of_graupel_in_air_ml"
+      met_params%mass_fraction_snow_in_air = "mass_fraction_of_snow_in_air_ml"
 
       met_params%mass_fraction_cloud_condensed_water_in_air = "mass_fraction_of_cloud_condensed_water_in_air_ml"
       met_params%mass_fraction_cloud_ice_in_air = '' ! Negligible cloud ice in AROME data. 

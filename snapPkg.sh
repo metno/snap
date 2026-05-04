@@ -2,8 +2,8 @@
 
 set -e
 
-export VERSION=2.5.13
-export CHANGE_LOG="emerson drydep with nrpa ec0.1 and ecemep met data"
+export VERSION=2.5.21
+export CHANGE_LOG="global land-fractions"
 #VERSION_=`echo -n $VERSION | tr '.' '_'`
 
 # We do not have a way of cross-compiling,
