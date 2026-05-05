@@ -17,7 +17,8 @@ TESTFILES = snap_testdata/meteo20200415_00_ringhals.nc \
 	snap_testdata/snap_ecemep_expected5.nc \
 	snap_testdata/snap_meps_interpolated_expected_20251125.nc \
 	snap_testdata/snap_ecemep_emerson_expected_20260304.nc \
-	snap_testdata/meteo_ecglobal_20260408T060000_06_ringhals.nc
+	snap_testdata/meteo_ecglobal_20260408T060000_06_ringhals.nc \
+	snap_testdata/wetdeptest-small_20260503.nc
 
 
 install:
@@ -27,7 +28,7 @@ snap_testdata/%.nc :
 	mkdir -p snap_testdata
 	curl --fail https://thredds.met.no/thredds/fileServer/metusers/heikok/$@ -o $@
 
-test: testDateCalc test_array_utils testGeoLatLonToGrid testHresLresPos find_parameters_fi_test  testGravSettling testDryDep testGaussianSmoothing bsnap_naccident $(TESTFILES)
+test: testDateCalc test_array_utils testGeoLatLonToGrid testHresLresPos find_parameters_fi_test testGravSettling testDryDep  testWetDep testGaussianSmoothing bsnap_naccident $(TESTFILES)
 	./testDateCalc && \
 	./test_array_utils && \
 	./testGeoLatLonToGrid && \
@@ -37,6 +38,7 @@ test: testDateCalc test_array_utils testGeoLatLonToGrid testHresLresPos find_par
 	./testGravSettling && \
 	./testDryDep && \
 	./testGaussianSmoothing && \
+	./testWetDep && \
 	python3 -m unittest -b -v snap_forward_test.py
 
 
@@ -63,6 +65,9 @@ testGravSettling: testGravSettling.o $(MODELOBJ)
 	${F77} $(F77FLAGS) $(MODELOBJ) $< $(BLIBS) -o $@
 
 testDryDep: testDryDep.o $(MODELOBJ)
+	${F77} $(F77FLAGS) $(MODELOBJ) $< $(BLIBS) -o $@
+
+testWetDep: testWetDep.o $(MODELOBJ)
 	${F77} $(F77FLAGS) $(MODELOBJ) $< $(BLIBS) -o $@
 
 testGaussianSmoothing: testGaussianSmoothing.o $(MODELOBJ)
@@ -94,6 +99,9 @@ testGravSettling.o: testGravSettling.f90 $(MODELOBJ)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 
 testDryDep.o: testDryDep.f90 $(MODELOBJ)
+	${F77} -c ${F77FLAGS} $(INCLUDES) $<
+
+testWetDep.o: testWetDep.f90 $(MODELOBJ)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 
 testGaussianSmoothing.o: testGaussianSmoothing.f90 $(MODELOBJ)

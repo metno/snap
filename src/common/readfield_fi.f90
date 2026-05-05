@@ -540,7 +540,7 @@ contains
   subroutine read_extra_precipitation_fields(fio, timepos)
     use iso_fortran_env, only: error_unit
     use snaptabML, only: g
-    use snapfldML, only: ps_io, precip3d, cw3d, cloud_cover, enspos
+    use snapfldML, only: ps_io, precip3d_io, cw3d_io, cloud_cover_io, enspos
     use snapgrdML, only: ahalf, bhalf, klevel
     use snapdimML, only: nx, ny, nk
     use snapmetML, only: mass_fraction_units, cloud_fraction_units, met_params
@@ -561,9 +561,9 @@ contains
 
     allocate(rain_in_air(nx,ny),graupel_in_air(nx,ny),snow_in_air(nx,ny),pdiff(nx,ny))
     allocate(cloud_water(nx,ny),cloud_ice(nx,ny))
-
-    precip3d(:,:,:) = 0.0
-    cw3d(:,:,:) = 0.0
+    
+    precip3d_io(:,:,:) = 0.0
+    cw3d_io(:,:,:) = 0.0
 
     do k=nk,2,-1
       ilevel = klevel(k)
@@ -590,13 +590,17 @@ contains
 
       pdiff(:,:) = 100*( (ahalf(k-1) - ahalf(k)) + (bhalf(k-1) - bhalf(k))*ps_io )
 
-      precip3d(:,:,k) = rain_in_air + graupel_in_air + snow_in_air
-      precip3d(:,:,k) = precip3d(:,:,k) * pdiff / g
-
+      precip3d_io(:,:,k) = rain_in_air + graupel_in_air + snow_in_air
+      precip3d_io(:,:,k) = precip3d_io(:,:,k) * pdiff / g
+      
       call fi_checkload(fio, met_params%mass_fraction_cloud_condensed_water_in_air, mass_fraction_units, &
-                        cloud_water, nt=timepos, nz=ilevel, nr=nr)
-      call fi_checkload(fio, met_params%mass_fraction_cloud_ice_in_air, mass_fraction_units, &
+                      cloud_water, nt=timepos, nz=ilevel, nr=nr)
+      if (met_params%mass_fraction_cloud_ice_in_air /= '') then
+        call fi_checkload(fio, met_params%mass_fraction_cloud_ice_in_air, mass_fraction_units, &
                         cloud_ice, nt=timepos, nz=ilevel, nr=nr)
+      else 
+        cloud_ice = 0.
+      end if 
 
       where (cloud_water < 0.0)
         cloud_water = 0.0
@@ -604,11 +608,13 @@ contains
       where (cloud_ice < 0.0)
         cloud_ice = 0.0
       end where
-      cw3d(:,:,k) = cloud_water + cloud_ice
-      cw3d(:,:,k) = cw3d(:,:,k) * pdiff / g
+
+      cw3d_io(:,:,k) = cloud_water + cloud_ice
+
+      cw3d_io(:,:,k) = cw3d_io(:,:,k) * pdiff / g
 
       call fi_checkload(fio, met_params%cloud_fraction, cloud_fraction_units, &
-                        cloud_cover(:,:,k), nt=timepos, nz=ilevel, nr=nr)
+                        cloud_cover_io(:,:,k), nt=timepos, nz=ilevel, nr=nr)
     enddo
   end subroutine
 
@@ -616,7 +622,7 @@ contains
   subroutine read_extra_precipitation_fields_infer_3d_precip(fio, timepos)
     use iso_fortran_env, only: error_unit
     use snaptabML, only: g
-    use snapfldML, only: ps_io, precip3d, cw3d, cloud_cover, enspos, precip_io
+    use snapfldML, only: ps_io, precip3d_io, cw3d_io, cloud_cover_io, enspos, precip_io
     use snapgrdML, only: ahalf, bhalf, klevel
     use snapdimML, only: nx, ny, nk
     use snapmetML, only: mass_fraction_units, cloud_fraction_units, met_params
@@ -637,10 +643,10 @@ contains
 
     allocate(pdiff(nx,ny))
     allocate(normaliser(nx,ny))
-    allocate(cloud_water(nx,ny), cloud_ice(nx,ny))
+    allocate(cloud_water(nx,ny),cloud_ice(nx,ny))
 
-    precip3d(:,:,:) = 0.0
-    cw3d(:,:,:) = 0.0
+    precip3d_io(:,:,:) = 0.0
+    cw3d_io(:,:,:) = 0.0
 
     normaliser(:,:) = 0.0
 
@@ -650,17 +656,22 @@ contains
       pdiff(:,:) = 100*( (ahalf(k-1) - ahalf(k)) + (bhalf(k-1) - bhalf(k))*ps_io )
       call fi_checkload(fio, met_params%mass_fraction_cloud_condensed_water_in_air, mass_fraction_units, &
                         cloud_water(:,:), nt=timepos, nz=ilevel, nr=nr)
-      call fi_checkload(fio, met_params%mass_fraction_cloud_ice_in_air, mass_fraction_units, &
-                        cloud_ice(:,:), nt=timepos, nz=ilevel, nr=nr)
-
-      cw3d(:,:,k) = (abs(cloud_water(:,:)) + abs(cloud_ice(:,:))) * pdiff / g
+      if (met_params%mass_fraction_cloud_ice_in_air /= '') then
+        call fi_checkload(fio, met_params%mass_fraction_cloud_ice_in_air, mass_fraction_units, &
+                          cloud_ice(:,:), nt=timepos, nz=ilevel, nr=nr)
+      else 
+        cloud_ice = 0.
+          
+      end if 
+      
+      cw3d_io(:,:,k) = (abs(cloud_water(:,:))+ abs(cloud_ice(:,:))) * pdiff / g
 
       ! Use cloud water to assign precipitation at model levels
-      normaliser(:,:) = normaliser + cw3d(:,:,k)
-      precip3d(:,:,k) = precip_io * cw3d(:,:,k)
+      normaliser(:,:) = normaliser + cw3d_io(:,:,k)
+      precip3d_io(:,:,k) = precip_io * cw3d_io(:,:,k)
 
       call fi_checkload(fio, met_params%cloud_fraction, cloud_fraction_units, &
-                        cloud_cover(:,:,k), nt=timepos, nz=ilevel, nr=nr)
+                        cloud_cover_io(:,:,k), nt=timepos, nz=ilevel, nr=nr)
     enddo
 
     block
@@ -671,11 +682,11 @@ contains
       do j=1,ny
         do i=1,nx
           if (normaliser(i,j) > 0.0) then
-            precip3d(i,j,k) = precip3d(i,j,k) / normaliser(i,j)
+            precip3d_io(i,j,k) = precip3d_io(i,j,k) / normaliser(i,j)
           elseif (k == klimit) then
             ! Put all precip at level closest to 0.67, analoguous
             ! with the old formulation of the precipitation
-            precip3d(i,j,k) = precip_io(i,j)
+            precip3d_io(i,j,k) = precip_io(i,j)
           endif
         enddo
       enddo
@@ -964,7 +975,7 @@ contains
     if (idebug == 1) then
       write (iulog, *) "number of points with zero surface stress: ", count(surface_stress == 0.0)
     endif
-
+    
     if (met_params%hflux_is_accumulated) then
       call read_accumulated_field(fio, nhdiff, timepos, timeposm1, met_params%hflux, accum_surface_heat_flux_units, hflux(:, :), &
         nr=nr)
