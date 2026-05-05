@@ -33,7 +33,7 @@ from the NOAA GFS model can be found under [src/naccident/examples/gfs/](./src/n
 SNAP requires the following libraries and programs to be installed for
 compilation
 
- * fortran77/90 compiler, e.g. gfortran or ifort
+ * fortran compiler with support for Fortran2008, e.g. gfortran or ifort
  * NetCDF (netcdf > 4.1.1)
  * NetCDF-fortran
  * Python3 (optional)
