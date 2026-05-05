@@ -1,19 +1,7 @@
 ! SNAP: Servere Nuclear Accident Programme
-! Copyright (C) 1992-2017   Norwegian Meteorological Institute
+! Copyright (C) 1992-2026   Norwegian Meteorological Institute
 
-! This file is part of SNAP. SNAP is free software: you can
-! redistribute it and/or modify it under the terms of the
-! GNU General Public License as published by the
-! Free Software Foundation, either version 3 of the License, or
-! (at your option) any later version.
-
-! This program is distributed in the hope that it will be useful,
-! but WITHOUT ANY WARRANTY; without even the implied warranty of
-! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-! GNU General Public License for more details.
-
-! You should have received a copy of the GNU General Public License
-! along with this program.  If not, see <https://www.gnu.org/licenses/>.
+! License: GNU General Public License Version 3 (GNU GPL-3.0)
 
 module allocateFieldsML
   USE particleML, only: pdata
@@ -33,7 +21,8 @@ module allocateFieldsML
       surface_stress, hflux, t2m, z0, &
       ustar, raero, my, nu, &
       total_activity_released, total_activity_lost_domain, total_activity_lost_other, &
-      wscav, wscav_x, wscav_io, cloud_cover, use_async_io
+      cloud_cover, use_async_io, &
+      precip3d_x, precip3d_io, cloud_cover_io, cloud_cover_x, cw3d_x, cw3d_io
   USE snapfilML, only: idata, fdata
   USE snapgrdML, only: ahalf, bhalf, vhalf, alevel, blevel, vlevel, imodlevel, &
       compute_column_max_conc, compute_aircraft_doserate, aircraft_doserate_threshold
@@ -212,19 +201,26 @@ subroutine allocateFields
   if (met_params%use_3d_precip) then
     ALLOCATE(precip3d(nx,ny,nk), cw3d(nx,ny,nk), STAT=AllocateStatus)
     if (AllocateStatus /= 0) ERROR STOP errmsg
-    ALLOCATE(wscav(nx,ny,nk,ncomp),STAT=AllocateStatus)
-    if (AllocateStatus /= 0) ERROR STOP errmsg
-    wscav(:,:,:,:) = 0.0
-    if (use_async_io) then
-      ALLOCATE(wscav_x(nx,ny,nk,ncomp), STAT=AllocateStatus)
-      if (AllocateStatus /= 0) ERROR STOP errmsg
-      wscav_io => wscav_x
-    ELSE
-      wscav_io => wscav
-    END IF
     allocate(cloud_cover(nx,ny,nk), STAT=AllocateStatus)
     if (AllocateStatus /= 0) ERROR STOP errmsg
-  endif
+    
+
+    if (use_async_io) then
+      ALLOCATE(precip3d_x(nx,ny,nk), STAT=AllocateStatus)
+      if (AllocateStatus /= 0) ERROR STOP errmsg
+      precip3d_io => precip3d_x
+      ALLOCATE(cw3d_x(nx,ny,nk), STAT=AllocateStatus)
+      if (AllocateStatus /= 0) ERROR STOP errmsg
+      cw3d_io => cw3d_x   
+      ALLOCATE(cloud_cover_x(nx,ny,nk), STAT=AllocateStatus)
+      if (AllocateStatus /= 0) ERROR STOP errmsg
+      cloud_cover_io => cloud_cover_x     
+    else
+      precip3d_io => precip3d
+      cw3d_io => cw3d
+      cloud_cover_io => cloud_cover
+    end if
+  end if
 
 ! the calculation-fields
   ALLOCATE ( avghbl(nx,ny), STAT = AllocateStatus)
@@ -401,8 +397,9 @@ subroutine deAllocateFields
   if (allocated(precip_x)) deallocate(precip_x)
   if (allocated(precip3d)) deallocate(precip3d)
   if (allocated(cw3d)) deallocate(cw3d)
-  if (allocated(wscav)) deallocate(wscav)
-  if (allocated(wscav_x)) deallocate(wscav_x)
+  if (allocated(precip3d_x)) deallocate(precip3d_x)
+  if (allocated(cw3d_x)) deallocate(cw3d_x)
+  if (allocated(cloud_cover_x)) deallocate(cloud_cover_x)
   if (allocated(cloud_cover)) deallocate(cloud_cover)
 
   DEALLOCATE ( avghbl )
