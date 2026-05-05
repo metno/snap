@@ -74,7 +74,7 @@ testGaussianSmoothing: testGaussianSmoothing.o $(MODELOBJ)
 	${F77} $(F77FLAGS) $(MODELOBJ) $< $(BLIBS) -o $@
 
 clean: clean_links
-	rm -f *.o *~ snap_batch_copy.F90 find_parameters_fi_test bsnap_naccident data/snap.nc data/snap_ecemep.nc data/snap.log testDateCalc test_array_utils testGeoLatLonToGrid testHresLresPos
+	rm -f *.o *~ snap_batch_copy.F90 find_parameters_fi_test bsnap_naccident data/snap.nc data/snap_ecemep.nc data/snap.log testDateCalc test_array_utils testGeoLatLonToGrid testHresLresPos testWetDep
 	rm -rf __pycache__
 
 distclean: clean
