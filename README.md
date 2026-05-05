@@ -79,7 +79,7 @@ env VERSION="some_version_number" make install
 
 ```
 SNAP: Servere Nuclear Accident Programme
-Copyright (C) 1992-2023  Norwegian Meteorological Institute
+Copyright (C) 1992-2026  Norwegian Meteorological Institute
 
 SNAP is free software: you can
 redistribute it and/or modify it under the terms of the
