@@ -1,19 +1,6 @@
 ! SNAP: Servere Nuclear Accident Programme
-! Copyright (C) 1992-2017   Norwegian Meteorological Institute
-!
-! This file is part of SNAP. SNAP is free software: you can
-! redistribute it and/or modify it under the terms of the
-! GNU General Public License as published by the
-! Free Software Foundation, either version 3 of the License, or
-! (at your option) any later version.
-!
-! This program is distributed in the hope that it will be useful,
-! but WITHOUT ANY WARRANTY; without even the implied warranty of
-! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-! GNU General Public License for more details.
-!
-! You should have received a copy of the GNU General Public License
-! along with this program.  If not, see <https://www.gnu.org/licenses/>.
+! Copyright (C) 1992-2026   Norwegian Meteorological Institute
+! License: GNU General Public License v3.0 or later
 
 !> all parameter statements (model dimensions etc.)
 module snapdimML
@@ -74,18 +61,21 @@ module snapdimML
     real(kind=real32), intent(inout) :: field_hres(:,:)
     logical, optional, intent(in) :: bilinear
     logical :: is_bilinear
-    integer :: i, j, k, l, or_2
+    integer :: i, j, k, l, or_2, i0, j0, k_rel, l_rel
     real dd, dx, dy, c1, c2, c3, c4
 
     is_bilinear = .false.
     if (present(bilinear)) is_bilinear = bilinear
     if (output_resolution_factor == 1) is_bilinear = .false.
+    or_2 = int(output_resolution_factor / 2.)
 
     ! nearest neighbor, even if bilinear, to fix the borders
     do j = 1, ny
-      do l = 1, output_resolution_factor
+      do l_rel = -or_2, output_resolution_factor-or_2-1
+        l = l_rel + or_2 + 1
         do i = 1, nx
-          do k = 1, output_resolution_factor
+          do k_rel = -or_2, output_resolution_factor-or_2-1
+            k = k_rel + or_2 + 1
             field_hres(output_resolution_factor*(i-1)+k, output_resolution_factor*(j-1)+l) = field(i,j)
           end do
         end do
@@ -93,24 +83,34 @@ module snapdimML
     end do
 
     if (is_bilinear) then
-      or_2 = int(output_resolution_factor / 2.)
       dd = 1./output_resolution_factor
       do j = 1, ny-1
-        do l = 1, output_resolution_factor
+        do l_rel = -or_2, output_resolution_factor-or_2-1
+          if (l_rel < 0) then
+            if (j == 1) cycle
+            j0 = j - 1
+          else
+            j0 = j
+          end if
+          l = l_rel + or_2 + 1
           do i = 1, nx-1
-            do k = 1, output_resolution_factor
-              ! this will partly extrapolate to left/bottom
-              ! but otherwise too many corner-cases needed
-              dx=(k-1-or_2)*dd
-              dy=(l-1-or_2)*dd
-              c1=(1.-dy)*(1.-dx)
-              c2=(1.-dy)*dx
-              c3=dy*(1.-dx)
-              c4=dy*dx
-              ! go here from -5 to 4 (for case resolution-factor 10)
-              field_hres(output_resolution_factor*i+k-or_2, output_resolution_factor*j+l-or_2) = &
-                c1 * field(i, j)   + c2 * field(i+1, j) + &
-                c3 * field(i, j+1) + c4 * field(i+1, j+1)
+            do k_rel = -or_2, output_resolution_factor-or_2-1
+              if (k_rel < 0) then
+                if (i == 1) cycle
+                i0 = i - 1
+              else
+                i0 = i
+              end if
+              k = k_rel + or_2 + 1
+              dx = (k_rel + 0.5_real32) * dd
+              dy = (l_rel + 0.5_real32) * dd
+              c1 = (1._real32 - dy) * (1._real32 - dx)
+              c2 = (1._real32 - dy) * dx
+              c3 = dy * (1._real32 - dx)
+              c4 = dy * dx
+              field_hres(output_resolution_factor*(i-1)+k, output_resolution_factor*(j-1)+l) = &
+                c1 * field(i0, j0) + c2 * field(i0+1, j0) + &
+                c3 * field(i0, j0+1) + c4 * field(i0+1, j0+1)
             end do
           end do
         end do
@@ -125,18 +125,21 @@ module snapdimML
     real(kind=real32), intent(inout) :: field_hres(:,:)
     logical, optional, intent(in) :: bilinear
     logical :: is_bilinear
-    integer :: i, j, k, l, or_2
+    integer :: i, j, k, l, or_2, i0, j0, k_rel, l_rel
     real dd, dx, dy, c1, c2, c3, c4
 
     is_bilinear = .false.
     if (present(bilinear)) is_bilinear = bilinear
     if (output_resolution_factor == 1) is_bilinear = .false.
+    or_2 = int(output_resolution_factor / 2.)
 
     ! nearest neighbor, even if bilinear, to fix the borders
     do j = 1, ny
-      do l = 1, output_resolution_factor
+      do l_rel = -or_2, output_resolution_factor-or_2-1
+        l = l_rel + or_2 + 1
         do i = 1, nx
-          do k = 1, output_resolution_factor
+          do k_rel = -or_2, output_resolution_factor-or_2-1
+            k = k_rel + or_2 + 1
             field_hres(output_resolution_factor*(i-1)+k, output_resolution_factor*(j-1)+l) = field(i,j)
           end do
         end do
@@ -144,24 +147,34 @@ module snapdimML
     end do
 
     if (is_bilinear) then
-      or_2 = int(output_resolution_factor / 2.)
       dd = 1./output_resolution_factor
       do j = 1, ny-1
-        do l = 1, output_resolution_factor
+        do l_rel = -or_2, output_resolution_factor-or_2-1
+          if (l_rel < 0) then
+            if (j == 1) cycle
+            j0 = j - 1
+          else
+            j0 = j
+          end if
+          l = l_rel + or_2 + 1
           do i = 1, nx-1
-            do k = 1, output_resolution_factor
-              ! this will partly extrapolate to left/bottom
-              ! but otherwise too many corner-cases needed
-              dx=(k-1-or_2)*dd
-              dy=(l-1-or_2)*dd
-              c1=(1.-dy)*(1.-dx)
-              c2=(1.-dy)*dx
-              c3=dy*(1.-dx)
-              c4=dy*dx
-              ! go here from -5 to 4 (for case resolution-factor 10)
-              field_hres(output_resolution_factor*i+k-or_2, output_resolution_factor*j+l-or_2) = &
-                c1 * field(i, j)   + c2 * field(i+1, j) + &
-                c3 * field(i, j+1) + c4 * field(i+1, j+1)
+            do k_rel = -or_2, output_resolution_factor-or_2-1
+              if (k_rel < 0) then
+                if (i == 1) cycle
+                i0 = i - 1
+              else
+                i0 = i
+              end if
+              k = k_rel + or_2 + 1
+              dx = (k_rel + 0.5_real32) * dd
+              dy = (l_rel + 0.5_real32) * dd
+              c1 = (1._real32 - dy) * (1._real32 - dx)
+              c2 = (1._real32 - dy) * dx
+              c3 = dy * (1._real32 - dx)
+              c4 = dy * dx
+              field_hres(output_resolution_factor*(i-1)+k, output_resolution_factor*(j-1)+l) = &
+                c1 * field(i0, j0) + c2 * field(i0+1, j0) + &
+                c3 * field(i0, j0+1) + c4 * field(i0+1, j0+1)
             end do
           end do
         end do
@@ -176,15 +189,18 @@ module snapdimML
 
     integer :: newshape(2)
 
-    integer :: i, j, k, l
+    integer :: i, j, k, l, or_2, k_rel, l_rel
 
     newshape(:) = shape(field)*output_resolution_factor
     allocate(field_hres(newshape(1), newshape(2)))
+    or_2 = int(output_resolution_factor / 2.)
 
     do j = 1, ny
-      do l = 1, output_resolution_factor
+      do l_rel = -or_2, output_resolution_factor-or_2-1
+        l = l_rel + or_2 + 1
         do i = 1, nx
-          do k = 1, output_resolution_factor
+          do k_rel = -or_2, output_resolution_factor-or_2-1
+            k = k_rel + or_2 + 1
             field_hres(output_resolution_factor*(i-1)+k, output_resolution_factor*(j-1)+l) = field(i,j)
           end do
         end do
@@ -197,17 +213,18 @@ module snapdimML
   pure integer function hres_pos(lres_pos)
     USE iso_fortran_env, only: real64
     real(kind=real64), intent(in) :: lres_pos
-    ! convert to 1-starting position (cell 1 from [1,2[, extend to new range, convert to 1-start
-    hres_pos = nint((lres_pos-1.) * output_resolution_factor + 1.)
+    ! Low- and high-resolution cells are centered on integer positions,
+    ! so cell 1 spans [0.5, 1.5[ on both grids.
+    hres_pos = int((lres_pos - 0.5_real64) * output_resolution_factor) + 1
   end function hres_pos
 
 !> translate a x or y position in the output-grid to the
 !> low_resolution input grid position
   pure integer function lres_pos(hres_pos)
-    USE iso_fortran_env, only: real64
     integer, intent(in) :: hres_pos
-    ! convert to 0-starting positions, extend to new range, convert to 1-start
-    lres_pos = nint((hres_pos - 1.)/output_resolution_factor + 1.)
+    ! Map the high-resolution cell center back to the containing
+    ! low-resolution cell using the same half-integer cell edges.
+    lres_pos = int((hres_pos - 0.5)/output_resolution_factor) + 1
   end function lres_pos
 
 

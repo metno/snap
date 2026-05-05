@@ -831,7 +831,7 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
     simulation_start)
   USE snapdimML, only : nx, ny, output_resolution_factor, hres_field
   USE snapfldML, only : field_hr1, field_hr2
-  USE milibML, only : EARTH_RADIUS
+  USE milibML, only : EARTH_RADIUS, GEO_PARAMS
   INTEGER, INTENT(IN) :: iunit, xdimid, ydimid, igtype
   REAL(real32), INTENT(IN):: gparam(8)
   REAL(real32), INTENT(IN), DIMENSION(nx*output_resolution_factor,ny*output_resolution_factor) :: garea
@@ -847,7 +847,6 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
   lon(nx,ny), &
   lat(nx,ny), &
   val, gparam2(6), gparam_hres(8)
-  real(kind=real32) :: llparam(6) = [1.0, 1.0, 1.0, 1.0, 0.0, 0.0]
 
   call check(nf90_def_var(iunit, "x", &
       NF90_FLOAT, xdimid, x_varid))
@@ -908,6 +907,11 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
     call check(nf90_put_att(iunit,proj_varid, &
         "grid_north_pole_latitude", 90.0-gparam(6)))
     call check(nf90_sync(iunit))
+    gparam_hres(3) = gparam(3)/output_resolution_factor
+    gparam_hres(4) = gparam(4)/output_resolution_factor
+    ! first cell center, not left edge. must be moved
+    gparam_hres(1) = gparam(1) - .5 * (output_resolution_factor-1) * gparam_hres(3)
+    gparam_hres(2) = gparam(2) - .5 * (output_resolution_factor-1) * gparam_hres(4)
 
     do i=1,nx*output_resolution_factor
       xvals(i) = gparam_hres(1) + (i-1)*gparam_hres(3)
@@ -935,14 +939,15 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
   !..increment
     gparam_hres(7) = gparam(7)/output_resolution_factor
     gparam_hres(8) = gparam(8)/output_resolution_factor
-    ! first cell center, not left edge. must be moved
-    gparam_hres(1) = gparam(1) + .5 * (output_resolution_factor-1)
-    gparam_hres(2) = gparam(2) + .5 * (output_resolution_factor-1)
+    ! Convert to high-res index space while preserving outer cell edges.
+    ! all cell centers will be moved, but the outer edges will be the same as in low-res, so the same area will be covered.
+    gparam_hres(1) = gparam(1)*output_resolution_factor - 0.5*(output_resolution_factor-1)
+    gparam_hres(2) = gparam(2)*output_resolution_factor - 0.5*(output_resolution_factor-1)
     do i=1,nx*output_resolution_factor
-      xvals(i) = (i-gparam(1))*gparam_hres(7)
+      xvals(i) = (i-gparam_hres(1))*gparam_hres(7)
     end do
     do i=1,ny*output_resolution_factor
-      yvals(i) = (i-gparam(2))*gparam(8)
+      yvals(i) = (i-gparam_hres(2))*gparam_hres(8)
     end do
   case(6) !..lcc
     call check(nf90_put_att(iunit,x_varid, "units", TRIM("m")))
@@ -968,19 +973,20 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
     gparam2(3:6) = gparam(3:6)
 
     ierror = 0
-    call xyconvert(1, xvals(1), yvals(1), 2, llparam, &
+    call xyconvert(1, xvals(1), yvals(1), 2, GEO_PARAMS, &
     &                                          6, gparam2, ierror)
     if (ierror /= 0) then
       write (error_unit,*) "error converting lcc to ll"
       error stop 1
     end if
-    gparam_hres(2) = gparam(2) / output_resolution_factor
-    gparam_hres(3) = gparam(3) / output_resolution_factor
+    ! For LCC output coordinates we use metric spacing (gparam(7:8)).
     gparam_hres(7) = gparam(7) / output_resolution_factor
     gparam_hres(8) = gparam(8) / output_resolution_factor
 
-    xvals(1) = (xvals(1)-1)*gparam(7)
-    yvals(1) = (yvals(1)-1)*gparam(8)
+    ! xyconvert returns center-based low-res indices here; remove the
+    ! extra half-cell before converting to metric hi-res centers.
+    xvals(1) = (xvals(1)-1.5)*gparam(7) + 0.5*gparam_hres(7)
+    yvals(1) = (yvals(1)-1.5)*gparam(8) + 0.5*gparam_hres(8)
 
     do i=2,nx*output_resolution_factor
       xvals(i) = xvals(1) + (i-1)*gparam_hres(7)
@@ -1033,7 +1039,7 @@ subroutine nc_set_projection(iunit, xdimid, ydimid, &
       end do
     end do
     call xyconvert(nx*ny, lon, lat,igtype, gparam, &
-        2, llparam, ierror)
+        2, GEO_PARAMS, ierror)
     if (ierror /= 0) then
       write (error_unit,*) "error converting pos to latlon-projection"
       error stop 1

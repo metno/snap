@@ -14,8 +14,10 @@
 ! TIME.RELEASE=      12h
 ! TITLE=  This is a optional title
 ! SET_RELEASE.POS=   P.1
-! RANDOM.WALK.ON
+! RANDOM.WALK.ON (default)
 ! RANDOM.WALK.OFF
+! FORWARD.ON (default)
+! FORWARD.OFF
 ! BOUNDARY.LAYER.FULL.MIX.OFF
 ! BOUNDARY.LAYER.FULL.MIX.ON
 ! DRY.DEPOSITION.OLD  * deprecated
@@ -186,7 +188,7 @@ PROGRAM bsnap
   USE split_particlesML, only: split_particles
   USE checkdomainML, only: check_in_domain
   USE rwalkML, only: rwalk, rwalk_init
-  USE milibML, only: xyconvert
+  USE milibML, only: xyconvert, GEO_PARAMS
   USE forwrdML, only: forwrd
   USE wetdepML, only: wetdep, wetdep_scheme, wetdep_scheme_t, &
     WETDEP_SUBCLOUD_SCHEME_UNDEFINED, WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
@@ -232,12 +234,10 @@ PROGRAM bsnap
   type(datetime_t) :: itime, itimei, itimeo
   type(datetime_t) :: time_file
 
-!..used in xyconvert (longitude,latitude -> x,y)
-  real, save :: geoparam(6) = [1.0, 1.0, 1.0, 1.0, 0.0, 0.0]
-
   integer :: snapinput_unit, ios
   integer :: nhrun = 0, nhrel = 0
   logical :: use_random_walk = .true.
+  logical :: use_forwrd = .true.
   logical :: autodetect_grid_params = .false.
   integer :: m, np, npl, nlevel, ifltim = 0
   logical :: synoptic_output = .false.
@@ -505,6 +505,7 @@ PROGRAM bsnap
     write (iulog, *) 'mprel:   ', mprel
     write (iulog, *) 'ifltim:  ', ifltim
     write (iulog, *) 'irwalk:  ', use_random_walk
+    write (iulog, *) 'iforwd:  ', use_forwrd
     write (iulog, *) 'drydep_scheme: ', drydep_scheme
     write (iulog, *) 'wetdep_scheme: subcloud scheme:   ', wetdep_scheme%subcloud
     write (iulog, *) 'wetdep_scheme: incloud  scheme:   ', wetdep_scheme%incloud
@@ -617,7 +618,7 @@ PROGRAM bsnap
       y = release_positions(irelpos)%geo_latitude
       x = release_positions(irelpos)%geo_longitude
       write (iulog, *) 'release lat,long: ', y, x
-      call xyconvert(1, x, y, 2, geoparam, igtype, gparam, ierror)
+      call xyconvert(1, x, y, 2, GEO_PARAMS, igtype, gparam, ierror)
       if (ierror /= 0) then
         write (iulog, *) 'ERROR: xyconvert'
         write (iulog, *) '   igtype: ', igtype
@@ -627,9 +628,10 @@ PROGRAM bsnap
         write (error_unit, *) '   gparam: ', gparam
         call snap_error_exit(iulog)
       end if
+      ! gparam stores cell centers; (1=center, 0.5 left/lower corner, 1.5= right/upper corner)
       write (iulog, *) 'release   x,y:    ', x, y
-      if (x(1) < 1.01 .OR. x(1) > (nx - 0.01) .OR. &
-          y(1) < 1.01 .OR. y(1) > (ny - 0.01)) then
+      if (x(1) < 1. .OR. x(1) >= nx  .OR. &
+          y(1) < 1. .OR. y(1) >= ny) then
         write (iulog, *) 'ERROR: Release position outside field area'
         write (error_unit, *) 'ERROR: Release position outside field area'
         call snap_error_exit(iulog)
@@ -800,7 +802,7 @@ PROGRAM bsnap
           call wetdep(tstep, pdata(np), pextra)
 
           !..move all particles forward, save u and v to pextra
-          call forwrd(tf1, tf2, tnow, tstep, pdata(np), pextra)
+          if (use_forwrd) call forwrd(tf1, tf2, tnow, tstep, pdata(np), pextra)
 
           !..apply the random walk method (diffusion)
           ! diffusion is applied after deposition to mix
@@ -1170,6 +1172,10 @@ contains
       case ('random.walk.off')
         !..random.walk.off
         use_random_walk = .false.
+      case ('forward.on')
+        use_forwrd = .true.
+      case ('forward.off')
+        use_forwrd = .false.
       case ('boundary.layer.full.mix.off')
         !..boundary.layer.full.mix.off
         blfullmix = .FALSE.

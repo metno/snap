@@ -1,19 +1,6 @@
 ! SNAP: Servere Nuclear Accident Programme
-! Copyright (C) 1992-2017   Norwegian Meteorological Institute
-
-! This file is part of SNAP. SNAP is free software: you can
-! redistribute it and/or modify it under the terms of the
-! GNU General Public License as published by the
-! Free Software Foundation, either version 3 of the License, or
-! (at your option) any later version.
-
-! This program is distributed in the hope that it will be useful,
-! but WITHOUT ANY WARRANTY; without even the implied warranty of
-! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-! GNU General Public License for more details.
-
-! You should have received a copy of the GNU General Public License
-! along with this program.  If not, see <https://www.gnu.org/licenses/>.
+! Copyright (C) 1992-2026   Norwegian Meteorological Institute
+! License: GNU General Public License v3.0 or later
 
 module checkDomainML
   implicit none
@@ -37,7 +24,9 @@ subroutine check_in_domain(part, out_of_domain)
 
   out_of_domain = .false.
 
-  ! first and last half col/row excl for bilinear interpolation
+  ! Cell centers are at integers; valid range is [0.5, nx+0.5).
+  ! Require x in [1, nx) and y in [1, ny) so bilinear interpolation
+  ! always has both a left and right (lower and upper) neighbour.
   if (part%x < 1 .OR. part%y < 1 .OR. &
       part%x >= nx .OR. part%y >= ny) then
     out_of_domain = .true.

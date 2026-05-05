@@ -49,7 +49,8 @@ subroutine posint(part,rt1,rt2,pextra)
   dygrid=gparam(8)
 
   !..for horizontal interpolations
-  ! i,j = lower left corner
+  ! i,j = center of the (lower left) grid cell in which the particle is located
+  ! dx,dy = distance of the particle to the center of the grid cell in grid units
   i=int(part%x)
   j=int(part%y)
   dx=part%x-i

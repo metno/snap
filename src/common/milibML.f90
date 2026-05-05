@@ -2,6 +2,9 @@ module milibML
   implicit none
   public
   real, parameter :: EARTH_RADIUS = 6371000.0 ! in m
+  ! default grid parameters, i.e. grid-distance 1, origin at (1,1) in fortran coordinates
+  real, parameter :: GEO_PARAMS(6) = [1.0, 1.0, 1.0, 1.0, 0.0, 0.0]
+
 
   interface
     subroutine xyconvert(npos, x, y, igtypa, ga, igtypr, gr, ierror)
