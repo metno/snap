@@ -498,11 +498,9 @@ STEP.HOUR.OUTPUT.FIELDS= 3
                 return
 
             if qDict["metmodel"] == MetModel.EC0p1Europe:
-                lat0 = self.res.ecDefaultDomainStartY
-                latN = (self.res.ecDefaultDomainStartY + self.res.ecDomainHeight)
-                lon0 = self.res.ecDefaultDomainStartX
-                lonN = self.res.ecDefaultDomainStartX + self.res.ecDomainWidth
-                interpol = f"FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|{lon0},{lon0 + 0.1},...,{lonN}|{lat0},{lat0 + 0.1},...,{latN}|degree\n"
+                latN, lonW, latS, lonE = 85, -20, 30, 50
+                gridRes = 0.1
+                interpol = f"FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|{lonW},{lonW + gridRes},...,{lonE}|{latS},{latS + gridRes},...,{latN}|degree\n"
             else:
                 interpol = ""
 
