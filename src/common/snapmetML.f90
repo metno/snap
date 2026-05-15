@@ -224,7 +224,7 @@ module snapmetML
       met_params%z0 = ""
       met_params%hflux = 'surface_downward_sensible_heat_flux'
       met_params%hflux_is_accumulated = .false.
-      met_params%hflux_is_downward = .true.  ! netcdf name in ecmwf database is upward, but data follows database convention and is downward... See codes.ecmwf.int/grib/param-db/146
+      met_params%hflux_is_downward = .true.
 !..get grid parameters from field identification
 
       ! 3D precip parameters
