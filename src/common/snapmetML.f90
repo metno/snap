@@ -215,6 +215,18 @@ module snapmetML
       met_params%precstratiaccumv = ''
       met_params%precconaccumv = ''
 
+      !! ddep parameters
+      met_params%t2m = 'air_temperature_2m'
+      met_params%xflux = 'surface_downward_eastward_stress'
+      met_params%xflux_is_accumulated = .false.
+      met_params%yflux = 'surface_downward_northward_stress'
+      met_params%yflux_is_accumulated = .false.
+      met_params%z0 = ""
+      met_params%hflux = 'surface_downward_sensible_heat_flux'
+      met_params%hflux_is_accumulated = .false.
+      met_params%hflux_is_downward = .true.  ! netcdf name in ecmwf database is upward, but data follows database convention and is downward... See codes.ecmwf.int/grib/param-db/146
+!..get grid parameters from field identification
+
       ! 3D precip parameters
       met_params%mass_fraction_rain_in_air = "mass_fraction_of_liquid_precipitation_in_air_ml"
       met_params%mass_fraction_snow_in_air = "mass_fraction_of_snow_in_air_ml"
@@ -263,8 +275,8 @@ module snapmetML
       met_params%mass_fraction_snow_in_air = "mass_fraction_of_snow_in_air_ml"
 
       met_params%mass_fraction_cloud_condensed_water_in_air = "mass_fraction_of_cloud_condensed_water_in_air_ml"
-      met_params%mass_fraction_cloud_ice_in_air = '' ! Negligible cloud ice in AROME data. 
-                                                     ! Originally: "mass_fraction_of_cloud_ice_in_air_ml" 
+      met_params%mass_fraction_cloud_ice_in_air = '' ! Negligible cloud ice in AROME data.
+                                                     ! Originally: "mass_fraction_of_cloud_ice_in_air_ml"
 
       met_params%cloud_fraction = "cloud_area_fraction_ml"
 !..get grid parameters from field identification
@@ -338,7 +350,7 @@ module snapmetML
       met_params%hflux = 'surface_flux_sensible_heat'
       met_params%hflux_is_accumulated = .false.
       met_params%hflux_is_downward = .true.
-      
+
       met_params%mass_fraction_rain_in_air = ""
       met_params%mass_fraction_graupel_in_air = ""
       met_params%mass_fraction_snow_in_air = ""
