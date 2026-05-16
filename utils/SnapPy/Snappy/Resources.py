@@ -453,6 +453,11 @@ GRAVITY.FIXED.M/S=0.0002
             )
         elif metmodel == MetModel.EC0p1Europe:
             # uses the same as global, with interpolation
+            if "FIMEX.INTERPOLATION" not in interpolation.upper():
+                # must have interpolation, use default EC0p1Europe unless given otherwise
+                latN, lonW, latS, lonE = 85, -20, 30, 50
+                gridRes = 0.1
+                interpolation += f"\nFIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|{lonW},{lonW + gridRes},...,{lonE}|{latS},{latS + gridRes},...,{latN}|degree\n"
             largest_landfraction_file = os.path.join(
                 self.directory, "landfractions", "largestLandFraction_EC0p1Global.nc"
             )

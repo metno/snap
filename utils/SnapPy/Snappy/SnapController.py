@@ -496,16 +496,8 @@ STEP.HOUR.OUTPUT.FIELDS= 3
                     f"no {qDict['metmodel']}  met-files found for {startDT}, runtime {qDict['runTime']}"
                 )
                 return
-
-            if qDict["metmodel"] == MetModel.EC0p1Europe:
-                latN, lonW, latS, lonE = 85, -20, 30, 50
-                gridRes = 0.1
-                interpol = f"FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|{lonW},{lonW + gridRes},...,{lonE}|{latS},{latS + gridRes},...,{latN}|degree\n"
-            else:
-                interpol = ""
-
             with open(os.path.join(self.lastOutputDir, "snap.input"), "a") as fh:
-                fh.write(self.res.getSnapInputMetDefinitions(qDict["metmodel"], files, interpolation=interpol))
+                fh.write(self.res.getSnapInputMetDefinitions(qDict["metmodel"], files))
             self._snap_model_run()
         else:
             self.write_log(f"unsupported MET-model '{qDict['metmodel']}' requested")
