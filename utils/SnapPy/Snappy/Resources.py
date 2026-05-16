@@ -469,7 +469,8 @@ GRAVITY.FIXED.M/S=0.0002
             pass
         elif metmodel == MetModel.Era5Nancy:
             # uses the same as global, with interpolation to nevada/nancy-files
-            interpolation = "FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|-135.,-134.75,...,-90|50,49.75,...,15|degree\n"
+            if "FIMEX.INTERPOLATION" not in interpolation.upper():
+                interpolation += "\nFIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|-135.,-134.75,...,-90|50,49.75,...,15|degree\n"
             largest_landfraction_file = os.path.join(
                 self.directory, "landfractions", "largestLandFraction_EC0p1Global.nc"
             )
