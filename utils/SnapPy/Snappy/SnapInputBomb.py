@@ -6,6 +6,7 @@ from collections import namedtuple
 from enum import Enum
 
 import numpy as np
+
 from Snappy.ActivityHeightDistribution import (
     ActivityHeightDistribution,
     ActivityHeightKdfoc3,
@@ -35,15 +36,15 @@ class ParticleDistribution(Enum):
         else:
             return self._interpolate_size_distribution(num)[0]
 
-    def size_distribution(self, num: int = 1) -> tuple[float]:
+    def size_distribution(self, num: int = 1) -> tuple[float, ...]:
         if num == 1:
-            return self.value.radius_sizes
+            return self.value.size_distribution
         else:
             return self._interpolate_size_distribution(num)[1]
 
     def _interpolate_size_distribution(
         self, num: int
-    ) -> tuple[tuple[float], tuple[float]]:
+    ) -> tuple[tuple[float, ...], tuple[float, ...]]:
         """Interpolate radii of size distribution into
         several sub-steps to simulate a more continuous distribution
 
@@ -92,9 +93,9 @@ class ParticleDistribution(Enum):
         0.0,  # 30% deposition in ground-0
         ActivityHeightType.VOLUMETRIC,
     )
-    # Glasstone Dolan, lognormal ~(3.78, 0.68), + ~50-60% local = in final class
-    SURFACE = _ParticleDistribution(
-        "Surface",
+    # Glasstone Dolan, lognormal ~(3.78, 0.68),
+    GD_HARVEY = _ParticleDistribution(
+        "GD_Harvey",
         [3.0, 6.5, 11.5, 18.5, 29.0, 45.0, 71.0, 120.0, 250.0, 500.0],
         [0.01, 0.01, 0.018, 0.08, 0.17, 0.25, 0.24, 0.17, 0.06, 0.01],  # ~(3.78, 0.68)
         0.00,  # 5% deposition in GZ
@@ -102,11 +103,43 @@ class ParticleDistribution(Enum):
         ActivityHeightType.TRIANGULAR,
     )
 
+    IZRAEL_ROLPH = _ParticleDistribution(
+        "Izrael/Rolph",
+#        [3.0, 6.5, 11.5, 18.5, 29.0, 45.0, 71.0, 120.0, 250.0, 500.0],
+#        [0.04, 0.06, 0.07, 0.08, 0.09, 0.10, 0.11, 0.12, 0.14, 0.19],
+        [  1.08,   2.33,   3.46,   4.59,   5.74,   6.93,   8.19,   9.50,
+        10.89,  12.35,  13.89,  15.53,  17.27,  19.11,  21.07,  23.15,
+        25.37,  27.74,  30.27,  32.97,  35.87,  38.98,  42.32,  45.91,
+        49.78,  53.96,  58.48,  63.39,  68.73,  74.55,  80.92,  87.90,
+        95.60, 104.10, 113.53, 124.06, 135.86, 149.18, 164.32, 181.65,
+       201.68, 225.08, 252.77, 286.03, 326.75, 377.79, 443.74, 532.58,
+       659.57, 858.77],
+       [0.00, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,
+       0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,
+       0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,
+       0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02,
+       0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02],
+        0.0,
+        ActivityHeightType.ROLPH,
+    )
+
     # Glassstone Dolan: below 20µm, using distribution µ=1, σ=0.8
     BOMB = _ParticleDistribution(
         "Bomb",
-        [3.0, 6.5, 11.5, 18.5, 29.0, 45.0, 71.0, 120.0, 250.0, 500.0],
-        [0.55, 0.31, 0.10, 0.04, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        # [3.0, 6.5, 11.5, 18.5, 29.0, 45.0, 71.0, 120.0, 250.0, 500.0],
+        # [0.55, 0.31, 0.10, 0.04, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        [  1.08,   2.33,   3.46,   4.59,   5.74,   6.93,   8.19,   9.50,
+        10.89,  12.35,  13.89,  15.53,  17.27,  19.11,  21.07,  23.15,
+        25.37,  27.74,  30.27,  32.97,  35.87,  38.98,  42.32,  45.91,
+        49.78,  53.96,  58.48,  63.39,  68.73,  74.55,  80.92,  87.90,
+        95.60, 104.10, 113.53, 124.06, 135.86, 149.18, 164.32, 181.65,
+       201.68, 225.08, 252.77, 286.03, 326.75, 377.79, 443.74, 532.58,
+       659.57, 858.77],
+       [0.00, 0.29, 0.24, 0.16, 0.10, 0.07, 0.04, 0.03, 0.02, 0.01, 0.01,
+       0.01, 0.01, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00,
+       0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00,
+       0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00,
+       0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00],
         0.0,  # 0% in ground-0
         ActivityHeightType.VOLUMETRIC_NO_STEM,
     )
@@ -128,17 +161,17 @@ class ExplosionType(Enum):
     # fmt: off
     # default snap
     # surface == spriggs r6
-    SURFACE  = _ExplosionType("Surface",      [(0.75, ParticleDistribution.SURFACE),
-                                               (0.25, ParticleDistribution.BOMB)])
-    SPRIGGS_R6 = _ExplosionType("Spriggs R6", [(0.75, ParticleDistribution.SURFACE),
-                                               (0.25, ParticleDistribution.BOMB)])
-    SPRIGGS_R5_5 = _ExplosionType("Spriggs R5.5", [(0.5, ParticleDistribution.SURFACE),
+    SURFACE  = _ExplosionType("Surface",      [(0.99, ParticleDistribution.IZRAEL_ROLPH),
+                                               (0.01, ParticleDistribution.BOMB)])
+    SPRIGGS_R6 = _ExplosionType("Spriggs R6", [(0.99, ParticleDistribution.IZRAEL_ROLPH),
+                                               (0.01, ParticleDistribution.BOMB)])
+    SPRIGGS_R5_5 = _ExplosionType("Spriggs R5.5", [(0.5, ParticleDistribution.IZRAEL_ROLPH),
                                                    (0.5, ParticleDistribution.BOMB)])
-    SPRIGGS_R5 = _ExplosionType("Spriggs R5", [(0.25, ParticleDistribution.SURFACE),
+    SPRIGGS_R5 = _ExplosionType("Spriggs R5", [(0.25, ParticleDistribution.IZRAEL_ROLPH),
                                                (0.75, ParticleDistribution.BOMB)])
-    SPRIGGS_R4_5 = _ExplosionType("Spriggs R4.5", [(0.13, ParticleDistribution.SURFACE),
+    SPRIGGS_R4_5 = _ExplosionType("Spriggs R4.5", [(0.13, ParticleDistribution.IZRAEL_ROLPH),
                                                    (0.87, ParticleDistribution.BOMB)])
-    SPRIGGS_R4 = _ExplosionType("Spriggs R4", [(0.05, ParticleDistribution.SURFACE),
+    SPRIGGS_R4 = _ExplosionType("Spriggs R4", [(0.05, ParticleDistribution.IZRAEL_ROLPH),
                                                (0.95, ParticleDistribution.BOMB)])
     MIXED = _ExplosionType("Mixed",           [(1.0, ParticleDistribution.MIXED)])
     HIGH = _ExplosionType("High Altitude",    [(1.0, ParticleDistribution.BOMB)])
@@ -203,8 +236,33 @@ class YieldParameters:
 30	6500	9500	3000
 """
 
+    _cloud_defs_harvey = """yield	bottom	top	thickness
+0	0	0	0
+0.5	1709	3183	1473
+1	1990	3730	1740
+2	2318	4373	2055
+3	2837	5128	2291
+4	3272	5742	2470
+5	3650	6268	2618
+6	3988	6734	2746
+7	4296	7154	2858
+8	4580	7540	2960
+9	4845	7897	3052
+10	5094	8231	3137
+15	6165	9653	3487
+20	7049	10808	3759
+25	7259	11243	3985
+30	7433	11612	4179
+50	7936	12711	4775
+100	8648	14370	5722
+150	9079	15439	6360
+300	9833	17455	7622
+500	10397	19106	8709
+1000	11164	21600	10436
+"""
+
     # rolph == ATP-45
-    _clouds_defs_rolph = """yield	bottom	top	thickness
+    _cloud_defs_rolph = """yield	bottom	top	thickness
 0	0	0	0
 0.5	1500	2250	750
 2.5	2000	3700	1222
@@ -227,7 +285,8 @@ class YieldParameters:
         self._nuclear_yield = nuclear_yield
         self._explosion_type = explosion_type
         # self._cloud_defs = self._parse_clouds(io.StringIO(self._cloud_defs1))
-        self._cloud_defs = self._parse_clouds(io.StringIO(self._clouds_defs_rolph))
+        # self._cloud_defs = self._parse_clouds(io.StringIO(self._cloud_defs_rolph))
+        self._cloud_defs = self._parse_clouds(io.StringIO(self._cloud_defs_harvey))
         return
 
     @property
@@ -302,26 +361,29 @@ class YieldParameters:
     def cloud_radius(self):
         """cloud radius in m
 
-        Typical radius of mushroom cloud after ~ 10 - 15 min is 1-3 km seen from different studies (Kanarska et al., 2009, Arthur et al., 2021)
+        harvey/kdfoc3: 872*pow(yield, 0.427) m, see Glasstone and Dolan (9.60)
         """
-        return 2500.0
+        return 872 * math.pow(self._nuclear_yield, 0.427)
+        # Typical radius of mushroom cloud after ~ 10 - 15 min is 1-3 km seen from different studies (Kanarska et al., 2009, Arthur et al., 2021)
+        # return 2500.0
 
     def stem_radius(self):
         """stem radius in m"""
         if self.explosion_type == ExplosionType.HIGH:
             return 0.0
         else:
+            return self.cloud_radius() / 3  # kdfoc3 simplificated
             # Glasstone-Dolan 9.61: the mushroom head from a contact land-surface burst initially contains about 90 percent with the remainder residing in the stem.
-            fraction = 0.1
-            vol_head = (
-                math.pi
-                * (self.cloud_radius() * self.cloud_radius())
-                * (self.cloud_top() - self.cloud_bottom())
-            )
-            stem_radius = math.sqrt(
-                fraction * vol_head / (math.pi * self.cloud_bottom())
-            )
-            return round(stem_radius)
+            # fraction = 0.1
+            # vol_head = (
+            #     math.pi
+            #     * (self.cloud_radius() * self.cloud_radius())
+            #     * (self.cloud_top() - self.cloud_bottom())
+            # )
+            # stem_radius = math.sqrt(
+            #     fraction * vol_head / (math.pi * self.cloud_bottom())
+            # )
+            # return round(stem_radius)
 
 
 class SnapInputBomb:
@@ -338,7 +400,7 @@ class SnapInputBomb:
     argos_operational : operational mode, i.e. non-decay H+1 run
     """
 
-    SIZE_INTERPOLATION = 5
+    SIZE_INTERPOLATION = 1  # number of sub-steps for interpolation of size distribution, default 1 (no interpolation)
 
     def __init__(
         self,
@@ -664,7 +726,7 @@ class SnapInputBomb:
         ):
             lines.append(
                 f"""
-    MAX.PARTICLES.PER.RELEASE= 1000000
+    MAX.PARTICLES.PER.RELEASE= 2000000
     RELEASE.MINUTE= {self.minutes}
     RELEASE.RADIUS.M= {self.cloud_radius}
     RELEASE.LOWER.M= {self.cloud_bottom}
@@ -695,7 +757,7 @@ class SnapInputBomb:
             components = [
                 f"'{self.component_name(i)}'" for i, _ in enumerate(self.radius_sizes)
             ]
-            max_particles = 1000000 / len(lower)
+            max_particles = 4000000 / len(lower)
             lines.append(
                 f"""
     MAX.PARTICLES.PER.RELEASE= {max_particles:.0f}
