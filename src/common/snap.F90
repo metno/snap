@@ -640,6 +640,8 @@ PROGRAM bsnap
       release_positions(irelpos)%grid_y = y(1)
     end block
 
+    ! start time loop
+    itimei = time_start
     npartmax = 0
 #ifdef _OPENMP
     ! both task and inner parallel do loops, so need 2 levels of parallelism
@@ -662,13 +664,8 @@ PROGRAM bsnap
       if (.not. use_async_io .or. istep == 0) then
         if (next_input_step == istep .and. nhleft > 0) then
           call input_timer%start()
-          if (istep == 0) then
-            ! start time loop
-            itimei = time_start
-          else
-            ! initial time to start next timestep is the time of the current file
-            itimei = time_file
-          end if
+          ! initial time to read next timestep is the time of the current file
+          itimei = time_file
           if (.not. use_async_io) then
             ! move all u2, v2, etc fields to u1, v1, etc before reading new fields to u2, v2, etc
             call swap_fields_before_reading()
@@ -678,7 +675,13 @@ PROGRAM bsnap
           write (error_unit, fmt="('input data: ',i4,3i3.2)") time_file
           call input_timer%stop_and_log()
 
-          dur = time_file - itimei
+          ! duration to next read
+          if (istep == 0) then
+            dur = time_file - time_start
+          else
+            ! itimei is the current files timestep
+            dur = time_file - itimei
+          end if
           ihdiff = dur%hours
           tf1 = 0.
           tf2 = 3600.*ihdiff
