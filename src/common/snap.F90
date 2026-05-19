@@ -705,7 +705,12 @@ PROGRAM bsnap
           end if
           ! just keep reading from the last timestep, no interpolation needed
           call swap_fields_after_reading()
-          dur = time_file - itimei
+          if (istep == 0) then
+            dur = time_file - time_start
+          else
+            ! itimei is the current files timestep
+            dur = time_file - itimei
+          end if
           ihdiff = dur%hours
           tf1 = 0.
           tf2 = 3600.*ihdiff
