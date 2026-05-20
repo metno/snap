@@ -581,21 +581,32 @@ GRAVITY.FIXED.M/S=0.0002
         if fixed_run == "best":
             if run_hours < 0:
                 start = dtime + timedelta(hours=run_hours)
+                finish = dtime  #start < finish always
             else:
-                start = dtime
+                start = dtime  # start < finish always
+                finish = start + timedelta(hours=run_hours)
 
-            start -= timedelta(hours=66)  # go 66 hours (forecast-length) back
-            last = start + timedelta(
-                days=24
-            )  # offer max 21days (24days - 66hours) in archive
+
             today = datetime.combine(date.today(), time(0, 0, 0))
             tomorrow = today + timedelta(days=1)
-            if tomorrow < last:
-                last = tomorrow
+
+            logger.debug((f"start {start}"))
+            logger.debug((f"finish {finish}"))
+
+            if (finish - tomorrow).days >= 3:
+                logger.debug(f"Runtime exceeds meteorological availability - run will be cut short.")
+            
+            if tomorrow < finish:
+                finish = tomorrow
             days = []
-            while start < last:
+            while start < finish:
                 days.append(start)
                 start += timedelta(days=1)
+            if days==[]:
+                #If run is purely in future
+                days = [
+                        today,
+                    ]
             # loop needs to have latest model runs/hindcast runs last
             for day in days:
                 for utc in [0, 6, 12, 18]:
