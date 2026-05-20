@@ -2,8 +2,8 @@
 
 set -e
 
-export VERSION=2.5.21
-export CHANGE_LOG="global land-fractions"
+export VERSION=2.5.22
+export CHANGE_LOG="meteo-time fix"
 #VERSION_=`echo -n $VERSION | tr '.' '_'`
 
 # We do not have a way of cross-compiling,

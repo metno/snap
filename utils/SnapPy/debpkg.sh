@@ -53,8 +53,8 @@ if [ ! -f "Snappy/resources/1-s2.0-S0146645313000110-mmc1.zip" ]; then
 fi
 
 HOST=$(lsb_release --codename --short)
-export VERSION=2.5.21
-CHANGELOG="write to new disks"
+export VERSION=2.5.22
+CHANGELOG="izrael/harvey/rolph ND parameterization"
 export DEBEMAIL=${USER}@met.no
 
 check_git_lfs() {

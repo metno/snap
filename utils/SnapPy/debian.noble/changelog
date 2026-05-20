@@ -1,3 +1,9 @@
+snap-py (2.5.22-1) noble; urgency=medium
+
+  * izrael/harvey/rolph ND parameterization
+
+ -- Ubuntu <ubuntu@met.no>  Wed, 20 May 2026 12:32:16 +0000
+
 snap-py (2.5.21-1) noble; urgency=medium
 
   * write to new disks
