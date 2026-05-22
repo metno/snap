@@ -595,11 +595,9 @@ GRAVITY.FIXED.M/S=0.0002
 
             if (finish - tomorrow).days >= 3:
                 logger.debug(f"Runtime exceeds meteorological availability - run will be cut short.")
-            
-            if tomorrow < finish:
-                finish = tomorrow
+
             days = []
-            while start < finish:
+            while start < min(finish + timedelta(days=1), tomorrow):
                 days.append(start)
                 start += timedelta(days=1)
             if days==[]:
@@ -622,7 +620,33 @@ GRAVITY.FIXED.M/S=0.0002
                             60 * 10
                         ):  # file older than 10min -> no longer under production
                             relevant_dates.append(filename)
+                    
+                    elif utc == 0 and day==days[0]:
+                        logger.debug(f"File {file} doesnt exist")
+                        utc_list = [18, 12, 6, 0]
 
+                        cases = [
+                            (u, d)
+                                for d in range(5)
+                                for u in utc_list
+                            ]
+                        for new_utc, dayoffset in cases:
+                            file = self.MET_FILENAME_PATTERN[metmodel].format(
+                                    UTC=new_utc, year=(day- timedelta(days=dayoffset)).year, month=(day - timedelta(days=dayoffset)).month, day=(day - timedelta(days=dayoffset)).day
+                                    )
+                                
+                            filename = self._findFileInPathes(
+                                file, self.getMetInputDirs(metmodel)
+                                )
+                            if filename is not None:
+                                logger.debug(f"Took {file} instead")
+                                relevant_dates.append(filename)
+                                break
+                        if filename is None:
+                            logger.debug("No alternative file exists")
+
+                    else:
+                        logger.debug(f"File {file} doesnt exist -- skipping")
         return relevant_dates
 
     def getECMeteorologyFiles(
