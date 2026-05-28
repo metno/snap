@@ -552,11 +552,6 @@ GRAVITY.FIXED.M/S=0.0002
     def getMEPS25MeteorologyFiles(
         self, dtime: datetime, run_hours: int, fixed_run="best", prod_check=True
     ):
-        return self.getMeteorologyFiles(MetModel.Meps2p5, dtime, run_hours, fixed_run, prod_check)
-
-    def getMeteorologyFiles(
-        self, metmodel, dtime: datetime, run_hours: int, fixed_run="best",prod_check=True
-    ):
         """Get available meteorology files for the last few days around dtime and run_hours.
 
         Keyword arguments:
@@ -566,16 +561,8 @@ GRAVITY.FIXED.M/S=0.0002
         latitude -- float of latitude position
         longitude -- float of longitude position
         """
+        metmodel=MetModel.Meps2p5
         relevant_dates = []
-
-        if metmodel not in self.MET_FILENAME_PATTERN:
-            raise NotImplementedError(
-                "metmodel='{}' not implememented for meteorology".format(metmodel)
-            )
-        if metmodel not in self._MET_INPUTDIRS:
-            raise NotImplementedError(
-                "metmodel='{}' not implememented for meteorology".format(metmodel)
-            )
 
         # only best currently implemented
         if fixed_run == "best":
@@ -594,7 +581,7 @@ GRAVITY.FIXED.M/S=0.0002
             logger.debug((f"finish {finish}"))
 
             if (finish - tomorrow).days >= 3:
-                logger.debug(f"Runtime exceeds meteorological availability - run will be cut short.")
+                logger.debug("Runtime exceeds meteorological availability - run will be cut short.")
 
             days = []
             while start < min(finish + timedelta(days=1), tomorrow):
@@ -607,7 +594,7 @@ GRAVITY.FIXED.M/S=0.0002
                     ]
             # loop needs to have latest model runs/hindcast runs last
             for day in days:
-                for utc in [0, 6, 12, 18]:
+                for utc in [0,3, 6, 9,12,15, 18]:
                     file = self.MET_FILENAME_PATTERN[metmodel].format(
                         UTC=utc, year=day.year, month=day.month, day=day.day
                     )
@@ -650,6 +637,66 @@ GRAVITY.FIXED.M/S=0.0002
                         logger.debug(f"File {file} doesnt exist -- skipping")
         return relevant_dates
 
+    def getMeteorologyFiles(
+        self, metmodel, dtime: datetime, run_hours: int, fixed_run="best"
+    ):
+        """Get available meteorology files for the last few days around dtime and run_hours.
+
+        Keyword arguments:
+        dtime -- start time of model run
+        run_hours -- run length in hours, possibly negative
+        fixed_run -- string of form YYYY-MM-DD_HH giving a specific model-run
+        latitude -- float of latitude position
+        longitude -- float of longitude position
+        """
+        relevant_dates = []
+
+        if metmodel not in self.MET_FILENAME_PATTERN:
+            raise NotImplementedError(
+                "metmodel='{}' not implememented for meteorology".format(metmodel)
+            )
+        if metmodel not in self._MET_INPUTDIRS:
+            raise NotImplementedError(
+                "metmodel='{}' not implememented for meteorology".format(metmodel)
+            )
+
+        # only best currently implemented
+        if fixed_run == "best":
+            if run_hours < 0:
+                start = dtime + timedelta(hours=run_hours)
+            else:
+                start = dtime
+
+            start -= timedelta(hours=66)  # go 66 hours (forecast-length) back
+            last = start + timedelta(
+                days=24
+            )  # offer max 21days (24days - 66hours) in archive
+            today = datetime.combine(date.today(), time(0, 0, 0))
+            tomorrow = today + timedelta(days=1)
+            if tomorrow < last:
+                last = tomorrow
+            days = []
+            while start < last:
+                days.append(start)
+                start += timedelta(days=1)
+            # loop needs to have latest model runs/hindcast runs last
+            for day in days:
+                for utc in [0, 6, 12, 18]:
+                    file = self.MET_FILENAME_PATTERN[metmodel].format(
+                        UTC=utc, year=day.year, month=day.month, day=day.day
+                    )
+                    filename = self._findFileInPathes(
+                        file, self.getMetInputDirs(metmodel)
+                    )
+                    if filename is not None:
+                        fmtime = os.stat(filename).st_mtime
+                        if (mtime.time() - fmtime) > (
+                            60 * 10
+                        ):  # file older than 10min -> no longer under production
+                            relevant_dates.append(filename)
+
+        return relevant_dates
+    
     def getECMeteorologyFiles(
         self, dtime: datetime, run_hours: int, fixed_run="best", pattern=""
     ) -> list[str]:
