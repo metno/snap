@@ -550,12 +550,12 @@ GRAVITY.FIXED.M/S=0.0002
         return relevant
 
     def getMEPS25MeteorologyFiles(
-        self, dtime: datetime, run_hours: int, fixed_run="best"
+        self, dtime: datetime, run_hours: int, fixed_run="best", prod_check=True
     ):
-        return self.getMeteorologyFiles(MetModel.Meps2p5, dtime, run_hours, fixed_run)
+        return self.getMeteorologyFiles(MetModel.Meps2p5, dtime, run_hours, fixed_run, prod_check)
 
     def getMeteorologyFiles(
-        self, metmodel, dtime: datetime, run_hours: int, fixed_run="best"
+        self, metmodel, dtime: datetime, run_hours: int, fixed_run="best",prod_check=True
     ):
         """Get available meteorology files for the last few days around dtime and run_hours.
 
@@ -614,20 +614,21 @@ GRAVITY.FIXED.M/S=0.0002
                     filename = self._findFileInPathes(
                         file, self.getMetInputDirs(metmodel)
                     )
-                    if filename is not None:
-                        fmtime = os.stat(filename).st_mtime
-                        if (mtime.time() - fmtime) > (
-                            60 * 10
-                        ):  # file older than 10min -> no longer under production
-                            relevant_dates.append(filename)
+
+                    if filename is not None and prod_check and ((mtime.time() - os.stat(filename).st_mtime) > (60 * 10)):
+                        #Check production was longer than 10 minutes ago, else skip
+                        filename = None 
                     
+                    if filename is not None:
+                        relevant_dates.append(filename)
+
                     elif utc == 0 and day==days[0]:
                         logger.debug(f"File {file} doesnt exist")
                         utc_list = [18, 12, 6, 0]
 
                         cases = [
                             (u, d)
-                                for d in range(5)
+                                for d in range(1,6)
                                 for u in utc_list
                             ]
                         for new_utc, dayoffset in cases:
