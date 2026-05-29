@@ -35,7 +35,9 @@ Specific period:
     d) missing end days
     e) missing all data
     f) missing 00, 18 files, 00 start
-
+10. Starting at 00:00
+    a) Starting at 00:00, full data
+    b) Missing 00 and 18 files
 """
 
 today = datetime.combine(date.today(), time(5, 0, 0))
@@ -235,10 +237,10 @@ class TestClass:
         duration = 12
 
         expected = [
+            f"{tmpdir}/{yesterday.year}/{yesterday.month:02d}/{yesterday.day:02d}/meps_det_2_5km_{yesterday.year}{yesterday.month:02d}{yesterday.day:02d}T18Z.nc",
             f"{tmpdir}/{today.year}/{today.month:02d}/{today.day:02d}/meps_det_2_5km_{today.year}{today.month:02d}{today.day:02d}T00Z.nc",
             f"{tmpdir}/{today.year}/{today.month:02d}/{today.day:02d}/meps_det_2_5km_{today.year}{today.month:02d}{today.day:02d}T06Z.nc",
             f"{tmpdir}/{today.year}/{today.month:02d}/{today.day:02d}/meps_det_2_5km_{today.year}{today.month:02d}{today.day:02d}T12Z.nc",
-            f"{tmpdir}/{today.year}/{today.month:02d}/{today.day:02d}/meps_det_2_5km_{today.year}{today.month:02d}{today.day:02d}T18Z.nc",
         ]
 
         assert (
@@ -271,7 +273,6 @@ class TestClass:
             f"{tmpdir}/2026/01/04/meps_det_2_5km_20260104T00Z.nc",
             f"{tmpdir}/2026/01/04/meps_det_2_5km_20260104T06Z.nc",
             f"{tmpdir}/2026/01/04/meps_det_2_5km_20260104T12Z.nc",
-            f"{tmpdir}/2026/01/04/meps_det_2_5km_20260104T18Z.nc",
         ]
 
         assert (
@@ -309,7 +310,6 @@ class TestClass:
             f"{tmpdir}/2026/01/03/meps_det_2_5km_20260103T00Z.nc",
             f"{tmpdir}/2026/01/03/meps_det_2_5km_20260103T06Z.nc",
             f"{tmpdir}/2026/01/03/meps_det_2_5km_20260103T12Z.nc",
-            f"{tmpdir}/2026/01/03/meps_det_2_5km_20260103T18Z.nc",
         ]
 
         assert (
@@ -374,7 +374,6 @@ class TestClass:
             f"{tmpdir}/2026/01/03/meps_det_2_5km_20260103T00Z.nc",                    
             f"{tmpdir}/2026/01/03/meps_det_2_5km_20260103T06Z.nc",
             f"{tmpdir}/2026/01/03/meps_det_2_5km_20260103T12Z.nc",
-            f"{tmpdir}/2026/01/03/meps_det_2_5km_20260103T18Z.nc",
         ]
 
         assert (
@@ -412,7 +411,6 @@ class TestClass:
             f"{tmpdir}/2026/01/04/meps_det_2_5km_20260104T00Z.nc",                    
             f"{tmpdir}/2026/01/04/meps_det_2_5km_20260104T06Z.nc",
             f"{tmpdir}/2026/01/04/meps_det_2_5km_20260104T12Z.nc",
-            f"{tmpdir}/2026/01/04/meps_det_2_5km_20260104T18Z.nc",
         ]
 
         assert (
@@ -466,8 +464,31 @@ class TestClass:
             res.getMEPS25MeteorologyFiles(start, duration, prod_check=False) == expected
         )
 
+    
+    #### Test 10 ####
+    def test_00_start(self, tmp_path_with_meteo_files):
+        # Part a: Starting at 00:00
+        tmpdir = str(tmp_path_with_meteo_files)
+        res = Resources()
+        res._MET_INPUTDIRS = {
+            MetModel.Meps2p5: [tmpdir],
+        }
+        start = datetime.fromisoformat("2026-01-03T00:00:00")
+        duration = 12
+
+        expected = [
+            f"{tmpdir}/2026/01/02/meps_det_2_5km_20260102T18Z.nc",
+            f"{tmpdir}/2026/01/03/meps_det_2_5km_20260103T00Z.nc",
+            f"{tmpdir}/2026/01/03/meps_det_2_5km_20260103T06Z.nc",
+            f"{tmpdir}/2026/01/03/meps_det_2_5km_20260103T12Z.nc",
+        ]
+
+        assert (
+            res.getMEPS25MeteorologyFiles(start, duration, prod_check=False) == expected
+        )
+    
     def test_missing_00_and_18(self, tmp_path_with_meteo_files):
-        # Part f: Starting at 00:00, missing 00 and 18 files
+        # Part b: Starting at 00:00, missing 00 and 18 files
         for year in (tmp_path_with_meteo_files).glob("*"):
             for month in (year).glob("*"):
                 for day in (month).glob("*"):
@@ -487,8 +508,6 @@ class TestClass:
             f"{tmpdir}/2026/01/02/meps_det_2_5km_20260102T12Z.nc",
             f"{tmpdir}/2026/01/03/meps_det_2_5km_20260103T06Z.nc",
             f"{tmpdir}/2026/01/03/meps_det_2_5km_20260103T12Z.nc",
-            f"{tmpdir}/2026/01/04/meps_det_2_5km_20260104T06Z.nc",
-            f"{tmpdir}/2026/01/04/meps_det_2_5km_20260104T12Z.nc",
         ]
 
         assert (

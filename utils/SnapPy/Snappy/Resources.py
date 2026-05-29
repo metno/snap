@@ -573,7 +573,6 @@ GRAVITY.FIXED.M/S=0.0002
                 start = dtime  # start < finish always
                 finish = start + timedelta(hours=run_hours)
 
-
             today = datetime.combine(date.today(), time(0, 0, 0))
             tomorrow = today + timedelta(days=1)
 
@@ -584,17 +583,47 @@ GRAVITY.FIXED.M/S=0.0002
                 logger.debug("Runtime exceeds meteorological availability - run will be cut short.")
 
             days = []
-            while start < min(finish + timedelta(days=1), tomorrow):
-                days.append(start)
-                start += timedelta(days=1)
+            tmp = start
+            while tmp < min(finish + timedelta(days=1), tomorrow):
+                days.append(tmp)
+                tmp += timedelta(days=1)
             if days==[]:
                 #If run is purely in future
                 days = [
                         today,
                     ]
+                
             # loop needs to have latest model runs/hindcast runs last
+            if start.hour < 3:
+                i=0
+                utc_list = [21, 18, 15, 12, 9, 6, 3, 0]
+                cases = [
+                        (u, d)
+                            for d in range(1,6)
+                            for u in utc_list
+                        ]
+                filename=None
+                while filename is None and i < len(cases)-1:
+                    new_utc = cases[i][0]
+                    dayoffset = cases[i][1]
+                    file = self.MET_FILENAME_PATTERN[metmodel].format(
+                                UTC=new_utc, year=(start- timedelta(days=dayoffset)).year, month=(start - timedelta(days=dayoffset)).month, day=(start - timedelta(days=dayoffset)).day
+                                )
+                                
+                    filename = self._findFileInPathes(
+                        file, self.getMetInputDirs(metmodel)
+                        )
+
+                    i+=1
+
+                if filename is not None:
+                    relevant_dates.append(filename)
+                else:
+                    logger.debug("Initial file does not exist")
             for day in days:
-                for utc in [0,3, 6, 9,12,15, 18]:
+                for utc in [0, 3, 6, 9,12,15, 18, 21]:
+                    if day.date() == (finish + timedelta(hours=3)).date() and utc > (finish + timedelta(hours=3)).hour:
+                        return relevant_dates
                     file = self.MET_FILENAME_PATTERN[metmodel].format(
                         UTC=utc, year=day.year, month=day.month, day=day.day
                     )
@@ -602,16 +631,17 @@ GRAVITY.FIXED.M/S=0.0002
                         file, self.getMetInputDirs(metmodel)
                     )
 
-                    if filename is not None and prod_check and ((mtime.time() - os.stat(filename).st_mtime) > (60 * 10)):
+                    if filename is not None and prod_check and ((mtime.time() - os.stat(filename).st_mtime) < (60 * 10)):
                         #Check production was longer than 10 minutes ago, else skip
+                        logger.debug(f"File {file} exists but isn't old enough")
                         filename = None 
                     
                     if filename is not None:
                         relevant_dates.append(filename)
 
-                    elif utc == 0 and day==days[0]:
+                    elif utc == 0 and day==days[0] and relevant_dates==[]:
                         logger.debug(f"File {file} doesnt exist")
-                        utc_list = [18, 12, 6, 0]
+                        utc_list = [21, 18, 15, 12, 9, 6, 3, 0]
 
                         cases = [
                             (u, d)
@@ -635,6 +665,7 @@ GRAVITY.FIXED.M/S=0.0002
 
                     else:
                         logger.debug(f"File {file} doesnt exist -- skipping")
+
         return relevant_dates
 
     def getMeteorologyFiles(
