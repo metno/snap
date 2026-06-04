@@ -281,34 +281,16 @@ STEP.HOUR.OUTPUT.FIELDS= 3
                             release_dt, runtime
                         )
                     )
-            elif met_model == MetModel.NrpaEC0p1Global:
-                ecmet = EcMeteorologyCalculator(
-                    EcMeteorologyCalculator.getGlobalMeteoResources(),
-                    release_dt,
-                    float(lon),
-                    float(lat),
-                )
-                ecmet.calc()
-                if ecmet.must_calc():
-                    raise Exception(
-                        "no EC met-files calculated for {}".format(release_dt)
-                    )
-                files = ecmet.get_meteorology_files()
-                (metdef["startX"], metdef["startY"]) = ecmet.get_grid_startX_Y()
             elif met_model == MetModel.EC0p1Global:
                 globalRes = EcMeteorologyCalculator.getGlobalMeteoResources()
-                files = [
-                    x[1]
-                    for x in sorted(
-                        MeteorologyCalculator.findAllGlobalData(globalRes),
-                        key=lambda x: x[0],
-                    )
-                ]
+                files = res.getRequiredMeteorologyFiles(MetModel.EC0p1Global,
+                release_dt, runtime, "best" 
+            )
                 lat0 = MeteorologyCalculator.getLat0(float(lat), globalRes.domainHeight)
                 lon0 = MeteorologyCalculator.getLon0(float(lon), globalRes.domainWidth)
                 interpolation = f"FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|{lon0},{lon0 + 0.1},...,{lon0 + globalRes.domainWidth}|{lat0},{lat0 + 0.1},...,{lat0 + globalRes.domainHeight}|degree\n"
             elif met_model == MetModel.Meps2p5:
-                files = res.getMEPS25MeteorologyFiles(met_model, release_dt, runtime, "best")
+                files = res.getRequiredMeteorologyFiles(met_model, release_dt, runtime, "best")
                 if len(files) == 0:
                     raise Exception(
                         "no MEPS2_5 met-files found for {}, runtime {}".format(
@@ -518,7 +500,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--metmodel",
-        help="the metmodel to use: nrpa_ec_0p1, nrpa_ec_0p1_global, ec_0p1_global, meps_2_5km, gfs_grib_filter_fimex, icon_0p25_global",
+        help="the metmodel to use: nrpa_ec_0p1, ec_0p1_global, meps_2_5km, gfs_grib_filter_fimex, icon_0p25_global",
         default="nrpa_ec_0p1",
     )
     parser.add_argument("--starttime", help="start time YYYY-MM-DD_HH")
