@@ -984,38 +984,3 @@ def snapNc_convert_to_grib(snapNc, basedir, ident, isotopes, bitmapCompress=Fals
 
     errlog.close()
     outlog.close()
-
-
-if __name__ == "__main__":
-    print(Resources().getStartScreen())
-    print(
-        Resources().getECMeteorologyFiles(datetime.combine(date.today(), time(0)), 48)
-    )
-    print(
-        Resources().getECMeteorologyFiles(datetime.combine(date.today(), time(0)), -72)
-    )
-    runs = Resources().getECRuns()
-    print(runs)
-    print(
-        Resources().getECMeteorologyFiles(
-            datetime.combine(date.today(), time(0)), 48, runs[1]
-        )
-    )
-    print(Resources().isotopes2snapinput([169, 158, 148]))
-    print(
-        Resources().getRequiredMeteorologyFiles(
-            datetime.combine(date.today(), time(0)), -48
-        )
-    )
-    print(
-        Resources().getRequiredMeteorologyFiles(
-            datetime.combine(date.today(), time(0)), -72
-        )
-    )
-    print(Resources().getDoseCoefficients())
-    isotopes = ["Cs-137", "Cs134"]
-    isoIds = Resources().isotopes2isoIds(isotopes)
-    print(f"f{isotopes} have ids:  {isoIds}")
-    assert len(isotopes) == len(isoIds)
-    # isotopes2isoIds idempotent
-    assert len(isoIds) == len(Resources().isotopes2isoIds(isoIds))

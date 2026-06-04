@@ -1,20 +1,9 @@
 # SNAP: Servere Nuclear Accident Programme
-# Copyright (C) 1992-2017   Norwegian Meteorological Institute
-#
-# This file is part of SNAP. SNAP is free software: you can
-# redistribute it and/or modify it under the terms of the
-# GNU General Public License as published by the
-# Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
+# Copyright (C) 1992-2026   Norwegian Meteorological Institute
+# License: GNU GPL v3 or later
+
+# SNAP - Severe Nuclear Accident Program
+
 '''
 Created on Oct 24, 2016
 
@@ -23,10 +12,8 @@ Created on Oct 24, 2016
 
 from datetime import datetime, timedelta
 from glob import iglob
-import math
 import os
 import subprocess
-import time
 
 from Snappy.Resources import Resources, MetModel
 import Snappy.MeteorologyCalculator
@@ -42,29 +29,13 @@ class ECDataNotAvailableException(Exception):
 
 class EcMeteorologyCalculator(Snappy.MeteorologyCalculator.MeteorologyCalculator):
     '''Calculate ec-meteorology'''
-    @staticmethod
-    def findECGlobalData(dtime: datetime):
-        '''Static method to find the closest global ec dataset earlier than dtime.
-
-        Args:
-            dtime: datetime object with a start-time, which should be included in the dataset
-
-
-        Returns:
-            A tuple with referencetime and filename
-
-        Raises:
-            ECDataNotAvailableException: no data for the dtime can be found
-        '''
-        return Snappy.MeteorologyCalculator.MeteorologyCalculator.findGlobalData(EcMeteorologyCalculator.getGlobalMeteoResources(), dtime)
-
 
     @staticmethod
     def getGlobalMeteoResources():
         '''retrieve the GlobalMeteoResources from internal resources'''
         ecres = Resources()
         res = Snappy.MeteorologyCalculator.GlobalMeteoResource()
-        res.indirs = ecres.getMetGlobalInputDirs(MetModel.EC0p1Global)
+        res.indirs = ecres.getMetInputDirs(MetModel.EC0p1Global)
         res.pathglob = "ec_atmo_0_1deg_????????T??????Z_3h.nc"
         res.pathptime = "ec_atmo_0_1deg_%Y%m%dT%H%M%SZ_3h.nc"
         res.path_grace_period_sec = 2*60 # 2min grace to ensure lustre cross-dir mv finishes
@@ -76,27 +47,6 @@ class EcMeteorologyCalculator(Snappy.MeteorologyCalculator.MeteorologyCalculator
         res.domainDeltaY = ecres.ecDomainRes
         res.timeoffset = 3 # required offset between reference-time and first useful startup-time
         return res
-
-#    def __init__(self, res: Snappy.MeteorologyCalculator.GlobalMeteoResource, dtime: datetime, domainCenterX, domainCenterY):
-#        super(res, dtime, domainCenterX, domainCenterY)
-
-    def add_expected_files(self, date):
-        self.files = []
-        self.optFiles = []
-        for i in (0,1,2):
-            self.files.append(os.path.join(self.outputdir,
-                                           self.res.output_filename_pattern.format(year=date.year,
-                                                                              month=date.month,
-                                                                              day=date.day,
-                                                                              dayoffset=i)))
-        for i in (3,4,5):
-            self.optFiles.append(os.path.join(self.outputdir,
-                                              self.res.output_filename_pattern.format(year=date.year,
-                                                                              month=date.month,
-                                                                              day=date.day,
-                                                                              dayoffset=i)))
-        return
-
 
     def calc(self, proc=None):
         '''run the calculation of ec-data if required.
@@ -160,15 +110,3 @@ rm {outdir}/running
             proc.start('/bin/bash', [scriptFile])
 
         return
-
-if __name__ == "__main__":
-    yesterday = datetime.today() - timedelta(days=1)
-    yesterdaytime = datetime.combine(yesterday, datetime.min.time())
-    print(EcMeteorologyCalculator.findECGlobalData(yesterdaytime))
-    try:
-        EcMeteorologyCalculator.findECGlobalData(datetime.strptime("2010-10-24T00", "%Y-%m-%dT%H"))
-    except Exception as e:
-        print(e.args[0])
-#    print(EcMeteorologyCalculator(Resources(), datetime.strptime("2016-10-24T00", "%Y-%m-%dT%H"), 63, 42, None))
-    ecmet = EcMeteorologyCalculator(EcMeteorologyCalculator.getGlobalMeteoResources(), yesterdaytime, -159, 20) # hawaii
-    print("recalc: ", ecmet.must_calc())
