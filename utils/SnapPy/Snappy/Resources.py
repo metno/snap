@@ -544,7 +544,7 @@ GRAVITY.FIXED.M/S=0.0002
         return relevant
 
     def getRequiredMeteorologyFiles(
-        self, metmodel, dtime: datetime, run_hours: int, fixed_run="best", prod_check=True
+        self, metmodel, dtime: datetime, run_hours: int, fixed_run="best",
     ):
         """Get available meteorology files for the last few days around dtime and run_hours.
             Works for MEPS 2.5km and EC Global Meteorology.
@@ -635,7 +635,7 @@ GRAVITY.FIXED.M/S=0.0002
                         file, self.getMetInputDirs(metmodel)
                     )
 
-                    if filename is not None and prod_check and ((mtime.time() - os.stat(filename).st_mtime) < (60 * 10)):
+                    if filename is not None and ((mtime.time() - os.stat(filename).st_mtime) < (60 * 10)):
                         #Check production was longer than 10 minutes ago, else skip
                         logger.debug(f"File {file} exists but isn't old enough")
                         filename = None 
