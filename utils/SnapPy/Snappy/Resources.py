@@ -634,11 +634,6 @@ GRAVITY.FIXED.M/S=0.0002
                     filename = self._findFileInPathes(
                         file, self.getMetInputDirs(metmodel)
                     )
-
-                    if filename is not None and ((mtime.time() - os.stat(filename).st_mtime) < (60 * 10)):
-                        #Check production was longer than 10 minutes ago, else skip
-                        logger.debug(f"File {file} exists but isn't old enough")
-                        filename = None 
                     
                     if filename is not None:
                         relevant_dates.append(filename)
