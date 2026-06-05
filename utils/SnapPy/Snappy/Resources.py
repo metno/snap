@@ -21,7 +21,6 @@ class MetModel(enum.Enum):
     Icon0p25Global = "icon_0p25_global"
     Meps2p5 = "meps_2_5km"
     NrpaEC0p1 = "nrpa_ec_0p1"
-    NrpaEC0p1Global = "nrpa_ec_0p1_global"
     EC0p1Global = "ec_0p1_global"
     EC0p1Europe = "ec_0p1_europe"
     GfsGribFilter = "gfs_grib_filter_fimex"
@@ -47,17 +46,14 @@ class Resources(ResourcesCommon):
     # ECINPUTDIRS = ["/lustre/storeB/users/heikok/Meteorology/ecdis2cwf/"]
     EC_FILENAME_PATTERN = "meteo{year:04d}{month:02d}{day:02d}_{dayoffset:02d}.nc"
     EC_FILE_PATTERN = os.path.join("NRPA_EUROPE_0_1_{UTC:02d}", EC_FILENAME_PATTERN)
-    EC_GLOBAL_PATTERN = (
-        "ec_atmo_0_1deg_{year:04d}{month:02d}{day:02d}T{dayoffset:02d}0000Z_3h.nc"
-    )
+
     _MET_GLOBAL_INPUTDIRS = {
-        MetModel.NrpaEC0p1Global: ["{MET_PRODUCTION_DIR}/products/ecmwf/nc/"],
-        MetModel.EC0p1Global: ["{MET_PRODUCTION_DIR}/products/ecmwf/nc/"],
         MetModel.Icon0p25Global: ["{MET_PRODUCTION_DIR}/products/icon/"],
     }
 
     _MET_INPUTDIRS = {
         MetModel.Meps2p5: ["{MET_ARCHIVE_DIR}/projects/metproduction/MEPS/"],
+        MetModel.EC0p1Global: ["{MET_PRODUCTION_DIR}/products/ecmwf/nc/"],
         # input directories for manual download
         MetModel.EC0p1Europe: ["{LF_PROD_DIR}/atom/Meteorology/ec_europe/"],
         MetModel.GfsGribFilter: ["{LF_PROD_DIR}/atom/Meteorology/gfs_europe/"],
@@ -71,6 +67,7 @@ class Resources(ResourcesCommon):
         MetModel.GfsGribFilter: "gfs_0p25deg_{year:04d}{month:02d}{day:02d}T{UTC:02d}Z.nc",
         MetModel.EC0p1Europe: "ec_atmo_0_1deg_{year:04d}{month:02d}{day:02d}T{UTC:02d}0000Z_3h.nc",
         MetModel.Era5Nancy: "nancy_{year:04d}-{month:02d}-{day:02d}_{UTC:02d}.nc",
+        MetModel.EC0p1Global: "ec_atmo_0_1deg_{year:04d}{month:02d}{day:02d}T{UTC:02d}0000Z_3h.nc",
     }
 
     def __init__(self):
@@ -114,7 +111,7 @@ class Resources(ResourcesCommon):
 
     def getDefaultMetDefinitions(self, metmodel):
         """get the default meteo-definitions as dict to be used as *dict for getSnapInputMetDefinitions"""
-        if (metmodel == MetModel.NrpaEC0p1) or (metmodel == MetModel.NrpaEC0p1Global):
+        if (metmodel == MetModel.NrpaEC0p1):
             return {
                 "nx": 1 + round(self.ecDomainWidth / self.ecDomainRes),
                 "ny": 1 + round(self.ecDomainHeight / self.ecDomainRes),
@@ -401,7 +398,7 @@ GRAVITY.FIXED.M/S=0.0002
         Keyword arguments:
         metmodel
         """
-        if (metmodel == MetModel.NrpaEC0p1) or (metmodel == MetModel.NrpaEC0p1Global):
+        if (metmodel == MetModel.NrpaEC0p1):
             filename = os.path.join(self.directory, "snap.input_nrpa_ec_0p1.tmpl")
         elif metmodel == MetModel.EC0p1Global or metmodel == MetModel.EC0p1Europe:
             filename = os.path.join(self.directory, "snap.input_ec_0p1.tmpl")
@@ -444,9 +441,6 @@ GRAVITY.FIXED.M/S=0.0002
             largest_landfraction_file = os.path.join(
                 self.directory, "landfractions", "largestLandFraction_NrpaEC0p1.nc"
             )
-        elif metmodel == MetModel.NrpaEC0p1Global:
-            # no setup needed, autdetection in snap
-            pass
         elif metmodel == MetModel.EC0p1Global:
             largest_landfraction_file = os.path.join(
                 self.directory, "landfractions", "largestLandFraction_EC0p1Global.nc"
@@ -561,13 +555,133 @@ GRAVITY.FIXED.M/S=0.0002
             start += timedelta(days=1)
         return relevant
 
-    def getMEPS25MeteorologyFiles(
-        self, dtime: datetime, run_hours: int, fixed_run="best"
+    def getRequiredMeteorologyFiles(
+        self, metmodel, dtime: datetime, run_hours: int, fixed_run="best",
     ):
-        return self.getMeteorologyFiles(MetModel.Meps2p5, dtime, run_hours, fixed_run)
+        """Get available meteorology files for the last few days around dtime and run_hours.
+            Works for MEPS 2.5km and EC Global Meteorology.
+        Keyword arguments:
+        dtime -- start time of model run
+        run_hours -- run length in hours, possibly negative
+        fixed_run -- string of form YYYY-MM-DD_HH giving a specific model-run
+        latitude -- float of latitude position
+        longitude -- float of longitude position
+        """
+
+        if metmodel is MetModel.Meps2p5:
+            utc_list=[0, 3, 6, 9, 12, 15, 18, 21]
+            max_future_day=3
+        elif metmodel is MetModel.EC0p1Global:
+            utc_list=[0, 6, 12, 18]
+            max_future_day=10
+        else:
+            raise NotImplementedError(
+                f"Metmodel='{metmodel}' not implememented for meteorology"
+            )
+        
+        relevant_dates = []
+
+        # only best currently implemented
+        if fixed_run == "best":
+            if run_hours < 0:
+                start = dtime + timedelta(hours=run_hours)
+                finish = dtime  #start < finish always
+            else:
+                start = dtime  # start < finish always
+                finish = start + timedelta(hours=run_hours)
+
+            today = datetime.combine(date.today(), time(0, 0, 0))
+            tomorrow = today + timedelta(days=1)
+
+            logger.debug((f"start {start}"))
+            logger.debug((f"finish {finish}"))
+
+            if (finish - tomorrow).days >= max_future_day:
+                logger.debug("Runtime exceeds meteorological availability - run will be cut short.")
+
+            days = []
+            tmp = start
+            while tmp < min(finish + timedelta(days=1), tomorrow):
+                days.append(tmp)
+                tmp += timedelta(days=1)
+            if days==[]:
+                #If run is purely in future
+                days = [
+                        today,
+                    ]
+                
+            # loop needs to have latest model runs/hindcast runs last
+            if start.hour < 3:
+                i=0
+                cases = [
+                        (u, d)
+                            for d in range(1,6)
+                            for u in utc_list[::-1]
+                        ]
+                filename=None
+                while filename is None and i < len(cases)-1:
+                    new_utc = cases[i][0]
+                    dayoffset = cases[i][1]
+                    file = self.MET_FILENAME_PATTERN[metmodel].format(
+                                UTC=new_utc, year=(start- timedelta(days=dayoffset)).year, month=(start - timedelta(days=dayoffset)).month, day=(start - timedelta(days=dayoffset)).day
+                                )
+                                
+                    filename = self._findFileInPathes(
+                        file, self.getMetInputDirs(metmodel)
+                        )
+
+                    i+=1
+
+                if filename is not None:
+                    relevant_dates.append(filename)
+                else:
+                    logger.debug("Initial file does not exist")
+            for day in days:
+                for utc in utc_list:
+                    if day.date() == (finish + timedelta(hours=3)).date() and utc > (finish + timedelta(hours=3)).hour:
+                        return relevant_dates
+                    file = self.MET_FILENAME_PATTERN[metmodel].format(
+                        UTC=utc, year=day.year, month=day.month, day=day.day
+                    )
+                    filename = self._findFileInPathes(
+                        file, self.getMetInputDirs(metmodel)
+                    )
+                    
+                    if filename is not None:
+                        relevant_dates.append(filename)
+
+                    elif utc == 0 and day==days[0] and relevant_dates==[]:
+                        logger.debug(f"File {file} doesnt exist")
+
+                        cases = [
+                            (u, d)
+                                for d in range(1,6)
+                                for u in utc_list[::-1]
+                            ]
+                        for new_utc, dayoffset in cases:
+                            file = self.MET_FILENAME_PATTERN[metmodel].format(
+                                    UTC=new_utc, year=(day- timedelta(days=dayoffset)).year, month=(day - timedelta(days=dayoffset)).month, day=(day - timedelta(days=dayoffset)).day
+                                    )
+                                
+                            filename = self._findFileInPathes(
+                                file, self.getMetInputDirs(metmodel)
+                                )
+                            if filename is not None:
+                                logger.debug(f"Took {file} instead")
+                                relevant_dates.append(filename)
+                                break
+                        if filename is None:
+                            logger.debug("No alternative file exists")
+                    
+                    elif metmodel is MetModel.EC0p1Global and day == days[-1] and (utc == 0 or utc == 12):
+                        logger.debug(f"File {file} doesnt exist -- skipping. Note: long runs may be cut short.")
+                    else:
+                        logger.debug(f"File {file} doesnt exist -- skipping")
+
+        return relevant_dates
 
     def getMeteorologyFiles(
-        self, metmodel, dtime: datetime, run_hours: int, fixed_run="best"
+        self, metmodel, dtime: datetime, run_hours: int, fixed_run="best", prod_check=True
     ):
         """Get available meteorology files for the last few days around dtime and run_hours.
 
@@ -582,11 +696,11 @@ GRAVITY.FIXED.M/S=0.0002
 
         if metmodel not in self.MET_FILENAME_PATTERN:
             raise NotImplementedError(
-                "metmodel='{}' not implememented for meteorology".format(metmodel)
+                f"metmodel='{metmodel}' not implememented for meteorology"
             )
         if metmodel not in self._MET_INPUTDIRS:
             raise NotImplementedError(
-                "metmodel='{}' not implememented for meteorology".format(metmodel)
+                f"metmodel='{metmodel}' not implememented for meteorology"
             )
 
         # only best currently implemented
@@ -619,18 +733,20 @@ GRAVITY.FIXED.M/S=0.0002
                     )
                     if filename is not None:
                         fmtime = os.stat(filename).st_mtime
-                        if (mtime.time() - fmtime) > (
+                        if prod_check and (mtime.time() - fmtime) < (
                             60 * 10
                         ):  # file older than 10min -> no longer under production
+                            pass
+                        else:
                             relevant_dates.append(filename)
 
         return relevant_dates
-
+    
     def getECMeteorologyFiles(
         self, dtime: datetime, run_hours: int, fixed_run="best", pattern=""
     ) -> list[str]:
         """Get available meteorology files for the last few days around dtime and run_hours.
-
+            Works for EC-emep meteorology
         :param dtime: start time of model run
         :param run_hours: run length in hours, possibly negative
         :param fixed_run: string of form YYYY-MM-DD_HH giving a specific model-run, defaults to "best"
@@ -875,38 +991,3 @@ def snapNc_convert_to_grib(snapNc, basedir, ident, isotopes, bitmapCompress=Fals
 
     errlog.close()
     outlog.close()
-
-
-if __name__ == "__main__":
-    print(Resources().getStartScreen())
-    print(
-        Resources().getECMeteorologyFiles(datetime.combine(date.today(), time(0)), 48)
-    )
-    print(
-        Resources().getECMeteorologyFiles(datetime.combine(date.today(), time(0)), -72)
-    )
-    runs = Resources().getECRuns()
-    print(runs)
-    print(
-        Resources().getECMeteorologyFiles(
-            datetime.combine(date.today(), time(0)), 48, runs[1]
-        )
-    )
-    print(Resources().isotopes2snapinput([169, 158, 148]))
-    print(
-        Resources().getMEPS25MeteorologyFiles(
-            datetime.combine(date.today(), time(0)), -48
-        )
-    )
-    print(
-        Resources().getMEPS25MeteorologyFiles(
-            datetime.combine(date.today(), time(0)), -72
-        )
-    )
-    print(Resources().getDoseCoefficients())
-    isotopes = ["Cs-137", "Cs134"]
-    isoIds = Resources().isotopes2isoIds(isotopes)
-    print(f"f{isotopes} have ids:  {isoIds}")
-    assert len(isotopes) == len(isoIds)
-    # isotopes2isoIds idempotent
-    assert len(isoIds) == len(Resources().isotopes2isoIds(isoIds))

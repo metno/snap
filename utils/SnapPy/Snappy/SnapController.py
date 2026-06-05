@@ -422,28 +422,19 @@ STEP.HOUR.OUTPUT.FIELDS= 3
             with open(os.path.join(self.lastOutputDir, "snap.input"), "a") as fh:
                 fh.write(self.res.getSnapInputMetDefinitions(qDict["metmodel"], files))
             self._snap_model_run()
-        elif qDict["metmodel"] == MetModel.NrpaEC0p1Global:
-            try:
-                self.write_log("extracting meteorology from EC for domain")
-                self.metcalc = EcMeteorologyCalculator(
-                    EcMeteorologyCalculator.getGlobalMeteoResources(),
-                    startDT,
-                    lonf,
-                    latf,
-                )
-                self._met_calculate_and_run()
-            except MeteoDataNotAvailableException as e:
-                self.write_log(f"problems creating EC-met: {e.args[0]}")
         elif qDict["metmodel"] == MetModel.EC0p1Global:
+            files = self.res.getRequiredMeteorologyFiles(MetModel.EC0p1Global,
+                startDT, int(qDict["runTime"]), "best" 
+            )
+            if len(files) == 0:
+                self.write_log(
+                    f"no EC-global met-files found for {startDT}, runtime {qDict['runTime']}"
+                )
+                return
             try:
+                #Interpolation to local domain
                 globalRes = EcMeteorologyCalculator.getGlobalMeteoResources()
-                files = [
-                    x[1]
-                    for x in sorted(
-                        MeteorologyCalculator.findAllGlobalData(globalRes),
-                        key=lambda x: x[0],
-                    )
-                ]
+
                 lat0 = MeteorologyCalculator.getLat0(latf, globalRes.domainHeight)
                 lon0 = MeteorologyCalculator.getLon0(lonf, globalRes.domainWidth)
                 with open(os.path.join(self.lastOutputDir, "snap.input"), "a") as fh:
@@ -468,8 +459,8 @@ STEP.HOUR.OUTPUT.FIELDS= 3
                 self._met_calculate_and_run()
             except MeteoDataNotAvailableException as e:
                 self.write_log(f"problems creating ICON-met: {e.args[0]}")
-        elif qDict["metmodel"] == "meps_2_5km":
-            files = self.res.getMEPS25MeteorologyFiles(
+        elif qDict["metmodel"] == MetModel.Meps2p5:
+            files = self.res.getRequiredMeteorologyFiles(
                 startDT, int(qDict["runTime"]), "best"
             )
             if len(files) == 0:

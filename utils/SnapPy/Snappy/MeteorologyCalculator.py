@@ -219,7 +219,3 @@ class MeteorologyCalculator(abc.ABC):
         #        if (not self.must_calc()):
         #            return
         pass
-
-
-if __name__ == "__main__":
-    pass

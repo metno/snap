@@ -17,24 +17,6 @@ Except for test 7, "Today" refers to final day in date range (final date with 0 
 For test 7, "Today" refers to the day this test is run (Actually today)
 Tests included:
 
-1. Only future forecast 48 hours
-2. Only past forecast 48 hours
-3. Long forecast 96 hours
-4. Long forecast -96 hours
-5. Missing specific files:
-    a) missing 00 file
-    b) missing whole day (not today)
-    c) missing todays data
-    d) missing two days of data
-    e) missing all data
-6. Starting at 00:00
-    a) Starting at 00:00, full data
-    b) Missing 18 file
-7. Using data from the actual "today"
-    a) 48 hour run from yesterday
-    b) Missing todays data. 48 hour run from today
-
-
 Realtime:
 1. Forecast 48 hours
 2. Run from yesterday 48 hours
