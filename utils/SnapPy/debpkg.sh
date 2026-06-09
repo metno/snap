@@ -32,7 +32,7 @@ set -e
 #     $ cd vgl-ansible
 #     # Roll out to one selected host
 #     $ ansible-playbook -i hosts --tags snap --limit ppi-vglserver-b3.met.no install-emergencymodels.yml
-#     #Check everything works
+#     # Check everything works
 #     $ ssh ppi-vglserver-b3.met.no
 #     $ snapPy
 #     $ exit #[Exit SSH]
