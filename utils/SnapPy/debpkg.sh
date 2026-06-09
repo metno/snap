@@ -25,7 +25,7 @@ set -e
 #     Wait for confirmation google message on "IT- package repositories" that package has been added
 #
 # 4 - Roll out to all machines with ansible
-#     # Setup (on local machine)
+#     # Setup (from local machine to vgl-servers)
 #     $ git clone git@gitlab.met.no:met/mapp/desktop/vgl-ansible.git
 #     $ sudo apt-get install ansible
 #     # Rollout
