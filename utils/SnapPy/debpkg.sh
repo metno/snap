@@ -30,7 +30,7 @@ set -e
 #     $ sudo apt-get install ansible
 #     # Rollout
 #     $ cd vgl-ansible
-#     #Roll out to one selected host
+#     # Roll out to one selected host
 #     $ ansible-playbook -i hosts --tags snap --limit ppi-vglserver-b3.met.no install-emergencymodels.yml
 #     #Check everything works
 #     $ ssh ppi-vglserver-b3.met.no
