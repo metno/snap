@@ -1,3 +1,9 @@
+snap-py (2.5.25-1) noble; urgency=medium
+
+  * fix meteorology collection for MEPS in Snappy
+
+ -- Charlie Negri <charlien@met.no>  Wed, 17 Jun 2026 14:26:45 +0200
+
 snap-py (2.5.22-1) noble; urgency=medium
 
   * izrael/harvey/rolph ND parameterization
