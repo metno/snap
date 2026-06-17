@@ -460,7 +460,7 @@ STEP.HOUR.OUTPUT.FIELDS= 3
             except MeteoDataNotAvailableException as e:
                 self.write_log(f"problems creating ICON-met: {e.args[0]}")
         elif qDict["metmodel"] == MetModel.Meps2p5:
-            files = self.res.getRequiredMeteorologyFiles(
+            files = self.res.getRequiredMeteorologyFiles(MetModel.Meps2p5,
                 startDT, int(qDict["runTime"]), "best"
             )
             if len(files) == 0:
