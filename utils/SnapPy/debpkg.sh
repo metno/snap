@@ -24,22 +24,18 @@ set -e
 #
 #     Wait for confirmation google message on "IT- package repositories" that package has been added
 #
-# 3 - Check that it works on one machine
-#     $ ssh -X ppi-vglserver-b3.met.no
-#     $ sudo apt-get update
-#     $ sudo apt-get install snap-py
-#     $ snapPy
-#     If something goes wrong, downgrade to last version again using
-#     $ sudo apt-get install snap-py=<version-number>
-#
 # 4 - Roll out to all machines with ansible
-#     # Setup
+#     # Setup (from local machine to vgl-servers)
 #     $ git clone git@gitlab.met.no:met/mapp/desktop/vgl-ansible.git
 #     $ sudo apt-get install ansible
 #     # Rollout
 #     $ cd vgl-ansible
-#     #Roll out to selected host
+#     # Roll out to one selected host
 #     $ ansible-playbook -i hosts --tags snap --limit ppi-vglserver-b3.met.no install-emergencymodels.yml
+#     # Check everything works
+#     $ ssh ppi-vglserver-b3.met.no
+#     $ snapPy
+#     $ exit #[Exit SSH]
 #     #Roll out to all hosts
 #     $ ansible-playbook -i hosts --tags snap install-emergencymodels.yml
 #
