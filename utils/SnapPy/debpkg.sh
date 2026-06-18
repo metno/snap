@@ -24,7 +24,7 @@ set -e
 #
 #     Wait for confirmation google message on "IT- package repositories" that package has been added
 #
-# 4 - Roll out to all machines with ansible
+# 3 - Roll out to all machines with ansible
 #     # Setup (from local machine to vgl-servers)
 #     $ git clone git@gitlab.met.no:met/mapp/desktop/vgl-ansible.git
 #     $ sudo apt-get install ansible
@@ -41,7 +41,9 @@ set -e
 #
 #     It may take a bit of time before the package is available for ansible (10 minutes)
 #
-# 5 - Inform meteorologists that a new version is available
+# 4 - Inform meteorologists that a new version is available
+#
+# 5 - Push changes to debpkg.sh and changelog to git
 #INSTRUCTIONS_END
 
 if [ ! -f "Snappy/resources/1-s2.0-S0146645313000110-mmc1.zip" ]; then
