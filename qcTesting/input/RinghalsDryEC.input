@@ -45,16 +45,17 @@ RADIUS.MICROMETER=0.05
 DENSITY.G/CM3=0.001
 GRAVITY.FIXED.M/S=0.00001
 DPUI.Sv_per_Bq_M3 = 7.6e-09
-FIELD.INPUT= /lustre/storeB/project/fou/kl/cerad/Meteorology/QC/RINGHALS_DRY/EC/meteo20260622_00.nc
-FIELD.INPUT= /lustre/storeB/project/fou/kl/cerad/Meteorology/QC/RINGHALS_DRY/EC/meteo20260622_00.nc
-FIELD.INPUT= /lustre/storeB/project/fou/kl/cerad/Meteorology/QC/RINGHALS_DRY/EC/meteo20260622_00.nc
-FIELD.INPUT= /lustre/storeB/project/fou/kl/cerad/Meteorology/QC/RINGHALS_DRY/EC/meteo20260622_00.nc
-FIELD.INPUT= /lustre/storeB/project/fou/kl/cerad/Meteorology/QC/RINGHALS_DRY/EC/meteo20260623_00.nc
-FIELD.INPUT= /lustre/storeB/project/fou/kl/cerad/Meteorology/QC/RINGHALS_DRY/EC/meteo20260623_00.nc
-FIELD.INPUT= /lustre/storeB/project/fou/kl/cerad/Meteorology/QC/RINGHALS_DRY/EC/meteo20260623_00.nc
-FIELD.INPUT= /lustre/storeB/project/fou/kl/cerad/Meteorology/QC/RINGHALS_DRY/EC/meteo20260623_00.nc
-FIELD.INPUT= /lustre/storeB/project/fou/kl/cerad/Meteorology/QC/RINGHALS_DRY/EC/meteo20260624_00.nc
-
+FIELD.INPUT= /lustre/storeB/project/fou/kl/cerad/Meteorology/QC/RINGHALS_DRY/EC/NRPA_EUROPE_0_1_00/meteo20260622_00.nc
+FIELD.INPUT= /lustre/storeB/project/fou/kl/cerad/Meteorology/QC/RINGHALS_DRY/EC/NRPA_EUROPE_0_1_06/meteo20260622_00.nc
+FIELD.INPUT= /lustre/storeB/project/fou/kl/cerad/Meteorology/QC/RINGHALS_DRY/EC/NRPA_EUROPE_0_1_12/meteo20260622_00.nc
+FIELD.INPUT= /lustre/storeB/project/fou/kl/cerad/Meteorology/QC/RINGHALS_DRY/EC/NRPA_EUROPE_0_1_18/meteo20260622_00.nc
+FIELD.INPUT= /lustre/storeB/project/fou/kl/cerad/Meteorology/QC/RINGHALS_DRY/EC/NRPA_EUROPE_0_1_00/meteo20260623_00.nc
+FIELD.INPUT= /lustre/storeB/project/fou/kl/cerad/Meteorology/QC/RINGHALS_DRY/EC/NRPA_EUROPE_0_1_06/meteo20260623_00.nc
+FIELD.INPUT= /lustre/storeB/project/fou/kl/cerad/Meteorology/QC/RINGHALS_DRY/EC/NRPA_EUROPE_0_1_12/meteo20260623_00.nc
+FIELD.INPUT= /lustre/storeB/project/fou/kl/cerad/Meteorology/QC/RINGHALS_DRY/EC/NRPA_EUROPE_0_1_18/meteo20260623_00.nc
+FIELD.INPUT= /lustre/storeB/project/fou/kl/cerad/Meteorology/QC/RINGHALS_DRY/EC/NRPA_EUROPE_0_1_00/meteo20260624_00.nc
+FIELD.INPUT= /lustre/storeB/project/fou/kl/cerad/Meteorology/QC/RINGHALS_DRY/EC/NRPA_EUROPE_0_1_06/meteo20260624_00.nc
+FIELD.INPUT= /lustre/storeB/project/fou/kl/cerad/Meteorology/QC/RINGHALS_DRY/EC/NRPA_EUROPE_0_1_12/meteo20260624_00.nc
 ***********************************************************************
 *** MET Norway SNAP input file derived from snap.input_nrpa_ec_0p1.tmpl
 ***********************************************************************
@@ -64,7 +65,7 @@ RANDOM.WALK.ON
 BOUNDARY.LAYER.FULL.MIX.OFF
 
 DRY.DEPOSITION.SCHEME = emerson
-DRY.DEPOSITION.LARGEST_LANDFRACTION_FILE = /usr/lib/python3/dist-packages/Snappy/resources/landfractions/largestLandFraction_NrpaEC0p1.nc
+DRY.DEPOSITION.LARGEST_LANDFRACTION_FILE = /home/geche8548/snap/utils/SnapPy/Snappy/resources/landfractions/largestLandFraction_NrpaEC0p1.nc
 
 WET.DEPOSITION.SCHEME = bartnicki
 
