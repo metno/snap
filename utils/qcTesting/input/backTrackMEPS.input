@@ -1,0 +1,95 @@
+
+SIMULATION.START.DATE=2026-06-26_07:59:11
+SET_RELEASE.POS= P=   59.9484,   10.6027
+TIME.START= 2026 07 08 15
+TIME.RUN = -48h
+MAX.PARTICLES.PER.RELEASE= 4000
+TIME.RELEASE.PROFILE.STEPS
+STEP.HOUR.OUTPUT.FIELDS= 1
+RELEASE.HOUR= 0, 48
+RELEASE.RADIUS.M= 500, 500
+RELEASE.LOWER.M= 0, 0
+RELEASE.UPPER.M= 250, 250
+RELEASE.BQ/SEC.COMP= 1e12, 1e12, 'Cs137'
+***List of components
+COMPONENT= Cs137
+RADIOACTIVE.DECAY.ON
+HALF.LIFETIME.DAYS= 1.10048516E+04
+DRY.DEP.ON
+WET.DEP.ON
+RADIUS.MICROMETER=0.55
+DENSITY.G/CM3=2.3
+GRAVITY.FIXED.M/S=0.0002
+DPUI.Sv_per_Bq_M3 = 4.8e-09
+FIELD.INPUT= /lustre/storeB/project/fou/kl/cerad/Meteorology/QC/RINGHALS_DRY/MEPS/meps_det_2_5km_20260706T00Z.nc
+FIELD.INPUT= /lustre/storeB/project/fou/kl/cerad/Meteorology/QC/RINGHALS_DRY/MEPS/meps_det_2_5km_20260707T00Z.nc
+FIELD.INPUT= /lustre/storeB/project/fou/kl/cerad/Meteorology/QC/RINGHALS_DRY/MEPS/meps_det_2_5km_20260708T00Z.nc
+
+***********************************************************************
+*** MET Norway SNAP input file derived from snap1.input_nrpa_ec_0p1.tmpl
+***********************************************************************
+
+RANDOM.WALK.ON
+
+BOUNDARY.LAYER.FULL.MIX.OFF
+
+DRY.DEPOSITION.SCHEME = emerson
+DRY.DEPOSITION.LARGEST_LANDFRACTION_FILE = /modules/rhel8/user-apps/fou-modules/SnapPy/2.5.25/lib/python3.12/site-packages/Snappy/resources/landfractions/largestLandFraction_Meps2p5.nc
+
+WET.DEPOSITION.SCHEME = bartnicki
+
+*** particles distributed on components according to mass
+MAX.TOTALPARTICLES= 20000000
+
+
+REMOVE.RELATIVE.MASS.LIMIT= 0.
+
+TIME.STEP= 300.
+STEP.HOUR.INPUT.MIN=  3
+STEP.HOUR.INPUT.MAX= 6
+ASYNOPTIC.OUTPUT
+*SYNOPTIC.OUTPUT
+
+TOTAL.COMPONENTS.OFF
+* TOTAL.COMPONENTS.ON
+MSLP.OFF
+PRECIPITATION.ON
+MODEL.LEVEL.FIELDS.OFF
+* MODEL.LEVEL.FIELDS.ON
+
+POSITIONS.DECIMAL
+
+FIELD.TYPE=fimex
+FIMEX.FILE_TYPE= netcdf
+FIMEX.CONFIG=
+
+
+** arome/meps output
+GRID.NCTYPE = arome
+DATA.ETA.LEVELS
+GRID.AUTODETECT.FROM_INPUT
+
+** INPUT FIELD FILES
+
+
+** IDENTIFY OUTPUT FIELDS WITH FORECAST LENGTH OR VALID TIME
+
+FIELD_TIME.FORECAST
+* FIELD_TIME.VALID
+
+** OUTPUT FILES
+
+FIELD.OUTTYPE=netcdf
+FIELD.OUTPUT= snap.nc
+LOG.FILE=     snap.log
+
+* DEBUG.OFF
+DEBUG.ON
+
+OUTPUT.COLUMN.ON
+* OUTPUT.AIRCRAFT_DOSERATE.ENABLE
+* Tiltaksgrense Avsperring
+* Se Sivilforsvaret Bestemmelser om sikkerhet under opplæring, øving og
+* innsats i Sivilforsvaret
+* Grense i Sv/h
+OUTPUT.AIRCRAFT_DOSERATE.THRESHOLD.SV_H = 60e-6

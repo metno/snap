@@ -1,0 +1,117 @@
+* Chernobyl run
+
+TIME.START=  1986 04 25 21 00
+POSITIONS.DECIMAL
+SET_RELEASE.POS= P=   51.389853, 30.094047
+TIME.RUN = 96 h
+TIME.STEP= 300.0
+
+ASYNC_IO.ON
+
+RANDOM.WALK.ON
+* RANDOM.WALK.OFF
+
+* BOUNDARY.LAYER.FULL.MIX.ON
+BOUNDARY.LAYER.FULL.MIX.OFF
+
+DRY.DEPOSITION.SCHEME = emerson
+
+DRY.DEPOSITION.LARGEST_LANDFRACTION_FILE=/modules/rhel8/user-apps/fou-modules/SnapPy/2.5.25/lib/python3.12/site-packages/Snappy/resources/landfractions/largestLandFraction_EC0p1Global.nc
+
+*** particles distributed on components according to mass
+MAX.PARTICLES.PER.RELEASE= 1000
+MAX.TOTALPARTICLES=20000000
+MAX.TOTALPLUMES=2000000
+PARTICLES.SPLIT.HOURS=72
+REMOVE.RELATIVE.MASS.LIMIT= 0.02
+RANDOM.SEED = 0
+
+COMPONENT= Cs137
+DRY.DEP.ON
+WET.DEP.ON
+RADIOACTIVE.DECAY.ON
+RADIUS.MICROMETER=0.5
+DENSITY.G/CM3=2.3
+HALF.LIFETIME.YEARS= 30
+*GRAVITY.FIXED.M/S=0.0002
+
+
+STEP.HOUR.INPUT.MIN=  1
+STEP.HOUR.INPUT.MAX=  3
+STEP.HOUR.OUTPUT.FIELDS=1
+
+TOTAL.COMPONENTS.OFF
+*TOTAL.COMPONENTS.ON
+OUTPUT.COLUMN.ON
+
+*MSLP.ON
+
+PRECIPITATION.ON
+
+MODEL.LEVEL.FIELDS.OFF
+*MODEL.LEVEL.FIELDS.ON
+
+** INPUT FIELD FILES
+
+FIELD.TYPE=fimex
+FIMEX.FILE_TYPE=netcdf
+FIMEX.CONFIG=
+*FIMEX.CONFIG=/lustre/storeB/project/fou/kl/cerad/Meteorology/AROME-CHERNOBYL/netcdf/cdmGribReaderConfigArome2_5.xml
+FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|-135.,-134.75,...,-90|50,49.75,...,15|degree
+*FIMEX.INTERPOLATION=nearest | +proj=latlon +R=6371000 +no_defs | 25.0,25.025,...,35 | 49,49.025,...,58.0 |degrees
+
+FIELD.SPINUPSTEPS=7
+FIELD.INPUT=/lustre/storeB/project/fou/kl/cerad/Meteorology/QC/CHERNOBYL_ERA5/netcdf/era5_1986-04-25T06Z.nc
+FIELD.INPUT=/lustre/storeB/project/fou/kl/cerad/Meteorology/QC/CHERNOBYL_ERA5/netcdf/era5_1986-04-25T18Z.nc
+FIELD.INPUT=/lustre/storeB/project/fou/kl/cerad/Meteorology/QC/CHERNOBYL_ERA5/netcdf/era5_1986-04-26T06Z.nc
+FIELD.INPUT=/lustre/storeB/project/fou/kl/cerad/Meteorology/QC/CHERNOBYL_ERA5/netcdf/era5_1986-04-26T18Z.nc
+FIELD.INPUT=/lustre/storeB/project/fou/kl/cerad/Meteorology/QC/CHERNOBYL_ERA5/netcdf/era5_1986-04-27T06Z.nc
+FIELD.INPUT=/lustre/storeB/project/fou/kl/cerad/Meteorology/QC/CHERNOBYL_ERA5/netcdf/era5_1986-04-27T18Z.nc
+FIELD.INPUT=/lustre/storeB/project/fou/kl/cerad/Meteorology/QC/CHERNOBYL_ERA5/netcdf/era5_1986-04-28T06Z.nc
+FIELD.INPUT=/lustre/storeB/project/fou/kl/cerad/Meteorology/QC/CHERNOBYL_ERA5/netcdf/era5_1986-04-28T18Z.nc
+FIELD.INPUT=/lustre/storeB/project/fou/kl/cerad/Meteorology/QC/CHERNOBYL_ERA5/netcdf/era5_1986-04-29T06Z.nc
+FIELD.INPUT=/lustre/storeB/project/fou/kl/cerad/Meteorology/QC/CHERNOBYL_ERA5/netcdf/era5_1986-04-29T18Z.nc
+FIELD.INPUT=/lustre/storeB/project/fou/kl/cerad/Meteorology/QC/CHERNOBYL_ERA5/netcdf/era5_1986-04-30T06Z.nc
+FIELD.INPUT=/lustre/storeB/project/fou/kl/cerad/Meteorology/QC/CHERNOBYL_ERA5/netcdf/era5_1986-04-30T18Z.nc
+FIELD.INPUT=/lustre/storeB/project/fou/kl/cerad/Meteorology/QC/CHERNOBYL_ERA5/netcdf/era5_1986-05-01T06Z.nc
+FIELD.INPUT=/lustre/storeB/project/fou/kl/cerad/Meteorology/QC/CHERNOBYL_ERA5/netcdf/era5_1986-05-01T18Z.nc
+FIELD.INPUT=/lustre/storeB/project/fou/kl/cerad/Meteorology/QC/CHERNOBYL_ERA5/netcdf/era5_1986-05-02T06Z.nc
+FIELD.INPUT=/lustre/storeB/project/fou/kl/cerad/Meteorology/QC/CHERNOBYL_ERA5/netcdf/era5_1986-05-02T18Z.nc
+FIELD.INPUT=/lustre/storeB/project/fou/kl/cerad/Meteorology/QC/CHERNOBYL_ERA5/netcdf/era5_1986-05-03T06Z.nc
+FIELD.INPUT=/lustre/storeB/project/fou/kl/cerad/Meteorology/QC/CHERNOBYL_ERA5/netcdf/era5_1986-05-03T18Z.nc
+
+
+GRID.NCTYPE = era5
+DATA.ETA.LEVELS
+GRID.AUTODETECT.FROM_INPUT
+*LEVELS.INPUT= 49,0,48,47,46,45,44,43,42,41,40,39,38,37,36,35,34,33,32,31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1
+* LEVELS.INPUT=22, 0, 64, 61, 58, 55, 52, 49, 46, 43, 40, 37, 34, 31, 28, 25, 22, 19, 16, 13, 10, 7, 4, 1
+
+
+
+FIELD_TIME.FORECAST
+* FIELD_TIME.VALID
+
+** OUTPUT FILES
+
+FIELD.OUTTYPE=netcdf
+
+* DEBUG.OFF
+DEBUG.ON
+
+
+* release should start 25.04. 21:30, but starting at 21:00
+TIME.RELEASE.PROFILE.STEPS
+TIME.RELEASE = 240h
+RELEASE.COMPONENTS = Cs137
+RELEASE.HEIGHTLOWER.M = 30.0,325.0,570.0,902.5,1332.5,1900.0
+RELEASE.HEIGHTUPPER.M = 325.0,570.0,902.5,1332.5,1900.0,2500
+RELEASE.HEIGHTRADIUS.M = 50,50,50,50,50,50
+RELEASE.FILE = /home/geche8548/snap/utils/qcTesting/input/snap.input.brandt.height
+
+FIELD.OUTPUT=snap.nc
+LOG.FILE=snap.log
+
+WET.DEPOSITION.SCHEME=bartnicki-takemura
+
+
