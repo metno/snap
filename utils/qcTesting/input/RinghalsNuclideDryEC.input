@@ -471,6 +471,7 @@ DENSITY.G/CM3=2.95
 
 FIELD.INPUT= /lustre/storeB/project/fou/kl/cerad/Meteorology/QC/RINGHALS_DRY/EC/NRPA_EUROPE_0_1_00/meteo20260708_00.nc
 FIELD.INPUT= /lustre/storeB/project/fou/kl/cerad/Meteorology/QC/RINGHALS_DRY/EC/NRPA_EUROPE_0_1_00/meteo20260709_00.nc
+FIELD.INPUT= /lustre/storeB/project/fou/kl/cerad/Meteorology/QC/RINGHALS_DRY/EC/NRPA_EUROPE_0_1_00/meteo20260710_00.nc
 
 ***********************************************************************
 *** MET Norway SNAP input file derived from snap.input_nrpa_ec_0p1.tmpl

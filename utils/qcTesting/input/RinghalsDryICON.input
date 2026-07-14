@@ -47,6 +47,8 @@ GRAVITY.FIXED.M/S=0.00001
 DPUI.Sv_per_Bq_M3 = 7.6e-09
 
 FIELD.INPUT= /lustre/storeB/project/fou/kl/cerad/Meteorology/QC/RINGHALS_DRY/ICON/icon_20260708T00Z.nc
+FIELD.INPUT= /lustre/storeB/project/fou/kl/cerad/Meteorology/QC/RINGHALS_DRY/ICON/icon_20260709T00Z.nc
+FIELD.INPUT= /lustre/storeB/project/fou/kl/cerad/Meteorology/QC/RINGHALS_DRY/ICON/icon_20260710T00Z.nc
 
 ***********************************************************************
 *** MET Norway SNAP input file derived from snap.input_icon_0p25.tmpl
