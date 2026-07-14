@@ -646,6 +646,14 @@ PROGRAM bsnap
 #ifdef _OPENMP
     ! both task and inner parallel do loops, so need 2 levels of parallelism
     call omp_set_max_active_levels(2)
+    write (iulog, *) "OpenMP: num_threads: ", omp_get_max_threads()
+    write (error_unit, *) "OpenMP: num_threads: ", omp_get_max_threads(), &
+      ", places: ", omp_get_num_places()
+    write (error_unit, *) "OpenMP: num_threads: ", omp_get_max_threads(), &
+      ", places: ", omp_get_num_places()
+#else
+    write (iulog, *) "OpenMP: not enabled"
+    write (error_unit, *) "OpenMP: not enabled"
 #endif
     !$OMP PARALLEL
     !$OMP SINGLE
