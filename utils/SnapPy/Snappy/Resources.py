@@ -568,10 +568,10 @@ GRAVITY.FIXED.M/S=0.0002
         longitude -- float of longitude position
         """
 
-        if metmodel is MetModel.Meps2p5:
+        if metmodel == MetModel.Meps2p5:
             utc_list=[0, 3, 6, 9, 12, 15, 18, 21]
             max_future_day=3
-        elif metmodel is MetModel.EC0p1Global:
+        elif metmodel == MetModel.EC0p1Global:
             utc_list=[0, 6, 12, 18]
             max_future_day=10
         else:
