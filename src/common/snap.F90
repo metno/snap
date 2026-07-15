@@ -157,7 +157,7 @@
 PROGRAM bsnap
   USE iso_fortran_env, only: real64, output_unit, error_unit, IOSTAT_END
 #ifdef _OPENMP
-  USE omp_lib, only: omp_set_max_active_levels
+  USE omp_lib, only: omp_set_max_active_levels, omp_get_max_threads, omp_get_num_places
 #endif
 
   USE DateCalc, only: epochToDate, timeGM
