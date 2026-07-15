@@ -157,7 +157,7 @@
 PROGRAM bsnap
   USE iso_fortran_env, only: real64, output_unit, error_unit, IOSTAT_END
 #ifdef _OPENMP
-  USE omp_lib, only: omp_set_max_active_levels
+  USE omp_lib, only: omp_set_max_active_levels, omp_get_max_threads, omp_get_num_places
 #endif
 
   USE DateCalc, only: epochToDate, timeGM
@@ -646,6 +646,14 @@ PROGRAM bsnap
 #ifdef _OPENMP
     ! both task and inner parallel do loops, so need 2 levels of parallelism
     call omp_set_max_active_levels(2)
+    write (iulog, *) "OpenMP: num_threads: ", omp_get_max_threads()
+    write (error_unit, *) "OpenMP: num_threads: ", omp_get_max_threads(), &
+      ", places: ", omp_get_num_places()
+    write (error_unit, *) "OpenMP: num_threads: ", omp_get_max_threads(), &
+      ", places: ", omp_get_num_places()
+#else
+    write (iulog, *) "OpenMP: not enabled"
+    write (error_unit, *) "OpenMP: not enabled"
 #endif
     !$OMP PARALLEL
     !$OMP SINGLE
