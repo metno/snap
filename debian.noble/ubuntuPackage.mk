@@ -4,10 +4,12 @@
 F77 = gfortran
 
 F77DEBUGFLAGS= -ffpe-trap=invalid,zero,overflow -fbounds-check
-F77FLAGS=-DVERSION=\"$(VERSION)\" -O2 -ftree-vectorize -fno-math-errno -g -march=x86-64-v3 -Wall -Wextra -fimplicit-none -fmodule-private -Wno-conversion
+F77FLAGS=-DVERSION=\"$(VERSION)\" -O2 -fopenmp -ftree-vectorize -fno-math-errno -g -march=x86-64-v3 -Wall -Wextra -fimplicit-none -fmodule-private -Wno-conversion
 ifdef SNAP_DEBUG_CHECKS
   F77FLAGS+=$(F77DEBUGFLAGS)
 endif
+
+LDFLAGS=-fopenmp $(PROFILE)
 
 # optional versioned fimex
 FIMEX = fimex
