@@ -2,21 +2,9 @@
 #
 # SNAP: Servere Nuclear Accident Programme
 # Copyright (C) 1992-2020   Norwegian Meteorological Institute
-#
-# This file is part of SNAP. SNAP is free software: you can
-# redistribute it and/or modify it under the terms of the
-# GNU General Public License as published by the
-# Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
+
+# License: GNU General Public License Version 3 (GNU GPL-3.0)
+
 from collections import OrderedDict
 import datetime
 import logging
@@ -188,8 +176,10 @@ def rimsterm2bomb_release(
 def request_is_bomb(argosRoot):
     return argosRoot.find("NuclearYield") is not None
 
+def request_is_QCtest(argosRoot):
+    return argosRoot.find("RequestMode").text == "test"
 
-def rimsterm2input(rimxml, argosxml, met_model, argos_operational) -> tuple[str, str | None]:
+def rimsterm2input(rimxml, argosxml, met_model, argos_operational, meteo_path) -> tuple[str, str | None]:
     """create a full snap.input sourceterm from a rimsterm.xml file using the met_model meteo
 
     :return: snap.input-content, and optional release.txt-content
@@ -207,6 +197,7 @@ def rimsterm2input(rimxml, argosxml, met_model, argos_operational) -> tuple[str,
         runTime = int(argosxml.find("RunLength").text)
         outputTimestep = int(argosxml.find("OutputTimestep").text)
         is_bomb = request_is_bomb(argosxml)
+        is_qcTest = request_is_QCtest(argosxml)
         # GridSize: size of grid-cell, i.e. 2.5, 0.1 (km or degree), available since Argos10
         gridSize = 0  # default
         # gridSize = float(argosxml.find("GridSize").text)
@@ -241,6 +232,15 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
 
     interpolation = ""
     metdef = res.getDefaultMetDefinitions(met_model)
+    if is_qcTest:
+        meteo_path = "/lustre/storeB/project/fou/kl/cerad/Meteorology/QC/" #need to import ResourcesCommon
+
+        res._MET_INPUTDIRS={
+            MetModel.Meps2p5: [meteo_path + "/MEPS/"],
+            MetModel.Icon0p25Global: [meteo_path + "/ICON/"]
+        }
+        res.MET_FILENAME_PATTERN[MetModel.Meps2p5] = "meps_det_2_5km_{year:04d}{month:02d}{day:02d}T{UTC:02d}Z.nc"
+        res._ECINPUTDIRS=[meteo_path + "/EC/"]
     if met_model == MetModel.NrpaEC0p1:
         files = res.getECMeteorologyFiles(dtime=startDTime, run_hours=int(runTime))
         if len(files) == 0:
@@ -262,17 +262,20 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
                 f"no {met_model} met-files found for {startDTime}, runtime {runTime}"
             )
     elif met_model == MetModel.Icon0p25Global:
-        metcalc = ICONMeteorologyCalculator(
-            ICONMeteorologyCalculator.getGlobalMeteoResources(),
-            startDTime,
-            float(lon),
-            float(lat),
-        )
-        metcalc.calc()
-        if metcalc.must_calc():
-            raise Exception(f"no ICON met-files calculated for {startDTime}")
-        files = metcalc.get_meteorology_files()
-        (metdef["startX"], metdef["startY"]) = metcalc.get_grid_startX_Y()
+        if meteo_path:
+            files = res.getMeteorologyFiles(met_model, startDTime, runTime, "best" )
+        else:
+            metcalc = ICONMeteorologyCalculator(
+                ICONMeteorologyCalculator.getGlobalMeteoResources(),
+                startDTime,
+                float(lon),
+                float(lat),
+            )
+            metcalc.calc()
+            if metcalc.must_calc():
+                raise Exception(f"no ICON met-files calculated for {startDTime}")
+            files = metcalc.get_meteorology_files()
+            (metdef["startX"], metdef["startY"]) = metcalc.get_grid_startX_Y()
     elif met_model == MetModel.EC0p1Europe:
         files = res.getMeteorologyFiles(met_model, startDTime, runTime, "best")
         if len(files) == 0:
@@ -307,7 +310,7 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
 
 
 def snap4rimsterm(
-    rimsterm, argosrequest, argos_operational, basedir, ident, met_model, bitmapCompress
+    rimsterm, argosrequest, argos_operational, basedir, ident, met_model, meteo_path, bitmapCompress
 ):
     """run snap with rimsterm definition in basedir dir"""
     tree = ET.parse(rimsterm)
@@ -331,7 +334,7 @@ def snap4rimsterm(
         os.remove(snapNC)
 
     snapInput, snapReleaseTXT = rimsterm2input(
-        root, argosRoot, met_model, argos_operational
+        root, argosRoot, met_model, argos_operational, meteo_path
     )
     snapInput = f"title={ident}\n" + snapInput
     with open(os.path.join(basedir, "snap.input"), "w") as fh:
@@ -436,6 +439,9 @@ if __name__ == "__main__":
     parser.add_argument("--dir", help="output-directory", required=True)
     parser.add_argument("--ident", help="output-file identifier", required=True)
     parser.add_argument(
+        "--meteo_path", help="changes path for collecting meteorology", required=False
+    )
+    parser.add_argument(
         "--bitmapCompress", help="enable grib bitmap-compression", action="store_true"
     )
 
@@ -447,5 +453,6 @@ if __name__ == "__main__":
         args.dir,
         args.ident,
         args.metmodel,
+        args.meteo_path,
         bitmapCompress=args.bitmapCompress,
     )
