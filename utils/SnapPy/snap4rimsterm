@@ -179,7 +179,7 @@ def request_is_bomb(argosRoot):
 def request_is_QCtest(argosRoot):
     return argosRoot.find("RequestMode").text == "test"
 
-def rimsterm2input(rimxml, argosxml, met_model, argos_operational, meteo_path) -> tuple[str, str | None]:
+def rimsterm2input(rimxml, argosxml, met_model, argos_operational) -> tuple[str, str | None]:
     """create a full snap.input sourceterm from a rimsterm.xml file using the met_model meteo
 
     :return: snap.input-content, and optional release.txt-content
@@ -262,7 +262,7 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
                 f"no {met_model} met-files found for {startDTime}, runtime {runTime}"
             )
     elif met_model == MetModel.Icon0p25Global:
-        if meteo_path:
+        if is_qcTest:
             files = res.getMeteorologyFiles(met_model, startDTime, runTime, "best" )
         else:
             metcalc = ICONMeteorologyCalculator(
@@ -310,7 +310,7 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
 
 
 def snap4rimsterm(
-    rimsterm, argosrequest, argos_operational, basedir, ident, met_model, meteo_path, bitmapCompress
+    rimsterm, argosrequest, argos_operational, basedir, ident, met_model, bitmapCompress
 ):
     """run snap with rimsterm definition in basedir dir"""
     tree = ET.parse(rimsterm)
@@ -334,7 +334,7 @@ def snap4rimsterm(
         os.remove(snapNC)
 
     snapInput, snapReleaseTXT = rimsterm2input(
-        root, argosRoot, met_model, argos_operational, meteo_path
+        root, argosRoot, met_model, argos_operational
     )
     snapInput = f"title={ident}\n" + snapInput
     with open(os.path.join(basedir, "snap.input"), "w") as fh:
@@ -439,9 +439,6 @@ if __name__ == "__main__":
     parser.add_argument("--dir", help="output-directory", required=True)
     parser.add_argument("--ident", help="output-file identifier", required=True)
     parser.add_argument(
-        "--meteo_path", help="changes path for collecting meteorology", required=False
-    )
-    parser.add_argument(
         "--bitmapCompress", help="enable grib bitmap-compression", action="store_true"
     )
 
@@ -453,6 +450,5 @@ if __name__ == "__main__":
         args.dir,
         args.ident,
         args.metmodel,
-        args.meteo_path,
         bitmapCompress=args.bitmapCompress,
     )
