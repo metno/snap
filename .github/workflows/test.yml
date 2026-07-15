@@ -79,6 +79,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Download test meteo data
+        run: cd src/test && make download_testmeteo
+
       - name: Install tox
         run: pip install tox tox-gh-actions
 

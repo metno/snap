@@ -10,19 +10,24 @@ include ../common/snap.mk
 # export FIMEXLIB
 .EXPORT_ALL_VARIABLES:
 
-TESTFILES = snap_testdata/meteo20200415_00_ringhals.nc \
+# Some of the Meteo-files are also used in utils/SnapPy/tests/
+# be careful when changing
+METEOFILES = snap_testdata/meteo20200415_00_ringhals.nc \
 	snap_testdata/meteo20200415_01_ringhals.nc \
 	snap_testdata/meteo20260113_00_sellafield.nc \
 	snap_testdata/meps_det_2_5km_20251125T06Z_ringhals.nc \
-	snap_testdata/snap_ecemep_expected5.nc \
+	snap_testdata/meteo_ecglobal_20260408T060000_06_ringhals.nc
+
+SNAPFILES =	snap_testdata/snap_ecemep_expected5.nc \
 	snap_testdata/snap_meps_interpolated_expected_20251125.nc \
 	snap_testdata/snap_ecemep_emerson_expected_20260304.nc \
-	snap_testdata/meteo_ecglobal_20260408T060000_06_ringhals.nc \
 	snap_testdata/wetdeptest-small_20260503.nc
 
+TESTFILES = $(METEOFILES) $(SNAPFILES)
 
 install:
 
+download_testmeteo: $(METEOFILES)
 
 snap_testdata/%.nc :
 	mkdir -p snap_testdata
