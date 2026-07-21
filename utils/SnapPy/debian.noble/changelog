@@ -1,3 +1,15 @@
+snap-py (2.5.27-1) noble; urgency=medium
+
+  * Use ASYNC_IO.ON in argos and snapPy.
+
+ -- Ubuntu <ubuntu@met.no>  Tue, 21 Jul 2026 09:37:45 +0000
+
+snap-py (2.5.26-1) noble; urgency=medium
+
+  * Use ASYNC_IO.ON in argos and snapPy.
+
+ -- Ubuntu <ubuntu@met.no>  Tue, 21 Jul 2026 09:27:35 +0000
+
 snap-py (2.5.25-1) noble; urgency=medium
 
   * fix meteorology collection for MEPS in Snappy
