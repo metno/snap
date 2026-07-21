@@ -40,6 +40,7 @@ setup(
     install_requires=[
         "numpy",
         "netCDF4",
+        "pyproj",
     ],
     scripts=[
         "snapPy",
