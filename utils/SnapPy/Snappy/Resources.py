@@ -28,6 +28,9 @@ class MetModel(enum.Enum):
 
     def __eq__(self, other):
         return self.value == str(other)
+    
+    def __str__(self):
+        return self.value
 
     def __hash__(self):
         return self.value.__hash__()

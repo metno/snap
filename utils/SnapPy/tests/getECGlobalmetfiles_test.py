@@ -114,7 +114,7 @@ class TestClass:
         ]
 
         assert (
-            res.getRequiredMeteorologyFiles("ec_0p1_global",start, duration) == expected
+            res.getRequiredMeteorologyFiles(MetModel.EC0p1Global,start, duration) == expected
         )
 
     def test_start_yesterday(self, tmp_path_with_realtime_meteo_files):
@@ -141,7 +141,7 @@ class TestClass:
         ]
 
         assert (
-            res.getRequiredMeteorologyFiles("ec_0p1_global", start, duration) == expected
+            res.getRequiredMeteorologyFiles(MetModel.EC0p1Global, start, duration) == expected
         )
 
     def test_backwards_forecast72(self, tmp_path_with_realtime_meteo_files):
@@ -168,7 +168,7 @@ class TestClass:
         ]
 
         assert (
-            res.getRequiredMeteorologyFiles("ec_0p1_global", start, duration) == expected
+            res.getRequiredMeteorologyFiles(MetModel.EC0p1Global, start, duration) == expected
         )
 
     def test_missing_00_start_today(self, tmp_path_with_realtime_meteo_files):
@@ -194,7 +194,7 @@ class TestClass:
         ]
 
         assert (
-            res.getRequiredMeteorologyFiles("ec_0p1_global", start, duration) == expected
+            res.getRequiredMeteorologyFiles(MetModel.EC0p1Global, start, duration) == expected
         )
 
     def test_missing_today(self, tmp_path_with_realtime_meteo_files):
@@ -216,7 +216,7 @@ class TestClass:
         ]
 
         assert (
-            res.getRequiredMeteorologyFiles("ec_0p1_global", start, duration) == expected
+            res.getRequiredMeteorologyFiles(MetModel.EC0p1Global, start, duration) == expected
         )
 
     def test_today_00_start(self, tmp_path_with_realtime_meteo_files):
@@ -238,7 +238,7 @@ class TestClass:
         ]
 
         assert (
-            res.getRequiredMeteorologyFiles("ec_0p1_global", start, duration) == expected
+            res.getRequiredMeteorologyFiles(MetModel.EC0p1Global, start, duration) == expected
         )
 
     # ################# Specific period of data                        #################
@@ -270,7 +270,7 @@ class TestClass:
         ]
 
         assert (
-            res.getRequiredMeteorologyFiles("ec_0p1_global", start, duration) == expected
+            res.getRequiredMeteorologyFiles(MetModel.EC0p1Global, start, duration) == expected
         )
 
     def test_forecast96(self, tmp_path_with_meteo_files):
@@ -307,7 +307,7 @@ class TestClass:
         ]
 
         assert (
-            res.getRequiredMeteorologyFiles("ec_0p1_global", start, duration) == expected
+            res.getRequiredMeteorologyFiles(MetModel.EC0p1Global, start, duration) == expected
         )
 
     ####    Test 9    ####
@@ -336,7 +336,7 @@ class TestClass:
         ]
 
         assert (
-            res.getRequiredMeteorologyFiles("ec_0p1_global", start, duration) == expected
+            res.getRequiredMeteorologyFiles(MetModel.EC0p1Global, start, duration) == expected
         )
 
     def test_missing_whole_day(self, tmp_path_with_meteo_files):
@@ -365,7 +365,7 @@ class TestClass:
         ]
 
         assert (
-            res.getRequiredMeteorologyFiles("ec_0p1_global", start, duration) == expected
+            res.getRequiredMeteorologyFiles(MetModel.EC0p1Global, start, duration) == expected
         )
 
     def test_missing_two_days(self, tmp_path_with_meteo_files):
@@ -396,7 +396,7 @@ class TestClass:
         ]
 
         assert (
-            res.getRequiredMeteorologyFiles("ec_0p1_global", start, duration) == expected
+            res.getRequiredMeteorologyFiles(MetModel.EC0p1Global, start, duration) == expected
         )
 
     def test_missing_end_days(self, tmp_path_with_meteo_files):
@@ -417,7 +417,7 @@ class TestClass:
         ]
 
         assert (
-            res.getRequiredMeteorologyFiles("ec_0p1_global", start, duration) == expected
+            res.getRequiredMeteorologyFiles(MetModel.EC0p1Global, start, duration) == expected
         )
 
     def test_missing_all(self, tmp_path_with_meteo_files):
@@ -437,7 +437,7 @@ class TestClass:
         expected = []
 
         assert (
-            res.getRequiredMeteorologyFiles("ec_0p1_global", start, duration) == expected
+            res.getRequiredMeteorologyFiles(MetModel.EC0p1Global, start, duration) == expected
         )
 
     
@@ -460,7 +460,7 @@ class TestClass:
         ]
 
         assert (
-            res.getRequiredMeteorologyFiles("ec_0p1_global", start, duration) == expected
+            res.getRequiredMeteorologyFiles(MetModel.EC0p1Global, start, duration) == expected
         )
     
     def test_missing_00_and_18(self, tmp_path_with_meteo_files):
@@ -484,5 +484,5 @@ class TestClass:
         ]
 
         assert (
-            res.getRequiredMeteorologyFiles("ec_0p1_global", start, duration) == expected
+            res.getRequiredMeteorologyFiles(MetModel.EC0p1Global, start, duration) == expected
         )
