@@ -156,6 +156,7 @@ class SnapController:
         metdefs = self.res.getDefaultMetDefinitions(self.lastQDict["metmodel"])
         (metdefs["startX"], metdefs["startY"]) = self.metcalc.get_grid_startX_Y()
         with open(os.path.join(self.lastOutputDir, "snap.input"), "a") as fh:
+            fh.write(self.lastSourceTerm)
             fh.write(
                 self.res.getSnapInputMetDefinitions(
                     self.lastQDict["metmodel"],
@@ -386,15 +387,16 @@ SIMULATION.START.DATE={strftime("%Y-%m-%d_%H:%M:%S", curtime)}
 SET_RELEASE.POS= P=   {latf},   {lonf}
 TIME.START= {startTime}
 TIME.RUN = {qDict["runTime"]}h
-STEP.HOUR.OUTPUT.FIELDS= 3
 """
 
         if "isBomb" in qDict:
+            self.lastSourceTerm += "STEP.HOUR.OUTPUT.FIELDS= 1\n"
             (term, releaseTXT, errors) = self.get_bomb_release(qDict, offset_minutes)
             if releaseTXT is not None:
                 with open(os.path.join(self.lastOutputDir, "release.txt"), "w") as fh:
                     fh.write(releaseTXT)
         else:
+            self.lastSourceTerm += "STEP.HOUR.OUTPUT.FIELDS= 1\n"
             (term, errors) = self.get_isotope_release(qDict, offset_minutes)
         if len(errors) > 0:
             logger.info(f'updateSnapLog("{json.dumps("ERRORS:\n\n" + errors)}");')
@@ -405,9 +407,7 @@ STEP.HOUR.OUTPUT.FIELDS= 3
         if qDict.get("isAircraft", False):
             self.lastSourceTerm += "OUTPUT.AIRCRAFT_DOSERATE.ENABLE\n"
 
-        with open(os.path.join(self.lastOutputDir, "snap.input"), "w") as fh:
-            fh.write(self.lastSourceTerm)
-
+        interpol = ""
         if qDict["metmodel"] == MetModel.NrpaEC0p1:
             files = self.res.getECMeteorologyFiles(
                 startDT, int(qDict["runTime"]), qDict["ecmodelrun"]
@@ -419,12 +419,9 @@ STEP.HOUR.OUTPUT.FIELDS= 3
                 return
             if not self._defaultDomainCheck(lonf, latf):
                 return
-            with open(os.path.join(self.lastOutputDir, "snap.input"), "a") as fh:
-                fh.write(self.res.getSnapInputMetDefinitions(qDict["metmodel"], files))
-            self._snap_model_run()
         elif qDict["metmodel"] == MetModel.EC0p1Global:
-            files = self.res.getRequiredMeteorologyFiles(MetModel.EC0p1Global,
-                startDT, int(qDict["runTime"]), "best" 
+            files = self.res.getRequiredMeteorologyFiles(
+                MetModel.EC0p1Global, startDT, int(qDict["runTime"]), "best"
             )
             if len(files) == 0:
                 self.write_log(
@@ -432,19 +429,12 @@ STEP.HOUR.OUTPUT.FIELDS= 3
                 )
                 return
             try:
-                #Interpolation to local domain
+                # Interpolation to local domain
                 globalRes = EcMeteorologyCalculator.getGlobalMeteoResources()
 
                 lat0 = MeteorologyCalculator.getLat0(latf, globalRes.domainHeight)
                 lon0 = MeteorologyCalculator.getLon0(lonf, globalRes.domainWidth)
-                with open(os.path.join(self.lastOutputDir, "snap.input"), "a") as fh:
-                    interpol = f"FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|{lon0},{lon0 + 0.1},...,{lon0 + globalRes.domainWidth}|{lat0},{lat0 + 0.1},...,{lat0 + globalRes.domainHeight}|degree\n"
-                    fh.write(
-                        self.res.getSnapInputMetDefinitions(
-                            qDict["metmodel"], files, interpolation=interpol
-                        )
-                    )
-                self._snap_model_run()
+                interpol = f"FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|{lon0},{lon0 + 0.1},...,{lon0 + globalRes.domainWidth}|{lat0},{lat0 + 0.1},...,{lat0 + globalRes.domainHeight}|degree\n"
             except MeteoDataNotAvailableException as e:
                 self.write_log(f"problems finding global EC-met: {e.args[0]}")
         elif qDict["metmodel"] == MetModel.Icon0p25Global:
@@ -457,11 +447,12 @@ STEP.HOUR.OUTPUT.FIELDS= 3
                     latf,
                 )
                 self._met_calculate_and_run()
+                return  # no further processing here, everything done in thread above
             except MeteoDataNotAvailableException as e:
                 self.write_log(f"problems creating ICON-met: {e.args[0]}")
         elif qDict["metmodel"] == MetModel.Meps2p5:
-            files = self.res.getRequiredMeteorologyFiles(MetModel.Meps2p5,
-                startDT, int(qDict["runTime"]), "best"
+            files = self.res.getRequiredMeteorologyFiles(
+                MetModel.Meps2p5, startDT, int(qDict["runTime"]), "best"
             )
             if len(files) == 0:
                 self.write_log(
@@ -470,9 +461,6 @@ STEP.HOUR.OUTPUT.FIELDS= 3
                 return
             if not self._meps25DomainCheck(lonf, latf):
                 return
-            with open(os.path.join(self.lastOutputDir, "snap.input"), "a") as fh:
-                fh.write(self.res.getSnapInputMetDefinitions(qDict["metmodel"], files))
-            self._snap_model_run()
         elif (
             qDict["metmodel"] == MetModel.GfsGribFilter
             or qDict["metmodel"] == MetModel.EC0p1Europe
@@ -487,12 +475,31 @@ STEP.HOUR.OUTPUT.FIELDS= 3
                     f"no {qDict['metmodel']}  met-files found for {startDT}, runtime {qDict['runTime']}"
                 )
                 return
-            with open(os.path.join(self.lastOutputDir, "snap.input"), "a") as fh:
-                fh.write(self.res.getSnapInputMetDefinitions(qDict["metmodel"], files))
-            self._snap_model_run()
         else:
             self.write_log(f"unsupported MET-model '{qDict['metmodel']}' requested")
             return
+
+        if "isBomb" in qDict and qDict.get("isBombSpecialDomain", False):
+            # this will overwrite perviously set interpol, if exist
+            interpol = Snappy.Utils.restrictDomainSizeAndResolution(
+                files[-1],
+                float(lon),
+                float(lat),
+                gridSize=0,
+                calcGridSize=500,
+                supersampling=2,
+            )
+
+        with open(os.path.join(self.lastOutputDir, "snap.input"), "w") as fh:
+            fh.write(self.lastSourceTerm)
+            fh.write(
+                self.res.getSnapInputMetDefinitions(
+                    qDict["metmodel"], files, interpolation=interpol
+                )
+            )
+
+        self._snap_model_run()
+        return
 
     def _snap_model_run(self):
         self.snap_run = SnapRun(self)

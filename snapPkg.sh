@@ -2,8 +2,8 @@
 
 set -e
 
-export VERSION=2.5.22
-export CHANGE_LOG="meteo-time fix"
+export VERSION=2.5.27
+export CHANGE_LOG="Enables openmp for noble and jammy; removes bionic"
 #VERSION_=`echo -n $VERSION | tr '.' '_'`
 
 # We do not have a way of cross-compiling,
