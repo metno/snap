@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<Request>
+<RunLength>-48</RunLength>
+<OutputTimestep>3</OutputTimestep>
+<OutputFormat>GRIB</OutputFormat>
+<OutputFormat>NetCDF</OutputFormat>
+<GridSize>2.5</GridSize>
+<GridsizeUnit>km</GridsizeUnit>
+<CalcGridSize>500</CalcGridSize>
+<RequestMode>test</RequestMode>
+</Request>

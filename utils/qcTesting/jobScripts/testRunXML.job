@@ -1,0 +1,202 @@
+#! /bin/bash
+#$ -N QC-dev-run
+#$ -S /bin/bash
+#$ -q bigmem-r8.q,research-r8.q,researchlong-r8.q,researchshort-r8.q #Operational eventually?
+#$ -pe shmem-1 1
+#$ -l h_rss=20G,mem_free=20G,h_data=20G
+#$ -l h_rt=4:00:00
+#$ -v STORE,SNAPPY
+#$ -M geche8548@met.no
+#$ -m abe
+#$ -P dsa
+#$ -o /home/geche8548/snap-runs/QC-dev/test-job-runs
+#$ -e /home/geche8548/snap-runs/QC-dev/test-job-runs
+#$ -t 1-15 
+
+umask 0002
+# ~4 mio particles, use 2 (hyper-) threads
+export OMP_NUM_THREADS=2
+export OMP_THREAD_LIMIT=2
+export OPENBLAS_NUM_THREADS=1
+export MAGICK_THREAD_LIMIT=1
+
+module load --silent /modules/MET/rhel8/user-modules/fou-modules/SnapPy/"$SNAPPY"
+
+set -x
+
+LUSTRE=/lustre/storeB/project/fou/kl/cerad/Projects/QC/ModelRuns/
+SNAPQCDIR=/home/geche8548/snap/utils/qcTesting/input/xml-requests
+VDIR=v$SNAPPY
+
+cd $LUSTRE/$VDIR
+
+if [ $SGE_TASK_ID -eq 1 ]; then
+    mkdir RinghalsRainyMeps
+
+    RIMSTERM_XML=$SNAPQCDIR/RinghalsRainy_Rimsterm.xml
+    ARGOS_REQUEST=$SNAPQCDIR/MEPS_SNAP_request.xml
+    IDENT=RinghalsRainyMEPS
+    METMODEL=meps_2_5km
+    DIR=./RinghalsRainyMeps
+    OPS=
+
+elif [ $SGE_TASK_ID -eq 2 ]; then
+    mkdir RinghalsRainyEC 
+
+    RIMSTERM_XML=$SNAPQCDIR/RinghalsRainy_Rimsterm.xml
+    ARGOS_REQUEST=$SNAPQCDIR/EC_SNAP_request.xml
+    IDENT=RinghalsRainyEC
+    METMODEL=nrpa_ec_0p1
+    DIR=./RinghalsRainyEC
+    OPS=
+
+elif [ $SGE_TASK_ID -eq 3 ]; then
+    mkdir RinghalsRainyICON
+
+    RIMSTERM_XML=$SNAPQCDIR/RinghalsRainy_Rimsterm.xml
+    ARGOS_REQUEST=$SNAPQCDIR/ICON_SNAP_request.xml
+    IDENT=RinghalsRainyICON
+    METMODEL=icon_0p25_global
+    DIR=./RinghalsRainyICON
+    OPS=
+
+elif [ $SGE_TASK_ID -eq 4 ]; then
+    mkdir RinghalsDryMeps
+
+    RIMSTERM_XML=$SNAPQCDIR/RinghalsDry_Rimsterm.xml
+    ARGOS_REQUEST=$SNAPQCDIR/MEPS_SNAP_request.xml
+    IDENT=RinghalsDryMEPS
+    METMODEL=meps_2_5km
+    DIR=./RinghalsDryMeps
+    OPS=
+
+elif [ $SGE_TASK_ID -eq 5 ]; then
+    mkdir RinghalsDryEC
+
+    RIMSTERM_XML=$SNAPQCDIR/RinghalsDry_Rimsterm.xml
+    ARGOS_REQUEST=$SNAPQCDIR/EC_SNAP_request.xml
+    IDENT=RinghalsDryEC
+    METMODEL=nrpa_ec_0p1
+    DIR=./RinghalsDryEC
+    OPS=
+
+elif [ $SGE_TASK_ID -eq 6 ]; then
+    mkdir RinghalsDryICON
+    
+    RIMSTERM_XML=$SNAPQCDIR/RinghalsDry_Rimsterm.xml
+    ARGOS_REQUEST=$SNAPQCDIR/ICON_SNAP_request.xml
+    IDENT=RinghalsDryICON
+    METMODEL=icon_0p25_global
+    DIR=./RinghalsDryICON
+    OPS=
+
+elif [ $SGE_TASK_ID -eq 7 ]; then
+    mkdir backTrackEC
+
+    RIMSTERM_XML=$SNAPQCDIR/RinghalsBackTrack_Rimsterm.xml
+    ARGOS_REQUEST=$SNAPQCDIR/EC_backTrack_SNAP_request.xml
+    IDENT=backTrackEC
+    METMODEL=nrpa_ec_0p1
+    DIR=./backTrackEC
+    OPS=
+
+elif [ $SGE_TASK_ID -eq 8 ]; then
+    mkdir backTrackMEPS
+
+    RIMSTERM_XML=$SNAPQCDIR/RinghalsBackTrack_Rimsterm.xml
+    ARGOS_REQUEST=$SNAPQCDIR/MEPS_backTrack_SNAP_request.xml
+    IDENT=backTrackMEPS
+    METMODEL=meps_2_5km
+    DIR=./backTrackMEPS
+    OPS=
+
+elif [ $SGE_TASK_ID -eq 9 ]; then
+    mkdir backTrackICON
+   
+    RIMSTERM_XML=$SNAPQCDIR/RinghalsBackTrack_Rimsterm.xml
+    ARGOS_REQUEST=$SNAPQCDIR/ICON_backTrack_SNAP_request.xml
+    IDENT=backTrackICON
+    METMODEL=icon_0p25_global
+    DIR=./backTrackICON
+    OPS=
+
+elif [ $SGE_TASK_ID -eq 10 ]; then
+    mkdir nuclideEC
+    echo "start work nuclide EC" >> "$LOGFILE"
+
+    RIMSTERM_XML=$SNAPQCDIR/Detonation-Ringhals_Rimsterm.xml
+    ARGOS_REQUEST=$SNAPQCDIR/EC_bomb_SNAP_request.xml
+    IDENT=nuclideEC
+    METMODEL=nrpa_ec_0p1
+    DIR=./nuclideEC
+    OPS=
+
+elif [ $SGE_TASK_ID -eq 11 ]; then
+    mkdir nuclideMEPS
+
+    RIMSTERM_XML=$SNAPQCDIR/Detonation-Ringhals_Rimsterm.xml
+    ARGOS_REQUEST=$SNAPQCDIR/MEPS_bomb_SNAP_request.xml
+    IDENT=nuclideMEPS
+    METMODEL=meps_2_5km
+    DIR=./nuclideMEPS
+    OPS=
+
+elif [ $SGE_TASK_ID -eq 12 ]; then
+    mkdir nuclideICON
+
+    RIMSTERM_XML=$SNAPQCDIR/Detonation-Ringhals_Rimsterm.xml
+    ARGOS_REQUEST=$SNAPQCDIR/ICON_bomb_SNAP_request.xml
+    IDENT=nuclideICON
+    METMODEL=icon_0p25_global
+    DIR=./nuclideICON
+    OPS=
+
+elif [ $SGE_TASK_ID -eq 13 ]; then
+    mkdir pseudoEC
+
+    RIMSTERM_XML=$SNAPQCDIR/Detonation-Ringhals_Rimsterm.xml
+    ARGOS_REQUEST=$SNAPQCDIR/EC_bomb_SNAP_request.xml
+    IDENT=pseudoEC
+    METMODEL=nrpa_ec_0p1
+    DIR=./pseudoEC
+    OPS=--argos_operational
+
+elif [ $SGE_TASK_ID -eq 14 ]; then
+    mkdir pseudoMEPS
+    
+    RIMSTERM_XML=$SNAPQCDIR/Detonation-Ringhals_Rimsterm.xml
+    ARGOS_REQUEST=$SNAPQCDIR/MEPS_bomb_SNAP_request.xml
+    IDENT=pseudoMEPS
+    METMODEL=meps_2_5km
+    DIR=./pseudoMEPS
+    OPS=--argos_operational
+
+elif [ $SGE_TASK_ID -eq 15 ]; then
+    mkdir pseudoICON
+
+    RIMSTERM_XML=$SNAPQCDIR/Detonation-Ringhals_Rimsterm.xml
+    ARGOS_REQUEST=$SNAPQCDIR/ICON_bomb_SNAP_request.xml
+    IDENT=pseudoICON
+    METMODEL=icon_0p25_global
+    DIR=./pseudoICON
+    OPS=--argos_operational
+
+fi
+
+# if [ $SGE_TASK_ID -eq 18 ]; then
+#     cd $LUSTRE/$VDIR
+#     mkdir SunbeamSmallBoy
+#     echo "start work SunbeamSmallBoy" >> "$LOGFILE"
+#     cd SunbeamSmallBoy
+#     bsnap_naccident $HOME/snap/utils/qcTesting/input/SunbeamSmallBoy.input
+#     # snapAddToa snap.nc
+# fi
+# cd $LUSTRE/$VDIR
+# mkdir ChernobylMEPS
+# echo "start work ChernobylMEPS MEPS" >> "$LOGFILE"
+# cd ChernobylMEPS
+#export OMP_NUM_THREADS=4
+# bsnap_naccident $HOME/snap/utils/qcTesting/input/ChernobylMEPS.input
+
+snap4rimsterm --rimsterm $RIMSTERM_XML --argosrequest $ARGOS_REQUEST $OPS --dir $DIR --ident $IDENT --metmodel $METMODEL
+

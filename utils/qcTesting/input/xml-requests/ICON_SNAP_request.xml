@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<Request>
+<RunLength>48</RunLength>
+<OutputTimestep>3</OutputTimestep>
+<OutputFormat>GRIB</OutputFormat>
+<OutputFormat>NetCDF</OutputFormat>
+<GridSize>0.25</GridSize>
+<GridsizeUnit>Degree</GridsizeUnit>
+<CalcGridSize>10000</CalcGridSize>
+<RequestMode>test</RequestMode>
+</Request>
