@@ -11,7 +11,7 @@
 #$ -P dsa
 #$ -o /home/geche8548/snap-runs/QC-dev/test-job-runs
 #$ -e /home/geche8548/snap-runs/QC-dev/test-job-runs
-#$ -t 1-15 
+#$ -t 1-16 
 
 umask 0002
 # ~4 mio particles, use 2 (hyper-) threads
@@ -181,16 +181,18 @@ elif [ $SGE_TASK_ID -eq 15 ]; then
     DIR=./pseudoICON
     OPS=--argos_operational
 
-fi
 
-# if [ $SGE_TASK_ID -eq 18 ]; then
-#     cd $LUSTRE/$VDIR
-#     mkdir SunbeamSmallBoy
-#     echo "start work SunbeamSmallBoy" >> "$LOGFILE"
-#     cd SunbeamSmallBoy
-#     bsnap_naccident $HOME/snap/utils/qcTesting/input/SunbeamSmallBoy.input
-#     # snapAddToa snap.nc
-# fi
+elif [ $SGE_TASK_ID -eq 16 ]; then
+    mkdir SunbeamSmallBoy
+
+    RIMSTERM_XML=$SNAPQCDIR/SunbeamSmallboy_Rimsterm.xml
+    ARGOS_REQUEST=$SNAPQCDIR/SunbeamSmallboy_SNAP_request.xml
+    IDENT=SunbeamSmallboy
+    METMODEL=era5_nancy
+    DIR=./SunbeamSmallBoy
+    OPS=--argos_operational
+
+fi
 # cd $LUSTRE/$VDIR
 # mkdir ChernobylMEPS
 # echo "start work ChernobylMEPS MEPS" >> "$LOGFILE"
