@@ -9,14 +9,14 @@
 #$ -M geche8548@met.no
 #$ -m abe
 #$ -P dsa
-#$ -o /home/geche8548/snap-runs/QC-dev/test-job-runs
-#$ -e /home/geche8548/snap-runs/QC-dev/test-job-runs
+#$ -o /lustre/storeB/project/fou/kl/cerad/Projects/QC/Logs
+#$ -e /lustre/storeB/project/fou/kl/cerad/Projects/QC/Logs
 
 umask 0002
 # ~4 mio particles, use 2 (hyper-) threads
 set -x
 
-LOGFILE=/home/geche8548/snap-runs/QC-dev/test-job-runs/test-job_$(date -d "today" +"%Y%m%dT%H%M").log
+LOGFILE=/lustre/storeB/project/fou/kl/cerad/Projects/QC/Logs/xml-main_$(date -d "today" +"%Y%m%dT%H%M").log
 LUSTRE=/lustre/storeB/project/fou/kl/cerad/Projects/QC/ModelRuns
 SNAPQCDIR=/home/geche8548/snap/utils/qcTesting/input/xml-requests
 VDIR=v$SNAPPY
@@ -42,4 +42,4 @@ SNAPPY=$SNAPPY qsub /home/geche8548/snap/utils/qcTesting/jobScripts/testRunXML.j
 
 
 #Create post processing check that checks all tests have run/aren't empty
-echo "start work BackTrack EC" >> "$LOGFILE"
+# echo "start work BackTrack EC" >> "$LOGFILE"

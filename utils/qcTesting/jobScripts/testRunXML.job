@@ -9,8 +9,8 @@
 #$ -M geche8548@met.no
 #$ -m abe
 #$ -P dsa
-#$ -o /home/geche8548/snap-runs/QC-dev/test-job-runs
-#$ -e /home/geche8548/snap-runs/QC-dev/test-job-runs
+#$ -o /lustre/storeB/project/fou/kl/cerad/Projects/QC/Logs
+#$ -e /lustre/storeB/project/fou/kl/cerad/Projects/QC/Logs
 #$ -t 1-16 
 
 umask 0002
