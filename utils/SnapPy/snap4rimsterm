@@ -177,7 +177,9 @@ def request_is_bomb(argosRoot):
     return argosRoot.find("NuclearYield") is not None
 
 def request_is_QCtest(argosRoot):
-    return argosRoot.find("RequestMode").text == "test"
+    if argosRoot.find("RequestMode") is not None:
+        return argosRoot.find("RequestMode").text == "test"
+    return False
 
 def rimsterm2input(rimxml, argosxml, met_model, argos_operational) -> tuple[str, str | None]:
     """create a full snap.input sourceterm from a rimsterm.xml file using the met_model meteo
@@ -233,14 +235,15 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
     interpolation = ""
     metdef = res.getDefaultMetDefinitions(met_model)
     if is_qcTest:
-        meteo_path = "/lustre/storeB/project/fou/kl/cerad/Meteorology/QC/" #need to import ResourcesCommon
+        meteo_path = "{LUSTREDIR}/project/fou/kl/cerad/Meteorology/QC/"
 
         res._MET_INPUTDIRS={
-            MetModel.Meps2p5: [meteo_path + "/MEPS/"],
-            MetModel.Icon0p25Global: [meteo_path + "/ICON/"]
+            MetModel.Meps2p5: [os.path.join(meteo_path,"MEPS")],
+            MetModel.Icon0p25Global: [os.path.join(meteo_path,"ICON")],
+            MetModel.Era5Nancy: [os.path.join(meteo_path,"ERA5")]
         }
         res.MET_FILENAME_PATTERN[MetModel.Meps2p5] = "meps_det_2_5km_{year:04d}{month:02d}{day:02d}T{UTC:02d}Z.nc"
-        res._ECINPUTDIRS=[meteo_path + "/EC/"]
+        res._ECINPUTDIRS=[os.path.join(meteo_path,"EC")]
     if met_model == MetModel.NrpaEC0p1:
         files = res.getECMeteorologyFiles(dtime=startDTime, run_hours=int(runTime))
         if len(files) == 0:
