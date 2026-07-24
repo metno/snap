@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<Request>
+<RunLength>48</RunLength>
+<OutputTimestep>1</OutputTimestep>
+<OutputFormat>GRIB</OutputFormat>
+<OutputFormat>NetCDF</OutputFormat>
+<GridSize>0.05</GridSize>
+<CalcGridSize>800</CalcGridSize>
+<NuclearYield>1.65</NuclearYield>
+<FissionProportion>20.000000</FissionProportion>
+<ExplosionType>Surface</ExplosionType>
+<SurfaceType>Urban</SurfaceType>
+<HeightOfBurst>3</HeightOfBurst>
+<GroundType>Dry_Rock</GroundType>
+<WeaponType>Uranium</WeaponType>
+<NoOfDetonations>1</NoOfDetonations>
+<RequestMode>test</RequestMode>
+</Request>
