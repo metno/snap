@@ -17,7 +17,21 @@ override_dh_auto_build:
 
 override_dh_auto_install:
 	python3 setup.py install --force --root=debian/snap-py --no-compile -O0 --install-layout=deb
-
+	# Add -s to all Python shebangs in installed scripts (first line only)
+	for f in debian/snap-py/usr/bin/snapPy \
+	         debian/snap-py/usr/bin/snap4rimsterm \
+	         debian/snap-py/usr/bin/snapCombineInverse \
+	         debian/snap-py/usr/bin/snapNc2grib.py \
+	         debian/snap-py/usr/bin/snapRunnerNpps \
+	         debian/snap-py/usr/bin/snapRunnerNpp \
+	         debian/snap-py/usr/bin/eemepModelRunner \
+	         debian/snap-py/usr/bin/snapRemoteRunner.py \
+	         debian/snap-py/usr/bin/snapEnsAshPlot.py \
+	         debian/snap-py/usr/bin/snapAddBombIsotopes \
+			 debian/snap-py/usr/bin/snapVolcano \
+	         debian/snap-py/usr/bin/snapAddToa; do \
+	    sed -i '1s|^$#!.*python3$.*|\1 -s|' "$$f"; \
+	done
 
 
 override_dh_python2:
