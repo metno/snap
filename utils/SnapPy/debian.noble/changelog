@@ -1,3 +1,9 @@
+snap-py (2.5.27-1ubuntu1) noble; urgency=medium
+
+  * Ignore user site-packages by adding -s to Python scripts.
+
+ -- Ubuntu <ubuntu@met.no>  Mon, 03 Aug 2026 11:29:26 +0000
+
 snap-py (2.5.27-1) noble; urgency=medium
 
   * Use ASYNC_IO.ON in argos and snapPy.
