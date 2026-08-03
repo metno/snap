@@ -30,7 +30,7 @@ override_dh_auto_install:
 	         debian/snap-py/usr/bin/snapAddBombIsotopes \
 			 debian/snap-py/usr/bin/snapVolcano \
 	         debian/snap-py/usr/bin/snapAddToa; do \
-	    sed -i '1s|^$#!.*python3$.*|\1 -s|' "$$f"; \
+	    sed -i '1s|^$$#!.*python3$$.*|\1 -s|' "$$f"; \
 	done
 
 
