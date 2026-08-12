@@ -51,8 +51,8 @@ if [ ! -f "Snappy/resources/1-s2.0-S0146645313000110-mmc1.zip" ]; then
 fi
 
 HOST=$(lsb_release --codename --short)
-export VERSION=2.5.27
-CHANGELOG="Use ASYNC_IO.ON in argos and snapPy."
+export VERSION=2.5.28
+CHANGELOG="write eemep to metproduction"
 export DEBEMAIL=${USER}@met.no
 
 check_git_lfs() {
