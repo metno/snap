@@ -5,10 +5,10 @@ import os
 import re
 import subprocess
 import sys
-import time as mtime
 from collections import OrderedDict
 from datetime import date, datetime, time, timedelta
 from time import gmtime, strftime
+from time import time as epoch_time
 
 from Snappy import read_dosecoefficients_icrp
 from Snappy.ResourcesCommon import ResourcesCommon
@@ -754,9 +754,8 @@ GRAVITY.FIXED.M/S=0.0002
                     )
                     if filename is not None:
                         fmtime = os.stat(filename).st_mtime
-                        if prod_check and (mtime.time() - fmtime) < (
-                            10
-                        ):  # file older than 10sec -> no longer under production
+                        # file older than 10sec -> no longer under production
+                        if prod_check and (epoch_time() - fmtime) < 10:
                             pass
                         else:
                             relevant_dates.append(filename)
