@@ -108,7 +108,7 @@ class PostProcess:
         :param instantFilename: model-output, instantaneous values
         :param averageFilename: model-output, average values
         """
-        if "nuclear" in self.path:
+        if self.is_npp:
             self.accumulate_and_toa_nuc_files(instantFilename, averageFilename)
         else:
             self.convert_files(instantFilename, averageFilename)
