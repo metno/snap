@@ -162,7 +162,7 @@ PROGRAM bsnap
 
   USE DateCalc, only: epochToDate, timeGM
   USE datetime, only: datetime_t, duration_t
-  USE snapdebug, only: iulog, idebug
+  USE snapdebug, only: iulog, idebug,sourceterm
   USE snaptimers, only: timeloop_timer, output_timer, input_timer, metcalc_timer, &
                         release_timer, other_timer, particleloop_timer, initialize_timers
   USE snapdimML, only: nx, ny, nk, output_resolution_factor, ldata, maxsiz, mcomp, surface_index
@@ -281,7 +281,7 @@ PROGRAM bsnap
   logical :: init = .TRUE.
 
   character(len=1024) ::  finput, fldfil = "snap.dat", fldfilX, fldfilN, logfile = "snap.log", ftype = "netcdf", &
-                         fldtype = "netcdf", relfile = "*"
+                         fldtype = "netcdf", relfile = "*", sourcefile = "snap_sourceterm.csv"
   character(len=1024) :: tempstr
 
 !> name of selected release position
@@ -365,6 +365,10 @@ PROGRAM bsnap
         access='sequential', form='formatted', &
         status='replace', action='write')
 
+  open (newunit=sourceterm, file=sourcefile, &
+        access='sequential', form='formatted', &
+        status='replace', action='write')
+
   ntimefo = 0
 
 !..define fixed tables and constants (independant of input data)
@@ -410,524 +414,530 @@ PROGRAM bsnap
 
 
   block
-  logical :: is_time_before_run, is_time_after_run
+    logical :: is_time_before_run, is_time_after_run
 
-  itime2 = time_start + duration_t(nhrun)
+    itime2 = time_start + duration_t(nhrun)
 
-  if (nhrun > 0) then
-    is_time_before_run = itimer(1) <= time_start
-    is_time_after_run = itimer(2) >= itime2
-  else
-    is_time_before_run = itimer(2) >= time_start
-    is_time_after_run = itimer(1) <= itime2
-  endif
-  if ((.not.is_time_before_run) .OR. (.not.is_time_after_run)) then
-    write (iulog, *) 'Not able to run requested time periode.'
-    write (iulog, *) 'Start:        ', time_start
-    write (iulog, *) 'End:          ', itime2
-    write (iulog, *) 'First fields: ', itimer(1)
-    write (iulog, *) 'Last  fields: ', itimer(2)
-    write (error_unit, *) 'Not able to run requested time periode.'
-    write (error_unit, *) 'Start:        ', time_start
-    write (error_unit, *) 'End:          ', itime2
-    write (error_unit, *) 'First fields: ', itimer(1)
-    write (error_unit, *) 'Last  fields: ', itimer(2)
-    if (.not.is_time_before_run) then
-      write (iulog, *) 'NO DATA AT START OF RUN'
-      write (error_unit, *) 'NO DATA AT START OF RUN'
-      call snap_error_exit(iulog)
-    end if
-    write (iulog, *) 'Running until end of data'
-    write (error_unit, *) 'Running until end of data'
     if (nhrun > 0) then
-      dur = itimer(2) - time_start
+      is_time_before_run = itimer(1) <= time_start
+      is_time_after_run = itimer(2) >= itime2
     else
-      dur = itimer(1) - time_start
+      is_time_before_run = itimer(2) >= time_start
+      is_time_after_run = itimer(1) <= itime2
     endif
-    nhrun = dur%hours
-  end if
-  if (nhrel > abs(nhrun)) nhrel = abs(nhrun)
+    if ((.not.is_time_before_run) .OR. (.not.is_time_after_run)) then
+      write (iulog, *) 'Not able to run requested time periode.'
+      write (iulog, *) 'Start:        ', time_start
+      write (iulog, *) 'End:          ', itime2
+      write (iulog, *) 'First fields: ', itimer(1)
+      write (iulog, *) 'Last  fields: ', itimer(2)
+      write (error_unit, *) 'Not able to run requested time periode.'
+      write (error_unit, *) 'Start:        ', time_start
+      write (error_unit, *) 'End:          ', itime2
+      write (error_unit, *) 'First fields: ', itimer(1)
+      write (error_unit, *) 'Last  fields: ', itimer(2)
+      if (.not.is_time_before_run) then
+        write (iulog, *) 'NO DATA AT START OF RUN'
+        write (error_unit, *) 'NO DATA AT START OF RUN'
+        call snap_error_exit(iulog)
+      end if
+      write (iulog, *) 'Running until end of data'
+      write (error_unit, *) 'Running until end of data'
+      if (nhrun > 0) then
+        dur = itimer(2) - time_start
+      else
+        dur = itimer(1) - time_start
+      endif
+      nhrun = dur%hours
+    end if
+    if (nhrel > abs(nhrun)) nhrel = abs(nhrun)
   end block
 
-    !..initial no. of plumes and particles
-    nplume = 0
-    npart = 0
-    nparnum = 0
+  !..initial no. of plumes and particles
+  nplume = 0
+  npart = 0
+  nparnum = 0
 
-    !..no. of timesteps per hour (adjust the timestep)
-    nsteph = nint(3600./tstep)
-    tstep = 3600./float(nsteph)
-    split_particle_after_step = split_particle_hours * nsteph
+  !..no. of timesteps per hour (adjust the timestep)
+  nsteph = nint(3600./tstep)
+  tstep = 3600./float(nsteph)
+  split_particle_after_step = split_particle_hours * nsteph
 
-    !..convert modleveldump from hours to steps
-    modleveldump = modleveldump*nsteph
+  !..convert modleveldump from hours to steps
+  modleveldump = modleveldump*nsteph
 
-    !..total no. of timesteps to run (nhrun is no. of hours to run)
-    nstep = nsteph*nhrun
-    if (nstep < 0) nstep = -nstep
+  !..total no. of timesteps to run (nhrun is no. of hours to run)
+  nstep = nsteph*nhrun
+  if (nstep < 0) nstep = -nstep
 
-    !..total no. of timesteps to release particles
-    nstepr = nsteph*nhrel
+  !..total no. of timesteps to release particles
+  nstepr = nsteph*nhrel
 
 
-    !..information to log file
-    write (iulog, *) 'nx,ny,nk:  ', nx, ny, nk
-    write (iulog, *) 'klevel:'
-    write (iulog, *) (klevel(i), i=1, nk)
-    write (iulog, *) 'imslp:     ', imslp
-    write (iulog, *) 'inprecip:  ', precipitation_in_output
-    write (iulog, *) 'imodlevel: ', imodlevel
-    write (iulog, *) 'modleveldump (h), steps:', modleveldump/nsteph, &
-      modleveldump
-    write (iulog, *) 'time_start:  ', time_start
-    write (tempstr, '("Starttime: ",I4,"-",I2.2,"-",I2.2,"T",I2.2 &
-        &,":",I2.2)') time_start
-    ncsummary = trim(ncsummary)//" "//trim(tempstr)
-    do n = 1, nrelpos
-      write (tempstr, '("Release Pos (lat, lon): (", F6.2, ",", F7.2 &
-          &,")")') &
-          release_positions(n)%geo_latitude, &
-          release_positions(n)%geo_longitude
-      ncsummary = trim(ncsummary)//". "//trim(tempstr)
-    end do
+  !..information to log file
+  write (iulog, *) 'nx,ny,nk:  ', nx, ny, nk
+  write (iulog, *) 'klevel:'
+  write (iulog, *) (klevel(i), i=1, nk)
+  write (iulog, *) 'imslp:     ', imslp
+  write (iulog, *) 'inprecip:  ', precipitation_in_output
+  write (iulog, *) 'imodlevel: ', imodlevel
+  write (iulog, *) 'modleveldump (h), steps:', modleveldump/nsteph, &
+    modleveldump
+  write (iulog, *) 'time_start:  ', time_start
+  write (tempstr, '("Starttime: ",I4,"-",I2.2,"-",I2.2,"T",I2.2 &
+      &,":",I2.2)') time_start
+  ncsummary = trim(ncsummary)//" "//trim(tempstr)
+  do n = 1, nrelpos
+    write (tempstr, '("Release Pos (lat, lon): (", F6.2, ",", F7.2 &
+        &,")")') &
+        release_positions(n)%geo_latitude, &
+        release_positions(n)%geo_longitude
+    ncsummary = trim(ncsummary)//". "//trim(tempstr)
+  end do
 
-    write (iulog, *) 'itime2:  ', itime2
-    write (iulog, *) 'itimer1: ', itimer(1)
-    write (iulog, *) 'itimer2: ', itimer(2)
-    write (iulog, *) 'nhfmin:  ', nhfmin
-    write (iulog, *) 'nhfmax:  ', nhfmax
-    write (iulog, *) 'nhrun:   ', nhrun
-    write (iulog, *) 'nhrel:   ', nhrel
-    write (iulog, *) 'tstep:   ', tstep
-    write (iulog, *) 'nsteph:  ', nsteph
-    write (iulog, *) 'nstep:   ', nstep
-    write (iulog, *) 'nstepr:  ', nstepr
-    write (iulog, *) 'mprel:   ', mprel
-    write (iulog, *) 'ifltim:  ', ifltim
-    write (iulog, *) 'irwalk:  ', use_random_walk
-    write (iulog, *) 'iforwd:  ', use_forwrd
-    write (iulog, *) 'drydep_scheme: ', drydep_scheme
-    write (iulog, *) 'wetdep_scheme: subcloud scheme:   ', wetdep_scheme%subcloud
-    write (iulog, *) 'wetdep_scheme: incloud  scheme:   ', wetdep_scheme%incloud
-    write (iulog, *) 'wetdep_scheme: use vertical:      ', wetdep_scheme%use_vertical
-    write (iulog, *) 'wetdep_scheme: use cloudfraction: ', wetdep_scheme%use_cloudfraction
-    write (iulog, *) 'idecay:  ', idecay
-    write (iulog, *) 'rmlimit: ', rmlimit
-    write (iulog, *) 'ndefcomp:', size(def_comp)
-    write (iulog, *) 'ncomp:   ', ncomp
-    write (iulog, fmt='(1x,a,40(1x,i2))') 'running_to_defined_comp: ', &
-      (run_comp(i)%to_defined, i=1, ncomp)
-    write (iulog, fmt='(1x,a,40(1x,i2))') 'defined_to_running_comp: ', &
-      (def_comp(i)%to_running, i=1, size(def_comp))
-    do n = 1, ncomp
-      m = run_comp(n)%to_defined
-      write (iulog, *) 'component no:  ', n
-      write (iulog, *) 'compname:   ', def_comp(m)%compname
-      write (iulog, *) '  field id:   ', def_comp(m)%idcomp
-      write (iulog, *) '  output_id:  ', def_comp(m)%to_output
-      write (iulog, *) '  output:     ', output_component(def_comp(m)%to_output)%name
-      write (iulog, *) '  output-defs:', output_component(def_comp(m)%to_output)%to_defined
-      write (iulog, *) '  kdrydep:    ', def_comp(m)%kdrydep
-      write (iulog, *) '  drydephgt:  ', def_comp(m)%drydephgt
-      write (iulog, *) '  drydeprat:  ', def_comp(m)%drydeprat
-      write (iulog, *) '  kwetdep:    ', def_comp(m)%kwetdep
-      write (iulog, *) '  kdecay:     ', def_comp(m)%kdecay
-      write (iulog, *) '  halftime:   ', def_comp(m)%halftime
-      write (iulog, *) '  decayrate:  ', def_comp(m)%decayrate
-      write (iulog, *) '  kgravity:   ', def_comp(m)%grav_type
-      write (iulog, *) '  gravityms:  ', def_comp(m)%gravityms
-      write (iulog, *) '  radiusmym:  ', def_comp(m)%radiusmym
-      write (iulog, *) '  densitygcm3:', def_comp(m)%densitygcm3
-      write (iulog, *) '  Release time profile:   ntprof: ', ntprof
-      ncsummary = trim(ncsummary)//". Release "//trim(def_comp(m)%compname) &
-                  //" (hour, Bq/s): "
-      do i = 1, ntprof
-        if (time_profile /= TIME_PROFILE_BOMB) then
-          write (iulog, *) '  hour,Bq/hour: ', &
-            releases(i)%frelhour, (releases(i)%relbqsec(n, ih)*3600., ih=1, nrelheight)
-        else
-          write (iulog, *) '  hour,Bq: ', &
-            releases(i)%frelhour, (releases(i)%relbqsec(n, ih), ih=1, nrelheight)
-          if (tpos_bomb == 0) then
-            if (any(releases(i)%relbqsec > 0.)) tpos_bomb = releases(i)%frelhour * 3600
-          end if
-          end if
-        write (tempstr, '("(",f5.1,",",ES9.2,")")') &
+  write (iulog, *) 'itime2:  ', itime2
+  write (iulog, *) 'itimer1: ', itimer(1)
+  write (iulog, *) 'itimer2: ', itimer(2)
+  write (iulog, *) 'nhfmin:  ', nhfmin
+  write (iulog, *) 'nhfmax:  ', nhfmax
+  write (iulog, *) 'nhrun:   ', nhrun
+  write (iulog, *) 'nhrel:   ', nhrel
+  write (iulog, *) 'tstep:   ', tstep
+  write (iulog, *) 'nsteph:  ', nsteph
+  write (iulog, *) 'nstep:   ', nstep
+  write (iulog, *) 'nstepr:  ', nstepr
+  write (iulog, *) 'mprel:   ', mprel
+  write (iulog, *) 'ifltim:  ', ifltim
+  write (iulog, *) 'irwalk:  ', use_random_walk
+  write (iulog, *) 'iforwd:  ', use_forwrd
+  write (iulog, *) 'drydep_scheme: ', drydep_scheme
+  write (iulog, *) 'wetdep_scheme: subcloud scheme:   ', wetdep_scheme%subcloud
+  write (iulog, *) 'wetdep_scheme: incloud  scheme:   ', wetdep_scheme%incloud
+  write (iulog, *) 'wetdep_scheme: use vertical:      ', wetdep_scheme%use_vertical
+  write (iulog, *) 'wetdep_scheme: use cloudfraction: ', wetdep_scheme%use_cloudfraction
+  write (iulog, *) 'idecay:  ', idecay
+  write (iulog, *) 'rmlimit: ', rmlimit
+  write (iulog, *) 'ndefcomp:', size(def_comp)
+  write (iulog, *) 'ncomp:   ', ncomp
+  write (iulog, fmt='(1x,a,40(1x,i2))') 'running_to_defined_comp: ', &
+    (run_comp(i)%to_defined, i=1, ncomp)
+  write (iulog, fmt='(1x,a,40(1x,i2))') 'defined_to_running_comp: ', &
+    (def_comp(i)%to_running, i=1, size(def_comp))
+  do n = 1, ncomp
+    m = run_comp(n)%to_defined
+    write (iulog, *) 'component no:  ', n
+    write (iulog, *) 'compname:   ', def_comp(m)%compname
+    write (iulog, *) '  field id:   ', def_comp(m)%idcomp
+    write (iulog, *) '  output_id:  ', def_comp(m)%to_output
+    write (iulog, *) '  output:     ', output_component(def_comp(m)%to_output)%name
+    write (iulog, *) '  output-defs:', output_component(def_comp(m)%to_output)%to_defined
+    write (iulog, *) '  kdrydep:    ', def_comp(m)%kdrydep
+    write (iulog, *) '  drydephgt:  ', def_comp(m)%drydephgt
+    write (iulog, *) '  drydeprat:  ', def_comp(m)%drydeprat
+    write (iulog, *) '  kwetdep:    ', def_comp(m)%kwetdep
+    write (iulog, *) '  kdecay:     ', def_comp(m)%kdecay
+    write (iulog, *) '  halftime:   ', def_comp(m)%halftime
+    write (iulog, *) '  decayrate:  ', def_comp(m)%decayrate
+    write (iulog, *) '  kgravity:   ', def_comp(m)%grav_type
+    write (iulog, *) '  gravityms:  ', def_comp(m)%gravityms
+    write (iulog, *) '  radiusmym:  ', def_comp(m)%radiusmym
+    write (iulog, *) '  densitygcm3:', def_comp(m)%densitygcm3
+    write (iulog, *) '  Release time profile:   ntprof: ', ntprof
+    ncsummary = trim(ncsummary)//". Release "//trim(def_comp(m)%compname) &
+                //" (hour, Bq/s): "
+
+    do i = 1, ntprof
+      if (time_profile /= TIME_PROFILE_BOMB) then
+        write (iulog, *) 'hour,Bq/hour: ', &
+          releases(i)%frelhour,(releases(i)%relbqsec(n, ih)*3600., ih=1, nrelheight)
+      else
+        write (iulog, *) 'hour,Bq: ', &
+          releases(i)%frelhour, (releases(i)%relbqsec(n, ih), ih=1, nrelheight)
+        if (tpos_bomb == 0) then
+          if (any(releases(i)%relbqsec > 0.)) tpos_bomb = releases(i)%frelhour * 3600
+        end if
+      end if
+      write (tempstr, '("(",f5.1,",",ES9.2,")")') &
           releases(i)%frelhour, releases(i)%relbqsec(n, 1)
         ncsummary = trim(ncsummary)//" "//trim(tempstr)
-      end do
     end do
-    if (time_profile == TIME_PROFILE_BOMB) then
-      write (iulog, *) 'tpos_bomb:  ', tpos_bomb
-    end if
-    write (iulog, *) 'itotcomp:   ', itotcomp
-    write (iulog, *) 'blfulmix:   ', blfullmix
-    write (error_unit, *) 'Title:      ', trim(nctitle)
-    write (error_unit, *) 'Summary:    ', trim(ncsummary)
+  end do
+  if (time_profile == TIME_PROFILE_BOMB) then
+    write (iulog, *) 'tpos_bomb:  ', tpos_bomb
+  end if
+  write (iulog, *) 'itotcomp:   ', itotcomp
+  write (iulog, *) 'blfulmix:   ', blfullmix
+  write (error_unit, *) 'Title:      ', trim(nctitle)
+  write (error_unit, *) 'Summary:    ', trim(ncsummary)
 
-    !..initialize files, deposition fields etc.
-    itime = time_start
-    time_file = datetime_t(-1, -1, -1, -1)
+  !..initialize files, deposition fields etc.
+  itime = time_start
+  time_file = datetime_t(-1, -1, -1, -1)
 
-    next_input_step = 0
-    ihread = 0
-    isteph = 0
-    lstepr = 0
-    iendrel = 0
+  next_input_step = 0
+  ihread = 0
+  isteph = 0
+  lstepr = 0
+  iendrel = 0
 
-    istep = -1
+  istep = -1
 
-    ! b_start
-    mhmin = 10000.0
-    mhmax = -10.0
-    ! b_end
+  ! b_start
+  mhmin = 10000.0
+  mhmax = -10.0
+  ! b_end
 
 
 ! reset readfield_nc (eventually, traj will rerun this loop)
-    call input_timer%start()
+  call input_timer%start()
 #if ! defined(FIMEX)
-      error stop "A fimex read was requested, but fimex support is not included"// &
-        " in this build"
+  error stop "A fimex read was requested, but fimex support is not included"// &
+    " in this build"
 #endif
-    call readfield_and_compute(ftype, -1, nhrun < 0, time_start, nhfmin, nhfmax, &
-                   time_file, ierror)
-    write (error_unit, fmt="('input data: ',i4,3i3.2)") time_file
-    flush(error_unit)
-    call input_timer%stop_and_log()
-    call swap_fields_after_reading() ! only for async io, but does not hurt otherwise
+  call readfield_and_compute(ftype, -1, nhrun < 0, time_start, nhfmin, nhfmax, &
+                  time_file, ierror)
+  write (error_unit, fmt="('input data: ',i4,3i3.2)") time_file
+  flush(error_unit)
+  call input_timer%stop_and_log()
+  call swap_fields_after_reading() ! only for async io, but does not hurt otherwise
 
-    ! Initialise output
-    if (idailyout == 1) then
-      !       daily output, append +x for each day, but initialize later
-      write (fldfilX, '(a9,a1,I3.3)') fldfil, '+', -1
+  ! Initialise output
+  if (idailyout == 1) then
+    !       daily output, append +x for each day, but initialize later
+    write (fldfilX, '(a9,a1,I3.3)') fldfil, '+', -1
+  else
+    ! standard output needs to be initialized
+    if (fldtype == "netcdf") then
+      fldfilX = fldfil
+      call initialize_output(fldfilX, itime, ierror)
     else
-      ! standard output needs to be initialized
-      if (fldtype == "netcdf") then
-        fldfilX = fldfil
-        call initialize_output(fldfilX, itime, ierror)
-      else
-        write (iulog, *) "only FIELD.OUTTYPE=netcdf supported, got: ", fldtype
-        ierror = 1
-      endif
+      write (iulog, *) "only FIELD.OUTTYPE=netcdf supported, got: ", fldtype
+      ierror = 1
     endif
-    if (ierror /= 0) call snap_error_exit(iulog)
+  endif
+  if (ierror /= 0) call snap_error_exit(iulog)
 
 
-    block
-      !..release position from geographic to active coordinates
-      y = release_positions(irelpos)%geo_latitude
-      x = release_positions(irelpos)%geo_longitude
-      write (iulog, *) 'release lat,long: ', y, x
-      call xyconvert(1, x, y, 2, GEO_PARAMS, igtype, gparam, ierror)
-      if (ierror /= 0) then
-        write (iulog, *) 'ERROR: xyconvert'
-        write (iulog, *) '   igtype: ', igtype
-        write (iulog, *) '   gparam: ', gparam
-        write (error_unit, *) 'ERROR: xyconvert'
-        write (error_unit, *) '   igtype: ', igtype
-        write (error_unit, *) '   gparam: ', gparam
-        call snap_error_exit(iulog)
-      end if
-      ! gparam stores cell centers; (1=center, 0.5 left/lower corner, 1.5= right/upper corner)
-      write (iulog, *) 'release   x,y:    ', x, y
-      if (x(1) < 1. .OR. x(1) >= nx  .OR. &
-          y(1) < 1. .OR. y(1) >= ny) then
-        write (iulog, *) 'ERROR: Release position outside field area'
-        write (error_unit, *) 'ERROR: Release position outside field area'
-        call snap_error_exit(iulog)
-      end if
-      release_positions(irelpos)%grid_x = x(1)
-      release_positions(irelpos)%grid_y = y(1)
-    end block
+  block
+    !..release position from geographic to active coordinates
+    y = release_positions(irelpos)%geo_latitude
+    x = release_positions(irelpos)%geo_longitude
+    write (iulog, *) 'release lat,long: ', y, x
+    call xyconvert(1, x, y, 2, GEO_PARAMS, igtype, gparam, ierror)
+    if (ierror /= 0) then
+      write (iulog, *) 'ERROR: xyconvert'
+      write (iulog, *) '   igtype: ', igtype
+      write (iulog, *) '   gparam: ', gparam
+      write (error_unit, *) 'ERROR: xyconvert'
+      write (error_unit, *) '   igtype: ', igtype
+      write (error_unit, *) '   gparam: ', gparam
+      call snap_error_exit(iulog)
+    end if
+    ! gparam stores cell centers; (1=center, 0.5 left/lower corner, 1.5= right/upper corner)
+    write (iulog, *) 'release   x,y:    ', x, y
+    if (x(1) < 1. .OR. x(1) >= nx  .OR. &
+        y(1) < 1. .OR. y(1) >= ny) then
+      write (iulog, *) 'ERROR: Release position outside field area'
+      write (error_unit, *) 'ERROR: Release position outside field area'
+      call snap_error_exit(iulog)
+    end if
+    release_positions(irelpos)%grid_x = x(1)
+    release_positions(irelpos)%grid_y = y(1)
+  end block
 
-    ! start time loop
-    itimei = time_start
-    npartmax = 0
+  ! start time loop
+  itimei = time_start
+  npartmax = 0
 #ifdef _OPENMP
-    ! both task and inner parallel do loops, so need 2 levels of parallelism
-    call omp_set_max_active_levels(2)
-    write (iulog, *) "OpenMP: num_threads: ", omp_get_max_threads()
-    write (error_unit, *) "OpenMP: num_threads: ", omp_get_max_threads(), &
-      ", places: ", omp_get_num_places()
-    write (error_unit, *) "OpenMP: num_threads: ", omp_get_max_threads(), &
-      ", places: ", omp_get_num_places()
+  ! both task and inner parallel do loops, so need 2 levels of parallelism
+  call omp_set_max_active_levels(2)
+  write (iulog, *) "OpenMP: num_threads: ", omp_get_max_threads()
+  write (error_unit, *) "OpenMP: num_threads: ", omp_get_max_threads(), &
+    ", places: ", omp_get_num_places()
+  write (error_unit, *) "OpenMP: num_threads: ", omp_get_max_threads(), &
+    ", places: ", omp_get_num_places()
 #else
-    write (iulog, *) "OpenMP: not enabled"
-    write (error_unit, *) "OpenMP: not enabled"
+  write (iulog, *) "OpenMP: not enabled"
+  write (error_unit, *) "OpenMP: not enabled"
 #endif
-    !$OMP PARALLEL
-    !$OMP SINGLE
-    time_loop: do istep = 0, nstep
-      call timeloop_timer%start()
-      write (iulog, *) 'istep,nplume,npart: ', istep, nplume, npart
-      flush (iulog)
-      if (mod(istep, nsteph) == 0) then
-        write (error_unit, *) 'istep,nplume,npart: ', istep, nplume, npart
-        flush (error_unit)
-      end if
+  ! write (sourceterm, '("Starttime: ",I4,"-",I2.2,"-",I2.2,"T",I2.2 &
+  !     &,":00Z")') time_start%year, time_start%month, time_start%day, time_start%hour
+  write (sourceterm, '("End timestep (seconds since ",I4,"-",I2.2,"-",I2.2,"T",I2.2 &
+      &,":00Z), Component name, Lower height [m], Upper height [m], Accumulated activity [Bq]")') time_start%year, time_start%month, time_start%day, time_start%hour
+  !$OMP PARALLEL
+  !$OMP SINGLE
+  time_loop: do istep = 0, nstep
+    call timeloop_timer%start()
+    write (iulog, *) 'istep,nplume,npart: ', istep, nplume, npart
+    flush (iulog)
+    flush (sourceterm)
+    if (mod(istep, nsteph) == 0) then
+      write (error_unit, *) 'istep,nplume,npart: ', istep, nplume, npart
+      flush (error_unit)
+    end if
 
-      !..read fields
-      nhleft = abs((nstep - istep + 1)/nsteph)
+    !..read fields
+    nhleft = abs((nstep - istep + 1)/nsteph)
 
-      if (.not. use_async_io .or. istep == 0) then
-        if (next_input_step == istep .and. nhleft > 0) then
-          call input_timer%start()
-          ! initial time to read next timestep is the time of the current file
-          itimei = time_file
-          if (.not. use_async_io) then
-            ! move all u2, v2, etc fields to u1, v1, etc before reading new fields to u2, v2, etc
-            call swap_fields_before_reading()
-          end if
-          call readfield_and_compute(ftype, istep, nhrun < 0, itimei, nhfmin, nhfmax, &
-                              time_file, ierror)
-          write (error_unit, fmt="('input data: ',i4,3i3.2)") time_file
-          call input_timer%stop_and_log()
+    if (.not. use_async_io .or. istep == 0) then
+      if (next_input_step == istep .and. nhleft > 0) then
+        call input_timer%start()
+        ! initial time to read next timestep is the time of the current file
+        itimei = time_file
+        if (.not. use_async_io) then
+          ! move all u2, v2, etc fields to u1, v1, etc before reading new fields to u2, v2, etc
+          call swap_fields_before_reading()
+        end if
+        call readfield_and_compute(ftype, istep, nhrun < 0, itimei, nhfmin, nhfmax, &
+                            time_file, ierror)
+        write (error_unit, fmt="('input data: ',i4,3i3.2)") time_file
+        call input_timer%stop_and_log()
 
-          ! duration to next read
-          if (istep == 0) then
-            dur = time_file - time_start
-          else
-            ! itimei is the current files timestep
-            dur = time_file - itimei
-          end if
-          ihdiff = dur%hours
-          tf1 = 0.
-          tf2 = 3600.*ihdiff
-          if (nhrun < 0) tf2 = -tf2
-          next_input_step = istep + nsteph*abs(ihdiff)
-
-          tnow = 0.
+        ! duration to next read
+        if (istep == 0) then
+          dur = time_file - time_start
         else
-          tnow = tnow + tstep
+          ! itimei is the current files timestep
+          dur = time_file - itimei
         end if
-      end if
-      ! Sync before we need the data from previous async read
-      if (use_async_io) then
-        if ((next_input_step == istep .and. nhleft > 0) .or. istep == 0) then
-          !$OMP TASKWAIT
-          ! move all u2 to u1, u3 to u2, etc after reading new fields to u3, v3, etc
-          ! not needed for last step, no further fields needed
-          if (istep > 0) then
-            ! otherwise already written in syncronous read above
-            write (error_unit, fmt="('input data: ',i4,3i3.2)") time_file
-          end if
-          ! just keep reading from the last timestep, no interpolation needed
-          call swap_fields_after_reading()
-          if (istep == 0) then
-            dur = time_file - time_start
-          else
-            ! itimei is the current files timestep
-            dur = time_file - itimei
-          end if
-          ihdiff = dur%hours
-          tf1 = 0.
-          tf2 = 3600.*ihdiff
-          if (nhrun < 0) tf2 = -tf2
-          tnow = 0.
-          next_input_step = istep + nsteph*abs(ihdiff)
+        ihdiff = dur%hours
+        tf1 = 0.
+        tf2 = 3600.*ihdiff
+        if (nhrun < 0) tf2 = -tf2
+        next_input_step = istep + nsteph*abs(ihdiff)
 
-          itimei = time_file
-          if (next_input_step < nstep) then ! still data needed
-            ! start reading the next fields early, while computations for current fields are still running
-            ! the tasks sets time_file and the new fields, to be swapped after the taskwait above
-            ! Don't let child threads inherit
-            !$OMP TASK &
-            !$OMP SHARED(time_file) &
-            !$OMP FIRSTPRIVATE(idebug,iulog,itimei, next_input_step,nhrun,nhfmin,nhfmax,nsteph) &
-            !$OMP PRIVATE(ierror)
-            if (idebug >= 1) then
-              write(error_unit, *) "Starting async read task for step ", next_input_step, nstep, itimei
-              flush(error_unit)
-            end if
-            call input_timer%start()
-            call readfield_and_compute(ftype, next_input_step, nhrun < 0, itimei, nhfmin, nhfmax, &
-                              time_file, ierror)
-            call input_timer%stop_and_log()
-            !$OMP END TASK
-          end if
-        else
-          ! this is not an IO step
-          tnow = tnow + tstep
-        end if
-      end if
-
-      tnext = tnow + tstep
-    !..for linear interpolation in time
-      rt1=(tf2-tnow)/(tf2-tf1)
-      rt2=(tnow-tf1)/(tf2-tf1)
-
-      if (iendrel == 0 .AND. istep <= nstepr) then
-
-        !..release one plume of particles
-        call release_timer%start()
-        call release(istep, nsteph, tf1, tf2, tnow, ierror)
-        npartmax = max(npartmax, npart)
-        call release_timer%stop_and_log()
-
-        if (ierror == 0) then
-          lstepr = istep
-        else
-          write (iulog, *) 'WARNING. Out of space for plumes/particles'
-          write (iulog, *) 'WARNING. End release, continue running'
-          write (error_unit, *) 'WARNING. Out of space for plumes/particles'
-          write (error_unit, *) 'WARNING. End release, continue running'
-          iendrel = 1
-        end if
-
-      end if
-
-      !..radioactive decay for depositions
-      !.. and initialization of decay-parameters
-      if (idecay == 1) call decayDeps(tstep)
-      ! prepare particle functions once before loop
-      if (init) then
-        call wetdep_init()
-        if (use_random_walk) call rwalk_init(tstep)
-        init = .FALSE.
-      end if
-
-      ! plume loop, increase age of all plumes/particles
-      do npl = 1, nplume
-        iplume(npl)%ageInSteps = iplume(npl)%ageInSteps + 1
-      end do
-
-      call particleloop_timer%start()
-      ! particle loop
-      !$OMP PARALLEL DO &
-      !$OMP PRIVATE(pextra,np,npl,m,out_of_domain, lost_activity, age_hr, smoothing_kernel) &
-      !$OMP FIRSTPRIVATE(last_age_hr) &
-      !$OMP SCHEDULE(auto) &
-      !$OMP REDUCTION(+:total_activity_lost_domain) REDUCTION(MAX:mhmax) REDUCTION(MIN:mhmin)
-      plume_do: do npl = 1, nplume
-        age_hr = nint(1.0 * iplume(npl)%ageInSteps / nsteph)
-        if (age_hr /= last_age_hr) then
-          last_age_hr = age_hr
-          call build_age_gaussian_kernel(last_age_hr, smoothing_kernel)
-        end if
-        part_do:  do np = iplume(npl)%start, iplume(npl)%end
-          lost_activity = 0.0
-          if (.not.pdata(np)%is_active()) cycle part_do
-
-          !..interpolation of boundary layer top, height, precipitation etc.
-          !  creates and save temporary data to pextra%prc, pextra%rmx, pextra%rmy
-          call posint(pdata(np), rt1, rt2, pextra)
-
-          !..radioactive decay
-          if (idecay == 1) call decay(pdata(np))
-
-          !..dry deposition
-          call drydep(tstep, pdata(np), smoothing_kernel, lost_activity)
-
-          !..wet deposition
-          call wetdep(tstep, pdata(np), pextra)
-
-          !..move all particles forward, save u and v to pextra
-          if (use_forwrd) call forwrd(tf1, tf2, tnow, tstep, pdata(np), pextra)
-
-          !..apply the random walk method (diffusion)
-          ! diffusion is applied after deposition to mix
-          ! before output (which computes surface concentrations)
-          if (use_random_walk) call rwalk(blfullmix, pdata(np), pextra)
-
-          !.. check domain (%active) after moving particle
-          call check_in_domain(pdata(np), out_of_domain)
-          if (out_of_domain) then
-            m = def_comp(pdata(np)%icomp)%to_output
-            total_activity_lost_domain(m) = &
-              total_activity_lost_domain(m) + pdata(np)%get_set_rad(0.0)
-          endif
-          if (lost_activity > 0.0) then
-            m = def_comp(pdata(np)%icomp)%to_output
-            total_activity_lost_domain(m) = &
-              total_activity_lost_domain(m) + lost_activity
-          end if
-
-          if (pdata(np)%is_active()) then
-            if (pdata(np)%hbl > mhmax) mhmax = pdata(np)%hbl
-            if (pdata(np)%hbl < mhmin) mhmin = pdata(np)%hbl
-          end if
-        end do part_do
-      end do plume_do
-      !$OMP END PARALLEL DO
-      call particleloop_timer%stop_and_log()
-
-      !..remove inactive particles or without any mass left
-      call rmpart(rmlimit)
-
-      !..split particles after some time of transport
-      if (split_particle_after_step > 0) then
-        call split_particles(split_particle_after_step)
-      end if
-      npartmax = max(npartmax, npart)
-
-      !..fields
-      ifldout = 0
-      isteph = isteph + 1
-      if (isteph == nsteph) then
-        isteph = 0
-        if (nhrun > 0) then
-          itime = itime + duration_t(1)
-        else
-          itime = itime - duration_t(1)
-        end if
-        itimeo = itime
-        if (synoptic_output) then
-          !..synoptic output  (use valid hour to test if output)
-          dur = itime - time_file
-          ihour = dur%hours
-        else
-          !..asynoptic output (use forecast length in hours to test if output)
-          dur = itime - time_start
-          ihour = dur%hours
-        end if
-        if (mod(ihour, nhfout) == 0) then
-          ifldout = 1
-          if (ifltim == 0) then
-            !..identify fields with forecast length (hours after start)
-            itimeo = itime
-          end if
-          !..save first and last output time
-          ntimefo = ntimefo + 1
-          write (iulog, *) 'fldout. ', itimeo
-        end if
-      end if
-
-      !..field output if ifldout=1, always accumulation for average fields
-      call output_timer%start()
-      call accumulate_fields(tf1, tf2, tnext, tstep, nsteph)
-
-      if (idailyout == 1) then
-        !       daily output, append +x for each day
-        ! istep/nsteph = hour  -> /24 =day
-        write (fldfilN, '(a9,a1,I3.3)') fldfil, '+', istep/nsteph/24
-        if (fldfilX /= fldfilN) then
-          fldfilX = fldfilN
-          if (fldtype == "netcdf") then
-            !$OMP TASKWAIT
-            call initialize_output(fldfilX, itime, ierror)
-            if (ierror /= 0) call snap_error_exit(iulog)
-          endif
-        end if
-        if (fldtype == "netcdf" .and. ifldout == 1) then
-          !$OMP TASKWAIT
-          call fldout_nc(fldfilX, itimeo, tf1, tf2, tnext, nsteph, &
-                         ierror)
-        endif
-        if (ierror /= 0) call snap_error_exit(iulog)
+        tnow = 0.
       else
-        if (fldtype == "netcdf" .and. ifldout == 1) then
-          !$OMP TASKWAIT
-          call fldout_nc(fldfilX, itimeo, tf1, tf2, tnext, nsteph, &
-                         ierror)
-        endif
-        if (ierror /= 0) call snap_error_exit(iulog)
+        tnow = tnow + tstep
       end if
-      call output_timer%stop_and_log()
+    end if
+    ! Sync before we need the data from previous async read
+    if (use_async_io) then
+      if ((next_input_step == istep .and. nhleft > 0) .or. istep == 0) then
+        !$OMP TASKWAIT
+        ! move all u2 to u1, u3 to u2, etc after reading new fields to u3, v3, etc
+        ! not needed for last step, no further fields needed
+        if (istep > 0) then
+          ! otherwise already written in syncronous read above
+          write (error_unit, fmt="('input data: ',i4,3i3.2)") time_file
+        end if
+        ! just keep reading from the last timestep, no interpolation needed
+        call swap_fields_after_reading()
+        if (istep == 0) then
+          dur = time_file - time_start
+        else
+          ! itimei is the current files timestep
+          dur = time_file - itimei
+        end if
+        ihdiff = dur%hours
+        tf1 = 0.
+        tf2 = 3600.*ihdiff
+        if (nhrun < 0) tf2 = -tf2
+        tnow = 0.
+        next_input_step = istep + nsteph*abs(ihdiff)
 
-      call timeloop_timer%stop_and_log()
-    end do time_loop
-    !$OMP END SINGLE
-    !$OMP END PARALLEL
+        itimei = time_file
+        if (next_input_step < nstep) then ! still data needed
+          ! start reading the next fields early, while computations for current fields are still running
+          ! the tasks sets time_file and the new fields, to be swapped after the taskwait above
+          ! Don't let child threads inherit
+          !$OMP TASK &
+          !$OMP SHARED(time_file) &
+          !$OMP FIRSTPRIVATE(idebug,iulog,itimei, next_input_step,nhrun,nhfmin,nhfmax,nsteph) &
+          !$OMP PRIVATE(ierror)
+          if (idebug >= 1) then
+            write(error_unit, *) "Starting async read task for step ", next_input_step, nstep, itimei
+            flush(error_unit)
+          end if
+          call input_timer%start()
+          call readfield_and_compute(ftype, next_input_step, nhrun < 0, itimei, nhfmin, nhfmax, &
+                            time_file, ierror)
+          call input_timer%stop_and_log()
+          !$OMP END TASK
+        end if
+      else
+        ! this is not an IO step
+        tnow = tnow + tstep
+      end if
+    end if
+
+    tnext = tnow + tstep
+  !..for linear interpolation in time
+    rt1=(tf2-tnow)/(tf2-tf1)
+    rt2=(tnow-tf1)/(tf2-tf1)
+
+    if (iendrel == 0 .AND. istep <= nstepr) then
+
+      !..release one plume of particles
+      call release_timer%start()
+      call release(istep, nsteph, tf1, tf2, tnow, ierror)
+      npartmax = max(npartmax, npart)
+      call release_timer%stop_and_log()
+
+      if (ierror == 0) then
+        lstepr = istep
+      else
+        write (iulog, *) 'WARNING. Out of space for plumes/particles'
+        write (iulog, *) 'WARNING. End release, continue running'
+        write (error_unit, *) 'WARNING. Out of space for plumes/particles'
+        write (error_unit, *) 'WARNING. End release, continue running'
+        iendrel = 1
+      end if
+
+    end if
+
+    !..radioactive decay for depositions
+    !.. and initialization of decay-parameters
+    if (idecay == 1) call decayDeps(tstep)
+    ! prepare particle functions once before loop
+    if (init) then
+      call wetdep_init()
+      if (use_random_walk) call rwalk_init(tstep)
+      init = .FALSE.
+    end if
+
+    ! plume loop, increase age of all plumes/particles
+    do npl = 1, nplume
+      iplume(npl)%ageInSteps = iplume(npl)%ageInSteps + 1
+    end do
+
+    call particleloop_timer%start()
+    ! particle loop
+    !$OMP PARALLEL DO &
+    !$OMP PRIVATE(pextra,np,npl,m,out_of_domain, lost_activity, age_hr, smoothing_kernel) &
+    !$OMP FIRSTPRIVATE(last_age_hr) &
+    !$OMP SCHEDULE(auto) &
+    !$OMP REDUCTION(+:total_activity_lost_domain) REDUCTION(MAX:mhmax) REDUCTION(MIN:mhmin)
+    plume_do: do npl = 1, nplume
+      age_hr = nint(1.0 * iplume(npl)%ageInSteps / nsteph)
+      if (age_hr /= last_age_hr) then
+        last_age_hr = age_hr
+        call build_age_gaussian_kernel(last_age_hr, smoothing_kernel)
+      end if
+      part_do:  do np = iplume(npl)%start, iplume(npl)%end
+        lost_activity = 0.0
+        if (.not.pdata(np)%is_active()) cycle part_do
+
+        !..interpolation of boundary layer top, height, precipitation etc.
+        !  creates and save temporary data to pextra%prc, pextra%rmx, pextra%rmy
+        call posint(pdata(np), rt1, rt2, pextra)
+
+        !..radioactive decay
+        if (idecay == 1) call decay(pdata(np))
+
+        !..dry deposition
+        call drydep(tstep, pdata(np), smoothing_kernel, lost_activity)
+
+        !..wet deposition
+        call wetdep(tstep, pdata(np), pextra)
+
+        !..move all particles forward, save u and v to pextra
+        if (use_forwrd) call forwrd(tf1, tf2, tnow, tstep, pdata(np), pextra)
+
+        !..apply the random walk method (diffusion)
+        ! diffusion is applied after deposition to mix
+        ! before output (which computes surface concentrations)
+        if (use_random_walk) call rwalk(blfullmix, pdata(np), pextra)
+
+        !.. check domain (%active) after moving particle
+        call check_in_domain(pdata(np), out_of_domain)
+        if (out_of_domain) then
+          m = def_comp(pdata(np)%icomp)%to_output
+          total_activity_lost_domain(m) = &
+            total_activity_lost_domain(m) + pdata(np)%get_set_rad(0.0)
+        endif
+        if (lost_activity > 0.0) then
+          m = def_comp(pdata(np)%icomp)%to_output
+          total_activity_lost_domain(m) = &
+            total_activity_lost_domain(m) + lost_activity
+        end if
+
+        if (pdata(np)%is_active()) then
+          if (pdata(np)%hbl > mhmax) mhmax = pdata(np)%hbl
+          if (pdata(np)%hbl < mhmin) mhmin = pdata(np)%hbl
+        end if
+      end do part_do
+    end do plume_do
+    !$OMP END PARALLEL DO
+    call particleloop_timer%stop_and_log()
+
+    !..remove inactive particles or without any mass left
+    call rmpart(rmlimit)
+
+    !..split particles after some time of transport
+    if (split_particle_after_step > 0) then
+      call split_particles(split_particle_after_step)
+    end if
+    npartmax = max(npartmax, npart)
+
+    !..fields
+    ifldout = 0
+    isteph = isteph + 1
+    if (isteph == nsteph) then
+      isteph = 0
+      if (nhrun > 0) then
+        itime = itime + duration_t(1)
+      else
+        itime = itime - duration_t(1)
+      end if
+      itimeo = itime
+      if (synoptic_output) then
+        !..synoptic output  (use valid hour to test if output)
+        dur = itime - time_file
+        ihour = dur%hours
+      else
+        !..asynoptic output (use forecast length in hours to test if output)
+        dur = itime - time_start
+        ihour = dur%hours
+      end if
+      if (mod(ihour, nhfout) == 0) then
+        ifldout = 1
+        if (ifltim == 0) then
+          !..identify fields with forecast length (hours after start)
+          itimeo = itime
+        end if
+        !..save first and last output time
+        ntimefo = ntimefo + 1
+        write (iulog, *) 'fldout. ', itimeo
+      end if
+    end if
+
+    !..field output if ifldout=1, always accumulation for average fields
+    call output_timer%start()
+    call accumulate_fields(tf1, tf2, tnext, tstep, nsteph)
+
+    if (idailyout == 1) then
+      !       daily output, append +x for each day
+      ! istep/nsteph = hour  -> /24 =day
+      write (fldfilN, '(a9,a1,I3.3)') fldfil, '+', istep/nsteph/24
+      if (fldfilX /= fldfilN) then
+        fldfilX = fldfilN
+        if (fldtype == "netcdf") then
+          !$OMP TASKWAIT
+          call initialize_output(fldfilX, itime, ierror)
+          if (ierror /= 0) call snap_error_exit(iulog)
+        endif
+      end if
+      if (fldtype == "netcdf" .and. ifldout == 1) then
+        !$OMP TASKWAIT
+        call fldout_nc(fldfilX, itimeo, tf1, tf2, tnext, nsteph, &
+                        ierror)
+      endif
+      if (ierror /= 0) call snap_error_exit(iulog)
+    else
+      if (fldtype == "netcdf" .and. ifldout == 1) then
+        !$OMP TASKWAIT
+        call fldout_nc(fldfilX, itimeo, tf1, tf2, tnext, nsteph, &
+                        ierror)
+      endif
+      if (ierror /= 0) call snap_error_exit(iulog)
+    end if
+    call output_timer%stop_and_log()
+
+    call timeloop_timer%stop_and_log()
+  end do time_loop
+  !$OMP END SINGLE
+  !$OMP END PARALLEL
 
   if (lstepr < nstep .AND. lstepr < nstepr) then
     write (iulog, *) 'ERROR: Due to space problems the release period was'
@@ -968,6 +978,7 @@ PROGRAM bsnap
   CALL deAllocateFields()
 
   close (iulog)
+  close (sourceterm)
 
 contains
 

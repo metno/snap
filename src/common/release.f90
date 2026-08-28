@@ -111,11 +111,11 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
   USE snapfldML, only: xm, ym, t1, t2, ps1, ps2
   USE snapparML, only: time_profile, ncomp, nparnum, run_comp, &
       iparnum, &
-      TIME_PROFILE_BOMB, TIME_PROFILE_LINEAR
+      TIME_PROFILE_BOMB, TIME_PROFILE_LINEAR, def_comp
   USE snapposML, only: irelpos, release_positions
   USE snaptabML, only: g, exner
   USE snapdimML, only: nx, ny, nk
-  USE snapdebug, only: iulog
+  USE snapdebug, only: iulog, sourceterm
 
   integer, intent(in) :: istep, nsteph
   real, intent(in) :: tf1, tf2, tnow
@@ -491,12 +491,10 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
     !.....end do nrad=1,numradius
     end do
   !++++++++++++++++++++++++++++++++++++++++++
-
     do n=1,ncomp
       run_comp(n)%totalbq = run_comp(n)%totalbq + pbq(n)*nrel(n)
       run_comp(n)%numtotal = run_comp(n)%numtotal + nrel(n)
     end do
-
   !################################################################
   ! c   if(mod(istep,nsteph*3).eq.0) then
   !      if(mod(istep,nsteph).eq.0) then
@@ -505,7 +503,10 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
     ! c  +			n,m,totalbq(m),numtotal(m)
       write(iulog,*) 'comp,totalbq,numtotal: ', &
       n, run_comp(n)%totalbq, run_comp(n)%numtotal
+      write (sourceterm, 10) INT((istep+1)*tstep),",", def_comp(n)%compname,",", hlower, ",", hupper, ",", run_comp(n)%totalbq
     end do
+
+    10 FORMAT(I7,A1,A6,A1,F8.3,A1,F8.3,A1,ES11.5)
   ! c	write(error_unit,*) 'nparnum: ',nparnum
     write(iulog,*) 'nparnum: ',nparnum
   !      end if
