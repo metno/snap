@@ -6,7 +6,7 @@
 <OutputFormat>NetCDF</OutputFormat>
 <GridSize>2.5</GridSize>
 <GridsizeUnit>km</GridsizeUnit>
-<CalcGridSize>500</CalcGridSize>
+<CalcGridSize>1000</CalcGridSize>
 <NuclearYield>10</NuclearYield>
 <FissionProportion>20.000000</FissionProportion>
 <ExplosionType>Spriggs R6</ExplosionType>

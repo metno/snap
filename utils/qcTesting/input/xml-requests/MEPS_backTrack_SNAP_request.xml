@@ -6,6 +6,6 @@
 <OutputFormat>NetCDF</OutputFormat>
 <GridSize>2.5</GridSize>
 <GridsizeUnit>km</GridsizeUnit>
-<CalcGridSize>500</CalcGridSize>
+<CalcGridSize>1000</CalcGridSize>
 <RequestMode>test</RequestMode>
 </Request>
