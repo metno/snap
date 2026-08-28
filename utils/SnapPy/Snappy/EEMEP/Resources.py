@@ -32,7 +32,7 @@ class Resources(ResourcesCommon):
     _ECINPUTDIRS = ["{LF_PROD_DIR}/atom/Meteorology/EC2CWF/"]
     ECVLEVELS = "Vertical_levels48.txt"
     EC_FILE_PATTERN = "NRPA_EUROPE_0_1_{UTC:02d}/meteo{year:04d}{month:02d}{day:02d}_{dayoffset:02d}.nc"
-    _OUTPUTDIR = "{LUSTREDIR}/project/fou/kl/eva/eemep/runs/"
+    _OUTPUTDIR = "{LF_PROD_DIR}/volcanicash/MetModels/"
 
     def __init__(self):
         """
