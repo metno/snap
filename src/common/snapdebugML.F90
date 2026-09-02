@@ -28,6 +28,8 @@ module snapdebug
     integer, public, save :: idebug = 0
 !> output unit for log file
     integer, public :: iulog
+!> output unit for sourceterm file    
+    integer, public :: sourceterm
 
     character(len=*), parameter :: global_timer_prefix = "timer: "
     character(len=*), parameter :: global_timer_total_prefix = "Total: "

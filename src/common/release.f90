@@ -110,12 +110,12 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
   USE snapgrdML, only: gparam, vlevel, alevel, ahalf, blevel, bhalf
   USE snapfldML, only: xm, ym, t1, t2, ps1, ps2
   USE snapparML, only: time_profile, ncomp, nparnum, run_comp, &
-      iparnum, &
+      def_comp, iparnum, &
       TIME_PROFILE_BOMB, TIME_PROFILE_LINEAR
   USE snapposML, only: irelpos, release_positions
   USE snaptabML, only: g, exner
   USE snapdimML, only: nx, ny, nk
-  USE snapdebug, only: iulog
+  USE snapdebug, only: iulog, sourceterm
 
   integer, intent(in) :: istep, nsteph
   real, intent(in) :: tf1, tf2, tnow
@@ -505,6 +505,8 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
     ! c  +			n,m,totalbq(m),numtotal(m)
       write(iulog,*) 'comp,totalbq,numtotal: ', &
       n, run_comp(n)%totalbq, run_comp(n)%numtotal
+      write (sourceterm, 10) INT((istep+1)*tstep),",", &
+      def_comp(n)%compname,",", hlower, ",", hupper, ",", run_comp(n)%totalbq
     end do
   ! c	write(error_unit,*) 'nparnum: ',nparnum
     write(iulog,*) 'nparnum: ',nparnum
