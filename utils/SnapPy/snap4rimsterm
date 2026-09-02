@@ -195,6 +195,7 @@ def rimsterm2input(rimxml, argosxml, met_model, argos_operational) -> tuple[str,
     runTime = 48
     outputTimestep = 3
     is_bomb = False
+    is_qcTest = False
     if argosxml:
         runTime = int(argosxml.find("RunLength").text)
         outputTimestep = int(argosxml.find("OutputTimestep").text)
