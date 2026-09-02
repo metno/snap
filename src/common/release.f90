@@ -110,7 +110,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
   USE snapgrdML, only: gparam, vlevel, alevel, ahalf, blevel, bhalf
   USE snapfldML, only: xm, ym, t1, t2, ps1, ps2
   USE snapparML, only: time_profile, ncomp, nparnum, run_comp, &
-      def_comp, iparnum, &
+      iparnum, &
       TIME_PROFILE_BOMB, TIME_PROFILE_LINEAR
   USE snapposML, only: irelpos, release_positions
   USE snaptabML, only: g, exner
