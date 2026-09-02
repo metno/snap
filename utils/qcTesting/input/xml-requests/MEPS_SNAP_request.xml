@@ -7,5 +7,5 @@
 <GridSize>2.5</GridSize>
 <GridsizeUnit>km</GridsizeUnit>
 <CalcGridSize>1000</CalcGridSize>
-<RequestMode>test</RequestMode>
+<RequestMode>QCtest</RequestMode>
 </Request>

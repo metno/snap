@@ -14,5 +14,5 @@
 <GroundType>Dry_Rock</GroundType>
 <WeaponType>Uranium</WeaponType>
 <NoOfDetonations>1</NoOfDetonations>
-<RequestMode>test</RequestMode>
+<RequestMode>QCtest</RequestMode>
 </Request>

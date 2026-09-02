@@ -7,5 +7,5 @@
 <GridSize>0.25</GridSize>
 <GridsizeUnit>Degree</GridsizeUnit>
 <CalcGridSize>10000</CalcGridSize>
-<RequestMode>test</RequestMode>
+<RequestMode>QCtest</RequestMode>
 </Request>

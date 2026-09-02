@@ -178,7 +178,7 @@ def request_is_bomb(argosRoot):
 
 def request_is_QCtest(argosRoot):
     if argosRoot.find("RequestMode") is not None:
-        return argosRoot.find("RequestMode").text == "test"
+        return argosRoot.find("RequestMode").text == "QCtest"
     return False
 
 def rimsterm2input(rimxml, argosxml, met_model, argos_operational) -> tuple[str, str | None]:
