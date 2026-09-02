@@ -102,6 +102,9 @@ module releaseML
 !> seconds since start of run when bomb-release occurs
   integer, save, public :: tpos_bomb = 0
 
+!> output unit for sourceterm file    
+  integer, public :: iu_sourceterm
+
   contains
 
 subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
@@ -115,7 +118,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
   USE snapposML, only: irelpos, release_positions
   USE snaptabML, only: g, exner
   USE snapdimML, only: nx, ny, nk
-  USE snapdebug, only: iulog, iu_sourceterm
+  USE snapdebug, only: iulog
 
   integer, intent(in) :: istep, nsteph
   real, intent(in) :: tf1, tf2, tnow
@@ -507,7 +510,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
       n, run_comp(n)%totalbq, run_comp(n)%numtotal
       10 FORMAT(I7,A1,A6,A1,F8.3,A1,F8.3,A1,ES11.5)
       write (iu_sourceterm, 10) INT((istep+1)*tstep),",", &
-      run_comp(n)%defined_component%compname,",", hlower, ",", hupper, ",", run_comp(n)%totalbq
+      run_comp(n)%defined%compname,",", hlower, ",", hupper, ",", run_comp(n)%totalbq
     end do
 
     

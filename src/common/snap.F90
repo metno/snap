@@ -162,7 +162,7 @@ PROGRAM bsnap
 
   USE DateCalc, only: epochToDate, timeGM
   USE datetime, only: datetime_t, duration_t
-  USE snapdebug, only: iulog, idebug,iu_sourceterm
+  USE snapdebug, only: iulog, idebug
   USE snaptimers, only: timeloop_timer, output_timer, input_timer, metcalc_timer, &
                         release_timer, other_timer, particleloop_timer, initialize_timers
   USE snapdimML, only: nx, ny, nk, output_resolution_factor, ldata, maxsiz, mcomp, surface_index
@@ -203,7 +203,7 @@ PROGRAM bsnap
   USE decayML, only: decay, decayDeps
   USE posintML, only: posint
   USE releaseML, only: release, releases, tpos_bomb, nrelheight, mprel, &
-                       mplume, nplume, iplume, npart, mpart, release_t
+                       mplume, nplume, iplume, npart, mpart, release_t, iu_sourceterm
   USE init_random_seedML, only: init_random_seed
   USE snapfimexML, only: fimex_type => file_type, fimex_config => conf_file, fimex_interpolation => interpolation, fint
 #if defined(FIMEX)
