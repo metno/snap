@@ -507,7 +507,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
       n, run_comp(n)%totalbq, run_comp(n)%numtotal
       10 FORMAT(I7,A1,A6,A1,F8.3,A1,F8.3,A1,ES11.5)
       write (iu_sourceterm, 10) INT((istep+1)*tstep),",", &
-      def_comp(n)%compname,",", hlower, ",", hupper, ",", run_comp(n)%totalbq
+      run_comp(n)%defined_component%compname,",", hlower, ",", hupper, ",", run_comp(n)%totalbq
     end do
 
     
