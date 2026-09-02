@@ -3,20 +3,8 @@
 # SNAP: Servere Nuclear Accident Programme
 # Copyright (C) 1992-2020   Norwegian Meteorological Institute
 #
-# This file is part of SNAP. SNAP is free software: you can
-# redistribute it and/or modify it under the terms of the
-# GNU General Public License as published by the
-# Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
+# License: GNU General Public License Version 3 (GNU GPL-3.0)
+
 from collections import OrderedDict
 import datetime
 import logging
@@ -188,6 +176,10 @@ def rimsterm2bomb_release(
 def request_is_bomb(argosRoot):
     return argosRoot.find("NuclearYield") is not None
 
+def request_is_QCtest(argosRoot):
+    if argosRoot.find("RequestMode") is not None:
+        return argosRoot.find("RequestMode").text == "QCtest"
+    return False
 
 def rimsterm2input(rimxml, argosxml, met_model, argos_operational) -> tuple[str, str | None]:
     """create a full snap.input sourceterm from a rimsterm.xml file using the met_model meteo
@@ -207,6 +199,7 @@ def rimsterm2input(rimxml, argosxml, met_model, argos_operational) -> tuple[str,
         runTime = int(argosxml.find("RunLength").text)
         outputTimestep = int(argosxml.find("OutputTimestep").text)
         is_bomb = request_is_bomb(argosxml)
+        is_qcTest = request_is_QCtest(argosxml)
         # GridSize: size of grid-cell, i.e. 2.5, 0.1 (km or degree), available since Argos10
         gridSize = 0  # default
         # gridSize = float(argosxml.find("GridSize").text)
@@ -241,6 +234,16 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
 
     interpolation = ""
     metdef = res.getDefaultMetDefinitions(met_model)
+    if is_qcTest:
+        meteo_path = "{LUSTREDIR}/project/fou/kl/cerad/Meteorology/QC/"
+
+        res._MET_INPUTDIRS={
+            MetModel.Meps2p5: [os.path.join(meteo_path,"MEPS")],
+            MetModel.Icon0p25Global: [os.path.join(meteo_path,"ICON")],
+            MetModel.Era5Nancy: [os.path.join(meteo_path,"ERA5")]
+        }
+        res.MET_FILENAME_PATTERN[MetModel.Meps2p5] = "meps_det_2_5km_{year:04d}{month:02d}{day:02d}T{UTC:02d}Z.nc"
+        res._ECINPUTDIRS=[os.path.join(meteo_path,"EC")]
     if met_model == MetModel.NrpaEC0p1:
         files = res.getECMeteorologyFiles(dtime=startDTime, run_hours=int(runTime))
         if len(files) == 0:
@@ -262,17 +265,20 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
                 f"no {met_model} met-files found for {startDTime}, runtime {runTime}"
             )
     elif met_model == MetModel.Icon0p25Global:
-        metcalc = ICONMeteorologyCalculator(
-            ICONMeteorologyCalculator.getGlobalMeteoResources(),
-            startDTime,
-            float(lon),
-            float(lat),
-        )
-        metcalc.calc()
-        if metcalc.must_calc():
-            raise Exception(f"no ICON met-files calculated for {startDTime}")
-        files = metcalc.get_meteorology_files()
-        (metdef["startX"], metdef["startY"]) = metcalc.get_grid_startX_Y()
+        if is_qcTest:
+            files = res.getMeteorologyFiles(met_model, startDTime, runTime, "best" )
+        else:
+            metcalc = ICONMeteorologyCalculator(
+                ICONMeteorologyCalculator.getGlobalMeteoResources(),
+                startDTime,
+                float(lon),
+                float(lat),
+            )
+            metcalc.calc()
+            if metcalc.must_calc():
+                raise Exception(f"no ICON met-files calculated for {startDTime}")
+            files = metcalc.get_meteorology_files()
+            (metdef["startX"], metdef["startY"]) = metcalc.get_grid_startX_Y()
     elif met_model == MetModel.EC0p1Europe:
         files = res.getMeteorologyFiles(met_model, startDTime, runTime, "best")
         if len(files) == 0:
