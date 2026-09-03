@@ -662,8 +662,8 @@ PROGRAM bsnap
 #endif
   ! write (sourceterm, '("Starttime: ",I4,"-",I2.2,"-",I2.2,"T",I2.2 &
   !     &,":00Z")') time_start%year, time_start%month, time_start%day, time_start%hour
-  write (sourceterm, '("End timestep (seconds since ",I4,"-",I2.2,"-",I2.2,"T",I2.2 &
-      &,":00Z), Component name, Lower height [m], Upper height [m], Accumulated activity [Bq]")') time_start%year, time_start%month, time_start%day, time_start%hour
+  write (sourceterm, '("End timestep [seconds since ",I4,"-",I2.2,"-",I2.2,"T",I2.2 &
+      &,":00Z], Component name, Lower height [m], Upper height [m], Accumulated activity [Bq]")') time_start%year, time_start%month, time_start%day, time_start%hour
   !$OMP PARALLEL
   !$OMP SINGLE
   time_loop: do istep = 0, nstep
