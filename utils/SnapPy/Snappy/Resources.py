@@ -25,6 +25,7 @@ class MetModel(enum.Enum):
     EC0p1Europe = "ec_0p1_europe"
     GfsGribFilter = "gfs_grib_filter_fimex"
     Era5Nancy = "era5_nancy"
+    Era5 = "era5"
 
     def __eq__(self, other):
         return self.value == str(other)
@@ -63,6 +64,9 @@ class Resources(ResourcesCommon):
         MetModel.Era5Nancy: [
             "{LUSTREDIR}/project/fou/kl/cerad/Meteorology/EC/Era5/Nancy/"
         ],
+        MetModel.Era5: [
+            "{LUSTREDIR}/project/fou/kl/cerad/Meteorology/EC/Era5/"
+        ],
     }
     MET_FILENAME_PATTERN = {
         MetModel.Meps2p5: "{year:04d}/{month:02d}/{day:02d}/meps_det_2_5km_{year:04d}{month:02d}{day:02d}T{UTC:02d}Z.nc",
@@ -70,6 +74,7 @@ class Resources(ResourcesCommon):
         MetModel.GfsGribFilter: "gfs_0p25deg_{year:04d}{month:02d}{day:02d}T{UTC:02d}Z.nc",
         MetModel.EC0p1Europe: "ec_atmo_0_1deg_{year:04d}{month:02d}{day:02d}T{UTC:02d}0000Z_3h.nc",
         MetModel.Era5Nancy: "nancy_{year:04d}-{month:02d}-{day:02d}_{UTC:02d}.nc",
+        MetModel.Era5: "meteo{year:04d}{month:02d}{day:02d}_{UTC:02d}.nc",
         MetModel.EC0p1Global: "ec_atmo_0_1deg_{year:04d}{month:02d}{day:02d}T{UTC:02d}0000Z_3h.nc",
     }
 
@@ -134,6 +139,8 @@ class Resources(ResourcesCommon):
         elif metmodel == MetModel.GfsGribFilter:
             return {}
         elif metmodel == MetModel.Era5Nancy:
+            return {}
+        elif metmodel == MetModel.Era5:
             return {}
 
         raise (NotImplementedError("metmodel='{}' not implememented".format(metmodel)))
@@ -411,8 +418,8 @@ GRAVITY.FIXED.M/S=0.0002
             filename = os.path.join(self.directory, "snap.input_icon_0p25.tmpl")
         elif metmodel == MetModel.GfsGribFilter:
             filename = os.path.join(self.directory, "snap.input_gfs_grib_filter.tmpl")
-        elif metmodel == MetModel.Era5Nancy:
-            filename = os.path.join(self.directory, "snap.input_era5_nancy.tmpl")
+        elif metmodel == MetModel.Era5Nancy or metmodel == MetModel.Era5:
+            filename = os.path.join(self.directory, "snap.input_era5.tmpl")
         else:
             raise (
                 NotImplementedError("metmodel='{}' not implememented".format(metmodel))
@@ -473,6 +480,10 @@ GRAVITY.FIXED.M/S=0.0002
             # uses the same as global, with interpolation to nevada/nancy-files
             if "FIMEX.INTERPOLATION" not in interpolation.upper():
                 interpolation += "\nFIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|-135.,-134.75,...,-90|50,49.75,...,15|degree\n"
+            largest_landfraction_file = os.path.join(
+                self.directory, "landfractions", "largestLandFraction_EC0p1Global.nc"
+            )
+        elif metmodel == MetModel.Era5:
             largest_landfraction_file = os.path.join(
                 self.directory, "landfractions", "largestLandFraction_EC0p1Global.nc"
             )

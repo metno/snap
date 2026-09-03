@@ -291,7 +291,7 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
             raise Exception(
                 f"no {met_model} met-files found for {startDTime}, runtime {runTime}"
             )
-    elif met_model == MetModel.Era5Nancy:
+    elif met_model == MetModel.Era5Nancy or met_model == MetModel.Era5:
         files = res.getMeteorologyFiles(met_model, startDTime, runTime, "best")
         if len(files) == 0:
             raise Exception(
