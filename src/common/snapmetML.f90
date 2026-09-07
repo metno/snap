@@ -222,7 +222,7 @@ module snapmetML
       met_params%yflux = 'surface_downward_northward_stress'
       met_params%yflux_is_accumulated = .true.
       met_params%z0 = ""
-      met_params%hflux = 'surface_downward_sensible_heat_flux'
+      met_params%hflux = 'surface_downward_sensible_heat_flux_acc'
       met_params%hflux_is_accumulated = .true.
       met_params%hflux_is_downward = .true.
 !..get grid parameters from field identification
