@@ -203,7 +203,7 @@ PROGRAM bsnap
   USE decayML, only: decay, decayDeps
   USE posintML, only: posint
   USE releaseML, only: release, releases, tpos_bomb, nrelheight, mprel, &
-                       mplume, nplume, iplume, npart, mpart, release_t
+                       mplume, nplume, iplume, npart, mpart, release_t, iu_sourceterm
   USE init_random_seedML, only: init_random_seed
   USE snapfimexML, only: fimex_type => file_type, fimex_config => conf_file, fimex_interpolation => interpolation, fint
 #if defined(FIMEX)
@@ -281,7 +281,7 @@ PROGRAM bsnap
   logical :: init = .TRUE.
 
   character(len=1024) ::  finput, fldfil = "snap.dat", fldfilX, fldfilN, logfile = "snap.log", ftype = "netcdf", &
-                         fldtype = "netcdf", relfile = "*"
+                         fldtype = "netcdf", relfile = "*", sourcefile = "snap_sourceterm.csv"
   character(len=1024) :: tempstr
 
 !> name of selected release position
@@ -362,6 +362,10 @@ PROGRAM bsnap
 
 !..log file
   open (newunit=iulog, file=logfile, &
+        access='sequential', form='formatted', &
+        status='replace', action='write')
+
+  open (newunit=iu_sourceterm, file=sourcefile, &
         access='sequential', form='formatted', &
         status='replace', action='write')
 
@@ -655,12 +659,16 @@ PROGRAM bsnap
     write (iulog, *) "OpenMP: not enabled"
     write (error_unit, *) "OpenMP: not enabled"
 #endif
+    write (iu_sourceterm, '("End timestep [seconds since ",I4,"-",I2.2,"-",I2.2,"T",I2.2 &
+      &,":00Z], Component name, Lower height [m], Upper height [m], Accumulated activity [Bq]")')&
+      time_start%year, time_start%month, time_start%day, time_start%hour
     !$OMP PARALLEL
     !$OMP SINGLE
     time_loop: do istep = 0, nstep
       call timeloop_timer%start()
       write (iulog, *) 'istep,nplume,npart: ', istep, nplume, npart
       flush (iulog)
+      flush (iu_sourceterm)
       if (mod(istep, nsteph) == 0) then
         write (error_unit, *) 'istep,nplume,npart: ', istep, nplume, npart
         flush (error_unit)
@@ -968,6 +976,7 @@ PROGRAM bsnap
   CALL deAllocateFields()
 
   close (iulog)
+  close (iu_sourceterm)
 
 contains
 

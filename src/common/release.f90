@@ -102,6 +102,9 @@ module releaseML
 !> seconds since start of run when bomb-release occurs
   integer, save, public :: tpos_bomb = 0
 
+!> output unit for sourceterm file    
+  integer, public :: iu_sourceterm
+
   contains
 
 subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
@@ -505,7 +508,12 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
     ! c  +			n,m,totalbq(m),numtotal(m)
       write(iulog,*) 'comp,totalbq,numtotal: ', &
       n, run_comp(n)%totalbq, run_comp(n)%numtotal
+      10 FORMAT(I7,A1,A6,A1,F8.3,A1,F8.3,A1,ES11.5)
+      write (iu_sourceterm, 10) INT((istep+1)*tstep),",", &
+      run_comp(n)%defined%compname,",", hlower, ",", hupper, ",", run_comp(n)%totalbq
     end do
+
+    
   ! c	write(error_unit,*) 'nparnum: ',nparnum
     write(iulog,*) 'nparnum: ',nparnum
   !      end if
