@@ -62,8 +62,8 @@ def plot_data_to_webp(
         1,
         subplot_kw=dict(projection=data_projection),
         figsize=(
-            data.shape[1] * 4 / 100,
-            data.shape[0] * 4 / 100,
+            data.shape[1] * 2 / 100,
+            data.shape[0] * 2 / 100,
         ),  # 4 pixels per grid cell, dpi=100
     )
     fig.patch.set_alpha(0)
