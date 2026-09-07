@@ -178,7 +178,7 @@ def request_is_bomb(argosRoot):
 
 def request_is_QCtest(argosRoot):
     if argosRoot.find("RequestMode") is not None:
-        return argosRoot.find("RequestMode").text == "QCtest"
+        return argosRoot.find("RequestMode").text == "test"
     return False
 
 def rimsterm2input(rimxml, argosxml, met_model, argos_operational) -> tuple[str, str | None]:
@@ -195,6 +195,7 @@ def rimsterm2input(rimxml, argosxml, met_model, argos_operational) -> tuple[str,
     runTime = 48
     outputTimestep = 3
     is_bomb = False
+    is_qcTest = False
     if argosxml:
         runTime = int(argosxml.find("RunLength").text)
         outputTimestep = int(argosxml.find("OutputTimestep").text)
@@ -240,7 +241,8 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
         res._MET_INPUTDIRS={
             MetModel.Meps2p5: [os.path.join(meteo_path,"MEPS")],
             MetModel.Icon0p25Global: [os.path.join(meteo_path,"ICON")],
-            MetModel.Era5Nancy: [os.path.join(meteo_path,"ERA5")]
+            MetModel.Era5Nancy: [os.path.join(meteo_path,"ERA5")],
+            MetModel.Era5: [os.path.join(meteo_path,"ERA5")]
         }
         res.MET_FILENAME_PATTERN[MetModel.Meps2p5] = "meps_det_2_5km_{year:04d}{month:02d}{day:02d}T{UTC:02d}Z.nc"
         res._ECINPUTDIRS=[os.path.join(meteo_path,"EC")]
