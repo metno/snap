@@ -37,7 +37,7 @@ if [ $SGE_TASK_ID -eq 1 ]; then
     ARGOS_REQUEST=$SNAPQCDIR/MEPS_SNAP_request.xml
     IDENT=RinghalsRainyMEPS
     METMODEL=meps_2_5km
-    DIR=./RinghalsRainyMeps
+    DIR=./RinghalsRainyMEPS
     OPS=
 
 elif [ $SGE_TASK_ID -eq 2 ]; then
@@ -61,13 +61,13 @@ elif [ $SGE_TASK_ID -eq 3 ]; then
     OPS=
 
 elif [ $SGE_TASK_ID -eq 4 ]; then
-    mkdir RinghalsDryMeps
+    mkdir RinghalsDryMEPS
 
     RIMSTERM_XML=$SNAPQCDIR/RinghalsDry_Rimsterm.xml
     ARGOS_REQUEST=$SNAPQCDIR/MEPS_SNAP_request.xml
     IDENT=RinghalsDryMEPS
     METMODEL=meps_2_5km
-    DIR=./RinghalsDryMeps
+    DIR=./RinghalsDryMEPS
     OPS=
 
 elif [ $SGE_TASK_ID -eq 5 ]; then
@@ -188,7 +188,7 @@ elif [ $SGE_TASK_ID -eq 16 ]; then
     RIMSTERM_XML=$SNAPQCDIR/SunbeamSmallboy_Rimsterm.xml
     ARGOS_REQUEST=$SNAPQCDIR/SunbeamSmallboy_SNAP_request.xml
     IDENT=SunbeamSmallboy
-    METMODEL=era5_nancy
+    METMODEL=era5
     DIR=./SunbeamSmallBoy
     OPS=--argos_operational
 
