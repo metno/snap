@@ -114,7 +114,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
   USE snapfldML, only: xm, ym, t1, t2, ps1, ps2
   USE snapparML, only: time_profile, ncomp, nparnum, run_comp, &
       iparnum, &
-      TIME_PROFILE_BOMB, TIME_PROFILE_LINEAR, def_comp
+      TIME_PROFILE_BOMB, TIME_PROFILE_LINEAR
   USE snapposML, only: irelpos, release_positions
   USE snaptabML, only: g, exner
   USE snapdimML, only: nx, ny, nk
