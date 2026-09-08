@@ -162,7 +162,7 @@ PROGRAM bsnap
 
   USE DateCalc, only: epochToDate, timeGM
   USE datetime, only: datetime_t, duration_t
-  USE snapdebug, only: iulog, idebug,sourceterm
+  USE snapdebug, only: iulog, idebug
   USE snaptimers, only: timeloop_timer, output_timer, input_timer, metcalc_timer, &
                         release_timer, other_timer, particleloop_timer, initialize_timers
   USE snapdimML, only: nx, ny, nk, output_resolution_factor, ldata, maxsiz, mcomp, surface_index
@@ -203,7 +203,7 @@ PROGRAM bsnap
   USE decayML, only: decay, decayDeps
   USE posintML, only: posint
   USE releaseML, only: release, releases, tpos_bomb, nrelheight, mprel, &
-                       mplume, nplume, iplume, npart, mpart, release_t
+                       mplume, nplume, iplume, npart, mpart, release_t, iu_sourceterm
   USE init_random_seedML, only: init_random_seed
   USE snapfimexML, only: fimex_type => file_type, fimex_config => conf_file, fimex_interpolation => interpolation, fint
 #if defined(FIMEX)
@@ -365,7 +365,7 @@ PROGRAM bsnap
         access='sequential', form='formatted', &
         status='replace', action='write')
 
-  open (newunit=sourceterm, file=sourcefile, &
+  open (newunit=iu_sourceterm, file=sourcefile, &
         access='sequential', form='formatted', &
         status='replace', action='write')
 
@@ -660,17 +660,16 @@ PROGRAM bsnap
   write (iulog, *) "OpenMP: not enabled"
   write (error_unit, *) "OpenMP: not enabled"
 #endif
-  ! write (sourceterm, '("Starttime: ",I4,"-",I2.2,"-",I2.2,"T",I2.2 &
-  !     &,":00Z")') time_start%year, time_start%month, time_start%day, time_start%hour
-  write (sourceterm, '("End timestep [seconds since ",I4,"-",I2.2,"-",I2.2,"T",I2.2 &
-      &,":00Z], Component name, Lower height [m], Upper height [m], Accumulated activity [Bq]")') time_start%year, time_start%month, time_start%day, time_start%hour
+    write (iu_sourceterm, '("End timestep [seconds since ",I4,"-",I2.2,"-",I2.2,"T",I2.2 &
+      &,":00Z], Component name, Lower height [m], Upper height [m], Accumulated activity [Bq]")')&
+      time_start%year, time_start%month, time_start%day, time_start%hour
   !$OMP PARALLEL
   !$OMP SINGLE
   time_loop: do istep = 0, nstep
     call timeloop_timer%start()
     write (iulog, *) 'istep,nplume,npart: ', istep, nplume, npart
     flush (iulog)
-    flush (sourceterm)
+    flush (iu_sourceterm)
     if (mod(istep, nsteph) == 0) then
       write (error_unit, *) 'istep,nplume,npart: ', istep, nplume, npart
       flush (error_unit)
@@ -978,7 +977,7 @@ PROGRAM bsnap
   CALL deAllocateFields()
 
   close (iulog)
-  close (sourceterm)
+  close (iu_sourceterm)
 
 contains
 
