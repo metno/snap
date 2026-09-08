@@ -510,7 +510,6 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
       write (iu_sourceterm, 10) INT((istep+1)*tstep),",", &
       run_comp(n)%defined%compname,",", hlower, ",", hupper, ",", run_comp(n)%totalbq
     end do
-
   ! c	write(error_unit,*) 'nparnum: ',nparnum
     write(iulog,*) 'nparnum: ',nparnum
   !      end if

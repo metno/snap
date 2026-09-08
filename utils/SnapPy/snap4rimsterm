@@ -2,7 +2,7 @@
 #
 # SNAP: Servere Nuclear Accident Programme
 # Copyright (C) 1992-2020   Norwegian Meteorological Institute
-
+#
 # License: GNU General Public License Version 3 (GNU GPL-3.0)
 
 from collections import OrderedDict

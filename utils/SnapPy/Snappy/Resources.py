@@ -64,7 +64,7 @@ class Resources(ResourcesCommon):
         MetModel.Era5Nancy: [
             "{LUSTREDIR}/project/fou/kl/cerad/Meteorology/EC/Era5/Nancy/"
         ],
-        MetModel.Era5: [
+         MetModel.Era5: [
             "{LUSTREDIR}/project/fou/kl/cerad/Meteorology/EC/Era5/"
         ],
     }
