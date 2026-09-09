@@ -128,7 +128,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
   integer :: ih,i,j,n,k,m,nprel,nt,npar1,numradius,nrad,mo
   integer, allocatable :: nrel(:), nrel2(:,:)
   real ::    x,y,dxgrid,dygrid,dx,dy,xrand,yrand,zrand,twodx,twody
-  real ::    rt1,rt2,dxx,dyy,c1,c2,c3,c4,tstep
+  real ::    rt1,rt2,dxx,dyy,c1,c2,c3,c4,tstep,mtstep
   real :: ps,th,p,pihu,pih,pif,hhu,h1,h2,h,vlev
   real, parameter :: pi = 4*atan(1.0)
   real, parameter :: ginv =  1.0/g
@@ -162,6 +162,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
     return
   endif
 
+  mtstep = 3600./float(nsteph) ! Model timestep
   if(time_profile == TIME_PROFILE_BOMB) then
   !..single bomb release
     tstep=1.
@@ -498,19 +499,13 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
     do n=1,ncomp
       run_comp(n)%totalbq = run_comp(n)%totalbq + pbq(n)*nrel(n)
       run_comp(n)%numtotal = run_comp(n)%numtotal + nrel(n)
-    end do
-
-  !################################################################
-  ! c   if(mod(istep,nsteph*3).eq.0) then
-  !      if(mod(istep,nsteph).eq.0) then
-    do n=1,ncomp
-    ! c	  write(error_unit,*) 'comp,m,totalbq,numtotal: ',
-    ! c  +			n,m,totalbq(m),numtotal(m)
+    !------------------ LOG
       write(iulog,*) 'comp,totalbq,numtotal: ', &
       n, run_comp(n)%totalbq, run_comp(n)%numtotal
-      10 FORMAT(I7,A1,A6,A1,F8.3,A1,F8.3,A1,ES11.5)
-      write (iu_sourceterm, 10) INT((istep+1)*tstep),",", &
-      run_comp(n)%defined%compname,",", hlower, ",", hupper, ",", run_comp(n)%totalbq
+    !------------------ SOURCETERM
+      10 FORMAT(I7,A1,A15,A1,F8.3,A1,F8.3,A1,ES11.5)
+      write (iu_sourceterm, 10) INT((istep+1)*(mtstep)),",", &
+      run_comp(n)%defined%compname,",", hlower, ",", hupper, ",", pbq(n)*nrel(n)
     end do
 
     
