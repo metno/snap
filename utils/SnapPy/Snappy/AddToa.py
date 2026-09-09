@@ -1,28 +1,12 @@
 #! /usr/bin/env python3
-#
-# SNAP: Servere Nuclear Accident Programme
-# Copyright (C) 1992-2017   Norwegian Meteorological Institute
-#
-# This file is part of SNAP. SNAP is free software: you can
-# redistribute it and/or modify it under the terms of the
-# GNU General Public License as published by the
-# Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-
 import logging
+
 import netCDF4
-import numpy
+import numpy as np
+import pyproj
 
 from Snappy.EEMEP.SixHourMax import SixHourMax
+
 
 def add_toa_to_nc(nc: netCDF4.Dataset, overwrite=False):
     """
@@ -43,16 +27,16 @@ def add_toa_to_nc(nc: netCDF4.Dataset, overwrite=False):
         if v.endswith("_acc_concentration") or v.endswith("_acc_wet_deposition"):
             exampleVar = var
             data += var[:]
-    if not isinstance(data, numpy.ndarray):
+    if not isinstance(data, np.ndarray):
         raise Exception(
             f"no variable with *_acc_concentration found in file: {nc.filepath()}"
         )
-    th = 0.0001 # low threshold
+    th = 0.0001  # low threshold
     # arrived: data >= th
     # flying: data < th
-    data = numpy.where(data >= th, 0., timeDelta)
+    data = np.where(data >= th, 0.0, timeDelta)
     # print(data.dtype) must be float!
-    toa = numpy.sum(data, axis=0)
+    toa = np.sum(data, axis=0)
     toa[toa > timeMax] = -999
     # snap output start at first timeDelta, not 0, so 0 means 0 - 3h
     # make sure that timestamp means 'within this time', e.g. 0 -> 3
@@ -83,7 +67,7 @@ def add_toa_to_nc(nc: netCDF4.Dataset, overwrite=False):
         var = nc[v]
         if v.endswith("_acc_dry_deposition"):
             total = var[:]
-            comp = v.replace("_acc_dry_deposition","")
+            comp = v.replace("_acc_dry_deposition", "")
             wdepName = f"{comp}_acc_wet_deposition"
             if wdepName in nc.variables:
                 total += nc.variables[wdepName][:]
@@ -100,8 +84,49 @@ def add_toa_to_nc(nc: netCDF4.Dataset, overwrite=False):
     nc.sync()
 
     # postprocess snap ash-files
-    if SixHourMax.detect_ash_model(nc) == 'snap':
+    if SixHourMax.detect_ash_model(nc) == "snap":
         SixHourMax(nc)
+
+
+def add_latlon_to_nc(nc: netCDF4.Dataset):
+    """add 2d latitude/longitude variables if the netcdf-file contains a CF
+    grid-mapping and coordinates, but no auxiliary variables exist.
+
+    :param nc: netcdf-dataset object
+    """
+    for vname in list(nc.variables.keys()):
+        var = nc[vname]
+        if "grid_mapping" in var.ncattrs() and "coordinates" in var.ncattrs():
+            coords = var.getncattr("coordinates").split()
+            lat_name = None
+            lon_name = None
+            for coord in coords:
+                if coord.startswith("lat"):
+                    lat_name = coord
+                elif coord.startswith("lon"):
+                    lon_name = coord
+            if lat_name not in nc.variables and lon_name not in nc.variables:
+                x_axis = var.dimensions[-1]
+                y_axis = var.dimensions[-2]
+                x_vals = nc.variables[x_axis][:]
+                y_vals = nc.variables[y_axis][:]
+
+                proj = pyproj.CRS.from_cf(nc[var.getncattr("grid_mapping")].__dict__)
+                transformer = pyproj.Transformer.from_crs(
+                    proj, pyproj.CRS.from_epsg(4326), always_xy=True
+                )
+
+                x_vals2d, y_vals2d = np.meshgrid(x_vals, y_vals)
+                # Transform the coordinates to the projection defined by the grid_mapping
+                lon_vals, lat_vals = transformer.transform(x_vals2d, y_vals2d)
+                lat = nc.createVariable(lat_name, "f", (y_axis, x_axis), zlib=True)
+                lon = nc.createVariable(lon_name, "f", (y_axis, x_axis), zlib=True)
+                lat.units = "degrees_north"
+                lon.units = "degrees_east"
+                lat[:, :] = lat_vals
+                lon[:, :] = lon_vals
+                nc.sync()
+
 
 def main():
     import argparse
@@ -109,23 +134,34 @@ def main():
     parser = argparse.ArgumentParser(
         description="""Add time_of_arrival, total_deposition to the nc-file.
                        For ASH, it adds also MAX6h_ASH in flightlevels
-                       and COLUMN_ASH_kmax."""
+                       and COLUMN_ASH_kmax.
+                       It will also add latitude and longitude variables if they are needed but missing.
+                       """
     )
     parser.add_argument("snapNc", help="snap.nc file to be changed")
-    parser.add_argument("--overwrite",
-                        help="force rewriting time_of_arrival, even if it exists",
-                        action="store_true")
     parser.add_argument(
-        '-v', '--verbose',
+        "--overwrite",
+        help="force rewriting time_of_arrival, even if it exists",
+        action="store_true",
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
         help="Be verbose",
-        action="store_const", dest="loglevel",
+        action="store_const",
+        dest="loglevel",
         const=logging.INFO,
-        default=logging.WARNING
+        default=logging.WARNING,
     )
     args = parser.parse_args()
     logging.basicConfig(level=args.loglevel)
     with netCDF4.Dataset(args.snapNc, "a") as nc:
         add_toa_to_nc(nc, args.overwrite)
+        try:
+            add_latlon_to_nc(nc)
+        except Exception as e:
+            logging.error(f"Failed to add lat/lon to nc file: {e}")
+
 
 if __name__ == "__main__":
     main()
