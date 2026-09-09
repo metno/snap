@@ -2,8 +2,8 @@
 
 set -e
 
-export VERSION=2.5.27
-export CHANGE_LOG="Enables openmp for noble and jammy; removes bionic"
+export VERSION=2.5.30
+export CHANGE_LOG="Adds lon/lat for meps, adds first QC changes"
 #VERSION_=`echo -n $VERSION | tr '.' '_'`
 
 # We do not have a way of cross-compiling,
