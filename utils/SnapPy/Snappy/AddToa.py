@@ -134,7 +134,9 @@ def main():
     parser = argparse.ArgumentParser(
         description="""Add time_of_arrival, total_deposition to the nc-file.
                        For ASH, it adds also MAX6h_ASH in flightlevels
-                       and COLUMN_ASH_kmax."""
+                       and COLUMN_ASH_kmax.
+                       It will also add latitude and longitude variables if they are needed but missing.
+                       """
     )
     parser.add_argument("snapNc", help="snap.nc file to be changed")
     parser.add_argument(
