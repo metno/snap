@@ -25,7 +25,7 @@ module load --silent /modules/MET/rhel8/user-modules/fou-modules/SnapPy/"$SNAPPY
 set -x
 
 LUSTRE=/lustre/storeB/project/fou/kl/cerad/Projects/QC/ModelRuns/
-SNAPQCDIR=/home/geche8548/snap/utils/qcTesting/input/xml-requests
+SNAPQCDIR=/home/geche8548/snap/utils/qcTesting/xml-requests
 VDIR=v$SNAPPY
 
 cd $LUSTRE/$VDIR
