@@ -432,7 +432,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--metmodel",
-        help="select the NWP input model, nrpa_ec_0p1, meps_2_5km, ec_0p1_global, ec_0p1_europe, gfs_grib_filter_fimex, icon_0p25_global, era5_nancy",
+        help="select the NWP input model, nrpa_ec_0p1, meps_2_5km, ec_0p1_global, ec_0p1_europe, gfs_grib_filter_fimex, icon_0p25_global, era5_nancy, era5",
         required=True,
         default="nrpa_ec_0p1",
     )
