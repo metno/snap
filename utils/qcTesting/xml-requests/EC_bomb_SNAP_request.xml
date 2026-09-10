@@ -1,16 +1,17 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <Request>
 <RunLength>48</RunLength>
-<OutputTimestep>1</OutputTimestep>
+<OutputTimestep>3</OutputTimestep>
 <OutputFormat>GRIB</OutputFormat>
 <OutputFormat>NetCDF</OutputFormat>
-<GridSize>0.05</GridSize>
+<GridSize>0.1</GridSize>
+<GridsizeUnit>Degree</GridsizeUnit>
 <CalcGridSize>800</CalcGridSize>
-<NuclearYield>1.65</NuclearYield>
+<NuclearYield>10</NuclearYield>
 <FissionProportion>20.000000</FissionProportion>
-<ExplosionType>Surface</ExplosionType>
+<ExplosionType>Spriggs R6</ExplosionType>
 <SurfaceType>Urban</SurfaceType>
-<HeightOfBurst>3</HeightOfBurst>
+<HeightOfBurst>100</HeightOfBurst>
 <GroundType>Dry_Rock</GroundType>
 <WeaponType>Uranium</WeaponType>
 <NoOfDetonations>1</NoOfDetonations>

@@ -4,8 +4,8 @@
 <OutputTimestep>3</OutputTimestep>
 <OutputFormat>GRIB</OutputFormat>
 <OutputFormat>NetCDF</OutputFormat>
-<GridSize>2.5</GridSize>
-<GridsizeUnit>km</GridsizeUnit>
-<CalcGridSize>1000</CalcGridSize>
+<GridSize>0.1</GridSize>
+<GridsizeUnit>Degree</GridsizeUnit>
+<CalcGridSize>10000</CalcGridSize>
 <RequestMode>test</RequestMode>
 </Request>
