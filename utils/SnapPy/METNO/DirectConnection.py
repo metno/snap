@@ -6,18 +6,16 @@ import unittest
 
 from METNO.HPC import Connection, typed_property
 
-try:
-    # some lustre versions have (had?) documented issues with sendfile
-    # disable sendfile and similar optimizations since benefit is minimal for our use-cases
-    # see: https://bugs.python.org/issue43743#msg393429
-    shutil._USE_CP_SENDFILE = False
-    shutil._USE_CP_COPY_FILE_RANGE = False
-except AttributeError:
-    print(
-        "shutil does not have _USE_CP_SENDFILE or _USE_CP_COPY_FILE_RANGE attributes, ignore",
-        file=sys.stderr,
-    )
-    pass
+# some lustre versions have (had?) documented issues with sendfile
+# disable sendfile and similar optimizations since benefit is minimal for our use-cases
+# see: https://bugs.python.org/issue43743#msg393429
+# disable also copy_file_range, similar new feature in ~3.14+
+if hasattr(shutil, "_USE_CP_SENDFILE"):
+    if shutil._USE_CP_SENDFILE:
+        shutil._USE_CP_SENDFILE = False
+if hasattr(shutil, "_USE_CP_COPY_FILE_RANGE"):
+    if shutil._USE_CP_COPY_FILE_RANGE:
+        shutil._USE_CP_COPY_FILE_RANGE = False
 
 
 class DirectConnection(Connection):
