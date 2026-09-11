@@ -15,6 +15,12 @@ def add_toa_to_nc(nc: netCDF4.Dataset, overwrite=False):
     to the nc-filehandle (netCDF4.Dataset)
     filehandle must be rewriteable snap-output file
     """
+    try:
+        # try adding lat/lon if missing
+        _add_latlon_to_nc(nc)
+    except Exception as e:
+        logging.error(f"Failed to add lat/lon to nc file: {e}")
+
     if "time_of_arrival" in nc.variables:
         if not overwrite:
             return
@@ -88,7 +94,7 @@ def add_toa_to_nc(nc: netCDF4.Dataset, overwrite=False):
         SixHourMax(nc)
 
 
-def add_latlon_to_nc(nc: netCDF4.Dataset):
+def _add_latlon_to_nc(nc: netCDF4.Dataset):
     """add 2d latitude/longitude variables if the netcdf-file contains a CF
     grid-mapping and coordinates, but no auxiliary variables exist.
 
@@ -157,10 +163,6 @@ def main():
     logging.basicConfig(level=args.loglevel)
     with netCDF4.Dataset(args.snapNc, "a") as nc:
         add_toa_to_nc(nc, args.overwrite)
-        try:
-            add_latlon_to_nc(nc)
-        except Exception as e:
-            logging.error(f"Failed to add lat/lon to nc file: {e}")
 
 
 if __name__ == "__main__":
