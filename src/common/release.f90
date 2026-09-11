@@ -503,7 +503,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
       write(iulog,*) 'comp,totalbq,numtotal: ', &
       n, run_comp(n)%totalbq, run_comp(n)%numtotal
     !------------------ SOURCETERM
-      10 FORMAT(I7,A1,A15,A1,F8.3,A1,F8.3,A1,ES11.5)    
+      10 FORMAT(I7,A1,I7,A1,A15,A1,F8.3,A1,F8.3,A1,ES11.5)    
       write (iu_sourceterm, 10) INT((istep)*(mtstep)),",", INT((istep+1)*(mtstep)),",", &
       run_comp(n)%defined%compname,",", hlower, ",", hupper, ",", pbq(n)*nrel(n)
     end do
