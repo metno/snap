@@ -310,7 +310,7 @@ subroutine convert_hbl_to_vbl(hbl, vbl)
   real :: hybrid_below, hybrid_above
 
   ! Set maximum and minimum value of ABL in metres
-  hbl = max(50.0, min(3000.0, hbl))
+  hbl = max(50.0, min(4000.0, hbl))
 
   ! Find the height level corresponding to the one immediately above the boundary layer height
   above_index = nk
