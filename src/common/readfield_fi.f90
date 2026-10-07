@@ -56,11 +56,11 @@ contains
     USE snapfilML, only: iavail, filef
     USE snapfldML, only: &
       xm, ym, u_io, v_io, w_io, t_io, ps_io, pmsl_io, &
-      garea, enspos, precip_io, t_abs_io, t2_abs
+      garea, enspos, precip_io, t_abs_io, t2_abs, hbl_io
     USE snapgrdML, only: alevel, blevel, vlevel, ahalf, bhalf, vhalf, &
                          gparam, klevel, ivlevel, imslp, igtype, ivlayer, ivcoor
     USE snapmetML, only: met_params, xy_wind_units, pressure_units, omega_units, &
-                         sigmadot_units, temp_units, requires_precip_deaccumulation
+                         sigmadot_units, temp_units, requires_precip_deaccumulation, blh_units
     USE snapdimML, only: nx, ny, nk, output_resolution_factor, hres_field, surface_index
     USE snaptimers, only: metcalc_timer
     USE datetime, only: datetime_t, duration_t
@@ -281,6 +281,16 @@ contains
       call read_precipitation(fio, nhdiff_precip, timepos, timeposm1)
     else
       precip_io = 0.0
+    endif
+
+    !..read boundary layer height from meteo
+    if (met_params%read_blh) then
+      if (met_params%blh == '') then
+        write (iulog, *) 'SNAP not configured to read ABL height from this meteo. Continuing with internal calculation.'
+        met_params%read_blh = .false.
+      else
+        call fi_checkload(fio, met_params%blh, blh_units, hbl_io(:, :), nt=timepos, nr=nr)
+      endif
     endif
 
     ! nhdiff_precip is timestep for accumulated fields, using it in case fluxes are accumulated

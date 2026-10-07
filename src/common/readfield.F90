@@ -43,11 +43,13 @@ module readfieldML
   end subroutine readfield
 
   subroutine readfield_and_compute(ftype, istep, backward, itimei, ihr1, ihr2, time_file, ierror)
-    USE bldpML, only: bldp
+    USE bldpML, only: bldp, convert_hbl_to_vbl
     USE compheightML, only: compheight
     USE datetime, only: datetime_t
     USE snapdebug, only: iulog, idebug
     USE snapgrdML, only: gparam, igtype
+    USE snapmetML, only: met_params
+    USE snapfldML, only: hbl_io, bl_io
 
     USE iso_fortran_env, only: error_unit
 !> file type (netcdf or fimex)
@@ -79,8 +81,12 @@ module readfieldML
 
     !..compute model level heights
     call compheight
-    !..calculate boundary layer (top and height)
-    call bldp
+    !.. convert ABL height or calculate ABL (top and height) if not reading in from meteo
+    if (met_params%read_blh) then
+      call convert_hbl_to_vbl(hbl_io, bl_io)
+    else
+      call bldp
+    endif
   end subroutine readfield_and_compute
 
 end module readfieldML

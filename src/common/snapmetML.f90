@@ -32,6 +32,7 @@ module snapmetML
     character(len=80) :: precstrativrt = ''
     character(len=80) :: precconvrt = ''
     character(len=80) :: total_column_rain = ''
+    character(len=80) :: blh = ''
 
     character(len=80) :: t2m = ''
     character(len=80) :: yflux = ''
@@ -51,6 +52,8 @@ module snapmetML
     logical :: manual_level_selection = .false.
     logical :: sigmadot_is_omega = .false.
     logical :: need_precipitation = .true.
+    ! flag for reading in ABL height
+    logical :: read_blh = .false.
     !> Use lowest level in #xwindv/#ywindv in place of
     !> #xwind10mv/#ywind10mv
     logical :: use_model_wind_for_10m = .false.
@@ -83,6 +86,7 @@ module snapmetML
   !> precip_units / density of water = (kg / m^2) / (1000 kg/m^3) = 1 / 1000 m = mm
   character(len=*), parameter, public :: precip_units_fallback = 'mm'
   character(len=*), parameter, public :: temp_units = 'K'
+  character(len=*), parameter, public :: blh_units = 'm'
 
   character(len=*), parameter, public :: downward_momentum_flux_units = 'N/m^2'
   character(len=*), parameter, public :: accum_downward_momentum_flux_units = 'N s/m^2'
@@ -214,6 +218,7 @@ module snapmetML
       met_params%precconvrt = ''
       met_params%precstratiaccumv = ''
       met_params%precconaccumv = ''
+      met_params%blh = 'boundary_layer_height'
 
       !! ddep parameters
       met_params%t2m = 'air_temperature_2m'
@@ -269,6 +274,7 @@ module snapmetML
       met_params%hflux = 'integral_of_surface_downward_sensible_heat_flux_wrt_time'
       met_params%hflux_is_accumulated = .true.
       met_params%hflux_is_downward = .true.
+      met_params%blh = 'atmosphere_boundary_layer_thickness'
 
       met_params%mass_fraction_rain_in_air = "mass_fraction_of_rain_in_air_ml"
       met_params%mass_fraction_graupel_in_air = "mass_fraction_of_graupel_in_air_ml"
@@ -341,6 +347,7 @@ module snapmetML
 !.. non accumulated precipitation rates in m/s
       met_params%precstrativrt = 'large_scale_precipitations'
       met_params%precconvrt = 'convective_precipitations'
+      met_params%blh = 'pblh'
 
       met_params%t2m = 'temperature_2m'
       met_params%surface_stress = 'surface_stress'

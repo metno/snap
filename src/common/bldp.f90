@@ -6,7 +6,7 @@ module bldpML
   implicit none
   private
 
-  public bldp
+  public bldp, convert_hbl_to_vbl
 
   contains
 
@@ -290,4 +290,59 @@ subroutine bldp
 
   return
 end subroutine bldp
+
+subroutine convert_hbl_to_vbl(hbl, vbl)
+  ! Converts boundary layer height read in from meteo from metres to hybrid coordinates
+
+  use snapfldML, only: hlevel_io
+  use snapdimML, only: nx, ny, nk
+  use snapgrdML, only: vlevel
+
+  real, intent(inout) :: hbl(:, :)
+  real, intent(out) :: vbl(:, :)
+
+  integer :: above_index(nx, ny)
+  integer :: below_index(nx, ny)
+
+  integer :: i, j, k
+  real :: weight
+  real :: bl_top_pressure
+  real :: pressure_below, pressure_above
+
+  ! Set maximum and minimum value of ABL in metres
+  where (hbl < 50.0) hbl = 50.0
+  where (hbl > 3000.0) hbl = 3000.0
+
+  ! Find the height level corresponding to the one immediately above the boundary layer height
+  above_index = nk
+  do k = 2, nk
+    associate(height_k => hlevel_io(:, :, k))
+    where (hbl < height_k)
+      above_index = min(above_index, k)
+    endwhere
+    end associate
+  end do
+
+  ! Get the index below the boundary layer height
+  below_index = above_index - 1
+
+  ! Linearly interpolate between the two indices to get the exact hybrid coord of ABL top
+  do i = 1, nx
+    do j = 1, ny
+
+      pressure_below = vlevel(below_index(i,j))
+      pressure_above = vlevel(above_index(i,j))
+
+      weight = (hbl(i, j) - hlevel_io(i, j, below_index(i, j))) /  &
+      (hlevel_io(i, j, above_index(i, j)) - hlevel_io(i, j, below_index(i, j)))
+
+      bl_top_pressure = pressure_below + weight * (pressure_above - pressure_below)
+
+      vbl(i, j) = bl_top_pressure
+
+    end do
+  end do
+
+  end subroutine
+
 end module bldpML
