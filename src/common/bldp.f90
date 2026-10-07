@@ -306,21 +306,18 @@ subroutine convert_hbl_to_vbl(hbl, vbl)
 
   integer :: i, j, k
   real :: weight
-  real :: bl_top_pressure
-  real :: pressure_below, pressure_above
+  real :: bl_top
+  real :: hybrid_below, hybrid_above
 
   ! Set maximum and minimum value of ABL in metres
-  where (hbl < 50.0) hbl = 50.0
-  where (hbl > 3000.0) hbl = 3000.0
+  hbl = max(50.0, min(3000.0, hbl))
 
   ! Find the height level corresponding to the one immediately above the boundary layer height
   above_index = nk
   do k = 2, nk
-    associate(height_k => hlevel_io(:, :, k))
-    where (hbl < height_k)
+    where (hbl < hlevel_io(:, :, k))
       above_index = min(above_index, k)
-    endwhere
-    end associate
+    end where
   end do
 
   ! Get the index below the boundary layer height
@@ -330,15 +327,15 @@ subroutine convert_hbl_to_vbl(hbl, vbl)
   do i = 1, nx
     do j = 1, ny
 
-      pressure_below = vlevel(below_index(i,j))
-      pressure_above = vlevel(above_index(i,j))
+      hybrid_below = vlevel(below_index(i,j))
+      hybrid_above = vlevel(above_index(i,j))
 
       weight = (hbl(i, j) - hlevel_io(i, j, below_index(i, j))) /  &
       (hlevel_io(i, j, above_index(i, j)) - hlevel_io(i, j, below_index(i, j)))
 
-      bl_top_pressure = pressure_below + weight * (pressure_above - pressure_below)
+      bl_top = hybrid_below + weight * (hybrid_above - hybrid_below)
 
-      vbl(i, j) = bl_top_pressure
+      vbl(i, j) = bl_top
 
     end do
   end do
