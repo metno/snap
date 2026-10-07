@@ -1216,6 +1216,10 @@ contains
       case ('boundary.layer.full.mix.on')
         !..boundary.layer.full.mix.on
         blfullmix = .TRUE.
+      case ('read.blh.from.meteo.on')
+        met_params%read_blh = .true.
+      case ('read.blh.from.meteo.off')
+        met_params%read_blh = .false.
       case ('surface.layer.concentration.at.height')
         surface_layer_is_lowest_level = .false.
         if (has_value) then
