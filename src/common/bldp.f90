@@ -327,11 +327,12 @@ subroutine convert_hbl_to_vbl(hbl, vbl)
   do j = 1, ny
     do i = 1, nx
 
-      hybrid_below = vlevel(below_index(i,j))
-      hybrid_above = vlevel(above_index(i,j))
+      k = above_index(i,j)
+      hybrid_below = vlevel(k - 1)
+      hybrid_above = vlevel(k)
 
-      weight = (hbl(i, j) - hlevel_io(i, j, below_index(i, j))) /  &
-      (hlevel_io(i, j, above_index(i, j)) - hlevel_io(i, j, below_index(i, j)))
+      weight = (hbl(i, j) - hlevel_io(i, j, k - 1))  /  &
+               (hlevel_io(i, j, k) - hlevel_io(i, j, k - 1))
 
       bl_top = hybrid_below + weight * (hybrid_above - hybrid_below)
 
