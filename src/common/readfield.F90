@@ -82,7 +82,7 @@ module readfieldML
     !..compute model level heights
     call compheight
     !.. convert ABL height or calculate ABL (top and height) if not reading in from meteo
-    if (met_params%read_blh) then
+    if (met_params%read_hbl) then
       call convert_hbl_to_vbl(hbl_io, bl_io)
     else
       call bldp

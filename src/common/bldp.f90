@@ -302,7 +302,6 @@ subroutine convert_hbl_to_vbl(hbl, vbl)
   real, intent(out) :: vbl(:, :)
 
   integer :: above_index(nx, ny)
-  integer :: below_index(nx, ny)
 
   integer :: i, j, k
   real :: weight
@@ -319,9 +318,6 @@ subroutine convert_hbl_to_vbl(hbl, vbl)
       above_index = min(above_index, k)
     end where
   end do
-
-  ! Get the index below the boundary layer height
-  below_index = above_index - 1
 
   ! Linearly interpolate between the two indices to get the exact hybrid coord of ABL top
   do j = 1, ny

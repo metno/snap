@@ -101,7 +101,7 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
       garea, enspos, precip_io, t_abs_io, t2_abs, hbl_io
   USE snapgrdML, only: alevel, blevel, vlevel, ahalf, bhalf, vhalf, &
       gparam, klevel, ivlevel, imslp, igtype, ivlayer, ivcoor
-  USE snapmetML, only: met_params, xy_wind_units, blh_units, &
+  USE snapmetML, only: met_params, xy_wind_units, hbl_units, &
       pressure_units,  temp_units, requires_precip_deaccumulation
   USE snapdimML, only: nx, ny, nk, output_resolution_factor, hres_field, surface_index
   USE snaptimers, only: metcalc_timer
@@ -314,12 +314,12 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
   endif
 
   !..read boundary layer height from meteo
-  if (met_params%read_blh) then
-    if (met_params%blh == '') then
+  if (met_params%read_hbl) then
+    if (met_params%hbl == '') then
       write (iulog, *) 'SNAP not configured to read ABL height from this meteo. Continuing with internal calculation.'
-      met_params%read_blh = .false.
+      met_params%read_hbl = .false.
     else
-      call nfcheckload(ncid, met_params%blh, start3d, count3d, hbl_io(:, :), units=blh_units)
+      call nfcheckload(ncid, met_params%hbl, start3d, count3d, hbl_io(:, :), units=hbl_units)
     endif
   endif
 

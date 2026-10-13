@@ -60,7 +60,7 @@ contains
     USE snapgrdML, only: alevel, blevel, vlevel, ahalf, bhalf, vhalf, &
                          gparam, klevel, ivlevel, imslp, igtype, ivlayer, ivcoor
     USE snapmetML, only: met_params, xy_wind_units, pressure_units, omega_units, &
-                         sigmadot_units, temp_units, requires_precip_deaccumulation, blh_units
+                         sigmadot_units, temp_units, requires_precip_deaccumulation, hbl_units
     USE snapdimML, only: nx, ny, nk, output_resolution_factor, hres_field, surface_index
     USE snaptimers, only: metcalc_timer
     USE datetime, only: datetime_t, duration_t
@@ -284,12 +284,12 @@ contains
     endif
 
     !..read boundary layer height from meteo
-    if (met_params%read_blh) then
-      if (met_params%blh == '') then
+    if (met_params%read_hbl) then
+      if (met_params%hbl == '') then
         write (iulog, *) 'SNAP not configured to read ABL height from this meteo. Continuing with internal calculation.'
-        met_params%read_blh = .false.
+        met_params%read_hbl = .false.
       else
-        call fi_checkload(fio, met_params%blh, blh_units, hbl_io(:, :), nt=timepos, nr=nr)
+        call fi_checkload(fio, met_params%hbl, hbl_units, hbl_io(:, :), nt=timepos, nr=nr)
       endif
     endif
 
