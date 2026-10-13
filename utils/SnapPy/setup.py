@@ -58,6 +58,7 @@ setup(
             "snapAddBombIsotopes = Snappy.AddBombIsotopes:main",
             "snapVolcano = Snappy.EEMEP.SnapVolcanoTranslator:main",
             "snapAddToa = Snappy.AddToa:main",
+            "snapCombine = Snappy.SnapCombine:main",
         ]
     },
     extras_require={"test": ["pytest>=7.0"], "gui": ["PyQt5>=5.15"]},
