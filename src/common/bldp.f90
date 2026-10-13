@@ -324,8 +324,8 @@ subroutine convert_hbl_to_vbl(hbl, vbl)
   below_index = above_index - 1
 
   ! Linearly interpolate between the two indices to get the exact hybrid coord of ABL top
-  do i = 1, nx
-    do j = 1, ny
+  do j = 1, ny
+    do i = 1, nx
 
       hybrid_below = vlevel(below_index(i,j))
       hybrid_above = vlevel(above_index(i,j))
