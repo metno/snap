@@ -71,3 +71,4 @@ or as module: `python3 -m Snappy.SnapCombine ...` / `Snappy.SnapCombine.snap_com
 - zip grib-files
 - add status file
 - write upload to dsa command as help (don't do it)
+- check debian packaging
