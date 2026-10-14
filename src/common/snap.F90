@@ -130,7 +130,7 @@
 ! FIELD.OUTTYPE=netcdf
 ! FIELD.DAILY.OUTPUT.ON ! Output a file per day
 ! FIELD.USE_MODEL_WIND_INSTEAD_OF_10M= [.false.]/.true
-! * boundary layer from meteo (ON) or calculate from reynolds number (OFF) (default: OFF)
+! * boundary layer from meteo (ON) or calculate from Richardson number (OFF) (default: OFF)
 ! * FIELD.BOUNDARY_LAYER.ON
 ! FIELD.BOUNDARY_LAYER.OFF
 ! OUTPUT.COLUMN_MAX_CONC.ENABLE
