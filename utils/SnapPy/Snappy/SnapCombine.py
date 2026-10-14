@@ -15,11 +15,12 @@ import math
 import os
 import re
 import sys
+import zipfile
 
 import netCDF4
 import numpy as np
 
-from Snappy.Resources import Resources
+from Snappy.Resources import Resources, snapNc_convert_to_grib
 
 TIME = "time"
 _SUM_RE = re.compile(r"_(concentration|deposition)")
@@ -152,6 +153,12 @@ def _components(ncs: list[netCDF4.Dataset]) -> list[str]:
                 c = str(c).strip()
                 if c and c not in comps:
                     comps.append(c)
+        else:
+            for v in nc.variables:
+                if v.endswith("_acc_concentration"):
+                    c = v[: -len("_acc_concentration")]
+                    if c and c not in comps:
+                        comps.append(c)
     return comps
 
 
@@ -159,6 +166,7 @@ def snap_combine(
     infiles: list[str],
     outfile: str,
     grib_tag: str | None = None,
+    model: str = "SNAP",
     recalc_toa: bool = False,
 ):
     """Combine several snap.nc files to one file outfile.
@@ -172,6 +180,7 @@ def snap_combine(
     - recalc_toa: recalculate time_of_arrival and *_acc_total_deposition
       (as snapAddToa)
     - grib_tag: if set, convert the result to grib files with this identifier
+    - model: the model to be used for the conversion (default: "SNAP")
 
     Raises SnapCombineError if the files cannot be combined.
     """
@@ -209,7 +218,10 @@ def snap_combine(
             logging.warning(
                 "grib without --recalc-toa: time_of_arrival and total depositions missing"
             )
-        _convert_to_grib(outfile, grib_tag)
+        if not grib_tag.endswith("_SNAP"):
+            # default result_infix in modelserver config
+            grib_tag += "_SNAP"
+        _convert_to_grib(outfile, grib_tag, model)
 
 
 def _write_combined(ncs, infiles, file_times, times, outfile):
@@ -371,13 +383,31 @@ def _isotopes_in_file(ncfile: str) -> list[int]:
     return isotopes
 
 
-def _convert_to_grib(ncfile: str, ident: str):
-    from Snappy.Resources import snapNc_convert_to_grib
-
+def _convert_to_grib(ncfile: str, ident: str, model: str = "SNAP"):
     dirname = os.path.dirname(os.path.abspath(ncfile))
     snapNc_convert_to_grib(
-        os.path.abspath(ncfile), dirname, ident, _isotopes_in_file(ncfile)
+        os.path.abspath(ncfile),
+        dirname,
+        ident,
+        _isotopes_in_file(ncfile),
+        bitmapCompress=True,
     )
+    grib_files = [f for f in os.listdir(dirname) if f.startswith(ident)]
+    output_name = ident.replace("_SNAP", f"_{model}")
+    # zip the output files
+    output_zip = os.path.join(dirname, f"{output_name}2ARGOS.zip")
+    with zipfile.ZipFile(output_zip, "w") as zipf:
+        for file in grib_files:
+            if file.startswith(output_name):
+                zipf.write(os.path.join(dirname, file), arcname=file)
+
+    output_status = os.path.join(dirname, f"{output_name}_status")
+    with open(output_status, "w") as f:
+        f.write(
+            f"202:{datetime.datetime.now():%Y%m%d%H%M}:Finished extracting {model} data for ARGOS"
+        )
+    print("Please ssh results to dsa manually:")
+    print(f"  scp {output_zip} {output_status} dsa@dsa.met.no:")
 
 
 def main(argv=None):
@@ -389,10 +419,16 @@ def main(argv=None):
     )
     parser.add_argument("-o", "--output", required=True, help="output nc file")
     parser.add_argument(
-        "-grib",
         "--grib",
         metavar="TAGNAME",
-        help="convert the combined file also to grib, using TAGNAME as identifier",
+        help='convert the combined file also to grib, using TAGNAME as identifier, e.g. "hk_test_20261014"',
+    )
+    parser.add_argument(
+        "--model",
+        metavar="MODEL",
+        help="specify the model to be used, e.g. SNAP, SNAPGLOBAL, SNAPNORDIC, SNAPICONGLOBAL",
+        choices=["SNAP", "SNAPGLOBAL", "SNAPNORDIC", "SNAPICONGLOBAL"],
+        default="SNAP",
     )
     parser.add_argument(
         "--recalc-toa",
@@ -405,7 +441,7 @@ def main(argv=None):
     logging.basicConfig(level=args.loglevel)
 
     try:
-        snap_combine(args.infiles, args.output, args.grib, args.recalc_toa)
+        snap_combine(args.infiles, args.output, args.grib, args.model, args.recalc_toa)
     except SnapCombineError as e:
         print(f"snapCombine: error: {e}", file=sys.stderr)
         return 1
