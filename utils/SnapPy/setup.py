@@ -39,7 +39,7 @@ setup(
     },
     install_requires=[
         "numpy",
-        "netCDF4",
+        "netCDF4!=1.7.4",
         "pyproj",
     ],
     scripts=[
