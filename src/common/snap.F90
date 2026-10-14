@@ -130,6 +130,9 @@
 ! FIELD.OUTTYPE=netcdf
 ! FIELD.DAILY.OUTPUT.ON ! Output a file per day
 ! FIELD.USE_MODEL_WIND_INSTEAD_OF_10M= [.false.]/.true
+! * boundary layer from meteo (ON) or calculate from reynolds number (OFF) (default: OFF)
+! * FIELD.BOUNDARY_LAYER.ON
+! FIELD.BOUNDARY_LAYER.OFF
 ! OUTPUT.COLUMN_MAX_CONC.ENABLE
 ! OUTPUT.COLUMN_MAX_CONC.DISABLE
 ! * Output column concentration (height independent)
@@ -1216,10 +1219,6 @@ contains
       case ('boundary.layer.full.mix.on')
         !..boundary.layer.full.mix.on
         blfullmix = .TRUE.
-      case ('read.hbl.from.meteo.on')
-        met_params%read_hbl = .true.
-      case ('read.hbl.from.meteo.off')
-        met_params%read_hbl = .false.
       case ('surface.layer.concentration.at.height')
         surface_layer_is_lowest_level = .false.
         if (has_value) then
@@ -1670,6 +1669,12 @@ contains
         ! FIELD.USE_MODEL_WIND_INSTEAD_OF_10M= [.false.]/.true
         if (.not. has_value) goto 12
         read (cinput(pname_start:pname_end), *, err=12) met_params%use_model_wind_for_10m
+      case ('field.boundary_layer.on')
+        ! use boundary layer from meteo data
+        met_params%read_hbl = .true.
+      case ('field.boundary_layer.off')
+        ! calculate boundary layer from reynolds number
+        met_params%read_hbl = .false.
       case ('precip(mm/h).probab')
         !..precip(mm/h).probab=<precip_intensity,probability, ...>
         write (error_unit, *) "precip(mm/h).probab is no longer used"
