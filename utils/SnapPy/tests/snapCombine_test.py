@@ -35,7 +35,7 @@ def _make_snap(path, hours, comps=("Cs137",), value=1.0, nx=NX, ref_hour=0):
         t.units = f"hours since {ref:%Y-%m-%d %H:%M:%S} +0000"
         t[:] = np.array(hours) - ref_hour
         nc.createVariable("components", "S1", ("nocomp", "compnamelenmax"))[:] = (
-            netCDF4.stringtochar(np.array(comps, dtype="S32"))
+            netCDF4.stringtochar(np.array(comps, dtype="S32"), encoding="ascii")
         )
         dims = ("time", "y", "x")
         nt = len(hours)
