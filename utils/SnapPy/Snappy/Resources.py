@@ -64,9 +64,7 @@ class Resources(ResourcesCommon):
         MetModel.Era5Nancy: [
             "{LUSTREDIR}/project/fou/kl/cerad/Meteorology/EC/Era5/Nancy/"
         ],
-         MetModel.Era5: [
-            "{LUSTREDIR}/project/fou/kl/cerad/Meteorology/EC/Era5/"
-        ],
+        MetModel.Era5: ["{LUSTREDIR}/project/fou/kl/cerad/Meteorology/EC/Era5/"],
     }
     MET_FILENAME_PATTERN = {
         MetModel.Meps2p5: "{year:04d}/{month:02d}/{day:02d}/meps_det_2_5km_{year:04d}{month:02d}{day:02d}T{UTC:02d}Z.nc",
@@ -112,10 +110,13 @@ class Resources(ResourcesCommon):
             r"%CURRENTTIME%", strftime("%Y-%m-%d %H:00", gmtime()), self.startScreen
         )
 
-        ecmodelruns = ""
-        for run in self.getECRuns():
-            ecmodelruns += '<option value="{run}">{run}</option>\n'.format(run=run)
-        self.startScreen = re.sub(r"%ECMODELRUN%", ecmodelruns, self.startScreen)
+        try:
+            ecmodelruns = ""
+            for run in self.getECRuns():
+                ecmodelruns += '<option value="{run}">{run}</option>\n'.format(run=run)
+            self.startScreen = re.sub(r"%ECMODELRUN%", ecmodelruns, self.startScreen)
+        except Exception:
+            logging.info("unable to set EC model runs in start screen, ignoring")
 
     def getDefaultMetDefinitions(self, metmodel):
         """get the default meteo-definitions as dict to be used as *dict for getSnapInputMetDefinitions"""
