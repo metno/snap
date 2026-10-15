@@ -51,7 +51,9 @@ or as module: `python3 -m Snappy.SnapCombine ...` / `Snappy.SnapCombine.snap_com
   but interpolation is an error (0,3,6 + 1,4,7).
 - Variables with `_concentration` or `_deposition` are summed. Outside a file's time range they are 0,
   except accumulated (`_acc_`) fields after the end of a file, which keep their last value;
-  accumulated depositions are decayed using the decay rate from `isotope_list.txt`.
+  accumulated depositions (`_acc_deposition`) are decayed using the decay rate from `isotope_list.txt`,
+  accumulated concentrations which are used for inhalation-dose calculation are not decayed. This is
+  the same behaviour as within the snap-model.
 - Other time-dependent variables are taken from any file with that time step;
   `time_of_arrival` and `_acc_total_deposition` are dropped; use `--recalc-toa` to recalculate
   them (as `snapAddToa`).
@@ -62,9 +64,9 @@ or as module: `python3 -m Snappy.SnapCombine ...` / `Snappy.SnapCombine.snap_com
 - the tool might write some warnings about lustre-dirs and mapp-services.sh, ignore
 - only for EC-files / lat-lon for now, MEPS not tested
 - grids need to be identical, i.e. different global runs won't work if they are further than 5° apart
+- timesteps need to be aligned, in particular on 3 hourly timesteps, the run-starts must be a multiple
+  of 3 hours apart. (for hourly output, this will always work)
 - incident-files are not included, i.e. ARGOS can't show the NPPs on the map
+- time of arrival are calculated from earliest start.
 
 
-## TODO
-
-- check debian packaging

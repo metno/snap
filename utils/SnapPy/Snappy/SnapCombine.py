@@ -258,6 +258,9 @@ def _write_combined(ncs, infiles, file_times, times, outfile):
         summaries = [getattr(nc, "summary", "") for nc in ncs]
         out.title = "Combined: " + " + ".join(t for t in titles if t)
         out.summary = " ".join(s.strip() for s in summaries if s)
+        out.SIMULATION_START_DATE = (
+            f"{datetime.datetime.now(datetime.timezone.utc):%Y-%m-%d_%H:%M:%S}"
+        )
         history = (
             f"{datetime.datetime.now(datetime.timezone.utc):%Y-%m-%dT%H:%M:%SZ} "
             f"snapCombine -o {outfile} {' '.join(infiles)}"
