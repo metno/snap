@@ -130,6 +130,9 @@
 ! FIELD.OUTTYPE=netcdf
 ! FIELD.DAILY.OUTPUT.ON ! Output a file per day
 ! FIELD.USE_MODEL_WIND_INSTEAD_OF_10M= [.false.]/.true
+! * boundary layer from meteo (ON) or calculate from Richardson number (OFF) (default: OFF)
+! * FIELD.BOUNDARY_LAYER.ON
+! FIELD.BOUNDARY_LAYER.OFF
 ! OUTPUT.COLUMN_MAX_CONC.ENABLE
 ! OUTPUT.COLUMN_MAX_CONC.DISABLE
 ! * Output column concentration (height independent)
@@ -660,8 +663,13 @@ PROGRAM bsnap
   write (iulog, *) "OpenMP: not enabled"
   write (error_unit, *) "OpenMP: not enabled"
 #endif
-    write (iu_sourceterm, '("End timestep [seconds since ",I4,"-",I2.2,"-",I2.2,"T",I2.2 &
-      &,":00Z], Component name, Lower height [m], Upper height [m], Accumulated activity [Bq]")')&
+    write (iu_sourceterm, '("Start time [seconds since ",I4,"-",I2.2,"-",I2.2,"T",I2.2,":00:00Z], &
+      & End time [seconds since ",I4,"-",I2.2,"-",I2.2,"T",I2.2,":00:00Z], &
+      & Component name, &
+      & Lower height [m], &
+      & Upper height [m], &
+      & Accumulated activity per timestep [Bq/timestep]")')&
+      time_start%year, time_start%month, time_start%day, time_start%hour, &
       time_start%year, time_start%month, time_start%day, time_start%hour
   !$OMP PARALLEL
   !$OMP SINGLE
@@ -1662,6 +1670,12 @@ contains
         ! FIELD.USE_MODEL_WIND_INSTEAD_OF_10M= [.false.]/.true
         if (.not. has_value) goto 12
         read (cinput(pname_start:pname_end), *, err=12) met_params%use_model_wind_for_10m
+      case ('field.boundary_layer.on')
+        ! use boundary layer from meteo data
+        met_params%read_hbl = .true.
+      case ('field.boundary_layer.off')
+        ! calculate boundary layer from reynolds number
+        met_params%read_hbl = .false.
       case ('precip(mm/h).probab')
         !..precip(mm/h).probab=<precip_intensity,probability, ...>
         write (error_unit, *) "precip(mm/h).probab is no longer used"
