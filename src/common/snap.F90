@@ -153,6 +153,8 @@
 ! DEBUG.OFF ..................................... (default)
 ! DEBUG.ON
 ! DEBUG.MASSBALANCE.FILE = "massbalance.txt"
+! * Additional sourceterm log file is written when a name for the file is provided.
+! LOG.SOURCETERM.FILE = ""
 ! END
 !=======================================================================
 
@@ -284,7 +286,7 @@ PROGRAM bsnap
   logical :: init = .TRUE.
 
   character(len=1024) ::  finput, fldfil = "snap.dat", fldfilX, fldfilN, logfile = "snap.log", ftype = "netcdf", &
-                         fldtype = "netcdf", relfile = "*", sourcefile = "snap_sourceterm.csv"
+                         fldtype = "netcdf", relfile = "*", sourcefile = ""
   character(len=1024) :: tempstr
 
 !> name of selected release position
@@ -367,10 +369,11 @@ PROGRAM bsnap
   open (newunit=iulog, file=logfile, &
         access='sequential', form='formatted', &
         status='replace', action='write')
-  if (isourceterm == 1) then
+  if (sourcefile /= "") then
     open (newunit=iu_sourceterm, file=sourcefile, &
           access='sequential', form='formatted', &
           status='replace', action='write')
+    isourceterm = 1
   end if
 
   ntimefo = 0
@@ -663,7 +666,7 @@ PROGRAM bsnap
     write (iulog, *) "OpenMP: not enabled"
     write (error_unit, *) "OpenMP: not enabled"
 #endif
-  if (isourceterm == 1) then
+  if (sourcefile /= "") then
     write (iu_sourceterm, '("Start time [seconds since ",I4,"-",I2.2,"-",I2.2,"T",I2.2,":00:00Z], &
       & End time [seconds since ",I4,"-",I2.2,"-",I2.2,"T",I2.2,":00:00Z], &
       & Component name, &
@@ -679,7 +682,7 @@ PROGRAM bsnap
     call timeloop_timer%start()
     write (iulog, *) 'istep,nplume,npart: ', istep, nplume, npart
     flush (iulog)
-    if (isourceterm == 1) then
+    if (sourcefile /= "") then
       flush (iu_sourceterm)
     end if
     if (mod(istep, nsteph) == 0) then
@@ -989,7 +992,7 @@ PROGRAM bsnap
   CALL deAllocateFields()
 
   close (iulog)
-  if (isourceterm == 1) then
+  if (sourcefile /= "") then
     close (iu_sourceterm)
   end if
 
@@ -1966,11 +1969,10 @@ contains
       case ('random.seed')
         if (.not. has_value) goto 12
         read(cinput(pname_start:pname_end), *, err=12) extra_seed
-      case ('sourcerterm.log.off')
-        isourceterm = 0
-      case ('sourceterm.log.on')
-        isourceterm = 1
-      
+
+      case ('log.sourceterm.file')
+        sourcefile = cinput(pname_start:pname_end)
+        
       ! Old argos options
       case ('argos.output.off')
         write (error_unit, *) "option argos.output.off is removed"
