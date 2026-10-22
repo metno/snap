@@ -153,6 +153,8 @@
 ! DEBUG.OFF ..................................... (default)
 ! DEBUG.ON
 ! DEBUG.MASSBALANCE.FILE = "massbalance.txt"
+! * Additional sourceterm log file is written when a name for the file is provided.
+! LOG.SOURCETERM.FILE = ""
 ! END
 !=======================================================================
 
@@ -206,7 +208,7 @@ PROGRAM bsnap
   USE decayML, only: decay, decayDeps
   USE posintML, only: posint
   USE releaseML, only: release, releases, tpos_bomb, nrelheight, mprel, &
-                       mplume, nplume, iplume, npart, mpart, release_t, iu_sourceterm
+                       mplume, nplume, iplume, npart, mpart, release_t, iu_sourceterm, isourceterm
   USE init_random_seedML, only: init_random_seed
   USE snapfimexML, only: fimex_type => file_type, fimex_config => conf_file, fimex_interpolation => interpolation, fint
 #if defined(FIMEX)
@@ -284,7 +286,7 @@ PROGRAM bsnap
   logical :: init = .TRUE.
 
   character(len=1024) ::  finput, fldfil = "snap.dat", fldfilX, fldfilN, logfile = "snap.log", ftype = "netcdf", &
-                         fldtype = "netcdf", relfile = "*", sourcefile = "snap_sourceterm.csv"
+                         fldtype = "netcdf", relfile = "*", sourcefile = ""
   character(len=1024) :: tempstr
 
 !> name of selected release position
@@ -367,10 +369,12 @@ PROGRAM bsnap
   open (newunit=iulog, file=logfile, &
         access='sequential', form='formatted', &
         status='replace', action='write')
-
-  open (newunit=iu_sourceterm, file=sourcefile, &
-        access='sequential', form='formatted', &
-        status='replace', action='write')
+  if (sourcefile /= "") then
+    open (newunit=iu_sourceterm, file=sourcefile, &
+          access='sequential', form='formatted', &
+          status='replace', action='write')
+    isourceterm = 1
+  end if
 
   ntimefo = 0
 
@@ -663,6 +667,7 @@ PROGRAM bsnap
   write (iulog, *) "OpenMP: not enabled"
   write (error_unit, *) "OpenMP: not enabled"
 #endif
+  if (sourcefile /= "") then
     write (iu_sourceterm, '("Start time [seconds since ",I4,"-",I2.2,"-",I2.2,"T",I2.2,":00:00Z], &
       & End time [seconds since ",I4,"-",I2.2,"-",I2.2,"T",I2.2,":00:00Z], &
       & Component name, &
@@ -671,13 +676,16 @@ PROGRAM bsnap
       & Accumulated activity per timestep [Bq/timestep]")')&
       time_start%year, time_start%month, time_start%day, time_start%hour, &
       time_start%year, time_start%month, time_start%day, time_start%hour
+  end if
   !$OMP PARALLEL
   !$OMP SINGLE
   time_loop: do istep = 0, nstep
     call timeloop_timer%start()
     write (iulog, *) 'istep,nplume,npart: ', istep, nplume, npart
     flush (iulog)
-    flush (iu_sourceterm)
+    if (sourcefile /= "") then
+      flush (iu_sourceterm)
+    end if
     if (mod(istep, nsteph) == 0) then
       write (error_unit, *) 'istep,nplume,npart: ', istep, nplume, npart
       flush (error_unit)
@@ -985,7 +993,9 @@ PROGRAM bsnap
   CALL deAllocateFields()
 
   close (iulog)
-  close (iu_sourceterm)
+  if (sourcefile /= "") then
+    close (iu_sourceterm)
+  end if
 
 contains
 
@@ -1961,6 +1971,9 @@ contains
         if (.not. has_value) goto 12
         read(cinput(pname_start:pname_end), *, err=12) extra_seed
 
+      case ('log.sourceterm.file')
+        sourcefile = cinput(pname_start:pname_end)
+        
       ! Old argos options
       case ('argos.output.off')
         write (error_unit, *) "option argos.output.off is removed"
