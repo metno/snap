@@ -24,6 +24,7 @@ module load --silent /modules/MET/rhel8/user-modules/fou-modules/SnapPy/"$SNAPPY
 
 set -x
 
+
 LUSTRE=/lustre/storeB/project/fou/kl/cerad/Projects/QC/ModelRuns/
 SNAPQCDIR=/home/geche8548/snap/utils/qcTesting/xml-requests
 VDIR=v$SNAPPY
@@ -31,7 +32,8 @@ VDIR=v$SNAPPY
 cd $LUSTRE/$VDIR
 
 if [ $SGE_TASK_ID -eq 1 ]; then
-    mkdir RinghalsRainyMeps
+    NAME=RinghalsRainyMEPS
+    mkdir $NAME
 
     RIMSTERM_XML=$SNAPQCDIR/RinghalsRainy_Rimsterm.xml
     ARGOS_REQUEST=$SNAPQCDIR/MEPS_SNAP_request.xml
@@ -39,9 +41,11 @@ if [ $SGE_TASK_ID -eq 1 ]; then
     METMODEL=meps_2_5km
     DIR=./RinghalsRainyMEPS
     OPS=
+    VARS=("Cs137_acc_total_deposition" "Cs137_acc_wet_deposition" "Cs137_acc_dry_deposition" "I131_acc_total_deposition" "I131_acc_wet_deposition" "I131_acc_dry_deposition" "Xe133_acc_concentration" "Cs137_acc_concentration" "I131_acc_concentration")
 
 elif [ $SGE_TASK_ID -eq 2 ]; then
-    mkdir RinghalsRainyEC 
+    NAME=RinghalsRainyEC
+    mkdir $NAME 
 
     RIMSTERM_XML=$SNAPQCDIR/RinghalsRainy_Rimsterm.xml
     ARGOS_REQUEST=$SNAPQCDIR/EC_SNAP_request.xml
@@ -49,9 +53,11 @@ elif [ $SGE_TASK_ID -eq 2 ]; then
     METMODEL=nrpa_ec_0p1
     DIR=./RinghalsRainyEC
     OPS=
+    VARS=("Cs137_acc_total_deposition" "Cs137_acc_wet_deposition" "Cs137_acc_dry_deposition" "I131_acc_total_deposition" "I131_acc_wet_deposition" "I131_acc_dry_deposition" "Xe133_acc_concentration" "Cs137_acc_concentration" "I131_acc_concentration")
 
 elif [ $SGE_TASK_ID -eq 3 ]; then
-    mkdir RinghalsRainyICON
+    NAME=RinghalsRainyICON
+    mkdir $NAME
 
     RIMSTERM_XML=$SNAPQCDIR/RinghalsRainy_Rimsterm.xml
     ARGOS_REQUEST=$SNAPQCDIR/ICON_SNAP_request.xml
@@ -59,9 +65,11 @@ elif [ $SGE_TASK_ID -eq 3 ]; then
     METMODEL=icon_0p25_global
     DIR=./RinghalsRainyICON
     OPS=
+    VARS=("Cs137_acc_total_deposition" "Cs137_acc_wet_deposition" "Cs137_acc_dry_deposition" "I131_acc_total_deposition" "I131_acc_wet_deposition" "I131_acc_dry_deposition" "Xe133_acc_concentration" "Cs137_acc_concentration" "I131_acc_concentration")
 
 elif [ $SGE_TASK_ID -eq 4 ]; then
-    mkdir RinghalsDryMEPS
+    NAME=RinghalsDryMEPS
+    mkdir $NAME
 
     RIMSTERM_XML=$SNAPQCDIR/RinghalsDry_Rimsterm.xml
     ARGOS_REQUEST=$SNAPQCDIR/MEPS_SNAP_request.xml
@@ -69,9 +77,11 @@ elif [ $SGE_TASK_ID -eq 4 ]; then
     METMODEL=meps_2_5km
     DIR=./RinghalsDryMEPS
     OPS=
+    VARS=("Cs137_acc_total_deposition" "Cs137_acc_wet_deposition" "Cs137_acc_dry_deposition" "I131_acc_total_deposition" "I131_acc_wet_deposition" "I131_acc_dry_deposition" "Xe133_acc_concentration" "Cs137_acc_concentration" "I131_acc_concentration")
 
 elif [ $SGE_TASK_ID -eq 5 ]; then
-    mkdir RinghalsDryEC
+    NAME=RinghalsDryEC
+    mkdir $NAME
 
     RIMSTERM_XML=$SNAPQCDIR/RinghalsDry_Rimsterm.xml
     ARGOS_REQUEST=$SNAPQCDIR/EC_SNAP_request.xml
@@ -79,19 +89,23 @@ elif [ $SGE_TASK_ID -eq 5 ]; then
     METMODEL=nrpa_ec_0p1
     DIR=./RinghalsDryEC
     OPS=
+    VARS=("Cs137_acc_total_deposition" "Cs137_acc_wet_deposition" "Cs137_acc_dry_deposition" "I131_acc_total_deposition" "I131_acc_wet_deposition" "I131_acc_dry_deposition" "Xe133_acc_concentration" "Cs137_acc_concentration" "I131_acc_concentration")
 
 elif [ $SGE_TASK_ID -eq 6 ]; then
-    mkdir RinghalsDryICON
-    
+    NAME=RinghalsDryICON
+    mkdir $NAME
+
     RIMSTERM_XML=$SNAPQCDIR/RinghalsDry_Rimsterm.xml
     ARGOS_REQUEST=$SNAPQCDIR/ICON_SNAP_request.xml
     IDENT=RinghalsDryICON
     METMODEL=icon_0p25_global
     DIR=./RinghalsDryICON
     OPS=
+    VARS=("Cs137_acc_total_deposition" "Cs137_acc_wet_deposition" "Cs137_acc_dry_deposition" "I131_acc_total_deposition" "I131_acc_wet_deposition" "I131_acc_dry_deposition" "Xe133_acc_concentration" "Cs137_acc_concentration" "I131_acc_concentration")
 
 elif [ $SGE_TASK_ID -eq 7 ]; then
-    mkdir backTrackEC
+    NAME=backTrackEC
+    mkdir $NAME
 
     RIMSTERM_XML=$SNAPQCDIR/RinghalsBackTrack_Rimsterm.xml
     ARGOS_REQUEST=$SNAPQCDIR/EC_backTrack_SNAP_request.xml
@@ -99,9 +113,11 @@ elif [ $SGE_TASK_ID -eq 7 ]; then
     METMODEL=nrpa_ec_0p1
     DIR=./backTrackEC
     OPS=
+    VARS=("Cs137_acc_total_deposition" "Cs137_acc_wet_deposition" "Cs137_acc_dry_deposition" "I131_acc_total_deposition" "I131_acc_wet_deposition" "I131_acc_dry_deposition" "Xe133_acc_concentration" "Cs137_acc_concentration" "I131_acc_concentration")
 
 elif [ $SGE_TASK_ID -eq 8 ]; then
-    mkdir backTrackMEPS
+    NAME=backTrackMEPS
+    mkdir $NAME
 
     RIMSTERM_XML=$SNAPQCDIR/RinghalsBackTrack_Rimsterm.xml
     ARGOS_REQUEST=$SNAPQCDIR/MEPS_backTrack_SNAP_request.xml
@@ -109,20 +125,23 @@ elif [ $SGE_TASK_ID -eq 8 ]; then
     METMODEL=meps_2_5km
     DIR=./backTrackMEPS
     OPS=
+    VARS=("Cs137_acc_total_deposition" "Cs137_acc_wet_deposition" "Cs137_acc_dry_deposition" "I131_acc_total_deposition" "I131_acc_wet_deposition" "I131_acc_dry_deposition" "Xe133_acc_concentration" "Cs137_acc_concentration" "I131_acc_concentration")
 
 elif [ $SGE_TASK_ID -eq 9 ]; then
-    mkdir backTrackICON
-   
+    NAME=backTrackICON
+    mkdir $NAME
+
     RIMSTERM_XML=$SNAPQCDIR/RinghalsBackTrack_Rimsterm.xml
     ARGOS_REQUEST=$SNAPQCDIR/ICON_backTrack_SNAP_request.xml
     IDENT=backTrackICON
     METMODEL=icon_0p25_global
     DIR=./backTrackICON
     OPS=
+    VARS=("Cs137_acc_total_deposition" "Cs137_acc_wet_deposition" "Cs137_acc_dry_deposition" "I131_acc_total_deposition" "I131_acc_wet_deposition" "I131_acc_dry_deposition" "Xe133_acc_concentration" "Cs137_acc_concentration" "I131_acc_concentration")
 
 elif [ $SGE_TASK_ID -eq 10 ]; then
-    mkdir nuclideEC
-    echo "start work nuclide EC" >> "$LOGFILE"
+    NAME=nuclideEC
+    mkdir $NAME
 
     RIMSTERM_XML=$SNAPQCDIR/Detonation-Ringhals_Rimsterm.xml
     ARGOS_REQUEST=$SNAPQCDIR/EC_bomb_SNAP_request.xml
@@ -130,9 +149,11 @@ elif [ $SGE_TASK_ID -eq 10 ]; then
     METMODEL=nrpa_ec_0p1
     DIR=./nuclideEC
     OPS=
+    VARS=("Cs137_acc_total_deposition" "Cs137_acc_wet_deposition" "Cs137_acc_dry_deposition" "Cs137_acc_concentration")
 
 elif [ $SGE_TASK_ID -eq 11 ]; then
-    mkdir nuclideMEPS
+    NAME=nuclideMEPS
+    mkdir $NAME
 
     RIMSTERM_XML=$SNAPQCDIR/Detonation-Ringhals_Rimsterm.xml
     ARGOS_REQUEST=$SNAPQCDIR/MEPS_bomb_SNAP_request.xml
@@ -140,9 +161,11 @@ elif [ $SGE_TASK_ID -eq 11 ]; then
     METMODEL=meps_2_5km
     DIR=./nuclideMEPS
     OPS=
+    VARS=("Cs137_acc_total_deposition" "Cs137_acc_wet_deposition" "Cs137_acc_dry_deposition" "Cs137_acc_concentration")
 
 elif [ $SGE_TASK_ID -eq 12 ]; then
-    mkdir nuclideICON
+    NAME=nuclideICON
+    mkdir $NAME
 
     RIMSTERM_XML=$SNAPQCDIR/Detonation-Ringhals_Rimsterm.xml
     ARGOS_REQUEST=$SNAPQCDIR/ICON_bomb_SNAP_request.xml
@@ -150,9 +173,11 @@ elif [ $SGE_TASK_ID -eq 12 ]; then
     METMODEL=icon_0p25_global
     DIR=./nuclideICON
     OPS=
+    VARS=("Cs137_acc_total_deposition" "Cs137_acc_wet_deposition" "Cs137_acc_dry_deposition" "Cs137_acc_concentration")
 
 elif [ $SGE_TASK_ID -eq 13 ]; then
-    mkdir pseudoEC
+    NAME=pseudoEC
+    mkdir $NAME
 
     RIMSTERM_XML=$SNAPQCDIR/Detonation-Ringhals_Rimsterm.xml
     ARGOS_REQUEST=$SNAPQCDIR/EC_bomb_SNAP_request.xml
@@ -160,19 +185,23 @@ elif [ $SGE_TASK_ID -eq 13 ]; then
     METMODEL=nrpa_ec_0p1
     DIR=./pseudoEC
     OPS=--argos_operational
+    VARS=("H1_acc_total_deposition" "H1_acc_wet_deposition" "H1_acc_dry_deposition" "H1_acc_concentration")
 
 elif [ $SGE_TASK_ID -eq 14 ]; then
-    mkdir pseudoMEPS
-    
+    NAME=pseudoMEPS
+    mkdir $NAME
+
     RIMSTERM_XML=$SNAPQCDIR/Detonation-Ringhals_Rimsterm.xml
     ARGOS_REQUEST=$SNAPQCDIR/MEPS_bomb_SNAP_request.xml
     IDENT=pseudoMEPS
     METMODEL=meps_2_5km
     DIR=./pseudoMEPS
     OPS=--argos_operational
+    VARS=("H1_acc_total_deposition" "H1_acc_wet_deposition" "H1_acc_dry_deposition" "H1_acc_concentration")
 
 elif [ $SGE_TASK_ID -eq 15 ]; then
-    mkdir pseudoICON
+    NAME=pseudoICON
+    mkdir $NAME
 
     RIMSTERM_XML=$SNAPQCDIR/Detonation-Ringhals_Rimsterm.xml
     ARGOS_REQUEST=$SNAPQCDIR/ICON_bomb_SNAP_request.xml
@@ -180,10 +209,12 @@ elif [ $SGE_TASK_ID -eq 15 ]; then
     METMODEL=icon_0p25_global
     DIR=./pseudoICON
     OPS=--argos_operational
+    VARS=("H1_acc_total_deposition" "H1_acc_wet_deposition" "H1_acc_dry_deposition" "H1_acc_concentration")
 
 
 elif [ $SGE_TASK_ID -eq 16 ]; then
-    mkdir SunbeamSmallBoy
+    NAME=SunbeamSmallBoy
+    mkdir $NAME
 
     RIMSTERM_XML=$SNAPQCDIR/SunbeamSmallboy_Rimsterm.xml
     ARGOS_REQUEST=$SNAPQCDIR/SunbeamSmallboy_SNAP_request.xml
@@ -191,14 +222,24 @@ elif [ $SGE_TASK_ID -eq 16 ]; then
     METMODEL=era5
     DIR=./SunbeamSmallBoy
     OPS=--argos_operational
-
+    VARS=("H1_acc_total_deposition" "H1_acc_wet_deposition" "H1_acc_dry_deposition" "H1_acc_concentration")
 fi
-# cd $LUSTRE/$VDIR
-# mkdir ChernobylMEPS
-# echo "start work ChernobylMEPS MEPS" >> "$LOGFILE"
-# cd ChernobylMEPS
-#export OMP_NUM_THREADS=4
-# bsnap_naccident $HOME/snap/utils/qcTesting/input/ChernobylMEPS.input
 
-snap4rimsterm --rimsterm $RIMSTERM_XML --argosrequest $ARGOS_REQUEST $OPS --dir $DIR --ident $IDENT --metmodel $METMODEL
+
+
+LOGFILE=/lustre/storeB/project/fou/kl/cerad/Projects/QC/Logs/${NAME}_v${SNAPPY}_$(date -d "today" +"%Y%m%dT%H%M").log
+
+snap4rimsterm --rimsterm $RIMSTERM_XML --argosrequest $ARGOS_REQUEST $OPS --dir $DIR --ident $IDENT --metmodel $METMODEL >> "$LOGFILE" 2>&1
+
+
+cd $DIR
+mkdir $LUSTRE../PublicResults/data/$VDIR/$DIR
+VENVDIR=/lustre/storeB/project/fou/kl/cerad/Projects/QC/ModelRuns/v2.5.30/
+source $VENVDIR.venv/bin/activate
+
+for v in ${VARS[@]}; do 
+    mkdir $LUSTRE../PublicResults/data/$VDIR/$DIR/$v
+    PYTHONPATH=$VENVDIR python3 /home/geche8548/snap/utils/SnapPy/snap2webp.py --nc snap.nc --var $v --output-dir $LUSTRE../PublicResults/data/$VDIR/$DIR/$v >> "$LOGFILE" 2>&1
+done
+
 
