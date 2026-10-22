@@ -103,7 +103,7 @@ module releaseML
   integer, save, public :: tpos_bomb = 0
 
 !> output unit for sourceterm file    
-  integer, public :: iu_sourceterm
+  integer, public :: iu_sourceterm, isourceterm = 0
 
   contains
 
@@ -502,12 +502,15 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
     !------------------ LOG
       write(iulog,*) 'comp,totalbq,numtotal: ', &
       n, run_comp(n)%totalbq, run_comp(n)%numtotal
-    !------------------ SOURCETERM
-      10 FORMAT(I7,A1,I7,A1,A15,A1,F8.3,A1,F8.3,A1,ES11.5)    
-      write (iu_sourceterm, 10) INT((istep)*(mtstep)),",", INT((istep+1)*(mtstep)),",", &
-      run_comp(n)%defined%compname,",", hlower, ",", hupper, ",", pbq(n)*nrel(n)
     end do
-
+    if (isourceterm == 1) then
+      do n=1,ncomp
+      !------------------ SOURCETERM
+        10 FORMAT(I7,A1,I7,A1,A15,A1,F8.3,A1,F8.3,A1,ES11.5)    
+        write (iu_sourceterm, 10) INT((istep)*(mtstep)),",", INT((istep+1)*(mtstep)),",", &
+        run_comp(n)%defined%compname,",", hlower, ",", hupper, ",", pbq(n)*nrel(n)
+      end do
+    end if
     
   ! c	write(error_unit,*) 'nparnum: ',nparnum
     write(iulog,*) 'nparnum: ',nparnum
