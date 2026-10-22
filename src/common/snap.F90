@@ -206,7 +206,7 @@ PROGRAM bsnap
   USE decayML, only: decay, decayDeps
   USE posintML, only: posint
   USE releaseML, only: release, releases, tpos_bomb, nrelheight, mprel, &
-                       mplume, nplume, iplume, npart, mpart, release_t, iu_sourceterm
+                       mplume, nplume, iplume, npart, mpart, release_t, iu_sourceterm, isourceterm
   USE init_random_seedML, only: init_random_seed
   USE snapfimexML, only: fimex_type => file_type, fimex_config => conf_file, fimex_interpolation => interpolation, fint
 #if defined(FIMEX)
@@ -367,10 +367,11 @@ PROGRAM bsnap
   open (newunit=iulog, file=logfile, &
         access='sequential', form='formatted', &
         status='replace', action='write')
-
-  open (newunit=iu_sourceterm, file=sourcefile, &
-        access='sequential', form='formatted', &
-        status='replace', action='write')
+  if (isourceterm == 1) then
+    open (newunit=iu_sourceterm, file=sourcefile, &
+          access='sequential', form='formatted', &
+          status='replace', action='write')
+  end if
 
   ntimefo = 0
 
@@ -662,6 +663,7 @@ PROGRAM bsnap
     write (iulog, *) "OpenMP: not enabled"
     write (error_unit, *) "OpenMP: not enabled"
 #endif
+  if (isourceterm == 1) then
     write (iu_sourceterm, '("Start time [seconds since ",I4,"-",I2.2,"-",I2.2,"T",I2.2,":00:00Z], &
       & End time [seconds since ",I4,"-",I2.2,"-",I2.2,"T",I2.2,":00:00Z], &
       & Component name, &
@@ -670,17 +672,20 @@ PROGRAM bsnap
       & Accumulated activity per timestep [Bq/timestep]")')&
       time_start%year, time_start%month, time_start%day, time_start%hour, &
       time_start%year, time_start%month, time_start%day, time_start%hour
-    !$OMP PARALLEL
-    !$OMP SINGLE
-    time_loop: do istep = 0, nstep
-      call timeloop_timer%start()
-      write (iulog, *) 'istep,nplume,npart: ', istep, nplume, npart
-      flush (iulog)
+  end if
+  !$OMP PARALLEL
+  !$OMP SINGLE
+  time_loop: do istep = 0, nstep
+    call timeloop_timer%start()
+    write (iulog, *) 'istep,nplume,npart: ', istep, nplume, npart
+    flush (iulog)
+    if (isourceterm == 1) then
       flush (iu_sourceterm)
-      if (mod(istep, nsteph) == 0) then
-        write (error_unit, *) 'istep,nplume,npart: ', istep, nplume, npart
-        flush (error_unit)
-      end if
+    end if
+    if (mod(istep, nsteph) == 0) then
+      write (error_unit, *) 'istep,nplume,npart: ', istep, nplume, npart
+      flush (error_unit)
+    end if
 
       !..read fields
       nhleft = abs((nstep - istep + 1)/nsteph)
@@ -984,7 +989,9 @@ PROGRAM bsnap
   CALL deAllocateFields()
 
   close (iulog)
-  close (iu_sourceterm)
+  if (isourceterm == 1) then
+    close (iu_sourceterm)
+  end if
 
 contains
 
@@ -1959,7 +1966,11 @@ contains
       case ('random.seed')
         if (.not. has_value) goto 12
         read(cinput(pname_start:pname_end), *, err=12) extra_seed
-
+      case ('sourcerterm.log.off')
+        isourceterm = 0
+      case ('sourceterm.log.on')
+        isourceterm = 1
+      
       ! Old argos options
       case ('argos.output.off')
         write (error_unit, *) "option argos.output.off is removed"

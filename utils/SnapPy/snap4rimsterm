@@ -310,6 +310,8 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
     sourceTerm += res.getSnapInputMetDefinitions(
         met_model, files, interpolation=interpolation, **metdef
     )
+    if is_qcTest:
+        sourceTerm += "SOURCETERM.LOG.ON\n"
 
     return sourceTerm, snapReleaseTXT
 
