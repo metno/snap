@@ -1104,7 +1104,7 @@ subroutine initialize_output(filename, itime, ierror)
   USE snapfldML, only:  &
       garea, &
       xm, ym, &
-      nhfout
+      hfout
   USE snapparML, only: nocomp, output_component, def_comp
   USE ftestML, only: ftest
   USE snapdimML, only: nx, ny, nk, output_resolution_factor, hres_field
@@ -1186,8 +1186,17 @@ subroutine initialize_output(filename, itime, ierror)
         "precipitation_amount_acc", units="kg/m2", &
         stdname="precipitation_amount", chunksize=chksz3d)
 
+      write(string, '(f32.12)') hfout
+      string = adjustl(string)
+      do while (len_trim(string) > 0)
+        m = len_trim(string)
+        if (string(m:m) /= '0') exit
+        string(m:m) = ' '
+      end do
+      m = len_trim(string)
+      if (string(m:m) == '.') string(m:m) = ' '
       call nc_declare(iunit, dimids3d, varid%prc, &
-        "lwe_precipitation_rate", units="mm/("//itoa(nhfout)//"hr)", &
+        "lwe_precipitation_rate", units="mm/("//trim(string)//"hr)", &
         stdname="lwe_precipitation_rate", chunksize=chksz3d)
 
       if (met_params%use_3d_precip) then

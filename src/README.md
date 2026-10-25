@@ -2,9 +2,10 @@
 
 ## Installation
 
-Create a file `current.mk` in thisdirectory. Use for example the file
+Create a file `current.mk` in this directory. Use for example the file
 [gcc_pkgconfig.mk](src/gcc_pkgconfig.mk)
-as a template. The most important parameter to modify is `BINDIR`, but `FIMEXLIB` and `NETCDFLIB` might also have to be modified depending on your development setup.
+as a template. The most important parameter to modify is `BINDIR`, but `FIMEXLIB` and `NETCDFLIB`
+might also have to be modified depending on your development setup.
 
 And run:
 
@@ -44,6 +45,15 @@ Asynoptic outputs are relative to the start; synoptic outputs remain on
 meteorology-relative hour boundaries. Logs, source-term epoch headers and NetCDF
 time origins retain the actual minutes and seconds. NetCDF times remain in
 `hours since ...`, including fractional hours where needed.
+
+`STEP.HOUR.OUTPUT.FIELDS` sets the field-output interval in hours and may be
+fractional. The requested interval is rounded to the nearest effective model
+timestep. With `ASYNOPTIC.OUTPUT`, output repeats at that fixed timestep
+multiple, relative to `TIME.START`. With `SYNOPTIC.OUTPUT`, output remains
+aligned to whole-hour meteorology times; the rounded interval is converted to
+the nearest whole hour, with a minimum interval of one hour. For example, with
+a 15-minute model timestep, `STEP.HOUR.OUTPUT.FIELDS=0.3` gives 15-minute
+asynoptic output and hourly synoptic output.
 
 The Fortran [datetime module](src/common/datetime.f90) provides
 `datetime_t(year, month, day, hour, minute, second)` with optional zero-defaulted

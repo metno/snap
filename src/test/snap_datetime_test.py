@@ -26,6 +26,7 @@ class SnapDatetimeTestCase(unittest.TestCase):
         synoptic: bool = False,
         timestep: float = 900,
         hours: int = 2,
+        output_interval: str = "1",
         valid: bool = True,
     ):
         text = (self.datadir / "snap.input_ecemep_fimex").read_text()
@@ -34,6 +35,7 @@ class SnapDatetimeTestCase(unittest.TestCase):
             "TIME.START": start,
             "TIME.RUN": f"{-hours if backward else hours}h",
             "TIME.STEP": str(timestep),
+            "STEP.HOUR.OUTPUT.FIELDS": output_interval,
             "MAX.PARTICLES.PER.RELEASE": "10",
             "FIELD.OUTPUT": "snap.nc",
             "LOG.FILE": "snap.log",
@@ -72,9 +74,10 @@ class SnapDatetimeTestCase(unittest.TestCase):
                 dates = [date.strftime("%Y-%m-%dT%H:%M:%S") for date in dates]
                 offsets = np.asarray(time[:])
                 units = time.units
+                precipitation_units = dataset["lwe_precipitation_rate"].units
             log = (tmp / "snap.log").read_text()
             header = (tmp / "source.csv").read_text().splitlines()[0]
-            return dates, offsets, units, log, header
+            return dates, offsets, units, log, header, precipitation_units
 
     def test_legacy_and_optional_components(self):
         for start in (
@@ -84,7 +87,7 @@ class SnapDatetimeTestCase(unittest.TestCase):
             "2020,04,16,00,30,15\nTIME.START=2020 04 16 00",
         ):
             with self.subTest(start=start):
-                dates, offsets, units, log, header = self.run_case(start)
+                dates, offsets, units, log, header, _ = self.run_case(start)
                 self.assertEqual(dates, ["2020-04-16T01:00:00", "2020-04-16T02:00:00"])
                 np.testing.assert_array_equal(offsets, [1, 2])
                 self.assertIn("00:00:00", units)
@@ -102,7 +105,7 @@ class SnapDatetimeTestCase(unittest.TestCase):
                     ):
                         hour = 4 if backward else 0
                         hours = 2 if backward else 4
-                        dates, offsets, units, log, header = self.run_case(
+                        dates, offsets, units, log, header, _ = self.run_case(
                             f"2020,04,16,{hour},30",
                             backward=backward,
                             asynchronous=asynchronous,
@@ -132,7 +135,7 @@ class SnapDatetimeTestCase(unittest.TestCase):
             ("2020,04,16,00,30", 3600 / 14, "2020-04-16T00:30:00"),
         ):
             with self.subTest(start=start, timestep=timestep):
-                dates, offsets, units, log, header = self.run_case(
+                dates, offsets, units, log, header, _ = self.run_case(
                     start, timestep=timestep
                 )
                 initial = datetime.datetime.fromisoformat(origin)
@@ -147,6 +150,59 @@ class SnapDatetimeTestCase(unittest.TestCase):
                 self.assertIn(origin[11:], units)
                 self.assertIn(origin, log)
                 self.assertIn(origin + "Z", header)
+
+    def test_fractional_output_interval_aligns_to_nearest_timestep(self):
+        for interval, step_count in (("0.3", 1), ("0.4", 2)):
+            with self.subTest(interval=interval):
+                dates, offsets, _, _, _, precipitation_units = self.run_case(
+                    "2020,04,16,00",
+                    timestep=900,
+                    hours=2,
+                    output_interval=interval,
+                )
+                output_hours = [
+                    step * 0.25 for step in range(step_count, 8 + 1, step_count)
+                ]
+                expected_dates = [
+                    (
+                        datetime.datetime(2020, 4, 16) + datetime.timedelta(hours=value)
+                    ).isoformat()
+                    for value in output_hours
+                ]
+                self.assertEqual(dates, expected_dates)
+                np.testing.assert_allclose(offsets, output_hours)
+                self.assertEqual(
+                    precipitation_units,
+                    f"mm/({step_count * 0.25:g}hr)",
+                )
+
+    def test_fractional_synoptic_output_remains_on_meteorology_hours(self):
+        dates, offsets, _, _, _, precipitation_units = self.run_case(
+            "2020,04,16,00,30",
+            timestep=900,
+            hours=2,
+            output_interval="0.5",
+            synoptic=True,
+        )
+        expected_offsets = [0.5, 1.5]
+        expected_dates = [
+            (
+                datetime.datetime(2020, 4, 16, 0, 30) + datetime.timedelta(hours=value)
+            ).isoformat()
+            for value in expected_offsets
+        ]
+        self.assertEqual(dates, expected_dates)
+        np.testing.assert_allclose(offsets, expected_offsets)
+        self.assertEqual(precipitation_units, "mm/(0.5hr)")
+
+    def test_output_interval_must_align_to_at_least_one_timestep(self):
+        output = self.run_case(
+            "2020,04,16,00",
+            timestep=900,
+            output_interval="0.01",
+            valid=False,
+        )
+        self.assertIn("must align to at least one model timestep", output)
 
     def test_rejected_start_times(self):
         for start in (
