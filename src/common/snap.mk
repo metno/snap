@@ -75,7 +75,7 @@ snapparML.o: ../common/snapparML.f90 snapdimML.o
 	${F77} -c ${F77FLAGS} $<
 checkDomain.o: ../common/checkDomain.f90 snapgrdML.o snapdimML.o particleML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-dateCalc.o: ../common/dateCalc.f90
+dateCalc.o: ../common/dateCalc.f90 datetime.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 gaussian_smoothingML.o: ../common/gaussian_smoothingML.f90
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
@@ -151,4 +151,3 @@ lam2sph.o: ../common/milib/lam2sph.f milibML.o
 mer2sph.o: ../common/milib/mer2sph.f milibML.o
 	${F77} -c ${F77FLAGS} ${MILIB_FLAGS} $(INCLUDES) $<
 #---------------------------------------------------------
-

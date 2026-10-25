@@ -160,7 +160,7 @@
 
 !> SNAP - Severe Nuclear Accident Program
 PROGRAM bsnap
-  USE iso_fortran_env, only: real64, output_unit, error_unit, IOSTAT_END
+  USE iso_fortran_env, only: real64, int64, output_unit, error_unit, IOSTAT_END
 #ifdef _OPENMP
   USE omp_lib, only: omp_set_max_active_levels, omp_get_max_threads, omp_get_num_places
 #endif
@@ -236,7 +236,7 @@ PROGRAM bsnap
   type(datetime_t) :: time_start = datetime_t(-huge(time_start%year), 0, 0, 0)
 !> stop  time
   type(datetime_t) :: itime2
-  type(datetime_t) :: itime, itimei, itimeo
+  type(datetime_t) :: itime, itimei, itimeo, output_reference
   type(datetime_t) :: time_file
 
   integer :: snapinput_unit, ios
@@ -254,9 +254,9 @@ PROGRAM bsnap
   integer :: idecay
   integer :: ntimefo
   integer :: nsteph, nstep, nstepr
-  integer :: ihread, isteph, lstepr, iendrel, istep, nhleft
+  integer :: ihread, isteph, lstepr, iendrel, istep
   integer :: next_input_step
-  integer :: ihdiff, ifldout, idailyout = 0, ihour, split_particle_after_step, split_particle_hours
+  integer :: ifldout, idailyout = 0, split_particle_after_step, split_particle_hours
   integer :: date_time(8)
   logical :: warning = .false.
   integer :: npartmax
@@ -423,7 +423,7 @@ PROGRAM bsnap
   block
   logical :: is_time_before_run, is_time_after_run
 
-  itime2 = time_start + duration_t(nhrun)
+  itime2 = time_start + duration_t(hours=nhrun)
 
   if (nhrun > 0) then
     is_time_before_run = itimer(1) <= time_start
@@ -455,7 +455,7 @@ PROGRAM bsnap
     else
       dur = itimer(1) - time_start
     endif
-    nhrun = dur%hours
+    nhrun = int(dur%seconds/3600_int64)
   end if
   if (nhrel > abs(nhrun)) nhrel = abs(nhrun)
   end block
@@ -467,7 +467,15 @@ PROGRAM bsnap
 
     !..no. of timesteps per hour (adjust the timestep)
     nsteph = nint(3600./tstep)
+    if (nsteph < 1) then
+      write (error_unit, *) 'TIME.STEP must give at least one timestep per hour'
+      call snap_error_exit(iulog)
+    endif
     tstep = 3600./float(nsteph)
+    if (mod((time_start%minute*60_int64 + time_start%second)*nsteph, 3600_int64) /= 0) then
+      write (error_unit, *) 'TIME.START must align with the effective timestep: ', tstep
+      call snap_error_exit(iulog)
+    endif
     split_particle_after_step = split_particle_hours * nsteph
 
     !..convert modleveldump from hours to steps
@@ -492,7 +500,8 @@ PROGRAM bsnap
       modleveldump
     write (iulog, *) 'time_start:  ', time_start
     write (tempstr, '("Starttime: ",I4,"-",I2.2,"-",I2.2,"T",I2.2 &
-        &,":",I2.2)') time_start
+        &,":",I2.2,":",I2.2)') time_start
+    write (iulog, '(A)') trim(tempstr)
     ncsummary = trim(ncsummary)//" "//trim(tempstr)
     do n = 1, nrelpos
       write (tempstr, '("Release Pos (lat, lon): (", F6.2, ",", F7.2 &
@@ -602,9 +611,11 @@ PROGRAM bsnap
 #endif
     call readfield_and_compute(ftype, -1, nhrun < 0, time_start, nhfmin, nhfmax, &
                    time_file, ierror)
-    write (error_unit, fmt="('input data: ',i4,3i3.2)") time_file
+    write (error_unit, fmt="('input data: ',i4,5i3.2)") time_file
+    output_reference = time_file
     flush(error_unit)
     call input_timer%stop_and_log()
+    output_reference = time_file
     call swap_fields_after_reading() ! only for async io, but does not hurt otherwise
 
     ! Initialise output
@@ -667,14 +678,14 @@ PROGRAM bsnap
     write (error_unit, *) "OpenMP: not enabled"
 #endif
   if (sourcefile /= "") then
-    write (iu_sourceterm, '("Start time [seconds since ",I4,"-",I2.2,"-",I2.2,"T",I2.2,":00:00Z], &
-      & End time [seconds since ",I4,"-",I2.2,"-",I2.2,"T",I2.2,":00:00Z], &
+    write (iu_sourceterm, '("Start time [seconds since ",I4,"-",I2.2,"-",I2.2,"T",I2.2,":",I2.2,":",I2.2,"Z], &
+      & End time [seconds since ",I4,"-",I2.2,"-",I2.2,"T",I2.2,":",I2.2,":",I2.2,"Z], &
       & Component name, &
       & Lower height [m], &
       & Upper height [m], &
       & Accumulated activity per timestep [Bq/timestep]")')&
-      time_start%year, time_start%month, time_start%day, time_start%hour, &
-      time_start%year, time_start%month, time_start%day, time_start%hour
+      time_start%year, time_start%month, time_start%day, time_start%hour, time_start%minute, time_start%second, &
+      time_start%year, time_start%month, time_start%day, time_start%hour, time_start%minute, time_start%second
   end if
   !$OMP PARALLEL
   !$OMP SINGLE
@@ -691,10 +702,8 @@ PROGRAM bsnap
     end if
 
       !..read fields
-      nhleft = abs((nstep - istep + 1)/nsteph)
-
       if (.not. use_async_io .or. istep == 0) then
-        if (next_input_step == istep .and. nhleft > 0) then
+        if (next_input_step == istep .and. istep < nstep) then
           call input_timer%start()
           ! initial time to read next timestep is the time of the current file
           itimei = time_file
@@ -704,7 +713,7 @@ PROGRAM bsnap
           end if
           call readfield_and_compute(ftype, istep, nhrun < 0, itimei, nhfmin, nhfmax, &
                               time_file, ierror)
-          write (error_unit, fmt="('input data: ',i4,3i3.2)") time_file
+          write (error_unit, fmt="('input data: ',i4,5i3.2)") time_file
           call input_timer%stop_and_log()
 
           ! duration to next read
@@ -714,11 +723,15 @@ PROGRAM bsnap
             ! itimei is the current files timestep
             dur = time_file - itimei
           end if
-          ihdiff = dur%hours
           tf1 = 0.
-          tf2 = 3600.*ihdiff
+          tf2 = real(dur%seconds)
           if (nhrun < 0) tf2 = -tf2
-          next_input_step = istep + nsteph*abs(ihdiff)
+          next_input_step = istep + aligned_steps(dur)
+          if (istep == 0) then
+            dur = itimei - time_start
+            tf1 = real(dur%seconds)
+            if (nhrun < 0) tf1 = -tf1
+          endif
 
           tnow = 0.
         else
@@ -727,28 +740,33 @@ PROGRAM bsnap
       end if
       ! Sync before we need the data from previous async read
       if (use_async_io) then
-        if ((next_input_step == istep .and. nhleft > 0) .or. istep == 0) then
+        if ((next_input_step == istep .and. istep < nstep) .or. istep == 0) then
           !$OMP TASKWAIT
           ! move all u2 to u1, u3 to u2, etc after reading new fields to u3, v3, etc
           ! not needed for last step, no further fields needed
           if (istep > 0) then
             ! otherwise already written in syncronous read above
-            write (error_unit, fmt="('input data: ',i4,3i3.2)") time_file
+            write (error_unit, fmt="('input data: ',i4,5i3.2)") time_file
           end if
           ! just keep reading from the last timestep, no interpolation needed
           call swap_fields_after_reading()
+          output_reference = time_file
           if (istep == 0) then
             dur = time_file - time_start
           else
             ! itimei is the current files timestep
             dur = time_file - itimei
           end if
-          ihdiff = dur%hours
           tf1 = 0.
-          tf2 = 3600.*ihdiff
+          tf2 = real(dur%seconds)
           if (nhrun < 0) tf2 = -tf2
           tnow = 0.
-          next_input_step = istep + nsteph*abs(ihdiff)
+          next_input_step = istep + aligned_steps(dur)
+          if (istep == 0) then
+            dur = itimei - time_start
+            tf1 = real(dur%seconds)
+            if (nhrun < 0) tf1 = -tf1
+          endif
 
           itimei = time_file
           if (next_input_step < nstep) then ! still data needed
@@ -884,42 +902,43 @@ PROGRAM bsnap
       end if
       npartmax = max(npartmax, npart)
 
-      !..fields
+
+      !..always accumulation for average fields
+      call output_timer%start()
+      call accumulate_fields(tf1, tf2, tnext, tstep, nsteph)
+
+      !..calculate output step, set ifldout and itimeo
       ifldout = 0
       isteph = isteph + 1
       if (isteph == nsteph) then
         isteph = 0
         if (nhrun > 0) then
-          itime = itime + duration_t(1)
+          itime = itime + duration_t(hours=1)
         else
-          itime = itime - duration_t(1)
+          itime = itime - duration_t(hours=1)
         end if
         itimeo = itime
-        if (synoptic_output) then
-          !..synoptic output  (use valid hour to test if output)
-          dur = itime - time_file
-          ihour = dur%hours
-        else
-          !..asynoptic output (use forecast length in hours to test if output)
+        if (.not. synoptic_output) then
           dur = itime - time_start
-          ihour = dur%hours
-        end if
-        if (mod(ihour, nhfout) == 0) then
-          ifldout = 1
-          if (ifltim == 0) then
-            !..identify fields with forecast length (hours after start)
-            itimeo = itime
+          if (mod(dur%seconds, nhfout*3600_int64) == 0) then
+            ifldout = 1
           end if
-          !..save first and last output time
-          ntimefo = ntimefo + 1
-          write (iulog, *) 'fldout. ', itimeo
         end if
       end if
+      if (synoptic_output) then
+        dur = time_start - output_reference
+        if (mod(dur%seconds*nsteph + sign(int(istep + 1, int64), int(nhrun, int64))*3600_int64, &
+                nhfout*3600_int64*nsteph) == 0) then
+          ifldout = 1
+          itimeo = time_start + duration_t(sign(int(istep + 1, int64), int(nhrun, int64))*3600_int64/nsteph)
+        endif
+      endif
+      if (ifldout == 1) then
+        ntimefo = ntimefo + 1
+        write (iulog, *) 'fldout. ', itimeo
+      endif
 
-      !..field output if ifldout=1, always accumulation for average fields
-      call output_timer%start()
-      call accumulate_fields(tf1, tf2, tnext, tstep, nsteph)
-
+      !..field output if ifldout=1, otherwise skip
       if (idailyout == 1) then
         !       daily output, append +x for each day
         ! istep/nsteph = hour  -> /24 =day
@@ -997,6 +1016,18 @@ PROGRAM bsnap
   end if
 
 contains
+
+  integer function aligned_steps(interval) result(steps)
+    type(duration_t), intent(in) :: interval
+    integer(int64) :: scaled
+
+    scaled = abs(interval%seconds)*nsteph
+    if (mod(scaled, 3600_int64) /= 0) then
+      write (error_unit, *) 'Meteorology timestamp must align with the effective timestep: ', tstep
+      call snap_error_exit(iulog)
+    endif
+    steps = int(scaled/3600_int64)
+  end function aligned_steps
 
   !> Exits snap ungracefully, leaving cleanup to the OS
   !>
@@ -1141,9 +1172,46 @@ contains
         !..positions.degree_minute
         ipostyp = 2
       case ('time.start')
-        !..time.start=<year,month,day,hour>
+        !..time.start=<year,month,day,hour[,minute[,second]]>
         if (.not. has_value) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) time_start%year, time_start%month, time_start%day, time_start%hour
+        block
+          integer :: parts(6), count, first, last, pos
+          character(len=:), allocatable :: text
+          text = trim(cinput(pname_start:pname_end))
+          parts = 0
+          count = 0
+          pos = 1
+          do while (pos <= len(text))
+            if (text(pos:pos) == ' ' .or. text(pos:pos) == achar(9)) then
+              pos = pos + 1
+              cycle
+            endif
+            first = pos
+            do while (pos <= len(text))
+              if (scan(text(pos:pos), ' ,'//achar(9)) /= 0) exit
+              pos = pos + 1
+            enddo
+            last = pos - 1
+            if (last < first .or. count == 6) goto 12
+            if (verify(text(first:last), '+-0123456789') /= 0) goto 12
+            count = count + 1
+            read (text(first:last), *, iostat=ierror) parts(count)
+            if (ierror /= 0) goto 12
+            do while (pos <= len(text))
+              if (text(pos:pos) /= ' ' .and. text(pos:pos) /= achar(9)) exit
+              pos = pos + 1
+            enddo
+            if (pos <= len(text)) then
+              if (text(pos:pos) == ',') then
+                pos = pos + 1
+                if (len_trim(text(pos:)) == 0) goto 12
+              endif
+            endif
+          enddo
+          if (count < 4) goto 12
+          if (parts(5) < 0 .or. parts(5) > 59 .or. parts(6) < 0 .or. parts(6) > 59) goto 12
+          time_start = datetime_t(parts(1), parts(2), parts(3), parts(4), parts(5), parts(6))
+        end block
       case ('time.run')
         !..time.run=<hours'h'> or <days'd'>
         if (.not. has_value) goto 12
@@ -1972,7 +2040,7 @@ contains
 
       case ('log.sourceterm.file')
         sourcefile = cinput(pname_start:pname_end)
-        
+
       ! Old argos options
       case ('argos.output.off')
         write (error_unit, *) "option argos.output.off is removed"

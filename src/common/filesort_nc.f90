@@ -200,7 +200,7 @@ subroutine filesort_nc
                            iavail(kavail(i))%aMonth, &
                            iavail(kavail(i))%aDay, &
                            iavail(kavail(i))%aHour)
-    itimer(i) = itimer(i) + duration_t(iavail(kavail(i))%fcHour)
+    itimer(i) = itimer(i) + duration_t(hours=int(iavail(kavail(i))%fcHour))
   end do
 
 !..adjust hours to hours since first available time

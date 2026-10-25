@@ -33,7 +33,8 @@ snap_testdata/%.nc :
 	mkdir -p snap_testdata
 	curl --fail https://thredds.met.no/thredds/fileServer/metusers/heikok/$@ -o $@
 
-test: testDateCalc test_array_utils testGeoLatLonToGrid testHresLresPos find_parameters_fi_test testGravSettling testDryDep  testWetDep testGaussianSmoothing bsnap_naccident $(TESTFILES)
+test: testdatetime testDateCalc test_array_utils testGeoLatLonToGrid testHresLresPos find_parameters_fi_test testGravSettling testDryDep  testWetDep testGaussianSmoothing bsnap_naccident $(TESTFILES)
+	./testdatetime && \
 	./testDateCalc && \
 	./test_array_utils && \
 	./testGeoLatLonToGrid && \
@@ -44,7 +45,7 @@ test: testDateCalc test_array_utils testGeoLatLonToGrid testHresLresPos find_par
 	./testDryDep && \
 	./testGaussianSmoothing && \
 	./testWetDep && \
-	python3 -m unittest -b -v snap_forward_test.py
+	python3 -m unittest -b -v snap_forward_test.py snap_datetime_test.py
 
 
 bsnap_naccident: $(BOBJ) $(MODELOBJ)
@@ -54,8 +55,11 @@ bsnap_naccident: $(BOBJ) $(MODELOBJ)
 find_parameters_fi_test: find_parameters_fi_test.o $(MODELOBJ)
 	${F77} $(F77FLAGS) $(MODELOBJ) $< $(BLIBS) -o find_parameters_fi_test
 
-testDateCalc: testDateCalc.o $(MODELOBJ)
-	${F77} $(F77FLAGS) $< $(MODELOBJ) $(BLIBS) -o $@
+testdatetime: testdatetime.o datetime.o
+	${F77} $(F77FLAGS) $^ -o $@
+
+testDateCalc: testDateCalc.o dateCalc.o datetime.o
+	${F77} $(F77FLAGS) $^ -o $@
 
 test_array_utils: test_array_utils.o $(MODELOBJ)
 	${F77} $(F77FLAGS) $(MODELOBJ) $< $(BLIBS) -o $@
@@ -79,6 +83,7 @@ testGaussianSmoothing: testGaussianSmoothing.o $(MODELOBJ)
 	${F77} $(F77FLAGS) $(MODELOBJ) $< $(BLIBS) -o $@
 
 clean: clean_links
+	rm -f testdatetime
 	rm -f *.o *~ snap_batch_copy.F90 find_parameters_fi_test bsnap_naccident data/snap.nc data/snap_ecemep.nc data/snap.log testDateCalc test_array_utils testGeoLatLonToGrid testHresLresPos testWetDep
 	rm -rf __pycache__
 
@@ -88,7 +93,10 @@ distclean: clean
 find_parameters_fi_test.o: find_parameters_fi_test.f90 $(MODELOBJ)
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 
-testDateCalc.o: testDateCalc.f90 $(MODELOBJ)
+testdatetime.o: testdatetime.f90 datetime.o
+	${F77} -c ${F77FLAGS} $<
+
+testDateCalc.o: testDateCalc.f90 dateCalc.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 
 test_array_utils.o: test_array_utils.f90 $(MODELOBJ)
