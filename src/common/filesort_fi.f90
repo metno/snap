@@ -1,19 +1,7 @@
 ! SNAP: Servere Nuclear Accident Programme
-! Copyright (C) 1992-2021   Norwegian Meteorological Institute
+! Copyright (C) 1992-2026   Norwegian Meteorological Institute
 
-! This file is part of SNAP. SNAP is free software: you can
-! redistribute it and/or modify it under the terms of the
-! GNU General Public License as published by the
-! Free Software Foundation, either version 3 of the License, or
-! (at your option) any later version.
-
-! This program is distributed in the hope that it will be useful,
-! but WITHOUT ANY WARRANTY; without even the implied warranty of
-! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-! GNU General Public License for more details.
-
-! You should have received a copy of the GNU General Public License
-! along with this program.  If not, see <https://www.gnu.org/licenses/>.
+! License: GNU General Public License Version 3 (GNU GPL-3.0)
 
 module filesort_fiML
   implicit none
@@ -30,7 +18,6 @@ contains
                      AXIS_Pressure, AXIS_Height, AXIS_Realization, AXIS_Time
     USE readfield_fiML, only: check
     USE snapfimexML, only: file_type, conf_file
-    USE DateCalc, only: epochToDate
     USE Utils, only: itoa
     USE ieee_arithmetic, only: ieee_is_nan
     USE snapfilML, only: iavail, kavail, itimer, navail, nfilef, filef, spinup_steps
@@ -38,7 +25,7 @@ contains
     USE snapmetML, ONLY: met_params
     USE snapdebug, only: iulog, idebug
     USE snapdimML, only: mavail
-    USE datetime, only: datetime_t, duration_t
+    USE datetime, only: datetime_t, duration_t, epochToDate
 
     TYPE(FimexIO) :: fio
     integer(int32), dimension(:), allocatable :: start, length, atypes
@@ -47,7 +34,7 @@ contains
     real(real64), allocatable, target :: times(:)
     real(real64), allocatable, target :: field(:)
     integer :: zeroHour, status, count_nan
-    integer :: date_time(6)
+    type(datetime_t) :: date_time
 
 ! position in iavail
     navail = 0
@@ -148,10 +135,10 @@ contains
           navail = mavail
         end if
         date_time = epochToDate(int(times(t), kind=int64))
-        iavail(navail)%aYear = date_time(6)
-        iavail(navail)%aMonth = date_time(5)
-        iavail(navail)%aDay = date_time(4)
-        iavail(navail)%aHour = date_time(3)
+        iavail(navail)%aYear = date_time%year
+        iavail(navail)%aMonth = date_time%month
+        iavail(navail)%aDay = date_time%day
+        iavail(navail)%aHour = date_time%hour
         !         iavail(n)%fcHour: forecast hour
         iavail(navail)%fcHour = 0
         iavail(navail)%fileNo = nf

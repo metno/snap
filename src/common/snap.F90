@@ -168,7 +168,6 @@ PROGRAM bsnap
   USE omp_lib, only: omp_set_max_active_levels, omp_get_max_threads, omp_get_num_places
 #endif
 
-  USE DateCalc, only: epochToDate, timeGM
   USE datetime, only: datetime_t, duration_t
   USE snapdebug, only: iulog, idebug
   USE snaptimers, only: timeloop_timer, output_timer, input_timer, metcalc_timer, &

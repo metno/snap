@@ -58,7 +58,7 @@ find_parameters_fi_test: find_parameters_fi_test.o $(MODELOBJ)
 testdatetime: testdatetime.o datetime.o
 	${F77} $(F77FLAGS) $^ -o $@
 
-testDateCalc: testDateCalc.o dateCalc.o datetime.o
+testDateCalc: testDateCalc.o datetime.o
 	${F77} $(F77FLAGS) $^ -o $@
 
 test_array_utils: test_array_utils.o $(MODELOBJ)
@@ -96,7 +96,7 @@ find_parameters_fi_test.o: find_parameters_fi_test.f90 $(MODELOBJ)
 testdatetime.o: testdatetime.f90 datetime.o
 	${F77} -c ${F77FLAGS} $<
 
-testDateCalc.o: testDateCalc.f90 dateCalc.o
+testDateCalc.o: testDateCalc.f90 datetime.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 
 test_array_utils.o: test_array_utils.f90 $(MODELOBJ)

@@ -1,7 +1,7 @@
 # this file contains the common parts to compile bsnap
 # should be included after all: target
 
-MODELOBJ = array_utils.o dateCalc.o utils.o particleML.o snapdimML.o snapfilML.o snapfimexML.o \
+MODELOBJ = array_utils.o utils.o particleML.o snapdimML.o snapfilML.o snapfimexML.o \
 snapfldML.o snapgrdML.o snapmetML.o snapparML.o \
 snapposML.o snaptabML.o snapdebugML.o snaptimersML.o posint.o decay.o \
 om2edot.o ftest.o readfield_nc.o readfield.o rwalk.o epinterp.o \
@@ -75,8 +75,6 @@ snapparML.o: ../common/snapparML.f90 snapdimML.o
 	${F77} -c ${F77FLAGS} $<
 checkDomain.o: ../common/checkDomain.f90 snapgrdML.o snapdimML.o particleML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-dateCalc.o: ../common/dateCalc.f90 datetime.o
-	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 gaussian_smoothingML.o: ../common/gaussian_smoothingML.f90
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 drydep.o: ../common/drydep.f90 gaussian_smoothingML.o particleML.o snapfldML.o snapparML.o snapgrdML.o vgravtables.o
@@ -91,9 +89,9 @@ readfield_fi.o: ../common/readfield_fi.f90 snapfimexML.o particleML.o snapfilML.
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 readfield.o: ../common/readfield.F90 $(READFIELDOBJ) snapgrdML.o datetime.o snapdebugML.o bldp.o compheight.o snapmetML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-filesort_nc.o: ../common/filesort_nc.f90 dateCalc.o snapfilML.o snapdimML.o snapgrdML.o snapfldML.o snapmetML.o snapdebugML.o readfield_nc.o datetime.o
+filesort_nc.o: ../common/filesort_nc.f90 snapfilML.o snapdimML.o snapgrdML.o snapfldML.o snapmetML.o snapdebugML.o readfield_nc.o datetime.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
-filesort_fi.o: ../common/filesort_fi.f90 snapfimexML.o dateCalc.o snapfilML.o snapdimML.o snapgrdML.o snapfldML.o snapmetML.o snapdebugML.o readfield_fi.o datetime.o utils.o
+filesort_fi.o: ../common/filesort_fi.f90 snapfimexML.o snapfilML.o snapdimML.o snapgrdML.o snapfldML.o snapmetML.o snapdebugML.o readfield_fi.o datetime.o utils.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<
 find_parameters.o: ../common/find_parameters.f90 snapmetML.o
 	${F77} -c ${F77FLAGS} $(INCLUDES) $<

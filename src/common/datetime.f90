@@ -1,8 +1,15 @@
+! SNAP: Servere Nuclear Accident Programme
+! Copyright (C) 1992-2026   Norwegian Meteorological Institute
+
+! License: GNU General Public License Version 3 (GNU GPL-3.0)
+
 !> Module to compute timelike items
 module datetime
-  use iso_fortran_env, only: int64
+  use iso_fortran_env, only: int64, error_unit
   implicit none
   private
+
+  public :: timeGM, epochToDate, parseIsoDate, timeUnitScale, timeUnitOffset
 
   !> Represents a datetime with granularity of
   !> integer seconds
@@ -62,6 +69,112 @@ module datetime
   integer, parameter :: JANUARY = 1, FEBRUARY = 2, DECEMBER = 12
 
   contains
+
+  !> Scale of a time unit in seconds.
+  function timeUnitScale(unit)
+    character(len=*), intent(in) :: unit
+    integer(int64) :: timeUnitScale
+    integer :: ind
+    character(len=25) :: tmp
+
+    ind = index(unit, " since ")
+    if (ind == 0) then
+      write(error_unit,*) "' since ' not found in time-units: ", unit
+      stop 1
+    end if
+    tmp = trim(unit(:ind-1))
+    timeUnitScale = 0
+    if (tmp == "seconds") timeUnitScale = 1
+    if (tmp == "minutes") timeUnitScale = 60
+    if (tmp == "hours") timeUnitScale = 60*60
+    if (tmp == "days") timeUnitScale = 60*60*24
+    if (timeUnitScale == 0) then
+      write(error_unit,*) "' since ' not found in time-units: ", unit
+      stop 1
+    end if
+  end function timeUnitScale
+
+  !> Offset in seconds from 1970-01-01T00:00:00.
+  function timeUnitOffset(unit)
+    character(len=*), intent(in) :: unit
+    integer(int64) :: timeUnitOffset
+    integer :: ind
+    character(len=25) :: date
+
+    ind = index(unit, " since ")
+    if (ind == 0) then
+      write(error_unit,*) "' since ' not found in time-units: ", unit
+      stop 1
+    end if
+    date = trim(unit(ind+7:))
+    timeUnitOffset = timeGM(parseIsoDate(date))
+  end function timeUnitOffset
+
+  pure function epochToDate(epochSeconds) result(date)
+    integer(int64), intent(in) :: epochSeconds
+    type(datetime_t) :: date
+
+    date = datetime_t(1970, 1, 1, 0) + duration_t(epochSeconds)
+  end function epochToDate
+
+  pure function timeGM(date)
+    type(datetime_t), intent(in) :: date
+    integer(int64) :: timeGM
+    type(duration_t) :: elapsed
+
+    elapsed = date - datetime_t(1970, 1, 1, 0)
+    timeGM = elapsed%seconds
+  end function timeGM
+
+  !> Parse an ISO date at integer-second precision, without timezone conversion.
+  function parseIsoDate(str) result(date)
+    use iso_c_binding, only: C_NULL_CHAR
+    character(len=*), intent(in) :: str
+    type(datetime_t) :: date
+    integer :: ind, ind2
+    character(len=80) :: substr
+
+    date = datetime_t(0, 0, 0, 0, 0, 0)
+    ind = index(str, "-")
+    if (ind > 0) read(str(:ind-1),*) date%year
+    substr = str(ind+1:)
+
+    ind = index(substr, "-")
+    if (ind > 0) read(substr(:ind-1),*) date%month
+    substr = substr(ind+1:)
+
+    ind = index(substr, " ")
+    ind2 = index(substr, "T")
+    if (ind == 0) ind = len(substr)
+    if (ind2 == 0) ind2 = len(substr)
+    ind = min(ind, ind2)
+    if (ind > 0) read(substr(:ind-1),*) date%day
+    substr = substr(ind+1:)
+
+    ind = index(substr, ":")
+    if (ind > 0) read(substr(:ind-1),*) date%hour
+    substr = substr(ind+1:)
+
+    ind = index(substr, ":")
+    if (ind > 0) read(substr(:ind-1),*) date%minute
+    substr = substr(ind+1:)
+
+    ! Seconds end at a suffix or fractional part, which are not interpreted.
+    ind = len(substr)
+    ind2 = index(substr, ".")
+    if (ind2 /= 0) ind = min(ind, ind2)
+    ind2 = index(substr, " ")
+    if (ind2 /= 0) ind = min(ind, ind2)
+    ind2 = index(substr, "Z")
+    if (ind2 /= 0) ind = min(ind, ind2)
+    ind2 = index(substr, "z")
+    if (ind2 /= 0) ind = min(ind, ind2)
+    ind2 = index(substr, "+")
+    if (ind2 /= 0) ind = min(ind, ind2)
+    ind2 = index(substr, C_NULL_CHAR)
+    if (ind2 /= 0) ind = min(ind, ind2)
+    if (ind > 0) read(substr(:ind-1),*) date%second
+  end function parseIsoDate
 
   !> Positional arguments are seconds; named hours may be combined with seconds.
   pure type(duration_t) function duration_from_units(seconds, hours) result(duration)
