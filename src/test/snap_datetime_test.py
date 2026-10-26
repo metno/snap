@@ -89,7 +89,7 @@ class SnapDatetimeTestCase(unittest.TestCase):
             with self.subTest(start=start):
                 dates, offsets, units, log, header, _ = self.run_case(start)
                 self.assertEqual(dates, ["2020-04-16T01:00:00", "2020-04-16T02:00:00"])
-                np.testing.assert_array_equal(offsets, [1, 2])
+                np.testing.assert_array_equal(offsets, [3600, 7200])
                 self.assertIn("00:00:00", units)
                 self.assertIn("2020-04-16T00:00:00", log)
                 self.assertIn("2020-04-16T00:00:00Z", header)
@@ -113,18 +113,20 @@ class SnapDatetimeTestCase(unittest.TestCase):
                             hours=hours,
                         )
                         origin = datetime.datetime(2020, 4, 16, hour, 30)
-                        expected_offsets = [
-                            value - 0.5 if synoptic else value
+                        expected_offsets_seconds = [
+                            3600 * (value - 0.5) if synoptic else 3600 * value
                             for value in range(1, hours + 1)
                         ]
                         if backward:
-                            expected_offsets = [-value for value in expected_offsets]
+                            expected_offsets_seconds = [
+                                -value for value in expected_offsets_seconds
+                            ]
                         expected_dates = [
-                            (origin + datetime.timedelta(hours=value)).isoformat()
-                            for value in expected_offsets
+                            (origin + datetime.timedelta(seconds=value)).isoformat()
+                            for value in expected_offsets_seconds
                         ]
                         self.assertEqual(dates, expected_dates)
-                        np.testing.assert_array_equal(offsets, expected_offsets)
+                        np.testing.assert_array_equal(offsets, expected_offsets_seconds)
                         self.assertIn(f"{hour:02d}:30:00", units)
                         self.assertIn(origin.isoformat(), log)
                         self.assertIn(origin.isoformat() + "Z", header)
@@ -142,11 +144,11 @@ class SnapDatetimeTestCase(unittest.TestCase):
                 self.assertEqual(
                     dates,
                     [
-                        (initial + datetime.timedelta(hours=value)).isoformat()
-                        for value in (1, 2)
+                        (initial + datetime.timedelta(seconds=value)).isoformat()
+                        for value in (3600, 7200)
                     ],
                 )
-                np.testing.assert_array_equal(offsets, [1, 2])
+                np.testing.assert_array_equal(offsets, [3600, 7200])
                 self.assertIn(origin[11:], units)
                 self.assertIn(origin, log)
                 self.assertIn(origin + "Z", header)
@@ -160,17 +162,18 @@ class SnapDatetimeTestCase(unittest.TestCase):
                     hours=2,
                     output_interval=interval,
                 )
-                output_hours = [
-                    step * 0.25 for step in range(step_count, 8 + 1, step_count)
+                output_seconds = [
+                    3600 * step * 0.25 for step in range(step_count, 8 + 1, step_count)
                 ]
                 expected_dates = [
                     (
-                        datetime.datetime(2020, 4, 16) + datetime.timedelta(hours=value)
+                        datetime.datetime(2020, 4, 16)
+                        + datetime.timedelta(seconds=value)
                     ).isoformat()
-                    for value in output_hours
+                    for value in output_seconds
                 ]
                 self.assertEqual(dates, expected_dates)
-                np.testing.assert_allclose(offsets, output_hours)
+                np.testing.assert_allclose(offsets, output_seconds)
                 self.assertEqual(
                     precipitation_units,
                     f"mm/({step_count * 0.25:g}hr)",
@@ -184,15 +187,16 @@ class SnapDatetimeTestCase(unittest.TestCase):
             output_interval="0.5",
             synoptic=True,
         )
-        expected_offsets = [0.5, 1.5]
+        expected_offsets_secs = [3600 * x for x in [0.5, 1.5]]
         expected_dates = [
             (
-                datetime.datetime(2020, 4, 16, 0, 30) + datetime.timedelta(hours=value)
+                datetime.datetime(2020, 4, 16, 0, 30)
+                + datetime.timedelta(seconds=value)
             ).isoformat()
-            for value in expected_offsets
+            for value in expected_offsets_secs
         ]
         self.assertEqual(dates, expected_dates)
-        np.testing.assert_allclose(offsets, expected_offsets)
+        np.testing.assert_allclose(offsets, expected_offsets_secs)
         self.assertEqual(precipitation_units, "mm/(0.5hr)")
 
     def test_output_interval_must_align_to_at_least_one_timestep(self):
