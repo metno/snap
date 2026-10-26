@@ -7,8 +7,8 @@ module snapfldML
   implicit none
   private
 
-!> number of hourly steps between output of fields
-  integer, save, public :: nhfout = 3
+!> requested time interval between field outputs, in hours
+  real(real64), save, public :: hfout = 3.0_real64
   !> Cut off radius for gas particles
   real, save, public :: gas_cutoff = 0.05001
 

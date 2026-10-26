@@ -16,7 +16,8 @@
 ! along with this program.  If not, see <https://www.gnu.org/licenses/>.
 !
 module DateCalc
-    USE iso_fortran_env, only: int32, int64, error_unit
+    USE iso_fortran_env, only: int64, error_unit
+    use datetime, only: datetime_t, duration_t
     implicit none
     private
 
@@ -26,9 +27,6 @@ module DateCalc
     public parseIsoDate
     public timeUnitScale
     public timeUnitOffset
-
-    integer, private, parameter :: MONTHDAYS(12) = (/ 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30 /)
-    integer, private, parameter :: SECS_PER_HOUR = 3600
 
 contains
 ! scale of timeUnit in seconds
@@ -73,14 +71,10 @@ contains
   function epochToDate(epochSeconds) result(values)
     integer(int64), intent(in) :: epochSeconds
     integer :: values(6)
-    integer :: gmvalues(9)
-    integer(int32) :: gmtimeIn
+    type(datetime_t) :: date
 
-    gmtimeIn = INT(epochSeconds, KIND=int32)
-    call gmtime(gmtimeIn, gmvalues)
-    values = gmvalues(1:6)
-    values(5) = values(5) + 1
-    values(6) = values(6) + 1900
+    date = datetime_t(1970, 1, 1, 0) + duration_t(epochSeconds)
+    values = [date%second, date%minute, date%hour, date%day, date%month, date%year]
 
   end function epochToDate
 
@@ -88,57 +82,11 @@ contains
   function timeGM(values)
     integer, intent(in) :: values(6)
     integer(int64) :: timeGM
-    timeGM = values(1) + 60 * (values(2) + 60 * values(3)) + daygm(values)
+    type(duration_t) :: elapsed
+    elapsed = datetime_t(values(6), values(5), values(4), values(3), values(2), values(1)) - &
+              datetime_t(1970, 1, 1, 0)
+    timeGM = elapsed%seconds
   end function timeGM
-
-  function daygm(values)
-    integer(int64) :: daygm
-    integer, intent(in) :: values(6)
-    integer i, ydays
-    daygm = 0
-    if (values(6) .ge. 1970) then
-      do i = 1970, values(6)-1, 1
-        daygm = daygm + (365 + leapyear(i)) * SECS_PER_HOUR*24
-      end do
-    else
-      do i = 1969, values(6), -1
-        daygm = daygm - (365 + leapyear(i)) * SECS_PER_HOUR*24
-      end do
-    end if
-
-    ! the days of this month
-    ydays = values(4)
-    ! the days of the previous month
-    do i = 1, values(5)
-      ydays = ydays + MONTHDAYS(i)
-    end do
-    daygm = daygm + (ydays - 1) * SECS_PER_HOUR*24
-    return
-  end function daygm
-
-! year since 0
-  function leapyear(year)
-    integer :: leapyear
-    integer, intent(IN) :: year
-
-    if (modulo(year, 4) > 0) then
-      leapyear = 0
-      return
-    end if
-
-    if (modulo(year, 100) > 0) then
-      leapyear = 1
-      return
-    end if
-
-    if (modulo(year, 400) > 0) then
-      leapyear = 0
-      return
-    end if
-
-    leapyear = 1
-    return
-  end function leapyear
 
 ! convert an ISO8601 date string to a list of values(6) = secs,min,hours, days,month,year
   function parseIsoDate(str) result(values)

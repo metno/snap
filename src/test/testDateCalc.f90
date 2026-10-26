@@ -1,10 +1,12 @@
 ! gfortran testDateCalc.f90 -I../naccident/ ../naccident/dateCalc.o -o testDateCalc
 program testDateCalc
+  use iso_fortran_env, only: int64
   use DateCalc
   implicit none
 
   integer :: values(6), values2(6)
-  integer(kind=8) :: epochSeconds
+  integer(int64) :: epochSeconds
+  integer :: year, month
 
 
   values = (/0,0,0, 1, 1, 1970 /)
@@ -103,5 +105,30 @@ program testDateCalc
                 timeUnitOffset("days since 1900-01-01T00:00:00+00:00")
     call exit(1)
   end if
+
+  call check_epoch([59, 59, 23, 31, 12, 1969], -1_int64)
+  call check_epoch([7, 14, 3, 19, 1, 2038], 2147483647_int64)
+  call check_epoch([8, 14, 3, 19, 1, 2038], 2147483648_int64)
+  call check_epoch([0, 0, 0, 1, 1, 1900], -2208988800_int64)
+  call check_epoch([0, 0, 0, 29, 2, 2000], 951782400_int64)
+  call check_epoch([1, 0, 0, 1, 3, 2000], 951868801_int64)
+  call check_epoch([0, 0, 0, 1, 3, 2100], 4107542400_int64)
+  do year = 1896, 2104, 4
+    do month = 1, 12
+      values = [37, 41, 13, 28, month, year]
+      if (.not.all(epochToDate(timeGM(values)) == values)) error stop "DateCalc round trip"
+    enddo
+  enddo
+  if (timeUnitOffset("seconds since 2000-03-01 00:00:01") /= 951868801_int64) &
+      error stop "Leap year time-unit offset"
+
+contains
+
+  subroutine check_epoch(date, epoch)
+    integer, intent(in) :: date(6)
+    integer(int64), intent(in) :: epoch
+    if (timeGM(date) /= epoch) error stop "Incorrect epoch seconds"
+    if (.not.all(epochToDate(epoch) == date)) error stop "Incorrect epoch date"
+  end subroutine check_epoch
 
 end program testDateCalc

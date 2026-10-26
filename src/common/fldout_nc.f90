@@ -162,7 +162,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, nsteph, &
 
   integer :: iunit
   integer :: ipos(3), isize(3)
-  integer, save :: ihrs, ihrs_pos
+  integer, save :: ihrs_pos
 
   character(len=1024) :: fmt
   integer :: nptot1,nptot2
@@ -195,8 +195,7 @@ subroutine fldout_nc(filename, itime,tf1,tf2,tnow, nsteph, &
 ! set the runtime
   ihrs_pos = ihrs_pos + 1
   dur = itime - iftime
-  ihrs = dur%hours
-  call check(nf90_put_var(iunit, varid%t, start=[ihrs_pos], values=FLOAT(ihrs)), &
+  call check(nf90_put_var(iunit, varid%t, start=[ihrs_pos], values=dur%seconds), &
       "set time")
 
   ipos = [1, 1, ihrs_pos]
@@ -1105,7 +1104,7 @@ subroutine initialize_output(filename, itime, ierror)
   USE snapfldML, only:  &
       garea, &
       xm, ym, &
-      nhfout
+      hfout
   USE snapparML, only: nocomp, output_component, def_comp
   USE ftestML, only: ftest
   USE snapdimML, only: nx, ny, nk, output_resolution_factor, hres_field
@@ -1155,10 +1154,10 @@ subroutine initialize_output(filename, itime, ierror)
       call nc_set_vtrans(iunit, dimid%k, varid%k, varid%ap, varid%b)
     endif
 
-    call check(nf90_def_var(iunit, "time", NF90_FLOAT, dimid%t, varid%t))
-    write(string,'(A12,I4,A1,I0.2,A1,I0.2,A1,I0.2,A12)') &
-        "hours since ",itime%year,"-",itime%month,"-",itime%day," ", &
-        itime%hour,":00:00 +0000"
+    call check(nf90_def_var(iunit, "time", NF90_INT, dimid%t, varid%t))
+    write(string,'(A14,I4,A1,I0.2,A1,I0.2,A1,I0.2,A1,I0.2,A1,I0.2,A6)') &
+        "seconds since ",itime%year,"-",itime%month,"-",itime%day," ", &
+        itime%hour,":",itime%minute,":",itime%second," +0000"
     call check(nf90_put_att(iunit, varid%t, "units", &
         trim(string)))
 
@@ -1187,8 +1186,17 @@ subroutine initialize_output(filename, itime, ierror)
         "precipitation_amount_acc", units="kg/m2", &
         stdname="precipitation_amount", chunksize=chksz3d)
 
+      write(string, '(f32.12)') hfout
+      string = adjustl(string)
+      do while (len_trim(string) > 0)
+        m = len_trim(string)
+        if (string(m:m) /= '0') exit
+        string(m:m) = ' '
+      end do
+      m = len_trim(string)
+      if (string(m:m) == '.') string(m:m) = ' '
       call nc_declare(iunit, dimids3d, varid%prc, &
-        "lwe_precipitation_rate", units="mm/("//itoa(nhfout)//"hr)", &
+        "lwe_precipitation_rate", units="mm/("//trim(string)//"hr)", &
         stdname="lwe_precipitation_rate", chunksize=chksz3d)
 
       if (met_params%use_3d_precip) then
