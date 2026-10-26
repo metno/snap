@@ -25,8 +25,8 @@ def add_toa_to_nc(nc: netCDF4.Dataset, overwrite=False):
         if not overwrite:
             return
     times = netCDF4.num2date(nc.variables["time"][:], units=nc.variables["time"].units)
-    timeMax = abs(int((times[-1] - times[0]).total_seconds() / (60 * 60)))
-    timeDelta = abs(int((times[1] - times[0]).total_seconds() / (60 * 60)))
+    timeMax = abs(int((times[-1] - times[0]).total_seconds()))
+    timeDelta = abs(int((times[1] - times[0]).total_seconds()))
     data = 0
     exampleVar = None
     for v, var in nc.variables.items():
@@ -47,7 +47,7 @@ def add_toa_to_nc(nc: netCDF4.Dataset, overwrite=False):
     # snap output start at first timeDelta, not 0, so 0 means 0 - 3h
     # make sure that timestamp means 'within this time', e.g. 0 -> 3
     # use slightly less, so that diana is satisfied [0,3[
-    toa[toa != -999] += float(timeDelta) - 0.01
+    toa[toa != -999] += float(timeDelta) - 0.1
 
     if "time_of_arrival" in nc.variables:
         # for debugging or in special cases only
@@ -61,10 +61,11 @@ def add_toa_to_nc(nc: netCDF4.Dataset, overwrite=False):
             zlib=True,
             fill_value=-999,
         )
-    toaVar.units = "hours"
     for attr in ("grid_mapping", "coordinates"):
         if attr in exampleVar.ncattrs():
             toaVar.setncattr(attr, exampleVar.getncattr(attr))
+    toaVar.units = "hours"
+    toa[toa != -999] /= 3600.0
     toaVar[0, :] = toa
 
     # add also total depositions
