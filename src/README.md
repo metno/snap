@@ -62,3 +62,25 @@ constructed as `duration_t(hours=24)`, `duration_t(seconds=90)`, or
 `duration_t(hours=1, seconds=30)`. Positional duration arguments now mean
 **seconds**, not hours; external callers must migrate accordingly. Read elapsed
 time from `%seconds` rather than the removed `%hours` component.
+
+
+### Fortran date/time API
+
+The [datetime module](src/common/datetime.f90) provides UTC Gregorian
+`datetime_t(year, month, day, hour, minute, second)` values with integer-second
+precision; minute and second default to zero. It also provides `duration_t`
+and date arithmetic.
+
+Epoch and parsing helpers now belong to this same module:
+
+* `epochToDate(epochSeconds)` takes `integer(int64)` seconds since
+  `1970-01-01T00:00:00` and returns `type(datetime_t)`.
+* `timeGM(date)` takes `type(datetime_t)` and returns `integer(int64)` epoch seconds.
+* `parseIsoDate(text)` returns `type(datetime_t)` at integer-second precision.
+  Fractional seconds and timezone suffixes are not interpreted; supply UTC.
+* `timeUnitScale(unit)` and `timeUnitOffset(unit)` return `integer(int64)`
+  scales and epoch offsets for `seconds`, `minutes`, `hours`, or `days since ...`.
+
+The former `DateCalc` module has been removed. Callers must import these helpers
+from `datetime` and use named date components (such as `%year` and `%second`)
+instead of the former six-integer arrays.

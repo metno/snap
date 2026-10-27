@@ -1,19 +1,7 @@
 ! SNAP: Servere Nuclear Accident Programme
-! Copyright (C) 1992-2017   Norwegian Meteorological Institute
+! Copyright (C) 1992-2026   Norwegian Meteorological Institute
 
-! This file is part of SNAP. SNAP is free software: you can
-! redistribute it and/or modify it under the terms of the
-! GNU General Public License as published by the
-! Free Software Foundation, either version 3 of the License, or
-! (at your option) any later version.
-
-! This program is distributed in the hope that it will be useful,
-! but WITHOUT ANY WARRANTY; without even the implied warranty of
-! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-! GNU General Public License for more details.
-
-! You should have received a copy of the GNU General Public License
-! along with this program.  If not, see <https://www.gnu.org/licenses/>.
+! License: GNU General Public License Version 3 (GNU GPL-3.0)
 
 module filesort_ncML
   implicit none
@@ -27,7 +15,6 @@ module filesort_ncML
 subroutine filesort_nc
   USE iso_fortran_env, only: error_unit, real64, int64
   USE ieee_arithmetic, only: ieee_is_nan
-  USE DateCalc, only: timeUnitOffset, timeUnitScale, epochToDate
   USE snapfilML, only: iavail, kavail, itimer, navail, nfilef, filef, spinup_steps
   USE snapfldML, only: enspos, field1
   USE snapmetML, ONLY: met_params
@@ -35,7 +22,7 @@ subroutine filesort_nc
   USE readfield_ncML, only: check, calc_2d_start_length, nfcheckload
   USE netcdf
   USE snapdimML, only: nx, ny, mavail
-  USE datetime, only: datetime_t, duration_t
+  USE datetime, only: datetime_t, duration_t, timeUnitOffset, timeUnitScale, epochToDate
 
   integer :: i, j, nf, tsize, prev_avail_same_file
   integer :: ncid, varid, dimid
@@ -43,7 +30,7 @@ subroutine filesort_nc
   integer :: zeroHour, tunitLen, status, count_nan
   integer(int64) :: eTimes(mavail)
   integer(int64) :: add_offset, scalef
-  integer :: dateTimeL(6)
+  type(datetime_t) :: date_time
   character(len=80) :: tunits
   character(len=256) :: errmsg
   integer :: start4d(7), count4d(7)
@@ -104,12 +91,12 @@ subroutine filesort_nc
         navail=mavail
       end if
       eTimes(i) = times(i)*scalef + add_offset
-      dateTimeL = epochToDate(eTimes(i))
-    !          write (error_unit,*) dateTimeL
-      iavail(navail)%aYear = dateTimeL(6)
-      iavail(navail)%aMonth = dateTimeL(5)
-      iavail(navail)%aDay = dateTimeL(4)
-      iavail(navail)%aHour = dateTimeL(3)
+      date_time = epochToDate(eTimes(i))
+    !          write (error_unit,*) date_time
+      iavail(navail)%aYear = date_time%year
+      iavail(navail)%aMonth = date_time%month
+      iavail(navail)%aDay = date_time%day
+      iavail(navail)%aHour = date_time%hour
     !         iavail(n)%fcHour: forecast hour
       iavail(navail)%fcHour = 0
       iavail(navail)%fileNo = nf
