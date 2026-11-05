@@ -39,7 +39,7 @@ setup(
     },
     install_requires=[
         "numpy",
-        "netCDF4",
+        "netCDF4!=1.7.4",
         "pyproj",
     ],
     scripts=[
@@ -58,6 +58,7 @@ setup(
             "snapAddBombIsotopes = Snappy.AddBombIsotopes:main",
             "snapVolcano = Snappy.EEMEP.SnapVolcanoTranslator:main",
             "snapAddToa = Snappy.AddToa:main",
+            "snapCombine = Snappy.SnapCombine:main",
         ]
     },
     extras_require={"test": ["pytest>=7.0"], "gui": ["PyQt5>=5.15"]},

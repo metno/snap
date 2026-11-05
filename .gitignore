@@ -90,6 +90,7 @@ Snappy.egg-info
 /src/naccident/snap_batch_copy.F90
 
 /src/test/testDateCalc
+/src/test/testdatetime
 /src/test/test_array_utils
 /src/test/bsnap_naccident
 /src/test/testGaussianSmoothing

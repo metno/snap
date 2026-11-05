@@ -50,13 +50,13 @@ integer function find_index(first, backward, itimei, ihr1, ihr2) result(ntav)
 !..search in list of available timesteps with model level data
   if(.not.backward) then
     current_index = kavail(1)
-    itime(1) = itimei + duration_t(ihr1)
-    itime(2) = itimei + duration_t(ihr2)
+    itime(1) = itimei + duration_t(hours=ihr1)
+    itime(2) = itimei + duration_t(hours=ihr2)
   else
   !..using the backward list
     current_index = kavail(2)
-    itime(1) = itimei - duration_t(ihr1)
-    itime(2) = itimei - duration_t(ihr2)
+    itime(1) = itimei - duration_t(hours=ihr1)
+    itime(2) = itimei - duration_t(hours=ihr2)
   end if
 
   if (.not.backward) then
@@ -72,7 +72,7 @@ integer function find_index(first, backward, itimei, ihr1, ihr2) result(ntav)
                            iavail(current_index)%aMonth, &
                            iavail(current_index)%aDay, &
                            iavail(current_index)%aHour) + &
-                duration_t(iavail(current_index)%fcHour)
+                duration_t(hours=int(iavail(current_index)%fcHour))
 
     !..pointer to next timestep (possibly same time)
     if (.not.backward) then
@@ -219,7 +219,7 @@ subroutine readfield_nc(istep, backward, itimei, ihr1, ihr2, &
                        iavail(ntav2)%aMonth, &
                        iavail(ntav2)%aDay, &
                        iavail(ntav2)%aHour)
-  itimefi = itimefi + duration_t(iavail(ntav2)%fcHour)
+  itimefi = itimefi + duration_t(hours=int(iavail(ntav2)%fcHour))
 
     if (idebug == 1) then
       write (iulog, *) 'READING DATA FROM file=', trim(file_name)

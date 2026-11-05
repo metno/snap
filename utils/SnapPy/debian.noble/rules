@@ -21,6 +21,7 @@ override_dh_auto_install:
 	for f in debian/snap-py/usr/bin/snapPy \
 	         debian/snap-py/usr/bin/snap4rimsterm \
 	         debian/snap-py/usr/bin/snapCombineInverse \
+	         debian/snap-py/usr/bin/snapCombine \
 	         debian/snap-py/usr/bin/snapNc2grib.py \
 	         debian/snap-py/usr/bin/snapRunnerNpps \
 	         debian/snap-py/usr/bin/snapRunnerNpp \

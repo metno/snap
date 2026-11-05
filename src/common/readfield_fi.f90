@@ -176,7 +176,7 @@ contains
                          iavail(ntav2)%aMonth, &
                          iavail(ntav2)%aDay, &
                          iavail(ntav2)%aHour)
-    itimefi = itimefi + duration_t(iavail(ntav2)%fcHour)
+    itimefi = itimefi + duration_t(hours=int(iavail(ntav2)%fcHour))
 
     if (idebug == 1) then
       write (iulog, *) 'READING DATA FROM file=', trim(file_name)
