@@ -419,275 +419,275 @@ PROGRAM bsnap
 
 
   block
-  logical :: is_time_before_run, is_time_after_run
+    logical :: is_time_before_run, is_time_after_run
 
-  dtime2 = time_start + duration_t(hours=nhrun)
+    dtime2 = time_start + duration_t(hours=nhrun)
 
-  if (nhrun > 0) then
-    is_time_before_run = itimer(1) <= time_start
-    is_time_after_run = itimer(2) >= dtime2
-  else
-    is_time_before_run = itimer(2) >= time_start
-    is_time_after_run = itimer(1) <= dtime2
-  endif
-  if ((.not.is_time_before_run) .OR. (.not.is_time_after_run)) then
-    write (iulog, *) 'Not able to run requested time periode.'
-    write (iulog, *) 'Start:        ', time_start
-    write (iulog, *) 'End:          ', dtime2
-    write (iulog, *) 'First fields: ', itimer(1)
-    write (iulog, *) 'Last  fields: ', itimer(2)
-    write (error_unit, *) 'Not able to run requested time periode.'
-    write (error_unit, *) 'Start:        ', time_start
-    write (error_unit, *) 'End:          ', dtime2
-    write (error_unit, *) 'First fields: ', itimer(1)
-    write (error_unit, *) 'Last  fields: ', itimer(2)
-    if (.not.is_time_before_run) then
-      write (iulog, *) 'NO DATA AT START OF RUN'
-      write (error_unit, *) 'NO DATA AT START OF RUN'
-      call snap_error_exit(iulog)
-    end if
-    write (iulog, *) 'Running until end of data'
-    write (error_unit, *) 'Running until end of data'
     if (nhrun > 0) then
-      dur = itimer(2) - time_start
+      is_time_before_run = itimer(1) <= time_start
+      is_time_after_run = itimer(2) >= dtime2
     else
-      dur = itimer(1) - time_start
+      is_time_before_run = itimer(2) >= time_start
+      is_time_after_run = itimer(1) <= dtime2
     endif
-    nhrun = int(dur%seconds/3600_int64)
-  end if
-  if (nhrel > abs(nhrun)) nhrel = abs(nhrun)
+    if ((.not.is_time_before_run) .OR. (.not.is_time_after_run)) then
+      write (iulog, *) 'Not able to run requested time periode.'
+      write (iulog, *) 'Start:        ', time_start
+      write (iulog, *) 'End:          ', dtime2
+      write (iulog, *) 'First fields: ', itimer(1)
+      write (iulog, *) 'Last  fields: ', itimer(2)
+      write (error_unit, *) 'Not able to run requested time periode.'
+      write (error_unit, *) 'Start:        ', time_start
+      write (error_unit, *) 'End:          ', dtime2
+      write (error_unit, *) 'First fields: ', itimer(1)
+      write (error_unit, *) 'Last  fields: ', itimer(2)
+      if (.not.is_time_before_run) then
+        write (iulog, *) 'NO DATA AT START OF RUN'
+        write (error_unit, *) 'NO DATA AT START OF RUN'
+        call snap_error_exit(iulog)
+      end if
+      write (iulog, *) 'Running until end of data'
+      write (error_unit, *) 'Running until end of data'
+      if (nhrun > 0) then
+        dur = itimer(2) - time_start
+      else
+        dur = itimer(1) - time_start
+      endif
+      nhrun = int(dur%seconds/3600_int64)
+    end if
+    if (nhrel > abs(nhrun)) nhrel = abs(nhrun)
   end block
 
-    !..initial no. of plumes and particles
-    nplume = 0
-    npart = 0
-    nparnum = 0
+  !..initial no. of plumes and particles
+  nplume = 0
+  npart = 0
+  nparnum = 0
 
-    !..no. of timesteps per hour (adjust the timestep)
-    nsteph = nint(3600./tstep)
-    if (nsteph < 1) then
-      write (error_unit, *) 'TIME.STEP must give at least one timestep per hour'
-      call snap_error_exit(iulog)
-    endif
-    tstep = 3600./float(nsteph)
-    if (.not. ieee_is_finite(hfout) .or. hfout <= 0.0_real64) then
-      write (error_unit, *) 'STEP.HOUR.OUTPUT.FIELDS must be a finite positive interval'
-      call snap_error_exit(iulog)
-    endif
-    if (hfout > real(huge(output_interval_steps), real64)/real(nsteph, real64)) then
-      write (error_unit, *) 'STEP.HOUR.OUTPUT.FIELDS is too large'
-      call snap_error_exit(iulog)
-    endif
-    output_interval_steps = nint(hfout*real(nsteph, real64))
-    if (output_interval_steps < 1) then
-      write (error_unit, *) 'STEP.HOUR.OUTPUT.FIELDS must align to at least one model timestep'
-      call snap_error_exit(iulog)
-    endif
-    hfout = real(output_interval_steps, real64)/real(nsteph, real64)
-    synoptic_interval_seconds = max(1_int64, nint(hfout, int64))*3600_int64
-    if (mod((time_start%minute*60_int64 + time_start%second)*nsteph, 3600_int64) /= 0) then
-      write (error_unit, *) 'TIME.START must align with the effective timestep: ', tstep
-      call snap_error_exit(iulog)
-    endif
-    split_particle_after_step = split_particle_hours * nsteph
+  !..no. of timesteps per hour (adjust the timestep)
+  nsteph = nint(3600./tstep)
+  if (nsteph < 1) then
+    write (error_unit, *) 'TIME.STEP must give at least one timestep per hour'
+    call snap_error_exit(iulog)
+  endif
+  tstep = 3600./float(nsteph)
+  if (.not. ieee_is_finite(hfout) .or. hfout <= 0.0_real64) then
+    write (error_unit, *) 'STEP.HOUR.OUTPUT.FIELDS must be a finite positive interval'
+    call snap_error_exit(iulog)
+  endif
+  if (hfout > real(huge(output_interval_steps), real64)/real(nsteph, real64)) then
+    write (error_unit, *) 'STEP.HOUR.OUTPUT.FIELDS is too large'
+    call snap_error_exit(iulog)
+  endif
+  output_interval_steps = nint(hfout*real(nsteph, real64))
+  if (output_interval_steps < 1) then
+    write (error_unit, *) 'STEP.HOUR.OUTPUT.FIELDS must align to at least one model timestep'
+    call snap_error_exit(iulog)
+  endif
+  hfout = real(output_interval_steps, real64)/real(nsteph, real64)
+  synoptic_interval_seconds = max(1_int64, nint(hfout, int64))*3600_int64
+  if (mod((time_start%minute*60_int64 + time_start%second)*nsteph, 3600_int64) /= 0) then
+    write (error_unit, *) 'TIME.START must align with the effective timestep: ', tstep
+    call snap_error_exit(iulog)
+  endif
+  split_particle_after_step = split_particle_hours * nsteph
 
-    !..convert modleveldump from hours to steps
-    modleveldump = modleveldump*nsteph
+  !..convert modleveldump from hours to steps
+  modleveldump = modleveldump*nsteph
 
-    !..total no. of timesteps to run (nhrun is no. of hours to run)
-    nstep = nsteph*nhrun
-    if (nstep < 0) nstep = -nstep
+  !..total no. of timesteps to run (nhrun is no. of hours to run)
+  nstep = nsteph*nhrun
+  if (nstep < 0) nstep = -nstep
 
-    !..total no. of timesteps to release particles
-    nstepr = nsteph*nhrel
+  !..total no. of timesteps to release particles
+  nstepr = nsteph*nhrel
 
 
-    !..information to log file
-    write (iulog, *) 'nx,ny,nk:  ', nx, ny, nk
-    write (iulog, *) 'klevel:'
-    write (iulog, *) (klevel(i), i=1, nk)
-    write (iulog, *) 'imslp:     ', imslp
-    write (iulog, *) 'inprecip:  ', precipitation_in_output
-    write (iulog, *) 'imodlevel: ', imodlevel
-    write (iulog, *) 'modleveldump (h), steps:', modleveldump/nsteph, &
-      modleveldump
-    write (iulog, *) 'time_start:  ', time_start
-    write (tempstr, '("Starttime: ",I4,"-",I2.2,"-",I2.2,"T",I2.2 &
-        &,":",I2.2,":",I2.2)') time_start
-    write (iulog, '(A)') trim(tempstr)
-    ncsummary = trim(ncsummary)//" "//trim(tempstr)
-    do n = 1, nrelpos
-      write (tempstr, '("Release Pos (lat, lon): (", F6.2, ",", F7.2 &
-          &,")")') &
-          release_positions(n)%geo_latitude, &
-          release_positions(n)%geo_longitude
-      ncsummary = trim(ncsummary)//". "//trim(tempstr)
+  !..information to log file
+  write (iulog, *) 'nx,ny,nk:  ', nx, ny, nk
+  write (iulog, *) 'klevel:'
+  write (iulog, *) (klevel(i), i=1, nk)
+  write (iulog, *) 'imslp:     ', imslp
+  write (iulog, *) 'inprecip:  ', precipitation_in_output
+  write (iulog, *) 'imodlevel: ', imodlevel
+  write (iulog, *) 'modleveldump (h), steps:', modleveldump/nsteph, &
+    modleveldump
+  write (iulog, *) 'time_start:  ', time_start
+  write (tempstr, '("Starttime: ",I4,"-",I2.2,"-",I2.2,"T",I2.2 &
+      &,":",I2.2,":",I2.2)') time_start
+  write (iulog, '(A)') trim(tempstr)
+  ncsummary = trim(ncsummary)//" "//trim(tempstr)
+  do n = 1, nrelpos
+    write (tempstr, '("Release Pos (lat, lon): (", F6.2, ",", F7.2 &
+        &,")")') &
+        release_positions(n)%geo_latitude, &
+        release_positions(n)%geo_longitude
+    ncsummary = trim(ncsummary)//". "//trim(tempstr)
+  end do
+
+  write (iulog, *) 'dtime2:  ', dtime2
+  write (iulog, *) 'itimer1: ', itimer(1)
+  write (iulog, *) 'itimer2: ', itimer(2)
+  write (iulog, *) 'nhfmin:  ', nhfmin
+  write (iulog, *) 'nhfmax:  ', nhfmax
+  write (iulog, *) 'nhrun:   ', nhrun
+  write (iulog, *) 'nhrel:   ', nhrel
+  write (iulog, *) 'tstep:   ', tstep
+  write (iulog, *) 'nsteph:  ', nsteph
+  write (iulog, *) 'nstep:   ', nstep
+  write (iulog, *) 'nstepr:  ', nstepr
+  write (iulog, *) 'mprel:   ', mprel
+  write (iulog, *) 'ifltim:  ', ifltim
+  write (iulog, *) 'irwalk:  ', use_random_walk
+  write (iulog, *) 'iforwd:  ', use_forwrd
+  write (iulog, *) 'drydep_scheme: ', drydep_scheme
+  write (iulog, *) 'wetdep_scheme: subcloud scheme:   ', wetdep_scheme%subcloud
+  write (iulog, *) 'wetdep_scheme: incloud  scheme:   ', wetdep_scheme%incloud
+  write (iulog, *) 'wetdep_scheme: use vertical:      ', wetdep_scheme%use_vertical
+  write (iulog, *) 'wetdep_scheme: use cloudfraction: ', wetdep_scheme%use_cloudfraction
+  write (iulog, *) 'idecay:  ', idecay
+  write (iulog, *) 'rmlimit: ', rmlimit
+  write (iulog, *) 'ndefcomp:', size(def_comp)
+  write (iulog, *) 'ncomp:   ', ncomp
+  write (iulog, fmt='(1x,a,40(1x,i2))') 'running_to_defined_comp: ', &
+    (run_comp(i)%to_defined, i=1, ncomp)
+  write (iulog, fmt='(1x,a,40(1x,i2))') 'defined_to_running_comp: ', &
+    (def_comp(i)%to_running, i=1, size(def_comp))
+  do n = 1, ncomp
+    m = run_comp(n)%to_defined
+    write (iulog, *) 'component no:  ', n
+    write (iulog, *) 'compname:   ', def_comp(m)%compname
+    write (iulog, *) '  field id:   ', def_comp(m)%idcomp
+    write (iulog, *) '  output_id:  ', def_comp(m)%to_output
+    write (iulog, *) '  output:     ', output_component(def_comp(m)%to_output)%name
+    write (iulog, *) '  output-defs:', output_component(def_comp(m)%to_output)%to_defined
+    write (iulog, *) '  kdrydep:    ', def_comp(m)%kdrydep
+    write (iulog, *) '  drydephgt:  ', def_comp(m)%drydephgt
+    write (iulog, *) '  drydeprat:  ', def_comp(m)%drydeprat
+    write (iulog, *) '  kwetdep:    ', def_comp(m)%kwetdep
+    write (iulog, *) '  kdecay:     ', def_comp(m)%kdecay
+    write (iulog, *) '  halftime:   ', def_comp(m)%halftime
+    write (iulog, *) '  decayrate:  ', def_comp(m)%decayrate
+    write (iulog, *) '  kgravity:   ', def_comp(m)%grav_type
+    write (iulog, *) '  gravityms:  ', def_comp(m)%gravityms
+    write (iulog, *) '  radiusmym:  ', def_comp(m)%radiusmym
+    write (iulog, *) '  densitygcm3:', def_comp(m)%densitygcm3
+    write (iulog, *) '  Release time profile:   ntprof: ', ntprof
+    ncsummary = trim(ncsummary)//". Release "//trim(def_comp(m)%compname) &
+                //" (hour, Bq/s): "
+    do i = 1, ntprof
+      if (time_profile /= TIME_PROFILE_BOMB) then
+        write (iulog, *) '  hour,Bq/hour: ', &
+          releases(i)%frelhour, (releases(i)%relbqsec(n, ih)*3600., ih=1, nrelheight)
+      else
+        write (iulog, *) '  hour,Bq: ', &
+          releases(i)%frelhour, (releases(i)%relbqsec(n, ih), ih=1, nrelheight)
+        if (tpos_bomb == 0) then
+          if (any(releases(i)%relbqsec > 0.)) tpos_bomb = releases(i)%frelhour * 3600
+        end if
+      end if
+      write (tempstr, '("(",f5.1,",",ES9.2,")")') &
+        releases(i)%frelhour, releases(i)%relbqsec(n, 1)
+      ncsummary = trim(ncsummary)//" "//trim(tempstr)
     end do
+  end do
+  if (time_profile == TIME_PROFILE_BOMB) then
+    write (iulog, *) 'tpos_bomb:  ', tpos_bomb
+  end if
+  write (iulog, *) 'itotcomp:   ', itotcomp
+  write (iulog, *) 'blfulmix:   ', blfullmix
+  write (error_unit, *) 'Title:      ', trim(nctitle)
+  write (error_unit, *) 'Summary:    ', trim(ncsummary)
 
-    write (iulog, *) 'dtime2:  ', dtime2
-    write (iulog, *) 'itimer1: ', itimer(1)
-    write (iulog, *) 'itimer2: ', itimer(2)
-    write (iulog, *) 'nhfmin:  ', nhfmin
-    write (iulog, *) 'nhfmax:  ', nhfmax
-    write (iulog, *) 'nhrun:   ', nhrun
-    write (iulog, *) 'nhrel:   ', nhrel
-    write (iulog, *) 'tstep:   ', tstep
-    write (iulog, *) 'nsteph:  ', nsteph
-    write (iulog, *) 'nstep:   ', nstep
-    write (iulog, *) 'nstepr:  ', nstepr
-    write (iulog, *) 'mprel:   ', mprel
-    write (iulog, *) 'ifltim:  ', ifltim
-    write (iulog, *) 'irwalk:  ', use_random_walk
-    write (iulog, *) 'iforwd:  ', use_forwrd
-    write (iulog, *) 'drydep_scheme: ', drydep_scheme
-    write (iulog, *) 'wetdep_scheme: subcloud scheme:   ', wetdep_scheme%subcloud
-    write (iulog, *) 'wetdep_scheme: incloud  scheme:   ', wetdep_scheme%incloud
-    write (iulog, *) 'wetdep_scheme: use vertical:      ', wetdep_scheme%use_vertical
-    write (iulog, *) 'wetdep_scheme: use cloudfraction: ', wetdep_scheme%use_cloudfraction
-    write (iulog, *) 'idecay:  ', idecay
-    write (iulog, *) 'rmlimit: ', rmlimit
-    write (iulog, *) 'ndefcomp:', size(def_comp)
-    write (iulog, *) 'ncomp:   ', ncomp
-    write (iulog, fmt='(1x,a,40(1x,i2))') 'running_to_defined_comp: ', &
-      (run_comp(i)%to_defined, i=1, ncomp)
-    write (iulog, fmt='(1x,a,40(1x,i2))') 'defined_to_running_comp: ', &
-      (def_comp(i)%to_running, i=1, size(def_comp))
-    do n = 1, ncomp
-      m = run_comp(n)%to_defined
-      write (iulog, *) 'component no:  ', n
-      write (iulog, *) 'compname:   ', def_comp(m)%compname
-      write (iulog, *) '  field id:   ', def_comp(m)%idcomp
-      write (iulog, *) '  output_id:  ', def_comp(m)%to_output
-      write (iulog, *) '  output:     ', output_component(def_comp(m)%to_output)%name
-      write (iulog, *) '  output-defs:', output_component(def_comp(m)%to_output)%to_defined
-      write (iulog, *) '  kdrydep:    ', def_comp(m)%kdrydep
-      write (iulog, *) '  drydephgt:  ', def_comp(m)%drydephgt
-      write (iulog, *) '  drydeprat:  ', def_comp(m)%drydeprat
-      write (iulog, *) '  kwetdep:    ', def_comp(m)%kwetdep
-      write (iulog, *) '  kdecay:     ', def_comp(m)%kdecay
-      write (iulog, *) '  halftime:   ', def_comp(m)%halftime
-      write (iulog, *) '  decayrate:  ', def_comp(m)%decayrate
-      write (iulog, *) '  kgravity:   ', def_comp(m)%grav_type
-      write (iulog, *) '  gravityms:  ', def_comp(m)%gravityms
-      write (iulog, *) '  radiusmym:  ', def_comp(m)%radiusmym
-      write (iulog, *) '  densitygcm3:', def_comp(m)%densitygcm3
-      write (iulog, *) '  Release time profile:   ntprof: ', ntprof
-      ncsummary = trim(ncsummary)//". Release "//trim(def_comp(m)%compname) &
-                  //" (hour, Bq/s): "
-      do i = 1, ntprof
-        if (time_profile /= TIME_PROFILE_BOMB) then
-          write (iulog, *) '  hour,Bq/hour: ', &
-            releases(i)%frelhour, (releases(i)%relbqsec(n, ih)*3600., ih=1, nrelheight)
-        else
-          write (iulog, *) '  hour,Bq: ', &
-            releases(i)%frelhour, (releases(i)%relbqsec(n, ih), ih=1, nrelheight)
-          if (tpos_bomb == 0) then
-            if (any(releases(i)%relbqsec > 0.)) tpos_bomb = releases(i)%frelhour * 3600
-          end if
-          end if
-        write (tempstr, '("(",f5.1,",",ES9.2,")")') &
-          releases(i)%frelhour, releases(i)%relbqsec(n, 1)
-        ncsummary = trim(ncsummary)//" "//trim(tempstr)
-      end do
-    end do
-    if (time_profile == TIME_PROFILE_BOMB) then
-      write (iulog, *) 'tpos_bomb:  ', tpos_bomb
-    end if
-    write (iulog, *) 'itotcomp:   ', itotcomp
-    write (iulog, *) 'blfulmix:   ', blfullmix
-    write (error_unit, *) 'Title:      ', trim(nctitle)
-    write (error_unit, *) 'Summary:    ', trim(ncsummary)
+  !..initialize files, deposition fields etc.
+  dtime = time_start
+  dtime_file = datetime_t(-1, -1, -1, -1)
 
-    !..initialize files, deposition fields etc.
-    dtime = time_start
-    dtime_file = datetime_t(-1, -1, -1, -1)
+  next_input_step = 0
+  ihread = 0
+  isteph = 0
+  lstepr = 0
+  iendrel = 0
 
-    next_input_step = 0
-    ihread = 0
-    isteph = 0
-    lstepr = 0
-    iendrel = 0
+  istep = -1
 
-    istep = -1
-
-    ! b_start
-    mhmin = 10000.0
-    mhmax = -10.0
-    ! b_end
+  ! b_start
+  mhmin = 10000.0
+  mhmax = -10.0
+  ! b_end
 
 
 ! reset readfield_nc (eventually, traj will rerun this loop)
-    call input_timer%start()
+  call input_timer%start()
 #if ! defined(FIMEX)
-      error stop "A fimex read was requested, but fimex support is not included"// &
-        " in this build"
+  error stop "A fimex read was requested, but fimex support is not included"// &
+    " in this build"
 #endif
-    call readfield_and_compute(ftype, -1, nhrun < 0, time_start, nhfmin, nhfmax, &
-                   dtime_file, ierror)
-    write (error_unit, fmt="('input data: ',i4,5i3.2)") dtime_file
-    dt_output_reference = dtime_file
-    flush(error_unit)
-    call input_timer%stop_and_log()
-    call swap_fields_after_reading() ! only for async io, but does not hurt otherwise
+  call readfield_and_compute(ftype, -1, nhrun < 0, time_start, nhfmin, nhfmax, &
+                  dtime_file, ierror)
+  write (error_unit, fmt="('input data: ',i4,5i3.2)") dtime_file
+  dt_output_reference = dtime_file
+  flush(error_unit)
+  call input_timer%stop_and_log()
+  call swap_fields_after_reading() ! only for async io, but does not hurt otherwise
 
-    ! Initialise output
-    if (idailyout == 1) then
-      !       daily output, append +x for each day, but initialize later
-      write (fldfilX, '(a9,a1,I3.3)') fldfil, '+', -1
+  ! Initialise output
+  if (idailyout == 1) then
+    !       daily output, append +x for each day, but initialize later
+    write (fldfilX, '(a9,a1,I3.3)') fldfil, '+', -1
+  else
+    ! standard output needs to be initialized
+    if (fldtype == "netcdf") then
+      fldfilX = fldfil
+      call initialize_output(fldfilX, dtime, ierror)
     else
-      ! standard output needs to be initialized
-      if (fldtype == "netcdf") then
-        fldfilX = fldfil
-        call initialize_output(fldfilX, dtime, ierror)
-      else
-        write (iulog, *) "only FIELD.OUTTYPE=netcdf supported, got: ", fldtype
-        ierror = 1
-      endif
+      write (iulog, *) "only FIELD.OUTTYPE=netcdf supported, got: ", fldtype
+      ierror = 1
     endif
-    if (ierror /= 0) call snap_error_exit(iulog)
+  endif
+  if (ierror /= 0) call snap_error_exit(iulog)
 
 
-    block
-      !..release position from geographic to active coordinates
-      y = release_positions(irelpos)%geo_latitude
-      x = release_positions(irelpos)%geo_longitude
-      write (iulog, *) 'release lat,long: ', y, x
-      call xyconvert(1, x, y, 2, GEO_PARAMS, igtype, gparam, ierror)
-      if (ierror /= 0) then
-        write (iulog, *) 'ERROR: xyconvert'
-        write (iulog, *) '   igtype: ', igtype
-        write (iulog, *) '   gparam: ', gparam
-        write (error_unit, *) 'ERROR: xyconvert'
-        write (error_unit, *) '   igtype: ', igtype
-        write (error_unit, *) '   gparam: ', gparam
-        call snap_error_exit(iulog)
-      end if
-      ! gparam stores cell centers; (1=center, 0.5 left/lower corner, 1.5= right/upper corner)
-      write (iulog, *) 'release   x,y:    ', x, y
-      if (x(1) < 1. .OR. x(1) >= nx  .OR. &
-          y(1) < 1. .OR. y(1) >= ny) then
-        write (iulog, *) 'ERROR: Release position outside field area'
-        write (error_unit, *) 'ERROR: Release position outside field area'
-        call snap_error_exit(iulog)
-      end if
-      release_positions(irelpos)%grid_x = x(1)
-      release_positions(irelpos)%grid_y = y(1)
-    end block
+  block
+    !..release position from geographic to active coordinates
+    y = release_positions(irelpos)%geo_latitude
+    x = release_positions(irelpos)%geo_longitude
+    write (iulog, *) 'release lat,long: ', y, x
+    call xyconvert(1, x, y, 2, GEO_PARAMS, igtype, gparam, ierror)
+    if (ierror /= 0) then
+      write (iulog, *) 'ERROR: xyconvert'
+      write (iulog, *) '   igtype: ', igtype
+      write (iulog, *) '   gparam: ', gparam
+      write (error_unit, *) 'ERROR: xyconvert'
+      write (error_unit, *) '   igtype: ', igtype
+      write (error_unit, *) '   gparam: ', gparam
+      call snap_error_exit(iulog)
+    end if
+    ! gparam stores cell centers; (1=center, 0.5 left/lower corner, 1.5= right/upper corner)
+    write (iulog, *) 'release   x,y:    ', x, y
+    if (x(1) < 1. .OR. x(1) >= nx  .OR. &
+        y(1) < 1. .OR. y(1) >= ny) then
+      write (iulog, *) 'ERROR: Release position outside field area'
+      write (error_unit, *) 'ERROR: Release position outside field area'
+      call snap_error_exit(iulog)
+    end if
+    release_positions(irelpos)%grid_x = x(1)
+    release_positions(irelpos)%grid_y = y(1)
+  end block
 
-    ! start time loop
-    dtimei = time_start
-    npartmax = 0
+  ! start time loop
+  dtimei = time_start
+  npartmax = 0
 #ifdef _OPENMP
-    ! both task and inner parallel do loops, so need 2 levels of parallelism
-    call omp_set_max_active_levels(2)
-    write (iulog, *) "OpenMP: num_threads: ", omp_get_max_threads()
-    write (error_unit, *) "OpenMP: num_threads: ", omp_get_max_threads(), &
-      ", places: ", omp_get_num_places()
-    write (error_unit, *) "OpenMP: num_threads: ", omp_get_max_threads(), &
-      ", places: ", omp_get_num_places()
+  ! both task and inner parallel do loops, so need 2 levels of parallelism
+  call omp_set_max_active_levels(2)
+  write (iulog, *) "OpenMP: num_threads: ", omp_get_max_threads()
+  write (error_unit, *) "OpenMP: num_threads: ", omp_get_max_threads(), &
+    ", places: ", omp_get_num_places()
+  write (error_unit, *) "OpenMP: num_threads: ", omp_get_max_threads(), &
+    ", places: ", omp_get_num_places()
 #else
-    write (iulog, *) "OpenMP: not enabled"
-    write (error_unit, *) "OpenMP: not enabled"
+  write (iulog, *) "OpenMP: not enabled"
+  write (error_unit, *) "OpenMP: not enabled"
 #endif
   if (sourcefile /= "") then
     write (iu_sourceterm, '("Start time [seconds since ",I4,"-",I2.2,"-",I2.2,"T",I2.2,":",I2.2,":",I2.2,"Z], &
@@ -713,281 +713,281 @@ PROGRAM bsnap
       flush (error_unit)
     end if
 
-      !..read fields
-      if (.not. use_async_io .or. istep == 0) then
-        if (next_input_step == istep .and. istep < nstep) then
-          call input_timer%start()
-          ! initial time to read next timestep is the time of the current file
-          dtimei = dtime_file
-          if (.not. use_async_io) then
-            ! move all u2, v2, etc fields to u1, v1, etc before reading new fields to u2, v2, etc
-            call swap_fields_before_reading()
-          end if
-          call readfield_and_compute(ftype, istep, nhrun < 0, dtimei, nhfmin, nhfmax, &
-                              dtime_file, ierror)
+    !..read fields
+    if (.not. use_async_io .or. istep == 0) then
+      if (next_input_step == istep .and. istep < nstep) then
+        call input_timer%start()
+        ! initial time to read next timestep is the time of the current file
+        dtimei = dtime_file
+        if (.not. use_async_io) then
+          ! move all u2, v2, etc fields to u1, v1, etc before reading new fields to u2, v2, etc
+          call swap_fields_before_reading()
+        end if
+        call readfield_and_compute(ftype, istep, nhrun < 0, dtimei, nhfmin, nhfmax, &
+                            dtime_file, ierror)
+        write (error_unit, fmt="('input data: ',i4,5i3.2)") dtime_file
+        call input_timer%stop_and_log()
+
+        ! duration to next read
+        if (istep == 0) then
+          dur = dtime_file - time_start
+        else
+          ! dtimei is the current files timestep
+          dur = dtime_file - dtimei
+        end if
+        tf1 = 0.
+        tf2 = real(dur%seconds)
+        if (nhrun < 0) tf2 = -tf2
+        next_input_step = istep + aligned_steps(dur)
+        if (istep == 0) then
+          dur = dtimei - time_start
+          tf1 = real(dur%seconds)
+          if (nhrun < 0) tf1 = -tf1
+        endif
+
+        tnow = 0.
+      else
+        tnow = tnow + tstep
+      end if
+    end if
+    ! Sync before we need the data from previous async read
+    if (use_async_io) then
+      if ((next_input_step == istep .and. istep < nstep) .or. istep == 0) then
+        !$OMP TASKWAIT
+        ! move all u2 to u1, u3 to u2, etc after reading new fields to u3, v3, etc
+        ! not needed for last step, no further fields needed
+        if (istep > 0) then
+          ! otherwise already written in syncronous read above
           write (error_unit, fmt="('input data: ',i4,5i3.2)") dtime_file
+        end if
+        ! just keep reading from the last timestep, no interpolation needed
+        call swap_fields_after_reading()
+        dt_output_reference = dtime_file
+        if (istep == 0) then
+          dur = dtime_file - time_start
+        else
+          ! dtimei is the current files timestep
+          dur = dtime_file - dtimei
+        end if
+        tf1 = 0.
+        tf2 = real(dur%seconds)
+        if (nhrun < 0) tf2 = -tf2
+        tnow = 0.
+        next_input_step = istep + aligned_steps(dur)
+        if (istep == 0) then
+          dur = dtimei - time_start
+          tf1 = real(dur%seconds)
+          if (nhrun < 0) tf1 = -tf1
+        endif
+
+        dtimei = dtime_file
+        if (next_input_step < nstep) then ! still data needed
+          ! start reading the next fields early, while computations for current fields are still running
+          ! the task sets dtime_file and the new fields, to be swapped after the taskwait above
+          ! Don't let child threads inherit
+          !$OMP TASK &
+          !$OMP SHARED(dtime_file) &
+          !$OMP FIRSTPRIVATE(idebug,iulog,dtimei, next_input_step,nhrun,nhfmin,nhfmax,nsteph) &
+          !$OMP PRIVATE(ierror)
+          if (idebug >= 1) then
+            write(error_unit, *) "Starting async read task for step ", next_input_step, nstep, dtimei
+            flush(error_unit)
+          end if
+          call input_timer%start()
+          call readfield_and_compute(ftype, next_input_step, nhrun < 0, dtimei, nhfmin, nhfmax, &
+                            dtime_file, ierror)
           call input_timer%stop_and_log()
-
-          ! duration to next read
-          if (istep == 0) then
-            dur = dtime_file - time_start
-          else
-            ! dtimei is the current files timestep
-            dur = dtime_file - dtimei
-          end if
-          tf1 = 0.
-          tf2 = real(dur%seconds)
-          if (nhrun < 0) tf2 = -tf2
-          next_input_step = istep + aligned_steps(dur)
-          if (istep == 0) then
-            dur = dtimei - time_start
-            tf1 = real(dur%seconds)
-            if (nhrun < 0) tf1 = -tf1
-          endif
-
-          tnow = 0.
-        else
-          tnow = tnow + tstep
+          !$OMP END TASK
         end if
+      else
+        ! this is not an IO step
+        tnow = tnow + tstep
       end if
-      ! Sync before we need the data from previous async read
-      if (use_async_io) then
-        if ((next_input_step == istep .and. istep < nstep) .or. istep == 0) then
-          !$OMP TASKWAIT
-          ! move all u2 to u1, u3 to u2, etc after reading new fields to u3, v3, etc
-          ! not needed for last step, no further fields needed
-          if (istep > 0) then
-            ! otherwise already written in syncronous read above
-            write (error_unit, fmt="('input data: ',i4,5i3.2)") dtime_file
-          end if
-          ! just keep reading from the last timestep, no interpolation needed
-          call swap_fields_after_reading()
-          dt_output_reference = dtime_file
-          if (istep == 0) then
-            dur = dtime_file - time_start
-          else
-            ! dtimei is the current files timestep
-            dur = dtime_file - dtimei
-          end if
-          tf1 = 0.
-          tf2 = real(dur%seconds)
-          if (nhrun < 0) tf2 = -tf2
-          tnow = 0.
-          next_input_step = istep + aligned_steps(dur)
-          if (istep == 0) then
-            dur = dtimei - time_start
-            tf1 = real(dur%seconds)
-            if (nhrun < 0) tf1 = -tf1
-          endif
+    end if
 
-          dtimei = dtime_file
-          if (next_input_step < nstep) then ! still data needed
-            ! start reading the next fields early, while computations for current fields are still running
-            ! the task sets dtime_file and the new fields, to be swapped after the taskwait above
-            ! Don't let child threads inherit
-            !$OMP TASK &
-            !$OMP SHARED(dtime_file) &
-            !$OMP FIRSTPRIVATE(idebug,iulog,dtimei, next_input_step,nhrun,nhfmin,nhfmax,nsteph) &
-            !$OMP PRIVATE(ierror)
-            if (idebug >= 1) then
-              write(error_unit, *) "Starting async read task for step ", next_input_step, nstep, dtimei
-              flush(error_unit)
-            end if
-            call input_timer%start()
-            call readfield_and_compute(ftype, next_input_step, nhrun < 0, dtimei, nhfmin, nhfmax, &
-                              dtime_file, ierror)
-            call input_timer%stop_and_log()
-            !$OMP END TASK
-          end if
-        else
-          ! this is not an IO step
-          tnow = tnow + tstep
-        end if
-      end if
-
-      tnext = tnow + tstep
+    tnext = tnow + tstep
     !..for linear interpolation in time
-      rt1=(tf2-tnow)/(tf2-tf1)
-      rt2=(tnow-tf1)/(tf2-tf1)
+    rt1=(tf2-tnow)/(tf2-tf1)
+    rt2=(tnow-tf1)/(tf2-tf1)
 
-      if (iendrel == 0 .AND. istep <= nstepr) then
+    if (iendrel == 0 .AND. istep <= nstepr) then
 
-        !..release one plume of particles
-        call release_timer%start()
-        call release(istep, nsteph, tf1, tf2, tnow, ierror)
-        npartmax = max(npartmax, npart)
-        call release_timer%stop_and_log()
-
-        if (ierror == 0) then
-          lstepr = istep
-        else
-          write (iulog, *) 'WARNING. Out of space for plumes/particles'
-          write (iulog, *) 'WARNING. End release, continue running'
-          write (error_unit, *) 'WARNING. Out of space for plumes/particles'
-          write (error_unit, *) 'WARNING. End release, continue running'
-          iendrel = 1
-        end if
-
-      end if
-
-      !..radioactive decay for depositions
-      !.. and initialization of decay-parameters
-      if (idecay == 1) call decayDeps(tstep)
-      ! prepare particle functions once before loop
-      if (init) then
-        call wetdep_init()
-        if (use_random_walk) call rwalk_init(tstep)
-        init = .FALSE.
-      end if
-
-      ! plume loop, increase age of all plumes/particles
-      do npl = 1, nplume
-        iplume(npl)%ageInSteps = iplume(npl)%ageInSteps + 1
-      end do
-
-      call particleloop_timer%start()
-      ! particle loop
-      !$OMP PARALLEL DO &
-      !$OMP PRIVATE(pextra,np,npl,m,out_of_domain, lost_activity, age_hr, smoothing_kernel) &
-      !$OMP FIRSTPRIVATE(last_age_hr) &
-      !$OMP SCHEDULE(auto) &
-      !$OMP REDUCTION(+:total_activity_lost_domain) REDUCTION(MAX:mhmax) REDUCTION(MIN:mhmin)
-      plume_do: do npl = 1, nplume
-        age_hr = nint(1.0 * iplume(npl)%ageInSteps / nsteph)
-        if (age_hr /= last_age_hr) then
-          last_age_hr = age_hr
-          call build_age_gaussian_kernel(last_age_hr, smoothing_kernel)
-        end if
-        part_do:  do np = iplume(npl)%start, iplume(npl)%end
-          lost_activity = 0.0
-          if (.not.pdata(np)%is_active()) cycle part_do
-
-          !..interpolation of boundary layer top, height, precipitation etc.
-          !  creates and save temporary data to pextra%prc, pextra%rmx, pextra%rmy
-          call posint(pdata(np), rt1, rt2, pextra)
-
-          !..radioactive decay
-          if (idecay == 1) call decay(pdata(np))
-
-          !..dry deposition
-          call drydep(tstep, pdata(np), smoothing_kernel, lost_activity)
-
-          !..wet deposition
-          call wetdep(tstep, pdata(np), pextra)
-
-          !..move all particles forward, save u and v to pextra
-          if (use_forwrd) call forwrd(tf1, tf2, tnow, tstep, pdata(np), pextra)
-
-          !..apply the random walk method (diffusion)
-          ! diffusion is applied after deposition to mix
-          ! before output (which computes surface concentrations)
-          if (use_random_walk) call rwalk(blfullmix, pdata(np), pextra)
-
-          !.. check domain (%active) after moving particle
-          call check_in_domain(pdata(np), out_of_domain)
-          if (out_of_domain) then
-            m = def_comp(pdata(np)%icomp)%to_output
-            total_activity_lost_domain(m) = &
-              total_activity_lost_domain(m) + pdata(np)%get_set_rad(0.0)
-          endif
-          if (lost_activity > 0.0) then
-            m = def_comp(pdata(np)%icomp)%to_output
-            total_activity_lost_domain(m) = &
-              total_activity_lost_domain(m) + lost_activity
-          end if
-
-          if (pdata(np)%is_active()) then
-            if (pdata(np)%hbl > mhmax) mhmax = pdata(np)%hbl
-            if (pdata(np)%hbl < mhmin) mhmin = pdata(np)%hbl
-          end if
-        end do part_do
-      end do plume_do
-      !$OMP END PARALLEL DO
-      call particleloop_timer%stop_and_log()
-
-      !..remove inactive particles or without any mass left
-      call rmpart(rmlimit)
-
-      !..split particles after some time of transport
-      if (split_particle_after_step > 0) then
-        call split_particles(split_particle_after_step)
-      end if
+      !..release one plume of particles
+      call release_timer%start()
+      call release(istep, nsteph, tf1, tf2, tnow, ierror)
       npartmax = max(npartmax, npart)
+      call release_timer%stop_and_log()
 
-
-      !..always accumulation for average fields
-      call output_timer%start()
-      call accumulate_fields(tf1, tf2, tnext, tstep, nsteph)
-
-      !..calculate output step, set ifldout and dtimeo
-      ifldout = 0
-      isteph = isteph + 1
-      if (isteph == nsteph) then
-        isteph = 0
-        if (nhrun > 0) then
-          dtime = dtime + duration_t(hours=1)
-        else
-          dtime = dtime - duration_t(hours=1)
-        end if
-        dtimeo = dtime
+      if (ierror == 0) then
+        lstepr = istep
+      else
+        write (iulog, *) 'WARNING. Out of space for plumes/particles'
+        write (iulog, *) 'WARNING. End release, continue running'
+        write (error_unit, *) 'WARNING. Out of space for plumes/particles'
+        write (error_unit, *) 'WARNING. End release, continue running'
+        iendrel = 1
       end if
-      if (.not. synoptic_output .and. istep < nstep .and. &
-          mod(istep + 1, output_interval_steps) == 0) then
+
+    end if
+
+    !..radioactive decay for depositions
+    !.. and initialization of decay-parameters
+    if (idecay == 1) call decayDeps(tstep)
+    ! prepare particle functions once before loop
+    if (init) then
+      call wetdep_init()
+      if (use_random_walk) call rwalk_init(tstep)
+      init = .FALSE.
+    end if
+
+    ! plume loop, increase age of all plumes/particles
+    do npl = 1, nplume
+      iplume(npl)%ageInSteps = iplume(npl)%ageInSteps + 1
+    end do
+
+    call particleloop_timer%start()
+    ! particle loop
+    !$OMP PARALLEL DO &
+    !$OMP PRIVATE(pextra,np,npl,m,out_of_domain, lost_activity, age_hr, smoothing_kernel) &
+    !$OMP FIRSTPRIVATE(last_age_hr) &
+    !$OMP SCHEDULE(auto) &
+    !$OMP REDUCTION(+:total_activity_lost_domain) REDUCTION(MAX:mhmax) REDUCTION(MIN:mhmin)
+    plume_do: do npl = 1, nplume
+      age_hr = nint(1.0 * iplume(npl)%ageInSteps / nsteph)
+      if (age_hr /= last_age_hr) then
+        last_age_hr = age_hr
+        call build_age_gaussian_kernel(last_age_hr, smoothing_kernel)
+      end if
+      part_do:  do np = iplume(npl)%start, iplume(npl)%end
+        lost_activity = 0.0
+        if (.not.pdata(np)%is_active()) cycle part_do
+
+        !..interpolation of boundary layer top, height, precipitation etc.
+        !  creates and save temporary data to pextra%prc, pextra%rmx, pextra%rmy
+        call posint(pdata(np), rt1, rt2, pextra)
+
+        !..radioactive decay
+        if (idecay == 1) call decay(pdata(np))
+
+        !..dry deposition
+        call drydep(tstep, pdata(np), smoothing_kernel, lost_activity)
+
+        !..wet deposition
+        call wetdep(tstep, pdata(np), pextra)
+
+        !..move all particles forward, save u and v to pextra
+        if (use_forwrd) call forwrd(tf1, tf2, tnow, tstep, pdata(np), pextra)
+
+        !..apply the random walk method (diffusion)
+        ! diffusion is applied after deposition to mix
+        ! before output (which computes surface concentrations)
+        if (use_random_walk) call rwalk(blfullmix, pdata(np), pextra)
+
+        !.. check domain (%active) after moving particle
+        call check_in_domain(pdata(np), out_of_domain)
+        if (out_of_domain) then
+          m = def_comp(pdata(np)%icomp)%to_output
+          total_activity_lost_domain(m) = &
+            total_activity_lost_domain(m) + pdata(np)%get_set_rad(0.0)
+        endif
+        if (lost_activity > 0.0) then
+          m = def_comp(pdata(np)%icomp)%to_output
+          total_activity_lost_domain(m) = &
+            total_activity_lost_domain(m) + lost_activity
+        end if
+
+        if (pdata(np)%is_active()) then
+          if (pdata(np)%hbl > mhmax) mhmax = pdata(np)%hbl
+          if (pdata(np)%hbl < mhmin) mhmin = pdata(np)%hbl
+        end if
+      end do part_do
+    end do plume_do
+    !$OMP END PARALLEL DO
+    call particleloop_timer%stop_and_log()
+
+    !..remove inactive particles or without any mass left
+    call rmpart(rmlimit)
+
+    !..split particles after some time of transport
+    if (split_particle_after_step > 0) then
+      call split_particles(split_particle_after_step)
+    end if
+    npartmax = max(npartmax, npart)
+
+
+    !..always accumulation for average fields
+    call output_timer%start()
+    call accumulate_fields(tf1, tf2, tnext, tstep, nsteph)
+
+    !..calculate output step, set ifldout and dtimeo
+    ifldout = 0
+    isteph = isteph + 1
+    if (isteph == nsteph) then
+      isteph = 0
+      if (nhrun > 0) then
+        dtime = dtime + duration_t(hours=1)
+      else
+        dtime = dtime - duration_t(hours=1)
+      end if
+      dtimeo = dtime
+    end if
+    if (.not. synoptic_output .and. istep < nstep .and. &
+        mod(istep + 1, output_interval_steps) == 0) then
+      aligned_elapsed_seconds = nint(real(int(istep + 1, int64)*3600_int64, real64) / &
+                                      real(nsteph, real64), int64)
+      dtimeo = time_start + duration_t(seconds= &
+        sign(aligned_elapsed_seconds, int(nhrun, int64)))
+      ifldout = 1
+    end if
+    if (synoptic_output .and. istep < nstep) then
+      dur = time_start - dt_output_reference
+      if (mod(dur%seconds*nsteph + sign(int(istep + 1, int64), int(nhrun, int64))*3600_int64, &
+              synoptic_interval_seconds*nsteph) == 0) then
+        ifldout = 1
         aligned_elapsed_seconds = nint(real(int(istep + 1, int64)*3600_int64, real64) / &
-                                       real(nsteph, real64), int64)
+                                        real(nsteph, real64), int64)
         dtimeo = time_start + duration_t(seconds= &
           sign(aligned_elapsed_seconds, int(nhrun, int64)))
-        ifldout = 1
-      end if
-      if (synoptic_output .and. istep < nstep) then
-        dur = time_start - dt_output_reference
-        if (mod(dur%seconds*nsteph + sign(int(istep + 1, int64), int(nhrun, int64))*3600_int64, &
-                synoptic_interval_seconds*nsteph) == 0) then
-          ifldout = 1
-          aligned_elapsed_seconds = nint(real(int(istep + 1, int64)*3600_int64, real64) / &
-                                         real(nsteph, real64), int64)
-          dtimeo = time_start + duration_t(seconds= &
-            sign(aligned_elapsed_seconds, int(nhrun, int64)))
-        endif
       endif
-      if (ifldout == 1) then
-        ntimefo = ntimefo + 1
-        write (iulog, *) 'fldout. ', dtimeo
-      endif
+    endif
+    if (ifldout == 1) then
+      ntimefo = ntimefo + 1
+      write (iulog, *) 'fldout. ', dtimeo
+    endif
 
-      !..field output if ifldout=1, otherwise skip
-      if (idailyout == 1) then
-        !       daily output, append +x for each day
-        ! istep/nsteph = hour  -> /24 =day
-        write (fldfilN, '(a9,a1,I3.3)') fldfil, '+', istep/nsteph/24
-        if (fldfilX /= fldfilN) then
-          fldfilX = fldfilN
-          if (fldtype == "netcdf") then
-            !$OMP TASKWAIT
-            call initialize_output(fldfilX, dtime, ierror)
-            if (ierror /= 0) call snap_error_exit(iulog)
-          endif
-        end if
-        if (fldtype == "netcdf" .and. ifldout == 1) then
+    !..field output if ifldout=1, otherwise skip
+    if (idailyout == 1) then
+      !       daily output, append +x for each day
+      ! istep/nsteph = hour  -> /24 =day
+      write (fldfilN, '(a9,a1,I3.3)') fldfil, '+', istep/nsteph/24
+      if (fldfilX /= fldfilN) then
+        fldfilX = fldfilN
+        if (fldtype == "netcdf") then
           !$OMP TASKWAIT
-          call fldout_nc(fldfilX, dtimeo, tf1, tf2, tnext, nsteph, &
-                         ierror)
+          call initialize_output(fldfilX, dtime, ierror)
+          if (ierror /= 0) call snap_error_exit(iulog)
         endif
-        if (ierror /= 0) call snap_error_exit(iulog)
-      else
-        if (fldtype == "netcdf" .and. ifldout == 1) then
-          !$OMP TASKWAIT
-          call fldout_nc(fldfilX, dtimeo, tf1, tf2, tnext, nsteph, &
-                         ierror)
-        endif
-        if (ierror /= 0) call snap_error_exit(iulog)
       end if
-      call output_timer%stop_and_log()
+      if (fldtype == "netcdf" .and. ifldout == 1) then
+        !$OMP TASKWAIT
+        call fldout_nc(fldfilX, dtimeo, tf1, tf2, tnext, nsteph, &
+                        ierror)
+      endif
+      if (ierror /= 0) call snap_error_exit(iulog)
+    else
+      if (fldtype == "netcdf" .and. ifldout == 1) then
+        !$OMP TASKWAIT
+        call fldout_nc(fldfilX, dtimeo, tf1, tf2, tnext, nsteph, &
+                        ierror)
+      endif
+      if (ierror /= 0) call snap_error_exit(iulog)
+    end if
+    call output_timer%stop_and_log()
 
-      call timeloop_timer%stop_and_log()
-    end do time_loop
-    !$OMP END SINGLE
-    !$OMP END PARALLEL
+    call timeloop_timer%stop_and_log()
+  end do time_loop
+  !$OMP END SINGLE
+  !$OMP END PARALLEL
 
   if (lstepr < nstep .AND. lstepr < nstepr) then
     write (iulog, *) 'ERROR: Due to space problems the release period was'
@@ -1182,911 +1182,911 @@ contains
       ! if (has_value) write (error_unit,*) "value: ", trim(cinput(pname_start:pname_end))
 
       select case (trim(keyword))
-      case ('positions.decimal')
-        !..positions.decimal
-        ipostyp = 1
-      case ('positions.degree_minute')
-        !..positions.degree_minute
-        ipostyp = 2
-      case ('time.start')
-        !..time.start=<year,month,day,hour[,minute[,second]]>
-        if (.not. has_value) goto 12
-        block
-          integer :: parts(6), count, first, last, pos
-          character(len=:), allocatable :: text
-          text = trim(cinput(pname_start:pname_end))
-          parts = 0
-          count = 0
-          pos = 1
-          do while (pos <= len(text))
-            if (text(pos:pos) == ' ' .or. text(pos:pos) == achar(9)) then
-              pos = pos + 1
-              cycle
-            endif
-            first = pos
+        case ('positions.decimal')
+          !..positions.decimal
+          ipostyp = 1
+        case ('positions.degree_minute')
+          !..positions.degree_minute
+          ipostyp = 2
+        case ('time.start')
+          !..time.start=<year,month,day,hour[,minute[,second]]>
+          if (.not. has_value) goto 12
+          block
+            integer :: parts(6), count, first, last, pos
+            character(len=:), allocatable :: text
+            text = trim(cinput(pname_start:pname_end))
+            parts = 0
+            count = 0
+            pos = 1
             do while (pos <= len(text))
-              if (scan(text(pos:pos), ' ,'//achar(9)) /= 0) exit
-              pos = pos + 1
-            enddo
-            last = pos - 1
-            if (last < first .or. count == 6) goto 12
-            if (verify(text(first:last), '+-0123456789') /= 0) goto 12
-            count = count + 1
-            read (text(first:last), *, iostat=ierror) parts(count)
-            if (ierror /= 0) goto 12
-            do while (pos <= len(text))
-              if (text(pos:pos) /= ' ' .and. text(pos:pos) /= achar(9)) exit
-              pos = pos + 1
-            enddo
-            if (pos <= len(text)) then
-              if (text(pos:pos) == ',') then
+              if (text(pos:pos) == ' ' .or. text(pos:pos) == achar(9)) then
                 pos = pos + 1
-                if (len_trim(text(pos:)) == 0) goto 12
+                cycle
               endif
-            endif
-          enddo
-          if (count < 4) goto 12
-          if (parts(5) < 0 .or. parts(5) > 59 .or. parts(6) < 0 .or. parts(6) > 59) goto 12
-          time_start = datetime_t(parts(1), parts(2), parts(3), parts(4), parts(5), parts(6))
-        end block
-      case ('time.run')
-        !..time.run=<hours'h'> or <days'd'>
-        if (.not. has_value) goto 12
-        kh = index(cinput(pname_start:pname_end), 'h')
-        kd = index(cinput(pname_start:pname_end), 'd')
-        if (kh > 0 .AND. kd == 0) then
-          read (cinput(pname_start:pname_start + kh - 2), *, err=12) rnhrun
-          nhrun = nint(rnhrun)
-        elseif (kd > 0 .AND. kh == 0) then
-          read (cinput(pname_start:pname_start + kd - 2), *, err=12) rnhrun
-          nhrun = nint(rnhrun*24.)
-        else
-          goto 12
-        end if
-      case ('time.release')
-        !..time.release=<hours'h'> or <days'd'>
-        if (.not. has_value) goto 12
-        kh = index(cinput(pname_start:pname_end), 'h')
-        kd = index(cinput(pname_start:pname_end), 'd')
-        if (kh > 0 .AND. kd == 0) then
-          read (cinput(pname_start:pname_start + kh - 2), *, err=12) rnhrel
-          nhrel = ceiling(rnhrel)
-        elseif (kd > 0 .AND. kh == 0) then
-          read (cinput(pname_start:pname_start + kd - 2), *, err=12) rnhrel
-          nhrel = ceiling(rnhrel*24.)
-        else
-          goto 12
-        end if
-      case ('set_release.pos')
-        !..set_release.pos=<name>   or <p=lat,long>
-        if (.not. has_value) goto 12
+              first = pos
+              do while (pos <= len(text))
+                if (scan(text(pos:pos), ' ,'//achar(9)) /= 0) exit
+                pos = pos + 1
+              enddo
+              last = pos - 1
+              if (last < first .or. count == 6) goto 12
+              if (verify(text(first:last), '+-0123456789') /= 0) goto 12
+              count = count + 1
+              read (text(first:last), *, iostat=ierror) parts(count)
+              if (ierror /= 0) goto 12
+              do while (pos <= len(text))
+                if (text(pos:pos) /= ' ' .and. text(pos:pos) /= achar(9)) exit
+                pos = pos + 1
+              enddo
+              if (pos <= len(text)) then
+                if (text(pos:pos) == ',') then
+                  pos = pos + 1
+                  if (len_trim(text(pos:)) == 0) goto 12
+                endif
+              endif
+            enddo
+            if (count < 4) goto 12
+            if (parts(5) < 0 .or. parts(5) > 59 .or. parts(6) < 0 .or. parts(6) > 59) goto 12
+            time_start = datetime_t(parts(1), parts(2), parts(3), parts(4), parts(5), parts(6))
+          end block
+        case ('time.run')
+          !..time.run=<hours'h'> or <days'd'>
+          if (.not. has_value) goto 12
+          kh = index(cinput(pname_start:pname_end), 'h')
+          kd = index(cinput(pname_start:pname_end), 'd')
+          if (kh > 0 .AND. kd == 0) then
+            read (cinput(pname_start:pname_start + kh - 2), *, err=12) rnhrun
+            nhrun = nint(rnhrun)
+          elseif (kd > 0 .AND. kh == 0) then
+            read (cinput(pname_start:pname_start + kd - 2), *, err=12) rnhrun
+            nhrun = nint(rnhrun*24.)
+          else
+            goto 12
+          end if
+        case ('time.release')
+          !..time.release=<hours'h'> or <days'd'>
+          if (.not. has_value) goto 12
+          kh = index(cinput(pname_start:pname_end), 'h')
+          kd = index(cinput(pname_start:pname_end), 'd')
+          if (kh > 0 .AND. kd == 0) then
+            read (cinput(pname_start:pname_start + kh - 2), *, err=12) rnhrel
+            nhrel = ceiling(rnhrel)
+          elseif (kd > 0 .AND. kh == 0) then
+            read (cinput(pname_start:pname_start + kd - 2), *, err=12) rnhrel
+            nhrel = ceiling(rnhrel*24.)
+          else
+            goto 12
+          end if
+        case ('set_release.pos')
+          !..set_release.pos=<name>   or <p=lat,long>
+          if (.not. has_value) goto 12
 
-        srelnam = trim(cinput(pname_start:pname_end))
-        if (srelnam(1:2) == 'p=' .OR. srelnam(1:2) == 'P=') then
-          pname_start = pname_start + 2
-          read (cinput(pname_start:pname_end), *, err=12) glat, glong
-          if (ipostyp == 2) then
-            ig = nint(glat)
-            igd = ig/100
-            igm = ig - igd*100
-            glat = float(igd) + float(igm)/60.
-            ig = nint(glong)
-            igd = ig/100
-            igm = ig - igd*100
-            glong = float(igd) + float(igm)/60.
+          srelnam = trim(cinput(pname_start:pname_end))
+          if (srelnam(1:2) == 'p=' .OR. srelnam(1:2) == 'P=') then
+            pname_start = pname_start + 2
+            read (cinput(pname_start:pname_end), *, err=12) glat, glong
+            if (ipostyp == 2) then
+              ig = nint(glat)
+              igd = ig/100
+              igm = ig - igd*100
+              glat = float(igd) + float(igm)/60.
+              ig = nint(glong)
+              igd = ig/100
+              igm = ig - igd*100
+              glong = float(igd) + float(igm)/60.
+            end if
+            srelnam = ' '
+            write (cpos1, fmt='(sp,f7.2,ss)') glat
+            write (cpos2, fmt='(sp,f7.2,ss)') glong
+            k1 = index(cpos1, '+')
+            if (k1 > 0) then
+              cpos1(8:8) = 'N'
+            else
+              k1 = index(cpos1, '-')
+              cpos1(8:8) = 'S'
+            end if
+            k2 = index(cpos2, '+')
+            if (k2 > 0) then
+              cpos2(8:8) = 'E'
+            else
+              k2 = index(cpos2, '-')
+              cpos2(8:8) = 'W'
+            end if
+            srelnam = cpos1(k1 + 1:8)//' '//cpos2(k2 + 1:8)
+            if (nrelpos < size(release_positions)) nrelpos = nrelpos + 1
+            release_positions(nrelpos)%name = srelnam
+            release_positions(nrelpos)%geo_latitude = glat
+            release_positions(nrelpos)%geo_longitude = glong
           end if
-          srelnam = ' '
-          write (cpos1, fmt='(sp,f7.2,ss)') glat
-          write (cpos2, fmt='(sp,f7.2,ss)') glong
-          k1 = index(cpos1, '+')
-          if (k1 > 0) then
-            cpos1(8:8) = 'N'
+        case ('random.walk.on')
+          !..random.walk.on
+          use_random_walk = .true.
+        case ('random.walk.off')
+          !..random.walk.off
+          use_random_walk = .false.
+        case ('forward.on')
+          use_forwrd = .true.
+        case ('forward.off')
+          use_forwrd = .false.
+        case ('boundary.layer.full.mix.off')
+          !..boundary.layer.full.mix.off
+          blfullmix = .FALSE.
+        case ('boundary.layer.full.mix.on')
+          !..boundary.layer.full.mix.on
+          blfullmix = .TRUE.
+        case ('surface.layer.concentration.at.height')
+          surface_layer_is_lowest_level = .false.
+          if (has_value) then
+            read(cinput(pname_start:pname_end),*) surface_height_m
+            if (surface_height_m <= 0.0) then
+              write(error_unit,*) "surface.layer.concentration.at.height must be positive"
+              goto 12
+            endif
+          endif
+        case ('dry.deposition.old')
+          !..dry.deposition.old
+          if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_OLD) goto 12
+          write(error_unit,*) "dry.deposition.old is deprecated, use dry.deposition.scheme=old"
+          warning = .true.
+          drydep_scheme = DRYDEP_SCHEME_OLD
+        case ('dry.deposition.new')
+          !..dry.deposition.new
+          if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_NEW) goto 12
+          write(error_unit,*) "dry.deposition.new is deprecated, use dry.deposition.scheme=new"
+          warning = .true.
+          drydep_scheme = DRYDEP_SCHEME_NEW
+        case ('dry.deposition.scheme')
+          if (.not. has_value) goto 12
+          call to_lowercase(cinput(pname_start:pname_end))
+          select case (cinput(pname_start:pname_end))
+            case ('old')
+              if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_OLD) goto 12
+              drydep_scheme = DRYDEP_SCHEME_OLD
+            case ('new')
+              if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_NEW) goto 12
+              drydep_scheme = DRYDEP_SCHEME_NEW
+            case ('emerson')
+              if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_EMERSON) goto 12
+              drydep_scheme = DRYDEP_SCHEME_EMERSON
+            case default
+              write(error_unit, *) "Scheme ", cinput(pname_start:pname_end), " is unknown"
+              goto 12
+          end select
+        case ('dry.deposition.save')
+          if (drydep_scheme /= DRYDEP_SCHEME_EMERSON) then
+            write(error_unit, *) "The drydep scheme is not set to a compatible value, ignoring"
           else
-            k1 = index(cpos1, '-')
-            cpos1(8:8) = 'S'
-          end if
-          k2 = index(cpos2, '+')
-          if (k2 > 0) then
-            cpos2(8:8) = 'E'
-          else
-            k2 = index(cpos2, '-')
-            cpos2(8:8) = 'W'
-          end if
-          srelnam = cpos1(k1 + 1:8)//' '//cpos2(k2 + 1:8)
-          if (nrelpos < size(release_positions)) nrelpos = nrelpos + 1
-          release_positions(nrelpos)%name = srelnam
-          release_positions(nrelpos)%geo_latitude = glat
-          release_positions(nrelpos)%geo_longitude = glong
-        end if
-      case ('random.walk.on')
-        !..random.walk.on
-        use_random_walk = .true.
-      case ('random.walk.off')
-        !..random.walk.off
-        use_random_walk = .false.
-      case ('forward.on')
-        use_forwrd = .true.
-      case ('forward.off')
-        use_forwrd = .false.
-      case ('boundary.layer.full.mix.off')
-        !..boundary.layer.full.mix.off
-        blfullmix = .FALSE.
-      case ('boundary.layer.full.mix.on')
-        !..boundary.layer.full.mix.on
-        blfullmix = .TRUE.
-      case ('surface.layer.concentration.at.height')
-        surface_layer_is_lowest_level = .false.
-        if (has_value) then
-          read(cinput(pname_start:pname_end),*) surface_height_m
-          if (surface_height_m <= 0.0) then
-            write(error_unit,*) "surface.layer.concentration.at.height must be positive"
+            output_vd = .true.
+          endif
+          if (has_value) goto 12
+        case ('dry.deposition.save.debug')
+          if (.not.output_vd) then
+            write(error_unit, *) "dry.deposition.save must be set"
             goto 12
           endif
-        endif
-      case ('dry.deposition.old')
-        !..dry.deposition.old
-        if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_OLD) goto 12
-        write(error_unit,*) "dry.deposition.old is deprecated, use dry.deposition.scheme=old"
-        warning = .true.
-        drydep_scheme = DRYDEP_SCHEME_OLD
-      case ('dry.deposition.new')
-        !..dry.deposition.new
-        if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_NEW) goto 12
-        write(error_unit,*) "dry.deposition.new is deprecated, use dry.deposition.scheme=new"
-        warning = .true.
-        drydep_scheme = DRYDEP_SCHEME_NEW
-      case ('dry.deposition.scheme')
-        if (.not. has_value) goto 12
-        call to_lowercase(cinput(pname_start:pname_end))
-        select case (cinput(pname_start:pname_end))
-        case ('old')
-          if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_OLD) goto 12
-          drydep_scheme = DRYDEP_SCHEME_OLD
-        case ('new')
-          if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_NEW) goto 12
-          drydep_scheme = DRYDEP_SCHEME_NEW
-        case ('emerson')
-          if (drydep_scheme /= 0 .AND. drydep_scheme /= DRYDEP_SCHEME_EMERSON) goto 12
-          drydep_scheme = DRYDEP_SCHEME_EMERSON
-        case default
-          write(error_unit, *) "Scheme ", cinput(pname_start:pname_end), " is unknown"
-          goto 12
-        end select
-      case ('dry.deposition.save')
-        if (drydep_scheme /= DRYDEP_SCHEME_EMERSON) then
-          write(error_unit, *) "The drydep scheme is not set to a compatible value, ignoring"
-        else
-          output_vd = .true.
-        endif
-        if (has_value) goto 12
-      case ('dry.deposition.save.debug')
-        if (.not.output_vd) then
-          write(error_unit, *) "dry.deposition.save must be set"
-          goto 12
-        endif
-        warning = .true.
-        write(error_unit, *) "This option is a hack, only use for a single component"
-        output_vd_debug = .true.
-      case ('dry.deposition.largest_landfraction_file')
-        if (.not.has_value) goto 12
-        largest_landfraction_file = cinput(pname_start:pname_end)
-      case ('wet.deposition.new')
-        !..wet.deposition.new
-        write (error_unit, *) "Deprecated, please use wet.deposition.scheme = Bartnicki"
-        warning = .true.
-        if (wetdep_scheme%subcloud /= WETDEP_SUBCLOUD_SCHEME_UNDEFINED .or. &
-            wetdep_scheme%incloud /= WETDEP_INCLOUD_SCHEME_UNDEFINED) then
-          write (error_unit, *) "wet deposition already set"
-          goto 12
-        endif
-        wetdep_scheme = wetdep_scheme_t( &
-          WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
-          WETDEP_INCLOUD_SCHEME_NONE, &
-          .false., .false.)
-      case ('wet.deposition.version')
-        write (error_unit, *) "Deprecated, please use wet.deposition.scheme = Bartnicki"
-        warning = .true.
-        if (wetdep_scheme%subcloud /= WETDEP_SUBCLOUD_SCHEME_UNDEFINED .or. &
-            wetdep_scheme%incloud /= WETDEP_INCLOUD_SCHEME_UNDEFINED) then
-          write (error_unit, *) "wet deposition already set"
-          goto 12
-        endif
-        if (.not. has_value) then
-          write (error_unit, *) "expected a keyword"
-          goto 12
-        endif
-        block
-          integer :: scheme_number
-          read (cinput(pname_start:pname_end), *, err=12) scheme_number
-          if (scheme_number /= 2) goto 12
+          warning = .true.
+          write(error_unit, *) "This option is a hack, only use for a single component"
+          output_vd_debug = .true.
+        case ('dry.deposition.largest_landfraction_file')
+          if (.not.has_value) goto 12
+          largest_landfraction_file = cinput(pname_start:pname_end)
+        case ('wet.deposition.new')
+          !..wet.deposition.new
+          write (error_unit, *) "Deprecated, please use wet.deposition.scheme = Bartnicki"
+          warning = .true.
+          if (wetdep_scheme%subcloud /= WETDEP_SUBCLOUD_SCHEME_UNDEFINED .or. &
+              wetdep_scheme%incloud /= WETDEP_INCLOUD_SCHEME_UNDEFINED) then
+            write (error_unit, *) "wet deposition already set"
+            goto 12
+          endif
           wetdep_scheme = wetdep_scheme_t( &
             WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
             WETDEP_INCLOUD_SCHEME_NONE, &
-            .false., &
-            .false.)
-        end block
-
-      case ('wet.deposition.scheme')
-        if (.not.has_value) goto 12
-        if (wetdep_scheme%subcloud /= WETDEP_SUBCLOUD_SCHEME_UNDEFINED .or. &
-            wetdep_scheme%incloud /= WETDEP_INCLOUD_SCHEME_UNDEFINED) then
-          write (error_unit, *) "wet deposition already set"
-          goto 12
-        endif
-        call to_lowercase(cinput(pname_start:pname_end))
-        select case(cinput(pname_start:pname_end))
-          case("bartnicki")
+            .false., .false.)
+        case ('wet.deposition.version')
+          write (error_unit, *) "Deprecated, please use wet.deposition.scheme = Bartnicki"
+          warning = .true.
+          if (wetdep_scheme%subcloud /= WETDEP_SUBCLOUD_SCHEME_UNDEFINED .or. &
+              wetdep_scheme%incloud /= WETDEP_INCLOUD_SCHEME_UNDEFINED) then
+            write (error_unit, *) "wet deposition already set"
+            goto 12
+          endif
+          if (.not. has_value) then
+            write (error_unit, *) "expected a keyword"
+            goto 12
+          endif
+          block
+            integer :: scheme_number
+            read (cinput(pname_start:pname_end), *, err=12) scheme_number
+            if (scheme_number /= 2) goto 12
             wetdep_scheme = wetdep_scheme_t( &
               WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
               WETDEP_INCLOUD_SCHEME_NONE, &
-              .false., .false. &
-              )
-          case("bartnicki-takemura")
-            met_params%use_3d_precip = .true.
-            met_params%use_ccf = .true.
-            wetdep_scheme = wetdep_scheme_t( &
-              WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
-              WETDEP_INCLOUD_SCHEME_TAKEMURA, &
-              .true., .true. &
-              )
+              .false., &
+              .false.)
+          end block
 
-          case default
-            !> No default - should always have scheme in input
-            write(error_unit,*) "Unknown scheme ", cinput(pname_start:pname_end)
-            goto 12
-        end select
-      case ('wet.deposition.save')
-        if (has_value) goto 12
-        if (.not.wetdep_scheme%use_vertical) then
-          write(error_unit,*) "wet.depositon.save is only allowed when 3D wetdep scheme is used"
-        endif
-        block
-          use fldout_ncml, only: output_wetdeprate
-          output_wetdeprate = .true.
-        end block
-      case ('time.step')
-        !..time.step=<seconds>
-        if (.not. has_value) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) tstep
-        if (tstep < 0.9999) goto 12
-
-      case ('time.release.profile.constant')
-        if (time_profile /= TIME_PROFILE_UNDEFINED) goto 12
-        time_profile = TIME_PROFILE_CONSTANT
-      case ('time.release.profile.bomb')
-        if (time_profile /= TIME_PROFILE_UNDEFINED) goto 12
-        time_profile = TIME_PROFILE_BOMB
-      case ('time.release.profile.linear')
-        if (time_profile /= TIME_PROFILE_UNDEFINED) goto 12
-        time_profile = TIME_PROFILE_LINEAR
-      case ('time.release.profile.steps')
-        if (time_profile /= TIME_PROFILE_UNDEFINED) goto 12
-        time_profile = TIME_PROFILE_STEPS
-
-      case ('release.day', 'release.hour', 'release.minute', 'release.second')
-        rscale = 1.
-        if (keyword == 'release.day') rscale = 24.
-        if (keyword == 'release.minute') rscale = 1./60.
-        if (keyword == 'release.second') rscale = 1./3600.
-        !..release.day
-        !..release.hour
-        !..release.minute
-        !..release.second
-        if (.not. has_value) goto 12
-        if (.not. allocated(releases)) call allocate_releases(cinput(pname_start:pname_end), ntprof)
-
-        read (cinput(pname_start:pname_end), *, err=12) releases%frelhour
-
-        releases%frelhour = releases%frelhour*rscale
-
-        do i = 2, ntprof
-          if (releases(i - 1)%frelhour >= releases(i)%frelhour) then
-            write (error_unit, *) 'ERROR: Release hours must be monotonically increasing'
+        case ('wet.deposition.scheme')
+          if (.not.has_value) goto 12
+          if (wetdep_scheme%subcloud /= WETDEP_SUBCLOUD_SCHEME_UNDEFINED .or. &
+              wetdep_scheme%incloud /= WETDEP_INCLOUD_SCHEME_UNDEFINED) then
+            write (error_unit, *) "wet deposition already set"
             goto 12
           endif
-        end do
-      case ('release.radius.m')
-        !..release.radius.m
-        if (.not. has_value) goto 12
-        if (.not. allocated(releases)) call allocate_releases(cinput(pname_start:pname_end), ntprof)
+          call to_lowercase(cinput(pname_start:pname_end))
+          select case(cinput(pname_start:pname_end))
+            case("bartnicki")
+              wetdep_scheme = wetdep_scheme_t( &
+                WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
+                WETDEP_INCLOUD_SCHEME_NONE, &
+                .false., .false. &
+                )
+            case("bartnicki-takemura")
+              met_params%use_3d_precip = .true.
+              met_params%use_ccf = .true.
+              wetdep_scheme = wetdep_scheme_t( &
+                WETDEP_SUBCLOUD_SCHEME_BARTNICKI, &
+                WETDEP_INCLOUD_SCHEME_TAKEMURA, &
+                .true., .true. &
+                )
 
-        call read_array_or_scalar(cinput(pname_start:pname_end), releases%relradius(1), ierror)
-        if (ierror /= 0) goto 12
-        if (any(releases%relradius(1) < 0.0)) goto 12
+            case default
+              !> No default - should always have scheme in input
+              write(error_unit,*) "Unknown scheme ", cinput(pname_start:pname_end)
+              goto 12
+          end select
+        case ('wet.deposition.save')
+          if (has_value) goto 12
+          if (.not.wetdep_scheme%use_vertical) then
+            write(error_unit,*) "wet.depositon.save is only allowed when 3D wetdep scheme is used"
+          endif
+          block
+            use fldout_ncml, only: output_wetdeprate
+            output_wetdeprate = .true.
+          end block
+        case ('time.step')
+          !..time.step=<seconds>
+          if (.not. has_value) goto 12
+          read (cinput(pname_start:pname_end), *, err=12) tstep
+          if (tstep < 0.9999) goto 12
 
-      case ('release.upper.m')
-        !..release.upper.m
-        if (.not. has_value) goto 12
-        if (.not. allocated(releases)) call allocate_releases(cinput(pname_start:pname_end), ntprof)
-        call read_array_or_scalar(cinput(pname_start:pname_end), releases%relupper(1), ierror)
-        if (ierror /= 0) goto 12
-        if (any(releases%relupper(1) < 0.0)) goto 12
+        case ('time.release.profile.constant')
+          if (time_profile /= TIME_PROFILE_UNDEFINED) goto 12
+          time_profile = TIME_PROFILE_CONSTANT
+        case ('time.release.profile.bomb')
+          if (time_profile /= TIME_PROFILE_UNDEFINED) goto 12
+          time_profile = TIME_PROFILE_BOMB
+        case ('time.release.profile.linear')
+          if (time_profile /= TIME_PROFILE_UNDEFINED) goto 12
+          time_profile = TIME_PROFILE_LINEAR
+        case ('time.release.profile.steps')
+          if (time_profile /= TIME_PROFILE_UNDEFINED) goto 12
+          time_profile = TIME_PROFILE_STEPS
 
-      case ('release.lower.m')
-        !..release.lower.m
-        if (.not. has_value) goto 12
-        if (.not. allocated(releases)) call allocate_releases(cinput(pname_start:pname_end), ntprof)
-        call read_array_or_scalar(cinput(pname_start:pname_end), releases%rellower(1), ierror)
-        if (ierror /= 0) goto 12
-        if (any(releases%rellower(1) < 0.0)) goto 12
-
-      case ('release.mushroom.stem.radius.m')
-        !..release.mushroom.stem.radius.m
-        if (.not. has_value) goto 12
-        if (.not. allocated(releases)) call allocate_releases(cinput(pname_start:pname_end), ntprof)
-        call read_array_or_scalar(cinput(pname_start:pname_end), releases%relstemradius, ierror)
-        if (ierror /= 0) goto 12
-
-      case ('release.bq/hour.comp', 'release.bq/sec.comp', 'release.bq/day.comp', 'release.bq/step.comp')
-        !..release.bq/hour.comp
-        !..release.bq/sec.comp
-        !..release.bq/day.comp
-        !..release.bq/step.comp
-        if (keyword == 'release.bq/hour.comp') then
-          rscale = 1./3600.
-        elseif (keyword == 'release.bq/day.comp') then
-          rscale = 1./(3600.*24.)
-        elseif (keyword == 'release.bq/step.comp') then
-          rscale = -1.
-        else
+        case ('release.day', 'release.hour', 'release.minute', 'release.second')
           rscale = 1.
-        end if
-        if (.not. has_value) goto 12
-        if (.not. allocated(releases)) call allocate_releases(cinput(pname_start:pname_end), ntprof)
-        ncomp = ncomp + 1
-        if (ncomp > mcomp) goto 13
-        read (cinput(pname_start:pname_end), *, err=12) releases%relbqsec(ncomp, 1), &
-          component(ncomp)
-        if (any(releases%relbqsec(ncomp, 1) < 0.0)) goto 12
-        if (rscale > 0.) then
-          releases%relbqsec(ncomp, 1) = releases%relbqsec(ncomp, 1)*rscale
-        elseif (ntprof > 1) then
-          if (keyword == 'release.bq/step.comp') then
-            do i = 1, ntprof - 1
-              if (time_profile == TIME_PROFILE_BOMB) then
-                ! everything released in one timestep
-                rscale = 1.
-              else
-                rscale = 1./(3600.*(releases(i + 1)%frelhour - releases(i)%frelhour))
-              end if
-              releases(i)%relbqsec(ncomp, 1) = releases(i)%relbqsec(ncomp, 1)*rscale
-            end do
+          if (keyword == 'release.day') rscale = 24.
+          if (keyword == 'release.minute') rscale = 1./60.
+          if (keyword == 'release.second') rscale = 1./3600.
+          !..release.day
+          !..release.hour
+          !..release.minute
+          !..release.second
+          if (.not. has_value) goto 12
+          if (.not. allocated(releases)) call allocate_releases(cinput(pname_start:pname_end), ntprof)
+
+          read (cinput(pname_start:pname_end), *, err=12) releases%frelhour
+
+          releases%frelhour = releases%frelhour*rscale
+
+          do i = 2, ntprof
+            if (releases(i - 1)%frelhour >= releases(i)%frelhour) then
+              write (error_unit, *) 'ERROR: Release hours must be monotonically increasing'
+              goto 12
+            endif
+          end do
+        case ('release.radius.m')
+          !..release.radius.m
+          if (.not. has_value) goto 12
+          if (.not. allocated(releases)) call allocate_releases(cinput(pname_start:pname_end), ntprof)
+
+          call read_array_or_scalar(cinput(pname_start:pname_end), releases%relradius(1), ierror)
+          if (ierror /= 0) goto 12
+          if (any(releases%relradius(1) < 0.0)) goto 12
+
+        case ('release.upper.m')
+          !..release.upper.m
+          if (.not. has_value) goto 12
+          if (.not. allocated(releases)) call allocate_releases(cinput(pname_start:pname_end), ntprof)
+          call read_array_or_scalar(cinput(pname_start:pname_end), releases%relupper(1), ierror)
+          if (ierror /= 0) goto 12
+          if (any(releases%relupper(1) < 0.0)) goto 12
+
+        case ('release.lower.m')
+          !..release.lower.m
+          if (.not. has_value) goto 12
+          if (.not. allocated(releases)) call allocate_releases(cinput(pname_start:pname_end), ntprof)
+          call read_array_or_scalar(cinput(pname_start:pname_end), releases%rellower(1), ierror)
+          if (ierror /= 0) goto 12
+          if (any(releases%rellower(1) < 0.0)) goto 12
+
+        case ('release.mushroom.stem.radius.m')
+          !..release.mushroom.stem.radius.m
+          if (.not. has_value) goto 12
+          if (.not. allocated(releases)) call allocate_releases(cinput(pname_start:pname_end), ntprof)
+          call read_array_or_scalar(cinput(pname_start:pname_end), releases%relstemradius, ierror)
+          if (ierror /= 0) goto 12
+
+        case ('release.bq/hour.comp', 'release.bq/sec.comp', 'release.bq/day.comp', 'release.bq/step.comp')
+          !..release.bq/hour.comp
+          !..release.bq/sec.comp
+          !..release.bq/day.comp
+          !..release.bq/step.comp
+          if (keyword == 'release.bq/hour.comp') then
+            rscale = 1./3600.
+          elseif (keyword == 'release.bq/day.comp') then
+            rscale = 1./(3600.*24.)
+          elseif (keyword == 'release.bq/step.comp') then
+            rscale = -1.
+          else
+            rscale = 1.
           end if
-        end if
-
-        !..releases with different height classes
-        !..  height-classes defined here, time-profile defined outside
-        !..release.heightlower.m
-      case ('release.heightlower.m')
-        nrelheight = 0
-        if (.not. has_value .OR. nrelheight > 0) goto 12
-        i1 = nrelheight + 1
-        i2 = nrelheight
-        ios = 0
-        do while (ios == 0)
-          if (i2 > size(release1%rellower)) goto 13
-          i2 = i2 + 1
-          read (cinput(pname_start:pname_end), *, iostat=ios) (release1%rellower(ih), ih=i1, i2)
-        end do
-        i2 = i2 - 1
-        if (i2 < i1) goto 12
-        nrelheight = i2
-      case ('release.heightradius.m')
-        !..release.heightradius.m
-        if (.not. has_value .OR. nrelheight < 1) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) (release1%relradius(ih), ih=1, nrelheight)
-        do ih = 1, nrelheight
-          if (release1%relradius(ih) < 0.) goto 12
-        end do
-      case ('release.heightupper.m')
-        !..release.heightupper.m
-        if (.not. has_value .OR. nrelheight < 1) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) (release1%relupper(ih), ih=1, nrelheight)
-        do ih = 1, nrelheight
-          if (release1%relupper(ih) < release1%rellower(ih)) goto 12
-        end do
-      case ('release.file')
-        if (.not. has_value) goto 12
-        !..release.file
-        relfile = trim(cinput(pname_start:pname_end))
-        !..release.component
-      case ('release.components')
-        ncomp = 0
-        if (.not. has_value .OR. ncomp > 0) goto 12
-        i1 = ncomp + 1
-        i2 = ncomp
-        ios = 0
-        do while (ios == 0)
-          if (i2 > mcomp) goto 13
-          i2 = i2 + 1
-          read (cinput(pname_start:pname_end), *, iostat=ios) (component(i), i=i1, i2)
-        end do
-        i2 = i2 - 1
-        if (i2 < i1) goto 12
-        ncomp = i2
-
-      case ('max.totalparticles')
-        !..max.totalparticles
-        if (.not. has_value) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) mpart
-        if (mpart < 1) goto 12
-      case ('max.totalplumes')
-        !..max.totalplumes
-        if (.not. has_value) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) mplume
-        if (mplume < 1) goto 12
-      case ('max.particles.per.release')
-        !..max.particles.per.release
-        if (.not. has_value) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) mprel
-        if (mprel < 1) goto 12
-      case ('component')
-        !..component= name
-        if (.not. has_value) goto 12
-        call push_down_dcomp(def_comp, top=d_comp)
-
-        d_comp%compname = cinput(pname_start:pname_end)
-        d_comp%output_name = d_comp%compname ! default
-      case ('merge.name')
-        !..output component name if merged
-        if (.not. associated(d_comp)) goto 12
-        d_comp%output_name = cinput(pname_start:pname_end)
-      case ('dry.dep.on')
-        !..dry.dep.on
-        if (.not. associated(d_comp)) goto 12
-        if (d_comp%kdrydep /= -1) goto 12
-        d_comp%kdrydep = 1
-      case ('dry.dep.off')
-        !..dry.dep.off
-        if (.not. associated(d_comp)) goto 12
-        if (d_comp%kdrydep /= -1) goto 12
-        d_comp%kdrydep = 0
-      case ('wet.dep.on')
-        !..wet.dep.on
-        if (.not. associated(d_comp)) goto 12
-        if (d_comp%kwetdep /= -1) goto 12
-        d_comp%kwetdep = 1
-      case ('wet.dep.off')
-        !..wet.dep.off
-        if (.not. associated(d_comp)) goto 12
-        if (d_comp%kwetdep /= -1) goto 12
-        d_comp%kwetdep = 0
-      case ('dry.dep.height')
-        !..dry.dep.height=
-        if (.not. has_value) goto 12
-        if (.not. associated(d_comp)) goto 12
-        if (d_comp%drydephgt >= 0.) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) d_comp%drydephgt
-      case ('dry.dep.ratio')
-        !..dry.dep.ratio=
-        if (.not. has_value) goto 12
-        if (.not. associated(d_comp)) goto 12
-        if (d_comp%drydeprat >= 0.) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) d_comp%drydeprat
-      case ('wet.dep.ratio')
-        write (error_unit, *) "wet.dep.ratio is no longer used"
-        warning = .true.
-      case ('radioactive.decay.on')
-        !..radioactive.decay.on
-        if (.not. associated(d_comp)) goto 12
-        if (d_comp%kdecay /= -1) goto 12
-        d_comp%kdecay = 1
-      case ('radioactive.decay.bomb')
-        !..radioactive.decay.on
-        if (.not. associated(d_comp)) goto 12
-        if (d_comp%kdecay /= -1) goto 12
-        d_comp%kdecay = 2
-      case ('radioactive.decay.off')
-        !..radioactive.decay.off
-        if (.not. associated(d_comp)) goto 12
-        if (d_comp%kdecay /= -1) goto 12
-        d_comp%kdecay = 0
-      case ('half.lifetime.minutes')
-        !..half.lifetime.minutes=
-        if (.not. has_value) goto 12
-        if (.not. associated(d_comp)) goto 12
-        if (d_comp%halftime >= 0.) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) d_comp%halftime
-        d_comp%halftime = d_comp%halftime/60.
-      case ('half.lifetime.hours')
-        !..half.lifetime.hours=
-        if (.not. has_value) goto 12
-        if (.not. associated(d_comp)) goto 12
-        if (d_comp%halftime >= 0.) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) d_comp%halftime
-      case ('half.lifetime.days')
-        !..half.lifetime.days=
-        if (.not. has_value) goto 12
-        if (.not. associated(d_comp)) goto 12
-        if (d_comp%halftime >= 0.) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) d_comp%halftime
-        d_comp%halftime = d_comp%halftime*24.
-      case ('half.lifetime.years')
-        !..half.lifetime.years=
-        if (.not. has_value) goto 12
-        if (.not. associated(d_comp)) goto 12
-        if (d_comp%halftime >= 0.) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) d_comp%halftime
-        d_comp%halftime = d_comp%halftime*24.*365.25
-      case ('gravity.off')
-        !..gravity.off
-        if (.not. associated(d_comp)) goto 12
-        if (d_comp%grav_type /= GRAV_TYPE_UNDEFINED) goto 12
-        d_comp%grav_type = GRAV_TYPE_OFF
-      case ('gravity.fixed.m/s')
-        !..gravity.fixed.m/s
-        if (.not. associated(d_comp)) goto 12
-        if (d_comp%grav_type /= GRAV_TYPE_UNDEFINED) goto 12
-        d_comp%grav_type = GRAV_TYPE_FIXED
-        if (.not. has_value) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) d_comp%gravityms
-        if (d_comp%gravityms <= 0.) goto 12
-      case ('gravity.fixed.cm/s')
-        !..gravity.fixed.cm/s
-        if (.not. associated(d_comp)) goto 12
-        if (d_comp%grav_type /= GRAV_TYPE_UNDEFINED) goto 12
-        d_comp%grav_type = GRAV_TYPE_FIXED
-        if (.not. has_value) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) d_comp%gravityms
-        if (d_comp%gravityms <= 0.) goto 12
-        d_comp%gravityms = d_comp%gravityms*0.01
-      case ('radius.micrometer')
-        !..radius.micrometer  (for gravity computation)
-        if (.not. has_value) goto 12
-        if (.not. associated(d_comp)) goto 12
-        if (d_comp%radiusmym > 0.) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) d_comp%radiusmym
-        if (d_comp%radiusmym <= 0.) goto 12
-      case ('density.g/cm3')
-        !..density.g/cm3  (for gravity computation)
-        if (.not. has_value) goto 12
-        if (.not. associated(d_comp)) goto 12
-        if (d_comp%densitygcm3 > 0.) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) d_comp%densitygcm3
-        if (d_comp%densitygcm3 <= 0.) goto 12
-      case ('dpui.sv_per_bq_m3')
-        if (.not. has_value) goto 12
-        if (.not. associated(d_comp)) goto 12
-        if (d_comp%dpui > 0.0) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) d_comp%dpui
-        if (d_comp%dpui <= 0.0) goto 12
-      case ('field.identification')
-        !..field.identification=
-        if (.not. has_value) goto 12
-        if (.not. associated(d_comp)) goto 12
-        if (d_comp%idcomp >= 0) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) d_comp%idcomp
-        if (d_comp%idcomp < 1) goto 12
-        do i = 1, size(def_comp) - 1
-          if (def_comp(i)%idcomp == d_comp%idcomp) goto 12
-        end do
-      case ('field.use_model_wind_instead_of_10m')
-        ! FIELD.USE_MODEL_WIND_INSTEAD_OF_10M= [.false.]/.true
-        if (.not. has_value) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) met_params%use_model_wind_for_10m
-      case ('field.boundary_layer.on')
-        ! use boundary layer from meteo data
-        met_params%read_hbl = .true.
-      case ('field.boundary_layer.off')
-        ! calculate boundary layer from reynolds number
-        met_params%read_hbl = .false.
-      case ('precip(mm/h).probab')
-        !..precip(mm/h).probab=<precip_intensity,probability, ...>
-        write (error_unit, *) "precip(mm/h).probab is no longer used"
-        warning = .true.
-      case ('remove.relative.mass.limit')
-        !..remove.relative.mass.limit=
-        if (.not. has_value) goto 12
-        if (rmlimit >= 0.00) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) rmlimit
-        if (rmlimit < 0.0 .OR. rmlimit > 0.5) goto 12
-      case ('particles.split.hours')
-        !..split particles after hours
-        if (.not. has_value) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) split_particle_hours
-      case ('step.hour.input.min')
-        !..step.hour.input.min=<hours>
-        if (.not. has_value) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) nhfmin
-      case ('step.hour.input.max')
-        !..step.hour.input.max=<hours>
-        if (.not. has_value) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) nhfmax
-      case ('step.hour.output.fields')
-        !..step.hour.output.fields=<hours, may be fractional>
-        if (.not. has_value) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) hfout
-      case ('synoptic.output')
-        !..synoptic.output ... output at whole-hour intervals aligned with meteorology
-        synoptic_output = .true.
-      case ('asynoptic.output')
-        !..asynoptic.output ... output at fixed intervals after start
-        synoptic_output = .false.
-      case ('output.gaussian_smoothing.maxhr,size')
-        !..output.gaussian_smoothing.maxHR,SIZE=<hours>, kernel-size
-        if (.not. has_value) goto 12
-        !.. read two integer values, first maxHr, second kernel size
-        read (cinput(pname_start:pname_end), *, err=12) gaussian_smoothing_max_age_hr, &
-          gaussian_smoothing_kernel_size
-      case ('total.components.off')
-        !..total.components.off
-        itotcomp = 0
-      case ('total.components.on')
-        !..total.components.on
-        itotcomp = 1
-      case ('mslp.on')
-        !..mslp.on
-        imslp = 1
-      case ('mslp.off')
-        !..mslp.off
-        imslp = 0
-      case ('precipitation.on')
-        !..precipitation.on
-        precipitation_in_output = .true.
-        met_params%need_precipitation = .true.
-      case ('precipitation.off')
-        !..precipitation.off
-        precipitation_in_output = .false.
-        met_params%need_precipitation = .false.
-      case ('model.level.fields.on')
-        !..model.level.fields.on
-        imodlevel = .true.
-      case ('model.level.fields.inst')
-        !..model.level.fields.off
-        imodlevel = .true.
-        modlevel_is_average = .false.
-      case ('model.level.fields.avg')
-        !..model.level.fields.off
-        imodlevel = .true.
-        modlevel_is_average = .true.
-      case ('model.level.fields.off')
-        !..model.level.fields.off
-        imodlevel = .false.
-      case ('model.level.fields.dumptime')
-        !..levelfields are dump-data
-        if (.not. has_value) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) modleveldump
-      case ('output.column_max_conc.enable')
-        compute_column_max_conc = .true.
-      case ('output.column_max_conc.disable')
-        compute_column_max_conc = .false.
-      case ('output.aircraft_doserate.enable')
-        compute_aircraft_doserate = .true.
-      case ('output.aircraft_doserate.disable')
-        compute_aircraft_doserate = .false.
-      case ('output.aircraft_doserate.threshold.sv_h')
-        if (.not. has_value) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) aircraft_doserate_threshold
-      case ('output.column.on')
-        output_column = .true.
-      case ('release.pos')
-        !..release.pos=<'name',latitude,longitude>
-        if (.not. has_value) goto 12
-        if (nrelpos < size(release_positions)) then
-          nrelpos = nrelpos + 1
-          read (cinput(pname_start:pname_end), *, err=12) release_positions(nrelpos)%name, &
-            release_positions(nrelpos)%geo_latitude, &
-            release_positions(nrelpos)%geo_longitude
-          if (ipostyp == 2) then
-            ig = nint(release_positions(nrelpos)%geo_latitude)
-            igd = ig/100
-            igm = ig - igd*100
-            release_positions(nrelpos)%geo_latitude = &
-              float(igd) + float(igm)/60.
-            ig = nint(release_positions(nrelpos)%geo_longitude)
-            igd = ig/100
-            igm = ig - igd*100
-            release_positions(nrelpos)%geo_longitude = &
-              float(igd) + float(igm)/60.
+          if (.not. has_value) goto 12
+          if (.not. allocated(releases)) call allocate_releases(cinput(pname_start:pname_end), ntprof)
+          ncomp = ncomp + 1
+          if (ncomp > mcomp) goto 13
+          read (cinput(pname_start:pname_end), *, err=12) releases%relbqsec(ncomp, 1), &
+            component(ncomp)
+          if (any(releases%relbqsec(ncomp, 1) < 0.0)) goto 12
+          if (rscale > 0.) then
+            releases%relbqsec(ncomp, 1) = releases%relbqsec(ncomp, 1)*rscale
+          elseif (ntprof > 1) then
+            if (keyword == 'release.bq/step.comp') then
+              do i = 1, ntprof - 1
+                if (time_profile == TIME_PROFILE_BOMB) then
+                  ! everything released in one timestep
+                  rscale = 1.
+                else
+                  rscale = 1./(3600.*(releases(i + 1)%frelhour - releases(i)%frelhour))
+                end if
+                releases(i)%relbqsec(ncomp, 1) = releases(i)%relbqsec(ncomp, 1)*rscale
+              end do
+            end if
           end if
-        else
+
+          !..releases with different height classes
+          !..  height-classes defined here, time-profile defined outside
+          !..release.heightlower.m
+        case ('release.heightlower.m')
+          nrelheight = 0
+          if (.not. has_value .OR. nrelheight > 0) goto 12
+          i1 = nrelheight + 1
+          i2 = nrelheight
+          ios = 0
+          do while (ios == 0)
+            if (i2 > size(release1%rellower)) goto 13
+            i2 = i2 + 1
+            read (cinput(pname_start:pname_end), *, iostat=ios) (release1%rellower(ih), ih=i1, i2)
+          end do
+          i2 = i2 - 1
+          if (i2 < i1) goto 12
+          nrelheight = i2
+        case ('release.heightradius.m')
+          !..release.heightradius.m
+          if (.not. has_value .OR. nrelheight < 1) goto 12
+          read (cinput(pname_start:pname_end), *, err=12) (release1%relradius(ih), ih=1, nrelheight)
+          do ih = 1, nrelheight
+            if (release1%relradius(ih) < 0.) goto 12
+          end do
+        case ('release.heightupper.m')
+          !..release.heightupper.m
+          if (.not. has_value .OR. nrelheight < 1) goto 12
+          read (cinput(pname_start:pname_end), *, err=12) (release1%relupper(ih), ih=1, nrelheight)
+          do ih = 1, nrelheight
+            if (release1%relupper(ih) < release1%rellower(ih)) goto 12
+          end do
+        case ('release.file')
+          if (.not. has_value) goto 12
+          !..release.file
+          relfile = trim(cinput(pname_start:pname_end))
+          !..release.component
+        case ('release.components')
+          ncomp = 0
+          if (.not. has_value .OR. ncomp > 0) goto 12
+          i1 = ncomp + 1
+          i2 = ncomp
+          ios = 0
+          do while (ios == 0)
+            if (i2 > mcomp) goto 13
+            i2 = i2 + 1
+            read (cinput(pname_start:pname_end), *, iostat=ios) (component(i), i=i1, i2)
+          end do
+          i2 = i2 - 1
+          if (i2 < i1) goto 12
+          ncomp = i2
+
+        case ('max.totalparticles')
+          !..max.totalparticles
+          if (.not. has_value) goto 12
+          read (cinput(pname_start:pname_end), *, err=12) mpart
+          if (mpart < 1) goto 12
+        case ('max.totalplumes')
+          !..max.totalplumes
+          if (.not. has_value) goto 12
+          read (cinput(pname_start:pname_end), *, err=12) mplume
+          if (mplume < 1) goto 12
+        case ('max.particles.per.release')
+          !..max.particles.per.release
+          if (.not. has_value) goto 12
+          read (cinput(pname_start:pname_end), *, err=12) mprel
+          if (mprel < 1) goto 12
+        case ('component')
+          !..component= name
+          if (.not. has_value) goto 12
+          call push_down_dcomp(def_comp, top=d_comp)
+
+          d_comp%compname = cinput(pname_start:pname_end)
+          d_comp%output_name = d_comp%compname ! default
+        case ('merge.name')
+          !..output component name if merged
+          if (.not. associated(d_comp)) goto 12
+          d_comp%output_name = cinput(pname_start:pname_end)
+        case ('dry.dep.on')
+          !..dry.dep.on
+          if (.not. associated(d_comp)) goto 12
+          if (d_comp%kdrydep /= -1) goto 12
+          d_comp%kdrydep = 1
+        case ('dry.dep.off')
+          !..dry.dep.off
+          if (.not. associated(d_comp)) goto 12
+          if (d_comp%kdrydep /= -1) goto 12
+          d_comp%kdrydep = 0
+        case ('wet.dep.on')
+          !..wet.dep.on
+          if (.not. associated(d_comp)) goto 12
+          if (d_comp%kwetdep /= -1) goto 12
+          d_comp%kwetdep = 1
+        case ('wet.dep.off')
+          !..wet.dep.off
+          if (.not. associated(d_comp)) goto 12
+          if (d_comp%kwetdep /= -1) goto 12
+          d_comp%kwetdep = 0
+        case ('dry.dep.height')
+          !..dry.dep.height=
+          if (.not. has_value) goto 12
+          if (.not. associated(d_comp)) goto 12
+          if (d_comp%drydephgt >= 0.) goto 12
+          read (cinput(pname_start:pname_end), *, err=12) d_comp%drydephgt
+        case ('dry.dep.ratio')
+          !..dry.dep.ratio=
+          if (.not. has_value) goto 12
+          if (.not. associated(d_comp)) goto 12
+          if (d_comp%drydeprat >= 0.) goto 12
+          read (cinput(pname_start:pname_end), *, err=12) d_comp%drydeprat
+        case ('wet.dep.ratio')
+          write (error_unit, *) "wet.dep.ratio is no longer used"
           warning = .true.
-          write (error_unit, *) 'WARNING. Too many RELEASE POSITIONS'
-          write (error_unit, *) '  ==> ', cinput(pname_start:pname_end)
-        end if
-      case ('grid.input')
-        write(error_unit,*) "grid.input is deprecated (has no effect)"
-        warning = .true.
-      case ('grid.nctype')
-        !..grid.nctype=<emep/hirlam12>
-        if (.not. has_value) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) nctype
-        if (nctype == "ec_n1s") then
-          write(error_unit, *) "grid type 'ec_n1s' is deprecated, mapping to ec_det"
-          nctype = "ec_det"
-        end if
-        call init_meteo_params(nctype, ierror)
-        if (ierror /= 0) goto 12
+        case ('radioactive.decay.on')
+          !..radioactive.decay.on
+          if (.not. associated(d_comp)) goto 12
+          if (d_comp%kdecay /= -1) goto 12
+          d_comp%kdecay = 1
+        case ('radioactive.decay.bomb')
+          !..radioactive.decay.on
+          if (.not. associated(d_comp)) goto 12
+          if (d_comp%kdecay /= -1) goto 12
+          d_comp%kdecay = 2
+        case ('radioactive.decay.off')
+          !..radioactive.decay.off
+          if (.not. associated(d_comp)) goto 12
+          if (d_comp%kdecay /= -1) goto 12
+          d_comp%kdecay = 0
+        case ('half.lifetime.minutes')
+          !..half.lifetime.minutes=
+          if (.not. has_value) goto 12
+          if (.not. associated(d_comp)) goto 12
+          if (d_comp%halftime >= 0.) goto 12
+          read (cinput(pname_start:pname_end), *, err=12) d_comp%halftime
+          d_comp%halftime = d_comp%halftime/60.
+        case ('half.lifetime.hours')
+          !..half.lifetime.hours=
+          if (.not. has_value) goto 12
+          if (.not. associated(d_comp)) goto 12
+          if (d_comp%halftime >= 0.) goto 12
+          read (cinput(pname_start:pname_end), *, err=12) d_comp%halftime
+        case ('half.lifetime.days')
+          !..half.lifetime.days=
+          if (.not. has_value) goto 12
+          if (.not. associated(d_comp)) goto 12
+          if (d_comp%halftime >= 0.) goto 12
+          read (cinput(pname_start:pname_end), *, err=12) d_comp%halftime
+          d_comp%halftime = d_comp%halftime*24.
+        case ('half.lifetime.years')
+          !..half.lifetime.years=
+          if (.not. has_value) goto 12
+          if (.not. associated(d_comp)) goto 12
+          if (d_comp%halftime >= 0.) goto 12
+          read (cinput(pname_start:pname_end), *, err=12) d_comp%halftime
+          d_comp%halftime = d_comp%halftime*24.*365.25
+        case ('gravity.off')
+          !..gravity.off
+          if (.not. associated(d_comp)) goto 12
+          if (d_comp%grav_type /= GRAV_TYPE_UNDEFINED) goto 12
+          d_comp%grav_type = GRAV_TYPE_OFF
+        case ('gravity.fixed.m/s')
+          !..gravity.fixed.m/s
+          if (.not. associated(d_comp)) goto 12
+          if (d_comp%grav_type /= GRAV_TYPE_UNDEFINED) goto 12
+          d_comp%grav_type = GRAV_TYPE_FIXED
+          if (.not. has_value) goto 12
+          read (cinput(pname_start:pname_end), *, err=12) d_comp%gravityms
+          if (d_comp%gravityms <= 0.) goto 12
+        case ('gravity.fixed.cm/s')
+          !..gravity.fixed.cm/s
+          if (.not. associated(d_comp)) goto 12
+          if (d_comp%grav_type /= GRAV_TYPE_UNDEFINED) goto 12
+          d_comp%grav_type = GRAV_TYPE_FIXED
+          if (.not. has_value) goto 12
+          read (cinput(pname_start:pname_end), *, err=12) d_comp%gravityms
+          if (d_comp%gravityms <= 0.) goto 12
+          d_comp%gravityms = d_comp%gravityms*0.01
+        case ('radius.micrometer')
+          !..radius.micrometer  (for gravity computation)
+          if (.not. has_value) goto 12
+          if (.not. associated(d_comp)) goto 12
+          if (d_comp%radiusmym > 0.) goto 12
+          read (cinput(pname_start:pname_end), *, err=12) d_comp%radiusmym
+          if (d_comp%radiusmym <= 0.) goto 12
+        case ('density.g/cm3')
+          !..density.g/cm3  (for gravity computation)
+          if (.not. has_value) goto 12
+          if (.not. associated(d_comp)) goto 12
+          if (d_comp%densitygcm3 > 0.) goto 12
+          read (cinput(pname_start:pname_end), *, err=12) d_comp%densitygcm3
+          if (d_comp%densitygcm3 <= 0.) goto 12
+        case ('dpui.sv_per_bq_m3')
+          if (.not. has_value) goto 12
+          if (.not. associated(d_comp)) goto 12
+          if (d_comp%dpui > 0.0) goto 12
+          read (cinput(pname_start:pname_end), *, err=12) d_comp%dpui
+          if (d_comp%dpui <= 0.0) goto 12
+        case ('field.identification')
+          !..field.identification=
+          if (.not. has_value) goto 12
+          if (.not. associated(d_comp)) goto 12
+          if (d_comp%idcomp >= 0) goto 12
+          read (cinput(pname_start:pname_end), *, err=12) d_comp%idcomp
+          if (d_comp%idcomp < 1) goto 12
+          do i = 1, size(def_comp) - 1
+            if (def_comp(i)%idcomp == d_comp%idcomp) goto 12
+          end do
+        case ('field.use_model_wind_instead_of_10m')
+          ! FIELD.USE_MODEL_WIND_INSTEAD_OF_10M= [.false.]/.true
+          if (.not. has_value) goto 12
+          read (cinput(pname_start:pname_end), *, err=12) met_params%use_model_wind_for_10m
+        case ('field.boundary_layer.on')
+          ! use boundary layer from meteo data
+          met_params%read_hbl = .true.
+        case ('field.boundary_layer.off')
+          ! calculate boundary layer from reynolds number
+          met_params%read_hbl = .false.
+        case ('precip(mm/h).probab')
+          !..precip(mm/h).probab=<precip_intensity,probability, ...>
+          write (error_unit, *) "precip(mm/h).probab is no longer used"
+          warning = .true.
+        case ('remove.relative.mass.limit')
+          !..remove.relative.mass.limit=
+          if (.not. has_value) goto 12
+          if (rmlimit >= 0.00) goto 12
+          read (cinput(pname_start:pname_end), *, err=12) rmlimit
+          if (rmlimit < 0.0 .OR. rmlimit > 0.5) goto 12
+        case ('particles.split.hours')
+          !..split particles after hours
+          if (.not. has_value) goto 12
+          read (cinput(pname_start:pname_end), *, err=12) split_particle_hours
+        case ('step.hour.input.min')
+          !..step.hour.input.min=<hours>
+          if (.not. has_value) goto 12
+          read (cinput(pname_start:pname_end), *, err=12) nhfmin
+        case ('step.hour.input.max')
+          !..step.hour.input.max=<hours>
+          if (.not. has_value) goto 12
+          read (cinput(pname_start:pname_end), *, err=12) nhfmax
+        case ('step.hour.output.fields')
+          !..step.hour.output.fields=<hours, may be fractional>
+          if (.not. has_value) goto 12
+          read (cinput(pname_start:pname_end), *, err=12) hfout
+        case ('synoptic.output')
+          !..synoptic.output ... output at whole-hour intervals aligned with meteorology
+          synoptic_output = .true.
+        case ('asynoptic.output')
+          !..asynoptic.output ... output at fixed intervals after start
+          synoptic_output = .false.
+        case ('output.gaussian_smoothing.maxhr,size')
+          !..output.gaussian_smoothing.maxHR,SIZE=<hours>, kernel-size
+          if (.not. has_value) goto 12
+          !.. read two integer values, first maxHr, second kernel size
+          read (cinput(pname_start:pname_end), *, err=12) gaussian_smoothing_max_age_hr, &
+            gaussian_smoothing_kernel_size
+        case ('total.components.off')
+          !..total.components.off
+          itotcomp = 0
+        case ('total.components.on')
+          !..total.components.on
+          itotcomp = 1
+        case ('mslp.on')
+          !..mslp.on
+          imslp = 1
+        case ('mslp.off')
+          !..mslp.off
+          imslp = 0
+        case ('precipitation.on')
+          !..precipitation.on
+          precipitation_in_output = .true.
+          met_params%need_precipitation = .true.
+        case ('precipitation.off')
+          !..precipitation.off
+          precipitation_in_output = .false.
+          met_params%need_precipitation = .false.
+        case ('model.level.fields.on')
+          !..model.level.fields.on
+          imodlevel = .true.
+        case ('model.level.fields.inst')
+          !..model.level.fields.off
+          imodlevel = .true.
+          modlevel_is_average = .false.
+        case ('model.level.fields.avg')
+          !..model.level.fields.off
+          imodlevel = .true.
+          modlevel_is_average = .true.
+        case ('model.level.fields.off')
+          !..model.level.fields.off
+          imodlevel = .false.
+        case ('model.level.fields.dumptime')
+          !..levelfields are dump-data
+          if (.not. has_value) goto 12
+          read (cinput(pname_start:pname_end), *, err=12) modleveldump
+        case ('output.column_max_conc.enable')
+          compute_column_max_conc = .true.
+        case ('output.column_max_conc.disable')
+          compute_column_max_conc = .false.
+        case ('output.aircraft_doserate.enable')
+          compute_aircraft_doserate = .true.
+        case ('output.aircraft_doserate.disable')
+          compute_aircraft_doserate = .false.
+        case ('output.aircraft_doserate.threshold.sv_h')
+          if (.not. has_value) goto 12
+          read (cinput(pname_start:pname_end), *, err=12) aircraft_doserate_threshold
+        case ('output.column.on')
+          output_column = .true.
+        case ('release.pos')
+          !..release.pos=<'name',latitude,longitude>
+          if (.not. has_value) goto 12
+          if (nrelpos < size(release_positions)) then
+            nrelpos = nrelpos + 1
+            read (cinput(pname_start:pname_end), *, err=12) release_positions(nrelpos)%name, &
+              release_positions(nrelpos)%geo_latitude, &
+              release_positions(nrelpos)%geo_longitude
+            if (ipostyp == 2) then
+              ig = nint(release_positions(nrelpos)%geo_latitude)
+              igd = ig/100
+              igm = ig - igd*100
+              release_positions(nrelpos)%geo_latitude = &
+                float(igd) + float(igm)/60.
+              ig = nint(release_positions(nrelpos)%geo_longitude)
+              igd = ig/100
+              igm = ig - igd*100
+              release_positions(nrelpos)%geo_longitude = &
+                float(igd) + float(igm)/60.
+            end if
+          else
+            warning = .true.
+            write (error_unit, *) 'WARNING. Too many RELEASE POSITIONS'
+            write (error_unit, *) '  ==> ', cinput(pname_start:pname_end)
+          end if
+        case ('grid.input')
+          write(error_unit,*) "grid.input is deprecated (has no effect)"
+          warning = .true.
+        case ('grid.nctype')
+          !..grid.nctype=<emep/hirlam12>
+          if (.not. has_value) goto 12
+          read (cinput(pname_start:pname_end), *, err=12) nctype
+          if (nctype == "ec_n1s") then
+            write(error_unit, *) "grid type 'ec_n1s' is deprecated, mapping to ec_det"
+            nctype = "ec_det"
+          end if
+          call init_meteo_params(nctype, ierror)
+          if (ierror /= 0) goto 12
 #if defined(SNAP_EXPERIMENTAL)
-      case ('grid.nctype.z0')
-        if (.not. has_value) goto 12
-        read(cinput(pname_start:pname_end), *, err=12) met_params%z0
+        case ('grid.nctype.z0')
+          if (.not. has_value) goto 12
+          read(cinput(pname_start:pname_end), *, err=12) met_params%z0
 #endif
-      case ('grid.size')
-        !..grid.size=<nx,ny>
-        if (.not. has_value) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) nx, ny
-      case ('grid.gparam')
-        !..grid.gparam=<igtype,gparam(6)>
-        if (.not. has_value) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) igtype, (gparam(i), i=1, 6)
-      case ('grid.run')
-        write(error_unit,*) "grid.run is deprecated (has no effect)"
-        warning = .true.
-      case ('ensemble_member.input')
-        read (cinput(pname_start:pname_end), *, err=12) enspos
-      case ('data.sigma.levels')
-        !..data.sigma.levels
-        ivcoor = 2
-      case ('data.eta.levels')
-        !..data.eta.levels
-        ivcoor = 10
-      case ('levels.input')
-        !..levels.input=<num_levels, 0,kk,k,k,k,....,1>
-        !..levels.input=<num_levels, 0,kk,k,k,k,....,18>
-        if (.not. has_value) goto 12
-        if (allocated(klevel_manual)) then
-          write (error_unit, *) "re-assigning levels"
-          DEALLOCATE(klevel_manual, STAT=AllocateStatus)
-        end if
-        read (cinput(pname_start:pname_end), *, err=12) nlevel
-        nk = nlevel
-        ALLOCATE(klevel_manual(nk), STAT=AllocateStatus)
-        IF (AllocateStatus /= 0) ERROR STOP AllocateErrorMessage
-
-        read (cinput(pname_start:pname_end), *, err=12) nlevel, (klevel_manual(i), i=1, nlevel)
-        if (klevel_manual(1) /= 0 .OR. klevel_manual(2) == 0) goto 12
-
-        do i = nk - 1, 2, -1
-          if (klevel_manual(i) <= klevel_manual(i + 1)) goto 12
-        end do
-      case ('forecast.hour.min')
-        warning = .true.
-        write(error_unit, *) "FORECAST.HOUR.MIN (forecast reference time testing) is currently not implemented"
-      case ('forecast.hour.max')
-        warning = .true.
-        write(error_unit, *) "FORECAST.HOUR.MAX (forecast reference time testing) is currently not implemented"
-      case ('field.type')
-        !..field.type felt, netcdf or fimex
-        if (.not. has_value) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) ftype
-      case ('fimex.config')
-#if !defined(FIMEX)
-        write (error_unit, *) "fimex.config is only used when compiled with fimex support"
-        warning = .true.
-#endif
-        !..fimex.config config filename, only used when ftype=fimex
-        if (.not. has_value) then
-          fimex_config = ""
-        else
-          fimex_config = cinput(pname_start:pname_end)
-        endif
-      case ('fimex.file_type')
-        !..fimex.file_type grib,netcdf,felt,ncml (known fimex filetypes), only used when ftype=fimex
-        if (.not. has_value) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) fimex_type
-      case ('fimex.interpolation')
-        !..fimex.interpolation e.g. bilinear|+proj=stere +R=6371000 +lat_ts=60 +lat_0=0 +no_defs|0,1000,...,50000|0,1000,...,50000|m
-        if (.not. has_value) goto 12
-        fimex_interpolation = cinput(pname_start:pname_end)
-        if (ftype == "fimex") then
-          if (parse_interpolator() == 1) then
-            write (error_unit, *) 'interpolation input wrong:', trim(fimex_interpolation)
-            ierror = 1
-          else
-            write(error_unit,*) "interpolation enabled:", fint%method, trim(fint%proj), &
-              trim(fint%x_axis), "|", &
-              trim(fint%y_axis), "|", fint%unit_is_degree
-          end if
-        else
-          write(error_unit,*) "fimex.interpolation ignored when field.type not fimex: ", trim(ftype)
-        end if
-      case ('field.input')
-        !..field.input=  felt_file_name
-        if (.not. has_value) goto 12
-        if (nfilef < size(filef)) then
-          nfilef = nfilef + 1
-          if (cinput(pname_start:pname_start) == '''' .OR. &
-              cinput(pname_start:pname_start) == '"') then
-            read (cinput(pname_start:pname_end), *, err=12) filef(nfilef)
-          else
-            filef(nfilef) = cinput(pname_start:pname_end)
-          endif
-        else
+        case ('grid.size')
+          !..grid.size=<nx,ny>
+          if (.not. has_value) goto 12
+          read (cinput(pname_start:pname_end), *, err=12) nx, ny
+        case ('grid.gparam')
+          !..grid.gparam=<igtype,gparam(6)>
+          if (.not. has_value) goto 12
+          read (cinput(pname_start:pname_end), *, err=12) igtype, (gparam(i), i=1, 6)
+        case ('grid.run')
+          write(error_unit,*) "grid.run is deprecated (has no effect)"
           warning = .true.
-          write (error_unit, *) 'WARNING. Too many FIELD INPUT files'
-          write (error_unit, *) '  ==> ', cinput(pname_start:pname_end)
-        end if
-      case ('field.spinupsteps')
-        !..field.spinupsteps= 1
-        if (.not. has_value) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) spinup_steps
-        if (spinup_steps < 0) goto 12
-      case ('field_time.forecast')
-        !..field_time.forecast ... use forecast length in output field ident.
-        ifltim = 0
-      case ('field_time.valid')
-        !..field_time.valid ...... use valid time in output field identification
-        ifltim = 1
-      case ('field.output')
-        !..field.output= <'file_name'>
-        if (.not. has_value) goto 12
-        fldfil = cinput(pname_start:pname_end)
-      case ('field.output_resolution_factor')
-        !..field.output= <'file_name'>
-        if (.not. has_value) goto 12
-        read (cinput(pname_start:pname_end), *, err=12) output_resolution_factor
-      case ('field.outtype')
-        !..field.outtype= <'felt|netcdf'>
-        if (.not. has_value) goto 12
-        fldtype = cinput(pname_start:pname_end)
-      case ('title')
-        allocate (character(len=len_trim(cinput(pname_start:pname_end))) :: nctitle)
-        nctitle(:) = trim(cinput(pname_start:pname_end))
-      case ('field.daily.output.on')
-        idailyout = 1
-      case ('field.daily.output.off')
-        idailyout = 0
-      case ('simulation.start.date')
-        if (.not. has_value) goto 12
-        simulation_start = cinput(pname_start:pname_end)
-      case ('log.file')
-        !..log.file= <'log_file_name'>
-        if (.not. has_value) goto 12
-        logfile = cinput(pname_start:pname_end)
-      case ('async_io.on')
-        use_async_io = .true.
-      case ('async_io.off')
-        use_async_io = .false.
-      case ('debug.off')
-        !..debug.off
-        idebug = 0
-      case ('debug.on')
-        !..debug.on
-        idebug = 1
-      case('debug.massbalance.file')
-        if (.not.has_value) goto 12
-        massbalance_filename = cinput(pname_start:pname_end)
-      case ('ensemble.project.output.off')
-        write (error_unit, *) "ensemble.project is deprecated, key is not used"
-        warning = .true.
+        case ('ensemble_member.input')
+          read (cinput(pname_start:pname_end), *, err=12) enspos
+        case ('data.sigma.levels')
+          !..data.sigma.levels
+          ivcoor = 2
+        case ('data.eta.levels')
+          !..data.eta.levels
+          ivcoor = 10
+        case ('levels.input')
+          !..levels.input=<num_levels, 0,kk,k,k,k,....,1>
+          !..levels.input=<num_levels, 0,kk,k,k,k,....,18>
+          if (.not. has_value) goto 12
+          if (allocated(klevel_manual)) then
+            write (error_unit, *) "re-assigning levels"
+            DEALLOCATE(klevel_manual, STAT=AllocateStatus)
+          end if
+          read (cinput(pname_start:pname_end), *, err=12) nlevel
+          nk = nlevel
+          ALLOCATE(klevel_manual(nk), STAT=AllocateStatus)
+          IF (AllocateStatus /= 0) ERROR STOP AllocateErrorMessage
 
-      case ('random.seed')
-        if (.not. has_value) goto 12
-        read(cinput(pname_start:pname_end), *, err=12) extra_seed
+          read (cinput(pname_start:pname_end), *, err=12) nlevel, (klevel_manual(i), i=1, nlevel)
+          if (klevel_manual(1) /= 0 .OR. klevel_manual(2) == 0) goto 12
 
-      case ('log.sourceterm.file')
-        sourcefile = cinput(pname_start:pname_end)
+          do i = nk - 1, 2, -1
+            if (klevel_manual(i) <= klevel_manual(i + 1)) goto 12
+          end do
+        case ('forecast.hour.min')
+          warning = .true.
+          write(error_unit, *) "FORECAST.HOUR.MIN (forecast reference time testing) is currently not implemented"
+        case ('forecast.hour.max')
+          warning = .true.
+          write(error_unit, *) "FORECAST.HOUR.MAX (forecast reference time testing) is currently not implemented"
+        case ('field.type')
+          !..field.type felt, netcdf or fimex
+          if (.not. has_value) goto 12
+          read (cinput(pname_start:pname_end), *, err=12) ftype
+        case ('fimex.config')
+#if !defined(FIMEX)
+          write (error_unit, *) "fimex.config is only used when compiled with fimex support"
+          warning = .true.
+#endif
+          !..fimex.config config filename, only used when ftype=fimex
+          if (.not. has_value) then
+            fimex_config = ""
+          else
+            fimex_config = cinput(pname_start:pname_end)
+          endif
+        case ('fimex.file_type')
+          !..fimex.file_type grib,netcdf,felt,ncml (known fimex filetypes), only used when ftype=fimex
+          if (.not. has_value) goto 12
+          read (cinput(pname_start:pname_end), *, err=12) fimex_type
+        case ('fimex.interpolation')
+          !..fimex.interpolation e.g. bilinear|+proj=stere +R=6371000 +lat_ts=60 +lat_0=0 +no_defs|0,1000,...,50000|0,1000,...,50000|m
+          if (.not. has_value) goto 12
+          fimex_interpolation = cinput(pname_start:pname_end)
+          if (ftype == "fimex") then
+            if (parse_interpolator() == 1) then
+              write (error_unit, *) 'interpolation input wrong:', trim(fimex_interpolation)
+              ierror = 1
+            else
+              write(error_unit,*) "interpolation enabled:", fint%method, trim(fint%proj), &
+                trim(fint%x_axis), "|", &
+                trim(fint%y_axis), "|", fint%unit_is_degree
+            end if
+          else
+            write(error_unit,*) "fimex.interpolation ignored when field.type not fimex: ", trim(ftype)
+          end if
+        case ('field.input')
+          !..field.input=  felt_file_name
+          if (.not. has_value) goto 12
+          if (nfilef < size(filef)) then
+            nfilef = nfilef + 1
+            if (cinput(pname_start:pname_start) == '''' .OR. &
+                cinput(pname_start:pname_start) == '"') then
+              read (cinput(pname_start:pname_end), *, err=12) filef(nfilef)
+            else
+              filef(nfilef) = cinput(pname_start:pname_end)
+            endif
+          else
+            warning = .true.
+            write (error_unit, *) 'WARNING. Too many FIELD INPUT files'
+            write (error_unit, *) '  ==> ', cinput(pname_start:pname_end)
+          end if
+        case ('field.spinupsteps')
+          !..field.spinupsteps= 1
+          if (.not. has_value) goto 12
+          read (cinput(pname_start:pname_end), *, err=12) spinup_steps
+          if (spinup_steps < 0) goto 12
+        case ('field_time.forecast')
+          !..field_time.forecast ... use forecast length in output field ident.
+          ifltim = 0
+        case ('field_time.valid')
+          !..field_time.valid ...... use valid time in output field identification
+          ifltim = 1
+        case ('field.output')
+          !..field.output= <'file_name'>
+          if (.not. has_value) goto 12
+          fldfil = cinput(pname_start:pname_end)
+        case ('field.output_resolution_factor')
+          !..field.output= <'file_name'>
+          if (.not. has_value) goto 12
+          read (cinput(pname_start:pname_end), *, err=12) output_resolution_factor
+        case ('field.outtype')
+          !..field.outtype= <'felt|netcdf'>
+          if (.not. has_value) goto 12
+          fldtype = cinput(pname_start:pname_end)
+        case ('title')
+          allocate (character(len=len_trim(cinput(pname_start:pname_end))) :: nctitle)
+          nctitle(:) = trim(cinput(pname_start:pname_end))
+        case ('field.daily.output.on')
+          idailyout = 1
+        case ('field.daily.output.off')
+          idailyout = 0
+        case ('simulation.start.date')
+          if (.not. has_value) goto 12
+          simulation_start = cinput(pname_start:pname_end)
+        case ('log.file')
+          !..log.file= <'log_file_name'>
+          if (.not. has_value) goto 12
+          logfile = cinput(pname_start:pname_end)
+        case ('async_io.on')
+          use_async_io = .true.
+        case ('async_io.off')
+          use_async_io = .false.
+        case ('debug.off')
+          !..debug.off
+          idebug = 0
+        case ('debug.on')
+          !..debug.on
+          idebug = 1
+        case('debug.massbalance.file')
+          if (.not.has_value) goto 12
+          massbalance_filename = cinput(pname_start:pname_end)
+        case ('ensemble.project.output.off')
+          write (error_unit, *) "ensemble.project is deprecated, key is not used"
+          warning = .true.
 
-      ! Old argos options
-      case ('argos.output.off')
-        write (error_unit, *) "option argos.output.off is removed"
-        warning = .true.
-      case ('argos.output.on')
-        write (error_unit, *) "option argos.output.on is removed"
-        warning = .true.
-      case ('argos.output.deposition.file')
-        write (error_unit, *) "option argos.output.deposition.file is removed"
-        warning = .true.
-      case ('argos.output.concentration.file')
-        write (error_unit, *) "option argos.output.concentration.file is removed"
-        warning = .true.
-      case ('argos.output.totaldose.file')
-        write (error_unit, *) "option argos.output.totaldose.file is removed"
-        warning = .true.
-      case ('argos.output.timestep.hour')
-        write (error_unit, *) "option argos.output.timestep.hour is removed"
-        warning = .true.
+        case ('random.seed')
+          if (.not. has_value) goto 12
+          read(cinput(pname_start:pname_end), *, err=12) extra_seed
 
-      case ('grid.autodetect.from_input')
-        autodetect_grid_params = .true.
-      case ('end')
-        !..end
-        end_loop = .true.
-      case default
-        write (error_unit, *) 'ERROR.  Unknown input:'
-        write (error_unit, *) cinput
-        goto 12
+        case ('log.sourceterm.file')
+          sourcefile = cinput(pname_start:pname_end)
+
+        ! Old argos options
+        case ('argos.output.off')
+          write (error_unit, *) "option argos.output.off is removed"
+          warning = .true.
+        case ('argos.output.on')
+          write (error_unit, *) "option argos.output.on is removed"
+          warning = .true.
+        case ('argos.output.deposition.file')
+          write (error_unit, *) "option argos.output.deposition.file is removed"
+          warning = .true.
+        case ('argos.output.concentration.file')
+          write (error_unit, *) "option argos.output.concentration.file is removed"
+          warning = .true.
+        case ('argos.output.totaldose.file')
+          write (error_unit, *) "option argos.output.totaldose.file is removed"
+          warning = .true.
+        case ('argos.output.timestep.hour')
+          write (error_unit, *) "option argos.output.timestep.hour is removed"
+          warning = .true.
+
+        case ('grid.autodetect.from_input')
+          autodetect_grid_params = .true.
+        case ('end')
+          !..end
+          end_loop = .true.
+        case default
+          write (error_unit, *) 'ERROR.  Unknown input:'
+          write (error_unit, *) cinput
+          goto 12
       end select
     end do
 
