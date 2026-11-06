@@ -495,6 +495,7 @@ subroutine release(istep,nsteph,tf1,tf2,tnow,ierror)
     !.....end do nrad=1,numradius
     end do
   !++++++++++++++++++++++++++++++++++++++++++
+    
     do n=1,ncomp
       run_comp(n)%totalbq = run_comp(n)%totalbq + pbq(n)*nrel(n)
       run_comp(n)%numtotal = run_comp(n)%numtotal + nrel(n)
