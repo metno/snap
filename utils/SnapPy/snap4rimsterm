@@ -196,7 +196,7 @@ def rimsterm2input(rimxml, argosxml, met_model, argos_operational) -> tuple[str,
     outputTimestep = 3
     is_bomb = False
     is_qcTest = False
-    if argosxml:
+    if argosxml is not None:
         runTime = int(argosxml.find("RunLength").text)
         outputTimestep = int(argosxml.find("OutputTimestep").text)
         is_bomb = request_is_bomb(argosxml)
@@ -245,7 +245,9 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
             MetModel.Era5: [os.path.join(meteo_path,"ERA5")]
         }
         res.MET_FILENAME_PATTERN[MetModel.Meps2p5] = "meps_det_2_5km_{year:04d}{month:02d}{day:02d}T{UTC:02d}Z.nc"
+        res.MET_FILENAME_PATTERN[MetModel.Era5Nancy] = "meteo{year:04d}{month:02d}{day:02d}_{UTC:02d}.nc"
         res._ECINPUTDIRS=[os.path.join(meteo_path,"EC")]
+
     if met_model == MetModel.NrpaEC0p1:
         files = res.getECMeteorologyFiles(dtime=startDTime, run_hours=int(runTime))
         if len(files) == 0:
@@ -385,7 +387,7 @@ def snap4rimsterm(
             # don't raise exception here, just log, data might still be useful without toa
             errlog.write(f"snapAddToa snap.nc in {basedir} failed: {ex}\n")
 
-    if argosRoot:
+    if argosRoot is not None:
         for oformat in argosRoot.findall("OutputFormat"):
             print(f"output in format: {oformat.text}")
             if oformat.text == "GRIB":
@@ -434,7 +436,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--metmodel",
-        help="select the NWP input model, nrpa_ec_0p1, meps_2_5km, ec_0p1_global, ec_0p1_europe, gfs_grib_filter_fimex, icon_0p25_global, era5_nancy",
+        help="select the NWP input model, nrpa_ec_0p1, meps_2_5km, ec_0p1_global, ec_0p1_europe, gfs_grib_filter_fimex, icon_0p25_global, era5_nancy, era5",
         required=True,
         default="nrpa_ec_0p1",
     )
