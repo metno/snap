@@ -401,10 +401,6 @@ def snap4rimsterm(
         directory = os.path.join(os.path.dirname(res.directory), "resources")
         isotopefile = os.path.join(directory, "isotope_list.txt")
 
-        
-        if os.path.exists(outfile):
-            os.remove(outfile)
-        
         shutil.copy2(isotopefile,outfile)
 
 
