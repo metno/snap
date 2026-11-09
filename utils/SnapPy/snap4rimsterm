@@ -320,6 +320,7 @@ def snap4rimsterm(
     rimsterm, argosrequest, argos_operational, basedir, ident, met_model, bitmapCompress
 ):
     """run snap with rimsterm definition in basedir dir"""
+
     tree = ET.parse(rimsterm)
     root = tree.getroot()
     assert root.tag == f"CBRN_Sourceterm", "Not a rimsterm input file: {rimsterm}"
@@ -386,6 +387,23 @@ def snap4rimsterm(
             errlog.write(f"snapAddToa snap.nc in {basedir} failed: {ex}\n")
 
     if argosRoot:
+        res = Resources()
+
+        outfile = os.path.join(basedir, f"{ident}_sourceterm.csv")
+        snapSource = os.path.join(basedir, "snap_sourceterm.csv")
+        
+        if os.path.exists(outfile):
+            os.unlink(outfile)  # avoid symlink exception
+        os.symlink(snapSource, outfile)  
+
+        outfile = os.path.join(basedir, f"{ident}_isotope_list.txt")
+        directory = os.path.join(os.path.dirname(res.directory), "resources")
+        isotopefile = os.path.join(directory, "isotope_list.txt")
+
+        if os.path.exists(outfile):
+            os.unlink(outfile)  # avoid symlink exception
+        os.symlink(isotopefile, outfile)  
+
         for oformat in argosRoot.findall("OutputFormat"):
             print(f"output in format: {oformat.text}")
             if oformat.text == "GRIB":
