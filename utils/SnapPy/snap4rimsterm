@@ -403,9 +403,10 @@ def snap4rimsterm(
 
         
         if os.path.exists(outfile):
-            os.remove(outfile)  # avoid symlink exception
+            os.remove(outfile)
+        
         shutil.copy2(isotopefile,outfile)
-        # os.symlink(isotopefile, outfile)  
+
 
         for oformat in argosRoot.findall("OutputFormat"):
             print(f"output in format: {oformat.text}")
