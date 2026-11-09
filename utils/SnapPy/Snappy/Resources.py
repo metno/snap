@@ -46,6 +46,7 @@ class Resources(ResourcesCommon):
     _OUTPUTDIR = "{LF_PROD_DIR}/atom/runs"
     _OUTPUTDIR_AUTOMATED = "{LF_PROD_DIR}/atom/automated_runs"
     _ECINPUTDIRS = ["{LF_PROD_DIR}/atom/Meteorology/EC2CWF/"]
+    _QC_MET_DIR = "{LUSTREDIR}/project/fou/kl/cerad/Meteorology/QC/"
 
     # ECINPUTDIRS = ["/lustre/storeB/users/heikok/Meteorology/ecdis2cwf/"]
     EC_FILENAME_PATTERN = "meteo{year:04d}{month:02d}{day:02d}_{dayoffset:02d}.nc"
@@ -75,6 +76,23 @@ class Resources(ResourcesCommon):
         MetModel.Era5: "meteo{year:04d}{month:02d}{day:02d}_{UTC:02d}.nc",
         MetModel.EC0p1Global: "ec_atmo_0_1deg_{year:04d}{month:02d}{day:02d}T{UTC:02d}0000Z_3h.nc",
     }
+    
+    _QC_INPUTDIRS = {
+        MetModel.NrpaEC0p1: [os.path.join(_QC_MET_DIR,"EC")],
+        MetModel.Meps2p5: [os.path.join(_QC_MET_DIR,"MEPS")],
+        MetModel.Icon0p25Global: [os.path.join(_QC_MET_DIR,"ICON")],
+        MetModel.Era5Nancy: [os.path.join(_QC_MET_DIR,"ERA5")],
+        MetModel.Era5: [os.path.join(_QC_MET_DIR,"ERA5")]
+    }
+
+    QC_FILENAME_PATTERN = {
+        MetModel.NrpaEC0p1: EC_FILE_PATTERN,
+        MetModel.Meps2p5: "meps_det_2_5km_{year:04d}{month:02d}{day:02d}T{UTC:02d}Z.nc",
+        MetModel.Icon0p25Global: MET_FILENAME_PATTERN["icon_0p25_global"],
+        MetModel.Era5Nancy: "meteo{year:04d}{month:02d}{day:02d}_{UTC:02d}.nc",
+        MetModel.Era5: MET_FILENAME_PATTERN["era5"]
+    }
+
 
     def __init__(self):
         """
@@ -536,39 +554,20 @@ GRAVITY.FIXED.M/S=0.0002
                 return filename
         return None
 
-    def getMetGlobalInputDirs(self, metmodel):
+    def getMetGlobalInputDirs(self, metmodel,is_qcTest=False):
+        if is_qcTest:
+            return self.lustreTemplateDirs(self._QC_INPUTDIRS[metmodel])
         return self.lustreTemplateDirs(self._MET_GLOBAL_INPUTDIRS[metmodel])
 
-    def getMetInputDirs(self, metmodel):
+    def getMetInputDirs(self, metmodel,is_qcTest=False):
+        if is_qcTest:
+            return self.lustreTemplateDirs(self._QC_INPUTDIRS[metmodel])
         return self.lustreTemplateDirs(self._MET_INPUTDIRS[metmodel])
 
-    def getECInputDirs(self):
+    def getECInputDirs(self,is_qcTest=False):
+        if is_qcTest:
+            return self.lustreTemplateDirs(self._QC_INPUTDIRS[MetModel.NrpaEC0p1])
         return self.lustreTemplateDirs(self._ECINPUTDIRS)
-
-    def getECRuns(self):
-        """Find ec-runs with at least 2 days of forecast"""
-        relevant = []
-        today = datetime.combine(date.today(), time(0, 0, 0))
-        start = today - timedelta(hours=72)
-        tomorrow = today + timedelta(days=1)
-        while start < tomorrow:
-            for utc in [0, 6, 12, 18]:
-                file = self.EC_FILE_PATTERN.format(
-                    dayoffset=2,
-                    UTC=utc,
-                    year=start.year,
-                    month=start.month,
-                    day=start.day,
-                )
-                filename = self._findFileInPathes(file, self.getECInputDirs())
-                if filename is not None:
-                    relevant.append(
-                        "{year:04d}-{month:02d}-{day:02d}_{UTC:02d}".format(
-                            UTC=utc, year=start.year, month=start.month, day=start.day
-                        )
-                    )
-            start += timedelta(days=1)
-        return relevant
 
     def getRequiredMeteorologyFiles(
         self,
@@ -576,6 +575,7 @@ GRAVITY.FIXED.M/S=0.0002
         dtime: datetime,
         run_hours: int,
         fixed_run="best",
+        is_qcTest=False
     ):
         """Get available meteorology files for the last few days around dtime and run_hours.
             Works for MEPS 2.5km and EC Global Meteorology.
@@ -599,6 +599,11 @@ GRAVITY.FIXED.M/S=0.0002
             )
 
         relevant_dates = []
+
+        if is_qcTest:
+            pattern = self.QC_FILENAME_PATTERN[metmodel]
+        else:
+            pattern = self.MET_FILENAME_PATTERN[metmodel]
 
         # only best currently implemented
         if fixed_run == "best":
@@ -639,7 +644,8 @@ GRAVITY.FIXED.M/S=0.0002
                 while filename is None and i < len(cases) - 1:
                     new_utc = cases[i][0]
                     dayoffset = cases[i][1]
-                    file = self.MET_FILENAME_PATTERN[metmodel].format(
+
+                    file = pattern.format(
                         UTC=new_utc,
                         year=(start - timedelta(days=dayoffset)).year,
                         month=(start - timedelta(days=dayoffset)).month,
@@ -647,7 +653,7 @@ GRAVITY.FIXED.M/S=0.0002
                     )
 
                     filename = self._findFileInPathes(
-                        file, self.getMetInputDirs(metmodel)
+                        file, self.getMetInputDirs(metmodel,is_qcTest)
                     )
 
                     i += 1
@@ -663,11 +669,11 @@ GRAVITY.FIXED.M/S=0.0002
                         and utc > (finish + timedelta(hours=3)).hour
                     ):
                         return relevant_dates
-                    file = self.MET_FILENAME_PATTERN[metmodel].format(
+                    file = pattern.format(
                         UTC=utc, year=day.year, month=day.month, day=day.day
                     )
                     filename = self._findFileInPathes(
-                        file, self.getMetInputDirs(metmodel)
+                        file, self.getMetInputDirs(metmodel, is_qcTest)
                     )
 
                     if filename is not None:
@@ -678,7 +684,7 @@ GRAVITY.FIXED.M/S=0.0002
 
                         cases = [(u, d) for d in range(1, 6) for u in utc_list[::-1]]
                         for new_utc, dayoffset in cases:
-                            file = self.MET_FILENAME_PATTERN[metmodel].format(
+                            file = pattern.format(
                                 UTC=new_utc,
                                 year=(day - timedelta(days=dayoffset)).year,
                                 month=(day - timedelta(days=dayoffset)).month,
@@ -686,7 +692,7 @@ GRAVITY.FIXED.M/S=0.0002
                             )
 
                             filename = self._findFileInPathes(
-                                file, self.getMetInputDirs(metmodel)
+                                file, self.getMetInputDirs(metmodel, is_qcTest)
                             )
                             if filename is not None:
                                 logger.debug(f"Took {file} instead")
@@ -715,6 +721,7 @@ GRAVITY.FIXED.M/S=0.0002
         run_hours: int,
         fixed_run="best",
         prod_check=True,
+        is_qcTest=False
     ):
         """Get available meteorology files for the last few days around dtime and run_hours.
 
@@ -727,9 +734,14 @@ GRAVITY.FIXED.M/S=0.0002
         """
         relevant_dates = []
 
-        if metmodel not in self.MET_FILENAME_PATTERN:
+        if is_qcTest:
+            pattern = self.QC_FILENAME_PATTERN
+        else:
+            pattern = self.MET_FILENAME_PATTERN
+
+        if metmodel not in pattern:
             raise NotImplementedError(
-                f"metmodel='{metmodel}' not implememented for meteorology"
+                f"metmodel='{metmodel}' not implememented for meteorology (file pattern)"
             )
         if metmodel not in self._MET_INPUTDIRS:
             raise NotImplementedError(
@@ -758,11 +770,11 @@ GRAVITY.FIXED.M/S=0.0002
             # loop needs to have latest model runs/hindcast runs last
             for day in days:
                 for utc in [0, 6, 12, 18]:
-                    file = self.MET_FILENAME_PATTERN[metmodel].format(
+                    file = pattern[metmodel].format(
                         UTC=utc, year=day.year, month=day.month, day=day.day
                     )
                     filename = self._findFileInPathes(
-                        file, self.getMetInputDirs(metmodel)
+                        file, self.getMETInputDirs(metmodel, is_qcTest)
                     )
                     if filename is not None:
                         fmtime = os.stat(filename).st_mtime
@@ -775,7 +787,7 @@ GRAVITY.FIXED.M/S=0.0002
         return relevant_dates
 
     def getECMeteorologyFiles(
-        self, dtime: datetime, run_hours: int, fixed_run="best", pattern=""
+        self, dtime: datetime, run_hours: int, fixed_run="best", pattern="",is_qcTest=False
     ) -> list[str]:
         """Get available meteorology files for the last few days around dtime and run_hours.
             Works for EC-emep meteorology
@@ -823,7 +835,7 @@ GRAVITY.FIXED.M/S=0.0002
                             month=today.month,
                             day=today.day,
                         )
-                        filename = self._findFileInPathes(file, self.getECInputDirs())
+                        filename = self._findFileInPathes(file, self.getECInputDirs(is_qcTest))
                         if filename is not None:
                             relevant_dates.append(filename)
                         elif utc == 0:  # Accounts for no complete dataset for today
@@ -845,7 +857,7 @@ GRAVITY.FIXED.M/S=0.0002
                                     day=(today - timedelta(days=dayoffset)).day,
                                 )
                                 filename = self._findFileInPathes(
-                                    file, self.getECInputDirs()
+                                    file, self.getECInputDirs(is_qcTest)
                                 )
                                 logger.debug(f"Trying {file}")
                                 if filename is not None:
@@ -890,7 +902,7 @@ GRAVITY.FIXED.M/S=0.0002
                             month=day.month,
                             day=day.day,
                         )
-                        filename = self._findFileInPathes(file, self.getECInputDirs())
+                        filename = self._findFileInPathes(file, self.getECInputDirs(is_qcTest))
                         if filename is not None:
                             relevant_dates.append(filename)
                         elif utc == 0:
@@ -911,7 +923,7 @@ GRAVITY.FIXED.M/S=0.0002
                                     day=(day - timedelta(days=dayoffset)).day,
                                 )
                                 filename = self._findFileInPathes(
-                                    file, self.getECInputDirs()
+                                    file, self.getECInputDirs(is_qcTest)
                                 )
 
                                 if filename is not None:
@@ -932,7 +944,7 @@ GRAVITY.FIXED.M/S=0.0002
                     file = self.EC_FILE_PATTERN.format(
                         dayoffset=offset, UTC=utc, year=year, month=month, day=day
                     )
-                    filename = self._findFileInPathes(file, self.getECInputDirs())
+                    filename = self._findFileInPathes(file, self.getECInputDirs(is_qcTest))
                     if filename is not None:
                         relevant_dates.append(filename)
         return relevant_dates
