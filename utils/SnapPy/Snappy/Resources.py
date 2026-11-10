@@ -133,7 +133,7 @@ class Resources(ResourcesCommon):
                 ecmodelruns += '<option value="{run}">{run}</option>\n'.format(run=run)
             self.startScreen = re.sub(r"%ECMODELRUN%", ecmodelruns, self.startScreen)
         except Exception:
-            logging.info("unable to set EC model runs in start screen, ignoring")
+            logger.info("unable to set EC model runs in start screen, ignoring")
 
     def getDefaultMetDefinitions(self, metmodel):
         """get the default meteo-definitions as dict to be used as *dict for getSnapInputMetDefinitions"""
