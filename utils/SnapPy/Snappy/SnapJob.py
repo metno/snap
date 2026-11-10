@@ -75,12 +75,17 @@ class SnapJob:
             task_model = self.task.model[4:]
         else:
             raise UnknownModelException("unknown model:" + self.task.model)
+
+        mem_req = 8  # default memory requirement in GB
         if task_model == "":
             metmodel = MetModel.NrpaEC0p1
         elif task_model == "GLOBAL":
             metmodel = MetModel.EC0p1Global
         elif task_model == "NORDIC":
             metmodel = MetModel.Meps2p5
+            mem_req = (
+                12  # GB: MEPS has more levels als larger domain and wdep parameters
+            )
         elif task_model == "ICONGLOBAL":
             metmodel = MetModel.Icon0p25Global
         elif task_model == "ERA5":
@@ -94,7 +99,7 @@ class SnapJob:
             argosrequest = "--argosrequest " + requestfile
 
         module_to_load = os.getenv("SNAP_MODULE", default="SnapPy/2.4.4")
-        mem_options = "h_rss=8G,mem_free=8G,h_data=8G"
+        mem_options = f"h_rss={mem_req}G,mem_free={mem_req}G,h_data={mem_req}G"
         queue = self.task.queue
 
         # Create qsub script
@@ -155,7 +160,7 @@ fi
 
 
 # create and deliver the file
-zip {zipreturnfile} {ident}_SNAP_conc {ident}_SNAP_coco {ident}_SNAP_dose {ident}_SNAP_depo {ident}_SNAP_prec {ident}_SNAP_wetd {ident}_SNAP_tofa {ident}_SNAP_all.nc {ident}_SNAP_IncidentFile.zip
+zip {zipreturnfile} {ident}_SNAP_conc {ident}_SNAP_coco {ident}_SNAP_dose {ident}_SNAP_depo {ident}_SNAP_prec {ident}_SNAP_wetd {ident}_SNAP_tofa {ident}_SNAP_all.nc {ident}_SNAP_sourceterm.csv {ident}_SNAP_isotope_list.txt {ident}_SNAP_IncidentFile.zip
 if [ $? -ne 0 ]; then
     send_msg 410 "{model} internal error, zip failed"
     exit 1;

@@ -14,6 +14,7 @@ import re
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
+import shutil
 
 from Snappy.AddBombIsotopes import snap_add_bomb_isotopes
 from Snappy.AddToa import add_toa_to_nc
@@ -324,6 +325,7 @@ def snap4rimsterm(
     rimsterm, argosrequest, argos_operational, basedir, ident, met_model, bitmapCompress
 ):
     """run snap with rimsterm definition in basedir dir"""
+
     tree = ET.parse(rimsterm)
     root = tree.getroot()
     assert root.tag == f"CBRN_Sourceterm", "Not a rimsterm input file: {rimsterm}"
@@ -389,6 +391,22 @@ def snap4rimsterm(
             errlog.write(f"snapAddToa snap.nc in {basedir} failed: {ex}\n")
 
     if argosRoot is not None:
+        res = Resources()
+
+        outfile = os.path.join(basedir, f"{ident}_sourceterm.csv")
+        snapSource = os.path.join(basedir, "snap_sourceterm.csv")
+        
+        if os.path.exists(outfile):
+            os.unlink(outfile)  # avoid symlink exception
+        os.symlink(snapSource, outfile)  
+
+        outfile = os.path.join(basedir, f"{ident}_isotope_list.txt")
+        directory = os.path.join(os.path.dirname(res.directory), "resources")
+        isotopefile = os.path.join(directory, "isotope_list.txt")
+
+        shutil.copy2(isotopefile,outfile)
+
+
         for oformat in argosRoot.findall("OutputFormat"):
             print(f"output in format: {oformat.text}")
             if oformat.text == "GRIB":
