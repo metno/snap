@@ -76,13 +76,13 @@ class Resources(ResourcesCommon):
         MetModel.Era5: "meteo{year:04d}{month:02d}{day:02d}_{UTC:02d}.nc",
         MetModel.EC0p1Global: "ec_atmo_0_1deg_{year:04d}{month:02d}{day:02d}T{UTC:02d}0000Z_3h.nc",
     }
-    
+
     _QC_INPUTDIRS = {
-        MetModel.NrpaEC0p1: [os.path.join(_QC_MET_DIR,"EC")],
-        MetModel.Meps2p5: [os.path.join(_QC_MET_DIR,"MEPS")],
-        MetModel.Icon0p25Global: [os.path.join(_QC_MET_DIR,"ICON")],
-        MetModel.Era5Nancy: [os.path.join(_QC_MET_DIR,"ERA5")],
-        MetModel.Era5: [os.path.join(_QC_MET_DIR,"ERA5")]
+        MetModel.NrpaEC0p1: [os.path.join(_QC_MET_DIR, "EC")],
+        MetModel.Meps2p5: [os.path.join(_QC_MET_DIR, "MEPS")],
+        MetModel.Icon0p25Global: [os.path.join(_QC_MET_DIR, "ICON")],
+        MetModel.Era5Nancy: [os.path.join(_QC_MET_DIR, "ERA5")],
+        MetModel.Era5: [os.path.join(_QC_MET_DIR, "ERA5")],
     }
 
     QC_FILENAME_PATTERN = {
@@ -90,9 +90,8 @@ class Resources(ResourcesCommon):
         MetModel.Meps2p5: "meps_det_2_5km_{year:04d}{month:02d}{day:02d}T{UTC:02d}Z.nc",
         MetModel.Icon0p25Global: MET_FILENAME_PATTERN["icon_0p25_global"],
         MetModel.Era5Nancy: "meteo{year:04d}{month:02d}{day:02d}_{UTC:02d}.nc",
-        MetModel.Era5: MET_FILENAME_PATTERN["era5"]
+        MetModel.Era5: MET_FILENAME_PATTERN["era5"],
     }
-
 
     def __init__(self):
         """
@@ -554,17 +553,17 @@ GRAVITY.FIXED.M/S=0.0002
                 return filename
         return None
 
-    def getMetGlobalInputDirs(self, metmodel,is_qcTest=False):
+    def getMetGlobalInputDirs(self, metmodel, is_qcTest=False):
         if is_qcTest:
             return self.lustreTemplateDirs(self._QC_INPUTDIRS[metmodel])
         return self.lustreTemplateDirs(self._MET_GLOBAL_INPUTDIRS[metmodel])
 
-    def getMetInputDirs(self, metmodel,is_qcTest=False):
+    def getMetInputDirs(self, metmodel, is_qcTest=False):
         if is_qcTest:
             return self.lustreTemplateDirs(self._QC_INPUTDIRS[metmodel])
         return self.lustreTemplateDirs(self._MET_INPUTDIRS[metmodel])
 
-    def getECInputDirs(self,is_qcTest=False):
+    def getECInputDirs(self, is_qcTest=False):
         if is_qcTest:
             return self.lustreTemplateDirs(self._QC_INPUTDIRS[MetModel.NrpaEC0p1])
         return self.lustreTemplateDirs(self._ECINPUTDIRS)
@@ -575,7 +574,7 @@ GRAVITY.FIXED.M/S=0.0002
         dtime: datetime,
         run_hours: int,
         fixed_run="best",
-        is_qcTest=False
+        is_qcTest=False,
     ):
         """Get available meteorology files for the last few days around dtime and run_hours.
             Works for MEPS 2.5km and EC Global Meteorology.
@@ -653,7 +652,7 @@ GRAVITY.FIXED.M/S=0.0002
                     )
 
                     filename = self._findFileInPathes(
-                        file, self.getMetInputDirs(metmodel,is_qcTest)
+                        file, self.getMetInputDirs(metmodel, is_qcTest)
                     )
 
                     i += 1
@@ -721,7 +720,7 @@ GRAVITY.FIXED.M/S=0.0002
         run_hours: int,
         fixed_run="best",
         prod_check=True,
-        is_qcTest=False
+        is_qcTest=False,
     ):
         """Get available meteorology files for the last few days around dtime and run_hours.
 
@@ -747,7 +746,6 @@ GRAVITY.FIXED.M/S=0.0002
             raise NotImplementedError(
                 f"metmodel='{metmodel}' not implemented for meteorology (file pattern)"
             )
-
 
         # only best currently implemented
         if fixed_run == "best":
@@ -788,7 +786,12 @@ GRAVITY.FIXED.M/S=0.0002
         return relevant_dates
 
     def getECMeteorologyFiles(
-        self, dtime: datetime, run_hours: int, fixed_run="best", pattern="",is_qcTest=False
+        self,
+        dtime: datetime,
+        run_hours: int,
+        fixed_run="best",
+        pattern="",
+        is_qcTest=False,
     ) -> list[str]:
         """Get available meteorology files for the last few days around dtime and run_hours.
             Works for EC-emep meteorology
@@ -836,7 +839,9 @@ GRAVITY.FIXED.M/S=0.0002
                             month=today.month,
                             day=today.day,
                         )
-                        filename = self._findFileInPathes(file, self.getECInputDirs(is_qcTest))
+                        filename = self._findFileInPathes(
+                            file, self.getECInputDirs(is_qcTest)
+                        )
                         if filename is not None:
                             relevant_dates.append(filename)
                         elif utc == 0:  # Accounts for no complete dataset for today
@@ -903,7 +908,9 @@ GRAVITY.FIXED.M/S=0.0002
                             month=day.month,
                             day=day.day,
                         )
-                        filename = self._findFileInPathes(file, self.getECInputDirs(is_qcTest))
+                        filename = self._findFileInPathes(
+                            file, self.getECInputDirs(is_qcTest)
+                        )
                         if filename is not None:
                             relevant_dates.append(filename)
                         elif utc == 0:
@@ -945,7 +952,9 @@ GRAVITY.FIXED.M/S=0.0002
                     file = self.EC_FILE_PATTERN.format(
                         dayoffset=offset, UTC=utc, year=year, month=month, day=day
                     )
-                    filename = self._findFileInPathes(file, self.getECInputDirs(is_qcTest))
+                    filename = self._findFileInPathes(
+                        file, self.getECInputDirs(is_qcTest)
+                    )
                     if filename is not None:
                         relevant_dates.append(filename)
         return relevant_dates

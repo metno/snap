@@ -35,7 +35,7 @@ def parseIsoTimeDelta(period):
     if not match:
         return
     time_params = {}
-    for (name, param) in match.groupdict().items():
+    for name, param in match.groupdict().items():
         if param:
             time_params[name] = int(param)
     return datetime.timedelta(**time_params)
@@ -122,7 +122,7 @@ def rimsterm2npp_release(rimxml, runTime, releaseStartTime, startDTime):
     lowervals = []
     uppervals = []
     for rel in releases:
-        timevals.append(f'{rel["endtime"].total_seconds() / (60 * 60):.2f}')
+        timevals.append(f"{rel['endtime'].total_seconds() / (60 * 60):.2f}")
         radiusvals.append("50")
         lowervals.append(rel["lower"])
         uppervals.append(rel["upper"])
@@ -141,10 +141,10 @@ RELEASE.UPPER.M= {", ".join(uppervals)}
     for isoName, isoId in isoItems.items():
         vals = []
         for rel in releases:
-            vals.append(f'{rel["isoBqs"][isoName]:10.3E}')
+            vals.append(f"{rel['isoBqs'][isoName]:10.3E}")
         vals.append("0")
         vals.append(f"'{isos[isoId]['isotope']}'")
-        releaseTerm += f'RELEASE.BQ/SEC.COMP= {",".join(vals)}\n'
+        releaseTerm += f"RELEASE.BQ/SEC.COMP= {','.join(vals)}\n"
     # add isotopes definitions (size/density/type/decay)
     releaseTerm += "\n" + res.isotopes2snapinput(isoItems.values())
     return releaseTerm
@@ -152,7 +152,7 @@ RELEASE.UPPER.M= {", ".join(uppervals)}
 
 def rimsterm2bomb_release(
     argosxml, offset_time: datetime.timedelta, argos_operational=False
-) -> tuple[str, str|None]:
+) -> tuple[str, str | None]:
     """
     create a release part of snap.input from rimsterm.xml and request.xml file for a nuclear bomb
 
@@ -176,12 +176,16 @@ def rimsterm2bomb_release(
 def request_is_bomb(argosRoot):
     return argosRoot.find("NuclearYield") is not None
 
+
 def request_is_QCtest(argosRoot):
     if argosRoot.find("RequestMode") is not None:
         return argosRoot.find("RequestMode").text == "test"
     return False
 
-def rimsterm2input(rimxml, argosxml, met_model, argos_operational) -> tuple[str, str | None]:
+
+def rimsterm2input(
+    rimxml, argosxml, met_model, argos_operational
+) -> tuple[str, str | None]:
     """create a full snap.input sourceterm from a rimsterm.xml file using the met_model meteo
 
     :return: snap.input-content, and optional release.txt-content
@@ -219,7 +223,9 @@ def rimsterm2input(rimxml, argosxml, met_model, argos_operational) -> tuple[str,
     offset_time = releaseStartTime - startDTime
     snapReleaseTXT = None
     if is_bomb:
-        releaseTerm, snapReleaseTXT = rimsterm2bomb_release(argosxml, offset_time, argos_operational)
+        releaseTerm, snapReleaseTXT = rimsterm2bomb_release(
+            argosxml, offset_time, argos_operational
+        )
     else:  # npp
         releaseTerm = rimsterm2npp_release(
             rimxml, runTime, releaseStartTime, startDTime
@@ -237,28 +243,34 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
     metdef = res.getDefaultMetDefinitions(met_model)
 
     if met_model == MetModel.NrpaEC0p1:
-        files = res.getECMeteorologyFiles(dtime=startDTime, run_hours=int(runTime),is_qcTest=is_qcTest)
+        files = res.getECMeteorologyFiles(
+            dtime=startDTime, run_hours=int(runTime), is_qcTest=is_qcTest
+        )
         if len(files) == 0:
             raise Exception(
                 f"no {met_model} met-files found for {startDTime}, runtime {runTime}"
             )
     elif met_model == MetModel.EC0p1Global:
         globalRes = EcMeteorologyCalculator.getGlobalMeteoResources()
-        files = res.getRequiredMeteorologyFiles(MetModel.EC0p1Global,
-                startDTime, runTime, "best" 
-            )
+        files = res.getRequiredMeteorologyFiles(
+            MetModel.EC0p1Global, startDTime, runTime, "best"
+        )
         lat0 = MeteorologyCalculator.getLat0(float(lat), globalRes.domainHeight)
         lon0 = MeteorologyCalculator.getLon0(float(lon), globalRes.domainWidth)
-        interpolation = f"FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|{lon0},{lon0+0.1},...,{lon0+globalRes.domainWidth}|{lat0},{lat0+0.1},...,{lat0+globalRes.domainHeight}|degree\n"
+        interpolation = f"FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|{lon0},{lon0 + 0.1},...,{lon0 + globalRes.domainWidth}|{lat0},{lat0 + 0.1},...,{lat0 + globalRes.domainHeight}|degree\n"
     elif met_model == MetModel.Meps2p5:
-        files = res.getRequiredMeteorologyFiles(met_model, startDTime, runTime, "best",is_qcTest=is_qcTest)
+        files = res.getRequiredMeteorologyFiles(
+            met_model, startDTime, runTime, "best", is_qcTest=is_qcTest
+        )
         if len(files) == 0:
             raise Exception(
                 f"no {met_model} met-files found for {startDTime}, runtime {runTime}"
             )
     elif met_model == MetModel.Icon0p25Global:
         if is_qcTest:
-            files = res.getMeteorologyFiles(met_model, startDTime, runTime, "best", is_qcTest=is_qcTest )
+            files = res.getMeteorologyFiles(
+                met_model, startDTime, runTime, "best", is_qcTest=is_qcTest
+            )
         else:
             metcalc = ICONMeteorologyCalculator(
                 ICONMeteorologyCalculator.getGlobalMeteoResources(),
@@ -284,7 +296,9 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
                 f"no {met_model} met-files found for {startDTime}, runtime {runTime}"
             )
     elif met_model == MetModel.Era5Nancy or met_model == MetModel.Era5:
-        files = res.getMeteorologyFiles(met_model, startDTime, runTime, "best", is_qcTest=is_qcTest)
+        files = res.getMeteorologyFiles(
+            met_model, startDTime, runTime, "best", is_qcTest=is_qcTest
+        )
         if len(files) == 0:
             raise Exception(
                 f"no {met_model} met-files found for {startDTime}, runtime {runTime}"
@@ -319,9 +333,9 @@ def snap4rimsterm(
     if argosrequest:
         argosTree = ET.parse(argosrequest)
         argosRoot = argosTree.getroot()
-        assert (
-            argosRoot.tag == f"Request"
-        ), "Not a argos request xml file: {argosrequest}"
+        assert argosRoot.tag == f"Request", (
+            "Not a argos request xml file: {argosrequest}"
+        )
         is_bomb = request_is_bomb(argosRoot)
 
     if not os.path.isdir(basedir):
@@ -339,7 +353,6 @@ def snap4rimsterm(
     if snapReleaseTXT is not None:
         with open(os.path.join(basedir, "release.txt"), "w") as fh:
             fh.write(snapReleaseTXT)
-
 
     errlog = open(os.path.join(basedir, "snap.errlog"), "a")
     outlog = open(os.path.join(basedir, "snap.outlog"), "a")
