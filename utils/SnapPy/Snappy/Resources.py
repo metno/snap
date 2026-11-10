@@ -739,12 +739,12 @@ GRAVITY.FIXED.M/S=0.0002
             pattern = self.MET_FILENAME_PATTERN
             if metmodel not in self._MET_INPUTDIRS:
                 raise NotImplementedError(
-                    f"metmodel='{metmodel}' not implemented for meteorology (is here)"
+                    f"metmodel='{metmodel}' not implemented for meteorology"
                 )
 
         if metmodel not in pattern:
             raise NotImplementedError(
-                f"metmodel='{metmodel}' not implemented for meteorology (file pattern)"
+                f"metmodel='{metmodel}' not implemented for meteorology"
             )
 
         # only best currently implemented
