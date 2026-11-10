@@ -235,18 +235,6 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
 
     interpolation = ""
     metdef = res.getDefaultMetDefinitions(met_model)
-    # if is_qcTest:
-    #     meteo_path = "{LUSTREDIR}/project/fou/kl/cerad/Meteorology/QC/"
-
-    #     res._MET_INPUTDIRS={
-    #         MetModel.Meps2p5: [os.path.join(meteo_path,"MEPS")],
-    #         MetModel.Icon0p25Global: [os.path.join(meteo_path,"ICON")],
-    #         MetModel.Era5Nancy: [os.path.join(meteo_path,"ERA5")],
-    #         MetModel.Era5: [os.path.join(meteo_path,"ERA5")]
-    #     }
-    #     res.MET_FILENAME_PATTERN[MetModel.Meps2p5] = "meps_det_2_5km_{year:04d}{month:02d}{day:02d}T{UTC:02d}Z.nc"
-    #     res.MET_FILENAME_PATTERN[MetModel.Era5Nancy] = "meteo{year:04d}{month:02d}{day:02d}_{UTC:02d}.nc"
-    #     res._ECINPUTDIRS=[os.path.join(meteo_path,"EC")]
 
     if met_model == MetModel.NrpaEC0p1:
         files = res.getECMeteorologyFiles(dtime=startDTime, run_hours=int(runTime),is_qcTest=is_qcTest)
@@ -263,14 +251,14 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
         lon0 = MeteorologyCalculator.getLon0(float(lon), globalRes.domainWidth)
         interpolation = f"FIMEX.INTERPOLATION=nearest|+proj=latlon +R=6371000 +no_defs|{lon0},{lon0+0.1},...,{lon0+globalRes.domainWidth}|{lat0},{lat0+0.1},...,{lat0+globalRes.domainHeight}|degree\n"
     elif met_model == MetModel.Meps2p5:
-        files = res.getRequiredMeteorologyFiles(met_model, startDTime, runTime, "best",is_qcTest)
+        files = res.getRequiredMeteorologyFiles(met_model, startDTime, runTime, "best",is_qcTest=is_qcTest)
         if len(files) == 0:
             raise Exception(
                 f"no {met_model} met-files found for {startDTime}, runtime {runTime}"
             )
     elif met_model == MetModel.Icon0p25Global:
         if is_qcTest:
-            files = res.getMeteorologyFiles(met_model, startDTime, runTime, "best", is_qcTest )
+            files = res.getMeteorologyFiles(met_model, startDTime, runTime, "best", is_qcTest=is_qcTest )
         else:
             metcalc = ICONMeteorologyCalculator(
                 ICONMeteorologyCalculator.getGlobalMeteoResources(),
@@ -296,7 +284,7 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
                 f"no {met_model} met-files found for {startDTime}, runtime {runTime}"
             )
     elif met_model == MetModel.Era5Nancy or met_model == MetModel.Era5:
-        files = res.getMeteorologyFiles(met_model, startDTime, runTime, "best", is_qcTest)
+        files = res.getMeteorologyFiles(met_model, startDTime, runTime, "best", is_qcTest=is_qcTest)
         if len(files) == 0:
             raise Exception(
                 f"no {met_model} met-files found for {startDTime}, runtime {runTime}"

@@ -738,15 +738,16 @@ GRAVITY.FIXED.M/S=0.0002
             pattern = self.QC_FILENAME_PATTERN
         else:
             pattern = self.MET_FILENAME_PATTERN
+            if metmodel not in self._MET_INPUTDIRS:
+                raise NotImplementedError(
+                    f"metmodel='{metmodel}' not implemented for meteorology (is here)"
+                )
 
         if metmodel not in pattern:
             raise NotImplementedError(
-                f"metmodel='{metmodel}' not implememented for meteorology (file pattern)"
+                f"metmodel='{metmodel}' not implemented for meteorology (file pattern)"
             )
-        if metmodel not in self._MET_INPUTDIRS:
-            raise NotImplementedError(
-                f"metmodel='{metmodel}' not implememented for meteorology"
-            )
+
 
         # only best currently implemented
         if fixed_run == "best":
@@ -774,7 +775,7 @@ GRAVITY.FIXED.M/S=0.0002
                         UTC=utc, year=day.year, month=day.month, day=day.day
                     )
                     filename = self._findFileInPathes(
-                        file, self.getMETInputDirs(metmodel, is_qcTest)
+                        file, self.getMetInputDirs(metmodel, is_qcTest)
                     )
                     if filename is not None:
                         fmtime = os.stat(filename).st_mtime
