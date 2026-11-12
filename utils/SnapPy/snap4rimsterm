@@ -315,8 +315,8 @@ STEP.HOUR.OUTPUT.FIELDS= {outputTimestep:d}
     sourceTerm += res.getSnapInputMetDefinitions(
         met_model, files, interpolation=interpolation, **metdef
     )
-    if is_qcTest:
-        sourceTerm += "LOG.SOURCETERM.FILE= snap_sourceterm.csv\n"
+
+    sourceTerm += "LOG.SOURCETERM.FILE= snap_sourceterm.csv\n"
 
     return sourceTerm, snapReleaseTXT
 
@@ -395,17 +395,16 @@ def snap4rimsterm(
 
         outfile = os.path.join(basedir, f"{ident}_sourceterm.csv")
         snapSource = os.path.join(basedir, "snap_sourceterm.csv")
-        
+
         if os.path.exists(outfile):
             os.unlink(outfile)  # avoid symlink exception
-        os.symlink(snapSource, outfile)  
+        os.symlink(snapSource, outfile)
 
         outfile = os.path.join(basedir, f"{ident}_isotope_list.txt")
         directory = os.path.join(os.path.dirname(res.directory), "resources")
         isotopefile = os.path.join(directory, "isotope_list.txt")
 
-        shutil.copy2(isotopefile,outfile)
-
+        shutil.copy2(isotopefile, outfile)
 
         for oformat in argosRoot.findall("OutputFormat"):
             print(f"output in format: {oformat.text}")
