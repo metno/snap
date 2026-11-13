@@ -12,7 +12,6 @@ currently used colorscale should be written down, too
 
 import argparse
 import os
-import sys
 
 import matplotlib
 
@@ -22,8 +21,8 @@ import logging
 
 import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
+import netCDF4
 import numpy as np
-import xarray as xr
 from cartopy.crs import Globe
 from matplotlib.colors import BoundaryNorm
 
@@ -44,11 +43,11 @@ def center_to_edges(center_array):
 
 
 def plot_data_to_webp(
-    data: xr.DataArray, filename, colormap, colorscale, data_projection
+    data_dict: dict, filename, colormap, colorscale, data_projection
 ) -> tuple[float, float, float, float]:
     """Plot data with blank background and without any borders to a 4x higher resolution
 
-    :param data: data to plot
+    :param data_dict: dictionary with keys 'values', 'x_coords', 'y_coords'
     :param filename: output filename for the webp image
     :param colormap: colormap name to use
     :param colorscale: list of color scale boundaries
@@ -57,72 +56,41 @@ def plot_data_to_webp(
     """
     plt.close("all")  # Close any existing plots to free memory
 
+    values = data_dict["values"]
+    x_coords = data_dict["x_coords"]
+    y_coords = data_dict["y_coords"]
+
     fig, axis = plt.subplots(
         1,
         1,
         subplot_kw=dict(projection=data_projection),
         figsize=(
-            data.shape[1] * 2 / 100,
-            data.shape[0] * 2 / 100,
+            values.shape[1] * 2 / 100,
+            values.shape[0] * 2 / 100,
         ),  # 4 pixels per grid cell, dpi=100
     )
     fig.patch.set_alpha(0)
     axis.axis("off")
 
-    # make data below colorscale[0] transparent
     cmap = plt.get_cmap(colormap)
     norm = BoundaryNorm(colorscale, ncolors=cmap.N, clip=False)
-    data_masked = data.where(
-        data >= colorscale[0]
-    )  # make data below colorscale[0] transparent
-    # using data.plot or data.plot.imshow gives a coarse interpolation of the data
-    # data_masked.plot(
-    #     ax=axis,
-    #     transform=data_projection,  # Assuming data is in PlateCarree projection
-    #     add_colorbar=False,
-    #     add_labels=False,
-    #     vmin=colorscale[0],
-    #     vmax=colorscale[-1],
-    #     cmap=cmap,
-    #     norm=norm,
-    # )
 
-    # with io.BytesIO() as buffer:  # use buffer memory
-    #     plt.savefig(
-    #         buffer,
-    #         bbox_inches="tight",
-    #         transparent=True,
-    #         format="webp",
-    #         pad_inches=0,
-    #     )
+    data_masked = np.where(values >= colorscale[0], values, np.nan)
 
-    #     buffer.seek(0)
-    #     image = buffer.getvalue()
-    # plt.close("all")
+    x_edges = center_to_edges(x_coords)
+    y_edges = center_to_edges(y_coords)
 
-    # with open(filename, "wb") as f:
-    #     f.write(image)
-
-    # x_min = float(data["x"].min())
-    # x_max = float(data["x"].max())
-    # y_min = float(data["y"].min())
-    # y_max = float(data["y"].max())
-    x_edges = center_to_edges(data["x"].values)
-    y_edges = center_to_edges(data["y"].values)
-
-    # flip the origin if y coordinates are descending
-    if data["y"][0] > data["y"][-1]:
+    if y_coords[0] > y_coords[-1]:
         origin = "upper"
     else:
         origin = "lower"
 
     axis.imshow(
-        data_masked.values,
+        data_masked,
         transform=data_projection,
         cmap=cmap,
         norm=norm,
         extent=[
-            # use edges instead of centers
             x_edges[0],
             x_edges[-1],
             y_edges[0],
@@ -136,27 +104,24 @@ def plot_data_to_webp(
         filename, dpi=100, transparent=True, pad_inches=0, pil_kwargs={"lossless": True}
     )
 
-    # img = Image.open(filename)
-    # print("saved image size:", img.size)
-    # print("data nx, ny:", data.shape)
-    # print("extent:", axis.get_extent(crs=data_projection))
-
-    # Return the extent of the plotted data in the output projection
     return axis.get_extent(crs=data_projection), axis.get_extent(crs=ccrs.PlateCarree())
 
 
 def plot_maps(nc_file, variable, output_dir, colormap, colorscale):
-    with xr.open_dataset(nc_file) as ds:
+    with netCDF4.Dataset(nc_file, "r") as ds:
         if variable not in ds.variables:
             raise ValueError(f"Variable {variable} not found in {nc_file}")
-        times = ds["time"].values
-        if "grid_mapping" in ds[variable].attrs:
-            proj_name = ds[variable].attrs["grid_mapping"]
+
+        times = ds.variables["time"][:]
+        var_obj = ds.variables[variable]
+        var_attrs = {k: var_obj.getncattr(k) for k in var_obj.ncattrs()}
+
+        if "grid_mapping" in var_attrs:
+            proj_name = var_attrs["grid_mapping"]
             if proj_name in ds.variables:
-                proj_var = ds[proj_name]
-                if "grid_mapping_name" in proj_var.attrs:
-                    projection_CF = proj_var.attrs
-                else:
+                proj_var = ds.variables[proj_name]
+                projection_CF = {k: proj_var.getncattr(k) for k in proj_var.ncattrs()}
+                if "grid_mapping_name" not in projection_CF:
                     raise ValueError(f"grid_mapping_name not found in {proj_name}")
             else:
                 raise ValueError(
@@ -167,10 +132,11 @@ def plot_maps(nc_file, variable, output_dir, colormap, colorscale):
 
         projection_proj4 = None
         globe = Globe(semimajor_axis=6371000, semiminor_axis=6371000)
+
         if projection_CF.get("grid_mapping_name") == "lambert_conformal_conic":
             try:
                 sp = projection_CF["standard_parallel"]
-                if isinstance(sp, (list, tuple)) and len(sp) == 2:
+                if isinstance(sp, (list, tuple, np.ndarray)) and len(sp) == 2:
                     standard_parallels = (float(sp[0]), float(sp[1]))
                 else:
                     standard_parallels = (float(sp), float(sp))
@@ -186,60 +152,76 @@ def plot_maps(nc_file, variable, output_dir, colormap, colorscale):
                 )
                 projection_proj4 = f"+proj=lcc +lat_1={standard_parallels[0]} +lat_2={standard_parallels[1]} +lat_0={central_latitude} +lon_0={central_longitude} +R=6371000 +units=m +towgs84=0,0,0 +no_defs"
             except Exception as e:
-                logger.error(f"Error converting {projection_CF}: {e}", file=sys.stderr)
+                logger.error(f"Error converting {projection_CF}: {e}")
                 raise RuntimeError(f"Error converting {projection_CF}: {e}")
 
         elif projection_CF.get("grid_mapping_name") == "latitude_longitude":
-            # PlateCarree with that globe (Cartopy version must support globe argument)
-            data_projection = ccrs.PlateCarree(
-                globe=globe
-            )  # Use PlateCarree for lat/lon data
+            data_projection = ccrs.PlateCarree(globe=globe)
             projection_proj4 = "+proj=longlat +R=6371000 +towgs84=0,0,0 +no_defs"
         else:
             logger.warning(
                 f"Warning: Unrecognized projection {projection_CF.get('grid_mapping_name')}, defaulting to PlateCarree"
             )
-            data_projection = ccrs.PlateCarree(
-                globe=globe
-            )  # Use PlateCarree for lat/lon data
+            data_projection = ccrs.PlateCarree(globe=globe)
 
-        # timesteps -> file mapping
         inventory = {
             "variable": variable,
-            "units": ds[variable].attrs.get("units", ""),
+            "units": var_attrs.get("units", ""),
             "colormap": colormap,
             "colorscale": colorscale,
             "projection_proj4": projection_proj4,
         }
 
-        # plot the data for each time step
+        x_coord_var = ds.variables["x"]
+        y_coord_var = ds.variables["y"]
+        x_coords = x_coord_var[:]
+        y_coords = y_coord_var[:]
+
         timestep_to_file = dict()
+        extent_pc = None
+
         for t_idx, dt in enumerate(times):
-            dtx = dt.astype("datetime64[us]").astype("O")  # Convert to Python datetime
-            data = ds[variable].isel(time=t_idx)
+            dtx = netCDF4.num2date(dt, ds.variables["time"].units)
+
+            data = var_obj[t_idx, :, :]
+
+            if np.ma.is_masked(data):
+                data = data.filled(np.nan)
+
+            if np.all(np.isnan(data)):
+                logger.warning(f"Data at time {dtx} and variable {variable} is all NaN")
+                continue
+
             filename = f"{variable}_{dtx.strftime('%Y%m%dT%H%M%SZ')}.webp"
-            filepath = os.path.join(
-                output_dir, f"{variable}_{dtx.strftime('%Y%m%dT%H%M%SZ')}.webp"
-            )
+            filepath = os.path.join(output_dir, filename)
             timestep_to_file[dtx.strftime("%Y-%m-%dT%H:%M:%SZ")] = filename
+
+            data_dict = {
+                "values": data,
+                "x_coords": x_coords,
+                "y_coords": y_coords,
+            }
+
             image_extent, extent_pc = plot_data_to_webp(
-                data, filepath, colormap, colorscale, data_projection
+                data_dict, filepath, colormap, colorscale, data_projection
             )
 
-        bbox = {
-            "west": extent_pc[0],
-            "east": extent_pc[1],
-            "south": extent_pc[2],
-            "north": extent_pc[3],
-        }
-        image_extent = {
-            "min_x": image_extent[0],
-            "max_x": image_extent[1],
-            "min_y": image_extent[2],
-            "max_y": image_extent[3],
-        }
-        inventory["bounding_box"] = bbox
-        inventory["image_extent"] = image_extent
+        if extent_pc is not None:
+            bbox = {
+                "west": extent_pc[0],
+                "east": extent_pc[1],
+                "south": extent_pc[2],
+                "north": extent_pc[3],
+            }
+            image_extent = {
+                "min_x": image_extent[0],
+                "max_x": image_extent[1],
+                "min_y": image_extent[2],
+                "max_y": image_extent[3],
+            }
+            inventory["bounding_box"] = bbox
+            inventory["image_extent"] = image_extent
+
         inventory["timesteps"] = timestep_to_file
         with open(os.path.join(output_dir, f"variable_{variable}.json"), "w") as f:
             json.dump(inventory, f, indent=4)
