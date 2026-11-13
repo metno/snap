@@ -9,7 +9,7 @@ python=3.14
 curl
 cartopy
 scipy
-fimex=2.6
+fimex=2.6.1
 netcdf4
 matplotlib
 nco
