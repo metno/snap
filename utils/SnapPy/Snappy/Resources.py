@@ -57,7 +57,8 @@ class Resources(ResourcesCommon):
     }
 
     _MET_INPUTDIRS = {
-        MetModel.Meps2p5: ["{MET_ARCHIVE_DIR}/projects/metproduction/MEPS/"],
+        # MetModel.Meps2p5: ["{MET_ARCHIVE_DIR}/projects/metproduction/MEPS/"],
+        MetModel.Meps2p5: ["/lustre/storeB/users/trygveasp/ecflowdata/products/meps/"],
         MetModel.EC0p1Global: ["{MET_PRODUCTION_DIR}/products/ecmwf/nc/"],
         # input directories for manual download
         MetModel.EC0p1Europe: ["{LF_PROD_DIR}/atom/Meteorology/ec_europe/"],
@@ -68,7 +69,8 @@ class Resources(ResourcesCommon):
         MetModel.Era5: ["{LUSTREDIR}/project/fou/kl/cerad/Meteorology/EC/Era5/"],
     }
     MET_FILENAME_PATTERN = {
-        MetModel.Meps2p5: "{year:04d}/{month:02d}/{day:02d}/meps_det_2_5km_{year:04d}{month:02d}{day:02d}T{UTC:02d}Z.nc",
+        # MetModel.Meps2p5: "{year:04d}/{month:02d}/{day:02d}/meps_det_2_5km_{year:04d}{month:02d}{day:02d}T{UTC:02d}Z.nc",
+        MetModel.Meps2p5: "meps_det_2_5km_{year:04d}{month:02d}{day:02d}T{UTC:02d}Z.grbfp",
         MetModel.Icon0p25Global: "icon_{year:04d}{month:02d}{day:02d}T{UTC:02d}Z.nc",
         MetModel.GfsGribFilter: "gfs_0p25deg_{year:04d}{month:02d}{day:02d}T{UTC:02d}Z.nc",
         MetModel.EC0p1Europe: "ec_atmo_0_1deg_{year:04d}{month:02d}{day:02d}T{UTC:02d}0000Z_3h.nc",
