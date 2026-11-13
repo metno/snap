@@ -110,6 +110,12 @@ def plot_data_to_webp(
     x_edges = center_to_edges(data["x"].values)
     y_edges = center_to_edges(data["y"].values)
 
+    # flip the origin if y coordinates are descending
+    if data["y"][0] > data["y"][-1]:
+        origin = "upper"
+    else:
+        origin = "lower"
+
     axis.imshow(
         data_masked.values,
         transform=data_projection,
@@ -122,7 +128,7 @@ def plot_data_to_webp(
             y_edges[0],
             y_edges[-1],
         ],
-        origin="lower",
+        origin=origin,
         interpolation="nearest",
     )
     plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
