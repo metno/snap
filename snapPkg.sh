@@ -19,7 +19,7 @@ elif [ $PLATFORM = jammy ]; then
     export SNAP_FIMEX_VERSION=1.9
     ln --symbolic gcc_pkgconfig.mk current.mk
 elif [ $PLATFORM = noble ]; then
-    export SNAP_FIMEX_VERSION=2.6.1
+    export SNAP_FIMEX_VERSION=2.6.2
     ln --symbolic gcc_pkgconfig.mk current.mk
 fi
 make clean

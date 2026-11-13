@@ -9,7 +9,7 @@ python=3.14
 curl
 cartopy
 scipy
-fimex=2.6.1
+fimex=2.6.2
 netcdf4
 matplotlib
 nco
@@ -210,7 +210,7 @@ EOF
 }
 
 check_git_lfs
-FIXED_BASEENV=conda202601
+FIXED_BASEENV=conda202611
 case "${1:-help}" in
   install_baseenv)
     install_baseenv "${2:-TEST}" "${3:---no-force}"
