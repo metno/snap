@@ -5,11 +5,11 @@ set -e
 install_conda_env() {
     # curl/openssh/openssl needed to fix issues with RHEL8 mixed commands
     conda create --channel conda-forge --prefix "$1" --yes --file /dev/stdin <<EOF
-python=3.12
+python=3.14
 curl
 cartopy
 scipy
-fimex=2.1
+fimex=2.6.2
 netcdf4
 matplotlib
 nco
@@ -99,7 +99,7 @@ install_baseenv() {
         echo "Installing a fresh conda environment"
     fi
 
-    source /modules/rhel8/conda/install/etc/profile.d/conda.sh
+    source /modules/rhel8/mamba-mf3/etc/profile.d/conda.sh
 
     install_conda_env "$MODULE_PREFIX"
     conda activate "$MODULE_PREFIX"
@@ -210,7 +210,7 @@ EOF
 }
 
 check_git_lfs
-FIXED_BASEENV=conda202601
+FIXED_BASEENV=conda202611
 case "${1:-help}" in
   install_baseenv)
     install_baseenv "${2:-TEST}" "${3:---no-force}"

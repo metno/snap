@@ -1,5 +1,5 @@
 ! SNAP: Servere Nuclear Accident Programme
-! Copyright (C) 1992-2021   Norwegian Meteorological Institute
+! Copyright (C) 1992-2026   Norwegian Meteorological Institute
 ! License: GNU General Public License v3.0 or later
 
 !> Module with utilities to read files with fimex
@@ -571,7 +571,7 @@ contains
 
     allocate(rain_in_air(nx,ny),graupel_in_air(nx,ny),snow_in_air(nx,ny),pdiff(nx,ny))
     allocate(cloud_water(nx,ny),cloud_ice(nx,ny))
-    
+
     precip3d_io(:,:,:) = 0.0
     cw3d_io(:,:,:) = 0.0
 
@@ -602,15 +602,15 @@ contains
 
       precip3d_io(:,:,k) = rain_in_air + graupel_in_air + snow_in_air
       precip3d_io(:,:,k) = precip3d_io(:,:,k) * pdiff / g
-      
+
       call fi_checkload(fio, met_params%mass_fraction_cloud_condensed_water_in_air, mass_fraction_units, &
                       cloud_water, nt=timepos, nz=ilevel, nr=nr)
       if (met_params%mass_fraction_cloud_ice_in_air /= '') then
         call fi_checkload(fio, met_params%mass_fraction_cloud_ice_in_air, mass_fraction_units, &
                         cloud_ice, nt=timepos, nz=ilevel, nr=nr)
-      else 
+      else
         cloud_ice = 0.
-      end if 
+      end if
 
       where (cloud_water < 0.0)
         cloud_water = 0.0
@@ -669,11 +669,11 @@ contains
       if (met_params%mass_fraction_cloud_ice_in_air /= '') then
         call fi_checkload(fio, met_params%mass_fraction_cloud_ice_in_air, mass_fraction_units, &
                           cloud_ice(:,:), nt=timepos, nz=ilevel, nr=nr)
-      else 
+      else
         cloud_ice = 0.
-          
-      end if 
-      
+
+      end if
+
       cw3d_io(:,:,k) = (abs(cloud_water(:,:))+ abs(cloud_ice(:,:))) * pdiff / g
 
       ! Use cloud water to assign precipitation at model levels
@@ -985,7 +985,7 @@ contains
     if (idebug == 1) then
       write (iulog, *) "number of points with zero surface stress: ", count(surface_stress == 0.0)
     endif
-    
+
     if (met_params%hflux_is_accumulated) then
       call read_accumulated_field(fio, nhdiff, timepos, timeposm1, met_params%hflux, accum_surface_heat_flux_units, hflux(:, :), &
         nr=nr)
